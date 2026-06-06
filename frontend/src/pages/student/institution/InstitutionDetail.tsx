@@ -501,7 +501,7 @@ function SocialLinks({ links }: { links: Record<string, string> | null | undefin
    ────────────────────────────────────────────────────────────────────────── */
 function TabBar({ tabs, active, onChange }: { tabs: { id: TabId; label: string }[]; active: TabId; onChange: (t: TabId) => void }) {
   return (
-    <div className="flex items-center gap-1 border-b border-border overflow-x-auto" role="tablist">
+    <div className="flex items-center gap-1 border-b border-border overflow-x-auto overflow-y-hidden" role="tablist">
       {tabs.map(t => {
         const on = t.id === active
         return (
@@ -515,7 +515,7 @@ function TabBar({ tabs, active, onChange }: { tabs: { id: TabId; label: string }
             }`}
           >
             {t.label}
-            {on && <span className="absolute left-2 right-2 -bottom-px h-0.5 rounded-full bg-secondary" />}
+            {on && <span className="absolute left-2 right-2 bottom-0 h-0.5 rounded-full bg-secondary" />}
           </button>
         )
       })}
@@ -551,10 +551,10 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
   if (netPrice != null) keyStats.push({ value: money(netPrice), label: 'Avg net price', hint: 'per year, after aid' })
   if (earn10 != null) keyStats.push({ value: money(earn10), label: 'Median earnings', hint: '10 yrs after entry' })
   if (grad4 != null) keyStats.push({ value: pct(grad4), label: 'Graduation rate' })
-  const rankings: { label: string; rank: number; year?: number }[] = []
+  const rankings: { key: string; label: string; rank: number; year?: number }[] = []
   for (const [k, v] of Object.entries(rd)) {
     if (v && typeof v === 'object' && typeof (v as any).rank === 'number') {
-      rankings.push({ label: rankingLabel(k), rank: (v as any).rank, year: (v as any).year })
+      rankings.push({ key: k, label: rankingLabel(k), rank: (v as any).rank, year: (v as any).year })
     }
   }
   const recognition: { value: string; label: string }[] = []
@@ -577,6 +577,11 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
   ]
     .filter(s => typeof s.pct === 'number' && s.pct > 0)
     .sort((a, b) => b.pct - a.pct)
+  const costSource = Array.isArray(outcomes.sources)
+    ? outcomes.sources.find(
+        (s: any) => typeof s?.source === 'string' && s.source.toLowerCase().includes('scorecard'),
+      )
+    : undefined
 
   return (
     <div className="space-y-5">
@@ -606,19 +611,15 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Trophy size={15} className="text-secondary" /> Rankings</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             {rankings.map(r => (
-              <RankingBadge key={r.label} rank={r.rank} label={r.label} year={r.year} peak={r.rank === 1} />
+              <RankingBadge
+                key={r.label}
+                rank={r.rank}
+                label={r.label}
+                year={r.year}
+                peak={r.rank === 1}
+                href={rankingHref(r.key, outcomes.sources)}
+              />
             ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Recognition — accolades with context */}
-      {recognition.length > 0 && (
-        <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-1 flex items-center gap-2"><Award size={15} className="text-secondary" /> Recognition</h2>
-          <p className="text-[12px] text-muted-foreground mb-3">Among faculty &amp; alumni</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {recognition.map(d => <Fact key={d.label} label={d.label} value={d.value} />)}
           </div>
         </Card>
       )}
@@ -664,6 +665,19 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
               {aid.federal_loan_rate != null && <StatBar label="Federal loan recipients" pct={aid.federal_loan_rate} />}
             </div>
           </div>
+          {costSource && (
+            <p className="text-[11px] text-muted-foreground/70 mt-3">
+              Source:{' '}
+              {costSource.url ? (
+                <a href={costSource.url} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">
+                  {costSource.source}
+                </a>
+              ) : (
+                costSource.source
+              )}
+              {costSource.year ? ` · ${costSource.year}` : ''}
+            </p>
+          )}
         </Card>
       )}
 
@@ -686,26 +700,37 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
         </Card>
       )}
 
-      {/* Student body — diversity bar + women + enrollment split */}
+      {/* Diversity — race/ethnicity + women lead; compact enrollment underneath */}
       {(diversity.length > 0 || demo.women != null || enrollTotal != null) && (
         <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Users size={15} className="text-secondary" /> Student body</h2>
-          {enrollTotal != null && (
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              {inst.student_body_size != null && <Fact label="Undergraduate" value={inst.student_body_size.toLocaleString()} />}
-              {gradCount != null && <Fact label="Graduate" value={gradCount.toLocaleString()} />}
-              <Fact label="Total enrollment" value={Number(enrollTotal).toLocaleString()} />
+          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Users size={15} className="text-secondary" /> Diversity</h2>
+          {diversity.length > 0 && (
+            <div className="mb-4">
+              <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Race &amp; ethnicity</p>
+              <DiversityBar segments={diversity} />
             </div>
           )}
           {demo.women != null && (
             <div className="max-w-xs mb-4"><StatBar label="Women" pct={demo.women} /></div>
           )}
-          {diversity.length > 0 && (
-            <>
-              <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Race &amp; ethnicity</p>
-              <DiversityBar segments={diversity} />
-            </>
+          {enrollTotal != null && (
+            <p className="text-[11.5px] text-muted-foreground/70">
+              {inst.student_body_size != null ? `${inst.student_body_size.toLocaleString()} undergraduate` : ''}
+              {gradCount != null ? ` · ${gradCount.toLocaleString()} graduate` : ''}
+              {` · ${Number(enrollTotal).toLocaleString()} total enrollment`}
+            </p>
           )}
+        </Card>
+      )}
+
+      {/* Recognition — accolades with context, lower in the page */}
+      {recognition.length > 0 && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-1 flex items-center gap-2"><Award size={15} className="text-secondary" /> Recognition</h2>
+          <p className="text-[12px] text-muted-foreground mb-3">Among faculty &amp; alumni</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {recognition.map(d => <Fact key={d.label} label={d.label} value={d.value} />)}
+          </div>
         </Card>
       )}
 
@@ -1205,6 +1230,22 @@ function rankingLabel(key: string): string {
     arwu: 'Academic Ranking of World Universities',
   }
   return map[key] ?? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+const RANKING_SOURCE_KEYWORD: Record<string, string> = {
+  qs_world_university_rankings: 'qs',
+  times_higher_education: 'times higher',
+  us_news_national: 'u.s. news',
+}
+
+/** Link a ranking to its reference page by matching the stored sources list. */
+function rankingHref(key: string, sources: unknown): string | undefined {
+  const kw = RANKING_SOURCE_KEYWORD[key]
+  if (!kw || !Array.isArray(sources)) return undefined
+  const match = sources.find(
+    (s: any) => typeof s?.source === 'string' && s.source.toLowerCase().includes(kw) && s.url,
+  )
+  return match?.url
 }
 
 function pct(v: any): string {

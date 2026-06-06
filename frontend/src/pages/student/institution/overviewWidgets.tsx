@@ -6,28 +6,28 @@
    everything else uses cobalt (`--secondary`).
    ────────────────────────────────────────────────────────────────────────── */
 import { Fragment } from 'react'
-import { Award, ChevronRight } from 'lucide-react'
+import { Award, ChevronRight, ExternalLink } from 'lucide-react'
 
-/** A single ranking as a medallion badge. `peak` (the #1) earns the gold beat. */
+/** A single ranking as a medallion badge. `peak` (the #1) earns the gold beat.
+ *  With `href`, the whole badge links to that ranking's reference page. */
 export function RankingBadge({
   rank,
   label,
   year,
   peak = false,
+  href,
 }: {
   rank: number
   label: string
   year?: number
   peak?: boolean
+  href?: string
 }) {
-  return (
-    <div
-      data-testid="ranking-badge"
-      data-peak={peak ? 'true' : undefined}
-      className={`flex items-center gap-3 rounded-xl border p-3.5 ${
-        peak ? 'border-primary/40 bg-primary/[0.07]' : 'border-border bg-muted/40'
-      }`}
-    >
+  const cls = `flex items-center gap-3 rounded-xl border p-3.5 ${
+    peak ? 'border-primary/40 bg-primary/[0.07]' : 'border-border bg-muted/40'
+  }${href ? ' transition-colors hover:border-secondary' : ''}`
+  const inner = (
+    <>
       <div
         className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full ${
           peak ? 'bg-primary/15 text-primary' : 'bg-secondary/10 text-secondary'
@@ -35,13 +35,35 @@ export function RankingBadge({
       >
         <Award size={18} />
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-xl font-bold leading-none text-foreground tabular-nums">#{rank}</p>
         <p className="mt-1 truncate text-[12px] leading-snug text-muted-foreground">
           {label}
           {year ? ` · ${year}` : ''}
         </p>
       </div>
+      {href && (
+        <ExternalLink size={13} className="flex-shrink-0 text-muted-foreground/60" aria-hidden="true" />
+      )}
+    </>
+  )
+  if (href) {
+    return (
+      <a
+        data-testid="ranking-badge"
+        data-peak={peak ? 'true' : undefined}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cls}
+      >
+        {inner}
+      </a>
+    )
+  }
+  return (
+    <div data-testid="ranking-badge" data-peak={peak ? 'true' : undefined} className={cls}>
+      {inner}
     </div>
   )
 }
