@@ -60,6 +60,21 @@ async def start_session(
     return DiscoverySessionResponse.model_validate(session)
 
 
+@router.post(
+    "/sessions/unified",
+    response_model=DiscoverySessionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def start_unified_session(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Start the unified, track-less Uni conversation (one session covers
+    self/goals/needs by content). The student never picks a track."""
+    session = await _svc(db).start_unified_session(user.id)
+    return DiscoverySessionResponse.model_validate(session)
+
+
 @router.get("/sessions", response_model=list[DiscoverySessionResponse])
 async def list_sessions(
     track: DiscoveryTrack | None = Query(None),

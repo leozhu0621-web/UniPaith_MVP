@@ -34,7 +34,7 @@ class DiscoverySession(Base):
     __tablename__ = "discovery_sessions"
     __table_args__ = (
         CheckConstraint(
-            "track IN ('profile','goals','needs')",
+            "track IN ('profile','goals','needs','discovery')",
             name="ck_discovery_sessions_track",
         ),
         CheckConstraint(
@@ -73,6 +73,11 @@ class DiscoverySession(Base):
     completion_pct: Mapped[Decimal] = mapped_column(
         Numeric(4, 3), nullable=False, default=Decimal("0")
     )
+    # For the unified track='discovery' session, completion_pct is the mean of
+    # the basic/goals/needs validators. That single value can't express a
+    # per-track gap, so we also persist the per-track breakdown here and feed it
+    # to the handoff gate (otherwise an average ≥ threshold masks a weak track).
+    completion_breakdown: Mapped[dict | None] = mapped_column(JSONB)
     exit_signal: Mapped[dict | None] = mapped_column(JSONB)
     started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

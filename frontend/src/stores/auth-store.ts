@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import apiClient from '../api/client'
+import { clearSignalEdits } from '../pages/student/discover/noticed'
 
 const REFRESH_TOKEN_KEY = 'unipaith_refresh_token'
 
@@ -94,6 +95,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           }
         })()
 
+    // Drop any cached inline "Noticed" edits from a prior account on this SPA
+    // session so the new user can't inherit stale signal→row links.
+    clearSignalEdits()
     set({
       accessToken: data.access_token,
       refreshToken: data.refresh_token ?? null,
@@ -125,6 +129,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       : null
 
+    clearSignalEdits()
     set({
       accessToken: data.access_token,
       refreshToken: data.refresh_token ?? null,
@@ -147,6 +152,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       : null
 
+    clearSignalEdits()
     set({
       accessToken: data.access_token,
       refreshToken: data.refresh_token ?? null,
@@ -158,6 +164,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: () => {
     persistRefreshToken(null)
+    // Drop any cached inline "Noticed" edits so the next user on this SPA session
+    // can't inherit stale signal→row links.
+    clearSignalEdits()
     set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isLoading: false })
   },
 

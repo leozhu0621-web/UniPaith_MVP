@@ -29,6 +29,14 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
   const panelRef = useRef<HTMLDivElement>(null)
   const previouslyFocused = useRef<HTMLElement | null>(null)
 
+  // Keep the latest onClose in a ref so the focus-management effect can depend
+  // ONLY on `isOpen`. Callers pass an inline arrow (`onClose={() => setOpen(false)}`)
+  // whose identity changes every render; if that were an effect dependency, every
+  // keystroke in a form-owning parent would re-run the effect and yank focus back
+  // to the first field — making it impossible to type in any other field.
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   useEffect(() => {
     if (!isOpen) return
     previouslyFocused.current = document.activeElement as HTMLElement
@@ -43,7 +51,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
 
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        onCloseRef.current()
         return
       }
       if (e.key === 'Tab' && panel) {
@@ -68,7 +76,10 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
       document.body.style.overflow = ''
       previouslyFocused.current?.focus?.()
     }
-  }, [isOpen, onClose])
+    // Depends ONLY on isOpen — onClose is read live via onCloseRef so a changing
+    // callback identity (every keystroke in a form-owning parent) never re-runs
+    // this effect and never resets focus. See test/modal-focus.test.tsx.
+  }, [isOpen])
 
   if (!isOpen) return null
 

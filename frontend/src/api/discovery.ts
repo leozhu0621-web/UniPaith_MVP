@@ -31,6 +31,10 @@ export const startSession = (
 ): Promise<DiscoverySession> =>
   apiClient.post(`${BASE}/sessions`, { track, layer }).then(r => r.data)
 
+// Redesign: one track-less Uni conversation (no Profile/Goals/Needs pick).
+export const startUnifiedSession = (): Promise<DiscoverySession> =>
+  apiClient.post(`${BASE}/sessions/unified`).then(r => r.data)
+
 export const listSessions = (params?: {
   track?: DiscoveryTrack
   status?: DiscoveryStatus

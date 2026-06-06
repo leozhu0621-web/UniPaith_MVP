@@ -132,3 +132,16 @@ async def test_me_with_auth(student_client: AsyncClient):
 async def test_me_without_auth(client: AsyncClient):
     resp = await client.get("/api/v1/auth/me")
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_invalid_token_returns_401(client: AsyncClient):
+    """An invalid/expired token MUST return 401 (not 400). The web client's axios
+    interceptor refreshes-and-retries on 401 only; when this regressed to 400,
+    expired sessions failed every authenticated call (feedback, SSE stream, …)
+    with no auto-recovery until manual re-login."""
+    resp = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": "Bearer not-a-valid-token"},
+    )
+    assert resp.status_code == 401

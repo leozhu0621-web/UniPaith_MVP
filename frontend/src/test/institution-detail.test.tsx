@@ -260,7 +260,19 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
       avg_net_price: 20111,
       median_earnings_10yr: 143372,
       completion_rate_4yr_150pct: 0.9641,
-      flagship: { nobel_laureates: 106, enrollment_total: 11816 },
+      retention_rate_first_year: 0.9908,
+      employed_or_continuing_ed: 0.94,
+      top_employer_industries: ['Technology', 'Finance', 'Consulting'],
+      financial_aid: { pell_grant_rate: 0.1932, federal_loan_rate: 0.0669, median_debt_completers: 14768 },
+      demographics: { asian: 0.3517, white: 0.2126, hispanic: 0.1409, women: 0.4816 },
+      flagship: {
+        nobel_laureates: 106,
+        macarthur_fellows: 85,
+        enrollment_total: 11816,
+        admissions_cycle: 'Class of 2029',
+        applicants: 29281,
+        admits: 1334,
+      },
       sources: [
         {
           label: 'Costs, outcomes',
@@ -268,6 +280,9 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
           year: 2024,
           url: 'https://collegescorecard.ed.gov/',
         },
+        { label: 'World ranking', source: 'QS World University Rankings', year: 2025, url: 'https://www.topuniversities.com/universities/mit' },
+        { label: 'World ranking', source: 'Times Higher Education', year: 2025, url: 'https://www.timeshighereducation.com/mit' },
+        { label: 'National ranking', source: 'U.S. News Best National Universities', year: 2025, url: 'https://www.usnews.com/best-colleges/mit' },
       ],
     },
   }
@@ -287,30 +302,80 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
     expect(meta).not.toHaveTextContent(/students/i)
   })
 
-  it('Overview renders all three rankings (QS, Times Higher Education, U.S. News)', async () => {
+  it('Overview renders all three rankings as badges (QS, THE, U.S. News)', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
     expect(await screen.findByText('Rankings')).toBeInTheDocument()
-    expect(screen.getByText(/QS World University Rankings/)).toBeInTheDocument()
-    expect(screen.getByText(/Times Higher Education/)).toBeInTheDocument()
-    expect(screen.getByText(/U\.S\. News/)).toBeInTheDocument()
+    const badges = screen.getAllByTestId('ranking-badge')
+    expect(badges.some(b => /QS World University Rankings/.test(b.textContent ?? ''))).toBe(true)
+    expect(badges.some(b => /Times Higher Education/.test(b.textContent ?? ''))).toBe(true)
+    expect(badges.some(b => /U\.S\. News/.test(b.textContent ?? ''))).toBe(true)
   })
 
-  it('Quick facts label the undergrad count; Distinction keeps total enrollment', async () => {
+  it('ranking badges link to their reference source (round 3)', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
-    expect(await screen.findByText('Undergraduates')).toBeInTheDocument()
-    expect(screen.getByText('Total enrollment')).toBeInTheDocument()
+    const badges = await screen.findAllByTestId('ranking-badge')
+    const qs = badges.find(b => /QS World University Rankings/.test(b.textContent ?? ''))
+    expect(qs?.tagName).toBe('A')
+    expect(qs).toHaveAttribute('href', 'https://www.topuniversities.com/universities/mit')
+    expect(qs).toHaveAttribute('target', '_blank')
+  })
+
+  it('Diversity section leads with the breakdown + a compact enrollment line (round 3)', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByRole('heading', { name: /Diversity/ })).toBeInTheDocument()
+    expect(screen.getByText(/4,535 undergraduate/)).toBeInTheDocument()
+    expect(screen.getByText(/11,816 total enrollment/)).toBeInTheDocument()
+  })
+
+  it('Admissions renders the funnel (applied → admitted → rate)', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText('29,281')).toBeInTheDocument()
+    expect(screen.getByText('1,334')).toBeInTheDocument()
+    expect(screen.getByText('Class of 2029')).toBeInTheDocument()
+    expect(screen.getByText('Applied')).toBeInTheDocument()
+  })
+
+  it('Cost & aid leads with net price and shows an aid bar', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText(/Cost & aid/)).toBeInTheDocument()
+    expect(screen.getAllByText('$20K').length).toBeGreaterThan(0)
+    expect(screen.getByText('Pell grant recipients')).toBeInTheDocument()
+  })
+
+  it('Outcomes surfaces top industries as chips', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText('Top industries')).toBeInTheDocument()
+    expect(screen.getByText('Technology')).toBeInTheDocument()
+    expect(screen.getByText('Finance')).toBeInTheDocument()
+  })
+
+  it('Student body renders a race & ethnicity breakdown', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText('Race & ethnicity')).toBeInTheDocument()
+    expect(screen.getByText('Asian')).toBeInTheDocument()
   })
 
   it('Overview renders a data-driven Sources footer with links', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
     expect(await screen.findByRole('heading', { name: /^Sources$/ })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /College Scorecard/ })).toHaveAttribute(
-      'href',
-      'https://collegescorecard.ed.gov/',
-    )
+    const scorecard = screen.getAllByRole('link', { name: /College Scorecard/ })
+    expect(scorecard.some(l => l.getAttribute('href') === 'https://collegescorecard.ed.gov/')).toBe(true)
+  })
+
+  it('Cost & aid shows an inline source citation (round 3)', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText(/Cost & aid/)).toBeInTheDocument()
+    // both the footer and the cost card now cite College Scorecard
+    expect(screen.getAllByRole('link', { name: /College Scorecard/ }).length).toBeGreaterThanOrEqual(2)
   })
 
   it('Overview intro renders the full multi-paragraph description', async () => {

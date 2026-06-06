@@ -27,7 +27,10 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Literal
 
-Track = Literal["profile", "goals", "needs"]
+# "discovery" = the unified, track-less Uni conversation (one session covers
+# self/goals/needs by content). "profile"/"goals"/"needs" remain for legacy
+# sessions + per-signal validators.
+Track = Literal["profile", "goals", "needs", "discovery"]
 Layer = Literal["basic", "personality", "identity"]
 
 
@@ -378,8 +381,7 @@ _PERSONALITY_PROBE_TEMPLATES: dict[str, str] = {
         "or mostly working through things alone?"
     ),
     "passion": (
-        "What's something you'd still do even if no one ever asked you to "
-        "or paid you for it?"
+        "What's something you'd still do even if no one ever asked you to or paid you for it?"
     ),
     "location_emotional": (
         "Beyond the practical stuff — what does the *feel* of a place mean "
@@ -423,9 +425,7 @@ def evaluate_identity_layer(snapshot: StudentSnapshot) -> LayerVerdict:
 
     missing: list[str] = []
     if vb_count < IDENTITY_REQUIRED_VALUE_BELIEFS:
-        missing.append(
-            f"identity.value_or_belief ({vb_count}/{IDENTITY_REQUIRED_VALUE_BELIEFS})"
-        )
+        missing.append(f"identity.value_or_belief ({vb_count}/{IDENTITY_REQUIRED_VALUE_BELIEFS})")
     if not has_sa:
         missing.append("identity.self_awareness_moment")
     if confirmed < IDENTITY_REQUIRED_CONFIRMATIONS:
@@ -508,9 +508,7 @@ def evaluate_goals_track(snapshot: StudentSnapshot) -> LayerVerdict:
     )
 
 
-def _goals_probe_for_missing(
-    missing_cats: list[str], snapshot: StudentSnapshot
-) -> str | None:
+def _goals_probe_for_missing(missing_cats: list[str], snapshot: StudentSnapshot) -> str | None:
     """Probe for the first missing category. If a partial goal already
     exists in that category, ask for the specific missing SMART field
     rather than restarting."""
@@ -551,11 +549,9 @@ _GOALS_CATEGORY_OPENERS: dict[str, str] = {
     ),
 }
 
+
 def _probe_measurable(g: GoalEntry) -> str:
-    return (
-        f"How would you know you hit '{g.specific[:80]}'? "
-        "What's the measurable signal?"
-    )
+    return f"How would you know you hit '{g.specific[:80]}'? What's the measurable signal?"
 
 
 def _probe_time_bound(g: GoalEntry) -> str:
@@ -563,10 +559,7 @@ def _probe_time_bound(g: GoalEntry) -> str:
 
 
 def _probe_achievable(g: GoalEntry) -> str:
-    return (
-        f"What makes '{g.specific[:80]}' within reach for you — "
-        "not what makes it easy?"
-    )
+    return f"What makes '{g.specific[:80]}' within reach for you — not what makes it easy?"
 
 
 def _probe_relevant(g: GoalEntry) -> str:
