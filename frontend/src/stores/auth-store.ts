@@ -31,7 +31,9 @@ interface User {
   id: string
   email: string
   role: 'student' | 'institution_admin'
-
+  // True when this account is on the server-side owner allowlist; unlocks the
+  // in-app feedback inbox (/s/feedback) and its nav link. Computed by /auth/me.
+  is_owner?: boolean
   created_at: string
 }
 
@@ -67,6 +69,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           email: String(loginUser.email ?? email),
           role: loginUser.role as User['role'],
           created_at: String(loginUser.created_at ?? new Date().toISOString()),
+          is_owner: Boolean(loginUser.is_owner),
         }
       : null
 
@@ -87,6 +90,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             email: String(me.email ?? email),
             role: me.role as User['role'],
             created_at: String(me.created_at ?? new Date().toISOString()),
+            is_owner: Boolean(me.is_owner),
           }
         })()
 
@@ -117,6 +121,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           email: String(loginUser.email ?? ''),
           role: loginUser.role as User['role'],
           created_at: String(loginUser.created_at ?? new Date().toISOString()),
+          is_owner: Boolean(loginUser.is_owner),
         }
       : null
 
@@ -138,6 +143,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           email: String(loginUser.email ?? ''),
           role: loginUser.role as User['role'],
           created_at: String(loginUser.created_at ?? new Date().toISOString()),
+          is_owner: Boolean(loginUser.is_owner),
         }
       : null
 
@@ -175,7 +181,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         headers: { Authorization: `Bearer ${token}` },
       })
       set({
-        user: { id: user.user_id, email: user.email, role: user.role, created_at: user.created_at },
+        user: {
+          id: user.user_id,
+          email: user.email,
+          role: user.role,
+          created_at: user.created_at,
+          is_owner: Boolean(user.is_owner),
+        },
         isAuthenticated: true,
         isLoading: false,
       })
