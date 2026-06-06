@@ -281,6 +281,8 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
         campus_acres: 168,
         undergrad_majors: 56,
       },
+      research: { labs: ['CSAIL', 'MIT Media Lab', 'Lincoln Laboratory'], areas: ['AI & computing', 'Fusion energy'], industry_collaborators: 700 },
+      campus_life: { varsity_sports: 33, athletics_division: 'NCAA Division III', arts_groups: 60, residence_halls: 20 },
       flagship: {
         nobel_laureates: 106,
         macarthur_fellows: 85,
@@ -418,6 +420,22 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
     expect(await screen.findByText('National Medal of Science')).toBeInTheDocument()
     expect(screen.getByText('64')).toBeInTheDocument()
+  })
+
+  it('Research & innovation lists labs + areas (crawl phase 3)', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByRole('heading', { name: /Research & innovation/ })).toBeInTheDocument()
+    expect(screen.getByText('CSAIL')).toBeInTheDocument()
+    expect(screen.getByText('MIT Media Lab')).toBeInTheDocument()
+  })
+
+  it('Campus life shows athletics + arts (crawl phase 3)', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByRole('heading', { name: /Campus life/ })).toBeInTheDocument()
+    expect(screen.getByText(/Varsity sports/)).toBeInTheDocument()
+    expect(screen.getByText('Arts groups')).toBeInTheDocument()
   })
 
   it('Overview intro renders the full multi-paragraph description', async () => {

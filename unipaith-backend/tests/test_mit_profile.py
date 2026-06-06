@@ -62,6 +62,8 @@ async def test_apply_enriches_institution(db_session):
     assert inst.school_outcomes["scale"]["faculty_count"] == 1466
     assert inst.school_outcomes["financial_aid"]["no_loan_debt_rate"] == 0.88
     assert inst.school_outcomes["flagship"]["national_medal_science"] == 64
+    assert "CSAIL" in inst.school_outcomes["research"]["labs"]
+    assert inst.school_outcomes["campus_life"]["varsity_sports"] == 33
     assert "Mens et Manus" in inst.description_text
 
 
