@@ -10,25 +10,34 @@
  * exact scenario with the real Modal + a changing onClose.
  */
 import { useState } from 'react'
+import type { ComponentType } from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import Modal from '../components/ui/Modal'
+import Sheet from '../components/ui/Sheet'
 
-function Harness() {
-  // `onClose` is a fresh arrow each render — exactly what real callers pass.
-  // The button forces a parent re-render, standing in for the setState that a
-  // keystroke triggers in a form-owning component.
-  const [, force] = useState(0)
-  return (
-    <Modal isOpen onClose={() => {}} title="Send feedback">
-      <input data-testid="title" />
-      <textarea data-testid="message" />
-      <button onClick={() => force(n => n + 1)}>force-rerender</button>
-    </Modal>
-  )
-}
+// Both overlays share the same focus-management shape (focus the first field on
+// open, trap Tab, restore focus on close) and the same failure mode.
+const OVERLAYS: Array<[string, ComponentType<{ isOpen: boolean; onClose: () => void; children: React.ReactNode }>]> = [
+  ['Modal', Modal],
+  ['Sheet', Sheet],
+]
 
-describe('Modal focus stability', () => {
+describe.each(OVERLAYS)('%s focus stability', (_name, Overlay) => {
+  function Harness() {
+    // `onClose` is a fresh arrow each render — exactly what real callers pass.
+    // The button forces a parent re-render, standing in for the setState that a
+    // keystroke triggers in a form-owning component.
+    const [, force] = useState(0)
+    return (
+      <Overlay isOpen onClose={() => {}}>
+        <input data-testid="title" />
+        <textarea data-testid="message" />
+        <button onClick={() => force(n => n + 1)}>force-rerender</button>
+      </Overlay>
+    )
+  }
+
   it('keeps caret in the focused field across a parent re-render', () => {
     render(<Harness />)
 
@@ -37,7 +46,7 @@ describe('Modal focus stability', () => {
     message.focus()
     expect(document.activeElement).toBe(message)
 
-    // A keystroke re-renders the parent → Modal receives a new onClose identity.
+    // A keystroke re-renders the parent → the overlay receives a new onClose identity.
     fireEvent.click(screen.getByText('force-rerender'))
 
     // Focus MUST stay on the message field. With the bug it jumps to `title`.
