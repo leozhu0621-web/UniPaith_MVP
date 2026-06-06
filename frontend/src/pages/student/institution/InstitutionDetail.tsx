@@ -26,9 +26,10 @@ import QueryError from '../../../components/ui/QueryError'
 import {
   Bookmark, BookmarkCheck, MapPin, Globe, Building2, BookOpen,
   Mail, Phone, CalendarPlus, Check, ChevronDown, X, Search, GraduationCap,
-  Filter, ArrowRight, Send, Link2, Award, Trophy,
+  Filter, ArrowRight, Send, Link2, Award, Trophy, DollarSign, TrendingUp, Users,
 } from 'lucide-react'
 import type { Institution, ProgramSummary, InstitutionPost, SchoolSummary } from '../../../types'
+import { AdmissionsFunnel, ChipList, DiversityBar, RankingBadge, StatBar } from './overviewWidgets'
 
 type TabId = 'overview' | 'about' | 'schools' | 'programs' | 'events' | 'updates'
 
@@ -530,7 +531,6 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
   const outcomes: any = inst.school_outcomes || {}
   const placement = outcomes.employed_or_continuing_ed ?? outcomes.first_destination_placement_rate
   const gradRate = outcomes.graduation_rate_6yr ?? rd.graduation_rate
-  const sizeBand = sizeBandLabel(inst.student_body_size)
   // Geo + US-News/Niche-grade depth (College Scorecard), surfaced from school_outcomes.
   const loc: any = outcomes.location || {}
   const ts: any = outcomes.test_scores || {}
@@ -557,11 +557,26 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
       rankings.push({ label: rankingLabel(k), rank: (v as any).rank, year: (v as any).year })
     }
   }
-  const distinction: { value: string; label: string }[] = []
-  if (flag.nobel_laureates != null) distinction.push({ value: String(flag.nobel_laureates), label: 'Nobel laureates' })
-  if (flag.macarthur_fellows != null) distinction.push({ value: String(flag.macarthur_fellows), label: 'MacArthur fellows' })
+  const recognition: { value: string; label: string }[] = []
+  if (flag.nobel_laureates != null) recognition.push({ value: String(flag.nobel_laureates), label: 'Nobel laureates' })
+  if (flag.macarthur_fellows != null) recognition.push({ value: String(flag.macarthur_fellows), label: 'MacArthur Fellows' })
   const enrollTotal = flag.enrollment_total ?? inst.student_body_size
-  if (enrollTotal != null) distinction.push({ value: Number(enrollTotal).toLocaleString(), label: 'Total enrollment' })
+  const gradCount =
+    enrollTotal != null && inst.student_body_size != null && enrollTotal > inst.student_body_size
+      ? enrollTotal - inst.student_body_size
+      : null
+  const industries: string[] = Array.isArray(outcomes.top_employer_industries)
+    ? outcomes.top_employer_industries
+    : []
+  const hasFunnel = flag.applicants != null && flag.admits != null && admitRate != null
+  const diversity = [
+    { label: 'Asian', pct: demo.asian as number },
+    { label: 'White', pct: demo.white as number },
+    { label: 'Hispanic', pct: demo.hispanic as number },
+    { label: 'Black', pct: demo.black as number },
+  ]
+    .filter(s => typeof s.pct === 'number' && s.pct > 0)
+    .sort((a, b) => b.pct - a.pct)
 
   return (
     <div className="space-y-5">
@@ -578,55 +593,135 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
         </div>
       )}
 
-      {/* Rankings */}
-      {rankings.length > 0 && (
-        <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Trophy size={15} className="text-secondary" /> Rankings</h2>
-          <div className="space-y-2.5">
-            {rankings.map(r => (
-              <div key={r.label} className="flex items-baseline gap-3">
-                <span className="text-2xl font-bold text-foreground tabular-nums leading-none">#{r.rank}</span>
-                <span className="text-sm text-muted-foreground">{r.label}{r.year ? ` · ${r.year}` : ''}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Distinction (flagship facts) */}
-      {distinction.length > 0 && (
-        <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Award size={15} className="text-secondary" /> Distinction</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {distinction.map(d => <Fact key={d.label} label={d.label} value={d.value} />)}
-          </div>
-          {flag.admissions_cycle && flag.applicants != null && flag.admits != null && (
-            <p className="text-[12px] text-muted-foreground mt-3">
-              {flag.admissions_cycle}: <span className="font-semibold text-foreground">{Number(flag.applicants).toLocaleString()}</span> applied,{' '}
-              <span className="font-semibold text-foreground">{Number(flag.admits).toLocaleString()}</span> admitted.
-            </p>
-          )}
-        </Card>
-      )}
+      {/* Editorial intro */}
       {inst.description_text && (
         <Card className="p-5">
           <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trimSource(inst.description_text)}</p>
         </Card>
       )}
 
+      {/* Rankings — badge row; the #1 earns the gold beat */}
+      {rankings.length > 0 && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Trophy size={15} className="text-secondary" /> Rankings</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            {rankings.map(r => (
+              <RankingBadge key={r.label} rank={r.rank} label={r.label} year={r.year} peak={r.rank === 1} />
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Recognition — accolades with context */}
+      {recognition.length > 0 && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-1 flex items-center gap-2"><Award size={15} className="text-secondary" /> Recognition</h2>
+          <p className="text-[12px] text-muted-foreground mb-3">Among faculty &amp; alumni</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {recognition.map(d => <Fact key={d.label} label={d.label} value={d.value} />)}
+          </div>
+        </Card>
+      )}
+
+      {/* Admissions — funnel + test scores + retention */}
+      {(hasFunnel || rng(ts.sat_reading_25_75) || rng(ts.sat_math_25_75) || rng(ts.act_25_75) || retention != null) && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3">Admissions</h2>
+          {hasFunnel && (
+            <div className="mb-4">
+              <AdmissionsFunnel applicants={Number(flag.applicants)} admits={Number(flag.admits)} rate={admitRate} cycle={flag.admissions_cycle} />
+            </div>
+          )}
+          {(rng(ts.sat_reading_25_75) || rng(ts.sat_math_25_75) || rng(ts.act_25_75) || retention != null) && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {rng(ts.sat_reading_25_75) && <Fact label="SAT EBRW (25–75th)" value={rng(ts.sat_reading_25_75)!} />}
+              {rng(ts.sat_math_25_75) && <Fact label="SAT Math (25–75th)" value={rng(ts.sat_math_25_75)!} />}
+              {rng(ts.act_25_75) && <Fact label="ACT (25–75th)" value={rng(ts.act_25_75)!} />}
+              {retention != null && <Fact label="First-year retention" value={pct(retention)} />}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Cost & aid — net price lead + aid bars + debt (parent-facing) */}
+      {(netPrice != null || aid.pell_grant_rate != null || aid.federal_loan_rate != null || aid.median_debt_completers != null) && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><DollarSign size={15} className="text-secondary" /> Cost &amp; aid</h2>
+          <div className="grid md:grid-cols-2 gap-x-6 gap-y-4">
+            <div className="space-y-3">
+              {netPrice != null && (
+                <div>
+                  <p className="text-2xl font-bold text-foreground tabular-nums leading-none">{money(netPrice)}</p>
+                  <p className="text-[12px] text-muted-foreground mt-1">Average net price — what families actually pay per year after aid.</p>
+                </div>
+              )}
+              {aid.median_debt_completers != null && (
+                <Fact label="Median debt at graduation" value={money(aid.median_debt_completers)} />
+              )}
+            </div>
+            <div className="space-y-3 self-center">
+              {aid.pell_grant_rate != null && <StatBar label="Pell grant recipients" pct={aid.pell_grant_rate} />}
+              {aid.federal_loan_rate != null && <StatBar label="Federal loan recipients" pct={aid.federal_loan_rate} />}
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Outcomes — placement, earnings, top industries */}
+      {(placement != null || earn10 != null || industries.length > 0) && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><TrendingUp size={15} className="text-secondary" /> Outcomes</h2>
+          {(placement != null || earn10 != null) && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+              {placement != null && <Fact label="Employed or continuing ed" value={pct(placement)} />}
+              {earn10 != null && <Fact label="Median earnings" value={money(earn10)} hint="10 yrs after entry" />}
+            </div>
+          )}
+          {industries.length > 0 && (
+            <>
+              <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Top industries</p>
+              <ChipList items={industries} />
+            </>
+          )}
+        </Card>
+      )}
+
+      {/* Student body — diversity bar + women + enrollment split */}
+      {(diversity.length > 0 || demo.women != null || enrollTotal != null) && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Users size={15} className="text-secondary" /> Student body</h2>
+          {enrollTotal != null && (
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              {inst.student_body_size != null && <Fact label="Undergraduate" value={inst.student_body_size.toLocaleString()} />}
+              {gradCount != null && <Fact label="Graduate" value={gradCount.toLocaleString()} />}
+              <Fact label="Total enrollment" value={Number(enrollTotal).toLocaleString()} />
+            </div>
+          )}
+          {demo.women != null && (
+            <div className="max-w-xs mb-4"><StatBar label="Women" pct={demo.women} /></div>
+          )}
+          {diversity.length > 0 && (
+            <>
+              <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Race &amp; ethnicity</p>
+              <DiversityBar segments={diversity} />
+            </>
+          )}
+        </Card>
+      )}
+
+      {/* Quick facts — deduped (no duplicate acceptance/size band) + enriched */}
       <Card className="p-5">
         <h2 className="font-semibold text-foreground mb-3">Quick facts</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <Fact label="Type" value={ownershipLabel(rd.ownership_type) ?? titleCase(inst.type)} />
           {inst.campus_setting && <Fact label="Campus setting" value={SETTING_LABELS[inst.campus_setting] ?? titleCase(inst.campus_setting)} />}
-          {sizeBand && <Fact label="Size" value={sizeBand} />}
           {inst.founded_year != null && <Fact label="Founded" value={String(inst.founded_year)} />}
-          {inst.student_body_size != null && <Fact label="Undergraduates" value={inst.student_body_size.toLocaleString()} />}
           <Fact label="Schools" value={String(schoolCount)} />
           <Fact label="Programs" value={String(programCount)} />
+          {rd.accreditor && <Fact label="Accreditation" value={String(rd.accreditor)} />}
         </div>
-        {rd.accreditor && (
-          <p className="text-[11.5px] text-muted-foreground/70 mt-3 italic">Accredited by {rd.accreditor}</p>
+        {rd.carnegie_classification && (
+          <p className="text-[11.5px] text-muted-foreground/70 mt-3 italic">{String(rd.carnegie_classification)}</p>
         )}
       </Card>
 
@@ -647,58 +742,6 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
             src={`https://maps.google.com/maps?q=${loc.lat},${loc.lng}&z=14&output=embed`}
             className="w-full h-64 border-0"
           />
-        </Card>
-      )}
-
-      {/* Admissions & test scores (US News / Niche depth). */}
-      {(rng(ts.sat_reading_25_75) ||
-        rng(ts.sat_math_25_75) ||
-        rng(ts.act_25_75) ||
-        retention != null) && (
-        <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-3">Admissions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {admitRate != null && <Fact label="Acceptance rate" value={pct(admitRate)} />}
-            {rng(ts.sat_reading_25_75) && <Fact label="SAT EBRW (25–75th)" value={rng(ts.sat_reading_25_75)!} />}
-            {rng(ts.sat_math_25_75) && <Fact label="SAT Math (25–75th)" value={rng(ts.sat_math_25_75)!} />}
-            {rng(ts.act_25_75) && <Fact label="ACT (25–75th)" value={rng(ts.act_25_75)!} />}
-            {retention != null && <Fact label="First-year retention" value={pct(retention)} />}
-          </div>
-        </Card>
-      )}
-
-      {placement != null && (
-        <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-3">First destination</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <Fact label="Placement" value={pct(placement)} hint="employed or continuing ed" />
-          </div>
-        </Card>
-      )}
-
-      {/* Financial aid (Scorecard). */}
-      {(aid.pell_grant_rate != null || aid.median_debt_completers != null || aid.federal_loan_rate != null) && (
-        <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-3">Financial aid</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {aid.pell_grant_rate != null && <Fact label="Pell grant recipients" value={pct(aid.pell_grant_rate)} />}
-            {aid.federal_loan_rate != null && <Fact label="Federal loan recipients" value={pct(aid.federal_loan_rate)} />}
-            {aid.median_debt_completers != null && <Fact label="Median debt at graduation" value={money(aid.median_debt_completers)} />}
-          </div>
-        </Card>
-      )}
-
-      {/* Student body / diversity (Scorecard). */}
-      {(demo.women != null || demo.white != null || demo.asian != null) && (
-        <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-3">Student body</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {demo.women != null && <Fact label="Women" value={pct(demo.women)} />}
-            {demo.asian != null && <Fact label="Asian" value={pct(demo.asian)} />}
-            {demo.hispanic != null && <Fact label="Hispanic" value={pct(demo.hispanic)} />}
-            {demo.black != null && <Fact label="Black" value={pct(demo.black)} />}
-            {demo.white != null && <Fact label="White" value={pct(demo.white)} />}
-          </div>
         </Card>
       )}
 
@@ -1147,14 +1190,6 @@ function classifyType(inst: Institution): string | null {
 function ownershipLabel(t?: string): string | null {
   if (!t) return null
   return t.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-}
-
-function sizeBandLabel(n?: number | null): string | null {
-  if (n == null) return null
-  if (n < 2000) return 'Small'
-  if (n < 15000) return 'Medium'
-  if (n < 30000) return 'Large'
-  return 'Very large'
 }
 
 function titleCase(s?: string | null): string {
