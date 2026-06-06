@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import QueryError from '../../components/ui/QueryError'
+import { PageHeader } from '../../components/student/density'
 import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { showToast } from '../../stores/toast-store'
@@ -196,11 +197,11 @@ export default function ExplorePage() {
   return (
     <div className="p-6 max-w-5xl w-full mx-auto">
       {/* Spec 09 §13 H1 + brand framing ("Fit, not fame", Spec 07 §2/§6). */}
-      <div className="mb-5">
-        <p className="text-eyebrow uppercase text-secondary font-semibold">Match</p>
-        <h1 className="text-2xl font-bold text-foreground mt-1">Your strategy and your matches</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Ranked for fit, not fame — and every score explains itself.</p>
-      </div>
+      <PageHeader
+        eyebrow="Match"
+        title="Your strategy and your matches"
+        sub="Ranked for fit, not fame — and every score explains itself."
+      />
 
       {/* Spec 09 §2 — strategy lands first. */}
       <div className="mb-4">
