@@ -8,6 +8,7 @@
  * Read-composed from existing goal / need / identity data; no new backend.
  */
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { ArrowRight, Sparkles } from 'lucide-react'
 
 import { getLivingProfile } from '../../../api/livingProfile'
@@ -110,6 +111,15 @@ export default function ProfileDrawer({
               ))}
             </section>
           )}
+
+          <Link
+            to="/s/profile"
+            onClick={onClose}
+            className="flex w-full items-center gap-2 border-t border-border pt-4 text-sm text-secondary hover:underline"
+          >
+            <span>Open your full profile</span>
+            <ArrowRight size={13} className="shrink-0 ml-auto" />
+          </Link>
         </div>
       )}
     </Sheet>

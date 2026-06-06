@@ -28,7 +28,7 @@ interface Props {
 
 export default function MatchHandoffCard({ verdict: verdictProp, variant = 'auto', onKeepTalking }: Props) {
   const navigate = useNavigate()
-  const { data: fetched } = useQuery<HandoffVerdict>({
+  const { data: fetched, isLoading } = useQuery<HandoffVerdict>({
     queryKey: ['discovery', 'handoff'],
     queryFn: getHandoffVerdict,
     enabled: verdictProp === undefined,
@@ -37,6 +37,9 @@ export default function MatchHandoffCard({ verdict: verdictProp, variant = 'auto
   const ready = !!verdict?.should_handoff
 
   if (variant === 'auto' && !ready) return null
+  // Hold the card back until the verdict resolves so the not-ready copy can't
+  // flash for a student who is actually match-ready.
+  if (verdictProp === undefined && isLoading) return null
 
   return (
     <div className="flex gap-2.5" data-testid="match-handoff-card">

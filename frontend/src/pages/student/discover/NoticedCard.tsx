@@ -13,7 +13,7 @@ import { Check, Pencil, X } from 'lucide-react'
 
 import { updateSignal } from '../../../api/livingProfile'
 import { showToast } from '../../../stores/toast-store'
-import type { NoticedItem } from './noticed'
+import { rememberSignalEdit, type NoticedItem } from './noticed'
 
 export function EditableChip({ item }: { item: NoticedItem }) {
   const qc = useQueryClient()
@@ -22,7 +22,10 @@ export function EditableChip({ item }: { item: NoticedItem }) {
 
   const mut = useMutation({
     mutationFn: (next: string) => updateSignal({ ...item.ref!, value: next }),
-    onSuccess: () => {
+    onSuccess: (_data, next) => {
+      // The renamed row no longer matches the frozen signal label; remember the
+      // edit so this chip stays linked (and shows the new wording) on re-render.
+      rememberSignalEdit(item.signalLabel ?? item.label, item.ref!, next)
       setEditing(false)
       qc.invalidateQueries({ queryKey: ['goals'] })
       qc.invalidateQueries({ queryKey: ['needs'] })
