@@ -715,9 +715,11 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
           )}
           {enrollTotal != null && (
             <p className="text-[11.5px] text-muted-foreground/70">
-              {inst.student_body_size != null ? `${inst.student_body_size.toLocaleString()} undergraduate` : ''}
-              {gradCount != null ? ` · ${gradCount.toLocaleString()} graduate` : ''}
-              {` · ${Number(enrollTotal).toLocaleString()} total enrollment`}
+              {[
+                inst.student_body_size != null ? `${inst.student_body_size.toLocaleString()} undergraduate` : null,
+                gradCount != null ? `${gradCount.toLocaleString()} graduate` : null,
+                `${Number(enrollTotal).toLocaleString()} total enrollment`,
+              ].filter(Boolean).join(' · ')}
             </p>
           )}
         </Card>
@@ -1235,7 +1237,7 @@ function rankingLabel(key: string): string {
 const RANKING_SOURCE_KEYWORD: Record<string, string> = {
   qs_world_university_rankings: 'qs',
   times_higher_education: 'times higher',
-  us_news_national: 'u.s. news',
+  us_news_national: 'us news',
 }
 
 /** Link a ranking to its reference page by matching the stored sources list. */
@@ -1243,7 +1245,7 @@ function rankingHref(key: string, sources: unknown): string | undefined {
   const kw = RANKING_SOURCE_KEYWORD[key]
   if (!kw || !Array.isArray(sources)) return undefined
   const match = sources.find(
-    (s: any) => typeof s?.source === 'string' && s.source.toLowerCase().includes(kw) && s.url,
+    (s: any) => typeof s?.source === 'string' && s.source.toLowerCase().replace(/\./g, '').includes(kw) && s.url,
   )
   return match?.url
 }
