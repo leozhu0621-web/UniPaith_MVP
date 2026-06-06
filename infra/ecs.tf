@@ -292,6 +292,11 @@ resource "aws_ecs_task_definition" "backend" {
       # Spec 60 crawler / info-gathering automation was removed; its CRAWLER_* env
       # is intentionally gone so the engine stays off (the flags default to off).
       { name = "SCHEDULER_ENABLED", value = "true" },
+      # Owner allowlist for the in-app feedback inbox (/s/feedback). Comma-separated
+      # emails, matched case-insensitively against the logged-in user; unlocks
+      # GET /feedback/inbox + the account-menu link. Not a secret — an email, not a
+      # credential (Google sign-in controls who actually holds the address).
+      { name = "OWNER_EMAILS", value = "leozjc@unipaith.co" },
     ]
 
     secrets = [
