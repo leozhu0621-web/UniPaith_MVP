@@ -655,7 +655,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
       )}
 
       {/* Cost & aid — net price lead + aid bars + debt (parent-facing) */}
-      {(netPrice != null || aid.pell_grant_rate != null || aid.federal_loan_rate != null || aid.median_debt_completers != null) && (
+      {(netPrice != null || aid.pell_grant_rate != null || aid.federal_loan_rate != null || aid.median_debt_completers != null || aid.cost_of_attendance != null || aid.tuition_free_rate != null || aid.no_loan_debt_rate != null || aid.median_scholarship != null) && (
         <Card className="p-5">
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><DollarSign size={15} className="text-secondary" /> Cost &amp; aid</h2>
           <div className="grid md:grid-cols-2 gap-x-6 gap-y-4">
@@ -664,10 +664,10 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
                 <div>
                   <p className="text-2xl font-bold text-foreground tabular-nums leading-none">{money(netPrice)}</p>
                   <p className="text-[12px] text-muted-foreground mt-1">Average net price — what families actually pay per year after aid.</p>
-                  {aid.cost_of_attendance != null && (
-                    <p className="text-[11.5px] text-muted-foreground/70 mt-1">Sticker cost of attendance {money(aid.cost_of_attendance)}/yr before aid.</p>
-                  )}
                 </div>
+              )}
+              {aid.cost_of_attendance != null && (
+                <p className="text-[11.5px] text-muted-foreground/70">Sticker cost of attendance {money(aid.cost_of_attendance)}/yr before aid.</p>
               )}
               {aid.median_debt_completers != null && (
                 <Fact label="Median debt at graduation" value={money(aid.median_debt_completers)} />
@@ -682,7 +682,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
             <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3 border-t border-border/60 pt-4">
               {aid.tuition_free_rate != null && <Fact label="Attend tuition-free" value={pct(aid.tuition_free_rate)} />}
               {aid.no_loan_debt_rate != null && <Fact label="Graduate debt-free" value={pct(aid.no_loan_debt_rate)} />}
-              {aid.median_scholarship != null && <Fact label="Median MIT scholarship" value={money(aid.median_scholarship)} />}
+              {aid.median_scholarship != null && <Fact label="Median scholarship" value={money(aid.median_scholarship)} />}
             </div>
           )}
           {costSource && (
