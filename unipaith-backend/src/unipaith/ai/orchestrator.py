@@ -62,18 +62,24 @@ _DISCOVERY_PROMPT_TEXT = _load_prompt("orchestrator_discovery.md")
 # agent is steered by the exact standard it is graded against — one source of
 # truth, no drift.
 _CONSTITUTION_TEXT = _load_prompt("_shared/constitution_student.md")
+# The Uni persona + counselor playbook. Loaded first so it frames the whole
+# system prompt — the agent IS Uni, a real college counselor, before any
+# track/framework detail.
+_UNI_TEXT = _load_prompt("_shared/uni_counselor.md")
 
 
 def _build_discovery_system_prompt() -> str:
-    """Concatenate the discovery prompt, the shared frameworks, and the
-    behavior constitution.
+    """Concatenate the Uni persona/playbook, the discovery prompt, the shared
+    frameworks, and the behavior constitution.
 
-    Frameworks live where the prompt references them; the constitution (spec
-    61 §3) is appended last. All three sit inside the single cached system
-    block — no extra cache breakpoint — so the 1h cache keeps hitting and the
-    agent reads the same versioned rubric the judge grades it on.
+    Uni leads (the agent is a real college counselor first). Frameworks live
+    where the prompt references them; the constitution (spec 61 §3) is appended
+    last. All sit inside the single cached system block — no extra cache
+    breakpoint — so the 1h cache keeps hitting and the agent reads the same
+    versioned rubric the judge grades it on.
     """
     return (
+        f"{_UNI_TEXT}\n\n---\n\n"
         f"{_DISCOVERY_PROMPT_TEXT}\n\n---\n\n"
         f"# Frameworks reference\n\n{_FRAMEWORKS_TEXT}\n\n---\n\n"
         f"{_CONSTITUTION_TEXT}"
