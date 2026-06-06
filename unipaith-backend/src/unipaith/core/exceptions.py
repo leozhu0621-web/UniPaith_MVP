@@ -21,6 +21,17 @@ class NotFoundException(UniPaithException):
         super().__init__(status_code=404, detail=detail, error_code="NOT_FOUND")
 
 
+class UnauthorizedException(UniPaithException):
+    """401 — the request's credentials are missing, invalid, or expired. Distinct
+    from 403 (authenticated but not allowed): a 401 tells the client to refresh
+    its token and retry, which the web client's axios interceptor does on 401.
+    Token verification failures MUST use this (not 400) so expired sessions
+    auto-recover instead of failing every call until manual re-login."""
+
+    def __init__(self, detail: str = "Unauthorized"):
+        super().__init__(status_code=401, detail=detail, error_code="UNAUTHORIZED")
+
+
 class ForbiddenException(UniPaithException):
     def __init__(self, detail: str = "Forbidden"):
         super().__init__(status_code=403, detail=detail, error_code="FORBIDDEN")
