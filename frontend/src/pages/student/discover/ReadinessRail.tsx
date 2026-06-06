@@ -99,7 +99,7 @@ function QuickFillRow({ item, onSaved }: { item: MatchReadyMissing; onSaved: () 
   const enumOpts = ENUM_OPTIONS[item.signal_name];
 
   return (
-    <li className="rounded-lg border border-border">
+    <li>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -334,7 +334,7 @@ export default function ReadinessRail() {
       ) : (
         mr &&
         mr.missing.length > 0 && (
-          <ul className="space-y-1.5">
+          <ul className="divide-y divide-border">
             {mr.missing.map((item) => (
               <QuickFillRow key={item.signal_name} item={item} onSaved={refetchAll} />
             ))}
