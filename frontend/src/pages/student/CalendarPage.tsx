@@ -218,7 +218,7 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-h1 text-foreground">Your admissions timeline</h1>
+          <h1 className="text-lg font-semibold text-foreground">Your admissions timeline</h1>
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} item{filtered.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex items-center gap-2">

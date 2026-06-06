@@ -39,7 +39,7 @@ export default function PostsPage() {
       <div className="max-w-5xl w-full mx-auto px-6 py-6">
         {/* Header (Spec 20 §3) */}
         <header className="mb-4">
-          <h1 className="text-2xl font-semibold text-foreground">Connect</h1>
+          <h1 className="text-lg font-semibold text-foreground">Connect</h1>
           <p className="text-sm text-foreground mt-0.5">From the institutions you follow</p>
         </header>
 
