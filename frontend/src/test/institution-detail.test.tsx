@@ -401,6 +401,7 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
   it('By the numbers surfaces institutional scale (crawl phase 1)', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    clickTab(/about/i)
     expect(await screen.findByRole('heading', { name: /By the numbers/ })).toBeInTheDocument()
     expect(screen.getByText('Faculty')).toBeInTheDocument()
     expect(screen.getByText('1,466')).toBeInTheDocument()
@@ -418,6 +419,7 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
   it('Recognition includes the national medals (crawl phase 1)', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    clickTab(/about/i)
     expect(await screen.findByText('National Medal of Science')).toBeInTheDocument()
     expect(screen.getByText('64')).toBeInTheDocument()
   })
@@ -425,6 +427,7 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
   it('Research & innovation lists labs + areas (crawl phase 3)', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    clickTab(/about/i)
     expect(await screen.findByRole('heading', { name: /Research & innovation/ })).toBeInTheDocument()
     expect(screen.getByText('CSAIL')).toBeInTheDocument()
     expect(screen.getByText('MIT Media Lab')).toBeInTheDocument()
@@ -433,6 +436,7 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
   it('Campus life shows athletics + arts (crawl phase 3)', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    clickTab(/about/i)
     expect(await screen.findByRole('heading', { name: /Campus life/ })).toBeInTheDocument()
     expect(screen.getByText(/Varsity sports/)).toBeInTheDocument()
     expect(screen.getByText('Arts groups')).toBeInTheDocument()

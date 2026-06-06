@@ -557,11 +557,6 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
       rankings.push({ key: k, label: rankingLabel(k), rank: (v as any).rank, year: (v as any).year })
     }
   }
-  const recognition: { value: string; label: string }[] = []
-  if (flag.nobel_laureates != null) recognition.push({ value: String(flag.nobel_laureates), label: 'Nobel laureates' })
-  if (flag.macarthur_fellows != null) recognition.push({ value: String(flag.macarthur_fellows), label: 'MacArthur Fellows' })
-  if (flag.national_medal_science != null) recognition.push({ value: String(flag.national_medal_science), label: 'National Medal of Science' })
-  if (flag.national_medal_tech != null) recognition.push({ value: String(flag.national_medal_tech), label: 'National Medal of Technology' })
   const enrollTotal = flag.enrollment_total ?? inst.student_body_size
   const gradCount =
     enrollTotal != null && inst.student_body_size != null && enrollTotal > inst.student_body_size
@@ -584,22 +579,6 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
         (s: any) => typeof s?.source === 'string' && s.source.toLowerCase().includes('scorecard'),
       )
     : undefined
-  const scale: any = outcomes.scale || {}
-  const scaleStats: { value: string; label: string }[] = []
-  if (scale.faculty_count != null) scaleStats.push({ value: Number(scale.faculty_count).toLocaleString(), label: 'Faculty' })
-  if (scale.student_faculty_ratio) scaleStats.push({ value: String(scale.student_faculty_ratio), label: 'Student–faculty ratio' })
-  if (scale.research_centers != null) scaleStats.push({ value: `${scale.research_centers}+`, label: 'Research centers & labs' })
-  if (scale.endowment_usd != null) scaleStats.push({ value: `$${(scale.endowment_usd / 1e9).toFixed(1)}B`, label: 'Endowment' })
-  if (scale.campus_acres != null) scaleStats.push({ value: `${Number(scale.campus_acres).toLocaleString()} acres`, label: 'Campus' })
-  if (scale.undergrad_majors != null) scaleStats.push({ value: String(scale.undergrad_majors), label: 'Undergraduate majors' })
-  const research: any = outcomes.research || {}
-  const researchLabs: string[] = Array.isArray(research.labs) ? research.labs : []
-  const researchAreas: string[] = Array.isArray(research.areas) ? research.areas : []
-  const campusLife: any = outcomes.campus_life || {}
-  const campusStats: { value: string; label: string }[] = []
-  if (campusLife.varsity_sports != null) campusStats.push({ value: String(campusLife.varsity_sports), label: campusLife.athletics_division ? `Varsity sports · ${campusLife.athletics_division}` : 'Varsity sports' })
-  if (campusLife.arts_groups != null) campusStats.push({ value: `${campusLife.arts_groups}+`, label: 'Arts groups' })
-  if (campusLife.residence_halls != null) campusStats.push({ value: String(campusLife.residence_halls), label: 'Residence halls' })
 
   return (
     <div className="space-y-5">
@@ -738,9 +717,6 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
               <DiversityBar segments={diversity} />
             </div>
           )}
-          {demo.women != null && (
-            <div className="max-w-xs mb-4"><StatBar label="Women" pct={demo.women} /></div>
-          )}
           {enrollTotal != null && (
             <p className="text-[11.5px] text-muted-foreground/70">
               {inst.student_body_size != null ? `${inst.student_body_size.toLocaleString()} undergraduate` : ''}
@@ -748,62 +724,6 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
               {` · ${Number(enrollTotal).toLocaleString()} total enrollment`}
             </p>
           )}
-        </Card>
-      )}
-
-      {/* Recognition — accolades with context, lower in the page */}
-      {recognition.length > 0 && (
-        <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-1 flex items-center gap-2"><Award size={15} className="text-secondary" /> Recognition</h2>
-          <p className="text-[12px] text-muted-foreground mb-3">Among faculty &amp; alumni</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {recognition.map(d => <Fact key={d.label} label={d.label} value={d.value} />)}
-          </div>
-        </Card>
-      )}
-
-      {/* By the numbers — institutional scale (MIT Facts) */}
-      {scaleStats.length > 0 && (
-        <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Building2 size={15} className="text-secondary" /> By the numbers</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {scaleStats.map(s => <Fact key={s.label} label={s.label} value={s.value} />)}
-          </div>
-        </Card>
-      )}
-
-      {/* Research & innovation */}
-      {(researchLabs.length > 0 || scale.research_centers != null) && (
-        <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-1 flex items-center gap-2"><FlaskConical size={15} className="text-secondary" /> Research &amp; innovation</h2>
-          {(scale.research_centers != null || research.industry_collaborators != null) && (
-            <p className="text-[12px] text-muted-foreground mb-3">
-              {scale.research_centers != null ? `${scale.research_centers}+ centers, labs & institutes` : ''}
-              {research.industry_collaborators != null ? ` · ~${research.industry_collaborators} industry collaborators` : ''}
-            </p>
-          )}
-          {researchLabs.length > 0 && (
-            <>
-              <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Notable labs &amp; institutes</p>
-              <ChipList items={researchLabs} />
-            </>
-          )}
-          {researchAreas.length > 0 && (
-            <div className="mt-3">
-              <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Research areas</p>
-              <ChipList items={researchAreas} />
-            </div>
-          )}
-        </Card>
-      )}
-
-      {/* Campus life */}
-      {campusStats.length > 0 && (
-        <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Tent size={15} className="text-secondary" /> Campus life</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {campusStats.map(s => <Fact key={s.label} label={s.label} value={s.value} />)}
-          </div>
         </Card>
       )}
 
@@ -889,6 +809,30 @@ function AboutTab({ inst }: { inst: Institution }) {
   const supportKeys = Object.keys(support).filter(k => !isInternal(k))
   const policyKeys = Object.keys(policies).filter(k => !isInternal(k))
   const intlKeys = Object.keys(intl).filter(k => !isInternal(k))
+  // Institutional depth (relocated from Overview): recognition, scale, research, campus life.
+  const outcomes: any = inst.school_outcomes || {}
+  const flag: any = outcomes.flagship || {}
+  const scale: any = outcomes.scale || {}
+  const recognition: { value: string; label: string }[] = []
+  if (flag.nobel_laureates != null) recognition.push({ value: String(flag.nobel_laureates), label: 'Nobel laureates' })
+  if (flag.macarthur_fellows != null) recognition.push({ value: String(flag.macarthur_fellows), label: 'MacArthur Fellows' })
+  if (flag.national_medal_science != null) recognition.push({ value: String(flag.national_medal_science), label: 'National Medal of Science' })
+  if (flag.national_medal_tech != null) recognition.push({ value: String(flag.national_medal_tech), label: 'National Medal of Technology' })
+  const scaleStats: { value: string; label: string }[] = []
+  if (scale.faculty_count != null) scaleStats.push({ value: Number(scale.faculty_count).toLocaleString(), label: 'Faculty' })
+  if (scale.student_faculty_ratio) scaleStats.push({ value: String(scale.student_faculty_ratio), label: 'Student–faculty ratio' })
+  if (scale.research_centers != null) scaleStats.push({ value: `${scale.research_centers}+`, label: 'Research centers & labs' })
+  if (scale.endowment_usd != null) scaleStats.push({ value: `$${(scale.endowment_usd / 1e9).toFixed(1)}B`, label: 'Endowment' })
+  if (scale.campus_acres != null) scaleStats.push({ value: `${Number(scale.campus_acres).toLocaleString()} acres`, label: 'Campus' })
+  if (scale.undergrad_majors != null) scaleStats.push({ value: String(scale.undergrad_majors), label: 'Undergraduate majors' })
+  const research: any = outcomes.research || {}
+  const researchLabs: string[] = Array.isArray(research.labs) ? research.labs : []
+  const researchAreas: string[] = Array.isArray(research.areas) ? research.areas : []
+  const campusLife: any = outcomes.campus_life || {}
+  const campusStats: { value: string; label: string }[] = []
+  if (campusLife.varsity_sports != null) campusStats.push({ value: String(campusLife.varsity_sports), label: campusLife.athletics_division ? `Varsity sports · ${campusLife.athletics_division}` : 'Varsity sports' })
+  if (campusLife.arts_groups != null) campusStats.push({ value: `${campusLife.arts_groups}+`, label: 'Arts groups' })
+  if (campusLife.residence_halls != null) campusStats.push({ value: String(campusLife.residence_halls), label: 'Residence halls' })
   const facts = [
     inst.type ? { label: 'Type', value: titleCase(inst.type) } : null,
     inst.founded_year != null ? { label: 'Founded', value: String(inst.founded_year) } : null,
@@ -906,6 +850,62 @@ function AboutTab({ inst }: { inst: Institution }) {
         <Card className="p-5">
           <h2 className="font-semibold text-foreground mb-2">About {inst.name}</h2>
           <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trimSource(inst.description_text)}</p>
+        </Card>
+      )}
+
+      {/* Recognition — accolades with context */}
+      {recognition.length > 0 && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-1 flex items-center gap-2"><Award size={15} className="text-secondary" /> Recognition</h2>
+          <p className="text-[12px] text-muted-foreground mb-3">Among faculty &amp; alumni</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {recognition.map(d => <Fact key={d.label} label={d.label} value={d.value} />)}
+          </div>
+        </Card>
+      )}
+
+      {/* By the numbers — institutional scale (MIT Facts) */}
+      {scaleStats.length > 0 && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Building2 size={15} className="text-secondary" /> By the numbers</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {scaleStats.map(s => <Fact key={s.label} label={s.label} value={s.value} />)}
+          </div>
+        </Card>
+      )}
+
+      {/* Research & innovation */}
+      {(researchLabs.length > 0 || scale.research_centers != null) && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-1 flex items-center gap-2"><FlaskConical size={15} className="text-secondary" /> Research &amp; innovation</h2>
+          {(scale.research_centers != null || research.industry_collaborators != null) && (
+            <p className="text-[12px] text-muted-foreground mb-3">
+              {scale.research_centers != null ? `${scale.research_centers}+ centers, labs & institutes` : ''}
+              {research.industry_collaborators != null ? ` · ~${research.industry_collaborators} industry collaborators` : ''}
+            </p>
+          )}
+          {researchLabs.length > 0 && (
+            <>
+              <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Notable labs &amp; institutes</p>
+              <ChipList items={researchLabs} />
+            </>
+          )}
+          {researchAreas.length > 0 && (
+            <div className="mt-3">
+              <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Research areas</p>
+              <ChipList items={researchAreas} />
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Campus life */}
+      {campusStats.length > 0 && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Tent size={15} className="text-secondary" /> Campus life</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {campusStats.map(s => <Fact key={s.label} label={s.label} value={s.value} />)}
+          </div>
         </Card>
       )}
 
