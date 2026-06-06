@@ -1,3 +1,4 @@
+import logging
 import time
 import uuid
 from typing import Any
@@ -8,6 +9,8 @@ from pydantic import BaseModel
 
 from unipaith.config import settings
 from unipaith.core.exceptions import UnauthorizedException
+
+logger = logging.getLogger("unipaith.auth")
 
 _jwks_cache: dict[str, Any] = {}
 _jwks_fetched_at: float = 0
@@ -100,13 +103,32 @@ async def verify_token(token: str) -> CognitoClaims:
             f"https://cognito-idp.{settings.aws_region}.amazonaws.com"
             f"/{settings.cognito_user_pool_id}"
         )
-        payload = jwt.decode(
-            token,
-            key.to_dict(),
-            algorithms=["RS256"],
-            audience=settings.cognito_app_client_id,
-            issuer=issuer,
-        )
+        # Cognito issues two verifiable token types and the web client may hold
+        # EITHER, depending on the sign-in path — notably, federated (Google) and
+        # refresh-token flows can return an ACCESS token rather than an ID token.
+        # ID tokens carry aud=client_id; ACCESS tokens carry no aud but a
+        # client_id claim. Accept both (verifying signature, issuer and expiry for
+        # each) so a valid session is never rejected purely over token type — the
+        # cause of the federated "couldn't send / everything 401s" loop.
+        token_use = jwt.get_unverified_claims(token).get("token_use")
+        if token_use == "access":
+            payload = jwt.decode(
+                token,
+                key.to_dict(),
+                algorithms=["RS256"],
+                issuer=issuer,
+                options={"verify_aud": False},
+            )
+            if payload.get("client_id") != settings.cognito_app_client_id:
+                raise UnauthorizedException("Invalid token: client_id mismatch")
+        else:
+            payload = jwt.decode(
+                token,
+                key.to_dict(),
+                algorithms=["RS256"],
+                audience=settings.cognito_app_client_id,
+                issuer=issuer,
+            )
         return CognitoClaims(
             sub=payload["sub"],
             email=payload.get("email", ""),
@@ -116,4 +138,6 @@ async def verify_token(token: str) -> CognitoClaims:
         # Expired / bad-signature / wrong-audience → 401 (NOT 400) so the web
         # client's interceptor refreshes the token and retries instead of
         # failing every call until manual re-login. See core/exceptions.py.
+        # Log the precise reason — token failures are otherwise invisible (no 5xx).
+        logger.warning("Token verification failed: %s", e)
         raise UnauthorizedException(f"Invalid token: {e}") from e
