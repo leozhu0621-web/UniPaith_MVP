@@ -11,11 +11,40 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.database import get_db
-from unipaith.dependencies import get_current_user, require_system
+from unipaith.dependencies import get_current_user, require_owner, require_system
+from unipaith.models.feedback import Feedback
 from unipaith.models.user import User
 from unipaith.services.feedback_service import FeedbackService
 
 router = APIRouter(prefix="/feedback", tags=["feedback"])
+
+
+def _feedback_payload(rows: list[Feedback]) -> list[dict]:
+    return [
+        {
+            "id": str(r.id),
+            "user_id": str(r.user_id) if r.user_id else None,
+            "role": r.role,
+            "title": r.title,
+            "message": r.message,
+            "context": r.context,
+            "created_at": r.created_at.isoformat(),
+        }
+        for r in rows
+    ]
+
+
+def _feedback_csv(rows: list[Feedback]) -> StreamingResponse:
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["created_at", "role", "title", "message"])
+    for r in rows:
+        writer.writerow([r.created_at.isoformat(), r.role or "", r.title or "", r.message])
+    return StreamingResponse(
+        iter([buf.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=feedback.csv"},
+    )
 
 
 class FeedbackCreate(BaseModel):
@@ -53,6 +82,19 @@ async def submit_feedback(
     )
 
 
+@router.get("/inbox")
+async def feedback_inbox(
+    _: User = Depends(require_owner),
+    db: AsyncSession = Depends(get_db),
+    fmt: str | None = Query(default=None, alias="format"),
+):
+    """Owner-only in-app feedback inbox (newest first). Same data as ``/admin``,
+    but gated by the owner email allowlist so it works with the normal login —
+    no ops token needed. ``?format=csv`` downloads a spreadsheet."""
+    rows = await FeedbackService(db).list_all()
+    return _feedback_csv(rows) if fmt == "csv" else _feedback_payload(rows)
+
+
 @router.get("/admin")
 async def list_feedback(
     _: bool = Depends(require_system),
@@ -60,27 +102,7 @@ async def list_feedback(
     fmt: str | None = Query(default=None, alias="format"),
 ):
     """Collect all feedback. System-guarded (X-Ops-Token, like the crawler ops
-    API) since there is no platform-admin tier. ``?format=csv`` downloads a CSV."""
+    API) for programmatic/ops access. ``?format=csv`` downloads a CSV. The
+    in-app owner inbox uses ``/inbox`` instead (user-auth, no token)."""
     rows = await FeedbackService(db).list_all()
-    if fmt == "csv":
-        buf = io.StringIO()
-        writer = csv.writer(buf)
-        writer.writerow(["created_at", "role", "title", "message"])
-        for r in rows:
-            writer.writerow([r.created_at.isoformat(), r.role or "", r.title or "", r.message])
-        return StreamingResponse(
-            iter([buf.getvalue()]),
-            media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=feedback.csv"},
-        )
-    return [
-        {
-            "id": str(r.id),
-            "user_id": str(r.user_id) if r.user_id else None,
-            "role": r.role,
-            "title": r.title,
-            "message": r.message,
-            "created_at": r.created_at.isoformat(),
-        }
-        for r in rows
-    ]
+    return _feedback_csv(rows) if fmt == "csv" else _feedback_payload(rows)

@@ -56,6 +56,7 @@ import SchoolSubunitPage from './pages/student/SchoolSubunitPage'
 import ApplicationDetailPage from './pages/student/ApplicationDetailPage'
 import SavedListPage from './pages/student/SavedListPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
+import FeedbackInboxPage from './pages/student/FeedbackInboxPage'
 import OnboardingPage from './pages/student/OnboardingPage'
 
 // Institution pages
@@ -182,6 +183,8 @@ const router = createBrowserRouter([
       { path: 'profile', element: <ProfilePage /> },
       { path: 'saved', element: <SavedListPage /> },
       { path: 'settings', element: <StudentSettingsPage /> },
+      // Owner-only in-app feedback inbox (gated server-side by the email allowlist).
+      { path: 'feedback', element: <FeedbackInboxPage /> },
       // === Drill-down pages ===
       { path: 'programs/:programId', element: <StudentProgramDetailPage /> },
       // Legacy alias — /s/schools/:id was the same page; redirect to the canonical

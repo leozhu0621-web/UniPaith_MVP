@@ -44,3 +44,35 @@ async def test_admin_csv_export(student_client, monkeypatch):
     assert resp.status_code == 200
     assert "text/csv" in resp.headers["content-type"]
     assert "csv row" in resp.text
+
+
+async def test_owner_inbox_gated_by_email_allowlist(student_client, mock_student_user, monkeypatch):
+    """The in-app inbox opens only for accounts on the owner allowlist — no ops
+    token, just the logged-in user's email (matched case-insensitively)."""
+    await student_client.post(
+        f"{PREFIX}/feedback", json={"message": "from the inbox path", "context": {"path": "/s"}}
+    )
+
+    # Empty allowlist → nobody is an owner → locked even for an authed student.
+    monkeypatch.setattr(settings, "owner_emails", "")
+    locked = await student_client.get(f"{PREFIX}/feedback/inbox")
+    assert locked.status_code == 403
+
+    # Email on the allowlist (different case, extra entries) → inbox opens.
+    allowlist = f"someone@else.com, {mock_student_user.email.upper()}"
+    monkeypatch.setattr(settings, "owner_emails", allowlist)
+    ok = await student_client.get(f"{PREFIX}/feedback/inbox")
+    assert ok.status_code == 200, ok.text
+    rows = ok.json()
+    assert "from the inbox path" in [r["message"] for r in rows]
+    # Context (the page the feedback came from) is preserved for the owner.
+    assert any(r.get("context") == {"path": "/s"} for r in rows)
+
+
+async def test_owner_inbox_csv_export(student_client, mock_student_user, monkeypatch):
+    await student_client.post(f"{PREFIX}/feedback", json={"title": "T", "message": "owner csv row"})
+    monkeypatch.setattr(settings, "owner_emails", mock_student_user.email)
+    resp = await student_client.get(f"{PREFIX}/feedback/inbox?format=csv")
+    assert resp.status_code == 200
+    assert "text/csv" in resp.headers["content-type"]
+    assert "owner csv row" in resp.text

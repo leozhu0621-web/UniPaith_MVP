@@ -633,6 +633,13 @@ class Settings(BaseSettings):
     # endpoints return 403 unless a token is configured for the environment.
     crawler_ops_token: str = ""
 
+    # Owner allowlist for the in-app feedback inbox — the one owner-only surface
+    # (there is no platform-admin role; 05 §2). Comma-separated emails, matched
+    # case-insensitively against the logged-in user's email, so it works with the
+    # normal Google login. Empty = no owner: the inbox 403s for everyone until an
+    # email is configured for the environment.
+    owner_emails: str = ""
+
     # Notifications — Amazon SES
     ses_region: str = "us-east-1"
     ses_sender_email: str = "noreply@unipaith.co"
