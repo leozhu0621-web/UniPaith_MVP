@@ -260,7 +260,19 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
       avg_net_price: 20111,
       median_earnings_10yr: 143372,
       completion_rate_4yr_150pct: 0.9641,
-      flagship: { nobel_laureates: 106, enrollment_total: 11816 },
+      retention_rate_first_year: 0.9908,
+      employed_or_continuing_ed: 0.94,
+      top_employer_industries: ['Technology', 'Finance', 'Consulting'],
+      financial_aid: { pell_grant_rate: 0.1932, federal_loan_rate: 0.0669, median_debt_completers: 14768 },
+      demographics: { asian: 0.3517, white: 0.2126, hispanic: 0.1409, women: 0.4816 },
+      flagship: {
+        nobel_laureates: 106,
+        macarthur_fellows: 85,
+        enrollment_total: 11816,
+        admissions_cycle: 'Class of 2029',
+        applicants: 29281,
+        admits: 1334,
+      },
       sources: [
         {
           label: 'Costs, outcomes',
@@ -296,11 +308,44 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
     expect(screen.getByText(/U\.S\. News/)).toBeInTheDocument()
   })
 
-  it('Quick facts label the undergrad count; Distinction keeps total enrollment', async () => {
+  it('Student body shows the undergrad / graduate / total split (round 2)', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
-    expect(await screen.findByText('Undergraduates')).toBeInTheDocument()
+    expect(await screen.findByText('Undergraduate')).toBeInTheDocument()
+    expect(screen.getByText('Graduate')).toBeInTheDocument()
     expect(screen.getByText('Total enrollment')).toBeInTheDocument()
+  })
+
+  it('Admissions renders the funnel (applied → admitted → rate)', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText('29,281')).toBeInTheDocument()
+    expect(screen.getByText('1,334')).toBeInTheDocument()
+    expect(screen.getByText('Class of 2029')).toBeInTheDocument()
+    expect(screen.getByText('Applied')).toBeInTheDocument()
+  })
+
+  it('Cost & aid leads with net price and shows an aid bar', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText(/Cost & aid/)).toBeInTheDocument()
+    expect(screen.getAllByText('$20K').length).toBeGreaterThan(0)
+    expect(screen.getByText('Pell grant recipients')).toBeInTheDocument()
+  })
+
+  it('Outcomes surfaces top industries as chips', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText('Top industries')).toBeInTheDocument()
+    expect(screen.getByText('Technology')).toBeInTheDocument()
+    expect(screen.getByText('Finance')).toBeInTheDocument()
+  })
+
+  it('Student body renders a race & ethnicity breakdown', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText('Race & ethnicity')).toBeInTheDocument()
+    expect(screen.getByText('Asian')).toBeInTheDocument()
   })
 
   it('Overview renders a data-driven Sources footer with links', async () => {
