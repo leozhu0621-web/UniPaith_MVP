@@ -26,7 +26,7 @@ import QueryError from '../../../components/ui/QueryError'
 import {
   Bookmark, BookmarkCheck, MapPin, Globe, Building2, BookOpen,
   Mail, Phone, CalendarPlus, Check, ChevronDown, X, Search, GraduationCap,
-  Filter, ArrowRight, Send, Link2, Award, Trophy, DollarSign, TrendingUp, Users,
+  Filter, ArrowRight, Send, Link2, Award, Trophy, DollarSign, TrendingUp, Users, FlaskConical, Tent,
 } from 'lucide-react'
 import type { Institution, ProgramSummary, InstitutionPost, SchoolSummary } from '../../../types'
 import { AdmissionsFunnel, ChipList, DiversityBar, RankingBadge, StatBar } from './overviewWidgets'
@@ -592,6 +592,14 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
   if (scale.endowment_usd != null) scaleStats.push({ value: `$${(scale.endowment_usd / 1e9).toFixed(1)}B`, label: 'Endowment' })
   if (scale.campus_acres != null) scaleStats.push({ value: `${Number(scale.campus_acres).toLocaleString()} acres`, label: 'Campus' })
   if (scale.undergrad_majors != null) scaleStats.push({ value: String(scale.undergrad_majors), label: 'Undergraduate majors' })
+  const research: any = outcomes.research || {}
+  const researchLabs: string[] = Array.isArray(research.labs) ? research.labs : []
+  const researchAreas: string[] = Array.isArray(research.areas) ? research.areas : []
+  const campusLife: any = outcomes.campus_life || {}
+  const campusStats: { value: string; label: string }[] = []
+  if (campusLife.varsity_sports != null) campusStats.push({ value: String(campusLife.varsity_sports), label: campusLife.athletics_division ? `Varsity sports · ${campusLife.athletics_division}` : 'Varsity sports' })
+  if (campusLife.arts_groups != null) campusStats.push({ value: `${campusLife.arts_groups}+`, label: 'Arts groups' })
+  if (campusLife.residence_halls != null) campusStats.push({ value: String(campusLife.residence_halls), label: 'Residence halls' })
 
   return (
     <div className="space-y-5">
@@ -760,6 +768,41 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Building2 size={15} className="text-secondary" /> By the numbers</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {scaleStats.map(s => <Fact key={s.label} label={s.label} value={s.value} />)}
+          </div>
+        </Card>
+      )}
+
+      {/* Research & innovation */}
+      {(researchLabs.length > 0 || scale.research_centers != null) && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-1 flex items-center gap-2"><FlaskConical size={15} className="text-secondary" /> Research &amp; innovation</h2>
+          {(scale.research_centers != null || research.industry_collaborators != null) && (
+            <p className="text-[12px] text-muted-foreground mb-3">
+              {scale.research_centers != null ? `${scale.research_centers}+ centers, labs & institutes` : ''}
+              {research.industry_collaborators != null ? ` · ~${research.industry_collaborators} industry collaborators` : ''}
+            </p>
+          )}
+          {researchLabs.length > 0 && (
+            <>
+              <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Notable labs &amp; institutes</p>
+              <ChipList items={researchLabs} />
+            </>
+          )}
+          {researchAreas.length > 0 && (
+            <div className="mt-3">
+              <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Research areas</p>
+              <ChipList items={researchAreas} />
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Campus life */}
+      {campusStats.length > 0 && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Tent size={15} className="text-secondary" /> Campus life</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {campusStats.map(s => <Fact key={s.label} label={s.label} value={s.value} />)}
           </div>
         </Card>
       )}

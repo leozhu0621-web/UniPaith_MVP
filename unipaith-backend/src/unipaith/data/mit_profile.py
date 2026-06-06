@@ -84,6 +84,33 @@ SCHOOL_OUTCOMES: dict = {
         "undergrad_majors": 56,
         "undergrad_minors": 62,
     },
+    "research": {
+        "labs": [
+            "CSAIL",
+            "MIT Media Lab",
+            "Lincoln Laboratory",
+            "Broad Institute",
+            "Koch Institute",
+            "McGovern Institute",
+            "Whitehead Institute",
+            "Plasma Science & Fusion Center",
+        ],
+        "areas": [
+            "AI & computing",
+            "Climate & energy",
+            "Health & life sciences",
+            "Robotics & manufacturing",
+            "Neuroscience",
+            "Fusion energy",
+        ],
+        "industry_collaborators": 700,
+    },
+    "campus_life": {
+        "varsity_sports": 33,
+        "athletics_division": "NCAA Division III",
+        "arts_groups": 60,
+        "residence_halls": 20,
+    },
     "flagship": {
         "nobel_laureates": 106,
         "macarthur_fellows": 85,
@@ -130,6 +157,12 @@ SCHOOL_OUTCOMES: dict = {
             "source": "MIT News — FY2024 financials",
             "year": 2024,
             "url": "https://news.mit.edu/2024/mit-releases-financials-and-endowment-figures-1011",
+        },
+        {
+            "label": "Research labs & athletics",
+            "source": "MIT Research & MIT Athletics",
+            "year": 2025,
+            "url": "https://www.mit.edu/research/",
         },
     ],
 }
