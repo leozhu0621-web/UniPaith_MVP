@@ -266,7 +266,7 @@ export default function SavedListPage() {
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
           Saved
         </p>
-        <h1 className="text-2xl font-semibold text-foreground">Your shortlist</h1>
+        <h1 className="text-lg font-semibold text-foreground">Your shortlist</h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-xl">
           Curate programs you are serious about, then compare and start applications when you are ready.
         </p>

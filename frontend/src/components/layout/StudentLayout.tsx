@@ -6,7 +6,7 @@ import { useCounselorStore } from '../../stores/counselor-store'
 import MiniCounselorPanel from '../student/MiniCounselorPanel'
 import {
   Compass, Target, FolderKanban, Newspaper,
-  LogOut, User, Bookmark, Settings, MessageSquare,
+  LogOut, User, Bookmark, Settings, MessageSquare, Inbox,
 } from 'lucide-react'
 import Avatar from '../ui/Avatar'
 import Dropdown from '../ui/Dropdown'
@@ -44,6 +44,10 @@ export default function StudentLayout() {
     { label: 'My Profile', to: '/s/profile', icon: <User size={16} /> },
     { label: 'Saved', to: '/s/saved', icon: <Bookmark size={16} /> },
     { label: 'Settings', to: '/s/settings', icon: <Settings size={16} /> },
+    // Owner-only: in-app feedback inbox (gated server-side by the email allowlist).
+    ...(user?.is_owner
+      ? [{ label: 'Feedback inbox', to: '/s/feedback', icon: <Inbox size={16} /> }]
+      : []),
   ]
 
   return (
@@ -95,7 +99,10 @@ export default function StudentLayout() {
               { label: 'My Profile', onClick: () => navigate('/s/profile'), icon: <User size={14} /> },
               { label: 'Saved', onClick: () => navigate('/s/saved'), icon: <Bookmark size={14} /> },
               { label: 'Settings', onClick: () => navigate('/s/settings'), icon: <Settings size={14} /> },
-              { label: 'Sign out', onClick: logout, icon: <LogOut size={14} />, variant: 'danger' },
+              ...(user?.is_owner
+                ? [{ label: 'Feedback inbox', onClick: () => navigate('/s/feedback'), icon: <Inbox size={14} /> }]
+                : []),
+              { label: 'Sign out', onClick: logout, icon: <LogOut size={14} />, variant: 'danger' as const },
             ]}
           />
         </div>

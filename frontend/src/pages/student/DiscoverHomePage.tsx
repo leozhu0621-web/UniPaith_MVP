@@ -12,6 +12,7 @@ import { generateStrategy } from '../../api/strategy'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import QueryError from '../../components/ui/QueryError'
+import { PageHeader } from '../../components/student/density'
 import { showToast } from '../../stores/toast-store'
 import type {
   CompletionMap,
@@ -241,25 +242,20 @@ export default function DiscoverHomePage() {
 
   return (
     <div className="p-6 max-w-5xl w-full mx-auto space-y-4">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-eyebrow text-accent mb-1">Discover</p>
-          <h1 className="text-2xl font-semibold text-foreground">
-            Let's figure out what you're looking for
-          </h1>
-          <p className="text-sm text-muted-foreground max-w-2xl mt-1">
-            Talk through who you are, what you want, and what you need — I'll build your profile as
-            we go.
-          </p>
-        </div>
-        {track === 'profile' && (
-          <LayerSwitcher
-            active={layer}
-            unlockedThrough={unlockedThrough < 0 ? 0 : unlockedThrough}
-            onChange={guardedSetLayer}
-          />
-        )}
-      </header>
+      <PageHeader
+        eyebrow="Discover"
+        title="Let's figure out what you're looking for"
+        sub="Talk through who you are, what you want, and what you need — I'll build your profile as we go."
+        actions={
+          track === 'profile' ? (
+            <LayerSwitcher
+              active={layer}
+              unlockedThrough={unlockedThrough < 0 ? 0 : unlockedThrough}
+              onChange={guardedSetLayer}
+            />
+          ) : undefined
+        }
+      />
 
       {handoffBanner && (
         <div className="rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 text-xs text-foreground">

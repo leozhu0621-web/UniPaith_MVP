@@ -40,6 +40,10 @@ class UserResponse(BaseModel):
     email: str
     role: str
     created_at: datetime
+    # True when this account is on the owner allowlist (settings.owner_emails);
+    # unlocks the in-app feedback inbox. Defaults False so login payloads that
+    # don't compute it simply hide the owner surface until /auth/me refreshes.
+    is_owner: bool = False
 
 
 class LoginResponse(TokenResponse):

@@ -91,6 +91,26 @@ async def require_institution_admin(user: User = Depends(get_current_user)) -> U
     return user
 
 
+def _owner_email_set() -> set[str]:
+    """Lowercased owner allowlist parsed from ``settings.owner_emails``."""
+    return {e.strip().lower() for e in settings.owner_emails.split(",") if e.strip()}
+
+
+def user_is_owner(user: User) -> bool:
+    """Whether this user may access owner-only surfaces (the feedback inbox).
+
+    Gated by an email allowlist rather than a role so it works with the normal
+    Google login — there is no platform-admin role (05 §2). An empty allowlist
+    means nobody is an owner (the inbox stays locked for the environment)."""
+    return bool(user.email) and user.email.lower() in _owner_email_set()
+
+
+async def require_owner(user: User = Depends(get_current_user)) -> User:
+    if not user_is_owner(user):
+        raise ForbiddenException("Owner access required")
+    return user
+
+
 async def require_system(x_ops_token: str | None = Header(None, alias="X-Ops-Token")) -> bool:
     """Spec 60 §9 — system guard for the internal crawler ops API. There is no
     platform-admin tier (05 §2); the ops endpoints are protected by a shared

@@ -74,7 +74,7 @@ export default function ProfilePage() {
         <CompletionRing value={isLoading ? 0 : overall} size={64} />
         <div>
           <p className="up-eyebrow">Profile</p>
-          <h1 className="text-h2 text-foreground">Your record</h1>
+          <h1 className="text-lg font-semibold text-foreground">Your record</h1>
           <p className="text-xs text-muted-foreground mt-0.5">{lastUpdatedLabel(lastUpdated)}</p>
         </div>
       </div>
