@@ -5,6 +5,7 @@
  * "What's next" action queue derived from completion gaps + onboarding.
  */
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Pencil } from 'lucide-react'
 
@@ -20,7 +21,7 @@ import { initials } from '../../../utils/format'
 import { DEGREE_LABELS } from '../../../utils/constants'
 import { BasicInfoForm } from '../components/ProfileForms'
 import { useCompletion } from './useCompletion'
-import { ConfidenceDots, lastUpdatedLabel, type CategoryKey } from './shared'
+import { ConfidenceDots, lastUpdatedLabel, CATEGORY_META, type CategoryKey } from './shared'
 
 interface NextAction {
   action: string
@@ -88,6 +89,7 @@ function deriveNextActions(
 }
 
 export default function OverviewTab({ onOpenTab }: { onOpenTab: (tab: string) => void }) {
+  const navigate = useNavigate()
   const qc = useQueryClient()
   const { user } = useAuthStore()
   const { data: profile, isLoading } = useQuery({ queryKey: ['profile'], queryFn: getProfile })
@@ -133,7 +135,7 @@ export default function OverviewTab({ onOpenTab }: { onOpenTab: (tab: string) =>
         .filter(Boolean)
         .join(' · ')
     : null
-  const locationLine = [p.country_of_residence, p.nationality].filter(Boolean).join(' · ')
+  const locationLine = [p.country_of_residence, p.nationality, p.preferred_pronouns ? `(${p.preferred_pronouns})` : null].filter(Boolean).join(' · ')
   const actions = deriveNextActions(stats, p, documentsList.length, nextStep?.guidance_text ?? null)
 
   return (
@@ -163,21 +165,27 @@ export default function OverviewTab({ onOpenTab }: { onOpenTab: (tab: string) =>
       <section>
         <p className="up-eyebrow mb-3">Completion map</p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {stats.map(s => (
-            <Card key={s.key} className="p-4 flex flex-col gap-2" interactive onClick={() => onOpenTab(s.tab)}>
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-foreground">{s.label}</span>
-                <span className="text-sm font-bold text-foreground tabular-nums">{s.pct}%</span>
-              </div>
-              <ConfidenceDots filled={s.dots} showLabel={false} />
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-xs text-muted-foreground">{lastUpdatedLabel(s.lastUpdated)}</span>
-                <span className="text-xs font-semibold text-secondary inline-flex items-center gap-0.5">
-                  Open <ArrowRight size={12} />
-                </span>
-              </div>
-            </Card>
-          ))}
+          {stats.map(s => {
+            const meta = CATEGORY_META.find(m => m.key === s.key)
+            return (
+              <Card key={s.key} className="p-4 flex flex-col gap-2" interactive onClick={() => onOpenTab(s.tab)}>
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-foreground">{s.label}</span>
+                  <span className="text-sm font-bold text-foreground tabular-nums">{s.pct}%</span>
+                </div>
+                <ConfidenceDots filled={s.dots} showLabel={false} />
+                {meta?.hint && (
+                  <p className="text-xs text-muted-foreground">{meta.hint}</p>
+                )}
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-xs text-muted-foreground">{lastUpdatedLabel(s.lastUpdated)}</span>
+                  <span className="text-xs font-semibold text-secondary inline-flex items-center gap-0.5">
+                    Open <ArrowRight size={12} />
+                  </span>
+                </div>
+              </Card>
+            )
+          })}
         </div>
       </section>
 
@@ -185,10 +193,25 @@ export default function OverviewTab({ onOpenTab }: { onOpenTab: (tab: string) =>
       <section>
         <p className="up-eyebrow mb-3">What's next</p>
         {actions.length === 0 ? (
-          <Card className="p-5">
+          <Card className="p-5 space-y-2">
+            <p className="text-sm text-foreground font-medium">Your profile is strong.</p>
             <p className="text-sm text-muted-foreground">
-              Your profile is in great shape. Keep it fresh as your goals evolve.
+              Check in on your applications or explore new programs to keep momentum.
             </p>
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => navigate('/s/manage')}
+                className="text-sm font-semibold text-secondary hover:underline inline-flex items-center gap-1"
+              >
+                Applications <ArrowRight size={13} />
+              </button>
+              <button
+                onClick={() => navigate('/s/explore')}
+                className="text-sm font-semibold text-secondary hover:underline inline-flex items-center gap-1"
+              >
+                Explore programs <ArrowRight size={13} />
+              </button>
+            </div>
           </Card>
         ) : (
           <Card className="p-2">

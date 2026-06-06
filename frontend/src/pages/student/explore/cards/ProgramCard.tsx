@@ -8,13 +8,9 @@ import {
   Clock, Building, Calendar, ArrowRight, Sparkles,
 } from 'lucide-react'
 import { differenceInDays } from 'date-fns'
-
-// Band label from match tier — editorial duotone, no rainbow (Spec/02 §9).
-function fitStyle(tier: number) {
-  if (tier >= 3) return { text: 'Strong fit', pill: 'bg-success-soft text-success border-success/30' }
-  if (tier >= 2) return { text: 'Good fit', pill: 'bg-secondary/10 text-secondary border-secondary/30' }
-  return { text: 'Reach', pill: 'bg-card text-secondary border-secondary/50' }
-}
+import BandBadge from '../../../../components/ui/BandBadge'
+import type { Band } from '../../../../components/ui/BandBadge'
+import DualRing from '../../match/DualRing'
 
 function degreeAbbrev(degree: string): string {
   const map: Record<string, string> = {
@@ -60,14 +56,24 @@ interface Props {
   onView: () => void
 }
 
+function toUnit(v: number | null | undefined): number {
+  if (v == null) return 0
+  const n = v > 1 ? v / 100 : v
+  return Math.max(0, Math.min(1, n))
+}
+
 export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView }: Props) {
   const degree = DEGREE_LABELS[program.degree_type] || program.degree_type
   const abbrev = degreeAbbrev(program.degree_type)
-  const fit = match ? fitStyle(match.match_tier) : null
   // Dual-score migration: prefer fitness_score, fall back to legacy match_score
   // (Phase E keeps match_score dual-written for one release — see CLAUDE.md).
-  const rawScore = (match as { fitness_score?: number | null } | undefined)?.fitness_score ?? match?.match_score
-  const matchScore = rawScore != null ? Math.round(rawScore * 100) : null
+  const extMatch = match as (MatchResult & { fitness_score?: number | null; confidence_score?: number | null; band_label?: string | null }) | undefined
+  const fitnessRaw = extMatch?.fitness_score ?? match?.match_score
+  const confidenceRaw = extMatch?.confidence_score
+  const hasDual = fitnessRaw != null
+  const fitness = toUnit(fitnessRaw)
+  const confidence = toUnit(confidenceRaw)
+  const bandLabel = extMatch?.band_label as Band | undefined
 
   const duration = formatDuration(program.duration_months)
   const format = formatFormat(program.delivery_format)
@@ -77,7 +83,7 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
   const gradPct = program.employment_rate != null ? Math.round(program.employment_rate * 100) : null
 
   return (
-    <div className="bg-card rounded-lg border border-border hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden flex flex-col group/card">
+    <div className="bg-card rounded-lg border border-border hover:elev-raised transition-all duration-200 ease-out overflow-hidden flex flex-col group/card">
       {/* ── Header — text-driven, white surface, hairline divider ── */}
       <div onClick={onView} className="relative cursor-pointer px-4 pt-4 pb-3 border-b border-border">
         {/* Save button */}
@@ -116,15 +122,10 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
           <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md bg-muted text-foreground border border-border/60">
             {degree}
           </span>
-          {fit && (
-            <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-md border ${fit.pill}`}>
-              {fit.text}
-            </span>
-          )}
-          {matchScore != null && (
-            <span className="ml-auto inline-flex items-center gap-1.5">
-              <MatchDot pct={matchScore} />
-              <span className="text-[11px] font-bold text-foreground">{matchScore}<span className="text-muted-foreground font-normal">% fit</span></span>
+          {bandLabel && <BandBadge band={bandLabel} />}
+          {hasDual && (
+            <span className="ml-auto">
+              <DualRing fitness={fitness} confidence={confidence} size={40} compact />
             </span>
           )}
         </div>
@@ -198,24 +199,6 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
         </button>
       </div>
     </div>
-  )
-}
-
-/* ── Small gold match dot (the one earned accent on the card) ── */
-function MatchDot({ pct }: { pct: number }) {
-  const r = 9
-  const c = 2 * Math.PI * r
-  return (
-    <span className="relative inline-flex w-5 h-5">
-      <svg viewBox="0 0 24 24" className="w-5 h-5 -rotate-90">
-        <circle cx="12" cy="12" r={r} fill="none" className="stroke-border/50" strokeWidth="3" />
-        <circle
-          cx="12" cy="12" r={r} fill="none"
-          className="stroke-primary" strokeWidth="3" strokeLinecap="round"
-          strokeDasharray={c} strokeDashoffset={c * (1 - pct / 100)}
-        />
-      </svg>
-    </span>
   )
 }
 

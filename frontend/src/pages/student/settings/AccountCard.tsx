@@ -29,7 +29,24 @@ export default function AccountCard({ account, onSave, saving }: AccountCardProp
     <SettingsSection icon={User} title="Account" description="Your identity on UniPaith.">
       {/* Read-only identity */}
       <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2 text-sm mb-5">
-        <Field label="Email" value={account.email} />
+        <div className="flex justify-between sm:block">
+          <dt className="text-muted-foreground sm:text-xs sm:uppercase sm:tracking-wide sm:font-semibold">
+            Email
+          </dt>
+          <dd className="text-foreground sm:mt-0.5 flex items-center gap-2">
+            <span>{account.email || '—'}</span>
+            <a
+              href="#security"
+              onClick={e => {
+                e.preventDefault()
+                document.getElementById('settings-security-section')?.scrollIntoView({ behavior: 'smooth' })
+              }}
+              className="text-xs font-medium text-secondary hover:underline"
+            >
+              Change
+            </a>
+          </dd>
+        </div>
         <Field label="Role" value={account.role.replace(/_/g, ' ')} capitalize />
         <Field label="Member since" value={formatDate(account.member_since)} />
       </dl>

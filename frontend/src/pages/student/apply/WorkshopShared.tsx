@@ -7,7 +7,7 @@ import Card from '../../../components/ui/Card'
 /** First-run / no-result hint (Spec/14-workshops.md §8 empty state). */
 export function EmptyHint({ children }: { children: ReactNode }) {
   return (
-    <Card variant="card-flush" className="px-4 py-10 text-center text-sm text-foreground">
+    <Card variant="card-flush" className="px-4 py-10 text-center text-sm text-muted-foreground">
       {children}
     </Card>
   )
@@ -35,7 +35,7 @@ export function ErrorNote({ onRetry }: { onRetry: () => void }) {
 /** Surfaced when a run came back rule-based (Spec/14-workshops.md §8 "Showing rule-based result"). */
 export function StubNote() {
   return (
-    <span className="inline-flex items-center gap-1 text-xs text-foreground">
+    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
       <Info size={12} /> We couldn&apos;t analyze this draft in depth. Showing rule-based result.
     </span>
   )

@@ -104,7 +104,7 @@ export default function NextStepsCard({
   return (
     <Card className="p-5">
       <div className="flex items-center gap-2 mb-3">
-        <ChevronRight size={14} className="text-primary" />
+        <ChevronRight size={14} className="text-secondary" />
         <h3 className="font-semibold text-foreground">Next Steps</h3>
       </div>
       <div className="space-y-2">

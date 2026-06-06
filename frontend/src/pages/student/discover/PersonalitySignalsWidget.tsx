@@ -15,6 +15,7 @@ import clsx from 'clsx'
 import { getPersonalitySignals } from '../../../api/discovery'
 import Card from '../../../components/ui/Card'
 import QueryError from '../../../components/ui/QueryError'
+import Skeleton from '../../../components/ui/Skeleton'
 import type { PersonalitySignal } from '../../../types'
 
 // Map the extractor's facet keys to friendly labels. Unknown facets fall
@@ -47,7 +48,7 @@ function ConfidenceDots({ confidence }: { confidence: number | null }) {
       {[0, 1, 2, 3].map(i => (
         <span
           key={i}
-          className={clsx('h-1.5 w-1.5 rounded-full', i < filled ? 'bg-primary' : 'bg-muted')}
+          className={clsx('h-1.5 w-1.5 rounded-full', i < filled ? 'bg-secondary' : 'bg-muted')}
         />
       ))}
     </span>
@@ -61,7 +62,14 @@ export default function PersonalitySignalsWidget() {
   })
 
   if (isLoading) {
-    return <Card className="text-sm text-foreground">Loading…</Card>
+    return (
+      <Card className="space-y-3 p-4">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-4/5" />
+        <Skeleton className="h-3 w-3/5" />
+      </Card>
+    )
   }
 
   if (isError) {
@@ -87,7 +95,7 @@ export default function PersonalitySignalsWidget() {
           <UserRound size={14} className="text-secondary" />
           Personality signals
         </div>
-        <p className="italic">
+        <p className="text-muted-foreground">
           As you talk about your interests, passions, and how you work with others, I'll
           capture them here.
         </p>
@@ -114,7 +122,7 @@ export default function PersonalitySignalsWidget() {
         {signals.slice(0, 8).map((s, i) => (
           <li key={`${s.facet}-${i}`} className="space-y-0.5">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] uppercase tracking-wide text-foreground">
+              <span className="text-eyebrow uppercase text-muted-foreground">
                 {labelFor(s.facet)}
               </span>
               <ConfidenceDots confidence={s.confidence} />

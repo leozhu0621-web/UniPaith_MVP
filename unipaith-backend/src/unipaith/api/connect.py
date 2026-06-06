@@ -52,15 +52,17 @@ async def get_feed(
     tab: str = Query("updates"),
     rank: str = Query("recent", pattern="^(recent|relevant)$"),
     limit: int = Query(50, ge=1, le=100),
+    cursor: str | None = Query(None),
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
     """Updates feed (Spec 20 §4). Posts + system deadline reminders + program
     changes from followed institutions. ``rank=recent`` (reverse-chronological)
     or ``rank=relevant`` (relevance heuristic, optionally AI-refined). Muted
-    institutions are suppressed except for ``program_change`` items."""
+    institutions are suppressed except for ``program_change`` items. ``cursor``
+    pages forward (Spec 56 §4); the response carries ``next_cursor``."""
     pid = await _profile_id(user, db)
-    return await ConnectService(db).build_updates_feed(pid, rank=rank, limit=limit)
+    return await ConnectService(db).build_updates_feed(pid, rank=rank, limit=limit, cursor=cursor)
 
 
 # ════════════════════════════════════════════════════════════════════════

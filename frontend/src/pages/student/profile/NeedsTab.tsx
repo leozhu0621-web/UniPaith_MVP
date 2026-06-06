@@ -21,6 +21,8 @@ import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import Modal from '../../../components/ui/Modal'
+import QueryError from '../../../components/ui/QueryError'
+import { SkeletonCard } from '../../../components/ui/Skeleton'
 import { showToast } from '../../../stores/toast-store'
 import type { MaslowLevel, NeedSeverity, StudentNeed } from '../../../types'
 
@@ -55,9 +57,9 @@ const MASLOW_TIERS: { key: MaslowLevel; label: string; hint: string }[] = [
   },
 ]
 
-const SEVERITY_VARIANTS: Record<NeedSeverity, 'danger' | 'warning' | 'neutral'> = {
-  must_have: 'danger',
-  strong_preference: 'warning',
+const SEVERITY_VARIANTS: Record<NeedSeverity, 'warning' | 'info' | 'neutral'> = {
+  must_have: 'warning',
+  strong_preference: 'info',
   nice_to_have: 'neutral',
 }
 
@@ -200,7 +202,7 @@ function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormP
 
 export default function NeedsTab() {
   const qc = useQueryClient()
-  const { data: needs = [], isLoading } = useQuery<StudentNeed[]>({
+  const { data: needs = [], isLoading, isError, refetch } = useQuery<StudentNeed[]>({
     queryKey: ['needs'],
     queryFn: () => listNeeds(),
   })
@@ -246,14 +248,16 @@ export default function NeedsTab() {
   }
   for (const n of needs) if (grouped[n.maslow_level]) grouped[n.maslow_level].push(n)
 
+  if (isError) return <QueryError onRetry={() => refetch()} />
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Needs map</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Maslow-keyed. Higher tiers carry the differentiating signal — community, scholarship,
-            mental support. Discovery infers; you can edit anything.
+            What you need from a program and campus — ranked by how much it matters to you.
+            Discovery infers; you can edit anything.
           </p>
         </div>
         <Button onClick={() => setCreating(true)}>
@@ -261,7 +265,13 @@ export default function NeedsTab() {
         </Button>
       </div>
 
-      {isLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
+      {isLoading && (
+        <div className="space-y-3">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      )}
 
       {!isLoading &&
         MASLOW_TIERS.map(tier => (
@@ -271,8 +281,8 @@ export default function NeedsTab() {
               <span className="text-xs text-muted-foreground">{tier.hint}</span>
             </div>
             {grouped[tier.key].length === 0 ? (
-              <Card className="p-4 text-sm text-muted-foreground italic">
-                No {tier.label.toLowerCase()} signals yet.
+              <Card className="p-4 text-sm text-muted-foreground">
+                No {tier.label.toLowerCase()} signals yet — add one above.
               </Card>
             ) : (
               <div className="space-y-2">

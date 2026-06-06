@@ -13,6 +13,7 @@ import clsx from 'clsx'
 import { listNeeds } from '../../../api/needs'
 import Card from '../../../components/ui/Card'
 import QueryError from '../../../components/ui/QueryError'
+import Skeleton from '../../../components/ui/Skeleton'
 import type { MaslowLevel, StudentNeed } from '../../../types'
 
 const TIERS: { key: MaslowLevel; label: string }[] = [
@@ -30,14 +31,21 @@ export default function NeedsMapWidget() {
   })
 
   if (isLoading) {
-    return <Card className="text-sm text-foreground">Loading…</Card>
+    return (
+      <Card className="space-y-3 p-4">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-4/5" />
+      </Card>
+    )
   }
 
   if (isError) {
     return (
       <Card className="space-y-2">
         <div className="flex items-center gap-2 text-foreground font-medium text-sm">
-          <Heart size={14} className="text-primary" />
+          <Heart size={14} className="text-secondary" />
           Needs map
         </div>
         <QueryError
@@ -53,10 +61,10 @@ export default function NeedsMapWidget() {
     return (
       <Card className="text-sm text-foreground space-y-2">
         <div className="flex items-center gap-2 text-foreground font-medium">
-          <Heart size={14} className="text-primary" />
+          <Heart size={14} className="text-secondary" />
           Needs map
         </div>
-        <p className="italic">
+        <p className="text-muted-foreground">
           As we talk through what you can't do without, I'll classify it on Maslow's hierarchy.
         </p>
       </Card>
@@ -76,12 +84,12 @@ export default function NeedsMapWidget() {
     <Card className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-foreground font-medium text-sm">
-          <Heart size={14} className="text-primary" />
+          <Heart size={14} className="text-secondary" />
           Needs map · {needs.length}
         </div>
         <Link
           to="/s/profile?tab=needs"
-          className="text-xs text-primary inline-flex items-center gap-1 hover:underline"
+          className="text-xs text-secondary inline-flex items-center gap-1 hover:underline"
         >
           Manage <ExternalLink size={11} />
         </Link>
@@ -98,23 +106,18 @@ export default function NeedsMapWidget() {
               className={clsx(
                 'rounded border px-2.5 py-1.5 transition-colors',
                 isFilled
-                  ? 'border-primary/30 bg-primary/5'
+                  ? 'border-secondary/30 bg-secondary/5'
                   : 'border-border bg-transparent',
               )}
             >
               <div className="flex items-center justify-between gap-2">
-                <span
-                  className={clsx(
-                    'text-xs font-medium',
-                    isFilled ? 'text-foreground' : 'text-foreground',
-                  )}
-                >
+                <span className="text-xs font-medium text-foreground">
                   {tier.label}
                 </span>
                 <span className="text-[10px] text-foreground">
                   {items.length}
                   {mustHaves > 0 && (
-                    <span className="ml-1.5 text-destructive">• {mustHaves} must-have</span>
+                    <span className="ml-1.5 text-foreground">• {mustHaves} must-have</span>
                   )}
                 </span>
               </div>

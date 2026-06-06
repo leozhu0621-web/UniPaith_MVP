@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bell } from 'lucide-react'
+import { confirmDialog } from '../../../stores/confirm-store'
 
 import EmptyState from '../../../components/ui/EmptyState'
 import { SkeletonCard } from '../../../components/ui/Skeleton'
@@ -111,7 +112,14 @@ export default function SavedSearchesPanel() {
           onToggleAlert={() => toggleMut.mutate({ id: s.id, alert_enabled: !s.alert_enabled })}
           onRun={() => runMut.mutate(s.id)}
           onOpen={() => openInMatch(s)}
-          onDelete={() => deleteMut.mutate(s.id)}
+          onDelete={async () => {
+            const ok = await confirmDialog({
+              title: 'Delete this saved search and its alerts?',
+              confirmLabel: 'Delete',
+              destructive: true,
+            })
+            if (ok) deleteMut.mutate(s.id)
+          }}
           togglePending={toggleMut.isPending && toggleMut.variables?.id === s.id}
           runPending={runMut.isPending && runMut.variables === s.id}
           deletePending={deleteMut.isPending && deleteMut.variables === s.id}

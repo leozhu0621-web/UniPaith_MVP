@@ -28,7 +28,7 @@ function ProfileWidget({ layer }: { layer?: DiscoveryLayer | null }) {
 
 export default function ArtifactRail({ track, layer }: Props) {
   return (
-    <aside className="space-y-3">
+    <aside className="space-y-3" aria-label="Discovery signals">
       {track === 'profile' && <ProfileWidget layer={layer} />}
       {track === 'goals' && <GoalStackWidget />}
       {track === 'needs' && <NeedsMapWidget />}

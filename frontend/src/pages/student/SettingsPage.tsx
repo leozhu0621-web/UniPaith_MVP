@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getSettings, updateSettings, type UpdateSettingsPayload } from '../../api/settings'
 import { useThemeStore, type FontSize, type Theme } from '../../stores/theme-store'
 import { showToast } from '../../stores/toast-store'
+import QueryError from '../../components/ui/QueryError'
 import AccountCard from './settings/AccountCard'
 import SecurityCard from './settings/SecurityCard'
 import PreferencesCard from './settings/PreferencesCard'
@@ -17,7 +18,7 @@ export default function SettingsPage() {
   const queryClient = useQueryClient()
   const hydrate = useThemeStore(s => s.hydrate)
 
-  const { data: settings, isLoading } = useQuery({ queryKey: ['settings'], queryFn: getSettings })
+  const { data: settings, isLoading, isError } = useQuery({ queryKey: ['settings'], queryFn: getSettings })
 
   // On load, let the server's saved prefs win (cross-device sync).
   useEffect(() => {
@@ -48,10 +49,18 @@ export default function SettingsPage() {
 
   const refetch = () => queryClient.invalidateQueries({ queryKey: ['settings'] })
 
+  if (isError && !settings) {
+    return (
+      <div className="px-4 sm:px-6 py-6 max-w-5xl w-full mx-auto">
+        <QueryError detail="We could not load your settings." onRetry={() => refetch()} />
+      </div>
+    )
+  }
+
   return (
-    <div className="px-4 sm:px-6 py-6 max-w-5xl w-full mx-auto w-full">
+    <div className="px-4 sm:px-6 py-6 max-w-5xl w-full mx-auto">
       <header className="mb-6">
-        <p className="up-eyebrow text-secondary">Settings</p>
+        <p className="up-eyebrow text-muted-foreground">Settings</p>
         <h1 className="text-lg font-bold text-foreground mt-1">Your account</h1>
       </header>
 

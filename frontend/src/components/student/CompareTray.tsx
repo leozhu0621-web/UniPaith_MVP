@@ -6,6 +6,7 @@ import { showToast } from '../../stores/toast-store'
 import { comparePrograms } from '../../api/saved-lists'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
+import Coachmark from '../ui/Coachmark'
 import { X, ArrowRightLeft, ChevronUp, ChevronDown, GraduationCap } from 'lucide-react'
 import { COMPARE_DIMENSIONS, type CompareProgram } from './compareDimensions'
 
@@ -115,18 +116,34 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
                             {dim.title}
                           </td>
                         </tr>
-                        {dim.rows.map(row => (
-                          <tr key={row.label} className="border-t border-border">
-                            <td className="sticky left-0 z-10 bg-card py-2 px-3 text-xs text-muted-foreground font-medium">
-                              {row.label}
-                            </td>
-                            {(comparisonResult.programs as CompareProgram[]).map(p => (
-                              <td key={p.id} className="py-2 px-3 text-xs text-foreground">
-                                {row.get(p)}
+                        {dim.rows.map(row => {
+                          // Compute best-value column index for numeric score rows.
+                          const isBestValueRow = row.label === 'Fit' || row.label === 'Confidence'
+                          let bestIdx = -1
+                          if (isBestValueRow) {
+                            const programs = comparisonResult.programs as CompareProgram[]
+                            const vals = programs.map(p =>
+                              row.label === 'Fit' ? (p.fitness_score ?? -1) : (p.confidence_score ?? -1)
+                            )
+                            const max = Math.max(...vals)
+                            if (max >= 0) bestIdx = vals.findIndex(v => v === max)
+                          }
+                          return (
+                            <tr key={row.label} className="border-t border-border">
+                              <td className="sticky left-0 z-10 bg-card py-2 px-3 text-xs text-muted-foreground font-medium">
+                                {row.label}
                               </td>
-                            ))}
-                          </tr>
-                        ))}
+                              {(comparisonResult.programs as CompareProgram[]).map((p, idx) => (
+                                <td
+                                  key={p.id}
+                                  className={`py-2 px-3 text-xs ${isBestValueRow && idx === bestIdx ? 'text-secondary font-semibold' : 'text-foreground'}`}
+                                >
+                                  {row.get(p)}
+                                </td>
+                              ))}
+                            </tr>
+                          )
+                        })}
                       </Fragment>
                     ))}
                   </tbody>
@@ -154,9 +171,16 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
             ))}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button size="sm" variant="secondary" onClick={() => compareMut.mutate()} disabled={items.length < 2 || compareMut.isPending} loading={compareMut.isPending}>
-              Compare selected ({items.length}) →
-            </Button>
+            <Coachmark
+              id="compare"
+              title="Compare side by side"
+              body="Add 2+ programs, then compare structure, cost, access, and outcomes in one view."
+              placement="top"
+            >
+              <Button size="sm" variant="secondary" onClick={() => compareMut.mutate()} disabled={items.length < 2 || compareMut.isPending} loading={compareMut.isPending}>
+                Compare selected ({items.length}) →
+              </Button>
+            </Coachmark>
             {comparisonResult && (
               <button onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Collapse' : 'Expand'} className="p-1 text-background/60 hover:text-background">
                 {expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}

@@ -47,11 +47,11 @@ export function matchDualOf(sp: SavedProgram): MatchResultDual | null {
   }
 }
 
-export type SortKey = 'match_score' | 'date_added' | 'deadline'
+export type SortKey = 'fitness_score' | 'date_added' | 'deadline'
 
 export function sortSavedPrograms(list: SavedProgram[], sortKey: SortKey): SavedProgram[] {
   return [...list].sort((a, b) => {
-    if (sortKey === 'match_score') {
+    if (sortKey === 'fitness_score') {
       const sa = a.fitness_score ?? -1
       const sb = b.fitness_score ?? -1
       return sb - sa

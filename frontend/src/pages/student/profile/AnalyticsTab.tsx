@@ -5,6 +5,7 @@
  * 15.2 Peer comparison — gated on the analytics consent lever.
  */
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { TrendingUp, TrendingDown } from 'lucide-react'
@@ -15,8 +16,8 @@ import { getAnalytics, getDataRights, getPeerComparison, getTimeline } from '../
 import { SectionHeader, CompletionRing } from './shared'
 import { useCompletion } from './useCompletion'
 
-// Read chart colors from the live CSS custom properties so they track the
-// active theme (light / dark) instead of being frozen to a hardcoded hex.
+// Read a CSS custom property from the document root at call time.
+// Must be called inside a render body so theme changes re-read the value.
 const cssVar = (name: string): string =>
   `hsl(${getComputedStyle(document.documentElement).getPropertyValue(name).trim()})`
 
@@ -39,6 +40,7 @@ function CategoryBars({ stats }: { stats: ReturnType<typeof useCompletion>['stat
 }
 
 export default function AnalyticsTab() {
+  const navigate = useNavigate()
   const { stats, overall, isLoading } = useCompletion()
   const { data: analytics } = useQuery({ queryKey: ['analytics'], queryFn: getAnalytics, retry: false })
   const { data: timeline } = useQuery({ queryKey: ['timeline'], queryFn: getTimeline, retry: false })
@@ -49,7 +51,9 @@ export default function AnalyticsTab() {
   // gated peer-comparison content the student hasn't consented to.
   const analyticsConsent = dataRights ? Boolean(dataRights.consent_research) : false
 
-  // Theme-aware chart palette + tooltip surface, read from CSS vars at render.
+  // Theme-aware chart palette + tooltip surface.
+  // Reading inside the render body means a theme change (light→dark) causes a
+  // re-render that re-reads the updated CSS vars rather than using stale values.
   const COBALT = cssVar('--secondary')
   const GOLD = cssVar('--primary')
   const tooltipStyle = {
@@ -187,7 +191,13 @@ export default function AnalyticsTab() {
         {!analyticsConsent ? (
           <Card className="p-5">
             <p className="text-sm text-muted-foreground">
-              Peer comparison requires analytics consent. Manage in <span className="font-semibold text-secondary">Data Rights</span>.
+              Peer comparison requires analytics consent. Manage in{' '}
+              <button
+                onClick={() => navigate('/s/profile?tab=data')}
+                className="font-semibold text-secondary hover:underline"
+              >
+                Data Rights →
+              </button>
             </p>
           </Card>
         ) : peerMetrics.length === 0 ? (

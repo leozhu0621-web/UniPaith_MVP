@@ -15,6 +15,7 @@ import { ExternalLink, GraduationCap } from 'lucide-react'
 import { getProfile, listAcademics } from '../../../api/students'
 import Card from '../../../components/ui/Card'
 import QueryError from '../../../components/ui/QueryError'
+import Skeleton from '../../../components/ui/Skeleton'
 
 interface Row {
   label: string
@@ -34,7 +35,13 @@ export default function BasicSignalsWidget() {
   const academics = academicsQ.data
 
   if (profileQ.isLoading || academicsQ.isLoading) {
-    return <Card className="text-sm text-foreground">Loading…</Card>
+    return (
+      <Card className="space-y-3 p-4">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-3/5" />
+      </Card>
+    )
   }
 
   if (profileQ.isError || academicsQ.isError) {
@@ -85,7 +92,7 @@ export default function BasicSignalsWidget() {
           <GraduationCap size={14} className="text-secondary" />
           Basic signals
         </div>
-        <p className="italic">
+        <p className="text-muted-foreground">
           As you share GPA, location, and education stage, I'll capture them here.
         </p>
       </Card>

@@ -45,13 +45,21 @@ class ConnectService:
         self.follows = FollowService(db)
 
     async def build_updates_feed(
-        self, student_id: UUID, *, rank: str = "recent", limit: int = 50
+        self,
+        student_id: UUID,
+        *,
+        rank: str = "recent",
+        limit: int = 50,
+        cursor: str | None = None,
     ) -> dict:
         """Assemble the Updates feed.
 
         ``rank`` is ``recent`` (reverse-chronological, pinned floated within an
         institution) or ``relevant`` (relevance heuristic; optionally refined by
-        the ConnectFeedRanker agent). Returns ``{items, followed_count, muted_count}``.
+        the ConnectFeedRanker agent). Returns
+        ``{items, followed_count, muted_count, next_cursor}``. ``cursor`` is the
+        ``id`` of the last item from the previous page (Spec 56 §4 — keyset
+        pagination over the ordered feed); ``next_cursor`` is null on the last page.
         """
         followed_all = await self.follows.followed_institution_ids(student_id, include_muted=True)
         muted = await self.follows.muted_institution_ids(student_id)
@@ -72,10 +80,23 @@ class ConnectService:
         else:
             items = self._order_recent(items)
 
+        # Keyset pagination over the ordered list (Spec 56 §4). The cursor is the
+        # id of the last item served; resume right after its current position so
+        # newly-arrived top-of-feed items are never re-served on later pages.
+        start = 0
+        if cursor:
+            ids = [it["id"] for it in items]
+            if cursor in ids:
+                start = ids.index(cursor) + 1
+        page = items[start : start + limit]
+        has_more = start + limit < len(items)
+        next_cursor = page[-1]["id"] if (has_more and page) else None
+
         return {
-            "items": items[:limit],
+            "items": page,
             "followed_count": len(followed_all),
             "muted_count": len(muted),
+            "next_cursor": next_cursor,
         }
 
     # ------------------------------------------------------------------

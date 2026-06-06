@@ -26,6 +26,7 @@ import {
 
 import { listGoals } from '../../../api/goals'
 import { activateStrategy, generateStrategy, getActiveStrategy } from '../../../api/strategy'
+import { formatRelative } from '../../../utils/format'
 import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
@@ -87,7 +88,7 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
     window.localStorage.setItem(COLLAPSED_KEY, next ? '1' : '0')
   }
 
-  if (strategyLoading) return null
+  if (strategyLoading) return <Card className="h-28 animate-pulse"><div className="h-full" /></Card>
 
   // Fetch failed → show a retry instead of falling through to a misleading
   // "no strategy / no goals" empty state (Spec 78 §3).
@@ -106,10 +107,10 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
   // State 1 — no goals at all → push student back to Discover.
   if (!strategy && goals.length === 0) {
     return (
-      <Card className="bg-primary/5 border-primary/30">
+      <Card className="bg-muted border-border">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <Compass size={18} className="text-primary mt-0.5 shrink-0" />
+            <Compass size={18} className="text-secondary mt-0.5 shrink-0" />
             <div>
               <div className="text-sm font-medium text-foreground">
                 Tell me about you first.
@@ -132,10 +133,10 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
   // State 2 — goals exist but no active strategy → offer to generate.
   if (!strategy) {
     return (
-      <Card className="bg-primary/5 border-primary/30">
+      <Card className="bg-muted border-border">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <Sparkles size={18} className="text-primary mt-0.5 shrink-0" />
+            <Sparkles size={18} className="text-secondary mt-0.5 shrink-0" />
             <div>
               <div className="text-sm font-medium text-foreground">
                 Ready to plan your strategy.
@@ -176,10 +177,10 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
           ) : (
             <ChevronDown size={14} className="text-foreground" />
           )}
-          <Target size={16} className="text-primary" />
+          <Target size={16} className="text-secondary" />
           <div>
-            <div className="text-xs uppercase tracking-wide text-foreground">
-              Active strategy · v{strategy.version}
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">
+              Active strategy · v{strategy.version}{strategy.generated_at ? ` · ${formatRelative(strategy.generated_at)}` : ''}
             </div>
             <div className="text-base font-semibold text-foreground">
               {strategy.career_target ?? 'Strategy'}
@@ -253,7 +254,7 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
 function StrategyLine({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="flex items-baseline gap-3">
-      <span className="w-24 shrink-0 text-[11px] uppercase tracking-wide text-foreground">
+      <span className="w-24 shrink-0 text-[11px] uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
       <span className="text-sm text-foreground min-w-0">{value?.trim() || '—'}</span>

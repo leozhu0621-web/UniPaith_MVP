@@ -19,6 +19,7 @@ export interface StudentProfile {
   user_id: string
   first_name: string | null
   last_name: string | null
+  preferred_pronouns: string | null
   date_of_birth: string | null
   nationality: string | null
   country_of_residence: string | null

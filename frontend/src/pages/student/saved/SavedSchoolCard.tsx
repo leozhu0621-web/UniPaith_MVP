@@ -1,5 +1,6 @@
 import { GraduationCap, MapPin, X } from 'lucide-react'
 import type { FollowedInstitution } from '../../../api/events'
+import { confirmDialog } from '../../../stores/confirm-store'
 
 interface Props {
   school: FollowedInstitution
@@ -19,7 +20,9 @@ export default function SavedSchoolCard({ school, onOpen, onUnfollow, unfollowin
           <h3 className="text-[15px] font-bold text-foreground leading-snug truncate">{school.name}</h3>
           <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
             <MapPin size={10} className="flex-shrink-0" />
-            Saved school · updates in Connect
+            {school.city && school.country
+              ? `${school.city}, ${school.country}`
+              : 'Saved school · updates in Connect'}
           </p>
         </div>
       </button>
@@ -27,9 +30,14 @@ export default function SavedSchoolCard({ school, onOpen, onUnfollow, unfollowin
         <div className="border-t border-border px-3 py-2 flex justify-end">
           <button
             type="button"
-            onClick={e => {
+            onClick={async e => {
               e.stopPropagation()
-              onUnfollow()
+              const ok = await confirmDialog({
+                title: `Stop following ${school.name}?`,
+                confirmLabel: 'Unfollow',
+                destructive: true,
+              })
+              if (ok) onUnfollow()
             }}
             disabled={unfollowing}
             className="text-[11px] font-medium text-muted-foreground hover:text-error inline-flex items-center gap-1 disabled:opacity-50"

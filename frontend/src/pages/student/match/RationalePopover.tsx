@@ -75,7 +75,7 @@ export default function RationalePopover({
         <header className="flex items-center justify-between gap-2 px-5 py-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Why this score?</h3>
+            <h3 className="text-sm font-semibold text-foreground">Why this match</h3>
             <AIBadge />
           </div>
           <button aria-label="Close" onClick={onClose} className="text-muted-foreground hover:text-foreground">
@@ -105,7 +105,7 @@ export default function RationalePopover({
                 {studentCitations.map(path => (
                   <span
                     key={path}
-                    className="inline-flex items-center gap-1 rounded-pill border border-primary bg-primary/10 px-2 py-0.5 text-xs text-foreground"
+                    className="inline-flex items-center gap-1 rounded-pill border border-secondary bg-secondary/10 px-2 py-0.5 text-xs text-foreground"
                   >
                     {prettyField(path)}
                   </span>

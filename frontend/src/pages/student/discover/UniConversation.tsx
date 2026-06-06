@@ -13,6 +13,7 @@ import {
   getSession,
   listSessions,
   startUnifiedSession,
+  streamDiscoveryMessage,
 } from '../../../api/discovery'
 import { getLivingProfile } from '../../../api/livingProfile'
 import type { LivingProfile } from '../../../api/livingProfile'
@@ -78,6 +79,19 @@ export default function UniConversation({
   // The student can wave off Uni's handoff offer; it re-surfaces after the next
   // turn (reset in the mutation's onSuccess).
   const [handoffDismissed, setHandoffDismissed] = useState(false)
+
+  // Token-streaming state (Spec 77 §6) — optimistic student bubble + an
+  // accumulating assistant bubble while Uni streams; cleared once the canonical
+  // session reloads. Falls back to the non-stream turnMut path on error.
+  const streamAbort = useRef<AbortController | null>(null)
+  const [streaming, setStreaming] = useState(false)
+  const [streamStudent, setStreamStudent] = useState<DiscoveryMessage | null>(null)
+  const [streamText, setStreamText] = useState('')
+  const canStream =
+    typeof window !== 'undefined' &&
+    typeof ReadableStream !== 'undefined' &&
+    !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  useEffect(() => () => streamAbort.current?.abort(), [])
 
   // Resolve the active unified (discovery) session, if any.
   const { data: sessions = [], isPending: sessionsLoading } = useQuery<DiscoverySession[]>({
@@ -145,7 +159,89 @@ export default function UniConversation({
   useEffect(() => {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
-  }, [messages.length, turnMut.isPending])
+  }, [messages.length, turnMut.isPending, streaming, streamText])
+
+  const refreshAfterTurn = async (sid: string) => {
+    await qc.invalidateQueries({ queryKey: ['discovery', 'session', sid] })
+    qc.invalidateQueries({ queryKey: ['discovery', 'completion'] })
+    qc.invalidateQueries({ queryKey: ['discovery', 'handoff'] })
+    qc.invalidateQueries({ queryKey: ['discovery', 'livingProfile'] })
+    qc.invalidateQueries({ queryKey: ['goals'] })
+    qc.invalidateQueries({ queryKey: ['needs'] })
+    qc.invalidateQueries({ queryKey: ['identity'] })
+  }
+
+  // Stream a turn over SSE (Spec 77 §6). Mirrors turnMut but renders Uni's reply
+  // token-by-token. On any connection failure with no persisted student echo it
+  // falls back to the non-streaming mutation (no duplicate turn).
+  const sendStreaming = async (text: string) => {
+    let sid = sessionId ?? resolvedSessionId
+    let studentEchoed = false
+    let finished = false
+    setStreaming(true)
+    setStreamText('')
+    setStreamStudent({
+      id: '__pending__',
+      session_id: sid ?? '',
+      role: 'student',
+      content: text,
+      extracted_signals: null,
+      created_at: new Date().toISOString(),
+    } as DiscoveryMessage)
+    setDraft('')
+    const ctrl = new AbortController()
+    streamAbort.current = ctrl
+    const finish = async () => {
+      if (finished) return
+      finished = true
+      setHandoffDismissed(false)
+      if (sid) await refreshAfterTurn(sid)
+      setStreaming(false)
+      setStreamStudent(null)
+      setStreamText('')
+    }
+    try {
+      if (!sid) {
+        const created = await startUnifiedSession()
+        sid = created.id
+        qc.invalidateQueries({ queryKey: ['discovery', 'sessions', 'unified'] })
+      }
+      if (sid !== sessionId) setSessionId(sid)
+      await streamDiscoveryMessage(
+        sid,
+        { role: 'student', content: text },
+        {
+          onStudentMessage: msg => {
+            studentEchoed = true
+            setStreamStudent(msg)
+          },
+          onDelta: t => setStreamText(prev => prev + t),
+          onAssistantMessage: msg => {
+            if (msg?.content) setStreamText(msg.content)
+          },
+          onError: m => showToast(m || 'Could not send message.', 'error'),
+          onDone: () => {
+            void finish()
+          },
+        },
+        ctrl.signal,
+      )
+      await finish()
+    } catch (e) {
+      if (ctrl.signal.aborted) return
+      setStreaming(false)
+      setStreamStudent(null)
+      setStreamText('')
+      if (sid && !studentEchoed) {
+        turnMut.mutate(text)
+      } else if (sid) {
+        await refreshAfterTurn(sid)
+        showToast('Connection interrupted — your message was saved.', 'info')
+      } else {
+        showToast((e as Error).message || 'Could not send message.', 'error')
+      }
+    }
+  }
 
   const send = (content: string) => {
     const text = content.trim()
@@ -154,16 +250,17 @@ export default function UniConversation({
     // session while an existing one is still loading. Surface a toast instead of
     // dropping the message silently (e.g. a profile-drawer gap invitation tapped
     // while Uni is still replying), so it never looks accepted-but-ignored.
-    if (turnMut.isPending || sessionsLoading) {
+    if (turnMut.isPending || streaming || sessionsLoading) {
       showToast(
-        turnMut.isPending
+        turnMut.isPending || streaming
           ? 'Uni is still replying — try again in a moment.'
           : 'One moment — still getting set up…',
         'info',
       )
       return
     }
-    turnMut.mutate(text)
+    if (canStream) void sendStreaming(text)
+    else turnMut.mutate(text)
   }
 
   return (
@@ -205,7 +302,21 @@ export default function UniConversation({
             )
           })
         )}
-        {turnMut.isPending && (
+        {/* In-flight streaming turn (Spec 77 §6) — optimistic student + live reply. */}
+        {streaming && streamStudent && <UniBubble message={streamStudent} />}
+        {streaming && streamText && (
+          <div className="flex justify-start gap-2.5">
+            <div className="h-7 w-7 rounded-full bg-secondary text-white flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold">
+              U
+            </div>
+            <div className="rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words max-w-[80%] leading-relaxed bg-card border border-border text-foreground rounded-bl-sm">
+              {streamText}
+              <span className="ml-0.5 inline-block h-3.5 w-px align-middle bg-secondary motion-safe:animate-pulse" />
+            </div>
+          </div>
+        )}
+
+        {(turnMut.isPending || (streaming && !streamText)) && (
           <div className="flex justify-start gap-2.5">
             <div className="h-7 w-7 rounded-full bg-secondary text-white flex items-center justify-center shrink-0 text-xs font-semibold">
               U
@@ -226,12 +337,12 @@ export default function UniConversation({
           </div>
         )}
 
-        {!isEmpty && !handoffDismissed && (
+        {!isEmpty && !handoffDismissed && !streaming && (
           <MatchHandoffCard variant="always" onKeepTalking={() => setHandoffDismissed(true)} />
         )}
       </div>
 
-      {!turnMut.isPending && (
+      {!turnMut.isPending && !streaming && (
         <div className="mb-2 flex flex-wrap gap-1.5">
           {QUICK_REPLIES.map(s => (
             <button
@@ -266,14 +377,14 @@ export default function UniConversation({
           }}
           placeholder="Tell Uni what's on your mind…"
           className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-secondary"
-          disabled={turnMut.isPending}
+          disabled={turnMut.isPending || streaming}
         />
         <Button
           type="submit"
           variant="secondary"
           size="sm"
-          loading={turnMut.isPending}
-          disabled={!draft.trim()}
+          loading={turnMut.isPending || streaming}
+          disabled={!draft.trim() || streaming}
           aria-label="Send message"
         >
           <ArrowUp size={16} />

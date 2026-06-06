@@ -41,6 +41,8 @@ export interface ConnectFeed {
   items: ConnectFeedItem[]
   followed_count: number
   muted_count: number
+  /** Spec 56 §4 — keyset cursor for the next page; null/absent on the last page. */
+  next_cursor?: string | null
 }
 
 export type RsvpState = 'none' | 'rsvp' | 'waitlist' | 'attended'
@@ -107,8 +109,12 @@ export interface PeerVisibilityProfile {
 
 // ── Updates feed (§4) ────────────────────────────────────────────────────────
 
-export const getConnectFeed = (rank: 'recent' | 'relevant' = 'recent') =>
-  apiClient.get('/connect/feed', { params: { tab: 'updates', rank, limit: 50 } }).then(r => r.data as ConnectFeed)
+export const getConnectFeed = (rank: 'recent' | 'relevant' = 'recent', cursor?: string | null) =>
+  apiClient
+    .get('/connect/feed', {
+      params: { tab: 'updates', rank, limit: 50, ...(cursor ? { cursor } : {}) },
+    })
+    .then(r => r.data as ConnectFeed)
 
 // ── Events (§5) ──────────────────────────────────────────────────────────────
 

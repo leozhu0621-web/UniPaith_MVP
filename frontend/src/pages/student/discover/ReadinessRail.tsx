@@ -14,7 +14,6 @@
  */
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { CheckCircle2, Circle, HelpCircle, Sparkles, Target } from "lucide-react";
 import clsx from "clsx";
 
@@ -27,7 +26,6 @@ import {
   type Clarification,
   type MatchReadyMissing,
 } from "../../../api/intake";
-import { generateStrategy } from "../../../api/strategy";
 import Button from "../../../components/ui/Button";
 import Card from "../../../components/ui/Card";
 import QueryError from "../../../components/ui/QueryError";
@@ -108,7 +106,7 @@ function QuickFillRow({ item, onSaved }: { item: MatchReadyMissing; onSaved: () 
         <Circle size={13} className="shrink-0 text-muted-foreground" />
         <span className="flex-1">{item.label}</span>
         {item.detail && <span className="text-xs text-muted-foreground">{item.detail}</span>}
-        <span className="text-xs text-secondary">{open ? "Cancel" : "Add"}</span>
+        <span className="text-xs text-secondary">{open ? "Close" : "Add"}</span>
       </button>
 
       {open && (
@@ -231,9 +229,12 @@ function ClarificationCard({ clar, onResolved }: { clar: Clarification; onResolv
   );
 }
 
-export default function ReadinessRail() {
+export default function ReadinessRail({
+  onGenerateStrategy,
+}: {
+  onGenerateStrategy?: () => void
+}) {
   const qc = useQueryClient();
-  const navigate = useNavigate();
 
   const matchReady = useQuery({ queryKey: ["intake", "match-ready"], queryFn: getMatchReady });
   const completeness = useQuery({ queryKey: ["intake", "completeness"], queryFn: getCompleteness });
@@ -248,17 +249,6 @@ export default function ReadinessRail() {
     qc.invalidateQueries({ queryKey: ["matching"] });
     qc.invalidateQueries({ queryKey: ["discovery"] });
   };
-
-  const generateMut = useMutation({
-    mutationFn: () => generateStrategy(),
-    onSuccess: () => {
-      showToast("Draft strategy generated.", "success");
-      qc.invalidateQueries({ queryKey: ["strategy"] });
-      navigate("/s/explore?showStrategy=open");
-    },
-    onError: (e: unknown) =>
-      showToast((e as Error).message ?? "Could not generate strategy.", "error"),
-  });
 
   if (matchReady.isLoading || completeness.isLoading) {
     return (
@@ -326,8 +316,7 @@ export default function ReadinessRail() {
           size="sm"
           variant="primary"
           className="w-full"
-          loading={generateMut.isPending}
-          onClick={() => generateMut.mutate()}
+          onClick={() => onGenerateStrategy?.()}
         >
           <Sparkles size={14} className="mr-1" /> Generate your first strategy
         </Button>

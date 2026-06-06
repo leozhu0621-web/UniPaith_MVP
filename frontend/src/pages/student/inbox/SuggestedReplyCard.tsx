@@ -37,7 +37,7 @@ export default function SuggestedReplyCard({
   }
 
   return (
-    <div className="rounded-xl border border-accent/40 bg-card p-3 shadow-sm">
+    <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
       <div className="flex items-center justify-between gap-2 mb-2">
         <AIBadge label="AI suggestion" />
         {drafts.length > 1 && (

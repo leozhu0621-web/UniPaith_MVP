@@ -16,13 +16,20 @@ import Card from '../../../components/ui/Card'
 import { showToast } from '../../../stores/toast-store'
 import type { WorkshopFeedbackRun } from '../../../types'
 
+import AIBadge from '../../../components/ui/AIBadge'
 import { RubricScores } from './RubricDots'
-import { EmptyHint, ErrorNote, ReadinessCard, StubNote } from './WorkshopShared'
+import { EmptyHint, ErrorNote, ReadinessCard } from './WorkshopShared'
 import WorkshopProgramPicker, {
   type ProgramOption,
   type WorkshopMode,
 } from './WorkshopProgramPicker'
-import { IMPORTANCE_VARIANT, SEVERITY_VARIANT, readinessSummary } from './workshopReadiness'
+import {
+  IMPORTANCE_LABEL,
+  IMPORTANCE_VARIANT,
+  SEVERITY_LABEL,
+  SEVERITY_VARIANT,
+  readinessSummary,
+} from './workshopReadiness'
 
 export default function EssayFeedbackPanel() {
   const [essay, setEssay] = useState('')
@@ -79,16 +86,16 @@ export default function EssayFeedbackPanel() {
             Your essay <span className="text-error">*</span>
           </label>
           <textarea
-            className="w-full rounded-md border border-border px-3 py-2 font-mono text-sm"
+            className="w-full rounded-md border border-border px-3 py-2 text-sm"
             rows={14}
             maxLength={20000}
             value={essay}
             onChange={e => setEssay(e.target.value)}
             placeholder="Paste your draft. Minimum 20 characters."
           />
-          <div className="mt-1 flex items-center justify-between text-xs text-foreground">
+          <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
             <span>{wordCount} words</span>
-            <span>I'll critique structure and flag missing elements. I won't rewrite it.</span>
+            <span>We score structure and flag missing elements — we never rewrite your essay.</span>
           </div>
         </div>
 
@@ -118,27 +125,27 @@ export default function EssayFeedbackPanel() {
 
           <Card>
             <div className="mb-3 flex items-center justify-between">
-              <div className="text-eyebrow uppercase text-foreground">Rubric scores</div>
-              {run.is_stub && <StubNote />}
+              <div className="text-eyebrow uppercase text-muted-foreground">Rubric scores</div>
+              <AIBadge fallback={run.is_stub} />
             </div>
             <RubricScores scores={run.rubric_scores} />
           </Card>
 
           {(run.structural_issues?.length ?? 0) > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-foreground">
+              <div className="mb-2 text-eyebrow uppercase text-muted-foreground">
                 Structural issues · {run.structural_issues.length}
               </div>
               <ul className="space-y-2">
                 {run.structural_issues.map((iss, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <Badge variant={SEVERITY_VARIANT[iss.severity]} size="sm">
-                      {iss.severity}
+                      {SEVERITY_LABEL[iss.severity]}
                     </Badge>
                     <div className="flex-1">
                       <div className="text-foreground">{iss.issue}</div>
                       {iss.location_ref && (
-                        <div className="mt-0.5 text-xs text-foreground">{iss.location_ref}</div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">{iss.location_ref}</div>
                       )}
                     </div>
                   </li>
@@ -149,14 +156,14 @@ export default function EssayFeedbackPanel() {
 
           {(run.missing_elements?.length ?? 0) > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-foreground">
+              <div className="mb-2 text-eyebrow uppercase text-muted-foreground">
                 Missing elements · {run.missing_elements.length}
               </div>
               <ul className="space-y-2">
                 {run.missing_elements.map((m, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <Badge variant={IMPORTANCE_VARIANT[m.importance]} size="sm">
-                      {m.importance.replace(/_/g, ' ')}
+                      {IMPORTANCE_LABEL[m.importance]}
                     </Badge>
                     <span className="flex-1 text-foreground">{m.element}</span>
                   </li>

@@ -32,7 +32,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </Link>
           <Link
             to="/signup"
-            className="ui-btn inline-flex items-center justify-center h-9 px-4 text-sm font-semibold rounded-lg bg-primary text-on-primary hover:brightness-95 transition-colors"
+            className="ui-btn inline-flex items-center justify-center h-9 px-4 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:brightness-95 transition-colors"
           >
             Get started
           </Link>

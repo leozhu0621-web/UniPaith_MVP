@@ -14,7 +14,7 @@ export default function SchoolCard({ school, institutionName, onClick }: Props) 
   return (
     <div
       onClick={onClick}
-      className="bg-card rounded-lg border border-border hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
+      className="bg-card rounded-lg border border-border hover:elev-raised transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
     >
       <div className="flex-1 px-5 pt-4 pb-3">
         <h3 className="text-[15px] font-bold text-foreground leading-snug mb-1">{school.name}</h3>

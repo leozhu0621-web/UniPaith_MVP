@@ -59,17 +59,17 @@ export interface CategoryStat {
   lastUpdated: string | null
 }
 
-export const CATEGORY_META: { key: CategoryKey; label: string; tab: string }[] = [
-  { key: 'personal', label: 'Personal', tab: 'overview' },
-  { key: 'identity', label: 'Identity', tab: 'identity' },
-  { key: 'academics', label: 'Academics', tab: 'academics' },
-  { key: 'experience', label: 'Experience', tab: 'experience' },
-  { key: 'goals', label: 'Goals', tab: 'goals' },
-  { key: 'needs', label: 'Needs', tab: 'needs' },
-  { key: 'strategy', label: 'Strategy', tab: 'strategy' },
-  { key: 'preparation', label: 'Preparation', tab: 'preparation' },
-  { key: 'preferences', label: 'Preferences', tab: 'preferences' },
-  { key: 'financial', label: 'Financial', tab: 'financial' },
+export const CATEGORY_META: { key: CategoryKey; label: string; tab: string; hint: string }[] = [
+  { key: 'personal', label: 'Personal', tab: 'overview', hint: 'Unlocks your personalised program intro on match cards.' },
+  { key: 'identity', label: 'Identity', tab: 'identity', hint: 'Unlocks values-based match rationales and the AI summary.' },
+  { key: 'academics', label: 'Academics', tab: 'academics', hint: 'Unlocks fitness score improvements and transcript comparisons.' },
+  { key: 'experience', label: 'Experience', tab: 'experience', hint: 'Unlocks activity and research signal in match scoring.' },
+  { key: 'goals', label: 'Goals', tab: 'goals', hint: 'Unlocks Strategy generation and goal-aligned match filters.' },
+  { key: 'needs', label: 'Needs', tab: 'needs', hint: 'Unlocks need-aware filtering (support services, campus culture).' },
+  { key: 'strategy', label: 'Strategy', tab: 'strategy', hint: 'Unlocks the broad-strategy view on your Match page.' },
+  { key: 'preparation', label: 'Preparation', tab: 'preparation', hint: 'Unlocks document-based completeness checks before applying.' },
+  { key: 'preferences', label: 'Preferences', tab: 'preferences', hint: 'Unlocks location, size, and format filters in Match.' },
+  { key: 'financial', label: 'Financial', tab: 'financial', hint: 'Unlocks net-cost comparisons and aid-likelihood signals.' },
 ]
 
 function maxDate(...isos: (string | null | undefined)[]): string | null {

@@ -4,8 +4,9 @@
 // suggested artifacts, and the bridge plan come from the MajorTrackCoach overlay
 // (flag-gated). Feedback-only ethos: we surface gaps, never fill the field.
 import clsx from 'clsx'
-import { Compass, Lightbulb, Sparkles } from 'lucide-react'
+import { Compass, Lightbulb } from 'lucide-react'
 
+import AIBadge from '../../../../components/ui/AIBadge'
 import Card from '../../../../components/ui/Card'
 import type { TrackCoach } from '../../../../types/majorSpecific'
 
@@ -18,7 +19,12 @@ function ScoreRing({ score, band }: { score: number; band: TrackCoach['readiness
   const offset = c * (1 - Math.max(0, Math.min(100, score)) / 100)
   return (
     <div className="relative h-[76px] w-[76px] shrink-0">
-      <svg viewBox="0 0 76 76" className="h-full w-full -rotate-90">
+      <svg
+        viewBox="0 0 76 76"
+        className="h-full w-full -rotate-90"
+        role="img"
+        aria-label={`${score} out of 100 — ${meta.label}`}
+      >
         <circle
           cx="38"
           cy="38"
@@ -89,7 +95,7 @@ export default function TrackReadinessHeader({ coach }: { coach: TrackCoach }) {
                 <div
                   className={clsx(
                     'h-full rounded-full transition-all duration-500',
-                    depth >= 70 ? 'bg-primary' : depth >= 40 ? 'bg-secondary' : 'bg-warning',
+                    depth >= 70 ? 'bg-secondary' : depth >= 40 ? 'bg-secondary/60' : 'bg-warning',
                   )}
                   style={{ width: `${Math.max(2, depth)}%` }}
                 />
@@ -137,7 +143,7 @@ export default function TrackReadinessHeader({ coach }: { coach: TrackCoach }) {
 
       {coach.suggested_bridge_plan && (
         <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5">
-          <Sparkles size={15} className="mt-0.5 shrink-0 text-primary" />
+          <AIBadge className="mt-0.5 shrink-0" />
           <p className="text-sm text-foreground">{coach.suggested_bridge_plan}</p>
         </div>
       )}

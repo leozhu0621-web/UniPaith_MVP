@@ -12,11 +12,11 @@ export default function PromoCard({ promo, onView }: Props) {
   return (
     <div
       onClick={onView}
-      className="bg-card rounded-lg border border-border border-l-2 border-l-student hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
+      className="bg-card rounded-lg border border-border border-l-2 border-l-secondary hover:elev-raised transition-shadow overflow-hidden cursor-pointer"
     >
       <div className="flex items-center gap-2 px-4 pt-3 pb-1">
-        <Sparkles size={12} className="text-primary" />
-        <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Featured program</span>
+        <Sparkles size={12} className="text-secondary" />
+        <span className="text-[10px] font-semibold text-secondary uppercase tracking-wider">Featured program</span>
       </div>
       <div className="px-4 pb-4">
         <h3 className="text-sm font-semibold text-foreground mb-1">{promo.title}</h3>

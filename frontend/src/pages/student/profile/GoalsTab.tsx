@@ -22,6 +22,8 @@ import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import Modal from '../../../components/ui/Modal'
+import QueryError from '../../../components/ui/QueryError'
+import { SkeletonCard } from '../../../components/ui/Skeleton'
 import { showToast } from '../../../stores/toast-store'
 import { formatDate } from '../../../utils/format'
 import { ConfidenceDots } from './shared'
@@ -199,7 +201,7 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
 
 export default function GoalsTab() {
   const qc = useQueryClient()
-  const { data: goals = [], isLoading } = useQuery<StudentGoal[]>({
+  const { data: goals = [], isLoading, isError, refetch } = useQuery<StudentGoal[]>({
     queryKey: ['goals'],
     queryFn: () => listGoals(),
   })
@@ -245,11 +247,13 @@ export default function GoalsTab() {
   }
   for (const g of goals) if (grouped[g.category]) grouped[g.category].push(g)
 
+  if (isError) return <QueryError onRetry={() => refetch()} />
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">SMART goals</h2>
+          <h2 className="text-lg font-semibold text-foreground">Your goals</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Specific, measurable, achievable, relevant, time-bound. Discovery-sourced goals show a
             confidence badge; you can edit anything.
@@ -260,7 +264,13 @@ export default function GoalsTab() {
         </Button>
       </div>
 
-      {isLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
+      {isLoading && (
+        <div className="space-y-3">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      )}
 
       {!isLoading &&
         CATEGORIES.map(cat => (
@@ -270,8 +280,8 @@ export default function GoalsTab() {
               <span className="text-xs text-muted-foreground">{cat.hint}</span>
             </div>
             {grouped[cat.key].length === 0 ? (
-              <Card className="p-4 text-sm text-muted-foreground italic">
-                No {cat.label.toLowerCase()} goals yet.
+              <Card className="p-4 text-sm text-muted-foreground">
+                No {cat.label.toLowerCase()} goals yet — add one above.
               </Card>
             ) : (
               <div className="space-y-2">

@@ -21,9 +21,13 @@ import {
   regenerateIdentitySummary,
   upsertIdentity,
 } from '../../../api/identity'
+import AIBadge from '../../../components/ui/AIBadge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
+import EmptyState from '../../../components/ui/EmptyState'
 import Modal from '../../../components/ui/Modal'
+import QueryError from '../../../components/ui/QueryError'
+import { SkeletonCard } from '../../../components/ui/Skeleton'
 import { showToast } from '../../../stores/toast-store'
 import { relativeShort } from './shared'
 import type {
@@ -225,7 +229,7 @@ function ItemFooter({ onCancel, submitting }: { onCancel: () => void; submitting
 export default function IdentityTab() {
   const qc = useQueryClient()
   const navigate = useNavigate()
-  const { data: identity, isLoading } = useQuery<StudentIdentity>({
+  const { data: identity, isLoading, isError, refetch } = useQuery<StudentIdentity>({
     queryKey: ['identity'],
     queryFn: () => getIdentity(),
   })
@@ -291,8 +295,15 @@ export default function IdentityTab() {
     }
   }
 
+  if (isError) return <QueryError onRetry={() => refetch()} />
   if (isLoading || !identity) {
-    return <div className="text-sm text-muted-foreground">Loading…</div>
+    return (
+      <div className="space-y-3">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+    )
   }
 
   return (
@@ -343,7 +354,7 @@ export default function IdentityTab() {
         }
       >
         {identity.core_values.length === 0 ? (
-          <Empty kind="value" />
+          <Empty kind="value" addLabel="Add value" onAdd={() => setEditing({ kind: 'core_values', index: null, draft: { ...(EMPTY.core_values as CoreValue) } })} />
         ) : (
           identity.core_values.map((v, i) => (
             <Card key={i} className="p-4 space-y-1">
@@ -384,7 +395,7 @@ export default function IdentityTab() {
         }
       >
         {identity.worldview.length === 0 ? (
-          <Empty kind="belief" />
+          <Empty kind="belief" addLabel="Add belief" onAdd={() => setEditing({ kind: 'worldview', index: null, draft: { ...(EMPTY.worldview as WorldviewItem) } })} />
         ) : (
           identity.worldview.map((w, i) => (
             <Card key={i} className="p-4 space-y-1">
@@ -420,7 +431,7 @@ export default function IdentityTab() {
         }
       >
         {identity.self_awareness.length === 0 ? (
-          <Empty kind="insight" />
+          <Empty kind="insight" addLabel="Add insight" onAdd={() => setEditing({ kind: 'self_awareness', index: null, draft: { ...(EMPTY.self_awareness as SelfAwarenessItem) } })} />
         ) : (
           identity.self_awareness.map((s, i) => (
             <Card key={i} className="p-4 space-y-1">
@@ -448,9 +459,7 @@ export default function IdentityTab() {
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
             <h3 className="text-h3 text-foreground">AI summary</h3>
-            <span className="inline-flex items-center gap-1 rounded-pill border border-accent px-2 py-0.5 text-[11px] font-semibold text-accent">
-              <Sparkles size={10} /> AI
-            </span>
+            <AIBadge />
           </div>
           <Button
             variant="ghost"
@@ -523,8 +532,14 @@ function Section({ title, hint, addLabel, onAdd, children }: SectionProps) {
   )
 }
 
-function Empty({ kind }: { kind: string }) {
-  return <Card className="p-4 text-sm text-muted-foreground italic">No {kind}s recorded yet.</Card>
+function Empty({ kind, addLabel, onAdd }: { kind: string; addLabel: string; onAdd: () => void }) {
+  return (
+    <EmptyState
+      title={`No ${kind}s added yet`}
+      description={`Add your first ${kind} to start building this layer of your profile.`}
+      action={{ label: addLabel, onClick: onAdd }}
+    />
+  )
 }
 
 function ItemActions({ onEdit, onRemove }: { onEdit: () => void; onRemove: () => void }) {

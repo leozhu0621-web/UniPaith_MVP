@@ -114,6 +114,7 @@ export default function ApplicationsPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | Bucket>('all')
   const [institution, setInstitution] = useState('all')
   const [deadlineWindow, setDeadlineWindow] = useState('all')
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'reach' | 'target' | 'safer'>('all')
   const [sort, setSort] = useState<'deadline' | 'readiness' | 'fit'>('deadline')
   const [showCompare, setShowCompare] = useState(false)
 
@@ -169,6 +170,12 @@ export default function ApplicationsPage() {
     let list = apps
     if (statusFilter !== 'all') list = list.filter(a => bucketOf(a) === statusFilter)
     if (institution !== 'all') list = list.filter(a => a.program?.institution_name === institution)
+    if (priorityFilter !== 'all') {
+      // Map reach/target/safer to fit_band values (low/medium/high).
+      const bandMap: Record<string, string> = { reach: 'low', target: 'medium', safer: 'high' }
+      const band = bandMap[priorityFilter]
+      list = list.filter(a => a.fit_band === band)
+    }
     if (deadlineWindow !== 'all') {
       list = list.filter(a => {
         const d = daysUntil(a.program?.application_deadline)
@@ -195,7 +202,7 @@ export default function ApplicationsPage() {
       return da - db
     })
     return sorted
-  }, [apps, statusFilter, institution, deadlineWindow, sort])
+  }, [apps, statusFilter, institution, deadlineWindow, priorityFilter, sort])
 
   if (isLoading)
     return <div className="p-4 max-w-5xl w-full mx-auto space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
@@ -262,7 +269,7 @@ export default function ApplicationsPage() {
                 ? `You have ${pendingOfferApps.length} offer${pendingOfferApps.length !== 1 ? 's' : ''} to respond to`
                 : `${offerApps.length} offer${offerApps.length !== 1 ? 's' : ''} on the table`}
             </p>
-            <p className="text-xs text-foreground">Weigh cost, fit, and deadlines side by side.</p>
+            <p className="text-xs text-muted-foreground">Weigh cost, fit, and deadlines side by side.</p>
           </div>
           {offerApps.length >= 2 ? (
             <button
@@ -313,7 +320,7 @@ export default function ApplicationsPage() {
                   onClick={() => navigate(appHref(a))}
                   className="w-full flex items-center gap-2 text-left text-sm hover:bg-muted rounded-lg px-2 py-1.5"
                 >
-                  <Star size={14} className="text-primary flex-shrink-0" fill="currentColor" />
+                  <Star size={14} className="text-secondary flex-shrink-0" fill="currentColor" />
                   <span className="flex-1 min-w-0 truncate text-foreground">
                     {nextAction(a)} — <span className="text-foreground">{a.program?.program_name}</span>
                   </span>
@@ -363,6 +370,19 @@ export default function ApplicationsPage() {
             ]}
           />
         </div>
+        <div className="w-full sm:w-40">
+          <Select
+            aria-label="Filter by priority"
+            value={priorityFilter}
+            onChange={e => setPriorityFilter(e.target.value as 'all' | 'reach' | 'target' | 'safer')}
+            options={[
+              { value: 'all', label: 'Any priority' },
+              { value: 'reach', label: 'Reach' },
+              { value: 'target', label: 'Target' },
+              { value: 'safer', label: 'Safer' },
+            ]}
+          />
+        </div>
         <div className="w-full sm:w-44">
           <Select
             aria-label="Sort"
@@ -401,7 +421,7 @@ export default function ApplicationsPage() {
                       {app.program?.program_name || 'Program'}
                     </p>
                     {app.program?.institution_name && (
-                      <p className="text-xs text-foreground mt-0.5">{app.program.institution_name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{app.program.institution_name}</p>
                     )}
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
                       <Badge variant={(STATUS_COLORS[app.status] || 'neutral') as never}>
@@ -414,7 +434,7 @@ export default function ApplicationsPage() {
                         <Badge variant={(STATUS_COLORS[app.decision] || 'neutral') as never}>{app.decision}</Badge>
                       )}
                       {isDraft && (
-                        <span className="text-xs text-foreground">{pct}% ready</span>
+                        <span className="text-xs text-muted-foreground">{pct}% ready</span>
                       )}
                       {d != null && d >= 0 && d <= 30 && isDraft && (
                         <span className={`text-xs font-medium inline-flex items-center gap-1 ${d <= 7 ? 'text-destructive' : 'text-warning'}`}>
@@ -430,7 +450,7 @@ export default function ApplicationsPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-foreground mt-2">Next: {nextAction(app)}</p>
+                    <p className="text-xs text-muted-foreground mt-2">Next: {nextAction(app)}</p>
                     {app.submitted_at && (
                       <p className="text-[11px] text-muted-foreground mt-1">Submitted {formatDate(app.submitted_at)}</p>
                     )}

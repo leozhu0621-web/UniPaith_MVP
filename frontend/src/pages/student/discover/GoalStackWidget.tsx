@@ -11,6 +11,7 @@ import { ExternalLink, Target } from 'lucide-react'
 import { listGoals } from '../../../api/goals'
 import Card from '../../../components/ui/Card'
 import QueryError from '../../../components/ui/QueryError'
+import Skeleton from '../../../components/ui/Skeleton'
 import type { GoalCategory, StudentGoal } from '../../../types'
 
 const CATEGORIES: { key: GoalCategory; label: string }[] = [
@@ -26,14 +27,21 @@ export default function GoalStackWidget() {
   })
 
   if (isLoading) {
-    return <Card className="text-sm text-foreground">Loading…</Card>
+    return (
+      <Card className="space-y-3 p-4">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-4/5" />
+        <Skeleton className="h-3 w-3/5" />
+      </Card>
+    )
   }
 
   if (isError) {
     return (
       <Card className="space-y-2">
         <div className="flex items-center gap-2 text-foreground font-medium text-sm">
-          <Target size={14} className="text-primary" />
+          <Target size={14} className="text-secondary" />
           Goal stack
         </div>
         <QueryError
@@ -49,10 +57,10 @@ export default function GoalStackWidget() {
     return (
       <Card className="text-sm text-foreground space-y-2">
         <div className="flex items-center gap-2 text-foreground font-medium">
-          <Target size={14} className="text-primary" />
+          <Target size={14} className="text-secondary" />
           Goal stack
         </div>
-        <p className="italic">
+        <p className="text-muted-foreground">
           As you talk through goals, I'll capture them as SMART rows here.
         </p>
       </Card>
@@ -70,12 +78,12 @@ export default function GoalStackWidget() {
     <Card className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-foreground font-medium text-sm">
-          <Target size={14} className="text-primary" />
+          <Target size={14} className="text-secondary" />
           Goal stack · {goals.length}
         </div>
         <Link
           to="/s/profile?tab=goals"
-          className="text-xs text-primary inline-flex items-center gap-1 hover:underline"
+          className="text-xs text-secondary inline-flex items-center gap-1 hover:underline"
         >
           Manage <ExternalLink size={11} />
         </Link>
@@ -86,7 +94,7 @@ export default function GoalStackWidget() {
         if (items.length === 0) return null
         return (
           <div key={c.key}>
-            <div className="text-[10px] uppercase tracking-wide text-foreground mb-1.5">
+            <div className="text-eyebrow uppercase text-muted-foreground mb-1.5">
               {c.label} · {items.length}
             </div>
             <ul className="space-y-1">

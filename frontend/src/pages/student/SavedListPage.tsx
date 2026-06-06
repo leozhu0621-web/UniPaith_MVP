@@ -54,7 +54,7 @@ export default function SavedListPage() {
     setSearchParams(p, { replace: true })
   }
   const [viewMode, setViewMode] = useState<ViewMode>('tier')
-  const [sortKey, setSortKey] = useState<SortKey>('match_score')
+  const [sortKey, setSortKey] = useState<SortKey>('fitness_score')
   const [filterKey, setFilterKey] = useState<FilterKey>('all')
   const [showDropped, setShowDropped] = useState(false)
   const [bulkBusy, setBulkBusy] = useState(false)
@@ -252,7 +252,7 @@ export default function SavedListPage() {
     )
   }
 
-  if (isError) {
+  if (isError && programs.length === 0) {
     return (
       <div className="p-4 max-w-5xl w-full mx-auto">
         <QueryError detail="We couldn't load your saved list." onRetry={() => refetch()} />
@@ -366,7 +366,7 @@ export default function SavedListPage() {
                 onChange={e => setSortKey(e.target.value as SortKey)}
                 className="text-xs font-medium border border-border rounded-md px-2 py-1 bg-card text-foreground"
               >
-                <option value="match_score">Match score</option>
+                <option value="fitness_score">Fitness score</option>
                 <option value="date_added">Date added</option>
                 <option value="deadline">Deadline</option>
               </select>
