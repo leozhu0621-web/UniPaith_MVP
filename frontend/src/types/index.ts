@@ -2717,7 +2717,7 @@ export interface PipelineStatus {
 
 // ============ PHASE A — DISCOVERY ============
 
-export type DiscoveryTrack = 'profile' | 'goals' | 'needs'
+export type DiscoveryTrack = 'profile' | 'goals' | 'needs' | 'discovery'
 export type DiscoveryLayer = 'basic' | 'personality' | 'identity'
 export type DiscoveryStatus = 'active' | 'completed' | 'abandoned'
 export type DiscoveryRole = 'student' | 'assistant' | 'system'
