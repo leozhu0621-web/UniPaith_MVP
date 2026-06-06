@@ -1,14 +1,15 @@
 // Connect → Events (Spec 20 §5). Upcoming | Past | My RSVPs; RSVP / waitlist;
-// add-to-calendar; detail modal with meeting-link reveal near start.
+// add-to-calendar; detail sheet with meeting-link reveal near start.
 // Brand: cobalt CTAs; GOLD reserved for the RSVP-confirmed state (§10).
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  CalendarPlus, Clock, ExternalLink, MapPin, Sparkles, Users, Video, X,
+  CalendarPlus, Clock, ExternalLink, MapPin, Sparkles, Users, Video,
 } from 'lucide-react'
 import { getConnectEvents, type ConnectEvent } from '../../../api/connect'
 import { rsvpEvent, cancelRsvp, addEventToCalendar } from '../../../api/events'
 import Sheet from '../../../components/ui/Sheet'
+import QueryError from '../../../components/ui/QueryError'
 
 type Scope = 'upcoming' | 'past' | 'mine'
 
@@ -34,26 +35,12 @@ function fmtDate(iso: string) {
   })
 }
 
-function useIsMobile() {
-  const [mobile, setMobile] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches,
-  )
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 639px)')
-    const onChange = () => setMobile(mq.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [])
-  return mobile
-}
-
 export default function EventsTab() {
   const qc = useQueryClient()
-  const isMobile = useIsMobile()
   const [scope, setScope] = useState<Scope>('upcoming')
   const [detail, setDetail] = useState<ConnectEvent | null>(null)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['connect-events', scope],
     queryFn: () => getConnectEvents(scope),
     retry: false,
@@ -80,7 +67,7 @@ export default function EventsTab() {
             className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
               scope === s.key
                 ? 'bg-secondary text-secondary-foreground'
-                : 'bg-muted text-foreground hover:text-foreground'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
             }`}
           >
             {s.label}
@@ -92,10 +79,12 @@ export default function EventsTab() {
         <div className="space-y-3">
           {[1, 2, 3].map(i => <div key={i} className="h-24 bg-card rounded-xl border border-border animate-pulse" />)}
         </div>
+      ) : isError ? (
+        <QueryError onRetry={() => refetch()} />
       ) : events.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-sm text-foreground">
-            {scope === 'mine' ? "You haven't RSVP'd to anything yet."
+          <p className="text-sm text-muted-foreground">
+            {scope === 'mine' ? 'Events you RSVP to will show up here.'
               : scope === 'past' ? 'No past events.'
               : 'No upcoming events from the institutions you follow.'}
           </p>
@@ -113,38 +102,30 @@ export default function EventsTab() {
         ))
       )}
 
+      {/* Detail sheet — right on desktop, bottom on mobile */}
       {detail && (
-        isMobile ? (
-          <Sheet
-            isOpen
-            onClose={() => setDetail(null)}
-            title={detail.event_name}
-            side="bottom"
-            footer={
-              <div className="flex items-center gap-2">
-                <RsvpButton
-                  event={detail}
-                  onRsvp={() => rsvpMut.mutate({ id: detail.id, going: detail.rsvp_state === 'rsvp' || detail.rsvp_state === 'waitlist' })}
-                />
-                <button
-                  onClick={() => addEventToCalendar(detail.id, detail.event_name)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-secondary hover:bg-secondary/5"
-                >
-                  <CalendarPlus size={13} /> Add to calendar
-                </button>
-              </div>
-            }
-          >
-            <EventDetailBody event={detail} />
-          </Sheet>
-        ) : (
-          <EventDetailModal
-            event={detail}
-            onClose={() => setDetail(null)}
-            onRsvp={() => rsvpMut.mutate({ id: detail.id, going: detail.rsvp_state === 'rsvp' || detail.rsvp_state === 'waitlist' })}
-            onAddCalendar={() => addEventToCalendar(detail.id, detail.event_name)}
-          />
-        )
+        <Sheet
+          isOpen
+          onClose={() => setDetail(null)}
+          title={detail.event_name}
+          side="right"
+          footer={
+            <div className="flex items-center gap-2">
+              <RsvpButton
+                event={detail}
+                onRsvp={() => rsvpMut.mutate({ id: detail.id, going: detail.rsvp_state === 'rsvp' || detail.rsvp_state === 'waitlist' })}
+              />
+              <button
+                onClick={() => addEventToCalendar(detail.id, detail.event_name)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-secondary hover:bg-secondary/5"
+              >
+                <CalendarPlus size={13} /> Add to calendar
+              </button>
+            </div>
+          }
+        >
+          <EventDetailBody event={detail} />
+        </Sheet>
       )}
     </div>
   )
@@ -161,7 +142,7 @@ function TypeBadge({ type }: { type: string | null }) {
 
 function RsvpButton({ event, onRsvp, busy }: { event: ConnectEvent; onRsvp: () => void; busy?: boolean }) {
   if (event.status === 'cancelled') {
-    return <span className="px-4 py-1.5 text-xs font-medium rounded-lg bg-muted text-foreground">Cancelled</span>
+    return <span className="px-4 py-1.5 text-xs font-medium rounded-lg bg-muted text-muted-foreground">Cancelled</span>
   }
   const st = event.rsvp_state
   if (st === 'rsvp') {
@@ -180,7 +161,7 @@ function RsvpButton({ event, onRsvp, busy }: { event: ConnectEvent; onRsvp: () =
     )
   }
   if (st === 'attended') {
-    return <span className="px-4 py-1.5 text-xs font-medium rounded-lg bg-muted text-foreground">Attended</span>
+    return <span className="px-4 py-1.5 text-xs font-medium rounded-lg bg-muted text-muted-foreground">Attended</span>
   }
   if (event.at_capacity) {
     return (
@@ -206,6 +187,8 @@ interface CardProps {
 
 function EventListCard({ event, busy, onOpen, onRsvp, onAddCalendar }: CardProps) {
   const d = new Date(event.start_time)
+  const capacityLabel = event.capacity ? ` of ${event.capacity}` : ''
+  const waitlistLabel = event.waitlist_count > 0 ? ` · ${event.waitlist_count} waitlisted` : ''
   return (
     <div className="bg-card rounded-xl border border-border hover:shadow-sm transition-shadow">
       <div className="flex items-center gap-2 px-4 pt-3">
@@ -220,7 +203,7 @@ function EventListCard({ event, busy, onOpen, onRsvp, onAddCalendar }: CardProps
             <Sparkles size={11} /> Recommended
           </span>
         )}
-        <span className="ml-auto text-[10px] text-foreground">{fmtDate(event.start_time)}</span>
+        <span className="ml-auto text-[10px] text-muted-foreground">{fmtDate(event.start_time)}</span>
       </div>
       <div className="flex gap-4 px-4 py-3">
         <div className="w-12 h-14 bg-muted border border-border rounded-lg flex flex-col items-center justify-center flex-shrink-0">
@@ -230,13 +213,13 @@ function EventListCard({ event, busy, onOpen, onRsvp, onAddCalendar }: CardProps
         <button onClick={onOpen} className="flex-1 min-w-0 text-left">
           <h3 className="text-sm font-semibold text-foreground truncate hover:text-secondary transition-colors">{event.event_name}</h3>
           <p className="text-xs text-foreground">{event.institution_name}</p>
-          <div className="flex items-center gap-3 text-[10px] text-foreground mt-1">
+          <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-1">
             <span className="flex items-center gap-0.5"><Clock size={9} /> {d.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
             <span className="flex items-center gap-0.5">
               {event.location ? <><MapPin size={9} /> {event.location}</> : <><Video size={9} /> Online</>}
             </span>
             <span className="flex items-center gap-0.5">
-              <Users size={9} /> {event.going_count} going{event.waitlist_count > 0 ? ` · ${event.waitlist_count} waitlisted` : ''}
+              <Users size={9} /> {event.going_count}{capacityLabel} going{waitlistLabel}
             </span>
           </div>
         </button>
@@ -253,17 +236,19 @@ function EventListCard({ event, busy, onOpen, onRsvp, onAddCalendar }: CardProps
 
 function EventDetailBody({ event }: { event: ConnectEvent }) {
   const rsvped = event.rsvp_state === 'rsvp' || event.rsvp_state === 'attended'
+  const capacityLabel = event.capacity ? ` of ${event.capacity}` : ''
+  const waitlistLabel = event.waitlist_count > 0 ? ` · ${event.waitlist_count} waitlisted` : ''
   return (
     <div className="space-y-3">
       <p className="text-sm text-foreground">{event.institution_name}</p>
-      <div className="flex items-center gap-2 text-sm text-foreground">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Clock size={14} className="text-secondary" /> {fmtDate(event.start_time)}
       </div>
-      <div className="flex items-center gap-2 text-sm text-foreground">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         {event.location ? <><MapPin size={14} className="text-secondary" /> {event.location}</> : <><Video size={14} className="text-secondary" /> Online event</>}
       </div>
-      <div className="flex items-center gap-2 text-sm text-foreground">
-        <Users size={14} /> Who else is going: {event.going_count}{event.capacity ? ` of ${event.capacity}` : ''}{event.waitlist_count > 0 ? ` · ${event.waitlist_count} waitlisted` : ''}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Users size={14} /> {event.going_count}{capacityLabel} going{waitlistLabel}
       </div>
       {event.description && <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">{event.description}</p>}
       {rsvped && event.meeting_link && (
@@ -273,38 +258,10 @@ function EventDetailBody({ event }: { event: ConnectEvent }) {
         </a>
       )}
       {rsvped && !event.meeting_link && event.meeting_link_reveals_at && (
-        <p className="text-xs text-foreground">
-          The meeting link appears here closer to the start time.
+        <p className="text-xs text-muted-foreground">
+          Your meeting link will appear here closer to the start time.
         </p>
       )}
-    </div>
-  )
-}
-
-function EventDetailModal({ event, onClose, onRsvp, onAddCalendar }: {
-  event: ConnectEvent; onClose: () => void; onRsvp: () => void; onAddCalendar: () => void
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-scrim" onClick={onClose}>
-      <div className="bg-card rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
-        <div className="flex items-start justify-between p-5 border-b border-border">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 mb-1"><TypeBadge type={event.event_type} /></div>
-            <h2 className="text-lg font-semibold text-foreground">{event.event_name}</h2>
-            <p className="text-sm text-foreground">{event.institution_name}</p>
-          </div>
-          <button onClick={onClose} className="text-foreground hover:text-foreground p-1"><X size={18} /></button>
-        </div>
-        <div className="p-5 space-y-3">
-          <EventDetailBody event={event} />
-        </div>
-        <div className="flex items-center gap-2 p-5 border-t border-border">
-          <RsvpButton event={event} onRsvp={onRsvp} />
-          <button onClick={onAddCalendar} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-secondary hover:bg-secondary/5">
-            <CalendarPlus size={13} /> Add to calendar
-          </button>
-        </div>
-      </div>
     </div>
   )
 }

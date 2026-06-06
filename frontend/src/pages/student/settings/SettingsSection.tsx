@@ -12,6 +12,7 @@ interface SettingsSectionProps {
   children: React.ReactNode
   tone?: 'default' | 'danger'
   action?: React.ReactNode
+  id?: string
 }
 
 export default function SettingsSection({
@@ -21,31 +22,34 @@ export default function SettingsSection({
   children,
   tone = 'default',
   action,
+  id,
 }: SettingsSectionProps) {
   const danger = tone === 'danger'
   return (
-    <Card className={clsx('p-5 sm:p-6', danger && 'border-error/40')}>
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="flex items-start gap-3">
-          <span
-            className={clsx(
-              'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-              danger ? 'bg-error-soft text-error' : 'bg-muted text-secondary'
-            )}
-          >
-            <Icon size={17} />
-          </span>
-          <div>
-            <h2 className={clsx('text-base font-semibold', danger ? 'text-error' : 'text-foreground')}>
-              {title}
-            </h2>
-            {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
+    <div id={id}>
+      <Card className={clsx('p-5 sm:p-6', danger && 'border-error/40')}>
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-start gap-3">
+            <span
+              className={clsx(
+                'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                danger ? 'bg-error-soft text-error' : 'bg-muted text-secondary'
+              )}
+            >
+              <Icon size={17} />
+            </span>
+            <div>
+              <h2 className={clsx('text-base font-semibold', danger ? 'text-error' : 'text-foreground')}>
+                {title}
+              </h2>
+              {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
+            </div>
           </div>
+          {action}
         </div>
-        {action}
-      </div>
-      {children}
-    </Card>
+        {children}
+      </Card>
+    </div>
   )
 }
 

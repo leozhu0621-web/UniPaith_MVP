@@ -4,6 +4,7 @@
  */
 import { useState } from 'react'
 import { ChevronDown, FileText, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
+import { confirmDialog } from '../../../stores/confirm-store'
 
 import ProgramCard from '../explore/cards/ProgramCard'
 import MatchCard from '../match/MatchCard'
@@ -227,9 +228,14 @@ export default function SavedProgramRow({
                 <button
                   type="button"
                   className="w-full text-left px-3 py-1.5 hover:bg-muted text-error flex items-center gap-2"
-                  onClick={() => {
+                  onClick={async () => {
                     setMenuOpen(false)
-                    onRemove()
+                    const ok = await confirmDialog({
+                      title: 'Remove from your shortlist?',
+                      confirmLabel: 'Remove',
+                      destructive: true,
+                    })
+                    if (ok) onRemove()
                   }}
                   disabled={removePending}
                 >

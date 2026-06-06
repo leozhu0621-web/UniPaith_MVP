@@ -7,11 +7,25 @@ export const SEVERITY_VARIANT: Record<IssueSeverity, 'danger' | 'warning' | 'neu
   minor: 'neutral',
 }
 
+/** severity → human display label. */
+export const SEVERITY_LABEL: Record<IssueSeverity, string> = {
+  major: 'HIGH',
+  moderate: 'MEDIUM',
+  minor: 'LOW',
+}
+
 /** importance → Badge variant. */
 export const IMPORTANCE_VARIANT: Record<ElementImportance, 'danger' | 'warning' | 'neutral'> = {
   required: 'danger',
   should_have: 'warning',
   nice_to_have: 'neutral',
+}
+
+/** importance → human display label. */
+export const IMPORTANCE_LABEL: Record<ElementImportance, string> = {
+  required: 'Required',
+  should_have: 'Should have',
+  nice_to_have: 'Nice to have',
 }
 
 const prettify = (k: string) => k.replace(/_/g, ' ')

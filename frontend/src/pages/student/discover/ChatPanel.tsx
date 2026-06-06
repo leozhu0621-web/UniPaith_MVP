@@ -7,9 +7,7 @@ import clsx from 'clsx'
 import { ArrowUp, Info, Sparkles } from 'lucide-react'
 
 import { appendMessage, getSession, startSession } from '../../../api/discovery'
-import Avatar from '../../../components/ui/Avatar'
 import Button from '../../../components/ui/Button'
-import { useAuthStore } from '../../../stores/auth-store'
 import { showToast } from '../../../stores/toast-store'
 import type {
   AppendMessageResponse,
@@ -36,7 +34,7 @@ const PROMPTS_BY_TRACK: Record<DiscoveryTrack, string[]> = {
   ],
 }
 
-const ALWAYS_REPLIES = ['I don’t know yet', 'Skip this'] as const
+const ALWAYS_REPLIES = ["I don't know yet", 'Skip this'] as const
 const TRACK_ORDER: DiscoveryTrack[] = ['profile', 'goals', 'needs']
 
 export interface ChatPanelProps {
@@ -98,7 +96,6 @@ export default function ChatPanel({
   onSessionCreated,
 }: ChatPanelProps) {
   const qc = useQueryClient()
-  const user = useAuthStore(s => s.user)
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
   const [resolvedSessionId, setResolvedSessionId] = useState<string | null>(session?.id ?? null)
@@ -193,7 +190,6 @@ export default function ChatPanel({
             layer={layer}
             onPick={onDraftChange}
             onSend={send}
-            firstName={user?.email?.split('@')[0]}
           />
         ) : (
           messages.map(m => <MessageBubble key={m.id} message={m} />)
@@ -223,7 +219,7 @@ export default function ChatPanel({
       {limitedMode && !turnMut.isPending && (
         <div className="mb-2 flex items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-1.5 text-xs text-foreground">
           <Info size={13} className="text-warning shrink-0" />
-          Limited mode active — your replies are still saved.
+          Limited mode is active. Your replies are still saved.
         </div>
       )}
 
@@ -309,34 +305,36 @@ function EmptyState({
   layer,
   onPick,
   onSend,
-  firstName,
 }: {
   track: DiscoveryTrack
   layer?: DiscoveryLayer
   onPick: (prompt: string) => void
   onSend: (prompt: string) => void
-  firstName?: string
 }) {
   const showBasicChips = track === 'profile' && (layer ?? 'basic') === 'basic'
   const prompts = PROMPTS_BY_TRACK[track]
   const chips = showBasicChips ? [...PROFILE_BASIC_CHIP_PROMPTS] : prompts
 
+  const openerText = showBasicChips
+    ? 'Tell me about a course you actually enjoyed this year.'
+    : prompts[0]
+
   return (
     <div className="py-8 space-y-4">
       <div className="flex items-center gap-3">
-        <Avatar name={firstName ?? 'You'} size="md" />
-        <div>
-          <div className="text-sm font-medium text-foreground">
-            {showBasicChips
-              ? 'Tell me about a course you actually enjoyed this year.'
-              : `Let's explore your ${track === 'profile' ? 'self' : track}.`}
+        <div className="shrink-0">
+          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+            <Sparkles size={15} className="text-accent" />
           </div>
+        </div>
+        <div>
+          <div className="text-sm font-medium text-foreground">{openerText}</div>
           <div className="text-xs text-muted-foreground">
             Type freely. I'll listen, ask follow-ups, and build out your profile as we go.
           </div>
         </div>
       </div>
-      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Suggested prompts</div>
+      <div className="text-eyebrow uppercase text-muted-foreground">Suggested prompts</div>
       <div className="grid gap-1.5">
         {chips.map(p => (
           <button

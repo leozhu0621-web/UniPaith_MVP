@@ -12,8 +12,18 @@ import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import QueryError from '../../components/ui/QueryError'
 import Skeleton from '../../components/ui/Skeleton'
-import { ArrowLeft, BookOpen, GraduationCap } from 'lucide-react'
+import { ArrowLeft, BookOpen, GraduationCap, Users, TrendingUp, Percent, Building2 } from 'lucide-react'
 import type { SchoolSummary, ProgramSummary } from '../../types'
+
+function fmtPct(v: number | null | undefined) {
+  if (v == null) return null
+  const pct = v > 1 ? v : v * 100
+  return `${Math.round(pct)}%`
+}
+function fmtNum(v: number | null | undefined) {
+  if (v == null) return null
+  return v.toLocaleString()
+}
 
 interface Props { isAuthenticated?: boolean }
 
@@ -125,7 +135,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
           {heroPhoto ? (
             <img src={heroPhoto} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary/15 via-muted to-background" />
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-background" />
           )}
           <div
             className="absolute inset-0"
@@ -162,9 +172,44 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
         {school.description_text ? (
           <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{school.description_text}</p>
         ) : (
-          <p className="text-sm text-muted-foreground">A full profile for this school is on the way — explore its programs below in the meantime.</p>
+          <p className="text-sm text-muted-foreground">No details published yet for this school. Explore programs below.</p>
         )}
       </Card>
+
+      {/* School quick-facts — derived from institution + program grid where available */}
+      {(() => {
+        const rd: any = institution?.ranking_data || {}
+        const outcomes: any = institution?.school_outcomes || {}
+        const acceptanceRate = fmtPct(outcomes.admit_rate ?? rd.acceptance_rate)
+        const gradRate = fmtPct(outcomes.graduation_rate_6yr ?? rd.graduation_rate)
+        const bodySize = fmtNum(institution?.student_body_size)
+        const setting = institution?.campus_setting
+        const tiles = [
+          progCount > 0 && { icon: GraduationCap, label: 'Programs', value: String(progCount) },
+          acceptanceRate && { icon: Percent, label: 'Acceptance', value: acceptanceRate },
+          gradRate && { icon: TrendingUp, label: 'Grad Rate', value: gradRate },
+          bodySize && { icon: Users, label: 'Students', value: bodySize },
+          setting && { icon: Building2, label: 'Setting', value: setting.charAt(0).toUpperCase() + setting.slice(1) },
+        ].filter(Boolean) as { icon: any; label: string; value: string }[]
+
+        if (tiles.length === 0) return null
+
+        return (
+          <div className={`grid gap-2 mb-5 ${tiles.length <= 2 ? 'grid-cols-2' : tiles.length === 3 ? 'grid-cols-3' : tiles.length === 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-5'}`}>
+            {tiles.map((t, i) => (
+              <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 bg-card border border-border rounded-lg">
+                <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
+                  <t.icon size={13} className="text-foreground/70" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide leading-tight">{t.label}</p>
+                  <p className="text-sm font-bold text-foreground leading-tight truncate">{t.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      })()}
 
       {/* Programs */}
       <div className="mb-3 flex items-center justify-between">
@@ -205,6 +250,16 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
           ))}
         </div>
       )}
+
+      {/* Data attribution footer */}
+      <footer className="mt-8 pt-4 border-t border-border">
+        <p className="text-[11px] leading-relaxed text-muted-foreground">
+          <span className="font-semibold text-foreground/70">Data sources:</span>{' '}
+          U.S. Department of Education College Scorecard (admissions &amp; outcomes);
+          institution-published program listings.
+          {' '}Figures reflect the latest available data; verify on the official school page.
+        </p>
+      </footer>
     </div>
   )
 }

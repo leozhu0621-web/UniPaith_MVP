@@ -15,7 +15,7 @@ export default function EventCard({ event, isRsvped, onRsvp }: Props) {
   const spotsLeft = event.capacity ? Math.max(0, event.capacity - (event.rsvp_count || 0)) : null
 
   return (
-    <div className="bg-card rounded-xl border border-border hover:shadow-md transition-shadow overflow-hidden">
+    <div className="bg-card rounded-xl border border-border hover:elev-raised transition-shadow overflow-hidden">
       <div className="flex items-center gap-2 px-4 pt-3 pb-1">
         <Calendar size={12} className="text-secondary" />
         <span className="text-[10px] font-semibold text-secondary uppercase tracking-wider">Event</span>

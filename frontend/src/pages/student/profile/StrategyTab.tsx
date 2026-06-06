@@ -14,6 +14,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, CheckCircle2, ChevronRight, Pencil, Sparkles } from 'lucide-react'
 
+import AIBadge from '../../../components/ui/AIBadge'
 import {
   type UpdateStrategyBody,
   activateStrategy,
@@ -26,6 +27,7 @@ import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import Modal from '../../../components/ui/Modal'
+import { SkeletonCard } from '../../../components/ui/Skeleton'
 import { showToast } from '../../../stores/toast-store'
 import type { StrategyStatus, StudentStrategy } from '../../../types'
 
@@ -128,15 +130,12 @@ function StrategyCard({
             <span className="text-xs uppercase tracking-wide text-muted-foreground">
               Version {strategy.version}
             </span>
-            <span className="inline-flex items-center gap-1 rounded-pill border border-accent px-2 py-0.5 text-[11px] font-semibold text-accent">
-              <Sparkles size={10} /> AI
-            </span>
+            <AIBadge />
             <Badge variant={STATUS_VARIANTS[strategy.status]} size="sm">
               {strategy.status}
             </Badge>
             {strategy.is_stub && (
-              <Badge variant="warning" size="sm" className="inline-flex items-center gap-1">
-                <Sparkles size={10} />
+              <Badge variant="warning" size="sm">
                 preview
               </Badge>
             )}
@@ -305,7 +304,7 @@ export default function StrategyTab() {
         </Button>
       </div>
 
-      {isLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
+      {isLoading && <div className="space-y-3"><SkeletonCard /><SkeletonCard /></div>}
 
       {/* Spec 03 §7 — on regenerate failure, preserve the existing active
           strategy and surface an inline brand-aligned banner. The toast

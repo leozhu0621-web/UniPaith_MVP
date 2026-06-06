@@ -115,18 +115,34 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
                             {dim.title}
                           </td>
                         </tr>
-                        {dim.rows.map(row => (
-                          <tr key={row.label} className="border-t border-border">
-                            <td className="sticky left-0 z-10 bg-card py-2 px-3 text-xs text-muted-foreground font-medium">
-                              {row.label}
-                            </td>
-                            {(comparisonResult.programs as CompareProgram[]).map(p => (
-                              <td key={p.id} className="py-2 px-3 text-xs text-foreground">
-                                {row.get(p)}
+                        {dim.rows.map(row => {
+                          // Compute best-value column index for numeric score rows.
+                          const isBestValueRow = row.label === 'Fit' || row.label === 'Confidence'
+                          let bestIdx = -1
+                          if (isBestValueRow) {
+                            const programs = comparisonResult.programs as CompareProgram[]
+                            const vals = programs.map(p =>
+                              row.label === 'Fit' ? (p.fitness_score ?? -1) : (p.confidence_score ?? -1)
+                            )
+                            const max = Math.max(...vals)
+                            if (max >= 0) bestIdx = vals.findIndex(v => v === max)
+                          }
+                          return (
+                            <tr key={row.label} className="border-t border-border">
+                              <td className="sticky left-0 z-10 bg-card py-2 px-3 text-xs text-muted-foreground font-medium">
+                                {row.label}
                               </td>
-                            ))}
-                          </tr>
-                        ))}
+                              {(comparisonResult.programs as CompareProgram[]).map((p, idx) => (
+                                <td
+                                  key={p.id}
+                                  className={`py-2 px-3 text-xs ${isBestValueRow && idx === bestIdx ? 'text-secondary font-semibold' : 'text-foreground'}`}
+                                >
+                                  {row.get(p)}
+                                </td>
+                              ))}
+                            </tr>
+                          )
+                        })}
                       </Fragment>
                     ))}
                   </tbody>

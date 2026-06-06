@@ -3,8 +3,9 @@
 // cobalt (functional) / warning (low). Competency coverage + practice plan come
 // from the PromptCoach overlay when the AI surface is enabled.
 import clsx from 'clsx'
-import { Sparkles, Target } from 'lucide-react'
+import { Target } from 'lucide-react'
 
+import AIBadge from '../../../../components/ui/AIBadge'
 import Card from '../../../../components/ui/Card'
 import type { PromptLibrarySummary } from '../../../../types/promptLibrary'
 
@@ -13,7 +14,7 @@ import { COMPETENCY_LABELS, COMPETENCIES } from './constants'
 const BAND_META: Record<string, { label: string; ring: string; text: string }> = {
   high: { label: 'Interview-ready', ring: 'text-primary', text: 'text-primary' },
   medium: { label: 'Getting there', ring: 'text-secondary', text: 'text-secondary' },
-  low: { label: 'Just starting', ring: 'text-warning', text: 'text-warning' },
+  low: { label: 'Getting started', ring: 'text-warning', text: 'text-warning' },
 }
 
 function ScoreRing({ score, band }: { score: number; band: string }) {
@@ -23,7 +24,12 @@ function ScoreRing({ score, band }: { score: number; band: string }) {
   const offset = c * (1 - Math.max(0, Math.min(100, score)) / 100)
   return (
     <div className="relative h-[76px] w-[76px] shrink-0">
-      <svg viewBox="0 0 76 76" className="h-full w-full -rotate-90">
+      <svg
+        viewBox="0 0 76 76"
+        className="h-full w-full -rotate-90"
+        role="img"
+        aria-label={`${score} out of 100 — ${meta.label}`}
+      >
         <circle cx="38" cy="38" r={r} fill="none" stroke="currentColor" strokeWidth="7" className="text-muted-foreground" />
         <circle
           cx="38"
@@ -112,7 +118,7 @@ export default function ReadinessHeader({ summary }: { summary: PromptLibrarySum
 
       {summary.inference_enabled && summary.suggested_practice_plan && (
         <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5">
-          <Sparkles size={15} className="mt-0.5 shrink-0 text-primary" />
+          <AIBadge className="mt-0.5 shrink-0" />
           <p className="text-sm text-foreground">{summary.suggested_practice_plan}</p>
         </div>
       )}

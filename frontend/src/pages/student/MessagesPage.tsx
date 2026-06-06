@@ -141,6 +141,30 @@ export default function MessagesPage({ initialThreadId }: { initialThreadId?: st
       attachments: InboxAttachment[]
       aiDraftUsed: boolean
     }) => postInboxMessage(selectedId!, { body, attachments, ai_draft_used: aiDraftUsed }),
+    onMutate: async ({ body, attachments }) => {
+      // Optimistically append a pending message so the UI feels instant.
+      await qc.cancelQueries({ queryKey: ['inbox-thread', selectedId] })
+      const prev = qc.getQueryData(['inbox-thread', selectedId])
+      qc.setQueryData(['inbox-thread', selectedId], (old: any) => {
+        if (!old) return old
+        const optimistic = {
+          id: `optimistic-${Date.now()}`,
+          sender: 'student',
+          body,
+          sent_at: new Date().toISOString(),
+          attachments: attachments ?? [],
+          ai_draft_used: false,
+        }
+        return { ...old, messages: [...(old.messages ?? []), optimistic] }
+      })
+      return { prev }
+    },
+    onError: (_err, _vars, ctx) => {
+      // Roll back the optimistic message on failure.
+      if (ctx?.prev !== undefined) {
+        qc.setQueryData(['inbox-thread', selectedId], ctx.prev)
+      }
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inbox-thread', selectedId] })
       qc.invalidateQueries({ queryKey: ['inbox-threads'] })

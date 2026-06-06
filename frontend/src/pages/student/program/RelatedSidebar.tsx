@@ -47,12 +47,12 @@ export default function RelatedSidebar({
       {upcomingEvents.length > 0 && (
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Calendar size={14} className="text-primary" />
+            <Calendar size={14} className="text-secondary" />
             <h3 className="text-sm font-semibold text-foreground">Upcoming Events</h3>
           </div>
           <div className="space-y-2">
             {upcomingEvents.map((ev: any) => (
-              <div key={ev.id} className="px-3 py-2.5 rounded-lg border border-border hover:border-primary/30 transition-colors">
+              <div key={ev.id} className="px-3 py-2.5 rounded-lg border border-border hover:border-secondary/30 transition-colors">
                 <p className="text-xs font-semibold text-foreground line-clamp-2">{ev.title}</p>
                 <p className="text-[10px] text-foreground mt-0.5">
                   {formatDate(ev.event_datetime || ev.starts_at)}
@@ -90,7 +90,7 @@ export default function RelatedSidebar({
                 className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-md hover:bg-muted group transition-colors"
               >
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-foreground truncate group-hover:text-primary">{p.program_name}</p>
+                  <p className="text-xs font-medium text-foreground truncate group-hover:text-secondary">{p.program_name}</p>
                   {(p.department || p.degree_type) && (
                     <p className="text-[10px] text-foreground/70 truncate">
                       {p.degree_type ? (DEGREE_LABELS[p.degree_type] || p.degree_type) : ''}
@@ -98,7 +98,7 @@ export default function RelatedSidebar({
                     </p>
                   )}
                 </div>
-                <ChevronRight size={12} className="text-foreground/40 group-hover:text-primary flex-shrink-0" />
+                <ChevronRight size={12} className="text-foreground/40 group-hover:text-secondary flex-shrink-0" />
               </Link>
             ))}
           </div>
@@ -120,12 +120,12 @@ export default function RelatedSidebar({
                 className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-md hover:bg-muted group transition-colors"
               >
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-foreground truncate group-hover:text-primary">{p.program_name}</p>
+                  <p className="text-xs font-medium text-foreground truncate group-hover:text-secondary">{p.program_name}</p>
                   {p.degree_type && (
                     <p className="text-[10px] text-foreground/70 truncate">{DEGREE_LABELS[p.degree_type] || p.degree_type}</p>
                   )}
                 </div>
-                <ChevronRight size={12} className="text-foreground/40 group-hover:text-primary flex-shrink-0" />
+                <ChevronRight size={12} className="text-foreground/40 group-hover:text-secondary flex-shrink-0" />
               </Link>
             ))}
           </div>

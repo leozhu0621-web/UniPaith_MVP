@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
   format, addMonths, subMonths, addWeeks, subWeeks, isSameDay, isToday, parseISO,
-  setHours, setMinutes, differenceInMinutes, addMinutes,
+  setHours, setMinutes, differenceInMinutes, addMinutes, differenceInDays,
 } from 'date-fns'
 import {
   ChevronLeft, ChevronRight, Clock, FileText, Mic, Video,
@@ -90,6 +90,19 @@ const DEADLINE_TYPES: CalendarItemType[] = [
 
 const isOverdue = (i: CalendarItem) => i.status === 'overdue'
 const isDone = (i: CalendarItem) => i.status === 'completed' || i.status === 'cancelled'
+
+/** Compute the effective dot color for an item, applying urgency to deadlines. */
+function itemColor(item: CalendarItem): DotColor {
+  if (isOverdue(item)) return 'error'
+  const base = TYPE_META[item.type].color
+  if (base !== 'error') return base
+  // deadline items: compute urgency from days until start_at
+  const daysLeft = differenceInDays(parseISO(item.start_at), new Date())
+  if (daysLeft < 0) return 'error'
+  if (daysLeft <= 7) return 'error'
+  if (daysLeft <= 30) return 'warning'
+  return 'slate'
+}
 // A deadline-like item the student can mark complete (Spec 16 §5).
 const completable = (i: CalendarItem) =>
   ['submission_deadline', 'document_deadline', 'recommendation_deadline',
@@ -294,7 +307,7 @@ export default function CalendarPage() {
                   </span>
                   <div className="mt-1 space-y-0.5">
                     {dayItems.slice(0, 3).map(i => {
-                      const c = isOverdue(i) ? 'error' : TYPE_META[i.type].color
+                      const c = itemColor(i)
                       return (
                         <div key={i.id} className={`flex items-center gap-1 ${isDone(i) ? 'opacity-50' : ''}`}>
                           <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${DOT_BG[c]}`} />
@@ -426,7 +439,7 @@ function WeekHourGrid({ weekDays, itemsOn, onOpen }: {
             {weekDays.map(day => (
               <div key={`allday-${day.toISOString()}`} className="border-l border-border p-0.5 space-y-0.5">
                 {itemsOn(day).filter(i => weekItemLayout(i, day) === 'allday').map(i => {
-                  const c = isOverdue(i) ? 'error' : TYPE_META[i.type].color
+                  const c = itemColor(i)
                   return (
                     <button
                       key={i.id}
@@ -476,7 +489,7 @@ function WeekHourGrid({ weekDays, itemsOn, onOpen }: {
                   />
                 ))}
                 {timed.map(({ item, layout }) => {
-                  const c = isOverdue(item) ? 'error' : TYPE_META[item.type].color
+                  const c = itemColor(item)
                   return (
                     <button
                       key={item.id}
@@ -556,7 +569,7 @@ function AgendaView({ items, hasActiveFilter, onClearFilters, onOpen, onDiscover
 
 function AgendaRow({ item, onOpen }: { item: CalendarItem; onOpen: (i: CalendarItem) => void }) {
   const meta = TYPE_META[item.type]
-  const c = isOverdue(item) ? 'error' : meta.color
+  const c = itemColor(item)
   const Icon = meta.icon
   return (
     <button onClick={() => onOpen(item)} className="w-full text-left group">
@@ -655,7 +668,7 @@ function ItemDetailModal({ item, onClose, onNavigate, onPatch, onDecline, patchi
 
   if (!item) return null
   const meta = TYPE_META[item.type]
-  const c = isOverdue(item) ? 'error' : meta.color
+  const c = itemColor(item)
   const Icon = meta.icon
 
   return (
@@ -733,7 +746,7 @@ function ItemDetailModal({ item, onClose, onNavigate, onPatch, onDecline, patchi
               <Check size={13} className="mr-1" /> Mark complete
             </Button>
           )}
-          {item.can_decline && item.interview_id && !isDone(item) && !interview && (
+          {item.can_decline && item.interview_id && !isDone(item) && (
             <Button size="sm" variant="danger" disabled={patching}
               onClick={() => onDecline(item.interview_id!)}>
               <XIcon size={13} className="mr-1" /> Decline

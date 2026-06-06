@@ -471,7 +471,7 @@ export default function KeyMetrics(props: Props) {
 // Duotone — map the legacy tone palette onto brand tokens. Cost/data are not
 // errors, so rose/blue/violet collapse to cobalt; values render as ink.
 const ACCENT_BG: Record<Tone, string> = {
-  amber: 'bg-warning',
+  amber: 'bg-muted',
   emerald: 'bg-success',
   rose: 'bg-secondary',
   blue: 'bg-secondary',
@@ -479,7 +479,7 @@ const ACCENT_BG: Record<Tone, string> = {
   slate: 'bg-muted',
 }
 const ICON_COLOR: Record<Tone, string> = {
-  amber: 'text-warning',
+  amber: 'text-foreground',
   emerald: 'text-success',
   rose: 'text-secondary',
   blue: 'text-secondary',

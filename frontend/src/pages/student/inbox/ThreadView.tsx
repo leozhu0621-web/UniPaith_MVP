@@ -183,7 +183,7 @@ export default function ThreadView({
             return (
               <div key={m.id} className="mx-auto max-w-[85%] text-center">
                 <div className="inline-flex items-start gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2 text-left text-xs text-muted-foreground">
-                  <Sparkles size={12} className="mt-0.5 shrink-0 text-accent" />
+                  <Sparkles size={12} className="mt-0.5 shrink-0 text-muted-foreground" />
                   <span>{m.body}</span>
                 </div>
                 <p className="mt-0.5 text-[10px] text-muted-foreground">{formatRelative(m.sent_at)}</p>
@@ -282,7 +282,7 @@ export default function ThreadView({
           {/* AI assist suggested reply (§7) — hidden silently when null */}
           {suggestionLoading ? (
             <div className="mb-2 flex items-center gap-2 text-[11px] text-muted-foreground">
-              <Sparkles size={12} className="animate-pulse text-accent" /> Drafting a suggestion…
+              <Sparkles size={12} className="animate-pulse text-muted-foreground" /> Drafting a suggestion…
             </div>
           ) : suggestion ? (
             <div className="mb-2">

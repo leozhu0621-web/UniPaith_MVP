@@ -16,12 +16,19 @@ import Card from '../../../components/ui/Card'
 import { showToast } from '../../../stores/toast-store'
 import type { WorkshopFeedbackRun } from '../../../types'
 
-import { EmptyHint, ErrorNote, ReadinessCard, StubNote } from './WorkshopShared'
+import AIBadge from '../../../components/ui/AIBadge'
+import { EmptyHint, ErrorNote, ReadinessCard } from './WorkshopShared'
 import WorkshopProgramPicker, {
   type ProgramOption,
   type WorkshopMode,
 } from './WorkshopProgramPicker'
-import { IMPORTANCE_VARIANT, SEVERITY_VARIANT, readinessSummary } from './workshopReadiness'
+import {
+  IMPORTANCE_LABEL,
+  IMPORTANCE_VARIANT,
+  SEVERITY_LABEL,
+  SEVERITY_VARIANT,
+  readinessSummary,
+} from './workshopReadiness'
 
 const TESTS: StandardizedTest[] = ['GRE', 'GMAT', 'TOEFL', 'IELTS', 'MCAT', 'LSAT', 'SAT', 'ACT']
 
@@ -118,8 +125,8 @@ export default function TestGuidancePanel() {
           </div>
         </div>
 
-        <div className="text-xs text-foreground">
-          You'll get a structured prep plan (small / medium / large gap). I won't generate practice
+        <div className="text-xs text-muted-foreground">
+          You'll get a structured prep plan (small / medium / large gap). We don't generate practice
           questions — that's your prep service's job.
         </div>
 
@@ -149,13 +156,13 @@ export default function TestGuidancePanel() {
           {stats.length > 0 && (
             <Card>
               <div className="mb-2 flex items-center justify-between">
-                <div className="text-eyebrow uppercase text-foreground">Gap analysis</div>
-                {run.is_stub && <StubNote />}
+                <div className="text-eyebrow uppercase text-muted-foreground">Gap analysis</div>
+                <AIBadge fallback={run.is_stub} />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 {stats.map(([k, v]) => (
                   <div key={k}>
-                    <div className="text-eyebrow uppercase text-foreground">
+                    <div className="text-eyebrow uppercase text-muted-foreground">
                       {STAT_LABEL[k] ?? k.replace(/_/g, ' ')}
                     </div>
                     <div className="text-2xl font-semibold text-foreground">{Number(v)}</div>
@@ -167,19 +174,19 @@ export default function TestGuidancePanel() {
 
           {(run.structural_issues?.length ?? 0) > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-foreground">
+              <div className="mb-2 text-eyebrow uppercase text-muted-foreground">
                 Section diagnosis · {run.structural_issues.length}
               </div>
               <ul className="space-y-2">
                 {run.structural_issues.map((iss, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <Badge variant={SEVERITY_VARIANT[iss.severity]} size="sm">
-                      {iss.severity}
+                      {SEVERITY_LABEL[iss.severity]}
                     </Badge>
                     <div className="flex-1">
                       <div className="text-foreground">{iss.issue}</div>
                       {iss.location_ref && (
-                        <div className="mt-0.5 text-xs text-foreground">{iss.location_ref}</div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">{iss.location_ref}</div>
                       )}
                     </div>
                   </li>
@@ -190,14 +197,14 @@ export default function TestGuidancePanel() {
 
           {(run.missing_elements?.length ?? 0) > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-foreground">
+              <div className="mb-2 text-eyebrow uppercase text-muted-foreground">
                 Prep recommendations · {run.missing_elements.length}
               </div>
               <ul className="space-y-2">
                 {run.missing_elements.map((m, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <Badge variant={IMPORTANCE_VARIANT[m.importance]} size="sm">
-                      {m.importance.replace(/_/g, ' ')}
+                      {IMPORTANCE_LABEL[m.importance]}
                     </Badge>
                     <span className="flex-1 text-foreground">{m.element}</span>
                   </li>
@@ -208,14 +215,14 @@ export default function TestGuidancePanel() {
 
           {(run.suggested_questions?.length ?? 0) > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-foreground">
+              <div className="mb-2 text-eyebrow uppercase text-muted-foreground">
                 Suggested resources · {run.suggested_questions.length}
               </div>
               <ul className="space-y-2">
                 {run.suggested_questions.map((q, i) => (
                   <li key={i} className="text-sm">
                     <div className="text-foreground">{q.question}</div>
-                    {q.why && <div className="mt-0.5 text-xs italic text-foreground">{q.why}</div>}
+                    {q.why && <div className="mt-0.5 text-xs text-muted-foreground">{q.why}</div>}
                   </li>
                 ))}
               </ul>

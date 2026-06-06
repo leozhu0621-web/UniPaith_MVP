@@ -50,9 +50,10 @@ export default function WorkshopsTab() {
     <div className="mx-auto max-w-4xl p-6">
       <header className="mb-4">
         <h2 className="text-h3 text-foreground">Workshops</h2>
-        <p className="mt-1 text-sm text-foreground">
-          Coaching on essays, interviews, and test prep — <strong>feedback-only</strong>. I score,
-          flag structural issues, and suggest questions; I won't write your essay or answers for you.
+        <p className="mt-1 text-sm text-muted-foreground">
+          Coaching on essays, interviews, and test prep — <strong>feedback-only</strong>. We score
+          your draft, flag structural issues, and surface what&apos;s missing — we never write your
+          essay for you.
         </p>
       </header>
 
@@ -80,7 +81,7 @@ export default function WorkshopsTab() {
             onClick={() => setSub(t.key)}
             className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
               sub === t.key
-                ? 'border-primary text-primary'
+                ? 'border-secondary text-secondary'
                 : 'border-transparent text-foreground hover:text-foreground'
             }`}
           >

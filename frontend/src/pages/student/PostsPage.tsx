@@ -10,6 +10,7 @@ import UpdatesTab from './connect/UpdatesTab'
 import EventsTab from './connect/EventsTab'
 import PeersTab from './connect/PeersTab'
 import ManageFollowingPanel from './connect/ManageFollowingPanel'
+import PageHeader from '../../components/student/density/PageHeader'
 
 type ConnectTab = 'updates' | 'events' | 'peers'
 
@@ -38,10 +39,11 @@ export default function PostsPage() {
     <div className="h-full overflow-y-auto">
       <div className="max-w-5xl w-full mx-auto px-6 py-6">
         {/* Header (Spec 20 §3) */}
-        <header className="mb-4">
-          <h1 className="text-lg font-semibold text-foreground">Connect</h1>
-          <p className="text-sm text-foreground mt-0.5">From the institutions you follow</p>
-        </header>
+        <PageHeader
+          eyebrow="Stage 3 · Connect"
+          title="Connect"
+          sub="From the institutions you follow"
+        />
 
         {/* Tabs + Manage following */}
         <div className="flex items-end justify-between border-b border-border mb-5">
@@ -53,7 +55,7 @@ export default function PostsPage() {
                 className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
                   tab === t.key
                     ? 'border-secondary text-secondary'
-                    : 'border-transparent text-foreground hover:text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <t.icon size={14} />
@@ -63,13 +65,13 @@ export default function PostsPage() {
           </div>
           <button
             onClick={() => setManaging(true)}
-            className="inline-flex sm:hidden items-center gap-1 px-3 py-1.5 mb-1 text-xs font-medium text-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+            className="inline-flex sm:hidden items-center gap-1 px-3 py-1.5 mb-1 text-xs font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             Following ({followCount}) <ChevronDown size={13} />
           </button>
           <button
             onClick={() => setManaging(true)}
-            className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 mb-1 text-xs font-medium text-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
+            className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 mb-1 text-xs font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             Manage following ({followCount}) <ChevronDown size={13} />
           </button>

@@ -147,6 +147,8 @@ export default function StatGroup(props: Props) {
     scale.push({ icon: Building2, label: 'Type', value: props.institutionType })
   }
 
+  if (admissions.length === 0 && outcomes.length === 0 && costs.length === 0 && scale.length === 0) return null
+
   return (
     <div className="mb-6">
       <Category title="Admissions" icon={Target} stats={admissions} />

@@ -76,7 +76,7 @@ export default function AboutCard({ description, institutionName, programName }:
   return (
     <Card className="p-5">
       <div className="flex items-center gap-2 mb-3">
-        <BookOpen size={14} className="text-primary" />
+        <BookOpen size={14} className="text-secondary" />
         <h3 className="font-semibold text-foreground">About This Program</h3>
       </div>
 
@@ -97,13 +97,13 @@ export default function AboutCard({ description, institutionName, programName }:
           href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-muted border border-border hover:border-primary/30 hover:bg-muted/70 transition-colors group"
+          className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-muted border border-border hover:border-secondary/30 hover:bg-muted/70 transition-colors group"
         >
           <div className="min-w-0 flex-1">
             <p className="text-[10px] text-foreground/60 uppercase tracking-wider font-medium leading-none">Source</p>
-            <p className="text-[11px] text-foreground truncate mt-0.5 group-hover:text-primary">{sourceDomain(sourceUrl)}</p>
+            <p className="text-[11px] text-foreground truncate mt-0.5 group-hover:text-secondary">{sourceDomain(sourceUrl)}</p>
           </div>
-          <ExternalLink size={12} className="text-foreground/50 group-hover:text-primary flex-shrink-0" />
+          <ExternalLink size={12} className="text-foreground/50 group-hover:text-secondary flex-shrink-0" />
         </a>
       )}
     </Card>

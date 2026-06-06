@@ -152,7 +152,7 @@ export default function ProbabilityBands({
 function Heading({ label }: { label?: string }) {
   return (
     <div className="flex items-center justify-between mb-2">
-      <span className="text-eyebrow uppercase text-foreground">Your realistic shot</span>
+      <span className="text-eyebrow uppercase text-muted-foreground">Your realistic shot</span>
       {label && (
         <span className="text-[11px] font-semibold text-secondary uppercase tracking-wide">{label}</span>
       )}

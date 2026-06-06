@@ -380,7 +380,7 @@ export default function ProgramDetailPage() {
           {heroPhoto ? (
             <img src={heroPhoto} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary/15 via-muted to-background" />
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-background" />
           )}
           {/* Fade to the cream page background at the bottom; soft top scrim for glare. */}
           <div

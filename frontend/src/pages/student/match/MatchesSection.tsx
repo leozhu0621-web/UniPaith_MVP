@@ -14,6 +14,7 @@ import { Compass, LayoutGrid, ListFilter, Loader2, RefreshCw, SlidersHorizontal 
 import { getMatches, refreshMatches } from '../../../api/matching'
 import BandBadge from '../../../components/ui/BandBadge'
 import Button from '../../../components/ui/Button'
+import QueryError from '../../../components/ui/QueryError'
 import { useCompareStore } from '../../../stores/compare-store'
 import { showToast } from '../../../stores/toast-store'
 import type { MatchBand, MatchResultDual } from '../../../types'
@@ -120,6 +121,19 @@ export default function MatchesSection({ savedIds, onToggleSave }: MatchesSectio
     )
   }
 
+  // ── Error with no cached data → show QueryError (distinct from sparse-profile empty state) ──
+  if (isError && matches.length === 0) {
+    return (
+      <section className="mb-6">
+        <SectionHeader count={null} />
+        <QueryError
+          title="Couldn't reach the matching service"
+          onRetry={() => refreshMut.mutate()}
+        />
+      </section>
+    )
+  }
+
   // ── Empty (no matches → profile too sparse / Discovery incomplete) ──
   if (matches.length === 0) {
     return (
@@ -128,8 +142,7 @@ export default function MatchesSection({ savedIds, onToggleSave }: MatchesSectio
           <Compass size={28} className="mx-auto text-foreground/50 mb-3" />
           <p className="text-sm font-semibold text-foreground mb-1">No matches yet</p>
           <p className="text-xs text-foreground max-w-md mx-auto mb-4">
-            Add more to your profile to unlock matches. Talk through your goals on Discover, then
-            refresh here.
+            Add more to your profile to unlock matches. Talk through your goals on Discover.
           </p>
           <div className="flex items-center justify-center gap-2">
             <Button size="sm" onClick={() => navigate('/s')}>

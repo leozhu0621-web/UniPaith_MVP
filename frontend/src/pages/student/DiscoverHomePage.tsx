@@ -91,29 +91,17 @@ function LayerSwitcher({
 interface StrategyHandoffProps {
   completion: CompletionMap | null
   judgeReady: boolean
+  onGenerate: () => void
+  generating: boolean
 }
 
-function StrategyHandoffCTA({ completion, judgeReady }: StrategyHandoffProps) {
-  const navigate = useNavigate()
-  const qc = useQueryClient()
-
+function StrategyHandoffCTA({ completion, judgeReady, onGenerate, generating }: StrategyHandoffProps) {
   const pct = (k: DiscoveryTrack) => (completion ? Number(completion[k]) : 0)
   const ready =
     !!completion &&
     pct('profile') >= HANDOFF_THRESHOLD &&
     pct('goals') >= HANDOFF_THRESHOLD &&
     pct('needs') >= HANDOFF_THRESHOLD
-
-  const generateMut = useMutation({
-    mutationFn: () => generateStrategy(),
-    onSuccess: () => {
-      showToast('Draft strategy generated.', 'success')
-      qc.invalidateQueries({ queryKey: ['strategy'] })
-      navigate('/s/explore?showStrategy=open')
-    },
-    onError: (err: unknown) =>
-      showToast((err as Error).message ?? 'Could not generate strategy.', 'error'),
-  })
 
   const behind = DISCOVERY_TRACKS.filter(k => pct(k) < HANDOFF_THRESHOLD)
   const hint = ready
@@ -147,8 +135,8 @@ function StrategyHandoffCTA({ completion, judgeReady }: StrategyHandoffProps) {
         size="sm"
         variant={ready ? 'primary' : 'tertiary'}
         disabled={!ready}
-        onClick={() => generateMut.mutate()}
-        loading={generateMut.isPending}
+        onClick={onGenerate}
+        loading={generating}
       >
         Generate strategy
       </Button>
@@ -157,6 +145,8 @@ function StrategyHandoffCTA({ completion, judgeReady }: StrategyHandoffProps) {
 }
 
 export default function DiscoverHomePage() {
+  const navigate = useNavigate()
+  const qc = useQueryClient()
   const [params, setParams] = useSearchParams()
   const trackParam = params.get('track') as DiscoveryTrack | null
   const initialTrack: DiscoveryTrack = DISCOVERY_TRACKS.includes(trackParam ?? ('' as DiscoveryTrack))
@@ -169,6 +159,17 @@ export default function DiscoverHomePage() {
   )
   const [draft, setDraft] = useState('')
   const [handoffBanner, setHandoffBanner] = useState(false)
+
+  const generateMut = useMutation({
+    mutationFn: () => generateStrategy(),
+    onSuccess: () => {
+      showToast('Draft strategy generated.', 'success')
+      qc.invalidateQueries({ queryKey: ['strategy'] })
+      navigate('/s/explore?showStrategy=open')
+    },
+    onError: (err: unknown) =>
+      showToast((err as Error).message ?? 'Could not generate strategy.', 'error'),
+  })
 
   const {
     data: completion,
@@ -278,7 +279,12 @@ export default function DiscoverHomePage() {
         profileLayer={track === 'profile' ? layer : sessionLayer}
       />
 
-      <StrategyHandoffCTA completion={completion ?? null} judgeReady={handoffBanner} />
+      <StrategyHandoffCTA
+        completion={completion ?? null}
+        judgeReady={handoffBanner}
+        onGenerate={() => generateMut.mutate()}
+        generating={generateMut.isPending}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
         <Card className="p-4">
@@ -296,7 +302,7 @@ export default function DiscoverHomePage() {
           />
         </Card>
         <div className="space-y-4">
-          <ReadinessRail />
+          <ReadinessRail onGenerateStrategy={() => generateMut.mutate()} />
           <ArtifactRail track={track} layer={track === 'profile' ? layer : undefined} />
         </div>
       </div>

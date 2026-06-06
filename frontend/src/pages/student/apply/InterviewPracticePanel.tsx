@@ -18,13 +18,20 @@ import Card from '../../../components/ui/Card'
 import { showToast } from '../../../stores/toast-store'
 import type { WorkshopFeedbackRun } from '../../../types'
 
+import AIBadge from '../../../components/ui/AIBadge'
 import { RubricScores } from './RubricDots'
-import { EmptyHint, ErrorNote, ReadinessCard, StubNote } from './WorkshopShared'
+import { EmptyHint, ErrorNote, ReadinessCard } from './WorkshopShared'
 import WorkshopProgramPicker, {
   type ProgramOption,
   type WorkshopMode,
 } from './WorkshopProgramPicker'
-import { IMPORTANCE_VARIANT, SEVERITY_VARIANT, readinessSummary } from './workshopReadiness'
+import {
+  IMPORTANCE_LABEL,
+  IMPORTANCE_VARIANT,
+  SEVERITY_LABEL,
+  SEVERITY_VARIANT,
+  readinessSummary,
+} from './workshopReadiness'
 
 type InterviewType = 'behavioral' | 'technical' | 'general'
 
@@ -131,21 +138,21 @@ export default function InterviewPracticePanel() {
             <div>
               <label className="mb-1 block text-xs font-medium text-foreground">Your response</label>
               <textarea
-                className="w-full rounded-md border border-border px-3 py-2 font-mono text-sm"
+                className="w-full rounded-md border border-border px-3 py-2 text-sm"
                 rows={6}
                 maxLength={20000}
                 value={responseText}
                 onChange={e => setResponseText(e.target.value)}
-                placeholder="Paste your answer. I'll coach delivery, structure, and specificity — no rewrite."
+                placeholder="Paste your answer. We'll coach delivery, structure, and specificity — no rewrite."
               />
             </div>
           </div>
         </details>
 
-        <div className="text-xs text-foreground">
+        <div className="text-xs text-muted-foreground">
           {hasResponse ? (
             <>
-              I'll coach your response — <strong>no model answer</strong> in return.
+              We'll coach your response — <strong>no model answer</strong> in return.
             </>
           ) : (
             <>
@@ -183,8 +190,8 @@ export default function InterviewPracticePanel() {
           {scored && (
             <Card>
               <div className="mb-3 flex items-center justify-between">
-                <div className="text-eyebrow uppercase text-foreground">Rubric scores</div>
-                {run.is_stub && <StubNote />}
+                <div className="text-eyebrow uppercase text-muted-foreground">Rubric scores</div>
+                <AIBadge fallback={run.is_stub} />
               </div>
               <RubricScores scores={run.rubric_scores} />
             </Card>
@@ -192,19 +199,19 @@ export default function InterviewPracticePanel() {
 
           {(run.structural_issues?.length ?? 0) > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-foreground">
+              <div className="mb-2 text-eyebrow uppercase text-muted-foreground">
                 Response issues · {run.structural_issues.length}
               </div>
               <ul className="space-y-2">
                 {run.structural_issues.map((iss, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <Badge variant={SEVERITY_VARIANT[iss.severity]} size="sm">
-                      {iss.severity}
+                      {SEVERITY_LABEL[iss.severity]}
                     </Badge>
                     <div className="flex-1">
                       <div className="text-foreground">{iss.issue}</div>
                       {iss.location_ref && (
-                        <div className="mt-0.5 text-xs text-foreground">{iss.location_ref}</div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">{iss.location_ref}</div>
                       )}
                     </div>
                   </li>
@@ -215,14 +222,14 @@ export default function InterviewPracticePanel() {
 
           {(run.missing_elements?.length ?? 0) > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-foreground">
+              <div className="mb-2 text-eyebrow uppercase text-muted-foreground">
                 Missing elements · {run.missing_elements.length}
               </div>
               <ul className="space-y-2">
                 {run.missing_elements.map((m, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
                     <Badge variant={IMPORTANCE_VARIANT[m.importance]} size="sm">
-                      {m.importance.replace(/_/g, ' ')}
+                      {IMPORTANCE_LABEL[m.importance]}
                     </Badge>
                     <span className="flex-1 text-foreground">{m.element}</span>
                   </li>
@@ -233,7 +240,7 @@ export default function InterviewPracticePanel() {
 
           {(run.suggested_questions?.length ?? 0) > 0 && (
             <Card>
-              <div className="mb-3 text-eyebrow uppercase text-foreground">
+              <div className="mb-3 text-eyebrow uppercase text-muted-foreground">
                 {hasResponse ? 'Questions to practice next' : 'Practice questions'} ·{' '}
                 {run.suggested_questions.length}
               </div>
@@ -243,7 +250,7 @@ export default function InterviewPracticePanel() {
                     <div className="font-medium text-foreground">
                       {i + 1}. {q.question}
                     </div>
-                    {q.why && <div className="mt-0.5 text-xs italic text-foreground">{q.why}</div>}
+                    {q.why && <div className="mt-0.5 text-xs text-muted-foreground">{q.why}</div>}
                   </li>
                 ))}
               </ol>

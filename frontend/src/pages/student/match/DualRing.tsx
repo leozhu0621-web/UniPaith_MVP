@@ -132,7 +132,7 @@ export default function DualRing({
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
           <span className="text-base font-bold text-foreground">{fitnessPct}</span>
-          <span className="text-[9px] uppercase tracking-wide text-foreground mt-0.5">
+          <span className="text-[9px] uppercase tracking-wide text-muted-foreground mt-0.5">
             fit
           </span>
         </div>
@@ -140,7 +140,7 @@ export default function DualRing({
       {!compact && (
         <div className="text-xs">
           <div className="text-foreground font-medium">Fitness · {fitnessPct}%</div>
-          <div className="text-foreground">
+          <div className="text-muted-foreground">
             Confidence · {confidencePct}%
           </div>
         </div>

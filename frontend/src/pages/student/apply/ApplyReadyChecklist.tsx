@@ -42,12 +42,12 @@ export default function ApplyReadyChecklist({ programId }: { programId?: string 
   return (
     <Card className="space-y-3 p-4">
       <div className="flex items-center gap-2">
-        <ShieldCheck size={15} className={ready ? "text-accent" : "text-secondary"} />
+        <ShieldCheck size={15} className={ready ? "text-success" : "text-secondary"} />
         <h3 className="text-sm font-medium text-foreground">Apply-readiness</h3>
         <span
           className={clsx(
             "ml-auto rounded-full px-2 py-0.5 text-[11px] font-medium",
-            ready ? "bg-accent/15 text-accent" : "bg-muted text-muted-foreground",
+            ready ? "bg-success/10 text-success" : "bg-muted text-muted-foreground",
           )}
         >
           {ready ? "Ready to submit" : "In progress"}
@@ -58,7 +58,7 @@ export default function ApplyReadyChecklist({ programId }: { programId?: string 
         {data.requirements.map((req) => (
           <li key={req.key} className="flex items-start gap-2 text-sm">
             {req.satisfied ? (
-              <Check size={14} className="mt-0.5 shrink-0 text-accent" />
+              <Check size={14} className="mt-0.5 shrink-0 text-success" />
             ) : (
               <Circle size={12} className="mt-1 shrink-0 text-muted-foreground" />
             )}

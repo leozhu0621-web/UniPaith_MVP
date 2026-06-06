@@ -56,6 +56,7 @@ export default function SecurityCard({
 
   return (
     <SettingsSection
+      id="settings-security-section"
       icon={ShieldCheck}
       title="Security"
       description="Password, two-factor authentication, and active sessions."
@@ -341,6 +342,7 @@ function MfaEnrollModal({ onClose, onDone }: { onClose: () => void; onDone: () =
   const [data, setData] = useState<MfaEnrollResponse | null>(null)
   const [code, setCode] = useState('')
   const [copied, setCopied] = useState(false)
+  const [verified, setVerified] = useState(false)
 
   const enrollMut = useMutation({
     mutationFn: mfaEnroll,
@@ -350,6 +352,7 @@ function MfaEnrollModal({ onClose, onDone }: { onClose: () => void; onDone: () =
   const confirmMut = useMutation({
     mutationFn: () => mfaConfirm(code),
     onSuccess: () => {
+      setVerified(true)
       showToast('Two-factor authentication enabled', 'success')
       onDone()
     },
@@ -438,19 +441,21 @@ function MfaEnrollModal({ onClose, onDone }: { onClose: () => void; onDone: () =
             placeholder="123456"
           />
 
-          <div className="rounded-lg border border-border bg-card p-3">
-            <p className="text-xs font-semibold text-foreground mb-1.5">Recovery codes</p>
-            <p className="text-xs text-muted-foreground mb-2">
-              Save these somewhere safe — each can be used once if you lose your device.
-            </p>
-            <div className="grid grid-cols-2 gap-1.5">
-              {data.recovery_codes.map(c => (
-                <code key={c} className="text-xs font-mono text-foreground bg-muted rounded px-2 py-1 text-center">
-                  {c}
-                </code>
-              ))}
+          {verified && (
+            <div className="rounded-lg border border-border bg-card p-3">
+              <p className="text-xs font-semibold text-foreground mb-1.5">Recovery codes</p>
+              <p className="text-xs text-muted-foreground mb-2">
+                Save these somewhere safe — each can be used once if you lose your device.
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {data.recovery_codes.map(c => (
+                  <code key={c} className="text-xs font-mono text-foreground bg-muted rounded px-2 py-1 text-center">
+                    {c}
+                  </code>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </Modal>

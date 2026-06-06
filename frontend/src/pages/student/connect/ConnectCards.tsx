@@ -67,7 +67,7 @@ function InstitutionRow({ item }: { item: ConnectFeedItem }) {
       <div className="min-w-0">
         <p className="text-xs font-semibold text-foreground truncate">{item.institution_name}</p>
         {item.program_name && (
-          <p className="text-[10px] text-foreground truncate">{item.program_name}</p>
+          <p className="text-[10px] text-muted-foreground truncate">{item.program_name}</p>
         )}
       </div>
     </div>
@@ -173,7 +173,7 @@ function PostCardLarge({ item, onViewProgram, onAddToCalendar, onStartApplicatio
                 <Pin size={11} className="fill-primary text-primary" /> Pinned
               </span>
             )}
-            <span className="text-[10px] text-foreground">{relativeTime(item.date)}</span>
+            <span className="text-[10px] text-muted-foreground">{relativeTime(item.date)}</span>
             {onMute && (
               <button
                 onClick={() => onMute(item.institution_id)}
@@ -229,19 +229,24 @@ function PostCardLarge({ item, onViewProgram, onAddToCalendar, onStartApplicatio
 
 function DeadlineCard({ item, onViewProgram, onAddToCalendar }: Props) {
   const days = item.days_until ?? 0
-  const urgent = days <= 14
+  // ≤7d → error (red), 8–30d → warning (amber), >30d → neutral
+  const urgencyClass = days <= 7
+    ? 'text-error'
+    : days <= 30
+      ? 'text-warning'
+      : 'text-secondary'
   return (
     <CardShell>
       <div className="p-4">
         <div className="flex items-start gap-2">
           <InstitutionRow item={item} />
-          <span className="ml-auto text-[10px] text-foreground flex-shrink-0">
+          <span className="ml-auto text-[10px] text-muted-foreground flex-shrink-0">
             {item.deadline ? new Date(item.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
           </span>
         </div>
         <div className="flex items-center gap-1.5 mt-3 mb-1">
-          <CalendarClock size={12} className={urgent ? 'text-error' : 'text-secondary'} />
-          <span className={`text-[10px] font-semibold uppercase tracking-wider ${urgent ? 'text-error' : 'text-secondary'}`}>
+          <CalendarClock size={12} className={urgencyClass} />
+          <span className={`text-[10px] font-semibold uppercase tracking-wider ${urgencyClass}`}>
             Application deadline
           </span>
         </div>
@@ -260,15 +265,15 @@ function ProgramChangeCard({ item, onViewProgram }: Props) {
       <div className="p-4">
         <div className="flex items-start gap-2">
           <InstitutionRow item={item} />
-          <span className="ml-auto text-[10px] text-foreground flex-shrink-0">{relativeTime(item.date)}</span>
+          <span className="ml-auto text-[10px] text-muted-foreground flex-shrink-0">{relativeTime(item.date)}</span>
         </div>
         <div className="flex items-center gap-1.5 mt-3 mb-1">
           <AlertTriangle size={12} className="text-warning" />
           <span className="text-[10px] font-semibold text-warning uppercase tracking-wider">Program change</span>
-          {item.muted && <span className="text-[9px] text-foreground">(shown despite mute)</span>}
+          {item.muted && <span className="text-[9px] text-muted-foreground">(shown despite mute)</span>}
         </div>
         <h3 className="text-sm font-semibold text-foreground">{item.change_summary || 'This program changed a requirement'}</h3>
-        <p className="text-xs text-foreground mt-0.5">{item.program_name}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{item.program_name}</p>
         {item.program_id && (
           <button
             onClick={() => onViewProgram(item.program_id!)}

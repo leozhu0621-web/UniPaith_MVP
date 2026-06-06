@@ -8,11 +8,38 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { ExternalLink, Sparkles } from 'lucide-react'
+import clsx from 'clsx'
 
 import { getIdentity } from '../../../api/identity'
 import Card from '../../../components/ui/Card'
 import QueryError from '../../../components/ui/QueryError'
+import Skeleton from '../../../components/ui/Skeleton'
 import type { StudentIdentity } from '../../../types'
+
+function confidenceDots(confidence: string | null): number {
+  if (confidence === 'high') return 4
+  if (confidence === 'medium') return 2
+  if (confidence === 'low') return 1
+  return 0
+}
+
+function ConfidenceDots({ confidence }: { confidence: string | null }) {
+  const filled = confidenceDots(confidence)
+  if (filled === 0) return null
+  return (
+    <span
+      className="inline-flex items-center gap-0.5 ml-1 shrink-0"
+      title={confidence ? `${confidence} confidence` : undefined}
+    >
+      {[0, 1, 2, 3].map(i => (
+        <span
+          key={i}
+          className={clsx('h-1.5 w-1.5 rounded-full', i < filled ? 'bg-secondary' : 'bg-muted')}
+        />
+      ))}
+    </span>
+  )
+}
 
 export default function IdentitySignalsWidget() {
   const { data: identity, isLoading, isError, refetch } = useQuery<StudentIdentity>({
@@ -21,14 +48,21 @@ export default function IdentitySignalsWidget() {
   })
 
   if (isLoading) {
-    return <Card className="text-sm text-foreground">Loading…</Card>
+    return (
+      <Card className="space-y-3 p-4">
+        <Skeleton className="h-4 w-28" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-4/5" />
+        <Skeleton className="h-3 w-3/5" />
+      </Card>
+    )
   }
 
   if (isError) {
     return (
       <Card className="space-y-2">
         <div className="flex items-center gap-2 text-foreground font-medium text-sm">
-          <Sparkles size={14} className="text-primary" />
+          <Sparkles size={14} className="text-secondary" />
           Identity signals
         </div>
         <QueryError
@@ -49,11 +83,11 @@ export default function IdentitySignalsWidget() {
     return (
       <Card className="text-sm text-foreground space-y-2">
         <div className="flex items-center gap-2 text-foreground font-medium">
-          <Sparkles size={14} className="text-primary" />
+          <Sparkles size={14} className="text-secondary" />
           Identity signals
         </div>
-        <p className="italic">
-          As you talk, I'll extract values, worldview, and self-awareness moments here.
+        <p className="text-muted-foreground">
+          As you open up, I'll reflect your values, worldview, and self-insights here.
         </p>
       </Card>
     )
@@ -68,7 +102,7 @@ export default function IdentitySignalsWidget() {
         </div>
         <Link
           to="/s/profile?tab=identity"
-          className="text-xs text-primary inline-flex items-center gap-1 hover:underline"
+          className="text-xs text-secondary inline-flex items-center gap-1 hover:underline"
         >
           Manage <ExternalLink size={11} />
         </Link>
@@ -76,27 +110,27 @@ export default function IdentitySignalsWidget() {
 
       <Section title="Values" count={values.length}>
         {values.slice(0, 5).map((v, i) => (
-          <Chip key={i}>{v.value}</Chip>
+          <Chip key={i} confidence={v.confidence}>{v.value}</Chip>
         ))}
         {values.length > 5 && <Chip muted>+{values.length - 5}</Chip>}
       </Section>
 
       <Section title="Worldview" count={beliefs.length}>
         {beliefs.slice(0, 4).map((w, i) => (
-          <Chip key={i}>{w.belief}</Chip>
+          <Chip key={i} confidence={w.confidence}>{w.belief}</Chip>
         ))}
         {beliefs.length > 4 && <Chip muted>+{beliefs.length - 4}</Chip>}
       </Section>
 
       <Section title="Self-awareness" count={insights.length}>
         {insights.slice(0, 4).map((s, i) => (
-          <Chip key={i}>{s.insight}</Chip>
+          <Chip key={i} confidence={s.confidence}>{s.insight}</Chip>
         ))}
         {insights.length > 4 && <Chip muted>+{insights.length - 4}</Chip>}
       </Section>
 
       {identity?.identity_summary && (
-        <div className="text-xs text-foreground border-l-2 border-border pl-2 italic">
+        <div className="text-xs text-muted-foreground border-l-2 border-border pl-2">
           {identity.identity_summary}
         </div>
       )}
@@ -116,7 +150,7 @@ function Section({
   if (count === 0) return null
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wide text-foreground mb-1.5">
+      <div className="text-eyebrow uppercase text-muted-foreground mb-1.5">
         {title} · {count}
       </div>
       <div className="flex flex-wrap gap-1">{children}</div>
@@ -124,16 +158,26 @@ function Section({
   )
 }
 
-function Chip({ children, muted = false }: { children: React.ReactNode; muted?: boolean }) {
+function Chip({
+  children,
+  muted = false,
+  confidence,
+}: {
+  children: React.ReactNode
+  muted?: boolean
+  confidence?: string | null
+}) {
   return (
     <span
-      className={
+      className={clsx(
+        'inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full',
         muted
-          ? 'text-[11px] px-2 py-0.5 rounded-full bg-muted text-foreground'
-          : 'text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-foreground'
-      }
+          ? 'bg-muted text-foreground'
+          : 'bg-secondary/10 text-secondary',
+      )}
     >
       {children}
+      {!muted && confidence != null && <ConfidenceDots confidence={confidence} />}
     </span>
   )
 }

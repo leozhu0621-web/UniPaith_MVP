@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { CreditCard, Sparkles } from 'lucide-react'
+import { confirmDialog } from '../../../stores/confirm-store'
 import Button from '../../../components/ui/Button'
 import Badge from '../../../components/ui/Badge'
 import Toggle from '../../../components/ui/Toggle'
@@ -34,7 +35,7 @@ export default function BillingCard() {
     onSuccess: d => {
       refresh(d)
       setCapturing(false)
-      showToast('You’re on UniPaith Plus', 'success')
+      showToast("You're on UniPaith Plus", 'success')
     },
     onError: (e: unknown) => {
       const msg =
@@ -143,7 +144,21 @@ export default function BillingCard() {
                 </Button>
               )}
               {billing.status === 'active' && (
-                <Button variant="ghost" size="sm" onClick={() => cancelMut.mutate()} loading={cancelMut.isPending} disabled={busy}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    const ok = await confirmDialog({
+                      title: 'Cancel your plan?',
+                      body: 'Access continues until the period ends.',
+                      confirmLabel: 'Cancel plan',
+                      destructive: true,
+                    })
+                    if (ok) cancelMut.mutate()
+                  }}
+                  loading={cancelMut.isPending}
+                  disabled={busy}
+                >
                   Cancel plan
                 </Button>
               )}

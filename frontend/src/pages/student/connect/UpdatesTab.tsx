@@ -7,13 +7,14 @@ import { Search } from 'lucide-react'
 import { getConnectFeed, muteFollowing, type ConnectFeedItem } from '../../../api/connect'
 import { createReminder } from '../../../api/calendar'
 import FeedItemCard from './ConnectCards'
+import QueryError from '../../../components/ui/QueryError'
 
 export default function UpdatesTab() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [rank, setRank] = useState<'recent' | 'relevant'>('recent')
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['connect-feed', rank],
     queryFn: () => getConnectFeed(rank),
     retry: false,
@@ -57,13 +58,17 @@ export default function UpdatesTab() {
     )
   }
 
+  if (isError) {
+    return <QueryError onRetry={() => refetch()} />
+  }
+
   // No follows (Spec 20 §9)
   if (followedCount === 0) {
     return (
       <div className="text-center py-14">
         <h3 className="text-base font-semibold text-foreground mb-1">Follow a program to see updates here.</h3>
-        <p className="text-sm text-foreground mb-5 max-w-sm mx-auto">
-          Saving a program follows its institution automatically — their updates, deadlines, and events land here.
+        <p className="text-sm text-muted-foreground mb-5 max-w-sm mx-auto">
+          Saving a program follows its institution — their updates, deadlines, and events land here.
         </p>
         <button
           onClick={() => navigate('/s/explore')}
@@ -95,7 +100,7 @@ export default function UpdatesTab() {
 
       {items.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-sm text-foreground">
+          <p className="text-sm text-muted-foreground">
             You're following {followedCount} institution{followedCount !== 1 ? 's' : ''}. New updates will appear here.
           </p>
         </div>

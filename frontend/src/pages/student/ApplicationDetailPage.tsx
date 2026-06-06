@@ -17,7 +17,7 @@ import Modal from '../../components/ui/Modal'
 import Textarea from '../../components/ui/Textarea'
 import Select from '../../components/ui/Select'
 import ProgressBar from '../../components/ui/ProgressBar'
-import Skeleton from '../../components/ui/Skeleton'
+import Skeleton, { SkeletonCard } from '../../components/ui/Skeleton'
 import QueryError from '../../components/ui/QueryError'
 import { showToast } from '../../stores/toast-store'
 import type { Interview } from '../../types'
@@ -131,11 +131,11 @@ export default function ApplicationDetailPage() {
         throw err
       }),
   })
-  const { data: essays, isError: essaysError, refetch: refetchEssays } = useQuery({ queryKey: ['essays', app?.program_id], queryFn: () => listEssays(app?.program_id), enabled: !!app?.program_id && (tab === 'essays' || tab === 'documents') })
+  const { data: essays, isLoading: essaysLoading, isError: essaysError, refetch: refetchEssays } = useQuery({ queryKey: ['essays', app?.program_id], queryFn: () => listEssays(app?.program_id), enabled: !!app?.program_id && (tab === 'essays' || tab === 'documents') })
   const { data: resumes } = useQuery({ queryKey: ['resumes', app?.program_id], queryFn: () => listResumes(app?.program_id), enabled: !!app?.program_id && tab === 'documents' })
   const { data: documents, isError: documentsError, refetch: refetchDocuments } = useQuery({ queryKey: ['documents'], queryFn: listDocuments, enabled: tab === 'documents' })
-  const { data: interviews, isError: interviewsError, refetch: refetchInterviews } = useQuery({ queryKey: ['interviews'], queryFn: getMyInterviews, enabled: tab === 'interviews' })
-  const { data: recommenders, isError: recommendersError, refetch: refetchRecommenders } = useQuery({ queryKey: ['recommendations'], queryFn: listRecommendations, enabled: tab === 'recommenders' })
+  const { data: interviews, isLoading: interviewsLoading, isError: interviewsError, refetch: refetchInterviews } = useQuery({ queryKey: ['interviews', appId], queryFn: getMyInterviews, enabled: tab === 'interviews' })
+  const { data: recommenders, isLoading: recommendersLoading, isError: recommendersError, refetch: refetchRecommenders } = useQuery({ queryKey: ['recommendations'], queryFn: listRecommendations, enabled: tab === 'recommenders' })
   const { data: cost, isError: costError, refetch: refetchCost } = useQuery({ queryKey: ['payment', appId], queryFn: () => getCostTracker(appId!), enabled: !!appId })
 
   // Spec 39 — after a Stripe redirect-return (?paid=fee|deposit), refresh state.
@@ -335,7 +335,7 @@ export default function ApplicationDetailPage() {
         className="mb-4"
         items={[{ label: 'Apply', to: '/s/manage' }, { label: 'Applications', to: '/s/manage' }, { label: programName }]}
       />
-      <button onClick={() => navigate('/s/manage')} className="flex items-center gap-1 text-sm text-foreground hover:text-foreground mb-4">
+      <button onClick={() => navigate('/s/manage')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-secondary mb-4">
         <ArrowLeft size={16} /> Back to Apply
       </button>
 
@@ -343,7 +343,7 @@ export default function ApplicationDetailPage() {
         <div>
           <h1 className="text-xl font-bold text-foreground mb-1">{programName}</h1>
           {application.program?.institution_name && (
-            <p className="text-sm text-foreground flex items-center gap-1"><Building2 size={13} /> {application.program.institution_name}</p>
+            <p className="text-sm text-muted-foreground flex items-center gap-1"><Building2 size={13} /> {application.program.institution_name}</p>
           )}
         </div>
       </div>
@@ -370,10 +370,10 @@ export default function ApplicationDetailPage() {
                 `Decision: ${application.decision}`}
             </p>
             {application.decision === 'admitted' && application.student_decision !== 'accepted_by_student' && (
-              <p className="text-xs text-foreground">Review your offer in the Offer tab.</p>
+              <p className="text-xs text-muted-foreground">Review your offer in the Offer tab.</p>
             )}
             {application.student_decision === 'accepted_by_student' && (
-              <p className="text-xs text-foreground">You're in — enrollment steps are on your calendar.</p>
+              <p className="text-xs text-muted-foreground">You&apos;re in — enrollment steps are on your calendar.</p>
             )}
           </div>
           {application.decision === 'admitted' && application.student_decision !== 'accepted_by_student' && (
@@ -396,7 +396,7 @@ export default function ApplicationDetailPage() {
             return (
               <div key={step} className="flex items-center flex-1 last:flex-none">
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${
-                  done ? 'bg-success text-secondary-foreground' : current ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'
+                  done ? 'bg-success text-white' : current ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'
                 }`}>
                   {done ? <Check size={12} /> : <Circle size={12} />}
                 </div>
@@ -451,7 +451,7 @@ export default function ApplicationDetailPage() {
                     onRetry={() => refetchChecklist()}
                   />
                 ) : (
-                  <p className="text-xs text-foreground">Generating checklist…</p>
+                  <p className="text-xs text-muted-foreground">Generating checklist…</p>
                 )
               )}
             </div>
@@ -549,9 +549,9 @@ export default function ApplicationDetailPage() {
                   Their portal
                 </button>
               </div>
-              <p className="text-[11px] text-foreground mt-2">
+              <p className="text-[11px] text-muted-foreground mt-2">
                 {isExternal
-                  ? 'You\'ll submit on the institution\'s portal. Mark items complete here and attach confirmation evidence.'
+                  ? "You'll submit on the institution's portal. Mark items complete here and attach confirmation evidence."
                   : 'Submit directly through UniPaith once every required item is complete.'}
               </p>
             </Card>
@@ -603,7 +603,7 @@ export default function ApplicationDetailPage() {
 
                 {uploading && (
                   <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-foreground"><span>Uploading…</span><span>{uploadProgress}%</span></div>
+                    <div className="flex justify-between text-xs text-muted-foreground"><span>Uploading…</span><span>{uploadProgress}%</span></div>
                     <ProgressBar value={uploadProgress} />
                   </div>
                 )}
@@ -618,7 +618,7 @@ export default function ApplicationDetailPage() {
 
                 {documentsList.length > 0 && (
                   <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-foreground">Uploaded documents</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground">Uploaded documents</h3>
                     {documentsList.map((doc: any) => (
                       <div key={doc.id} className="flex justify-between items-center p-3 rounded-lg border border-border text-sm">
                         <div className="flex items-center gap-2"><FileCheck size={16} className="text-success" /><span className="text-foreground">{doc.file_name}</span></div>
@@ -639,7 +639,7 @@ export default function ApplicationDetailPage() {
                 </div>
 
                 {documentsList.length === 0 && !uploading && (
-                  <p className="text-sm text-foreground">Upload transcripts, recommendations, and other required documents above.</p>
+                  <p className="text-sm text-muted-foreground">Upload transcripts, recommendations, and other required documents above.</p>
                 )}
               </div>
             )}
@@ -647,14 +647,16 @@ export default function ApplicationDetailPage() {
             {tab === 'essays' && (
               <div className="space-y-4">
                 <Button size="sm" onClick={() => setShowEssayModal(true)}>+ New essay</Button>
-                {essaysError && essaysList.length === 0 ? (
+                {essaysLoading ? (
+                  <SkeletonCard />
+                ) : essaysError && essaysList.length === 0 ? (
                   <QueryError
                     variant="inline"
                     detail="We couldn't load your essays."
                     onRetry={() => refetchEssays()}
                   />
                 ) : essaysList.length === 0 ? (
-                  <p className="text-sm text-foreground mt-2">No essays yet for this application.</p>
+                  <p className="text-sm text-muted-foreground mt-2">No essays yet for this application.</p>
                 ) : (
                   essaysList.map((e: Essay) => (
                     <Card key={e.id} className="p-4">
@@ -662,7 +664,7 @@ export default function ApplicationDetailPage() {
                         <div>
                           <p className="font-medium text-sm text-foreground">{e.prompt_text || 'Essay'}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-foreground">{e.word_count ?? wordCount(e.content)} words</span>
+                            <span className="text-xs text-muted-foreground">{e.word_count ?? wordCount(e.content)} words</span>
                             <Badge variant={(STATUS_COLORS[e.status] || 'neutral') as never}>{e.status}</Badge>
                           </div>
                         </div>
@@ -673,7 +675,7 @@ export default function ApplicationDetailPage() {
                           <Button size="sm" variant="ghost" onClick={() => { setEditingEssay(e); setEssayContent(e.content); setEssayPrompt(e.prompt_text || '') }}>Edit</Button>
                         </div>
                       </div>
-                      <p className="text-sm text-foreground line-clamp-3">{e.content}</p>
+                      <p className="text-sm text-muted-foreground line-clamp-3">{e.content}</p>
                       {feedbackResults[e.id] && (
                         <div className="mt-3 bg-muted rounded-lg p-3">
                           <div className="flex items-center gap-2 mb-2"><Sparkles size={14} className="text-secondary" /><span className="text-sm font-medium text-foreground">Feedback</span></div>
@@ -692,7 +694,9 @@ export default function ApplicationDetailPage() {
             )}
 
             {tab === 'recommenders' && (
-              recommendersError && recommendersList.length === 0 ? (
+              recommendersLoading ? (
+                <SkeletonCard />
+              ) : recommendersError && recommendersList.length === 0 ? (
                 <QueryError
                   variant="inline"
                   detail="We couldn't load your recommenders."
@@ -713,7 +717,9 @@ export default function ApplicationDetailPage() {
                 : []
               return (
                 <div className="space-y-4">
-                  {interviewList.length > 0 ? (
+                  {interviewsLoading ? (
+                    <SkeletonCard />
+                  ) : interviewList.length > 0 ? (
                     interviewList.map((iv: Interview) => (
                       <InterviewRespondPanel key={iv.id} interview={iv} />
                     ))
@@ -745,7 +751,7 @@ export default function ApplicationDetailPage() {
                     <AlertTriangle size={18} className="text-warning flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-foreground">Low-fit warning</p>
-                      <p className="text-xs text-foreground mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {fitnessPct != null ? `This program's fitness is ${fitnessPct}%.` : 'This program may be a low-fit option.'} Review your Match analysis before committing effort here.
                       </p>
                     </div>
@@ -799,7 +805,7 @@ export default function ApplicationDetailPage() {
                     <h3 className="text-sm font-medium text-foreground">Guardrail scan</h3>
                     <Button size="sm" onClick={runGuardrailScan} loading={scanning}>Run scan</Button>
                   </div>
-                  <p className="text-xs text-foreground mb-3">Checks fit and flags anything to reconsider before you apply.</p>
+                  <p className="text-xs text-muted-foreground mb-3">Checks fit and flags anything to reconsider before you apply.</p>
                   {(guardrailResult || application.fit_band) && (
                     <div className={`rounded-lg p-3 ${
                       (guardrailResult?.fit_band || application.fit_band) === 'high' ? 'bg-success-soft'
@@ -809,7 +815,7 @@ export default function ApplicationDetailPage() {
                         <Badge variant={(guardrailResult?.fit_band || application.fit_band) === 'high' ? 'success' : (guardrailResult?.fit_band || application.fit_band) === 'low' ? 'warning' : 'info'}>
                           {(guardrailResult?.fit_band || application.fit_band)} fit
                         </Badge>
-                        {guardrailResult?.recommended_action && <span className="text-xs text-foreground">Recommended: {guardrailResult.recommended_action}</span>}
+                        {guardrailResult?.recommended_action && <span className="text-xs text-muted-foreground">Recommended: {guardrailResult.recommended_action}</span>}
                         {guardrailResult?.is_rule_based && <span className="text-[10px] text-muted-foreground">Showing rule-based result</span>}
                       </div>
                       {(guardrailResult?.blockers || application.guardrail_blockers || []).length > 0 ? (
@@ -875,7 +881,7 @@ export default function ApplicationDetailPage() {
               </div>
               <div>
                 <p className="font-medium text-foreground">{readiness.is_ready ? 'Ready to submit!' : 'Almost there'}</p>
-                <p className="text-sm text-foreground">{readiness.completion_percentage}% complete</p>
+                <p className="text-sm text-muted-foreground">{readiness.completion_percentage}% complete</p>
               </div>
             </div>
             <ProgressBar value={readiness.completion_percentage} />
@@ -884,7 +890,7 @@ export default function ApplicationDetailPage() {
                 <h4 className="text-sm font-medium text-foreground mb-2">Missing items:</h4>
                 <ul className="space-y-1">
                   {readiness.missing_items.map((item: string, i: number) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-foreground"><Circle size={8} className="text-destructive flex-shrink-0" /> {item}</li>
+                    <li key={i} className="flex items-center gap-2 text-sm text-foreground"><Circle size={8} className="text-muted-foreground flex-shrink-0" /> {item}</li>
                   ))}
                 </ul>
               </div>
@@ -904,13 +910,16 @@ export default function ApplicationDetailPage() {
       </Modal>
 
       {/* Submit blocked modal (§10) */}
-      <Modal isOpen={!!submitBlockers} onClose={() => setSubmitBlockers(null)} title="Submit blocked. Resolve these items first:">
+      <Modal isOpen={!!submitBlockers} onClose={() => setSubmitBlockers(null)} title="A few items still need attention">
         <ul className="space-y-2">
           {(submitBlockers || []).map((b, i) => (
             <li key={i} className="flex items-center gap-2 text-sm text-foreground"><AlertCircle size={14} className="text-warning flex-shrink-0" /> {b}</li>
           ))}
         </ul>
-        <Button className="w-full mt-4" variant="tertiary" onClick={() => setSubmitBlockers(null)}>Got it</Button>
+        <div className="flex gap-2 mt-4">
+          <Button className="flex-1" variant="secondary" onClick={() => { setSubmitBlockers(null); setTab('checklist') }}>Go to checklist</Button>
+          <Button className="flex-1" variant="tertiary" onClick={() => setSubmitBlockers(null)}>Got it</Button>
+        </div>
       </Modal>
 
       {/* Spec 39 — fee checkout (calm, cobalt, no gold) */}
@@ -1086,7 +1095,7 @@ function ChecklistTab({ items, completionPct, isExternal, canToggle, onToggle }:
           {completionPct >= 100 && <Badge variant="success">Ready to submit</Badge>}
         </div>
         <ProgressBar value={completionPct} />
-        {isExternal && <p className="text-xs text-foreground mt-2">External submission — check items off as you complete them on the institution's portal.</p>}
+        {isExternal && <p className="text-xs text-muted-foreground mt-2">External submission — check items off as you complete them on the institution's portal.</p>}
       </Card>
       {Object.entries(grouped).map(([cat, catItems]) => (
         <div key={cat}>
@@ -1150,7 +1159,7 @@ function RecommendersTab({ recommenders, programId, onNudge }: {
         <Card key={r.id} className="p-4 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground">{r.recommender_name}</p>
-            <p className="text-xs text-foreground">{r.recommender_title || r.relationship || r.recommender_institution || 'Recommender'}</p>
+            <p className="text-xs text-muted-foreground">{r.recommender_title || r.relationship || r.recommender_institution || 'Recommender'}</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Badge variant={REC_STATUS[r.status] || 'neutral'}>{(r.status || 'draft').replace(/_/g, ' ')}</Badge>
