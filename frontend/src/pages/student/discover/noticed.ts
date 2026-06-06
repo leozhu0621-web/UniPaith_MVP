@@ -9,6 +9,31 @@ export interface NoticedItem {
   label: string
   /** Present when the signal was saved as an editable goal / need row. */
   ref?: { kind: 'goal' | 'need'; id: string }
+  /**
+   * The original (frozen) extracted-signal label this item was built from. Used
+   * as the stable key for reconciling later inline edits — the message's
+   * `extracted_signals` never change, but the goal/need text can.
+   */
+  signalLabel?: string
+}
+
+/**
+ * Remembered inline edits, keyed by the frozen signal label. After an edit the
+ * living-profile row is renamed, so it no longer matches the historical signal
+ * text by label. We keep the resolved ref (and the new wording) here so the
+ * chip stays editable and shows current text on subsequent renders.
+ */
+const editedSignals = new Map<string, { ref: NonNullable<NoticedItem['ref']>; label: string }>()
+
+const norm = (s: string) => s.toLowerCase().trim()
+
+/** Record an inline edit so the renamed signal stays linked to its row. */
+export function rememberSignalEdit(
+  signalLabel: string,
+  ref: NonNullable<NoticedItem['ref']>,
+  label: string,
+): void {
+  editedSignals.set(norm(signalLabel), { ref, label })
 }
 
 /** Pull a readable label out of one extracted-signal entry (string or object). */
@@ -47,9 +72,8 @@ export function noticedItemsFromSignals(signals: Record<string, unknown> | null)
  * "Adjust in your profile →"). Used to wire the thread's Noticed cards.
  */
 export function attachRefs(items: NoticedItem[], profile?: LivingProfile | null): NoticedItem[] {
-  if (!profile) return items
-  const norm = (s: string) => s.toLowerCase().trim()
   const find = (label: string): NoticedItem['ref'] => {
+    if (!profile) return undefined
     const n = norm(label)
     const g = profile.goals.find(x => norm(x.label) === n)
     if (g) return { kind: 'goal', id: g.id }
@@ -57,5 +81,13 @@ export function attachRefs(items: NoticedItem[], profile?: LivingProfile | null)
     if (nd) return { kind: 'need', id: nd.id }
     return undefined
   }
-  return items.map(i => (i.ref ? i : { ...i, ref: find(i.label) }))
+  return items.map(i => {
+    if (i.ref) return i
+    // A prior inline edit renamed the row, so it no longer matches the frozen
+    // signal label — recover the ref (and current wording) from the edit log.
+    const edited = editedSignals.get(norm(i.label))
+    if (edited) return { ...i, label: edited.label, ref: edited.ref, signalLabel: i.label }
+    const ref = find(i.label)
+    return ref ? { ...i, ref, signalLabel: i.label } : i
+  })
 }

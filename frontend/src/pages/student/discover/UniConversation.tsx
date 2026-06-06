@@ -216,7 +216,7 @@ export default function UniConversation({
         )}
 
         {!isEmpty && !handoffDismissed && (
-          <MatchHandoffCard variant="auto" onKeepTalking={() => setHandoffDismissed(true)} />
+          <MatchHandoffCard variant="always" onKeepTalking={() => setHandoffDismissed(true)} />
         )}
       </div>
 
