@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 
 import ProfileDrawer from '../pages/student/discover/ProfileDrawer'
 import * as livingProfile from '../api/livingProfile'
@@ -22,7 +23,13 @@ const PROFILE: LivingProfile = {
 
 function renderDrawer(ui: React.ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>)
+  // ProfileDrawer renders a <Link to="/s/profile"> (full-profile link), so it
+  // needs a Router context — as it always has in the app.
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  )
 }
 
 describe('ProfileDrawer', () => {
