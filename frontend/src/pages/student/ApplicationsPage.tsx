@@ -198,11 +198,11 @@ export default function ApplicationsPage() {
   }, [apps, statusFilter, institution, deadlineWindow, sort])
 
   if (isLoading)
-    return <div className="p-6 max-w-5xl w-full mx-auto space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+    return <div className="p-4 max-w-5xl w-full mx-auto space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 
   if (apps.length === 0)
     return (
-      <div className="p-6 max-w-5xl w-full mx-auto">
+      <div className="p-4 max-w-5xl w-full mx-auto">
         <PageHeader eyebrow="Apply" title="Your portfolio" sub="Turn saved targets into application projects" />
         <EmptyState
           icon={<FileText size={48} />}
@@ -214,7 +214,7 @@ export default function ApplicationsPage() {
     )
 
   return (
-    <div className="p-6 max-w-5xl w-full mx-auto">
+    <div className="p-4 max-w-5xl w-full mx-auto">
       <PageHeader
         eyebrow="Apply"
         title="Your portfolio"

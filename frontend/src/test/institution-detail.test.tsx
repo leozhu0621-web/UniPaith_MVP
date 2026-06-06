@@ -238,3 +238,85 @@ describe('InstitutionDetail (Spec 12)', () => {
     expect(screen.queryByRole('button', { name: /sign in to ask/i })).not.toBeInTheDocument()
   })
 })
+
+// MIT flagship overhaul — header trim, three rankings, undergrad label,
+// data-driven Sources footer, and the multi-paragraph editorial intro.
+describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
+  const MIT = {
+    ...INSTITUTION,
+    name: 'Massachusetts Institute of Technology',
+    student_body_size: 4535,
+    founded_year: 1861,
+    description_text:
+      'Founded in 1861 in Cambridge, MIT is a private research university.\n\n' +
+      'MIT is organized into five schools and one college, plus the Schwarzman College of Computing.',
+    ranking_data: {
+      qs_world_university_rankings: { rank: 1, year: 2025 },
+      times_higher_education: { rank: 2, year: 2025 },
+      us_news_national: { rank: 2, year: 2025 },
+    },
+    school_outcomes: {
+      admit_rate: 0.0455,
+      avg_net_price: 20111,
+      median_earnings_10yr: 143372,
+      completion_rate_4yr_150pct: 0.9641,
+      flagship: { nobel_laureates: 106, enrollment_total: 11816 },
+      sources: [
+        {
+          label: 'Costs, outcomes',
+          source: 'U.S. Dept. of Education College Scorecard',
+          year: 2024,
+          url: 'https://collegescorecard.ed.gov/',
+        },
+      ],
+    },
+  }
+
+  function renderMit() {
+    vi.spyOn(institutionsApi, 'getPublicInstitution').mockResolvedValue(MIT as any)
+    return renderDetail(true)
+  }
+
+  it('header meta shows ranking + founded only (no acceptance / student count)', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    const meta = screen.getByTestId('hero-meta')
+    expect(meta).toHaveTextContent(/QS World/)
+    expect(meta).toHaveTextContent(/founded/)
+    expect(meta).not.toHaveTextContent(/acceptance/i)
+    expect(meta).not.toHaveTextContent(/students/i)
+  })
+
+  it('Overview renders all three rankings (QS, Times Higher Education, U.S. News)', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText('Rankings')).toBeInTheDocument()
+    expect(screen.getByText(/QS World University Rankings/)).toBeInTheDocument()
+    expect(screen.getByText(/Times Higher Education/)).toBeInTheDocument()
+    expect(screen.getByText(/U\.S\. News/)).toBeInTheDocument()
+  })
+
+  it('Quick facts label the undergrad count; Distinction keeps total enrollment', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText('Undergraduates')).toBeInTheDocument()
+    expect(screen.getByText('Total enrollment')).toBeInTheDocument()
+  })
+
+  it('Overview renders a data-driven Sources footer with links', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByRole('heading', { name: /^Sources$/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /College Scorecard/ })).toHaveAttribute(
+      'href',
+      'https://collegescorecard.ed.gov/',
+    )
+  })
+
+  it('Overview intro renders the full multi-paragraph description', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText(/Founded in 1861/)).toBeInTheDocument()
+    expect(screen.getByText(/five schools and one college/)).toBeInTheDocument()
+  })
+})

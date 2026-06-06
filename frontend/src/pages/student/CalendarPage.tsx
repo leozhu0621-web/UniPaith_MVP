@@ -185,7 +185,7 @@ export default function CalendarPage() {
   // ── Loading ──
   if (isLoading) {
     return (
-      <div className="p-6 max-w-5xl w-full mx-auto space-y-4">
+      <div className="p-4 max-w-5xl w-full mx-auto space-y-4">
         {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
       </div>
     )
@@ -194,7 +194,7 @@ export default function CalendarPage() {
   // ── Error ── distinguish a failed fetch from an empty (but successful) timeline.
   if (isError) {
     return (
-      <div className="p-6 max-w-5xl w-full mx-auto">
+      <div className="p-4 max-w-5xl w-full mx-auto">
         <QueryError detail="We couldn't load your timeline." onRetry={() => refetch()} />
       </div>
     )
@@ -214,11 +214,11 @@ export default function CalendarPage() {
   const itemsOn = (day: Date) => filtered.filter(i => isSameDay(parseISO(i.start_at), day))
 
   return (
-    <div className="p-6 max-w-5xl w-full mx-auto">
+    <div className="p-4 max-w-5xl w-full mx-auto">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-h1 text-foreground">Your admissions timeline</h1>
+          <h1 className="text-lg font-semibold text-foreground">Your admissions timeline</h1>
           <p className="text-sm text-muted-foreground mt-1">{filtered.length} item{filtered.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex items-center gap-2">

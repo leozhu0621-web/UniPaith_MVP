@@ -244,7 +244,7 @@ export default function SavedListPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-5xl w-full mx-auto space-y-4">
+      <div className="p-4 max-w-5xl w-full mx-auto space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
           <SkeletonCard key={i} />
         ))}
@@ -254,19 +254,19 @@ export default function SavedListPage() {
 
   if (isError) {
     return (
-      <div className="p-6 max-w-5xl w-full mx-auto">
+      <div className="p-4 max-w-5xl w-full mx-auto">
         <QueryError detail="We couldn't load your saved list." onRetry={() => refetch()} />
       </div>
     )
   }
 
   return (
-    <div className="p-6 max-w-5xl w-full mx-auto pb-28">
+    <div className="p-4 max-w-5xl w-full mx-auto pb-28">
       <header className="mb-6">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
           Saved
         </p>
-        <h1 className="text-2xl font-semibold text-foreground">Your shortlist</h1>
+        <h1 className="text-lg font-semibold text-foreground">Your shortlist</h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-xl">
           Curate programs you are serious about, then compare and start applications when you are ready.
         </p>
