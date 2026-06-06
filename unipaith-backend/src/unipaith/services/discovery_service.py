@@ -103,6 +103,12 @@ class DiscoveryService:
         await self.db.refresh(session)
         return session
 
+    async def start_unified_session(self, user_id: UUID) -> DiscoverySession:
+        """Start the unified, track-less Uni conversation (one session). The
+        extractor is content-based, so a single conversation populates
+        goals / needs / identity by what the student says — no track to pick."""
+        return await self.start_session(user_id, track="discovery", layer=None)
+
     async def list_sessions(
         self,
         user_id: UUID,
@@ -304,6 +310,27 @@ class DiscoveryService:
                     snapshot=snapshot,
                 )
                 session.completion_pct = verdict.completion_pct
+            elif session.track == "discovery":
+                # Unified conversation — the extractor already populated all
+                # signal types by content; combine the three validators so
+                # completion reflects coverage across self/goals/needs and Uni
+                # is steered toward the least-covered area next.
+                from unipaith.ai.state import LayerVerdict
+
+                parts = [
+                    default_validator.validate(layer="basic", snapshot=snapshot),
+                    default_validator.validate_track(track="goals", snapshot=snapshot),
+                    default_validator.validate_track(track="needs", snapshot=snapshot),
+                ]
+                avg = sum((p.completion_pct for p in parts), Decimal("0")) / Decimal(len(parts))
+                weakest = min(parts, key=lambda p: p.completion_pct)
+                verdict = LayerVerdict(
+                    layer_complete=all(p.layer_complete for p in parts),
+                    completion_pct=avg,
+                    missing_signals=[s for p in parts for s in p.missing_signals],
+                    next_probe_hint=weakest.next_probe_hint,
+                )
+                session.completion_pct = avg
 
             # 4b. Phase B1 — fire the feature emitter on completion.
             # Best-effort: errors here never fail the turn. The matcher
@@ -692,6 +719,23 @@ class DiscoveryService:
                     snapshot=snapshot,
                 )
                 session.completion_pct = verdict.completion_pct
+            elif session.track == "discovery":
+                from unipaith.ai.state import LayerVerdict
+
+                parts = [
+                    default_validator.validate(layer="basic", snapshot=snapshot),
+                    default_validator.validate_track(track="goals", snapshot=snapshot),
+                    default_validator.validate_track(track="needs", snapshot=snapshot),
+                ]
+                avg = sum((p.completion_pct for p in parts), Decimal("0")) / Decimal(len(parts))
+                weakest = min(parts, key=lambda p: p.completion_pct)
+                verdict = LayerVerdict(
+                    layer_complete=all(p.layer_complete for p in parts),
+                    completion_pct=avg,
+                    missing_signals=[s for p in parts for s in p.missing_signals],
+                    next_probe_hint=weakest.next_probe_hint,
+                )
+                session.completion_pct = avg
 
             history_msgs = await self._load_message_history(session.id)
             cross_track = await self._cross_track_summary(
@@ -992,6 +1036,10 @@ _RULE_BASED_OPENERS: dict[tuple[str, str | None], str] = {
     ("profile", "identity"): "What's a value of yours that's been tested recently?",
     ("goals", None): "What does success look like a year after you finish?",
     ("needs", None): "What's one thing you can't do without in a school environment?",
+    (
+        "discovery",
+        None,
+    ): "Thinking back over this past year, when was a moment you felt really absorbed?",
 }
 
 

@@ -266,6 +266,21 @@ class Orchestrator:
         )
         missing = ", ".join(verdict.missing_signals) if verdict and verdict.missing_signals else "—"
         cross_track = ctx.cross_track_summary or "(no other tracks started yet)"
+        if ctx.track == "discovery":
+            # Unified Uni conversation — never push a track menu at the model.
+            return (
+                "## Current state\n\n"
+                "You are in one open discovery conversation with this student. "
+                "There are no tracks to pick — explore whatever they open up, and over "
+                "time naturally cover who they are, what they want, and what they need.\n"
+                f"- Completion so far: {ctx.completion_pct:.0%}\n"
+                f"- Still useful to learn: {missing}\n"
+                f"- A possible next probe: {next_probe}\n\n"
+                "## What we already know about this student\n\n"
+                f"{ctx.known_profile_summary or '(nothing yet)'}\n\n"
+                "## Recently captured signals (this session)\n\n"
+                f"{ctx.recent_signals_summary or '(none yet)'}"
+            )
         return (
             f"## Current state\n\n"
             f"- Track: {ctx.track}\n"

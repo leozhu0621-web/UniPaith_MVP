@@ -34,7 +34,7 @@ class DiscoverySession(Base):
     __tablename__ = "discovery_sessions"
     __table_args__ = (
         CheckConstraint(
-            "track IN ('profile','goals','needs')",
+            "track IN ('profile','goals','needs','discovery')",
             name="ck_discovery_sessions_track",
         ),
         CheckConstraint(
