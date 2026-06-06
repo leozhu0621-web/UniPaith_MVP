@@ -128,6 +128,14 @@ async def verify_token(token: str) -> CognitoClaims:
                 algorithms=["RS256"],
                 audience=settings.cognito_app_client_id,
                 issuer=issuer,
+                # Federated (Google) ID tokens carry an `at_hash` claim. python-jose
+                # otherwise demands the matching access_token to verify at_hash —
+                # which a bearer-token API never has — and rejects the token with
+                # "No access_token provided to compare against at_hash claim",
+                # 401-looping every federated session. at_hash is an OIDC client-
+                # side integrity check, not server-side auth; signature, aud, iss
+                # and exp (all still enforced) are what matter.
+                options={"verify_at_hash": False},
             )
         return CognitoClaims(
             sub=payload["sub"],
