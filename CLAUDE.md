@@ -21,6 +21,7 @@ Before starting new feature work, always verify the environment is healthy first
 - **Detail-page content width is standardized to `max-w-5xl mx-auto`** — the MIT institution page is the "example for all", so institution, college (school-subunit), and BOTH program pages (public + student) use the SAME `max-w-5xl` content container. The width must never change between tabs or across page types. (Set 2026-06-05 — college + student-program were `max-w-6xl`; unified.)
 - **Explore cards** and other dense list surfaces stay text-driven — no hero images there.
 - Aesthetic is editorial + content-rich (Niche-modeled), program-specific, never generic marketing
+- **Across the broader student app (non-detail surfaces — Discover, Match, Apply, Profile, Connect, Saved, Settings): dense, utilitarian, app-like (LinkedIn-leaning) WITHIN each surface's existing layout** — surfaced metadata + counts, compact list rows, tight vertical rhythm, small utilitarian section headers. Use the shared density layer `frontend/src/components/student/density/` (`PageHeader · SectionHeader · ListRow · StatTile`). This COMPLEMENTS (does not replace) the content-rich Niche-modeled detail pages above. See `docs/superpowers/specs/2026-06-04-student-ux-densification-design.md`. (Set 2026-06-04 by user direction.)
 - Always confirm WHICH component is being changed (explore card vs detail page) before editing
 
 ## Project Overview
