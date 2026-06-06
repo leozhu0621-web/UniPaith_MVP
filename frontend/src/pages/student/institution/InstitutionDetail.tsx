@@ -557,6 +557,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
       rankings.push({ label: rankingLabel(k), rank: (v as any).rank, year: (v as any).year })
     }
   }
+  const peakIndex = rankings.findIndex(r => r.rank === 1)
   const recognition: { value: string; label: string }[] = []
   if (flag.nobel_laureates != null) recognition.push({ value: String(flag.nobel_laureates), label: 'Nobel laureates' })
   if (flag.macarthur_fellows != null) recognition.push({ value: String(flag.macarthur_fellows), label: 'MacArthur Fellows' })
@@ -568,7 +569,8 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
   const industries: string[] = Array.isArray(outcomes.top_employer_industries)
     ? outcomes.top_employer_industries
     : []
-  const hasFunnel = flag.applicants != null && flag.admits != null && admitRate != null
+  const funnelRate = admitRate ?? (flag.applicants ? Number(flag.admits) / Number(flag.applicants) : null)
+  const hasFunnel = flag.applicants != null && flag.admits != null && funnelRate != null
   const diversity = [
     { label: 'Asian', pct: demo.asian as number },
     { label: 'White', pct: demo.white as number },
@@ -605,8 +607,8 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
         <Card className="p-5">
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Trophy size={15} className="text-secondary" /> Rankings</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            {rankings.map(r => (
-              <RankingBadge key={r.label} rank={r.rank} label={r.label} year={r.year} peak={r.rank === 1} />
+            {rankings.map((r, i) => (
+              <RankingBadge key={r.label} rank={r.rank} label={r.label} year={r.year} peak={i === peakIndex} />
             ))}
           </div>
         </Card>
@@ -629,7 +631,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
           <h2 className="font-semibold text-foreground mb-3">Admissions</h2>
           {hasFunnel && (
             <div className="mb-4">
-              <AdmissionsFunnel applicants={Number(flag.applicants)} admits={Number(flag.admits)} rate={admitRate} cycle={flag.admissions_cycle} />
+              <AdmissionsFunnel applicants={Number(flag.applicants)} admits={Number(flag.admits)} rate={funnelRate} cycle={flag.admissions_cycle} />
             </div>
           )}
           {(rng(ts.sat_reading_25_75) || rng(ts.sat_math_25_75) || rng(ts.act_25_75) || retention != null) && (
@@ -694,7 +696,9 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
             <div className="grid grid-cols-3 gap-3 mb-4">
               {inst.student_body_size != null && <Fact label="Undergraduate" value={inst.student_body_size.toLocaleString()} />}
               {gradCount != null && <Fact label="Graduate" value={gradCount.toLocaleString()} />}
-              <Fact label="Total enrollment" value={Number(enrollTotal).toLocaleString()} />
+              {(inst.student_body_size == null || Number(enrollTotal) > inst.student_body_size) && (
+                <Fact label="Total enrollment" value={Number(enrollTotal).toLocaleString()} />
+              )}
             </div>
           )}
           {demo.women != null && (
