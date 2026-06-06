@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { ArrowUp, Info, Sparkles } from 'lucide-react'
 
-import { appendMessage, getSession, startSession } from '../../../api/discovery'
+import { appendMessage, getSession, startSession, streamDiscoveryMessage } from '../../../api/discovery'
 import Button from '../../../components/ui/Button'
 import { showToast } from '../../../stores/toast-store'
 import type {
@@ -98,6 +98,19 @@ export default function ChatPanel({
   const qc = useQueryClient()
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
+  // Token-streaming state (Spec 77 §6). While a turn streams we render an
+  // optimistic student bubble + an accumulating assistant bubble; on completion
+  // we invalidate the session query and drop the overlay (no flicker).
+  const streamAbort = useRef<AbortController | null>(null)
+  const [streaming, setStreaming] = useState(false)
+  const [streamStudent, setStreamStudent] = useState<DiscoveryMessage | null>(null)
+  const [streamText, setStreamText] = useState('')
+  const canStream =
+    typeof window !== 'undefined' &&
+    typeof ReadableStream !== 'undefined' &&
+    !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  useEffect(() => () => streamAbort.current?.abort(), [])
+
   const [resolvedSessionId, setResolvedSessionId] = useState<string | null>(session?.id ?? null)
   useEffect(() => {
     setResolvedSessionId(session?.id ?? null)
@@ -143,12 +156,96 @@ export default function ChatPanel({
   useEffect(() => {
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
-  }, [messages.length, turnMut.isPending])
+  }, [messages.length, turnMut.isPending, streaming, streamText])
+
+  const refreshAfterTurn = async (sid: string) => {
+    await qc.invalidateQueries({ queryKey: ['discovery', 'session', sid] })
+    qc.invalidateQueries({ queryKey: ['discovery', 'sessions', track] })
+    qc.invalidateQueries({ queryKey: ['discovery', 'completion'] })
+    qc.invalidateQueries({ queryKey: ['goals'] })
+    qc.invalidateQueries({ queryKey: ['needs'] })
+    qc.invalidateQueries({ queryKey: ['identity'] })
+    qc.invalidateQueries({ queryKey: ['personality-signals'] })
+  }
+
+  const sendStreaming = async (text: string) => {
+    let sid = resolvedSessionId
+    let studentEchoed = false
+    let finished = false
+    setStreaming(true)
+    setStreamText('')
+    setStreamStudent({
+      id: '__pending__',
+      session_id: sid ?? '',
+      role: 'student',
+      content: text,
+      extracted_signals: null,
+      created_at: new Date().toISOString(),
+    } as DiscoveryMessage)
+    onDraftChange('')
+    const ctrl = new AbortController()
+    streamAbort.current = ctrl
+    const finish = async () => {
+      if (finished) return
+      finished = true
+      if (sid) await refreshAfterTurn(sid)
+      setStreaming(false)
+      setStreamStudent(null)
+      setStreamText('')
+      onTurnComplete?.()
+    }
+    try {
+      if (!sid) {
+        const created = await startSession(track, track === 'profile' ? layer : undefined)
+        sid = created.id
+        setResolvedSessionId(created.id)
+        onSessionCreated?.(created.id)
+        qc.invalidateQueries({ queryKey: ['discovery', 'sessions', track] })
+      }
+      await streamDiscoveryMessage(
+        sid,
+        { role: 'student', content: text },
+        {
+          onStudentMessage: msg => {
+            studentEchoed = true
+            setStreamStudent(msg)
+          },
+          onDelta: t => setStreamText(prev => prev + t),
+          onAssistantMessage: msg => {
+            if (msg?.content) setStreamText(msg.content)
+          },
+          onError: m => showToast(m || 'Could not send message.', 'error'),
+          onDone: () => {
+            void finish()
+          },
+        },
+        ctrl.signal,
+      )
+      // Safety net if the server closed without an explicit `done`.
+      await finish()
+    } catch (e) {
+      if (ctrl.signal.aborted) return
+      setStreaming(false)
+      setStreamStudent(null)
+      setStreamText('')
+      // Fall back to the non-streaming path only when nothing was persisted yet
+      // (no student echo) — otherwise just surface what was saved (no dup turn).
+      if (sid && !studentEchoed) {
+        turnMut.mutate(text)
+      } else if (sid) {
+        await refreshAfterTurn(sid)
+        showToast('Connection interrupted — your message was saved.', 'info')
+      } else {
+        showToast((e as Error).message || 'Could not send message.', 'error')
+      }
+    }
+  }
 
   const send = (content: string) => {
     const text = content.trim()
-    if (!text || turnMut.isPending) return
-    turnMut.mutate(text)
+    if (!text || turnMut.isPending || streaming) return
+    if (canStream) void sendStreaming(text)
+    else turnMut.mutate(text)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -174,7 +271,7 @@ export default function ChatPanel({
     : []
   const limitedMode = lastSignals._mode === 'rule_based' || lastSignals._phase === 'A2_error'
   const chipPrompts = showBasicChips && suggested.length === 0 ? [...PROFILE_BASIC_CHIP_PROMPTS] : suggested
-  const showChipRow = !isEmpty && !turnMut.isPending && chipPrompts.length > 0
+  const showChipRow = !isEmpty && !turnMut.isPending && !streaming && chipPrompts.length > 0
 
   return (
     <div className="flex flex-col h-full min-h-[500px]">
@@ -184,7 +281,7 @@ export default function ChatPanel({
         aria-live="polite"
         aria-label="Discovery conversation"
       >
-        {isEmpty ? (
+        {isEmpty && !streaming ? (
           <EmptyState
             track={track}
             layer={layer}
@@ -194,7 +291,29 @@ export default function ChatPanel({
         ) : (
           messages.map(m => <MessageBubble key={m.id} message={m} />)
         )}
-        {turnMut.isPending && (
+
+        {/* In-flight streaming turn (Spec 77 §6) — optimistic student + live assistant. */}
+        {streaming && streamStudent && <MessageBubble message={streamStudent} />}
+        {streaming && streamText && (
+          <div className="flex justify-start gap-2">
+            <div className="shrink-0 mt-0.5">
+              <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center">
+                <Sparkles size={14} className="text-accent" />
+              </div>
+            </div>
+            <div className="flex flex-col max-w-[80%] items-start">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5 px-1">
+                Counselor
+              </span>
+              <div className="rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words bg-card border border-border text-foreground rounded-bl-sm">
+                {streamText}
+                <span className="ml-0.5 inline-block h-3.5 w-px align-middle bg-secondary motion-safe:animate-pulse" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {(turnMut.isPending || (streaming && !streamText)) && (
           <div className="flex justify-start gap-2">
             <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center shrink-0">
               <Sparkles size={14} className="text-accent" />
@@ -216,14 +335,14 @@ export default function ChatPanel({
         )}
       </div>
 
-      {limitedMode && !turnMut.isPending && (
+      {limitedMode && !turnMut.isPending && !streaming && (
         <div className="mb-2 flex items-center gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-1.5 text-xs text-foreground">
           <Info size={13} className="text-warning shrink-0" />
           Limited mode is active. Your replies are still saved.
         </div>
       )}
 
-      {!isEmpty && !turnMut.isPending && (
+      {!isEmpty && !turnMut.isPending && !streaming && (
         <div className="mb-2 space-y-1.5">
           {showChipRow && (
             <>
@@ -283,14 +402,14 @@ export default function ChatPanel({
           aria-label="Your reply to the counselor"
           placeholder={`Tell me about your ${track === 'profile' ? 'life' : track}…`}
           className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent"
-          disabled={turnMut.isPending}
+          disabled={turnMut.isPending || streaming}
         />
         <Button
           type="submit"
           variant="secondary"
           size="sm"
-          loading={turnMut.isPending}
-          disabled={!draft.trim()}
+          loading={turnMut.isPending || streaming}
+          disabled={!draft.trim() || streaming}
           aria-label="Send message"
         >
           <ArrowUp size={16} />
