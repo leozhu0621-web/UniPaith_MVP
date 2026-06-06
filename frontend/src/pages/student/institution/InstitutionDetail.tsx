@@ -236,16 +236,15 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   const eyebrow = classifyType(inst)
   // Hero campus photo — first raster image in the gallery (logos are SVG → skipped).
   const heroPhoto = (inst.media_gallery ?? []).find(u => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) ?? null
-  const heroOut = (inst.school_outcomes || {}) as Record<string, any>
-  const heroFlag = (heroOut.flagship || {}) as Record<string, any>
   const heroRd = (inst.ranking_data || {}) as Record<string, any>
   const heroQs = heroRd.qs_world_university_rankings as { rank?: number; year?: number } | undefined
+  // Header meta is intentionally minimal — ranking + founded only. Acceptance
+  // is shown in the Overview stat card, and the enrollment counts (undergrad
+  // vs total) live in Quick facts / Distinction, so they're omitted here to
+  // avoid duplicate/conflicting numbers.
   const heroStats: { value: string; label: string }[] = []
   if (heroQs?.rank != null) heroStats.push({ value: `#${heroQs.rank}`, label: `QS World${heroQs.year ? ` ${heroQs.year}` : ''}` })
-  if (heroOut.admit_rate != null) heroStats.push({ value: `${(heroOut.admit_rate * 100).toFixed(heroOut.admit_rate < 0.1 ? 1 : 0)}%`, label: 'acceptance' })
   if (inst.founded_year != null) heroStats.push({ value: String(inst.founded_year), label: 'founded' })
-  const heroStudents = heroFlag.enrollment_total ?? inst.student_body_size
-  if (heroStudents != null) heroStats.push({ value: Number(heroStudents).toLocaleString(), label: 'students' })
 
   const TABS: { id: TabId; label: string }[] = [
     { id: 'overview', label: 'Overview' },
@@ -309,7 +308,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
 
           {/* Headline stats — no location, per the page spec. */}
           {heroStats.length > 0 && (
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2.5 text-[13px] text-muted-foreground">
+            <div data-testid="hero-meta" className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2.5 text-[13px] text-muted-foreground">
               {heroStats.map((s, i) => (
                 <Fragment key={s.label}>
                   {i > 0 && <span className="text-border" aria-hidden="true">·</span>}
@@ -611,7 +610,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
       )}
       {inst.description_text && (
         <Card className="p-5">
-          <p className="text-sm text-muted-foreground leading-relaxed">{trimSource(inst.description_text)}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trimSource(inst.description_text)}</p>
         </Card>
       )}
 
@@ -622,7 +621,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
           {inst.campus_setting && <Fact label="Campus setting" value={SETTING_LABELS[inst.campus_setting] ?? titleCase(inst.campus_setting)} />}
           {sizeBand && <Fact label="Size" value={sizeBand} />}
           {inst.founded_year != null && <Fact label="Founded" value={String(inst.founded_year)} />}
-          {inst.student_body_size != null && <Fact label="Students" value={inst.student_body_size.toLocaleString()} />}
+          {inst.student_body_size != null && <Fact label="Undergraduates" value={inst.student_body_size.toLocaleString()} />}
           <Fact label="Schools" value={String(schoolCount)} />
           <Fact label="Programs" value={String(programCount)} />
         </div>
@@ -703,11 +702,36 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
         </Card>
       )}
 
-      <p className="text-[11px] leading-relaxed text-muted-foreground pt-1">
-        <span className="font-semibold text-foreground/70">Data sources:</span>{' '}
-        U.S. Department of Education College Scorecard; institution-published facts; map ©{' '}
-        Google. Latest available data.
-      </p>
+      {/* Sources — data-driven from school_outcomes.sources when present
+          (each with year + link), else a generic citation line. */}
+      {Array.isArray(outcomes.sources) && outcomes.sources.length > 0 ? (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+            <BookOpen size={15} className="text-secondary" /> Sources
+          </h2>
+          <ul className="space-y-1.5">
+            {outcomes.sources.map((s: any, i: number) => (
+              <li key={i} className="text-[12px] text-muted-foreground">
+                {s.label ? <span className="text-foreground/80">{s.label}: </span> : null}
+                {s.url ? (
+                  <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">
+                    {s.source}
+                  </a>
+                ) : (
+                  <span>{s.source}</span>
+                )}
+                {s.year ? ` · ${s.year}` : ''}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : (
+        <p className="text-[11px] leading-relaxed text-muted-foreground pt-1">
+          <span className="font-semibold text-foreground/70">Data sources:</span>{' '}
+          U.S. Department of Education College Scorecard; institution-published facts; map ©{' '}
+          Google. Latest available data.
+        </p>
+      )}
     </div>
   )
 }
