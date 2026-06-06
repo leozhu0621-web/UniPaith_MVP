@@ -7,6 +7,7 @@ import Badge from '../../components/ui/Badge'
 import Select from '../../components/ui/Select'
 import EmptyState from '../../components/ui/EmptyState'
 import { SkeletonCard } from '../../components/ui/Skeleton'
+import { PageHeader } from '../../components/student/density'
 import { formatDate } from '../../utils/format'
 import { STATUS_COLORS } from '../../utils/constants'
 import { FileText, Star, ChevronRight, CalendarClock, PartyPopper, ArrowRight, Mail } from 'lucide-react'
@@ -202,8 +203,7 @@ export default function ApplicationsPage() {
   if (apps.length === 0)
     return (
       <div className="p-6 max-w-5xl w-full mx-auto">
-        <h1 className="text-2xl font-semibold text-foreground mb-1">Your portfolio</h1>
-        <p className="text-sm text-foreground mb-6">Turn saved targets into application projects.</p>
+        <PageHeader eyebrow="Apply" title="Your portfolio" sub="Turn saved targets into application projects" />
         <EmptyState
           icon={<FileText size={48} />}
           title="No applications yet"
@@ -215,10 +215,11 @@ export default function ApplicationsPage() {
 
   return (
     <div className="p-6 max-w-5xl w-full mx-auto">
-      <h1 className="text-2xl font-semibold text-foreground mb-1">Your portfolio</h1>
-      <p className="text-sm text-foreground mb-5">
-        {apps.length} application{apps.length !== 1 ? 's' : ''} across your journey.
-      </p>
+      <PageHeader
+        eyebrow="Apply"
+        title="Your portfolio"
+        sub={`${apps.length} application${apps.length !== 1 ? 's' : ''} across your journey`}
+      />
 
       {/* Spec 18 — "You're in" celebration once an offer is accepted (§6/§13) */}
       {acceptedApp && (
