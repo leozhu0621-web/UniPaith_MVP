@@ -773,13 +773,15 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
       )}
 
       {/* Research & innovation */}
-      {(researchLabs.length > 0 || scale.research_centers != null) && (
+      {(researchLabs.length > 0 || researchAreas.length > 0 || scale.research_centers != null || research.industry_collaborators != null) && (
         <Card className="p-5">
           <h2 className="font-semibold text-foreground mb-1 flex items-center gap-2"><FlaskConical size={15} className="text-secondary" /> Research &amp; innovation</h2>
           {(scale.research_centers != null || research.industry_collaborators != null) && (
             <p className="text-[12px] text-muted-foreground mb-3">
-              {scale.research_centers != null ? `${scale.research_centers}+ centers, labs & institutes` : ''}
-              {research.industry_collaborators != null ? ` · ~${research.industry_collaborators} industry collaborators` : ''}
+              {[
+                scale.research_centers != null ? `${scale.research_centers}+ centers, labs & institutes` : null,
+                research.industry_collaborators != null ? `~${research.industry_collaborators} industry collaborators` : null,
+              ].filter(Boolean).join(' · ')}
             </p>
           )}
           {researchLabs.length > 0 && (
