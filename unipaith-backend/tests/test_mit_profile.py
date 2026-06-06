@@ -120,6 +120,10 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     sch = await db_session.get(School, eecs.school_id)
     assert sch.name == "School of Engineering"
     assert eecs.degree_type == "bachelors"
+    # Online, non-degree credential carries through (crawl phase 2).
+    mm = next(p for p in progs if p.slug == "mit-mm-finance")
+    assert mm.degree_type == "certificate"
+    assert mm.delivery_format == "online"
 
 
 async def test_program_has_dependents_false_for_unreferenced_program(db_session):
