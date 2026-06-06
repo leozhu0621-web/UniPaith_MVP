@@ -707,8 +707,8 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
         </Card>
       )}
 
-      {/* Diversity — race/ethnicity + women lead; compact enrollment underneath */}
-      {(diversity.length > 0 || demo.women != null || enrollTotal != null) && (
+      {/* Diversity — race/ethnicity lead; compact enrollment underneath */}
+      {(diversity.length > 0 || enrollTotal != null) && (
         <Card className="p-5">
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Users size={15} className="text-secondary" /> Diversity</h2>
           {diversity.length > 0 && (
@@ -838,7 +838,8 @@ function AboutTab({ inst }: { inst: Institution }) {
     inst.founded_year != null ? { label: 'Founded', value: String(inst.founded_year) } : null,
     inst.campus_setting ? { label: 'Campus setting', value: titleCase(inst.campus_setting) } : null,
   ].filter(Boolean) as { label: string; value: string }[]
-  const nothing = !inst.campus_description && !inst.description_text && !supportKeys.length && !policyKeys.length && !intlKeys.length && !facts.length
+  const hasDepth = recognition.length > 0 || scaleStats.length > 0 || researchLabs.length > 0 || scale.research_centers != null || campusStats.length > 0
+  const nothing = !inst.campus_description && !inst.description_text && !supportKeys.length && !policyKeys.length && !intlKeys.length && !facts.length && !hasDepth
 
   if (nothing) {
     return <EmptyBlock icon={BookOpen} title="More about this school is coming" body="Institution details haven't been published yet. Explore the schools and programs in the meantime." />
