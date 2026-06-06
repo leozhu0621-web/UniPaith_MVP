@@ -6,7 +6,7 @@ import { useCounselorStore } from '../../stores/counselor-store'
 import MiniCounselorPanel from '../student/MiniCounselorPanel'
 import {
   Compass, Target, FolderKanban, Newspaper,
-  LogOut, User, Bookmark, Settings, MessageSquare, Inbox,
+  LogOut, User, Bookmark, Settings, MessageSquare, Inbox, WifiOff,
 } from 'lucide-react'
 import Avatar from '../ui/Avatar'
 import Dropdown from '../ui/Dropdown'
@@ -19,6 +19,9 @@ import Paywall from '../student/Paywall'
 import { SearchTrigger, CommandPalette } from '../student/GlobalSearch'
 import ScrollReset from './ScrollReset'
 import MessagesNavButton from '../student/MessagesNavButton'
+import LiveAnnouncer from '../a11y/LiveAnnouncer'
+import { useOnlineStatus } from '../../hooks/useOnlineStatus'
+import { COPY } from '../../lib/copy'
 
 // Stage-ordered navigation (Spec/02 §7): Discover · Match · Apply · Connect.
 const NAV_ITEMS = [
@@ -35,6 +38,7 @@ export default function StudentLayout() {
   const [searchParams] = useSearchParams()
   const { isMinimized, setMinimized } = useCounselorStore()
   const [accountSheetOpen, setAccountSheetOpen] = useState(false)
+  const online = useOnlineStatus()
 
   const isDiscoverTab = location.pathname === '/s' || location.pathname === '/s/'
   const isOtherTab = !isDiscoverTab
@@ -77,7 +81,7 @@ export default function StudentLayout() {
                 {({ isActive }) => (
                   <>
                     {item.label}
-                    {isActive && <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-primary rounded-full" />}
+                    {isActive && <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-secondary rounded-full" />}
                   </>
                 )}
               </NavLink>
@@ -119,6 +123,17 @@ export default function StudentLayout() {
           <NotificationBell />
         </div>
       </header>
+
+      {/* Offline banner (Spec 78 §5) — app-wide, auto-clears on reconnect. */}
+      {!online && (
+        <div
+          role="status"
+          className="flex items-center gap-2 px-4 sm:px-8 py-2 border-b border-warning/40 bg-warning-soft text-sm text-foreground"
+        >
+          <WifiOff size={15} className="text-warning shrink-0" />
+          <span className="flex-1 min-w-0 truncate">{COPY.offline}</span>
+        </div>
+      )}
 
       {/* Trial / plan nudge (Spec 05 §9, 07 §4.1) */}
       <TrialBanner />
@@ -235,6 +250,9 @@ export default function StudentLayout() {
 
       {/* Trial→paywall gate (Spec 05 §9) — only blocks when enforced + lapsed. */}
       <Paywall />
+
+      {/* App-wide polite ARIA live region (Spec 80 §4) — optimistic-action announcements. */}
+      <LiveAnnouncer />
     </div>
   )
 }

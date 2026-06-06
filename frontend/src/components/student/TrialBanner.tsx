@@ -52,7 +52,7 @@ export default function TrialBanner() {
       </span>
       <button
         onClick={goManage}
-        className="ui-btn shrink-0 inline-flex items-center h-7 px-3 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:brightness-95 transition"
+        className="ui-btn shrink-0 inline-flex items-center h-7 px-3 rounded-lg bg-secondary text-secondary-foreground text-xs font-semibold hover:brightness-95 transition"
       >
         {cta}
       </button>
