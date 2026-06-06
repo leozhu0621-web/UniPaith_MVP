@@ -263,11 +263,29 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
       retention_rate_first_year: 0.9908,
       employed_or_continuing_ed: 0.94,
       top_employer_industries: ['Technology', 'Finance', 'Consulting'],
-      financial_aid: { pell_grant_rate: 0.1932, federal_loan_rate: 0.0669, median_debt_completers: 14768 },
+      financial_aid: {
+        pell_grant_rate: 0.1932,
+        federal_loan_rate: 0.0669,
+        median_debt_completers: 14768,
+        cost_of_attendance: 89340,
+        tuition_free_rate: 0.39,
+        no_loan_debt_rate: 0.88,
+        median_scholarship: 69777,
+      },
       demographics: { asian: 0.3517, white: 0.2126, hispanic: 0.1409, women: 0.4816 },
+      scale: {
+        faculty_count: 1466,
+        student_faculty_ratio: '3:1',
+        research_centers: 70,
+        endowment_usd: 24600000000,
+        campus_acres: 168,
+        undergrad_majors: 56,
+      },
       flagship: {
         nobel_laureates: 106,
         macarthur_fellows: 85,
+        national_medal_science: 64,
+        national_medal_tech: 35,
         enrollment_total: 11816,
         admissions_cycle: 'Class of 2029',
         applicants: 29281,
@@ -376,6 +394,30 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
     expect(await screen.findByText(/Cost & aid/)).toBeInTheDocument()
     // both the footer and the cost card now cite College Scorecard
     expect(screen.getAllByRole('link', { name: /College Scorecard/ }).length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('By the numbers surfaces institutional scale (crawl phase 1)', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByRole('heading', { name: /By the numbers/ })).toBeInTheDocument()
+    expect(screen.getByText('Faculty')).toBeInTheDocument()
+    expect(screen.getByText('1,466')).toBeInTheDocument()
+    expect(screen.getByText('$24.6B')).toBeInTheDocument()
+  })
+
+  it('Cost & aid shows the sticker price and aid highlights (crawl phase 1)', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText(/Sticker cost of attendance/)).toBeInTheDocument()
+    expect(screen.getByText('Attend tuition-free')).toBeInTheDocument()
+    expect(screen.getByText('Graduate debt-free')).toBeInTheDocument()
+  })
+
+  it('Recognition includes the national medals (crawl phase 1)', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    expect(await screen.findByText('National Medal of Science')).toBeInTheDocument()
+    expect(screen.getByText('64')).toBeInTheDocument()
   })
 
   it('Overview intro renders the full multi-paragraph description', async () => {
