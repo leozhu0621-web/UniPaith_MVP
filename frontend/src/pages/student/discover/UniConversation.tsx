@@ -71,7 +71,7 @@ export default function UniConversation() {
   useEffect(() => {
     if (sessionId) return
     const unified = sessions
-      .filter(s => s.track === 'discovery')
+      .filter(s => (s.track as string) === 'discovery')
       .sort((a, b) => b.started_at.localeCompare(a.started_at))[0]
     if (unified) setSessionId(unified.id)
   }, [sessions, sessionId])
