@@ -16,6 +16,19 @@ describe('RankingBadge', () => {
     rerender(<RankingBadge rank={2} label="Times Higher Education" />)
     expect(screen.getByTestId('ranking-badge')).not.toHaveAttribute('data-peak')
   })
+
+  it('renders as a link to the reference when href is given', () => {
+    render(<RankingBadge rank={2} label="Times Higher Education" href="https://example.com/the" />)
+    const badge = screen.getByTestId('ranking-badge')
+    expect(badge.tagName).toBe('A')
+    expect(badge).toHaveAttribute('href', 'https://example.com/the')
+    expect(badge).toHaveAttribute('target', '_blank')
+  })
+
+  it('renders as a plain div when no href is given', () => {
+    render(<RankingBadge rank={2} label="THE" />)
+    expect(screen.getByTestId('ranking-badge').tagName).toBe('DIV')
+  })
 })
 
 describe('AdmissionsFunnel', () => {
