@@ -33,6 +33,13 @@ export default function Sheet({
   const panelRef = useRef<HTMLDivElement>(null)
   const previouslyFocused = useRef<HTMLElement | null>(null)
 
+  // Latest onClose via ref so the focus effect depends only on isOpen — an
+  // inline-arrow onClose would otherwise re-run it (and reset focus to the first
+  // field) on every parent re-render, e.g. each keystroke in a sheet form. See
+  // Modal.tsx + test/modal-focus.test.tsx.
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   useEffect(() => {
     if (!isOpen) return
     previouslyFocused.current = document.activeElement as HTMLElement
@@ -42,7 +49,7 @@ export default function Sheet({
     ;(first ?? panel)?.focus()
 
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') return onClose()
+      if (e.key === 'Escape') return onCloseRef.current()
       if (e.key === 'Tab' && panel) {
         const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
           el => el.offsetParent !== null
@@ -65,7 +72,8 @@ export default function Sheet({
       document.body.style.overflow = ''
       previouslyFocused.current?.focus?.()
     }
-  }, [isOpen, onClose])
+    // Only isOpen — see onCloseRef note above (typing in a sheet form must not reset focus).
+  }, [isOpen])
 
   if (!isOpen) return null
 
