@@ -28,7 +28,7 @@ interface Props {
 
 export default function MatchHandoffCard({ verdict: verdictProp, variant = 'auto', onKeepTalking }: Props) {
   const navigate = useNavigate()
-  const { data: fetched, isLoading } = useQuery<HandoffVerdict>({
+  const { data: fetched, isFetching } = useQuery<HandoffVerdict>({
     queryKey: ['discovery', 'handoff'],
     queryFn: getHandoffVerdict,
     enabled: verdictProp === undefined,
@@ -37,9 +37,10 @@ export default function MatchHandoffCard({ verdict: verdictProp, variant = 'auto
   const ready = !!verdict?.should_handoff
 
   if (variant === 'auto' && !ready) return null
-  // Hold the card back until the verdict resolves so the not-ready copy can't
-  // flash for a student who is actually match-ready.
-  if (verdictProp === undefined && isLoading) return null
+  // Hold the card back while any fetch is in flight (including background
+  // refetches after a chat-turn invalidation) so a stale verdict can't show
+  // the wrong copy at the moment readiness may have flipped.
+  if (verdictProp === undefined && isFetching) return null
 
   return (
     <div className="flex gap-2.5" data-testid="match-handoff-card">
