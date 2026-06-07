@@ -941,6 +941,99 @@ _FOS_OUTCOMES: dict[str, tuple[int, int | None, str]] = {
     "mit-chemistry-phd": (120827, None, "40.05"),
 }
 
+# Who-it's-for + highlights — real content, by degree type with per-program
+# overrides for flagship programs. Fills the program page's audience +
+# highlights sections (previously empty for MIT).
+_WHO_BY_TYPE = {
+    "bachelors": "Applicants seeking a rigorous, research-grounded undergraduate education.",
+    "masters": "Students seeking advanced, specialized graduate training.",
+    "phd": "Researchers pursuing an academic or research career through a funded doctorate.",
+    "certificate": "Learners worldwide seeking a focused MIT credential, often online.",
+}
+_WHO_BY_SLUG = {
+    "mit-sloan-mba": "Early-to-mid-career professionals targeting management and tech leadership.",
+    "mit-sloan-mfin": "Quantitatively-minded graduates targeting careers across modern finance.",
+    "mit-sloan-mban": "Graduates who want to turn data into business decisions.",
+}
+_HL_BY_TYPE = {
+    "bachelors": [
+        "Need-blind admission with need-based aid",
+        "Undergraduate Research Opportunities (UROP)",
+        "Hands-on, project-based curriculum",
+    ],
+    "masters": [
+        "Direct access to MIT faculty & labs",
+        "Strong industry & startup network",
+    ],
+    "phd": [
+        "Fully funded — tuition + stipend",
+        "World-leading research environment",
+        "Small, mentored cohorts",
+    ],
+    "certificate": [
+        "Learn online, on your schedule",
+        "Earn an MIT credential",
+        "Stackable toward an MIT degree",
+    ],
+}
+_HL_BY_SLUG = {
+    "mit-eecs-bs": [
+        "MIT's largest undergraduate major (Course 6)",
+        "Home of CSAIL",
+        "Flexible 6-1 / 6-2 / 6-3 tracks",
+        "Optional 5th-year MEng",
+    ],
+    "mit-cs-6-3-bs": [
+        "Computer-science track of Course 6",
+        "Schwarzman College of Computing",
+        "Access to CSAIL",
+    ],
+    "mit-ai-6-4-bs": [
+        "AI & decision-making focus (Course 6-4)",
+        "Machine learning, optimization & theory",
+        "Schwarzman College of Computing",
+    ],
+    "mit-meche-bs": [
+        "Course 2 — robotics to energy",
+        "Renowned design & manufacturing",
+        "Pappalardo teaching labs",
+    ],
+    "mit-aeroastro-bs": [
+        "Course 16 — aerospace & autonomy",
+        "Space systems & flight research",
+        "Ties to Lincoln Laboratory",
+    ],
+    "mit-physics-bs": [
+        "Among the world's top physics programs",
+        "Quantum information to astrophysics",
+        "LIGO heritage",
+    ],
+    "mit-math-bs": [
+        "Pure & applied math (Course 18)",
+        "World-renowned in theory",
+        "Highest reported median earnings of MIT majors",
+    ],
+    "mit-biology-bs": [
+        "Course 7 — molecular to computational",
+        "Koch Institute & Whitehead nearby",
+        "Strong research & pre-med pathways",
+    ],
+    "mit-cheme-bs": [
+        "Course 10 — energy to medicine",
+        "Practice School industry immersion",
+    ],
+    "mit-sloan-mba": [
+        "Action Learning labs",
+        "Deep tech & entrepreneurship network",
+        "Kendall Square innovation hub",
+    ],
+    "mit-architecture-march": [
+        "Accredited professional M.Arch",
+        "Oldest U.S. architecture department",
+        "Access to the MIT Media Lab",
+    ],
+}
+
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
 def apply(session: Session) -> bool:
@@ -1096,6 +1189,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p.outcomes_data = dict(_OUTCOMES_INSTITUTION)
         else:
             p.outcomes_data = None
+        # Audience + highlights: per-program for flagship, else by degree type.
+        p.who_its_for = _WHO_BY_SLUG.get(spec["slug"]) or _WHO_BY_TYPE.get(spec["degree_type"])
+        p.highlights = _HL_BY_SLUG.get(spec["slug"]) or _HL_BY_TYPE.get(spec["degree_type"])
     session.flush()
     # Reconcile legacy MIT programs (slug not in the canonical set): delete when
     # unreferenced, otherwise unpublish so the catalog is clean without breaking
