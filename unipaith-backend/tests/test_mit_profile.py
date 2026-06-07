@@ -133,6 +133,10 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert mm.degree_type == "certificate"
     assert mm.delivery_format == "online"
     assert mm.tuition is None  # online/MicroMasters pricing varies → null
+    # Official admission-requirements baseline populates per program type.
+    assert eecs.application_requirements["test_policy"]["stance"] == "required"
+    assert eecs.application_requirements["source"] == "MIT Admissions"
+    assert mba.application_requirements["recommendations"]["required_count"] == 1
 
 
 async def test_program_has_dependents_false_for_unreferenced_program(db_session):

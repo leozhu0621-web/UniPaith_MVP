@@ -841,6 +841,65 @@ PROGRAMS: list[dict] = [
 
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
+# Application-requirement baselines by program type. Official at the degree
+# level (undergrad is institute-wide; the Sloan MBA is Sloan-specific). Grad
+# specifics vary by department, so the grad baseline is labelled accordingly.
+_REQ_UNDERGRAD = {
+    "materials": [
+        {"name": "MIT application (not the Common App)", "required": True},
+        {"name": "Short-answer essays", "required": True},
+        {"name": "Activities, coursework & self-reported grades", "required": True},
+    ],
+    "test_policy": {
+        "stance": "required",
+        "note": "SAT or ACT required (reinstated for 2025 entry)",
+    },
+    "recommendations": {
+        "required_count": 3,
+        "types": ["Two teacher evaluations", "Secondary-school counselor report"],
+    },
+    "source": "MIT Admissions",
+    "source_url": "https://mitadmissions.org/apply/first-year/",
+}
+_REQ_GRAD = {
+    "materials": [
+        {"name": "Statement of objectives", "required": True},
+        {"name": "Academic transcripts", "required": True},
+        {
+            "name": "English proficiency (TOEFL/IELTS) for international applicants",
+            "required": False,
+            "note": "TOEFL iBT 100 / IELTS 7.0 typical",
+        },
+    ],
+    "test_policy": {"stance": "varies", "note": "GRE policy varies by department"},
+    "recommendations": {
+        "required_count": 3,
+        "types": ["Three letters of recommendation"],
+    },
+    "source": "MIT Graduate Admissions",
+    "source_url": "https://oge.mit.edu/admissions/",
+}
+_REQ_MBA = {
+    "materials": [
+        {"name": "Cover letter & short essays", "required": True},
+        {"name": "Résumé", "required": True},
+        {"name": "Academic transcripts", "required": True},
+    ],
+    "test_policy": {"stance": "required", "note": "GMAT, GRE, or Executive Assessment"},
+    "recommendations": {
+        "required_count": 1,
+        "types": ["One professional letter of recommendation"],
+    },
+    "source": "MIT Sloan Admissions",
+    "source_url": "https://mitsloan.mit.edu/mba/admissions",
+}
+_REQ_OPEN = {
+    "materials": [{"name": "Open enrollment — no formal admission required", "required": False}],
+    "test_policy": {"stance": "not_required"},
+    "source": "MIT Open Learning",
+    "source_url": "https://openlearning.mit.edu/",
+}
+
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
 def apply(session: Session) -> bool:
@@ -969,6 +1028,14 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             if (p.tuition is not None or spec["degree_type"] == "phd")
             else None
         )
+        if spec["slug"] == "mit-sloan-mba":
+            p.application_requirements = dict(_REQ_MBA)
+        elif p.delivery_format == "online" or spec["degree_type"] == "certificate":
+            p.application_requirements = dict(_REQ_OPEN)
+        elif spec["degree_type"] == "bachelors":
+            p.application_requirements = dict(_REQ_UNDERGRAD)
+        else:
+            p.application_requirements = dict(_REQ_GRAD)
     session.flush()
     # Reconcile legacy MIT programs (slug not in the canonical set): delete when
     # unreferenced, otherwise unpublish so the catalog is clean without breaking
