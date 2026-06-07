@@ -145,6 +145,10 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     chem = next(p for p in progs if p.slug == "mit-chemistry-bs")
     assert chem.outcomes_data["scope"] == "institution"  # suppressed → MIT-wide labelled
     assert mm.outcomes_data is None  # non-degree credential → no outcomes
+    # Audience + highlights populate (flagship override + by-type fallback).
+    assert eecs.who_its_for and "education" in eecs.who_its_for
+    assert eecs.highlights and any("CSAIL" in h for h in eecs.highlights)
+    assert chem.highlights  # by-type (bachelors) fallback
 
 
 async def test_program_has_dependents_false_for_unreferenced_program(db_session):
