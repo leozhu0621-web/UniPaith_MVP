@@ -852,7 +852,8 @@ _REQ_UNDERGRAD = {
     ],
     "test_policy": {
         "stance": "required",
-        "note": "SAT or ACT required (reinstated for 2025 entry)",
+        "accepted_tests": ["SAT", "ACT"],
+        "waived_rules": "SAT or ACT required (reinstated for 2025 entry)",
     },
     "recommendations": {
         "required_count": 3,
@@ -871,7 +872,11 @@ _REQ_GRAD = {
             "note": "TOEFL iBT 100 / IELTS 7.0 typical",
         },
     ],
-    "test_policy": {"stance": "varies", "note": "GRE policy varies by department"},
+    "test_policy": {
+        "stance": "varies",
+        "accepted_tests": ["GRE"],
+        "waived_rules": "GRE policy varies by department",
+    },
     "recommendations": {
         "required_count": 3,
         "types": ["Three letters of recommendation"],
@@ -885,7 +890,11 @@ _REQ_MBA = {
         {"name": "Résumé", "required": True},
         {"name": "Academic transcripts", "required": True},
     ],
-    "test_policy": {"stance": "required", "note": "GMAT, GRE, or Executive Assessment"},
+    "test_policy": {
+        "stance": "required",
+        "accepted_tests": ["GMAT", "GRE", "Executive Assessment"],
+        "waived_rules": "GMAT, GRE, or Executive Assessment",
+    },
     "recommendations": {
         "required_count": 1,
         "types": ["One professional letter of recommendation"],
