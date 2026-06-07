@@ -149,6 +149,7 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert eecs.who_its_for and "education" in eecs.who_its_for
     assert eecs.highlights and any("CSAIL" in h for h in eecs.highlights)
     assert chem.highlights  # by-type (bachelors) fallback
+    assert eecs.tracks and any("6-3" in c for c in eecs.tracks["concentrations"])
 
 
 async def test_program_has_dependents_false_for_unreferenced_program(db_session):
