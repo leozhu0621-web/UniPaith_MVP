@@ -125,10 +125,14 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert eecs.tuition == 64730  # undergrads pay MIT's single published rate
     phd = next(p for p in progs if p.slug == "mit-eecs-phd")
     assert phd.tuition == 0  # PhDs are funded
+    assert phd.cost_data and phd.cost_data["funded"] is True
+    mba = next(p for p in progs if p.slug == "mit-sloan-mba")
+    assert mba.tuition == 89000  # Sloan MBA professional rate (2025-26)
     # Online, non-degree credential carries through (crawl phase 2).
     mm = next(p for p in progs if p.slug == "mit-mm-finance")
     assert mm.degree_type == "certificate"
     assert mm.delivery_format == "online"
+    assert mm.tuition is None  # online/MicroMasters pricing varies → null
 
 
 async def test_program_has_dependents_false_for_unreferenced_program(db_session):
