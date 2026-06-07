@@ -303,6 +303,7 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
         { label: 'World ranking', source: 'QS World University Rankings', year: 2025, url: 'https://www.topuniversities.com/universities/mit' },
         { label: 'World ranking', source: 'Times Higher Education', year: 2025, url: 'https://www.timeshighereducation.com/mit' },
         { label: 'National ranking', source: 'U.S. News Best National Universities', year: 2025, url: 'https://www.usnews.com/best-colleges/mit' },
+        { label: 'Facts & profile', source: 'MIT Facts', year: 2025, url: 'https://facts.mit.edu/' },
       ],
     },
   }
@@ -447,5 +448,13 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
     expect(await screen.findByText(/Founded in 1861/)).toBeInTheDocument()
     expect(screen.getByText(/five schools and one college/)).toBeInTheDocument()
+  })
+
+  it('intro carries an inline MIT Facts source citation (phase B)', async () => {
+    renderMit()
+    await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
+    const factsLinks = await screen.findAllByRole('link', { name: /MIT Facts/ })
+    expect(factsLinks.length).toBeGreaterThanOrEqual(1)
+    expect(factsLinks[0]).toHaveAttribute('href', 'https://facts.mit.edu/')
   })
 })

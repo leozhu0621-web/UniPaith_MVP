@@ -595,6 +595,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
       {inst.description_text && (
         <Card className="p-5">
           <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trimSource(inst.description_text)}</p>
+          <IntroSourceLine outcomes={outcomes} />
         </Card>
       )}
 
@@ -844,6 +845,7 @@ function AboutTab({ inst }: { inst: Institution }) {
         <Card className="p-5">
           <h2 className="font-semibold text-foreground mb-2">About {inst.name}</h2>
           <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trimSource(inst.description_text)}</p>
+          <IntroSourceLine outcomes={inst.school_outcomes || {}} />
         </Card>
       )}
 
@@ -1198,6 +1200,29 @@ function UpdatesTab({ posts, institutionName }: { posts: InstitutionPost[]; inst
 /* ──────────────────────────────────────────────────────────────────────────
    Shared bits
    ────────────────────────────────────────────────────────────────────────── */
+/** A "Source:" line under descriptive prose — surfaces the official source
+ *  (MIT Facts) from school_outcomes.sources. Renders nothing if absent. */
+function IntroSourceLine({ outcomes }: { outcomes: { sources?: { source: string; url?: string; year?: number }[] } }) {
+  const list = outcomes?.sources
+  const s = Array.isArray(list)
+    ? list.find(x => typeof x?.source === 'string' && /mit facts/i.test(x.source))
+    : undefined
+  if (!s) return null
+  return (
+    <p className="text-[11px] text-muted-foreground/70 mt-2">
+      Source:{' '}
+      {s.url ? (
+        <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">
+          {s.source}
+        </a>
+      ) : (
+        s.source
+      )}
+      {s.year ? ` · ${s.year}` : ''}
+    </p>
+  )
+}
+
 function Fact({ label, value, hint }: { label: string; value: string; hint?: string }) {
   // Semantic foreground tokens (not fixed charcoal/slate) so the tile stays
   // legible when bg-muted flips to dark navy in dark mode.
