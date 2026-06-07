@@ -488,6 +488,7 @@ PROGRAMS: list[dict] = [
         "program_name": "Master of Finance",
         "degree_type": "masters",
         "duration_months": 18,
+        "tuition": 93834,
         "description": "A rigorous, quantitative master's for careers in finance.",
     },
     {
@@ -496,6 +497,7 @@ PROGRAMS: list[dict] = [
         "program_name": "Master of Business Analytics",
         "degree_type": "masters",
         "duration_months": 12,
+        "tuition": 93834,
         "description": "A one-year master's in business analytics and data science.",
     },
     {
