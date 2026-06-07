@@ -1232,7 +1232,7 @@ export default function ProgramDetailPage() {
 
           {tab === 'outcomes' && (() => {
             const od = odn
-            const salary = od.median_salary ? Number(od.median_salary) : (rd.earnings_10yr_median || null)
+            const salary = od.median_salary ? Number(od.median_salary) : null
             const salaryLow = od.salary_25th ? Number(od.salary_25th) : (salary ? Math.round(salary * 0.75) : null)
             const salaryHigh = od.salary_75th ? Number(od.salary_75th) : (salary ? Math.round(salary * 1.3) : null)
             const empRate = od.employment_rate ? Number(od.employment_rate) : null
