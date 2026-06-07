@@ -900,6 +900,47 @@ _REQ_OPEN = {
     "source_url": "https://openlearning.mit.edu/",
 }
 
+# Outcomes are not published per program by MIT, and the College Scorecard
+# Field-of-Study API is key-gated. So degree programs surface MIT's REAL
+# institution-wide outcomes, explicitly scoped/labelled "not program-specific"
+# (rendered with a disclaimer). Non-degree credentials get none.
+_OUTCOMES_INSTITUTION = {
+    "median_salary": 143372,
+    "employment_rate": 0.94,
+    "employment_timeframe": "MIT graduates overall",
+    "top_industries": ["Technology", "Finance", "Consulting", "Research"],
+    "scope": "institution",
+    "scope_note": "MIT-wide figures across all graduates — not specific to this program.",
+    "source": "U.S. Dept. of Education College Scorecard (institution-level)",
+    "source_url": "https://collegescorecard.ed.gov/",
+}
+
+# Real per-program median earnings (+ debt where reported) from the College
+# Scorecard Field-of-Study file (Most-Recent-Cohorts), MIT UNITID 166683. Only
+# non-privacy-suppressed fields appear here; every other program falls back to
+# the institution figure. Tuple = (median_earnings, median_debt | None, CIP).
+_FOS_OUTCOMES: dict[str, tuple[int, int | None, str]] = {
+    "mit-aeroastro-bs": (138934, 17724, "14.02"),
+    "mit-cs-6-3-bs": (220064, 11077, "11.07"),
+    "mit-ai-6-4-bs": (220064, 11077, "11.07"),
+    "mit-eecs-bs": (190731, 10967, "14.10"),
+    "mit-meche-bs": (106765, 11507, "14.19"),
+    "mit-cheme-bs": (124650, 17000, "14.07"),
+    "mit-dmse-bs": (98069, None, "14.18"),
+    "mit-be-bs": (106402, 13000, "14.05"),
+    "mit-physics-bs": (126258, 18500, "40.08"),
+    "mit-math-bs": (226193, 9751, "27.01"),
+    "mit-biology-bs": (82813, None, "26.01"),
+    "mit-management-bs": (142355, None, "52.01"),
+    "mit-sloan-mba": (264269, 41000, "52.01"),
+    "mit-architecture-march": (87746, None, "04.02"),
+    "mit-city-planning-sm": (109410, 40833, "04.03"),
+    "mit-sdm-sm": (194940, 44052, "14.27"),
+    "mit-eecs-phd": (156904, None, "14.10"),
+    "mit-meche-phd": (167643, None, "14.19"),
+    "mit-chemistry-phd": (120827, None, "40.05"),
+}
+
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
 def apply(session: Session) -> bool:
@@ -1036,6 +1077,25 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p.application_requirements = dict(_REQ_UNDERGRAD)
         else:
             p.application_requirements = dict(_REQ_GRAD)
+        # Real per-program outcomes from College Scorecard Field-of-Study where
+        # MIT reports non-suppressed figures; otherwise MIT-wide institution
+        # outcomes, explicitly labelled (degree programs only); non-degree: none.
+        fos = _FOS_OUTCOMES.get(spec["slug"])
+        if fos is not None:
+            salary, debt, cip = fos
+            p.outcomes_data = {
+                "median_salary": salary,
+                "scope": "program",
+                "cip": cip,
+                "source": "U.S. Dept. of Education College Scorecard — Field of Study",
+                "source_url": "https://collegescorecard.ed.gov/",
+            }
+            if debt is not None:
+                p.outcomes_data["median_debt_completers"] = debt
+        elif spec["degree_type"] in ("bachelors", "masters", "phd"):
+            p.outcomes_data = dict(_OUTCOMES_INSTITUTION)
+        else:
+            p.outcomes_data = None
     session.flush()
     # Reconcile legacy MIT programs (slug not in the canonical set): delete when
     # unreferenced, otherwise unpublish so the catalog is clean without breaking

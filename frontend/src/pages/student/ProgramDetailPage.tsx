@@ -1252,6 +1252,17 @@ export default function ProgramDetailPage() {
                   employmentRate={od.employment_rate}
                 />
 
+                {(salary || empRate) && (od.scope || od.source) && (
+                  <Card className="p-3 border-secondary/30 bg-secondary/[0.05]">
+                    <p className="text-[12px] text-muted-foreground">
+                      {od.scope === 'institution'
+                        ? (od.scope_note || 'MIT-wide figures across all graduates — not specific to this program.')
+                        : 'Program-level median earnings (College Scorecard, Field of Study).'}
+                      {od.source ? ` Source: ${od.source}.` : ''}
+                    </p>
+                  </Card>
+                )}
+
                 {!hasData ? (
                   <Card className="p-6 text-center">
                     <TrendingUp size={32} className="text-foreground/30 mx-auto mb-3" />

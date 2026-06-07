@@ -137,6 +137,14 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert eecs.application_requirements["test_policy"]["stance"] == "required"
     assert eecs.application_requirements["source"] == "MIT Admissions"
     assert mba.application_requirements["recommendations"]["required_count"] == 1
+    # Real per-program outcomes from College Scorecard Field-of-Study, with a
+    # labelled institution fallback where MIT's figures are privacy-suppressed.
+    cs = next(p for p in progs if p.slug == "mit-cs-6-3-bs")
+    assert cs.outcomes_data["median_salary"] == 220064
+    assert cs.outcomes_data["scope"] == "program"
+    chem = next(p for p in progs if p.slug == "mit-chemistry-bs")
+    assert chem.outcomes_data["scope"] == "institution"  # suppressed → MIT-wide labelled
+    assert mm.outcomes_data is None  # non-degree credential → no outcomes
 
 
 async def test_program_has_dependents_false_for_unreferenced_program(db_session):
