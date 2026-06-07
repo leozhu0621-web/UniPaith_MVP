@@ -17,6 +17,8 @@ and the dev seed all agree (DRY).
 
 from __future__ import annotations
 
+from datetime import date
+
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
@@ -1088,6 +1090,140 @@ _TRACKS_BY_SLUG = {
     },
 }
 
+# Richer 2-sentence descriptions for the major programs (real). Programs not
+# listed keep their canonical one-line description from PROGRAMS above.
+_DESC_RICH_BY_SLUG = {
+    "mit-eecs-bs": (
+        "Course 6, MIT's largest undergraduate major, spans circuits and devices, computer "
+        "systems, artificial intelligence, and theory across flexible 6-1/6-2/6-3 tracks. "
+        "It is the academic home of CSAIL, with an optional fifth-year MEng."
+    ),
+    "mit-cs-6-3-bs": (
+        "The computer-science track of Course 6 (6-3) — algorithms, systems, AI, and "
+        "software — anchored by the Schwarzman College of Computing and CSAIL. Graduates "
+        "report among the highest early-career earnings of any MIT major."
+    ),
+    "mit-ai-6-4-bs": (
+        "Course 6-4 focuses on artificial intelligence and decision-making: machine "
+        "learning, optimization, robotics, and the mathematics behind them. It blends EECS "
+        "with the Schwarzman College of Computing's interdisciplinary approach."
+    ),
+    "mit-meche-bs": (
+        "Course 2 covers mechanics, design, controls, and manufacturing — from robotics and "
+        "energy systems to bioengineering. Flexible 2-A and ocean-engineering (2-OE) options "
+        "let students tailor the degree."
+    ),
+    "mit-aeroastro-bs": (
+        "Course 16 educates engineers of aerospace vehicles, autonomy, and space systems "
+        "through hands-on flight and systems projects. It maintains close ties to labs such "
+        "as Lincoln Laboratory."
+    ),
+    "mit-cheme-bs": (
+        "Course 10 applies chemical and biological engineering to energy, materials, and "
+        "medicine. Its renowned Practice School places students in real industrial settings."
+    ),
+    "mit-dmse-bs": (
+        "Course 3 studies the structure, properties, and processing of materials — from "
+        "semiconductors and metals to polymers and biomaterials — bridging science and "
+        "engineering."
+    ),
+    "mit-be-bs": (
+        "Course 20 engineers at the interface of biology, applying quantitative and molecular "
+        "tools to medicine, therapeutics, and synthetic biology."
+    ),
+    "mit-cee-bs": (
+        "Course 1 designs resilient infrastructure and environmental systems, combining "
+        "mechanics, data, and sustainability to address climate and the built world."
+    ),
+    "mit-nse-bs": (
+        "Course 22 spans fission and fusion energy, radiation science, and quantum "
+        "engineering, with access to MIT's research reactor and the Plasma Science & Fusion "
+        "Center."
+    ),
+    "mit-physics-bs": (
+        "Course 8 is among the world's foremost physics programs, ranging from quantum "
+        "information and particle physics to astrophysics and condensed matter. Flexible "
+        "(8-Flex) and focused tracks suit research- or breadth-minded students."
+    ),
+    "mit-math-bs": (
+        "Course 18 offers pure mathematics, applied mathematics, and mathematics with "
+        "computer science (18-C), with world-leading strength in theory and combinatorics. "
+        "It reports the highest median earnings of any MIT undergraduate major."
+    ),
+    "mit-biology-bs": (
+        "Course 7 spans molecular, cellular, and computational biology, supported by "
+        "neighbors like the Koch Institute and Whitehead Institute. It is a common path to "
+        "research and medicine."
+    ),
+    "mit-chemistry-bs": (
+        "Course 5 covers organic, inorganic, physical, and biological chemistry, with "
+        "extensive undergraduate research across MIT's labs."
+    ),
+    "mit-bcs-bs": (
+        "Course 9 connects molecules and neurons to cognition and machine intelligence, "
+        "drawing on the McGovern and Picower Institutes for brain research."
+    ),
+    "mit-eaps-bs": (
+        "Course 12 studies Earth, climate, the oceans, and the planets, combining field, "
+        "laboratory, and computational science."
+    ),
+    "mit-economics-bs": (
+        "Course 14 is a top-ranked economics program known for empirical and theoretical "
+        "rigor, offered as Economics (14-1) or Mathematical Economics (14-2)."
+    ),
+    "mit-management-bs": (
+        "Course 15, MIT Sloan's undergraduate major, blends analytics, finance, operations, "
+        "and entrepreneurship with MIT's quantitative core."
+    ),
+    "mit-sloan-mba": (
+        "MIT Sloan's two-year MBA pairs analytical rigor with hands-on Action Learning labs "
+        "and a deep technology and entrepreneurship network at the heart of Kendall Square. "
+        "Optional certificates focus study in finance, analytics, entrepreneurship, or "
+        "sustainability."
+    ),
+    "mit-sloan-mfin": (
+        "A rigorous, quantitative master's preparing graduates for careers across modern "
+        "finance — from asset management to fintech — backed by MIT Sloan's research depth."
+    ),
+    "mit-sloan-mban": (
+        "A one-year Master of Business Analytics, run with the Operations Research Center, "
+        "that turns data and optimization into business decisions."
+    ),
+    "mit-architecture-bs": (
+        "Course 4 combines design studios, history and theory, and building technology in "
+        "the oldest architecture program in the United States (founded 1865)."
+    ),
+    "mit-architecture-march": (
+        "The accredited professional Master of Architecture — a studio-based degree with "
+        "access to the MIT Media Lab and the school's design and computation faculty."
+    ),
+    "mit-dusp-bs": (
+        "Course 11 studies cities, housing, transportation, and the policy of the built "
+        "environment, blending social science with planning and design."
+    ),
+    "mit-mediaarts-sm": (
+        "The graduate program of the MIT Media Lab, inventing across human-computer "
+        "interaction, robotics, biotech, and media at the intersection of technology and "
+        "design."
+    ),
+    "mit-mm-finance": (
+        "An online MicroMasters credential in finance from MIT Sloan, covering financial "
+        "markets, mathematical methods, and modeling — stackable toward a master's."
+    ),
+    "mit-mm-statistics-data-science": (
+        "An online MicroMasters in Statistics and Data Science from MIT's IDSS, spanning "
+        "probability, data analysis, and machine learning."
+    ),
+    "mit-mm-supply-chain": (
+        "An online MicroMasters in Supply Chain Management from the MIT Center for "
+        "Transportation & Logistics, a pathway to MIT's blended master's."
+    ),
+    "mit-mm-data-econ-policy": (
+        "An online MicroMasters in Data, Economics, and Design of Policy from MIT's J-PAL "
+        "and economics faculty, applying rigorous evaluation to real policy questions."
+    ),
+}
+
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
 def apply(session: Session) -> bool:
@@ -1186,7 +1322,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.program_name = spec["program_name"]
         p.degree_type = spec["degree_type"]
         p.duration_months = spec.get("duration_months")
-        p.description_text = spec["description"]
+        p.description_text = _DESC_RICH_BY_SLUG.get(spec["slug"]) or spec["description"]
         p.school_id = school_by_name[spec["school"]].id
         p.is_published = True
         p.catalog_source = "curated"
@@ -1248,6 +1384,17 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.highlights = _HL_BY_SLUG.get(spec["slug"]) or _HL_BY_TYPE.get(spec["degree_type"])
         if spec["slug"] in _TRACKS_BY_SLUG:
             p.tracks = _TRACKS_BY_SLUG[spec["slug"]]
+        # Application deadline (upcoming cycle). Undergrad Regular Action is stable
+        # (Jan 1); graduate dates vary by department — the program-page footer
+        # notes "verify on the official program page".
+        if spec["slug"] == "mit-sloan-mba":
+            p.application_deadline = date(2027, 1, 13)
+        elif spec["degree_type"] == "bachelors":
+            p.application_deadline = date(2027, 1, 1)
+        elif p.delivery_format == "online" or spec["degree_type"] == "certificate":
+            p.application_deadline = None
+        else:
+            p.application_deadline = date(2026, 12, 15)
     session.flush()
     # Reconcile legacy MIT programs (slug not in the canonical set): delete when
     # unreferenced, otherwise unpublish so the catalog is clean without breaking

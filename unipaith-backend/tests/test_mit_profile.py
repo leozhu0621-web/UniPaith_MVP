@@ -150,6 +150,9 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert eecs.highlights and any("CSAIL" in h for h in eecs.highlights)
     assert chem.highlights  # by-type (bachelors) fallback
     assert eecs.tracks and any("6-3" in c for c in eecs.tracks["concentrations"])
+    assert "CSAIL" in eecs.description_text  # richer description override
+    assert eecs.application_deadline is not None  # undergrad deadline (Jan 1)
+    assert mm.application_deadline is None  # online/MicroMasters → no fixed deadline
 
 
 async def test_program_has_dependents_false_for_unreferenced_program(db_session):
