@@ -1034,6 +1034,60 @@ _HL_BY_SLUG = {
     ],
 }
 
+# Real MIT concentrations / degree tracks, for the programs that offer them.
+# Shape matches the frontend extractTracksMeta: {concentrations: [...], note}.
+_TRACKS_BY_SLUG = {
+    "mit-eecs-bs": {
+        "concentrations": [
+            "6-1 Electrical Science & Engineering",
+            "6-2 Electrical Engineering & Computer Science",
+            "6-3 Computer Science & Engineering",
+            "6-9 Computation & Cognition",
+            "6-14 Computer Science, Economics & Data Science",
+        ],
+        "note": "Course 6 offers flexible tracks spanning electrical engineering and CS.",
+    },
+    "mit-cs-6-3-bs": {
+        "concentrations": ["Artificial Intelligence", "Systems", "Theory", "Graphics & HCI"],
+        "note": "Course 6-3 students choose focus areas across computer science.",
+    },
+    "mit-meche-bs": {
+        "concentrations": [
+            "Course 2 (Mechanical Engineering)",
+            "2-A (flexible, concentration-based)",
+            "2-OE (with ocean engineering)",
+        ],
+    },
+    "mit-math-bs": {
+        "concentrations": [
+            "Pure Mathematics",
+            "Applied Mathematics",
+            "Mathematics with Computer Science (18-C)",
+        ],
+    },
+    "mit-physics-bs": {
+        "concentrations": ["Flexible track (8-Flex)", "Focused option (8)"],
+    },
+    "mit-biology-bs": {
+        "concentrations": ["Course 7 (Biology)", "7-A (flexible)"],
+    },
+    "mit-aeroastro-bs": {
+        "concentrations": ["Aerospace Engineering (16)", "Engineering (16-ENG, flexible)"],
+    },
+    "mit-economics-bs": {
+        "concentrations": ["Economics (14-1)", "Mathematical Economics (14-2)"],
+    },
+    "mit-sloan-mba": {
+        "concentrations": [
+            "Finance",
+            "Entrepreneurship & Innovation",
+            "Analytics",
+            "Sustainability",
+        ],
+        "note": "Optional certificates let MBA students specialize.",
+    },
+}
+
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
 def apply(session: Session) -> bool:
@@ -1192,6 +1246,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # Audience + highlights: per-program for flagship, else by degree type.
         p.who_its_for = _WHO_BY_SLUG.get(spec["slug"]) or _WHO_BY_TYPE.get(spec["degree_type"])
         p.highlights = _HL_BY_SLUG.get(spec["slug"]) or _HL_BY_TYPE.get(spec["degree_type"])
+        if spec["slug"] in _TRACKS_BY_SLUG:
+            p.tracks = _TRACKS_BY_SLUG[spec["slug"]]
     session.flush()
     # Reconcile legacy MIT programs (slug not in the canonical set): delete when
     # unreferenced, otherwise unpublish so the catalog is clean without breaking
