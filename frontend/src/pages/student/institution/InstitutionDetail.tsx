@@ -237,14 +237,10 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   const eyebrow = classifyType(inst)
   // Hero campus photo — first raster image in the gallery (logos are SVG → skipped).
   const heroPhoto = (inst.media_gallery ?? []).find(u => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) ?? null
-  const heroRd = (inst.ranking_data || {}) as Record<string, any>
-  const heroQs = heroRd.qs_world_university_rankings as { rank?: number; year?: number } | undefined
-  // Header meta is intentionally minimal — ranking + founded only. Acceptance
-  // is shown in the Overview stat card, and the enrollment counts (undergrad
-  // vs total) live in Quick facts / Distinction, so they're omitted here to
-  // avoid duplicate/conflicting numbers.
+  // Header meta is intentionally minimal — founded year only. Ranking lives in
+  // the Rankings section; acceptance in the Overview stat card; enrollment in
+  // Quick facts / Diversity — all omitted here to avoid duplicate numbers.
   const heroStats: { value: string; label: string }[] = []
-  if (heroQs?.rank != null) heroStats.push({ value: `#${heroQs.rank}`, label: `QS World${heroQs.year ? ` ${heroQs.year}` : ''}` })
   if (inst.founded_year != null) heroStats.push({ value: String(inst.founded_year), label: 'founded' })
 
   const TABS: { id: TabId; label: string }[] = [
@@ -631,7 +627,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
             </div>
           )}
           {(rng(ts.sat_reading_25_75) || rng(ts.sat_math_25_75) || rng(ts.act_25_75) || retention != null) && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {rng(ts.sat_reading_25_75) && <Fact label="SAT EBRW (25–75th)" value={rng(ts.sat_reading_25_75)!} />}
               {rng(ts.sat_math_25_75) && <Fact label="SAT Math (25–75th)" value={rng(ts.sat_math_25_75)!} />}
               {rng(ts.act_25_75) && <Fact label="ACT (25–75th)" value={rng(ts.act_25_75)!} />}
@@ -656,20 +652,18 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
                   )}
                 </div>
               )}
-              {aid.median_debt_completers != null && (
-                <Fact label="Median debt at graduation" value={money(aid.median_debt_completers)} />
-              )}
             </div>
             <div className="space-y-3 self-center">
               {aid.pell_grant_rate != null && <StatBar label="Pell grant recipients" pct={aid.pell_grant_rate} />}
               {aid.federal_loan_rate != null && <StatBar label="Federal loan recipients" pct={aid.federal_loan_rate} />}
             </div>
           </div>
-          {(aid.tuition_free_rate != null || aid.no_loan_debt_rate != null || aid.median_scholarship != null) && (
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3 border-t border-border/60 pt-4">
+          {(aid.tuition_free_rate != null || aid.no_loan_debt_rate != null || aid.median_scholarship != null || aid.median_debt_completers != null) && (
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 border-t border-border/60 pt-4">
               {aid.tuition_free_rate != null && <Fact label="Attend tuition-free" value={pct(aid.tuition_free_rate)} />}
               {aid.no_loan_debt_rate != null && <Fact label="Graduate debt-free" value={pct(aid.no_loan_debt_rate)} />}
               {aid.median_scholarship != null && <Fact label="Median MIT scholarship" value={money(aid.median_scholarship)} />}
+              {aid.median_debt_completers != null && <Fact label="Median debt at graduation" value={money(aid.median_debt_completers)} />}
             </div>
           )}
           {costSource && (
@@ -693,7 +687,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
         <Card className="p-5">
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><TrendingUp size={15} className="text-secondary" /> Outcomes</h2>
           {(placement != null || earn10 != null) && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+            <div className="grid grid-cols-2 gap-3 mb-3">
               {placement != null && <Fact label="Employed or continuing ed" value={pct(placement)} />}
               {earn10 != null && <Fact label="Median earnings" value={money(earn10)} hint="10 yrs after entry" />}
             </div>
@@ -858,7 +852,7 @@ function AboutTab({ inst }: { inst: Institution }) {
         <Card className="p-5">
           <h2 className="font-semibold text-foreground mb-1 flex items-center gap-2"><Award size={15} className="text-secondary" /> Recognition</h2>
           <p className="text-[12px] text-muted-foreground mb-3">Among faculty &amp; alumni</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {recognition.map(d => <Fact key={d.label} label={d.label} value={d.value} />)}
           </div>
         </Card>

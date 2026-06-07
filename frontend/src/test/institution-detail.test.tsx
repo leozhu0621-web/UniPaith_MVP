@@ -312,11 +312,11 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
     return renderDetail(true)
   }
 
-  it('header meta shows ranking + founded only (no acceptance / student count)', async () => {
+  it('header meta shows only founded (ranking + year removed; no acceptance / students)', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
     const meta = screen.getByTestId('hero-meta')
-    expect(meta).toHaveTextContent(/QS World/)
+    expect(meta).not.toHaveTextContent(/QS World/)
     expect(meta).toHaveTextContent(/founded/)
     expect(meta).not.toHaveTextContent(/acceptance/i)
     expect(meta).not.toHaveTextContent(/students/i)
