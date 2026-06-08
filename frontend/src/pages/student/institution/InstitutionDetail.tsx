@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState, type ComponentType } from 'react'
+import { useMemo, useState, type ComponentType } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -237,11 +237,9 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   const eyebrow = classifyType(inst)
   // Hero campus photo — first raster image in the gallery (logos are SVG → skipped).
   const heroPhoto = (inst.media_gallery ?? []).find(u => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) ?? null
-  // Header meta is intentionally minimal — founded year only. Ranking lives in
-  // the Rankings section; acceptance in the Overview stat card; enrollment in
-  // Quick facts / Diversity — all omitted here to avoid duplicate numbers.
-  const heroStats: { value: string; label: string }[] = []
-  if (inst.founded_year != null) heroStats.push({ value: String(inst.founded_year), label: 'founded' })
+  // The header is intentionally chip-free — no founded/ranking/acceptance/enrollment
+  // line. Founded lives in Quick facts; ranking in the Rankings section; acceptance
+  // in the Overview stat card; enrollment in Quick facts / Diversity.
 
   const TABS: { id: TabId; label: string }[] = [
     { id: 'overview', label: 'Overview' },
@@ -302,18 +300,6 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
           <h1 className="text-2xl sm:text-3xl md:text-[2.5rem] font-bold text-foreground leading-[1.08] tracking-tight max-w-[22ch]">
             {inst.name}
           </h1>
-
-          {/* Headline stats — no location, per the page spec. */}
-          {heroStats.length > 0 && (
-            <div data-testid="hero-meta" className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2.5 text-[13px] text-muted-foreground">
-              {heroStats.map((s, i) => (
-                <Fragment key={s.label}>
-                  {i > 0 && <span className="text-border" aria-hidden="true">·</span>}
-                  <span><span className="font-semibold text-foreground">{s.value}</span> {s.label}</span>
-                </Fragment>
-              ))}
-            </div>
-          )}
 
           {/* Web presence (Spec 22 §3) */}
           {(inst.website_url || inst.contact_email || inst.contact_phone || hasSocialLinks(inst.social_links)) && (
@@ -689,8 +675,8 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><TrendingUp size={15} className="text-secondary" /> Outcomes</h2>
           {(placement != null || earn10 != null) && (
             <div className="grid grid-cols-2 gap-3 mb-3">
-              {placement != null && <Fact label="Employed or continuing ed" value={pct(placement)} />}
-              {earn10 != null && <Fact label="Median earnings" value={money(earn10)} hint="10 yrs after entry" />}
+              {placement != null && <OutcomeStat label="Employed or continuing ed" value={pct(placement)} />}
+              {earn10 != null && <OutcomeStat label="Median earnings" value={money(earn10)} hint="10 yrs after entry" />}
             </div>
           )}
           {industries.length > 0 && (
@@ -1223,6 +1209,18 @@ function IntroSourceLine({ outcomes }: { outcomes: { sources?: { source: string;
       )}
       {s.year ? ` · ${s.year}` : ''}
     </p>
+  )
+}
+
+// A bigger, headline-weight stat tile for the Outcomes card (the two numbers
+// students/parents scan first). Larger value + label than the compact Fact tile.
+function OutcomeStat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="px-4 py-4 rounded-lg bg-muted/60 border border-border/50">
+      <p className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">{label}</p>
+      <p className="text-[28px] sm:text-3xl font-bold text-foreground tabular-nums mt-1.5 leading-none">{value}</p>
+      {hint && <p className="text-[12px] text-muted-foreground mt-1.5">{hint}</p>}
+    </div>
   )
 }
 

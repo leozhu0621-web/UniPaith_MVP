@@ -74,7 +74,7 @@ describe('InstitutionDetail (Spec 12)', () => {
     // Breadcrumb: Match · Search · University of Foo
     expect(screen.getByRole('button', { name: 'Match' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument()
-    // Header meta renders the founded year (Spec 12 §2: "Founded 1831")
+    // Founded year now lives in Quick facts / About (the header is chip-free).
     expect(screen.getAllByText(/1831/).length).toBeGreaterThan(0)
     // Eyebrow must not double the noun (regression: "University University" when
     // ownership_type is absent). type='university' + no ownership → "University".
@@ -313,14 +313,13 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
     return renderDetail(true)
   }
 
-  it('header meta shows only founded (ranking + year removed; no acceptance / students)', async () => {
+  it('header is chip-free — no founded/ranking/acceptance/students meta line; founded lives in Quick facts', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
-    const meta = screen.getByTestId('hero-meta')
-    expect(meta).not.toHaveTextContent(/QS World/)
-    expect(meta).toHaveTextContent(/founded/)
-    expect(meta).not.toHaveTextContent(/acceptance/i)
-    expect(meta).not.toHaveTextContent(/students/i)
+    // The header meta chip line was removed entirely (per design feedback).
+    expect(screen.queryByTestId('hero-meta')).not.toBeInTheDocument()
+    // Founded still appears — in Quick facts / About, not the header.
+    expect(screen.getAllByText(/founded/i).length).toBeGreaterThan(0)
   })
 
   it('Overview renders all three rankings as badges (QS, THE, U.S. News)', async () => {
