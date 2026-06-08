@@ -1,0 +1,1525 @@
+"""Canonical Harvard University profile — the single source of truth.
+
+Real, sourced data only (U.S. Dept. of Education College Scorecard · Harvard at a
+Glance · Harvard school financial-aid offices · QS · Times Higher Education ·
+U.S. News). ``apply(session)`` idempotently enriches the Harvard institution row,
+upserts the twelve real degree-granting schools, and builds Harvard's program
+catalog across all of them.
+
+It **flushes but does not commit** — the caller (the Alembic data migration, the
+CLI script, or the dev seed) owns the transaction. It is a **no-op** (returns
+``False``) when Harvard is absent, so it is safe to run against a fresh or CI
+database. Re-running is safe: schools key off ``(institution_id, name)`` and
+programs off ``slug``; stale rows are reconciled without breaking foreign keys.
+
+This mirrors ``mit_profile`` so the migration, the standalone script, and the dev
+seed all agree (DRY). Every figure here traces to a public, citable source; where
+Harvard's per-program earnings are privacy-suppressed in the College Scorecard
+Field-of-Study file, the program falls back to Harvard's labelled institution-wide
+figure rather than inventing one.
+"""
+
+from __future__ import annotations
+
+from datetime import date
+
+from sqlalchemy import select, text
+from sqlalchemy.orm import Session
+
+from unipaith.models.institution import Institution, Program, School
+
+INSTITUTION_NAME = "Harvard University"
+
+# ── Institution-level data ────────────────────────────────────────────────
+# Rankings are stored as {rank, year} objects because the page renders every
+# ranking_data entry that is an object with a numeric `rank` (labelled via the
+# frontend `rankingLabel` map, which already knows these keys).
+RANKING_DATA: dict = {
+    "ownership_type": "private_nonprofit",
+    "accreditor": "NECHE",
+    "carnegie_classification": "Doctoral Universities: Very High Research Activity",
+    # QS World 2026 (released 2025-06)
+    "qs_world_university_rankings": {"rank": 5, "year": 2025},
+    # THE World University Rankings 2025 (Oxford 1, MIT 2, Harvard 3)
+    "times_higher_education": {"rank": 3, "year": 2025},
+    # US News Best National Universities 2025-26 (Princeton 1, MIT 2, Harvard 3)
+    "us_news_national": {"rank": 3, "year": 2025},
+}
+
+# school_outcomes is shallow-merged into the existing JSONB; each sub-object
+# below is complete, so a shallow merge is correct. Sources back the figures.
+SCHOOL_OUTCOMES: dict = {
+    "admit_rate": 0.0365,
+    "avg_net_price": 19066,
+    "median_earnings_10yr": 101817,
+    "completion_rate_4yr_150pct": 0.9758,
+    "retention_rate_first_year": 0.983,
+    "test_scores": {
+        "sat_reading_25_75": [740, 780],
+        "sat_math_25_75": [770, 800],
+        "act_25_75": [34, 36],
+    },
+    "financial_aid": {
+        "pell_grant_rate": 0.1643,
+        "federal_loan_rate": 0.0444,
+        "median_debt_completers": 14000,
+        "cost_of_attendance": 86926,
+        "scholarship_rate": 0.55,
+        "median_scholarship": 70000,
+        # 2025-26: families earning under $200k pay no tuition (over half of
+        # U.S. families qualify); under $100k pay nothing at all.
+        "tuition_free_rate": 0.55,
+    },
+    "demographics": {
+        "white": 0.3085,
+        "black": 0.0887,
+        "hispanic": 0.1187,
+        "asian": 0.224,
+        "women": 0.5377,
+    },
+    "location": {"lat": 42.3745, "lng": -71.1183},
+    "employed_or_continuing_ed": 0.95,
+    "graduation_rate_6yr": 0.98,
+    "top_employer_industries": [
+        "Finance",
+        "Consulting",
+        "Technology",
+        "Law",
+        "Healthcare & medicine",
+        "Government & public service",
+    ],
+    "scale": {
+        "student_faculty_ratio": "7:1",
+        "research_centers": 100,
+        "endowment_usd": 53200000000,
+        "undergrad_majors": 50,
+    },
+    "research": {
+        "labs": [
+            "Wyss Institute for Biologically Inspired Engineering",
+            "Broad Institute (Harvard & MIT)",
+            "Harvard Stem Cell Institute",
+            "Radcliffe Institute for Advanced Study",
+            "Berkman Klein Center for Internet & Society",
+            "Belfer Center for Science & International Affairs",
+            "Harvard-Smithsonian Center for Astrophysics",
+            "Dana-Farber/Harvard Cancer Center",
+            "Weatherhead Center for International Affairs",
+        ],
+        "areas": [
+            "Life sciences & medicine",
+            "Public health",
+            "Law, government & public policy",
+            "Business & economics",
+            "Engineering & applied sciences",
+            "Arts & humanities",
+        ],
+    },
+    "campus_life": {
+        "varsity_sports": 42,
+        "athletics_division": "NCAA Division I (Ivy League)",
+        "residence_halls": 12,
+    },
+    "flagship": {
+        "nobel_laureates": 161,
+        "us_presidents": 8,
+        "enrollment_total": 24519,
+        "admissions_cycle": "Class of 2028",
+        "applicants": 54008,
+        "admits": 1937,
+    },
+    "sources": [
+        {
+            "label": "Costs, outcomes, test scores, demographics",
+            "source": "U.S. Dept. of Education College Scorecard",
+            "year": 2024,
+            "url": "https://collegescorecard.ed.gov/school/?166027-Harvard-University",
+        },
+        {
+            "label": "World ranking",
+            "source": "QS World University Rankings",
+            "year": 2025,
+            "url": "https://www.topuniversities.com/universities/harvard-university",
+        },
+        {
+            "label": "World ranking",
+            "source": "Times Higher Education",
+            "year": 2025,
+            "url": "https://www.timeshighereducation.com/world-university-rankings/harvard-university",
+        },
+        {
+            "label": "National ranking",
+            "source": "U.S. News Best National Universities",
+            "year": 2025,
+            "url": "https://www.usnews.com/best-colleges/harvard-university-2155",
+        },
+        {
+            "label": "Schools, enrollment, faculty & staff, alumni",
+            "source": "Harvard at a Glance",
+            "year": 2025,
+            "url": "https://www.harvard.edu/about/",
+        },
+        {
+            "label": "Endowment & financials (FY2024)",
+            "source": "Harvard Management Company — FY2024 endowment",
+            "year": 2024,
+            "url": "https://www.harvard.edu/about/financial-overview/",
+        },
+        {
+            "label": "Nobel laureates",
+            "source": "Nobels at Harvard",
+            "year": 2025,
+            "url": "https://www.harvard.edu/in-focus/nobels-at-harvard/",
+        },
+        {
+            "label": "Admissions — Class of 2028",
+            "source": "Harvard College Admissions Statistics",
+            "year": 2024,
+            "url": "https://college.harvard.edu/admissions/admissions-statistics",
+        },
+    ],
+}
+
+# student_body_size is the undergraduate count (the page labels it
+# "Undergraduates"); the total (24,519) lives in flagship.enrollment_total and
+# renders as "Total enrollment".
+UNDERGRAD_COUNT = 7601
+FOUNDED_YEAR = 1636
+CAMPUS_SETTING = "urban"
+
+DESCRIPTION = (
+    "Founded in 1636, Harvard University is the oldest institution of higher "
+    "education in the United States and one of the most influential research "
+    "universities in the world. Its campus centers on Harvard Yard in Cambridge, "
+    "Massachusetts, and extends across the Charles River into the Allston "
+    "neighborhood of Boston and to the Longwood Medical Area.\n\n"
+    "Harvard is organized into Harvard College — the undergraduate school — and "
+    "twelve graduate and professional schools, including the Business School, "
+    "Law School, Medical School, Kennedy School of Government, and the T.H. Chan "
+    "School of Public Health, together with the John A. Paulson School of "
+    "Engineering and Applied Sciences. About 7,600 undergraduates and roughly "
+    "17,000 graduate and professional students study across these faculties, "
+    "supported by the largest academic endowment in the world — $53.2 billion as "
+    "of fiscal year 2024.\n\n"
+    "The university ranks among the very best globally — No. 3 in both the Times "
+    "Higher Education world ranking and the U.S. News national-universities list, "
+    "and No. 5 in the QS World University Rankings. Its faculty and alumni include "
+    "161 Nobel laureates and eight U.S. presidents, alongside Fields Medalists, "
+    "Pulitzer Prize winners, and MacArthur Fellows across every field.\n\n"
+    "Harvard pairs that academic depth with some of the most generous financial "
+    "aid in the country. Beginning in 2025-26, families earning under $200,000 a "
+    "year pay no tuition, and families under $100,000 pay nothing at all — holding "
+    "the average net price near $19,000 a year and letting most students graduate "
+    "with little or no debt."
+)
+
+# ── The twelve real degree-granting schools (in display order) ─────────────
+SCHOOLS: list[dict] = [
+    {
+        "name": "Harvard Faculty of Arts & Sciences",
+        "sort_order": 1,
+        "description": (
+            "Harvard's largest faculty and the intellectual core of the "
+            "university — home to Harvard College's undergraduate education and, "
+            "through the Griffin Graduate School of Arts & Sciences, doctoral "
+            "programs across the humanities, social sciences, and natural "
+            "sciences."
+        ),
+    },
+    {
+        "name": "Harvard John A. Paulson School of Engineering & Applied Sciences",
+        "sort_order": 2,
+        "description": (
+            "Harvard's engineering and computing school (SEAS), spanning "
+            "computer science, applied mathematics, bioengineering, electrical "
+            "and mechanical engineering, and environmental science — Harvard's "
+            "fastest-growing area of study, anchored in the Allston Science & "
+            "Engineering Complex."
+        ),
+    },
+    {
+        "name": "Harvard Business School",
+        "sort_order": 3,
+        "description": (
+            "One of the world's leading business schools, known for the case "
+            "method and its two-year residential MBA, alongside doctoral "
+            "programs and executive education at the heart of the Allston "
+            "campus."
+        ),
+    },
+    {
+        "name": "Harvard Law School",
+        "sort_order": 4,
+        "description": (
+            "The largest and one of the most prestigious law schools in the "
+            "United States, offering the J.D., the LL.M. for trained lawyers, "
+            "and the S.J.D. research doctorate, with unmatched strength across "
+            "every field of law."
+        ),
+    },
+    {
+        "name": "Harvard Medical School",
+        "sort_order": 5,
+        "description": (
+            "A global leader in medical education and biomedical research in the "
+            "Longwood Medical Area, offering the M.D. and, with the Division of "
+            "Medical Sciences, Ph.D. programs across the basic and translational "
+            "biomedical sciences."
+        ),
+    },
+    {
+        "name": "Harvard T.H. Chan School of Public Health",
+        "sort_order": 6,
+        "description": (
+            "Harvard's school of public health, advancing health for "
+            "populations worldwide through degrees in epidemiology, biostatistics, "
+            "global health, health policy, and environmental health, from the "
+            "M.P.H. to the doctorate."
+        ),
+    },
+    {
+        "name": "Harvard Kennedy School",
+        "sort_order": 7,
+        "description": (
+            "Harvard's school of public policy and government, training leaders "
+            "for the public, nonprofit, and private sectors through the M.P.P., "
+            "M.P.A., and doctoral programs, backed by research centers such as "
+            "the Belfer and Ash Centers."
+        ),
+    },
+    {
+        "name": "Harvard Graduate School of Education",
+        "sort_order": 8,
+        "description": (
+            "A leading school of education (HGSE) preparing teachers, leaders, "
+            "and researchers through the one-year Ed.M., the Doctor of Education "
+            "Leadership (Ed.L.D.), and the Ph.D. in Education."
+        ),
+    },
+    {
+        "name": "Harvard Graduate School of Design",
+        "sort_order": 9,
+        "description": (
+            "Harvard's school of design (GSD), educating architects, landscape "
+            "architects, and planners through professional master's degrees and "
+            "advanced research in the design of the built and natural "
+            "environment."
+        ),
+    },
+    {
+        "name": "Harvard Divinity School",
+        "sort_order": 10,
+        "description": (
+            "One of the oldest nonsectarian divinity schools in the U.S. (HDS), "
+            "offering the Master of Divinity and Master of Theological Studies "
+            "for the academic study of religion and for religious leadership."
+        ),
+    },
+    {
+        "name": "Harvard School of Dental Medicine",
+        "sort_order": 11,
+        "description": (
+            "The smallest of Harvard's schools (HSDM), pairing a rigorous, "
+            "research-driven Doctor of Dental Medicine with the basic-science "
+            "curriculum of Harvard Medical School."
+        ),
+    },
+    {
+        "name": "Harvard Division of Continuing Education",
+        "sort_order": 12,
+        "description": (
+            "Harvard's open-access division — the Extension School and HarvardX — "
+            "offering the Master of Liberal Arts and a wide range of online and "
+            "evening courses to learners worldwide."
+        ),
+    },
+]
+
+# ── The program catalog (real degree programs, organized by school) ────────
+# slug = idempotency key. degree_type ∈ {bachelors, masters, phd, certificate};
+# professional doctorates (J.D., M.D., D.M.D.) are modelled as "masters" to match
+# the platform taxonomy. Funded research doctorates carry tuition 0.
+_FAS = "Harvard Faculty of Arts & Sciences"
+_SEAS = "Harvard John A. Paulson School of Engineering & Applied Sciences"
+_HBS = "Harvard Business School"
+_HLS = "Harvard Law School"
+_HMS = "Harvard Medical School"
+_HSPH = "Harvard T.H. Chan School of Public Health"
+_HKS = "Harvard Kennedy School"
+_HGSE = "Harvard Graduate School of Education"
+_GSD = "Harvard Graduate School of Design"
+_HDS = "Harvard Divinity School"
+_HSDM = "Harvard School of Dental Medicine"
+_DCE = "Harvard Division of Continuing Education"
+
+PROGRAMS: list[dict] = [
+    # ── Faculty of Arts & Sciences — Harvard College (A.B.) ───────────────────
+    {
+        "slug": "harvard-economics-ab",
+        "school": _FAS,
+        "program_name": "Economics",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Harvard's most popular concentration: empirical and theoretical economics.",
+    },
+    {
+        "slug": "harvard-government-ab",
+        "school": _FAS,
+        "program_name": "Government",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Political theory, American politics, comparative politics, and IR.",
+    },
+    {
+        "slug": "harvard-social-studies-ab",
+        "school": _FAS,
+        "program_name": "Social Studies",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Harvard's famed interdisciplinary social-science honors concentration.",
+    },
+    {
+        "slug": "harvard-history-ab",
+        "school": _FAS,
+        "program_name": "History",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "History across periods, regions, and methods.",
+    },
+    {
+        "slug": "harvard-english-ab",
+        "school": _FAS,
+        "program_name": "English",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Literature in English from the medieval period to the present.",
+    },
+    {
+        "slug": "harvard-history-literature-ab",
+        "school": _FAS,
+        "program_name": "History & Literature",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "An interdisciplinary honors concentration in history and literature.",
+    },
+    {
+        "slug": "harvard-philosophy-ab",
+        "school": _FAS,
+        "program_name": "Philosophy",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Logic, ethics, metaphysics, and the history of philosophy.",
+    },
+    {
+        "slug": "harvard-art-history-ab",
+        "school": _FAS,
+        "program_name": "History of Art & Architecture",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "The study of art, architecture, and visual culture across history.",
+    },
+    {
+        "slug": "harvard-psychology-ab",
+        "school": _FAS,
+        "program_name": "Psychology",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Cognition, behavior, and the science of the mind.",
+    },
+    {
+        "slug": "harvard-sociology-ab",
+        "school": _FAS,
+        "program_name": "Sociology",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Social structure, inequality, and institutions.",
+    },
+    {
+        "slug": "harvard-statistics-ab",
+        "school": _FAS,
+        "program_name": "Statistics",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Statistical theory and data science — a fast-growing concentration.",
+    },
+    {
+        "slug": "harvard-mathematics-ab",
+        "school": _FAS,
+        "program_name": "Mathematics",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Harvard's renowned mathematics concentration, from analysis to topology.",
+    },
+    {
+        "slug": "harvard-physics-ab",
+        "school": _FAS,
+        "program_name": "Physics",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "From quantum mechanics and particle physics to astrophysics.",
+    },
+    {
+        "slug": "harvard-chemistry-ab",
+        "school": _FAS,
+        "program_name": "Chemistry",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Organic, inorganic, physical, and chemical biology.",
+    },
+    {
+        "slug": "harvard-mcb-ab",
+        "school": _FAS,
+        "program_name": "Molecular & Cellular Biology",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Molecular, cellular, and developmental biology — a major pre-med path.",
+    },
+    {
+        "slug": "harvard-neuroscience-ab",
+        "school": _FAS,
+        "program_name": "Neuroscience",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "From molecules and neurons to cognition, via the Center for Brain Science.",
+    },
+    {
+        "slug": "harvard-eps-ab",
+        "school": _FAS,
+        "program_name": "Earth & Planetary Sciences",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Earth, climate, oceans, and the planets.",
+    },
+    # ── Faculty of Arts & Sciences — doctoral (Griffin GSAS) ──────────────────
+    {
+        "slug": "harvard-economics-phd",
+        "school": _FAS,
+        "program_name": "Economics",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A leading economics doctoral program. Fully funded.",
+    },
+    {
+        "slug": "harvard-government-phd",
+        "school": _FAS,
+        "program_name": "Government",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research across political science. Fully funded.",
+    },
+    {
+        "slug": "harvard-history-phd",
+        "school": _FAS,
+        "program_name": "History",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research across historical fields. Fully funded.",
+    },
+    {
+        "slug": "harvard-english-phd",
+        "school": _FAS,
+        "program_name": "English",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral study of literature in English. Fully funded.",
+    },
+    {
+        "slug": "harvard-psychology-phd",
+        "school": _FAS,
+        "program_name": "Psychology",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research across the subfields of psychology. Fully funded.",
+    },
+    {
+        "slug": "harvard-statistics-phd",
+        "school": _FAS,
+        "program_name": "Statistics",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research in statistical theory and methods. Fully funded.",
+    },
+    {
+        "slug": "harvard-physics-phd",
+        "school": _FAS,
+        "program_name": "Physics",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research in theoretical and experimental physics. Fully funded.",
+    },
+    {
+        "slug": "harvard-mcb-phd",
+        "school": _FAS,
+        "program_name": "Biological Sciences (Molecular & Cellular Biology)",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research across molecular and cellular biology. Fully funded.",
+    },
+    # ── SEAS — undergraduate (A.B./S.B.) ──────────────────────────────────────
+    {
+        "slug": "harvard-cs-ab",
+        "school": _SEAS,
+        "program_name": "Computer Science",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Harvard's largest STEM concentration — theory, systems, and AI.",
+    },
+    {
+        "slug": "harvard-applied-math-ab",
+        "school": _SEAS,
+        "program_name": "Applied Mathematics",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Mathematics applied to a chosen field, from economics to engineering.",
+    },
+    {
+        "slug": "harvard-electrical-eng-sb",
+        "school": _SEAS,
+        "program_name": "Electrical Engineering",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Signals, circuits, devices, and computer engineering.",
+    },
+    {
+        "slug": "harvard-mechanical-eng-sb",
+        "school": _SEAS,
+        "program_name": "Mechanical Engineering",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Mechanics, design, robotics, and energy systems.",
+    },
+    {
+        "slug": "harvard-bioengineering-sb",
+        "school": _SEAS,
+        "program_name": "Bioengineering",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Engineering at the interface of biology and medicine.",
+    },
+    {
+        "slug": "harvard-environmental-eng-sb",
+        "school": _SEAS,
+        "program_name": "Environmental Science & Engineering",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Climate, energy, and the science of the environment.",
+    },
+    # ── SEAS — graduate ───────────────────────────────────────────────────────
+    {
+        "slug": "harvard-cs-phd",
+        "school": _SEAS,
+        "program_name": "Computer Science",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research in CS — AI, systems, theory, and HCI. Fully funded.",
+    },
+    {
+        "slug": "harvard-applied-physics-phd",
+        "school": _SEAS,
+        "program_name": "Applied Physics",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research in applied physics and materials. Fully funded.",
+    },
+    {
+        "slug": "harvard-bioengineering-phd",
+        "school": _SEAS,
+        "program_name": "Bioengineering",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research in bioengineering, tied to the Wyss Institute. Funded.",
+    },
+    {
+        "slug": "harvard-data-science-sm",
+        "school": _SEAS,
+        "program_name": "Data Science",
+        "degree_type": "masters",
+        "duration_months": 12,
+        "description": "A one-year master's in data science (SEAS & Statistics).",
+    },
+    {
+        "slug": "harvard-cse-sm",
+        "school": _SEAS,
+        "program_name": "Computational Science & Engineering",
+        "degree_type": "masters",
+        "duration_months": 12,
+        "description": "A master's in computational science and engineering (SM/ME).",
+    },
+    # ── Harvard Business School ───────────────────────────────────────────────
+    {
+        "slug": "harvard-mba",
+        "school": _HBS,
+        "program_name": "MBA",
+        "degree_type": "masters",
+        "duration_months": 24,
+        "description": "Harvard's two-year residential MBA, taught by the case method.",
+    },
+    {
+        "slug": "harvard-business-phd",
+        "school": _HBS,
+        "program_name": "Business Administration",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research across management and business economics. Funded.",
+    },
+    # ── Harvard Law School ────────────────────────────────────────────────────
+    {
+        "slug": "harvard-jd",
+        "school": _HLS,
+        "program_name": "Juris Doctor (J.D.)",
+        "degree_type": "masters",
+        "duration_months": 36,
+        "description": "The three-year professional law degree at the heart of HLS.",
+    },
+    {
+        "slug": "harvard-llm",
+        "school": _HLS,
+        "program_name": "Master of Laws (LL.M.)",
+        "degree_type": "masters",
+        "duration_months": 12,
+        "description": "A one-year degree for lawyers trained in the U.S. and abroad.",
+    },
+    {
+        "slug": "harvard-law-sjd",
+        "school": _HLS,
+        "program_name": "Doctor of Juridical Science (S.J.D.)",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "HLS's most advanced law degree, for legal scholars. Funded.",
+    },
+    # ── Harvard Medical School ────────────────────────────────────────────────
+    {
+        "slug": "harvard-md",
+        "school": _HMS,
+        "program_name": "Doctor of Medicine (M.D.)",
+        "degree_type": "masters",
+        "duration_months": 48,
+        "description": "Harvard's M.D. program across the Pathways and HST curricula.",
+    },
+    {
+        "slug": "harvard-biomedical-phd",
+        "school": _HMS,
+        "program_name": "Biomedical Sciences",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research in the biomedical sciences (DMS). Fully funded.",
+    },
+    # ── Harvard School of Dental Medicine ─────────────────────────────────────
+    {
+        "slug": "harvard-dmd",
+        "school": _HSDM,
+        "program_name": "Doctor of Dental Medicine (D.M.D.)",
+        "degree_type": "masters",
+        "duration_months": 48,
+        "description": "A research-driven dental degree built on the HMS basic-science core.",
+    },
+    # ── Harvard T.H. Chan School of Public Health ─────────────────────────────
+    {
+        "slug": "harvard-mph",
+        "school": _HSPH,
+        "program_name": "Master of Public Health (M.P.H.)",
+        "degree_type": "masters",
+        "duration_months": 12,
+        "description": "Harvard's flagship public-health master's, with several fields.",
+    },
+    {
+        "slug": "harvard-sm-public-health",
+        "school": _HSPH,
+        "program_name": "Master of Science in Public Health",
+        "degree_type": "masters",
+        "duration_months": 24,
+        "description": "A research-oriented S.M. across epidemiology, biostatistics, and more.",
+    },
+    {
+        "slug": "harvard-public-health-phd",
+        "school": _HSPH,
+        "program_name": "Population Health Sciences",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research across population and public-health sciences. Funded.",
+    },
+    # ── Harvard Kennedy School ────────────────────────────────────────────────
+    {
+        "slug": "harvard-mpp",
+        "school": _HKS,
+        "program_name": "Master in Public Policy (M.P.P.)",
+        "degree_type": "masters",
+        "duration_months": 24,
+        "description": "HKS's two-year analytic policy degree.",
+    },
+    {
+        "slug": "harvard-mpa",
+        "school": _HKS,
+        "program_name": "Master in Public Administration (M.P.A.)",
+        "degree_type": "masters",
+        "duration_months": 24,
+        "description": "A flexible two-year degree for public-service leaders.",
+    },
+    {
+        "slug": "harvard-mpa-id",
+        "school": _HKS,
+        "program_name": "M.P.A. in International Development",
+        "degree_type": "masters",
+        "duration_months": 24,
+        "description": "A rigorous, economics-intensive degree in international development.",
+    },
+    {
+        "slug": "harvard-public-policy-phd",
+        "school": _HKS,
+        "program_name": "Public Policy",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research in public policy and political economy. Funded.",
+    },
+    # ── Harvard Graduate School of Education ──────────────────────────────────
+    {
+        "slug": "harvard-edm",
+        "school": _HGSE,
+        "program_name": "Master's in Education (Ed.M.)",
+        "degree_type": "masters",
+        "duration_months": 12,
+        "description": "A one-year master's across HGSE's education pathways.",
+    },
+    {
+        "slug": "harvard-edld",
+        "school": _HGSE,
+        "program_name": "Doctor of Education Leadership (Ed.L.D.)",
+        "degree_type": "phd",
+        "duration_months": 36,
+        "description": "A three-year practitioner doctorate in education leadership. Funded.",
+    },
+    {
+        "slug": "harvard-education-phd",
+        "school": _HGSE,
+        "program_name": "Education (Ph.D.)",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "Doctoral research in education, conferred with FAS. Fully funded.",
+    },
+    # ── Harvard Graduate School of Design ─────────────────────────────────────
+    {
+        "slug": "harvard-march",
+        "school": _GSD,
+        "program_name": "Master of Architecture (M.Arch)",
+        "degree_type": "masters",
+        "duration_months": 42,
+        "description": "The accredited professional degree in architecture.",
+    },
+    {
+        "slug": "harvard-mla",
+        "school": _GSD,
+        "program_name": "Master in Landscape Architecture (M.L.A.)",
+        "degree_type": "masters",
+        "duration_months": 36,
+        "description": "The accredited professional degree in landscape architecture.",
+    },
+    {
+        "slug": "harvard-mup",
+        "school": _GSD,
+        "program_name": "Master in Urban Planning (M.U.P.)",
+        "degree_type": "masters",
+        "duration_months": 24,
+        "description": "A professional degree in urban planning and design.",
+    },
+    {
+        "slug": "harvard-mdes",
+        "school": _GSD,
+        "program_name": "Master in Design Studies (M.Des.)",
+        "degree_type": "masters",
+        "duration_months": 18,
+        "description": "A post-professional research master's across design domains.",
+    },
+    # ── Harvard Divinity School ───────────────────────────────────────────────
+    {
+        "slug": "harvard-mdiv",
+        "school": _HDS,
+        "program_name": "Master of Divinity (M.Div.)",
+        "degree_type": "masters",
+        "duration_months": 36,
+        "description": "HDS's three-year degree for religious leadership and ministry.",
+    },
+    {
+        "slug": "harvard-mts",
+        "school": _HDS,
+        "program_name": "Master of Theological Studies (M.T.S.)",
+        "degree_type": "masters",
+        "duration_months": 24,
+        "description": "A two-year academic degree in the study of religion.",
+    },
+    # ── Harvard Division of Continuing Education (Extension / HarvardX) ────────
+    {
+        "slug": "harvard-alm",
+        "school": _DCE,
+        "program_name": "Master of Liberal Arts (A.L.M.)",
+        "degree_type": "masters",
+        "duration_months": 24,
+        "delivery_format": "hybrid",
+        "description": "The Extension School's part-time master's, taken on campus or online.",
+    },
+    {
+        "slug": "harvard-cs50-cert",
+        "school": _DCE,
+        "program_name": "CS50: Computer Science (HarvardX Certificate)",
+        "degree_type": "certificate",
+        "duration_months": 6,
+        "delivery_format": "online",
+        "description": "Harvard's famous open online introduction to computer science.",
+    },
+    {
+        "slug": "harvard-data-science-cert",
+        "school": _DCE,
+        "program_name": "Data Science (HarvardX Professional Certificate)",
+        "degree_type": "certificate",
+        "duration_months": 9,
+        "delivery_format": "online",
+        "description": "An online HarvardX professional certificate in data science.",
+    },
+]
+
+PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+
+# ── Application-requirement baselines ──────────────────────────────────────
+# Official at the degree level. Harvard College is university-wide; the
+# professional schools each publish their own; the GSAS baseline covers the
+# arts-&-sciences and SEAS research degrees.
+_REQ_UNDERGRAD = {
+    "materials": [
+        {"name": "Common Application or Coalition Application", "required": True},
+        {"name": "Harvard supplement & short-answer essays", "required": True},
+        {"name": "Secondary-school report & transcript", "required": True},
+    ],
+    "test_policy": {
+        "stance": "required",
+        "note": "SAT or ACT required (reinstated for fall 2025 entry onward)",
+    },
+    "recommendations": {
+        "required_count": 3,
+        "types": ["Two teacher evaluations", "School counselor report"],
+    },
+    "source": "Harvard College Admissions",
+    "source_url": "https://college.harvard.edu/admissions/apply",
+}
+_REQ_GRAD = {
+    "materials": [
+        {"name": "Statement of purpose", "required": True},
+        {"name": "Academic transcripts", "required": True},
+        {
+            "name": "English proficiency (TOEFL/IELTS) for international applicants",
+            "required": False,
+            "note": "TOEFL iBT 100 / IELTS 7.0 typical",
+        },
+    ],
+    "test_policy": {"stance": "varies", "note": "GRE policy varies by program"},
+    "recommendations": {
+        "required_count": 3,
+        "types": ["Three letters of recommendation"],
+    },
+    "source": "Harvard Griffin GSAS Admissions",
+    "source_url": "https://gsas.harvard.edu/apply",
+}
+_REQ_MBA = {
+    "materials": [
+        {"name": "Application essay", "required": True},
+        {"name": "Résumé & transcripts", "required": True},
+        {"name": "GMAT or GRE score", "required": True},
+    ],
+    "test_policy": {"stance": "required", "note": "GMAT or GRE required"},
+    "recommendations": {
+        "required_count": 2,
+        "types": ["Two professional letters of recommendation"],
+    },
+    "source": "Harvard Business School MBA Admissions",
+    "source_url": "https://www.hbs.edu/mba/admissions",
+}
+_REQ_LAW = {
+    "materials": [
+        {"name": "Personal statement", "required": True},
+        {"name": "Transcripts via CAS", "required": True},
+        {"name": "Résumé", "required": True},
+    ],
+    "test_policy": {"stance": "required", "note": "LSAT or GRE accepted"},
+    "recommendations": {
+        "required_count": 2,
+        "types": ["Two letters of recommendation"],
+    },
+    "source": "Harvard Law School J.D. Admissions",
+    "source_url": "https://hls.harvard.edu/dept/jdadmissions/",
+}
+_REQ_MED = {
+    "materials": [
+        {"name": "AMCAS application & Harvard secondary", "required": True},
+        {"name": "Transcripts & MCAT score", "required": True},
+        {"name": "Required premedical coursework", "required": True},
+    ],
+    "test_policy": {"stance": "required", "note": "MCAT required"},
+    "recommendations": {
+        "required_count": 3,
+        "types": ["Letters of recommendation (committee or individual)"],
+    },
+    "source": "Harvard Medical School Admissions",
+    "source_url": "https://meded.hms.harvard.edu/admissions",
+}
+_REQ_OPEN = {
+    "materials": [{"name": "Open enrollment — no formal admission required", "required": False}],
+    "test_policy": {"stance": "not_required"},
+    "source": "Harvard Extension School / HarvardX",
+    "source_url": "https://extension.harvard.edu/",
+}
+
+# ── Outcomes ───────────────────────────────────────────────────────────────
+# Harvard-wide institution outcome, used (explicitly labelled) where the College
+# Scorecard Field-of-Study earnings are privacy-suppressed for a program.
+_OUTCOMES_INSTITUTION = {
+    "median_salary": 101817,
+    "employment_rate": 0.95,
+    "employment_timeframe": "Harvard graduates overall",
+    "top_industries": ["Finance", "Consulting", "Technology", "Law", "Healthcare"],
+    "scope": "institution",
+    "scope_note": "Harvard-wide figures across all graduates — not specific to this program.",
+    "source": "U.S. Dept. of Education College Scorecard (institution-level)",
+    "source_url": "https://collegescorecard.ed.gov/",
+}
+
+# Real per-program median earnings (+ debt where reported) from the College
+# Scorecard Field-of-Study file (Most-Recent-Cohorts), Harvard UNITID 166027.
+# Only non-privacy-suppressed fields appear here; every other degree program
+# falls back to the labelled institution figure. Tuple = (earnings, debt|None, CIP).
+_FOS_OUTCOMES: dict[str, tuple[int, int | None, str]] = {
+    # Harvard College (A.B.) — bachelor's
+    "harvard-cs-ab": (219550, None, "11.07"),
+    "harvard-applied-math-ab": (178318, None, "27.03"),
+    "harvard-statistics-ab": (229811, None, "27.05"),
+    "harvard-economics-ab": (161251, 6617, "45.06"),
+    "harvard-government-ab": (117484, None, "45.10"),
+    "harvard-social-studies-ab": (76293, 22750, "45.01"),
+    "harvard-history-ab": (94015, 12721, "54.01"),
+    "harvard-english-ab": (64155, None, "23.01"),
+    "harvard-psychology-ab": (102305, None, "42.27"),
+    "harvard-sociology-ab": (89947, None, "45.11"),
+    "harvard-mcb-ab": (87380, None, "26.04"),
+    "harvard-neuroscience-ab": (75342, None, "26.15"),
+    # Graduate & professional
+    "harvard-mba": (283798, 41000, "52.02"),
+    "harvard-jd": (250647, 93235, "22.01"),
+    "harvard-md": (139818, 99160, "51.12"),
+    "harvard-dmd": (172732, 184220, "51.04"),
+    "harvard-mph": (204275, 49681, "51.22"),
+    "harvard-mpa": (140456, 70763, "44.04"),
+    "harvard-mpp": (134992, 70447, "44.05"),
+    "harvard-edm": (84569, 20500, "13.01"),
+    "harvard-march": (85413, None, "04.02"),
+    "harvard-mla": (79176, None, "04.06"),
+    "harvard-mup": (89211, 41000, "04.03"),
+    "harvard-mdiv": (59192, 36777, "39.06"),
+    "harvard-mts": (68181, 25632, "39.06"),
+    "harvard-alm": (88617, 25780, "24.01"),
+    # Doctoral (Scorecard FOS doctoral earnings; these degrees are funded)
+    "harvard-education-phd": (132114, 25465, "13.01"),
+    "harvard-mcb-phd": (117155, None, "26.01"),
+    "harvard-public-policy-phd": (129458, None, "44.05"),
+    "harvard-public-health-phd": (120143, None, "51.22"),
+}
+
+# ── Per-school official tuition (2025-26 unless noted) and cost source ──────
+# Real published figures from each school's financial-aid / registrar office.
+# Undergraduates pay Harvard College tuition; research doctorates are fully
+# funded (tuition 0); Extension / HarvardX is charged per course (left null).
+_TUITION_UNDERGRAD = 57328  # Harvard College tuition, 2025-26 (FAS Registrar)
+_TUITION_BY_SLUG: dict[str, int] = {
+    "harvard-mba": 78700,  # HBS MBA, 2025-26
+    "harvard-jd": 78692,  # HLS J.D. tuition & fees, 2025-26
+    "harvard-llm": 78692,  # HLS LL.M., 2025-26
+    "harvard-md": 73874,  # HMS M.D., 2025-26
+    "harvard-dmd": 69300,  # HSDM D.M.D., 2025-26
+    "harvard-mpp": 61926,  # HKS, 2025-26
+    "harvard-mpa": 61926,
+    "harvard-mpa-id": 61926,
+    "harvard-march": 61510,  # GSD, 2025-26
+    "harvard-mla": 61510,
+    "harvard-mup": 61510,
+    "harvard-mdes": 61510,
+    "harvard-edm": 62244,  # HGSE Ed.M., 2025-26
+    "harvard-mph": 65160,  # Harvard Chan MPH-65 (most recent published)
+    "harvard-sm-public-health": 65160,
+    "harvard-mdiv": 30472,  # HDS, most recent published
+    "harvard-mts": 30472,
+    "harvard-data-science-sm": 57328,  # Griffin GSAS full tuition, 2025-26
+    "harvard-cse-sm": 57328,
+}
+_COST_SRC_BY_SCHOOL: dict[str, tuple[str, str]] = {
+    _FAS: ("Harvard College / Griffin GSAS", "https://college.harvard.edu/financial-aid"),
+    _SEAS: ("Harvard Griffin GSAS", "https://gsas.harvard.edu/financial-support"),
+    _HBS: ("Harvard Business School", "https://www.hbs.edu/mba/financial-aid/"),
+    _HLS: ("Harvard Law School", "https://hls.harvard.edu/sfs/"),
+    _HMS: ("Harvard Medical School", "https://hms.harvard.edu/education-admissions"),
+    _HSDM: ("Harvard School of Dental Medicine", "https://www.hsdm.harvard.edu/admissions-aid"),
+    _HSPH: (
+        "Harvard T.H. Chan School of Public Health",
+        "https://hsph.harvard.edu/tuition-and-financial-aid/",
+    ),
+    _HKS: ("Harvard Kennedy School", "https://www.hks.harvard.edu/admissions-aid"),
+    _HGSE: (
+        "Harvard Graduate School of Education",
+        "https://www.gse.harvard.edu/admissions-and-aid",
+    ),
+    _GSD: ("Harvard Graduate School of Design", "https://www.gsd.harvard.edu/admissions/"),
+    _HDS: ("Harvard Divinity School", "https://www.hds.harvard.edu/admissions-aid"),
+    _DCE: ("Harvard Extension School", "https://extension.harvard.edu/paying-for-school/"),
+}
+
+# ── Who-it's-for + highlights ──────────────────────────────────────────────
+_WHO_BY_TYPE = {
+    "bachelors": "Applicants seeking a rigorous liberal-arts-and-sciences education at Harvard.",
+    "masters": "Students seeking advanced, professional, or specialized graduate training.",
+    "phd": "Researchers pursuing an academic or research career through a funded doctorate.",
+    "certificate": "Learners worldwide seeking a focused Harvard credential online.",
+}
+_WHO_BY_SLUG = {
+    "harvard-mba": "Early-to-mid-career professionals targeting general management and leadership.",
+    "harvard-jd": "Aspiring lawyers and legal scholars across every field of law.",
+    "harvard-md": "Future physicians and physician-scientists.",
+    "harvard-mpp": "Future policy analysts and public-sector leaders.",
+    "harvard-mpa": "Experienced professionals advancing into public-service leadership.",
+    "harvard-mph": "Clinicians, scientists, and leaders advancing population health.",
+    "harvard-edm": "Educators and leaders driving change in schools and learning organizations.",
+}
+_HL_BY_TYPE = {
+    "bachelors": [
+        "Need-blind admission, 100% of need met with no loans",
+        "Nearly 50 concentrations across the liberal arts & sciences",
+        "House system & undergraduate research",
+    ],
+    "masters": [
+        "Direct access to Harvard faculty & global networks",
+        "Cross-registration across Harvard's schools",
+    ],
+    "phd": [
+        "Fully funded — tuition + multi-year stipend",
+        "World-leading research environment",
+        "Mentored cohorts across Harvard's institutes",
+    ],
+    "certificate": [
+        "Learn online, on your schedule",
+        "Earn a Harvard credential",
+        "Open enrollment — no application required",
+    ],
+}
+_HL_BY_SLUG = {
+    "harvard-economics-ab": [
+        "Harvard's most popular concentration",
+        "Among the highest reported earnings of any Harvard field",
+        "Gateway to finance, consulting & policy",
+    ],
+    "harvard-cs-ab": [
+        "Harvard's largest STEM field (SEAS)",
+        "From theory to AI & systems",
+        "Ties to the CS50 teaching tradition",
+    ],
+    "harvard-statistics-ab": [
+        "One of Harvard's fastest-growing concentrations",
+        "Highest reported median earnings among Harvard fields",
+        "Strong path into data science & quant roles",
+    ],
+    "harvard-mba": [
+        "Taught by the case method",
+        "Two-year residential program on the Allston campus",
+        "One of the world's strongest business networks",
+    ],
+    "harvard-jd": [
+        "The largest top law school in the U.S.",
+        "Unmatched breadth across every legal field",
+        "LSAT or GRE accepted",
+    ],
+    "harvard-md": [
+        "Pathways & HST curricula",
+        "Clinical training across world-leading hospitals",
+        "Generous need-based aid",
+    ],
+    "harvard-mpp": [
+        "Two-year analytic policy core",
+        "Belfer, Ash & Shorenstein research centers",
+        "Global public-service network",
+    ],
+    "harvard-mph": [
+        "Several fields of study (epi, global health, health policy…)",
+        "Longwood Medical Area location",
+        "One-year and two-year tracks",
+    ],
+}
+
+# ── Concentrations / degree tracks (real), for programs that offer them ─────
+_TRACKS_BY_SLUG = {
+    "harvard-economics-ab": {
+        "concentrations": ["Standard track", "Mathematical track", "Data-science track"],
+        "note": "Economics offers tracks ranging from standard to mathematically intensive.",
+    },
+    "harvard-cs-ab": {
+        "concentrations": [
+            "Artificial Intelligence",
+            "Systems",
+            "Theory",
+            "Mind, Brain & Behavior",
+        ],
+        "note": "CS concentrators choose a focus area and may pursue an honors track.",
+    },
+    "harvard-applied-math-ab": {
+        "concentrations": [
+            "Economics application field",
+            "Computer-science application field",
+            "Engineering & physical-science fields",
+        ],
+        "note": "Applied Math is built around a chosen application field.",
+    },
+    "harvard-mba": {
+        "concentrations": [
+            "Required Curriculum (year 1)",
+            "Elective Curriculum (year 2)",
+            "Field method",
+        ],
+        "note": "The MBA pairs a fixed first-year core with a fully elective second year.",
+    },
+    "harvard-mph": {
+        "concentrations": [
+            "Epidemiology",
+            "Global Health",
+            "Health Policy & Management",
+            "Health & Social Behavior",
+            "Generalist",
+        ],
+        "note": "The M.P.H. is offered across several fields of study.",
+    },
+    "harvard-mpp": {
+        "concentrations": [
+            "Business & Government Policy",
+            "International & Global Affairs",
+            "Social & Urban Policy",
+            "Politics & Political Institutions",
+        ],
+        "note": "MPP students choose a Policy Area of Concentration.",
+    },
+    "harvard-edm": {
+        "concentrations": [
+            "Education Leadership, Organizations & Entrepreneurship",
+            "Human Development & Education",
+            "Learning Design, Innovation & Technology",
+            "Education Policy & Analysis",
+            "Teaching & Teacher Leadership",
+        ],
+        "note": "The Ed.M. is organized around five programs of study.",
+    },
+    "harvard-jd": {
+        "concentrations": [
+            "1L required curriculum",
+            "Upper-level electives & clinics",
+            "Joint degrees",
+        ],
+        "note": "After the first-year core, J.D. students build an individualized course of study.",
+    },
+}
+
+# Richer 2-sentence descriptions for the major programs (real). Programs not
+# listed keep their canonical one-line description from PROGRAMS above.
+_DESC_RICH_BY_SLUG = {
+    "harvard-economics-ab": (
+        "Economics is Harvard College's most popular concentration, combining microeconomics, "
+        "macroeconomics, and econometrics with a wide range of fields from finance to "
+        "development. It reports among the highest early-career earnings of any Harvard field "
+        "and is a common path into finance, consulting, and policy."
+    ),
+    "harvard-cs-ab": (
+        "Computer Science is Harvard's largest STEM concentration, housed in the John A. Paulson "
+        "School of Engineering and Applied Sciences and spanning theory, systems, and artificial "
+        "intelligence. Students can pursue a basic or honors track and join Harvard's renowned "
+        "CS50 teaching community."
+    ),
+    "harvard-statistics-ab": (
+        "Statistics is one of Harvard's fastest-growing concentrations, covering probability, "
+        "statistical inference, and data science. Graduates report the highest median earnings of "
+        "any Harvard undergraduate field and move into data, quantitative finance, and research."
+    ),
+    "harvard-social-studies-ab": (
+        "Social Studies is Harvard's celebrated interdisciplinary honors concentration in the "
+        "social sciences, built around a sophomore tutorial in classic social theory. Students "
+        "design an individual focus field spanning economics, government, sociology, history, and "
+        "philosophy."
+    ),
+    "harvard-government-ab": (
+        "Government is Harvard's political-science concentration, covering political theory, "
+        "American politics, comparative politics, and international relations. It is a leading "
+        "path into law, public service, journalism, and policy."
+    ),
+    "harvard-mcb-ab": (
+        "Molecular & Cellular Biology studies how molecules and cells drive life, development, "
+        "and disease, with extensive laboratory research. It is one of the most common pre-medical "
+        "pathways at Harvard College."
+    ),
+    "harvard-neuroscience-ab": (
+        "Neuroscience connects molecules and neurons to behavior and cognition, drawing on "
+        "Harvard's Center for Brain Science and affiliated hospitals. Students combine rigorous "
+        "biology with research across the nervous system."
+    ),
+    "harvard-mba": (
+        "Harvard Business School's two-year residential MBA is taught almost entirely by the case "
+        "method, immersing students in real decisions faced by real leaders. Its Required "
+        "Curriculum is followed by a fully elective second year and one of the strongest alumni "
+        "networks in business."
+    ),
+    "harvard-jd": (
+        "The Juris Doctor is the three-year professional degree at the heart of Harvard Law "
+        "School — the largest of the top U.S. law schools. After a first-year core, students "
+        "choose from an unmatched breadth of upper-level courses, clinics, and joint degrees, "
+        "with the LSAT or GRE accepted for admission."
+    ),
+    "harvard-md": (
+        "Harvard Medical School's M.D. program educates physicians and physician-scientists "
+        "through the Pathways and Health Sciences & Technology (HST) curricula, with clinical "
+        "training across world-leading Boston hospitals. Generous need-based aid supports students "
+        "throughout."
+    ),
+    "harvard-dmd": (
+        "Harvard's Doctor of Dental Medicine is a small, research-driven program whose students "
+        "complete the first-year basic-science curriculum alongside Harvard Medical School. It "
+        "produces academic leaders and clinician-scientists in oral medicine."
+    ),
+    "harvard-mph": (
+        "The Master of Public Health is Harvard Chan School's flagship degree, offered across "
+        "fields such as epidemiology, global health, and health policy in one-year and two-year "
+        "tracks. Students train in the Longwood Medical Area to advance the health of populations."
+    ),
+    "harvard-mpp": (
+        "The Master in Public Policy is Harvard Kennedy School's two-year analytic degree, pairing "
+        "a quantitative and economic policy core with a chosen area of concentration. Students "
+        "draw on research centers such as the Belfer, Ash, and Shorenstein Centers."
+    ),
+    "harvard-mpa": (
+        "The Master in Public Administration is a flexible two-year degree for those advancing "
+        "into public-service leadership, allowing wide cross-registration across Harvard's "
+        "schools."
+    ),
+    "harvard-edm": (
+        "The one-year Ed.M. is Harvard Graduate School of Education's master's degree, organized "
+        "around five programs of study from learning design to education policy. It prepares "
+        "educators and leaders to drive change in schools and learning organizations."
+    ),
+    "harvard-march": (
+        "The Master of Architecture is the Graduate School of Design's accredited professional "
+        "degree — a studio-based program combining design, history and theory, and building "
+        "technology at one of the world's leading design schools."
+    ),
+    "harvard-mdiv": (
+        "The Master of Divinity is Harvard Divinity School's three-year degree preparing students "
+        "for religious leadership, ministry, chaplaincy, and engaged scholarship across "
+        "traditions."
+    ),
+    "harvard-alm": (
+        "The Master of Liberal Arts is Harvard Extension School's flexible, part-time master's, "
+        "taken on campus or online across fields from data science to management. Admission is "
+        "earned by completing degree courses with strong grades rather than by a prior "
+        "application."
+    ),
+}
+
+
+# ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
+def apply(session: Session) -> bool:
+    """Enrich Harvard to the canonical profile. Flushes; caller commits.
+
+    Returns False (no-op) when Harvard is absent — safe on fresh/CI databases.
+    """
+    inst = session.scalar(select(Institution).where(Institution.name == INSTITUTION_NAME))
+    if inst is None:
+        return False
+    # Shallow-merge JSONB: every sub-object we provide is complete.
+    inst.ranking_data = {**(inst.ranking_data or {}), **RANKING_DATA}
+    inst.school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
+    inst.description_text = DESCRIPTION
+    inst.student_body_size = UNDERGRAD_COUNT
+    inst.founded_year = FOUNDED_YEAR
+    inst.campus_setting = CAMPUS_SETTING
+    session.flush()
+    school_by_name = _apply_schools(session, inst)
+    _apply_programs(session, inst, school_by_name)
+    session.flush()
+    return True
+
+
+def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
+    existing = {
+        s.name: s for s in session.scalars(select(School).where(School.institution_id == inst.id))
+    }
+    canonical_names = {s["name"] for s in SCHOOLS}
+    by_name: dict[str, School] = {}
+    for spec in SCHOOLS:
+        sc = existing.get(spec["name"])
+        if sc is None:
+            sc = School(institution_id=inst.id, name=spec["name"])
+            session.add(sc)
+        sc.description_text = spec["description"]
+        sc.sort_order = spec["sort_order"]
+        sc.catalog_source = "curated"
+        by_name[spec["name"]] = sc
+    # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is
+    # FK-safe (any orphaned programs are handled by the program reconcile).
+    for name, sc in existing.items():
+        if name not in canonical_names:
+            session.delete(sc)
+    session.flush()
+    return by_name
+
+
+def _program_has_dependents(session: Session, program_id) -> bool:
+    """True if any FK in the schema references this programs row (delete unsafe).
+
+    Introspects FKs pointing at programs.id rather than hard-coding table names,
+    so it stays correct as the schema grows.
+    """
+    fks = session.execute(
+        text("""
+        SELECT tc.table_name, kcu.column_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+          ON tc.constraint_name = kcu.constraint_name
+         AND tc.table_schema = kcu.table_schema
+        JOIN information_schema.constraint_column_usage ccu
+          ON tc.constraint_name = ccu.constraint_name
+         AND tc.table_schema = ccu.table_schema
+        WHERE tc.constraint_type = 'FOREIGN KEY'
+          AND ccu.table_name = 'programs'
+          AND ccu.column_name = 'id'
+          AND tc.table_name <> 'programs'
+        """)
+    ).fetchall()
+    for table, col in fks:
+        hit = session.execute(
+            text(f'SELECT 1 FROM "{table}" WHERE "{col}" = :pid LIMIT 1'),
+            {"pid": program_id},
+        ).first()
+        if hit:
+            return True
+    return False
+
+
+def _requirements_for(spec: dict) -> dict:
+    slug, dtype = spec["slug"], spec["degree_type"]
+    if slug == "harvard-mba":
+        return dict(_REQ_MBA)
+    if slug in ("harvard-jd", "harvard-llm"):
+        return dict(_REQ_LAW)
+    if slug == "harvard-md":
+        return dict(_REQ_MED)
+    if dtype == "certificate" or spec.get("delivery_format") == "online":
+        return dict(_REQ_OPEN)
+    if dtype == "bachelors":
+        return dict(_REQ_UNDERGRAD)
+    return dict(_REQ_GRAD)
+
+
+def _deadline_for(spec: dict) -> date | None:
+    slug, dtype = spec["slug"], spec["degree_type"]
+    if dtype == "certificate" or spec.get("delivery_format") == "online":
+        return None
+    if slug == "harvard-mba":
+        return date(2027, 1, 6)  # HBS Round 2
+    if slug == "harvard-jd":
+        return date(2027, 2, 15)  # HLS J.D.
+    if slug == "harvard-md":
+        return date(2026, 10, 15)  # AMCAS cycle
+    if dtype == "bachelors":
+        return date(2027, 1, 1)  # Harvard College Regular Decision
+    return date(2026, 12, 15)  # graduate baseline (varies by program)
+
+
+def _apply_programs(session: Session, inst: Institution, school_by_name: dict[str, School]) -> None:
+    existing = {
+        p.slug: p
+        for p in session.scalars(select(Program).where(Program.institution_id == inst.id))
+        if p.slug
+    }
+    canonical = set(PROGRAM_SLUGS)
+    for spec in PROGRAMS:
+        p = existing.get(spec["slug"])
+        if p is None:
+            p = Program(
+                institution_id=inst.id,
+                program_name=spec["program_name"],
+                degree_type=spec["degree_type"],
+                slug=spec["slug"],
+            )
+            session.add(p)
+        p.program_name = spec["program_name"]
+        p.degree_type = spec["degree_type"]
+        p.duration_months = spec.get("duration_months")
+        p.description_text = _DESC_RICH_BY_SLUG.get(spec["slug"]) or spec["description"]
+        p.school_id = school_by_name[spec["school"]].id
+        p.is_published = True
+        p.catalog_source = "curated"
+        p.delivery_format = spec.get("delivery_format", "in_person")
+        # Tuition: explicit per-school published rate → undergrad rate → funded
+        # PhD (0) → Extension/HarvardX per-course (null). Every figure is real.
+        if spec["slug"] in _TUITION_BY_SLUG:
+            p.tuition = _TUITION_BY_SLUG[spec["slug"]]
+        elif spec["degree_type"] == "phd":
+            p.tuition = 0
+        elif (
+            spec["slug"] == "harvard-alm"
+            or p.delivery_format == "online"
+            or (spec["degree_type"] == "certificate")
+        ):
+            p.tuition = None
+        elif spec["degree_type"] == "bachelors":
+            p.tuition = _TUITION_UNDERGRAD
+        else:
+            p.tuition = None
+        src_name, src_url = _COST_SRC_BY_SCHOOL.get(
+            spec["school"], ("Harvard University", "https://www.harvard.edu/")
+        )
+        p.cost_data = (
+            {
+                "tuition_usd": p.tuition,
+                "funded": spec["degree_type"] == "phd",
+                "source": src_name,
+                "source_url": src_url,
+                "year": "2025-26",
+            }
+            if (p.tuition is not None or spec["degree_type"] == "phd")
+            else None
+        )
+        p.application_requirements = _requirements_for(spec)
+        # Real per-program outcomes from College Scorecard Field-of-Study where
+        # Harvard reports non-suppressed figures; otherwise Harvard-wide
+        # institution outcomes, explicitly labelled (degree programs only);
+        # non-degree credentials: none.
+        fos = _FOS_OUTCOMES.get(spec["slug"])
+        if fos is not None:
+            salary, debt, cip = fos
+            p.outcomes_data = {
+                "median_salary": salary,
+                "scope": "program",
+                "cip": cip,
+                "source": "U.S. Dept. of Education College Scorecard — Field of Study",
+                "source_url": "https://collegescorecard.ed.gov/",
+            }
+            if debt is not None:
+                p.outcomes_data["median_debt_completers"] = debt
+        elif spec["degree_type"] in ("bachelors", "masters", "phd"):
+            p.outcomes_data = dict(_OUTCOMES_INSTITUTION)
+        else:
+            p.outcomes_data = None
+        # Audience + highlights: per-program for flagship, else by degree type.
+        p.who_its_for = _WHO_BY_SLUG.get(spec["slug"]) or _WHO_BY_TYPE.get(spec["degree_type"])
+        p.highlights = _HL_BY_SLUG.get(spec["slug"]) or _HL_BY_TYPE.get(spec["degree_type"])
+        if spec["slug"] in _TRACKS_BY_SLUG:
+            p.tracks = _TRACKS_BY_SLUG[spec["slug"]]
+        p.application_deadline = _deadline_for(spec)
+    session.flush()
+    # Reconcile legacy Harvard programs (slug not in the canonical set): delete
+    # when unreferenced, otherwise unpublish so the catalog is clean without
+    # breaking any application/match rows that point at them.
+    for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
+        if (p.slug or "") in canonical:
+            continue
+        if _program_has_dependents(session, p.id):
+            p.is_published = False
+        else:
+            session.delete(p)
+    session.flush()

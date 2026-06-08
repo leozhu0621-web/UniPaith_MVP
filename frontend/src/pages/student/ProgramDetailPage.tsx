@@ -1256,7 +1256,7 @@ export default function ProgramDetailPage() {
                   <Card className="p-3 border-secondary/30 bg-secondary/[0.05]">
                     <p className="text-[12px] text-muted-foreground">
                       {od.scope === 'institution'
-                        ? (od.scope_note || 'MIT-wide figures across all graduates — not specific to this program.')
+                        ? (od.scope_note || 'Institution-wide figures across all graduates — not specific to this program.')
                         : 'Program-level median earnings (College Scorecard, Field of Study).'}
                       {od.source ? ` Source: ${od.source}.` : ''}
                     </p>
