@@ -12,7 +12,7 @@ import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import QueryError from '../../components/ui/QueryError'
 import Skeleton from '../../components/ui/Skeleton'
-import { ArrowLeft, BookOpen, GraduationCap, Users, TrendingUp, Percent, Building2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, GraduationCap, Users, TrendingUp, Percent, Building2, Globe } from 'lucide-react'
 import type { SchoolSummary, ProgramSummary } from '../../types'
 
 function fmtPct(v: number | null | undefined) {
@@ -168,7 +168,17 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
               ))}
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-2 mt-4">
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            {school.website_url && (
+              <a
+                href={school.website_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-secondary hover:underline"
+              >
+                <Globe size={14} /> Website
+              </a>
+            )}
             <Button size="sm" variant="ghost" onClick={() => navigate(instHref)}>
               <ArrowLeft size={14} className="mr-1" /> Back to {institution?.name || 'university'}
             </Button>

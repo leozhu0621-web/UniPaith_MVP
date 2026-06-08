@@ -272,6 +272,7 @@ class SchoolSummaryResponse(BaseModel):
     description_text: str | None = None
     media_urls: list | dict | None = None
     logo_url: str | None = None
+    website_url: str | None = None
     program_count: int = 0
     program_names: list[str] = []
 

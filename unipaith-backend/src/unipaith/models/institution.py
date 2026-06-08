@@ -159,6 +159,8 @@ class School(Base):
     description_text: Mapped[str | None] = mapped_column(Text)
     media_urls: Mapped[dict | None] = mapped_column(JSONB)
     logo_url: Mapped[str | None] = mapped_column(String(1000))
+    # The school's own official website (e.g. mitsloan.mit.edu for MIT Sloan).
+    website_url: Mapped[str | None] = mapped_column(String(1000))
     sort_order: Mapped[int | None] = mapped_column(Integer)
     # Spec 69 — school-level catalog ingestion provenance/freshness (school grain,
     # distinct from program grain). Nullable; ingested schools carry source + slug.
