@@ -755,7 +755,7 @@ function AboutTab({ inst }: { inst: Institution }) {
     inst.founded_year != null ? { label: 'Founded', value: String(inst.founded_year) } : null,
     inst.campus_setting ? { label: 'Campus setting', value: titleCase(inst.campus_setting) } : null,
   ].filter(Boolean) as { label: string; value: string }[]
-  const nothing = !inst.campus_description && !inst.description_text && !supportKeys.length && !policyKeys.length && !intlKeys.length && !facts.length
+  const nothing = !inst.campus_description && !supportKeys.length && !policyKeys.length && !intlKeys.length && !facts.length
 
   if (nothing) {
     return <EmptyBlock icon={BookOpen} title="More about this school is coming" body="Institution details haven't been published yet. Explore the schools and programs in the meantime." />
