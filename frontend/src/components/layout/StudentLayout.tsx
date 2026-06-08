@@ -61,7 +61,7 @@ export default function StudentLayout() {
       <header className="hidden lg:flex h-16 items-center justify-between px-8 bg-background border-b border-border flex-shrink-0 z-30">
         <div className="flex flex-1 items-center gap-3">
           <NavLink to="/s" className="leading-none" aria-label="UniPaith home">
-            <Wordmark className="h-7 w-auto" />
+            <Wordmark className="h-9 w-auto" />
           </NavLink>
           <SearchTrigger variant="icon" />
         </div>
