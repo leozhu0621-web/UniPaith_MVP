@@ -699,6 +699,7 @@ export default function ProgramDetailPage() {
             const appFee = reqObj.application_fee && typeof reqObj.application_fee === 'object'
               ? reqObj.application_fee as { amount_usd?: number; waiver_available?: boolean; note?: string }
               : null
+            const appFeeDisplayable = appFee && (typeof appFee.amount_usd === 'number' || appFee.waiver_available || !!appFee.note)
             const deadlineRounds: Array<{ round: string; date: string }> = Array.isArray(reqObj.deadlines)
               ? reqObj.deadlines.filter((d: any) => d && d.round && d.date)
                 .map((d: any) => ({ round: String(d.round), date: String(d.date) }))
@@ -951,18 +952,21 @@ export default function ProgramDetailPage() {
                 )}
 
                 {/* How you're evaluated + application fee */}
-                {(evaluation || appFee) && (
+                {(evaluation || appFeeDisplayable) && (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <Sparkles size={14} className="text-secondary" />
                       <h3 className="font-semibold text-foreground">How You&rsquo;re Evaluated</h3>
                     </div>
                     {evaluation && <p className="text-sm text-foreground leading-relaxed">{evaluation}</p>}
-                    {appFee && (
+                    {appFee && appFeeDisplayable && (
                       <div className="mt-3 flex items-start gap-2 text-sm rounded-lg bg-muted/50 border border-border px-3 py-2">
                         <DollarSign size={14} className="text-secondary flex-shrink-0 mt-0.5" />
                         <span className="text-foreground">
-                          Application fee: <span className="font-semibold">${appFee.amount_usd}</span>
+                          Application fee
+                          {typeof appFee.amount_usd === 'number' && (
+                            <>: <span className="font-semibold">{formatCurrency(appFee.amount_usd)}</span></>
+                          )}
                           {appFee.waiver_available && (
                             <span className="text-foreground/70"> · fee waivers available</span>
                           )}
