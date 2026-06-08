@@ -71,3 +71,35 @@ def test_unguided_header_keeps_open_discovery_fallback() -> None:
     )
     assert "one open discovery conversation" in header
     assert "Stage coverage" not in header
+
+
+def test_grounding_block_appended_when_present() -> None:
+    from unipaith.ai.orchestrator import Orchestrator
+
+    header = Orchestrator._render_state_header(
+        _ctx(
+            guided=True,
+            completion_breakdown={"profile": 0.6, "goals": 0.2, "needs": 0.0},
+            knowledge_summary="## From your knowledge base\n- Marine Biology BS at U Maine",
+        )
+    )
+    assert "From your knowledge base" in header
+    assert "prefer" in header.lower()
+
+
+def test_no_grounding_block_when_absent() -> None:
+    from unipaith.ai.orchestrator import Orchestrator
+
+    header = Orchestrator._render_state_header(
+        _ctx(guided=True, completion_breakdown={"profile": 0.6, "goals": 0.2, "needs": 0.0})
+    )
+    assert "From your knowledge base" not in header
+
+
+def test_grounding_block_in_open_mode_too() -> None:
+    from unipaith.ai.orchestrator import Orchestrator
+
+    header = Orchestrator._render_state_header(
+        _ctx(guided=False, knowledge_summary="## From your knowledge base\n- X at Y")
+    )
+    assert "From your knowledge base" in header
