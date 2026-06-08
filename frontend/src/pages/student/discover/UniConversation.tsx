@@ -147,9 +147,10 @@ export default function UniConversation({
     : []
   const offeredAdvance = guided && lastSignals?.requested_layer_advance === true
   const curIdx = journey.stages.findIndex(s => s.state === 'current')
-  const nextStageLabel = journey.matchesUnlocked
-    ? 'your matches'
-    : (journey.stages[curIdx + 1]?.label ?? 'your matches')
+  const nextStageLabel =
+    journey.matchesUnlocked || curIdx < 0
+      ? 'your matches'
+      : (journey.stages[curIdx + 1]?.label ?? 'your matches')
 
   const turnMut = useMutation({
     mutationFn: async (content: string) => {
