@@ -26,7 +26,7 @@ import type {
   DiscoverySession,
   DiscoverySessionDetail,
 } from '../../../types'
-import MatchHandoffCard from './MatchHandoffCard'
+import FirstLookCard from './FirstLookCard'
 import NoticedCard from './NoticedCard'
 import { attachRefs, noticedItemsFromSignals } from './noticed'
 import ProfileDrawer from './ProfileDrawer'
@@ -387,7 +387,7 @@ export default function UniConversation({
         )}
 
         {!isEmpty && !handoffDismissed && !streaming && (
-          <MatchHandoffCard variant="always" onKeepTalking={() => setHandoffDismissed(true)} />
+          <FirstLookCard variant="always" onKeepTalking={() => setHandoffDismissed(true)} />
         )}
       </div>
 
