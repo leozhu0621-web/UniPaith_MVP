@@ -692,6 +692,17 @@ export default function ProgramDetailPage() {
             const legacyReqs = p.requirements && typeof p.requirements === 'object' ? Object.entries(p.requirements) : []
             const requiredItems = appReqs.filter(r => r.required !== false)
             const optionalItems = appReqs.filter(r => r.required === false)
+            // Enriched admissions detail (rounds, fee, how-you're-evaluated).
+            const reqObj = (p.application_requirements && !Array.isArray(p.application_requirements)
+              ? p.application_requirements : {}) as Record<string, any>
+            const evaluation = typeof reqObj.evaluation === 'string' ? reqObj.evaluation : null
+            const appFee = reqObj.application_fee && typeof reqObj.application_fee === 'object'
+              ? reqObj.application_fee as { amount_usd?: number; waiver_available?: boolean; note?: string }
+              : null
+            const deadlineRounds: Array<{ round: string; date: string }> = Array.isArray(reqObj.deadlines)
+              ? reqObj.deadlines.filter((d: any) => d && d.round && d.date)
+                .map((d: any) => ({ round: String(d.round), date: String(d.date) }))
+              : []
 
             return (
               <>
@@ -918,6 +929,47 @@ export default function ProgramDetailPage() {
                         </div>
                       )}
                     </div>
+                  </Card>
+                )}
+
+                {/* Application rounds (Early Action / Regular / R1–R3 etc.) */}
+                {deadlineRounds.length > 0 && (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">Application Rounds</h3>
+                    </div>
+                    <ul className="space-y-2 text-sm">
+                      {deadlineRounds.map((d, i) => (
+                        <li key={i} className="flex justify-between border-b border-border pb-2 last:border-0 last:pb-0">
+                          <span className="text-foreground">{d.round}</span>
+                          <span className="font-medium text-foreground">{d.date}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                )}
+
+                {/* How you're evaluated + application fee */}
+                {(evaluation || appFee) && (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">How You&rsquo;re Evaluated</h3>
+                    </div>
+                    {evaluation && <p className="text-sm text-foreground leading-relaxed">{evaluation}</p>}
+                    {appFee && (
+                      <div className="mt-3 flex items-start gap-2 text-sm rounded-lg bg-muted/50 border border-border px-3 py-2">
+                        <DollarSign size={14} className="text-secondary flex-shrink-0 mt-0.5" />
+                        <span className="text-foreground">
+                          Application fee: <span className="font-semibold">${appFee.amount_usd}</span>
+                          {appFee.waiver_available && (
+                            <span className="text-foreground/70"> · fee waivers available</span>
+                          )}
+                          {appFee.note && <span className="block text-[11px] text-foreground/60 mt-0.5">{appFee.note}</span>}
+                        </span>
+                      </div>
+                    )}
                   </Card>
                 )}
 
