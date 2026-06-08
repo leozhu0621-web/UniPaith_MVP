@@ -35,6 +35,9 @@ interface User {
   // True when this account is on the server-side owner allowlist; unlocks the
   // in-app feedback inbox (/s/feedback) and its nav link. Computed by /auth/me.
   is_owner?: boolean
+  // Mirrors the backend ai_uni_guided_v1 flag; gates the guided Uni workspace
+  // shell so flag-off keeps the single-column open Uni experience. From /auth/me.
+  uni_guided?: boolean
   created_at: string
 }
 
@@ -71,6 +74,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           role: loginUser.role as User['role'],
           created_at: String(loginUser.created_at ?? new Date().toISOString()),
           is_owner: Boolean(loginUser.is_owner),
+          uni_guided: Boolean(loginUser.uni_guided),
         }
       : null
 
@@ -92,6 +96,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             role: me.role as User['role'],
             created_at: String(me.created_at ?? new Date().toISOString()),
             is_owner: Boolean(me.is_owner),
+            uni_guided: Boolean(me.uni_guided),
           }
         })()
 
@@ -126,6 +131,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           role: loginUser.role as User['role'],
           created_at: String(loginUser.created_at ?? new Date().toISOString()),
           is_owner: Boolean(loginUser.is_owner),
+          uni_guided: Boolean(loginUser.uni_guided),
         }
       : null
 
@@ -149,6 +155,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           role: loginUser.role as User['role'],
           created_at: String(loginUser.created_at ?? new Date().toISOString()),
           is_owner: Boolean(loginUser.is_owner),
+          uni_guided: Boolean(loginUser.uni_guided),
         }
       : null
 
@@ -196,6 +203,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           role: user.role,
           created_at: user.created_at,
           is_owner: Boolean(user.is_owner),
+          uni_guided: Boolean(user.uni_guided),
         },
         isAuthenticated: true,
         isLoading: false,

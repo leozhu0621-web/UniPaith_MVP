@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 
@@ -13,6 +13,9 @@ vi.mock('../api/discovery', () => ({
     student_message: { id: 'm1', session_id: 's1', role: 'student', content: 'hi', created_at: '' },
     assistant_message: null,
   }),
+  getCompletionMap: vi
+    .fn()
+    .mockResolvedValue({ profile: '0', goals: '0', needs: '0', identity: '0' }),
   getHandoffVerdict: vi.fn().mockResolvedValue({
     should_handoff: false,
     handoff_target: null,
@@ -31,8 +34,8 @@ vi.mock('../api/livingProfile', () => ({
   updateSignal: vi.fn(),
 }))
 vi.mock('../stores/auth-store', () => ({
-  useAuthStore: (sel: (s: { user: { email: string } }) => unknown) =>
-    sel({ user: { email: 'leo@unipaith.co' } }),
+  useAuthStore: (sel: (s: { user: { email: string; uni_guided: boolean } }) => unknown) =>
+    sel({ user: { email: 'leo@unipaith.co', uni_guided: true } }),
 }))
 vi.mock('../stores/toast-store', () => ({ showToast: vi.fn() }))
 
@@ -49,13 +52,23 @@ function renderHome(route = '/s') {
   )
 }
 
-describe('DiscoverHomePage — Uni redesign', () => {
-  it('renders the Uni conversation and the quiet profile link', async () => {
+describe('DiscoverHomePage — Uni guided workspace', () => {
+  it('renders the Uni conversation and the journey rail', async () => {
     renderHome()
-    expect(screen.getByText('Discover · with Uni')).toBeInTheDocument()
     expect(await screen.findByText(/I'm Uni/)).toBeInTheDocument()
-    expect(screen.getByText('Your profile')).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/Tell Uni what's on your mind/i)).toBeInTheDocument()
+    // Rail stages (unique to the rail; "About you" is also echoed in the mobile bar)
+    expect(screen.getByText('Your goals')).toBeInTheDocument()
+    expect(screen.getByText('What you need')).toBeInTheDocument()
+    expect(screen.getByText('Your matches')).toBeInTheDocument()
+  })
+
+  it('shows the living profile in the rail', async () => {
+    renderHome()
+    // Await the living-profile query, then the static section labels are present.
+    expect(await screen.findByText(/You light up around hands-on problems/)).toBeInTheDocument()
+    expect(screen.getByText('What Uni knows about you')).toBeInTheDocument()
+    expect(screen.getByText('What lights you up')).toBeInTheDocument()
   })
 
   it('drops the old track/layer/strategy chrome', () => {
@@ -64,17 +77,10 @@ describe('DiscoverHomePage — Uni redesign', () => {
     expect(screen.queryByText("Let's figure out what you're looking for")).not.toBeInTheDocument()
   })
 
-  it('offers counselor-style ways-in (gentle quick replies)', () => {
-    renderHome()
-    expect(screen.getByText("I'm not sure where to start")).toBeInTheDocument()
-    expect(screen.getByText('Could you give an example?')).toBeInTheDocument()
-  })
-
-  it('opens the living-profile drawer from the trigger', async () => {
+  it('offers counselor-style ways-in (gentle quick replies)', async () => {
     renderHome()
     await screen.findByText(/I'm Uni/)
-    fireEvent.click(screen.getByText('Your profile'))
-    expect(await screen.findByText('What lights you up')).toBeInTheDocument()
-    expect(screen.getByText(/You light up around hands-on problems/)).toBeInTheDocument()
+    expect(screen.getByText("I'm not sure where to start")).toBeInTheDocument()
+    expect(screen.getByText('Could you give an example?')).toBeInTheDocument()
   })
 })

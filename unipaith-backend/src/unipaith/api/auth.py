@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.config import settings
 from unipaith.database import get_db
 from unipaith.dependencies import get_current_user, user_is_owner
 from unipaith.models.user import User
@@ -56,6 +57,7 @@ async def me(user: User = Depends(get_current_user)):
         role=user.role.value,
         created_at=user.created_at,
         is_owner=user_is_owner(user),
+        uni_guided=settings.ai_uni_guided_v1,
     )
 
 

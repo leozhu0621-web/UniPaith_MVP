@@ -378,6 +378,8 @@ class DiscoveryService:
                 recent_signals_summary=_summarize_extraction(extraction),
                 cross_track_summary=cross_track,
                 history=history_msgs,
+                guided=settings.ai_uni_guided_v1,
+                completion_breakdown=session.completion_breakdown or {},
             )
             orch_response = await get_orchestrator().respond(
                 ctx=ctx,
@@ -781,6 +783,8 @@ class DiscoveryService:
                 recent_signals_summary=_summarize_extraction(extraction),
                 cross_track_summary=cross_track,
                 history=history_msgs,
+                guided=settings.ai_uni_guided_v1,
+                completion_breakdown=session.completion_breakdown or {},
             )
 
             text_buffer: list[str] = []

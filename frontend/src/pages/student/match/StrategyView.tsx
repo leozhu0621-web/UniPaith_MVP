@@ -116,14 +116,14 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
                 Tell me about you first.
               </div>
               <div className="text-xs text-foreground mt-1 max-w-2xl">
-                Match works against the broad strategy you build in Discover. Talk through your
+                Match works against the broad strategy you build with Uni. Talk through your
                 goals and I'll surface the strategy here once you have at least one active
                 academic goal.
               </div>
             </div>
           </div>
           <Link to="/s">
-            <Button size="sm">Open Discover</Button>
+            <Button size="sm">Talk to Uni</Button>
           </Link>
         </div>
       </Card>

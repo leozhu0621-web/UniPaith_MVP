@@ -34,3 +34,22 @@ def test_eval_first_turn_needs_no_reflection() -> None:
     # No prior student turn (the opener) → reflection not required.
     r = score_counselor_turn("", "Welcome — when did you last feel really absorbed?")
     assert r.passed
+
+
+def test_eval_flags_off_stage_turn() -> None:
+    from unipaith.ai.evals.uni_counselor import score_stage_turn
+
+    r = score_stage_turn(stage="goals", assistant="What's your favorite color?")
+    assert not r.passed
+    assert "off_stage" in r.reasons
+
+
+def test_eval_passes_on_stage_turn() -> None:
+    from unipaith.ai.evals.uni_counselor import score_stage_turn
+
+    r = score_stage_turn(
+        stage="goals",
+        assistant="When you picture life after college — a career, a field, or still open?",
+    )
+    assert r.passed
+    assert r.reasons == []

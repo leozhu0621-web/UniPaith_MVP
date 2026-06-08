@@ -36,8 +36,8 @@ const TOTAL_STEPS = 3
 const STAGES = [
   {
     icon: Compass,
-    title: 'Discover',
-    body: 'Tell us about you in a short conversation — no dreaded forms. We learn your profile, goals, and what matters to you.',
+    title: 'Meet Uni',
+    body: 'Talk it through with Uni, your counselor — no dreaded forms. Uni learns your profile, goals, and what matters to you, one step at a time.',
   },
   {
     icon: Target,

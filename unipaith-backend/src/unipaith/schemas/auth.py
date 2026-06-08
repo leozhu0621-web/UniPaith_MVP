@@ -44,6 +44,10 @@ class UserResponse(BaseModel):
     # unlocks the in-app feedback inbox. Defaults False so login payloads that
     # don't compute it simply hide the owner surface until /auth/me refreshes.
     is_owner: bool = False
+    # Mirrors settings.ai_uni_guided_v1 so the client can render the guided Uni
+    # workspace shell only when the flag is on (spec §9 — flag-off keeps the
+    # single-column open Uni experience). Defaults False; computed by /auth/me.
+    uni_guided: bool = False
 
 
 class LoginResponse(TokenResponse):

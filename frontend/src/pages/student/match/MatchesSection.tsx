@@ -70,7 +70,7 @@ export default function MatchesSection({ savedIds, onToggleSave }: MatchesSectio
     onSuccess: data => {
       qc.setQueryData(['matches'], data)
       showToast(
-        data.length ? 'Matches refreshed.' : 'No matches yet — add more on Discover.',
+        data.length ? 'Matches refreshed.' : 'No matches yet — add more with Uni.',
         data.length ? 'success' : 'info',
       )
     },
@@ -160,11 +160,11 @@ export default function MatchesSection({ savedIds, onToggleSave }: MatchesSectio
           <Compass size={28} className="mx-auto text-foreground/50 mb-3" />
           <p className="text-sm font-semibold text-foreground mb-1">No matches yet</p>
           <p className="text-xs text-muted-foreground max-w-md mx-auto mb-4">
-            Add more to your profile to unlock matches. Talk through your goals on Discover.
+            Add more to your profile to unlock matches. Talk through your goals with Uni.
           </p>
           <div className="flex items-center justify-center gap-2">
             <Button size="sm" onClick={() => navigate('/s')}>
-              <Compass size={14} className="mr-1.5" /> Open Discover
+              <Compass size={14} className="mr-1.5" /> Talk to Uni
             </Button>
             <Button
               size="sm"
