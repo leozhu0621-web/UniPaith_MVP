@@ -584,12 +584,15 @@ export default function ProgramDetailPage() {
                 websiteUrl={p.website_url}
               />
 
-              {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format) && (
+              {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format || tracksMeta.curriculum.length > 0) && (
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <BookOpen size={14} className="text-secondary" />
-                    <h3 className="font-semibold text-foreground">Tracks & Structure</h3>
+                    <h3 className="font-semibold text-foreground">Curriculum & Structure</h3>
                   </div>
+                  {tracksMeta.note && (
+                    <p className="text-sm text-foreground mb-3">{tracksMeta.note}</p>
+                  )}
                   {tracksMeta.concentrations.length > 0 && (
                     <div className="mb-3">
                       <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">Concentrations</p>
@@ -600,17 +603,65 @@ export default function ProgramDetailPage() {
                       </div>
                     </div>
                   )}
-                  {tracksMeta.note && (
-                    <p className="text-sm text-foreground mb-3">{tracksMeta.note}</p>
+                  {tracksMeta.curriculum.length > 0 && (
+                    <div className="space-y-3">
+                      {tracksMeta.curriculum.map((term, i) => (
+                        <div key={i} className="rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+                          <p className="text-[10px] font-semibold text-secondary uppercase tracking-wider mb-1.5">{term.term}</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {term.courses.map((c, j) => (
+                              <span key={j} className="px-2 py-0.5 text-[11px] rounded-md bg-card text-foreground border border-border/60">{c}</span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                   {tracksMeta.learning_format && (
-                    <div>
+                    <div className="mt-3">
                       <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Learning format</p>
                       <p className="text-sm text-foreground leading-relaxed">{tracksMeta.learning_format}</p>
                     </div>
                   )}
                 </Card>
               )}
+
+              {(() => {
+                const cp = p.class_profile && typeof p.class_profile === 'object'
+                  ? p.class_profile as Record<string, any> : null
+                if (!cp) return null
+                const pct = (v: any) => `${Math.round(Number(v) * 100)}%`
+                const rows: Array<{ label: string; value: string }> = []
+                if (cp.cohort_size) rows.push({ label: 'Cohort size', value: String(cp.cohort_size) })
+                if (cp.international_pct != null) rows.push({ label: 'International', value: pct(cp.international_pct) })
+                if (cp.countries != null) rows.push({ label: 'Countries', value: String(cp.countries) })
+                if (cp.women_pct != null) rows.push({ label: 'Women', value: pct(cp.women_pct) })
+                if (cp.stem_pct != null) rows.push({ label: 'STEM background', value: pct(cp.stem_pct) })
+                if (cp.median_gpa != null) rows.push({ label: 'Median GPA', value: String(cp.median_gpa) })
+                if (cp.median_gre_quant != null) rows.push({ label: 'Median GRE (Quant)', value: String(cp.median_gre_quant) })
+                if (cp.median_gmat != null) rows.push({ label: 'Median GMAT', value: String(cp.median_gmat) })
+                if (cp.avg_work_experience_months != null) rows.push({ label: 'Avg work experience', value: `${cp.avg_work_experience_months} mo` })
+                if (!rows.length) return null
+                return (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Users size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">Class Profile</h3>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {rows.map(r => (
+                        <div key={r.label} className="px-3 py-2.5 rounded-lg bg-muted/50 border border-border">
+                          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground leading-none">{r.label}</p>
+                          <p className="text-[17px] font-bold text-foreground tabular-nums mt-1 leading-tight">{r.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {cp.source && (
+                      <p className="mt-3 text-[11px] text-muted-foreground/70">Source: {String(cp.source)}</p>
+                    )}
+                  </Card>
+                )
+              })()}
 
               <NextStepsCard
                 applicationDeadline={effectiveDeadline}

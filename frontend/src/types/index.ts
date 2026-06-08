@@ -388,6 +388,7 @@ export interface Program {
   promotion_categories?: string[] | null
   english_policy?: IntlEnglishPolicy | null
   website_url?: string | null
+  class_profile?: Record<string, any> | null
   institution_name?: string | null
   institution_website_url?: string | null
   created_at: string

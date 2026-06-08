@@ -1118,6 +1118,13 @@ _HL_BY_SLUG = {
         "Deep tech & entrepreneurship network",
         "Kendall Square innovation hub",
     ],
+    "mit-sloan-mban": [
+        "STEM-designated (24-month OPT eligible)",
+        "Year-long Analytics Capstone with a sponsor company",
+        "Built with the MIT Operations Research Center",
+        "~$135K median starting salary",
+        "98.6% had offers within 6 months",
+    ],
     "mit-architecture-march": [
         "Accredited professional M.Arch",
         "Oldest U.S. architecture department",
@@ -1176,6 +1183,41 @@ _TRACKS_BY_SLUG = {
             "Sustainability",
         ],
         "note": "Optional certificates let MBA students specialize.",
+    },
+    "mit-sloan-mban": {
+        "note": (
+            "A 12-month sequence: a quantitative fall core, then the year-long Analytics "
+            "Capstone solving a live problem for a sponsor company."
+        ),
+        "curriculum": [
+            {
+                "term": "Fall",
+                "courses": [
+                    "Optimization Methods",
+                    "Machine Learning",
+                    "The Analytics Edge",
+                    "Intensive Hands-on Deep Learning",
+                    "Analytics Lab",
+                    "From Analytics to Action",
+                ],
+            },
+            {
+                "term": "IAP (January)",
+                "courses": [
+                    "Analytics Capstone — matching & scoping",
+                    "Communicating with Data",
+                    "Ethics & Data Privacy",
+                ],
+            },
+            {
+                "term": "Spring",
+                "courses": ["Analytics Capstone — company project", "Analytics electives"],
+            },
+            {
+                "term": "Summer",
+                "courses": ["Analytics Capstone — full-time, final deliverables"],
+            },
+        ],
     },
 }
 
@@ -1295,8 +1337,15 @@ _DESC_RICH_BY_SLUG = {
         "finance — from asset management to fintech — backed by MIT Sloan's research depth."
     ),
     "mit-sloan-mban": (
-        "A one-year Master of Business Analytics, run with the Operations Research Center, "
-        "that turns data and optimization into business decisions."
+        "The MIT Sloan Master of Business Analytics (MBAn) is a 12-month, STEM-designated "
+        "program — developed with MIT's Operations Research Center — that applies modern data "
+        "science, optimization, and machine learning to real business problems. It is built for "
+        "aspiring data-science professionals early in their careers, such as engineers, "
+        "mathematicians, physicists, and programmers. A rigorous fall core (optimization, machine "
+        "learning, the Analytics Edge, deep learning) is paired with the year-long Analytics "
+        "Capstone, in which students solve a live problem for a sponsor company through to a "
+        "summer deliverable. Graduates move overwhelmingly into data-science roles, reporting a "
+        "median base salary near $135,000 and offers for 98.6% of the class within six months."
     ),
     "mit-architecture-bs": (
         "Course 4 combines design studios, history and theory, and building technology in "
@@ -1333,6 +1382,107 @@ _DESC_RICH_BY_SLUG = {
     ),
 }
 
+
+# ── Per-program "gold standard" overrides ─────────────────────────────────
+# When a program publishes its own cost, outcomes, admissions, curriculum, and
+# class profile, those program-specific (sourced) values take precedence over
+# the degree-type fallbacks. Programs without an entry keep the fallbacks.
+# MIT Sloan's Master of Business Analytics (MBAn) is the reference example.
+
+# Program-specific cost (official published tuition), overriding the standard rate.
+_COST_BY_SLUG: dict[str, dict] = {
+    "mit-sloan-mban": {
+        "tuition_usd": 93834,
+        "year": "2025-26",
+        "funded": False,
+        "note": "≈ $71,834 after the Analytics Capstone summer tuition subsidy",
+        "source": "MIT Sloan — Financing Your Education",
+        "source_url": (
+            "https://mitsloan.mit.edu/master-of-business-analytics/admissions/"
+            "tuition-and-financial-aid"
+        ),
+    },
+}
+
+# Program-specific outcomes from the program's own published employment report
+# (scope="program"), overriding the institution-level / Field-of-Study fallback.
+_OUTCOMES_BY_SLUG: dict[str, dict] = {
+    "mit-sloan-mban": {
+        "median_salary": 135000,
+        "mean_salary": 136152,
+        "median_signing_bonus": 24163,
+        "employment_rate": 0.986,
+        "employment_timeframe": "received offers within 6 months of graduation",
+        "scope": "program",
+        "top_industries": ["Retail & CPG", "Healthcare & Biotech", "Technology", "Finance"],
+        "source": "MIT Sloan 2024 Master of Business Analytics Employment Report",
+        "source_url": "https://mitsloan.mit.edu/career-development-office/employment-reports",
+    },
+}
+
+# Program-specific application requirements (official), overriding the degree-type
+# baseline so the page never shows a wrong note (e.g. PhD funding on a master's).
+_REQ_BY_SLUG: dict[str, dict] = {
+    "mit-sloan-mban": {
+        "materials": [
+            {"name": "MIT Sloan online application", "required": True},
+            {"name": "Two short essays + a one-minute video statement", "required": True},
+            {"name": "Transcripts from all post-secondary institutions", "required": True},
+            {"name": "Résumé", "required": True},
+            {
+                "name": "GRE or GMAT",
+                "required": False,
+                "note": "Optional — a strong quantitative score can strengthen an application",
+            },
+            {
+                "name": "English proficiency (TOEFL/IELTS) for international applicants",
+                "required": False,
+            },
+            {
+                "name": "Programming & quantitative preparation (e.g. Python, linear algebra)",
+                "required": False,
+                "note": "Expected preparation, not a formal submission",
+            },
+        ],
+        "test_policy": {
+            "stance": "optional",
+            "note": "GRE/GMAT optional; submit only if it strengthens your quantitative profile.",
+            "accepted_tests": ["GRE", "GMAT"],
+        },
+        "recommendations": {
+            "required_count": 2,
+            "types": ["Two letters of recommendation (academic or professional)"],
+        },
+        "deadlines": [
+            {"round": "Single annual round", "date": "Early January"},
+        ],
+        "evaluation": (
+            "MIT Sloan looks for exceptional quantitative aptitude, programming readiness, and a "
+            "clear fit with a data-science career — assessed through the essays, video, "
+            "recommendations, and academic record. GRE/GMAT scores are optional."
+        ),
+        "source": "MIT Sloan MBAn Admissions",
+        "source_url": (
+            "https://mitsloan.mit.edu/master-of-business-analytics/admissions/how-to-apply"
+        ),
+    },
+}
+
+# Program class profile (size + selectivity + composition), where published.
+_CLASS_PROFILE_BY_SLUG: dict[str, dict] = {
+    "mit-sloan-mban": {
+        "cohort_size": "~130 students",
+        "international_pct": 0.60,
+        "countries": 22,
+        "stem_pct": 0.875,
+        "median_gpa": 3.92,
+        "median_gre_quant": 169,
+        "median_gmat": 730,
+        "avg_work_experience_months": 15,
+        "source": "MIT Sloan MBAn Class Profile",
+        "source_url": "https://mitsloan.mit.edu/master-of-business-analytics/meet-class/class-profile",
+    },
+}
 
 # Full official degree names (MIT awards the SB/Bachelor of Science, the SM/
 # Master of Science or named professional master's, and the PhD). Shown as the
@@ -1596,28 +1746,38 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # programs pay MIT's single published tuition; PhDs are fully funded;
         # the Sloan MBA has its own professional rate; online / MicroMasters /
         # certificate pricing varies per course → left null rather than guessed.
-        if spec.get("tuition") is not None:
-            p.tuition = spec["tuition"]
-        elif spec["slug"] == "mit-sloan-mba":
-            p.tuition = 89000
-        elif spec["degree_type"] == "phd":
-            p.tuition = 0
-        elif p.delivery_format == "online" or spec["degree_type"] == "certificate":
-            p.tuition = None
+        # Program-specific cost (official) takes precedence over the standard rate.
+        cost_override = _COST_BY_SLUG.get(spec["slug"])
+        if cost_override is not None:
+            p.tuition = cost_override.get("tuition_usd")
+            p.cost_data = dict(cost_override)
         else:
-            p.tuition = 64730
-        p.cost_data = (
-            {
-                "tuition_usd": p.tuition,
-                "funded": spec["degree_type"] == "phd",
-                "source": "MIT Student Financial Services",
-                "source_url": "https://sfs.mit.edu/",
-                "year": "2025-26",
-            }
-            if (p.tuition is not None or spec["degree_type"] == "phd")
-            else None
-        )
-        if spec["slug"] == "mit-sloan-mba":
+            if spec.get("tuition") is not None:
+                p.tuition = spec["tuition"]
+            elif spec["slug"] == "mit-sloan-mba":
+                p.tuition = 89000
+            elif spec["degree_type"] == "phd":
+                p.tuition = 0
+            elif p.delivery_format == "online" or spec["degree_type"] == "certificate":
+                p.tuition = None
+            else:
+                p.tuition = 64730
+            p.cost_data = (
+                {
+                    "tuition_usd": p.tuition,
+                    "funded": spec["degree_type"] == "phd",
+                    "source": "MIT Student Financial Services",
+                    "source_url": "https://sfs.mit.edu/",
+                    "year": "2025-26",
+                }
+                if (p.tuition is not None or spec["degree_type"] == "phd")
+                else None
+            )
+        # Program-specific admission requirements (official) take precedence.
+        req_override = _REQ_BY_SLUG.get(spec["slug"])
+        if req_override is not None:
+            p.application_requirements = dict(req_override)
+        elif spec["slug"] == "mit-sloan-mba":
             p.application_requirements = dict(_REQ_MBA)
         elif p.delivery_format == "online" or spec["degree_type"] == "certificate":
             p.application_requirements = dict(_REQ_OPEN)
@@ -1625,11 +1785,14 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p.application_requirements = dict(_REQ_UNDERGRAD)
         else:
             p.application_requirements = dict(_REQ_GRAD)
-        # Real per-program outcomes from College Scorecard Field-of-Study where
-        # MIT reports non-suppressed figures; otherwise MIT-wide institution
-        # outcomes, explicitly labelled (degree programs only); non-degree: none.
+        # Outcomes precedence: program's own published employment report, else
+        # College Scorecard Field-of-Study, else MIT-wide institution figures
+        # (explicitly labelled), else none for non-degree credentials.
+        out_override = _OUTCOMES_BY_SLUG.get(spec["slug"])
         fos = _FOS_OUTCOMES.get(spec["slug"])
-        if fos is not None:
+        if out_override is not None:
+            p.outcomes_data = dict(out_override)
+        elif fos is not None:
             salary, debt, cip = fos
             p.outcomes_data = {
                 "median_salary": salary,
@@ -1649,6 +1812,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.highlights = _HL_BY_SLUG.get(spec["slug"]) or _HL_BY_TYPE.get(spec["degree_type"])
         if spec["slug"] in _TRACKS_BY_SLUG:
             p.tracks = _TRACKS_BY_SLUG[spec["slug"]]
+        # Class profile (size + selectivity + composition) where published.
+        p.class_profile = _CLASS_PROFILE_BY_SLUG.get(spec["slug"])
         # Application deadline (upcoming cycle). Undergrad Regular Action is stable
         # (Jan 1); graduate dates vary by department — the program-page footer
         # notes "verify on the official program page".

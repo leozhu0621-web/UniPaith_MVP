@@ -166,6 +166,19 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert any(d["round"].startswith("Regular") for d in ar["deadlines"])
     assert ar["test_policy"]["typical_ranges"]
     assert "holistic" in ar["evaluation"].lower()
+    # MBAn = the "gold standard" reference: program-specific cost, outcomes,
+    # admissions, curriculum, and class profile (all sourced, not fallbacks).
+    mban = next(p for p in progs if p.slug == "mit-sloan-mban")
+    assert mban.tuition == 93834  # official MBAn tuition, overriding the standard rate
+    assert mban.cost_data["source"].startswith("MIT Sloan")
+    assert mban.outcomes_data["scope"] == "program"
+    assert mban.outcomes_data["median_salary"] == 135000
+    assert mban.outcomes_data["source"].startswith("MIT Sloan")
+    assert mban.application_requirements["test_policy"]["stance"] == "optional"
+    assert "data-science" in mban.application_requirements["evaluation"].lower()
+    assert mban.class_profile["median_gpa"] == 3.92
+    assert mban.class_profile["median_gre_quant"] == 169
+    assert mban.tracks["curriculum"] and mban.tracks["curriculum"][0]["term"] == "Fall"
 
 
 async def test_program_has_dependents_false_for_unreferenced_program(db_session):
