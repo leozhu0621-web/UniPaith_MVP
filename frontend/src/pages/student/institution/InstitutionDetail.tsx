@@ -810,7 +810,9 @@ function AboutTab({ inst }: { inst: Institution }) {
   const scale: any = outcomes.scale || {}
   const recognition: { value: string; label: string }[] = []
   if (flag.nobel_laureates != null) recognition.push({ value: String(flag.nobel_laureates), label: 'Nobel laureates' })
+  if (flag.us_presidents != null) recognition.push({ value: String(flag.us_presidents), label: 'U.S. Presidents' })
   if (flag.macarthur_fellows != null) recognition.push({ value: String(flag.macarthur_fellows), label: 'MacArthur Fellows' })
+  if (flag.pulitzer_prizes != null) recognition.push({ value: String(flag.pulitzer_prizes), label: 'Pulitzer Prizes' })
   if (flag.national_medal_science != null) recognition.push({ value: String(flag.national_medal_science), label: 'National Medal of Science' })
   if (flag.national_medal_tech != null) recognition.push({ value: String(flag.national_medal_tech), label: 'National Medal of Technology' })
   const scaleStats: { value: string; label: string }[] = []
