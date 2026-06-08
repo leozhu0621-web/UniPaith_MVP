@@ -165,6 +165,18 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert "case method" in mba.description_text  # richer description override
     assert cs.application_deadline is not None  # undergrad deadline (Jan 1)
     assert cert.application_deadline is None  # online/HarvardX → no fixed deadline
+    # Full official degree name as the title + official program-page URL.
+    assert cs.program_name == "Bachelor of Arts in Computer Science"
+    assert cs.website_url == "https://seas.harvard.edu/computer-science"
+    assert econ.program_name == "Bachelor of Arts in Economics"
+    assert mba.program_name == "Master of Business Administration"
+    assert mba.website_url == "https://www.hbs.edu/mba/"
+    # Enriched admissions detail on the undergrad baseline (rounds, fee, ranges).
+    ar = cs.application_requirements
+    assert ar["application_fee"]["amount_usd"] == 85
+    assert any(d["round"].startswith("Regular") for d in ar["deadlines"])
+    assert ar["test_policy"]["typical_ranges"]
+    assert "need-blind" in ar["evaluation"].lower()
 
 
 async def test_program_has_dependents_false_for_unreferenced_program(db_session):
