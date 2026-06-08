@@ -23,9 +23,9 @@ import LiveAnnouncer from '../a11y/LiveAnnouncer'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { COPY } from '../../lib/copy'
 
-// Stage-ordered navigation (Spec/02 §7): Discover · Match · Apply · Connect.
+// Stage-ordered navigation (Spec/02 §7): Uni · Match · Apply · Connect.
 const NAV_ITEMS = [
-  { to: '/s', icon: Compass, label: 'Discover', end: true },
+  { to: '/s', icon: Compass, label: 'Uni', end: true },
   { to: '/s/explore', icon: Target, label: 'Match', end: false },
   { to: '/s/manage', icon: FolderKanban, label: 'Apply', end: false },
   { to: '/s/posts', icon: Newspaper, label: 'Connect', end: false },

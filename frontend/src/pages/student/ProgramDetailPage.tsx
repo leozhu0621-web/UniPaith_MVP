@@ -24,7 +24,7 @@ import { differenceInDays } from 'date-fns'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare,
   Briefcase, Building2, Users, Clock, Sparkles, Mail, Archive,
-  Bookmark, BookmarkCheck, FileText, Send, ArrowRightLeft, ChevronRight, ExternalLink,
+  Bookmark, BookmarkCheck, FileText, Send, ArrowRightLeft, ChevronRight,
 } from 'lucide-react'
 import { DEGREE_LABELS } from '../../utils/constants'
 import type { EventItem } from '../../types'
