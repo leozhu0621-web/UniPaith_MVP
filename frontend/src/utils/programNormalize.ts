@@ -137,8 +137,14 @@ export function extractTracksMeta(tracks: unknown): {
   concentrations: string[]
   note: string
   learning_format: string
+  curriculum: Array<{ term: string; courses: string[] }>
 } {
-  const out = { concentrations: [] as string[], note: '', learning_format: '' }
+  const out = {
+    concentrations: [] as string[],
+    note: '',
+    learning_format: '',
+    curriculum: [] as Array<{ term: string; courses: string[] }>,
+  }
   if (Array.isArray(tracks)) {
     out.concentrations = tracks.filter(t => typeof t === 'string') as string[]
   } else if (isObj(tracks)) {
@@ -150,6 +156,15 @@ export function extractTracksMeta(tracks: unknown): {
     }
     out.note = String(tracks.note || '')
     out.learning_format = String(tracks.learning_format || '')
+    if (Array.isArray(tracks.curriculum)) {
+      out.curriculum = (tracks.curriculum as unknown[])
+        .filter(isObj)
+        .map(t => ({
+          term: String((t as Record<string, any>).term ?? ''),
+          courses: arr<string>((t as Record<string, any>).courses).map(String).filter(Boolean),
+        }))
+        .filter(t => t.term && t.courses.length > 0)
+    }
   }
   return out
 }
