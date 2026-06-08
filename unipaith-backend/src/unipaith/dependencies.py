@@ -36,6 +36,17 @@ async def authenticate_token(token: str, db: AsyncSession) -> User:
         result = await db.execute(select(User).where(User.cognito_sub == claims.sub))
         user = result.scalar_one_or_none()
 
+    if user is None and claims.email:
+        # Account linking — one account per email. Cognito mints a SEPARATE
+        # identity (sub) for each sign-in method, so the same person signing in
+        # with Google vs email+password arrives with a sub that won't match the
+        # stored one. Resolve by the verified email instead (auto-verified for
+        # native users, IdP-verified for Google) so both methods land on the
+        # SAME app account rather than forking into duplicates — and so password
+        # login keeps working after the email has been used with Google.
+        result = await db.execute(select(User).where(User.email == claims.email))
+        user = result.scalar_one_or_none()
+
     if user is None and settings.cognito_bypass:
         # Dev-mode resilience: when local DB is reset but a valid dev token remains,
         # auto-provision a matching user (and student profile) to avoid auth dead-ends.

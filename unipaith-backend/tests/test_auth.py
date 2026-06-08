@@ -145,3 +145,28 @@ async def test_invalid_token_returns_401(client: AsyncClient):
         headers={"Authorization": "Bearer not-a-valid-token"},
     )
     assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_authenticate_links_methods_by_email(db_session, monkeypatch):
+    """One account per email. Cognito issues a different sub for the Google
+    identity vs the email+password identity of the same address; a token whose
+    sub doesn't match the stored one must still resolve to the SAME existing
+    account via the verified email (not 'User not found'). Guards the link-them
+    account model + keeps password login working after Google has been used."""
+    from unipaith.core.security import CognitoClaims
+    from unipaith.dependencies import authenticate_token
+    from unipaith.models.user import User, UserRole
+
+    user = User(email="linkme@example.com", cognito_sub="native-sub-1", role=UserRole.student)
+    db_session.add(user)
+    await db_session.flush()
+
+    async def _fake_verify(_token):
+        # Same email, DIFFERENT sub — exactly what Cognito sends for the Google
+        # identity of an email first registered with a password.
+        return CognitoClaims(sub="google-sub-DIFFERENT", email="linkme@example.com", role="student")
+
+    monkeypatch.setattr("unipaith.dependencies.verify_token", _fake_verify)
+    resolved = await authenticate_token("tok", db_session)
+    assert resolved.id == user.id
