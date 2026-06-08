@@ -387,7 +387,9 @@ export interface Program {
   cost_data: ProgramCostData | Record<string, any> | null
   promotion_categories?: string[] | null
   english_policy?: IntlEnglishPolicy | null
+  website_url?: string | null
   institution_name?: string | null
+  institution_website_url?: string | null
   created_at: string
   updated_at: string
 }

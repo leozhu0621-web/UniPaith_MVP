@@ -24,7 +24,7 @@ import { differenceInDays } from 'date-fns'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare,
   Briefcase, Building2, Users, Clock, Sparkles, Mail, Archive,
-  Bookmark, BookmarkCheck, FileText, Send, ArrowRightLeft, ChevronRight,
+  Bookmark, BookmarkCheck, FileText, Send, ArrowRightLeft, ChevronRight, ExternalLink,
 } from 'lucide-react'
 import { DEGREE_LABELS } from '../../utils/constants'
 import type { EventItem } from '../../types'
@@ -581,17 +581,8 @@ export default function ProgramDetailPage() {
                 description={p.description_text || p.institution_description || ''}
                 institutionName={instName}
                 programName={p.program_name}
+                websiteUrl={p.website_url}
               />
-
-              {p.who_its_for && (
-                <Card className="p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users size={14} className="text-secondary" />
-                    <h3 className="font-semibold text-foreground">Who It's For</h3>
-                  </div>
-                  <p className="text-sm text-foreground leading-relaxed">{p.who_its_for}</p>
-                </Card>
-              )}
 
               {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format) && (
                 <Card className="p-5">
