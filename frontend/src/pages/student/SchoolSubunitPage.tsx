@@ -127,6 +127,14 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
 
   return (
     <div className="p-6 max-w-5xl w-full mx-auto">
+      {/* Back to the last level */}
+      <button
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-1.5 text-[13px] font-medium text-secondary hover:underline mb-3"
+      >
+        <ArrowLeft size={15} /> Back
+      </button>
+
       {/* Breadcrumb */}
       <nav className="text-sm text-muted-foreground mb-4" aria-label="Breadcrumb">
         <button onClick={() => navigate(instHref)} className="hover:text-foreground transition-colors">{institution?.name || 'University'}</button>

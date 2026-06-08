@@ -2,7 +2,7 @@ import { useMemo, useState, type ComponentType } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  getPublicInstitution, getPublicPosts, getInstitutionSchools, submitInquiry,
+  getPublicInstitution, getPublicPosts, getInstitutionSchools,
 } from '../../../api/institutions'
 import { searchPrograms } from '../../../api/programs'
 import {
@@ -18,15 +18,11 @@ import PostCard from '../explore/cards/PostCard'
 import Card from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
 import Skeleton from '../../../components/ui/Skeleton'
-import Modal from '../../../components/ui/Modal'
-import Input from '../../../components/ui/Input'
-import Select from '../../../components/ui/Select'
-import Textarea from '../../../components/ui/Textarea'
 import QueryError from '../../../components/ui/QueryError'
 import {
   Bookmark, BookmarkCheck, MapPin, Globe, Building2, BookOpen,
   Mail, Phone, CalendarPlus, Check, ChevronDown, X, Search, GraduationCap,
-  Filter, ArrowRight, Send, Link2, Award, Trophy, DollarSign, TrendingUp, Users, FlaskConical, Tent,
+  Filter, ArrowRight, Link2, Award, Trophy, DollarSign, TrendingUp, Users, FlaskConical, Tent,
 } from 'lucide-react'
 import type { Institution, ProgramSummary, InstitutionPost, SchoolSummary } from '../../../types'
 import { AdmissionsFunnel, ChipList, DiversityBar, RankingBadge, StatBar } from './overviewWidgets'
@@ -171,30 +167,6 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
     })
   }
 
-  // ── Request info (Spec 22 §7) — opens an inquiry routed per inquiry_routing ─
-  const [inquiryOpen, setInquiryOpen] = useState(false)
-  const [inquiryType, setInquiryType] = useState('general')
-  const [inquirySubject, setInquirySubject] = useState('')
-  const [inquiryMessage, setInquiryMessage] = useState('')
-  const inquiryMut = useMutation({
-    mutationFn: () => submitInquiry({
-      institution_id: institutionId,
-      subject: inquirySubject.trim(),
-      message: inquiryMessage.trim(),
-      inquiry_type: inquiryType,
-    }),
-    onSuccess: () => {
-      setInquiryOpen(false)
-      setInquirySubject('')
-      setInquiryMessage('')
-      showToast('Request sent. The school will be in touch.', 'success')
-    },
-    onError: () => showToast('Couldn’t send your request. Try again.', 'error'),
-  })
-  const onRequestInfo = () => {
-    if (!isAuthenticated) { navigate('/login'); return }
-    setInquiryOpen(true)
-  }
 
   // ── Link builders (auth vs public surfaces) ─────────────────────────────
   const programHref = (id: string) => (isAuthenticated ? `/s/programs/${id}` : `/program/${id}`)
@@ -252,7 +224,6 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
 
   // Inquiry types offered in the Request-info modal — the institution's
   // configured routing keys, with a generic "general" always available.
-  const inquiryTypes = ['general', ...Object.keys((inst.inquiry_routing as Record<string, unknown>) ?? {}).filter(k => k !== 'general')]
 
   return (
     <div className="p-6 max-w-5xl w-full mx-auto">
@@ -335,10 +306,6 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
               {isSaved ? <BookmarkCheck size={14} className="mr-1.5" /> : <Bookmark size={14} className="mr-1.5" />}
               {isAuthenticated ? (isSaved ? 'Saved' : 'Save school') : 'Sign in to save'}
             </Button>
-            <Button size="sm" variant="tertiary" onClick={onRequestInfo}>
-              <Send size={14} className="mr-1.5" />
-              Request info
-            </Button>
             {schoolList.length > 0 ? (
               <Button size="sm" variant="ghost" onClick={() => setTab('schools')}>
                 View all schools <ArrowRight size={14} className="ml-1" />
@@ -414,39 +381,6 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
         )}
       </div>
 
-      {/* Request info (Spec 22 §7 / §15) — authenticated only; public surfaces
-          route to sign-in before reaching here. */}
-      <Modal
-        isOpen={inquiryOpen}
-        onClose={() => setInquiryOpen(false)}
-        title={`Request info from ${inst.name}`}
-        size="md"
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setInquiryOpen(false)}>Cancel</Button>
-            <Button
-              onClick={() => inquiryMut.mutate()}
-              disabled={inquiryMut.isPending || !inquirySubject.trim() || !inquiryMessage.trim()}
-            >
-              {inquiryMut.isPending ? 'Sending…' : <><Send size={14} className="mr-1.5" /> Send request</>}
-            </Button>
-          </div>
-        }
-      >
-        <div className="space-y-3">
-          <p className="text-[13px] text-muted-foreground">Ask {inst.name} about admissions, programs, financial aid, or anything else. They’ll reply to your account email.</p>
-          {inquiryTypes.length > 1 && (
-            <Select
-              label="Topic"
-              options={inquiryTypes.map(t => ({ value: t, label: titleCase(t.replace(/_/g, ' ')) }))}
-              value={inquiryType}
-              onChange={e => setInquiryType(e.target.value)}
-            />
-          )}
-          <Input label="Subject" value={inquirySubject} onChange={e => setInquirySubject(e.target.value)} placeholder="What would you like to know?" />
-          <Textarea label="Message" value={inquiryMessage} onChange={e => setInquiryMessage(e.target.value)} rows={4} placeholder="Tell them about your interests and questions…" />
-        </div>
-      </Modal>
     </div>
   )
 }
@@ -829,13 +763,6 @@ function AboutTab({ inst }: { inst: Institution }) {
 
   return (
     <div className="space-y-5">
-      {inst.description_text && (
-        <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-2">About {inst.name}</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trimSource(inst.description_text)}</p>
-          <IntroSourceLine outcomes={inst.school_outcomes || {}} />
-        </Card>
-      )}
 
       {/* Recognition — accolades with context */}
       {recognition.length > 0 && (

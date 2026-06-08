@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom'
-import { Calendar, GraduationCap, Sparkles, ChevronRight, Compass } from 'lucide-react'
+import { Calendar, Sparkles, ChevronRight, Compass } from 'lucide-react'
 import Card from '../../../components/ui/Card'
 import { formatDate } from '../../../utils/format'
 import { DEGREE_LABELS } from '../../../utils/constants'
-import type { EventItem, NetPriceEstimate } from '../../../types'
-import NetPriceEstimator from './NetPriceEstimator'
+import type { EventItem } from '../../../types'
 
 interface ProgramLink {
   id: string
@@ -19,8 +18,6 @@ interface Props {
   similarPrograms?: ProgramLink[]
   onRsvp?: (eventId: string) => void
   rsvpedIds?: Set<string>
-  /** Spec 11 §4 — net-price headline echo in the sidebar. */
-  netPrice?: NetPriceEstimate | null
   /** Spec 11 §4 — back to Discovery with this program's attributes pre-applied. */
   discoveryBackHref?: string
 }
@@ -31,18 +28,22 @@ export default function RelatedSidebar({
   similarPrograms = [],
   onRsvp,
   rsvpedIds = new Set(),
-  netPrice,
   discoveryBackHref,
 }: Props) {
   const upcomingEvents = events
     .filter(e => new Date((e as any).event_datetime || (e as any).starts_at || (e as any).start_time || Date.now()) > new Date())
     .slice(0, 2)
 
+  // "Programs that fit you" — semantically-recommended programs first; fall back
+  // to other programs at the same school so the rail is never empty.
+  const fitById = new Map<string, ProgramLink>()
+  for (const p of [...similarPrograms, ...sameSchoolPrograms]) {
+    if (!fitById.has(p.id)) fitById.set(p.id, p)
+  }
+  const fitPrograms = [...fitById.values()].slice(0, 6)
+
   return (
     <aside className="space-y-4">
-      {/* Net-price headline echo (§4) */}
-      {netPrice && <NetPriceEstimator estimate={netPrice} compact />}
-
       {/* Upcoming events */}
       {upcomingEvents.length > 0 && (
         <Card className="p-4">
@@ -75,15 +76,15 @@ export default function RelatedSidebar({
         </Card>
       )}
 
-      {/* Same school */}
-      {sameSchoolPrograms.length > 0 && (
+      {/* Programs that fit you */}
+      {fitPrograms.length > 0 && (
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <GraduationCap size={14} className="text-secondary" />
-            <h3 className="text-sm font-semibold text-foreground">Other at this school</h3>
+            <Sparkles size={14} className="text-secondary" />
+            <h3 className="text-sm font-semibold text-foreground">Programs that fit you</h3>
           </div>
           <div className="space-y-1">
-            {sameSchoolPrograms.slice(0, 5).map(p => (
+            {fitPrograms.map(p => (
               <Link
                 key={p.id}
                 to={`/s/programs/${p.id}`}
@@ -96,33 +97,6 @@ export default function RelatedSidebar({
                       {p.degree_type ? (DEGREE_LABELS[p.degree_type] || p.degree_type) : ''}
                       {p.department ? ` · ${p.department}` : ''}
                     </p>
-                  )}
-                </div>
-                <ChevronRight size={12} className="text-foreground/40 group-hover:text-secondary flex-shrink-0" />
-              </Link>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Similar programs elsewhere */}
-      {similarPrograms.length > 0 && (
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles size={14} className="text-secondary" />
-            <h3 className="text-sm font-semibold text-foreground">Similar programs</h3>
-          </div>
-          <div className="space-y-1">
-            {similarPrograms.slice(0, 5).map(p => (
-              <Link
-                key={p.id}
-                to={`/s/programs/${p.id}`}
-                className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-md hover:bg-muted group transition-colors"
-              >
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-foreground truncate group-hover:text-secondary">{p.program_name}</p>
-                  {p.degree_type && (
-                    <p className="text-[10px] text-foreground/70 truncate">{DEGREE_LABELS[p.degree_type] || p.degree_type}</p>
                   )}
                 </div>
                 <ChevronRight size={12} className="text-foreground/40 group-hover:text-secondary flex-shrink-0" />
