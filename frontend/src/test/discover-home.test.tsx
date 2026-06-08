@@ -34,8 +34,8 @@ vi.mock('../api/livingProfile', () => ({
   updateSignal: vi.fn(),
 }))
 vi.mock('../stores/auth-store', () => ({
-  useAuthStore: (sel: (s: { user: { email: string } }) => unknown) =>
-    sel({ user: { email: 'leo@unipaith.co' } }),
+  useAuthStore: (sel: (s: { user: { email: string; uni_guided: boolean } }) => unknown) =>
+    sel({ user: { email: 'leo@unipaith.co', uni_guided: true } }),
 }))
 vi.mock('../stores/toast-store', () => ({ showToast: vi.fn() }))
 

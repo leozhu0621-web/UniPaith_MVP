@@ -145,7 +145,16 @@ export default function UniConversation({
   const llmChips = Array.isArray(lastSignals?.suggested_options)
     ? (lastSignals.suggested_options as string[]).filter(s => typeof s === 'string' && s.trim())
     : []
-  const offeredAdvance = guided && lastSignals?.requested_layer_advance === true
+  // Earned Continue: the orchestrator can proactively offer to advance
+  // (`requested_layer_advance`), but readiness is ultimately driven by the
+  // engine's per-layer completion (spec §4). When the deterministic handoff
+  // verdict says all Discovery layers are covered, surface Continue even if the
+  // assistant turn omitted the tool flag (rule-based fallback, streaming error,
+  // or a model that narrates readiness without calling it).
+  const offeredAdvance =
+    guided &&
+    !isEmpty &&
+    (lastSignals?.requested_layer_advance === true || journey.matchesUnlocked)
   const curIdx = journey.stages.findIndex(s => s.state === 'current')
   const nextStageLabel =
     journey.matchesUnlocked || curIdx < 0

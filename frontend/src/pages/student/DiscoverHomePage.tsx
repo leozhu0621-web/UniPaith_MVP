@@ -12,6 +12,7 @@ import { ChevronDown, Sparkles } from 'lucide-react'
 
 import Card from '../../components/ui/Card'
 import Sheet from '../../components/ui/Sheet'
+import { useAuthStore } from '../../stores/auth-store'
 import JourneyRail from './discover/JourneyRail'
 import UniConversation from './discover/UniConversation'
 import { useJourneyState, type StageKey } from './discover/useJourneyState'
@@ -20,7 +21,11 @@ export default function DiscoverHomePage() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [journeySheetOpen, setJourneySheetOpen] = useState(false)
   const askRef = useRef<(t: string) => void>(() => {})
-  const journey = useJourneyState(true)
+  // Guided workspace shell is gated on the backend ai_uni_guided_v1 flag
+  // (spec §9). Flag off → the prior single-column open Uni experience (no rail,
+  // no journey chrome) so nothing regresses.
+  const guided = !!useAuthStore(s => s.user?.uni_guided)
+  const journey = useJourneyState(guided)
 
   const onReady = useCallback((api: { ask: (t: string) => void }) => {
     askRef.current = api.ask
@@ -46,6 +51,21 @@ export default function DiscoverHomePage() {
     }),
     [journey.stages, journey.matchesUnlocked],
   )
+
+  // Flag off — single-column open Uni, no guided chrome (spec §9 fallback).
+  if (!guided) {
+    return (
+      <div className="p-4 lg:p-6 mx-auto max-w-6xl w-full">
+        <Card className="p-4 sm:p-5">
+          <UniConversation
+            profileOpen={profileOpen}
+            onProfileOpenChange={setProfileOpen}
+            onReady={onReady}
+          />
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="p-4 lg:p-6 mx-auto max-w-6xl w-full">
