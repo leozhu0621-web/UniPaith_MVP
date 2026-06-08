@@ -1407,7 +1407,7 @@ def _requirements_for(spec: dict) -> dict:
         return dict(_REQ_LAW)
     if slug == "harvard-md":
         return dict(_REQ_MED)
-    if dtype == "certificate" or spec.get("delivery_format") == "online":
+    if slug == "harvard-alm" or dtype == "certificate" or spec.get("delivery_format") == "online":
         return dict(_REQ_OPEN)
     if dtype == "bachelors":
         return dict(_REQ_UNDERGRAD)
@@ -1416,7 +1416,7 @@ def _requirements_for(spec: dict) -> dict:
 
 def _deadline_for(spec: dict) -> date | None:
     slug, dtype = spec["slug"], spec["degree_type"]
-    if dtype == "certificate" or spec.get("delivery_format") == "online":
+    if slug == "harvard-alm" or dtype == "certificate" or spec.get("delivery_format") == "online":
         return None
     if slug == "harvard-mba":
         return date(2027, 1, 6)  # HBS Round 2
