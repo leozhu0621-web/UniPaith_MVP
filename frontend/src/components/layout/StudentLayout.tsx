@@ -11,13 +11,13 @@ import {
 import Avatar from '../ui/Avatar'
 import Dropdown from '../ui/Dropdown'
 import NotificationBell from '../notifications/NotificationBell'
-import Wordmark from '../ui/Wordmark'
 import Sheet from '../ui/Sheet'
 import CompareTray from '../student/CompareTray'
 import TrialBanner from '../student/TrialBanner'
 import Paywall from '../student/Paywall'
 import { SearchTrigger, CommandPalette } from '../student/GlobalSearch'
 import ScrollReset from './ScrollReset'
+import StudentTitle from './StudentTitle'
 import MessagesNavButton from '../student/MessagesNavButton'
 import LiveAnnouncer from '../a11y/LiveAnnouncer'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
@@ -61,7 +61,7 @@ export default function StudentLayout() {
       <header className="hidden lg:flex h-16 items-center justify-between px-8 bg-background border-b border-border flex-shrink-0 z-30">
         <div className="flex flex-1 items-center gap-3">
           <NavLink to="/s" className="leading-none" aria-label="UniPaith home">
-            <Wordmark className="h-9 w-auto" />
+            <img src="/favicon.svg" alt="UniPaith" className="h-9 w-9 rounded-md" />
           </NavLink>
           <SearchTrigger variant="icon" />
         </div>
@@ -244,6 +244,7 @@ export default function StudentLayout() {
 
       {/* Reset scroll to top on route change (the <main> scroll container persists). */}
       <ScrollReset />
+      <StudentTitle />
 
       {/* Global ⌘K command palette — search programs/schools + jump to any surface. */}
       <CommandPalette />
