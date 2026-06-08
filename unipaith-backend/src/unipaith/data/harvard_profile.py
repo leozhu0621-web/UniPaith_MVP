@@ -49,7 +49,9 @@ RANKING_DATA: dict = {
 # school_outcomes is shallow-merged into the existing JSONB; each sub-object
 # below is complete, so a shallow merge is correct. Sources back the figures.
 SCHOOL_OUTCOMES: dict = {
-    "admit_rate": 0.0365,
+    # Class of 2028 (1,937 admits / 54,008 applicants), matching the admissions
+    # funnel below so the headline rate and the funnel are internally consistent.
+    "admit_rate": 0.0359,
     "avg_net_price": 19066,
     "median_earnings_10yr": 101817,
     "completion_rate_4yr_150pct": 0.9758,

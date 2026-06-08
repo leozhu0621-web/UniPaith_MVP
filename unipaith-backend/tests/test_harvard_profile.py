@@ -53,7 +53,7 @@ async def test_apply_enriches_institution(db_session):
     assert inst.ranking_data["qs_world_university_rankings"]["rank"] == 5
     assert inst.ranking_data["times_higher_education"]["rank"] == 3
     assert inst.ranking_data["us_news_national"]["rank"] == 3
-    assert inst.school_outcomes["admit_rate"] == 0.0365
+    assert inst.school_outcomes["admit_rate"] == 0.0359
     assert inst.school_outcomes["median_earnings_10yr"] == 101817
     assert inst.school_outcomes["test_scores"]["act_25_75"] == [34, 36]
     assert inst.school_outcomes["flagship"]["nobel_laureates"] == 161
