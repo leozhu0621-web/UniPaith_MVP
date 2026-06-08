@@ -226,6 +226,8 @@ class Program(Base):
     website_url: Mapped[str | None] = mapped_column(String(1000))
     # Class profile (cohort size, selectivity, composition) where published.
     class_profile: Mapped[dict | None] = mapped_column(JSONB)
+    # Aggregated, cited student-review themes from public third-party sources.
+    external_reviews: Mapped[dict | None] = mapped_column(JSONB)
     is_published: Mapped[bool] = mapped_column(Boolean, default=False)
     application_deadline: Mapped[date | None] = mapped_column(Date)
     program_start_date: Mapped[date | None] = mapped_column(Date)
