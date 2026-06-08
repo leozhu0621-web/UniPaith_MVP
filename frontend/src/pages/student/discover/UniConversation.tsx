@@ -30,6 +30,7 @@ import MatchHandoffCard from './MatchHandoffCard'
 import NoticedCard from './NoticedCard'
 import { attachRefs, noticedItemsFromSignals } from './noticed'
 import ProfileDrawer from './ProfileDrawer'
+import { useJourneyState } from './useJourneyState'
 
 // Counselor-style ways-in for a stuck student — gentle fallbacks, not the
 // primary interaction (Uni leads the conversation).
@@ -65,10 +66,16 @@ function UniBubble({ message }: { message: DiscoveryMessage }) {
 export default function UniConversation({
   profileOpen = false,
   onProfileOpenChange,
+  guided = false,
+  onReady,
 }: {
   /** Living-profile drawer open state (the trigger lives in DiscoverHomePage). */
   profileOpen?: boolean
   onProfileOpenChange?: (open: boolean) => void
+  /** Guided shell: show the stage header + earned Continue. */
+  guided?: boolean
+  /** Register an imperative `ask` so the rail can drive the conversation. */
+  onReady?: (api: { ask: (text: string) => void }) => void
 } = {}) {
   const qc = useQueryClient()
   const user = useAuthStore(s => s.user)
@@ -125,6 +132,24 @@ export default function UniConversation({
     queryFn: getLivingProfile,
     enabled: !isEmpty,
   })
+
+  // Guided journey state (stages + matches unlock) + per-turn guidance derived
+  // from the latest assistant turn's structured signals (LLM-suggested chips and
+  // the orchestrator's offer-to-advance). All no-ops when not guided.
+  const journey = useJourneyState(guided)
+  const lastMsg = messages.length ? messages[messages.length - 1] : undefined
+  const lastSignals =
+    lastMsg?.role === 'assistant'
+      ? (lastMsg.extracted_signals as Record<string, unknown> | null)
+      : null
+  const llmChips = Array.isArray(lastSignals?.suggested_options)
+    ? (lastSignals.suggested_options as string[]).filter(s => typeof s === 'string' && s.trim())
+    : []
+  const offeredAdvance = guided && lastSignals?.requested_layer_advance === true
+  const curIdx = journey.stages.findIndex(s => s.state === 'current')
+  const nextStageLabel = journey.matchesUnlocked
+    ? 'your matches'
+    : (journey.stages[curIdx + 1]?.label ?? 'your matches')
 
   const turnMut = useMutation({
     mutationFn: async (content: string) => {
@@ -263,8 +288,32 @@ export default function UniConversation({
     else turnMut.mutate(text)
   }
 
+  // Expose an imperative `ask` (stable identity) so the rail can drive the
+  // conversation — revisit a stage, accept a gap invitation, open matches.
+  const sendRef = useRef(send)
+  sendRef.current = send
+  useEffect(() => {
+    onReady?.({ ask: (t: string) => sendRef.current(t) })
+  }, [onReady])
+
   return (
     <div className="flex flex-col h-full min-h-[520px] max-w-[640px] mx-auto w-full">
+      {guided && !isEmpty && journey.currentStage && (
+        <div className="mb-3 border-b border-border pb-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-foreground">
+              {journey.currentStage.label}
+            </span>
+            <span className="text-eyebrow text-muted-foreground">Discovery</span>
+          </div>
+          <div className="mt-2 h-1 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full bg-secondary transition-all"
+              style={{ width: `${Math.round((journey.currentStage.pct || 0) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto space-y-3.5 pr-1 pb-3"
@@ -342,9 +391,20 @@ export default function UniConversation({
         )}
       </div>
 
+      {offeredAdvance && !turnMut.isPending && !streaming && (
+        <div className="mb-2 flex justify-end">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => send(`Let's move on to ${nextStageLabel}.`)}
+          >
+            Continue to {nextStageLabel} →
+          </Button>
+        </div>
+      )}
       {!turnMut.isPending && !streaming && (
         <div className="mb-2 flex flex-wrap gap-1.5">
-          {QUICK_REPLIES.map(s => (
+          {(llmChips.length > 0 ? llmChips : [...QUICK_REPLIES]).map(s => (
             <button
               key={s}
               type="button"
