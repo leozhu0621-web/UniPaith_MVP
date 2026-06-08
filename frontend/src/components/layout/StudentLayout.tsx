@@ -59,11 +59,11 @@ export default function StudentLayout() {
       <SkipLink />
       {/* ─── Desktop top nav (lg+) — Spec/02 §7. 64px, --bg, --border hairline. ─── */}
       <header className="hidden lg:flex h-16 items-center justify-between px-8 bg-background border-b border-border flex-shrink-0 z-30">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-1 items-center gap-3">
           <NavLink to="/s" className="leading-none" aria-label="UniPaith home">
             <Wordmark className="h-7 w-auto" />
           </NavLink>
-          <SearchTrigger variant="bar" />
+          <SearchTrigger variant="icon" />
         </div>
 
         <nav className="flex items-center gap-1" aria-label="Primary">
@@ -90,7 +90,7 @@ export default function StudentLayout() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-1 items-center justify-end gap-2">
           <MessagesNavButton />
           <NotificationBell />
           <Dropdown
