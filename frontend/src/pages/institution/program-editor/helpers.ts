@@ -100,6 +100,9 @@ export interface EditorDraft {
   who_its_for: string
   highlights: string[]
   faculty_contacts: { name: string; email: string; role: string }[]
+  // Preserved non-array (dict) faculty payload (e.g. { lead, note, directory_url })
+  // that the form can't edit — kept so saving other fields never wipes curated data.
+  faculty_contacts_dict: Record<string, any> | null
   // Requirements
   application_requirements: ProgramApplicationRequirements
   requirements_kv: { key: string; value: string }[]
@@ -414,6 +417,7 @@ export function fromProgram(p: Program): EditorDraft {
       email: str(f.email),
       role: str(f.role),
     })),
+    faculty_contacts_dict: isObj(p.faculty_contacts) ? p.faculty_contacts : null,
     application_requirements: hydrateAppReqs(p.application_requirements),
     english_policy: {
       accepted_tests: arr<Record<string, any>>(p.english_policy?.accepted_tests).map(t => ({
@@ -455,6 +459,7 @@ export function emptyDraft(): EditorDraft {
     who_its_for: '',
     highlights: [],
     faculty_contacts: [],
+    faculty_contacts_dict: null,
     application_requirements: defaultAppReqs(),
     english_policy: defaultEnglishPolicy(),
     requirements_kv: [],
@@ -528,6 +533,10 @@ export function toPayload(d: EditorDraft): Record<string, any> {
 
   const acceptanceRate = numOrNull(d.acceptance_rate_pct)
 
+  // Form edits the array shape; when it's empty fall back to any preserved
+  // non-array (dict) payload so saving never wipes curated faculty data.
+  const facultyContacts = d.faculty_contacts.filter(f => f.name.trim())
+
   return {
     program_name: d.program_name.trim(),
     degree_type: d.degree_type,
@@ -540,7 +549,7 @@ export function toPayload(d: EditorDraft): Record<string, any> {
     who_its_for: d.who_its_for.trim() || undefined,
     tracks,
     highlights: clean(d.highlights),
-    faculty_contacts: d.faculty_contacts.filter(f => f.name.trim()),
+    faculty_contacts: facultyContacts.length ? facultyContacts : d.faculty_contacts_dict ?? facultyContacts,
     application_requirements: appReqs,
     english_policy: englishPolicy,
     requirements: Object.keys(requirements).length ? requirements : undefined,
