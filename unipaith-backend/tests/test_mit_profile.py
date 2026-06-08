@@ -91,6 +91,9 @@ async def test_apply_sets_six_real_schools(db_session):
     eng = next(s for s in rows if s.name == "School of Engineering")
     assert eng.sort_order == 1
     assert eng.description_text and "largest school" in eng.description_text
+    assert eng.website_url == "https://engineering.mit.edu/"
+    sloan = next(s for s in rows if s.name == "MIT Sloan School of Management")
+    assert sloan.website_url == "https://mitsloan.mit.edu/"
 
 
 async def test_apply_builds_real_program_catalog_idempotently(db_session):

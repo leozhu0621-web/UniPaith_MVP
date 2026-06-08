@@ -337,6 +337,22 @@ SCHOOLS: list[dict] = [
     },
 ]
 
+# Each school's own official website (verified to resolve at author time).
+_SCHOOL_WEBSITE: dict[str, str] = {
+    "Harvard Faculty of Arts & Sciences": "https://fas.harvard.edu/",
+    "Harvard John A. Paulson School of Engineering & Applied Sciences": "https://seas.harvard.edu/",
+    "Harvard Business School": "https://www.hbs.edu/",
+    "Harvard Law School": "https://hls.harvard.edu/",
+    "Harvard Medical School": "https://hms.harvard.edu/",
+    "Harvard T.H. Chan School of Public Health": "https://www.hsph.harvard.edu/",
+    "Harvard Kennedy School": "https://www.hks.harvard.edu/",
+    "Harvard Graduate School of Education": "https://www.gse.harvard.edu/",
+    "Harvard Graduate School of Design": "https://www.gsd.harvard.edu/",
+    "Harvard Divinity School": "https://hds.harvard.edu/",
+    "Harvard School of Dental Medicine": "https://hsdm.harvard.edu/",
+    "Harvard Division of Continuing Education": "https://extension.harvard.edu/",
+}
+
 # ── The program catalog (real degree programs, organized by school) ────────
 # slug = idempotency key. degree_type ∈ {bachelors, masters, phd, certificate};
 # professional doctorates (J.D., M.D., D.M.D.) are modelled as "masters" to match
@@ -1544,6 +1560,7 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
         sc.description_text = spec["description"]
         sc.sort_order = spec["sort_order"]
         sc.catalog_source = "curated"
+        sc.website_url = _SCHOOL_WEBSITE.get(spec["name"])
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is
     # FK-safe (any orphaned programs are handled by the program reconcile).

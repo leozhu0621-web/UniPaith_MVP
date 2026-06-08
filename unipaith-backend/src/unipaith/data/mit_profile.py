@@ -267,6 +267,16 @@ SCHOOLS: list[dict] = [
     },
 ]
 
+# Each school's own official website (verified to resolve at author time).
+_SCHOOL_WEBSITE: dict[str, str] = {
+    "School of Engineering": "https://engineering.mit.edu/",
+    "School of Science": "https://science.mit.edu/",
+    "School of Humanities, Arts, and Social Sciences": "https://shass.mit.edu/",
+    "MIT Sloan School of Management": "https://mitsloan.mit.edu/",
+    "School of Architecture and Planning": "https://sap.mit.edu/",
+    "MIT Stephen A. Schwarzman College of Computing": "https://computing.mit.edu/",
+}
+
 # ── The program catalog (real degree programs, organized by school) ────────
 # slug = idempotency key. degree_type ∈ {bachelors, masters, phd}. tuition /
 # acceptance_rate are left null: the institution net price and admit rate are
@@ -1672,6 +1682,7 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
         sc.description_text = spec["description"]
         sc.sort_order = spec["sort_order"]
         sc.catalog_source = "curated"
+        sc.website_url = _SCHOOL_WEBSITE.get(spec["name"])
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this
     # is FK-safe (any orphaned programs are handled by the program reconcile).
