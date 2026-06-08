@@ -663,7 +663,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
             <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 border-t border-border/60 pt-4">
               {aid.tuition_free_rate != null && <Fact label="Attend tuition-free" value={pct(aid.tuition_free_rate)} />}
               {aid.no_loan_debt_rate != null && <Fact label="Graduate debt-free" value={pct(aid.no_loan_debt_rate)} />}
-              {aid.median_scholarship != null && <Fact label="Median MIT scholarship" value={money(aid.median_scholarship)} />}
+              {aid.median_scholarship != null && <Fact label="Median scholarship" value={money(aid.median_scholarship)} />}
               {aid.median_debt_completers != null && <Fact label="Median debt at graduation" value={money(aid.median_debt_completers)} />}
             </div>
           )}
@@ -1200,12 +1200,13 @@ function UpdatesTab({ posts, institutionName }: { posts: InstitutionPost[]; inst
 /* ──────────────────────────────────────────────────────────────────────────
    Shared bits
    ────────────────────────────────────────────────────────────────────────── */
-/** A "Source:" line under descriptive prose — surfaces the official source
- *  (MIT Facts) from school_outcomes.sources. Renders nothing if absent. */
+/** A "Source:" line under descriptive prose — surfaces the official primary
+ *  facts source (e.g. "MIT Facts", "Harvard at a Glance") from
+ *  school_outcomes.sources. Renders nothing if absent. */
 function IntroSourceLine({ outcomes }: { outcomes: { sources?: { source: string; url?: string; year?: number }[] } }) {
   const list = outcomes?.sources
   const s = Array.isArray(list)
-    ? list.find(x => typeof x?.source === 'string' && /mit facts/i.test(x.source))
+    ? list.find(x => typeof x?.source === 'string' && /facts|at a glance/i.test(x.source))
     : undefined
   if (!s) return null
   return (
