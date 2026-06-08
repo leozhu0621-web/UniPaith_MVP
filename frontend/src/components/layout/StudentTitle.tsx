@@ -9,7 +9,7 @@ import { useLocation, useSearchParams } from 'react-router-dom'
 
 const APP_SUFFIX = ' · UniPaith'
 
-export const ROUTE_TITLES: Record<string, string> = {
+const ROUTE_TITLES: Record<string, string> = {
   '/s': 'Uni',
   '/s/explore': 'Match',
   '/s/posts': 'Connect',

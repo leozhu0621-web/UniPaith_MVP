@@ -1,11 +1,25 @@
 import { describe, it, expect } from 'vitest'
-import { ROUTE_TITLES } from '../components/layout/StudentTitle'
+import { render } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+
+import StudentTitle from '../components/layout/StudentTitle'
 
 describe('Discover → Uni rename', () => {
-  it('routes /s to the "Uni" title', () => {
-    expect(ROUTE_TITLES['/s']).toBe('Uni')
+  it('sets the /s browser tab title to "Uni"', () => {
+    render(
+      <MemoryRouter initialEntries={['/s']}>
+        <StudentTitle />
+      </MemoryRouter>,
+    )
+    expect(document.title).toBe('Uni · UniPaith')
   })
-  it('has no stray "Discover" surface title', () => {
-    expect(Object.values(ROUTE_TITLES)).not.toContain('Discover')
+
+  it('does not title the surface "Discover"', () => {
+    render(
+      <MemoryRouter initialEntries={['/s']}>
+        <StudentTitle />
+      </MemoryRouter>,
+    )
+    expect(document.title).not.toMatch(/Discover/)
   })
 })
