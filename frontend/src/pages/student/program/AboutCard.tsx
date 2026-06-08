@@ -9,6 +9,9 @@ interface Props {
   institutionName?: string | null
   /** Name of the program itself, same reason as institutionName. */
   programName?: string | null
+  /** Official program-page URL — rendered as a prominent outbound link so
+   *  students can read the school's own in-depth description at the source. */
+  websiteUrl?: string | null
 }
 
 /** Build a set of stop-phrases we should never pull out as keyword chips.
@@ -65,13 +68,16 @@ function sourceDomain(url: string): string {
   }
 }
 
-export default function AboutCard({ description, institutionName, programName }: Props) {
-  if (!description) return null
+export default function AboutCard({ description, institutionName, programName, websiteUrl }: Props) {
+  if (!description && !websiteUrl) return null
 
   const sourceUrl = extractSource(description)
   const cleanText = description.replace(/\s*\[Source:.*?\]\s*/g, '').trim()
   const stopPhrases = buildStopPhrases(institutionName, programName)
   const keywords = extractKeywords(cleanText, stopPhrases)
+  // Don't render a duplicate "Source" chip when it points at the same place as
+  // the official program-page link below.
+  const showSource = sourceUrl && sourceUrl !== websiteUrl
 
   return (
     <Card className="p-5">
@@ -90,18 +96,34 @@ export default function AboutCard({ description, institutionName, programName }:
         </div>
       )}
 
-      <p className="text-[13px] text-foreground leading-relaxed whitespace-pre-line">{cleanText}</p>
+      {cleanText && <p className="text-[13px] text-foreground leading-relaxed whitespace-pre-line">{cleanText}</p>}
 
-      {sourceUrl && (
+      {websiteUrl && (
         <a
-          href={sourceUrl}
+          href={websiteUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-muted border border-border hover:border-secondary/30 hover:bg-muted/70 transition-colors group"
+          className="mt-4 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-secondary/5 border border-secondary/30 hover:bg-secondary/10 transition-colors group"
+        >
+          <BookOpen size={14} className="text-secondary flex-shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[12px] font-semibold text-foreground leading-none group-hover:text-secondary">Visit the official program page</p>
+            <p className="text-[11px] text-foreground/60 truncate mt-0.5">{sourceDomain(websiteUrl)}</p>
+          </div>
+          <ExternalLink size={13} className="text-secondary flex-shrink-0" />
+        </a>
+      )}
+
+      {showSource && (
+        <a
+          href={sourceUrl!}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-muted border border-border hover:border-secondary/30 hover:bg-muted/70 transition-colors group"
         >
           <div className="min-w-0 flex-1">
             <p className="text-[10px] text-foreground/60 uppercase tracking-wider font-medium leading-none">Source</p>
-            <p className="text-[11px] text-foreground truncate mt-0.5 group-hover:text-secondary">{sourceDomain(sourceUrl)}</p>
+            <p className="text-[11px] text-foreground truncate mt-0.5 group-hover:text-secondary">{sourceDomain(sourceUrl!)}</p>
           </div>
           <ExternalLink size={12} className="text-foreground/50 group-hover:text-secondary flex-shrink-0" />
         </a>
