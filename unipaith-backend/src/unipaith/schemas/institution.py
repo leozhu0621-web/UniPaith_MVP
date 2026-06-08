@@ -203,6 +203,7 @@ class ProgramResponse(BaseModel):
     application_requirements: list | dict | None = None
     description_text: str | None
     who_its_for: str | None = None
+    website_url: str | None = None
     is_published: bool
     application_deadline: date | None
     program_start_date: date | None

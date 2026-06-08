@@ -848,50 +848,139 @@ PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 # specifics vary by department, so the grad baseline is labelled accordingly.
 _REQ_UNDERGRAD = {
     "materials": [
-        {"name": "MIT application (not the Common App)", "required": True},
-        {"name": "Short-answer essays", "required": True},
-        {"name": "Activities, coursework & self-reported grades", "required": True},
+        {
+            "name": "MIT application (apply.mitadmissions.org — not the Common App)",
+            "required": True,
+        },
+        {"name": "Five short-answer essays", "required": True},
+        {"name": "Activities & coursework list with self-reported grades", "required": True},
+        {"name": "Secondary School Report + high-school transcript", "required": True},
+        {"name": "February Updates & Notes Form (mid-year report)", "required": True},
+        {
+            "name": "Interview with an MIT Educational Counselor",
+            "required": False,
+            "note": (
+                "Offered to most applicants where available; not held against you if unavailable"
+            ),
+        },
+        {
+            "name": "Optional maker / research / arts portfolio",
+            "required": False,
+            "note": "Submit work via the portfolio platform if it strengthens your application",
+        },
     ],
     "test_policy": {
         "stance": "required",
-        "note": "SAT or ACT required (reinstated for 2025 entry)",
+        "note": "SAT or ACT required (reinstated for 2025 entry); scores may be self-reported.",
+        "accepted_tests": ["SAT", "ACT"],
+        "superscore_enabled": True,
+        "typical_ranges": [
+            {"test": "SAT", "low": 1520, "high": 1580},
+            {"test": "ACT", "low": 34, "high": 36},
+        ],
     },
     "recommendations": {
         "required_count": 3,
-        "types": ["Two teacher evaluations", "Secondary-school counselor report"],
+        "types": [
+            "Math or science teacher evaluation",
+            "Humanities, arts, or social-science teacher evaluation",
+            "Secondary-school counselor report",
+        ],
     },
+    "deadlines": [
+        {"round": "Early Action (non-binding)", "date": "November 1"},
+        {"round": "Regular Action", "date": "January 1"},
+    ],
+    "application_fee": {
+        "amount_usd": 75,
+        "waiver_available": True,
+        "note": "Fee waivers available for students with financial need",
+    },
+    "evaluation": (
+        "Holistic review: academics in the context of your school, alignment with MIT's "
+        "hands-on “mens et manus” culture, initiative, collaboration, and what you'd add to "
+        "the community. MIT is need-blind for all applicants and meets full demonstrated need; "
+        "it does not consider legacy or demonstrated interest."
+    ),
     "source": "MIT Admissions",
     "source_url": "https://mitadmissions.org/apply/first-year/",
 }
 _REQ_GRAD = {
     "materials": [
         {"name": "Statement of objectives", "required": True},
-        {"name": "Academic transcripts", "required": True},
+        {"name": "Academic transcripts from all institutions", "required": True},
+        {"name": "Curriculum vitae / résumé", "required": True},
+        {
+            "name": "GRE general / subject scores",
+            "required": False,
+            "note": "Many departments are GRE-optional or GRE-blind — check the department",
+        },
         {
             "name": "English proficiency (TOEFL/IELTS) for international applicants",
             "required": False,
-            "note": "TOEFL iBT 100 / IELTS 7.0 typical",
+            "note": "TOEFL iBT 100 / IELTS 7.0 typical minimums",
         },
     ],
-    "test_policy": {"stance": "varies", "note": "GRE policy varies by department"},
+    "test_policy": {
+        "stance": "varies",
+        "note": "GRE requirement varies by department — many are optional or not accepted.",
+    },
     "recommendations": {
         "required_count": 3,
-        "types": ["Three letters of recommendation"],
+        "types": ["Three letters of recommendation (academic or research)"],
     },
+    "deadlines": [
+        {"round": "Fall entry (most departments)", "date": "December 15"},
+    ],
+    "application_fee": {
+        "amount_usd": 75,
+        "waiver_available": True,
+        "note": "Fee waivers available for eligible applicants",
+    },
+    "evaluation": (
+        "Departments weigh research fit and potential, academic preparation, letters, and the "
+        "statement of objectives. Admission is by the department/program, not a central office; "
+        "PhD admits are typically offered full funding (tuition + stipend)."
+    ),
     "source": "MIT Graduate Admissions",
     "source_url": "https://oge.mit.edu/admissions/",
 }
 _REQ_MBA = {
     "materials": [
-        {"name": "Cover letter & short essays", "required": True},
-        {"name": "Résumé", "required": True},
+        {"name": "Cover letter addressed to the Admissions Committee", "required": True},
+        {"name": "One-minute introductory video", "required": True},
+        {"name": "Résumé (one page)", "required": True},
         {"name": "Academic transcripts", "required": True},
+        {
+            "name": "Organizational chart of your current role",
+            "required": False,
+            "note": "Optional context on where you sit in your organization",
+        },
     ],
-    "test_policy": {"stance": "required", "note": "GMAT, GRE, or Executive Assessment"},
+    "test_policy": {
+        "stance": "required",
+        "note": "GMAT, GRE, or Executive Assessment — score may be self-reported to apply.",
+        "accepted_tests": ["GMAT", "GRE", "Executive Assessment"],
+    },
     "recommendations": {
         "required_count": 1,
-        "types": ["One professional letter of recommendation"],
+        "types": ["One professional letter of recommendation (ideally from a supervisor)"],
     },
+    "deadlines": [
+        {"round": "Round 1", "date": "Late September"},
+        {"round": "Round 2", "date": "Mid-January"},
+        {"round": "Round 3", "date": "Early April"},
+    ],
+    "application_fee": {
+        "amount_usd": 250,
+        "waiver_available": True,
+        "note": "Fee waivers for active military, veterans, and select fellows",
+    },
+    "evaluation": (
+        "MIT Sloan looks for evidence of impact, analytical capability, and alignment with its "
+        "mission to develop principled, innovative leaders — assessed through the cover letter, "
+        "video, recommendation, and interview (by invitation)."
+    ),
     "source": "MIT Sloan Admissions",
     "source_url": "https://mitsloan.mit.edu/mba/admissions",
 }
@@ -1094,14 +1183,22 @@ _TRACKS_BY_SLUG = {
 # listed keep their canonical one-line description from PROGRAMS above.
 _DESC_RICH_BY_SLUG = {
     "mit-eecs-bs": (
-        "Course 6, MIT's largest undergraduate major, spans circuits and devices, computer "
-        "systems, artificial intelligence, and theory across flexible 6-1/6-2/6-3 tracks. "
-        "It is the academic home of CSAIL, with an optional fifth-year MEng."
+        "Course 6 is MIT's largest undergraduate major, spanning circuits and devices, "
+        "computer systems, artificial intelligence, applied mathematics, and theory. Students "
+        "choose among flexible tracks — 6-1 (electrical science & engineering), 6-2 (electrical "
+        "engineering & computer science), and 6-3 (computer science & engineering) — and learn "
+        "through project-based labs alongside world-class faculty. It is the academic home of "
+        "CSAIL and the Research Laboratory of Electronics, and many students stay a fifth year "
+        "to earn the MEng. Graduates are recruited across software, hardware, finance, and "
+        "research, and report among the highest early-career earnings at MIT."
     ),
     "mit-cs-6-3-bs": (
-        "The computer-science track of Course 6 (6-3) — algorithms, systems, AI, and "
-        "software — anchored by the Schwarzman College of Computing and CSAIL. Graduates "
-        "report among the highest early-career earnings of any MIT major."
+        "Course 6-3 is the computer-science track of MIT's Course 6, covering algorithms, "
+        "software systems, artificial intelligence, computer architecture, graphics, and "
+        "human-computer interaction. Anchored by the Schwarzman College of Computing and "
+        "CSAIL — the largest research laboratory at MIT — it pairs rigorous theory with "
+        "hands-on systems and AI project work. Students can add an optional fifth-year MEng, "
+        "and graduates report among the highest early-career earnings of any MIT major."
     ),
     "mit-ai-6-4-bs": (
         "Course 6-4 focuses on artificial intelligence and decision-making: machine "
@@ -1168,12 +1265,24 @@ _DESC_RICH_BY_SLUG = {
         "laboratory, and computational science."
     ),
     "mit-economics-bs": (
-        "Course 14 is a top-ranked economics program known for empirical and theoretical "
-        "rigor, offered as Economics (14-1) or Mathematical Economics (14-2)."
+        "Course 14 is one of the world's leading economics programs, known for empirical and "
+        "theoretical rigor and a faculty that has included multiple Nobel laureates and John "
+        "Bates Clark medalists. Offered as Economics (14-1) or the more math-intensive "
+        "Mathematical Economics (14-2), the major builds strong foundations in micro- and "
+        "macroeconomics, econometrics, and data analysis. Undergraduates work closely with "
+        "faculty and labs such as J-PAL and go on to careers in finance, consulting, policy, "
+        "and technology, and to top PhD programs."
     ),
     "mit-management-bs": (
-        "Course 15, MIT Sloan's undergraduate major, blends analytics, finance, operations, "
-        "and entrepreneurship with MIT's quantitative core."
+        "Course 15 is MIT Sloan's undergraduate major, giving students the analytical and "
+        "leadership foundation to approach management problems with an engineer's rigor. The "
+        "curriculum spans economics, accounting, finance, marketing, operations, organizational "
+        "behavior, and strategy, all built on MIT's quantitative core in mathematics and "
+        "computation. Students can follow the general Management track (15-1) or the more "
+        "technical Business Analytics (15-2) and Finance (15-3) tracks, and learn by doing "
+        "through Action Learning labs that embed them in real companies. Based in Kendall "
+        "Square — one of the world's densest innovation ecosystems — it launches careers in "
+        "consulting, finance, technology, and entrepreneurship."
     ),
     "mit-sloan-mba": (
         "MIT Sloan's two-year MBA pairs analytical rigor with hands-on Action Learning labs "
@@ -1222,6 +1331,159 @@ _DESC_RICH_BY_SLUG = {
         "An online MicroMasters in Data, Economics, and Design of Policy from MIT's J-PAL "
         "and economics faculty, applying rigorous evaluation to real policy questions."
     ),
+}
+
+
+# Full official degree names (MIT awards the SB/Bachelor of Science, the SM/
+# Master of Science or named professional master's, and the PhD). Shown as the
+# program-page title in place of the short PROGRAMS display label.
+_FULL_NAME_BY_SLUG: dict[str, str] = {
+    # School of Engineering
+    "mit-eecs-bs": "Bachelor of Science in Electrical Engineering and Computer Science",
+    "mit-eecs-phd": "Doctor of Philosophy in Electrical Engineering and Computer Science",
+    "mit-meche-bs": "Bachelor of Science in Mechanical Engineering",
+    "mit-meche-phd": "Doctor of Philosophy in Mechanical Engineering",
+    "mit-aeroastro-bs": "Bachelor of Science in Aerospace Engineering",
+    "mit-aeroastro-phd": "Doctor of Philosophy in Aeronautics and Astronautics",
+    "mit-cheme-bs": "Bachelor of Science in Chemical Engineering",
+    "mit-dmse-bs": "Bachelor of Science in Materials Science and Engineering",
+    "mit-be-bs": "Bachelor of Science in Biological Engineering",
+    "mit-cee-bs": "Bachelor of Science in Civil and Environmental Engineering",
+    "mit-nse-bs": "Bachelor of Science in Nuclear Science and Engineering",
+    "mit-statistics-phd": "Doctor of Philosophy in Statistics",
+    "mit-tpp-sm": "Master of Science in Technology and Policy",
+    # School of Science
+    "mit-physics-bs": "Bachelor of Science in Physics",
+    "mit-physics-phd": "Doctor of Philosophy in Physics",
+    "mit-math-bs": "Bachelor of Science in Mathematics",
+    "mit-math-phd": "Doctor of Philosophy in Mathematics",
+    "mit-math-cs-bs": "Bachelor of Science in Mathematics with Computer Science",
+    "mit-biology-bs": "Bachelor of Science in Biology",
+    "mit-chemistry-bs": "Bachelor of Science in Chemistry",
+    "mit-chemistry-phd": "Doctor of Philosophy in Chemistry",
+    "mit-bcs-bs": "Bachelor of Science in Brain and Cognitive Sciences",
+    "mit-eaps-bs": "Bachelor of Science in Earth, Atmospheric, and Planetary Sciences",
+    # School of Humanities, Arts, and Social Sciences
+    "mit-economics-bs": "Bachelor of Science in Economics",
+    "mit-economics-phd": "Doctor of Philosophy in Economics",
+    "mit-linguistics-philosophy-bs": "Bachelor of Science in Linguistics and Philosophy",
+    "mit-political-science-bs": "Bachelor of Science in Political Science",
+    "mit-cms-writing-bs": "Bachelor of Science in Comparative Media Studies",
+    "mit-anthropology-bs": "Bachelor of Science in Anthropology",
+    "mit-history-bs": "Bachelor of Science in History",
+    "mit-literature-bs": "Bachelor of Science in Literature",
+    "mit-music-bs": "Bachelor of Science in Music",
+    "mit-sts-bs": "Bachelor of Science in Science, Technology, and Society",
+    "mit-global-languages-bs": "Bachelor of Science in Global Studies and Languages",
+    "mit-science-writing-sm": "Master of Science in Science Writing",
+    # MIT Sloan School of Management
+    "mit-management-bs": "Bachelor of Science in Management",
+    "mit-business-analytics-bs": "Bachelor of Science in Business Analytics",
+    "mit-finance-bs": "Bachelor of Science in Finance",
+    "mit-sloan-mba": "Master of Business Administration",
+    "mit-sloan-mfin": "Master of Finance",
+    "mit-sloan-mban": "Master of Business Analytics",
+    "mit-sloan-phd": "Doctor of Philosophy in Management",
+    "mit-sloan-fellows-mba": "MIT Sloan Fellows MBA",
+    "mit-sdm-sm": "Master of Science in Engineering and Management",
+    # School of Architecture and Planning
+    "mit-architecture-bs": "Bachelor of Science in Architecture",
+    "mit-architecture-march": "Master of Architecture",
+    "mit-dusp-bs": "Bachelor of Science in Urban Studies and Planning",
+    "mit-city-planning-sm": "Master in City Planning",
+    "mit-mediaarts-sm": "Master of Science in Media Arts and Sciences",
+    "mit-red-sm": "Master of Science in Real Estate Development",
+    # MIT Stephen A. Schwarzman College of Computing
+    "mit-cs-6-3-bs": "Bachelor of Science in Computer Science and Engineering",
+    "mit-ai-6-4-bs": "Bachelor of Science in Artificial Intelligence and Decision Making",
+    "mit-comp-cognition-bs": "Bachelor of Science in Computation and Cognition",
+    "mit-cs-econ-data-bs": "Bachelor of Science in Computer Science, Economics, and Data Science",
+    "mit-cse-phd": "Doctor of Philosophy in Computational Science and Engineering",
+    # Online MicroMasters (non-degree credentials)
+    "mit-mm-supply-chain": "MicroMasters Program in Supply Chain Management",
+    "mit-mm-statistics-data-science": "MicroMasters Program in Statistics and Data Science",
+    "mit-mm-data-econ-policy": "MicroMasters Program in Data, Economics, and Design of Policy",
+    "mit-mm-manufacturing": "MicroMasters Program in Principles of Manufacturing",
+    "mit-mm-finance": "MicroMasters Program in Finance",
+    # MIT Professional Education certificates
+    "mit-pe-ml-ai": (
+        "Professional Certificate Program in Machine Learning & Artificial Intelligence"
+    ),
+    "mit-pe-design-manufacturing": "Professional Certificate Program in Design & Manufacturing",
+    "mit-pe-sustainability": "Professional Certificate Program in Sustainability",
+    "mit-pe-cto": "MIT Chief Technology Officer Program",
+    "mit-pe-innovation-tech": "Professional Certificate Program in Innovation & Technology",
+}
+
+# Official program-page URLs. Every URL was verified to resolve at author time;
+# uncertain deep links fall back to the verified department or program home page
+# so the "Visit the official program page" link never 404s.
+_WEBSITE_BY_SLUG: dict[str, str] = {
+    "mit-eecs-bs": "https://www.eecs.mit.edu/",
+    "mit-eecs-phd": "https://www.eecs.mit.edu/academics/graduate-programs/",
+    "mit-meche-bs": "https://meche.mit.edu/",
+    "mit-meche-phd": "https://meche.mit.edu/education/graduate",
+    "mit-aeroastro-bs": "https://aeroastro.mit.edu/",
+    "mit-aeroastro-phd": "https://aeroastro.mit.edu/",
+    "mit-cheme-bs": "https://cheme.mit.edu/",
+    "mit-dmse-bs": "https://dmse.mit.edu/",
+    "mit-be-bs": "https://be.mit.edu/",
+    "mit-cee-bs": "https://cee.mit.edu/",
+    "mit-nse-bs": "https://web.mit.edu/nse/",
+    "mit-statistics-phd": "https://idss.mit.edu/",
+    "mit-tpp-sm": "https://idss.mit.edu/",
+    "mit-physics-bs": "https://physics.mit.edu/",
+    "mit-physics-phd": "https://physics.mit.edu/academic-programs/graduate-students/",
+    "mit-math-bs": "https://math.mit.edu/",
+    "mit-math-phd": "https://math.mit.edu/academics/grad/",
+    "mit-math-cs-bs": "https://math.mit.edu/academics/undergrad/",
+    "mit-biology-bs": "https://biology.mit.edu/",
+    "mit-chemistry-bs": "https://chemistry.mit.edu/",
+    "mit-chemistry-phd": "https://chemistry.mit.edu/",
+    "mit-bcs-bs": "https://bcs.mit.edu/",
+    "mit-eaps-bs": "https://eapsweb.mit.edu/",
+    "mit-economics-bs": "https://economics.mit.edu/",
+    "mit-economics-phd": "https://economics.mit.edu/graduate",
+    "mit-linguistics-philosophy-bs": "https://linguistics.mit.edu/",
+    "mit-political-science-bs": "https://polisci.mit.edu/",
+    "mit-cms-writing-bs": "https://cmsw.mit.edu/",
+    "mit-anthropology-bs": "https://anthropology.mit.edu/",
+    "mit-history-bs": "https://history.mit.edu/",
+    "mit-literature-bs": "https://lit.mit.edu/",
+    "mit-music-bs": "https://mta.mit.edu/",
+    "mit-sts-bs": "https://sts-program.mit.edu/",
+    "mit-global-languages-bs": "https://languages.mit.edu/",
+    "mit-science-writing-sm": "https://sciwrite.mit.edu/",
+    "mit-management-bs": "https://mitsloan.mit.edu/undergrad",
+    "mit-business-analytics-bs": "https://mitsloan.mit.edu/undergrad",
+    "mit-finance-bs": "https://mitsloan.mit.edu/undergrad",
+    "mit-sloan-mba": "https://mitsloan.mit.edu/mba",
+    "mit-sloan-mfin": "https://mitsloan.mit.edu/mfin",
+    "mit-sloan-mban": "https://mitsloan.mit.edu/master-of-business-analytics",
+    "mit-sloan-phd": "https://mitsloan.mit.edu/phd",
+    "mit-sloan-fellows-mba": "https://mitsloan.mit.edu/fellows",
+    "mit-sdm-sm": "https://sdm.mit.edu/",
+    "mit-architecture-bs": "https://architecture.mit.edu/",
+    "mit-architecture-march": "https://architecture.mit.edu/",
+    "mit-dusp-bs": "https://dusp.mit.edu/",
+    "mit-city-planning-sm": "https://dusp.mit.edu/",
+    "mit-mediaarts-sm": "https://www.media.mit.edu/",
+    "mit-red-sm": "https://cre.mit.edu/",
+    "mit-cs-6-3-bs": "https://www.eecs.mit.edu/",
+    "mit-ai-6-4-bs": "https://www.eecs.mit.edu/",
+    "mit-comp-cognition-bs": "https://www.eecs.mit.edu/",
+    "mit-cs-econ-data-bs": "https://www.eecs.mit.edu/",
+    "mit-cse-phd": "https://computing.mit.edu/",
+    "mit-mm-supply-chain": "https://micromasters.mit.edu/scm/",
+    "mit-mm-statistics-data-science": "https://micromasters.mit.edu/ds/",
+    "mit-mm-data-econ-policy": "https://micromasters.mit.edu/dedp/",
+    "mit-mm-manufacturing": "https://micromasters.mit.edu/",
+    "mit-mm-finance": "https://mitsloan.mit.edu/",
+    "mit-pe-ml-ai": "https://professional.mit.edu/",
+    "mit-pe-design-manufacturing": "https://professional.mit.edu/",
+    "mit-pe-sustainability": "https://professional.mit.edu/",
+    "mit-pe-cto": "https://professional.mit.edu/",
+    "mit-pe-innovation-tech": "https://professional.mit.edu/",
 }
 
 
@@ -1319,10 +1581,13 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 slug=spec["slug"],
             )
             session.add(p)
-        p.program_name = spec["program_name"]
+        # Full official degree name as the title (falls back to the short label).
+        p.program_name = _FULL_NAME_BY_SLUG.get(spec["slug"]) or spec["program_name"]
         p.degree_type = spec["degree_type"]
         p.duration_months = spec.get("duration_months")
         p.description_text = _DESC_RICH_BY_SLUG.get(spec["slug"]) or spec["description"]
+        # Official program-page URL (read-more link on the program page).
+        p.website_url = _WEBSITE_BY_SLUG.get(spec["slug"])
         p.school_id = school_by_name[spec["school"]].id
         p.is_published = True
         p.catalog_source = "curated"

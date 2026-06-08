@@ -153,6 +153,19 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert "CSAIL" in eecs.description_text  # richer description override
     assert eecs.application_deadline is not None  # undergrad deadline (Jan 1)
     assert mm.application_deadline is None  # online/MicroMasters → no fixed deadline
+    # Full official degree name as the title + official program-page URL.
+    assert eecs.program_name == (
+        "Bachelor of Science in Electrical Engineering and Computer Science"
+    )
+    assert eecs.website_url == "https://www.eecs.mit.edu/"
+    assert mba.program_name == "Master of Business Administration"
+    assert mba.website_url == "https://mitsloan.mit.edu/mba"
+    # Enriched admissions detail (deadline rounds, application fee, test ranges).
+    ar = eecs.application_requirements
+    assert ar["application_fee"]["amount_usd"] == 75
+    assert any(d["round"].startswith("Regular") for d in ar["deadlines"])
+    assert ar["test_policy"]["typical_ranges"]
+    assert "holistic" in ar["evaluation"].lower()
 
 
 async def test_program_has_dependents_false_for_unreferenced_program(db_session):
