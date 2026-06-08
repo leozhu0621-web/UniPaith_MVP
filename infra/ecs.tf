@@ -183,6 +183,7 @@ resource "aws_ecs_task_definition" "backend" {
       # stub on agent failure (see tests/test_plan2_integration.py), so
       # flipping these on is graceful.
       { name = "AI_DISCOVERY_V2_ENABLED", value = "true" },
+      { name = "AI_UNI_GUIDED_V1", value = "true" },
       { name = "AI_WORKSHOPS_V2_ENABLED", value = "true" },
       { name = "AI_MATCH_RATIONALE_V2_ENABLED", value = "true" },
       { name = "AI_STRATEGY_V2_ENABLED", value = "true" },
