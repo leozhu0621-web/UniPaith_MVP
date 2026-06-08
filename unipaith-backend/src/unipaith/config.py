@@ -280,6 +280,14 @@ class Settings(BaseSettings):
     # in `.env` once Anthropic + Voyage keys are populated.
     ai_discovery_v2_enabled: bool = False
 
+    # Uni guided redesign — when True, the discovery orchestrator leads the
+    # unified Uni conversation stage-by-stage: the current Discovery layer is
+    # derived from completion_breakdown (profile → goals → needs), Uni leads
+    # that stage, narrates the transition when it's covered, and offers an
+    # earned "continue". When False (default), the open-ended unified Uni
+    # behavior is used as the fallback. Flip per-environment.
+    ai_uni_guided_v1: bool = False
+
     # Plan 2 — Workshop coach LLM. When True, WorkshopFeedbackService routes
     # essay/interview/test feedback through the WorkshopCoach agent (with
     # two-layer guardrail: schema-blind heuristics + LLM judge). On coach
