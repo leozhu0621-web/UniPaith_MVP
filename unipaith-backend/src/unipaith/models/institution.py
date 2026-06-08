@@ -220,6 +220,8 @@ class Program(Base):
     application_requirements: Mapped[dict | None] = mapped_column(JSONB)
     description_text: Mapped[str | None] = mapped_column(Text)
     who_its_for: Mapped[str | None] = mapped_column(Text)
+    # Official program-page URL (the school's own in-depth page for this program).
+    website_url: Mapped[str | None] = mapped_column(String(1000))
     is_published: Mapped[bool] = mapped_column(Boolean, default=False)
     application_deadline: Mapped[date | None] = mapped_column(Date)
     program_start_date: Mapped[date | None] = mapped_column(Date)
