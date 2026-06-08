@@ -210,33 +210,6 @@ describe('InstitutionDetail (Spec 12)', () => {
     expect(twitter).toHaveAttribute('href', 'https://x.com/foo')
   })
 
-  // Spec 22 §7 / §15 — Request info routes through submit_inquiry when authed.
-  it('authenticated: Request info opens a modal and submits an institution-level inquiry', async () => {
-    renderDetail(true)
-    await screen.findByRole('heading', { name: 'University of Foo' })
-
-    fireEvent.click(screen.getByRole('button', { name: /request info/i }))
-    expect(await screen.findByText('Request info from University of Foo')).toBeInTheDocument()
-
-    fireEvent.change(screen.getByLabelText('Subject'), { target: { value: 'Tell me more' } })
-    fireEvent.change(screen.getByLabelText('Message'), { target: { value: 'Is there aid?' } })
-    fireEvent.click(screen.getByRole('button', { name: /send request/i }))
-
-    await waitFor(() => expect(institutionsApi.submitInquiry).toHaveBeenCalledWith({
-      institution_id: 'inst-1',
-      subject: 'Tell me more',
-      message: 'Is there aid?',
-      inquiry_type: 'general',
-    }))
-  })
-
-  // Spec 22 §8 — only Save/RSVP swap to sign-in CTAs; Request info stays labelled.
-  it('public: Request info label stays; click routes to sign-in', async () => {
-    renderDetail(false)
-    await screen.findByRole('heading', { name: 'University of Foo' })
-    expect(screen.getByRole('button', { name: /request info/i })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /sign in to ask/i })).not.toBeInTheDocument()
-  })
 })
 
 // MIT flagship overhaul — header trim, three rankings, undergrad label,

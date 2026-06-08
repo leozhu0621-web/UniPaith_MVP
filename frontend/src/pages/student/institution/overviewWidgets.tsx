@@ -195,6 +195,19 @@ export function DiversityBar({ segments }: { segments: { label: string; pct: num
             </span>
           </span>
         ))}
+        {remainder > 0.001 && (
+          <span className="inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+            <span
+              className="h-2 w-2 rounded-sm border border-border"
+              style={{ backgroundColor: 'hsl(var(--muted))' }}
+              aria-hidden="true"
+            />
+            Other{' '}
+            <span className="font-semibold tabular-nums text-foreground">
+              {Math.round(remainder * 100)}%
+            </span>
+          </span>
+        )}
       </div>
     </div>
   )

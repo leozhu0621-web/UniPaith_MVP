@@ -24,7 +24,7 @@ import { differenceInDays } from 'date-fns'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare,
   Briefcase, Building2, Users, Clock, Sparkles, Mail, Archive,
-  Bookmark, BookmarkCheck, FileText, Send, ArrowRightLeft, ChevronRight,
+  Bookmark, BookmarkCheck, FileText, Send, ArrowRightLeft, ChevronRight, ArrowLeft,
 } from 'lucide-react'
 import { DEGREE_LABELS } from '../../utils/constants'
 import type { EventItem } from '../../types'
@@ -360,6 +360,14 @@ export default function ProgramDetailPage() {
           <p className="text-sm text-foreground">This program is no longer accepting applications.</p>
         </div>
       )}
+
+      {/* ── Back to the last level ── */}
+      <button
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-1.5 text-[13px] font-medium text-secondary hover:underline mb-3"
+      >
+        <ArrowLeft size={15} /> Back
+      </button>
 
       {/* ── Breadcrumb (mirrors the school pages) ── */}
       <nav className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-4 flex-wrap" aria-label="Breadcrumb">
@@ -1508,7 +1516,6 @@ export default function ProgramDetailPage() {
             similarPrograms={similar}
             onRsvp={(id) => rsvpMut.mutate(id)}
             rsvpedIds={rsvpSet}
-            netPrice={netPrice}
             discoveryBackHref={discoveryBackHref}
           />
         </div>
