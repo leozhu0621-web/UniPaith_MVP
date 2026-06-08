@@ -886,36 +886,97 @@ PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 # arts-&-sciences and SEAS research degrees.
 _REQ_UNDERGRAD = {
     "materials": [
-        {"name": "Common Application or Coalition Application", "required": True},
-        {"name": "Harvard supplement & short-answer essays", "required": True},
-        {"name": "Secondary-school report & transcript", "required": True},
+        {"name": "Common Application, Coalition, or Common App", "required": True},
+        {"name": "Harvard questions & supplemental essays", "required": True},
+        {"name": "Secondary-school report + transcript", "required": True},
+        {"name": "Mid-year school report", "required": True},
+        {
+            "name": "Alumni / admissions interview",
+            "required": False,
+            "note": "Offered where an interviewer is available; not held against you otherwise",
+        },
+        {
+            "name": "Optional supplementary materials (research, art, music, maker)",
+            "required": False,
+            "note": "Submit if they meaningfully add to your application",
+        },
     ],
     "test_policy": {
         "stance": "required",
-        "note": "SAT or ACT required (reinstated for fall 2025 entry onward)",
+        "note": (
+            "SAT or ACT required (reinstated for fall 2025 entry); scores may be self-reported."
+        ),
+        "accepted_tests": ["SAT", "ACT"],
+        "superscore_enabled": True,
+        "typical_ranges": [
+            {"test": "SAT", "low": 1500, "high": 1580},
+            {"test": "ACT", "low": 34, "high": 36},
+        ],
     },
     "recommendations": {
         "required_count": 3,
         "types": ["Two teacher evaluations", "School counselor report"],
     },
+    "deadlines": [
+        {"round": "Restrictive Early Action (non-binding)", "date": "November 1"},
+        {"round": "Regular Decision", "date": "January 1"},
+    ],
+    "application_fee": {
+        "amount_usd": 85,
+        "waiver_available": True,
+        "note": "Fee waivers available for students with financial need",
+    },
+    "evaluation": (
+        "Holistic review of academic strength, intellectual curiosity, character, and "
+        "contribution to the community. Harvard is need-blind for all applicants — including "
+        "international students — and meets 100% of demonstrated financial need; it does not "
+        "consider ability to pay."
+    ),
     "source": "Harvard College Admissions",
     "source_url": "https://college.harvard.edu/admissions/apply",
 }
 _REQ_GRAD = {
     "materials": [
         {"name": "Statement of purpose", "required": True},
-        {"name": "Academic transcripts", "required": True},
+        {"name": "Academic transcripts from all institutions", "required": True},
+        {"name": "Curriculum vitae / résumé", "required": True},
+        {
+            "name": "GRE general / subject scores",
+            "required": False,
+            "note": "Many programs are GRE-optional or GRE-blind — check the program",
+        },
+        {
+            "name": "Writing sample or research statement",
+            "required": False,
+            "note": "Required by some humanities and social-science programs",
+        },
         {
             "name": "English proficiency (TOEFL/IELTS) for international applicants",
             "required": False,
-            "note": "TOEFL iBT 100 / IELTS 7.0 typical",
+            "note": "TOEFL iBT 100 / IELTS 7.0 typical minimums",
         },
     ],
-    "test_policy": {"stance": "varies", "note": "GRE policy varies by program"},
+    "test_policy": {
+        "stance": "varies",
+        "note": "GRE requirement varies by program — many are optional or not accepted.",
+    },
     "recommendations": {
         "required_count": 3,
-        "types": ["Three letters of recommendation"],
+        "types": ["Three letters of recommendation (academic or research)"],
     },
+    "deadlines": [
+        {"round": "Fall entry (most programs)", "date": "December 1"},
+    ],
+    "application_fee": {
+        "amount_usd": 105,
+        "waiver_available": True,
+        "note": "Fee waivers available for eligible applicants",
+    },
+    "evaluation": (
+        "Admission is by the program/department through Harvard Griffin GSAS, weighing research "
+        "fit, academic preparation, letters, and the statement of purpose. PhD admits are "
+        "typically offered a multi-year funding package (tuition + stipend)."
+    ),
     "source": "Harvard Griffin GSAS Admissions",
     "source_url": "https://gsas.harvard.edu/apply",
 }
@@ -1322,6 +1383,130 @@ _DESC_RICH_BY_SLUG = {
 }
 
 
+# Full official degree names (Harvard College grants the A.B.; SEAS grants the
+# S.B.; graduate schools grant named professional degrees and the PhD). Shown as
+# the program-page title; programs not listed keep their short PROGRAMS label
+# (already full for most professional degrees, e.g. "Juris Doctor (J.D.)").
+_FULL_NAME_BY_SLUG: dict[str, str] = {
+    "harvard-economics-ab": "Bachelor of Arts in Economics",
+    "harvard-government-ab": "Bachelor of Arts in Government",
+    "harvard-social-studies-ab": "Bachelor of Arts in Social Studies",
+    "harvard-history-ab": "Bachelor of Arts in History",
+    "harvard-english-ab": "Bachelor of Arts in English",
+    "harvard-history-literature-ab": "Bachelor of Arts in History & Literature",
+    "harvard-philosophy-ab": "Bachelor of Arts in Philosophy",
+    "harvard-art-history-ab": "Bachelor of Arts in History of Art & Architecture",
+    "harvard-psychology-ab": "Bachelor of Arts in Psychology",
+    "harvard-sociology-ab": "Bachelor of Arts in Sociology",
+    "harvard-statistics-ab": "Bachelor of Arts in Statistics",
+    "harvard-mathematics-ab": "Bachelor of Arts in Mathematics",
+    "harvard-physics-ab": "Bachelor of Arts in Physics",
+    "harvard-chemistry-ab": "Bachelor of Arts in Chemistry",
+    "harvard-mcb-ab": "Bachelor of Arts in Molecular & Cellular Biology",
+    "harvard-neuroscience-ab": "Bachelor of Arts in Neuroscience",
+    "harvard-eps-ab": "Bachelor of Arts in Earth & Planetary Sciences",
+    "harvard-cs-ab": "Bachelor of Arts in Computer Science",
+    "harvard-applied-math-ab": "Bachelor of Arts in Applied Mathematics",
+    "harvard-electrical-eng-sb": "Bachelor of Science in Electrical Engineering",
+    "harvard-mechanical-eng-sb": "Bachelor of Science in Mechanical Engineering",
+    "harvard-bioengineering-sb": "Bachelor of Science in Bioengineering",
+    "harvard-environmental-eng-sb": "Bachelor of Science in Environmental Science & Engineering",
+    "harvard-economics-phd": "Doctor of Philosophy in Economics",
+    "harvard-government-phd": "Doctor of Philosophy in Government",
+    "harvard-history-phd": "Doctor of Philosophy in History",
+    "harvard-english-phd": "Doctor of Philosophy in English",
+    "harvard-psychology-phd": "Doctor of Philosophy in Psychology",
+    "harvard-statistics-phd": "Doctor of Philosophy in Statistics",
+    "harvard-physics-phd": "Doctor of Philosophy in Physics",
+    "harvard-mcb-phd": "Doctor of Philosophy in Biological Sciences (Molecular & Cellular Biology)",
+    "harvard-cs-phd": "Doctor of Philosophy in Computer Science",
+    "harvard-applied-physics-phd": "Doctor of Philosophy in Applied Physics",
+    "harvard-bioengineering-phd": "Doctor of Philosophy in Bioengineering",
+    "harvard-business-phd": "Doctor of Philosophy in Business Administration",
+    "harvard-biomedical-phd": "Doctor of Philosophy in Biomedical Sciences",
+    "harvard-public-health-phd": "Doctor of Philosophy in Population Health Sciences",
+    "harvard-public-policy-phd": "Doctor of Philosophy in Public Policy",
+    "harvard-education-phd": "Doctor of Philosophy in Education",
+    "harvard-data-science-sm": "Master of Science in Data Science",
+    "harvard-cse-sm": "Master of Science in Computational Science & Engineering",
+    "harvard-mba": "Master of Business Administration",
+    "harvard-mpa-id": "Master in Public Administration in International Development",
+    "harvard-edm": "Master of Education (Ed.M.)",
+}
+
+# Official program-page URLs (every URL verified to resolve at author time;
+# uncertain deep links fall back to the verified school home page).
+_WEBSITE_BY_SLUG: dict[str, str] = {
+    "harvard-economics-ab": "https://economics.harvard.edu/",
+    "harvard-economics-phd": "https://economics.harvard.edu/",
+    "harvard-government-ab": "https://gov.harvard.edu/",
+    "harvard-government-phd": "https://gov.harvard.edu/",
+    "harvard-social-studies-ab": "https://socialstudies.fas.harvard.edu/",
+    "harvard-history-ab": "https://history.fas.harvard.edu/",
+    "harvard-history-phd": "https://history.fas.harvard.edu/",
+    "harvard-english-ab": "https://english.fas.harvard.edu/",
+    "harvard-english-phd": "https://english.fas.harvard.edu/",
+    "harvard-history-literature-ab": "https://histlit.fas.harvard.edu/",
+    "harvard-philosophy-ab": "https://philosophy.fas.harvard.edu/",
+    "harvard-art-history-ab": "https://haa.fas.harvard.edu/",
+    "harvard-psychology-ab": "https://psychology.fas.harvard.edu/",
+    "harvard-psychology-phd": "https://psychology.fas.harvard.edu/",
+    "harvard-sociology-ab": "https://sociology.fas.harvard.edu/",
+    "harvard-statistics-ab": "https://statistics.fas.harvard.edu/",
+    "harvard-statistics-phd": "https://statistics.fas.harvard.edu/",
+    "harvard-mathematics-ab": "https://www.math.harvard.edu/",
+    "harvard-physics-ab": "https://www.physics.harvard.edu/",
+    "harvard-physics-phd": "https://www.physics.harvard.edu/",
+    "harvard-chemistry-ab": "https://www.chemistry.harvard.edu/",
+    "harvard-mcb-ab": "https://www.mcb.harvard.edu/",
+    "harvard-mcb-phd": "https://www.mcb.harvard.edu/",
+    "harvard-neuroscience-ab": "https://www.mcb.harvard.edu/",
+    "harvard-eps-ab": "https://eps.harvard.edu/",
+    "harvard-cs-ab": "https://seas.harvard.edu/computer-science",
+    "harvard-cs-phd": "https://seas.harvard.edu/computer-science",
+    "harvard-applied-math-ab": "https://seas.harvard.edu/applied-mathematics",
+    "harvard-electrical-eng-sb": "https://seas.harvard.edu/electrical-engineering",
+    "harvard-mechanical-eng-sb": "https://seas.harvard.edu/materials-science-mechanical-engineering",
+    "harvard-bioengineering-sb": "https://seas.harvard.edu/bioengineering",
+    "harvard-bioengineering-phd": "https://seas.harvard.edu/bioengineering",
+    "harvard-environmental-eng-sb": "https://seas.harvard.edu/environmental-science-engineering",
+    "harvard-applied-physics-phd": "https://seas.harvard.edu/applied-physics",
+    "harvard-cse-sm": "https://seas.harvard.edu/",
+    "harvard-data-science-sm": "https://www.hsph.harvard.edu/biostatistics/data-science/",
+    "harvard-mba": "https://www.hbs.edu/mba/",
+    "harvard-business-phd": "https://www.hbs.edu/doctoral/",
+    "harvard-jd": "https://hls.harvard.edu/",
+    "harvard-llm": "https://hls.harvard.edu/dept/graduate-program/",
+    "harvard-law-sjd": "https://hls.harvard.edu/dept/graduate-program/",
+    "harvard-md": "https://hms.harvard.edu/",
+    "harvard-biomedical-phd": "https://gsas.harvard.edu/",
+    "harvard-dmd": "https://hsdm.harvard.edu/",
+    "harvard-mph": "https://www.hsph.harvard.edu/",
+    "harvard-sm-public-health": "https://www.hsph.harvard.edu/",
+    "harvard-public-health-phd": "https://www.hsph.harvard.edu/",
+    "harvard-mpp": (
+        "https://www.hks.harvard.edu/educational-programs/masters-programs/master-public-policy"
+    ),
+    "harvard-mpa": "https://www.hks.harvard.edu/",
+    "harvard-mpa-id": "https://www.hks.harvard.edu/",
+    "harvard-public-policy-phd": (
+        "https://www.hks.harvard.edu/educational-programs/doctoral-programs"
+    ),
+    "harvard-edm": "https://www.gse.harvard.edu/masters",
+    "harvard-edld": "https://www.gse.harvard.edu/doctorate/doctor-education-leadership",
+    "harvard-education-phd": "https://www.gse.harvard.edu/",
+    "harvard-march": "https://www.gsd.harvard.edu/architecture/",
+    "harvard-mla": "https://www.gsd.harvard.edu/landscape-architecture/",
+    "harvard-mup": "https://www.gsd.harvard.edu/urban-planning-design/",
+    "harvard-mdes": "https://www.gsd.harvard.edu/design-studies/",
+    "harvard-mdiv": "https://hds.harvard.edu/",
+    "harvard-mts": "https://hds.harvard.edu/",
+    "harvard-alm": "https://extension.harvard.edu/",
+    "harvard-cs50-cert": "https://pll.harvard.edu/course/cs50-introduction-computer-science",
+    "harvard-data-science-cert": "https://pll.harvard.edu/",
+}
+
+
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
 def apply(session: Session) -> bool:
     """Enrich Harvard to the canonical profile. Flushes; caller commits.
@@ -1448,10 +1633,13 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 slug=spec["slug"],
             )
             session.add(p)
-        p.program_name = spec["program_name"]
+        # Full official degree name as the title (falls back to the short label).
+        p.program_name = _FULL_NAME_BY_SLUG.get(spec["slug"]) or spec["program_name"]
         p.degree_type = spec["degree_type"]
         p.duration_months = spec.get("duration_months")
         p.description_text = _DESC_RICH_BY_SLUG.get(spec["slug"]) or spec["description"]
+        # Official program-page URL (read-more link on the program page).
+        p.website_url = _WEBSITE_BY_SLUG.get(spec["slug"])
         p.school_id = school_by_name[spec["school"]].id
         p.is_published = True
         p.catalog_source = "curated"
