@@ -126,3 +126,63 @@ def score_counselor_turn(prior_student: str, assistant: str) -> CounselorVerdict
     if prior_student.strip() and not _reflects(prior_student, assistant):
         reasons.append("no_reflection")
     return CounselorVerdict(passed=not reasons, reasons=reasons)
+
+
+# Guided (ai_uni_guided_v1) — keywords that signal a turn is actually leading a
+# given Discovery stage rather than wandering off it.
+_STAGE_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "profile": (
+        "enjoy",
+        "love",
+        "class",
+        "value",
+        "interest",
+        "drawn",
+        "absorbed",
+        "lights you up",
+        "who you are",
+        "matters to you",
+        "passion",
+        "favorite",
+    ),
+    "goals": (
+        "career",
+        "field",
+        "after college",
+        "want",
+        "future",
+        "dream",
+        "aspir",
+        "study",
+        "become",
+        "do with",
+    ),
+    "needs": (
+        "afford",
+        "money",
+        "aid",
+        "scholarship",
+        "cost",
+        "location",
+        "near",
+        "close to home",
+        "support",
+        "distance",
+        "need",
+    ),
+}
+
+
+def score_stage_turn(stage: str, assistant: str) -> CounselorVerdict:
+    """Grade whether a guided turn actually leads the named stage.
+
+    Deterministic: a stage-leading turn asks at least one question and touches a
+    keyword for that stage; otherwise it's flagged ``off_stage``.
+    """
+    reasons: list[str] = []
+    if _question_count(assistant) < 1:
+        reasons.append("no_question")
+    a = assistant.lower()
+    if not any(k in a for k in _STAGE_KEYWORDS.get(stage, ())):
+        reasons.append("off_stage")
+    return CounselorVerdict(passed=not reasons, reasons=reasons)

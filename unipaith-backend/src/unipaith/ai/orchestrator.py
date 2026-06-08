@@ -109,6 +109,12 @@ class TurnContext:
     # re-ask what another track already covered. Empty on the first turn.
     cross_track_summary: str = ""
     history: list[dict[str, str]] = field(default_factory=list)  # [{role, content}]
+    # Uni guided redesign (ai_uni_guided_v1). When True, the unified discovery
+    # conversation is led stage-by-stage; the current stage is derived from
+    # `completion_breakdown` ({profile,goals,needs}). When False, the open
+    # discovery behavior is the fallback.
+    guided: bool = False
+    completion_breakdown: dict[str, float] | None = None
 
 
 @dataclass
@@ -267,14 +273,46 @@ class Orchestrator:
         missing = ", ".join(verdict.missing_signals) if verdict and verdict.missing_signals else "—"
         cross_track = ctx.cross_track_summary or "(no other tracks started yet)"
         if ctx.track == "discovery":
-            # Unified Uni conversation — never push a track menu at the model.
+            if not ctx.guided:
+                # Unified Uni conversation — never push a track menu at the model.
+                return (
+                    "## Current state\n\n"
+                    "You are in one open discovery conversation with this student. "
+                    "There are no tracks to pick — explore whatever they open up, and over "
+                    "time naturally cover who they are, what they want, and what they need.\n"
+                    f"- Completion so far: {ctx.completion_pct:.0%}\n"
+                    f"- Still useful to learn: {missing}\n"
+                    f"- A possible next probe: {next_probe}\n\n"
+                    "## What we already know about this student\n\n"
+                    f"{ctx.known_profile_summary or '(nothing yet)'}\n\n"
+                    "## Recently captured signals (this session)\n\n"
+                    f"{ctx.recent_signals_summary or '(none yet)'}"
+                )
+            # Guided (ai_uni_guided_v1) — lead one Discovery stage at a time.
+            from unipaith.ai.journey import current_stage, stage_label
+
+            bd = ctx.completion_breakdown or {}
+            stage = current_stage(bd)
+            if stage:
+                focus = (
+                    "You are guiding this student through one stage at a time. Right now the "
+                    f"focus is **{stage_label(stage)}**. Lead this stage — ask about it, one "
+                    "question at a time, and offer 2-3 short tappable options via "
+                    "`suggest_replies`. When this stage has enough signal, warmly say so and "
+                    "offer to move on to the next thing (never force it)."
+                )
+            else:
+                focus = (
+                    "You've learned enough across who they are, their goals, and their needs. "
+                    "Warmly tell them you're ready to show a first look at their matches "
+                    "whenever they want."
+                )
             return (
                 "## Current state\n\n"
-                "You are in one open discovery conversation with this student. "
-                "There are no tracks to pick — explore whatever they open up, and over "
-                "time naturally cover who they are, what they want, and what they need.\n"
-                f"- Completion so far: {ctx.completion_pct:.0%}\n"
-                f"- Still useful to learn: {missing}\n"
+                f"{focus}\n"
+                f"- Stage coverage — about you {float(bd.get('profile', 0) or 0):.0%}, "
+                f"goals {float(bd.get('goals', 0) or 0):.0%}, "
+                f"needs {float(bd.get('needs', 0) or 0):.0%}\n"
                 f"- A possible next probe: {next_probe}\n\n"
                 "## What we already know about this student\n\n"
                 f"{ctx.known_profile_summary or '(nothing yet)'}\n\n"
