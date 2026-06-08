@@ -1494,6 +1494,92 @@ _CLASS_PROFILE_BY_SLUG: dict[str, dict] = {
     },
 }
 
+# Program faculty (lead + directory link), where confidently sourced. Kept light
+# — a confidently-sourced lead plus a link to the official directory — rather than
+# a roster that goes stale.
+_FACULTY_BY_SLUG: dict[str, dict] = {
+    "mit-sloan-mban": {
+        "lead": [
+            {
+                "name": "Prof. Dimitris Bertsimas",
+                "title": "Faculty Director — founded the MBAn (2013)",
+                "url": "https://mitsloan.mit.edu/faculty/directory/dimitris-bertsimas",
+            },
+        ],
+        "note": "Taught by MIT Sloan and MIT Operations Research Center faculty.",
+        "directory_url": "https://mitsloan.mit.edu/faculty",
+    },
+}
+
+# Aggregated, cited student-review themes from public third-party sources.
+# Paraphrased (never verbatim) and always attributed — honest and copyright-safe.
+_REVIEWS_BY_SLUG: dict[str, dict] = {
+    "mit-sloan-mban": {
+        "summary": (
+            "Students and third-party guides consistently praise the program's rigor, its "
+            "tight, collaborative cohort, and the seven-month Analytics Capstone with a real "
+            "company; the most common cautions are the fast pace, heavy quantitative workload, "
+            "and high total cost."
+        ),
+        "themes": [
+            {
+                "label": "Rigorous & fast-paced",
+                "sentiment": "mixed",
+                "detail": "An intense, presentation-heavy year that rewards a genuine passion "
+                "for analytics.",
+            },
+            {
+                "label": "Strong, collaborative cohort",
+                "sentiment": "positive",
+                "detail": "Students describe smart, supportive classmates and a close-knit cohort.",
+            },
+            {
+                "label": "Standout Analytics Capstone",
+                "sentiment": "positive",
+                "detail": "A ~7-month real-company data-science project with faculty mentorship "
+                "is the highlight.",
+            },
+            {
+                "label": "Strong career support",
+                "sentiment": "positive",
+                "detail": "MIT Sloan's Career Development Office is praised through the job "
+                "search.",
+            },
+            {
+                "label": "High total cost",
+                "sentiment": "caution",
+                "detail": "Tuition plus living expenses runs well over $130K, partly offset by "
+                "the Capstone subsidy.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Poets&Quants — MIT Sloan MBAn profile",
+                "url": "https://poetsandquants.com/specialized-master/"
+                "mit-sloan-school-management-master-business-analytics/",
+            },
+            {
+                "label": "Poets&Quants — MBAn student profile",
+                "url": "https://poetsandquants.com/2021/03/16/"
+                "masters-in-business-analytics-abby-garrett-mit-sloan/",
+            },
+            {
+                "label": "BusinessBecause — MIT MBAn review",
+                "url": "https://www.businessbecause.com/news/masters-in-business-analytics/"
+                "7460/mit-master-of-business-analytics",
+            },
+            {
+                "label": "MIT Sloan 2024 MBAn Employment Report",
+                "url": "https://mitsloan.mit.edu/career-development-office/employment-reports",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+}
+
 # Full official degree names (MIT awards the SB/Bachelor of Science, the SM/
 # Master of Science or named professional master's, and the PhD). Shown as the
 # program-page title in place of the short PROGRAMS display label.
@@ -1825,6 +1911,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p.tracks = _TRACKS_BY_SLUG[spec["slug"]]
         # Class profile (size + selectivity + composition) where published.
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(spec["slug"])
+        # Faculty (lead + directory link) and aggregated cited review themes.
+        p.faculty_contacts = _FACULTY_BY_SLUG.get(spec["slug"])
+        p.external_reviews = _REVIEWS_BY_SLUG.get(spec["slug"])
         # Application deadline (upcoming cycle). Undergrad Regular Action is stable
         # (Jan 1); graduate dates vary by department — the program-page footer
         # notes "verify on the official program page".

@@ -383,7 +383,8 @@ export interface Program {
   intake_rounds: IntakeRoundForm[] | Record<string, any>[] | Record<string, any> | null
   media_urls: string[] | null
   highlights: string[] | null
-  faculty_contacts: Record<string, any>[] | null
+  faculty_contacts: Record<string, any>[] | Record<string, any> | null
+  external_reviews?: Record<string, any> | null
   cost_data: ProgramCostData | Record<string, any> | null
   promotion_categories?: string[] | null
   english_policy?: IntlEnglishPolicy | null

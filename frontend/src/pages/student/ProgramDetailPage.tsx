@@ -24,7 +24,7 @@ import { differenceInDays } from 'date-fns'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare,
   Briefcase, Building2, Users, Clock, Sparkles, Mail, Archive,
-  Bookmark, BookmarkCheck, FileText, Send, ArrowRightLeft, ChevronRight, ArrowLeft,
+  Bookmark, BookmarkCheck, FileText, Send, ArrowRightLeft, ChevronRight, ArrowLeft, ExternalLink, Star,
 } from 'lucide-react'
 import { DEGREE_LABELS } from '../../utils/constants'
 import type { EventItem } from '../../types'
@@ -666,6 +666,45 @@ export default function ProgramDetailPage() {
                     </div>
                     {cp.source && (
                       <p className="mt-3 text-[11px] text-muted-foreground/70">Source: {String(cp.source)}</p>
+                    )}
+                  </Card>
+                )
+              })()}
+
+              {(() => {
+                const fc = p.faculty_contacts
+                const facObj = (fc && !Array.isArray(fc) && typeof fc === 'object')
+                  ? fc as Record<string, any> : null
+                const lead: Array<Record<string, any>> = facObj && Array.isArray(facObj.lead) ? facObj.lead : []
+                if (!facObj || (!lead.length && !facObj.directory_url && !facObj.note)) return null
+                return (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Users size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">Faculty</h3>
+                    </div>
+                    {lead.length > 0 && (
+                      <div className="space-y-2 mb-3">
+                        {lead.map((f, i) => (
+                          <div key={i} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground">{String(f.name)}</p>
+                              {f.title && <p className="text-[11px] text-muted-foreground">{String(f.title)}</p>}
+                            </div>
+                            {f.url && (
+                              <a href={String(f.url)} target="_blank" rel="noopener noreferrer" className="text-secondary hover:text-secondary/80 flex-shrink-0" aria-label="Faculty profile">
+                                <ExternalLink size={13} />
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {facObj.note && <p className="text-sm text-foreground/80 mb-3">{String(facObj.note)}</p>}
+                    {facObj.directory_url && (
+                      <a href={String(facObj.directory_url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-secondary hover:underline">
+                        <ExternalLink size={13} /> Full faculty directory
+                      </a>
                     )}
                   </Card>
                 )
@@ -1490,6 +1529,51 @@ export default function ProgramDetailPage() {
           })()}
 
           {tab === 'insights' && (
+            <div className="space-y-4">
+              {(() => {
+                const er = p.external_reviews && typeof p.external_reviews === 'object'
+                  ? p.external_reviews as Record<string, any> : null
+                const themes: Array<Record<string, any>> = er && Array.isArray(er.themes) ? er.themes : []
+                const sources: Array<Record<string, any>> = er && Array.isArray(er.sources) ? er.sources : []
+                if (!er || (!themes.length && !er.summary)) return null
+                const tone = (s: string) => s === 'positive' ? 'text-success' : s === 'caution' ? 'text-warning' : 'text-foreground'
+                const dot = (s: string) => s === 'positive' ? 'bg-success' : s === 'caution' ? 'bg-warning' : 'bg-secondary'
+                return (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Star size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">What students say</h3>
+                    </div>
+                    {er.summary && <p className="text-sm text-foreground leading-relaxed mb-3">{String(er.summary)}</p>}
+                    {themes.length > 0 && (
+                      <ul className="space-y-2 mb-3">
+                        {themes.map((t, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${dot(String(t.sentiment))}`} />
+                            <div className="min-w-0 text-sm">
+                              <span className={`font-medium ${tone(String(t.sentiment))}`}>{String(t.label)}</span>
+                              {t.detail && <span className="text-foreground/80"> — {String(t.detail)}</span>}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {sources.length > 0 && (
+                      <div className="pt-2 border-t border-border">
+                        <p className="text-[10px] font-semibold text-foreground/60 uppercase tracking-wider mb-1.5">Sources</p>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1">
+                          {sources.map((s, i) => (
+                            <a key={i} href={String(s.url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-secondary hover:underline">
+                              <ExternalLink size={11} /> {String(s.label)}
+                            </a>
+                          ))}
+                        </div>
+                        {er.disclaimer && <p className="text-[10.5px] text-muted-foreground/70 mt-2">{String(er.disclaimer)}</p>}
+                      </div>
+                    )}
+                  </Card>
+                )
+              })()}
             <InsightsPanel
               programName={p.program_name}
               reviews={reviewsData ?? null}
@@ -1505,6 +1589,7 @@ export default function ProgramDetailPage() {
               similarPrograms={similar}
               onNavigateProgram={(id) => navigate(`/s/programs/${id}`)}
             />
+            </div>
           )}
         </div>
 
