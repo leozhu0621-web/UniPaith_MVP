@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -39,6 +39,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const compareStore = useCompareStore()
+  const [degFilter, setDegFilter] = useState<string>('all')
 
   const instHref = isAuthenticated ? `/s/institutions/${institutionId}` : `/school/${institutionId}`
   const programHref = (id: string) => (isAuthenticated ? `/s/programs/${id}` : `/program/${id}`)
@@ -84,7 +85,11 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
   // its own); falls back to a gradient. Picks a real photo, never the logo SVG.
   const heroPhoto = (institution?.media_gallery ?? []).find(u => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) ?? null
   const DEG: Record<string, string> = { bachelors: "Bachelor's", masters: "Master's", phd: 'PhD', doctoral: 'Doctorate', associate: 'Associate', certificate: 'Certificate', diploma: 'Diploma', professional: 'Professional' }
-  const degreeLevels = [...new Set(programList.map(p => p.degree_type).filter(Boolean) as string[])].map(d => DEG[d] ?? d)
+  const degreeTypes = [...new Set(programList.map(p => p.degree_type).filter(Boolean) as string[])]
+  const degreeLevels = degreeTypes.map(d => DEG[d] ?? d)
+  // Degree-level filter for the program grid (parity with the explore page).
+  const activeDegFilter = degreeTypes.includes(degFilter) ? degFilter : 'all'
+  const filteredPrograms = activeDegFilter === 'all' ? programList : programList.filter(p => p.degree_type === activeDegFilter)
   const progCount = programList.length || school?.program_count || 0
   const heroStats = [
     { value: String(progCount), label: progCount === 1 ? 'program' : 'programs' },
@@ -214,8 +219,26 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
       {/* Programs */}
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">Programs</h2>
-        <span className="text-xs text-muted-foreground">{programList.length} program{programList.length !== 1 ? 's' : ''}</span>
+        <span className="text-xs text-muted-foreground">
+          {activeDegFilter === 'all'
+            ? `${programList.length} program${programList.length !== 1 ? 's' : ''}`
+            : `${filteredPrograms.length} of ${programList.length}`}
+        </span>
       </div>
+
+      {/* Degree-level filter — only when the school offers more than one level. */}
+      {degreeTypes.length > 1 && (
+        <div className="mb-4 flex flex-wrap gap-1.5">
+          <FilterChip active={activeDegFilter === 'all'} onClick={() => setDegFilter('all')}>
+            All
+          </FilterChip>
+          {degreeTypes.map(d => (
+            <FilterChip key={d} active={activeDegFilter === d} onClick={() => setDegFilter(d)}>
+              {DEG[d] ?? d}
+            </FilterChip>
+          ))}
+        </div>
+      )}
 
       {programsLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -234,7 +257,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {programList.map(p => (
+          {filteredPrograms.map(p => (
             <ProgramCard
               key={p.id}
               program={p}
@@ -261,5 +284,23 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
         </p>
       </footer>
     </div>
+  )
+}
+
+/* ── Degree-level filter chip ── */
+function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`px-3 py-1 rounded-full text-[12px] font-medium border transition-colors ${
+        active
+          ? 'bg-secondary text-secondary-foreground border-secondary'
+          : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
+      }`}
+    >
+      {children}
+    </button>
   )
 }

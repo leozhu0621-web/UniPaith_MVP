@@ -83,7 +83,7 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
   const gradPct = program.employment_rate != null ? Math.round(program.employment_rate * 100) : null
 
   return (
-    <div className="bg-card rounded-lg border border-border hover:elev-raised transition-all duration-200 ease-out overflow-hidden flex flex-col group/card">
+    <div className="h-full bg-card rounded-lg border border-border hover:elev-raised transition-all duration-200 ease-out overflow-hidden flex flex-col group/card">
       {/* ── Header — text-driven, white surface, hairline divider ── */}
       <div onClick={onView} className="relative cursor-pointer px-4 pt-4 pb-3 border-b border-border">
         {/* Save button */}
@@ -131,36 +131,16 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
         </div>
       </div>
 
-      {/* ── Meta pills row ── */}
-      {(duration || format || (deadline && !deadline.closed)) && (
-        <div className="flex items-center gap-1.5 px-4 py-2 border-b border-border bg-muted/40 overflow-x-auto">
-          {duration && <MetaPill icon={Clock}>{duration}</MetaPill>}
-          {format && <MetaPill icon={Building}>{format}</MetaPill>}
-          {deadline && !deadline.closed && (
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] whitespace-nowrap ${
-              deadline.urgent ? 'bg-warning-soft border-warning/40 text-warning font-semibold' : 'bg-card border-border/60 text-muted-foreground'
-            }`}>
-              <Calendar size={10} className={deadline.urgent ? 'text-warning' : 'text-muted-foreground/70'} />
-              {deadline.urgent ? `Deadline ${deadline.text}` : deadline.text}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* ── Description ── */}
-      <div className="flex-1 px-4 pt-3 cursor-pointer" onClick={onView}>
-        {program.description_text ? (
-          <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-3">
-            {program.description_text.replace(/\s*\[Source:.*?\]\s*/g, '').trim()}
-          </p>
-        ) : (
-          <p className="text-[11px] text-muted-foreground/60 italic">No description available — open to view full details.</p>
-        )}
-      </div>
-
-      {/* ── Stats grid — only tiles with real data (no empty "—" placeholders) ── */}
+      {/* ── Facts grid — one consistent block on every card. Duration + format
+          are almost always present, so even programs without numeric outcomes
+          (e.g. non-degree certificates) keep a populated, uniform layout rather
+          than collapsing to a bare description. ── */}
       {(() => {
-        const tiles: { label: string; value: string; icon: typeof Percent }[] = []
+        const tiles: { label: string; value: string; icon: typeof Percent; urgent?: boolean }[] = []
+        if (duration) tiles.push({ label: 'Duration', value: duration, icon: Clock })
+        if (format) tiles.push({ label: 'Format', value: format, icon: Building })
+        if (deadline && !deadline.closed)
+          tiles.push({ label: 'Deadline', value: deadline.text, icon: Calendar, urgent: deadline.urgent })
         if (acceptPct != null) tiles.push({ label: 'Acceptance', value: `${acceptPct}%`, icon: Percent })
         if (program.tuition != null)
           tiles.push({ label: 'Tuition / yr', value: program.tuition === 0 ? 'Funded' : formatCurrency(program.tuition), icon: DollarSign })
@@ -169,13 +149,25 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
         if (gradPct != null) tiles.push({ label: 'Grad rate', value: `${gradPct}%`, icon: GraduationCap })
         if (!tiles.length) return null
         return (
-          <div className="px-4 pt-3 pb-3 grid grid-cols-2 gap-1.5">
+          <div className="px-4 pt-3 grid grid-cols-2 gap-1.5">
             {tiles.map(t => (
-              <StatTile key={t.label} label={t.label} value={t.value} icon={t.icon} />
+              <StatTile key={t.label} label={t.label} value={t.value} icon={t.icon} urgent={t.urgent} />
             ))}
           </div>
         )
       })()}
+
+      {/* ── Description — the flexible filler so every card's footer pins to the
+          bottom and the grid stays even regardless of how much data a card has ── */}
+      <div className="flex-1 px-4 pt-3 pb-1 cursor-pointer" onClick={onView}>
+        {program.description_text ? (
+          <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-3">
+            {program.description_text.replace(/\s*\[Source:.*?\]\s*/g, '').trim()}
+          </p>
+        ) : (
+          <p className="text-[11px] text-muted-foreground/60 italic">No description available — open to view full details.</p>
+        )}
+      </div>
 
       {/* ── Actions ── */}
       <div className="flex items-stretch border-t border-border mt-auto">
@@ -213,33 +205,23 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
   )
 }
 
-/* ── Meta pill ── */
-function MetaPill({ icon: Icon, children }: { icon: ComponentType<{ size?: number; className?: string }>; children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-card border border-border/60 text-[10px] text-muted-foreground whitespace-nowrap">
-      <Icon size={10} className="text-muted-foreground/70" />
-      {children}
-    </span>
-  )
-}
-
-/* ── Stat tile (neutral editorial) ── */
+/* ── Stat tile (neutral editorial; warning tone for an urgent deadline) ── */
 interface StatTileProps {
   label: string
   value: string
   icon: ComponentType<{ size?: number; className?: string }>
+  urgent?: boolean
 }
 
-function StatTile({ label, value, icon: Icon }: StatTileProps) {
-  const isEmpty = value === '—'
+function StatTile({ label, value, icon: Icon, urgent }: StatTileProps) {
   return (
-    <div className={`flex items-center gap-2 px-2.5 py-2 rounded-md border ${isEmpty ? 'bg-muted/40 border-border/40' : 'bg-muted/60 border-border/60'}`}>
-      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 bg-card border border-border/50">
-        <Icon size={11} className={isEmpty ? 'text-muted-foreground/40' : 'text-secondary'} />
+    <div className={`flex items-center gap-2 px-2.5 py-2 rounded-md border ${urgent ? 'bg-warning-soft border-warning/40' : 'bg-muted/60 border-border/60'}`}>
+      <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 bg-card border ${urgent ? 'border-warning/30' : 'border-border/50'}`}>
+        <Icon size={11} className={urgent ? 'text-warning' : 'text-secondary'} />
       </div>
       <div className="min-w-0">
-        <p className={`text-[9px] uppercase tracking-wide leading-none ${isEmpty ? 'text-muted-foreground/40' : 'text-muted-foreground'}`}>{label}</p>
-        <p className={`text-[13px] font-bold leading-tight truncate mt-0.5 ${isEmpty ? 'text-muted-foreground/40' : 'text-foreground'}`}>{value}</p>
+        <p className={`text-[9px] uppercase tracking-wide leading-none ${urgent ? 'text-warning' : 'text-muted-foreground'}`}>{label}</p>
+        <p className={`text-[13px] font-bold leading-tight truncate mt-0.5 ${urgent ? 'text-warning' : 'text-foreground'}`}>{value}</p>
       </div>
     </div>
   )

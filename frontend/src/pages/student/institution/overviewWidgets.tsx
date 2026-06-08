@@ -148,8 +148,13 @@ export function StatBar({ label, pct, hint }: { label: string; pct: number; hint
 export function DiversityBar({ segments }: { segments: { label: string; pct: number }[] }) {
   const items = segments.filter(s => s.pct > 0)
   if (!items.length) return null
-  const alphas = [1, 0.78, 0.58, 0.42, 0.3, 0.22]
-  const shade = (i: number) => `hsl(var(--secondary) / ${alphas[i] ?? 0.18})`
+  // Distinct categorical palette so each race/ethnicity segment is easy to tell
+  // apart (the old single-hue cobalt-opacity ramp blurred adjacent segments
+  // together). These mid-tone hues read on both the cream light surface and the
+  // dark-navy dark-mode surface; gold/amber is intentionally excluded (reserved
+  // for "earned" beats per the design system).
+  const PALETTE = ['#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#06b6d4', '#f43f5e']
+  const shade = (i: number) => PALETTE[i] ?? '#94a3b8'
   const total = items.reduce((a, s) => a + s.pct, 0)
   const remainder = Math.max(0, 1 - total)
   return (
