@@ -221,7 +221,15 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
         {school.description_text ? (
           <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{school.description_text}</p>
         ) : (
-          <p className="text-sm text-muted-foreground">No details published yet for this school. Explore programs below.</p>
+          <p className="text-sm text-muted-foreground">
+            No details published yet for this school.
+            {progCount > 0 && (
+              <>
+                {' '}
+                <button onClick={() => setTab('programs')} className="font-medium text-secondary hover:underline">Explore programs</button>.
+              </>
+            )}
+          </p>
         )}
       </Card>
       )}
