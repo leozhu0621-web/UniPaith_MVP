@@ -205,6 +205,7 @@ class ProgramResponse(BaseModel):
     who_its_for: str | None = None
     website_url: str | None = None
     class_profile: dict | None = None
+    external_reviews: dict | None = None
     is_published: bool
     application_deadline: date | None
     program_start_date: date | None

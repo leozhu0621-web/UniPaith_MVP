@@ -182,6 +182,14 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert mban.class_profile["median_gpa"] == 3.92
     assert mban.class_profile["median_gre_quant"] == 169
     assert mban.tracks["curriculum"] and mban.tracks["curriculum"][0]["term"] == "Fall"
+    # Faculty lead + directory link; cited external-review themes with sources.
+    assert mban.faculty_contacts["lead"][0]["name"] == "Dimitris Bertsimas"
+    assert len(mban.faculty_contacts["lead"]) >= 6  # real faculty list, not one name
+    assert mban.faculty_contacts["directory_url"]
+    assert len(mban.external_reviews["themes"]) >= 4
+    assert mban.external_reviews["sources"] and all(
+        s["url"].startswith("http") for s in mban.external_reviews["sources"]
+    )
 
 
 async def test_program_has_dependents_false_for_unreferenced_program(db_session):
