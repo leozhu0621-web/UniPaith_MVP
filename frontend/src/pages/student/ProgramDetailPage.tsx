@@ -796,6 +796,8 @@ export default function ProgramDetailPage() {
                   : undefined,
               })
             }
+            // Recommendation rows are appended above, so gate on what will actually render.
+            const hasStructuredReqs = requiredItems.length > 0 || optionalItems.length > 0
             // Enriched admissions detail (rounds, fee, how-you're-evaluated).
             const reqObj = (p.application_requirements && !Array.isArray(p.application_requirements)
               ? p.application_requirements : {}) as Record<string, any>
@@ -822,7 +824,7 @@ export default function ProgramDetailPage() {
                     <h3
                       className="font-semibold text-foreground"
                       title={
-                        appReqs.length > 0
+                        hasStructuredReqs
                           ? `${requiredItems.length} required${optionalItems.length > 0 ? ` · ${optionalItems.length} optional` : ''}`
                           : undefined
                       }
@@ -831,7 +833,7 @@ export default function ProgramDetailPage() {
                     </h3>
                   </div>
 
-                  {appReqs.length > 0 ? (
+                  {hasStructuredReqs ? (
                     <div className="space-y-3">
                       {requiredItems.length > 0 && (
                         <div>
@@ -962,8 +964,10 @@ export default function ProgramDetailPage() {
                   </Card>
                 )}
 
-                {/* Application Timeline — rounds + key dates merged into one card. */}
-                {!admissionTimeline && (deadlineRounds.length > 0 || effectiveDeadline || p.program_start_date) && (
+                {/* Application Timeline — rounds + key dates merged into one card.
+                    Requirements-sourced rounds always render; key dates are suppressed
+                    when an intake-based timeline already shows them above. */}
+                {(deadlineRounds.length > 0 || (!admissionTimeline && (effectiveDeadline || p.program_start_date))) && (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <Clock size={14} className="text-secondary" />
@@ -976,13 +980,13 @@ export default function ProgramDetailPage() {
                           <span className="font-medium text-foreground">{d.date}</span>
                         </li>
                       ))}
-                      {effectiveDeadline && (
+                      {!admissionTimeline && effectiveDeadline && (
                         <li className="flex justify-between border-b border-border pb-2 last:border-0 last:pb-0">
                           <span className="text-foreground">Application deadline</span>
                           <span className="font-medium text-foreground">{formatDate(effectiveDeadline)}</span>
                         </li>
                       )}
-                      {p.program_start_date && (
+                      {!admissionTimeline && p.program_start_date && (
                         <li className="flex justify-between border-b border-border pb-2 last:border-0 last:pb-0">
                           <span className="text-foreground">Program starts</span>
                           <span className="font-medium text-foreground">{formatDate(p.program_start_date)}</span>
