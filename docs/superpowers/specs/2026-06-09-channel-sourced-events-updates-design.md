@@ -63,19 +63,26 @@ a manual "import" button (C) is folded in as the manual refresh trigger.
   `external_id IS NOT NULL` — the idempotency/dedup key.
 
 Existing `status` columns are reused: ingested rows are written `published` and a
-school can flip any to `archived`/`draft` to hide it. `published_at` is set from
-the feed item's date.
+school can flip a post to `archived`/`draft` — or an event to `cancelled` (the
+status `ConnectService.build_events` already excludes) — to hide it. `published_at`
+is set from the feed item's date.
 
 ## Ingestion service — `services/content_ingest/`
 
 - `ChannelSource` (ABC): `name: str`; `fetch(session, institution) -> list[NormalizedItem]`.
   `NormalizedItem` = `{kind: 'post'|'event', external_id, title, body/description,
-  url, published_at, start_time?, end_time?, location?}`.
+  url, published_at, start_time?, end_time?, location?}`. The `start_time?`/
+  `end_time?` fields are optional only for `post` items; for an `event` both are
+  **required** (non-null) since the `events` table forbids a null `end_time` (see
+  `EventsFeedSource` below for the default).
 - `NewsRssSource` — parses `content_sources.news_rss` with **feedparser** → `post`
   items (guid → `external_id`, summary → `body`, link → `source_url`).
 - `EventsFeedSource` — parses `content_sources.events_feed` as iCal (**icalendar**)
   or RSS (feedparser) → `event` items (UID → `external_id`, DTSTART/DTEND →
-  `start_time`/`end_time`, LOCATION, URL).
+  `start_time`/`end_time`, LOCATION, URL). The `events` table requires a non-null
+  `end_time`, but many iCal entries omit `DTEND` or are all-day; the source MUST
+  always derive an `end_time` (use `DTEND`/duration when present, else default to
+  `start_time + 1h` — all-day → end of that day) so it is never `None` on insert.
 - `ContentIngestService.ingest_institution(institution)`:
   - For each configured source: fetch (timeout, fail-soft per source — log and
     continue), cap to the **N most recent** items (e.g. 25 posts / 25 events),
@@ -83,11 +90,19 @@ the feed item's date.
   - Upsert by `(institution_id, source, external_id)`; set `source`,
     `source_url`, `published_at`, `status='published'`. Never overwrite a row a
     school has manually edited/hidden (respect a `status` that's not `published`,
-    or a future `locked` flag — for now: skip re-publishing a row whose status is
-    `archived`/`draft`).
+    or a future `locked` flag — for now: skip re-publishing a post whose status is
+    `archived`/`draft`, and skip re-publishing an event whose status is `cancelled`
+    (events use `cancelled`, not `archived`/`draft`, to hide — see
+    `EventService.cancel_event` / `ConnectService.build_events`)).
   - Governance: **public, non-personal, first-party only** (reuse the Spec 60
     crawler governance posture); store the canonical `source_url`; never fabricate.
-- `ingest_all(session)` iterates institutions that have `content_sources`.
+- `ingest_all(session)` iterates institutions that have `content_sources`. Because
+  this repo's JSONB columns can hold the JSON-null literal (`'null'::jsonb`, which
+  passes `IS NOT NULL`/`COALESCE` but deserializes to Python `None`), the selection
+  MUST also exclude that case — e.g.
+  `WHERE content_sources IS NOT NULL AND jsonb_typeof(content_sources) != 'null'` —
+  and the loop must re-check the fetched value for `None`/emptiness before use, so
+  schools seeded with a JSON-null placeholder aren't silently skipped or crashed.
 
 Dependencies to add: `feedparser`, `icalendar` (both small, widely used).
 
@@ -124,8 +139,8 @@ Dependencies to add: `feedparser`, `icalendar` (both small, widely used).
 - **Ingestion unit tests** (no network): feed `NewsRssSource`/`EventsFeedSource`
   fixed RSS/iCal fixture strings → assert correct `InstitutionPost`/`Event`
   upserts (fields, `source`, `source_url`, `published_at`); re-run → **idempotent**
-  (no duplicates, dedup by `external_id`); a school-archived row is **not**
-  re-published.
+  (no duplicates, dedup by `external_id`); a school-hidden row is **not**
+  re-published (an `archived`/`draft` post and a `cancelled` event).
 - **Governance test:** the ingester only writes public source data; `source_url`
   preserved.
 - **Frontend:** Campus life / Campus & basics render from sample
