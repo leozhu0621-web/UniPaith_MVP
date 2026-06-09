@@ -106,6 +106,17 @@ SCHOOL_OUTCOMES: dict = {
             "Fusion energy",
         ],
         "industry_collaborators": 700,
+        # Official lab/institute homepages (links on the Campus resources card).
+        "lab_links": {
+            "CSAIL": "https://www.csail.mit.edu/",
+            "MIT Media Lab": "https://www.media.mit.edu/",
+            "Lincoln Laboratory": "https://www.ll.mit.edu/",
+            "Broad Institute": "https://www.broadinstitute.org/",
+            "Koch Institute": "https://ki.mit.edu/",
+            "McGovern Institute": "https://mcgovern.mit.edu/",
+            "Whitehead Institute": "https://wi.mit.edu/",
+            "Plasma Science & Fusion Center": "https://www.psfc.mit.edu/",
+        },
     },
     "campus_life": {
         "varsity_sports": 33,
@@ -115,6 +126,13 @@ SCHOOL_OUTCOMES: dict = {
         "student_orgs": "500+",
         "greek_life": "~25% of undergrads",
         "housing": "Guaranteed 4 years",
+        # Official student-resource hubs (links on the Campus resources card).
+        "resources": [
+            {"label": "Athletics", "url": "https://mitathletics.com/"},
+            {"label": "Arts at MIT", "url": "https://arts.mit.edu/"},
+            {"label": "Housing", "url": "https://studentlife.mit.edu/housing"},
+            {"label": "Student life", "url": "https://studentlife.mit.edu/"},
+        ],
     },
     "campus_basics": {
         "location": "Cambridge, Massachusetts",

@@ -21,7 +21,7 @@ import QueryError from '../../../components/ui/QueryError'
 import {
   Bookmark, BookmarkCheck, MapPin, Globe, Building2, BookOpen,
   Mail, Phone, ChevronDown, X, Search, GraduationCap,
-  Filter, ArrowRight, Link2, Award, Trophy, DollarSign, TrendingUp, Users, FlaskConical, Tent,
+  Filter, ArrowRight, Link2, Award, Trophy, DollarSign, TrendingUp, Users, FlaskConical,
 } from 'lucide-react'
 import type { Institution, ProgramSummary, InstitutionPost, SchoolSummary } from '../../../types'
 import { AdmissionsFunnel, ChipList, DiversityBar, RankingBadge, StatBar } from './overviewWidgets'
@@ -746,6 +746,8 @@ function AboutTab({ inst }: { inst: Institution }) {
   if (campusLife.greek_life) campusStats.push({ value: String(campusLife.greek_life), label: 'Greek life (FSILGs)' })
   if (campusLife.residence_halls != null) campusStats.push({ value: String(campusLife.residence_halls), label: 'Residence halls' })
   if (campusLife.housing) campusStats.push({ value: String(campusLife.housing), label: 'On-campus housing' })
+  const labLinks: Record<string, string> = (research.lab_links && typeof research.lab_links === 'object') ? research.lab_links : {}
+  const campusResources: { label: string; url: string }[] = Array.isArray(campusLife.resources) ? campusLife.resources : []
   const basics: any = outcomes.campus_basics || {}
   const facts = [
     inst.type ? { label: 'Type', value: titleCase(inst.type) } : null,
@@ -786,10 +788,9 @@ function AboutTab({ inst }: { inst: Institution }) {
         </Card>
       )}
 
-      {/* Research & innovation */}
-      {(researchLabs.length > 0 || scale.research_centers != null) && (
+      {/* Campus resources — research + campus life + links, merged. */}
+      {(researchLabs.length > 0 || researchAreas.length > 0 || campusStats.length > 0 || campusResources.length > 0) && (
         <Card className="p-5">
-          {/* Centers/collaborators summary → heading hover tooltip (declutter). */}
           <h2
             className="font-semibold text-foreground mb-3 flex items-center gap-2"
             title={
@@ -803,30 +804,55 @@ function AboutTab({ inst }: { inst: Institution }) {
                 : undefined
             }
           >
-            <FlaskConical size={15} className="text-secondary" /> Research &amp; innovation
+            <FlaskConical size={15} className="text-secondary" /> Campus resources
           </h2>
+
           {researchLabs.length > 0 && (
-            <>
+            <div className="mb-4">
               <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Notable labs &amp; institutes</p>
-              <ChipList items={researchLabs} />
-            </>
+              <div className="flex flex-wrap gap-2">
+                {researchLabs.map(name => {
+                  const url = labLinks[name]
+                  return url ? (
+                    <a key={name} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-medium border border-border bg-card text-foreground/80 hover:text-secondary hover:border-secondary/40 transition-colors">
+                      {name} ↗
+                    </a>
+                  ) : (
+                    <span key={name} className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium border border-border bg-card text-foreground/80">{name}</span>
+                  )
+                })}
+              </div>
+            </div>
           )}
+
           {researchAreas.length > 0 && (
-            <div className="mt-3">
+            <div className="mb-4">
               <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Research areas</p>
               <ChipList items={researchAreas} />
             </div>
           )}
-        </Card>
-      )}
 
-      {/* Campus life */}
-      {campusStats.length > 0 && (
-        <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Tent size={15} className="text-secondary" /> Campus life</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {campusStats.map(s => <Fact key={s.label} label={s.label} value={s.value} />)}
-          </div>
+          {campusStats.length > 0 && (
+            <div className="mb-4">
+              <p className="text-[12px] font-medium text-foreground/80 mb-2">Campus life</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {campusStats.map(s => <Fact key={s.label} label={s.label} value={s.value} />)}
+              </div>
+            </div>
+          )}
+
+          {campusResources.length > 0 && (
+            <div>
+              <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Explore &amp; get involved</p>
+              <div className="flex flex-wrap gap-2">
+                {campusResources.map(r => (
+                  <a key={r.label} href={r.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-medium border border-secondary/20 bg-secondary/10 text-secondary hover:bg-secondary/15 transition-colors">
+                    {r.label} ↗
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </Card>
       )}
 
