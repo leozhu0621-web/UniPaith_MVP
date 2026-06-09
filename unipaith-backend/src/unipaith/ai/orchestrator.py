@@ -115,6 +115,10 @@ class TurnContext:
     # discovery behavior is the fallback.
     guided: bool = False
     completion_breakdown: dict[str, float] | None = None
+    # Uni knowledge grounding (ai_uni_knowledge_v1) — a rendered, cited block of
+    # real programs/scholarships relevant to the student. Empty when off or no
+    # signal. Appended to the discovery state header so Uni references our data.
+    knowledge_summary: str = ""
 
 
 @dataclass
@@ -273,6 +277,19 @@ class Orchestrator:
         missing = ", ".join(verdict.missing_signals) if verdict and verdict.missing_signals else "—"
         cross_track = ctx.cross_track_summary or "(no other tracks started yet)"
         if ctx.track == "discovery":
+            # Uni knowledge grounding (ai_uni_knowledge_v1) — when a cited bundle
+            # is present, append it + the our-first / counselor-paced / honest
+            # instruction to whichever discovery header we return below.
+            grounding = ""
+            if ctx.knowledge_summary:
+                grounding = (
+                    f"\n\n{ctx.knowledge_summary}\n\n"
+                    "When you name a specific school/program/cost, PREFER the items above — "
+                    "they're real, from our data. Counselor-paced: weave in 1-2 only when "
+                    "relevant to what they've told you; never dump a list. If our data doesn't "
+                    "cover what they need, you may use general knowledge but stay tentative on "
+                    "specific numbers/deadlines and offer to look it up."
+                )
             if not ctx.guided:
                 # Unified Uni conversation — never push a track menu at the model.
                 return (
@@ -287,7 +304,7 @@ class Orchestrator:
                     f"{ctx.known_profile_summary or '(nothing yet)'}\n\n"
                     "## Recently captured signals (this session)\n\n"
                     f"{ctx.recent_signals_summary or '(none yet)'}"
-                )
+                ) + grounding
             # Guided (ai_uni_guided_v1) — lead one Discovery stage at a time.
             from unipaith.ai.journey import current_stage, stage_label
 
@@ -318,7 +335,7 @@ class Orchestrator:
                 f"{ctx.known_profile_summary or '(nothing yet)'}\n\n"
                 "## Recently captured signals (this session)\n\n"
                 f"{ctx.recent_signals_summary or '(none yet)'}"
-            )
+            ) + grounding
         return (
             f"## Current state\n\n"
             f"- Track: {ctx.track}\n"

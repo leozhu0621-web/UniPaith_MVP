@@ -53,3 +53,31 @@ def test_eval_passes_on_stage_turn() -> None:
     )
     assert r.passed
     assert r.reasons == []
+
+
+def test_grounding_flags_unhedged_specific_not_in_bundle() -> None:
+    from unipaith.ai.evals.uni_counselor import score_grounding_turn
+
+    r = score_grounding_turn(
+        assistant="Tuition there is exactly $54,000 a year.", knowledge_block=""
+    )
+    assert not r.passed and "unhedged_specific" in r.reasons
+
+
+def test_grounding_ok_when_specific_is_grounded() -> None:
+    from unipaith.ai.evals.uni_counselor import score_grounding_turn
+
+    r = score_grounding_turn(
+        assistant="Tuition there is $54,000 a year.",
+        knowledge_block="- Program at X · ~$54,000/yr tuition",
+    )
+    assert r.passed
+
+
+def test_grounding_ok_when_hedged() -> None:
+    from unipaith.ai.evals.uni_counselor import score_grounding_turn
+
+    r = score_grounding_turn(
+        assistant="Tuition is typically around $50,000 — worth verifying.", knowledge_block=""
+    )
+    assert r.passed

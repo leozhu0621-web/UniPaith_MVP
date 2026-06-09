@@ -13,6 +13,8 @@ vi.mock('../api/matching', () => ({
       confidence_score: '0.8',
       rationale_text: 'Coastal field station + strong aid.',
       band_label: 'target',
+      tuition: 18000,
+      acceptance_rate: 0.7,
     },
     {
       program_id: 'p2',
@@ -81,6 +83,8 @@ describe('FirstLookCard', () => {
     expect(screen.getByText(/Marine Science, B\.S\./)).toBeInTheDocument()
     expect(screen.getByText(/Environmental Sci/)).toBeInTheDocument()
     expect(screen.queryByText(/Should not show/)).not.toBeInTheDocument()
+    // Grounded cost/selectivity line from the catalog.
+    expect(screen.getByText(/\$18,000\/yr · 70% admit · target fit/)).toBeInTheDocument()
     fireEvent.click(screen.getByText(/Go deeper in Match/i))
     expect(await screen.findByText('EXPLORE PAGE')).toBeInTheDocument()
   })

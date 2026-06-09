@@ -186,3 +186,43 @@ def score_stage_turn(stage: str, assistant: str) -> CounselorVerdict:
     if not any(k in a for k in _STAGE_KEYWORDS.get(stage, ())):
         reasons.append("off_stage")
     return CounselorVerdict(passed=not reasons, reasons=reasons)
+
+
+# Knowledge grounding (ai_uni_knowledge_v1) — hedge words that make a non-grounded
+# specific acceptable ("typically around $50k, worth verifying").
+_HEDGES = (
+    "about",
+    "around",
+    "roughly",
+    "typically",
+    "usually",
+    "approximately",
+    "verify",
+    "check",
+    "varies",
+    "depends",
+    "ballpark",
+    "or so",
+    "~",
+)
+
+
+def score_grounding_turn(assistant: str, knowledge_block: str = "") -> CounselorVerdict:
+    """Flag a confident, specific dollar figure that isn't grounded or hedged.
+
+    Best-effort heuristic: if Uni states a specific dollar amount that doesn't
+    appear in the provided knowledge block and isn't hedged, flag it. Keeps the
+    our-first / honest-on-general-specifics stance enforceable in CI (no key).
+    """
+    reasons: list[str] = []
+    a = assistant.lower()
+    dollars = re.findall(r"\$\s?[\d,]{3,}", assistant)
+    if dollars:
+        hedged = any(h in a for h in _HEDGES)
+        block_dollars = {
+            d.replace(" ", "") for d in re.findall(r"\$\s?[\d,]{3,}", knowledge_block)
+        }
+        grounded = any(d.replace(" ", "") in block_dollars for d in dollars)
+        if not hedged and not grounded:
+            reasons.append("unhedged_specific")
+    return CounselorVerdict(passed=not reasons, reasons=reasons)

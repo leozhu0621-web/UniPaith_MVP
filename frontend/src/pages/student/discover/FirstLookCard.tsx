@@ -72,7 +72,15 @@ export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', 
         {ready && top.length > 0 && (
           <div className="mt-3 rounded-xl border border-border bg-card divide-y divide-border overflow-hidden">
             {top.map(m => {
-              const why = m.rationale_text || (m.band_label ? `${m.band_label} fit` : '')
+              const why = m.rationale_text || ''
+              // Grounded facts straight from the catalog — real cost + selectivity.
+              const facts = [
+                m.tuition != null ? `$${m.tuition.toLocaleString()}/yr` : null,
+                m.acceptance_rate != null ? `${Math.round(m.acceptance_rate * 100)}% admit` : null,
+                m.band_label ? `${m.band_label} fit` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')
               return (
                 <div key={m.program_id} className="flex items-center gap-3 px-3 py-2.5">
                   <DualRing
@@ -86,6 +94,7 @@ export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', 
                       {m.program_name}
                       {m.institution_name ? ` · ${m.institution_name}` : ''}
                     </div>
+                    {facts && <div className="text-xs text-muted-foreground">{facts}</div>}
                     {why && <div className="text-xs text-muted-foreground line-clamp-2">{why}</div>}
                   </div>
                 </div>

@@ -288,6 +288,14 @@ class Settings(BaseSettings):
     # behavior is used as the fallback. Flip per-environment.
     ai_uni_guided_v1: bool = False
 
+    # Uni knowledge grounding — when True, the discovery orchestrator is fed a
+    # cited "From your knowledge base" block of real programs (+ scholarships)
+    # relevant to the student's emerging profile, so Uni references our catalog
+    # our-knowledge-first / counselor-paced. Independent of ai_uni_guided_v1;
+    # requires the LLM discovery path (ai_discovery_v2_enabled). Off → today's
+    # ungrounded conversation. Flip per-environment.
+    ai_uni_knowledge_v1: bool = False
+
     # Plan 2 — Workshop coach LLM. When True, WorkshopFeedbackService routes
     # essay/interview/test feedback through the WorkshopCoach agent (with
     # two-layer guardrail: schema-blind heuristics + LLM judge). On coach

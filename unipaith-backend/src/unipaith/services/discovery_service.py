@@ -178,6 +178,22 @@ class DiscoveryService:
 
         return session
 
+    async def _knowledge_summary(self, snapshot) -> str:
+        """Rendered grounding block for the orchestrator, gated on
+        ai_uni_knowledge_v1. Never raises — empty string on off/error so the
+        conversation degrades to the ungrounded path."""
+        from unipaith.config import settings
+
+        if not settings.ai_uni_knowledge_v1:
+            return ""
+        try:
+            from unipaith.services.uni_knowledge import UniKnowledgeRetriever
+
+            bundle = await UniKnowledgeRetriever(self.db).retrieve(snapshot)
+            return bundle.render()
+        except Exception:
+            return ""
+
     async def append_message(
         self,
         user_id: UUID,
@@ -380,6 +396,7 @@ class DiscoveryService:
                 history=history_msgs,
                 guided=settings.ai_uni_guided_v1,
                 completion_breakdown=session.completion_breakdown or {},
+                knowledge_summary=await self._knowledge_summary(snapshot),
             )
             orch_response = await get_orchestrator().respond(
                 ctx=ctx,
@@ -785,6 +802,7 @@ class DiscoveryService:
                 history=history_msgs,
                 guided=settings.ai_uni_guided_v1,
                 completion_breakdown=session.completion_breakdown or {},
+                knowledge_summary=await self._knowledge_summary(snapshot),
             )
 
             text_buffer: list[str] = []
