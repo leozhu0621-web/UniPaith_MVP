@@ -112,6 +112,13 @@ SCHOOL_OUTCOMES: dict = {
         "athletics_division": "NCAA Division III",
         "arts_groups": 60,
         "residence_halls": 20,
+        "student_orgs": "500+",
+        "greek_life": "~25% of undergrads",
+        "housing": "Guaranteed 4 years",
+    },
+    "campus_basics": {
+        "location": "Cambridge, Massachusetts",
+        "academic_calendar": "4-1-4 — fall, January IAP, spring",
     },
     "flagship": {
         "nobel_laureates": 106,
