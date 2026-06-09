@@ -33,6 +33,7 @@ async def list_upcoming_events(
     school_id: UUID | None = Query(None),
     event_type: str | None = Query(None),
     limit: int = Query(20, ge=1, le=100),
+    institution_scope: bool = Query(False),
     db: AsyncSession = Depends(get_db),
 ):
     svc = EventService(db)
@@ -42,6 +43,7 @@ async def list_upcoming_events(
         school_id=school_id,
         event_type=event_type,
         limit=limit,
+        institution_scope=institution_scope,
     )
 
 

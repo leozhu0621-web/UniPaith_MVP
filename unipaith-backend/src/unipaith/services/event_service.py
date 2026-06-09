@@ -211,6 +211,7 @@ class EventService:
         school_id: UUID | None = None,
         event_type: str | None = None,
         limit: int = 20,
+        institution_scope: bool = False,
     ) -> list[Event]:
         """List published upcoming events with optional filters."""
         now = datetime.now(UTC)
@@ -225,6 +226,10 @@ class EventService:
             query = query.where(Event.institution_id == institution_id)
         if school_id:
             query = query.where(Event.school_id == school_id)
+        if institution_scope:
+            # Institution page: institution-wide events only (no school/program
+            # copies), so the same event doesn't appear twice.
+            query = query.where(Event.school_id.is_(None), Event.program_id.is_(None))
         if event_type:
             query = query.where(Event.event_type == event_type)
 

@@ -1133,6 +1133,7 @@ class PostResponse(BaseModel):
     visibility: dict | None = None
     source: str = "manual"
     source_url: str | None = None
+    image_url: str | None = None
     # Scope tags for school/program-specific updates (channel-sourced ingest).
     school_id: UUID | None = None
     program_id: UUID | None = None

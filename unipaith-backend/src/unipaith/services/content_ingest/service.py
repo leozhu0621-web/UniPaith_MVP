@@ -163,6 +163,7 @@ class ContentIngestService:
                 existing.title = it.title
                 existing.body = it.body or it.title
                 existing.source_url = it.url
+                existing.image_url = it.image_url
                 existing.published_at = it.published_at
                 continue
             self.session.add(
@@ -175,6 +176,7 @@ class ContentIngestService:
                     source=_NEWS,
                     external_id=it.external_id,
                     source_url=it.url,
+                    image_url=it.image_url,
                     status="published",
                     published_at=it.published_at,
                 )
@@ -217,6 +219,7 @@ class ContentIngestService:
                 existing.end_time = end
                 existing.location = it.location
                 existing.source_url = it.url
+                existing.image_url = it.image_url
                 continue
             self.session.add(
                 Event(
@@ -231,6 +234,7 @@ class ContentIngestService:
                     source=_EVENTS,
                     external_id=it.external_id,
                     source_url=it.url,
+                    image_url=it.image_url,
                     # "upcoming" is the live state the public list endpoint filters on
                     # (EventService.create + list_upcoming_events). Was "live" — a bug
                     # that kept ingested events from ever surfacing.
@@ -297,6 +301,7 @@ def _seed_scope_sync(
                     source=_NEWS,
                     external_id=it.external_id,
                     source_url=it.url,
+                    image_url=it.image_url,
                     status="published",
                     published_at=it.published_at,
                 )
@@ -334,6 +339,7 @@ def _seed_scope_sync(
                     source=_EVENTS,
                     external_id=it.external_id,
                     source_url=it.url,
+                    image_url=it.image_url,
                     status="upcoming",
                 )
             )
@@ -341,6 +347,53 @@ def _seed_scope_sync(
 
     session.flush()
     return counts
+
+
+def backfill_images_sync(
+    session: Session,
+    *,
+    inst_id: UUID,
+    cfg: dict | None,
+    school_id: UUID | None = None,
+    program_id: UUID | None = None,
+) -> int:
+    """Sync, fail-soft: set image_url on EXISTING posts that don't have one yet.
+
+    seed_populate_sync only inserts new rows, so rows created before image_url
+    existed never get a cover image until the daily refresh. This backfills them
+    on deploy by re-fetching the news feed and matching by external_id.
+    """
+    cfg = cfg or {}
+    news_url = cfg.get("news_rss")
+    if not news_url:
+        return 0
+    try:
+        with httpx.Client(timeout=12.0, follow_redirects=True, headers=_HEADERS) as client:
+            resp = client.get(news_url)
+            resp.raise_for_status()
+            items = NewsRssSource().parse(resp.text)
+    except Exception as exc:  # noqa: BLE001 — best-effort; never break the migration
+        logger.warning("content_ingest(backfill): %s failed: %s", news_url, exc)
+        return 0
+    updated = 0
+    for it in items:
+        if not it.image_url:
+            continue
+        row = session.scalar(
+            select(InstitutionPost).where(
+                InstitutionPost.institution_id == inst_id,
+                InstitutionPost.school_id == school_id,
+                InstitutionPost.program_id == program_id,
+                InstitutionPost.source == _NEWS,
+                InstitutionPost.external_id == it.external_id,
+                InstitutionPost.image_url.is_(None),
+            )
+        )
+        if row is not None:
+            row.image_url = it.image_url
+            updated += 1
+    session.flush()
+    return updated
 
 
 def seed_populate_sync(session: Session, institution: Institution) -> dict:

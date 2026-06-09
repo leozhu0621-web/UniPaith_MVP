@@ -53,6 +53,7 @@ class EventResponse(BaseModel):
     status: str | None
     source: str = "manual"
     source_url: str | None = None
+    image_url: str | None = None
     created_at: datetime
 
 

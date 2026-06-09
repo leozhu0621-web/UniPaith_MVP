@@ -1649,12 +1649,19 @@ async def get_public_posts(
     institution_id: UUID,
     school_id: UUID | None = Query(None),
     program_id: UUID | None = Query(None),
+    institution_scope: bool = Query(False),
     db: AsyncSession = Depends(get_db),
 ):
     """Public endpoint — returns published posts for an institution, optionally
-    scoped to a school or program (channel-sourced Updates)."""
+    scoped to a school or program (channel-sourced Updates). institution_scope
+    restricts to institution-wide items (no school/program copies)."""
     svc = _svc(db)
-    return await svc.get_public_posts(institution_id, school_id=school_id, program_id=program_id)
+    return await svc.get_public_posts(
+        institution_id,
+        school_id=school_id,
+        program_id=program_id,
+        institution_scope=institution_scope,
+    )
 
 
 # --- Campaign Action Tracking (student-facing) ---

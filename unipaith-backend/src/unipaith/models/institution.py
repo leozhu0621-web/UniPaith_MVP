@@ -556,6 +556,8 @@ class Event(Base):
     source: Mapped[str] = mapped_column(String(24), default="manual", server_default="manual")
     external_id: Mapped[str | None] = mapped_column(String(500))
     source_url: Mapped[str | None] = mapped_column(String(1000))
+    # Cover image straight from the channel feed (news-grid card). Events have none.
+    image_url: Mapped[str | None] = mapped_column(String(1000))
     # Scope tagging for school/program-specific events (keyword-relevant ingest).
     school_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("schools.id", ondelete="SET NULL"), index=True
@@ -738,6 +740,8 @@ class InstitutionPost(Base):
     source: Mapped[str] = mapped_column(String(24), default="manual", server_default="manual")
     external_id: Mapped[str | None] = mapped_column(String(500))
     source_url: Mapped[str | None] = mapped_column(String(1000))
+    # Cover image straight from the channel feed (news-grid card).
+    image_url: Mapped[str | None] = mapped_column(String(1000))
     # Scope tagging for school/program-specific updates (keyword-relevant ingest).
     school_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("schools.id", ondelete="SET NULL"), index=True
