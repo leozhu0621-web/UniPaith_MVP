@@ -186,6 +186,14 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert mban.faculty_contacts["lead"][0]["name"] == "Dimitris Bertsimas"
     assert len(mban.faculty_contacts["lead"]) >= 6  # real faculty list, not one name
     assert mban.faculty_contacts["directory_url"]
+    # Dedicated international-student requirements (English + visa) with sources.
+    intl = mban.application_requirements["international"]
+    assert intl["english"]["required"] is False
+    assert "F-1" in intl["visa"]["type"]
+    assert any("iso.mit.edu" in s["url"] for s in intl["sources"])
+    # Generic grad/undergrad templates also carry an international block.
+    eecs = next(p for p in progs if p.slug == "mit-eecs-bs")
+    assert eecs.application_requirements["international"]["visa"]["type"]
     assert len(mban.external_reviews["themes"]) >= 4
     assert mban.external_reviews["sources"] and all(
         s["url"].startswith("http") for s in mban.external_reviews["sources"]
