@@ -142,7 +142,7 @@ class ContentIngestService:
                     source=_EVENTS,
                     external_id=it.external_id,
                     source_url=it.url,
-                    status="live",
+                    status="upcoming",
                 )
             )
             created += 1
@@ -222,7 +222,7 @@ def seed_populate_sync(session: Session, institution: Institution) -> dict:
                     source=_EVENTS,
                     external_id=it.external_id,
                     source_url=it.url,
-                    status="live",
+                    status="upcoming",
                 )
             )
             counts["events"] += 1

@@ -63,6 +63,10 @@ class EventsFeedSource(ChannelSource):
                     location=loc[:500] if loc else None,
                 )
             )
+        # Drop events that have already ended; keep upcoming/ongoing only so the
+        # cap is not consumed by years of historical calendar entries.
+        now = datetime.now(UTC)
+        items = [i for i in items if (i.end_time or i.start_time or now) >= now]
         # Soonest upcoming first; cap.
         items.sort(key=lambda i: i.start_time or datetime.max.replace(tzinfo=UTC))
         return items[: self.max_items]
