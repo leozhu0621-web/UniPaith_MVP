@@ -25,6 +25,15 @@ function renderInlineMarkdown(text: string): ReactNode[] {
   })
 }
 
+/** Host of a source URL, for "via {host}" channel attribution. */
+function sourceHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return url
+  }
+}
+
 /** Institution update card — Spec 22 §4 / §12. Editorial cobalt shell; gold pin marker. */
 export default function PostCard({ post }: Props) {
   const [expanded, setExpanded] = useState(false)
@@ -90,6 +99,16 @@ export default function PostCard({ post }: Props) {
               </div>
             ))}
           </div>
+        )}
+        {post.source && post.source !== 'manual' && post.source_url && (
+          <a
+            href={post.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-block text-[10px] text-muted-foreground hover:text-secondary hover:underline"
+          >
+            via {sourceHost(post.source_url)} ↗
+          </a>
         )}
       </div>
     </div>
