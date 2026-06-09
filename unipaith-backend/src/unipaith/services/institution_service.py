@@ -2626,10 +2626,17 @@ class InstitutionService:
                 InstitutionPost.published_at.desc().nulls_last(),
             )
         )
+        # School/program feeds are keyword-scoped slices; the default institution
+        # view (no scope param) shows only institution-wide rows, never the
+        # school-/program-tagged ingest copies.
         if school_id is not None:
             query = query.where(InstitutionPost.school_id == school_id)
+        else:
+            query = query.where(InstitutionPost.school_id.is_(None))
         if program_id is not None:
             query = query.where(InstitutionPost.program_id == program_id)
+        else:
+            query = query.where(InstitutionPost.program_id.is_(None))
         result = await self.db.execute(query)
         posts = list(result.scalars().all())
         # Spec 27 §2.3 — public pages exclude posts scoped non-public.

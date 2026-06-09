@@ -219,12 +219,19 @@ class EventService:
             Event.status == "upcoming",
         )
 
+        # School/program feeds are keyword-scoped slices; an unscoped listing
+        # (e.g. the institution view) shows only institution-wide rows, never the
+        # school-/program-tagged ingest copies.
         if program_id:
             query = query.where(Event.program_id == program_id)
+        else:
+            query = query.where(Event.program_id.is_(None))
         if institution_id:
             query = query.where(Event.institution_id == institution_id)
         if school_id:
             query = query.where(Event.school_id == school_id)
+        else:
+            query = query.where(Event.school_id.is_(None))
         if event_type:
             query = query.where(Event.event_type == event_type)
 

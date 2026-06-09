@@ -217,6 +217,10 @@ class ContentIngestService:
                 existing.end_time = end
                 existing.location = it.location
                 existing.source_url = it.url
+                # Heal rows seeded/ingested before the status fix (stored "live"),
+                # which list_upcoming_events filters out. The item is still in the
+                # feed → it is upcoming; "cancelled" was already skipped above.
+                existing.status = "upcoming"
                 continue
             self.session.add(
                 Event(
