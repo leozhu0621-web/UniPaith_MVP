@@ -107,7 +107,8 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   // (report card · rankings · distinction · facts). A ?tab= param still wins.
   const paramTab = searchParams.get('tab') as TabId | null
   const defaultTab: TabId = 'overview'
-  const tab: TabId = paramTab ?? defaultTab
+  // Events + Updates merged into one tab; map legacy ?tab=updates deep links.
+  const tab: TabId = (paramTab === 'updates' ? 'events' : paramTab) ?? defaultTab
   const setTab = (next: TabId) => {
     const sp = new URLSearchParams(searchParams)
     sp.set('tab', next)
@@ -218,8 +219,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
     { id: 'about', label: 'About' },
     { id: 'schools', label: `Schools${schoolList.length ? ` (${schoolList.length})` : ''}` },
     { id: 'programs', label: `Programs${programList.length ? ` (${programList.length})` : ''}` },
-    { id: 'events', label: 'Events' },
-    { id: 'updates', label: 'Updates' },
+    { id: 'events', label: 'Events & Updates' },
   ]
 
   // Inquiry types offered in the Request-info modal — the institution's
@@ -359,25 +359,31 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
           )
         )}
         {tab === 'events' && (
-          eventsQ.isError ? (
-            <QueryError variant="inline" detail="We couldn't load this school's events." onRetry={() => eventsQ.refetch()} />
-          ) : (
-          <EventsTab
-            events={eventList}
-            institutionName={inst.name}
-            isAuthenticated={isAuthenticated}
-            rsvpSet={rsvpSet}
-            onRsvp={onRsvp}
-            rsvpPending={rsvpMut.isPending}
-          />
-          )
-        )}
-        {tab === 'updates' && (
-          postsQ.isError ? (
-            <QueryError variant="inline" detail="We couldn't load this school's updates." onRetry={() => postsQ.refetch()} />
-          ) : (
-            <UpdatesTab posts={postList} institutionName={inst.name} />
-          )
+          <div className="space-y-6">
+            <section>
+              <h2 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Events</h2>
+              {eventsQ.isError ? (
+                <QueryError variant="inline" detail="We couldn't load this school's events." onRetry={() => eventsQ.refetch()} />
+              ) : (
+                <EventsTab
+                  events={eventList}
+                  institutionName={inst.name}
+                  isAuthenticated={isAuthenticated}
+                  rsvpSet={rsvpSet}
+                  onRsvp={onRsvp}
+                  rsvpPending={rsvpMut.isPending}
+                />
+              )}
+            </section>
+            <section>
+              <h2 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Updates</h2>
+              {postsQ.isError ? (
+                <QueryError variant="inline" detail="We couldn't load this school's updates." onRetry={() => postsQ.refetch()} />
+              ) : (
+                <UpdatesTab posts={postList} institutionName={inst.name} />
+              )}
+            </section>
+          </div>
         )}
       </div>
 
@@ -777,8 +783,10 @@ function AboutTab({ inst }: { inst: Institution }) {
     basics.location ? { label: 'Location', value: String(basics.location) } : null,
     inst.campus_setting ? { label: 'Campus setting', value: titleCase(inst.campus_setting) } : null,
     basics.academic_calendar ? { label: 'Academic calendar', value: String(basics.academic_calendar) } : null,
+    // Campus size/description shown as its own box (was a caption line below).
+    inst.campus_description ? { label: 'Campus', value: trimSource(inst.campus_description) } : null,
   ].filter(Boolean) as { label: string; value: string }[]
-  const nothing = !inst.campus_description && !inst.description_text && !supportKeys.length && !policyKeys.length && !intlKeys.length && !facts.length
+  const nothing = !inst.description_text && !supportKeys.length && !policyKeys.length && !intlKeys.length && !facts.length
 
   if (nothing) {
     return <EmptyBlock icon={BookOpen} title="More about this school is coming" body="Institution details haven't been published yet. Explore the schools and programs in the meantime." />
@@ -852,22 +860,17 @@ function AboutTab({ inst }: { inst: Institution }) {
         </Card>
       )}
 
-      {(facts.length > 0 || inst.campus_description) && (
+      {facts.length > 0 && (
         <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-3">Campus &amp; basics</h2>
-          {facts.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-              {facts.map(f => (
-                <div key={f.label} className="px-3 py-2 rounded-lg bg-muted/60 border border-border/50">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{f.label}</p>
-                  <p className="text-sm font-medium text-foreground mt-0.5">{f.value}</p>
-                </div>
-              ))}
-            </div>
-          )}
-          {inst.campus_description && (
-            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trimSource(inst.campus_description)}</p>
-          )}
+          <h2 className="font-semibold text-foreground mb-3">Basic Info</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {facts.map(f => (
+              <div key={f.label} className="px-3 py-2 rounded-lg bg-muted/60 border border-border/50">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{f.label}</p>
+                <p className="text-sm font-medium text-foreground mt-0.5">{f.value}</p>
+              </div>
+            ))}
+          </div>
         </Card>
       )}
 
@@ -1096,6 +1099,10 @@ function EventsTab({ events, institutionName, isAuthenticated, rsvpSet, onRsvp, 
       {events.map(ev => {
         const rsvped = rsvpSet.has(ev.id)
         const when = formatEventTime(ev.start_time)
+        // Channel-sourced events (news/calendar feeds) live on the institution's
+        // own platform — there's nothing to RSVP to here, just add-to-calendar
+        // + the source link. Only manual (school-authored) events take RSVPs.
+        const isChannel = !!(ev.source && ev.source !== 'manual')
         return (
           <Card key={ev.id} className="p-4 flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -1110,9 +1117,11 @@ function EventsTab({ events, institutionName, isAuthenticated, rsvpSet, onRsvp, 
               )}
             </div>
             <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-              <Button size="sm" variant={rsvped ? 'tertiary' : 'secondary'} onClick={() => onRsvp(ev.id)} disabled={rsvpPending}>
-                {rsvped ? <><Check size={13} className="mr-1" /> Going</> : (isAuthenticated ? 'RSVP' : 'Sign in to RSVP')}
-              </Button>
+              {!isChannel && (
+                <Button size="sm" variant={rsvped ? 'tertiary' : 'secondary'} onClick={() => onRsvp(ev.id)} disabled={rsvpPending}>
+                  {rsvped ? <><Check size={13} className="mr-1" /> Going</> : (isAuthenticated ? 'RSVP' : 'Sign in to RSVP')}
+                </Button>
+              )}
               <button
                 onClick={() => addEventToCalendar(ev.id, ev.event_name).catch(() => showToast('Couldn’t generate the calendar file.', 'error'))}
                 className="inline-flex items-center gap-1 text-[11px] text-secondary hover:underline"

@@ -52,13 +52,21 @@ export default function RelatedSidebar({
             <h3 className="text-sm font-semibold text-foreground">Upcoming Events</h3>
           </div>
           <div className="space-y-2">
-            {upcomingEvents.map((ev: any) => (
+            {upcomingEvents.map((ev: any) => {
+              // Channel-sourced events (feeds) live on the host's platform — no
+              // RSVP here, just the source link. Only manual events take RSVPs.
+              const isChannel = !!(ev.source && ev.source !== 'manual')
+              const host = (() => {
+                if (!isChannel || !ev.source_url) return null
+                try { return new URL(ev.source_url).hostname.replace(/^www\./, '') } catch { return null }
+              })()
+              return (
               <div key={ev.id} className="px-3 py-2.5 rounded-lg border border-border hover:border-secondary/30 transition-colors">
-                <p className="text-xs font-semibold text-foreground line-clamp-2">{ev.title}</p>
+                <p className="text-xs font-semibold text-foreground line-clamp-2">{ev.title || ev.event_name}</p>
                 <p className="text-[10px] text-foreground mt-0.5">
-                  {formatDate(ev.event_datetime || ev.starts_at)}
+                  {formatDate(ev.event_datetime || ev.starts_at || ev.start_time)}
                 </p>
-                {onRsvp && (
+                {!isChannel && onRsvp && (
                   <button
                     onClick={() => onRsvp(ev.id)}
                     className={`mt-2 text-[11px] font-medium px-2 py-1 rounded-md transition-colors ${
@@ -70,8 +78,14 @@ export default function RelatedSidebar({
                     {rsvpedIds.has(ev.id) ? '✓ Going' : 'RSVP'}
                   </button>
                 )}
+                {host && ev.source_url && (
+                  <a href={ev.source_url} target="_blank" rel="noopener noreferrer" className="block mt-1 text-[10px] text-muted-foreground hover:text-secondary hover:underline">
+                    via {host} ↗
+                  </a>
+                )}
               </div>
-            ))}
+              )
+            })}
           </div>
         </Card>
       )}

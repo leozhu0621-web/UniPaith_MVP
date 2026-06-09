@@ -254,7 +254,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
             ['overview', 'Overview'],
             ['about', 'About'],
             ['programs', `Programs${progCount ? ` (${progCount})` : ''}`],
-            ['updates', 'Updates'],
+            ['updates', 'Events & Updates'],
           ] as const).map(([id, label]) => (
             <button
               key={id}
