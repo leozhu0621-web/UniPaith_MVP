@@ -78,6 +78,7 @@ class EventsFeedSource(ChannelSource):
                 body=p.body,
                 url=p.url,
                 start_time=p.published_at,
+                image_url=p.image_url,
             )
             for p in posts
             if p.published_at
