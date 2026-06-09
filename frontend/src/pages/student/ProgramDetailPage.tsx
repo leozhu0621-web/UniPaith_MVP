@@ -598,7 +598,7 @@ export default function ProgramDetailPage() {
                     <BookOpen size={14} className="text-secondary" />
                     <h3 className="font-semibold text-foreground">Curriculum & Structure</h3>
                   </div>
-                  {tracksMeta.note && (
+                  {tracksMeta.note && tracksMeta.curriculum.length === 0 && (
                     <p className="text-sm text-foreground mb-3">{tracksMeta.note}</p>
                   )}
                   {tracksMeta.concentrations.length > 0 && (
@@ -612,15 +612,18 @@ export default function ProgramDetailPage() {
                     </div>
                   )}
                   {tracksMeta.curriculum.length > 0 && (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {tracksMeta.curriculum.map((term, i) => (
-                        <div key={i} className="rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+                        <div key={i}>
                           <p className="text-[10px] font-semibold text-secondary uppercase tracking-wider mb-1.5">{term.term}</p>
-                          <div className="flex flex-wrap gap-1.5">
+                          <ul className="space-y-1">
                             {term.courses.map((c, j) => (
-                              <span key={j} className="px-2 py-0.5 text-[11px] rounded-md bg-card text-foreground border border-border/60">{c}</span>
+                              <li key={j} className="flex items-start gap-2 text-sm text-foreground">
+                                <span className="mt-[7px] w-1 h-1 rounded-full bg-secondary/50 flex-shrink-0" aria-hidden="true" />
+                                {c}
+                              </li>
                             ))}
-                          </div>
+                          </ul>
                         </div>
                       ))}
                     </div>

@@ -1501,13 +1501,44 @@ _FACULTY_BY_SLUG: dict[str, dict] = {
     "mit-sloan-mban": {
         "lead": [
             {
-                "name": "Prof. Dimitris Bertsimas",
-                "title": "Faculty Director — founded the MBAn (2013)",
+                "name": "Dimitris Bertsimas",
+                "title": "Faculty Director · Boeing Professor of Operations Research",
                 "url": "https://mitsloan.mit.edu/faculty/directory/dimitris-bertsimas",
+            },
+            {
+                "name": "Georgia Perakis",
+                "title": "Professor of Operations Research, Statistics & Operations Management",
+            },
+            {
+                "name": "Negin (Nikki) Golrezaei",
+                "title": "Associate Professor of Operations Management",
+            },
+            {
+                "name": "Alexandre Jacquillat",
+                "title": "Associate Professor of Operations Research & Statistics",
+                "url": "https://mitsloan.mit.edu/faculty/directory/alexandre-jacquillat",
+            },
+            {
+                "name": "Rama Ramakrishnan",
+                "title": "Professor of the Practice, AI/ML",
+                "url": "https://mitsloan.mit.edu/faculty/directory/rama-ramakrishnan",
+            },
+            {
+                "name": "Daniel Freund",
+                "title": "Associate Professor of Operations Management",
+                "url": "https://mitsloan.mit.edu/faculty/directory/daniel-freund",
+            },
+            {
+                "name": "Chara Podimata",
+                "title": "Assistant Professor of Operations Research & Statistics",
+                "url": "https://mitsloan.mit.edu/faculty/directory/chara-podimata",
             },
         ],
         "note": "Taught by MIT Sloan and MIT Operations Research Center faculty.",
-        "directory_url": "https://mitsloan.mit.edu/faculty",
+        "directory_url": (
+            "https://mitsloan.mit.edu/faculty/academic-groups/"
+            "operations-research-statistics/faculty"
+        ),
     },
 }
 
