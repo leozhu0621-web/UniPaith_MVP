@@ -173,6 +173,10 @@ class School(Base):
     slug: Mapped[str | None] = mapped_column(String(200))
     last_ingested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     field_provenance: Mapped[dict | None] = mapped_column(JSONB)
+    # Channel feeds + official social links for keyword-relevant Events/Updates
+    # (mirrors Institution.content_sources): news_rss / events_feed / keywords /
+    # news_curated / social.
+    content_sources: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -295,6 +299,9 @@ class Program(Base):
     last_ingested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Per-field provenance: {field: {source, source_url, confidence, fetched_at}}.
     field_provenance: Mapped[dict | None] = mapped_column(JSONB)
+    # Channel feeds + official social links for keyword-relevant Events/Updates
+    # (mirrors Institution.content_sources); program-scoped, tagged on ingest.
+    content_sources: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -549,6 +556,10 @@ class Event(Base):
     source: Mapped[str] = mapped_column(String(24), default="manual", server_default="manual")
     external_id: Mapped[str | None] = mapped_column(String(500))
     source_url: Mapped[str | None] = mapped_column(String(1000))
+    # Scope tagging for school/program-specific events (keyword-relevant ingest).
+    school_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("schools.id", ondelete="SET NULL"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -727,6 +738,13 @@ class InstitutionPost(Base):
     source: Mapped[str] = mapped_column(String(24), default="manual", server_default="manual")
     external_id: Mapped[str | None] = mapped_column(String(500))
     source_url: Mapped[str | None] = mapped_column(String(1000))
+    # Scope tagging for school/program-specific updates (keyword-relevant ingest).
+    school_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("schools.id", ondelete="SET NULL"), index=True
+    )
+    program_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("programs.id", ondelete="SET NULL"), index=True
+    )
     scheduled_for: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_template: Mapped[bool] = mapped_column(Boolean, default=False)

@@ -284,6 +284,52 @@ _SCHOOL_WEBSITE: dict[str, str] = {
     "MIT Stephen A. Schwarzman College of Computing": "https://computing.mit.edu/",
 }
 
+# ── Channel feeds + official social links for keyword-relevant Events/Updates ──
+# All URLs live-verified 2026-06-09 and adversarially confirmed official (see
+# docs/superpowers/specs/2026-06-09-school-program-events-updates-design.md §3).
+#   - Sloan news topic feed is MIT's own Sloan tagging → curated (gate bypassed).
+#   - MBAn uses MIT's operations-research topic feed (its home discipline) +
+#     keyword gate; events come from the MIT calendar keyword search + gate.
+#   - Sloan's 5 social handles are the official mitsloan.mit.edu footer links;
+#     MBAn inherits Sloan's links + the ORC's X (no unverified @mit.analytics).
+_SLOAN_CONTENT: dict = {
+    "news_rss": "https://news.mit.edu/rss/topic/sloan-school-management",
+    "news_curated": True,
+    "events_feed": {
+        "url": "https://calendar.mit.edu/search/events.ics?search=sloan",
+        "type": "ical",
+    },
+    "keywords": ["sloan", "mit sloan"],
+    "social": {
+        "instagram": "https://www.instagram.com/mitsloan/",
+        "linkedin": "https://www.linkedin.com/company/mit-sloan-school-of-management",
+        "x": "https://twitter.com/mitsloan",
+        "youtube": "https://www.youtube.com/user/MITSloan",
+        "facebook": "https://www.facebook.com/MITSloan",
+    },
+}
+_MBAN_CONTENT: dict = {
+    "news_rss": "https://news.mit.edu/rss/topic/operations-research",
+    "news_curated": False,
+    "events_feed": {
+        "url": "https://calendar.mit.edu/search/events.ics?search=business+analytics",
+        "type": "ical",
+    },
+    "keywords": [
+        "mban",
+        "business analytics",
+        "master of business analytics",
+        "operations research",
+    ],
+    "social": {
+        "instagram": "https://www.instagram.com/mitsloan/",
+        "linkedin": "https://www.linkedin.com/company/mit-sloan-school-of-management",
+        "x": "https://x.com/orcenter",
+        "youtube": "https://www.youtube.com/user/MITSloan",
+        "facebook": "https://www.facebook.com/MITSloan",
+    },
+}
+
 # ── The program catalog (real degree programs, organized by school) ────────
 # slug = idempotency key. degree_type ∈ {bachelors, masters, phd}. tuition /
 # acceptance_rate are left null: the institution net price and admit rate are
@@ -1878,11 +1924,18 @@ def apply(session: Session) -> bool:
     _gallery = [u for u in (inst.media_gallery or []) if u != _CAMPUS_PHOTO]
     inst.media_gallery = [_CAMPUS_PHOTO, *_gallery]
     # Public channel feeds → auto-sourced Updates (news) + Events (calendar).
-    # Verified live; social handles reserved for the Phase-2 social pull.
+    # Institution-wide (no keywords) → kept wholesale. Social handles verified
+    # official from www.mit.edu / socialmediahub.mit.edu (2026-06-09).
     inst.content_sources = {
         "news_rss": "https://news.mit.edu/rss/feed",
         "events_feed": {"url": "https://calendar.mit.edu/calendar.ics", "type": "ical"},
-        "social": {"x": None, "instagram": None, "linkedin": None, "youtube": None},
+        "social": {
+            "instagram": "https://www.instagram.com/mit/",
+            "linkedin": "https://www.linkedin.com/school/mit/",
+            "x": "https://x.com/mit",
+            "youtube": "https://www.youtube.com/mit",
+            "facebook": "https://www.facebook.com/MITnews",
+        },
     }
     session.flush()
     school_by_name = _apply_schools(session, inst)
@@ -1906,6 +1959,10 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
         sc.sort_order = spec["sort_order"]
         sc.catalog_source = "curated"
         sc.website_url = _SCHOOL_WEBSITE.get(spec["name"])
+        # Sloan is the standard-setting school: its own keyword-relevant feeds +
+        # official social links. Other schools carry none yet (follow-up).
+        if spec["name"] == _SLOAN:
+            sc.content_sources = _SLOAN_CONTENT
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this
     # is FK-safe (any orphaned programs are handled by the program reconcile).
@@ -1975,6 +2032,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.school_id = school_by_name[spec["school"]].id
         p.is_published = True
         p.catalog_source = "curated"
+        # MBAn is the standard-setting program: its own keyword-relevant feeds
+        # (operations-research news + business-analytics calendar) + social.
+        if spec["slug"] == "mit-sloan-mban":
+            p.content_sources = _MBAN_CONTENT
         p.delivery_format = spec.get("delivery_format", "in_person")
         # Tuition by program (MIT official 2025-26 rates). Standard degree
         # programs pay MIT's single published tuition; PhDs are fully funded;

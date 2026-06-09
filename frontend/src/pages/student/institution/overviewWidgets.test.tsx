@@ -32,12 +32,13 @@ describe('RankingBadge', () => {
 })
 
 describe('AdmissionsFunnel', () => {
-  it('shows applied, admitted, the acceptance rate, and the cycle', () => {
+  it('shows applied, admitted, the acceptance rate, and the cycle (cycle as hover tooltip)', () => {
     render(<AdmissionsFunnel applicants={29281} admits={1334} rate={0.0455} cycle="Class of 2029" />)
     expect(screen.getByText('29,281')).toBeInTheDocument()
     expect(screen.getByText('1,334')).toBeInTheDocument()
     expect(screen.getByText('4.5%')).toBeInTheDocument()
-    expect(screen.getByText('Class of 2029')).toBeInTheDocument()
+    // The cycle is a declutter hover tooltip on the funnel container, not a visible caption.
+    expect(screen.getByTestId('admissions-funnel')).toHaveAttribute('title', 'Class of 2029')
   })
 })
 

@@ -36,6 +36,7 @@ class EventResponse(BaseModel):
     id: UUID
     institution_id: UUID
     program_id: UUID | None
+    school_id: UUID | None = None
     event_name: str
     event_type: str | None
     description: str | None

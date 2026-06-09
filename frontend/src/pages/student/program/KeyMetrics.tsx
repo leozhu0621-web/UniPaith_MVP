@@ -511,20 +511,15 @@ function MetricTile({ tile }: { tile: Tile }) {
         </span>
       </div>
 
-      {/* Hero value — bold, tabular, truncates if too wide */}
+      {/* Hero value — bold, tabular, truncates if too wide. The editorial
+          context qualifier is folded into the hover title to declutter the
+          tile (was a printed sub-line under every stat). */}
       <p
         className={`text-[26px] font-bold tracking-tight tabular-nums leading-[1.1] ${VALUE_COLOR[tile.tone]} truncate`}
-        title={tile.value}
+        title={tile.context ? `${tile.value} — ${tile.context}` : tile.value}
       >
         {tile.value}
       </p>
-
-      {/* Context — editorial subtitle */}
-      {tile.context && (
-        <p className="text-[11.5px] text-muted-foreground mt-2 leading-snug line-clamp-2">
-          {tile.context}
-        </p>
-      )}
     </div>
   )
 }

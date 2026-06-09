@@ -33,6 +33,30 @@ def to_utc(dt: datetime | None) -> datetime | None:
     return dt.astimezone(UTC)
 
 
+def passes_relevance(
+    item: NormalizedItem, keywords: list[str] | None, curated: bool = False
+) -> bool:
+    """Keep an item only when it is genuinely relevant to the scope.
+
+    Encodes the rule: *a MIT post that contains "Sloan" counts as Sloan-related;
+    a random mention does not.* Sources are already restricted to authoritative
+    channels; within them:
+
+    - ``curated`` feeds (MIT-authoritative topic feeds) are kept wholesale;
+    - with no ``keywords`` there is no filter (institution-wide content);
+    - otherwise a keyword must appear (case-insensitive, word-boundary) in the
+      item's visible text — title + body + location.
+    """
+    if curated or not keywords:
+        return True
+    haystack = " ".join(
+        part for part in (item.title, item.body, item.location or "") if part
+    ).lower()
+    return any(
+        re.search(rf"(?<!\w){re.escape(kw.lower())}(?!\w)", haystack) for kw in keywords if kw
+    )
+
+
 @dataclass
 class NormalizedItem:
     """A feed item normalized to our domain (a post or an event)."""

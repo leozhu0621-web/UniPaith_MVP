@@ -232,8 +232,10 @@ export default function InsightsPanel({
         </div>
 
         {/* Guided prompts (§3.5) */}
-        <div className="flex flex-wrap items-center gap-1.5 mb-4">
-          <span className="text-[11px] text-foreground/70">Reviews answer:</span>
+        <div
+          className="flex flex-wrap items-center gap-1.5 mb-4"
+          title="Reviews answer: who thrives here, who should avoid it, best resources, biggest tradeoffs"
+        >
           {GUIDED_PROMPTS.map(p => (
             <span key={p} className="text-[11px] px-2 py-0.5 rounded-pill bg-muted text-foreground">
               {p}
@@ -308,12 +310,12 @@ export default function InsightsPanel({
               <div className="space-y-3">
                 {filteredReviews.map(r => (
                   <div key={r.id} className="rounded-lg border border-border p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Stars value={r.rating_overall} />
-                        {r.is_verified && <Badge variant="success" size="sm">Verified</Badge>}
-                      </div>
-                      <span className="text-[10px] text-foreground/60">{formatDate(r.created_at)}</span>
+                    <div
+                      className="flex items-center gap-2 mb-2"
+                      title={`Reviewed ${formatDate(r.created_at)}`}
+                    >
+                      <Stars value={r.rating_overall} />
+                      {r.is_verified && <Badge variant="success" size="sm">Verified</Badge>}
                     </div>
                     {r.reviewer_context && (
                       <div className="flex flex-wrap gap-1.5 mb-2">
@@ -361,8 +363,10 @@ export default function InsightsPanel({
             )}
             {similarPrograms.length > 0 && onNavigateProgram && (
               <div className="mt-4">
-                <p className="text-[11px] text-foreground/70 mb-2">See reviews for similar programs:</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div
+                  className="grid grid-cols-1 md:grid-cols-2 gap-2"
+                  title="See reviews for similar programs"
+                >
                   {similarPrograms.slice(0, 4).map(sp => (
                     <button
                       key={sp.id}
@@ -402,8 +406,7 @@ export default function InsightsPanel({
             {/* Job-readiness sentiment — single cobalt-intensity series (§8) */}
             {sentTotal > 0 && (
               <div className="mb-4">
-                <p className="text-xs text-foreground mb-2">Job-readiness sentiment</p>
-                <div className="flex h-3 rounded-pill overflow-hidden bg-muted">
+                <div className="flex h-3 rounded-pill overflow-hidden bg-muted" title="Job-readiness sentiment">
                   {([
                     ['positive', 'bg-secondary'],
                     ['neutral', 'bg-secondary/40'],
@@ -463,13 +466,15 @@ export default function InsightsPanel({
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
                       <Building2 size={13} className="text-foreground/50" />
-                      <p className="text-sm font-medium text-foreground">{f.employer_name}</p>
+                      <p
+                        className="text-sm font-medium text-foreground"
+                        title={f.feedback_year ? `Feedback from ${f.feedback_year}` : undefined}
+                      >
+                        {f.employer_name}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       {f.industry && <Badge variant="info" size="sm">{f.industry}</Badge>}
-                      {f.feedback_year && (
-                        <span className="text-[10px] text-foreground/60">{f.feedback_year}</span>
-                      )}
                     </div>
                   </div>
                   {f.feedback_text && <p className="text-sm text-foreground">{f.feedback_text}</p>}

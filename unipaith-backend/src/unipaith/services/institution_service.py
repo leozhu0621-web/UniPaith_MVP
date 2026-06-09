@@ -2612,8 +2612,10 @@ class InstitutionService:
     async def get_public_posts(
         self,
         institution_id: UUID,
+        school_id: UUID | None = None,
+        program_id: UUID | None = None,
     ) -> list[PostResponse]:
-        result = await self.db.execute(
+        query = (
             select(InstitutionPost)
             .where(
                 InstitutionPost.institution_id == institution_id,
@@ -2624,6 +2626,11 @@ class InstitutionService:
                 InstitutionPost.published_at.desc().nulls_last(),
             )
         )
+        if school_id is not None:
+            query = query.where(InstitutionPost.school_id == school_id)
+        if program_id is not None:
+            query = query.where(InstitutionPost.program_id == program_id)
+        result = await self.db.execute(query)
         posts = list(result.scalars().all())
         # Spec 27 §2.3 — public pages exclude posts scoped non-public.
         posts = [
@@ -2687,6 +2694,10 @@ class InstitutionService:
             apply_started_count=post.apply_started_count or 0,
             ctas=post.ctas,
             visibility=post.visibility,
+            source=post.source,
+            source_url=post.source_url,
+            school_id=post.school_id,
+            program_id=post.program_id,
             created_at=post.created_at,
             updated_at=post.updated_at,
             author_email=author_email,

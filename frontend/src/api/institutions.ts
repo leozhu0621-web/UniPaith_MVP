@@ -913,8 +913,11 @@ export async function getPostTemplates(): Promise<InstitutionPost[]> {
   return data
 }
 
-export async function getPublicPosts(institutionId: string): Promise<InstitutionPost[]> {
-  const { data } = await apiClient.get(`/institutions/${institutionId}/posts`)
+export async function getPublicPosts(
+  institutionId: string,
+  params?: { school_id?: string; program_id?: string },
+): Promise<InstitutionPost[]> {
+  const { data } = await apiClient.get(`/institutions/${institutionId}/posts`, { params })
   return data
 }
 

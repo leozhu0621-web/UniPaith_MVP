@@ -6,7 +6,9 @@ import {
   getProgram, getProgramReviews, getEmployerFeedback, getNetPrice,
   searchPrograms, semanticSearch,
 } from '../../api/programs'
-import { getPublicInstitution } from '../../api/institutions'
+import { getPublicInstitution, getPublicPosts } from '../../api/institutions'
+import SocialLinks from '../../components/SocialLinks'
+import PostCard from './explore/cards/PostCard'
 import { pushRecentProgram } from '../../lib/recentPrograms'
 import { getMatchDetail, logEngagement } from '../../api/matching'
 import { listEvents, rsvpEvent, getMyRsvps } from '../../api/events'
@@ -147,6 +149,13 @@ export default function ProgramDetailPage() {
   })
   const { data: netPrice } = useQuery({ queryKey: ['net-price', programId], queryFn: () => getNetPrice(programId!), enabled: !!programId, retry: false })
   const { data: events } = useQuery({ queryKey: ['events', { program_id: programId }], queryFn: () => listEvents({ program_id: programId, limit: 5 }) })
+  // Channel-sourced program Updates (news tagged to this program).
+  const { data: programPostsData } = useQuery({
+    queryKey: ['program-posts', (program as any)?.institution_id, programId],
+    queryFn: () => getPublicPosts((program as any).institution_id, { program_id: programId }),
+    enabled: !!(program as any)?.institution_id && !!programId,
+  })
+  const programPosts = Array.isArray(programPostsData) ? programPostsData : []
   const { data: rsvps } = useQuery({ queryKey: ['my-rsvps'], queryFn: getMyRsvps, retry: false })
   const { data: saved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
   const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
@@ -473,7 +482,6 @@ export default function ProgramDetailPage() {
                   <Sparkles size={16} className="text-secondary" />
                 </div>
                 <div className="leading-tight">
-                  <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground/60">Your match</p>
                   <p className="text-[12px] font-medium text-secondary hover:underline">See my matches</p>
                 </div>
               </button>
@@ -596,6 +604,22 @@ export default function ProgramDetailPage() {
                 programName={p.program_name}
                 websiteUrl={p.website_url}
               />
+
+              {(p as any).content_sources?.social && (
+                <Card className="p-5">
+                  <h3 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Follow &amp; connect</h3>
+                  <SocialLinks social={(p as any).content_sources.social} />
+                </Card>
+              )}
+
+              {programPosts.length > 0 && (
+                <Card className="p-5">
+                  <h3 className="font-semibold text-foreground mb-3">Latest updates</h3>
+                  <div className="space-y-3">
+                    {programPosts.map(post => <PostCard key={post.id} post={post} />)}
+                  </div>
+                </Card>
+              )}
 
               {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format || tracksMeta.curriculum.length > 0) && (
                 <Card className="p-5">
@@ -843,13 +867,16 @@ export default function ProgramDetailPage() {
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <GraduationCap size={14} className="text-secondary" />
-                    <h3 className="font-semibold text-foreground">Application Requirements</h3>
-                    {appReqs.length > 0 && (
-                      <span className="ml-auto text-[11px] text-foreground/60">
-                        {requiredItems.length} required
-                        {optionalItems.length > 0 && ` · ${optionalItems.length} optional`}
-                      </span>
-                    )}
+                    <h3
+                      className="font-semibold text-foreground"
+                      title={
+                        appReqs.length > 0
+                          ? `${requiredItems.length} required${optionalItems.length > 0 ? ` · ${optionalItems.length} optional` : ''}`
+                          : undefined
+                      }
+                    >
+                      Application Requirements
+                    </h3>
                   </div>
 
                   {appReqs.length > 0 ? (
@@ -1008,8 +1035,7 @@ export default function ProgramDetailPage() {
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Clock size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Admission Timeline</h3>
-                      <span className="ml-auto text-[11px] text-foreground/60 capitalize">{admissionTimeline.term}</span>
+                      <h3 className="font-semibold text-foreground" title={admissionTimeline.term || undefined}>Admission Timeline</h3>
                     </div>
                     <div className="space-y-2">
                       {admissionTimeline.rounds.map((r: any, i: number) => {
@@ -1259,9 +1285,8 @@ export default function ProgramDetailPage() {
                       <dl className="space-y-1.5 text-sm">
                         {cd.breakdown.map((it: any, i: number) => (
                           <div key={i} className="flex justify-between gap-3">
-                            <dt className="text-foreground">
+                            <dt className="text-foreground" title={it.note ? String(it.note) : undefined}>
                               {String(it.label)}
-                              {it.note && <span className="block text-[11px] text-foreground/55">{String(it.note)}</span>}
                             </dt>
                             <dd className={`font-medium tabular-nums whitespace-nowrap ${Number(it.amount) < 0 ? 'text-success' : 'text-foreground'}`}>
                               {Number(it.amount) < 0 ? '−' : ''}{formatCurrency(Math.abs(Number(it.amount)))}
@@ -1286,20 +1311,17 @@ export default function ProgramDetailPage() {
                   </div>
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div className="bg-muted/60 rounded-lg p-3">
-                      <p className="text-xs text-foreground mb-1">{costBandMin != null ? 'Low estimate' : 'Tuition Only'}</p>
-                      <p className="text-lg font-bold text-foreground">{formatCurrency(costBandMin ?? totalTuitionOnly)}</p>
+                      <p className="text-lg font-bold text-foreground" title={costBandMin != null ? 'Low estimate' : 'Tuition Only'}>{formatCurrency(costBandMin ?? totalTuitionOnly)}</p>
                     </div>
                     <div className="bg-muted/60 rounded-lg p-3">
-                      <p className="text-xs text-foreground mb-1">{costBandMax != null ? 'Expected range' : 'With Living Costs'}</p>
-                      <p className="text-lg font-bold text-foreground">
+                      <p className="text-lg font-bold text-foreground" title={costBandMax != null ? 'Expected range' : 'With Living Costs'}>
                         {costBandMin != null && costBandMax != null
                           ? `${formatCurrency(costBandMin)} – ${formatCurrency(costBandMax)}`
                           : formatCurrency(totalMid)}
                       </p>
                     </div>
                     <div className="bg-muted/60 rounded-lg p-3">
-                      <p className="text-xs text-foreground mb-1">{costBandMax != null ? 'High estimate' : 'High Estimate'}</p>
-                      <p className="text-lg font-bold text-foreground">{formatCurrency(totalHigh)}</p>
+                      <p className="text-lg font-bold text-foreground" title={costBandMax != null ? 'High estimate' : 'High Estimate'}>{formatCurrency(totalHigh)}</p>
                     </div>
                   </div>
                 </Card>
@@ -1363,8 +1385,7 @@ export default function ProgramDetailPage() {
                           return (
                             <div key={r.key} className="grid grid-cols-[90px_1fr_85px] gap-3 items-center">
                               <div>
-                                <p className="text-[11px] font-semibold text-foreground">{r.label}</p>
-                                <p className="text-[10px] text-foreground/60">{r.range}</p>
+                                <p className="text-[11px] font-semibold text-foreground" title={r.range}>{r.label}</p>
                               </div>
                               <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
                                 <div className="h-full rounded-pill bg-secondary" style={{ width: `${widthPct}%` }} />
@@ -1520,7 +1541,7 @@ export default function ProgramDetailPage() {
                       <Card className="p-5">
                         <div className="flex items-center gap-2 mb-3">
                           <DollarSign size={14} className="text-secondary" />
-                          <h3 className="font-semibold text-foreground">Salary Distribution</h3>
+                          <h3 className="font-semibold text-foreground" title={odn.outcome_reporting_window || undefined}>Salary Distribution</h3>
                         </div>
                         {salaryBands.length > 0 ? (
                           <div className="space-y-2">
@@ -1533,9 +1554,6 @@ export default function ProgramDetailPage() {
                                 <p className="text-xs font-semibold text-foreground text-right tabular-nums">{b.percent}%</p>
                               </div>
                             ))}
-                            {odn.outcome_reporting_window && (
-                              <p className="text-[10px] text-foreground/60 mt-2">{odn.outcome_reporting_window}</p>
-                            )}
                           </div>
                         ) : (
                           <>
@@ -1572,15 +1590,13 @@ export default function ProgramDetailPage() {
                           {empRate != null && (
                             <div>
                               <p className="text-xs text-foreground">Employment Rate</p>
-                              <p className="text-2xl font-bold text-foreground">{(empRate * 100).toFixed(0)}%</p>
-                              <p className="text-[10px] text-foreground/60">Within {empTimeframe}</p>
+                              <p className="text-2xl font-bold text-foreground" title={`Within ${empTimeframe}`}>{(empRate * 100).toFixed(0)}%</p>
                             </div>
                           )}
                           {internRate != null && (
                             <div>
                               <p className="text-xs text-foreground">Internship Conversion</p>
-                              <p className="text-2xl font-bold text-foreground">{(internRate * 100).toFixed(0)}%</p>
-                              <p className="text-[10px] text-foreground/60">Interns → full-time offers</p>
+                              <p className="text-2xl font-bold text-foreground" title="Interns → full-time offers">{(internRate * 100).toFixed(0)}%</p>
                             </div>
                           )}
                         </div>

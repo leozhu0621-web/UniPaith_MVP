@@ -137,6 +137,12 @@ class Settings(BaseSettings):
     # always fire immediately. Off by default, on in prod.
     notification_digest_enabled: bool = False
     notification_digest_interval_minutes: int = 1440  # daily
+    # Daily channel-sourced Events/Updates refresh: re-fetch every institution/
+    # school/program feed, re-apply the keyword relevance gate, idempotently
+    # upsert. Off by default (test), on in prod via ECS env. Idempotent +
+    # fail-soft so a daily run only adds new items / refreshes existing ones.
+    content_ingest_refresh_enabled: bool = False
+    content_ingest_refresh_hours: int = 24
     # Channel-send reliability (§4): each channel send runs through a retry/backoff
     # wrapper; terminal failures land in an in-process dead-letter log with an
     # alert. The queue/worker substrate (§55 §4) is the planned upgrade path.

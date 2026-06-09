@@ -111,6 +111,20 @@ def setup_scheduler() -> None:
             **_job_defaults(),
         )
 
+    # Daily channel-sourced Events/Updates refresh — re-fetch every
+    # institution/school/program feed, re-apply the keyword relevance gate, and
+    # idempotently upsert so the school/program profiles stay current with no
+    # manual upkeep. Fail-soft + leader-only (guarded above).
+    if settings.content_ingest_refresh_enabled:
+        scheduler.add_job(
+            _run_content_ingest_refresh,
+            "interval",
+            hours=settings.content_ingest_refresh_hours,
+            id="content_ingest_refresh",
+            name="Daily Content Ingest Refresh",
+            **_job_defaults(),
+        )
+
     # Knowledge engine tick: now handled by ContinuousPipeline Stages 1+2.
     if not settings.pipeline_enabled and settings.engine_loop_enabled:
         scheduler.add_job(
@@ -203,3 +217,22 @@ async def _run_notification_digest() -> None:
             logger.info("Notification digest loop sent %d digest email(s)", sent)
     except Exception as exc:  # noqa: BLE001 — never let a tick break the scheduler
         logger.warning("Notification digest loop failed: %s", exc)
+
+
+async def _run_content_ingest_refresh() -> None:
+    """Re-ingest every institution/school/program channel feed (daily).
+
+    Opens its own session; idempotent + keyword-gated upserts mean a run only
+    adds new items / refreshes existing ones. A failed tick logs and is retried
+    next interval — a scheduled job must never crash the loop.
+    """
+    from unipaith.database import async_session
+    from unipaith.services.content_ingest import ContentIngestService
+
+    try:
+        async with async_session() as session:
+            totals = await ContentIngestService(session).ingest_all()
+            await session.commit()
+        logger.info("Content ingest refresh: %s", totals)
+    except Exception as exc:  # noqa: BLE001 — never let a tick break the scheduler
+        logger.warning("Content ingest refresh failed: %s", exc)

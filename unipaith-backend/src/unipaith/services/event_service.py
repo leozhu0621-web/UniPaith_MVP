@@ -208,6 +208,7 @@ class EventService:
         self,
         program_id: UUID | None = None,
         institution_id: UUID | None = None,
+        school_id: UUID | None = None,
         event_type: str | None = None,
         limit: int = 20,
     ) -> list[Event]:
@@ -222,6 +223,8 @@ class EventService:
             query = query.where(Event.program_id == program_id)
         if institution_id:
             query = query.where(Event.institution_id == institution_id)
+        if school_id:
+            query = query.where(Event.school_id == school_id)
         if event_type:
             query = query.where(Event.event_type == event_type)
 

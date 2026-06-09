@@ -318,9 +318,11 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
   it('Diversity section leads with the breakdown + a compact enrollment line (round 3)', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
-    expect(await screen.findByRole('heading', { name: /Diversity/ })).toBeInTheDocument()
-    expect(screen.getByText(/4,535 undergraduate/)).toBeInTheDocument()
-    expect(screen.getByText(/11,816 total enrollment/)).toBeInTheDocument()
+    const h = await screen.findByRole('heading', { name: /Diversity/ })
+    expect(h).toBeInTheDocument()
+    // The enrollment breakdown is folded into the heading's hover tooltip (declutter).
+    expect(h.getAttribute('title')).toContain('4,535 undergraduate')
+    expect(h.getAttribute('title')).toContain('11,816 total enrollment')
   })
 
   it('Admissions renders the funnel (applied → admitted → rate)', async () => {
@@ -328,7 +330,8 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
     expect(await screen.findByText('29,281')).toBeInTheDocument()
     expect(screen.getByText('1,334')).toBeInTheDocument()
-    expect(screen.getByText('Class of 2029')).toBeInTheDocument()
+    // The admissions cycle is a hover tooltip on the funnel container (declutter).
+    expect(screen.getByTestId('admissions-funnel').getAttribute('title')).toContain('Class of 2029')
     expect(screen.getByText('Applied')).toBeInTheDocument()
   })
 
@@ -384,7 +387,8 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
   it('Cost & aid shows the sticker price and aid highlights (crawl phase 1)', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
-    expect(await screen.findByText(/Sticker cost of attendance/)).toBeInTheDocument()
+    // The sticker-cost contrast is folded into the net-price value's hover tooltip.
+    expect(await screen.findByTitle(/Sticker cost of attendance/)).toBeInTheDocument()
     expect(screen.getByText('Attend tuition-free')).toBeInTheDocument()
     expect(screen.getByText('Graduate debt-free')).toBeInTheDocument()
   })

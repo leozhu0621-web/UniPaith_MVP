@@ -227,7 +227,8 @@ describe('Spec 11 §3.3a — NetPriceEstimator', () => {
     expect(screen.getByText('Your estimated net price')).toBeInTheDocument()
     expect(screen.getByText('Estimate, not a quote')).toBeInTheDocument()
     expect(screen.getByText(/A stretch/)).toBeInTheDocument()
-    expect(screen.getByText(/This is an estimate, not a quote/)).toBeInTheDocument()
+    // The methodology disclaimer is folded into a hover tooltip on the Info icon (declutter).
+    expect(screen.getByTitle(/This is an estimate, not a quote/)).toBeInTheDocument()
   })
 
   it('renders nothing when the estimate is unavailable', () => {

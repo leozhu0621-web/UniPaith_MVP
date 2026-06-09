@@ -504,8 +504,9 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
           {keyStats.map(s => (
             <Card key={s.label} className="p-4">
               <p className="text-[1.9rem] leading-none font-bold text-foreground tracking-tight tabular-nums">{s.value}</p>
-              <p className="text-[12px] font-medium text-foreground/80 mt-2">{s.label}</p>
-              {s.hint && <p className="text-[10.5px] text-muted-foreground/70 mt-0.5">{s.hint}</p>}
+              {/* The hint qualifier (e.g. "per year, after aid", "10 yrs after
+                  entry") lives in the label's hover tooltip to declutter. */}
+              <p className="text-[12px] font-medium text-foreground/80 mt-2" title={s.hint || undefined}>{s.label}</p>
             </Card>
           ))}
         </div>
@@ -566,11 +567,13 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
             <div className="space-y-3">
               {netPrice != null && (
                 <div>
-                  <p className="text-2xl font-bold text-foreground tabular-nums leading-none">{money(netPrice)}</p>
-                  <p className="text-[12px] text-muted-foreground mt-1">Average net price — what families actually pay per year after aid.</p>
-                  {aid.cost_of_attendance != null && (
-                    <p className="text-[11.5px] text-muted-foreground/70 mt-1">Sticker cost of attendance {money(aid.cost_of_attendance)}/yr before aid.</p>
-                  )}
+                  {/* Sticker-cost contrast folded into the value's hover; the
+                      descriptor condensed from a full sentence to a short label. */}
+                  <p
+                    className="text-2xl font-bold text-foreground tabular-nums leading-none"
+                    title={aid.cost_of_attendance != null ? `Sticker cost of attendance ${money(aid.cost_of_attendance)}/yr before aid` : undefined}
+                  >{money(netPrice)}</p>
+                  <p className="text-[12px] text-muted-foreground mt-1">Avg net price — per year, after aid</p>
                 </div>
               )}
             </div>
@@ -625,26 +628,43 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
       {/* Diversity — race/ethnicity + women lead; compact enrollment underneath */}
       {(diversity.length > 0 || demo.women != null || enrollTotal != null) && (
         <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Users size={15} className="text-secondary" /> Diversity</h2>
+          {/* Enrollment breakdown folded into the heading's hover tooltip (was a
+              muted caption line under the bar — declutter). */}
+          <h2
+            className="font-semibold text-foreground mb-3 flex items-center gap-2"
+            title={
+              enrollTotal != null
+                ? [
+                    inst.student_body_size != null ? `${inst.student_body_size.toLocaleString()} undergraduate` : null,
+                    gradCount != null ? `${gradCount.toLocaleString()} graduate` : null,
+                    `${Number(enrollTotal).toLocaleString()} total enrollment`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')
+                : undefined
+            }
+          >
+            <Users size={15} className="text-secondary" /> Diversity
+          </h2>
           {diversity.length > 0 && (
             <div className="mb-4">
               <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Race &amp; ethnicity</p>
               <DiversityBar segments={diversity} />
             </div>
           )}
-          {enrollTotal != null && (
-            <p className="text-[11.5px] text-muted-foreground/70">
-              {inst.student_body_size != null ? `${inst.student_body_size.toLocaleString()} undergraduate` : ''}
-              {gradCount != null ? ` · ${gradCount.toLocaleString()} graduate` : ''}
-              {` · ${Number(enrollTotal).toLocaleString()} total enrollment`}
-            </p>
-          )}
         </Card>
       )}
 
-      {/* Quick facts — deduped (no duplicate acceptance/size band) + enriched */}
+      {/* Quick facts — deduped (no duplicate acceptance/size band) + enriched.
+          The Carnegie classification is folded into the heading's hover tooltip
+          (was an italic caption line — declutter). */}
       <Card className="p-5">
-        <h2 className="font-semibold text-foreground mb-3">Quick facts</h2>
+        <h2
+          className="font-semibold text-foreground mb-3"
+          title={rd.carnegie_classification ? String(rd.carnegie_classification) : undefined}
+        >
+          Quick facts
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <Fact label="Type" value={ownershipLabel(rd.ownership_type) ?? titleCase(inst.type)} />
           {inst.campus_setting && <Fact label="Campus setting" value={SETTING_LABELS[inst.campus_setting] ?? titleCase(inst.campus_setting)} />}
@@ -653,9 +673,6 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
           <Fact label="Programs" value={String(programCount)} />
           {rd.accreditor && <Fact label="Accreditation" value={String(rd.accreditor)} />}
         </div>
-        {rd.carnegie_classification && (
-          <p className="text-[11.5px] text-muted-foreground/70 mt-3 italic">{String(rd.carnegie_classification)}</p>
-        )}
       </Card>
 
       {/* Location — small Google Map showing where the campus is. */}
@@ -773,8 +790,8 @@ function AboutTab({ inst }: { inst: Institution }) {
       {/* Recognition — accolades with context */}
       {recognition.length > 0 && (
         <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-1 flex items-center gap-2"><Award size={15} className="text-secondary" /> Recognition</h2>
-          <p className="text-[12px] text-muted-foreground mb-3">Among faculty &amp; alumni</p>
+          {/* "Among faculty & alumni" scope note → heading hover tooltip. */}
+          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2" title="Among faculty & alumni"><Award size={15} className="text-secondary" /> Recognition</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {recognition.map(d => <Fact key={d.label} label={d.label} value={d.value} />)}
           </div>
@@ -794,13 +811,22 @@ function AboutTab({ inst }: { inst: Institution }) {
       {/* Research & innovation */}
       {(researchLabs.length > 0 || scale.research_centers != null) && (
         <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-1 flex items-center gap-2"><FlaskConical size={15} className="text-secondary" /> Research &amp; innovation</h2>
-          {(scale.research_centers != null || research.industry_collaborators != null) && (
-            <p className="text-[12px] text-muted-foreground mb-3">
-              {scale.research_centers != null ? `${scale.research_centers}+ centers, labs & institutes` : ''}
-              {research.industry_collaborators != null ? ` · ~${research.industry_collaborators} industry collaborators` : ''}
-            </p>
-          )}
+          {/* Centers/collaborators summary → heading hover tooltip (declutter). */}
+          <h2
+            className="font-semibold text-foreground mb-3 flex items-center gap-2"
+            title={
+              scale.research_centers != null || research.industry_collaborators != null
+                ? [
+                    scale.research_centers != null ? `${scale.research_centers}+ centers, labs & institutes` : null,
+                    research.industry_collaborators != null ? `~${research.industry_collaborators} industry collaborators` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')
+                : undefined
+            }
+          >
+            <FlaskConical size={15} className="text-secondary" /> Research &amp; innovation
+          </h2>
           {researchLabs.length > 0 && (
             <>
               <p className="text-[12px] font-medium text-foreground/80 mb-1.5">Notable labs &amp; institutes</p>
@@ -1154,22 +1180,21 @@ function IntroSourceLine({ outcomes }: { outcomes: { sources?: { source: string;
 // students/parents scan first). Larger value + label than the compact Fact tile.
 function OutcomeStat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="px-4 py-4 rounded-lg bg-muted/60 border border-border/50">
+    <div className="px-4 py-4 rounded-lg bg-muted/60 border border-border/50" title={hint || undefined}>
       <p className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">{label}</p>
       <p className="text-[28px] sm:text-3xl font-bold text-foreground tabular-nums mt-1.5 leading-none">{value}</p>
-      {hint && <p className="text-[12px] text-muted-foreground mt-1.5">{hint}</p>}
     </div>
   )
 }
 
 function Fact({ label, value, hint }: { label: string; value: string; hint?: string }) {
   // Semantic foreground tokens (not fixed charcoal/slate) so the tile stays
-  // legible when bg-muted flips to dark navy in dark mode.
+  // legible when bg-muted flips to dark navy in dark mode. The hint qualifier
+  // is folded into the tile's hover tooltip to declutter.
   return (
-    <div className="px-3 py-2.5 rounded-lg bg-muted/60 border border-border/50">
+    <div className="px-3 py-2.5 rounded-lg bg-muted/60 border border-border/50" title={hint || undefined}>
       <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{label}</p>
       <p className="text-[15px] font-bold text-foreground tabular-nums mt-0.5 leading-tight">{value}</p>
-      {hint && <p className="text-[10.5px] text-muted-foreground mt-0.5">{hint}</p>}
     </div>
   )
 }
