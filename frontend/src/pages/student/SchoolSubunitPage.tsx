@@ -82,7 +82,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
   const queryClient = useQueryClient()
   const compareStore = useCompareStore()
   const [degFilter, setDegFilter] = useState<string>('all')
-  const [tab, setTab] = useState<'overview' | 'about' | 'programs' | 'updates'>('overview')
+  const [tab, setTab] = useState<'about' | 'programs' | 'updates'>('about')
 
   const instHref = isAuthenticated ? `/s/institutions/${institutionId}` : `/school/${institutionId}`
   const programHref = (id: string) => (isAuthenticated ? `/s/programs/${id}` : `/program/${id}`)
@@ -251,7 +251,6 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
       <div className="border-b border-border mb-5">
         <div className="flex gap-1 -mb-px overflow-x-auto" role="tablist">
           {([
-            ['overview', 'Overview'],
             ['about', 'About'],
             ['programs', `Programs${progCount ? ` (${progCount})` : ''}`],
             ['updates', 'Events & Updates'],
@@ -271,22 +270,8 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
         </div>
       </div>
 
-      {/* About this school */}
+      {/* About — quick-facts (moved from the former Overview tab) + full description */}
       {tab === 'about' && (
-      <Card className="p-5 mb-5">
-        <div className="flex items-center gap-2 mb-2">
-          <BookOpen size={14} className="text-secondary" />
-          <h2 className="font-semibold text-foreground">About this school</h2>
-        </div>
-        {school.description_text ? (
-          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{school.description_text}</p>
-        ) : (
-          <p className="text-sm text-muted-foreground">No details published yet for this school. Explore programs below.</p>
-        )}
-      </Card>
-      )}
-
-      {tab === 'overview' && (
       <>
       {/* School quick-facts — derived from institution + program grid where available */}
       {(() => {
@@ -322,24 +307,17 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
           </div>
         )
       })()}
-      {/* About excerpt + a jump to the full program list */}
-      <div className="space-y-4">
-        {school.description_text && (
-          <Card className="p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <BookOpen size={14} className="text-secondary" />
-              <h2 className="font-semibold text-foreground">About this school</h2>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">{school.description_text}</p>
-            <button onClick={() => setTab('about')} className="mt-2 text-[13px] font-medium text-secondary hover:underline">Read more →</button>
-          </Card>
+      <Card className="p-5 mb-5">
+        <div className="flex items-center gap-2 mb-2">
+          <BookOpen size={14} className="text-secondary" />
+          <h2 className="font-semibold text-foreground">About this school</h2>
+        </div>
+        {school.description_text ? (
+          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{school.description_text}</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">No details published yet for this school. Explore programs below.</p>
         )}
-        {progCount > 0 && (
-          <button onClick={() => setTab('programs')} className="text-[13px] font-medium text-secondary hover:underline">
-            View all {progCount} programs →
-          </button>
-        )}
-      </div>
+      </Card>
       </>
       )}
 
