@@ -15,7 +15,7 @@ export interface FollowedInstitution {
 
 // ── Events ───────────────────────────────────────────────────────────────
 
-export const listEvents = (params?: { program_id?: string; institution_id?: string; school_id?: string; event_type?: string; limit?: number }) =>
+export const listEvents = (params?: { program_id?: string; institution_id?: string; school_id?: string; event_type?: string; limit?: number; institution_scope?: boolean }) =>
   apiClient.get('/events', { params }).then(r => toArrayData<any>(r.data))
 
 export const rsvpEvent = (eventId: string) =>

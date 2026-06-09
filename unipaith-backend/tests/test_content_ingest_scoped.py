@@ -150,6 +150,37 @@ async def test_idempotent_rerun_no_duplicates(db_session):
     assert len(rows) == 1
 
 
+async def test_post_persists_image_url(db_session):
+    inst, school, _ = await _scaffold(db_session)
+    svc = ContentIngestService(db_session)
+    item = NormalizedItem(
+        kind="post",
+        external_id="img1",
+        title="MIT Sloan launches lab",
+        image_url="https://news.mit.edu/cover.jpg",
+    )
+    await svc.upsert_posts(inst.id, [item], school_id=school.id, keywords=["sloan"])
+    row = (await db_session.scalars(select(InstitutionPost))).first()
+    assert row.image_url == "https://news.mit.edu/cover.jpg"
+
+
+async def test_institution_scope_dedups_cross_scope(db_session):
+    from unipaith.services.institution_service import InstitutionService
+
+    inst, school, _ = await _scaffold(db_session)
+    svc = ContentIngestService(db_session)
+    # Same article ingested at BOTH institution scope and school scope.
+    await svc.upsert_posts(inst.id, [_post("dup", "Shared article")], keywords=None)
+    await svc.upsert_posts(
+        inst.id, [_post("dup", "Shared article")], school_id=school.id, keywords=None
+    )
+    isvc = InstitutionService(db_session)
+    inst_only = await isvc.get_public_posts(inst.id, institution_scope=True)
+    assert len(inst_only) == 1  # only the institution-wide copy — no duplicate
+    everything = await isvc.get_public_posts(inst.id)
+    assert len(everything) == 2  # unfiltered still returns both scopes
+
+
 async def test_archived_post_not_resurrected(db_session):
     inst, school, _ = await _scaffold(db_session)
     svc = ContentIngestService(db_session)

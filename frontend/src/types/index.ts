@@ -2443,6 +2443,7 @@ export interface InstitutionPost {
   // Channel-sourcing provenance — 'manual' (school-authored) vs 'news_rss' etc.
   source?: string
   source_url?: string | null
+  image_url?: string | null
   // Scope tags for school/program-specific updates.
   school_id?: string | null
   program_id?: string | null

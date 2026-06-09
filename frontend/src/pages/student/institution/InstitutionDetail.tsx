@@ -6,22 +6,21 @@ import {
 } from '../../../api/institutions'
 import { searchPrograms } from '../../../api/programs'
 import {
-  listEvents, rsvpEvent, cancelRsvp, getMyRsvps, addEventToCalendar,
-  getMyFollows, followInstitution, unfollowInstitution,
+  listEvents, getMyFollows, followInstitution, unfollowInstitution,
 } from '../../../api/events'
 import { listSaved, saveProgram, unsaveProgram } from '../../../api/saved-lists'
 import { useCompareStore } from '../../../stores/compare-store'
 import { showToast } from '../../../stores/toast-store'
 import ProgramCard from '../explore/cards/ProgramCard'
 import SchoolCard from '../explore/cards/SchoolCard'
-import PostCard from '../explore/cards/PostCard'
+import NewsGrid from '../../../components/NewsGrid'
 import Card from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
 import Skeleton from '../../../components/ui/Skeleton'
 import QueryError from '../../../components/ui/QueryError'
 import {
   Bookmark, BookmarkCheck, MapPin, Globe, Building2, BookOpen,
-  Mail, Phone, CalendarPlus, Check, ChevronDown, X, Search, GraduationCap,
+  Mail, Phone, ChevronDown, X, Search, GraduationCap,
   Filter, ArrowRight, Link2, Award, Trophy, DollarSign, TrendingUp, Users, FlaskConical, Tent,
 } from 'lucide-react'
 import type { Institution, ProgramSummary, InstitutionPost, SchoolSummary } from '../../../types'
@@ -68,22 +67,23 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   })
   const programsResp = programsQ.data
 
+  // institution_scope: only institution-wide items, so a school/program copy of
+  // the same article doesn't duplicate the institution-wide one.
   const eventsQ = useQuery({
     queryKey: ['institution-events', institutionId],
-    queryFn: () => listEvents({ institution_id: institutionId, limit: 30 }),
+    queryFn: () => listEvents({ institution_id: institutionId, limit: 30, institution_scope: true }),
     enabled: !!institutionId,
   })
   const events = eventsQ.data
 
   const postsQ = useQuery({
     queryKey: ['institution-posts', institutionId],
-    queryFn: () => getPublicPosts(institutionId),
+    queryFn: () => getPublicPosts(institutionId, { institution_scope: true }),
     enabled: !!institutionId,
   })
   const posts = postsQ.data
 
-  // Authenticated-only: RSVP set, saved programs, followed schools.
-  const { data: rsvps } = useQuery({ queryKey: ['my-rsvps'], queryFn: getMyRsvps, enabled: isAuthenticated, retry: false })
+  // Authenticated-only: saved programs, followed schools.
   const { data: savedData } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, enabled: isAuthenticated, retry: false })
   const { data: follows } = useQuery({ queryKey: ['my-follows'], queryFn: getMyFollows, enabled: isAuthenticated, retry: false })
 
@@ -97,7 +97,6 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
     return list.sort((a, b) => Number(b.pinned ?? false) - Number(a.pinned ?? false))
   }, [posts])
 
-  const rsvpSet = new Set((rsvps as any[] ?? []).map((r: any) => r.event_id))
   const savedIds = new Set((savedData as any[] ?? []).map((s: any) => String(s.program_id)))
   const followedIds = new Set((follows as any[] ?? []).map((f: any) => String(f.institution_id)))
   const isSaved = !!institutionId && followedIds.has(String(institutionId))
@@ -128,19 +127,6 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   const onSaveSchool = () => {
     if (!isAuthenticated) { navigate('/login'); return }
     followMut.mutate()
-  }
-
-  const rsvpMut = useMutation({
-    mutationFn: (eventId: string) => (rsvpSet.has(eventId) ? cancelRsvp(eventId) : rsvpEvent(eventId)),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['institution-events'] })
-      queryClient.invalidateQueries({ queryKey: ['my-rsvps'] })
-    },
-    onError: () => showToast('Couldn’t update your RSVP. Try again.', 'error'),
-  })
-  const onRsvp = (eventId: string) => {
-    if (!isAuthenticated) { navigate('/login'); return }
-    rsvpMut.mutate(eventId)
   }
 
   // Save/unsave a program. Guarded against double-clicks: a per-id in-flight set
@@ -359,31 +345,15 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
           )
         )}
         {tab === 'events' && (
-          <div className="space-y-6">
-            <section>
-              <h2 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Events</h2>
-              {eventsQ.isError ? (
-                <QueryError variant="inline" detail="We couldn't load this school's events." onRetry={() => eventsQ.refetch()} />
-              ) : (
-                <EventsTab
-                  events={eventList}
-                  institutionName={inst.name}
-                  isAuthenticated={isAuthenticated}
-                  rsvpSet={rsvpSet}
-                  onRsvp={onRsvp}
-                  rsvpPending={rsvpMut.isPending}
-                />
-              )}
-            </section>
-            <section>
-              <h2 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Updates</h2>
-              {postsQ.isError ? (
-                <QueryError variant="inline" detail="We couldn't load this school's updates." onRetry={() => postsQ.refetch()} />
-              ) : (
-                <UpdatesTab posts={postList} institutionName={inst.name} />
-              )}
-            </section>
-          </div>
+          (eventsQ.isError || postsQ.isError) ? (
+            <QueryError variant="inline" detail="We couldn't load events & updates." onRetry={() => { eventsQ.refetch(); postsQ.refetch() }} />
+          ) : (
+            <NewsGrid
+              posts={postList}
+              events={eventList}
+              emptyText={`${inst.name} hasn't posted any events or updates yet.`}
+            />
+          )
         )}
       </div>
 
@@ -1086,79 +1056,6 @@ function ProgramsTab({ programs, institutionName, savedIds, comparing, onSave, o
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   Events tab — RSVP + add to calendar (Spec 12 §3.5)
-   ────────────────────────────────────────────────────────────────────────── */
-function EventsTab({ events, institutionName, isAuthenticated, rsvpSet, onRsvp, rsvpPending }: {
-  events: any[]; institutionName: string; isAuthenticated: boolean; rsvpSet: Set<string>; onRsvp: (id: string) => void; rsvpPending: boolean
-}) {
-  if (events.length === 0) {
-    return <EmptyBlock icon={CalendarPlus} title="No events scheduled" body={`${institutionName} hasn't scheduled any events yet.`} />
-  }
-  return (
-    <div className="space-y-3">
-      {events.map(ev => {
-        const rsvped = rsvpSet.has(ev.id)
-        const when = formatEventTime(ev.start_time)
-        // Channel-sourced events (news/calendar feeds) live on the institution's
-        // own platform — there's nothing to RSVP to here, just add-to-calendar
-        // + the source link. Only manual (school-authored) events take RSVPs.
-        const isChannel = !!(ev.source && ev.source !== 'manual')
-        return (
-          <Card key={ev.id} className="p-4 flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <h3 className="font-semibold text-foreground truncate">{ev.event_name}</h3>
-              <p className="text-[13px] text-muted-foreground mt-0.5">{when}{ev.location ? ` · ${ev.location}` : ''}</p>
-              {ev.event_type && <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] rounded-md bg-muted text-muted-foreground border border-border/60 capitalize">{String(ev.event_type).replace(/_/g, ' ')}</span>}
-              {ev.capacity != null && <span className="ml-2 text-[11px] text-muted-foreground/70">{ev.rsvp_count}/{ev.capacity} spots</span>}
-              {ev.source && ev.source !== 'manual' && ev.source_url && (
-                <a href={ev.source_url} target="_blank" rel="noopener noreferrer" className="block mt-1 text-[11px] text-muted-foreground hover:text-secondary hover:underline">
-                  via {(() => { try { return new URL(ev.source_url).hostname.replace(/^www\./, '') } catch { return 'source' } })()} ↗
-                </a>
-              )}
-            </div>
-            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-              {!isChannel && (
-                <Button size="sm" variant={rsvped ? 'tertiary' : 'secondary'} onClick={() => onRsvp(ev.id)} disabled={rsvpPending}>
-                  {rsvped ? <><Check size={13} className="mr-1" /> Going</> : (isAuthenticated ? 'RSVP' : 'Sign in to RSVP')}
-                </Button>
-              )}
-              <button
-                onClick={() => addEventToCalendar(ev.id, ev.event_name).catch(() => showToast('Couldn’t generate the calendar file.', 'error'))}
-                className="inline-flex items-center gap-1 text-[11px] text-secondary hover:underline"
-              >
-                <CalendarPlus size={11} /> Add to calendar
-              </button>
-            </div>
-          </Card>
-        )
-      })}
-    </div>
-  )
-}
-
-/* ──────────────────────────────────────────────────────────────────────────
-   Updates tab — pinned first (Spec 12 §3.6)
-   ────────────────────────────────────────────────────────────────────────── */
-function UpdatesTab({ posts, institutionName }: { posts: InstitutionPost[]; institutionName: string }) {
-  if (posts.length === 0) {
-    return (
-      <EmptyBlock
-        icon={BookOpen}
-        title="No updates yet"
-        body="Posts arrive here once you publish your first."
-      />
-    )
-  }
-  return (
-    <div className="space-y-3">
-      {posts.map(post => (
-        <PostCard key={post.id} post={{ ...post, institution_name: institutionName } as any} />
-      ))}
-    </div>
-  )
-}
-
-/* ──────────────────────────────────────────────────────────────────────────
    Shared bits
    ────────────────────────────────────────────────────────────────────────── */
 /** A "Source:" line under descriptive prose — surfaces the official primary
@@ -1363,10 +1260,4 @@ function dl(p: ProgramSummary): number | null {
 function programScore(p: ProgramSummary): number | null {
   const s = (p as any).fitness_score ?? (p as any).match_score
   return typeof s === 'number' ? s : null
-}
-
-function formatEventTime(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 }

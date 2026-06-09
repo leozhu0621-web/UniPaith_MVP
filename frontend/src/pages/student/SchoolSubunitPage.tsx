@@ -9,53 +9,14 @@ import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
 import { showToast } from '../../stores/toast-store'
 import ProgramCard from './explore/cards/ProgramCard'
-import PostCard from './explore/cards/PostCard'
+import NewsGrid from '../../components/NewsGrid'
 import SocialLinks from '../../components/SocialLinks'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import QueryError from '../../components/ui/QueryError'
 import Skeleton from '../../components/ui/Skeleton'
-import { ArrowLeft, BookOpen, GraduationCap, Users, TrendingUp, Percent, Building2, Globe, Bell, Calendar, MapPin } from 'lucide-react'
+import { ArrowLeft, BookOpen, GraduationCap, Users, TrendingUp, Percent, Building2, Globe } from 'lucide-react'
 import type { SchoolSummary, ProgramSummary, InstitutionPost } from '../../types'
-
-/** Host of a source URL, for "via {host}" channel attribution. */
-function hostOf(url?: string | null): string | null {
-  if (!url) return null
-  try {
-    return new URL(url).hostname.replace(/^www\./, '')
-  } catch {
-    return null
-  }
-}
-
-/** Compact channel-sourced event row (name · date · location · via host). */
-function EventRow({ ev }: { ev: any }) {
-  const host = ev.source && ev.source !== 'manual' ? hostOf(ev.source_url) : null
-  const when = ev.start_time
-    ? new Date(ev.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    : null
-  return (
-    <div className="bg-card rounded-xl border border-border px-4 py-3">
-      <div className="flex items-start gap-2">
-        <Calendar size={14} className="text-secondary mt-0.5 shrink-0" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-foreground">{ev.event_name}</p>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-[11px] text-muted-foreground">
-            {when && <span>{when}</span>}
-            {ev.location && (
-              <span className="inline-flex items-center gap-1"><MapPin size={11} /> {ev.location}</span>
-            )}
-            {host && ev.source_url && (
-              <a href={ev.source_url} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">
-                via {host} ↗
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function fmtPct(v: number | null | undefined) {
   if (v == null) return null
@@ -384,43 +345,18 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
       )}
 
       {tab === 'updates' && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {school.content_sources?.social && (
             <div>
               <h2 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Follow {school.name}</h2>
               <SocialLinks social={school.content_sources.social} />
             </div>
           )}
-
-          <section>
-            <h2 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Upcoming events</h2>
-            {eventList.length > 0 ? (
-              <div className="space-y-2">
-                {eventList.map(ev => <EventRow key={ev.id} ev={ev} />)}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">No upcoming events published yet.</p>
-            )}
-          </section>
-
-          <section>
-            <h2 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Latest updates</h2>
-            {postList.length > 0 ? (
-              <div className="space-y-3">
-                {postList.map(p => <PostCard key={p.id} post={p} />)}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">No updates published yet.</p>
-            )}
-          </section>
-
-          {postList.length === 0 && eventList.length === 0 && !school.content_sources?.social && (
-            <div className="text-center py-16 bg-card rounded-xl border border-border">
-              <Bell size={32} className="mx-auto text-muted-foreground mb-3" />
-              <p className="text-sm text-foreground font-medium mb-1">No updates yet</p>
-              <p className="text-xs text-muted-foreground">{school.name} hasn&rsquo;t posted any updates or events yet.</p>
-            </div>
-          )}
+          <NewsGrid
+            posts={postList}
+            events={eventList}
+            emptyText={`${school.name} hasn’t posted any events or updates yet.`}
+          />
         </div>
       )}
 

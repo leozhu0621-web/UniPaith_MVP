@@ -70,6 +70,9 @@ class NormalizedItem:
     start_time: datetime | None = None
     end_time: datetime | None = None
     location: str | None = None
+    # Cover image straight from the feed (RSS media:content/thumbnail). News
+    # cards render it; events have none → None (we never fabricate an image).
+    image_url: str | None = None
 
 
 class ChannelSource(ABC):

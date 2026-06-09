@@ -20,6 +20,17 @@ def _entry_dt(entry) -> datetime | None:
         return None
 
 
+def _entry_image(entry) -> str | None:
+    """Cover image straight from the feed: media:content, then media:thumbnail."""
+    for attr in ("media_content", "media_thumbnail"):
+        media = getattr(entry, attr, None)
+        if isinstance(media, list) and media:
+            url = media[0].get("url")
+            if url:
+                return str(url)
+    return None
+
+
 class NewsRssSource(ChannelSource):
     """Parse an RSS/Atom news feed into post items (guid → external_id)."""
 
@@ -45,6 +56,7 @@ class NewsRssSource(ChannelSource):
                     body=clean_text(getattr(entry, "summary", "") or ""),
                     url=getattr(entry, "link", None),
                     published_at=_entry_dt(entry),
+                    image_url=_entry_image(entry),
                 )
             )
         return items

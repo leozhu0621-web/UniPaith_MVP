@@ -8,10 +8,9 @@ import {
 } from '../../api/programs'
 import { getPublicInstitution, getPublicPosts } from '../../api/institutions'
 import SocialLinks from '../../components/SocialLinks'
-import PostCard from './explore/cards/PostCard'
 import { pushRecentProgram } from '../../lib/recentPrograms'
 import { getMatchDetail, logEngagement } from '../../api/matching'
-import { listEvents, rsvpEvent, getMyRsvps } from '../../api/events'
+import { listEvents, rsvpEvent } from '../../api/events'
 import { listMyApplications, createApplication } from '../../api/applications'
 import { saveProgram, unsaveProgram, listSaved } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
@@ -24,7 +23,7 @@ import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate } from '../../utils/format'
 import { differenceInDays } from 'date-fns'
 import {
-  BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare,
+  BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare, Megaphone,
   Briefcase, Building2, Users, Clock, Sparkles, Mail, Archive,
   Bookmark, BookmarkCheck, FileText, Send, ArrowRightLeft, ChevronRight, ArrowLeft, ExternalLink, Star,
 } from 'lucide-react'
@@ -56,10 +55,11 @@ import NextStepsCard from './program/NextStepsCard'
 import RelatedSidebar from './program/RelatedSidebar'
 import InsightsPanel from './program/InsightsPanel'
 import NetPriceEstimator from './program/NetPriceEstimator'
+import NewsGrid from '../../components/NewsGrid'
 
-// Spec 11 §3 — five tabs; Insights merges student reviews + employer feedback (§3.6).
-type Tab = 'overview' | 'admissions' | 'costs' | 'outcomes' | 'insights'
-const TAB_IDS: Tab[] = ['overview', 'admissions', 'costs', 'outcomes', 'insights']
+// Spec 11 §3 — tabs; Insights merges student reviews + employer feedback (§3.6).
+type Tab = 'overview' | 'admissions' | 'costs' | 'outcomes' | 'insights' | 'events'
+const TAB_IDS: Tab[] = ['overview', 'admissions', 'costs', 'outcomes', 'insights', 'events']
 
 const TABS: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: 'overview', label: 'Overview', icon: BookOpen },
@@ -67,6 +67,7 @@ const TABS: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: 'costs', label: 'Costs & Aid', icon: DollarSign },
   { id: 'outcomes', label: 'Outcomes', icon: TrendingUp },
   { id: 'insights', label: 'Insights', icon: MessageSquare },
+  { id: 'events', label: 'Events & Updates', icon: Megaphone },
 ]
 
 // Legacy `?tab=reviews` redirects to `?tab=insights` (§3.6).
@@ -156,7 +157,6 @@ export default function ProgramDetailPage() {
     enabled: !!(program as any)?.institution_id && !!programId,
   })
   const programPosts = Array.isArray(programPostsData) ? programPostsData : []
-  const { data: rsvps } = useQuery({ queryKey: ['my-rsvps'], queryFn: getMyRsvps, retry: false })
   const { data: saved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
   const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
   const { data: reviewsData } = useQuery({ queryKey: ['program-reviews', programId], queryFn: () => getProgramReviews(programId!), retry: false })
@@ -188,7 +188,6 @@ export default function ProgramDetailPage() {
   const applicationsList: any[] = Array.isArray(applications) ? applications : []
   const existingApp = applicationsList.find((a: any) => a.program_id === programId)
   const eventsList: EventItem[] = Array.isArray(events) ? events : []
-  const rsvpSet = new Set((rsvps as any[] ?? []).map((r: any) => r.event_id))
 
   const saveMut = useMutation({
     mutationFn: async (): Promise<void> => {
@@ -604,22 +603,8 @@ export default function ProgramDetailPage() {
                 programName={p.program_name}
                 websiteUrl={p.website_url}
               />
-
-              {(p as any).content_sources?.social && (
-                <Card className="p-5">
-                  <h3 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Follow &amp; connect</h3>
-                  <SocialLinks social={(p as any).content_sources.social} />
-                </Card>
-              )}
-
-              {programPosts.length > 0 && (
-                <Card className="p-5">
-                  <h3 className="font-semibold text-foreground mb-3">Latest updates</h3>
-                  <div className="space-y-3">
-                    {programPosts.map(post => <PostCard key={post.id} post={post} />)}
-                  </div>
-                </Card>
-              )}
+              {/* Social links + channel-sourced Updates/Events now live in the
+                  dedicated "Events & Updates" tab (NewsGrid). */}
 
               {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format || tracksMeta.curriculum.length > 0) && (
                 <Card className="p-5">
@@ -1711,16 +1696,29 @@ export default function ProgramDetailPage() {
             />
             </div>
           )}
+
+          {tab === 'events' && (
+            <div className="space-y-5">
+              {(p as any).content_sources?.social && (
+                <div>
+                  <h3 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Follow &amp; connect</h3>
+                  <SocialLinks social={(p as any).content_sources.social} />
+                </div>
+              )}
+              <NewsGrid
+                posts={programPosts}
+                events={eventsList}
+                emptyText={`${p.program_name} has no events or updates yet.`}
+              />
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
         <div className="lg:sticky lg:top-4 lg:self-start">
           <RelatedSidebar
-            events={eventsList}
             sameSchoolPrograms={sameSchool}
             similarPrograms={similar}
-            onRsvp={(id) => rsvpMut.mutate(id)}
-            rsvpedIds={rsvpSet}
             discoveryBackHref={discoveryBackHref}
           />
         </div>

@@ -2614,6 +2614,7 @@ class InstitutionService:
         institution_id: UUID,
         school_id: UUID | None = None,
         program_id: UUID | None = None,
+        institution_scope: bool = False,
     ) -> list[PostResponse]:
         query = (
             select(InstitutionPost)
@@ -2630,6 +2631,13 @@ class InstitutionService:
             query = query.where(InstitutionPost.school_id == school_id)
         if program_id is not None:
             query = query.where(InstitutionPost.program_id == program_id)
+        if institution_scope:
+            # Institution page: only institution-wide items, so a school/program
+            # copy of the same article doesn't duplicate the MIT-wide one.
+            query = query.where(
+                InstitutionPost.school_id.is_(None),
+                InstitutionPost.program_id.is_(None),
+            )
         result = await self.db.execute(query)
         posts = list(result.scalars().all())
         # Spec 27 §2.3 — public pages exclude posts scoped non-public.
@@ -2696,6 +2704,7 @@ class InstitutionService:
             visibility=post.visibility,
             source=post.source,
             source_url=post.source_url,
+            image_url=post.image_url,
             school_id=post.school_id,
             program_id=post.program_id,
             created_at=post.created_at,
