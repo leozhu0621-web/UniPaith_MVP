@@ -95,9 +95,9 @@ async def test_upsert_posts_idempotent_and_attributed(db_session):
     svc = ContentIngestService(db_session)
     items = NewsRssSource().parse(_RSS)
 
-    created = await svc.upsert_posts(inst, items)
+    created = await svc.upsert_posts(inst.id, items)
     assert created == 2
-    again = await svc.upsert_posts(inst, items)  # re-run → no new rows
+    again = await svc.upsert_posts(inst.id, items)  # re-run → no new rows
     assert again == 0
 
     rows = (
@@ -120,7 +120,7 @@ async def test_archived_post_not_resurrected(db_session):
     inst = await _make_institution(db_session)
     svc = ContentIngestService(db_session)
     items = NewsRssSource().parse(_RSS)
-    await svc.upsert_posts(inst, items)
+    await svc.upsert_posts(inst.id, items)
 
     hidden = (
         await db_session.execute(
@@ -130,7 +130,7 @@ async def test_archived_post_not_resurrected(db_session):
     hidden.status = "archived"
     await db_session.flush()
 
-    await svc.upsert_posts(inst, items)  # re-run must NOT republish it
+    await svc.upsert_posts(inst.id, items)  # re-run must NOT republish it
     await db_session.refresh(hidden)
     assert hidden.status == "archived"
 
@@ -140,8 +140,8 @@ async def test_upsert_events_idempotent(db_session):
     svc = ContentIngestService(db_session)
     items = EventsFeedSource().parse(_ICAL)
 
-    assert await svc.upsert_events(inst, items) == 1
-    assert await svc.upsert_events(inst, items) == 0  # dedup by UID
+    assert await svc.upsert_events(inst.id, items) == 1
+    assert await svc.upsert_events(inst.id, items) == 0  # dedup by UID
 
     count = await db_session.scalar(
         select(func.count()).select_from(Event).where(Event.institution_id == inst.id)
