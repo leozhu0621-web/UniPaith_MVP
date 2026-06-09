@@ -1,34 +1,57 @@
-import { Fragment, useEffect, useState } from 'react'
-import QueryError from '../../components/ui/QueryError'
-import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Fragment, useEffect, useState } from "react";
+import QueryError from "../../components/ui/QueryError";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  getProgram, getProgramReviews, getEmployerFeedback, getNetPrice,
-  searchPrograms, semanticSearch,
-} from '../../api/programs'
-import { getPublicInstitution, getPublicPosts } from '../../api/institutions'
-import SocialLinks from '../../components/SocialLinks'
-import { pushRecentProgram } from '../../lib/recentPrograms'
-import { getMatchDetail, logEngagement } from '../../api/matching'
-import { listEvents, rsvpEvent } from '../../api/events'
-import { listMyApplications, createApplication } from '../../api/applications'
-import { saveProgram, unsaveProgram, listSaved } from '../../api/saved-lists'
-import { useCompareStore } from '../../stores/compare-store'
-import { useCounselorStore } from '../../stores/counselor-store'
-import Card from '../../components/ui/Card'
-import Badge from '../../components/ui/Badge'
-import Button from '../../components/ui/Button'
-import Skeleton from '../../components/ui/Skeleton'
-import { showToast } from '../../stores/toast-store'
-import { formatCurrency, formatDate } from '../../utils/format'
-import { differenceInDays } from 'date-fns'
+  getProgram,
+  getProgramReviews,
+  getEmployerFeedback,
+  getNetPrice,
+  searchPrograms,
+  semanticSearch,
+} from "../../api/programs";
+import { getPublicInstitution, getPublicPosts } from "../../api/institutions";
+import SocialLinks from "../../components/SocialLinks";
+import { pushRecentProgram } from "../../lib/recentPrograms";
+import { getMatchDetail, logEngagement } from "../../api/matching";
+import { listEvents, rsvpEvent } from "../../api/events";
+import { listMyApplications, createApplication } from "../../api/applications";
+import { saveProgram, unsaveProgram, listSaved } from "../../api/saved-lists";
+import { useCompareStore } from "../../stores/compare-store";
+import { useCounselorStore } from "../../stores/counselor-store";
+import Card from "../../components/ui/Card";
+import Badge from "../../components/ui/Badge";
+import Button from "../../components/ui/Button";
+import Skeleton from "../../components/ui/Skeleton";
+import { showToast } from "../../stores/toast-store";
+import { formatCurrency, formatDate } from "../../utils/format";
+import { differenceInDays } from "date-fns";
 import {
-  BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare, Megaphone,
-  Briefcase, Building2, Users, Clock, Sparkles, Mail, Archive,
-  Bookmark, BookmarkCheck, FileText, Send, ArrowRightLeft, ChevronRight, ArrowLeft, ExternalLink, Star,
-} from 'lucide-react'
-import { DEGREE_LABELS } from '../../utils/constants'
-import type { EventItem } from '../../types'
+  BookOpen,
+  GraduationCap,
+  DollarSign,
+  TrendingUp,
+  MessageSquare,
+  Megaphone,
+  Briefcase,
+  Building2,
+  Users,
+  Clock,
+  Sparkles,
+  Mail,
+  Archive,
+  Bookmark,
+  BookmarkCheck,
+  FileText,
+  Send,
+  ArrowRightLeft,
+  ChevronRight,
+  ArrowLeft,
+  ExternalLink,
+  Star,
+} from "lucide-react";
+import { DEGREE_LABELS } from "../../utils/constants";
+import type { EventItem } from "../../types";
 import {
   normalizeCostData,
   normalizeOutcomes,
@@ -41,323 +64,409 @@ import {
   extractRecommendations,
   extractFundingSignals,
   extractSalaryBands,
-} from '../../utils/programNormalize'
+} from "../../utils/programNormalize";
 
 // Redesigned components
-import DualRing from './match/DualRing'
-import RationalePopover from './match/RationalePopover'
-import ProbabilityBands from './match/ProbabilityBands'
-import BandBadge from '../../components/ui/BandBadge'
-import KeyMetrics from './program/KeyMetrics'
-import StatGroup from './program/StatGroup'
-import AboutCard from './program/AboutCard'
-import NextStepsCard from './program/NextStepsCard'
-import RelatedSidebar from './program/RelatedSidebar'
-import InsightsPanel from './program/InsightsPanel'
-import NetPriceEstimator from './program/NetPriceEstimator'
-import NewsGrid from '../../components/NewsGrid'
+import DualRing from "./match/DualRing";
+import RationalePopover from "./match/RationalePopover";
+import ProbabilityBands from "./match/ProbabilityBands";
+import BandBadge from "../../components/ui/BandBadge";
+import KeyMetrics from "./program/KeyMetrics";
+import StatGroup from "./program/StatGroup";
+import AboutCard from "./program/AboutCard";
+import NextStepsCard from "./program/NextStepsCard";
+import RelatedSidebar from "./program/RelatedSidebar";
+import InsightsPanel from "./program/InsightsPanel";
+import NetPriceEstimator from "./program/NetPriceEstimator";
+import NewsGrid from "../../components/NewsGrid";
 
 // Spec 11 §3 — tabs; Insights merges student reviews + employer feedback (§3.6).
-type Tab = 'overview' | 'admissions' | 'costs' | 'outcomes' | 'insights' | 'events'
-const TAB_IDS: Tab[] = ['overview', 'admissions', 'costs', 'outcomes', 'insights', 'events']
+type Tab = "overview" | "admissions" | "costs" | "outcomes" | "insights" | "events";
+const TAB_IDS: Tab[] = ["overview", "admissions", "costs", "outcomes", "insights", "events"];
 
 const TABS: { id: Tab; label: string; icon: typeof BookOpen }[] = [
-  { id: 'overview', label: 'Overview', icon: BookOpen },
-  { id: 'admissions', label: 'Admissions', icon: GraduationCap },
-  { id: 'costs', label: 'Costs & Aid', icon: DollarSign },
-  { id: 'outcomes', label: 'Outcomes', icon: TrendingUp },
-  { id: 'insights', label: 'Insights', icon: MessageSquare },
-  { id: 'events', label: 'Events & Updates', icon: Megaphone },
-]
+  { id: "overview", label: "Overview", icon: BookOpen },
+  { id: "admissions", label: "Admissions", icon: GraduationCap },
+  { id: "costs", label: "Costs & Aid", icon: DollarSign },
+  { id: "outcomes", label: "Outcomes", icon: TrendingUp },
+  { id: "insights", label: "Insights", icon: MessageSquare },
+  { id: "events", label: "Events & Updates", icon: Megaphone },
+];
 
 // Legacy `?tab=reviews` redirects to `?tab=insights` (§3.6).
 function normalizeTab(raw: string | null): Tab {
-  if (raw === 'reviews') return 'insights'
-  return TAB_IDS.includes(raw as Tab) ? (raw as Tab) : 'overview'
+  if (raw === "reviews") return "insights";
+  return TAB_IDS.includes(raw as Tab) ? (raw as Tab) : "overview";
 }
 
 // Match scores arrive as Decimal/number in either 0..1 or 0..100; the rings
 // want 0..1. Coerce defensively so the UI is robust to either convention.
 function toUnit(v: number | string | null | undefined): number {
-  const n = typeof v === 'string' ? parseFloat(v) : (v ?? 0)
-  if (!Number.isFinite(n)) return 0
-  const unit = n > 1 ? n / 100 : n
-  return Math.max(0, Math.min(1, unit))
+  const n = typeof v === "string" ? parseFloat(v) : (v ?? 0);
+  if (!Number.isFinite(n)) return 0;
+  const unit = n > 1 ? n / 100 : n;
+  return Math.max(0, Math.min(1, unit));
 }
 
 export default function ProgramDetailPage() {
-  const { programId } = useParams<{ programId: string }>()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const compareStore = useCompareStore()
-  const askCounselor = useCounselorStore(s => s.askQuestion)
+  const { programId } = useParams<{ programId: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const compareStore = useCompareStore();
+  const askCounselor = useCounselorStore((s) => s.askQuestion);
 
   // Spec 11 §10 — active tab + Insights filters live in the URL so they
   // persist on reload and are shareable.
-  const [searchParams, setSearchParams] = useSearchParams()
-  const tab = normalizeTab(searchParams.get('tab'))
-  const reviewerType = searchParams.get('reviewer') ?? ''
-  const degreeFilter = searchParams.get('degree') ?? ''
-  const cohortFilter = searchParams.get('cohort') ?? ''
-  const minRating = searchParams.get('dim') ?? ''
-  const industry = searchParams.get('industry') ?? ''
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = normalizeTab(searchParams.get("tab"));
+  const reviewerType = searchParams.get("reviewer") ?? "";
+  const degreeFilter = searchParams.get("degree") ?? "";
+  const cohortFilter = searchParams.get("cohort") ?? "";
+  const minRating = searchParams.get("dim") ?? "";
+  const industry = searchParams.get("industry") ?? "";
 
   // Spec 06 §3/§5.5 — student (redacted) "why this match" popover.
-  const [rationaleOpen, setRationaleOpen] = useState(false)
-  const [curTerm, setCurTerm] = useState(0) // active curriculum term tab
+  const [rationaleOpen, setRationaleOpen] = useState(false);
+  const [curTerm, setCurTerm] = useState(0); // active curriculum term tab
 
   const setTab = (t: Tab) =>
-    setSearchParams(prev => {
-      const n = new URLSearchParams(prev)
-      n.set('tab', t)
-      return n
-    })
-  const setFilter = (key: 'reviewer' | 'degree' | 'cohort' | 'dim' | 'industry', value: string) =>
-    setSearchParams(prev => {
-      const n = new URLSearchParams(prev)
-      if (value) n.set(key, value)
-      else n.delete(key)
-      return n
-    }, { replace: true })
+    setSearchParams((prev) => {
+      const n = new URLSearchParams(prev);
+      n.set("tab", t);
+      return n;
+    });
+  const setFilter = (key: "reviewer" | "degree" | "cohort" | "dim" | "industry", value: string) =>
+    setSearchParams(
+      (prev) => {
+        const n = new URLSearchParams(prev);
+        if (value) n.set(key, value);
+        else n.delete(key);
+        return n;
+      },
+      { replace: true },
+    );
   const clearFilters = () =>
-    setSearchParams(prev => {
-      const n = new URLSearchParams(prev)
-      for (const k of ['reviewer', 'degree', 'cohort', 'dim', 'industry']) n.delete(k)
-      return n
-    }, { replace: true })
+    setSearchParams(
+      (prev) => {
+        const n = new URLSearchParams(prev);
+        for (const k of ["reviewer", "degree", "cohort", "dim", "industry"]) n.delete(k);
+        return n;
+      },
+      { replace: true },
+    );
 
   // Rewrite the legacy ?tab=reviews into ?tab=insights in the address bar.
   useEffect(() => {
-    if (searchParams.get('tab') === 'reviews') {
-      const n = new URLSearchParams(searchParams)
-      n.set('tab', 'insights')
-      setSearchParams(n, { replace: true })
+    if (searchParams.get("tab") === "reviews") {
+      const n = new URLSearchParams(searchParams);
+      n.set("tab", "insights");
+      setSearchParams(n, { replace: true });
     }
-  }, [searchParams, setSearchParams])
+  }, [searchParams, setSearchParams]);
 
   // Data
-  const { data: program, isLoading, isError, refetch } = useQuery({ queryKey: ['program', programId], queryFn: () => getProgram(programId!) })
+  const {
+    data: program,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({ queryKey: ["program", programId], queryFn: () => getProgram(programId!) });
   // Track the visit for the global command palette's "Recently viewed".
-  useEffect(() => { if (program) pushRecentProgram(program) }, [program])
-  const { data: matchResult } = useQuery({ queryKey: ['match', programId], queryFn: () => getMatchDetail(programId!), retry: false })
+  useEffect(() => {
+    if (program) pushRecentProgram(program);
+  }, [program]);
+  const { data: matchResult } = useQuery({
+    queryKey: ["match", programId],
+    queryFn: () => getMatchDetail(programId!),
+    retry: false,
+  });
   // Parent institution — a program has no photo of its own, so the hero inherits
   // the institution's campus photo (gradient fallback). Mirrors the school pages.
   const { data: institution } = useQuery({
-    queryKey: ['institution', (program as any)?.institution_id],
+    queryKey: ["institution", (program as any)?.institution_id],
     queryFn: () => getPublicInstitution((program as any).institution_id),
     enabled: !!(program as any)?.institution_id,
     retry: false,
-  })
-  const { data: netPrice } = useQuery({ queryKey: ['net-price', programId], queryFn: () => getNetPrice(programId!), enabled: !!programId, retry: false })
-  const { data: events } = useQuery({ queryKey: ['events', { program_id: programId }], queryFn: () => listEvents({ program_id: programId, limit: 5 }) })
+  });
+  const { data: netPrice } = useQuery({
+    queryKey: ["net-price", programId],
+    queryFn: () => getNetPrice(programId!),
+    enabled: !!programId,
+    retry: false,
+  });
+  const { data: events } = useQuery({
+    queryKey: ["events", { program_id: programId }],
+    queryFn: () => listEvents({ program_id: programId, limit: 30 }),
+  });
   // Channel-sourced program Updates (news tagged to this program).
   const { data: programPostsData } = useQuery({
-    queryKey: ['program-posts', (program as any)?.institution_id, programId],
+    queryKey: ["program-posts", (program as any)?.institution_id, programId],
     queryFn: () => getPublicPosts((program as any).institution_id, { program_id: programId }),
     enabled: !!(program as any)?.institution_id && !!programId,
-  })
-  const programPosts = Array.isArray(programPostsData) ? programPostsData : []
-  const { data: saved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
-  const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
-  const { data: reviewsData } = useQuery({ queryKey: ['program-reviews', programId], queryFn: () => getProgramReviews(programId!), retry: false })
-  const { data: employerData } = useQuery({ queryKey: ['employer-feedback', programId], queryFn: () => getEmployerFeedback(programId!), retry: false })
+  });
+  const programPosts = Array.isArray(programPostsData) ? programPostsData : [];
+  const { data: saved } = useQuery({ queryKey: ["saved"], queryFn: listSaved });
+  const { data: applications } = useQuery({
+    queryKey: ["my-applications"],
+    queryFn: listMyApplications,
+  });
+  const { data: reviewsData } = useQuery({
+    queryKey: ["program-reviews", programId],
+    queryFn: () => getProgramReviews(programId!),
+    retry: false,
+  });
+  const { data: employerData } = useQuery({
+    queryKey: ["employer-feedback", programId],
+    queryFn: () => getEmployerFeedback(programId!),
+    retry: false,
+  });
   const { data: sameSchoolData } = useQuery({
-    queryKey: ['same-school-programs', (program as any)?.institution_id],
-    queryFn: () => searchPrograms({ institution_id: (program as any)?.institution_id, page_size: 7 }),
+    queryKey: ["same-school-programs", (program as any)?.institution_id],
+    queryFn: () =>
+      searchPrograms({ institution_id: (program as any)?.institution_id, page_size: 7 }),
     enabled: !!(program as any)?.institution_id,
     retry: false,
-  })
+  });
   const { data: similarData } = useQuery({
-    queryKey: ['similar-programs', (program as any)?.program_name],
+    queryKey: ["similar-programs", (program as any)?.program_name],
     queryFn: () => semanticSearch((program as any).program_name, 7),
     enabled: !!(program as any)?.program_name,
     retry: false,
-  })
+  });
 
   useEffect(() => {
-    if (programId) logEngagement(programId, 'viewed_program', 1).catch(() => {})
-    const start = Date.now()
+    if (programId) logEngagement(programId, "viewed_program", 1).catch(() => {});
+    const start = Date.now();
     return () => {
-      const secs = Math.round((Date.now() - start) / 1000)
-      if (programId && secs > 5) logEngagement(programId, 'time_spent', secs).catch(() => {})
-    }
-  }, [programId])
+      const secs = Math.round((Date.now() - start) / 1000);
+      if (programId && secs > 5) logEngagement(programId, "time_spent", secs).catch(() => {});
+    };
+  }, [programId]);
 
-  const savedList: any[] = Array.isArray(saved) ? saved : []
-  const isSaved = savedList.some((s: any) => s.program_id === programId)
-  const applicationsList: any[] = Array.isArray(applications) ? applications : []
-  const existingApp = applicationsList.find((a: any) => a.program_id === programId)
-  const eventsList: EventItem[] = Array.isArray(events) ? events : []
+  const savedList: any[] = Array.isArray(saved) ? saved : [];
+  const isSaved = savedList.some((s: any) => s.program_id === programId);
+  const applicationsList: any[] = Array.isArray(applications) ? applications : [];
+  const existingApp = applicationsList.find((a: any) => a.program_id === programId);
+  const eventsList: EventItem[] = Array.isArray(events) ? events : [];
 
   const saveMut = useMutation({
     mutationFn: async (): Promise<void> => {
-      if (isSaved) await unsaveProgram(programId!)
-      else await saveProgram(programId!)
+      if (isSaved) await unsaveProgram(programId!);
+      else await saveProgram(programId!);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved'] }),
-  })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["saved"] }),
+  });
   const applyMut = useMutation({
     mutationFn: () => createApplication(programId!),
-    onSuccess: (app) => { showToast('Application created', 'success'); navigate(`/s/applications/${app.id}`) },
-  })
+    onSuccess: (app) => {
+      showToast("Application created", "success");
+      navigate(`/s/applications/${app.id}`);
+    },
+  });
   const rsvpMut = useMutation({
     mutationFn: rsvpEvent,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['events'] }); queryClient.invalidateQueries({ queryKey: ['my-rsvps'] }); showToast('RSVP confirmed', 'success') },
-  })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+      queryClient.invalidateQueries({ queryKey: ["my-rsvps"] });
+      showToast("RSVP confirmed", "success");
+    },
+  });
 
-  if (isLoading) return <ProgramDetailSkeleton />
+  if (isLoading) return <ProgramDetailSkeleton />;
 
   if (isError) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <QueryError detail="We couldn't load this program." onRetry={() => refetch()} />
       </div>
-    )
+    );
   }
 
   if (!program) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <p className="text-sm text-foreground mb-3">Program details are unavailable right now.</p>
-        <Button size="sm" variant="secondary" onClick={() => navigate('/s/explore')}>Back to Explore</Button>
+        <Button size="sm" variant="secondary" onClick={() => navigate("/s/explore")}>
+          Back to Explore
+        </Button>
       </div>
-    )
+    );
   }
 
-  const p: any = program
+  const p: any = program;
   // Untyped (dual-score `MatchResultDual` ∪ legacy `MatchResult`) — getMatchDetail
   // returns `any` and this page reads both shapes; matches the `p: any` style.
-  const match: any = matchResult ?? null
-  const hasMatch = !!(match && (match.fitness_score != null || match.match_score != null))
-  const rd: any = p.ranking_data || {}
+  const match: any = matchResult ?? null;
+  const hasMatch = !!(match && (match.fitness_score != null || match.match_score != null));
+  const rd: any = p.ranking_data || {};
   // Spec 23 bridge: project the institution editor's canonical cost/outcomes
   // blobs onto the legacy keys this page renders (canonical-first, legacy
   // fallback). See utils/programNormalize.ts.
-  const cd: any = normalizeCostData(p.cost_data)
-  const odn: any = normalizeOutcomes(p.outcomes_data)
-  const tracksMeta = extractTracksMeta(p.tracks)
-  const prerequisites = extractPrerequisites(p.application_requirements)
-  const testPolicy = extractTestPolicy(p.application_requirements)
-  const recommendations = extractRecommendations(p.application_requirements)
-  const fundingSignals = extractFundingSignals(p.cost_data)
-  const salaryBands = extractSalaryBands(p.outcomes_data)
+  const cd: any = normalizeCostData(p.cost_data);
+  const odn: any = normalizeOutcomes(p.outcomes_data);
+  const tracksMeta = extractTracksMeta(p.tracks);
+  const prerequisites = extractPrerequisites(p.application_requirements);
+  const testPolicy = extractTestPolicy(p.application_requirements);
+  const recommendations = extractRecommendations(p.application_requirements);
+  const fundingSignals = extractFundingSignals(p.cost_data);
+  const salaryBands = extractSalaryBands(p.outcomes_data);
   const costBandMin =
-    cd.estimated_total_cost_band?.min != null && !Number.isNaN(Number(cd.estimated_total_cost_band.min))
+    cd.estimated_total_cost_band?.min != null &&
+    !Number.isNaN(Number(cd.estimated_total_cost_band.min))
       ? Number(cd.estimated_total_cost_band.min)
-      : null
+      : null;
   const costBandMax =
-    cd.estimated_total_cost_band?.max != null && !Number.isNaN(Number(cd.estimated_total_cost_band.max))
+    cd.estimated_total_cost_band?.max != null &&
+    !Number.isNaN(Number(cd.estimated_total_cost_band.max))
       ? Number(cd.estimated_total_cost_band.max)
       : cd.total_cost_attendance != null && !Number.isNaN(Number(cd.total_cost_attendance))
         ? Number(cd.total_cost_attendance)
-        : null
-  const instName = p.institution_name || ''
+        : null;
+  const instName = p.institution_name || "";
 
   // Spec 11 §6 — archived program. No dedicated column exists yet, so key on the
   // signals that would mark a program closed; harmless (all falsy) for live ones.
-  const isArchived = p.status === 'archived' || p.is_archived === true ||
-    p.accepting_applications === false || p.is_published === false
+  const isArchived =
+    p.status === "archived" ||
+    p.is_archived === true ||
+    p.accepting_applications === false ||
+    p.is_published === false;
 
   /* ── Fallback derivations so the page never shows blanks when data exists
      elsewhere in the payload (intake_rounds, cost_data, ranking_data). ── */
 
   const effectiveTuition: number | null =
-    p.tuition ?? cd.tuition_annual_institution ?? cd.tuition_annual
-    ?? rd.tuition_out_of_state ?? rd.tuition_in_state ?? null
+    p.tuition ??
+    cd.tuition_annual_institution ??
+    cd.tuition_annual ??
+    rd.tuition_out_of_state ??
+    rd.tuition_in_state ??
+    null;
 
   function pickDeadline(ir: any): string | null {
     // Spec 23 — the editor now writes intake_rounds as an array.
-    if (Array.isArray(ir)) return intakeDeadlineFromArray(ir)
-    if (!ir || typeof ir !== 'object') return null
+    if (Array.isArray(ir)) return intakeDeadlineFromArray(ir);
+    if (!ir || typeof ir !== "object") return null;
     const pick = (t: any) =>
-      t?.regular_decision?.deadline ?? t?.early_decision_2?.deadline ?? t?.early_decision_1?.deadline ?? null
+      t?.regular_decision?.deadline ??
+      t?.early_decision_2?.deadline ??
+      t?.early_decision_1?.deadline ??
+      null;
     for (const [k, v] of Object.entries(ir)) {
-      if (k === 'source') continue
-      const d = pick(v)
-      if (d) return d
+      if (k === "source") continue;
+      const d = pick(v);
+      if (d) return d;
     }
-    return pick(ir)
+    return pick(ir);
   }
-  const effectiveDeadline: string | null = p.application_deadline ?? pickDeadline(p.intake_rounds)
+  const effectiveDeadline: string | null = p.application_deadline ?? pickDeadline(p.intake_rounds);
 
-  function extractTimeline(ir: any): { term: string; rounds: any[]; enrollment_deadline: string | null } | null {
+  function extractTimeline(
+    ir: any,
+  ): { term: string; rounds: any[]; enrollment_deadline: string | null } | null {
     // Spec 23 — array shape from the editor takes the dedicated path.
-    if (Array.isArray(ir)) return intakeTimelineFromArray(ir)
-    if (!ir || typeof ir !== 'object') return null
+    if (Array.isArray(ir)) return intakeTimelineFromArray(ir);
+    if (!ir || typeof ir !== "object") return null;
     const buildFrom = (term: any, termKey: string) => {
-      if (!term || typeof term !== 'object') return null
-      const rounds: any[] = []
-      if (term.early_decision_1) rounds.push({ name: 'Early Decision 1', ...term.early_decision_1 })
-      if (term.early_decision_2) rounds.push({ name: 'Early Decision 2', ...term.early_decision_2 })
-      if (term.early_action) rounds.push({ name: 'Early Action', ...term.early_action })
-      if (term.regular_decision) rounds.push({ name: 'Regular Decision', ...term.regular_decision })
-      if (term.rolling) rounds.push({ name: 'Rolling Admission', ...term.rolling })
-      if (rounds.length === 0) return null
-      return { term: term.term ?? termKey.replace(/_/g, ' '), rounds, enrollment_deadline: term.enrollment_deadline ?? null }
-    }
-    const direct = buildFrom(ir, 'intake')
-    if (direct) return direct
+      if (!term || typeof term !== "object") return null;
+      const rounds: any[] = [];
+      if (term.early_decision_1)
+        rounds.push({ name: "Early Decision 1", ...term.early_decision_1 });
+      if (term.early_decision_2)
+        rounds.push({ name: "Early Decision 2", ...term.early_decision_2 });
+      if (term.early_action) rounds.push({ name: "Early Action", ...term.early_action });
+      if (term.regular_decision)
+        rounds.push({ name: "Regular Decision", ...term.regular_decision });
+      if (term.rolling) rounds.push({ name: "Rolling Admission", ...term.rolling });
+      if (rounds.length === 0) return null;
+      return {
+        term: term.term ?? termKey.replace(/_/g, " "),
+        rounds,
+        enrollment_deadline: term.enrollment_deadline ?? null,
+      };
+    };
+    const direct = buildFrom(ir, "intake");
+    if (direct) return direct;
     for (const [k, v] of Object.entries(ir)) {
-      if (k === 'source') continue
-      const t = buildFrom(v, k)
-      if (t) return t
+      if (k === "source") continue;
+      const t = buildFrom(v, k);
+      if (t) return t;
     }
-    return null
+    return null;
   }
-  const admissionTimeline = extractTimeline(p.intake_rounds)
+  const admissionTimeline = extractTimeline(p.intake_rounds);
 
   const upcomingEvent = eventsList
     .filter((e: any) => new Date(e.event_datetime || e.starts_at || Date.now()) > new Date())
-    .sort((a: any, b: any) => new Date(a.event_datetime || a.starts_at).getTime() - new Date(b.event_datetime || b.starts_at).getTime())[0]
+    .sort(
+      (a: any, b: any) =>
+        new Date(a.event_datetime || a.starts_at).getTime() -
+        new Date(b.event_datetime || b.starts_at).getTime(),
+    )[0];
 
   const handleCompare = () => {
-    if (compareStore.has(p.id)) compareStore.remove(p.id)
-    else compareStore.add({ program_id: p.id, program_name: p.program_name, institution_name: instName, degree_type: p.degree_type })
-  }
+    if (compareStore.has(p.id)) compareStore.remove(p.id);
+    else
+      compareStore.add({
+        program_id: p.id,
+        program_name: p.program_name,
+        institution_name: instName,
+        degree_type: p.degree_type,
+      });
+  };
 
-  const sameSchool = (sameSchoolData?.items ?? []).filter((sp: any) => sp.id !== programId).slice(0, 5)
-  const similar = (Array.isArray(similarData) ? similarData : []).filter((sp: any) => sp.id !== programId).slice(0, 5)
+  const sameSchool = (sameSchoolData?.items ?? [])
+    .filter((sp: any) => sp.id !== programId)
+    .slice(0, 5);
+  const similar = (Array.isArray(similarData) ? similarData : [])
+    .filter((sp: any) => sp.id !== programId)
+    .slice(0, 5);
 
   // Deep-link back to Discovery with this program's attributes pre-applied (§4).
   const discoveryBackHref = `/s/explore?${new URLSearchParams({
     ...(p.degree_type ? { degree_type: p.degree_type } : {}),
     ...(p.institution_country ? { country: p.institution_country } : {}),
     ...(p.program_name ? { q: p.program_name } : {}),
-  }).toString()}`
+  }).toString()}`;
 
   /* ── Hero (campus-photo, no logo/geo) — mirrors the institution/school pages.
      The program owns no photo; inherit the parent institution's campus photo
      (first raster image in its gallery; logos are SVG → skipped). Fall back to a
      clean gradient when the school has no photo. ── */
-  const inst: any = institution ?? null
+  const inst: any = institution ?? null;
   const heroPhoto: string | null =
-    (inst?.media_gallery ?? []).find((u: string) => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) ?? null
-  const degreeLabel = DEGREE_LABELS[p.degree_type] || p.degree_type || ''
+    (inst?.media_gallery ?? []).find((u: string) => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) ??
+    null;
+  const degreeLabel = DEGREE_LABELS[p.degree_type] || p.degree_type || "";
   // Eyebrow = degree label when we have one, else the institution name.
-  const heroEyebrow = degreeLabel || instName || null
+  const heroEyebrow = degreeLabel || instName || null;
 
   // Stat strip — real fields only, NO location. Omit anything absent.
-  const heroStats: { value: string; label: string }[] = []
+  const heroStats: { value: string; label: string }[] = [];
   if (hasMatch) {
-    const fit = toUnit(match.fitness_score ?? match.match_score)
-    if (fit > 0) heroStats.push({ value: `${Math.round(fit * 100)}%`, label: 'fitness' })
+    const fit = toUnit(match.fitness_score ?? match.match_score);
+    if (fit > 0) heroStats.push({ value: `${Math.round(fit * 100)}%`, label: "fitness" });
   }
-  const heroAcceptance = p.acceptance_rate ?? rd.acceptance_rate
+  const heroAcceptance = p.acceptance_rate ?? rd.acceptance_rate;
   if (heroAcceptance != null && Number.isFinite(Number(heroAcceptance))) {
-    const ar = Number(heroAcceptance)
-    heroStats.push({ value: `${(ar * 100).toFixed(ar < 0.1 ? 1 : 0)}%`, label: 'acceptance' })
+    const ar = Number(heroAcceptance);
+    heroStats.push({ value: `${(ar * 100).toFixed(ar < 0.1 ? 1 : 0)}%`, label: "acceptance" });
   }
-  if (effectiveTuition != null && Number.isFinite(Number(effectiveTuition)) && Number(effectiveTuition) > 0) {
-    heroStats.push({ value: formatCurrency(Number(effectiveTuition)), label: 'tuition / yr' })
+  if (
+    effectiveTuition != null &&
+    Number.isFinite(Number(effectiveTuition)) &&
+    Number(effectiveTuition) > 0
+  ) {
+    heroStats.push({ value: formatCurrency(Number(effectiveTuition)), label: "tuition / yr" });
   }
   const heroEarnings =
     odn.median_salary != null && Number.isFinite(Number(odn.median_salary))
       ? Number(odn.median_salary)
-      : (rd.earnings_10yr_median != null && Number.isFinite(Number(rd.earnings_10yr_median))
+      : rd.earnings_10yr_median != null && Number.isFinite(Number(rd.earnings_10yr_median))
         ? Number(rd.earnings_10yr_median)
-        : null)
+        : null;
   if (heroEarnings != null && heroEarnings > 0) {
-    heroStats.push({ value: formatCurrency(heroEarnings), label: 'median earnings' })
+    heroStats.push({ value: formatCurrency(heroEarnings), label: "median earnings" });
   }
 
   return (
@@ -366,7 +475,9 @@ export default function ProgramDetailPage() {
       {isArchived && (
         <div className="mb-4 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3">
           <Archive size={16} className="text-warning flex-shrink-0" />
-          <p className="text-sm text-foreground">This program is no longer accepting applications.</p>
+          <p className="text-sm text-foreground">
+            This program is no longer accepting applications.
+          </p>
         </div>
       )}
 
@@ -374,8 +485,8 @@ export default function ProgramDetailPage() {
             no in-app history, e.g. the page was opened directly) ── */}
       <button
         onClick={() => {
-          if (window.history.length > 1) navigate(-1)
-          else navigate(`/s/institutions/${p.institution_id}`)
+          if (window.history.length > 1) navigate(-1);
+          else navigate(`/s/institutions/${p.institution_id}`);
         }}
         className="inline-flex items-center gap-1.5 text-[13px] font-medium text-secondary hover:underline mb-3"
       >
@@ -383,14 +494,31 @@ export default function ProgramDetailPage() {
       </button>
 
       {/* ── Breadcrumb (mirrors the school pages) ── */}
-      <nav className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-4 flex-wrap" aria-label="Breadcrumb">
-        <button onClick={() => navigate('/s/explore')} className="hover:text-secondary transition-colors">Match</button>
-        <span className="text-muted-foreground" aria-hidden="true">·</span>
-        <Link to={`/s/institutions/${p.institution_id}`} className="hover:text-secondary transition-colors truncate max-w-[28ch]">
-          {instName || 'School'}
+      <nav
+        className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-4 flex-wrap"
+        aria-label="Breadcrumb"
+      >
+        <button
+          onClick={() => navigate("/s/explore")}
+          className="hover:text-secondary transition-colors"
+        >
+          Match
+        </button>
+        <span className="text-muted-foreground" aria-hidden="true">
+          ·
+        </span>
+        <Link
+          to={`/s/institutions/${p.institution_id}`}
+          className="hover:text-secondary transition-colors truncate max-w-[28ch]"
+        >
+          {instName || "School"}
         </Link>
-        <span className="text-muted-foreground" aria-hidden="true">·</span>
-        <span className="text-foreground font-medium truncate max-w-[40ch]" aria-current="page">{p.program_name}</span>
+        <span className="text-muted-foreground" aria-hidden="true">
+          ·
+        </span>
+        <span className="text-foreground font-medium truncate max-w-[40ch]" aria-current="page">
+          {p.program_name}
+        </span>
       </nav>
 
       {/* ── Hero — campus photo (inherited from the parent institution) fading
@@ -399,7 +527,12 @@ export default function ProgramDetailPage() {
         {/* Photo banner (raster image) or gradient fallback */}
         <div className="relative h-52 sm:h-64 md:h-72">
           {heroPhoto ? (
-            <img src={heroPhoto} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
+            <img
+              src={heroPhoto}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-background" />
           )}
@@ -408,14 +541,16 @@ export default function ProgramDetailPage() {
             className="absolute inset-0"
             style={{
               background:
-                'linear-gradient(to bottom, rgba(10,18,36,0.30) 0%, rgba(10,18,36,0.04) 24%, rgba(10,18,36,0) 44%, hsl(var(--background)) 97%)',
+                "linear-gradient(to bottom, rgba(10,18,36,0.30) 0%, rgba(10,18,36,0.04) 24%, rgba(10,18,36,0) 44%, hsl(var(--background)) 97%)",
             }}
           />
         </div>
 
         {/* Identity — overlaps onto the cream gradient base; dark text reads cleanly. */}
         <div className="relative -mt-20 px-5 sm:px-7 pb-6">
-          {heroEyebrow && <p className="text-eyebrow uppercase text-secondary mb-1.5">{heroEyebrow}</p>}
+          {heroEyebrow && (
+            <p className="text-eyebrow uppercase text-secondary mb-1.5">{heroEyebrow}</p>
+          )}
 
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="min-w-0">
@@ -425,12 +560,19 @@ export default function ProgramDetailPage() {
 
               {/* Institution + department line (links to the school; NO geo). */}
               <div className="flex items-center gap-1.5 mt-2 text-[13px] text-muted-foreground flex-wrap">
-                <Link to={`/s/institutions/${p.institution_id}`} className="text-secondary hover:underline font-medium">
-                  {instName || 'School'}
+                <Link
+                  to={`/s/institutions/${p.institution_id}`}
+                  className="text-secondary hover:underline font-medium"
+                >
+                  {instName || "School"}
                 </Link>
                 {p.department && (
                   <>
-                    <ChevronRight size={12} className="text-muted-foreground/50" aria-hidden="true" />
+                    <ChevronRight
+                      size={12}
+                      className="text-muted-foreground/50"
+                      aria-hidden="true"
+                    />
                     <span>{p.department}</span>
                   </>
                 )}
@@ -441,8 +583,14 @@ export default function ProgramDetailPage() {
                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2.5 text-[13px] text-muted-foreground">
                   {heroStats.map((s, i) => (
                     <Fragment key={s.label}>
-                      {i > 0 && <span className="text-border" aria-hidden="true">·</span>}
-                      <span><span className="font-semibold text-foreground">{s.value}</span> {s.label}</span>
+                      {i > 0 && (
+                        <span className="text-border" aria-hidden="true">
+                          ·
+                        </span>
+                      )}
+                      <span>
+                        <span className="font-semibold text-foreground">{s.value}</span> {s.label}
+                      </span>
                     </Fragment>
                   ))}
                 </div>
@@ -473,7 +621,7 @@ export default function ProgramDetailPage() {
               </div>
             ) : (
               <button
-                onClick={() => navigate('/s/explore')}
+                onClick={() => navigate("/s/explore")}
                 className="flex items-center gap-2 text-left flex-shrink-0"
                 title="We haven't computed your match for this program yet."
               >
@@ -481,7 +629,9 @@ export default function ProgramDetailPage() {
                   <Sparkles size={16} className="text-secondary" />
                 </div>
                 <div className="leading-tight">
-                  <p className="text-[12px] font-medium text-secondary hover:underline">See my matches</p>
+                  <p className="text-[12px] font-medium text-secondary hover:underline">
+                    See my matches
+                  </p>
                 </div>
               </button>
             )}
@@ -490,28 +640,45 @@ export default function ProgramDetailPage() {
           {/* Actions — primary application CTA + Save + Ask counselor + Compare. */}
           <div className="flex flex-wrap items-center gap-2 mt-5">
             {existingApp ? (
-              <Button size="sm" variant="secondary" onClick={() => navigate(`/s/applications/${existingApp.id}`)}>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => navigate(`/s/applications/${existingApp.id}`)}
+              >
                 <FileText size={14} className="mr-1.5" /> My application
               </Button>
             ) : (
-              <Button size="sm" variant="secondary" onClick={() => applyMut.mutate()} disabled={isArchived || applyMut.isPending}>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => applyMut.mutate()}
+                disabled={isArchived || applyMut.isPending}
+              >
                 <Send size={14} className="mr-1.5" /> Start application
               </Button>
             )}
             <Button
               size="sm"
-              variant={isSaved ? 'secondary' : 'tertiary'}
+              variant={isSaved ? "secondary" : "tertiary"}
               onClick={() => saveMut.mutate()}
               disabled={isArchived || saveMut.isPending}
               aria-pressed={isSaved}
             >
-              {isSaved ? <BookmarkCheck size={14} className="mr-1.5" /> : <Bookmark size={14} className="mr-1.5" />}
-              {isSaved ? 'Saved' : 'Save'}
+              {isSaved ? (
+                <BookmarkCheck size={14} className="mr-1.5" />
+              ) : (
+                <Bookmark size={14} className="mr-1.5" />
+              )}
+              {isSaved ? "Saved" : "Save"}
             </Button>
             <Button
               size="sm"
               variant="tertiary"
-              onClick={() => askCounselor(`Is ${p.program_name} at ${instName} a good fit for me? Why or why not?`)}
+              onClick={() =>
+                askCounselor(
+                  `Is ${p.program_name} at ${instName} a good fit for me? Why or why not?`,
+                )
+              }
             >
               <Sparkles size={14} className="mr-1.5" /> Ask counselor
             </Button>
@@ -523,7 +690,7 @@ export default function ProgramDetailPage() {
               aria-pressed={compareStore.has(p.id)}
             >
               <ArrowRightLeft size={14} className="mr-1.5" />
-              {compareStore.has(p.id) ? 'Comparing' : 'Compare'}
+              {compareStore.has(p.id) ? "Comparing" : "Compare"}
             </Button>
           </div>
         </div>
@@ -556,7 +723,7 @@ export default function ProgramDetailPage() {
         <Card className="mb-5 p-4">
           <ProbabilityBands
             bands={match.probability_bands ?? null}
-            reason={match.acceptance_rate == null ? 'no_history' : 'not_match_ready'}
+            reason={match.acceptance_rate == null ? "no_history" : "not_match_ready"}
           />
         </Card>
       )}
@@ -564,29 +731,34 @@ export default function ProgramDetailPage() {
       {/* ── Tabs (underline in --accent) ── */}
       <div className="border-b border-border mb-5">
         <div className="flex gap-1 overflow-x-auto">
-          {TABS.map(t => {
-            const isActive = tab === t.id
-            let badge: string | null = null
-            if (t.id === 'insights' && reviewsData?.total_reviews) badge = String(reviewsData.total_reviews)
+          {TABS.map((t) => {
+            const isActive = tab === t.id;
+            let badge: string | null = null;
+            if (t.id === "insights" && reviewsData?.total_reviews)
+              badge = String(reviewsData.total_reviews);
             return (
               <button
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   isActive
-                    ? 'border-secondary text-secondary'
-                    : 'border-transparent text-foreground hover:text-foreground'
+                    ? "border-secondary text-secondary"
+                    : "border-transparent text-foreground hover:text-foreground"
                 }`}
               >
                 <t.icon size={14} />
                 {t.label}
                 {badge && (
-                  <span className={`px-1.5 py-0.5 text-[10px] rounded-full ${
-                    isActive ? 'bg-muted text-secondary' : 'bg-muted text-foreground'
-                  }`}>{badge}</span>
+                  <span
+                    className={`px-1.5 py-0.5 text-[10px] rounded-full ${
+                      isActive ? "bg-muted text-secondary" : "bg-muted text-foreground"
+                    }`}
+                  >
+                    {badge}
+                  </span>
                 )}
               </button>
-            )
+            );
           })}
         </div>
       </div>
@@ -595,10 +767,10 @@ export default function ProgramDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
         {/* Main column */}
         <div className="min-w-0 space-y-4">
-          {tab === 'overview' && (
+          {tab === "overview" && (
             <>
               <AboutCard
-                description={p.description_text || p.institution_description || ''}
+                description={p.description_text || p.institution_description || ""}
                 institutionName={instName}
                 programName={p.program_name}
                 websiteUrl={p.website_url}
@@ -606,7 +778,10 @@ export default function ProgramDetailPage() {
               {/* Social links + channel-sourced Updates/Events now live in the
                   dedicated "Events & Updates" tab (NewsGrid). */}
 
-              {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format || tracksMeta.curriculum.length > 0) && (
+              {(tracksMeta.concentrations.length > 0 ||
+                tracksMeta.note ||
+                tracksMeta.learning_format ||
+                tracksMeta.curriculum.length > 0) && (
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <BookOpen size={14} className="text-secondary" />
@@ -617,73 +792,101 @@ export default function ProgramDetailPage() {
                   )}
                   {tracksMeta.concentrations.length > 0 && (
                     <div className="mb-3">
-                      <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">Concentrations</p>
+                      <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">
+                        Concentrations
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         {tracksMeta.concentrations.map((t, i) => (
-                          <Badge key={i} variant="neutral" size="sm">{t}</Badge>
+                          <Badge key={i} variant="neutral" size="sm">
+                            {t}
+                          </Badge>
                         ))}
                       </div>
                     </div>
                   )}
-                  {tracksMeta.curriculum.length > 0 && (() => {
-                    const active = Math.min(curTerm, tracksMeta.curriculum.length - 1)
-                    const term = tracksMeta.curriculum[active]
-                    return (
-                      <div>
-                        {/* Term tabs — one consistent format for every program */}
-                        <div className="flex flex-wrap gap-1.5 mb-3" role="tablist">
-                          {tracksMeta.curriculum.map((t, i) => (
-                            <button
-                              key={i}
-                              role="tab"
-                              aria-selected={active === i}
-                              onClick={() => setCurTerm(i)}
-                              className={`px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider border transition-colors ${
-                                active === i
-                                  ? 'bg-secondary text-secondary-foreground border-secondary'
-                                  : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
-                              }`}
-                            >
-                              {t.term}
-                            </button>
-                          ))}
+                  {tracksMeta.curriculum.length > 0 &&
+                    (() => {
+                      const active = Math.min(curTerm, tracksMeta.curriculum.length - 1);
+                      const term = tracksMeta.curriculum[active];
+                      return (
+                        <div>
+                          {/* Term tabs — one consistent format for every program */}
+                          <div className="flex flex-wrap gap-1.5 mb-3" role="tablist">
+                            {tracksMeta.curriculum.map((t, i) => (
+                              <button
+                                key={i}
+                                role="tab"
+                                aria-selected={active === i}
+                                onClick={() => setCurTerm(i)}
+                                className={`px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider border transition-colors ${
+                                  active === i
+                                    ? "bg-secondary text-secondary-foreground border-secondary"
+                                    : "bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground"
+                                }`}
+                              >
+                                {t.term}
+                              </button>
+                            ))}
+                          </div>
+                          <ul className="space-y-1">
+                            {(term?.courses ?? []).map((c, j) => (
+                              <li
+                                key={j}
+                                className="flex items-start gap-2 text-sm text-foreground"
+                              >
+                                <span
+                                  className="mt-[7px] w-1 h-1 rounded-full bg-secondary/50 flex-shrink-0"
+                                  aria-hidden="true"
+                                />
+                                {c}
+                              </li>
+                            ))}
+                          </ul>
                         </div>
-                        <ul className="space-y-1">
-                          {(term?.courses ?? []).map((c, j) => (
-                            <li key={j} className="flex items-start gap-2 text-sm text-foreground">
-                              <span className="mt-[7px] w-1 h-1 rounded-full bg-secondary/50 flex-shrink-0" aria-hidden="true" />
-                              {c}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )
-                  })()}
+                      );
+                    })()}
                   {tracksMeta.learning_format && (
                     <div className="mt-3">
-                      <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Learning format</p>
-                      <p className="text-sm text-foreground leading-relaxed">{tracksMeta.learning_format}</p>
+                      <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">
+                        Learning format
+                      </p>
+                      <p className="text-sm text-foreground leading-relaxed">
+                        {tracksMeta.learning_format}
+                      </p>
                     </div>
                   )}
                 </Card>
               )}
 
               {(() => {
-                const cp = p.class_profile && typeof p.class_profile === 'object'
-                  ? p.class_profile as Record<string, any> : null
-                if (!cp) return null
-                const pct = (v: any) => `${Math.round(Number(v) * 100)}%`
-                const rows: Array<{ label: string; value: string }> = []
-                if (cp.cohort_size) rows.push({ label: 'Cohort size', value: String(cp.cohort_size) })
-                if (cp.international_pct != null) rows.push({ label: 'International', value: pct(cp.international_pct) })
-                if (cp.countries != null) rows.push({ label: 'Countries', value: String(cp.countries) })
-                if (cp.women_pct != null) rows.push({ label: 'Women', value: pct(cp.women_pct) })
-                if (cp.stem_pct != null) rows.push({ label: 'STEM background', value: pct(cp.stem_pct) })
-                if (cp.median_gpa != null) rows.push({ label: 'Median GPA', value: String(cp.median_gpa) })
-                if (cp.median_gre_quant != null) rows.push({ label: 'Median GRE (Quant)', value: String(cp.median_gre_quant) })
-                if (cp.median_gmat != null) rows.push({ label: 'Median GMAT', value: String(cp.median_gmat) })
-                if (cp.avg_work_experience_months != null) rows.push({ label: 'Avg work experience', value: `${cp.avg_work_experience_months} mo` })
-                if (!rows.length) return null
+                const cp =
+                  p.class_profile && typeof p.class_profile === "object"
+                    ? (p.class_profile as Record<string, any>)
+                    : null;
+                if (!cp) return null;
+                const pct = (v: any) => `${Math.round(Number(v) * 100)}%`;
+                const rows: Array<{ label: string; value: string }> = [];
+                if (cp.cohort_size)
+                  rows.push({ label: "Cohort size", value: String(cp.cohort_size) });
+                if (cp.international_pct != null)
+                  rows.push({ label: "International", value: pct(cp.international_pct) });
+                if (cp.countries != null)
+                  rows.push({ label: "Countries", value: String(cp.countries) });
+                if (cp.women_pct != null) rows.push({ label: "Women", value: pct(cp.women_pct) });
+                if (cp.stem_pct != null)
+                  rows.push({ label: "STEM background", value: pct(cp.stem_pct) });
+                if (cp.median_gpa != null)
+                  rows.push({ label: "Median GPA", value: String(cp.median_gpa) });
+                if (cp.median_gre_quant != null)
+                  rows.push({ label: "Median GRE (Quant)", value: String(cp.median_gre_quant) });
+                if (cp.median_gmat != null)
+                  rows.push({ label: "Median GMAT", value: String(cp.median_gmat) });
+                if (cp.avg_work_experience_months != null)
+                  rows.push({
+                    label: "Avg work experience",
+                    value: `${cp.avg_work_experience_months} mo`,
+                  });
+                if (!rows.length) return null;
                 return (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
@@ -691,31 +894,50 @@ export default function ProgramDetailPage() {
                       <h3 className="font-semibold text-foreground">Class Profile</h3>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {rows.map(r => (
-                        <div key={r.label} className="px-3 py-2.5 rounded-lg bg-muted/50 border border-border">
-                          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground leading-none">{r.label}</p>
-                          <p className="text-[17px] font-bold text-foreground tabular-nums mt-1 leading-tight">{r.value}</p>
+                      {rows.map((r) => (
+                        <div
+                          key={r.label}
+                          className="px-3 py-2.5 rounded-lg bg-muted/50 border border-border"
+                        >
+                          <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground leading-none">
+                            {r.label}
+                          </p>
+                          <p className="text-[17px] font-bold text-foreground tabular-nums mt-1 leading-tight">
+                            {r.value}
+                          </p>
                         </div>
                       ))}
                     </div>
                     {cp.source && (
                       <p className="mt-3 text-[11px] text-muted-foreground/70">
-                        Source:{' '}
+                        Source:{" "}
                         {cp.source_url ? (
-                          <a href={String(cp.source_url)} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">{String(cp.source)}</a>
-                        ) : String(cp.source)}
+                          <a
+                            href={String(cp.source_url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-secondary hover:underline"
+                          >
+                            {String(cp.source)}
+                          </a>
+                        ) : (
+                          String(cp.source)
+                        )}
                       </p>
                     )}
                   </Card>
-                )
+                );
               })()}
 
               {(() => {
-                const fc = p.faculty_contacts
-                const facObj = (fc && !Array.isArray(fc) && typeof fc === 'object')
-                  ? fc as Record<string, any> : null
-                const lead: Array<Record<string, any>> = facObj && Array.isArray(facObj.lead) ? facObj.lead : []
-                if (!facObj || (!lead.length && !facObj.directory_url && !facObj.note)) return null
+                const fc = p.faculty_contacts;
+                const facObj =
+                  fc && !Array.isArray(fc) && typeof fc === "object"
+                    ? (fc as Record<string, any>)
+                    : null;
+                const lead: Array<Record<string, any>> =
+                  facObj && Array.isArray(facObj.lead) ? facObj.lead : [];
+                if (!facObj || (!lead.length && !facObj.directory_url && !facObj.note)) return null;
                 return (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
@@ -725,13 +947,28 @@ export default function ProgramDetailPage() {
                     {lead.length > 0 && (
                       <div className="space-y-2 mb-3">
                         {lead.map((f, i) => (
-                          <div key={i} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
+                          <div
+                            key={i}
+                            className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border"
+                          >
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-foreground">{String(f.name)}</p>
-                              {f.title && <p className="text-[11px] text-muted-foreground">{String(f.title)}</p>}
+                              <p className="text-sm font-medium text-foreground">
+                                {String(f.name)}
+                              </p>
+                              {f.title && (
+                                <p className="text-[11px] text-muted-foreground">
+                                  {String(f.title)}
+                                </p>
+                              )}
                             </div>
                             {f.url && (
-                              <a href={String(f.url)} target="_blank" rel="noopener noreferrer" className="text-secondary hover:text-secondary/80 flex-shrink-0" aria-label="Faculty profile">
+                              <a
+                                href={String(f.url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-secondary hover:text-secondary/80 flex-shrink-0"
+                                aria-label="Faculty profile"
+                              >
                                 <ExternalLink size={13} />
                               </a>
                             )}
@@ -739,27 +976,47 @@ export default function ProgramDetailPage() {
                         ))}
                       </div>
                     )}
-                    {facObj.note && <p className="text-sm text-foreground/80 mb-3">{String(facObj.note)}</p>}
+                    {facObj.note && (
+                      <p className="text-sm text-foreground/80 mb-3">{String(facObj.note)}</p>
+                    )}
                     {facObj.directory_url && (
-                      <a href={String(facObj.directory_url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-secondary hover:underline">
+                      <a
+                        href={String(facObj.directory_url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-[13px] font-medium text-secondary hover:underline"
+                      >
                         <ExternalLink size={13} /> Full faculty directory
                       </a>
                     )}
                   </Card>
-                )
+                );
               })()}
 
               <NextStepsCard
                 applicationDeadline={effectiveDeadline}
-                upcomingEvent={upcomingEvent ? {
-                  title: (upcomingEvent as any).title || (upcomingEvent as any).event_name,
-                  event_datetime: (upcomingEvent as any).event_datetime || (upcomingEvent as any).starts_at || (upcomingEvent as any).start_time,
-                  onClick: () => rsvpMut.mutate(upcomingEvent.id),
-                } : null}
+                upcomingEvent={
+                  upcomingEvent
+                    ? {
+                        title: (upcomingEvent as any).title || (upcomingEvent as any).event_name,
+                        event_datetime:
+                          (upcomingEvent as any).event_datetime ||
+                          (upcomingEvent as any).starts_at ||
+                          (upcomingEvent as any).start_time,
+                        onClick: () => rsvpMut.mutate(upcomingEvent.id),
+                      }
+                    : null
+                }
                 hasApplication={!!existingApp}
                 onApply={() => applyMut.mutate()}
-                onViewApplication={existingApp ? () => navigate(`/s/applications/${existingApp.id}`) : undefined}
-                onAskCounselor={() => navigate(`/s?prefill=${encodeURIComponent(`Tell me more about ${p.program_name}. What should I know?`)}`)}
+                onViewApplication={
+                  existingApp ? () => navigate(`/s/applications/${existingApp.id}`) : undefined
+                }
+                onAskCounselor={() =>
+                  navigate(
+                    `/s?prefill=${encodeURIComponent(`Tell me more about ${p.program_name}. What should I know?`)}`,
+                  )
+                }
               />
 
               {/* Highlights as editorial chips */}
@@ -771,7 +1028,10 @@ export default function ProgramDetailPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {p.highlights.map((h: string, i: number) => (
-                      <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-secondary/10 text-foreground border border-secondary/20">
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-secondary/10 text-foreground border border-secondary/20"
+                      >
                         <Sparkles size={11} className="text-secondary" />
                         {h}
                       </span>
@@ -782,12 +1042,17 @@ export default function ProgramDetailPage() {
 
               {/* Faculty contacts */}
               {(() => {
-                const fc = p.faculty_contacts
-                let rows: Array<{ name?: string; email?: string; role?: string; source_url?: string }> = []
-                if (Array.isArray(fc)) rows = fc
-                else if (fc && typeof fc === 'object') rows = [fc as any]
-                rows = rows.filter(r => r && (r.name || r.email))
-                if (!rows.length) return null
+                const fc = p.faculty_contacts;
+                let rows: Array<{
+                  name?: string;
+                  email?: string;
+                  role?: string;
+                  source_url?: string;
+                }> = [];
+                if (Array.isArray(fc)) rows = fc;
+                else if (fc && typeof fc === "object") rows = [fc as any];
+                rows = rows.filter((r) => r && (r.name || r.email));
+                if (!rows.length) return null;
                 return (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
@@ -796,13 +1061,19 @@ export default function ProgramDetailPage() {
                     </div>
                     <div className="space-y-2 text-sm">
                       {rows.map((c, i) => (
-                        <div key={i} className="flex justify-between items-start gap-2 border-b border-border pb-2">
+                        <div
+                          key={i}
+                          className="flex justify-between items-start gap-2 border-b border-border pb-2"
+                        >
                           <div className="flex-1">
                             {c.name && <div className="font-medium text-foreground">{c.name}</div>}
                             {c.role && <div className="text-xs text-foreground">{c.role}</div>}
                           </div>
                           {c.email && (
-                            <a href={`mailto:${c.email}`} className="text-xs text-secondary hover:underline">
+                            <a
+                              href={`mailto:${c.email}`}
+                              className="text-xs text-secondary hover:underline"
+                            >
                               {c.email}
                             </a>
                           )}
@@ -810,854 +1081,1236 @@ export default function ProgramDetailPage() {
                       ))}
                       {rows[0]?.source_url && (
                         <p className="text-[10px] text-foreground/50 mt-2">
-                          Source:{' '}
-                          <a href={rows[0].source_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                          Source:{" "}
+                          <a
+                            href={rows[0].source_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                          >
                             {rows[0].source_url}
                           </a>
                         </p>
                       )}
                     </div>
                   </Card>
-                )
+                );
               })()}
             </>
           )}
 
-          {tab === 'admissions' && (() => {
-            const appReqs: Array<{ label: string; required?: boolean; note?: string }> =
-              normalizeRequirements(p.application_requirements)
-            const legacyReqs = p.requirements && typeof p.requirements === 'object' ? Object.entries(p.requirements) : []
-            const requiredItems = appReqs.filter(r => r.required !== false)
-            const optionalItems = appReqs.filter(r => r.required === false)
-            // Enriched admissions detail (rounds, fee, how-you're-evaluated).
-            const reqObj = (p.application_requirements && !Array.isArray(p.application_requirements)
-              ? p.application_requirements : {}) as Record<string, any>
-            const deadlineRounds: Array<{ round: string; date: string }> = Array.isArray(reqObj.deadlines)
-              ? reqObj.deadlines.filter((d: any) => d && d.round && d.date)
-                .map((d: any) => ({ round: String(d.round), date: String(d.date) }))
-              : []
-            const intl = reqObj.international && typeof reqObj.international === 'object'
-              ? reqObj.international as Record<string, any> : null
+          {tab === "admissions" &&
+            (() => {
+              const appReqs: Array<{ label: string; required?: boolean; note?: string }> =
+                normalizeRequirements(p.application_requirements);
+              const legacyReqs =
+                p.requirements && typeof p.requirements === "object"
+                  ? Object.entries(p.requirements)
+                  : [];
+              const requiredItems = appReqs.filter((r) => r.required !== false);
+              const optionalItems = appReqs.filter((r) => r.required === false);
+              // Enriched admissions detail (rounds, fee, how-you're-evaluated).
+              const reqObj = (
+                p.application_requirements && !Array.isArray(p.application_requirements)
+                  ? p.application_requirements
+                  : {}
+              ) as Record<string, any>;
+              const deadlineRounds: Array<{ round: string; date: string }> = Array.isArray(
+                reqObj.deadlines,
+              )
+                ? reqObj.deadlines
+                    .filter((d: any) => d && d.round && d.date)
+                    .map((d: any) => ({ round: String(d.round), date: String(d.date) }))
+                : [];
+              const intl =
+                reqObj.international && typeof reqObj.international === "object"
+                  ? (reqObj.international as Record<string, any>)
+                  : null;
 
-            return (
-              <>
-                <StatGroup
-                  acceptanceRate={p.acceptance_rate ?? rd.acceptance_rate}
-                  satAvg={rd.sat_avg}
-                  actMidpoint={rd.act_midpoint}
-                  applicationDeadline={effectiveDeadline}
-                />
+              return (
+                <>
+                  <StatGroup
+                    acceptanceRate={p.acceptance_rate ?? rd.acceptance_rate}
+                    satAvg={rd.sat_avg}
+                    actMidpoint={rd.act_midpoint}
+                    applicationDeadline={effectiveDeadline}
+                  />
 
-                {/* Application Requirements */}
-                <Card className="p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <GraduationCap size={14} className="text-secondary" />
-                    <h3
-                      className="font-semibold text-foreground"
-                      title={
-                        appReqs.length > 0
-                          ? `${requiredItems.length} required${optionalItems.length > 0 ? ` · ${optionalItems.length} optional` : ''}`
-                          : undefined
-                      }
-                    >
-                      Application Requirements
-                    </h3>
-                  </div>
-
-                  {appReqs.length > 0 ? (
-                    <div className="space-y-3">
-                      {requiredItems.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">Required</p>
-                          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {requiredItems.map((r, i) => (
-                              <li key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
-                                <span className="w-5 h-5 rounded-full bg-success-soft text-success flex items-center justify-center flex-shrink-0 mt-0.5">
-                                  <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" clipRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" /></svg>
-                                </span>
-                                <div className="min-w-0">
-                                  <p className="text-sm font-medium text-foreground leading-tight">{r.label}</p>
-                                  {r.note && <p className="text-[11px] text-foreground/70 mt-0.5">{r.note}</p>}
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {optionalItems.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">Optional / Flexible</p>
-                          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {optionalItems.map((r, i) => (
-                              <li key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-card border border-border">
-                                <span className="w-5 h-5 rounded-full bg-muted text-foreground/60 flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">~</span>
-                                <div className="min-w-0">
-                                  <p className="text-sm font-medium text-foreground leading-tight">{r.label}</p>
-                                  {r.note && <p className="text-[11px] text-foreground/70 mt-0.5">{r.note}</p>}
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  ) : legacyReqs.length > 0 ? (
-                    <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                      {legacyReqs.map(([k, v]) => (
-                        <div key={k} className="flex justify-between border-b border-border pb-2">
-                          <dt className="text-foreground capitalize">{k.replace(/_/g, ' ')}</dt>
-                          <dd className="font-medium text-foreground">{String(v)}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  ) : (
-                    <p className="text-sm text-foreground">Application requirements not yet listed. Contact the program for details.</p>
-                  )}
-                </Card>
-
-                {prerequisites.length > 0 && (
+                  {/* Application Requirements */}
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <GraduationCap size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Prerequisites</h3>
+                      <h3
+                        className="font-semibold text-foreground"
+                        title={
+                          appReqs.length > 0
+                            ? `${requiredItems.length} required${optionalItems.length > 0 ? ` · ${optionalItems.length} optional` : ""}`
+                            : undefined
+                        }
+                      >
+                        Application Requirements
+                      </h3>
                     </div>
-                    <ul className="space-y-2">
-                      {prerequisites.map((pr, i) => (
-                        <li key={i} className="rounded-lg border border-border px-3 py-2 text-sm">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-medium text-foreground">{pr.name}</span>
-                            <Badge variant={pr.required ? 'warning' : 'neutral'} size="sm">
-                              {pr.required ? 'Required' : 'Recommended'}
-                            </Badge>
-                          </div>
-                          {pr.allowed_substitutes.length > 0 && (
-                            <p className="text-[11px] text-foreground/70 mt-1">
-                              Substitutes: {pr.allowed_substitutes.join(', ')}
-                            </p>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                )}
 
-                {testPolicy && (
-                  <Card className="p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <BookOpen size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Test Policy</h3>
-                      {testPolicy.stance_label && (
-                        <Badge variant="info" size="sm">{testPolicy.stance_label}</Badge>
-                      )}
-                    </div>
-                    <div className="space-y-3 text-sm">
-                      {testPolicy.required.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Required</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {testPolicy.required.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
-                          </div>
-                        </div>
-                      )}
-                      {testPolicy.optional.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Optional</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {testPolicy.optional.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
-                          </div>
-                        </div>
-                      )}
-                      {testPolicy.accepted_tests.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Accepted</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {testPolicy.accepted_tests.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
-                          </div>
-                        </div>
-                      )}
-                      {testPolicy.typical_ranges.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Typical score ranges</p>
-                          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {testPolicy.typical_ranges.map(r => (
-                              <div key={r.test} className="flex justify-between border-b border-border pb-1">
-                                <dt className="text-foreground">{r.test}</dt>
-                                <dd className="font-medium text-foreground tabular-nums">{r.low}–{r.high}</dd>
-                              </div>
-                            ))}
-                          </dl>
-                        </div>
-                      )}
-                      {testPolicy.superscore_enabled && (
-                        <p className="text-xs text-foreground">Superscore across attempts is accepted.</p>
-                      )}
-                      {testPolicy.waived_rules && (
-                        <p className="text-xs text-foreground"><span className="font-semibold text-foreground">Waiver rules:</span> {testPolicy.waived_rules}</p>
-                      )}
-                    </div>
-                  </Card>
-                )}
-
-                {recommendations && (
-                  <Card className="p-5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Mail size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Recommendations</h3>
-                    </div>
-                    <p className="text-sm text-foreground">
-                      {recommendations.required_count > 0
-                        ? `${recommendations.required_count} letter${recommendations.required_count === 1 ? '' : 's'} required`
-                        : 'Recommendations may be requested'}
-                      {recommendations.types.length > 0 && (
-                        <> · {recommendations.types.map(t => t.replace(/_/g, ' ')).join(', ')}</>
-                      )}
-                    </p>
-                  </Card>
-                )}
-
-                {/* Admission Timeline */}
-                {admissionTimeline && (
-                  <Card className="p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Clock size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground" title={admissionTimeline.term || undefined}>Admission Timeline</h3>
-                    </div>
-                    <div className="space-y-2">
-                      {admissionTimeline.rounds.map((r: any, i: number) => {
-                        const days = differenceInDays(new Date(r.deadline), new Date())
-                        const isPast = days < 0
-                        const isUrgent = !isPast && days <= 30
-                        return (
-                          <div
-                            key={i}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${
-                              isPast
-                                ? 'bg-muted/40 border-border opacity-60'
-                                : isUrgent
-                                  ? 'bg-warning-soft border-warning/30'
-                                  : 'bg-card border-border'
-                            }`}
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-semibold text-foreground">{r.name}</p>
-                                {r.binding && <Badge variant="warning" size="sm">Binding</Badge>}
-                                {isUrgent && <Badge variant="warning" size="sm">{days}d left</Badge>}
-                                {isPast && <Badge variant="neutral" size="sm">Closed</Badge>}
-                              </div>
-                              <p className="text-[11px] text-foreground/70 mt-0.5">
-                                Apply by <span className="font-medium text-foreground">{formatDate(r.deadline)}</span>
-                                {r.decision_release && (
-                                  <> · Decision <span className="font-medium text-foreground">{formatDate(r.decision_release)}</span></>
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                        )
-                      })}
-                      {admissionTimeline.enrollment_deadline && (
-                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-muted border border-secondary/15">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-secondary">Enrollment Deadline</p>
-                            <p className="text-[11px] text-foreground/70 mt-0.5">
-                              Commit by <span className="font-medium text-foreground">{formatDate(admissionTimeline.enrollment_deadline)}</span>
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                )}
-
-                {/* Application rounds (Early Action / Regular / R1–R3 etc.) */}
-                {deadlineRounds.length > 0 && (
-                  <Card className="p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Clock size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Application Rounds</h3>
-                    </div>
-                    <ul className="space-y-2 text-sm">
-                      {deadlineRounds.map((d, i) => (
-                        <li key={i} className="flex justify-between border-b border-border pb-2 last:border-0 last:pb-0">
-                          <span className="text-foreground">{d.round}</span>
-                          <span className="font-medium text-foreground">{d.date}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                )}
-
-                {/* International students — English proficiency + visa */}
-                {intl && (() => {
-                  const eng = intl.english && typeof intl.english === 'object' ? intl.english as Record<string, any> : null
-                  const visa = intl.visa && typeof intl.visa === 'object' ? intl.visa as Record<string, any> : null
-                  const engTests: string[] = eng && Array.isArray(eng.tests) ? eng.tests.map(String) : []
-                  const intlSources: Array<Record<string, any>> = Array.isArray(intl.sources) ? intl.sources : []
-                  if (!eng && !visa && !intl.opt) return null
-                  return (
-                    <Card className="p-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Building2 size={14} className="text-secondary" />
-                        <h3 className="font-semibold text-foreground">International Students</h3>
-                      </div>
+                    {appReqs.length > 0 ? (
                       <div className="space-y-3">
-                        {eng && (
-                          <div className="px-3 py-2.5 rounded-lg bg-muted/50 border border-border">
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <p className="text-sm font-medium text-foreground">English proficiency</p>
-                              {eng.required != null && (
-                                <Badge variant={eng.required ? 'warning' : 'neutral'} size="sm">
-                                  {eng.required ? 'Required' : 'Not required'}
-                                </Badge>
-                              )}
-                              {engTests.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
+                        {requiredItems.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">
+                              Required
+                            </p>
+                            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {requiredItems.map((r, i) => (
+                                <li
+                                  key={i}
+                                  className="flex items-start gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border"
+                                >
+                                  <span className="w-5 h-5 rounded-full bg-success-soft text-success flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <svg
+                                      width="10"
+                                      height="10"
+                                      viewBox="0 0 20 20"
+                                      fill="currentColor"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        clipRule="evenodd"
+                                        d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z"
+                                      />
+                                    </svg>
+                                  </span>
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-medium text-foreground leading-tight">
+                                      {r.label}
+                                    </p>
+                                    {r.note && (
+                                      <p className="text-[11px] text-foreground/70 mt-0.5">
+                                        {r.note}
+                                      </p>
+                                    )}
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {optionalItems.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">
+                              Optional / Flexible
+                            </p>
+                            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {optionalItems.map((r, i) => (
+                                <li
+                                  key={i}
+                                  className="flex items-start gap-2 px-3 py-2 rounded-lg bg-card border border-border"
+                                >
+                                  <span className="w-5 h-5 rounded-full bg-muted text-foreground/60 flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">
+                                    ~
+                                  </span>
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-medium text-foreground leading-tight">
+                                      {r.label}
+                                    </p>
+                                    {r.note && (
+                                      <p className="text-[11px] text-foreground/70 mt-0.5">
+                                        {r.note}
+                                      </p>
+                                    )}
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ) : legacyReqs.length > 0 ? (
+                      <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        {legacyReqs.map(([k, v]) => (
+                          <div key={k} className="flex justify-between border-b border-border pb-2">
+                            <dt className="text-foreground capitalize">{k.replace(/_/g, " ")}</dt>
+                            <dd className="font-medium text-foreground">{String(v)}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    ) : (
+                      <p className="text-sm text-foreground">
+                        Application requirements not yet listed. Contact the program for details.
+                      </p>
+                    )}
+                  </Card>
+
+                  {prerequisites.length > 0 && (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <GraduationCap size={14} className="text-secondary" />
+                        <h3 className="font-semibold text-foreground">Prerequisites</h3>
+                      </div>
+                      <ul className="space-y-2">
+                        {prerequisites.map((pr, i) => (
+                          <li key={i} className="rounded-lg border border-border px-3 py-2 text-sm">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-medium text-foreground">{pr.name}</span>
+                              <Badge variant={pr.required ? "warning" : "neutral"} size="sm">
+                                {pr.required ? "Required" : "Recommended"}
+                              </Badge>
                             </div>
-                            {eng.note && <p className="text-[12px] text-foreground/80">{String(eng.note)}</p>}
-                          </div>
-                        )}
-                        {visa && (
-                          <div className="px-3 py-2.5 rounded-lg bg-muted/50 border border-border">
-                            <p className="text-sm font-medium text-foreground mb-1">Visa{visa.type ? ` — ${String(visa.type)}` : ''}</p>
-                            {visa.note && <p className="text-[12px] text-foreground/80">{String(visa.note)}</p>}
-                          </div>
-                        )}
-                        {intl.opt && (
-                          <p className="text-[12px] text-foreground/80 flex items-start gap-2">
-                            <Sparkles size={13} className="text-secondary flex-shrink-0 mt-0.5" />
-                            {String(intl.opt)}
-                          </p>
-                        )}
-                      </div>
-                      {intlSources.length > 0 && (
-                        <div className="mt-3 pt-2 border-t border-border flex flex-wrap gap-x-3 gap-y-1">
-                          {intlSources.map((s, i) => (
-                            <a key={i} href={String(s.url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-secondary hover:underline">
-                              <ExternalLink size={11} /> {String(s.label)}
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </Card>
-                  )
-                })()}
-
-                {/* Admissions insights */}
-                <div className={`grid grid-cols-1 ${admissionTimeline ? 'md:grid-cols-1' : 'md:grid-cols-2'} gap-4`}>
-                  {!admissionTimeline && (effectiveDeadline || p.program_start_date) && (
-                    <Card className="p-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Clock size={14} className="text-secondary" />
-                        <h3 className="font-semibold text-foreground">Key Dates</h3>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        {effectiveDeadline && (
-                          <div className="flex justify-between">
-                            <span className="text-foreground">Application Deadline</span>
-                            <span className="font-medium text-foreground">{formatDate(effectiveDeadline)}</span>
-                          </div>
-                        )}
-                        {p.program_start_date && (
-                          <div className="flex justify-between">
-                            <span className="text-foreground">Program Starts</span>
-                            <span className="font-medium text-foreground">{formatDate(p.program_start_date)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-                  )}
-
-                  {(p.acceptance_rate ?? rd.acceptance_rate) != null && (
-                    <Card className="p-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Sparkles size={14} className="text-secondary" />
-                        <h3 className="font-semibold text-foreground">Admissions Profile</h3>
-                      </div>
-                      <ul className="space-y-2 text-sm">
-                        {(() => {
-                          const ar = p.acceptance_rate ?? rd.acceptance_rate
-                          const pct = ar * 100
-                          const items: string[] = []
-                          if (pct < 10) items.push(`Highly selective — fewer than 1 in 10 applicants admitted`)
-                          else if (pct < 25) items.push(`Very selective — about 1 in ${Math.round(100 / pct)} applicants admitted`)
-                          else if (pct < 50) items.push(`Selective — ${Math.round(pct)}% of applicants admitted`)
-                          else items.push(`Accessible — ${Math.round(pct)}% of applicants admitted`)
-                          if (rd.sat_avg) items.push(`Middle 50% SAT: ~${rd.sat_avg - 40}–${rd.sat_avg + 40}`)
-                          if (rd.act_25_75) items.push(`Middle 50% ACT: ${rd.act_25_75[0]}–${rd.act_25_75[1]}`)
-                          return items.map((t, i) => (
-                            <li key={i} className="flex items-start gap-2 text-foreground">
-                              <span className="w-1 h-1 rounded-full bg-secondary mt-2 flex-shrink-0" />
-                              {t}
-                            </li>
-                          ))
-                        })()}
+                            {pr.allowed_substitutes.length > 0 && (
+                              <p className="text-[11px] text-foreground/70 mt-1">
+                                Substitutes: {pr.allowed_substitutes.join(", ")}
+                              </p>
+                            )}
+                          </li>
+                        ))}
                       </ul>
                     </Card>
                   )}
-                </div>
-                {reqObj.source && (
-                  <p className="text-[11px] text-muted-foreground/70">
-                    Source:{' '}
-                    {reqObj.source_url ? (
-                      <a href={String(reqObj.source_url)} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">{String(reqObj.source)}</a>
-                    ) : String(reqObj.source)}
-                  </p>
-                )}
-              </>
-            )
-          })()}
 
-          {tab === 'costs' && (() => {
-            const years = (p.duration_months || (p.degree_type === 'bachelors' ? 48 : 24)) / 12
-            const annual = effectiveTuition || 0
-            const fees = cd.fees || {}
-            const feeTotal = Object.values(fees).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
-            const living = cd.estimated_living_cost || 15000
-            const books = cd.book_supplies || 1200
-            const intlPremium = cd.international_premium || 0
-            const totalTuitionOnly = annual * years
-            const totalMid = costBandMin != null && costBandMax != null
-              ? Math.round((costBandMin + costBandMax) / 2)
-              : (annual + feeTotal + living + books) * years
-            const totalHigh = costBandMax ?? Math.round(totalMid * 1.15)
-            const netPriceByIncome: Record<string, number> = cd.net_price_by_income || {}
-            return (
-              <>
-                {/* Spec 11 §3.3a — personalized net price (highlighted block) */}
-                <NetPriceEstimator estimate={netPrice} />
-
-                <StatGroup
-                  tuition={effectiveTuition}
-                  totalCost={cd.total_cost_attendance ?? rd.total_cost_attendance}
-                  netPrice={cd.average_net_price ?? rd.avg_net_price}
-                  medianDebt={cd.median_debt ?? rd.median_debt}
-                  pellGrantRate={cd.pell_grant_rate ?? rd.pell_grant_rate}
-                />
-
-                <Card className="p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <DollarSign size={14} className="text-secondary" />
-                    <h3 className="font-semibold text-foreground">Tuition & Fees</h3>
-                  </div>
-                  <dl className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <dt className="text-foreground">Annual Tuition</dt>
-                      <dd className="font-medium text-foreground">{formatCurrency(annual)}</dd>
-                    </div>
-                    {Object.entries(fees).map(([k, v]) => (
-                      <div key={k} className="flex justify-between">
-                        <dt className="text-foreground capitalize">{k.replace(/_/g, ' ')}</dt>
-                        <dd className="text-foreground">{formatCurrency(Number(v))}</dd>
+                  {testPolicy && (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <BookOpen size={14} className="text-secondary" />
+                        <h3 className="font-semibold text-foreground">Test Policy</h3>
+                        {testPolicy.stance_label && (
+                          <Badge variant="info" size="sm">
+                            {testPolicy.stance_label}
+                          </Badge>
+                        )}
                       </div>
-                    ))}
-                    {intlPremium > 0 && (
-                      <div className="flex justify-between">
-                        <dt className="text-foreground">International Premium</dt>
-                        <dd className="text-foreground">{formatCurrency(intlPremium)}</dd>
-                      </div>
-                    )}
-                    {feeTotal > 0 && (
-                      <div className="flex justify-between border-t border-border pt-2 font-medium">
-                        <dt className="text-foreground">Annual Subtotal</dt>
-                        <dd className="text-foreground">{formatCurrency(annual + feeTotal)}</dd>
-                      </div>
-                    )}
-                  </dl>
-
-                  {/* What the cost is made up of (program-published breakdown) */}
-                  {Array.isArray(cd.breakdown) && cd.breakdown.length > 0 && (
-                    <div className="mt-4 pt-3 border-t border-border">
-                      <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">What it&rsquo;s made up of</p>
-                      <dl className="space-y-1.5 text-sm">
-                        {cd.breakdown.map((it: any, i: number) => (
-                          <div key={i} className="flex justify-between gap-3">
-                            <dt className="text-foreground" title={it.note ? String(it.note) : undefined}>
-                              {String(it.label)}
-                            </dt>
-                            <dd className={`font-medium tabular-nums whitespace-nowrap ${Number(it.amount) < 0 ? 'text-success' : 'text-foreground'}`}>
-                              {Number(it.amount) < 0 ? '−' : ''}{formatCurrency(Math.abs(Number(it.amount)))}
-                            </dd>
-                          </div>
-                        ))}
-                        {cd.total_cost_of_attendance != null && (
-                          <div className="flex justify-between border-t border-border pt-2 font-semibold">
-                            <dt className="text-foreground">Estimated total / year</dt>
-                            <dd className="text-foreground tabular-nums whitespace-nowrap">≈ {formatCurrency(Number(cd.total_cost_of_attendance))}</dd>
+                      <div className="space-y-3 text-sm">
+                        {testPolicy.required.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">
+                              Required
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {testPolicy.required.map((t) => (
+                                <Badge key={t} variant="neutral" size="sm">
+                                  {t}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
                         )}
-                      </dl>
-                    </div>
+                        {testPolicy.optional.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">
+                              Optional
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {testPolicy.optional.map((t) => (
+                                <Badge key={t} variant="neutral" size="sm">
+                                  {t}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {testPolicy.accepted_tests.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">
+                              Accepted
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {testPolicy.accepted_tests.map((t) => (
+                                <Badge key={t} variant="neutral" size="sm">
+                                  {t}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {testPolicy.typical_ranges.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">
+                              Typical score ranges
+                            </p>
+                            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {testPolicy.typical_ranges.map((r) => (
+                                <div
+                                  key={r.test}
+                                  className="flex justify-between border-b border-border pb-1"
+                                >
+                                  <dt className="text-foreground">{r.test}</dt>
+                                  <dd className="font-medium text-foreground tabular-nums">
+                                    {r.low}–{r.high}
+                                  </dd>
+                                </div>
+                              ))}
+                            </dl>
+                          </div>
+                        )}
+                        {testPolicy.superscore_enabled && (
+                          <p className="text-xs text-foreground">
+                            Superscore across attempts is accepted.
+                          </p>
+                        )}
+                        {testPolicy.waived_rules && (
+                          <p className="text-xs text-foreground">
+                            <span className="font-semibold text-foreground">Waiver rules:</span>{" "}
+                            {testPolicy.waived_rules}
+                          </p>
+                        )}
+                      </div>
+                    </Card>
                   )}
-                </Card>
 
-                <Card className="p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <GraduationCap size={14} className="text-secondary" />
-                    <h3 className="font-semibold text-foreground">Estimated Total Cost ({years.toFixed(1)} years)</h3>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="bg-muted/60 rounded-lg p-3">
-                      <p className="text-lg font-bold text-foreground" title={costBandMin != null ? 'Low estimate' : 'Tuition Only'}>{formatCurrency(costBandMin ?? totalTuitionOnly)}</p>
-                    </div>
-                    <div className="bg-muted/60 rounded-lg p-3">
-                      <p className="text-lg font-bold text-foreground" title={costBandMax != null ? 'Expected range' : 'With Living Costs'}>
-                        {costBandMin != null && costBandMax != null
-                          ? `${formatCurrency(costBandMin)} – ${formatCurrency(costBandMax)}`
-                          : formatCurrency(totalMid)}
+                  {recommendations && (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Mail size={14} className="text-secondary" />
+                        <h3 className="font-semibold text-foreground">Recommendations</h3>
+                      </div>
+                      <p className="text-sm text-foreground">
+                        {recommendations.required_count > 0
+                          ? `${recommendations.required_count} letter${recommendations.required_count === 1 ? "" : "s"} required`
+                          : "Recommendations may be requested"}
+                        {recommendations.types.length > 0 && (
+                          <>
+                            {" "}
+                            · {recommendations.types.map((t) => t.replace(/_/g, " ")).join(", ")}
+                          </>
+                        )}
                       </p>
-                    </div>
-                    <div className="bg-muted/60 rounded-lg p-3">
-                      <p className="text-lg font-bold text-foreground" title={costBandMax != null ? 'High estimate' : 'High Estimate'}>{formatCurrency(totalHigh)}</p>
-                    </div>
-                  </div>
-                </Card>
+                    </Card>
+                  )}
 
-                {fundingSignals && (
+                  {/* Admission Timeline */}
+                  {admissionTimeline && (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Clock size={14} className="text-secondary" />
+                        <h3
+                          className="font-semibold text-foreground"
+                          title={admissionTimeline.term || undefined}
+                        >
+                          Admission Timeline
+                        </h3>
+                      </div>
+                      <div className="space-y-2">
+                        {admissionTimeline.rounds.map((r: any, i: number) => {
+                          const days = differenceInDays(new Date(r.deadline), new Date());
+                          const isPast = days < 0;
+                          const isUrgent = !isPast && days <= 30;
+                          return (
+                            <div
+                              key={i}
+                              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${
+                                isPast
+                                  ? "bg-muted/40 border-border opacity-60"
+                                  : isUrgent
+                                    ? "bg-warning-soft border-warning/30"
+                                    : "bg-card border-border"
+                              }`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold text-foreground">{r.name}</p>
+                                  {r.binding && (
+                                    <Badge variant="warning" size="sm">
+                                      Binding
+                                    </Badge>
+                                  )}
+                                  {isUrgent && (
+                                    <Badge variant="warning" size="sm">
+                                      {days}d left
+                                    </Badge>
+                                  )}
+                                  {isPast && (
+                                    <Badge variant="neutral" size="sm">
+                                      Closed
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-[11px] text-foreground/70 mt-0.5">
+                                  Apply by{" "}
+                                  <span className="font-medium text-foreground">
+                                    {formatDate(r.deadline)}
+                                  </span>
+                                  {r.decision_release && (
+                                    <>
+                                      {" "}
+                                      · Decision{" "}
+                                      <span className="font-medium text-foreground">
+                                        {formatDate(r.decision_release)}
+                                      </span>
+                                    </>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {admissionTimeline.enrollment_deadline && (
+                          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-muted border border-secondary/15">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-secondary">
+                                Enrollment Deadline
+                              </p>
+                              <p className="text-[11px] text-foreground/70 mt-0.5">
+                                Commit by{" "}
+                                <span className="font-medium text-foreground">
+                                  {formatDate(admissionTimeline.enrollment_deadline)}
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  )}
+
+                  {/* Application rounds (Early Action / Regular / R1–R3 etc.) */}
+                  {deadlineRounds.length > 0 && (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Clock size={14} className="text-secondary" />
+                        <h3 className="font-semibold text-foreground">Application Rounds</h3>
+                      </div>
+                      <ul className="space-y-2 text-sm">
+                        {deadlineRounds.map((d, i) => (
+                          <li
+                            key={i}
+                            className="flex justify-between border-b border-border pb-2 last:border-0 last:pb-0"
+                          >
+                            <span className="text-foreground">{d.round}</span>
+                            <span className="font-medium text-foreground">{d.date}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </Card>
+                  )}
+
+                  {/* International students — English proficiency + visa */}
+                  {intl &&
+                    (() => {
+                      const eng =
+                        intl.english && typeof intl.english === "object"
+                          ? (intl.english as Record<string, any>)
+                          : null;
+                      const visa =
+                        intl.visa && typeof intl.visa === "object"
+                          ? (intl.visa as Record<string, any>)
+                          : null;
+                      const engTests: string[] =
+                        eng && Array.isArray(eng.tests) ? eng.tests.map(String) : [];
+                      const intlSources: Array<Record<string, any>> = Array.isArray(intl.sources)
+                        ? intl.sources
+                        : [];
+                      if (!eng && !visa && !intl.opt) return null;
+                      return (
+                        <Card className="p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Building2 size={14} className="text-secondary" />
+                            <h3 className="font-semibold text-foreground">
+                              International Students
+                            </h3>
+                          </div>
+                          <div className="space-y-3">
+                            {eng && (
+                              <div className="px-3 py-2.5 rounded-lg bg-muted/50 border border-border">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                  <p className="text-sm font-medium text-foreground">
+                                    English proficiency
+                                  </p>
+                                  {eng.required != null && (
+                                    <Badge variant={eng.required ? "warning" : "neutral"} size="sm">
+                                      {eng.required ? "Required" : "Not required"}
+                                    </Badge>
+                                  )}
+                                  {engTests.map((t) => (
+                                    <Badge key={t} variant="neutral" size="sm">
+                                      {t}
+                                    </Badge>
+                                  ))}
+                                </div>
+                                {eng.note && (
+                                  <p className="text-[12px] text-foreground/80">
+                                    {String(eng.note)}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                            {visa && (
+                              <div className="px-3 py-2.5 rounded-lg bg-muted/50 border border-border">
+                                <p className="text-sm font-medium text-foreground mb-1">
+                                  Visa{visa.type ? ` — ${String(visa.type)}` : ""}
+                                </p>
+                                {visa.note && (
+                                  <p className="text-[12px] text-foreground/80">
+                                    {String(visa.note)}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                            {intl.opt && (
+                              <p className="text-[12px] text-foreground/80 flex items-start gap-2">
+                                <Sparkles
+                                  size={13}
+                                  className="text-secondary flex-shrink-0 mt-0.5"
+                                />
+                                {String(intl.opt)}
+                              </p>
+                            )}
+                          </div>
+                          {intlSources.length > 0 && (
+                            <div className="mt-3 pt-2 border-t border-border flex flex-wrap gap-x-3 gap-y-1">
+                              {intlSources.map((s, i) => (
+                                <a
+                                  key={i}
+                                  href={String(s.url)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[12px] text-secondary hover:underline"
+                                >
+                                  <ExternalLink size={11} /> {String(s.label)}
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </Card>
+                      );
+                    })()}
+
+                  {/* Admissions insights */}
+                  <div
+                    className={`grid grid-cols-1 ${admissionTimeline ? "md:grid-cols-1" : "md:grid-cols-2"} gap-4`}
+                  >
+                    {!admissionTimeline && (effectiveDeadline || p.program_start_date) && (
+                      <Card className="p-5">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Clock size={14} className="text-secondary" />
+                          <h3 className="font-semibold text-foreground">Key Dates</h3>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          {effectiveDeadline && (
+                            <div className="flex justify-between">
+                              <span className="text-foreground">Application Deadline</span>
+                              <span className="font-medium text-foreground">
+                                {formatDate(effectiveDeadline)}
+                              </span>
+                            </div>
+                          )}
+                          {p.program_start_date && (
+                            <div className="flex justify-between">
+                              <span className="text-foreground">Program Starts</span>
+                              <span className="font-medium text-foreground">
+                                {formatDate(p.program_start_date)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    )}
+
+                    {(p.acceptance_rate ?? rd.acceptance_rate) != null && (
+                      <Card className="p-5">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Sparkles size={14} className="text-secondary" />
+                          <h3 className="font-semibold text-foreground">Admissions Profile</h3>
+                        </div>
+                        <ul className="space-y-2 text-sm">
+                          {(() => {
+                            const ar = p.acceptance_rate ?? rd.acceptance_rate;
+                            const pct = ar * 100;
+                            const items: string[] = [];
+                            if (pct < 10)
+                              items.push(
+                                `Highly selective — fewer than 1 in 10 applicants admitted`,
+                              );
+                            else if (pct < 25)
+                              items.push(
+                                `Very selective — about 1 in ${Math.round(100 / pct)} applicants admitted`,
+                              );
+                            else if (pct < 50)
+                              items.push(`Selective — ${Math.round(pct)}% of applicants admitted`);
+                            else
+                              items.push(`Accessible — ${Math.round(pct)}% of applicants admitted`);
+                            if (rd.sat_avg)
+                              items.push(`Middle 50% SAT: ~${rd.sat_avg - 40}–${rd.sat_avg + 40}`);
+                            if (rd.act_25_75)
+                              items.push(`Middle 50% ACT: ${rd.act_25_75[0]}–${rd.act_25_75[1]}`);
+                            return items.map((t, i) => (
+                              <li key={i} className="flex items-start gap-2 text-foreground">
+                                <span className="w-1 h-1 rounded-full bg-secondary mt-2 flex-shrink-0" />
+                                {t}
+                              </li>
+                            ));
+                          })()}
+                        </ul>
+                      </Card>
+                    )}
+                  </div>
+                  {reqObj.source && (
+                    <p className="text-[11px] text-muted-foreground/70">
+                      Source:{" "}
+                      {reqObj.source_url ? (
+                        <a
+                          href={String(reqObj.source_url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-secondary hover:underline"
+                        >
+                          {String(reqObj.source)}
+                        </a>
+                      ) : (
+                        String(reqObj.source)
+                      )}
+                    </p>
+                  )}
+                </>
+              );
+            })()}
+
+          {tab === "costs" &&
+            (() => {
+              const years = (p.duration_months || (p.degree_type === "bachelors" ? 48 : 24)) / 12;
+              const annual = effectiveTuition || 0;
+              const fees = cd.fees || {};
+              const feeTotal = Object.values(fees).reduce(
+                (s: number, v: any) => s + (Number(v) || 0),
+                0,
+              );
+              const living = cd.estimated_living_cost || 15000;
+              const books = cd.book_supplies || 1200;
+              const intlPremium = cd.international_premium || 0;
+              const totalTuitionOnly = annual * years;
+              const totalMid =
+                costBandMin != null && costBandMax != null
+                  ? Math.round((costBandMin + costBandMax) / 2)
+                  : (annual + feeTotal + living + books) * years;
+              const totalHigh = costBandMax ?? Math.round(totalMid * 1.15);
+              const netPriceByIncome: Record<string, number> = cd.net_price_by_income || {};
+              return (
+                <>
+                  {/* Spec 11 §3.3a — personalized net price (highlighted block) */}
+                  <NetPriceEstimator estimate={netPrice} />
+
+                  <StatGroup
+                    tuition={effectiveTuition}
+                    totalCost={cd.total_cost_attendance ?? rd.total_cost_attendance}
+                    netPrice={cd.average_net_price ?? rd.avg_net_price}
+                    medianDebt={cd.median_debt ?? rd.median_debt}
+                    pellGrantRate={cd.pell_grant_rate ?? rd.pell_grant_rate}
+                  />
+
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <DollarSign size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Funding & Aid Signals</h3>
+                      <h3 className="font-semibold text-foreground">Tuition & Fees</h3>
                     </div>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                      {fundingSignals.ta_funded && (
-                        <li className="flex items-center gap-2 text-foreground">
-                          <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> TA funding available
-                        </li>
+                    <dl className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <dt className="text-foreground">Annual Tuition</dt>
+                        <dd className="font-medium text-foreground">{formatCurrency(annual)}</dd>
+                      </div>
+                      {Object.entries(fees).map(([k, v]) => (
+                        <div key={k} className="flex justify-between">
+                          <dt className="text-foreground capitalize">{k.replace(/_/g, " ")}</dt>
+                          <dd className="text-foreground">{formatCurrency(Number(v))}</dd>
+                        </div>
+                      ))}
+                      {intlPremium > 0 && (
+                        <div className="flex justify-between">
+                          <dt className="text-foreground">International Premium</dt>
+                          <dd className="text-foreground">{formatCurrency(intlPremium)}</dd>
+                        </div>
                       )}
-                      {fundingSignals.ra_funded && (
-                        <li className="flex items-center gap-2 text-foreground">
-                          <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> RA funding available
-                        </li>
+                      {feeTotal > 0 && (
+                        <div className="flex justify-between border-t border-border pt-2 font-medium">
+                          <dt className="text-foreground">Annual Subtotal</dt>
+                          <dd className="text-foreground">{formatCurrency(annual + feeTotal)}</dd>
+                        </div>
                       )}
-                      {fundingSignals.merit_scholarship_available && (
-                        <li className="flex items-center gap-2 text-foreground">
-                          <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> Merit scholarships
-                        </li>
-                      )}
-                      {fundingSignals.need_based_available && (
-                        <li className="flex items-center gap-2 text-foreground">
-                          <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> Need-based aid
-                        </li>
-                      )}
-                    </ul>
+                    </dl>
+
+                    {/* What the cost is made up of (program-published breakdown) */}
+                    {Array.isArray(cd.breakdown) && cd.breakdown.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-border">
+                        <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">
+                          What it&rsquo;s made up of
+                        </p>
+                        <dl className="space-y-1.5 text-sm">
+                          {cd.breakdown.map((it: any, i: number) => (
+                            <div key={i} className="flex justify-between gap-3">
+                              <dt
+                                className="text-foreground"
+                                title={it.note ? String(it.note) : undefined}
+                              >
+                                {String(it.label)}
+                              </dt>
+                              <dd
+                                className={`font-medium tabular-nums whitespace-nowrap ${Number(it.amount) < 0 ? "text-success" : "text-foreground"}`}
+                              >
+                                {Number(it.amount) < 0 ? "−" : ""}
+                                {formatCurrency(Math.abs(Number(it.amount)))}
+                              </dd>
+                            </div>
+                          ))}
+                          {cd.total_cost_of_attendance != null && (
+                            <div className="flex justify-between border-t border-border pt-2 font-semibold">
+                              <dt className="text-foreground">Estimated total / year</dt>
+                              <dd className="text-foreground tabular-nums whitespace-nowrap">
+                                ≈ {formatCurrency(Number(cd.total_cost_of_attendance))}
+                              </dd>
+                            </div>
+                          )}
+                        </dl>
+                      </div>
+                    )}
                   </Card>
-                )}
 
-                {/* Net Price by Income — what families actually pay after aid */}
-                {Object.keys(netPriceByIncome).length > 0 && (() => {
-                  const canonical: { key: string; label: string; range: string }[] = [
-                    { key: '0-30000', label: 'Low', range: '$0 – $30K' },
-                    { key: '30001-48000', label: 'Lower-middle', range: '$30K – $48K' },
-                    { key: '48001-75000', label: 'Middle', range: '$48K – $75K' },
-                    { key: '75001-110000', label: 'Upper-middle', range: '$75K – $110K' },
-                    { key: '110001-plus', label: 'High', range: '$110K+' },
-                  ]
-                  const rows = canonical.filter(b => netPriceByIncome[b.key] != null)
-                  if (rows.length === 0) return null
-                  const maxPrice = Math.max(...rows.map(r => netPriceByIncome[r.key]))
-                  return (
-                    <Card className="p-5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <DollarSign size={14} className="text-secondary" />
-                        <h3 className="font-semibold text-foreground">Net Price by Household Income</h3>
-                      </div>
-                      <p className="text-xs text-foreground mb-4">
-                        Average price families actually pay after grants & scholarships, by household income band.
-                      </p>
-                      <div className="space-y-2">
-                        {rows.map(r => {
-                          const price = netPriceByIncome[r.key]
-                          const widthPct = Math.round((price / maxPrice) * 100)
-                          return (
-                            <div key={r.key} className="grid grid-cols-[90px_1fr_85px] gap-3 items-center">
-                              <div>
-                                <p className="text-[11px] font-semibold text-foreground" title={r.range}>{r.label}</p>
-                              </div>
-                              <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
-                                <div className="h-full rounded-pill bg-secondary" style={{ width: `${widthPct}%` }} />
-                              </div>
-                              <p className="text-xs font-bold text-foreground text-right tabular-nums">
-                                {formatCurrency(price)}
-                              </p>
-                            </div>
-                          )
-                        })}
-                      </div>
-                      {cd.source && (
-                        <p className="text-[10px] text-foreground/50 mt-3 italic">
-                          Source:{' '}
-                          {cd.source_url ? (
-                            <a href={cd.source_url} target="_blank" rel="noopener noreferrer" className="text-secondary not-italic hover:underline">{cd.source}</a>
-                          ) : cd.source}
-                          {cd.source_year ? ` · ${cd.source_year}` : ''}
-                        </p>
-                      )}
-                      {rd.price_calculator_url && (
-                        <a
-                          href={rd.price_calculator_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-secondary hover:text-secondary"
-                        >
-                          Estimate your cost with {instName}'s calculator ↗
-                        </a>
-                      )}
-                    </Card>
-                  )
-                })()}
-
-                {/* Debt percentiles */}
-                {rd.debt_percentiles && typeof rd.debt_percentiles === 'object' && (() => {
-                  const dp: any = rd.debt_percentiles
-                  const order = ['10th', '25th', '75th', '90th']
-                  const rows = order.filter(k => dp[k] != null).map(k => ({ pct: k, value: Number(dp[k]) }))
-                  if (rows.length === 0) return null
-                  const max = Math.max(...rows.map(r => r.value))
-                  return (
-                    <Card className="p-5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <DollarSign size={14} className="text-secondary" />
-                        <h3 className="font-semibold text-foreground">Graduate Debt Distribution</h3>
-                      </div>
-                      <p className="text-xs text-foreground mb-3">
-                        How much graduates actually borrow. Most fall between the 25th and 75th percentiles.
-                      </p>
-                      <div className="space-y-2">
-                        {rows.map(r => {
-                          const w = Math.round((r.value / max) * 100)
-                          const isMiddle = r.pct === '25th' || r.pct === '75th'
-                          return (
-                            <div key={r.pct} className="grid grid-cols-[70px_1fr_85px] gap-3 items-center">
-                              <p className={`text-[11px] font-semibold ${isMiddle ? 'text-foreground' : 'text-foreground'}`}>
-                                {r.pct} %ile
-                              </p>
-                              <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
-                                <div
-                                  className={`h-full rounded-pill ${isMiddle ? 'bg-secondary' : 'bg-secondary/30'}`}
-                                  style={{ width: `${w}%` }}
-                                />
-                              </div>
-                              <p className={`text-xs font-bold tabular-nums text-right ${isMiddle ? 'text-foreground' : 'text-foreground'}`}>
-                                {formatCurrency(r.value)}
-                              </p>
-                            </div>
-                          )
-                        })}
-                      </div>
-                      {rd.median_debt_monthly != null && (
-                        <p className="text-[11px] text-foreground mt-3">
-                          Median monthly payment after graduation: <span className="font-semibold text-foreground">${Math.round(rd.median_debt_monthly)}</span>
-                        </p>
-                      )}
-                    </Card>
-                  )
-                })()}
-
-              </>
-            )
-          })()}
-
-          {tab === 'outcomes' && (() => {
-            const od = odn
-            const salary = od.median_salary ? Number(od.median_salary) : (rd.earnings_10yr_median || null)
-            const salaryLow = od.salary_25th ? Number(od.salary_25th) : (salary ? Math.round(salary * 0.75) : null)
-            const salaryHigh = od.salary_75th ? Number(od.salary_75th) : (salary ? Math.round(salary * 1.3) : null)
-            const empRate = od.employment_rate ? Number(od.employment_rate) : null
-            const payback = od.payback_months ? Number(od.payback_months) : null
-            const roiYears = (p.duration_months || (p.degree_type === 'bachelors' ? 48 : 24)) / 12
-            const roiTotalCost = effectiveTuition ? Number(effectiveTuition) * roiYears : 0
-            const empTimeframe = od.employment_timeframe || '6 months after graduation'
-            const internRate = od.internship_conversion_rate ? Number(od.internship_conversion_rate) : null
-            const topEmployers: string[] = od.top_employers || []
-            const topIndustries: string[] = od.top_industries || []
-            const hasData = salary || empRate || topEmployers.length > 0
-
-            return (
-              <>
-                <StatGroup
-                  earnings6yr={rd.earnings_6yr_median}
-                  earnings10yr={rd.earnings_10yr_median}
-                  graduationRate={rd.graduation_rate}
-                  retentionRate={rd.retention_rate}
-                  employmentRate={od.employment_rate}
-                />
-
-                {(salary || empRate || payback) && (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <TrendingUp size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">ROI Snapshot</h3>
+                      <GraduationCap size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">
+                        Estimated Total Cost ({years.toFixed(1)} years)
+                      </h3>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      {salary && <div><p className="text-foreground text-xs">Median Salary</p><p className="font-bold text-foreground text-lg">{formatCurrency(salary)}</p></div>}
-                      {empRate && <div><p className="text-foreground text-xs">Grad/Employment Rate</p><p className="font-bold text-foreground text-lg">{(empRate * 100).toFixed(0)}%</p></div>}
-                      {payback && <div><p className="text-foreground text-xs">Payback Period</p><p className="font-medium text-foreground">{payback} months</p></div>}
-                      {salary && roiTotalCost > 0 && <div><p className="text-foreground text-xs">Salary-to-Cost</p><p className="font-medium text-foreground">1:{(salary / roiTotalCost).toFixed(1)}x</p></div>}
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="bg-muted/60 rounded-lg p-3">
+                        <p
+                          className="text-lg font-bold text-foreground"
+                          title={costBandMin != null ? "Low estimate" : "Tuition Only"}
+                        >
+                          {formatCurrency(costBandMin ?? totalTuitionOnly)}
+                        </p>
+                      </div>
+                      <div className="bg-muted/60 rounded-lg p-3">
+                        <p
+                          className="text-lg font-bold text-foreground"
+                          title={costBandMax != null ? "Expected range" : "With Living Costs"}
+                        >
+                          {costBandMin != null && costBandMax != null
+                            ? `${formatCurrency(costBandMin)} – ${formatCurrency(costBandMax)}`
+                            : formatCurrency(totalMid)}
+                        </p>
+                      </div>
+                      <div className="bg-muted/60 rounded-lg p-3">
+                        <p
+                          className="text-lg font-bold text-foreground"
+                          title={costBandMax != null ? "High estimate" : "High Estimate"}
+                        >
+                          {formatCurrency(totalHigh)}
+                        </p>
+                      </div>
                     </div>
                   </Card>
-                )}
 
-                {(salary || empRate) && (od.scope || od.source) && (
-                  <Card className="p-3 border-secondary/30 bg-secondary/[0.05]">
-                    <p className="text-[12px] text-muted-foreground">
-                      {od.scope === 'institution'
-                        ? (od.scope_note || 'Institution-wide figures across all graduates — not specific to this program.')
-                        : 'Program-level median earnings (College Scorecard, Field of Study).'}
-                      {od.source && (
-                        <>
-                          {' '}Source:{' '}
-                          {od.source_url ? (
-                            <a href={od.source_url} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">{od.source}</a>
-                          ) : od.source}.
-                        </>
-                      )}
-                    </p>
-                  </Card>
-                )}
+                  {fundingSignals && (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <DollarSign size={14} className="text-secondary" />
+                        <h3 className="font-semibold text-foreground">Funding & Aid Signals</h3>
+                      </div>
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        {fundingSignals.ta_funded && (
+                          <li className="flex items-center gap-2 text-foreground">
+                            <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> TA funding
+                            available
+                          </li>
+                        )}
+                        {fundingSignals.ra_funded && (
+                          <li className="flex items-center gap-2 text-foreground">
+                            <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> RA funding
+                            available
+                          </li>
+                        )}
+                        {fundingSignals.merit_scholarship_available && (
+                          <li className="flex items-center gap-2 text-foreground">
+                            <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> Merit
+                            scholarships
+                          </li>
+                        )}
+                        {fundingSignals.need_based_available && (
+                          <li className="flex items-center gap-2 text-foreground">
+                            <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> Need-based
+                            aid
+                          </li>
+                        )}
+                      </ul>
+                    </Card>
+                  )}
 
-                {!hasData ? (
-                  <Card className="p-6 text-center">
-                    <TrendingUp size={32} className="text-foreground/30 mx-auto mb-3" />
-                    <p className="text-sm text-foreground">Outcomes data is not yet available for this program.</p>
-                    <p className="text-xs text-foreground/60 mt-1">Check back later or contact the program directly.</p>
-                  </Card>
-                ) : (
-                  <>
-                    {salary && (
-                      <Card className="p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <DollarSign size={14} className="text-secondary" />
-                          <h3 className="font-semibold text-foreground" title={odn.outcome_reporting_window || undefined}>Salary Distribution</h3>
-                        </div>
-                        {salaryBands.length > 0 ? (
-                          <div className="space-y-2">
-                            {salaryBands.map(b => (
-                              <div key={b.band_label} className="grid grid-cols-[1fr_48px_40px] gap-3 items-center">
-                                <p className="text-sm text-foreground">{b.band_label}</p>
-                                <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
-                                  <div className="h-full rounded-pill bg-secondary" style={{ width: `${Math.min(100, b.percent)}%` }} />
-                                </div>
-                                <p className="text-xs font-semibold text-foreground text-right tabular-nums">{b.percent}%</p>
-                              </div>
-                            ))}
+                  {/* Net Price by Income — what families actually pay after aid */}
+                  {Object.keys(netPriceByIncome).length > 0 &&
+                    (() => {
+                      const canonical: { key: string; label: string; range: string }[] = [
+                        { key: "0-30000", label: "Low", range: "$0 – $30K" },
+                        { key: "30001-48000", label: "Lower-middle", range: "$30K – $48K" },
+                        { key: "48001-75000", label: "Middle", range: "$48K – $75K" },
+                        { key: "75001-110000", label: "Upper-middle", range: "$75K – $110K" },
+                        { key: "110001-plus", label: "High", range: "$110K+" },
+                      ];
+                      const rows = canonical.filter((b) => netPriceByIncome[b.key] != null);
+                      if (rows.length === 0) return null;
+                      const maxPrice = Math.max(...rows.map((r) => netPriceByIncome[r.key]));
+                      return (
+                        <Card className="p-5">
+                          <div className="flex items-center gap-2 mb-2">
+                            <DollarSign size={14} className="text-secondary" />
+                            <h3 className="font-semibold text-foreground">
+                              Net Price by Household Income
+                            </h3>
                           </div>
-                        ) : (
+                          <p className="text-xs text-foreground mb-4">
+                            Average price families actually pay after grants & scholarships, by
+                            household income band.
+                          </p>
+                          <div className="space-y-2">
+                            {rows.map((r) => {
+                              const price = netPriceByIncome[r.key];
+                              const widthPct = Math.round((price / maxPrice) * 100);
+                              return (
+                                <div
+                                  key={r.key}
+                                  className="grid grid-cols-[90px_1fr_85px] gap-3 items-center"
+                                >
+                                  <div>
+                                    <p
+                                      className="text-[11px] font-semibold text-foreground"
+                                      title={r.range}
+                                    >
+                                      {r.label}
+                                    </p>
+                                  </div>
+                                  <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
+                                    <div
+                                      className="h-full rounded-pill bg-secondary"
+                                      style={{ width: `${widthPct}%` }}
+                                    />
+                                  </div>
+                                  <p className="text-xs font-bold text-foreground text-right tabular-nums">
+                                    {formatCurrency(price)}
+                                  </p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {cd.source && (
+                            <p className="text-[10px] text-foreground/50 mt-3 italic">
+                              Source:{" "}
+                              {cd.source_url ? (
+                                <a
+                                  href={cd.source_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-secondary not-italic hover:underline"
+                                >
+                                  {cd.source}
+                                </a>
+                              ) : (
+                                cd.source
+                              )}
+                              {cd.source_year ? ` · ${cd.source_year}` : ""}
+                            </p>
+                          )}
+                          {rd.price_calculator_url && (
+                            <a
+                              href={rd.price_calculator_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-secondary hover:text-secondary"
+                            >
+                              Estimate your cost with {instName}'s calculator ↗
+                            </a>
+                          )}
+                        </Card>
+                      );
+                    })()}
+
+                  {/* Debt percentiles */}
+                  {rd.debt_percentiles &&
+                    typeof rd.debt_percentiles === "object" &&
+                    (() => {
+                      const dp: any = rd.debt_percentiles;
+                      const order = ["10th", "25th", "75th", "90th"];
+                      const rows = order
+                        .filter((k) => dp[k] != null)
+                        .map((k) => ({ pct: k, value: Number(dp[k]) }));
+                      if (rows.length === 0) return null;
+                      const max = Math.max(...rows.map((r) => r.value));
+                      return (
+                        <Card className="p-5">
+                          <div className="flex items-center gap-2 mb-2">
+                            <DollarSign size={14} className="text-secondary" />
+                            <h3 className="font-semibold text-foreground">
+                              Graduate Debt Distribution
+                            </h3>
+                          </div>
+                          <p className="text-xs text-foreground mb-3">
+                            How much graduates actually borrow. Most fall between the 25th and 75th
+                            percentiles.
+                          </p>
+                          <div className="space-y-2">
+                            {rows.map((r) => {
+                              const w = Math.round((r.value / max) * 100);
+                              const isMiddle = r.pct === "25th" || r.pct === "75th";
+                              return (
+                                <div
+                                  key={r.pct}
+                                  className="grid grid-cols-[70px_1fr_85px] gap-3 items-center"
+                                >
+                                  <p
+                                    className={`text-[11px] font-semibold ${isMiddle ? "text-foreground" : "text-foreground"}`}
+                                  >
+                                    {r.pct} %ile
+                                  </p>
+                                  <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-pill ${isMiddle ? "bg-secondary" : "bg-secondary/30"}`}
+                                      style={{ width: `${w}%` }}
+                                    />
+                                  </div>
+                                  <p
+                                    className={`text-xs font-bold tabular-nums text-right ${isMiddle ? "text-foreground" : "text-foreground"}`}
+                                  >
+                                    {formatCurrency(r.value)}
+                                  </p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {rd.median_debt_monthly != null && (
+                            <p className="text-[11px] text-foreground mt-3">
+                              Median monthly payment after graduation:{" "}
+                              <span className="font-semibold text-foreground">
+                                ${Math.round(rd.median_debt_monthly)}
+                              </span>
+                            </p>
+                          )}
+                        </Card>
+                      );
+                    })()}
+                </>
+              );
+            })()}
+
+          {tab === "outcomes" &&
+            (() => {
+              const od = odn;
+              const salary = od.median_salary
+                ? Number(od.median_salary)
+                : rd.earnings_10yr_median || null;
+              const salaryLow = od.salary_25th
+                ? Number(od.salary_25th)
+                : salary
+                  ? Math.round(salary * 0.75)
+                  : null;
+              const salaryHigh = od.salary_75th
+                ? Number(od.salary_75th)
+                : salary
+                  ? Math.round(salary * 1.3)
+                  : null;
+              const empRate = od.employment_rate ? Number(od.employment_rate) : null;
+              const payback = od.payback_months ? Number(od.payback_months) : null;
+              const roiYears =
+                (p.duration_months || (p.degree_type === "bachelors" ? 48 : 24)) / 12;
+              const roiTotalCost = effectiveTuition ? Number(effectiveTuition) * roiYears : 0;
+              const empTimeframe = od.employment_timeframe || "6 months after graduation";
+              const internRate = od.internship_conversion_rate
+                ? Number(od.internship_conversion_rate)
+                : null;
+              const topEmployers: string[] = od.top_employers || [];
+              const topIndustries: string[] = od.top_industries || [];
+              const hasData = salary || empRate || topEmployers.length > 0;
+
+              return (
+                <>
+                  <StatGroup
+                    earnings6yr={rd.earnings_6yr_median}
+                    earnings10yr={rd.earnings_10yr_median}
+                    graduationRate={rd.graduation_rate}
+                    retentionRate={rd.retention_rate}
+                    employmentRate={od.employment_rate}
+                  />
+
+                  {(salary || empRate || payback) && (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp size={14} className="text-secondary" />
+                        <h3 className="font-semibold text-foreground">ROI Snapshot</h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        {salary && (
+                          <div>
+                            <p className="text-foreground text-xs">Median Salary</p>
+                            <p className="font-bold text-foreground text-lg">
+                              {formatCurrency(salary)}
+                            </p>
+                          </div>
+                        )}
+                        {empRate && (
+                          <div>
+                            <p className="text-foreground text-xs">Grad/Employment Rate</p>
+                            <p className="font-bold text-foreground text-lg">
+                              {(empRate * 100).toFixed(0)}%
+                            </p>
+                          </div>
+                        )}
+                        {payback && (
+                          <div>
+                            <p className="text-foreground text-xs">Payback Period</p>
+                            <p className="font-medium text-foreground">{payback} months</p>
+                          </div>
+                        )}
+                        {salary && roiTotalCost > 0 && (
+                          <div>
+                            <p className="text-foreground text-xs">Salary-to-Cost</p>
+                            <p className="font-medium text-foreground">
+                              1:{(salary / roiTotalCost).toFixed(1)}x
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  )}
+
+                  {(salary || empRate) && (od.scope || od.source) && (
+                    <Card className="p-3 border-secondary/30 bg-secondary/[0.05]">
+                      <p className="text-[12px] text-muted-foreground">
+                        {od.scope === "institution"
+                          ? od.scope_note ||
+                            "Institution-wide figures across all graduates — not specific to this program."
+                          : "Program-level median earnings (College Scorecard, Field of Study)."}
+                        {od.source && (
                           <>
-                            <div className="flex items-end justify-between mb-2">
-                              <div className="text-center flex-1">
-                                <p className="text-xs text-foreground/60">25th %ile</p>
-                                <p className="text-sm font-medium text-foreground">{salaryLow ? formatCurrency(salaryLow) : '—'}</p>
-                              </div>
-                              <div className="text-center flex-1">
-                                <p className="text-xs text-foreground/60">Median</p>
-                                <p className="text-2xl font-bold text-foreground">{formatCurrency(salary)}</p>
-                              </div>
-                              <div className="text-center flex-1">
-                                <p className="text-xs text-foreground/60">75th %ile</p>
-                                <p className="text-sm font-medium text-foreground">{salaryHigh ? formatCurrency(salaryHigh) : '—'}</p>
-                              </div>
-                            </div>
-                            <div className="relative h-2 bg-muted rounded-pill mt-3">
-                              <div className="absolute h-full bg-secondary/30 rounded-pill" style={{ left: '15%', width: '70%' }} />
-                              <div className="absolute h-full bg-secondary rounded-pill" style={{ left: '40%', width: '20%' }} />
-                            </div>
+                            {" "}
+                            Source:{" "}
+                            {od.source_url ? (
+                              <a
+                                href={od.source_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-secondary hover:underline"
+                              >
+                                {od.source}
+                              </a>
+                            ) : (
+                              od.source
+                            )}
+                            .
                           </>
                         )}
-                      </Card>
-                    )}
+                      </p>
+                    </Card>
+                  )}
 
-                    {(empRate || internRate) && (
-                      <Card className="p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Briefcase size={14} className="text-secondary" />
-                          <h3 className="font-semibold text-foreground">Employment & Placement</h3>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          {empRate != null && (
-                            <div>
-                              <p className="text-xs text-foreground">Employment Rate</p>
-                              <p className="text-2xl font-bold text-foreground" title={`Within ${empTimeframe}`}>{(empRate * 100).toFixed(0)}%</p>
+                  {!hasData ? (
+                    <Card className="p-6 text-center">
+                      <TrendingUp size={32} className="text-foreground/30 mx-auto mb-3" />
+                      <p className="text-sm text-foreground">
+                        Outcomes data is not yet available for this program.
+                      </p>
+                      <p className="text-xs text-foreground/60 mt-1">
+                        Check back later or contact the program directly.
+                      </p>
+                    </Card>
+                  ) : (
+                    <>
+                      {salary && (
+                        <Card className="p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <DollarSign size={14} className="text-secondary" />
+                            <h3
+                              className="font-semibold text-foreground"
+                              title={odn.outcome_reporting_window || undefined}
+                            >
+                              Salary Distribution
+                            </h3>
+                          </div>
+                          {salaryBands.length > 0 ? (
+                            <div className="space-y-2">
+                              {salaryBands.map((b) => (
+                                <div
+                                  key={b.band_label}
+                                  className="grid grid-cols-[1fr_48px_40px] gap-3 items-center"
+                                >
+                                  <p className="text-sm text-foreground">{b.band_label}</p>
+                                  <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
+                                    <div
+                                      className="h-full rounded-pill bg-secondary"
+                                      style={{ width: `${Math.min(100, b.percent)}%` }}
+                                    />
+                                  </div>
+                                  <p className="text-xs font-semibold text-foreground text-right tabular-nums">
+                                    {b.percent}%
+                                  </p>
+                                </div>
+                              ))}
                             </div>
+                          ) : (
+                            <>
+                              <div className="flex items-end justify-between mb-2">
+                                <div className="text-center flex-1">
+                                  <p className="text-xs text-foreground/60">25th %ile</p>
+                                  <p className="text-sm font-medium text-foreground">
+                                    {salaryLow ? formatCurrency(salaryLow) : "—"}
+                                  </p>
+                                </div>
+                                <div className="text-center flex-1">
+                                  <p className="text-xs text-foreground/60">Median</p>
+                                  <p className="text-2xl font-bold text-foreground">
+                                    {formatCurrency(salary)}
+                                  </p>
+                                </div>
+                                <div className="text-center flex-1">
+                                  <p className="text-xs text-foreground/60">75th %ile</p>
+                                  <p className="text-sm font-medium text-foreground">
+                                    {salaryHigh ? formatCurrency(salaryHigh) : "—"}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="relative h-2 bg-muted rounded-pill mt-3">
+                                <div
+                                  className="absolute h-full bg-secondary/30 rounded-pill"
+                                  style={{ left: "15%", width: "70%" }}
+                                />
+                                <div
+                                  className="absolute h-full bg-secondary rounded-pill"
+                                  style={{ left: "40%", width: "20%" }}
+                                />
+                              </div>
+                            </>
                           )}
-                          {internRate != null && (
-                            <div>
-                              <p className="text-xs text-foreground">Internship Conversion</p>
-                              <p className="text-2xl font-bold text-foreground" title="Interns → full-time offers">{(internRate * 100).toFixed(0)}%</p>
-                            </div>
-                          )}
-                        </div>
-                      </Card>
-                    )}
+                        </Card>
+                      )}
 
-                    {topEmployers.length > 0 && (
-                      <Card className="p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Building2 size={14} className="text-secondary" />
-                          <h3 className="font-semibold text-foreground">Top Employers</h3>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {topEmployers.map((e: string) => <Badge key={e} variant="neutral" size="sm">{e}</Badge>)}
-                        </div>
-                      </Card>
-                    )}
+                      {(empRate || internRate) && (
+                        <Card className="p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Briefcase size={14} className="text-secondary" />
+                            <h3 className="font-semibold text-foreground">
+                              Employment & Placement
+                            </h3>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            {empRate != null && (
+                              <div>
+                                <p className="text-xs text-foreground">Employment Rate</p>
+                                <p
+                                  className="text-2xl font-bold text-foreground"
+                                  title={`Within ${empTimeframe}`}
+                                >
+                                  {(empRate * 100).toFixed(0)}%
+                                </p>
+                              </div>
+                            )}
+                            {internRate != null && (
+                              <div>
+                                <p className="text-xs text-foreground">Internship Conversion</p>
+                                <p
+                                  className="text-2xl font-bold text-foreground"
+                                  title="Interns → full-time offers"
+                                >
+                                  {(internRate * 100).toFixed(0)}%
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </Card>
+                      )}
 
-                    {topIndustries.length > 0 && (
-                      <Card className="p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Users size={14} className="text-secondary" />
-                          <h3 className="font-semibold text-foreground">Industry Placement</h3>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {topIndustries.map((ind: string) => <Badge key={ind} variant="info" size="sm">{ind}</Badge>)}
-                        </div>
-                      </Card>
-                    )}
+                      {topEmployers.length > 0 && (
+                        <Card className="p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Building2 size={14} className="text-secondary" />
+                            <h3 className="font-semibold text-foreground">Top Employers</h3>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {topEmployers.map((e: string) => (
+                              <Badge key={e} variant="neutral" size="sm">
+                                {e}
+                              </Badge>
+                            ))}
+                          </div>
+                        </Card>
+                      )}
 
-                    {/* Employer feedback now lives in the Insights tab (§3.6). */}
-                    {(employerData?.total_feedback ?? 0) > 0 && (
-                      <button
-                        onClick={() => setTab('insights')}
-                        className="w-full text-left rounded-lg border border-border hover:border-secondary hover:bg-muted transition-colors p-4 flex items-center justify-between gap-3"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Briefcase size={14} className="text-secondary" />
-                          <span className="text-sm text-foreground">
-                            See what <span className="font-semibold">{employerData?.total_feedback}</span> employers say about graduates
-                          </span>
-                        </div>
-                        <span className="text-xs font-semibold text-secondary">Insights →</span>
-                      </button>
-                    )}
-                  </>
-                )}
-              </>
-            )
-          })()}
+                      {topIndustries.length > 0 && (
+                        <Card className="p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Users size={14} className="text-secondary" />
+                            <h3 className="font-semibold text-foreground">Industry Placement</h3>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {topIndustries.map((ind: string) => (
+                              <Badge key={ind} variant="info" size="sm">
+                                {ind}
+                              </Badge>
+                            ))}
+                          </div>
+                        </Card>
+                      )}
 
-          {tab === 'insights' && (
+                      {/* Employer feedback now lives in the Insights tab (§3.6). */}
+                      {(employerData?.total_feedback ?? 0) > 0 && (
+                        <button
+                          onClick={() => setTab("insights")}
+                          className="w-full text-left rounded-lg border border-border hover:border-secondary hover:bg-muted transition-colors p-4 flex items-center justify-between gap-3"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Briefcase size={14} className="text-secondary" />
+                            <span className="text-sm text-foreground">
+                              See what{" "}
+                              <span className="font-semibold">{employerData?.total_feedback}</span>{" "}
+                              employers say about graduates
+                            </span>
+                          </div>
+                          <span className="text-xs font-semibold text-secondary">Insights →</span>
+                        </button>
+                      )}
+                    </>
+                  )}
+                </>
+              );
+            })()}
+
+          {tab === "insights" && (
             <div className="space-y-4">
               {(() => {
-                const er = p.external_reviews && typeof p.external_reviews === 'object'
-                  ? p.external_reviews as Record<string, any> : null
-                const themes: Array<Record<string, any>> = er && Array.isArray(er.themes) ? er.themes : []
-                const sources: Array<Record<string, any>> = er && Array.isArray(er.sources) ? er.sources : []
-                if (!er || (!themes.length && !er.summary)) return null
-                const tone = (s: string) => s === 'positive' ? 'text-success' : s === 'caution' ? 'text-warning' : 'text-foreground'
-                const dot = (s: string) => s === 'positive' ? 'bg-success' : s === 'caution' ? 'bg-warning' : 'bg-secondary'
+                const er =
+                  p.external_reviews && typeof p.external_reviews === "object"
+                    ? (p.external_reviews as Record<string, any>)
+                    : null;
+                const themes: Array<Record<string, any>> =
+                  er && Array.isArray(er.themes) ? er.themes : [];
+                const sources: Array<Record<string, any>> =
+                  er && Array.isArray(er.sources) ? er.sources : [];
+                if (!er || (!themes.length && !er.summary)) return null;
+                const tone = (s: string) =>
+                  s === "positive"
+                    ? "text-success"
+                    : s === "caution"
+                      ? "text-warning"
+                      : "text-foreground";
+                const dot = (s: string) =>
+                  s === "positive" ? "bg-success" : s === "caution" ? "bg-warning" : "bg-secondary";
                 return (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-2">
                       <Star size={14} className="text-secondary" />
                       <h3 className="font-semibold text-foreground">What students say</h3>
                     </div>
-                    {er.summary && <p className="text-sm text-foreground leading-relaxed mb-3">{String(er.summary)}</p>}
+                    {er.summary && (
+                      <p className="text-sm text-foreground leading-relaxed mb-3">
+                        {String(er.summary)}
+                      </p>
+                    )}
                     {themes.length > 0 && (
                       <ul className="space-y-2 mb-3">
                         {themes.map((t, i) => (
                           <li key={i} className="flex items-start gap-2">
-                            <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${dot(String(t.sentiment))}`} />
+                            <span
+                              className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${dot(String(t.sentiment))}`}
+                            />
                             <div className="min-w-0 text-sm">
-                              <span className={`font-medium ${tone(String(t.sentiment))}`}>{String(t.label)}</span>
-                              {t.detail && <span className="text-foreground/80"> — {String(t.detail)}</span>}
+                              <span className={`font-medium ${tone(String(t.sentiment))}`}>
+                                {String(t.label)}
+                              </span>
+                              {t.detail && (
+                                <span className="text-foreground/80"> — {String(t.detail)}</span>
+                              )}
                             </div>
                           </li>
                         ))}
@@ -1665,43 +2318,61 @@ export default function ProgramDetailPage() {
                     )}
                     {sources.length > 0 && (
                       <div className="pt-2 border-t border-border">
-                        <p className="text-[10px] font-semibold text-foreground/60 uppercase tracking-wider mb-1.5">Sources</p>
+                        <p className="text-[10px] font-semibold text-foreground/60 uppercase tracking-wider mb-1.5">
+                          Sources
+                        </p>
                         <div className="flex flex-wrap gap-x-3 gap-y-1">
                           {sources.map((s, i) => (
-                            <a key={i} href={String(s.url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-secondary hover:underline">
+                            <a
+                              key={i}
+                              href={String(s.url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[12px] text-secondary hover:underline"
+                            >
                               <ExternalLink size={11} /> {String(s.label)}
                             </a>
                           ))}
                         </div>
-                        {er.disclaimer && <p className="text-[10.5px] text-muted-foreground/70 mt-2">{String(er.disclaimer)}</p>}
+                        {er.disclaimer && (
+                          <p className="text-[10.5px] text-muted-foreground/70 mt-2">
+                            {String(er.disclaimer)}
+                          </p>
+                        )}
                       </div>
                     )}
                   </Card>
-                )
+                );
               })()}
-            <InsightsPanel
-              programName={p.program_name}
-              reviews={reviewsData ?? null}
-              employer={employerData ?? null}
-              reviewerType={reviewerType}
-              degree={degreeFilter}
-              cohort={cohortFilter}
-              minRating={minRating}
-              industry={industry}
-              onFilter={setFilter}
-              onClear={clearFilters}
-              onWriteReview={() => navigate(`/s?prefill=${encodeURIComponent(`I'd like to write a review for ${p.program_name} at ${instName}. Help me structure it.`)}`)}
-              similarPrograms={similar}
-              onNavigateProgram={(id) => navigate(`/s/programs/${id}`)}
-            />
+              <InsightsPanel
+                programName={p.program_name}
+                reviews={reviewsData ?? null}
+                employer={employerData ?? null}
+                reviewerType={reviewerType}
+                degree={degreeFilter}
+                cohort={cohortFilter}
+                minRating={minRating}
+                industry={industry}
+                onFilter={setFilter}
+                onClear={clearFilters}
+                onWriteReview={() =>
+                  navigate(
+                    `/s?prefill=${encodeURIComponent(`I'd like to write a review for ${p.program_name} at ${instName}. Help me structure it.`)}`,
+                  )
+                }
+                similarPrograms={similar}
+                onNavigateProgram={(id) => navigate(`/s/programs/${id}`)}
+              />
             </div>
           )}
 
-          {tab === 'events' && (
+          {tab === "events" && (
             <div className="space-y-5">
               {(p as any).content_sources?.social && (
                 <div>
-                  <h3 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Follow &amp; connect</h3>
+                  <h3 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    Follow &amp; connect
+                  </h3>
                   <SocialLinks social={(p as any).content_sources.social} />
                 </div>
               )}
@@ -1727,12 +2398,14 @@ export default function ProgramDetailPage() {
       {/* ── Data sources (attribute public + proprietary data, per product decision) ── */}
       <footer className="mt-8 pt-4 border-t border-border">
         <p className="text-[11px] leading-relaxed text-muted-foreground">
-          <span className="font-semibold text-foreground/70">Data sources:</span>{' '}
-          U.S. Department of Education College Scorecard (admissions, cost &amp; earnings);
-          institution-published admissions requirements, deadlines &amp; cost of attendance
-          {(odn.outcomes_source || (reviewsData?.total_reviews ?? 0) > 0 || employerData) ?
-            '; and — where shown — career-services outcomes and aggregated third-party review data' : ''}.
-          {' '}Figures reflect the latest available data; verify deadlines and costs on the official program page.
+          <span className="font-semibold text-foreground/70">Data sources:</span> U.S. Department of
+          Education College Scorecard (admissions, cost &amp; earnings); institution-published
+          admissions requirements, deadlines &amp; cost of attendance
+          {odn.outcomes_source || (reviewsData?.total_reviews ?? 0) > 0 || employerData
+            ? "; and — where shown — career-services outcomes and aggregated third-party review data"
+            : ""}
+          . Figures reflect the latest available data; verify deadlines and costs on the official
+          program page.
         </p>
       </footer>
 
@@ -1741,13 +2414,15 @@ export default function ProgramDetailPage() {
         <RationalePopover
           programId={programId}
           fitnessBreakdown={(match.fitness_breakdown as Record<string, unknown> | null) ?? null}
-          confidenceBreakdown={(match.confidence_breakdown as Record<string, unknown> | null) ?? null}
+          confidenceBreakdown={
+            (match.confidence_breakdown as Record<string, unknown> | null) ?? null
+          }
           cachedRationale={match.rationale_text ?? null}
           onClose={() => setRationaleOpen(false)}
         />
       )}
     </div>
-  )
+  );
 }
 
 /* ── Loading skeleton — header + tab placeholders (§6) ── */
@@ -1758,14 +2433,18 @@ function ProgramDetailSkeleton() {
       <Skeleton className="h-20 rounded-lg" />
       <Skeleton className="h-24 rounded-lg" />
       <div className="flex gap-2">
-        {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-9 w-28 rounded-md" />)}
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-9 w-28 rounded-md" />
+        ))}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
         <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-lg" />)}
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 rounded-lg" />
+          ))}
         </div>
         <Skeleton className="h-64 rounded-lg" />
       </div>
     </div>
-  )
+  );
 }

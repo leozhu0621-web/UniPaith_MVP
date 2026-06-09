@@ -163,7 +163,10 @@ class ContentIngestService:
                 existing.title = it.title
                 existing.body = it.body or it.title
                 existing.source_url = it.url
-                existing.image_url = it.image_url
+                # Keep a previously stored image when the feed omits media so a
+                # re-ingest (or backfill) doesn't drop the card image.
+                if it.image_url:
+                    existing.image_url = it.image_url
                 existing.published_at = it.published_at
                 continue
             self.session.add(
@@ -219,7 +222,10 @@ class ContentIngestService:
                 existing.end_time = end
                 existing.location = it.location
                 existing.source_url = it.url
-                existing.image_url = it.image_url
+                # Keep a previously stored image when the feed omits media so a
+                # re-ingest (or backfill) doesn't drop the card image.
+                if it.image_url:
+                    existing.image_url = it.image_url
                 continue
             self.session.add(
                 Event(
