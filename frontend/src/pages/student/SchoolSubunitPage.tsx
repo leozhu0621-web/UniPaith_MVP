@@ -220,7 +220,11 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
               {heroStats.map((s, i) => (
                 <Fragment key={s.label}>
                   {i > 0 && <span className="text-border" aria-hidden="true">·</span>}
-                  <span><span className="font-semibold text-foreground">{s.value}</span> {s.label}</span>
+                  {s.label === 'offered' ? (
+                    <span><span className="font-semibold text-foreground" title="Degree levels offered">{s.value}</span></span>
+                  ) : (
+                    <span><span className="font-semibold text-foreground">{s.value}</span> {s.label}</span>
+                  )}
                 </Fragment>
               ))}
             </div>
@@ -311,7 +315,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wide leading-tight">{t.label}</p>
-                  <p className="text-sm font-bold text-foreground leading-tight truncate">{t.value}</p>
+                  <p className="text-sm font-bold text-foreground leading-tight truncate" title={t.label}>{t.value}</p>
                 </div>
               </div>
             ))}

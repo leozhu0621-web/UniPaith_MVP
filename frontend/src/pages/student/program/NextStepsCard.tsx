@@ -7,6 +7,9 @@ interface Step {
   icon: any
   label: string
   hint?: string
+  // When true, the factual-qualifier hint (e.g. deadline countdown, event date)
+  // is shown only on hover via title, not as visible caption text.
+  hintAsTooltip?: boolean
   tone: 'urgent' | 'primary' | 'info'
   onClick: () => void
 }
@@ -61,6 +64,7 @@ export default function NextStepsCard({
         : applicationDeadline
           ? `Deadline: ${formatDate(applicationDeadline!)}`
           : 'Apply when you\'re ready',
+      hintAsTooltip: true,
       tone: daysLeft != null && daysLeft <= 30 ? 'urgent' : 'primary',
       onClick: onApply,
     })
@@ -72,6 +76,7 @@ export default function NextStepsCard({
       icon: Calendar,
       label: upcomingEvent.title,
       hint: formatDate(upcomingEvent.event_datetime),
+      hintAsTooltip: true,
       tone: 'info',
       onClick: upcomingEvent.onClick,
     })
@@ -112,6 +117,7 @@ export default function NextStepsCard({
           <button
             key={i}
             onClick={step.onClick}
+            title={step.hintAsTooltip ? step.hint || undefined : undefined}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors text-left ${TONE_STYLES[step.tone]}`}
           >
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -121,7 +127,7 @@ export default function NextStepsCard({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold leading-tight">{step.label}</p>
-              {step.hint && <p className={`text-[10px] mt-0.5 truncate ${
+              {step.hint && !step.hintAsTooltip && <p className={`text-[10px] mt-0.5 truncate ${
                 step.tone === 'primary' ? 'text-secondary-foreground/80' : 'opacity-70'
               }`}>{step.hint}</p>}
             </div>

@@ -51,12 +51,11 @@ export default function NetPriceEstimator({ estimate, compact = false }: Props) 
             Est. net price
           </p>
         </div>
-        <p className="text-base font-bold text-foreground tabular-nums">
+        <p
+          className="text-base font-bold text-foreground tabular-nums"
+          title={`${formatCurrency(range.expected)}/yr · ${formatCurrency(range.min)}–${formatCurrency(range.max)} · estimate`}
+        >
           ≈ {formatCurrency(range.expected)}
-          <span className="text-[11px] font-normal text-foreground">/yr</span>
-        </p>
-        <p className="text-[10px] text-foreground/70 mt-0.5">
-          {formatCurrency(range.min)}–{formatCurrency(range.max)} · estimate
         </p>
         {band && (
           <div className="mt-1.5">
@@ -89,10 +88,12 @@ export default function NetPriceEstimator({ estimate, compact = false }: Props) 
 
       {/* Headline range */}
       <div className="flex items-end gap-2 mb-1">
-        <p className="text-[28px] leading-none font-bold text-foreground tabular-nums">
+        <p
+          className="text-[28px] leading-none font-bold text-foreground tabular-nums"
+          title="/ year (expected)"
+        >
           ≈ {formatCurrency(range.expected)}
         </p>
-        <p className="text-sm text-foreground mb-0.5">/ year (expected)</p>
       </div>
       <p className="text-xs text-foreground mb-4">
         Likely range <span className="font-semibold text-foreground">{formatCurrency(range.min)}</span> –{' '}
@@ -101,7 +102,10 @@ export default function NetPriceEstimator({ estimate, compact = false }: Props) 
 
       {/* Range bar — cobalt band within the neutral COA track, marker at expected */}
       <div className="mb-1">
-        <div className="relative h-3 rounded-pill bg-muted overflow-hidden">
+        <div
+          className="relative h-3 rounded-pill bg-muted overflow-hidden"
+          title={`Sticker ${formatCurrency(coa)}/yr`}
+        >
           <div
             className="absolute top-0 h-full rounded-pill bg-secondary/30"
             style={{ left: minPct, width: widthPct }}
@@ -113,7 +117,7 @@ export default function NetPriceEstimator({ estimate, compact = false }: Props) 
         </div>
         <div className="flex justify-between mt-1 text-[10px] text-foreground/70">
           <span>$0</span>
-          <span>Sticker {formatCurrency(coa)}/yr</span>
+          <span>Sticker</span>
         </div>
       </div>
 
@@ -179,10 +183,11 @@ export default function NetPriceEstimator({ estimate, compact = false }: Props) 
         </div>
       )}
 
-      {/* Honesty disclaimer */}
-      <div className="flex items-start gap-1.5 text-[10px] text-foreground/60 border-t border-border pt-2">
-        <Info size={11} className="flex-shrink-0 mt-0.5" />
-        <span>{estimate.disclaimer}</span>
+      {/* Honesty disclaimer — methodology aside, surfaced on hover */}
+      <div className="flex items-center gap-1.5 text-[10px] text-foreground/60 border-t border-border pt-2">
+        <span className="flex-shrink-0" title={estimate.disclaimer || undefined}>
+          <Info size={11} />
+        </span>
       </div>
     </Card>
   )

@@ -90,8 +90,7 @@ export function AdmissionsFunnel({
     },
   ]
   return (
-    <div data-testid="admissions-funnel">
-      {cycle && <p className="mb-2 text-[12px] text-muted-foreground">{cycle}</p>}
+    <div data-testid="admissions-funnel" title={cycle || undefined}>
       <div className="flex items-stretch gap-1.5">
         {steps.map((s, i) => (
           <Fragment key={s.label}>
@@ -128,7 +127,10 @@ export function StatBar({ label, pct, hint }: { label: string; pct: number; hint
     <div>
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[12px] text-foreground/80">{label}</span>
-        <span className="text-[13px] font-semibold tabular-nums text-foreground">
+        <span
+          className="text-[13px] font-semibold tabular-nums text-foreground"
+          title={hint || undefined}
+        >
           {Math.round(w)}%
         </span>
       </div>
@@ -139,7 +141,6 @@ export function StatBar({ label, pct, hint }: { label: string; pct: number; hint
       >
         <div className="h-full rounded-full bg-secondary" style={{ width: `${w}%` }} />
       </div>
-      {hint && <p className="mt-0.5 text-[10.5px] text-muted-foreground/70">{hint}</p>}
     </div>
   )
 }
