@@ -75,7 +75,7 @@ export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', 
               const why = m.rationale_text || ''
               // Grounded facts straight from the catalog — real cost + selectivity.
               const facts = [
-                m.tuition ? `$${m.tuition.toLocaleString()}/yr` : null,
+                m.tuition != null ? `$${m.tuition.toLocaleString()}/yr` : null,
                 m.acceptance_rate != null ? `${Math.round(m.acceptance_rate * 100)}% admit` : null,
                 m.band_label ? `${m.band_label} fit` : null,
               ]

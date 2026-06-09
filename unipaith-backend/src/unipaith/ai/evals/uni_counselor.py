@@ -219,7 +219,10 @@ def score_grounding_turn(assistant: str, knowledge_block: str = "") -> Counselor
     dollars = re.findall(r"\$\s?[\d,]{3,}", assistant)
     if dollars:
         hedged = any(h in a for h in _HEDGES)
-        grounded = any(d.replace(" ", "") in knowledge_block.replace(" ", "") for d in dollars)
+        block_dollars = {
+            d.replace(" ", "") for d in re.findall(r"\$\s?[\d,]{3,}", knowledge_block)
+        }
+        grounded = any(d.replace(" ", "") in block_dollars for d in dollars)
         if not hedged and not grounded:
             reasons.append("unhedged_specific")
     return CounselorVerdict(passed=not reasons, reasons=reasons)

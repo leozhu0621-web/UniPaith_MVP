@@ -59,7 +59,7 @@ class KnowledgeBundle:
             bits = [p.name]
             if p.school:
                 bits.append(f"at {p.school}")
-            if p.tuition:
+            if p.tuition is not None:
                 bits.append(f"~${p.tuition:,}/yr tuition")
             if p.median_salary:
                 bits.append(f"${p.median_salary:,} median salary")
