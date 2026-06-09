@@ -267,6 +267,11 @@ resource "aws_ecs_task_definition" "backend" {
       # urgent events stay immediate. Both pinned on for prod auditability.
       { name = "REALTIME_ENABLED", value = "true" },
       { name = "NOTIFICATION_DIGEST_ENABLED", value = "true" },
+      # Daily channel-sourced Events/Updates refresh — re-fetch every
+      # institution/school/program feed, re-apply the keyword relevance gate,
+      # idempotently upsert. Keeps the school/program profiles current with no
+      # manual upkeep. Fail-soft + leader-only.
+      { name = "CONTENT_INGEST_REFRESH_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).
