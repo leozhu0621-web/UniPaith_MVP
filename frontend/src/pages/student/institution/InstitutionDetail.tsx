@@ -203,9 +203,9 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   const TABS: { id: TabId; label: string }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'about', label: 'About' },
+    { id: 'events', label: 'Events & Updates' },
     { id: 'schools', label: `Schools${schoolList.length ? ` (${schoolList.length})` : ''}` },
     { id: 'programs', label: `Programs${programList.length ? ` (${programList.length})` : ''}` },
-    { id: 'events', label: 'Events & Updates' },
   ]
 
   // Inquiry types offered in the Request-info modal — the institution's
