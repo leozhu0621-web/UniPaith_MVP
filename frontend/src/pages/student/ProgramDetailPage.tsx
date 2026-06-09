@@ -10,8 +10,8 @@ import { getPublicInstitution, getPublicPosts } from '../../api/institutions'
 import SocialLinks from '../../components/SocialLinks'
 import { pushRecentProgram } from '../../lib/recentPrograms'
 import { getMatchDetail, logEngagement } from '../../api/matching'
-import { listEvents, rsvpEvent } from '../../api/events'
-import { listMyApplications, createApplication } from '../../api/applications'
+import { listEvents } from '../../api/events'
+import { listMyApplications } from '../../api/applications'
 import { saveProgram, unsaveProgram, listSaved } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
 import { useCounselorStore } from '../../stores/counselor-store'
@@ -19,13 +19,12 @@ import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
-import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate } from '../../utils/format'
 import { differenceInDays } from 'date-fns'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare, Megaphone,
   Briefcase, Building2, Users, Clock, Sparkles, Mail, Archive,
-  Bookmark, BookmarkCheck, FileText, Send, ArrowRightLeft, ChevronRight, ArrowLeft, ExternalLink, Star,
+  Bookmark, BookmarkCheck, FileText, ArrowRightLeft, ChevronRight, ArrowLeft, ExternalLink, Star,
 } from 'lucide-react'
 import { DEGREE_LABELS } from '../../utils/constants'
 import type { EventItem } from '../../types'
@@ -37,7 +36,6 @@ import {
   intakeTimelineFromArray,
   extractTracksMeta,
   extractPrerequisites,
-  extractTestPolicy,
   extractRecommendations,
   extractFundingSignals,
   extractSalaryBands,
@@ -51,22 +49,22 @@ import BandBadge from '../../components/ui/BandBadge'
 import KeyMetrics from './program/KeyMetrics'
 import StatGroup from './program/StatGroup'
 import AboutCard from './program/AboutCard'
-import NextStepsCard from './program/NextStepsCard'
 import RelatedSidebar from './program/RelatedSidebar'
 import InsightsPanel from './program/InsightsPanel'
+// (NextStepsCard removed — applications start from the saved list.)
 import NetPriceEstimator from './program/NetPriceEstimator'
 import NewsGrid from '../../components/NewsGrid'
 
 // Spec 11 §3 — tabs; Insights merges student reviews + employer feedback (§3.6).
 type Tab = 'overview' | 'admissions' | 'costs' | 'outcomes' | 'insights' | 'events'
-const TAB_IDS: Tab[] = ['overview', 'admissions', 'costs', 'outcomes', 'events', 'insights']
+const TAB_IDS: Tab[] = ['overview', 'events', 'admissions', 'costs', 'outcomes', 'insights']
 
 const TABS: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: 'overview', label: 'Overview', icon: BookOpen },
+  { id: 'events', label: 'Events & Updates', icon: Megaphone },
   { id: 'admissions', label: 'Admissions', icon: GraduationCap },
   { id: 'costs', label: 'Costs & Aid', icon: DollarSign },
   { id: 'outcomes', label: 'Outcomes', icon: TrendingUp },
-  { id: 'events', label: 'Events & Updates', icon: Megaphone },
   { id: 'insights', label: 'Insights', icon: MessageSquare },
 ]
 
@@ -196,14 +194,6 @@ export default function ProgramDetailPage() {
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved'] }),
   })
-  const applyMut = useMutation({
-    mutationFn: () => createApplication(programId!),
-    onSuccess: (app) => { showToast('Application created', 'success'); navigate(`/s/applications/${app.id}`) },
-  })
-  const rsvpMut = useMutation({
-    mutationFn: rsvpEvent,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['events'] }); queryClient.invalidateQueries({ queryKey: ['my-rsvps'] }); showToast('RSVP confirmed', 'success') },
-  })
 
   if (isLoading) return <ProgramDetailSkeleton />
 
@@ -237,7 +227,6 @@ export default function ProgramDetailPage() {
   const odn: any = normalizeOutcomes(p.outcomes_data)
   const tracksMeta = extractTracksMeta(p.tracks)
   const prerequisites = extractPrerequisites(p.application_requirements)
-  const testPolicy = extractTestPolicy(p.application_requirements)
   const recommendations = extractRecommendations(p.application_requirements)
   const fundingSignals = extractFundingSignals(p.cost_data)
   const salaryBands = extractSalaryBands(p.outcomes_data)
@@ -305,10 +294,6 @@ export default function ProgramDetailPage() {
     return null
   }
   const admissionTimeline = extractTimeline(p.intake_rounds)
-
-  const upcomingEvent = eventsList
-    .filter((e: any) => new Date(e.event_datetime || e.starts_at || Date.now()) > new Date())
-    .sort((a: any, b: any) => new Date(a.event_datetime || a.starts_at).getTime() - new Date(b.event_datetime || b.starts_at).getTime())[0]
 
   const handleCompare = () => {
     if (compareStore.has(p.id)) compareStore.remove(p.id)
@@ -450,7 +435,7 @@ export default function ProgramDetailPage() {
             </div>
 
             {/* Match ring — integrated beside the title (the sole gold accent, §2). */}
-            {hasMatch ? (
+            {hasMatch && (
               <div
                 className="flex items-center gap-2.5 flex-shrink-0"
                 title="Fitness is how well this program matches your strategy; confidence is how sure we are given your profile depth."
@@ -471,31 +456,15 @@ export default function ProgramDetailPage() {
                   </button>
                 </div>
               </div>
-            ) : (
-              <button
-                onClick={() => navigate('/s/explore')}
-                className="flex items-center gap-2 text-left flex-shrink-0"
-                title="We haven't computed your match for this program yet."
-              >
-                <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                  <Sparkles size={16} className="text-secondary" />
-                </div>
-                <div className="leading-tight">
-                  <p className="text-[12px] font-medium text-secondary hover:underline">See my matches</p>
-                </div>
-              </button>
             )}
           </div>
 
-          {/* Actions — primary application CTA + Save + Ask counselor + Compare. */}
+          {/* Actions — Save + Ask counselor + Compare. Applications are started
+              from the saved list, not here; only a link to an existing app shows. */}
           <div className="flex flex-wrap items-center gap-2 mt-5">
-            {existingApp ? (
+            {existingApp && (
               <Button size="sm" variant="secondary" onClick={() => navigate(`/s/applications/${existingApp.id}`)}>
                 <FileText size={14} className="mr-1.5" /> My application
-              </Button>
-            ) : (
-              <Button size="sm" variant="secondary" onClick={() => applyMut.mutate()} disabled={isArchived || applyMut.isPending}>
-                <Send size={14} className="mr-1.5" /> Start application
               </Button>
             )}
             <Button
@@ -749,18 +718,6 @@ export default function ProgramDetailPage() {
                 )
               })()}
 
-              <NextStepsCard
-                applicationDeadline={effectiveDeadline}
-                upcomingEvent={upcomingEvent ? {
-                  title: (upcomingEvent as any).title || (upcomingEvent as any).event_name,
-                  event_datetime: (upcomingEvent as any).event_datetime || (upcomingEvent as any).starts_at || (upcomingEvent as any).start_time,
-                  onClick: () => rsvpMut.mutate(upcomingEvent.id),
-                } : null}
-                hasApplication={!!existingApp}
-                onApply={() => applyMut.mutate()}
-                onViewApplication={existingApp ? () => navigate(`/s/applications/${existingApp.id}`) : undefined}
-                onAskCounselor={() => navigate(`/s?prefill=${encodeURIComponent(`Tell me more about ${p.program_name}. What should I know?`)}`)}
-              />
 
               {/* Highlights as editorial chips */}
               {Array.isArray(p.highlights) && p.highlights.length > 0 && (
@@ -829,6 +786,16 @@ export default function ProgramDetailPage() {
             const legacyReqs = p.requirements && typeof p.requirements === 'object' ? Object.entries(p.requirements) : []
             const requiredItems = appReqs.filter(r => r.required !== false)
             const optionalItems = appReqs.filter(r => r.required === false)
+            // Recommendations live inside Application Requirements (no separate card).
+            if (recommendations && recommendations.required_count > 0) {
+              requiredItems.push({
+                label: `${recommendations.required_count} letter${recommendations.required_count === 1 ? '' : 's'} of recommendation`,
+                required: true,
+                note: recommendations.types.length > 0
+                  ? recommendations.types.map(t => t.replace(/_/g, ' ')).join(', ')
+                  : undefined,
+              })
+            }
             // Enriched admissions detail (rounds, fee, how-you're-evaluated).
             const reqObj = (p.application_requirements && !Array.isArray(p.application_requirements)
               ? p.application_requirements : {}) as Record<string, any>
@@ -941,86 +908,12 @@ export default function ProgramDetailPage() {
                   </Card>
                 )}
 
-                {testPolicy && (
-                  <Card className="p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <BookOpen size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Test Policy</h3>
-                      {testPolicy.stance_label && (
-                        <Badge variant="info" size="sm">{testPolicy.stance_label}</Badge>
-                      )}
-                    </div>
-                    <div className="space-y-3 text-sm">
-                      {testPolicy.required.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Required</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {testPolicy.required.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
-                          </div>
-                        </div>
-                      )}
-                      {testPolicy.optional.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Optional</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {testPolicy.optional.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
-                          </div>
-                        </div>
-                      )}
-                      {testPolicy.accepted_tests.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Accepted</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {testPolicy.accepted_tests.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
-                          </div>
-                        </div>
-                      )}
-                      {testPolicy.typical_ranges.length > 0 && (
-                        <div>
-                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Typical score ranges</p>
-                          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {testPolicy.typical_ranges.map(r => (
-                              <div key={r.test} className="flex justify-between border-b border-border pb-1">
-                                <dt className="text-foreground">{r.test}</dt>
-                                <dd className="font-medium text-foreground tabular-nums">{r.low}–{r.high}</dd>
-                              </div>
-                            ))}
-                          </dl>
-                        </div>
-                      )}
-                      {testPolicy.superscore_enabled && (
-                        <p className="text-xs text-foreground">Superscore across attempts is accepted.</p>
-                      )}
-                      {testPolicy.waived_rules && (
-                        <p className="text-xs text-foreground"><span className="font-semibold text-foreground">Waiver rules:</span> {testPolicy.waived_rules}</p>
-                      )}
-                    </div>
-                  </Card>
-                )}
-
-                {recommendations && (
-                  <Card className="p-5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Mail size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Recommendations</h3>
-                    </div>
-                    <p className="text-sm text-foreground">
-                      {recommendations.required_count > 0
-                        ? `${recommendations.required_count} letter${recommendations.required_count === 1 ? '' : 's'} required`
-                        : 'Recommendations may be requested'}
-                      {recommendations.types.length > 0 && (
-                        <> · {recommendations.types.map(t => t.replace(/_/g, ' ')).join(', ')}</>
-                      )}
-                    </p>
-                  </Card>
-                )}
-
-                {/* Admission Timeline */}
+                {/* Application Timeline */}
                 {admissionTimeline && (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Clock size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground" title={admissionTimeline.term || undefined}>Admission Timeline</h3>
+                      <h3 className="font-semibold text-foreground" title={admissionTimeline.term || undefined}>Application Timeline</h3>
                     </div>
                     <div className="space-y-2">
                       {admissionTimeline.rounds.map((r: any, i: number) => {
@@ -1069,20 +962,32 @@ export default function ProgramDetailPage() {
                   </Card>
                 )}
 
-                {/* Application rounds (Early Action / Regular / R1–R3 etc.) */}
-                {deadlineRounds.length > 0 && (
+                {/* Application Timeline — rounds + key dates merged into one card. */}
+                {!admissionTimeline && (deadlineRounds.length > 0 || effectiveDeadline || p.program_start_date) && (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <Clock size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Application Rounds</h3>
+                      <h3 className="font-semibold text-foreground">Application Timeline</h3>
                     </div>
                     <ul className="space-y-2 text-sm">
                       {deadlineRounds.map((d, i) => (
-                        <li key={i} className="flex justify-between border-b border-border pb-2 last:border-0 last:pb-0">
+                        <li key={`r${i}`} className="flex justify-between border-b border-border pb-2 last:border-0 last:pb-0">
                           <span className="text-foreground">{d.round}</span>
                           <span className="font-medium text-foreground">{d.date}</span>
                         </li>
                       ))}
+                      {effectiveDeadline && (
+                        <li className="flex justify-between border-b border-border pb-2 last:border-0 last:pb-0">
+                          <span className="text-foreground">Application deadline</span>
+                          <span className="font-medium text-foreground">{formatDate(effectiveDeadline)}</span>
+                        </li>
+                      )}
+                      {p.program_start_date && (
+                        <li className="flex justify-between border-b border-border pb-2 last:border-0 last:pb-0">
+                          <span className="text-foreground">Program starts</span>
+                          <span className="font-medium text-foreground">{formatDate(p.program_start_date)}</span>
+                        </li>
+                      )}
                     </ul>
                   </Card>
                 )}
@@ -1141,31 +1046,8 @@ export default function ProgramDetailPage() {
                   )
                 })()}
 
-                {/* Admissions insights */}
-                <div className={`grid grid-cols-1 ${admissionTimeline ? 'md:grid-cols-1' : 'md:grid-cols-2'} gap-4`}>
-                  {!admissionTimeline && (effectiveDeadline || p.program_start_date) && (
-                    <Card className="p-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Clock size={14} className="text-secondary" />
-                        <h3 className="font-semibold text-foreground">Key Dates</h3>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        {effectiveDeadline && (
-                          <div className="flex justify-between">
-                            <span className="text-foreground">Application Deadline</span>
-                            <span className="font-medium text-foreground">{formatDate(effectiveDeadline)}</span>
-                          </div>
-                        )}
-                        {p.program_start_date && (
-                          <div className="flex justify-between">
-                            <span className="text-foreground">Program Starts</span>
-                            <span className="font-medium text-foreground">{formatDate(p.program_start_date)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-                  )}
-
+                {/* Admissions profile (Key Dates merged into Application Timeline above) */}
+                <div className="grid grid-cols-1 gap-4">
                   {(p.acceptance_rate ?? rd.acceptance_rate) != null && (
                     <Card className="p-5">
                       <div className="flex items-center gap-2 mb-3">
@@ -1225,8 +1107,8 @@ export default function ProgramDetailPage() {
                 {/* Spec 11 §3.3a — personalized net price (highlighted block) */}
                 <NetPriceEstimator estimate={netPrice} />
 
+                {/* Tuition/yr stat omitted — the Tuition & Fees breakdown below covers it. */}
                 <StatGroup
-                  tuition={effectiveTuition}
                   totalCost={cd.total_cost_attendance ?? rd.total_cost_attendance}
                   netPrice={cd.average_net_price ?? rd.avg_net_price}
                   medianDebt={cd.median_debt ?? rd.median_debt}

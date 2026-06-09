@@ -74,17 +74,10 @@ export default function NetPriceEstimator({ estimate, compact = false }: Props) 
 
   return (
     <Card className="p-5 border-secondary/30">
-      <div className="flex items-center justify-between gap-2 mb-1">
-        <div className="flex items-center gap-2">
-          <Wallet size={15} className="text-secondary" />
-          <h3 className="font-semibold text-foreground">Your estimated net price</h3>
-        </div>
-        <Badge variant="info" size="sm">Estimate, not a quote</Badge>
+      <div className="flex items-center gap-2 mb-4">
+        <Wallet size={15} className="text-secondary" />
+        <h3 className="font-semibold text-foreground">Your estimated net price</h3>
       </div>
-      <p className="text-xs text-foreground mb-4">
-        What you might actually pay per year after estimated grants &amp; scholarships — personalized
-        to your profile, not the sticker price.
-      </p>
 
       {/* Headline range */}
       <div className="flex items-end gap-2 mb-1">
@@ -185,7 +178,10 @@ export default function NetPriceEstimator({ estimate, compact = false }: Props) 
 
       {/* Honesty disclaimer — methodology aside, surfaced on hover */}
       <div className="flex items-center gap-1.5 text-[10px] text-foreground/60 border-t border-border pt-2">
-        <span className="flex-shrink-0" title={estimate.disclaimer || undefined}>
+        <span
+          className="flex-shrink-0"
+          title={`What you might actually pay per year after estimated grants & scholarships — personalized to your profile, not the sticker price.${estimate.disclaimer ? ` ${estimate.disclaimer}` : ''}`}
+        >
           <Info size={11} />
         </span>
       </div>
