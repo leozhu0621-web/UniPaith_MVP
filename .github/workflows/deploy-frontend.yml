@@ -8,6 +8,13 @@ on:
       - '.github/workflows/deploy-frontend.yml'
   workflow_dispatch:
 
+# Serialize frontend deploys so concurrent S3 syncs/CloudFront invalidations don't
+# race. cancel-in-progress is false (not true): let an in-flight upload finish
+# rather than risk a partial bundle; the newest queued run then ships the latest.
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: false
+
 env:
   AWS_REGION: us-east-1
   S3_BUCKET: unipaith-frontend

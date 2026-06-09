@@ -8,6 +8,15 @@ on:
       - '.github/workflows/deploy-backend.yml'
   workflow_dispatch:
 
+# Only one backend deploy at a time; a newer push cancels the in-progress/queued
+# one. Each deploy runs `alembic upgrade heads` (all pending migrations) and ships
+# the latest image, so a newer deploy is a strict superset — cancelling stacked
+# intermediate deploys is safe and avoids the ~20-min-each pile-up when several
+# PRs merge in quick succession.
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: true
+
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: unipaith-backend
