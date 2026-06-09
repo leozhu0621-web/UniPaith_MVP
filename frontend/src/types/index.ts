@@ -438,6 +438,17 @@ export interface ProgramSummary {
   school_id?: string | null
 }
 
+/** Rich, sourced About-tab content for a school (e.g. MIT Sloan). */
+export interface SchoolAboutDetail {
+  founded?: number
+  named_for?: string
+  leadership?: string
+  scale?: { faculty?: number; students?: number }
+  faculty?: { name: string; title: string; focus?: string }[]
+  research_centers?: string[]
+  source?: { label: string; url: string }
+}
+
 export interface SchoolSummary {
   id: string
   institution_id: string
@@ -447,6 +458,7 @@ export interface SchoolSummary {
   logo_url?: string | null
   website_url?: string | null
   content_sources?: ContentSources | null
+  about_detail?: SchoolAboutDetail | null
   program_count: number
   program_names: string[]
 }

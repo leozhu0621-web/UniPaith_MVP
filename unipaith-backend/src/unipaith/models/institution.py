@@ -177,6 +177,9 @@ class School(Base):
     # (mirrors Institution.content_sources): news_rss / events_feed / keywords /
     # news_curated / social.
     content_sources: Mapped[dict | None] = mapped_column(JSONB)
+    # Rich About-tab content (real, sourced): founded / named_for / leadership /
+    # faculty[{name,title,focus}] / research_centers[] / source{label,url}.
+    about_detail: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

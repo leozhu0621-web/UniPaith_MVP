@@ -245,11 +245,16 @@ SCHOOLS: list[dict] = [
         "name": "MIT Sloan School of Management",
         "sort_order": 4,
         "description": (
-            "One of the world's leading business schools, dedicated to developing "
-            "principled, innovative leaders and advancing management practice — "
-            "offering the MBA, Master of Finance, Master of Business Analytics, "
-            "PhD, and executive programs at the intersection of management and "
-            "technology."
+            "One of the world's leading business schools. Established in 1914 as "
+            "MIT's Course 15 and renamed in 1964 for Alfred P. Sloan Jr. — the "
+            "MIT-trained engineer who led General Motors — Sloan develops "
+            "principled, innovative leaders and advances management practice at the "
+            "intersection of management and technology, in the spirit of MIT's motto "
+            'Mens et Manus ("mind and hand"). Its evidence-based, data-driven '
+            "research spans finance, operations, the digital economy, and "
+            "entrepreneurship. Roughly 1,300 students learn from about 116 faculty "
+            "across the MBA, Master of Finance, Master of Business Analytics, the "
+            "Sloan Fellows MBA, Executive MBA, a research PhD, and executive education."
         ),
     },
     {
@@ -307,6 +312,53 @@ _SLOAN_CONTENT: dict = {
         "youtube": "https://www.youtube.com/user/MITSloan",
         "facebook": "https://www.facebook.com/MITSloan",
     },
+}
+# Rich About-tab content for the Sloan school. All facts verified against
+# en.wikipedia.org/wiki/MIT_Sloan_School_of_Management and the official faculty
+# directory at mitsloan.mit.edu/faculty/directory (2026-06-09). Faculty titles
+# are quoted from each professor's official directory page.
+_SLOAN_ABOUT_DETAIL: dict = {
+    "founded": 1914,
+    "named_for": (
+        "Alfred P. Sloan Jr. — an 1895 MIT graduate and longtime CEO of General "
+        "Motors; the school was renamed in his honor in 1964."
+    ),
+    "leadership": "Richard M. Locke, Dean",
+    "scale": {"faculty": 116, "students": 1300},
+    "faculty": [
+        {
+            "name": "Dimitris Bertsimas",
+            "title": "Associate Dean, Online Education & Artificial Intelligence",
+            "focus": "Optimization & analytics; faculty lead of the Master of Business Analytics",
+        },
+        {
+            "name": "Andrew W. Lo",
+            "title": "Charles E. and Susan T. Harris Professor",
+            "focus": "Finance — adaptive markets and financial engineering",
+        },
+        {
+            "name": "Sinan Aral",
+            "title": "David Austin Professor of Management",
+            "focus": "The digital economy, social networks, and AI",
+        },
+        {
+            "name": "Simon Johnson",
+            "title": "Ronald A. Kurtz (1954) Professor of Entrepreneurship",
+            "focus": "Economics & entrepreneurship — 2024 Nobel laureate",
+        },
+        {
+            "name": "Antoinette Schoar",
+            "title": "Stewart C. Myers-Horn Family Professor of Finance",
+            "focus": "Entrepreneurial and household finance",
+        },
+    ],
+    "research_centers": [
+        "MIT Initiative on the Digital Economy",
+        "MIT Center for Collective Intelligence",
+        "MIT Laboratory for Financial Engineering",
+        "Operations Research Center",
+    ],
+    "source": {"label": "MIT Sloan", "url": "https://mitsloan.mit.edu/about-mit-sloan"},
 }
 _MBAN_CONTENT: dict = {
     "news_rss": "https://news.mit.edu/rss/topic/operations-research",
@@ -1960,9 +2012,10 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
         sc.catalog_source = "curated"
         sc.website_url = _SCHOOL_WEBSITE.get(spec["name"])
         # Sloan is the standard-setting school: its own keyword-relevant feeds +
-        # official social links. Other schools carry none yet (follow-up).
+        # official social links + a rich, sourced About tab. Others: follow-up.
         if spec["name"] == _SLOAN:
             sc.content_sources = _SLOAN_CONTENT
+            sc.about_detail = _SLOAN_ABOUT_DETAIL
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this
     # is FK-safe (any orphaned programs are handled by the program reconcile).

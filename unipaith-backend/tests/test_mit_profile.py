@@ -113,6 +113,17 @@ async def test_apply_sets_six_real_schools(db_session):
     # Other schools carry no feeds yet (Sloan is the standard-setting example).
     eng = next(s for s in rows if s.name == "School of Engineering")
     assert eng.content_sources is None
+    # Sloan carries a rich, sourced About tab (founded + faculty + centers).
+    ad = sloan.about_detail
+    assert ad is not None
+    assert ad["founded"] == 1914
+    assert "Alfred P. Sloan" in ad["named_for"]
+    assert ad["leadership"].startswith("Richard M. Locke")
+    names = [f["name"] for f in ad["faculty"]]
+    assert "Dimitris Bertsimas" in names and "Simon Johnson" in names
+    assert len(ad["faculty"]) >= 4
+    assert any("Digital Economy" in c for c in ad["research_centers"])
+    assert eng.about_detail is None
 
 
 async def test_apply_builds_real_program_catalog_idempotently(db_session):
