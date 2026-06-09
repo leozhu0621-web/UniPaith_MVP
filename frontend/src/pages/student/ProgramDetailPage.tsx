@@ -102,6 +102,9 @@ export default function ProgramDetailPage() {
   // Spec 06 §3/§5.5 — student (redacted) "why this match" popover.
   const [rationaleOpen, setRationaleOpen] = useState(false)
   const [curTerm, setCurTerm] = useState(0) // active curriculum term tab
+  // Reset the curriculum term to the first one when navigating between programs —
+  // the component is not keyed by programId, so state otherwise sticks across routes.
+  useEffect(() => { setCurTerm(0) }, [programId])
 
   const setTab = (t: Tab) =>
     setSearchParams(prev => {
@@ -1458,7 +1461,12 @@ export default function ProgramDetailPage() {
             const empRate = od.employment_rate ? Number(od.employment_rate) : null
             const payback = od.payback_months ? Number(od.payback_months) : null
             const roiYears = (p.duration_months || (p.degree_type === 'bachelors' ? 48 : 24)) / 12
-            const roiTotalCost = effectiveTuition ? Number(effectiveTuition) * roiYears : 0
+            const roiFees = Object.values(cd.fees || {}).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
+            const roiLiving = cd.estimated_living_cost || 15000
+            const roiBooks = cd.book_supplies || 1200
+            const roiTotalCost = costBandMin != null && costBandMax != null
+              ? Math.round((costBandMin + costBandMax) / 2)
+              : ((Number(effectiveTuition) || 0) + roiFees + roiLiving + roiBooks) * roiYears
             const empTimeframe = od.employment_timeframe || '6 months after graduation'
             const internRate = od.internship_conversion_rate ? Number(od.internship_conversion_rate) : null
             const topEmployers: string[] = od.top_employers || []
