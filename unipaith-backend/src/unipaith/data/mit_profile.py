@@ -853,6 +853,16 @@ PROGRAMS: list[dict] = [
 
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
+# Shared international-student building blocks (visa/I-20 is MIT-wide via the ISO).
+_INTL_VISA = {
+    "type": "F-1 student visa",
+    "note": (
+        "Admitted international students receive an I-20 from the MIT International "
+        "Students Office after showing proof of funding, then use it to apply for the F-1 visa."
+    ),
+}
+_INTL_SOURCES = [{"label": "MIT International Students Office", "url": "https://iso.mit.edu/"}]
+
 # Application-requirement baselines by program type. Official at the degree
 # level (undergrad is institute-wide; the Sloan MBA is Sloan-specific). Grad
 # specifics vary by department, so the grad baseline is labelled accordingly.
@@ -912,6 +922,15 @@ _REQ_UNDERGRAD = {
         "the community. MIT is need-blind for all applicants and meets full demonstrated need; "
         "it does not consider legacy or demonstrated interest."
     ),
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS", "Duolingo", "Cambridge English"],
+            "required": False,
+            "note": "Not required, but recommended where English is not your first language.",
+        },
+        "visa": _INTL_VISA,
+        "sources": _INTL_SOURCES,
+    },
     "source": "MIT Admissions",
     "source_url": "https://mitadmissions.org/apply/first-year/",
 }
@@ -952,6 +971,18 @@ _REQ_GRAD = {
         "statement of objectives. Admission is by the department/program, not a central office; "
         "PhD admits are typically offered full funding (tuition + stipend)."
     ),
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS"],
+            "required": True,
+            "note": (
+                "Required for applicants whose prior degree was not taught in English "
+                "(TOEFL iBT 100 / IELTS 7.0 are typical minimums)."
+            ),
+        },
+        "visa": _INTL_VISA,
+        "sources": _INTL_SOURCES,
+    },
     "source": "MIT Graduate Admissions",
     "source_url": "https://oge.mit.edu/admissions/",
 }
@@ -991,6 +1022,15 @@ _REQ_MBA = {
         "mission to develop principled, innovative leaders — assessed through the cover letter, "
         "video, recommendation, and interview (by invitation)."
     ),
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS"],
+            "required": False,
+            "note": "Not required to apply; English ability is assessed during the interview.",
+        },
+        "visa": _INTL_VISA,
+        "sources": _INTL_SOURCES,
+    },
     "source": "MIT Sloan Admissions",
     "source_url": "https://mitsloan.mit.edu/mba/admissions",
 }
@@ -1471,6 +1511,29 @@ _REQ_BY_SLUG: dict[str, dict] = {
             "clear fit with a data-science career — assessed through the essays, video, "
             "recommendations, and academic record. GRE/GMAT scores are optional."
         ),
+        "international": {
+            "english": {
+                "tests": ["TOEFL", "IELTS", "Duolingo"],
+                "required": False,
+                "note": (
+                    "Not required to apply — English proficiency is assessed in the "
+                    "interview; waived for those educated in English."
+                ),
+            },
+            "visa": _INTL_VISA,
+            "opt": (
+                "STEM-designated — eligible for up to 36 months of OPT "
+                "(12 months + a 24-month STEM extension)."
+            ),
+            "sources": [
+                {
+                    "label": "MIT Sloan MBAn — How to Apply",
+                    "url": "https://mitsloan.mit.edu/master-of-business-analytics/"
+                    "admissions/how-to-apply",
+                },
+                {"label": "MIT International Students Office", "url": "https://iso.mit.edu/"},
+            ],
+        },
         "source": "MIT Sloan MBAn Admissions",
         "source_url": (
             "https://mitsloan.mit.edu/master-of-business-analytics/admissions/how-to-apply"

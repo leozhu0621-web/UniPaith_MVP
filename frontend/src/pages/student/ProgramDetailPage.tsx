@@ -668,7 +668,12 @@ export default function ProgramDetailPage() {
                       ))}
                     </div>
                     {cp.source && (
-                      <p className="mt-3 text-[11px] text-muted-foreground/70">Source: {String(cp.source)}</p>
+                      <p className="mt-3 text-[11px] text-muted-foreground/70">
+                        Source:{' '}
+                        {cp.source_url ? (
+                          <a href={String(cp.source_url)} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">{String(cp.source)}</a>
+                        ) : String(cp.source)}
+                      </p>
                     )}
                   </Card>
                 )
@@ -804,6 +809,8 @@ export default function ProgramDetailPage() {
               ? reqObj.deadlines.filter((d: any) => d && d.round && d.date)
                 .map((d: any) => ({ round: String(d.round), date: String(d.date) }))
               : []
+            const intl = reqObj.international && typeof reqObj.international === 'object'
+              ? reqObj.international as Record<string, any> : null
 
             return (
               <>
@@ -1074,6 +1081,60 @@ export default function ProgramDetailPage() {
                   </Card>
                 )}
 
+                {/* International students — English proficiency + visa */}
+                {intl && (() => {
+                  const eng = intl.english && typeof intl.english === 'object' ? intl.english as Record<string, any> : null
+                  const visa = intl.visa && typeof intl.visa === 'object' ? intl.visa as Record<string, any> : null
+                  const engTests: string[] = eng && Array.isArray(eng.tests) ? eng.tests.map(String) : []
+                  const intlSources: Array<Record<string, any>> = Array.isArray(intl.sources) ? intl.sources : []
+                  if (!eng && !visa && !intl.opt) return null
+                  return (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Building2 size={14} className="text-secondary" />
+                        <h3 className="font-semibold text-foreground">International Students</h3>
+                      </div>
+                      <div className="space-y-3">
+                        {eng && (
+                          <div className="px-3 py-2.5 rounded-lg bg-muted/50 border border-border">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <p className="text-sm font-medium text-foreground">English proficiency</p>
+                              {eng.required != null && (
+                                <Badge variant={eng.required ? 'warning' : 'neutral'} size="sm">
+                                  {eng.required ? 'Required' : 'Not required'}
+                                </Badge>
+                              )}
+                              {engTests.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
+                            </div>
+                            {eng.note && <p className="text-[12px] text-foreground/80">{String(eng.note)}</p>}
+                          </div>
+                        )}
+                        {visa && (
+                          <div className="px-3 py-2.5 rounded-lg bg-muted/50 border border-border">
+                            <p className="text-sm font-medium text-foreground mb-1">Visa{visa.type ? ` — ${String(visa.type)}` : ''}</p>
+                            {visa.note && <p className="text-[12px] text-foreground/80">{String(visa.note)}</p>}
+                          </div>
+                        )}
+                        {intl.opt && (
+                          <p className="text-[12px] text-foreground/80 flex items-start gap-2">
+                            <Sparkles size={13} className="text-secondary flex-shrink-0 mt-0.5" />
+                            {String(intl.opt)}
+                          </p>
+                        )}
+                      </div>
+                      {intlSources.length > 0 && (
+                        <div className="mt-3 pt-2 border-t border-border flex flex-wrap gap-x-3 gap-y-1">
+                          {intlSources.map((s, i) => (
+                            <a key={i} href={String(s.url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[12px] text-secondary hover:underline">
+                              <ExternalLink size={11} /> {String(s.label)}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </Card>
+                  )
+                })()}
+
                 {/* Admissions insights */}
                 <div className={`grid grid-cols-1 ${admissionTimeline ? 'md:grid-cols-1' : 'md:grid-cols-2'} gap-4`}>
                   {!admissionTimeline && (effectiveDeadline || p.program_start_date) && (
@@ -1127,6 +1188,14 @@ export default function ProgramDetailPage() {
                     </Card>
                   )}
                 </div>
+                {reqObj.source && (
+                  <p className="text-[11px] text-muted-foreground/70">
+                    Source:{' '}
+                    {reqObj.source_url ? (
+                      <a href={String(reqObj.source_url)} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">{String(reqObj.source)}</a>
+                    ) : String(reqObj.source)}
+                  </p>
+                )}
               </>
             )
           })()}
@@ -1292,7 +1361,11 @@ export default function ProgramDetailPage() {
                       </div>
                       {cd.source && (
                         <p className="text-[10px] text-foreground/50 mt-3 italic">
-                          Source: {cd.source}{cd.source_year ? ` · ${cd.source_year}` : ''}
+                          Source:{' '}
+                          {cd.source_url ? (
+                            <a href={cd.source_url} target="_blank" rel="noopener noreferrer" className="text-secondary not-italic hover:underline">{cd.source}</a>
+                          ) : cd.source}
+                          {cd.source_year ? ` · ${cd.source_year}` : ''}
                         </p>
                       )}
                       {rd.price_calculator_url && (
@@ -1402,7 +1475,14 @@ export default function ProgramDetailPage() {
                       {od.scope === 'institution'
                         ? (od.scope_note || 'Institution-wide figures across all graduates — not specific to this program.')
                         : 'Program-level median earnings (College Scorecard, Field of Study).'}
-                      {od.source ? ` Source: ${od.source}.` : ''}
+                      {od.source && (
+                        <>
+                          {' '}Source:{' '}
+                          {od.source_url ? (
+                            <a href={od.source_url} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">{od.source}</a>
+                          ) : od.source}.
+                        </>
+                      )}
                     </p>
                   </Card>
                 )}
