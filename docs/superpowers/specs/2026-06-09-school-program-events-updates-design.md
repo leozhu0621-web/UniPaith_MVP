@@ -232,6 +232,7 @@ A tiny `InfoCaption`/`withTip` helper (or just `title=` + `aria-label` where the
 - Replicating the channel + social + campus data to Harvard and other schools.
 - User confirmation of the MBAn `@mit.analytics` Instagram before it is shown as official.
 
-## 8. Open question for spec review
+## 8. Resolved decisions
 
-The MBAn `@mit.analytics` Instagram is likely genuine but not strictly confirmable (not linked from any mit.edu page; a confusable impostor exists). **Default: omit it; MBAn shows Sloan's confirmed links + ORC X.** Confirm whether to include `@mit.analytics` anyway.
+- **MBAn `@mit.analytics` Instagram → OMITTED.** It is likely genuine but not strictly confirmable (not linked from any mit.edu page; a confusable student-run `@mitanalytics` impostor exists). The MBAn page therefore shows **Sloan's 5 confirmed handles + ORC's X (`@orcenter`)** only — fully sourced, no unverifiable handle. Revisit if MIT later links `@mit.analytics` from an official page.
+- **Spec approved** under the user's standing rule ("I provide the goal; you decide implementation; continue all the way"). Proceeding to writing-plans → implementation → deploy → verify live.
