@@ -25,6 +25,26 @@ def _get_cognito_client():  # type: ignore[no-untyped-def]
     return boto3.client("cognito-idp", **kwargs)
 
 
+def _auth_user_payload(user: User) -> dict[str, Any]:
+    """The user block returned alongside auth tokens.
+
+    Mirrors GET /auth/me (``is_owner`` + ``uni_guided``) so the client renders
+    the guided Uni workspace and owner inbox immediately after login — not only
+    after a later /auth/me refresh. Keeping login and /me in sync here prevents
+    the "logged in but stuck on the old single-column Uni until reload" bug.
+    """
+    from unipaith.dependencies import user_is_owner
+
+    return {
+        "user_id": user.id,
+        "email": user.email,
+        "role": user.role.value,
+        "created_at": user.created_at,
+        "is_owner": user_is_owner(user),
+        "uni_guided": settings.ai_uni_guided_v1,
+    }
+
+
 class AuthService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -86,12 +106,7 @@ class AuthService:
                 "refresh_token": f"dev-refresh:{user.id}",
                 "expires_in": 3600,
                 "token_type": "Bearer",
-                "user": {
-                    "user_id": user.id,
-                    "email": user.email,
-                    "role": user.role.value,
-                    "created_at": user.created_at,
-                },
+                "user": _auth_user_payload(user),
             }
 
         client = _get_cognito_client()
@@ -128,12 +143,7 @@ class AuthService:
                 "refresh_token": auth_result.get("RefreshToken"),
                 "expires_in": auth_result["ExpiresIn"],
                 "token_type": "Bearer",
-                "user": {
-                    "user_id": user.id,
-                    "email": user.email,
-                    "role": user.role.value,
-                    "created_at": user.created_at,
-                },
+                "user": _auth_user_payload(user),
             }
         except BadRequestException:
             raise
@@ -278,12 +288,7 @@ class AuthService:
             "refresh_token": tokens.get("refresh_token"),
             "expires_in": tokens.get("expires_in", 3600),
             "token_type": "Bearer",
-            "user": {
-                "user_id": user.id,
-                "email": user.email,
-                "role": user.role.value,
-                "created_at": user.created_at,
-            },
+            "user": _auth_user_payload(user),
         }
 
     async def google_signin(self, id_token_str: str, role: str = "student") -> dict[str, Any]:
@@ -350,12 +355,7 @@ class AuthService:
             "refresh_token": f"dev-refresh:{user.id}",
             "expires_in": 3600,
             "token_type": "Bearer",
-            "user": {
-                "user_id": user.id,
-                "email": user.email,
-                "role": user.role.value,
-                "created_at": user.created_at,
-            },
+            "user": _auth_user_payload(user),
         }
 
     async def get_or_create_user(self, claims: CognitoClaims) -> User:
