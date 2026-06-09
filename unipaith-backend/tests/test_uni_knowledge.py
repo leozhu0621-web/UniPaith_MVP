@@ -103,3 +103,17 @@ async def test_retrieve_returns_programs_for_interest(db_session) -> None:
     bundle = await UniKnowledgeRetriever(db_session).retrieve(snap)
     assert any("Marine Biology" in p.name for p in bundle.programs)
     assert "From your knowledge base" in bundle.render()
+
+
+@pytest.mark.asyncio
+async def test_service_knowledge_summary_gated_by_flag(db_session, monkeypatch) -> None:
+    from unipaith.config import settings
+    from unipaith.services.discovery_service import DiscoveryService
+
+    svc = DiscoveryService(db_session)
+    snap = StudentSnapshot(goals=[GoalEntry(category="academic", specific="marine biology")])
+    monkeypatch.setattr(settings, "ai_uni_knowledge_v1", False)
+    assert await svc._knowledge_summary(snap) == ""
+    monkeypatch.setattr(settings, "ai_uni_knowledge_v1", True)
+    out = await svc._knowledge_summary(snap)
+    assert isinstance(out, str)
