@@ -50,6 +50,8 @@ class EventResponse(BaseModel):
     waitlist_count: int = 0
     view_count: int = 0
     status: str | None
+    source: str = "manual"
+    source_url: str | None = None
     created_at: datetime
 
 

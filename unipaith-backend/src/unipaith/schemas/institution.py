@@ -1131,6 +1131,8 @@ class PostResponse(BaseModel):
     # Spec 27 §2.4 / §2.3 — CTAs + visibility scope (raw JSONB passthrough).
     ctas: list | None = None
     visibility: dict | None = None
+    source: str = "manual"
+    source_url: str | None = None
     created_at: datetime
     updated_at: datetime
     author_email: str | None = None

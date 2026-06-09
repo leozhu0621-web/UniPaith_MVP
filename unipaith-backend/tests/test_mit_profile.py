@@ -68,6 +68,9 @@ async def test_apply_enriches_institution(db_session):
     # Gallery leads with a real raster campus photo (the hero picks the first raster).
     assert inst.media_gallery[0].startswith("https://upload.wikimedia.org")
     assert inst.media_gallery[0].lower().endswith(".jpg")
+    # Public channel feeds seeded for auto-sourced Events/Updates.
+    assert inst.content_sources["news_rss"].startswith("https://news.mit.edu")
+    assert inst.content_sources["events_feed"]["type"] == "ical"
 
 
 async def test_apply_sets_six_real_schools(db_session):

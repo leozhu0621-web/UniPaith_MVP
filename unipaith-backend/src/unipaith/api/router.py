@@ -15,6 +15,7 @@ from unipaith.api.billing import router as billing_router
 from unipaith.api.build import router as build_router
 from unipaith.api.calendar import router as calendar_router
 from unipaith.api.connect import router as connect_router
+from unipaith.api.content_ingest import router as content_ingest_router
 from unipaith.api.discovery import router as discovery_router
 from unipaith.api.documents import router as documents_router
 from unipaith.api.events import router as events_router
@@ -132,6 +133,7 @@ api_router.include_router(recommendations_router)
 api_router.include_router(calendar_router)
 api_router.include_router(connect_router)
 api_router.include_router(feedback_router)
+api_router.include_router(content_ingest_router)
 
 
 @api_router.post("/webhooks/stripe", tags=["payments"])
