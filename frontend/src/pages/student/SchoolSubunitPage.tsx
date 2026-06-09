@@ -12,7 +12,7 @@ import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import QueryError from '../../components/ui/QueryError'
 import Skeleton from '../../components/ui/Skeleton'
-import { ArrowLeft, BookOpen, GraduationCap, Users, TrendingUp, Percent, Building2, Globe } from 'lucide-react'
+import { ArrowLeft, BookOpen, GraduationCap, Users, TrendingUp, Percent, Building2, Globe, Bell } from 'lucide-react'
 import type { SchoolSummary, ProgramSummary } from '../../types'
 
 function fmtPct(v: number | null | undefined) {
@@ -40,6 +40,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
   const queryClient = useQueryClient()
   const compareStore = useCompareStore()
   const [degFilter, setDegFilter] = useState<string>('all')
+  const [tab, setTab] = useState<'overview' | 'about' | 'programs' | 'updates'>('overview')
 
   const instHref = isAuthenticated ? `/s/institutions/${institutionId}` : `/school/${institutionId}`
   const programHref = (id: string) => (isAuthenticated ? `/s/programs/${id}` : `/program/${id}`)
@@ -127,9 +128,9 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
 
   return (
     <div className="p-6 max-w-5xl w-full mx-auto">
-      {/* Back to the last level */}
+      {/* Back to the last level (falls back to the institution when opened directly) */}
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => { if (window.history.length > 1) navigate(-1); else navigate(instHref) }}
         className="inline-flex items-center gap-1.5 text-[13px] font-medium text-secondary hover:underline mb-3"
       >
         <ArrowLeft size={15} /> Back
@@ -186,7 +187,32 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
         </div>
       </div>
 
+      {/* Tabs — the school's own Overview / About / Programs / Updates */}
+      <div className="border-b border-border mb-5">
+        <div className="flex gap-1 -mb-px overflow-x-auto" role="tablist">
+          {([
+            ['overview', 'Overview'],
+            ['about', 'About'],
+            ['programs', `Programs${progCount ? ` (${progCount})` : ''}`],
+            ['updates', 'Updates'],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={tab === id}
+              onClick={() => setTab(id)}
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                tab === id ? 'border-secondary text-secondary' : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* About this school */}
+      {tab === 'about' && (
       <Card className="p-5 mb-5">
         <div className="flex items-center gap-2 mb-2">
           <BookOpen size={14} className="text-secondary" />
@@ -198,7 +224,10 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
           <p className="text-sm text-muted-foreground">No details published yet for this school. Explore programs below.</p>
         )}
       </Card>
+      )}
 
+      {tab === 'overview' && (
+      <>
       {/* School quick-facts — derived from institution + program grid where available */}
       {(() => {
         const rd: any = institution?.ranking_data || {}
@@ -233,7 +262,29 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
           </div>
         )
       })()}
+      {/* About excerpt + a jump to the full program list */}
+      <div className="space-y-4">
+        {school.description_text && (
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <BookOpen size={14} className="text-secondary" />
+              <h2 className="font-semibold text-foreground">About this school</h2>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">{school.description_text}</p>
+            <button onClick={() => setTab('about')} className="mt-2 text-[13px] font-medium text-secondary hover:underline">Read more →</button>
+          </Card>
+        )}
+        {progCount > 0 && (
+          <button onClick={() => setTab('programs')} className="text-[13px] font-medium text-secondary hover:underline">
+            View all {progCount} programs →
+          </button>
+        )}
+      </div>
+      </>
+      )}
 
+      {tab === 'programs' && (
+      <>
       {/* Programs */}
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">Programs</h2>
@@ -289,6 +340,16 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
               onView={() => navigate(programHref(p.id))}
             />
           ))}
+        </div>
+      )}
+      </>
+      )}
+
+      {tab === 'updates' && (
+        <div className="text-center py-16 bg-card rounded-xl border border-border">
+          <Bell size={32} className="mx-auto text-muted-foreground mb-3" />
+          <p className="text-sm text-foreground font-medium mb-1">No updates yet</p>
+          <p className="text-xs text-muted-foreground">{school.name} hasn&rsquo;t posted any updates or events yet.</p>
         </div>
       )}
 
