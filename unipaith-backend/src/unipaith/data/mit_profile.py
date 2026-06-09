@@ -1870,6 +1870,13 @@ def apply(session: Session) -> bool:
     # prepend), and the logo is preserved behind it.
     _gallery = [u for u in (inst.media_gallery or []) if u != _CAMPUS_PHOTO]
     inst.media_gallery = [_CAMPUS_PHOTO, *_gallery]
+    # Public channel feeds → auto-sourced Updates (news) + Events (calendar).
+    # Verified live; social handles reserved for the Phase-2 social pull.
+    inst.content_sources = {
+        "news_rss": "https://news.mit.edu/rss/feed",
+        "events_feed": {"url": "https://calendar.mit.edu/calendar.ics", "type": "ical"},
+        "social": {"x": None, "instagram": None, "linkedin": None, "youtube": None},
+    }
     session.flush()
     school_by_name = _apply_schools(session, inst)
     _apply_programs(session, inst, school_by_name)

@@ -47,6 +47,9 @@ class Institution(Base):
     website_url: Mapped[str | None] = mapped_column(String(1000))
     media_gallery: Mapped[dict | None] = mapped_column(JSONB)
     social_links: Mapped[dict | None] = mapped_column(JSONB)
+    # Public channel feeds for auto-sourcing Events/Updates: {news_rss, events_feed:
+    # {url, type}, social:{...}}. social handles are reserved for the Phase-2 pull.
+    content_sources: Mapped[dict | None] = mapped_column(JSONB)
     inquiry_routing: Mapped[dict | None] = mapped_column(JSONB)
     support_services: Mapped[dict | None] = mapped_column(JSONB)
     policies: Mapped[dict | None] = mapped_column(JSONB)
@@ -541,6 +544,11 @@ class Event(Base):
     view_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     # Spec 27 §3.2 lifecycle: draft | scheduled | live | completed | cancelled.
     status: Mapped[str | None] = mapped_column(String(20))
+    # Channel-sourcing provenance: source ∈ {manual, events_feed, social}; the
+    # feed's stable id (UID/guid) for idempotent dedupe; the canonical link.
+    source: Mapped[str] = mapped_column(String(24), default="manual", server_default="manual")
+    external_id: Mapped[str | None] = mapped_column(String(500))
+    source_url: Mapped[str | None] = mapped_column(String(1000))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -714,6 +722,11 @@ class InstitutionPost(Base):
     tagged_program_ids: Mapped[dict | None] = mapped_column(JSONB)
     tagged_intake: Mapped[str | None] = mapped_column(String(50))
     status: Mapped[str] = mapped_column(String(20), default="draft")
+    # Channel-sourcing provenance (see Event): manual vs news_rss/social, the
+    # feed's stable id for idempotent dedupe, and the canonical link.
+    source: Mapped[str] = mapped_column(String(24), default="manual", server_default="manual")
+    external_id: Mapped[str | None] = mapped_column(String(500))
+    source_url: Mapped[str | None] = mapped_column(String(1000))
     scheduled_for: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_template: Mapped[bool] = mapped_column(Boolean, default=False)
