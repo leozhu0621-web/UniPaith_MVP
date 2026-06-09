@@ -102,6 +102,17 @@ async def test_apply_sets_six_real_schools(db_session):
     assert eng.website_url == "https://engineering.mit.edu/"
     sloan = next(s for s in rows if s.name == "MIT Sloan School of Management")
     assert sloan.website_url == "https://mitsloan.mit.edu/"
+    # Sloan carries its own keyword-relevant feeds + official social links.
+    cs = sloan.content_sources
+    assert cs is not None
+    assert cs["news_rss"].endswith("/topic/sloan-school-management")
+    assert cs["news_curated"] is True
+    assert cs["keywords"] == ["sloan", "mit sloan"]
+    assert cs["social"]["instagram"] == "https://www.instagram.com/mitsloan/"
+    assert len(cs["social"]) == 5
+    # Other schools carry no feeds yet (Sloan is the standard-setting example).
+    eng = next(s for s in rows if s.name == "School of Engineering")
+    assert eng.content_sources is None
 
 
 async def test_apply_builds_real_program_catalog_idempotently(db_session):
@@ -181,6 +192,14 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     # admissions, curriculum, and class profile (all sourced, not fallbacks).
     mban = next(p for p in progs if p.slug == "mit-sloan-mban")
     assert mban.tuition == 93834  # official MBAn tuition, overriding the standard rate
+    # MBAn carries its own keyword-relevant feeds (operations-research news,
+    # gated by program keywords) + Sloan-inherited social + the ORC's X.
+    mcs = mban.content_sources
+    assert mcs is not None
+    assert mcs["news_rss"].endswith("/topic/operations-research")
+    assert mcs["news_curated"] is False
+    assert "business analytics" in mcs["keywords"]
+    assert mcs["social"]["x"] == "https://x.com/orcenter"
     assert mban.cost_data["source"].startswith("MIT Sloan")
     # Cost-of-attendance breakdown ("what it's made up of").
     assert len(mban.cost_data["breakdown"]) >= 3
