@@ -6,7 +6,9 @@ import {
   getProgram, getProgramReviews, getEmployerFeedback, getNetPrice,
   searchPrograms, semanticSearch,
 } from '../../api/programs'
-import { getPublicInstitution } from '../../api/institutions'
+import { getPublicInstitution, getPublicPosts } from '../../api/institutions'
+import SocialLinks from '../../components/SocialLinks'
+import PostCard from './explore/cards/PostCard'
 import { pushRecentProgram } from '../../lib/recentPrograms'
 import { getMatchDetail, logEngagement } from '../../api/matching'
 import { listEvents, rsvpEvent, getMyRsvps } from '../../api/events'
@@ -147,6 +149,13 @@ export default function ProgramDetailPage() {
   })
   const { data: netPrice } = useQuery({ queryKey: ['net-price', programId], queryFn: () => getNetPrice(programId!), enabled: !!programId, retry: false })
   const { data: events } = useQuery({ queryKey: ['events', { program_id: programId }], queryFn: () => listEvents({ program_id: programId, limit: 5 }) })
+  // Channel-sourced program Updates (news tagged to this program).
+  const { data: programPostsData } = useQuery({
+    queryKey: ['program-posts', (program as any)?.institution_id, programId],
+    queryFn: () => getPublicPosts((program as any).institution_id, { program_id: programId }),
+    enabled: !!(program as any)?.institution_id && !!programId,
+  })
+  const programPosts = Array.isArray(programPostsData) ? programPostsData : []
   const { data: rsvps } = useQuery({ queryKey: ['my-rsvps'], queryFn: getMyRsvps, retry: false })
   const { data: saved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
   const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
@@ -596,6 +605,22 @@ export default function ProgramDetailPage() {
                 programName={p.program_name}
                 websiteUrl={p.website_url}
               />
+
+              {(p as any).content_sources?.social && (
+                <Card className="p-5">
+                  <h3 className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Follow &amp; connect</h3>
+                  <SocialLinks social={(p as any).content_sources.social} />
+                </Card>
+              )}
+
+              {programPosts.length > 0 && (
+                <Card className="p-5">
+                  <h3 className="font-semibold text-foreground mb-3">Latest updates</h3>
+                  <div className="space-y-3">
+                    {programPosts.map(post => <PostCard key={post.id} post={post} />)}
+                  </div>
+                </Card>
+              )}
 
               {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format || tracksMeta.curriculum.length > 0) && (
                 <Card className="p-5">

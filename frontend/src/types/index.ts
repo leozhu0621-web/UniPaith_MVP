@@ -446,6 +446,7 @@ export interface SchoolSummary {
   media_urls?: string[] | null
   logo_url?: string | null
   website_url?: string | null
+  content_sources?: ContentSources | null
   program_count: number
   program_names: string[]
 }
