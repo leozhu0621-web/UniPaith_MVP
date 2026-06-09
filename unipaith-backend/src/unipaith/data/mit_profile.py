@@ -1446,6 +1446,20 @@ _COST_BY_SLUG: dict[str, dict] = {
         "year": "2025-26",
         "funded": False,
         "note": "≈ $71,834 after the Analytics Capstone summer tuition subsidy",
+        "breakdown": [
+            {"label": "Tuition (12-month program)", "amount": 93834},
+            {
+                "label": "Analytics Capstone summer tuition subsidy",
+                "amount": -22000,
+                "note": "Applied during the summer Capstone term",
+            },
+            {
+                "label": "Living & personal expenses (estimated)",
+                "amount": 50965,
+                "note": "Housing, food, transport & personal — varies by lifestyle",
+            },
+        ],
+        "total_cost_of_attendance": 122799,
         "source": "MIT Sloan — Financing Your Education",
         "source_url": (
             "https://mitsloan.mit.edu/master-of-business-analytics/admissions/"

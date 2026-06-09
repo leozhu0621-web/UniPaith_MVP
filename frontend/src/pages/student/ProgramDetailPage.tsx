@@ -101,6 +101,7 @@ export default function ProgramDetailPage() {
 
   // Spec 06 §3/§5.5 — student (redacted) "why this match" popover.
   const [rationaleOpen, setRationaleOpen] = useState(false)
+  const [curTerm, setCurTerm] = useState(0) // active curriculum term tab
 
   const setTab = (t: Tab) =>
     setSearchParams(prev => {
@@ -615,23 +616,40 @@ export default function ProgramDetailPage() {
                       </div>
                     </div>
                   )}
-                  {tracksMeta.curriculum.length > 0 && (
-                    <div className="space-y-4">
-                      {tracksMeta.curriculum.map((term, i) => (
-                        <div key={i}>
-                          <p className="text-[10px] font-semibold text-secondary uppercase tracking-wider mb-1.5">{term.term}</p>
-                          <ul className="space-y-1">
-                            {term.courses.map((c, j) => (
-                              <li key={j} className="flex items-start gap-2 text-sm text-foreground">
-                                <span className="mt-[7px] w-1 h-1 rounded-full bg-secondary/50 flex-shrink-0" aria-hidden="true" />
-                                {c}
-                              </li>
-                            ))}
-                          </ul>
+                  {tracksMeta.curriculum.length > 0 && (() => {
+                    const active = Math.min(curTerm, tracksMeta.curriculum.length - 1)
+                    const term = tracksMeta.curriculum[active]
+                    return (
+                      <div>
+                        {/* Term tabs — one consistent format for every program */}
+                        <div className="flex flex-wrap gap-1.5 mb-3" role="tablist">
+                          {tracksMeta.curriculum.map((t, i) => (
+                            <button
+                              key={i}
+                              role="tab"
+                              aria-selected={active === i}
+                              onClick={() => setCurTerm(i)}
+                              className={`px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider border transition-colors ${
+                                active === i
+                                  ? 'bg-secondary text-secondary-foreground border-secondary'
+                                  : 'bg-card text-muted-foreground border-border hover:bg-muted hover:text-foreground'
+                              }`}
+                            >
+                              {t.term}
+                            </button>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        <ul className="space-y-1">
+                          {(term?.courses ?? []).map((c, j) => (
+                            <li key={j} className="flex items-start gap-2 text-sm text-foreground">
+                              <span className="mt-[7px] w-1 h-1 rounded-full bg-secondary/50 flex-shrink-0" aria-hidden="true" />
+                              {c}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )
+                  })()}
                   {tracksMeta.learning_format && (
                     <div className="mt-3">
                       <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Learning format</p>
@@ -805,10 +823,6 @@ export default function ProgramDetailPage() {
             // Enriched admissions detail (rounds, fee, how-you're-evaluated).
             const reqObj = (p.application_requirements && !Array.isArray(p.application_requirements)
               ? p.application_requirements : {}) as Record<string, any>
-            const evaluation = typeof reqObj.evaluation === 'string' ? reqObj.evaluation : null
-            const appFee = reqObj.application_fee && typeof reqObj.application_fee === 'object'
-              ? reqObj.application_fee as { amount_usd?: number; waiver_available?: boolean; note?: string }
-              : null
             const deadlineRounds: Array<{ round: string; date: string }> = Array.isArray(reqObj.deadlines)
               ? reqObj.deadlines.filter((d: any) => d && d.round && d.date)
                 .map((d: any) => ({ round: String(d.round), date: String(d.date) }))
@@ -1062,29 +1076,6 @@ export default function ProgramDetailPage() {
                   </Card>
                 )}
 
-                {/* How you're evaluated + application fee */}
-                {(evaluation || appFee) && (
-                  <Card className="p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Sparkles size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">How You&rsquo;re Evaluated</h3>
-                    </div>
-                    {evaluation && <p className="text-sm text-foreground leading-relaxed">{evaluation}</p>}
-                    {appFee && (
-                      <div className="mt-3 flex items-start gap-2 text-sm rounded-lg bg-muted/50 border border-border px-3 py-2">
-                        <DollarSign size={14} className="text-secondary flex-shrink-0 mt-0.5" />
-                        <span className="text-foreground">
-                          Application fee: <span className="font-semibold">${appFee.amount_usd}</span>
-                          {appFee.waiver_available && (
-                            <span className="text-foreground/70"> · fee waivers available</span>
-                          )}
-                          {appFee.note && <span className="block text-[11px] text-foreground/60 mt-0.5">{appFee.note}</span>}
-                        </span>
-                      </div>
-                    )}
-                  </Card>
-                )}
-
                 {/* International students — English proficiency + visa */}
                 {intl && (() => {
                   const eng = intl.english && typeof intl.english === 'object' ? intl.english as Record<string, any> : null
@@ -1218,10 +1209,6 @@ export default function ProgramDetailPage() {
               : (annual + feeTotal + living + books) * years
             const totalHigh = costBandMax ?? Math.round(totalMid * 1.15)
             const netPriceByIncome: Record<string, number> = cd.net_price_by_income || {}
-            const od = odn
-            const salary = od.median_salary ? Number(od.median_salary) : (rd.earnings_10yr_median || null)
-            const empRate = od.employment_rate ? Number(od.employment_rate) : (rd.graduation_rate || null)
-            const payback = od.payback_months ? Number(od.payback_months) : null
             return (
               <>
                 {/* Spec 11 §3.3a — personalized net price (highlighted block) */}
@@ -1264,6 +1251,32 @@ export default function ProgramDetailPage() {
                       </div>
                     )}
                   </dl>
+
+                  {/* What the cost is made up of (program-published breakdown) */}
+                  {Array.isArray(cd.breakdown) && cd.breakdown.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-border">
+                      <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">What it&rsquo;s made up of</p>
+                      <dl className="space-y-1.5 text-sm">
+                        {cd.breakdown.map((it: any, i: number) => (
+                          <div key={i} className="flex justify-between gap-3">
+                            <dt className="text-foreground">
+                              {String(it.label)}
+                              {it.note && <span className="block text-[11px] text-foreground/55">{String(it.note)}</span>}
+                            </dt>
+                            <dd className={`font-medium tabular-nums whitespace-nowrap ${Number(it.amount) < 0 ? 'text-success' : 'text-foreground'}`}>
+                              {Number(it.amount) < 0 ? '−' : ''}{formatCurrency(Math.abs(Number(it.amount)))}
+                            </dd>
+                          </div>
+                        ))}
+                        {cd.total_cost_of_attendance != null && (
+                          <div className="flex justify-between border-t border-border pt-2 font-semibold">
+                            <dt className="text-foreground">Estimated total / year</dt>
+                            <dd className="text-foreground tabular-nums whitespace-nowrap">≈ {formatCurrency(Number(cd.total_cost_of_attendance))}</dd>
+                          </div>
+                        )}
+                      </dl>
+                    </div>
+                  )}
                 </Card>
 
                 <Card className="p-5">
@@ -1433,20 +1446,6 @@ export default function ProgramDetailPage() {
                   )
                 })()}
 
-                {(salary || empRate || payback) && (
-                  <Card className="p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <TrendingUp size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">ROI Snapshot</h3>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      {salary && <div><p className="text-foreground text-xs">Median Salary</p><p className="font-bold text-foreground text-lg">{formatCurrency(salary)}</p></div>}
-                      {empRate && <div><p className="text-foreground text-xs">Grad/Employment Rate</p><p className="font-bold text-foreground text-lg">{(empRate * 100).toFixed(0)}%</p></div>}
-                      {payback && <div><p className="text-foreground text-xs">Payback Period</p><p className="font-medium text-foreground">{payback} months</p></div>}
-                      {salary && totalMid > 0 && <div><p className="text-foreground text-xs">Salary-to-Cost</p><p className="font-medium text-foreground">1:{(salary / totalMid).toFixed(1)}x</p></div>}
-                    </div>
-                  </Card>
-                )}
               </>
             )
           })()}
@@ -1457,6 +1456,9 @@ export default function ProgramDetailPage() {
             const salaryLow = od.salary_25th ? Number(od.salary_25th) : (salary ? Math.round(salary * 0.75) : null)
             const salaryHigh = od.salary_75th ? Number(od.salary_75th) : (salary ? Math.round(salary * 1.3) : null)
             const empRate = od.employment_rate ? Number(od.employment_rate) : null
+            const payback = od.payback_months ? Number(od.payback_months) : null
+            const roiYears = (p.duration_months || (p.degree_type === 'bachelors' ? 48 : 24)) / 12
+            const roiTotalCost = effectiveTuition ? Number(effectiveTuition) * roiYears : 0
             const empTimeframe = od.employment_timeframe || '6 months after graduation'
             const internRate = od.internship_conversion_rate ? Number(od.internship_conversion_rate) : null
             const topEmployers: string[] = od.top_employers || []
@@ -1472,6 +1474,21 @@ export default function ProgramDetailPage() {
                   retentionRate={rd.retention_rate}
                   employmentRate={od.employment_rate}
                 />
+
+                {(salary || empRate || payback) && (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <TrendingUp size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">ROI Snapshot</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      {salary && <div><p className="text-foreground text-xs">Median Salary</p><p className="font-bold text-foreground text-lg">{formatCurrency(salary)}</p></div>}
+                      {empRate && <div><p className="text-foreground text-xs">Grad/Employment Rate</p><p className="font-bold text-foreground text-lg">{(empRate * 100).toFixed(0)}%</p></div>}
+                      {payback && <div><p className="text-foreground text-xs">Payback Period</p><p className="font-medium text-foreground">{payback} months</p></div>}
+                      {salary && roiTotalCost > 0 && <div><p className="text-foreground text-xs">Salary-to-Cost</p><p className="font-medium text-foreground">1:{(salary / roiTotalCost).toFixed(1)}x</p></div>}
+                    </div>
+                  </Card>
+                )}
 
                 {(salary || empRate) && (od.scope || od.source) && (
                   <Card className="p-3 border-secondary/30 bg-secondary/[0.05]">
