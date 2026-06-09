@@ -1533,6 +1533,7 @@ async def get_institution_schools(
             "description_text": s.description_text,
             "media_urls": s.media_urls,
             "logo_url": s.logo_url,
+            "website_url": s.website_url,
             "program_count": pc_map.get(s.id, (0, []))[0],
             "program_names": sorted(pc_map.get(s.id, (0, []))[1] or []),
         }

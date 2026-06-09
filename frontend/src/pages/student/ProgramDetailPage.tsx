@@ -361,9 +361,13 @@ export default function ProgramDetailPage() {
         </div>
       )}
 
-      {/* ── Back to the last level ── */}
+      {/* ── Back to the last level (falls back to the institution when there's
+            no in-app history, e.g. the page was opened directly) ── */}
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => {
+          if (window.history.length > 1) navigate(-1)
+          else navigate(`/s/institutions/${p.institution_id}`)
+        }}
         className="inline-flex items-center gap-1.5 text-[13px] font-medium text-secondary hover:underline mb-3"
       >
         <ArrowLeft size={15} /> Back
