@@ -1048,14 +1048,18 @@ class DiscoveryService:
             value = pct or Decimal("0")
             if track == "discovery":
                 # Unified Uni conversation covers self/goals/needs in one
-                # session. completion_pct is the masking average, so feed each
-                # legacy track its own value from completion_breakdown — the
-                # handoff gate must see a weak track, not just the mean. Legacy
-                # rows without a breakdown fall back to the average.
+                # session. completion_pct is the masking AVERAGE, so feed each
+                # track its own value from completion_breakdown — the handoff
+                # gate must see a weak track, not just the mean. When a session
+                # has no breakdown yet (legacy rows, or a session whose first
+                # turn hasn't computed it — the column is nullable with no
+                # backfill), treat each track as 0 so the gate stays
+                # CONSERVATIVE: never unlock the matches reward off the masking
+                # average. The breakdown is populated on the next discovery turn.
                 bd = breakdown or {}
                 for key in ("profile", "goals", "needs"):
                     sub = bd.get(key)
-                    sub_val = Decimal(str(sub)) if sub is not None else value
+                    sub_val = Decimal(str(sub)) if sub is not None else Decimal("0")
                     if sub_val > out[key]:
                         out[key] = sub_val
                 continue
