@@ -7,7 +7,7 @@
 
 ## 1. Goal
 
-Extend the channel-sourced **Events & Updates** feature (built for the institution profile in PR #378) down to the **school profile** (Sloan) and **program profile** (MBAn), plus surface each entity's **official social channels**. Bundle a UI decluttering pass that converts scattered small caption notes into **hover-only tooltips**. MIT / Sloan / MBAn set the standard; everything ships with real, sourced data — nothing fabricated.
+Extend the channel-sourced **Events & Updates** feature (built for the institution profile in PR #378) down to the **school profile** (Sloan) and **program profile** (MBAn), plus surface each entity's **official social channels**. Content is scoped by **keyword relevance over authoritative MIT channels** and **refreshes itself daily** so the surfaces stay current with no manual upkeep. Bundle a UI decluttering pass that converts scattered small caption notes into **hover-only tooltips**. MIT / Sloan / MBAn set the standard; everything ships with real, sourced data — nothing fabricated.
 
 ## 2. Scope decision (confirmed with user)
 
@@ -155,6 +155,18 @@ Same mechanism as MIT (the ops endpoint is locked on prod). `mit_profile.apply()
 - Sets `content_sources` on the **MBAn Program row**: `updates.rss` = operations-research topic feed (`curated: false` → gated), `events.ical` = `?search=business+analytics`, `keywords` = `["mban","business analytics","master of business analytics","operations research"]`, `social` = Sloan's links + ORC X (`@mit.analytics` only if user-approved).
 - A new data migration calls `content_ingest` `seed_populate_sync` for the Sloan + MBAn feeds so Updates (and any gated Events) populate on deploy (sync, fail-soft, idempotent — same pattern as `contentsrc1`).
 
+### 4.7 Daily self-refresh (the feature keeps itself current)
+
+The whole Events/Updates pipeline **refreshes itself daily** via the existing APScheduler in `core/scheduler.py` — the same mechanism that already runs the saved-search-alert and notification-digest loops and a `hours=24` "Daily Feature Refresh". Add one job:
+
+- **`_run_content_ingest_refresh()`** — registered with `scheduler.add_job(..., "interval", hours=24, id="content_ingest_refresh", name="Daily Content Ingest Refresh", **_job_defaults())`, gated by a new `settings.content_ingest_refresh_enabled` flag (true in prod, off in `test`).
+- Opens its own `async_session`, calls `ContentIngestService(session).ingest_all()` — which walks **every** institution/school/program that has `content_sources`, re-fetches each feed, applies the **relevance gate**, and **idempotently upserts**. Commits once.
+- **Fail-soft:** wrapped in `try/except` that logs and is retried next interval — a tick must never crash the scheduler (exactly matching `_run_saved_search_alerts` / `_run_notification_digest`).
+- Runs under the existing **leader-only guard** (`scheduler_require_leader` / `scheduler_is_leader`) so multiple ECS tasks don't duplicate the run; the idempotent upsert makes a duplicate harmless regardless.
+- Because ingest is idempotent + fail-soft + hidden-rows-not-resurrected, each daily run only **adds genuinely new items and refreshes existing ones** — nothing is duplicated, and admin-hidden rows stay hidden.
+
+So: the deploy-time `seed_populate_sync` migration does the **first** populate; the scheduler keeps it **fresh every 24 h** thereafter; the locked ops endpoint (`/admin/content-ingest/refresh`) remains for manual on-demand refresh. New config: `content_ingest_refresh_enabled` (bool) + optional `content_ingest_refresh_hours` (default 24) in `config.py`, exported to the ECS env block like the other scheduler flags.
+
 ## 5. Tooltip cleanup (request "a") — full inventory
 
 The user flagged that small caption notes are "everywhere" and "make the UI look messy." Convert qualifier/explainer captions into **native hover-only `title` tooltips** (zero-dep, exactly "show on hover") via a tiny shared helper. A full sweep of all 11 detail-page files (workflow `wf_b48aaef2-ccc`) classified every small-note site as **tooltip** (hide-on-hover), **keep** (real content / source-trust), or **condense** (shorten — too long for a tooltip).
@@ -208,6 +220,7 @@ A tiny `InfoCaption`/`withTip` helper (or just `title=` + `aria-label` where the
 
 - **Relevance-gate unit tests:** `curated == true` keeps all; otherwise a `?search=sloan` fixture (15 raw VEVENTs, only 1 with "Sloan" in its description) yields exactly 1; keyword match is case-insensitive + word-boundary (no substring false-positive on "sloane"); a program-keyword fixture drops discipline-feed items lacking the MBAn keywords.
 - **Ingest unit tests:** school-scoped tagging (writes `school_id`), program-scoped tagging (writes `program_id`), dedup-with-scope, fail-soft on a bad feed, gate applied per source, `SocialSource` yields `[]` when no provider.
+- **Scheduler test:** `setup_scheduler()` registers the `content_ingest_refresh` job (24 h interval) when `content_ingest_refresh_enabled`; `_run_content_ingest_refresh()` is fail-soft (a raising `ingest_all` logs, does not propagate); not registered in `test` env.
 - **`mit_profile` test:** Sloan School row gets `content_sources` with the 5 social links, `updates.rss` (Sloan topic, `curated: true`), `events.ical` (`?search=sloan`), and `keywords`; MBAn Program row gets `updates.rss` (operations-research, not curated), `keywords`, and Sloan-inherited social.
 - **API test:** `GET /events?school_id=` filters; `EventResponse`/`PostResponse` expose `school_id`; school/program responses expose `content_sources`.
 - **Frontend:** school Updates tab renders posts/events + social links; program Updates renders; tooltip `title` attributes present on the converted caption sites; empty states render when no data.
