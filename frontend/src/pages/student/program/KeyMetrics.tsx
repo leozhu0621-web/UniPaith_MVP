@@ -499,7 +499,7 @@ function MetricTile({ tile }: { tile: Tile }) {
   const Icon = tile.icon
 
   return (
-    <div className="group relative rounded-xl bg-card border border-border pl-4 pr-4 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-border overflow-hidden">
+    <div className="relative rounded-xl bg-card border border-border pl-4 pr-4 py-4 overflow-hidden">
       {/* Left accent bar — the only bg color on the tile */}
       <span className={`absolute left-0 top-0 bottom-0 w-[3px] ${ACCENT_BG[tile.tone]}`} aria-hidden />
 

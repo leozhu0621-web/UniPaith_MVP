@@ -174,6 +174,10 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     mban = next(p for p in progs if p.slug == "mit-sloan-mban")
     assert mban.tuition == 93834  # official MBAn tuition, overriding the standard rate
     assert mban.cost_data["source"].startswith("MIT Sloan")
+    # Cost-of-attendance breakdown ("what it's made up of").
+    assert len(mban.cost_data["breakdown"]) >= 3
+    assert any(it["amount"] < 0 for it in mban.cost_data["breakdown"])  # Capstone subsidy
+    assert mban.cost_data["total_cost_of_attendance"] == 122799
     assert mban.outcomes_data["scope"] == "program"
     assert mban.outcomes_data["median_salary"] == 135000
     assert mban.outcomes_data["source"].startswith("MIT Sloan")
