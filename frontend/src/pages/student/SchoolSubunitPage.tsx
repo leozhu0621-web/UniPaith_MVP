@@ -213,8 +213,8 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
         <div className="flex gap-1 -mb-px overflow-x-auto" role="tablist">
           {([
             ['about', 'About'],
-            ['programs', `Programs${progCount ? ` (${progCount})` : ''}`],
             ['updates', 'Events & Updates'],
+            ['programs', `Programs${progCount ? ` (${progCount})` : ''}`],
           ] as const).map(([id, label]) => (
             <button
               key={id}
@@ -279,6 +279,68 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
           <p className="text-sm text-muted-foreground">No details published yet for this school. Explore programs below.</p>
         )}
       </Card>
+
+      {school.about_detail && (
+        <>
+          {(school.about_detail.founded != null || school.about_detail.named_for || school.about_detail.leadership) && (
+            <Card className="p-5 mb-5">
+              <h2 className="font-semibold text-foreground mb-3">Facts &amp; leadership</h2>
+              <dl className="space-y-2.5 text-sm">
+                {school.about_detail.founded != null && (
+                  <div className="flex gap-3">
+                    <dt className="w-24 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground pt-0.5">Founded</dt>
+                    <dd className="text-foreground">{school.about_detail.founded}</dd>
+                  </div>
+                )}
+                {school.about_detail.named_for && (
+                  <div className="flex gap-3">
+                    <dt className="w-24 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground pt-0.5">Named for</dt>
+                    <dd className="text-muted-foreground leading-relaxed">{school.about_detail.named_for}</dd>
+                  </div>
+                )}
+                {school.about_detail.leadership && (
+                  <div className="flex gap-3">
+                    <dt className="w-24 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground pt-0.5">Leadership</dt>
+                    <dd className="text-foreground">{school.about_detail.leadership}</dd>
+                  </div>
+                )}
+              </dl>
+            </Card>
+          )}
+
+          {school.about_detail.faculty && school.about_detail.faculty.length > 0 && (
+            <Card className="p-5 mb-5">
+              <h2 className="font-semibold text-foreground mb-3">Notable faculty</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {school.about_detail.faculty.map(f => (
+                  <div key={f.name} className="px-3 py-2.5 rounded-lg bg-muted/60 border border-border/50">
+                    <p className="text-sm font-semibold text-foreground">{f.name}</p>
+                    <p className="text-[12px] text-foreground/80">{f.title}</p>
+                    {f.focus && <p className="text-[11px] text-muted-foreground mt-0.5">{f.focus}</p>}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {school.about_detail.research_centers && school.about_detail.research_centers.length > 0 && (
+            <Card className="p-5 mb-5">
+              <h2 className="font-semibold text-foreground mb-3">Research centers &amp; labs</h2>
+              <div className="flex flex-wrap gap-2">
+                {school.about_detail.research_centers.map(c => (
+                  <span key={c} className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium bg-secondary/10 text-secondary border border-secondary/20">{c}</span>
+                ))}
+              </div>
+              {school.about_detail.source && (
+                <p className="text-[11px] text-muted-foreground mt-3">
+                  <span className="font-semibold text-foreground/70">Source:</span>{' '}
+                  <a href={school.about_detail.source.url} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">{school.about_detail.source.label} ↗</a>
+                </p>
+              )}
+            </Card>
+          )}
+        </>
+      )}
       </>
       )}
 
