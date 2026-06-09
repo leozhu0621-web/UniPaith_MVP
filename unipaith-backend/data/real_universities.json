@@ -62,7 +62,24 @@
    "lat": 34.1375,
    "lng": -118.125,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    740,
+    780
+   ],
+   "sat_math_25_75": [
+    790,
+    800
+   ],
+   "act_25_75": [
+    35,
+    36
+   ],
+   "year": 2020,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.98
  },
  {
   "unit_id": 166027,
@@ -263,7 +280,24 @@
    "lat": 42.377,
    "lng": -71.1167,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    780
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    34,
+    36
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 166683,
@@ -510,7 +544,24 @@
    "lat": 42.3597,
    "lng": -71.0919,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    740,
+    780
+   ],
+   "sat_math_25_75": [
+    790,
+    800
+   ],
+   "act_25_75": [
+    35,
+    36
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.99
  },
  {
   "unit_id": 243744,
@@ -711,7 +762,24 @@
    "lat": 37.4275,
    "lng": -122.17,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    780
+   ],
+   "sat_math_25_75": [
+    770,
+    800
+   ],
+   "act_25_75": [
+    33,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.99
  },
  {
   "unit_id": 110635,
@@ -912,7 +980,9 @@
    "lat": 37.8719,
    "lng": -122.2583,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": null,
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 144050,
@@ -1113,7 +1183,24 @@
    "lat": 41.78972,
    "lng": -87.59972,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    740,
+    780
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    34,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.99
  },
  {
   "unit_id": 190150,
@@ -1314,7 +1401,24 @@
    "lat": 40.8075,
    "lng": -73.96194,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    780
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    34,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.99
  },
  {
   "unit_id": 211440,
@@ -1515,7 +1619,24 @@
    "lat": 40.4433,
    "lng": -79.9436,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    720,
+    770
+   ],
+   "sat_math_25_75": [
+    770,
+    800
+   ],
+   "act_25_75": [
+    34,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 130794,
@@ -1716,7 +1837,24 @@
    "lat": 41.31639,
    "lng": -72.92222,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    740,
+    780
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    33,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.99
  },
  {
   "unit_id": 162928,
@@ -1917,7 +2055,24 @@
    "lat": 39.32889,
    "lng": -76.62028,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    740,
+    770
+   ],
+   "sat_math_25_75": [
+    780,
+    800
+   ],
+   "act_25_75": [
+    34,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 186131,
@@ -2118,7 +2273,24 @@
    "lat": 40.34528,
    "lng": -74.65611,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    780
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    33,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.98
  },
  {
   "unit_id": 215062,
@@ -2319,7 +2491,24 @@
    "lat": 39.95028,
    "lng": -75.19472,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    770
+   ],
+   "sat_math_25_75": [
+    770,
+    800
+   ],
+   "act_25_75": [
+    34,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.98
  },
  {
   "unit_id": 139755,
@@ -2520,7 +2709,24 @@
    "lat": 33.7756,
    "lng": -84.3963,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    670,
+    760
+   ],
+   "sat_math_25_75": [
+    700,
+    790
+   ],
+   "act_25_75": [
+    31,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 147767,
@@ -2721,7 +2927,24 @@
    "lat": 42.05583,
    "lng": -87.67472,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    770
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    33,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.98
  },
  {
   "unit_id": 170976,
@@ -2922,7 +3145,24 @@
    "lat": 42.27694,
    "lng": -83.73806,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    670,
+    750
+   ],
+   "sat_math_25_75": [
+    680,
+    780
+   ],
+   "act_25_75": [
+    31,
+    34
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 198419,
@@ -3123,7 +3363,24 @@
    "lat": 36.00139,
    "lng": -78.93833,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    770
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    34,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.98
  },
  {
   "unit_id": 110662,
@@ -3324,7 +3581,8 @@
    "lat": 34.0722,
    "lng": -118.4427,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 110680,
@@ -3525,7 +3783,9 @@
    "lat": 32.8801,
    "lng": -117.234,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": null,
+  "retention_rate_first_year": 0.93
  },
  {
   "unit_id": 190415,
@@ -3726,7 +3986,24 @@
    "lat": 42.4492,
    "lng": -76.4839,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    710,
+    770
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    33,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 193900,
@@ -3927,7 +4204,24 @@
    "lat": 40.73,
    "lng": -73.995,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    720,
+    770
+   ],
+   "sat_math_25_75": [
+    750,
+    800
+   ],
+   "act_25_75": [
+    33,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.94
  },
  {
   "unit_id": 123961,
@@ -4128,7 +4422,24 @@
    "lat": 34.0206,
    "lng": -118.2848,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    710,
+    760
+   ],
+   "sat_math_25_75": [
+    740,
+    790
+   ],
+   "act_25_75": [
+    32,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.96
  },
  {
   "unit_id": 164988,
@@ -4329,7 +4640,24 @@
    "lat": 42.34889,
    "lng": -71.10028,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    660,
+    730
+   ],
+   "sat_math_25_75": [
+    690,
+    770
+   ],
+   "act_25_75": [
+    31,
+    34
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.94
  },
  {
   "unit_id": 228778,
@@ -4530,6 +4858,22 @@
    "lat": 30.285,
    "lng": -97.735,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    620,
+    730
+   ],
+   "sat_math_25_75": [
+    610,
+    770
+   ],
+   "act_25_75": [
+    26,
+    33
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -4731,7 +5075,24 @@
    "lat": 43.0766,
    "lng": -89.4125,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    650,
+    730
+   ],
+   "sat_math_25_75": [
+    690,
+    780
+   ],
+   "act_25_75": [
+    26,
+    32
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.95
  },
  {
   "unit_id": 145637,
@@ -4932,7 +5293,24 @@
    "lat": 40.11056,
    "lng": -88.22833,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    650,
+    730
+   ],
+   "sat_math_25_75": [
+    670,
+    780
+   ],
+   "act_25_75": [
+    29,
+    34
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.93
  },
  {
   "unit_id": 227757,
@@ -5133,7 +5511,24 @@
    "lat": 29.71694,
    "lng": -95.40278,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    770
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    34,
+    36
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.98
  },
  {
   "unit_id": 236948,
@@ -5334,7 +5729,24 @@
    "lat": 47.6542,
    "lng": -122.3081,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    590,
+    700
+   ],
+   "sat_math_25_75": [
+    610,
+    753
+   ],
+   "act_25_75": [
+    27,
+    33
+   ],
+   "year": 2020,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.95
  },
  {
   "unit_id": 243780,
@@ -5535,6 +5947,23 @@
    "lat": 40.425,
    "lng": -86.92306,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    600,
+    710
+   ],
+   "sat_math_25_75": [
+    600,
+    760
+   ],
+   "act_25_75": [
+    27,
+    34
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
+  },
+  "retention_rate_first_year": 0.91
  }
 ]
