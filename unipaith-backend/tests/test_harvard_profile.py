@@ -71,6 +71,9 @@ async def test_apply_enriches_institution(db_session):
     assert "oldest" in inst.description_text
     assert inst.founded_year == 1636
     assert inst.campus_setting == "urban"
+    # Gallery leads with a real raster campus photo (the hero picks the first raster).
+    assert inst.media_gallery[0].startswith("https://upload.wikimedia.org")
+    assert inst.media_gallery[0].lower().endswith(".jpg")
 
 
 async def test_apply_sets_twelve_real_schools(db_session):

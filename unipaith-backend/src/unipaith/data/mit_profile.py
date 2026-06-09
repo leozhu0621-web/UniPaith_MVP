@@ -1841,6 +1841,15 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
 }
 
 
+# Real MIT campus photo (the Great Dome over Killian Court) — Wikimedia Commons,
+# hotlinkable, landscape JPG. Leads the hero on the institution detail page.
+_CAMPUS_PHOTO = (
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/"
+    "Great_dome_of_MIT%2C_Feb_2021_%282%29_%28cropped%29.jpg/"
+    "1920px-Great_dome_of_MIT%2C_Feb_2021_%282%29_%28cropped%29.jpg"
+)
+
+
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
 def apply(session: Session) -> bool:
     """Enrich MIT to the canonical profile. Flushes; caller commits.
@@ -1855,6 +1864,12 @@ def apply(session: Session) -> bool:
     inst.school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
     inst.description_text = DESCRIPTION
     inst.student_body_size = UNDERGRAD_COUNT
+    # Lead the gallery with a real campus photo. The detail-page hero shows the
+    # first RASTER image in media_gallery; the gallery otherwise holds only the
+    # logo SVG, so the hero fell back to a blank gradient. Idempotent (dedupe +
+    # prepend), and the logo is preserved behind it.
+    _gallery = [u for u in (inst.media_gallery or []) if u != _CAMPUS_PHOTO]
+    inst.media_gallery = [_CAMPUS_PHOTO, *_gallery]
     session.flush()
     school_by_name = _apply_schools(session, inst)
     _apply_programs(session, inst, school_by_name)

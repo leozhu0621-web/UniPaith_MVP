@@ -1523,6 +1523,15 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
 }
 
 
+# Real Harvard campus photo (Harvard Yard) — Wikimedia Commons, hotlinkable,
+# landscape JPG. Leads the hero on the institution detail page.
+_CAMPUS_PHOTO = (
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/"
+    "2014-04-03-Harvard-Yard-Cambridge-Massachusetts.jpg/"
+    "1920px-2014-04-03-Harvard-Yard-Cambridge-Massachusetts.jpg"
+)
+
+
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
 def apply(session: Session) -> bool:
     """Enrich Harvard to the canonical profile. Flushes; caller commits.
@@ -1539,6 +1548,10 @@ def apply(session: Session) -> bool:
     inst.student_body_size = UNDERGRAD_COUNT
     inst.founded_year = FOUNDED_YEAR
     inst.campus_setting = CAMPUS_SETTING
+    # Lead the gallery with a real campus photo (the detail-page hero shows the
+    # first raster image; the gallery otherwise holds only the logo SVG).
+    _gallery = [u for u in (inst.media_gallery or []) if u != _CAMPUS_PHOTO]
+    inst.media_gallery = [_CAMPUS_PHOTO, *_gallery]
     session.flush()
     school_by_name = _apply_schools(session, inst)
     _apply_programs(session, inst, school_by_name)

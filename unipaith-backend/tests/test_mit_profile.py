@@ -65,6 +65,9 @@ async def test_apply_enriches_institution(db_session):
     assert "CSAIL" in inst.school_outcomes["research"]["labs"]
     assert inst.school_outcomes["campus_life"]["varsity_sports"] == 33
     assert "Mens et Manus" in inst.description_text
+    # Gallery leads with a real raster campus photo (the hero picks the first raster).
+    assert inst.media_gallery[0].startswith("https://upload.wikimedia.org")
+    assert inst.media_gallery[0].lower().endswith(".jpg")
 
 
 async def test_apply_sets_six_real_schools(db_session):
