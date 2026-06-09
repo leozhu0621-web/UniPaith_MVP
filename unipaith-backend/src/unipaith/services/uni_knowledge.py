@@ -9,6 +9,7 @@ empty and Uni simply counsels generally (the ungrounded fallback).
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,12 +72,34 @@ class KnowledgeBundle:
         return "\n".join(lines)
 
 
+# Discovery captures ISO-3166 location codes (e.g. "US-MA", "CA-ON", "GB"), but
+# search_programs filters on human-readable institution country/region/city. Map
+# the country lead to its name so the filter narrows instead of silently zeroing
+# the grounded catalog; drop an untranslatable code rather than over-filter.
+_ISO_COUNTRY_NAMES = {
+    "US": "United States",
+    "GB": "United Kingdom",
+    "UK": "United Kingdom",
+    "CA": "Canada",
+}
+_ISO_CODE_RE = re.compile(r"^[A-Za-z]{2}(?:-[A-Za-z0-9]{1,3})?$")
+
+
+def _normalize_location(pref: str | None) -> str | None:
+    if not (pref and pref.strip()):
+        return None
+    pref = pref.strip()
+    if _ISO_CODE_RE.match(pref):
+        return _ISO_COUNTRY_NAMES.get(pref.split("-", 1)[0].upper())
+    return pref
+
+
 def build_query(snapshot: StudentSnapshot) -> ProgramQuery | None:
     """Counselor-paced gate: only build a query once a real interest (goal) exists."""
     interests = [g.specific.strip() for g in snapshot.goals if (g.specific or "").strip()]
     if not interests:
         return None
-    location = snapshot.location_prefs[0] if snapshot.location_prefs else None
+    location = _normalize_location(snapshot.location_prefs[0]) if snapshot.location_prefs else None
     return ProgramQuery(query=" ".join(interests[:3]), location=location)
 
 
@@ -87,7 +110,13 @@ async def _scholarship_facts(snapshot: StudentSnapshot, db: AsyncSession) -> lis
 
         from unipaith.models.reference import Scholarship
 
-        rows = (await db.execute(select(Scholarship).limit(2))).scalars().all()
+        rows = (
+            await db.execute(
+                select(Scholarship)
+                .where(Scholarship.status.notin_(("superseded", "archived")))
+                .limit(2)
+            )
+        ).scalars().all()
         out: list[ReferenceFact] = []
         for s in rows:
             amt = f"up to ${int(s.amount_max):,}" if s.amount_max else "varies"
