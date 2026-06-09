@@ -225,9 +225,10 @@ describe('Spec 11 §3.3a — NetPriceEstimator', () => {
   it('renders a {min,expected,max} range, the gap band, and the honest disclaimer', () => {
     render(<NetPriceEstimator estimate={netPrice} />)
     expect(screen.getByText('Your estimated net price')).toBeInTheDocument()
-    expect(screen.getByText('Estimate, not a quote')).toBeInTheDocument()
     expect(screen.getByText(/A stretch/)).toBeInTheDocument()
-    // The methodology disclaimer is folded into a hover tooltip on the Info icon (declutter).
+    // The dek + methodology disclaimer are folded into the bottom Info icon's hover
+    // tooltip (the "Estimate, not a quote" badge + visible dek were removed).
+    expect(screen.getByTitle(/personalized to your profile/)).toBeInTheDocument()
     expect(screen.getByTitle(/This is an estimate, not a quote/)).toBeInTheDocument()
   })
 
@@ -306,35 +307,27 @@ describe('Spec 11 §10 — ProgramDetailPage integration', () => {
     await waitFor(() => expect(h.saveProgramMock).toHaveBeenCalledWith('prog-1'))
   })
 
-  it('triggers Start application when that action is clicked', async () => {
+  it('does not show a Start application button (applications start from the saved list)', async () => {
     renderPage('/s/programs/prog-1?tab=overview')
-    const applyBtn = await screen.findByRole('button', { name: /start application/i })
-    fireEvent.click(applyBtn)
-    await waitFor(() => expect(h.createApplicationMock).toHaveBeenCalledWith('prog-1'))
+    await screen.findByRole('button', { name: /^save$/i })
+    expect(screen.queryByRole('button', { name: /start application/i })).not.toBeInTheDocument()
   })
 
-  it('renders Spec 23 structured admissions (test policy, prerequisites) on Admissions tab', async () => {
+  it('renders structured admissions on the Admissions tab; recommendations fold into Requirements', async () => {
     const { getProgram } = await import('../api/programs')
     vi.mocked(getProgram).mockResolvedValueOnce({
       ...h.program,
       application_requirements: {
         materials: [{ name: 'Essay', required: true }],
         prerequisites: [{ name: 'Calculus', required: true, allowed_substitutes: [] }],
-        test_policy: {
-          stance: 'test_optional',
-          required: ['GRE'],
-          optional: [],
-          accepted_tests: ['GRE'],
-          superscore_enabled: false,
-          waived_rules: '',
-          typical_ranges: [],
-        },
         recommendations: { required_count: 2, types: ['academic'] },
       },
     } as any)
     renderPage('/s/programs/prog-1?tab=admissions')
-    expect(await screen.findByText('Test Policy')).toBeInTheDocument()
-    expect(screen.getByText('Prerequisites')).toBeInTheDocument()
+    expect(await screen.findByText('Prerequisites')).toBeInTheDocument()
     expect(screen.getByText('Calculus')).toBeInTheDocument()
+    // Recommendations now live inside Application Requirements, not a separate card.
+    expect(screen.getByText(/letters? of recommendation/i)).toBeInTheDocument()
+    expect(screen.queryByText('Test Policy')).not.toBeInTheDocument()
   })
 })
