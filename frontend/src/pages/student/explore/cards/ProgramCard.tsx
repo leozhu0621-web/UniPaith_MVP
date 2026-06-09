@@ -1,6 +1,5 @@
 import type { ComponentType } from 'react'
 import { formatCurrency } from '../../../../utils/format'
-import { DEGREE_LABELS } from '../../../../utils/constants'
 import type { ProgramSummary, MatchResult } from '../../../../types'
 import {
   Bookmark, BookmarkCheck, DollarSign, GraduationCap,
@@ -63,7 +62,6 @@ function toUnit(v: number | null | undefined): number {
 }
 
 export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView }: Props) {
-  const degree = DEGREE_LABELS[program.degree_type] || program.degree_type
   const abbrev = degreeAbbrev(program.degree_type)
   // Dual-score migration: prefer fitness_score, fall back to legacy match_score
   // (Phase E keeps match_score dual-written for one release — see CLAUDE.md).
@@ -105,7 +103,8 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
           </div>
 
           <div className="min-w-0 flex-1">
-            <h3 className="text-[15px] font-bold text-foreground leading-tight line-clamp-2">
+            {/* Fixed 2-line height so the header divider lines up across cards. */}
+            <h3 className="text-[15px] font-bold text-foreground leading-tight line-clamp-2 min-h-[2.35rem]">
               {program.program_name}
             </h3>
             {(program.department || program.institution_name) && (
@@ -118,17 +117,19 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 mt-3 flex-wrap">
-          <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md bg-muted text-foreground border border-border/60">
-            {degree}
-          </span>
-          {bandLabel && <BandBadge band={bandLabel} />}
-          {hasDual && (
-            <span className="ml-auto">
-              <DualRing fitness={fitness} confidence={confidence} size={40} compact />
-            </span>
-          )}
-        </div>
+        {/* Band / match-ring row — only when there's a match to show. The degree
+            is already conveyed by the monogram tile and the full program name, so
+            no separate degree chip here. */}
+        {(bandLabel || hasDual) && (
+          <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+            {bandLabel && <BandBadge band={bandLabel} />}
+            {hasDual && (
+              <span className="ml-auto">
+                <DualRing fitness={fitness} confidence={confidence} size={40} compact />
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Facts grid — one consistent block on every card. Duration + format
