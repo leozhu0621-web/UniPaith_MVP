@@ -392,8 +392,25 @@ export interface Program {
   class_profile?: Record<string, any> | null
   institution_name?: string | null
   institution_website_url?: string | null
+  content_sources?: ContentSources | null
   created_at: string
   updated_at: string
+}
+
+/** Channel feeds + official social links for keyword-relevant Events/Updates
+ *  (carried on institutions, schools, and programs). */
+export interface ContentSources {
+  news_rss?: string
+  news_curated?: boolean
+  events_feed?: { url: string; type: string } | null
+  keywords?: string[]
+  social?: {
+    instagram?: string | null
+    linkedin?: string | null
+    x?: string | null
+    youtube?: string | null
+    facebook?: string | null
+  } | null
 }
 
 export interface ProgramSummary {
@@ -2425,6 +2442,9 @@ export interface InstitutionPost {
   // Channel-sourcing provenance — 'manual' (school-authored) vs 'news_rss' etc.
   source?: string
   source_url?: string | null
+  // Scope tags for school/program-specific updates.
+  school_id?: string | null
+  program_id?: string | null
   is_template: boolean
   template_name: string | null
   view_count: number

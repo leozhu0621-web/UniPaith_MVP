@@ -30,6 +30,7 @@ router = APIRouter(prefix="/events", tags=["events"])
 async def list_upcoming_events(
     program_id: UUID | None = Query(None),
     institution_id: UUID | None = Query(None),
+    school_id: UUID | None = Query(None),
     event_type: str | None = Query(None),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -38,6 +39,7 @@ async def list_upcoming_events(
     return await svc.list_upcoming_events(
         program_id=program_id,
         institution_id=institution_id,
+        school_id=school_id,
         event_type=event_type,
         limit=limit,
     )

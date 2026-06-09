@@ -1534,6 +1534,7 @@ async def get_institution_schools(
             "media_urls": s.media_urls,
             "logo_url": s.logo_url,
             "website_url": s.website_url,
+            "content_sources": s.content_sources,
             "program_count": pc_map.get(s.id, (0, []))[0],
             "program_names": sorted(pc_map.get(s.id, (0, []))[1] or []),
         }
@@ -1646,11 +1647,14 @@ async def get_posts_feed(
 @router.get("/{institution_id}/posts", response_model=list[PostResponse])
 async def get_public_posts(
     institution_id: UUID,
+    school_id: UUID | None = Query(None),
+    program_id: UUID | None = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Public endpoint — returns published posts for an institution."""
+    """Public endpoint — returns published posts for an institution, optionally
+    scoped to a school or program (channel-sourced Updates)."""
     svc = _svc(db)
-    return await svc.get_public_posts(institution_id)
+    return await svc.get_public_posts(institution_id, school_id=school_id, program_id=program_id)
 
 
 # --- Campaign Action Tracking (student-facing) ---

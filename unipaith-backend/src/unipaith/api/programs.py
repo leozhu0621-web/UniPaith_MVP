@@ -110,6 +110,8 @@ async def get_public_program(
     resp_dict["institution_student_body_size"] = inst.student_body_size if inst else None
     resp_dict["institution_description"] = inst.description_text if inst else None
     resp_dict["institution_website_url"] = inst.website_url if inst else None
+    # Channel feeds + official social links for the program's Updates/social row.
+    resp_dict["content_sources"] = program.content_sources
 
     # Do NOT fall back program-level `acceptance_rate` or `delivery_format` to
     # institution values — that misleads students (e.g., NYU's 9.23% university
@@ -207,21 +209,18 @@ async def get_program_reviews(
     result = await db.execute(stmt)
     reviews = list(result.scalars().all())
 
-    avg_stmt = (
-        select(
-            func.count().label("cnt"),
-            func.avg(StudentProgramReview.rating_teaching),
-            func.avg(StudentProgramReview.rating_workload),
-            func.avg(StudentProgramReview.rating_career_support),
-            func.avg(StudentProgramReview.rating_internship_access),
-            func.avg(StudentProgramReview.rating_community_culture),
-            func.avg(StudentProgramReview.rating_roi),
-            func.avg(StudentProgramReview.rating_overall),
-        )
-        .where(
-            StudentProgramReview.program_id == program_id,
-            StudentProgramReview.is_published.is_(True),
-        )
+    avg_stmt = select(
+        func.count().label("cnt"),
+        func.avg(StudentProgramReview.rating_teaching),
+        func.avg(StudentProgramReview.rating_workload),
+        func.avg(StudentProgramReview.rating_career_support),
+        func.avg(StudentProgramReview.rating_internship_access),
+        func.avg(StudentProgramReview.rating_community_culture),
+        func.avg(StudentProgramReview.rating_roi),
+        func.avg(StudentProgramReview.rating_overall),
+    ).where(
+        StudentProgramReview.program_id == program_id,
+        StudentProgramReview.is_published.is_(True),
     )
     agg = (await db.execute(avg_stmt)).one()
 
@@ -310,20 +309,17 @@ async def get_employer_feedback(
     result = await db.execute(stmt)
     items = list(result.scalars().all())
 
-    avg_stmt = (
-        select(
-            func.count().label("cnt"),
-            func.avg(EmployerFeedback.rating_technical),
-            func.avg(EmployerFeedback.rating_practical),
-            func.avg(EmployerFeedback.rating_communication),
-            func.avg(EmployerFeedback.rating_teamwork),
-            func.avg(EmployerFeedback.rating_reliability),
-            func.avg(EmployerFeedback.rating_overall),
-        )
-        .where(
-            EmployerFeedback.program_id == program_id,
-            EmployerFeedback.is_published.is_(True),
-        )
+    avg_stmt = select(
+        func.count().label("cnt"),
+        func.avg(EmployerFeedback.rating_technical),
+        func.avg(EmployerFeedback.rating_practical),
+        func.avg(EmployerFeedback.rating_communication),
+        func.avg(EmployerFeedback.rating_teamwork),
+        func.avg(EmployerFeedback.rating_reliability),
+        func.avg(EmployerFeedback.rating_overall),
+    ).where(
+        EmployerFeedback.program_id == program_id,
+        EmployerFeedback.is_published.is_(True),
     )
     agg = (await db.execute(avg_stmt)).one()
 
