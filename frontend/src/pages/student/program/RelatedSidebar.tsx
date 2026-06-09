@@ -1,9 +1,7 @@
 import { Link } from 'react-router-dom'
-import { Calendar, Sparkles, ChevronRight, Compass } from 'lucide-react'
+import { Sparkles, ChevronRight, Compass } from 'lucide-react'
 import Card from '../../../components/ui/Card'
-import { formatDate } from '../../../utils/format'
 import { DEGREE_LABELS } from '../../../utils/constants'
-import type { EventItem } from '../../../types'
 
 interface ProgramLink {
   id: string
@@ -13,27 +11,17 @@ interface ProgramLink {
 }
 
 interface Props {
-  events?: EventItem[]
   sameSchoolPrograms?: ProgramLink[]
   similarPrograms?: ProgramLink[]
-  onRsvp?: (eventId: string) => void
-  rsvpedIds?: Set<string>
   /** Spec 11 §4 — back to Discovery with this program's attributes pre-applied. */
   discoveryBackHref?: string
 }
 
 export default function RelatedSidebar({
-  events = [],
   sameSchoolPrograms = [],
   similarPrograms = [],
-  onRsvp,
-  rsvpedIds = new Set(),
   discoveryBackHref,
 }: Props) {
-  const upcomingEvents = events
-    .filter(e => new Date((e as any).event_datetime || (e as any).starts_at || (e as any).start_time || Date.now()) > new Date())
-    .slice(0, 2)
-
   // "Programs that fit you" — semantically-recommended programs first; fall back
   // to other programs at the same school so the rail is never empty.
   const fitById = new Map<string, ProgramLink>()
@@ -44,51 +32,6 @@ export default function RelatedSidebar({
 
   return (
     <aside className="space-y-4">
-      {/* Upcoming events */}
-      {upcomingEvents.length > 0 && (
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Calendar size={14} className="text-secondary" />
-            <h3 className="text-sm font-semibold text-foreground">Upcoming Events</h3>
-          </div>
-          <div className="space-y-2">
-            {upcomingEvents.map((ev: any) => {
-              // Channel-sourced events (feeds) live on the host's platform — no
-              // RSVP here, just the source link. Only manual events take RSVPs.
-              const isChannel = !!(ev.source && ev.source !== 'manual')
-              const host = (() => {
-                if (!isChannel || !ev.source_url) return null
-                try { return new URL(ev.source_url).hostname.replace(/^www\./, '') } catch { return null }
-              })()
-              return (
-              <div key={ev.id} className="px-3 py-2.5 rounded-lg border border-border hover:border-secondary/30 transition-colors">
-                <p className="text-xs font-semibold text-foreground line-clamp-2">{ev.title || ev.event_name}</p>
-                <p className="text-[10px] text-foreground mt-0.5">
-                  {formatDate(ev.event_datetime || ev.starts_at || ev.start_time)}
-                </p>
-                {!isChannel && onRsvp && (
-                  <button
-                    onClick={() => onRsvp(ev.id)}
-                    className={`mt-2 text-[11px] font-medium px-2 py-1 rounded-md transition-colors ${
-                      rsvpedIds.has(ev.id)
-                        ? 'bg-success-soft text-success'
-                        : 'bg-secondary text-secondary-foreground hover:brightness-95'
-                    }`}
-                  >
-                    {rsvpedIds.has(ev.id) ? '✓ Going' : 'RSVP'}
-                  </button>
-                )}
-                {host && ev.source_url && (
-                  <a href={ev.source_url} target="_blank" rel="noopener noreferrer" className="block mt-1 text-[10px] text-muted-foreground hover:text-secondary hover:underline">
-                    via {host} ↗
-                  </a>
-                )}
-              </div>
-              )
-            })}
-          </div>
-        </Card>
-      )}
 
       {/* Programs that fit you */}
       {fitPrograms.length > 0 && (

@@ -116,30 +116,25 @@ describe('InstitutionDetail (Spec 12)', () => {
     })
   })
 
-  it('Events and Updates tabs show the spec empty-state copy', async () => {
+  it('Events & Updates tab shows an honest empty state', async () => {
     renderDetail(true)
     await screen.findByRole('heading', { name: 'University of Foo' })
 
     clickTab(/events/i)
-    expect(await screen.findByText('No events scheduled')).toBeInTheDocument()
-
-    clickTab(/updates/i)
-    expect(await screen.findByText('Posts arrive here once you publish your first.')).toBeInTheDocument()
+    expect(await screen.findByText(/posted any events or updates yet/i)).toBeInTheDocument()
   })
 
-  it('Updates tab shows pinned posts first with a Pinned marker', async () => {
+  it('Events & Updates renders post cards in the news grid', async () => {
     vi.spyOn(institutionsApi, 'getPublicPosts').mockResolvedValue([
       { id: 'post-2', title: 'Regular update', body: 'Body two', pinned: false, created_at: '2026-05-02T00:00:00Z', media_urls: [] },
       { id: 'post-1', title: 'Featured news', body: 'Body one', pinned: true, created_at: '2026-05-01T00:00:00Z', media_urls: [] },
     ] as any)
     renderDetail(true)
     await screen.findByRole('heading', { name: 'University of Foo' })
-    clickTab(/updates/i)
+    clickTab(/events/i)
 
     expect(await screen.findByText('Featured news')).toBeInTheDocument()
-    expect(screen.getByText('Pinned')).toBeInTheDocument()
-    const titles = screen.getAllByRole('heading', { level: 3 }).map(el => el.textContent)
-    expect(titles.indexOf('Featured news')).toBeLessThan(titles.indexOf('Regular update'))
+    expect(screen.getByText('Regular update')).toBeInTheDocument()
   })
 
   it('Programs tab renders canonical ProgramCard entries', async () => {
@@ -160,46 +155,47 @@ describe('InstitutionDetail (Spec 12)', () => {
     expect(screen.getByText('International students')).toBeInTheDocument()
   })
 
-  // Spec 22 §14 — RSVP from institution page uses the same events API (→ Calendar via backend).
-  it('authenticated: RSVP calls the events API', async () => {
-    const rsvpSpy = vi.spyOn(eventsApi, 'rsvpEvent').mockResolvedValue({} as any)
+  // The news grid is RSVP-free — events get an "Add to calendar" action only.
+  it('Events & Updates shows an Add to calendar action on events (no RSVP)', async () => {
     vi.spyOn(eventsApi, 'listEvents').mockResolvedValue([
       {
         id: 'ev-1', event_name: 'Info Session', start_time: '2026-06-15T18:00:00Z',
-        location: 'Online', event_type: 'info_session', capacity: 50, rsvp_count: 0,
+        location: 'Online', source: 'events_feed', source_url: 'https://calendar.mit.edu/x',
       },
     ] as any)
     renderDetail(true)
     await screen.findByRole('heading', { name: 'University of Foo' })
     clickTab(/events/i)
-    fireEvent.click(await screen.findByRole('button', { name: /^rsvp$/i }))
-    await waitFor(() => expect(rsvpSpy).toHaveBeenCalledWith('ev-1'))
+    expect(await screen.findByText('Info Session')).toBeInTheDocument()
+    expect(screen.getByText(/add to calendar/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^rsvp$/i })).not.toBeInTheDocument()
   })
 
-  it('public: Events tab shows Sign in to RSVP', async () => {
+  it('public: Events & Updates renders events with no RSVP', async () => {
     vi.spyOn(eventsApi, 'listEvents').mockResolvedValue([
       { id: 'ev-1', event_name: 'Open House', start_time: '2026-06-15T18:00:00Z', location: 'Campus' },
     ] as any)
     renderDetail(false)
     await screen.findByRole('heading', { name: 'University of Foo' })
     clickTab(/events/i)
-    expect(await screen.findByRole('button', { name: /sign in to rsvp/i })).toBeInTheDocument()
+    expect(await screen.findByText('Open House')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /sign in to rsvp/i })).not.toBeInTheDocument()
   })
 
-  it('Updates tab renders program tags and markdown links on posts', async () => {
+  it('Events & Updates renders the post title and dek + via-host link', async () => {
     vi.spyOn(institutionsApi, 'getPublicPosts').mockResolvedValue([
       {
-        id: 'post-1', title: 'Aid update', body: 'See our [aid page](https://foo.edu/aid) for **details**.',
+        id: 'post-1', title: 'Aid update', body: 'See our aid page for details.',
         pinned: false, created_at: '2026-05-01T00:00:00Z', media_urls: [],
-        program_names: ['MS in Data Science'],
+        source: 'news_rss', source_url: 'https://news.foo.edu/aid',
       },
     ] as any)
     renderDetail(true)
     await screen.findByRole('heading', { name: 'University of Foo' })
-    clickTab(/updates/i)
-    expect(await screen.findByText('MS in Data Science')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'aid page' })).toHaveAttribute('href', 'https://foo.edu/aid')
-    expect(screen.getByText('details')).toBeInTheDocument()
+    clickTab(/events/i)
+    expect(await screen.findByText('Aid update')).toBeInTheDocument()
+    expect(screen.getByText(/See our aid page for details/i)).toBeInTheDocument()
+    expect(screen.getByText(/via news\.foo\.edu/i)).toBeInTheDocument()
   })
 
   // Spec 22 §3 — social links surface on the header (text links, no logos).
