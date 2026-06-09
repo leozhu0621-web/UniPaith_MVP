@@ -59,15 +59,15 @@ import NewsGrid from '../../components/NewsGrid'
 
 // Spec 11 §3 — tabs; Insights merges student reviews + employer feedback (§3.6).
 type Tab = 'overview' | 'admissions' | 'costs' | 'outcomes' | 'insights' | 'events'
-const TAB_IDS: Tab[] = ['overview', 'admissions', 'costs', 'outcomes', 'insights', 'events']
+const TAB_IDS: Tab[] = ['overview', 'admissions', 'costs', 'outcomes', 'events', 'insights']
 
 const TABS: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: 'overview', label: 'Overview', icon: BookOpen },
   { id: 'admissions', label: 'Admissions', icon: GraduationCap },
   { id: 'costs', label: 'Costs & Aid', icon: DollarSign },
   { id: 'outcomes', label: 'Outcomes', icon: TrendingUp },
-  { id: 'insights', label: 'Insights', icon: MessageSquare },
   { id: 'events', label: 'Events & Updates', icon: Megaphone },
+  { id: 'insights', label: 'Insights', icon: MessageSquare },
 ]
 
 // Legacy `?tab=reviews` redirects to `?tab=insights` (§3.6).
