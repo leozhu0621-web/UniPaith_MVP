@@ -748,12 +748,18 @@ function AboutTab({ inst }: { inst: Institution }) {
   const campusLife: any = outcomes.campus_life || {}
   const campusStats: { value: string; label: string }[] = []
   if (campusLife.varsity_sports != null) campusStats.push({ value: String(campusLife.varsity_sports), label: campusLife.athletics_division ? `Varsity sports · ${campusLife.athletics_division}` : 'Varsity sports' })
+  if (campusLife.student_orgs != null) campusStats.push({ value: String(campusLife.student_orgs), label: 'Student organizations' })
   if (campusLife.arts_groups != null) campusStats.push({ value: `${campusLife.arts_groups}+`, label: 'Arts groups' })
+  if (campusLife.greek_life) campusStats.push({ value: String(campusLife.greek_life), label: 'Greek life (FSILGs)' })
   if (campusLife.residence_halls != null) campusStats.push({ value: String(campusLife.residence_halls), label: 'Residence halls' })
+  if (campusLife.housing) campusStats.push({ value: String(campusLife.housing), label: 'On-campus housing' })
+  const basics: any = outcomes.campus_basics || {}
   const facts = [
     inst.type ? { label: 'Type', value: titleCase(inst.type) } : null,
     inst.founded_year != null ? { label: 'Founded', value: String(inst.founded_year) } : null,
+    basics.location ? { label: 'Location', value: String(basics.location) } : null,
     inst.campus_setting ? { label: 'Campus setting', value: titleCase(inst.campus_setting) } : null,
+    basics.academic_calendar ? { label: 'Academic calendar', value: String(basics.academic_calendar) } : null,
   ].filter(Boolean) as { label: string; value: string }[]
   const nothing = !inst.campus_description && !inst.description_text && !supportKeys.length && !policyKeys.length && !intlKeys.length && !facts.length
 
@@ -1071,6 +1077,11 @@ function EventsTab({ events, institutionName, isAuthenticated, rsvpSet, onRsvp, 
               <p className="text-[13px] text-muted-foreground mt-0.5">{when}{ev.location ? ` · ${ev.location}` : ''}</p>
               {ev.event_type && <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] rounded-md bg-muted text-muted-foreground border border-border/60 capitalize">{String(ev.event_type).replace(/_/g, ' ')}</span>}
               {ev.capacity != null && <span className="ml-2 text-[11px] text-muted-foreground/70">{ev.rsvp_count}/{ev.capacity} spots</span>}
+              {ev.source && ev.source !== 'manual' && ev.source_url && (
+                <a href={ev.source_url} target="_blank" rel="noopener noreferrer" className="block mt-1 text-[11px] text-muted-foreground hover:text-secondary hover:underline">
+                  via {(() => { try { return new URL(ev.source_url).hostname.replace(/^www\./, '') } catch { return 'source' } })()} ↗
+                </a>
+              )}
             </div>
             <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
               <Button size="sm" variant={rsvped ? 'tertiary' : 'secondary'} onClick={() => onRsvp(ev.id)} disabled={rsvpPending}>

@@ -2422,6 +2422,9 @@ export interface InstitutionPost {
   status: 'draft' | 'published' | 'scheduled' | 'archived'
   scheduled_for: string | null
   published_at: string | null
+  // Channel-sourcing provenance — 'manual' (school-authored) vs 'news_rss' etc.
+  source?: string
+  source_url?: string | null
   is_template: boolean
   template_name: string | null
   view_count: number
