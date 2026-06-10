@@ -2183,6 +2183,21 @@ def _requirements_for(spec: dict) -> dict:
     return dict(_REQ_UNDERGRAD)
 
 
+# Slug-specific persisted application deadline (next upcoming cycle), where a program's
+# real deadline differs from the default January 5. Each date matches the admissions set's
+# verified first-party deadline; the Penn GSE M.S.Ed. deadline could not be verified from a
+# static first-party page (served only via a dynamic dropdown), so it persists None — the
+# field is recorded in that program's _standard.omitted rather than carrying a wrong date.
+_DEADLINE_BY_SLUG: dict[str, date | None] = {
+    "penn-dmd": date(2026, 12, 1),  # AADSAS application & supplemental materials due Dec 1
+    "penn-vmd": date(2026, 9, 15),  # VMCAS application deadline (Fall 2027 entry)
+    "penn-march": date(2027, 1, 7),  # Weitzman M.Arch application deadline January 7
+    "penn-msw": date(2027, 2, 1),  # SP2 MSW final application deadline February 1
+    "penn-gse-higher-education-msed": None,  # deadline unverifiable — omitted
+    "penn-communication-phd": date(2026, 12, 1),  # Annenberg PhD application deadline Dec 1
+}
+
+
 # Real Penn campus photo (College Hall) — Wikimedia Commons, hotlinkable landscape JPG
 # (canonical thumbnail URL verified via the Commons API). Leads the institution hero.
 _CAMPUS_PHOTO = (
@@ -2410,10 +2425,13 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        # Application deadline (upcoming undergraduate Regular Decision closes Jan 5;
-        # Wharton MBA Round 2 closes early January).
+        # Application deadline — the single persisted date that catalog / search /
+        # reminder flows read. Slug-specific where a program's real deadline differs from
+        # the default January 5 (undergraduate Regular Decision / Wharton MBA Round 2);
+        # programs whose deadline could not be verified persist None rather than a wrong
+        # date. ``_DEADLINE_BY_SLUG`` maps a slug to its real next-cycle deadline (or None).
         p.application_deadline = (
-            date(2027, 1, 5) if spec["degree_type"] == "masters" else date(2027, 1, 5)
+            _DEADLINE_BY_SLUG[slug] if slug in _DEADLINE_BY_SLUG else date(2027, 1, 5)
         )
     session.flush()
     # Reconcile legacy Penn programs (slug not in the canonical set): delete when
