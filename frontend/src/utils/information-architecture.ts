@@ -14,8 +14,8 @@ export const STUDENT_LEGACY_REDIRECTS: Record<string, string> = {
   '/s/discover': '/s/explore',
   '/s/match': '/s',
   '/s/deadlines': '/s/calendar',
-  '/s/financial-aid': '/s/profile?tab=financial',
-  '/s/recommendations': '/s/profile?tab=preparation&section=recommenders',
+  '/s/financial-aid': '/s/applications?tab=costs',
+  '/s/recommendations': '/s/prep?tab=recommenders',
   '/s/resume-workshop': '/s/prep?tab=workshops',
   '/s/essay-workshop': '/s/prep?tab=workshops',
   '/s/test-scores': '/s/profile?tab=academics',
@@ -33,10 +33,18 @@ export const MANAGE_TAB_REDIRECTS: Record<string, string> = {
   workshops: '/s/prep?tab=workshops',
 }
 
-/** Map deprecated profile tab keys to the §4.6 tab structure. */
+/**
+ * Map deprecated profile tab keys OUT of the profile (Spec 2026-06-10 §5):
+ * Preparation and Financial left the record — prep work lives in
+ * My Space › Prep, money tools in My Space › Applications › Costs & aid.
+ * (?tab=preparation&section=recommenders is special-cased in ProfilePage.)
+ */
 export const PROFILE_TAB_ALIASES: Record<string, string> = {
   essays: '/s/prep?tab=workshops',
-  recommenders: '/s/profile?tab=preparation&section=recommenders',
+  recommenders: '/s/prep?tab=recommenders',
+  // The Preparation cluster is the documents repo — land there directly.
+  preparation: '/s/prep?tab=documents',
+  financial: '/s/applications?tab=costs',
 }
 
 export const PROFILE_TABS_SPEC = [
@@ -47,9 +55,7 @@ export const PROFILE_TABS_SPEC = [
   'goals',
   'needs',
   'strategy',
-  'preparation',
   'preferences',
-  'financial',
   'timeline',
   'analytics',
   'data',
@@ -59,7 +65,6 @@ export type ProfileTabSpec = (typeof PROFILE_TABS_SPEC)[number]
 
 export function normalizeProfileTab(raw: string | null): ProfileTabSpec {
   if (!raw) return 'overview'
-  if (raw === 'recommenders') return 'preparation'
   if (PROFILE_TABS_SPEC.includes(raw as ProfileTabSpec)) return raw as ProfileTabSpec
   return 'overview'
 }

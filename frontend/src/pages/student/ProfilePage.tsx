@@ -2,8 +2,10 @@
  * Universal Profile — the student's durable record (Spec/08-universal-profile.md).
  *
  * Brand shell: eyebrow + H1 "Your record" + 64px gold completion ring + the
- * 13-tab strip (active tab = the one gold underline). Each tab is a lazy
- * module under `profile/`. The 19 spec sections cluster into these 13 tabs.
+ * 11-tab strip (active tab = the one gold underline). Each tab is a lazy
+ * module under `profile/`. Preparation and Financial left for My Space
+ * (Spec 2026-06-10 §5) — their legacy tab params redirect out via
+ * PROFILE_TAB_ALIASES; the completion ring still counts those clusters.
  */
 import { lazy, Suspense, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -21,9 +23,7 @@ const ExperienceTab = lazy(() => import('./profile/ExperienceTab'))
 const GoalsTab = lazy(() => import('./profile/GoalsTab'))
 const NeedsTab = lazy(() => import('./profile/NeedsTab'))
 const StrategyTab = lazy(() => import('./profile/StrategyTab'))
-const PreparationTab = lazy(() => import('./profile/PreparationTab'))
 const PreferencesTab = lazy(() => import('./profile/PreferencesTab'))
-const FinancialTab = lazy(() => import('./profile/FinancialTab'))
 const TimelineTab = lazy(() => import('./profile/TimelineTab'))
 const AnalyticsTab = lazy(() => import('./profile/AnalyticsTab'))
 const DataTab = lazy(() => import('./profile/DataTab'))
@@ -36,9 +36,7 @@ const TABS: { key: ProfileTabSpec; label: string }[] = [
   { key: 'goals', label: 'Goals' },
   { key: 'needs', label: 'Needs' },
   { key: 'strategy', label: 'Strategy' },
-  { key: 'preparation', label: 'Preparation' },
   { key: 'preferences', label: 'Preferences' },
-  { key: 'financial', label: 'Financial' },
   { key: 'timeline', label: 'Timeline' },
   { key: 'analytics', label: 'Analytics' },
   { key: 'data', label: 'Data' },
@@ -53,12 +51,18 @@ export default function ProfilePage() {
   const { overall, lastUpdated, isLoading } = useCompletion()
   const tablistRef = useRef<HTMLDivElement>(null)
 
-  // Legacy tab aliases (e.g. ?tab=essays → workshops).
+  // Legacy tab aliases — tabs that left the profile (Spec 2026-06-10 §5)
+  // redirect to their new homes in My Space. ?tab=preparation keeps its
+  // section deep link (recommenders) across the move.
   useEffect(() => {
     if (!rawTab) return
+    if (rawTab === 'preparation' && searchParams.get('section') === 'recommenders') {
+      navigate('/s/prep?tab=recommenders', { replace: true })
+      return
+    }
     const alias = PROFILE_TAB_ALIASES[rawTab]
     if (alias) navigate(alias, { replace: true })
-  }, [rawTab, navigate])
+  }, [rawTab, navigate, searchParams])
 
   const setTab = (tab: string) => {
     const next = new URLSearchParams(searchParams)
@@ -149,9 +153,7 @@ export default function ProfilePage() {
           {activeTab === 'goals' && <GoalsTab />}
           {activeTab === 'needs' && <NeedsTab />}
           {activeTab === 'strategy' && <StrategyTab />}
-          {activeTab === 'preparation' && <PreparationTab />}
           {activeTab === 'preferences' && <PreferencesTab />}
-          {activeTab === 'financial' && <FinancialTab />}
           {activeTab === 'timeline' && <TimelineTab />}
           {activeTab === 'analytics' && <AnalyticsTab />}
           {activeTab === 'data' && <DataTab />}

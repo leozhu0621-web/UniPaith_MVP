@@ -239,8 +239,8 @@ const router = createBrowserRouter([
       { path: 'match', element: <Navigate to="/s" replace /> },
       { path: 'deadlines', element: <Navigate to="/s/calendar" replace /> },
       { path: 'messages/:convId', element: <LegacyMessageRedirect /> },
-      { path: 'financial-aid', element: <Navigate to="/s/profile?tab=financial" replace /> },
-      { path: 'recommendations', element: <Navigate to="/s/profile?tab=preparation&section=recommenders" replace /> },
+      { path: 'financial-aid', element: <Navigate to="/s/applications?tab=costs" replace /> },
+      { path: 'recommendations', element: <Navigate to="/s/prep?tab=recommenders" replace /> },
       // Phase D — workshops live in My Space › Prep (feedback-only).
       { path: 'resume-workshop', element: <Navigate to="/s/prep?tab=workshops" replace /> },
       { path: 'essay-workshop', element: <Navigate to="/s/prep?tab=workshops" replace /> },
