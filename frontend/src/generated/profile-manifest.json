@@ -147,7 +147,7 @@
         "id": "feeds",
         "title": "Events & updates feeds",
         "order": 12,
-        "required": false,
+        "required": true,
         "widget": "none",
         "fields": [
           "content_sources"

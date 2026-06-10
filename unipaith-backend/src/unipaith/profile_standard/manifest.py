@@ -359,7 +359,10 @@ INSTITUTION: list[Section] = [
         "Events & updates feeds",
         12,
         widget="none",
-        required=False,
+        # Required: without content_sources the daily ingest has nothing to fetch,
+        # so the institution shows no updates/events. The gate must force the
+        # routine to set news_rss + events_feed + socials.
+        required=True,
         fields=[
             _f(
                 "content_sources",

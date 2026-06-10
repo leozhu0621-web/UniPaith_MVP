@@ -28,6 +28,7 @@ const ANCHORS: Record<string, string> = {
   'institution:location': 'location',
   'institution:campus_resources': 'campus resources',
   'institution:citation': 'source',
+  'institution:feeds': 'events',
   'school:identity': 'website',
   'school:about_detail': 'leadership',
   'program:basics': 'length',
