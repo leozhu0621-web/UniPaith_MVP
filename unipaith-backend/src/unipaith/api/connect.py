@@ -158,7 +158,7 @@ async def unfollow(
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
-    """Unfollow. Blocked (400) while an active application exists (Spec 20 §2)."""
+    """Unfollow. Always available; idempotent when not following (Spec 20 §2)."""
     pid = await _profile_id(user, db)
     await FollowService(db).unfollow(pid, institution_id)
     await db.commit()
