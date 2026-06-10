@@ -1,0 +1,1187 @@
+"""Canonical University of California, Berkeley profile — the single source of
+truth.
+
+Real, sourced data only (U.S. Dept. of Education College Scorecard, UNITID 110635
+· UC Berkeley Office of Planning & Analysis "Quick Facts" · the official UC Berkeley
+"By the Numbers" page · UC Berkeley's official Nobel-laureate tally · the official
+QS / Times Higher Education / U.S. News rankings · each college's official
+leadership / about page · the College Scorecard Field-of-Study earnings by CIP).
+``apply(session)`` idempotently enriches the Berkeley institution row, upserts the
+seven real undergraduate-degree-granting colleges, and builds Berkeley's
+undergraduate program catalog across them.
+
+Berkeley admits undergraduates into SIX colleges and ONE school (its own
+terminology). We map those onto the platform's ``School`` model:
+  - College of Letters & Science (the largest — ~three-quarters of undergraduates)
+  - College of Engineering
+  - College of Chemistry
+  - College of Environmental Design
+  - Rausser College of Natural Resources
+  - Haas School of Business
+  - College of Computing, Data Science, and Society
+
+It **flushes but does not commit** — the caller (the Alembic data migration, the
+CLI script, or the dev seed) owns the transaction. It is a **no-op** (returns
+``False``) when Berkeley is absent, so it is safe to run against a fresh or CI
+database. Re-running is safe: colleges key off ``(institution_id, name)`` and
+programs off ``slug``; stale rows are reconciled without breaking foreign keys.
+
+This mirrors ``mit_profile`` / ``stanford_profile`` / ``caltech_profile`` so the
+migration, the standalone script, and the dev seed all agree (DRY). Every figure
+traces to a public, citable source; anything that could not be verified from a
+first-party or two-independent-source basis is **omitted** (recorded in the
+relevant ``_standard.omitted`` list), never guessed. The Electrical Engineering
+and Computer Sciences (EECS) major is the most-enriched flagship program (its real
+technical areas, faculty, class profile, and aggregated reviews), mirroring MIT
+Sloan's MBAn in the reference instance — with the honest caveats that the
+University of California is test-free (no SAT/ACT percentiles exist to report) and
+that this run ships Berkeley's complete UNDERGRADUATE tree; its department-level
+graduate programs are the resumption scope for a later run.
+"""
+
+from __future__ import annotations
+
+from datetime import date
+
+from sqlalchemy import select, text
+from sqlalchemy.orm import Session
+
+from unipaith.models.institution import Institution, Program, School
+from unipaith.profile_standard import STANDARD_VERSION
+
+INSTITUTION_NAME = "University of California-Berkeley"
+
+# Date this profile was researched + verified; stamped into every node's _standard.
+ENRICHED_AT = "2026-06-10"
+
+
+def _standard(omitted: list[str] | None = None) -> dict:
+    """The per-node provenance stamp the routine writes onto every enriched node."""
+    return {
+        "version": STANDARD_VERSION,
+        "enriched_at": ENRICHED_AT,
+        "omitted": omitted or [],
+    }
+
+
+# Institution-level fields that could NOT be verified from a citable source and are
+# therefore honestly omitted rather than guessed.
+_OMITTED_INSTITUTION = [
+    # The University of California has been test-free for admissions since 2021 — it
+    # neither requires nor considers SAT/ACT scores, so there are no admitted-class
+    # test-score percentiles to report. We omit rather than publish a stale figure.
+    "school_outcomes.test_scores",
+    # Berkeley publishes a 19.4:1 student-faculty ratio on its official "By the
+    # Numbers" page but does not publish a single official total faculty headcount;
+    # we publish the ratio and omit the count rather than compute one.
+    "school_outcomes.scale.faculty_count",
+    # No precise single first-party endowment figure was cleanly verifiable (the
+    # campus endowment is reported across the UC Investments pool and the UC
+    # Berkeley Foundation); omitted rather than asserting an approximate number.
+    "school_outcomes.scale.endowment_usd",
+    "school_outcomes.scale.research_centers",
+    # Berkeley does not publish a single first-party institution-wide "employed or
+    # continuing education" rate or a top-employer-industries breakdown that we
+    # could verify; the verified, program-level Scorecard outcomes are used instead.
+    "school_outcomes.employed_or_continuing_ed",
+    "school_outcomes.top_employer_industries",
+]
+
+# ── Institution-level data ────────────────────────────────────────────────
+# Rankings are stored as {rank, year} objects because the page renders every
+# ranking_data entry that is an object with a numeric `rank`. All three ranks are
+# quoted from the official ranking bodies / Berkeley News announcements.
+RANKING_DATA: dict = {
+    "ownership_type": "public",
+    # Berkeley is accredited by the WASC Senior College and University Commission.
+    "accreditor": "WSCUC",
+    # Carnegie 2021 basic classification.
+    "carnegie_classification": "Doctoral Universities: Very High Research Activity",
+    # QS World University Rankings 2026: Berkeley is ranked #17 worldwide.
+    "qs_world_university_rankings": {"rank": 17, "year": 2026},
+    # THE World University Rankings 2026: #9 in the world (and #1 public in North
+    # America).
+    "times_higher_education": {"rank": 9, "year": 2026},
+    # U.S. News Best Colleges (National Universities) 2026: #15 nationally (tied),
+    # and #1 among public universities.
+    "us_news_national": {"rank": 15, "year": 2026},
+}
+
+# school_outcomes is shallow-merged into the existing JSONB; each sub-object below
+# is complete, so a shallow merge is correct. Figures are College Scorecard
+# (UNITID 110635) cross-checked against Berkeley's Office of Planning & Analysis
+# "Quick Facts" and the official "By the Numbers" page where both publish the metric.
+SCHOOL_OUTCOMES: dict = {
+    # OPA Quick Facts 2025-26: 14,451 first-year admits / 126,842 first-year
+    # applicants = 11.39%.
+    "admit_rate": 0.114,
+    "avg_net_price": 13481,
+    "median_earnings_10yr": 92446,
+    "completion_rate_4yr_150pct": 0.9284,
+    # OPA Quick Facts: new-freshman first-year retention (Fall 2024 cohort) = 97%.
+    "retention_rate_first_year": 0.97,
+    # OPA Quick Facts: six-year graduation rate for the Fall 2019 freshman cohort
+    # = 94%.
+    "graduation_rate_6yr": 0.94,
+    "financial_aid": {
+        "pell_grant_rate": 0.2864,
+        "federal_loan_rate": 0.1683,
+        # College Scorecard in-state academic-year cost of attendance.
+        "cost_of_attendance": 45619,
+        "median_debt_completers": 13000,
+    },
+    # Undergraduate race/ethnicity from College Scorecard (UNITID 110635); the women
+    # share is from OPA Quick Facts (Fall 2025: 17,910 women of 33,122 undergraduates).
+    "demographics": {
+        "white": 0.1979,
+        "black": 0.0205,
+        "hispanic": 0.221,
+        "asian": 0.3545,
+        "two_or_more": 0.0678,
+        "international": 0.0984,
+        "women": 0.541,
+    },
+    # Berkeley main campus, San Francisco Bay Area.
+    "location": {"lat": 37.8719, "lng": -122.2583},
+    "campus_basics": {"location": "Berkeley, California (San Francisco Bay Area)"},
+    "scale": {
+        # Berkeley "By the Numbers": 19.4-to-1 student-faculty ratio.
+        "student_faculty_ratio": "19.4:1",
+    },
+    "research": {
+        "labs": [
+            "Lawrence Berkeley National Laboratory (managed by UC Berkeley for the DOE)",
+            "Space Sciences Laboratory",
+            "Lawrence Hall of Science",
+            "Mathematical Sciences Research Institute (SLMath)",
+            "Berkeley Institute for Data Science",
+        ],
+        "areas": [
+            "Artificial intelligence & computing",
+            "Engineering & applied science",
+            "Physical & chemical sciences",
+            "Biological & environmental sciences",
+            "Economics & social sciences",
+            "Energy & climate",
+            "Data science & statistics",
+        ],
+        "lab_links": {
+            "Lawrence Berkeley National Laboratory (managed by UC Berkeley for the DOE)": (
+                "https://www.lbl.gov/"
+            ),
+            "Space Sciences Laboratory": "https://ssl.berkeley.edu/",
+            "Lawrence Hall of Science": "https://lawrencehallofscience.org/",
+        },
+    },
+    "campus_life": {
+        # Cal's athletic teams (the California Golden Bears) compete in NCAA Division
+        # I; Cal joined the Atlantic Coast Conference (ACC) in 2024.
+        "athletics_division": "NCAA Division I (Atlantic Coast Conference)",
+        "mascot": "California Golden Bears (Oski the Bear)",
+        "housing": "Undergraduate residence halls + Berkeley student cooperatives",
+        "resources": [
+            {"label": "Cal Athletics (Golden Bears)", "url": "https://calbears.com/"},
+            {"label": "Berkeley Housing", "url": "https://housing.berkeley.edu/"},
+        ],
+    },
+    "flagship": {
+        # Berkeley "By the Numbers" (Fall 2024): 33,070 undergraduate + 12,812
+        # graduate = 45,882 total enrollment.
+        "enrollment_total": 45882,
+        # OPA Quick Facts 2025-26 first-year admissions cycle.
+        "applicants": 126842,
+        "admits": 14451,
+        "admissions_cycle": "Entering class fall 2025 (UC Berkeley Quick Facts, 2025-26)",
+        # Berkeley's official tally: 63 Berkeley Nobelists (faculty + alumni).
+        "nobel_laureates": 63,
+        # Berkeley "By the Numbers": ~400 degree programs.
+        "degree_programs": 400,
+        # Founded by the State of California in 1868 (UC's founding campus).
+        "founded_year": 1868,
+    },
+    "sources": [
+        {
+            "label": "U.S. Dept. of Education — College Scorecard (UC Berkeley, UNITID 110635)",
+            "url": "https://collegescorecard.ed.gov/school/?110635",
+        },
+        {
+            "label": "UC Berkeley Office of Planning & Analysis — Quick Facts",
+            "url": "https://opa.berkeley.edu/campus-data/uc-berkeley-quick-facts",
+        },
+        {
+            "label": "UC Berkeley — By the Numbers",
+            "url": "https://www.berkeley.edu/about/by-the-numbers/",
+        },
+        {
+            "label": "UC Berkeley — Berkeley's Nobel laureates",
+            "url": "https://inspire.berkeley.edu/get-inspired/nobels/",
+        },
+        {
+            "label": "QS World University Rankings 2026 — UC Berkeley",
+            "url": "https://www.topuniversities.com/universities/university-california-berkeley-ucb",
+        },
+        {
+            "label": "Times Higher Education — UC Berkeley (No. 1 public in North America, 2026)",
+            "url": (
+                "https://news.berkeley.edu/2025/10/08/"
+                "uc-berkeley-rated-no-1-public-university-in-north-america-by-times-higher-education/"
+            ),
+        },
+        {
+            "label": "U.S. News — UC Berkeley named top public school (2026)",
+            "url": (
+                "https://news.berkeley.edu/2025/09/22/"
+                "uc-berkeley-named-top-public-school-in-the-country-by-us-news/"
+            ),
+        },
+    ],
+}
+
+# student_body_size is the undergraduate count (the page labels it "Undergraduates");
+# the total (45,882) lives in flagship.enrollment_total and renders as "Total
+# enrollment". 33,070 = Berkeley "By the Numbers" (Fall 2024) undergraduate count.
+UNDERGRAD_COUNT = 33070
+
+DESCRIPTION = (
+    "Founded by the State of California in 1868, the University of California, "
+    "Berkeley is the founding campus of the University of California system — a "
+    "public land-grant research university on a campus in Berkeley, in the San "
+    "Francisco Bay Area. It enrolls roughly 33,000 undergraduates and about 12,800 "
+    "graduate students, some 45,900 students in all.\n\n"
+    "Berkeley admits undergraduates into six colleges and one school: the College "
+    "of Letters & Science — the largest, holding about three-quarters of "
+    "undergraduates — together with the College of Engineering; the College of "
+    "Chemistry; the College of Environmental Design; the Rausser College of Natural "
+    "Resources; the Haas School of Business; and the College of Computing, Data "
+    "Science, and Society. Across them the university offers roughly 400 degree "
+    "programs, and it manages Lawrence Berkeley National Laboratory for the U.S. "
+    "Department of Energy.\n\n"
+    "Berkeley ranks among the best universities in the world and the very best "
+    "public university in North America: No. 9 in the world and No. 1 public in "
+    "North America by Times Higher Education, No. 17 by QS, and No. 1 among public "
+    "universities (No. 15 nationally) by U.S. News. By the university's own count, "
+    "63 Berkeley Nobelists are associated with the campus, and it admits about 11% "
+    "of first-year applicants.\n\n"
+    "As a public flagship, Berkeley pairs that reach with relative affordability: "
+    "the in-state cost of attendance is about $45,600 a year, the average net price "
+    "is roughly $13,500, and 29% of undergraduates receive Pell grants. Berkeley "
+    "graduates earn a median income of about $92,000 a decade after entry."
+)
+
+# ── The seven real undergraduate-degree-granting colleges (display order) ───
+_LS = "College of Letters & Science"
+_COE = "College of Engineering"
+_CHEM = "College of Chemistry"
+_CED = "College of Environmental Design"
+_RAUSSER = "Rausser College of Natural Resources"
+_HAAS = "Haas School of Business"
+_CDSS = "College of Computing, Data Science, and Society"
+
+SCHOOLS: list[dict] = [
+    {
+        "name": _LS,
+        "sort_order": 1,
+        "description": (
+            "The largest of Berkeley's colleges and schools — encompassing about "
+            "three-quarters of its undergraduates and half of its faculty and "
+            "graduate students — the College of Letters & Science spans the arts and "
+            "humanities, biological sciences, mathematical and physical sciences, "
+            "and social sciences across five academic divisions and dozens of majors."
+        ),
+    },
+    {
+        "name": _COE,
+        "sort_order": 2,
+        "description": (
+            "Berkeley Engineering educates and conducts research across "
+            "bioengineering; civil and environmental engineering; electrical "
+            "engineering and computer sciences; industrial engineering and "
+            "operations research; materials science and engineering; mechanical "
+            "engineering; and nuclear engineering."
+        ),
+    },
+    {
+        "name": _CHEM,
+        "sort_order": 3,
+        "description": (
+            "The College of Chemistry comprises the Department of Chemistry and the "
+            "Department of Chemical and Biomolecular Engineering, with a faculty that "
+            "has been at the frontiers of chemistry at Berkeley since 1872."
+        ),
+    },
+    {
+        "name": _CED,
+        "sort_order": 4,
+        "description": (
+            "The College of Environmental Design brings together architecture, "
+            "landscape architecture and environmental planning, and city and "
+            "regional planning — the design of the built and natural environment."
+        ),
+    },
+    {
+        "name": _RAUSSER,
+        "sort_order": 5,
+        "description": (
+            "Rausser College of Natural Resources studies the biological, social, "
+            "and economic challenges of protecting natural resources and the "
+            "environment across agricultural and resource economics; environmental "
+            "science, policy and management; metabolic biology and nutrition; and "
+            "plant and microbial biology."
+        ),
+    },
+    {
+        "name": _HAAS,
+        "sort_order": 6,
+        "description": (
+            "Founded in 1898 as the first business school at a public university, "
+            "the Haas School of Business spans undergraduate, MBA, PhD, and "
+            "executive education in business and management."
+        ),
+    },
+    {
+        "name": _CDSS,
+        "sort_order": 7,
+        "description": (
+            "Berkeley's newest college, Computing, Data Science, and Society unites "
+            "computing, data science, and statistics — including the Department of "
+            "Electrical Engineering and Computer Sciences (shared with Engineering), "
+            "the Department of Statistics, and Data Science undergraduate studies — "
+            "with an emphasis on societal applications."
+        ),
+    },
+]
+
+# Each college's official website (verified to resolve at author time).
+_SCHOOL_WEBSITE: dict[str, str] = {
+    _LS: "https://ls.berkeley.edu/",
+    _COE: "https://engineering.berkeley.edu/",
+    _CHEM: "https://chemistry.berkeley.edu/",
+    _CED: "https://ced.berkeley.edu/",
+    _RAUSSER: "https://nature.berkeley.edu/",
+    _HAAS: "https://haas.berkeley.edu/",
+    _CDSS: "https://cdss.berkeley.edu/",
+}
+
+# Rich, sourced About-tab content per college. Deans + titles are quoted from each
+# college's official leadership page (verified 2026-06-10). Several deanships are
+# mid-transition (terms turning over July 1, 2026); the CURRENT dean is recorded
+# with the announced successor noted. Founding years are included only where an
+# official page states one (Haas 1898; Chemistry 1872); the rest are honestly
+# omitted (recorded in _ABOUT_OMITTED). Notable-faculty rosters are not published
+# uniformly per college and are omitted rather than hand-picked without an official
+# list; named research centers are included only where verified on an official page.
+_ABOUT_DETAIL: dict[str, dict] = {
+    _LS: {
+        "leadership": (
+            "Jennifer Johnson-Hanks — Executive Dean, College of Letters & Science "
+            "(term through June 30, 2026; Janet Broughton appointed next Executive "
+            "Dean effective July 1, 2026)"
+        ),
+        "source": {
+            "label": "Berkeley L&S — About",
+            "url": "https://ls.berkeley.edu/about",
+        },
+    },
+    _COE: {
+        "leadership": (
+            "Mark Asta — Dean Designate and Roy W. Carlson Chair of Engineering "
+            "(interim dean for AY 2025–26; named the 14th dean effective July 1, 2026)"
+        ),
+        "research_centers": [
+            "Jacobs Institute for Design Innovation",
+            "Sutardja Center for Entrepreneurship & Technology (SCET)",
+            "Fung Institute for Engineering Leadership",
+        ],
+        "source": {
+            "label": "Berkeley Engineering — About",
+            "url": "https://engineering.berkeley.edu/about/",
+        },
+    },
+    _CHEM: {
+        "founded": 1872,
+        "leadership": "Anne Baranger — College Dean (Interim)",
+        "source": {
+            "label": "Berkeley College of Chemistry — Facts",
+            "url": "https://chemistry.berkeley.edu/facts",
+        },
+    },
+    _CED: {
+        "leadership": (
+            "Renee Y. Chow — William W. Wurster Dean, College of Environmental "
+            "Design (through June 30, 2026)"
+        ),
+        "source": {
+            "label": "Berkeley CED",
+            "url": "https://ced.berkeley.edu/",
+        },
+    },
+    _RAUSSER: {
+        "leadership": "David Ackerly — Dean, Rausser College of Natural Resources",
+        "research_centers": ["Agricultural Experiment Station"],
+        "source": {
+            "label": "Rausser College — Leadership",
+            "url": "https://nature.berkeley.edu/college-leadership",
+        },
+    },
+    _HAAS: {
+        "founded": 1898,
+        "leadership": (
+            "Jennifer Chatman — Dean and Paul J. Cortese Distinguished Professor of "
+            "Management (16th dean, effective July 1, 2025)"
+        ),
+        "research_centers": [
+            "Institute of Business and Economic Research (IBER, est. 1941)",
+            "Institute of Industrial Relations (1945)",
+            "Center for Real Estate and Urban Economics (CREUE, 1950)",
+        ],
+        "named_for": "Walter A. Haas Sr.",
+        "source": {
+            "label": "Berkeley Haas — History",
+            "url": "https://haas.berkeley.edu/about/at-a-glance/history/",
+        },
+    },
+    _CDSS: {
+        "leadership": (
+            "Jennifer Tour Chayes — Dean, College of Computing, Data Science, and "
+            "Society (founding dean; reappointed through December 31, 2029)"
+        ),
+        "research_centers": [
+            "Center for Computational Biology",
+            "Computational Precision Health",
+            "Berkeley Institute for Data Science",
+        ],
+        "source": {
+            "label": "Berkeley CDSS — Leadership",
+            "url": "https://cdss.berkeley.edu/leadership",
+        },
+    },
+}
+
+# About-detail fields omitted per college (verified-unavailable), recorded in each
+# college node's _standard.omitted. Notable-faculty rosters are omitted for every
+# college; founding years and research-center lists are omitted where no official
+# page states them.
+_ABOUT_OMITTED: dict[str, list[str]] = {
+    _LS: ["about_detail.founded", "about_detail.faculty", "about_detail.research_centers"],
+    _COE: ["about_detail.founded", "about_detail.faculty"],
+    _CHEM: ["about_detail.faculty", "about_detail.research_centers"],
+    _CED: ["about_detail.founded", "about_detail.faculty", "about_detail.research_centers"],
+    _RAUSSER: ["about_detail.founded", "about_detail.faculty"],
+    _HAAS: ["about_detail.faculty"],
+    _CDSS: ["about_detail.founded", "about_detail.faculty"],
+}
+
+# ── Channel feeds + official social links ──────────────────────────────────
+# Institution-wide socials (official UC Berkeley handles) + news page.
+_INSTITUTION_CONTENT: dict = {
+    "news_url": "https://news.berkeley.edu/",
+    "social": {
+        "instagram": "https://www.instagram.com/ucberkeleyofficial/",
+        "linkedin": "https://www.linkedin.com/school/uc-berkeley/",
+        "x": "https://x.com/UCBerkeley",
+        "youtube": "https://www.youtube.com/UCBerkeley",
+        "facebook": "https://www.facebook.com/UCBerkeley",
+    },
+}
+
+# EECS keyword-relevant feed (the flagship program), inheriting the institution
+# socials (the department surfaces its news through the EECS site).
+_EECS_CONTENT: dict = {
+    "news_url": "https://eecs.berkeley.edu/about/news/",
+    "keywords": ["eecs", "electrical engineering", "computer science", "berkeley engineering"],
+    "social": _INSTITUTION_CONTENT["social"],
+}
+
+# ── The undergraduate program catalog (real majors, organized by college) ───
+# slug = idempotency key. Every program is mapped to its owning college from
+# Berkeley's official "Majors at Berkeley" listing. Berkeley awards a mix of B.A.
+# and B.S. degrees that varies by major; the platform models them with the generic
+# ``bachelors`` degree type rather than asserting a per-major designation.
+PROGRAMS: list[dict] = [
+    # ── College of Engineering ──
+    {
+        "slug": "berkeley-eecs-bs",
+        "school": _COE,
+        "program_name": "Electrical Engineering and Computer Sciences",
+        "duration_months": 48,
+        "description": (
+            "Berkeley's flagship engineering major — electrical engineering and "
+            "computer science in the College of Engineering."
+        ),
+    },
+    {
+        "slug": "berkeley-mechanical-engineering-bs",
+        "school": _COE,
+        "program_name": "Mechanical Engineering",
+        "duration_months": 48,
+        "description": "Mechanical engineering — mechanics, design, and thermal sciences.",
+    },
+    # ── College of Chemistry ──
+    {
+        "slug": "berkeley-chemistry-bs",
+        "school": _CHEM,
+        "program_name": "Chemistry",
+        "duration_months": 48,
+        "description": "Chemistry — organic, inorganic, physical, and theoretical chemistry.",
+    },
+    {
+        "slug": "berkeley-chemical-engineering-bs",
+        "school": _CHEM,
+        "program_name": "Chemical Engineering",
+        "duration_months": 48,
+        "description": "Chemical and biomolecular engineering — reaction engineering and design.",
+    },
+    # ── College of Computing, Data Science, and Society ──
+    {
+        "slug": "berkeley-computer-science-bs",
+        "school": _CDSS,
+        "program_name": "Computer Science",
+        "duration_months": 48,
+        "description": (
+            "Computer science in the College of Computing, Data Science, and Society "
+            "— the same CS technical core as EECS with broader flexibility."
+        ),
+    },
+    {
+        "slug": "berkeley-data-science-bs",
+        "school": _CDSS,
+        "program_name": "Data Science",
+        "duration_months": 48,
+        "description": "Data science — computing, statistics, and societal applications.",
+    },
+    # ── College of Letters & Science ──
+    {
+        "slug": "berkeley-economics-bs",
+        "school": _LS,
+        "program_name": "Economics",
+        "duration_months": 48,
+        "description": "Economics — micro, macro, and econometrics.",
+    },
+    {
+        "slug": "berkeley-molecular-cell-biology-bs",
+        "school": _LS,
+        "program_name": "Molecular and Cell Biology",
+        "duration_months": 48,
+        "description": "Molecular and cell biology — biochemistry, genetics, and neurobiology.",
+    },
+    {
+        "slug": "berkeley-integrative-biology-bs",
+        "school": _LS,
+        "program_name": "Integrative Biology",
+        "duration_months": 48,
+        "description": "Integrative biology — organismal, evolutionary, and ecological biology.",
+    },
+    {
+        "slug": "berkeley-political-science-bs",
+        "school": _LS,
+        "program_name": "Political Science",
+        "duration_months": 48,
+        "description": "Political science — American, comparative, and international politics.",
+    },
+    {
+        "slug": "berkeley-psychology-bs",
+        "school": _LS,
+        "program_name": "Psychology",
+        "duration_months": 48,
+        "description": "Psychology — cognitive, clinical, developmental, and social psychology.",
+    },
+    {
+        "slug": "berkeley-sociology-bs",
+        "school": _LS,
+        "program_name": "Sociology",
+        "duration_months": 48,
+        "description": "Sociology — social structure, inequality, and institutions.",
+    },
+    {
+        "slug": "berkeley-media-studies-bs",
+        "school": _LS,
+        "program_name": "Media Studies",
+        "duration_months": 48,
+        "description": "Media studies — communication, media, and society.",
+    },
+    {
+        "slug": "berkeley-applied-mathematics-bs",
+        "school": _LS,
+        "program_name": "Applied Mathematics",
+        "duration_months": 48,
+        "description": "Applied mathematics — modeling, analysis, and computation.",
+    },
+    {
+        "slug": "berkeley-cognitive-science-bs",
+        "school": _LS,
+        "program_name": "Cognitive Science",
+        "duration_months": 48,
+        "description": "Cognitive science — mind, brain, language, and computation.",
+    },
+    {
+        "slug": "berkeley-english-bs",
+        "school": _LS,
+        "program_name": "English",
+        "duration_months": 48,
+        "description": "English — literature, language, and critical writing.",
+    },
+    {
+        "slug": "berkeley-legal-studies-bs",
+        "school": _LS,
+        "program_name": "Legal Studies",
+        "duration_months": 48,
+        "description": "Legal studies — law, society, and legal institutions.",
+    },
+    {
+        "slug": "berkeley-public-health-bs",
+        "school": _LS,
+        "program_name": "Public Health",
+        "duration_months": 48,
+        "description": "Public health — population health, epidemiology, and policy.",
+    },
+    # ── Rausser College of Natural Resources ──
+    {
+        "slug": "berkeley-environmental-sciences-bs",
+        "school": _RAUSSER,
+        "program_name": "Environmental Sciences",
+        "duration_months": 48,
+        "description": "Environmental sciences — ecology, earth systems, and sustainability.",
+    },
+    {
+        "slug": "berkeley-conservation-resource-studies-bs",
+        "school": _RAUSSER,
+        "program_name": "Conservation and Resource Studies",
+        "duration_months": 48,
+        "description": "Conservation and resource studies — interdisciplinary environmental study.",
+    },
+    # ── Haas School of Business ──
+    {
+        "slug": "berkeley-business-administration-bs",
+        "school": _HAAS,
+        "program_name": "Business Administration",
+        "duration_months": 48,
+        "description": "Business administration — the Haas undergraduate business program.",
+    },
+    # ── College of Environmental Design ──
+    {
+        "slug": "berkeley-architecture-bs",
+        "school": _CED,
+        "program_name": "Architecture",
+        "duration_months": 48,
+        "description": "Architecture — design of the built environment.",
+    },
+]
+
+PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+
+# Full official major names (program-page title); for Berkeley these equal the
+# major name (the B.A./B.S. designation varies per major and is not asserted).
+_FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROGRAMS}
+
+# Official program/department home pages. The flagship EECS major has its own
+# verified department page; the others use their owning college's official site.
+_EECS_URL = "https://eecs.berkeley.edu/academics/undergraduate/"
+_WEBSITE_BY_SLUG: dict[str, str] = {
+    "berkeley-eecs-bs": _EECS_URL,
+    "berkeley-computer-science-bs": "https://eecs.berkeley.edu/academics/undergraduate/",
+    "berkeley-data-science-bs": "https://data.berkeley.edu/",
+    "berkeley-business-administration-bs": (
+        "https://haas.berkeley.edu/undergraduate/"
+    ),
+}
+
+# ── Who-it's-for + highlights (catalog baselines) ──────────────────────────
+_WHO_BASELINE = (
+    "Undergraduates seeking a rigorous, research-rich education at the top public "
+    "university in the United States."
+)
+_HL_BASELINE = ["Public flagship", "19.4:1 student-faculty ratio", "Research-rich"]
+_WHO_BY_SLUG = {
+    "berkeley-eecs-bs": (
+        "Technically exceptional undergraduates who want a rigorous electrical "
+        "engineering and computer science education with deep access to one of the "
+        "world's leading EECS faculties and its research."
+    ),
+}
+_HL_BY_SLUG = {
+    "berkeley-eecs-bs": [
+        "Flagship EECS major",
+        "20 technical areas",
+        "Six Turing Awards on faculty",
+    ],
+}
+
+# ── Curriculum / technical areas, where published (the flagship) ───────────
+# Berkeley EECS publishes 20 official research / technical areas; quoted from the
+# official EECS Research Areas page.
+_TRACKS_BY_SLUG: dict[str, dict] = {
+    "berkeley-eecs-bs": {
+        "label": "EECS technical areas",
+        "note": (
+            "The EECS major builds on a lower-division math, science, and "
+            "programming core, then upper-division coursework across the "
+            "department's twenty official technical areas."
+        ),
+        "items": [
+            {"name": "Artificial Intelligence (AI)"},
+            {"name": "Computer Architecture & Engineering (ARC)"},
+            {"name": "Biosystems & Computational Biology (BIO)"},
+            {"name": "Control, Intelligent Systems, and Robotics (CIR)"},
+            {"name": "Cyber-Physical Systems and Design Automation (CPSDA)"},
+            {"name": "Database Management Systems (DBMS)"},
+            {"name": "Power and Energy (ENE)"},
+            {"name": "Graphics (GR)"},
+            {"name": "Human-Computer Interaction (HCI)"},
+            {"name": "Information, Data, Network, and Communication Sciences (IDNCS)"},
+            {"name": "Integrated Circuits (INC)"},
+            {"name": "Micro/Nano Electro Mechanical Systems (MEMS)"},
+            {"name": "Operating Systems & Networking (OSNT)"},
+            {"name": "Physical Electronics (PHY)"},
+            {"name": "Programming Systems (PS)"},
+            {"name": "Scientific Computing (SCI)"},
+            {"name": "Security (SEC)"},
+            {"name": "Signal Processing (SP)"},
+            {"name": "Theory (THY)"},
+        ],
+        "source": "Berkeley EECS — Research Areas",
+        "source_url": "https://www2.eecs.berkeley.edu/Research/Areas/",
+    },
+}
+
+# ── Program-specific cost (official published rates, College Scorecard) ─────
+# Berkeley undergraduate cost of attendance and tuition (College Scorecard,
+# UNITID 110635). Nonresidents pay an additional nonresident supplemental tuition.
+_TUITION_IN_STATE = 16347
+_TUITION_OUT_OF_STATE = 50547
+_UNDERGRAD_COA = 45619
+_ROOM_BOARD = 23750
+_BOOKS_SUPPLIES = 1131
+_AVG_NET_PRICE = 13481
+_COST_BY_SLUG: dict[str, dict] = {}
+
+# ── Program-specific outcomes (College Scorecard Field of Study, by CIP) ────
+# Where the federal College Scorecard publishes a Field-of-Study median earnings
+# (one year after completion) for an awarded bachelor's CIP at UNITID 110635, we
+# use it (program scope). Programs whose CIP earnings are suppressed fall back to
+# the institution-wide 10-year median.
+_FOS_OUTCOMES: dict[str, tuple[int, str]] = {
+    "berkeley-eecs-bs": (126367, "14.10"),
+    "berkeley-mechanical-engineering-bs": (73836, "14.19"),
+    "berkeley-chemistry-bs": (47449, "40.05"),
+    "berkeley-chemical-engineering-bs": (70767, "14.07"),
+    "berkeley-computer-science-bs": (125250, "11.07"),
+    "berkeley-economics-bs": (71330, "45.06"),
+    "berkeley-molecular-cell-biology-bs": (35329, "26.04"),
+    "berkeley-integrative-biology-bs": (36294, "26.01"),
+    "berkeley-political-science-bs": (40526, "45.10"),
+    "berkeley-psychology-bs": (30168, "42.27"),
+    "berkeley-sociology-bs": (42238, "45.11"),
+    "berkeley-media-studies-bs": (48287, "09.01"),
+    "berkeley-applied-mathematics-bs": (71282, "27.03"),
+    "berkeley-cognitive-science-bs": (62295, "30.25"),
+    "berkeley-english-bs": (31616, "23.01"),
+    "berkeley-environmental-sciences-bs": (41250, "03.01"),
+    "berkeley-conservation-resource-studies-bs": (41250, "03.01"),
+    "berkeley-business-administration-bs": (74034, "52.02"),
+    "berkeley-architecture-bs": (52215, "04.02"),
+}
+
+# Verbatim methodology for the program-scope Scorecard FOS earnings figure.
+_FOS_CONDITIONS = (
+    "Median earnings of federally-aided graduates who were working and not enrolled, "
+    "measured one year after program completion; reported by the U.S. Department of "
+    "Education College Scorecard Field of Study by 4-digit CIP. Programs with too "
+    "few completers are suppressed."
+)
+
+# Institution-wide outcomes fallback (College Scorecard, UNITID 110635), used for
+# degree programs whose program-level earnings are suppressed.
+_OUTCOMES_INSTITUTION = {
+    "median_salary": 92446,
+    "scope": "institution",
+    "conditions": (
+        "Berkeley institution-wide median earnings ten years after entry "
+        "(College Scorecard, UNITID 110635); a program-level figure is not "
+        "published for this major."
+    ),
+    "source": "U.S. Dept. of Education College Scorecard (UNITID 110635)",
+    "source_url": "https://collegescorecard.ed.gov/school/?110635",
+}
+
+# ── Class profile, where published (the flagship) ──────────────────────────
+_CLASS_PROFILE_BY_SLUG: dict[str, dict] = {
+    "berkeley-eecs-bs": {
+        "cohort_size": (
+            "≈528 EECS bachelor's degrees awarded annually (one of Berkeley's "
+            "largest engineering majors)"
+        ),
+        "note": (
+            "Berkeley does not publish a per-major entering-cohort size; the figure "
+            "is the annual count of EECS bachelor's degrees awarded (College "
+            "Scorecard Field of Study, CIP 14.10)."
+        ),
+        "source": "U.S. Dept. of Education College Scorecard — Field of Study (CIP 14.10)",
+        "source_url": "https://collegescorecard.ed.gov/school/?110635",
+    },
+}
+
+# ── Faculty (lead + directory link), where confidently sourced ─────────────
+_FACULTY_BY_SLUG: dict[str, dict] = {
+    "berkeley-eecs-bs": {
+        "lead": [
+            {
+                "name": "Chenming Hu",
+                "title": (
+                    "Professor Emeritus of EECS; 2020 IEEE Medal of Honor (inventor "
+                    "of the FinFET 3D transistor)"
+                ),
+            },
+        ],
+        "note": (
+            "Berkeley EECS faculty have collectively earned six ACM A.M. Turing "
+            "Awards, and 37 of its faculty have been elected to the National Academy "
+            "of Engineering."
+        ),
+        "directory_url": "https://www2.eecs.berkeley.edu/Faculty/Lists/list.html",
+    },
+}
+
+# ── Aggregated, cited student-review themes (≥2 third-party sources) ────────
+_REVIEWS_BY_SLUG: dict[str, dict] = {
+    "berkeley-eecs-bs": {
+        "summary": (
+            "Students and third-party guides consistently describe Berkeley EECS as "
+            "academically elite and intensely rigorous, with world-class faculty, "
+            "deep research opportunities, and exceptional placement into top "
+            "technology firms and graduate programs; the most common cautions are "
+            "very large classes, a fast pace, and a highly competitive environment."
+        ),
+        "themes": [
+            {
+                "label": "Academic strength",
+                "sentiment": "positive",
+                "detail": "Among the strongest EECS programs anywhere, with leading faculty.",
+            },
+            {
+                "label": "Research & resources",
+                "sentiment": "positive",
+                "detail": "Extensive undergraduate research access at a top public university.",
+            },
+            {
+                "label": "Strong tech placement",
+                "sentiment": "positive",
+                "detail": "Graduates place strongly into Bay Area tech firms and PhD programs.",
+            },
+            {
+                "label": "Large classes",
+                "sentiment": "caution",
+                "detail": "Popular lower-division courses can be very large.",
+            },
+            {
+                "label": "Competitive & fast-paced",
+                "sentiment": "caution",
+                "detail": "A demanding, competitive environment is a recurring theme.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — University of California, Berkeley",
+                "url": "https://www.niche.com/colleges/university-of-california-berkeley/",
+            },
+            {
+                "label": "U.S. News — UC Berkeley Computer Science / Engineering",
+                "url": "https://www.usnews.com/best-colleges/university-of-california-berkeley-1312",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+}
+
+# ── Application requirements (undergraduate baseline) ───────────────────────
+# Berkeley undergraduate admission is via the University of California application.
+# The UC is test-free (no SAT/ACT) and does not require letters of recommendation.
+_INTL_VISA = {
+    "types": ["F-1", "J-1"],
+    "note": "International students are issued an I-20 (F-1) or DS-2019 (J-1) after admission.",
+}
+_REQ_UNDERGRAD = {
+    "materials": [
+        {"name": "University of California (UC) application", "required": True},
+        {"name": "Four Personal Insight Question responses", "required": True},
+        {
+            "name": "Self-reported academic record (official transcripts on enrollment)",
+            "required": True,
+        },
+        {
+            "name": "$80 application fee per UC campus ($95 international); fee waivers available",
+            "required": True,
+        },
+        {
+            "name": "SAT/ACT scores",
+            "required": False,
+            "note": "The UC is test-free — SAT/ACT scores are neither required nor considered.",
+        },
+        {
+            "name": "Letters of recommendation",
+            "required": False,
+            "note": "Not required for the general UC application.",
+        },
+    ],
+    "deadlines": [
+        {"round": "Application opens", "date": "August 1"},
+        {"round": "Filing period (submit)", "date": "November 1–30"},
+    ],
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS", "Duolingo English Test"],
+            "required": False,
+            "note": "English-proficiency proof may be required for non-native speakers.",
+        },
+        "visa": _INTL_VISA,
+        "sources": [
+            {
+                "label": "UC Berkeley Office of Undergraduate Admissions",
+                "url": "https://admissions.berkeley.edu/",
+            }
+        ],
+    },
+    "source": "UC Berkeley Office of Undergraduate Admissions",
+    "source_url": "https://admissions.berkeley.edu/apply/",
+}
+
+
+# Real UC Berkeley campus photo (Sather Tower / the Campanile at sunset) — Wikimedia
+# Commons, CC BY-SA 4.0, hotlinkable landscape JPG. Leads the institution hero.
+_CAMPUS_PHOTO = (
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/"
+    "Redwood_trees_and_Sather_Tower_during_the_Sunset_in_Berkeley_California.jpg/"
+    "1920px-Redwood_trees_and_Sather_Tower_during_the_Sunset_in_Berkeley_California.jpg"
+)
+
+
+# ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
+def apply(session: Session) -> bool:
+    """Enrich UC Berkeley to the canonical profile. Flushes; caller commits.
+
+    Returns False (no-op) when Berkeley is absent — safe on fresh/CI databases.
+    """
+    inst = session.scalar(select(Institution).where(Institution.name == INSTITUTION_NAME))
+    if inst is None:
+        return False
+    # Shallow-merge JSONB: every sub-object we provide is complete.
+    inst.ranking_data = {**(inst.ranking_data or {}), **RANKING_DATA}
+    school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
+    # Drop any stale value for a path we explicitly declare omitted, so the merge
+    # can't keep serving a figure the enrichment run refused to assert.
+    for _path in _OMITTED_INSTITUTION:
+        if _path.startswith("school_outcomes."):
+            rest = _path.split(".", 1)[1]
+            if "." not in rest:
+                school_outcomes.pop(rest, None)
+            else:
+                head, leaf = rest.split(".", 1)
+                if isinstance(school_outcomes.get(head), dict):
+                    school_outcomes[head].pop(leaf, None)
+    school_outcomes["_standard"] = _standard(_OMITTED_INSTITUTION)
+    inst.school_outcomes = school_outcomes
+    inst.description_text = DESCRIPTION
+    inst.student_body_size = UNDERGRAD_COUNT
+    inst.founded_year = 1868
+    inst.campus_setting = "urban"
+    if not inst.website_url:
+        inst.website_url = "https://www.berkeley.edu"
+    # Lead the gallery with a real campus photo (dedupe + prepend; idempotent).
+    _gallery = [u for u in (inst.media_gallery or []) if u != _CAMPUS_PHOTO]
+    inst.media_gallery = [_CAMPUS_PHOTO, *_gallery]
+    inst.content_sources = _INSTITUTION_CONTENT
+    session.flush()
+    school_by_name = _apply_schools(session, inst)
+    _apply_programs(session, inst, school_by_name)
+    session.flush()
+    return True
+
+
+def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
+    existing = {
+        s.name: s for s in session.scalars(select(School).where(School.institution_id == inst.id))
+    }
+    canonical_names = {s["name"] for s in SCHOOLS}
+    by_name: dict[str, School] = {}
+    for spec in SCHOOLS:
+        sc = existing.get(spec["name"])
+        if sc is None:
+            sc = School(institution_id=inst.id, name=spec["name"])
+            session.add(sc)
+        sc.description_text = spec["description"]
+        sc.sort_order = spec["sort_order"]
+        sc.catalog_source = "curated"
+        sc.website_url = _SCHOOL_WEBSITE.get(spec["name"])
+        about = _ABOUT_DETAIL.get(spec["name"])
+        if about is not None:
+            about = dict(about)
+            about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
+            sc.about_detail = about
+        # No college carries its own keyword-relevant feed (only the flagship
+        # program does); always assign None so a stale value on a pre-existing row
+        # is cleared and never kept in ContentIngestService's selection.
+        sc.content_sources = None
+        by_name[spec["name"]] = sc
+    # Drop legacy colleges — programs.school_id is ON DELETE SET NULL, so this is
+    # FK-safe (any orphaned programs are handled by the program reconcile).
+    for name, sc in existing.items():
+        if name not in canonical_names:
+            session.delete(sc)
+    session.flush()
+    return by_name
+
+
+def _program_has_dependents(session: Session, program_id) -> bool:
+    """True if any FK in the schema references this programs row (delete unsafe)."""
+    fks = session.execute(
+        text("""
+        SELECT tc.table_name, kcu.column_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+          ON tc.constraint_name = kcu.constraint_name
+         AND tc.table_schema = kcu.table_schema
+        JOIN information_schema.constraint_column_usage ccu
+          ON tc.constraint_name = ccu.constraint_name
+         AND tc.table_schema = ccu.table_schema
+        WHERE tc.constraint_type = 'FOREIGN KEY'
+          AND ccu.table_name = 'programs'
+          AND ccu.column_name = 'id'
+          AND tc.table_name <> 'programs'
+        """)
+    ).fetchall()
+    for table, col in fks:
+        hit = session.execute(
+            text(f'SELECT 1 FROM "{table}" WHERE "{col}" = :pid LIMIT 1'),
+            {"pid": program_id},
+        ).first()
+        if hit:
+            return True
+    return False
+
+
+def _program_standard(slug: str) -> dict:
+    """Per-program omitted-field list (verified-unavailable), for _standard."""
+    omitted: list[str] = []
+    # Berkeley publishes no per-program employment report or industry breakdown, so
+    # every program omits the program-level employment rate and top industries.
+    omitted += [
+        "outcomes_data.employment_rate",
+        "outcomes_data.top_industries",
+    ]
+    if slug not in _TRACKS_BY_SLUG:
+        omitted.append("tracks")
+    if slug not in _CLASS_PROFILE_BY_SLUG:
+        omitted.append("class_profile.cohort_size")
+    if slug not in _FACULTY_BY_SLUG:
+        omitted.append("faculty_contacts.lead")
+    if slug not in _REVIEWS_BY_SLUG:
+        omitted.append("external_reviews.summary")
+    if slug != "berkeley-eecs-bs":
+        # Only the flagship carries its own keyword-relevant feed; catalog programs
+        # surface the institution/college feed rather than a per-program one.
+        omitted.append("content_sources")
+    return _standard(omitted)
+
+
+def _apply_programs(session: Session, inst: Institution, school_by_name: dict[str, School]) -> None:
+    existing = {
+        p.slug: p
+        for p in session.scalars(select(Program).where(Program.institution_id == inst.id))
+        if p.slug
+    }
+    canonical = set(PROGRAM_SLUGS)
+    for spec in PROGRAMS:
+        slug = spec["slug"]
+        p = existing.get(slug)
+        if p is None:
+            p = Program(
+                institution_id=inst.id,
+                program_name=spec["program_name"],
+                degree_type="bachelors",
+                slug=slug,
+            )
+            session.add(p)
+        p.program_name = _FULL_NAME_BY_SLUG.get(slug) or spec["program_name"]
+        p.degree_type = "bachelors"
+        p.duration_months = spec.get("duration_months")
+        p.description_text = spec["description"]
+        # Website: verified department page where available, else the owning
+        # college's official site (the authoritative home for the major).
+        p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
+        p.school_id = school_by_name[spec["school"]].id
+        p.is_published = True
+        p.catalog_source = "curated"
+        p.delivery_format = spec.get("delivery_format", "in_person")
+        # Always assign so a stale value on a pre-existing row is cleared: only the
+        # flagship carries its own feed (content_sources is omitted for the rest).
+        p.content_sources = _EECS_CONTENT if slug == "berkeley-eecs-bs" else None
+        # Cost: published Berkeley undergraduate rates (College Scorecard).
+        cost_override = _COST_BY_SLUG.get(slug)
+        if cost_override is not None:
+            p.tuition = cost_override.get("tuition_usd")
+            p.cost_data = dict(cost_override)
+        else:
+            p.tuition = _TUITION_IN_STATE
+            p.cost_data = {
+                "tuition_usd": _TUITION_IN_STATE,
+                "total_cost_of_attendance": _UNDERGRAD_COA,
+                "avg_net_price": _AVG_NET_PRICE,
+                "breakdown": {
+                    "tuition_in_state": _TUITION_IN_STATE,
+                    "tuition_out_of_state": _TUITION_OUT_OF_STATE,
+                    "room_board": _ROOM_BOARD,
+                    "books_supplies": _BOOKS_SUPPLIES,
+                },
+                "funded": False,
+                "note": (
+                    "In-state cost of attendance and net price; nonresidents pay an "
+                    "additional nonresident supplemental tuition (out-of-state "
+                    "tuition shown in the breakdown)."
+                ),
+                "source": "U.S. Dept. of Education College Scorecard (UNITID 110635)",
+                "source_url": "https://collegescorecard.ed.gov/school/?110635",
+                "year": "2024-25",
+            }
+        # Admissions: UC undergraduate baseline.
+        p.application_requirements = dict(_REQ_UNDERGRAD)
+        # Outcomes precedence: Scorecard FOS (program) → institution median.
+        fos = _FOS_OUTCOMES.get(slug)
+        if fos is not None:
+            salary, cip = fos
+            outcomes = {
+                "median_salary": salary,
+                "scope": "program",
+                "cip": cip,
+                "earnings_timeframe": "median earnings 1 year after completion",
+                "conditions": _FOS_CONDITIONS,
+                "source": "U.S. Dept. of Education College Scorecard — Field of Study",
+                "source_url": "https://collegescorecard.ed.gov/school/?110635",
+            }
+        else:
+            outcomes = dict(_OUTCOMES_INSTITUTION)
+        outcomes["_standard"] = _program_standard(slug)
+        p.outcomes_data = outcomes
+        p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BASELINE
+        p.highlights = _HL_BY_SLUG.get(slug) or _HL_BASELINE
+        # Always assign so a stale value on a pre-existing row is cleared (tracks is
+        # recorded as omitted where unverified, and match_service reads program.tracks).
+        p.tracks = _TRACKS_BY_SLUG.get(slug)
+        p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
+        p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
+        p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
+        # Application deadline (upcoming UC filing period closes Nov 30).
+        p.application_deadline = date(2026, 11, 30)
+    session.flush()
+    # Reconcile legacy Berkeley programs (slug not in the canonical set): delete when
+    # unreferenced, otherwise unpublish so the catalog stays clean without breaking
+    # any application/match rows that point at them.
+    for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
+        if (p.slug or "") in canonical:
+            continue
+        if _program_has_dependents(session, p.id):
+            p.is_published = False
+        else:
+            session.delete(p)
+    session.flush()
