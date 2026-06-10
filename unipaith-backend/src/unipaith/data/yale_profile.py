@@ -1639,10 +1639,15 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        # Application deadline (upcoming undergraduate Regular Decision closes Jan 2).
-        p.application_deadline = (
-            date(2026, 9, 10) if slug == "yale-mba" else date(2027, 1, 2)
-        )
+        # Application deadline: MBA Round 1; undergraduate Regular Decision closes
+        # Jan 2; other graduate/professional programs vary by program (see the
+        # program page), so no fixed date is asserted.
+        if slug == "yale-mba":
+            p.application_deadline = date(2026, 9, 10)
+        elif spec["degree_type"] == "masters":
+            p.application_deadline = None
+        else:
+            p.application_deadline = date(2027, 1, 2)
     session.flush()
     # Reconcile legacy Yale programs (slug not in the canonical set): delete when
     # unreferenced, otherwise unpublish so the catalog stays clean without breaking any
