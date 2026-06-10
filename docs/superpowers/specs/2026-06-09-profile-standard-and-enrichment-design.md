@@ -53,7 +53,8 @@ Per-field, human-readable rules the enrichment engine follows:
 
 ### 3.3 Versioning semantics
 - A profile stores the `standard_version` it last satisfied (see §5).
-- `profile is stale ⇔ profile.standard_version < STANDARD_VERSION` OR conformance finds missing required sections/fields.
+- **`stale` is version-only:** `profile is stale ⇔ profile.standard_version < STANDARD_VERSION`. Missing required sections/fields are a **separate** conformance signal (`missing required`), not folded into `stale` — this keeps `check().stale` and the §9 ranking axes (`{stale, missing required, fact-age}`) orthogonal. A profile can be missing-required without being stale (it satisfied the current version but a field is gone/unverifiable) and stale without being missing-required (the blueprint moved on).
+- **Omitted ≠ missing:** a required field recorded in `_standard.omitted` **at the current `standard_version`** counts as conformance-satisfied (honestly-empty), not missing — so the gate's no-fabrication omissions (§5–§8) don't re-queue endless enrichment for unverifiable required fields (e.g. a profile that legitimately lacks a citable source). A bump to `STANDARD_VERSION` clears this exemption (the omission is re-attempted once against the new standard); the refresh cadence (§9) may also periodically re-check omitted fields.
 - Bumping `STANDARD_VERSION` makes the whole fleet stale by definition → drives §7 re-conform.
 
 ## 4. Shared base (`profile_base.py`)
