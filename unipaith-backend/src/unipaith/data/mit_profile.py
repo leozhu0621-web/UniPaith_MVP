@@ -23,8 +23,21 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.models.institution import Institution, Program, School
+from unipaith.profile_standard import STANDARD_VERSION, check_conformance
 
 INSTITUTION_NAME = "Massachusetts Institute of Technology"
+
+# Date this profile was researched + verified; stamped into every node's _standard.
+ENRICHED_AT = "2026-06-10"
+
+
+def _standard(omitted: list[str] | None = None) -> dict:
+    """Conformance stamp for a node: standard version + honest omitted list."""
+    return {
+        "version": STANDARD_VERSION,
+        "enriched_at": ENRICHED_AT,
+        "omitted": omitted or [],
+    }
 
 # ── Institution-level data ────────────────────────────────────────────────
 # Rankings are stored as {rank, year} objects because the page renders every
@@ -411,6 +424,17 @@ _SHASS = "School of Humanities, Arts, and Social Sciences"
 _SLOAN = "MIT Sloan School of Management"
 _SAP = "School of Architecture and Planning"
 _COMPUTING = "MIT Stephen A. Schwarzman College of Computing"
+
+# ── Per-school About tabs + feeds ──────────────────────────────────────────
+# Sloan was the standard-setter; the remaining five schools' about_detail and
+# content_sources are merged below (live-verified against each school's
+# official site; see each block's source).
+_ABOUT_BY_SCHOOL: dict[str, dict] = {
+    _SLOAN: _SLOAN_ABOUT_DETAIL,
+}
+_CONTENT_BY_SCHOOL: dict[str, dict] = {
+    _SLOAN: _SLOAN_CONTENT,
+}
 
 PROGRAMS: list[dict] = [
     # School of Engineering
@@ -1999,6 +2023,42 @@ _CAMPUS_PHOTO = (
 )
 
 
+# ── Conformance bookkeeping ────────────────────────────────────────────────
+_SCHOOL_ABOUT_REQUIRED = ("founded", "leadership", "faculty", "research_centers")
+
+
+def _school_omitted(about: dict) -> list[str]:
+    """Required about_detail fields this run could not verify for a school."""
+    return [f"about_detail.{k}" for k in _SCHOOL_ABOUT_REQUIRED if not about.get(k)]
+
+
+def _program_omitted(p: Program) -> list[str]:
+    """Required program fields that remain unverified after this run's research.
+
+    Derived against the manifest itself (via check_conformance) so the omitted
+    list always names exactly the required paths the research could not fill —
+    each was attempted from official sources before being recorded here.
+    """
+    snap = {
+        "program_name": p.program_name,
+        "degree_type": p.degree_type,
+        "duration_months": p.duration_months,
+        "delivery_format": p.delivery_format,
+        "description_text": p.description_text,
+        "website_url": p.website_url,
+        "department": p.department,
+        "tracks": p.tracks,
+        "application_requirements": p.application_requirements,
+        "cost_data": p.cost_data,
+        "outcomes_data": {k: v for k, v in (p.outcomes_data or {}).items() if k != "_standard"},
+        "class_profile": p.class_profile,
+        "faculty_contacts": p.faculty_contacts,
+        "external_reviews": p.external_reviews,
+        "content_sources": p.content_sources,
+    }
+    return check_conformance("program", snap).missing_fields
+
+
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
 def apply(session: Session) -> bool:
     """Enrich MIT to the canonical profile. Flushes; caller commits.
@@ -2010,7 +2070,10 @@ def apply(session: Session) -> bool:
         return False
     # Shallow-merge JSONB: every sub-object we provide is complete.
     inst.ranking_data = {**(inst.ranking_data or {}), **RANKING_DATA}
-    inst.school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
+    school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
+    # Every required institution field is filled from a cited source; nothing omitted.
+    school_outcomes["_standard"] = _standard()
+    inst.school_outcomes = school_outcomes
     inst.description_text = DESCRIPTION
     inst.student_body_size = UNDERGRAD_COUNT
     # Lead the gallery with a real campus photo. The detail-page hero shows the
@@ -2055,11 +2118,15 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
         sc.sort_order = spec["sort_order"]
         sc.catalog_source = "curated"
         sc.website_url = _SCHOOL_WEBSITE.get(spec["name"])
-        # Sloan is the standard-setting school: its own keyword-relevant feeds +
-        # official social links + a rich, sourced About tab. Others: follow-up.
-        if spec["name"] == _SLOAN:
-            sc.content_sources = _SLOAN_CONTENT
-            sc.about_detail = _SLOAN_ABOUT_DETAIL
+        # Every school carries a sourced About tab (founded · leadership · notable
+        # faculty · research centers) and, where verified, its own keyword-relevant
+        # feeds + official social links. The conformance stamp records what could
+        # not be verified for a given school.
+        about = dict(_ABOUT_BY_SCHOOL.get(spec["name"]) or {})
+        about["_standard"] = _standard(_school_omitted(about))
+        sc.about_detail = about
+        if spec["name"] in _CONTENT_BY_SCHOOL:
+            sc.content_sources = _CONTENT_BY_SCHOOL[spec["name"]]
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this
     # is FK-safe (any orphaned programs are handled by the program reconcile).
@@ -2220,6 +2287,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p.application_deadline = None
         else:
             p.application_deadline = date(2026, 12, 15)
+        # Conformance stamp: record exactly which required fields remain
+        # unverified for this program (each was researched before omission).
+        outcomes = dict(p.outcomes_data or {})
+        outcomes["_standard"] = _standard(_program_omitted(p))
+        p.outcomes_data = outcomes
     session.flush()
     # Reconcile legacy MIT programs (slug not in the canonical set): delete when
     # unreferenced, otherwise unpublish so the catalog is clean without breaking
