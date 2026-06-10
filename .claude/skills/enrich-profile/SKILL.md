@@ -189,6 +189,24 @@ Add an Alembic data migration whose `upgrade()` calls
 commit, `replace=True`/dedup). Validate the full chain on a fresh scratch DB
 (CREATE EXTENSION vector,pgcrypto → `alembic upgrade head`). Single head.
 
+**Head-sync protocol (MANDATORY — a dual-head once blocked ALL deploys for hours):**
+other sessions ship migrations concurrently, so never trust a stale checkout.
+1. **Immediately before authoring** the migration: `git fetch origin main` and
+   branch off fresh `origin/main`; set `down_revision` to the CURRENT head of
+   that fresh tree (`alembic heads`), not whatever your older checkout had.
+2. **Right before opening the PR:** re-fetch `origin/main`, merge it in, re-run
+   `alembic heads`. If a concurrent migration landed and you now see TWO heads,
+   re-point your `down_revision` onto the new head (or add a merge-only
+   migration) so your PR carries exactly ONE head.
+3. **Right after your PR squash-merges:** fetch the merged `origin/main` and run
+   `alembic heads` one final time. If a racing merge created a dual head, ship a
+   merge-only migration IMMEDIATELY (tiny PR, `down_revision = (headA, headB)`,
+   empty upgrade/downgrade) before ending the run. Never leave `main` with two
+   heads — `test_alembic_has_single_head` fails CI and every deploy is blocked
+   until someone fixes it.
+4. Use READABLE revision ids (e.g. `nyuprof1`, `feedspennmerge1`) — auto-generated
+   hex ids trip the repo's detect-secrets pre-commit hook as false positives.
+
 ### 8.5 Conformance gate (do NOT skip — this is what the first runs missed)
 For the institution and **every** school and program in the tree, build its
 snapshot and run `check_conformance`. A node may ship only when it is **gold**
