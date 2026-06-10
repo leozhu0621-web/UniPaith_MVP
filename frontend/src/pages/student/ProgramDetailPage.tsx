@@ -46,7 +46,6 @@ import DualRing from './match/DualRing'
 import RationalePopover from './match/RationalePopover'
 import ProbabilityBands from './match/ProbabilityBands'
 import BandBadge from '../../components/ui/BandBadge'
-import KeyMetrics from './program/KeyMetrics'
 import StatGroup from './program/StatGroup'
 import AboutCard from './program/AboutCard'
 import RelatedSidebar from './program/RelatedSidebar'
@@ -335,15 +334,6 @@ export default function ProgramDetailPage() {
   if (effectiveTuition != null && Number.isFinite(Number(effectiveTuition)) && Number(effectiveTuition) > 0) {
     heroStats.push({ value: formatCurrency(Number(effectiveTuition)), label: 'tuition / yr' })
   }
-  const heroEarnings =
-    odn.median_salary != null && Number.isFinite(Number(odn.median_salary))
-      ? Number(odn.median_salary)
-      : (rd.earnings_10yr_median != null && Number.isFinite(Number(rd.earnings_10yr_median))
-        ? Number(rd.earnings_10yr_median)
-        : null)
-  if (heroEarnings != null && heroEarnings > 0) {
-    heroStats.push({ value: formatCurrency(heroEarnings), label: 'median earnings' })
-  }
 
   return (
     <div className="p-6 max-w-5xl w-full mx-auto">
@@ -498,26 +488,37 @@ export default function ProgramDetailPage() {
         </div>
       </div>
 
-      {/* ── KPI strip — adaptive: picks the 4 most distinctive numbers per program ── */}
-      <KeyMetrics
-        degreeType={p.degree_type}
-        durationMonths={p.duration_months}
-        tuition={effectiveTuition}
-        tracks={p.tracks}
-        highlights={p.highlights}
-        descriptionText={p.description_text}
-        outcomesMedianSalary={odn.median_salary}
-        outcomesEmploymentRate={odn.employment_rate}
-        outcomesInternshipConversion={odn.internship_conversion_rate}
-        outcomesTopEmployers={odn.top_employers}
-        outcomesTopIndustries={odn.top_industries}
-        outcomesPaybackMonths={odn.payback_months}
-        institutionTuition={rd.tuition_out_of_state ?? rd.tuition_in_state}
-        earnings6yr={rd.earnings_6yr_median}
-        earnings10yr={rd.earnings_10yr_median}
-        graduationRate={rd.graduation_rate}
-        retentionRate={rd.retention_rate}
-      />
+      {/* ── Basic-info strip — the program's defining facts (length / degree /
+            format / department). Outcomes live on the Outcomes tab. ── */}
+      {(() => {
+        const DEG: Record<string, string> = { bachelors: "Bachelor's", masters: "Master's", phd: 'PhD', doctoral: 'Doctorate', associate: 'Associate', certificate: 'Certificate', diploma: 'Diploma', professional: 'Professional' }
+        const FMT: Record<string, string> = { in_person: 'In-person', online: 'Online', hybrid: 'Hybrid' }
+        const lengthLabel = p.duration_months
+          ? (p.duration_months % 12 === 0
+              ? `${p.duration_months / 12} year${p.duration_months === 12 ? '' : 's'}`
+              : `${p.duration_months} months`)
+          : null
+        const tiles = [
+          lengthLabel && { icon: Clock, label: 'Length', value: lengthLabel },
+          p.degree_type && { icon: GraduationCap, label: 'Degree', value: DEG[p.degree_type] || p.degree_type },
+          p.delivery_format && { icon: Briefcase, label: 'Format', value: FMT[p.delivery_format] || p.delivery_format },
+          p.department && { icon: Building2, label: 'Department', value: p.department },
+        ].filter(Boolean) as { icon: typeof Clock; label: string; value: string }[]
+        if (tiles.length === 0) return null
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+            {tiles.map(t => (
+              <Card key={t.label} className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <t.icon size={13} className="text-secondary" />
+                  <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">{t.label}</span>
+                </div>
+                <p className="text-xl font-bold text-foreground leading-tight">{t.value}</p>
+              </Card>
+            ))}
+          </div>
+        )
+      })()}
 
       {/* ── Your realistic shot — probability bands (Spec 09 §4A).
             The DualRing + redacted "why this match" now lead the fact strip (§2). ── */}
@@ -1601,6 +1602,7 @@ export default function ProgramDetailPage() {
           <RelatedSidebar
             sameSchoolPrograms={sameSchool}
             similarPrograms={similar}
+            bgPhoto={heroPhoto}
             discoveryBackHref={discoveryBackHref}
           />
         </div>
