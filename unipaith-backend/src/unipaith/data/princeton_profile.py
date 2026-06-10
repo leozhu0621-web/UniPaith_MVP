@@ -999,11 +999,11 @@ _REQ_UNDERGRAD = {
         {"round": "Regular Decision", "date": "January 1"},
     ],
     "recommendations": {
-        "required": 2,
-        "note": (
-            "Two recommendations from teachers in core academic subjects, plus a "
-            "counselor recommendation."
-        ),
+        "required_count": 2,
+        "types": [
+            "Two recommendations from teachers in core academic subjects",
+            "Counselor recommendation",
+        ],
     },
     "international": {
         "english": {
@@ -1035,10 +1035,10 @@ _REQ_GRAD_MPA = {
         {"round": "MPA application deadline", "date": "Early December"},
     ],
     "recommendations": {
-        "required": 3,
-        "note": (
-            "Three letters of recommendation submitted through the Graduate School application."
-        ),
+        "required_count": 3,
+        "types": [
+            "Three letters of recommendation submitted through the Graduate School application",
+        ],
     },
     "international": {
         "english": {
