@@ -64,6 +64,8 @@ async def test_apply_enriches_institution(db_session):
     assert inst.student_body_size == 7601
     assert inst.school_outcomes["scale"]["endowment_usd"] == 53200000000
     assert inst.school_outcomes["scale"]["student_faculty_ratio"] == "7:1"
+    # Instructional faculty count (CDS-I 2024-25) — closes the last institution gap.
+    assert inst.school_outcomes["scale"]["faculty_count"] == 2162
     assert inst.school_outcomes["financial_aid"]["scholarship_rate"] == 0.55
     assert inst.school_outcomes["financial_aid"]["cost_of_attendance"] == 86926
     assert any("Wyss" in lab for lab in inst.school_outcomes["research"]["labs"])
@@ -100,6 +102,16 @@ async def test_apply_sets_twelve_real_schools(db_session):
     fas = next(s for s in rows if s.name == "Harvard Faculty of Arts & Sciences")
     assert fas.sort_order == 1
     assert fas.description_text and "largest faculty" in fas.description_text
+    # about_detail (founded · leadership · faculty · research centers) is set.
+    assert fas.about_detail["founded"] == 1890
+    assert "Hoekstra" in fas.about_detail["leadership"]
+    assert fas.about_detail["faculty"] and fas.about_detail["research_centers"]
+    hbs = next(s for s in rows if s.name == "Harvard Business School")
+    assert hbs.about_detail["founded"] == 1908
+    # The Division of Continuing Education legitimately omits faculty/centers.
+    dce = next(s for s in rows if s.name == "Harvard Division of Continuing Education")
+    assert dce.about_detail["founded"] == 1975
+    assert "faculty" not in dce.about_detail and "research_centers" not in dce.about_detail
 
 
 async def test_apply_builds_real_program_catalog_idempotently(db_session):
