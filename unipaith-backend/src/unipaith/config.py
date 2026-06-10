@@ -668,6 +668,13 @@ class Settings(BaseSettings):
     ses_sender_name: str = "UniPaith"
     campaign_unsubscribe_secret: str = "unipaith-campaign-unsub-v1"
     notifications_enabled: bool = False
+    # Transactional email (services/email_service.py) — direct, user-triggered
+    # sends such as the recommender request email. Off by default; flipped on in
+    # production (infra/ecs.tf) where the SES domain identity for unipaith.co is
+    # verified (infra/ses.tf). Empty from-address falls back to
+    # "{ses_sender_name} <{ses_sender_email}>".
+    email_send_enabled: bool = False
+    email_from_address: str = ""
 
     # Essay Workshop
     essay_max_drafts: int = 20

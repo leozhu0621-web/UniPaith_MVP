@@ -3151,6 +3151,10 @@ export interface WorkshopFeedbackRun {
   id: string
   student_id: string
   domain: WorkshopDomain
+  // Backend WorkshopFeedbackResponse also carries the run's targeting; used
+  // to surface program-relevant runs on the application detail page.
+  mode?: 'general' | 'program_specific'
+  target_program_id?: string | null
   input_artifact_id: string | null
   prompt_text: string | null
   rubric_scores: Record<string, number>

@@ -295,6 +295,10 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "CORS_ORIGINS", value = "[\"https://app.${var.domain_name}\"]" },
       { name = "SES_SENDER_EMAIL", value = "noreply@${var.domain_name}" },
       { name = "NOTIFICATIONS_ENABLED", value = "true" },
+      # Transactional email (recommender request emails). SES domain identity
+      # for ${var.domain_name} is verified via ses.tf (Route53 verification +
+      # DKIM) and the task role already holds ses:SendEmail.
+      { name = "EMAIL_SEND_ENABLED", value = "true" },
       # In-process scheduler (notification digests + saved-search alerts). The
       # Spec 60 crawler / info-gathering automation was removed; its CRAWLER_* env
       # is intentionally gone so the engine stays off (the flags default to off).

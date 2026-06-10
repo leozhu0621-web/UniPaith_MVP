@@ -41,6 +41,16 @@ export default function InterviewRespondPanel({ interview, compact = false, onUp
   const isConfirmed = interview.status === 'confirmed'
   const canRespond = isProposed && !interview.async_expired
 
+  // The student must explicitly pick a slot — never silently book the first one.
+  // When exactly one slot is offered, preselect it; ignore selections that are
+  // no longer among the proposed times.
+  const slots = interview.proposed_times ?? []
+  const chosenSlot = slots.includes(selectedSlot)
+    ? selectedSlot
+    : slots.length === 1
+      ? slots[0]
+      : ''
+
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['interviews'] })
     qc.invalidateQueries({ queryKey: ['calendar'] })
@@ -48,11 +58,7 @@ export default function InterviewRespondPanel({ interview, compact = false, onUp
   }
 
   const confirmMut = useMutation({
-    mutationFn: () =>
-      confirmInterview(
-        interview.id,
-        isAsync ? null : selectedSlot || interview.proposed_times?.[0] || null,
-      ),
+    mutationFn: () => confirmInterview(interview.id, isAsync ? null : chosenSlot || null),
     onSuccess: () => {
       invalidate()
       showToast('Interview confirmed', 'success')
@@ -165,23 +171,37 @@ export default function InterviewRespondPanel({ interview, compact = false, onUp
               : 'Pick one of the proposed times, or request a reschedule.'}
           </p>
 
-          {!isAsync && interview.proposed_times?.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {interview.proposed_times.map(slot => {
-                const on = selectedSlot === slot
+          {!isAsync && slots.length > 0 && (
+            <div
+              role="radiogroup"
+              aria-label="Proposed interview times"
+              className="rounded-md border border-border bg-card px-2"
+            >
+              {slots.map(slot => {
+                const on = chosenSlot === slot
                 return (
                   <button
                     key={slot}
                     type="button"
+                    role="radio"
+                    aria-checked={on}
                     disabled={busy}
                     onClick={() => setSelectedSlot(slot)}
-                    className={`rounded-pill border px-3 py-1.5 text-xs font-medium transition-colors ${
-                      on
-                        ? 'border-secondary bg-secondary text-secondary-foreground'
-                        : 'border-border bg-card text-foreground hover:bg-muted'
-                    }`}
+                    className="flex w-full items-center gap-3 border-b border-border py-2 text-left transition-colors last:border-0 hover:bg-muted/50"
                   >
-                    {formatDateTime(slot)}
+                    <span
+                      aria-hidden="true"
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                        on ? 'border-secondary' : 'border-border'
+                      }`}
+                    >
+                      {on && <span className="h-2 w-2 rounded-full bg-secondary" />}
+                    </span>
+                    <span
+                      className={`text-sm text-foreground ${on ? 'font-medium' : ''}`}
+                    >
+                      {formatDateTime(slot)}
+                    </span>
                   </button>
                 )
               })}
@@ -193,7 +213,7 @@ export default function InterviewRespondPanel({ interview, compact = false, onUp
               size="sm"
               variant="secondary"
               loading={confirmMut.isPending}
-              disabled={busy || (!isAsync && !selectedSlot && !interview.proposed_times?.[0])}
+              disabled={busy || (!isAsync && !chosenSlot)}
               onClick={() => confirmMut.mutate()}
             >
               Confirm

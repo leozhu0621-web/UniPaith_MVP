@@ -10,7 +10,7 @@
  * The legacy Essays & Resume workshops still exist under the Profile tab for
  * now; they'll be deleted in Phase E once consumers are migrated.
  */
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useRef, useState } from 'react'
 import { FileText, MessageCircleQuestion, ScrollText, X } from 'lucide-react'
 
 const EssayFeedbackPanel = lazy(() => import('./EssayFeedbackPanel'))
@@ -29,6 +29,7 @@ const DISCLOSURE_KEY = 'up.workshops.disclosureDismissed'
 
 export default function WorkshopsTab() {
   const [sub, setSub] = useState<WorkshopSubTab>('essay')
+  const tablistRef = useRef<HTMLDivElement>(null)
   const [showDisclosure, setShowDisclosure] = useState(() => {
     try {
       return localStorage.getItem(DISCLOSURE_KEY) !== '1'
@@ -43,6 +44,22 @@ export default function WorkshopsTab() {
       localStorage.setItem(DISCLOSURE_KEY, '1')
     } catch {
       /* ignore */
+    }
+  }
+
+  // Arrow-key / Home / End keyboard navigation on the tablist (ARIA tabs pattern).
+  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    const buttons = tablistRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+    if (!buttons) return
+    let next = -1
+    if (e.key === 'ArrowRight') next = (idx + 1) % buttons.length
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + buttons.length) % buttons.length
+    else if (e.key === 'Home') next = 0
+    else if (e.key === 'End') next = buttons.length - 1
+    if (next >= 0) {
+      e.preventDefault()
+      buttons[next].focus()
+      setSub(SUB_TABS[next].key)
     }
   }
 
@@ -73,12 +90,23 @@ export default function WorkshopsTab() {
         </div>
       )}
 
-      <div className="mb-4 flex gap-1 border-b border-border">
-        {SUB_TABS.map(t => (
+      <div
+        ref={tablistRef}
+        role="tablist"
+        aria-label="Workshop domains"
+        className="mb-4 flex gap-1 border-b border-border"
+      >
+        {SUB_TABS.map((t, idx) => (
           <button
             key={t.key}
+            id={`workshop-tab-${t.key}`}
             type="button"
+            role="tab"
+            aria-selected={sub === t.key}
+            aria-controls={`workshop-panel-${t.key}`}
+            tabIndex={sub === t.key ? 0 : -1}
             onClick={() => setSub(t.key)}
+            onKeyDown={e => handleTabKeyDown(e, idx)}
             className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
               sub === t.key
                 ? 'border-secondary text-secondary'
@@ -91,11 +119,19 @@ export default function WorkshopsTab() {
         ))}
       </div>
 
-      <Suspense fallback={<div className="py-6 text-sm text-foreground">Loading…</div>}>
-        {sub === 'essay' && <EssayFeedbackPanel />}
-        {sub === 'interview' && <InterviewPracticePanel />}
-        {sub === 'test' && <TestGuidancePanel />}
-      </Suspense>
+      <div
+        id={`workshop-panel-${sub}`}
+        role="tabpanel"
+        aria-labelledby={`workshop-tab-${sub}`}
+        tabIndex={0}
+        className="focus-visible:outline-none"
+      >
+        <Suspense fallback={<div className="py-6 text-sm text-foreground">Loading…</div>}>
+          {sub === 'essay' && <EssayFeedbackPanel />}
+          {sub === 'interview' && <InterviewPracticePanel />}
+          {sub === 'test' && <TestGuidancePanel />}
+        </Suspense>
+      </div>
     </div>
   )
 }

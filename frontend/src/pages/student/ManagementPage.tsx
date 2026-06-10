@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useEffect } from 'react'
+import { useState, lazy, Suspense, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
   FolderKanban,
@@ -31,6 +31,7 @@ const TABS: { key: Tab; label: string; icon: typeof FolderKanban }[] = [
 export default function ManagementPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const tablistRef = useRef<HTMLDivElement>(null)
   const rawTab = searchParams.get('tab') as Tab | null
   const threadId = searchParams.get('thread')
   const [tab, setTab] = useState<Tab>(rawTab && TABS.some(t => t.key === rawTab) ? rawTab : 'applications')
@@ -48,17 +49,39 @@ export default function ManagementPage() {
     navigate(qs ? `/s/manage?${qs}` : '/s/manage', { replace: true })
   }
 
+  // Arrow-key / Home / End keyboard navigation on the tablist (ARIA tabs pattern).
+  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    const buttons = tablistRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+    if (!buttons) return
+    let next = -1
+    if (e.key === 'ArrowRight') next = (idx + 1) % buttons.length
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + buttons.length) % buttons.length
+    else if (e.key === 'Home') next = 0
+    else if (e.key === 'End') next = buttons.length - 1
+    if (next >= 0) {
+      e.preventDefault()
+      buttons[next].focus()
+      switchTab(TABS[next].key)
+    }
+  }
+
   const isInbox = tab === 'messages'
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Sub-tab bar */}
       <div className="flex-shrink-0 border-b border-border bg-card px-6">
-        <div className="flex gap-0.5">
-          {TABS.map(t => (
+        <div ref={tablistRef} role="tablist" aria-label="Apply sections" className="flex gap-0.5">
+          {TABS.map((t, idx) => (
             <button
               key={t.key}
+              id={`manage-tab-${t.key}`}
+              role="tab"
+              aria-selected={tab === t.key}
+              aria-controls={`manage-panel-${t.key}`}
+              tabIndex={tab === t.key ? 0 : -1}
               onClick={() => switchTab(t.key)}
+              onKeyDown={e => handleTabKeyDown(e, idx)}
               className={`flex items-center gap-1.5 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                 tab === t.key
                   ? 'border-secondary text-foreground'
@@ -74,7 +97,11 @@ export default function ManagementPage() {
 
       {/* Content — inbox is a fixed two-pane surface (Spec 17 §2); other tabs scroll. */}
       <div
-        className={`min-h-0 flex-1 ${isInbox ? 'overflow-hidden' : 'overflow-y-auto'}`}
+        id={`manage-panel-${tab}`}
+        role="tabpanel"
+        aria-labelledby={`manage-tab-${tab}`}
+        tabIndex={0}
+        className={`min-h-0 flex-1 focus-visible:outline-none ${isInbox ? 'overflow-hidden' : 'overflow-y-auto'}`}
       >
         <Suspense fallback={<div className="p-6 text-center text-muted-foreground">Loading...</div>}>
           {tab === 'applications' && <ApplicationsPage />}

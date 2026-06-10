@@ -45,28 +45,30 @@ export default function TestGuidancePanel() {
   const [mode, setMode] = useState<WorkshopMode>('general')
   const [program, setProgram] = useState<ProgramOption | null>(null)
   const [run, setRun] = useState<WorkshopFeedbackRun | null>(null)
+  // The program the displayed run was generated for — snapshotted at request
+  // time so switching the picker afterwards never relabels a stale run.
+  const [runProgram, setRunProgram] = useState<ProgramOption | null>(null)
 
   const guidanceMut = useMutation({
-    mutationFn: () =>
+    mutationFn: (targetProg: ProgramOption | null) =>
       requestTestGuidance({
         test_type: testType,
         current_score: current ? Number(current) : null,
         target_score: target ? Number(target) : null,
-        target_program_id: mode === 'program_specific' ? program?.programId ?? null : null,
+        target_program_id: targetProg?.programId ?? null,
       }),
-    onSuccess: r => {
+    onSuccess: (r, targetProg) => {
       setRun(r)
+      setRunProgram(targetProg)
       showToast('Feedback ready.', 'success')
     },
     onError: (err: unknown) =>
       showToast((err as Error).message ?? 'Could not get feedback.', 'error'),
   })
 
+  const targetProgram = mode === 'program_specific' ? program : null
   const stats = run ? Object.entries(run.rubric_scores ?? {}) : []
-  const readiness =
-    run && mode === 'program_specific' && program
-      ? readinessSummary(run, program.programName)
-      : null
+  const readiness = run && runProgram ? readinessSummary(run, runProgram.programName) : null
 
   return (
     <div className="space-y-4">
@@ -133,7 +135,7 @@ export default function TestGuidancePanel() {
         <div className="flex justify-end">
           <Button
             variant="secondary"
-            onClick={() => guidanceMut.mutate()}
+            onClick={() => guidanceMut.mutate(targetProgram)}
             loading={guidanceMut.isPending}
           >
             Get feedback
@@ -145,12 +147,12 @@ export default function TestGuidancePanel() {
         <EmptyHint>Add your current and target scores to get a structured prep plan.</EmptyHint>
       )}
 
-      {guidanceMut.isError && !run && <ErrorNote onRetry={() => guidanceMut.mutate()} />}
+      {guidanceMut.isError && !run && <ErrorNote onRetry={() => guidanceMut.mutate(targetProgram)} />}
 
       {run && (
         <>
-          {readiness && program && (
-            <ReadinessCard programName={program.programName} summary={readiness} />
+          {readiness && runProgram && (
+            <ReadinessCard programName={runProgram.programName} summary={readiness} />
           )}
 
           {stats.length > 0 && (

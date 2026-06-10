@@ -37,28 +37,30 @@ export default function EssayFeedbackPanel() {
   const [mode, setMode] = useState<WorkshopMode>('general')
   const [program, setProgram] = useState<ProgramOption | null>(null)
   const [run, setRun] = useState<WorkshopFeedbackRun | null>(null)
+  // The program the displayed run was generated for — snapshotted at request
+  // time so switching the picker afterwards never relabels a stale run.
+  const [runProgram, setRunProgram] = useState<ProgramOption | null>(null)
 
   const feedbackMut = useMutation({
-    mutationFn: () =>
+    mutationFn: (target: ProgramOption | null) =>
       requestEssayFeedback({
         essay_text: essay,
         prompt_text: prompt.trim() || null,
-        target_program_id: mode === 'program_specific' ? program?.programId ?? null : null,
+        target_program_id: target?.programId ?? null,
       }),
-    onSuccess: r => {
+    onSuccess: (r, target) => {
       setRun(r)
+      setRunProgram(target)
       showToast('Feedback ready.', 'success')
     },
     onError: (err: unknown) =>
       showToast((err as Error).message ?? 'Could not get feedback.', 'error'),
   })
 
+  const targetProgram = mode === 'program_specific' ? program : null
   const wordCount = essay.trim().split(/\s+/).filter(Boolean).length
   const tooShort = essay.trim().length < 20
-  const readiness =
-    run && mode === 'program_specific' && program
-      ? readinessSummary(run, program.programName)
-      : null
+  const readiness = run && runProgram ? readinessSummary(run, runProgram.programName) : null
 
   return (
     <div className="space-y-4">
@@ -102,7 +104,7 @@ export default function EssayFeedbackPanel() {
         <div className="flex justify-end">
           <Button
             variant="secondary"
-            onClick={() => feedbackMut.mutate()}
+            onClick={() => feedbackMut.mutate(targetProgram)}
             loading={feedbackMut.isPending}
             disabled={tooShort}
           >
@@ -115,12 +117,12 @@ export default function EssayFeedbackPanel() {
         <EmptyHint>Drop in an essay draft to get structured feedback.</EmptyHint>
       )}
 
-      {feedbackMut.isError && !run && <ErrorNote onRetry={() => feedbackMut.mutate()} />}
+      {feedbackMut.isError && !run && <ErrorNote onRetry={() => feedbackMut.mutate(targetProgram)} />}
 
       {run && (
         <>
-          {readiness && program && (
-            <ReadinessCard programName={program.programName} summary={readiness} />
+          {readiness && runProgram && (
+            <ReadinessCard programName={runProgram.programName} summary={readiness} />
           )}
 
           <Card>
