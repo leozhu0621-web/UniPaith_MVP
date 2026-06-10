@@ -1,49 +1,53 @@
 """Canonical Columbia University profile — the single source of truth.
 
 Real, sourced data only (U.S. Dept. of Education College Scorecard, UNITID 190150 ·
-NCES College Navigator / IPEDS · Columbia's Office of Planning and Institutional Research
-Common Data Set 2024-25 for Columbia College and Columbia Engineering · Columbia Finance /
-UChicago... Columbia News (endowment) · the official QS / Times Higher Education / U.S.
-News rankings · each school's official leadership page (Office of the President / the
-school's own site) · the Office of the Bursar / each school's tuition page · the Columbia
-Center for Career Education "Beyond Columbia" survey (Class of 2024, CC + SEAS) · the
-Columbia Business School MBA Employment Report (Class of 2024) · the College Scorecard
+NCES College Navigator / IPEDS · Columbia's Office of Planning and Institutional
+Research "Columbia Facts 2024" · the Columbia College & Columbia Engineering Common
+Data Set 2024-25 · Columbia's FY2024 endowment performance report · the official QS /
+Times Higher Education / U.S. News rankings · each school's official leadership / about
+page and the Columbia bulletin (tuition) · the Columbia Center for Career Education
+"Beyond Columbia" first-destination survey, Class of 2023 · the College Scorecard
 Field-of-Study earnings by CIP). ``apply(session)`` idempotently enriches the Columbia
-institution row, upserts its real degree-granting schools, and builds its program catalog
-across them.
+institution row, upserts its real degree-granting schools, and builds Columbia's program
+catalog across them.
 
-This is a **verified partial** of Columbia's tree (Columbia is a giant — ~20 schools).
-Per the routine's resumption design for large universities, this run brings the
-**institution node + five schools + their programs to the gold standard**, with the
-Columbia Business School MBA as the most-enriched flagship; the remaining schools/programs
-(Public Health, Social Work, Law, Nursing, Architecture, Climate, the Graduate School of
-Arts and Sciences, and additional Engineering/SEAS master's) are deferred to a resume run
-on the SAME university. The five schools modelled here:
-  - Columbia College (undergraduate B.A./B.S. majors)
-  - The Fu Foundation School of Engineering and Applied Science (Columbia Engineering)
-  - Columbia Business School (the MBA — the most-enriched flagship)
-  - School of International and Public Affairs (SIPA)
-  - Columbia Journalism School
+Columbia's academic structure: an undergraduate enterprise (Columbia College and The Fu
+Foundation School of Engineering and Applied Science, which share the Faculty of Arts and
+Sciences and a single undergraduate tuition rate) plus a set of dean-led graduate and
+professional schools. We model the units that own the degree programs in the canonical
+College Scorecard Field-of-Study list for UNITID 190150 onto the platform's ``School``
+model:
+  - Columbia College (undergraduate B.A. majors)
+  - The Fu Foundation School of Engineering and Applied Science (B.S. + M.S.)
+  - Columbia Business School (the MBA)
+  - Columbia Law School (the J.D.)
+  - Vagelos College of Physicians and Surgeons (the M.D.)
+  - Columbia Journalism School (the M.S.)
+  - School of International and Public Affairs (the MIA / MPA)
+  - Mailman School of Public Health (the MPH)
+  - Columbia School of Social Work (the MSW)
+  - Graduate School of Architecture, Planning and Preservation (the M.Arch)
+  - Columbia School of the Arts (the MFA)
+  - Columbia School of Nursing (the MSN)
 
 It **flushes but does not commit** — the caller (the Alembic data migration, the CLI
-script, or the dev seed) owns the transaction. It is a **no-op** (returns ``False``) when
-Columbia is absent, so it is safe to run against a fresh or CI database. Re-running is
-safe: schools key off ``(institution_id, name)`` and programs off ``slug``. The program
-catalog is reconciled to ONLY the curated, gold set (non-canonical/seed programs are
-unpublished when referenced, otherwise deleted) so the live page shows no un-enriched
-duplicates; SCHOOLS outside the canonical five are left intact so the partial composes
-with the resume run. All FK-safe.
+script, or the dev seed) owns the transaction. It is a **no-op** (returns ``False``)
+when Columbia is absent, so it is safe to run against a fresh or CI database. Re-running
+is safe: schools key off ``(institution_id, name)`` and programs off ``slug``; stale rows
+are reconciled without breaking foreign keys.
 
-This mirrors ``mit_profile`` / ``chicago_profile`` so the migration, the standalone
-script, and the dev seed all agree (DRY). Every figure traces to a public, citable source;
+This mirrors ``mit_profile`` / ``yale_profile`` so the migration, the standalone script,
+and the dev seed all agree (DRY). Every figure traces to a public, citable source;
 anything that could not be verified from a first-party or two-independent-source basis is
-**omitted** (recorded in the relevant ``_standard.omitted`` list), never guessed. The
-Columbia Business School MBA is the most-enriched flagship (its curriculum, faculty, class
-profile, employment distribution and aggregated reviews) — with the honest caveats that
-Columbia is test-optional for first-year admission, that the university does not publish a
-single unambiguous instructional-faculty headline (omitted), and that program-specific
-graduate tuition for the divisional/engineering master's is published only on the
-JavaScript-rendered Bursar pages and so is recorded as omitted rather than guessed.
+**omitted** (recorded in the relevant ``_standard.omitted`` list), never guessed. Computer
+Science is the most-enriched flagship program (its real research areas, faculty, class
+profile, and aggregated reviews), mirroring MIT Sloan's MBAn in the reference instance —
+with the honest caveats that Columbia is permanently test-optional, that the canonical
+program set is the College Scorecard Field-of-Study list for UNITID 190150 (degree-by-CIP),
+that several graduate programs publish tuition only on bot-blocked pages and so their
+program-level tuition is omitted rather than guessed, that the Vagelos College deanship is
+in transition (so its leadership is omitted), and that the M.D. one-year earnings figure
+reflects residency stipends.
 """
 
 from __future__ import annotations
@@ -72,12 +76,8 @@ def _standard(omitted: list[str] | None = None) -> dict:
 
 
 # Institution-level fields that could NOT be verified from a citable source and are
-# therefore honestly omitted rather than guessed. Columbia does not publish a single
-# unambiguous instructional-faculty headline count; the CDS faculty grid mixes standalone
-# professional-school faculty, so the figure is omitted rather than misread.
-_OMITTED_INSTITUTION = [
-    "school_outcomes.scale.faculty_count",
-]
+# therefore honestly omitted rather than guessed.
+_OMITTED_INSTITUTION: list[str] = []
 
 # ── Institution-level data ────────────────────────────────────────────────
 # Rankings are stored as {rank, year} objects (the page renders any ranking_data entry
@@ -87,22 +87,23 @@ RANKING_DATA: dict = {
     "ownership_type": "private",
     # Columbia is accredited by the Middle States Commission on Higher Education (MSCHE).
     "accreditor": "MSCHE",
-    # Carnegie basic classification (R1).
-    "carnegie_classification": "Doctoral Universities: Very High Research Activity",
+    # Carnegie 2025 research-activity designation (the R1 tier).
+    "carnegie_classification": "Research 1: Very High Research Spending and Doctorate Production",
     # QS World University Rankings 2026: Columbia is ranked #38 worldwide.
     "qs_world_university_rankings": {"rank": 38, "year": 2026},
     # THE World University Rankings 2026: #20 in the world.
     "times_higher_education": {"rank": 20, "year": 2026},
-    # U.S. News Best Colleges (National Universities) 2026: #13 nationally.
-    "us_news_national": {"rank": 13, "year": 2026},
+    # U.S. News Best Colleges (National Universities) 2026: #15 nationally.
+    "us_news_national": {"rank": 15, "year": 2026},
 }
 
 # school_outcomes is shallow-merged into the existing JSONB; each sub-object below is
 # complete, so a shallow merge is correct. Figures are College Scorecard (UNITID 190150)
-# cross-checked against Columbia's Common Data Set 2024-25 (Columbia College + Columbia
-# Engineering) and NCES College Navigator (IPEDS) where each publishes a metric.
+# cross-checked against Columbia's Common Data Set 2024-25, "Columbia Facts 2024" (OPIR),
+# and NCES College Navigator (IPEDS) where each publishes a metric.
 SCHOOL_OUTCOMES: dict = {
-    # CDS 2024-25 (CC + SEAS): 2,325 admits / 60,247 first-year applicants = 3.86%.
+    # CDS 2024-25 (Columbia College + Columbia Engineering), item C1: 2,325 admits /
+    # 60,247 first-year applicants = 3.86% (College Scorecard reports 0.0399).
     "admit_rate": 0.0386,
     # College Scorecard average annual net price.
     "avg_net_price": 21590,
@@ -112,201 +113,237 @@ SCHOOL_OUTCOMES: dict = {
     "completion_rate_4yr_150pct": 0.961,
     # CDS 2024-25 (item B22): first-year retention (Fall 2023 cohort) = 98%.
     "retention_rate_first_year": 0.98,
-    # CDS 2024-25: six-year graduation rate (Fall 2018 cohort), all students = 96%.
+    # CDS 2024-25 (item B11): six-year graduation rate (2018 entering cohort) = 96%.
     "graduation_rate_6yr": 0.96,
     "financial_aid": {
-        # NCES College Navigator (IPEDS), 2023-24 full-time beginning undergraduates: 21%
-        # received a Pell grant; 5% took federal student loans. Columbia meets full need.
-        "pell_grant_rate": 0.21,
-        "federal_loan_rate": 0.05,
+        # College Scorecard: 22.71% of undergraduates received a Pell grant; 13.71% took
+        # federal student loans. Columbia is need-blind for U.S. applicants and meets full
+        # need with no-loan aid.
+        "pell_grant_rate": 0.2271,
+        "federal_loan_rate": 0.1371,
         # College Scorecard average annual cost of attendance.
         "cost_of_attendance": 89472,
     },
-    # Undergraduate race/ethnicity (Columbia CDS 2024-25, item B2, degree-seeking CC + SEAS
-    # undergraduates, n=6,597; shares rounded to whole percents).
+    # Undergraduate race/ethnicity (College Scorecard, UNITID 190150). "international" is
+    # the federal non-resident-alien share.
     "demographics": {
-        "white": 0.26,
-        "black": 0.08,
-        "hispanic": 0.17,
-        "asian": 0.22,
-        "two_or_more": 0.07,
-        "international": 0.16,
+        "white": 0.287,
+        "black": 0.075,
+        "hispanic": 0.154,
+        "asian": 0.187,
+        "two_or_more": 0.063,
+        "international": 0.197,
     },
-    # SAT/ACT 25th-75th percentiles of enrolled first-years (Columbia CDS 2024-25, item
-    # C9). Columbia is test-optional, so percentiles reflect only score-submitters.
+    # SAT/ACT 25th-75th percentiles of enrolled first-years (College Scorecard, UNITID
+    # 190150). Columbia is permanently test-optional, so these reflect score submitters.
     "test_scores": {
         "sat_reading_25_75": [740, 780],
         "sat_math_25_75": [770, 800],
-        "act_25_75": [34, 36],
+        "act_25_75": [34, 35],
     },
-    # Morningside Heights campus, New York City.
-    "location": {"lat": 40.8075, "lng": -73.96194},
-    "campus_basics": {"location": "Morningside Heights, New York City"},
+    # Columbia main campus, Morningside Heights, New York City (College Scorecard).
+    "location": {"lat": 40.808286, "lng": -73.961885},
+    "campus_basics": {"location": "New York, New York"},
     "scale": {
-        # faculty_count omitted (see _OMITTED_INSTITUTION).
-        # CDS 2024-25 (item I2): 6-to-1 student-faculty ratio.
+        # "Columbia Facts 2024" (OPIR): 4,787 full-time faculty, university-wide (Fall 2024).
+        "faculty_count": 4787,
+        # CDS 2024-25 (item I2): 6:1 student-faculty ratio (Columbia College + Engineering).
         "student_faculty_ratio": "6:1",
-        # Columbia News / Columbia Finance: endowment $14.8 billion at fiscal year-end
-        # June 30, 2024 (FY24, 11.5% net return).
+        # Columbia FY2024 endowment performance report: total endowment $14.8 billion at
+        # fiscal year-end June 30, 2024 (FY2024, 11.5% net return).
         "endowment_usd": 14800000000,
     },
-    # Columbia Center for Career Education "Beyond Columbia" survey, Columbia College +
-    # Columbia Engineering undergraduates, Class of 2024: 87.9% employed or in graduate
-    # school (64.1% working + 23.8% continuing education).
-    "employed_or_continuing_ed": 0.879,
-    # The industries Columbia College + Engineering graduates most commonly enter (Beyond
-    # Columbia Survey 2024 names these as the most popular); not ranked by a precise share.
+    # Columbia Center for Career Education, "Beyond Columbia" survey, Class of 2023
+    # (Columbia College + Columbia Engineering undergraduates): 89.9% employed or in
+    # graduate/professional school (combined headline; 69.7% knowledge rate).
+    "employed_or_continuing_ed": 0.899,
+    # "Beyond Columbia" Class of 2023 — top industries entered, in rank order.
     "top_employer_industries": [
-        "Internet & software",
-        "Investment banking",
-        "Investment / portfolio management",
-        "Consulting",
+        "Internet & Software",
+        "Investment Banking",
+        "Management Consulting",
+        "Investment/Portfolio Management",
+        "Healthcare",
     ],
     "research": {
         "labs": [
             "Lamont-Doherty Earth Observatory (earth & climate science)",
-            "Zuckerman Mind Brain Behavior Institute (neuroscience)",
-            "Nevis Laboratories (particle & nuclear physics)",
-            "NASA Goddard Institute for Space Studies (climate modeling)",
+            "The Mortimer B. Zuckerman Mind Brain Behavior Institute (neuroscience)",
             "Data Science Institute",
-            "Columbia Climate School",
+            "Columbia Climate School (incorporating the former Earth Institute)",
+            "Herbert Irving Comprehensive Cancer Center (NCI-designated)",
         ],
         "areas": [
-            "Earth, climate & sustainability science",
-            "Neuroscience & the mind",
-            "Physics & particle science",
-            "Economics, finance & the social sciences",
-            "Journalism, international affairs & public policy",
-            "Data science & engineering",
+            "Earth, climate & environmental science",
+            "Neuroscience & the mind-brain-behavior sciences",
+            "Data science, AI & computing",
+            "Biomedical & health sciences",
+            "Economics & the social sciences",
+            "Law, international affairs & public policy",
+            "Journalism & the arts",
         ],
         "lab_links": {
             "Lamont-Doherty Earth Observatory (earth & climate science)": (
                 "https://lamont.columbia.edu/"
             ),
-            "Zuckerman Mind Brain Behavior Institute (neuroscience)": (
+            "The Mortimer B. Zuckerman Mind Brain Behavior Institute (neuroscience)": (
                 "https://zuckermaninstitute.columbia.edu/"
             ),
             "Data Science Institute": "https://datascience.columbia.edu/",
+            "Columbia Climate School (incorporating the former Earth Institute)": (
+                "https://climate.columbia.edu/"
+            ),
         },
     },
     "campus_life": {
-        # The Lions compete in NCAA Division I as members of the Ivy League.
+        # Columbia's teams (the Lions) compete in NCAA Division I (Ivy League).
         "athletics_division": "NCAA Division I (Ivy League)",
         "mascot": "Columbia Lions (Roar-ee the Lion)",
-        "housing": "Residential housing across the Morningside Heights campus",
+        "housing": "Guaranteed undergraduate housing on the Morningside Heights campus",
         "resources": [
             {"label": "Columbia Lions Athletics", "url": "https://gocolumbialions.com/"},
-            {
-                "label": "Columbia in New York City",
-                "url": "https://www.columbia.edu/content/nyc",
-            },
+            {"label": "Columbia University Events Calendar", "url": "https://events.columbia.edu/"},
         ],
     },
     "flagship": {
-        # CDS 2024-25 total all students (Columbia College + Columbia Engineering CDS).
-        "enrollment_total": 28657,
-        # Common Data Set 2024-25 first-year admissions cycle (item C1; CC + SEAS).
+        # "Columbia Facts 2024" (OPIR): 35,769 total students (Fall 2024).
+        "enrollment_total": 35769,
+        # CDS 2024-25 first-year admissions cycle (item C1), Columbia College + Engineering.
         "applicants": 60247,
         "admits": 2325,
         "admissions_cycle": (
-            "Columbia College + Columbia Engineering, entering class fall 2024 "
-            "(Columbia Common Data Set 2024-25)"
+            "Entering class fall 2024 (Columbia College + Columbia Engineering Common Data "
+            "Set 2024-25)"
         ),
-        # Founded in 1754 as King's College by royal charter of King George II; renamed
-        # Columbia College in 1784 and Columbia University in 1896.
+        # Founded in 1754 as King's College.
         "founded_year": 1754,
     },
     "sources": [
         {
             "label": "U.S. Dept. of Education — College Scorecard (Columbia, UNITID 190150)",
-            "url": "https://collegescorecard.ed.gov/school/?190150-Columbia-University-in-the-City-of-New-York",
+            "url": "https://collegescorecard.ed.gov/school/?190150",
         },
         {
             "label": "NCES College Navigator — Columbia University (IPEDS)",
             "url": "https://nces.ed.gov/collegenavigator/?id=190150",
         },
         {
-            "label": "Columbia OPIR — Common Data Set 2024-25 (Columbia College & Engineering)",
-            "url": "https://opir.columbia.edu/cds",
+            "label": "Columbia Office of Planning and Institutional Research — Columbia Facts 2024",
+            "url": (
+                "https://opir.columbia.edu/sites/opir.columbia.edu/files/content/"
+                "Columbia%20Facts/Fact_2024.pdf"
+            ),
         },
         {
-            "label": "Columbia University endowment, fiscal 2024 ($14.8B; Columbia Finance)",
-            "url": "https://www.finance.columbia.edu/news/financial-statements-released-fiscal-2024",
+            "label": (
+                "Columbia College & Columbia Engineering — Common Data Set 2024-25"
+            ),
+            "url": (
+                "https://opir.columbia.edu/sites/opir.columbia.edu/files/content/"
+                "Common%20Data%20Set/2024-25_Columbia_College_and_Columbia_Engineering_CDS.pdf"
+            ),
         },
         {
-            "label": "QS World University Rankings 2026 — Columbia University",
+            "label": "Columbia University — FY2024 Endowment Performance ($14.8B)",
+            "url": (
+                "https://endowment.giving.columbia.edu/wp-content/uploads/2024/12/"
+                "FY2024-Columbia-Endowment-Performance.pdf"
+            ),
+        },
+        {
+            "label": "QS World University Rankings 2026 — Columbia University (#=38)",
             "url": "https://www.topuniversities.com/universities/columbia-university",
         },
         {
-            "label": (
-                "Times Higher Education World University Rankings 2026 — Columbia University"
-            ),
+            "label": "Times Higher Education World University Rankings 2026 — Columbia (#20)",
             "url": "https://www.timeshighereducation.com/world-university-rankings/columbia-university",
         },
         {
-            "label": (
-                "U.S. News Best Colleges 2026 — Columbia University (#13 National Universities)"
-            ),
+            "label": "U.S. News Best Colleges 2026 — Columbia (#15 National Universities)",
             "url": "https://www.usnews.com/best-colleges/columbia-university-2707",
         },
         {
+            "label": "Columbia Undergraduate Admissions — Financial Aid (need-blind, no-loan)",
+            "url": "https://undergrad.admissions.columbia.edu/financialaid",
+        },
+        {
             "label": (
-                "Columbia Center for Career Education — Beyond Columbia Survey 2024 (CC & SEAS)"
+                "Columbia Center for Career Education — Beyond Columbia Survey, Class of 2023 "
+                "(Columbia College & Engineering)"
             ),
-            "url": "https://www.careereducation.columbia.edu/sites/default/files/2025-04/2024-bcs-cc-seas-ug.pdf",
+            "url": (
+                "https://www.careereducation.columbia.edu/sites/default/files/"
+                "2023%20BCS--CC%20&%20SEAS-UG.pdf"
+            ),
+        },
+        {
+            "label": "Carnegie Classifications — Columbia University (Research 1)",
+            "url": (
+                "https://carnegieclassifications.acenet.edu/institution/"
+                "columbia-university-in-the-city-of-new-york/"
+            ),
         },
     ],
 }
 
-# student_body_size is the undergraduate count (the page labels it "Undergraduates"); the
-# total (28,657) lives in flagship.enrollment_total and renders as "Total enrollment".
-# 8,344 = CDS 2024-25 total undergraduate students (Columbia College + Engineering + GS).
-UNDERGRAD_COUNT = 8344
+# student_body_size is the undergraduate count (the page labels it "Undergraduates");
+# the total (35,769) lives in flagship.enrollment_total and renders as "Total enrollment".
+# 9,359 = "Columbia Facts 2024" (OPIR) bachelor's/undergraduate enrollment, Fall 2024.
+UNDERGRAD_COUNT = 9359
 
 DESCRIPTION = (
-    "Founded in 1754 as King's College by royal charter of King George II, Columbia "
-    "University is a private Ivy League research university in the Morningside Heights "
-    "neighborhood of New York City — the oldest institution of higher education in New "
-    "York and the fifth-oldest in the United States. It enrolls about 8,300 undergraduates "
-    "and roughly 20,000 graduate and professional students, some 28,700 in all, pairing "
-    "the resources of a major research university with the opportunities of New York "
-    "City.\n\n"
-    "Columbia College awards the B.A. anchored by the Core Curriculum, and the university "
-    "spans the Fu Foundation School of Engineering and Applied Science and a celebrated "
-    "set of professional schools — among them Columbia Business School, the Law School, "
-    "the Vagelos College of Physicians and Surgeons, the School of International and "
-    "Public Affairs, the Mailman School of Public Health, the Journalism School (which "
-    "administers the Pulitzer Prizes), and Teachers College. Its research reaches from "
-    "the Lamont-Doherty Earth Observatory and the NASA Goddard Institute for Space "
-    "Studies to the Zuckerman Mind Brain Behavior Institute.\n\n"
-    "Columbia ranks among the world's leading universities: No. 13 among national "
+    "Founded in 1754 as King's College by royal charter of George II, Columbia is a "
+    "private Ivy League research university in the Morningside Heights neighborhood of "
+    "Upper Manhattan — the oldest institution of higher education in New York and the "
+    "fifth-oldest in the United States. It enrolls about 9,400 undergraduates and roughly "
+    "26,000 graduate and professional students, some 35,800 in all, and pairs the famous "
+    "Core Curriculum of its undergraduate colleges — a 6:1 student-faculty ratio — with the "
+    "research depth of a major university and its 4,787 full-time faculty.\n\n"
+    "Columbia's undergraduate enterprise is shared by Columbia College and The Fu "
+    "Foundation School of Engineering and Applied Science, and the university is organized "
+    "into a set of renowned graduate and professional schools — among them the Business "
+    "School, the Law School, the Vagelos College of Physicians and Surgeons (the first U.S. "
+    "school to grant the M.D.), the Journalism School (which administers the Pulitzer "
+    "Prizes), the School of International and Public Affairs, the Mailman School of Public "
+    "Health, the School of Social Work (the oldest in the country), the Graduate School of "
+    "Architecture, Planning and Preservation, and the School of the Arts. Columbia's "
+    "research is anchored by the Lamont-Doherty Earth Observatory, the Zuckerman Institute "
+    "for neuroscience, the Data Science Institute, and the Columbia Climate School.\n\n"
+    "Columbia ranks among the very best universities in the world: No. 15 among national "
     "universities by U.S. News, No. 20 in the world by Times Higher Education, and No. 38 "
-    "by QS. It admits under 4% of first-year applicants and is backed by a $14.8 billion "
-    "endowment.\n\n"
-    "Columbia is need-blind for domestic first-year applicants and meets 100% of "
-    "demonstrated financial need: the average net price is about $21,600 a year, 21% of "
-    "undergraduates receive Pell grants, and only 5% take federal student loans. Among "
-    "the Columbia College and Engineering Class of 2024, 87.9% were employed or in "
-    "graduate school within six months of graduation."
+    "by QS. It admits under 4% of first-year applicants to its undergraduate colleges and "
+    "manages a $14.8 billion endowment (June 2024).\n\n"
+    "Columbia is need-blind for U.S. applicants and meets 100% of demonstrated financial "
+    "need with grants, not loans: the average net price is about $21,600 a year, 23% of "
+    "undergraduates receive Pell grants, and the university is permanently test-optional. "
+    "Among the Columbia College and Engineering Class of 2023, 89.9% were employed or had "
+    "entered graduate or professional school within six months of graduation."
 )
 
-# ── The real degree-granting schools modelled in this partial (display order) ──
-_COLLEGE = "Columbia College"
+# ── The real degree-granting schools (display order) ───────────────────────
+_CC = "Columbia College"
 _SEAS = "The Fu Foundation School of Engineering and Applied Science"
 _CBS = "Columbia Business School"
+_LAW = "Columbia Law School"
+_PS = "Vagelos College of Physicians and Surgeons"
+_JOUR = "Columbia Journalism School"
 _SIPA = "School of International and Public Affairs"
-_JOURNALISM = "Columbia Journalism School"
+_MAILMAN = "Mailman School of Public Health"
+_SSW = "Columbia School of Social Work"
+_GSAPP = "Graduate School of Architecture, Planning and Preservation"
+_ARTS = "Columbia School of the Arts"
+_NURSING = "Columbia School of Nursing"
 
 SCHOOLS: list[dict] = [
     {
-        "name": _COLLEGE,
+        "name": _CC,
         "sort_order": 1,
         "description": (
             "Columbia College, founded in 1754 as King's College, is the university's "
-            "oldest undergraduate school. Built around the Core Curriculum — a shared "
-            "sequence in literature, philosophy, history, science and the arts — it awards "
-            "the B.A. across the humanities, social sciences and sciences and is the "
-            "historic heart of the university."
+            "oldest undergraduate college and the original core of Columbia. It awards the "
+            "B.A. across the liberal arts and sciences, and every student completes the "
+            "Core Curriculum — Columbia's signature sequence of shared courses in literature, "
+            "philosophy, art, music, science and writing."
         ),
     },
     {
@@ -314,163 +351,344 @@ SCHOOLS: list[dict] = [
         "sort_order": 2,
         "description": (
             "The Fu Foundation School of Engineering and Applied Science (Columbia "
-            "Engineering), founded in 1864 as the School of Mines, is the university's "
-            "engineering and applied-science school. It awards the B.S., M.S. and Ph.D. "
-            "across computer science, electrical and mechanical engineering, operations "
-            "research, and the applied sciences, in the heart of New York City."
+            "Engineering), with roots in the 1864 School of Mines, is Columbia's school of "
+            "engineering and applied science. It awards the B.S., M.S., and doctoral degrees "
+            "across computer science, the engineering disciplines and applied mathematics, "
+            "and its undergraduates share the Core Curriculum with Columbia College."
         ),
     },
     {
         "name": _CBS,
         "sort_order": 3,
         "description": (
-            "Founded in 1916, Columbia Business School educates business leaders at the "
-            "very center of business. It awards the full-time MBA, the Executive MBA, "
-            "specialized master's degrees and the Ph.D., and is distinguished by its New "
-            "York City location, value-investing tradition and a curriculum that pairs a "
-            "rigorous core with deep engagement in the city's industries."
+            "Founded in 1916, Columbia Business School educates leaders at the intersection "
+            "of academic theory and real-world practice ('the very business of business'), "
+            "drawing on its New York City location. It awards the full-time MBA, the "
+            "Executive MBA, specialized master's degrees and the Ph.D."
+        ),
+    },
+    {
+        "name": _LAW,
+        "sort_order": 4,
+        "description": (
+            "Columbia Law School, founded in 1858, is one of the most influential law "
+            "schools in the United States. It awards the J.D., the LL.M. and the J.S.D. "
+            "research doctorate, with particular strength in corporate, constitutional and "
+            "international law."
+        ),
+    },
+    {
+        "name": _PS,
+        "sort_order": 5,
+        "description": (
+            "The Vagelos College of Physicians and Surgeons, founded in 1767, was the first "
+            "institution in the American colonies to confer the M.D. degree. Part of "
+            "Columbia University Irving Medical Center, it awards the M.D. and M.D.-Ph.D. "
+            "and is a leading center of biomedical research."
+        ),
+    },
+    {
+        "name": _JOUR,
+        "sort_order": 6,
+        "description": (
+            "Endowed by Joseph Pulitzer and opened in 1912, the Columbia Journalism School "
+            "is the only Ivy League journalism school. It awards the M.S., M.A. and Ph.D. in "
+            "journalism, and administers the Pulitzer Prizes."
         ),
     },
     {
         "name": _SIPA,
-        "sort_order": 4,
+        "sort_order": 7,
         "description": (
-            "The School of International and Public Affairs (SIPA), founded in 1946, "
-            "educates leaders in public policy and global affairs. It awards the Master of "
-            "Public Administration, the Master of International Affairs and doctoral "
-            "degrees, drawing on Columbia's research depth and New York's role as a global "
-            "and diplomatic capital."
+            "The School of International and Public Affairs, founded in 1946, prepares "
+            "leaders for public service, international affairs and policy. It awards the "
+            "Master of International Affairs (MIA), the Master of Public Administration (MPA) "
+            "and doctoral degrees, anchored by centers such as the Center on Global Energy "
+            "Policy."
         ),
     },
     {
-        "name": _JOURNALISM,
-        "sort_order": 5,
+        "name": _MAILMAN,
+        "sort_order": 8,
         "description": (
-            "The Columbia Journalism School, founded in 1912 from a bequest of Joseph "
-            "Pulitzer, is the only Ivy League journalism school and administers the "
-            "Pulitzer Prizes. It awards the Master of Science and Master of Arts in "
-            "journalism and is among the most influential schools of journalism in the "
-            "world."
+            "Founded in 1922, the Mailman School of Public Health awards the accredited MPH, "
+            "the M.S., the Dr.P.H. and the Ph.D. across biostatistics, epidemiology, "
+            "environmental health sciences, health policy and management, and population and "
+            "family health."
+        ),
+    },
+    {
+        "name": _SSW,
+        "sort_order": 9,
+        "description": (
+            "The Columbia School of Social Work, founded in 1898, is the oldest school of "
+            "social work in the United States. It awards the Master of Science in Social Work "
+            "(MSW) and the Ph.D., with strengths in clinical practice and social policy."
+        ),
+    },
+    {
+        "name": _GSAPP,
+        "sort_order": 10,
+        "description": (
+            "The Graduate School of Architecture, Planning and Preservation (Columbia "
+            "GSAPP), founded in 1881, awards the Master of Architecture and degrees in urban "
+            "planning, historic preservation, urban design and real estate development. It is "
+            "a leading center of architectural thought."
+        ),
+    },
+    {
+        "name": _ARTS,
+        "sort_order": 11,
+        "description": (
+            "The Columbia School of the Arts, established in 1965, is a graduate arts school "
+            "awarding the Master of Fine Arts in film, theatre, visual arts and writing, and "
+            "the M.A. in film and media studies — embedded in a major research university in "
+            "New York City."
+        ),
+    },
+    {
+        "name": _NURSING,
+        "sort_order": 12,
+        "description": (
+            "Columbia School of Nursing, founded in 1892, was among the first to base "
+            "nursing education on a scientific model. Part of Columbia University Irving "
+            "Medical Center, it awards the Master's Direct Entry (MDE), the Doctor of Nursing "
+            "Practice (DNP) and the Ph.D. across advanced-practice specialties."
         ),
     },
 ]
 
 # Each school's official website (verified to resolve at author time).
 _SCHOOL_WEBSITE: dict[str, str] = {
-    _COLLEGE: "https://www.college.columbia.edu/",
+    _CC: "https://www.college.columbia.edu/",
     _SEAS: "https://www.engineering.columbia.edu/",
     _CBS: "https://business.columbia.edu/",
+    _LAW: "https://www.law.columbia.edu/",
+    _PS: "https://www.vagelos.columbia.edu/",
+    _JOUR: "https://journalism.columbia.edu/",
     _SIPA: "https://www.sipa.columbia.edu/",
-    _JOURNALISM: "https://journalism.columbia.edu/",
+    _MAILMAN: "https://www.publichealth.columbia.edu/",
+    _SSW: "https://socialwork.columbia.edu/",
+    _GSAPP: "https://www.arch.columbia.edu/",
+    _ARTS: "https://arts.columbia.edu/",
+    _NURSING: "https://www.nursing.columbia.edu/",
 }
 
 # Rich, sourced About-tab content per school. Deans + titles are quoted from each school's
-# official leadership page / the Office of the President (verified 2026-06-10). Founding
-# years come from each school's official history. Notable-faculty rosters are not published
-# uniformly per school and are omitted rather than hand-picked (recorded in _ABOUT_OMITTED).
+# official leadership page (verified 2026-06-10). Founding years come from each school's
+# official history/about page. Notable-faculty rosters are not published uniformly per
+# school and are omitted rather than hand-picked (recorded in _ABOUT_OMITTED). The Vagelos
+# College deanship is in active transition (no confirmed current dean), so its leadership
+# is omitted.
 _ABOUT_DETAIL: dict[str, dict] = {
-    _COLLEGE: {
+    _CC: {
         "founded": 1754,
         "leadership": (
             "Josef Sorett — Dean of Columbia College and Vice President for Undergraduate "
-            "Education"
+            "Education (Henry L. and Lucy G. Moses Professor)"
         ),
-        "research_centers": [
-            "The Core Curriculum",
-            "Center for the Core Curriculum",
-            "Undergraduate Research and Fellowships",
-        ],
-        "named_for": "Originally King's College (1754); renamed Columbia College in 1784",
         "source": {
-            "label": "Columbia College — Office of the Dean (Josef Sorett)",
+            "label": "Columbia College — Office of the Dean",
             "url": "https://www.college.columbia.edu/about/dean-josef-sorett",
         },
     },
     _SEAS: {
         "founded": 1864,
         "leadership": (
-            "Shih-Fu Chang — Dean of Columbia Engineering and Morris A. and Alma Schapiro "
-            "Professor"
+            "Shih-Fu Chang — Dean of Columbia Engineering (Morris A. and Alma Schapiro "
+            "Professor of Engineering)"
         ),
         "research_centers": [
             "Data Science Institute",
             "Columbia Nano Initiative",
-            "Fu Foundation laboratories across computer science and engineering",
         ],
-        "named_for": "The Fu Foundation (1997 naming gift); founded 1864 as the School of Mines",
         "source": {
-            "label": "Columbia Engineering — Dean Shih-Fu Chang",
-            "url": "https://www.engineering.columbia.edu/faculty-staff/directory/dean-shih-fu-chang",
+            "label": "Columbia Engineering — Office of the Dean",
+            "url": (
+                "https://www.engineering.columbia.edu/faculty-staff/directory/"
+                "dean-shih-fu-chang"
+            ),
         },
     },
     _CBS: {
         "founded": 1916,
         "leadership": (
-            "Costis Maglaras — Dean and David and Lyn Silfen Professor of Business"
+            "Costis Maglaras — David and Lyn Silfen Professor of Business and Dean"
         ),
         "research_centers": [
             "Heilbrunn Center for Graham & Dodd Investing",
-            "Eugene Lang Entrepreneurship Center",
+            "Tamer Institute for Social Enterprise and Climate Change",
             "Chazen Institute for Global Business",
         ],
         "source": {
-            "label": "Columbia Business School — Leadership (Dean Costis Maglaras)",
+            "label": "Columbia Business School — Leadership",
             "url": "https://business.columbia.edu/about-us/leadership",
+        },
+    },
+    _LAW: {
+        "founded": 1858,
+        "leadership": ("Daniel Abebe — Dean and Lucy G. Moses Professor of Law"),
+        "research_centers": [
+            "Sabin Center for Climate Change Law",
+            "Knight First Amendment Institute at Columbia University",
+        ],
+        "source": {
+            "label": "Columbia Law School — About the Dean",
+            "url": "https://www.law.columbia.edu/community-life/welcome/about-dean",
+        },
+    },
+    _PS: {
+        "founded": 1767,
+        "research_centers": [
+            "Herbert Irving Comprehensive Cancer Center",
+            "Vagelos Institute for Basic Biomedical Research",
+        ],
+        "source": {
+            "label": "Vagelos College of Physicians and Surgeons — Leadership",
+            "url": (
+                "https://www.vagelos.columbia.edu/about-us/explore-vp-s/"
+                "leadership-and-administration"
+            ),
+        },
+    },
+    _JOUR: {
+        "founded": 1912,
+        "leadership": (
+            "Jelani Cobb — Dean and Henry R. Luce Professor of Journalism"
+        ),
+        "research_centers": [
+            "Tow Center for Digital Journalism",
+            "Brown Institute for Media Innovation",
+            "Dart Center for Journalism and Trauma",
+        ],
+        "source": {
+            "label": "Columbia Journalism School — Meet the Dean",
+            "url": "https://journalism.columbia.edu/meet-the-dean",
         },
     },
     _SIPA: {
         "founded": 1946,
-        "leadership": "Keren Yarhi-Milo — Dean of Columbia SIPA",
+        "leadership": (
+            "Keren Yarhi-Milo — Dean of the School of International and Public Affairs "
+            "(Adlai E. Stevenson Professor of International Relations)"
+        ),
         "research_centers": [
             "Center on Global Energy Policy",
-            "Saltzman Institute of War and Peace Studies",
-            "Center for Development Economics and Policy",
+            "Arnold A. Saltzman Institute of War and Peace Studies",
         ],
         "source": {
-            "label": "Columbia SIPA — Dean Keren Yarhi-Milo",
-            "url": "https://www.sipa.columbia.edu/communities-connections/faculty/keren-yarhi-milo",
+            "label": "SIPA — Dean's Office",
+            "url": (
+                "https://www.sipa.columbia.edu/about/"
+                "deans-office-administrative-leadership"
+            ),
         },
     },
-    _JOURNALISM: {
-        "founded": 1912,
-        "leadership": "Jelani Cobb — Dean of the Columbia Journalism School",
+    _MAILMAN: {
+        "founded": 1922,
+        "leadership": ("Jonathan Mermin — Dean of the Columbia Mailman School of Public Health"),
         "research_centers": [
-            "The Pulitzer Prizes",
-            "Tow Center for Digital Journalism",
-            "Columbia Journalism Review",
+            "ICAP at Columbia University",
+            "Robert N. Butler Columbia Aging Center",
         ],
-        "named_for": "Endowed by a bequest of Joseph Pulitzer",
         "source": {
-            "label": "Columbia Journalism School — Dean Jelani Cobb",
-            "url": "https://journalism.columbia.edu/dean-jelani-cobb",
+            "label": "Mailman School of Public Health — University Announces Next Dean",
+            "url": (
+                "https://www.publichealth.columbia.edu/news/"
+                "university-announces-next-columbia-mailman-school-dean"
+            ),
+        },
+    },
+    _SSW: {
+        "founded": 1898,
+        "leadership": ("Melissa D. Begg — Dean and Professor, Columbia School of Social Work"),
+        "source": {
+            "label": "Columbia School of Social Work — Welcome from the Dean",
+            "url": "https://socialwork.columbia.edu/content/welcome-dean",
+        },
+    },
+    _GSAPP: {
+        "founded": 1881,
+        "leadership": ("Andrés Jaque — Dean and Professor, Columbia GSAPP"),
+        "research_centers": [
+            "Temple Hoyne Buell Center for the Study of American Architecture",
+            "Center for Spatial Research",
+        ],
+        "source": {
+            "label": "Columbia GSAPP — Dean's Office",
+            "url": "https://www.arch.columbia.edu/deans-office",
+        },
+    },
+    _ARTS: {
+        "founded": 1965,
+        "leadership": ("Sarah Cole — Dean of the School of the Arts"),
+        "research_centers": [
+            "Lenfest Center for the Arts",
+            "Columbia University Film Festival",
+        ],
+        "source": {
+            "label": "Columbia School of the Arts — Dean's Office",
+            "url": "https://arts.columbia.edu/deans-office",
+        },
+    },
+    _NURSING: {
+        "founded": 1892,
+        "leadership": (
+            "Lorraine Frazier — Dean and Mary O'Neil Mundinger Professor (Senior Vice "
+            "President, Columbia University Irving Medical Center)"
+        ),
+        "source": {
+            "label": "Columbia School of Nursing — Leadership",
+            "url": "https://www.nursing.columbia.edu/about-us/leadership",
         },
     },
 }
 
 # About-detail fields omitted per school (verified-unavailable), recorded in each school's
-# _standard.omitted. Notable-faculty rosters are omitted for every school.
+# _standard.omitted. Notable-faculty rosters are omitted for every school. Columbia College,
+# Social Work and Nursing additionally omit a distinct school-owned research center (none
+# could be confirmed with an official name from a first-party page). The Vagelos College
+# additionally omits leadership (the deanship is in transition with no confirmed dean).
 _FACULTY_OMIT = ["about_detail.faculty"]
 _ABOUT_OMITTED: dict[str, list[str]] = {
-    _COLLEGE: list(_FACULTY_OMIT),
+    _CC: [*_FACULTY_OMIT, "about_detail.research_centers"],
     _SEAS: list(_FACULTY_OMIT),
     _CBS: list(_FACULTY_OMIT),
+    _LAW: list(_FACULTY_OMIT),
+    _PS: [*_FACULTY_OMIT, "about_detail.leadership"],
+    _JOUR: list(_FACULTY_OMIT),
     _SIPA: list(_FACULTY_OMIT),
-    _JOURNALISM: list(_FACULTY_OMIT),
+    _MAILMAN: list(_FACULTY_OMIT),
+    _SSW: [*_FACULTY_OMIT, "about_detail.research_centers"],
+    _GSAPP: list(_FACULTY_OMIT),
+    _ARTS: list(_FACULTY_OMIT),
+    _NURSING: [*_FACULTY_OMIT, "about_detail.research_centers"],
 }
 
 # ── Channel feeds + official social links ──────────────────────────────────
+# Institution-wide socials (official Columbia handles, from the Columbia social-media
+# directory) + the Columbia News page. The YouTube channel and a documented RSS feed URL
+# could not be confirmed and are omitted rather than guessed.
 _INSTITUTION_CONTENT: dict = {
     "news_url": "https://news.columbia.edu",
     "social": {
         "instagram": "https://www.instagram.com/columbia/",
         "linkedin": "https://www.linkedin.com/school/columbia-university/",
-        "x": "https://x.com/Columbia",
-        "youtube": "https://www.youtube.com/user/Columbia",
-        "facebook": "https://www.facebook.com/columbia",
+        "x": "https://x.com/columbia",
+        "facebook": "https://www.facebook.com/columbia/",
     },
 }
 
-# Columbia Business School keyword-relevant feed (the flagship program).
+# Computer Science keyword-relevant feed (a flagship program), inheriting the
+# institution socials.
+_CS_CONTENT: dict = {
+    "news_url": "https://news.columbia.edu",
+    "keywords": ["computer science", "columbia cs", "artificial intelligence", "data science"],
+    "social": _INSTITUTION_CONTENT["social"],
+}
+
+# Columbia Business School keyword-relevant feed (the MBA flagship), with the school's own
+# official social handles.
 _MBA_CONTENT: dict = {
     "news_url": "https://business.columbia.edu/insights",
     "keywords": ["columbia business school", "mba", "finance", "value investing", "new york"],
@@ -483,31 +701,34 @@ _MBA_CONTENT: dict = {
     },
 }
 
+# Programs that carry their own keyword-relevant feed (the two deep flagships); every other
+# catalog program surfaces the institution feed and records content_sources as omitted.
+_PROGRAM_CONTENT: dict[str, dict] = {
+    "columbia-computer-science-bs": _CS_CONTENT,
+    "columbia-mba": _MBA_CONTENT,
+}
+
 # ── The program catalog (real majors/degrees, organized by school) ─────────
-# slug = idempotency key. Programs are mapped to their owning school from Columbia's
-# official structure. Undergraduate majors and the engineering/affairs/journalism master's
-# come from the College Scorecard Field-of-Study list for UNITID 190150 (the deterministic
-# federal view); the Columbia Business School MBA (the flagship) is added from the school's
-# own catalog with its published employment report. Graduate degrees use the generic
-# ``masters`` type with the real degree name carried in the program name.
+# slug = idempotency key. Every program is mapped to its owning school from Columbia's
+# official structure. The program set is built from the College Scorecard Field-of-Study
+# list for UNITID 190150 (the deterministic federal view, degree-by-CIP). Graduate degrees
+# use the generic ``masters`` type with the real degree name carried in the program name
+# (professional doctorates J.D. and M.D. are modelled as ``masters`` to match the platform
+# enum, with the degree named in the title).
 PROGRAMS: list[dict] = [
     # ── Columbia College (undergraduate B.A. majors) ──
     {
-        "slug": "columbia-economics-bs",
-        "school": _COLLEGE,
+        "slug": "columbia-economics-ba",
+        "school": _CC,
         "program_name": "Economics",
         "degree_type": "bachelors",
         "cip": "45.06",
         "duration_months": 48,
-        "description": (
-            "Economics — micro and macroeconomic theory, econometrics and applied "
-            "economics, with combined majors across mathematics, statistics and political "
-            "science."
-        ),
+        "description": "Economics — micro, macro, econometrics and economic history.",
     },
     {
-        "slug": "columbia-political-science-bs",
-        "school": _COLLEGE,
+        "slug": "columbia-political-science-ba",
+        "school": _CC,
         "program_name": "Political Science",
         "degree_type": "bachelors",
         "cip": "45.10",
@@ -518,24 +739,51 @@ PROGRAMS: list[dict] = [
         ),
     },
     {
-        "slug": "columbia-psychology-bs",
-        "school": _COLLEGE,
-        "program_name": "Psychology",
-        "degree_type": "bachelors",
-        "cip": "42.27",
-        "duration_months": 48,
-        "description": "Psychology — cognitive, developmental, social and neural science.",
-    },
-    {
-        "slug": "columbia-history-bs",
-        "school": _COLLEGE,
+        "slug": "columbia-history-ba",
+        "school": _CC,
         "program_name": "History",
         "degree_type": "bachelors",
         "cip": "54.01",
         "duration_months": 48,
         "description": "History — the study of the human past across periods and regions.",
     },
-    # ── Columbia Engineering (SEAS) ──
+    {
+        "slug": "columbia-english-ba",
+        "school": _CC,
+        "program_name": "English and Comparative Literature",
+        "degree_type": "bachelors",
+        "cip": "23.01",
+        "duration_months": 48,
+        "description": "English and comparative literature — literature, criticism and writing.",
+    },
+    {
+        "slug": "columbia-psychology-ba",
+        "school": _CC,
+        "program_name": "Psychology",
+        "degree_type": "bachelors",
+        "cip": "42.27",
+        "duration_months": 48,
+        "description": "Psychology — cognitive, developmental, social and clinical science.",
+    },
+    {
+        "slug": "columbia-sociology-ba",
+        "school": _CC,
+        "program_name": "Sociology",
+        "degree_type": "bachelors",
+        "cip": "45.11",
+        "duration_months": 48,
+        "description": "Sociology — social structure, inequality and the study of society.",
+    },
+    {
+        "slug": "columbia-biology-ba",
+        "school": _CC,
+        "program_name": "Biology",
+        "degree_type": "bachelors",
+        "cip": "26.01",
+        "duration_months": 48,
+        "description": "Biology — molecular, cellular and organismal biology and genetics.",
+    },
+    # ── The Fu Foundation School of Engineering and Applied Science (undergraduate) ──
     {
         "slug": "columbia-computer-science-bs",
         "school": _SEAS,
@@ -544,110 +792,221 @@ PROGRAMS: list[dict] = [
         "cip": "11.07",
         "duration_months": 48,
         "description": (
-            "Computer science — algorithms, systems, machine learning and the theory and "
-            "applications of computation, offered through Columbia Engineering."
+            "Columbia's flagship computing major — offered as the B.S. (Columbia "
+            "Engineering) and the B.A. (Columbia College), spanning AI, machine learning, "
+            "systems, theory and graphics through the Department of Computer Science."
         ),
     },
     {
+        "slug": "columbia-operations-research-bs",
+        "school": _SEAS,
+        "program_name": "Operations Research",
+        "degree_type": "bachelors",
+        "cip": "14.37",
+        "duration_months": 48,
+        "description": (
+            "Operations research — optimization, stochastic modeling and analytics in the "
+            "Department of Industrial Engineering and Operations Research."
+        ),
+    },
+    {
+        "slug": "columbia-mechanical-engineering-bs",
+        "school": _SEAS,
+        "program_name": "Mechanical Engineering",
+        "degree_type": "bachelors",
+        "cip": "14.19",
+        "duration_months": 48,
+        "description": (
+            "Mechanical engineering — mechanics, thermofluids, robotics and design."
+        ),
+    },
+    {
+        "slug": "columbia-electrical-engineering-bs",
+        "school": _SEAS,
+        "program_name": "Electrical Engineering",
+        "degree_type": "bachelors",
+        "cip": "14.10",
+        "duration_months": 48,
+        "description": (
+            "Electrical engineering — circuits, signals, devices, communications and systems."
+        ),
+    },
+    {
+        "slug": "columbia-applied-mathematics-bs",
+        "school": _SEAS,
+        "program_name": "Applied Mathematics",
+        "degree_type": "bachelors",
+        "cip": "27.03",
+        "duration_months": 48,
+        "description": (
+            "Applied mathematics — modeling, analysis and computation in the Department of "
+            "Applied Physics and Applied Mathematics."
+        ),
+    },
+    {
+        "slug": "columbia-biomedical-engineering-bs",
+        "school": _SEAS,
+        "program_name": "Biomedical Engineering",
+        "degree_type": "bachelors",
+        "cip": "14.05",
+        "duration_months": 48,
+        "description": (
+            "Biomedical engineering — engineering principles applied to medicine and biology."
+        ),
+    },
+    # ── The Fu Foundation School of Engineering and Applied Science (graduate) ──
+    {
         "slug": "columbia-computer-science-ms",
         "school": _SEAS,
-        "program_name": "Master of Science in Computer Science",
+        "program_name": "Master of Science in Computer Science (M.S.)",
         "degree_type": "masters",
         "cip": "11.07",
         "duration_months": 18,
         "description": (
-            "The M.S. in Computer Science — a track-based professional master's spanning "
-            "machine learning, systems, security, vision, NLP and foundations of CS."
+            "The 30-point M.S. in Computer Science — advanced study across tracks such as "
+            "machine learning, systems, vision, NLP, security and theory."
         ),
     },
-    {
-        "slug": "columbia-electrical-engineering-ms",
-        "school": _SEAS,
-        "program_name": "Master of Science in Electrical Engineering",
-        "degree_type": "masters",
-        "cip": "14.10",
-        "duration_months": 18,
-        "description": (
-            "The M.S. in Electrical Engineering — signal processing, communications, "
-            "circuits, devices and machine learning systems."
-        ),
-    },
-    {
-        "slug": "columbia-mechanical-engineering-ms",
-        "school": _SEAS,
-        "program_name": "Master of Science in Mechanical Engineering",
-        "degree_type": "masters",
-        "cip": "14.19",
-        "duration_months": 18,
-        "description": (
-            "The M.S. in Mechanical Engineering — robotics, controls, energy, "
-            "micro/nanoscale systems and mechanics."
-        ),
-    },
-    {
-        "slug": "columbia-management-science-ms",
-        "school": _SEAS,
-        "program_name": "Master of Science in Management Science and Engineering",
-        "degree_type": "masters",
-        "cip": "52.13",
-        "duration_months": 18,
-        "description": (
-            "The M.S. in Management Science and Engineering — optimization, stochastic "
-            "modeling and analytics for finance, operations and technology, from the "
-            "Department of Industrial Engineering and Operations Research."
-        ),
-    },
-    # ── Columbia Business School (the flagship) ──
+    # ── Columbia Business School ──
     {
         "slug": "columbia-mba",
         "school": _CBS,
         "program_name": "Master of Business Administration (MBA)",
         "degree_type": "masters",
         "cip": "52.02",
-        "duration_months": 20,
-        "description": (
-            "Columbia Business School's flagship full-time MBA — a rigorous core paired "
-            "with deep engagement in New York's industries and a celebrated value-investing "
-            "and entrepreneurship tradition, set at the very center of business."
-        ),
-    },
-    # ── School of International and Public Affairs (SIPA) ──
-    {
-        "slug": "columbia-public-administration-mpa",
-        "school": _SIPA,
-        "program_name": "Master of Public Administration (MPA)",
-        "degree_type": "masters",
-        "cip": "44.04",
         "duration_months": 24,
         "description": (
-            "The two-year Master of Public Administration — policy analysis, economics, "
-            "management and a professional concentration for leadership in public service."
+            "The full-time, two-year MBA — connecting academic theory to real-world "
+            "practice from the heart of New York City."
         ),
     },
+    # ── Columbia Law School ──
     {
-        "slug": "columbia-international-affairs-mia",
+        "slug": "columbia-jd",
+        "school": _LAW,
+        "program_name": "Juris Doctor (J.D.)",
+        "degree_type": "masters",
+        "cip": "22.01",
+        "duration_months": 36,
+        "description": (
+            "The three-year Juris Doctor — Columbia Law School's professional law degree, "
+            "with strength in corporate, constitutional and international law."
+        ),
+    },
+    # ── Vagelos College of Physicians and Surgeons ──
+    {
+        "slug": "columbia-md",
+        "school": _PS,
+        "program_name": "Doctor of Medicine (M.D.)",
+        "degree_type": "masters",
+        "cip": "51.12",
+        "duration_months": 48,
+        "description": (
+            "The four-year Doctor of Medicine — awarded by the first U.S. medical school to "
+            "confer the M.D., at Columbia University Irving Medical Center."
+        ),
+    },
+    # ── Columbia Journalism School ──
+    {
+        "slug": "columbia-journalism-ms",
+        "school": _JOUR,
+        "program_name": "Master of Science in Journalism (M.S.)",
+        "degree_type": "masters",
+        "cip": "09.04",
+        "duration_months": 10,
+        "description": (
+            "The Master of Science in Journalism — the flagship reporting degree of the only "
+            "Ivy League journalism school, which administers the Pulitzer Prizes."
+        ),
+    },
+    # ── School of International and Public Affairs ──
+    {
+        "slug": "columbia-sipa-mia",
         "school": _SIPA,
         "program_name": "Master of International Affairs (MIA)",
         "degree_type": "masters",
         "cip": "45.09",
         "duration_months": 24,
         "description": (
-            "The two-year Master of International Affairs — international security, "
-            "development, economic policy and regional studies for careers in global "
-            "affairs."
+            "The two-year Master of International Affairs — policy, security and development "
+            "for careers in international and public affairs."
         ),
     },
-    # ── Columbia Journalism School ──
     {
-        "slug": "columbia-journalism-ms",
-        "school": _JOURNALISM,
-        "program_name": "Master of Science in Journalism",
+        "slug": "columbia-sipa-mpa",
+        "school": _SIPA,
+        "program_name": "Master of Public Administration (MPA)",
         "degree_type": "masters",
-        "cip": "09.04",
-        "duration_months": 10,
+        "cip": "44.04",
+        "duration_months": 24,
         "description": (
-            "The Master of Science in Journalism — Columbia's signature reporting degree, "
-            "an intensive program in reporting, writing and multimedia journalism."
+            "The two-year Master of Public Administration — management and policy analysis "
+            "for public-service and policy leadership."
+        ),
+    },
+    # ── Mailman School of Public Health ──
+    {
+        "slug": "columbia-public-health-mph",
+        "school": _MAILMAN,
+        "program_name": "Master of Public Health (MPH)",
+        "degree_type": "masters",
+        "cip": "51.22",
+        "duration_months": 24,
+        "description": (
+            "The accredited Master of Public Health — biostatistics, epidemiology, "
+            "environmental health, health policy and population health."
+        ),
+    },
+    # ── Columbia School of Social Work ──
+    {
+        "slug": "columbia-social-work-msw",
+        "school": _SSW,
+        "program_name": "Master of Science in Social Work (MSW)",
+        "degree_type": "masters",
+        "cip": "44.07",
+        "duration_months": 24,
+        "description": (
+            "The Master of Science in Social Work — clinical practice and social policy at "
+            "the oldest school of social work in the United States."
+        ),
+    },
+    # ── Graduate School of Architecture, Planning and Preservation ──
+    {
+        "slug": "columbia-architecture-march",
+        "school": _GSAPP,
+        "program_name": "Master of Architecture (M.Arch)",
+        "degree_type": "masters",
+        "cip": "04.02",
+        "duration_months": 36,
+        "description": (
+            "The three-year professional Master of Architecture — Columbia GSAPP's flagship "
+            "design degree."
+        ),
+    },
+    # ── Columbia School of the Arts ──
+    {
+        "slug": "columbia-arts-mfa",
+        "school": _ARTS,
+        "program_name": "Master of Fine Arts (MFA)",
+        "degree_type": "masters",
+        "cip": "50.06",
+        "duration_months": 24,
+        "description": (
+            "The Master of Fine Arts — Columbia's terminal arts degree in film, theatre, "
+            "visual arts or writing."
+        ),
+    },
+    # ── Columbia School of Nursing ──
+    {
+        "slug": "columbia-nursing-msn",
+        "school": _NURSING,
+        "program_name": "Master's Direct Entry Program in Nursing (MDE)",
+        "degree_type": "masters",
+        "cip": "51.38",
+        "duration_months": 15,
+        "description": (
+            "The Master's Direct Entry program — an accelerated path to registered-nurse "
+            "licensure for students entering nursing from another field."
         ),
     },
 ]
@@ -659,58 +1018,105 @@ _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROG
 
 # Official program/department/school home pages.
 _WEBSITE_BY_SLUG: dict[str, str] = {
-    "columbia-economics-bs": "https://econ.columbia.edu/",
-    "columbia-political-science-bs": "https://polisci.columbia.edu/",
-    "columbia-psychology-bs": "https://psychology.columbia.edu/",
-    "columbia-history-bs": "https://history.columbia.edu/",
+    "columbia-economics-ba": "https://econ.columbia.edu/",
+    "columbia-political-science-ba": "https://polisci.columbia.edu/",
+    "columbia-history-ba": "https://history.columbia.edu/",
+    "columbia-english-ba": "https://english.columbia.edu/",
+    "columbia-psychology-ba": "https://psychology.columbia.edu/",
+    "columbia-sociology-ba": "https://sociology.columbia.edu/",
+    "columbia-biology-ba": "https://biology.columbia.edu/",
     "columbia-computer-science-bs": "https://www.cs.columbia.edu/education/undergraduate/",
+    "columbia-operations-research-bs": "https://www.ieor.columbia.edu/",
+    "columbia-mechanical-engineering-bs": "https://www.me.columbia.edu/",
+    "columbia-electrical-engineering-bs": "https://www.ee.columbia.edu/",
+    "columbia-applied-mathematics-bs": "https://www.apam.columbia.edu/",
+    "columbia-biomedical-engineering-bs": "https://www.bme.columbia.edu/",
     "columbia-computer-science-ms": "https://www.cs.columbia.edu/education/ms/",
-    "columbia-electrical-engineering-ms": "https://www.ee.columbia.edu/ms-program",
-    "columbia-mechanical-engineering-ms": "https://www.me.columbia.edu/ms-program",
-    "columbia-management-science-ms": "https://www.ieor.columbia.edu/",
     "columbia-mba": "https://business.columbia.edu/mba",
-    "columbia-public-administration-mpa": "https://www.sipa.columbia.edu/sipa-education/degrees/master-public-administration-mpa",
-    "columbia-international-affairs-mia": "https://www.sipa.columbia.edu/sipa-education/degrees/master-international-affairs-mia",
+    "columbia-jd": "https://www.law.columbia.edu/academics/degree-programs/jd-program",
+    "columbia-md": "https://www.vagelos.columbia.edu/education/degree-programs/md-program",
     "columbia-journalism-ms": "https://journalism.columbia.edu/ms-degree",
+    "columbia-sipa-mia": "https://www.sipa.columbia.edu/academics/master-programs/master-international-affairs-mia",
+    "columbia-sipa-mpa": "https://www.sipa.columbia.edu/academics/master-programs/master-public-administration-mpa",
+    "columbia-public-health-mph": "https://www.publichealth.columbia.edu/become-student/departments",
+    "columbia-social-work-msw": "https://socialwork.columbia.edu/academics/ms-program/",
+    "columbia-architecture-march": "https://www.arch.columbia.edu/programs/2-m-arch",
+    "columbia-arts-mfa": "https://arts.columbia.edu/",
+    "columbia-nursing-msn": "https://www.nursing.columbia.edu/academics/academic-programs/masters-direct-entry-program-non-nurses",
 }
 
 # ── Who-it's-for + highlights (catalog baselines) ──────────────────────────
 _WHO_BASELINE = (
-    "Intellectually ambitious students who want a rigorous education anchored by the Core "
-    "Curriculum, full-need financial aid, and the opportunities of a major research "
-    "university in New York City."
+    "Academically exceptional students seeking a research-rich Ivy League education in New "
+    "York City, anchored by Columbia's Core Curriculum and full-need, no-loan financial aid."
 )
-_HL_BASELINE = ["Ivy League", "The Core Curriculum", "Need-met financial aid"]
+_HL_BASELINE = ["Ivy League", "Core Curriculum", "Need-met, no-loan aid"]
 _WHO_GRAD_BASELINE = (
     "Graduate and professional students seeking a top-ranked Columbia degree with the "
-    "resources of a major research university at the center of New York City."
+    "resources of a major research university in the heart of New York City."
 )
-_HL_GRAD_BASELINE = [
-    "Top-ranked Columbia degree",
-    "World-class faculty",
-    "New York City",
-]
+_HL_GRAD_BASELINE = ["Top-ranked Columbia graduate degree", "World-class faculty", "New York City"]
 
 _WHO_BY_SLUG = {
+    "columbia-computer-science-bs": (
+        "Technically strong students who want a rigorous computer science education — "
+        "offered as the B.S. or the B.A. — at the heart of New York's tech and research "
+        "ecosystem."
+    ),
     "columbia-mba": (
-        "Aspiring leaders who want a rigorous MBA at the center of business, with deep "
-        "strength in finance, value investing and entrepreneurship and immersion in New "
-        "York City's industries."
+        "Aspiring leaders seeking a two-year MBA that connects academic theory to practice "
+        "from the financial and business capital of the world."
+    ),
+    "columbia-journalism-ms": (
+        "Aspiring journalists seeking a rigorous reporting and writing degree at the only "
+        "Ivy League journalism school, home of the Pulitzer Prizes."
     ),
 }
 _HL_BY_SLUG = {
+    "columbia-computer-science-bs": [
+        "B.S. & B.A. tracks",
+        "11 research areas",
+        "New York City tech hub",
+    ],
     "columbia-mba": [
-        "At the very center of business",
-        "Value-investing tradition",
-        "New York City network",
+        "Two-year full-time MBA",
+        "New York City",
+        "Theory meets practice",
+    ],
+    "columbia-journalism-ms": [
+        "Only Ivy League J-school",
+        "Home of the Pulitzer Prizes",
+        "New York City newsroom",
     ],
 }
 
-# ── Curriculum / structure, where published (the flagship) ─────────────────
-# Columbia Business School organizes its faculty and teaching around academic divisions;
-# the MBA pairs a required core with extensive electives across them. Quoted from the
-# school's official academics pages.
+# ── Curriculum / research areas, where published (the flagship) ────────────
+# Columbia CS publishes 11 official research areas; quoted from the department's official
+# research-areas page.
 _TRACKS_BY_SLUG: dict[str, dict] = {
+    "columbia-computer-science-bs": {
+        "label": "Computer science research areas",
+        "note": (
+            "Computer science is offered as the B.S. (through Columbia Engineering) and the "
+            "B.A. (through Columbia College), with combined and joint majors. The department "
+            "spans eleven official research areas across more than sixty faculty."
+        ),
+        "items": [
+            {"name": "Artificial Intelligence"},
+            {"name": "Machine Learning"},
+            {"name": "Vision & Robotics"},
+            {"name": "Networking"},
+            {"name": "Computer Engineering"},
+            {"name": "Software Systems"},
+            {"name": "Computational Biology"},
+            {"name": "Security & Privacy"},
+            {"name": "Natural Language Processing & Speech"},
+            {"name": "Theory"},
+            {"name": "Graphics & User Interfaces"},
+        ],
+        "source": "Columbia Department of Computer Science — Research Areas",
+        "source_url": "https://www.cs.columbia.edu/areas/",
+    },
     "columbia-mba": {
         "label": "Columbia Business School academic divisions",
         "note": (
@@ -732,17 +1138,18 @@ _TRACKS_BY_SLUG: dict[str, dict] = {
 }
 
 # ── Program-specific cost ──────────────────────────────────────────────────
-# Columbia College undergraduate cost: tuition is the College Scorecard 2024-25 figure
-# (tuition & fees); cost of attendance and average net price are College Scorecard.
-_TUITION_UG = 71845
+# Columbia undergraduate cost: Columbia College and Columbia Engineering charge the same
+# undergraduate tuition (2025-26: $35,085 per term = $70,170 per year, plus $3,280 in
+# mandatory fees). Cost of attendance and average net price are College Scorecard.
+_TUITION_UG = 70170
+_UNDERGRAD_FEES = 3280
 _UNDERGRAD_COA = 89472
 _AVG_NET_PRICE = 21590
 
-# Per-program graduate cost. Columbia's Bursar tuition pages are JavaScript-rendered; where
-# a program's exact tuition could not be verified from a static first-party source it is
-# OMITTED (recorded in the program's _standard.omitted) and only the source pointer is
-# kept. The engineering/affairs/journalism master's are in that omitted state; the Columbia
-# Business School MBA carries its verified, published cost.
+# Per-program graduate tuition, verified first-party (Columbia bulletin / school cost
+# pages). Programs whose tuition is published only on bot-blocked pages and could not be
+# confirmed first-party are omitted (recorded in _program_standard) rather than guessed:
+# MBA, M.S. Journalism, MIA/MPA, MSW and MFA.
 _COST_BY_SLUG: dict[str, dict] = {
     "columbia-mba": {
         "tuition_usd": 88300,
@@ -761,114 +1168,106 @@ _COST_BY_SLUG: dict[str, dict] = {
         "year": "2024-25",
     },
     "columbia-computer-science-ms": {
+        "tuition_usd": 81000,
         "funded": False,
         "note": (
-            "Graduate tuition is set per-point on the Office of the Bursar's engineering "
-            "page; the exact 2025-26 figure could not be verified from a static source "
-            "and is omitted rather than estimated."
+            "Columbia Engineering charges $2,700 per credit for M.S. students; the 30-point "
+            "M.S. in Computer Science is shown as 30 × $2,700 = $81,000 in tuition (excludes "
+            "fees)."
         ),
-        "source": "Columbia University — Office of the Bursar / SFS Tuition tool",
-        "source_url": "https://tuition.sfs.columbia.edu/",
+        "source": "Columbia Engineering — Graduate Tuition, Fees and Payments (bulletin)",
+        "source_url": (
+            "https://bulletin.columbia.edu/columbia-engineering/graduate-studies/"
+            "graduate-tuition-fees-payments/"
+        ),
+        "year": "2025-26",
     },
-    "columbia-electrical-engineering-ms": {
+    "columbia-jd": {
+        "tuition_usd": 85368,
+        "total_cost_of_attendance": 93757,
         "funded": False,
         "note": (
-            "Graduate tuition is set per-point on the Office of the Bursar's engineering "
-            "page; the exact 2025-26 figure could not be verified from a static source "
-            "and is omitted rather than estimated."
+            "J.D. tuition; total university charges of $93,757 add the student activity, "
+            "university-services, health-services fees and (waivable) student health "
+            "insurance."
         ),
-        "source": "Columbia University — Office of the Bursar / SFS Tuition tool",
-        "source_url": "https://tuition.sfs.columbia.edu/",
+        "source": "Columbia Law School — J.D. and LL.M. Tuition and Fees",
+        "source_url": (
+            "https://www.law.columbia.edu/about/departments/financial-aid/"
+            "jd-and-llm-tuition-and-fees"
+        ),
+        "year": "2025-26",
     },
-    "columbia-mechanical-engineering-ms": {
+    "columbia-architecture-march": {
+        "tuition_usd": 70380,
         "funded": False,
         "note": (
-            "Graduate tuition is set per-point on the Office of the Bursar's engineering "
-            "page; the exact 2025-26 figure could not be verified from a static source "
-            "and is omitted rather than estimated."
+            "GSAPP charges $35,190 per term (12-19 points); the figure shown is two terms = "
+            "$70,380 per year, with coursework beyond the band billed at $2,346 per point."
         ),
-        "source": "Columbia University — Office of the Bursar / SFS Tuition tool",
-        "source_url": "https://tuition.sfs.columbia.edu/",
+        "source": "Columbia GSAPP — Tuition and Aid",
+        "source_url": "https://www.arch.columbia.edu/admissions/tuition-aid",
+        "year": "2025-26",
     },
-    "columbia-management-science-ms": {
+    "columbia-public-health-mph": {
+        "tuition_usd": 49888,
         "funded": False,
         "note": (
-            "Graduate tuition is set per-point on the Office of the Bursar's engineering "
-            "page; the exact 2025-26 figure could not be verified from a static source "
-            "and is omitted rather than estimated."
+            "Full-time MPH flat-rate tuition across two semesters (the earliest year the "
+            "official page publishes is 2026-27); program fees apply on top."
         ),
-        "source": "Columbia University — Office of the Bursar / SFS Tuition tool",
-        "source_url": "https://tuition.sfs.columbia.edu/",
-    },
-    "columbia-public-administration-mpa": {
-        "funded": False,
-        "note": (
-            "SIPA tuition is set on the Office of the Bursar's SIPA page; the exact "
-            "2025-26 figure could not be verified from a static source and is omitted "
-            "rather than estimated."
+        "source": "Mailman School of Public Health — Tuition & Fees",
+        "source_url": (
+            "https://www.publichealth.columbia.edu/become-student/how-apply/financial-aid/"
+            "tuition-fees"
         ),
-        "source": "Columbia University — Office of the Bursar / SFS Tuition tool (SIPA)",
-        "source_url": "https://tuition.sfs.columbia.edu/",
+        "year": "2026-27",
     },
-    "columbia-international-affairs-mia": {
-        "funded": False,
-        "note": (
-            "SIPA tuition is set on the Office of the Bursar's SIPA page; the exact "
-            "2025-26 figure could not be verified from a static source and is omitted "
-            "rather than estimated."
-        ),
-        "source": "Columbia University — Office of the Bursar / SFS Tuition tool (SIPA)",
-        "source_url": "https://tuition.sfs.columbia.edu/",
-    },
-    "columbia-journalism-ms": {
-        "funded": False,
-        "note": (
-            "Journalism School tuition is set on the Office of the Bursar's Journalism "
-            "page; the exact 2025-26 figure could not be verified from a static source "
-            "and is omitted rather than estimated."
-        ),
-        "source": "Columbia University — Office of the Bursar / SFS Tuition tool (Journalism)",
-        "source_url": "https://tuition.sfs.columbia.edu/",
-    },
-}
-
-# Programs whose program tuition is omitted (recorded per program in _standard.omitted).
-_TUITION_OMITTED_SLUGS = {
-    slug for slug, cost in _COST_BY_SLUG.items() if cost.get("tuition_usd") is None
 }
 
 # ── Program-specific outcomes (College Scorecard Field of Study, by CIP) ────
 # Where the federal College Scorecard publishes a Field-of-Study median earnings (one year
-# after completion) for an awarded CIP + credential level at UNITID 190150, we use it
-# (program scope). The Columbia Business School MBA (flagship) instead carries its own
-# published employment distribution (below) and is not in this table. Tuples are
-# (median_earnings_1yr, cip).
+# after completion) for an awarded CIP at UNITID 190150, we use it (program scope). Tuples
+# are (median_earnings_1yr, cip).
 _FOS_OUTCOMES: dict[str, tuple[int, str]] = {
-    "columbia-economics-bs": (83135, "45.06"),
-    "columbia-political-science-bs": (61077, "45.10"),
-    "columbia-psychology-bs": (53156, "42.27"),
-    "columbia-history-bs": (53828, "54.01"),
+    "columbia-economics-ba": (83135, "45.06"),
+    "columbia-political-science-ba": (61077, "45.10"),
+    "columbia-history-ba": (53828, "54.01"),
+    "columbia-english-ba": (35838, "23.01"),
+    "columbia-psychology-ba": (53156, "42.27"),
+    "columbia-sociology-ba": (58541, "45.11"),
+    "columbia-biology-ba": (40935, "26.01"),
     "columbia-computer-science-bs": (118636, "11.07"),
+    "columbia-operations-research-bs": (110457, "14.37"),
+    "columbia-mechanical-engineering-bs": (72036, "14.19"),
+    "columbia-electrical-engineering-bs": (84019, "14.10"),
+    "columbia-applied-mathematics-bs": (91559, "27.03"),
+    "columbia-biomedical-engineering-bs": (62895, "14.05"),
     "columbia-computer-science-ms": (161851, "11.07"),
-    "columbia-electrical-engineering-ms": (124969, "14.10"),
-    "columbia-mechanical-engineering-ms": (104503, "14.19"),
-    "columbia-management-science-ms": (197821, "52.13"),
-    "columbia-public-administration-mpa": (89478, "44.04"),
-    "columbia-international-affairs-mia": (80448, "45.09"),
+    "columbia-mba": (182930, "52.02"),
+    "columbia-jd": (220843, "22.01"),
     "columbia-journalism-ms": (54170, "09.04"),
+    "columbia-sipa-mia": (80448, "45.09"),
+    "columbia-sipa-mpa": (89478, "44.04"),
+    "columbia-public-health-mph": (71704, "51.22"),
+    "columbia-social-work-msw": (59891, "44.07"),
 }
+
+# The M.D. is handled separately: the College Scorecard one-year figure for CIP 51.12
+# (Medicine) reflects residency stipends, not attending-physician pay, so it carries a
+# distinct verbatim condition.
+_MD_OUTCOME = (78891, "51.12")
 
 # Verbatim methodology for the program-scope Scorecard FOS earnings figure.
 _FOS_CONDITIONS = (
     "Median earnings of graduates who received federal financial aid, measured "
     "approximately one year after program completion; reported by the U.S. Department of "
-    "Education College Scorecard Field of Study by 4-digit CIP code and credential level. "
-    "Programs with too few completers are suppressed."
+    "Education College Scorecard Field of Study by 4-digit CIP code. Programs with too few "
+    "completers are suppressed."
 )
 
-# Institution-wide outcomes fallback (College Scorecard, UNITID 190150). Unused in this
-# partial (every modelled program has a published FOS earnings figure) but kept for the
-# resume run and for parity with the reference data modules.
+# Institution-wide outcomes fallback (College Scorecard, UNITID 190150), used for degree
+# programs whose program-level one-year earnings are suppressed (the M.Arch and the MFA).
 _OUTCOMES_INSTITUTION = {
     "median_salary": 102491,
     "scope": "institution",
@@ -878,80 +1277,28 @@ _OUTCOMES_INSTITUTION = {
         "published (suppressed) for this field of study."
     ),
     "source": "U.S. Dept. of Education College Scorecard (UNITID 190150)",
-    "source_url": (
-        "https://collegescorecard.ed.gov/school/?190150-Columbia-University-in-the-City-of-New-York"
-    ),
+    "source_url": "https://collegescorecard.ed.gov/school/?190150",
 }
 
-# ── The flagship: Columbia Business School MBA employment distribution ──────
-# Columbia Business School MBA Employment Report, Class of 2024. Percentages and counts are
-# quoted from that report.
-_MBA_OUTCOMES = {
-    "median_salary": 175000,
-    "median_signing_bonus": 30000,
-    "employment_rate": 0.864,
-    "employment_timeframe": "accepted an offer within 3 months of graduation",
-    "class_size": 844,
-    "scope": "program",
-    "cip": "52.02",
-    "top_industries": [
-        "Financial services — 35.9%",
-        "Consulting — 30.6%",
-        "Technology — 10.0%",
-        "Consumer products — 5.2%",
-        "Healthcare — 3.8%",
-    ],
-    "top_employers": [
-        "McKinsey & Company",
-        "Boston Consulting Group",
-        "Amazon",
-        "PricewaterhouseCoopers",
-        "Bain & Company",
-        "JPMorgan Chase",
-        "Deloitte",
-    ],
-    "conditions": [
-        "Columbia Business School MBA Employment Report, Class of 2024.",
-        "Within three months of graduation, 89.0% of graduates seeking employment "
-        "received and 86.4% accepted a full-time offer.",
-        "Median base salary $175,000 (100% reporting; high $370,000); median signing "
-        "bonus $30,000 received by 71.3% of hires (high $151,000).",
-        "Top employers are listed by the school in order of total hires; figures exclude "
-        "graduates sponsored, starting a business, or joining a family business, per "
-        "Career Services & Employer Alliance standards.",
-    ],
-    "source": "Columbia Business School MBA Employment Report, Class of 2024",
-    "source_url": "https://business.columbia.edu/recruiters/employment-report",
-}
-
-
-def _outcomes_for(slug: str) -> dict:
-    """The outcomes_data payload (without _standard) for a program slug.
-
-    Precedence: Columbia Business School MBA distribution → Scorecard FOS (program) →
-    institution median fallback. Used by both ``apply()`` and the conformance test (DRY).
-    """
-    if slug == "columbia-mba":
-        return dict(_MBA_OUTCOMES)
-    fos = _FOS_OUTCOMES.get(slug)
-    if fos is not None:
-        salary, cip = fos
-        return {
-            "median_salary": salary,
-            "scope": "program",
-            "cip": cip,
-            "earnings_timeframe": "median earnings 1 year after completion",
-            "conditions": _FOS_CONDITIONS,
-            "source": "U.S. Dept. of Education College Scorecard — Field of Study",
-            "source_url": (
-                "https://collegescorecard.ed.gov/school/?190150-Columbia-University-in-the-City-of-New-York"
-            ),
-        }
-    return dict(_OUTCOMES_INSTITUTION)
-
+# Annual degrees conferred per CIP (College Scorecard Field of Study, IPEDS awards), used
+# for the flagship class-profile cohort figure.
+_AWARDS_BY_SLUG: dict[str, int] = {"columbia-computer-science-bs": 391}
 
 # ── Class profile, where published (the flagship) ──────────────────────────
 _CLASS_PROFILE_BY_SLUG: dict[str, dict] = {
+    "columbia-computer-science-bs": {
+        "cohort_size": (
+            "≈391 computer science bachelor's degrees awarded annually (one of Columbia's "
+            "largest majors)"
+        ),
+        "note": (
+            "Columbia does not publish a per-major entering-cohort size; the figure is the "
+            "annual count of computer science bachelor's degrees awarded (College Scorecard "
+            "Field of Study, CIP 11.07)."
+        ),
+        "source": "U.S. Dept. of Education College Scorecard — Field of Study (CIP 11.07)",
+        "source_url": "https://collegescorecard.ed.gov/school/?190150",
+    },
     "columbia-mba": {
         "cohort_size": "844 students (Full-Time MBA, Class of 2024, entering 2022)",
         "international_pct": 51,
@@ -967,6 +1314,33 @@ _CLASS_PROFILE_BY_SLUG: dict[str, dict] = {
 
 # ── Faculty (lead + directory link), where confidently sourced (the flagship) ──
 _FACULTY_BY_SLUG: dict[str, dict] = {
+    "columbia-computer-science-bs": {
+        "lead": [
+            {
+                "name": "Luca Carloni",
+                "title": "Professor and Chair of the Department of Computer Science",
+            },
+            {
+                "name": "Christos H. Papadimitriou",
+                "title": (
+                    "The Donovan Family Professor of Computer Science; computational "
+                    "complexity, algorithms and the theory of computation"
+                ),
+            },
+            {
+                "name": "Mihalis Yannakakis",
+                "title": (
+                    "Percy K. and Vida L. W. Hudson Professor of Computer Science; "
+                    "algorithms and computational complexity"
+                ),
+            },
+        ],
+        "note": (
+            "Columbia Computer Science is chaired by Luca Carloni; its faculty include the "
+            "theory pioneers Christos Papadimitriou and Mihalis Yannakakis."
+        ),
+        "directory_url": "https://www.cs.columbia.edu/people/faculty/",
+    },
     "columbia-mba": {
         "lead": [
             {
@@ -979,8 +1353,8 @@ _FACULTY_BY_SLUG: dict[str, dict] = {
         ],
         "note": (
             "Columbia Business School is led by Dean Costis Maglaras, the David and Lyn "
-            "Silfen Professor of Business; its faculty span finance, economics, "
-            "marketing, management and operations."
+            "Silfen Professor of Business; its faculty span finance, economics, marketing, "
+            "management and operations."
         ),
         "directory_url": "https://business.columbia.edu/faculty",
     },
@@ -988,6 +1362,58 @@ _FACULTY_BY_SLUG: dict[str, dict] = {
 
 # ── Aggregated, cited student-review themes (≥2 third-party sources, the flagship) ──
 _REVIEWS_BY_SLUG: dict[str, dict] = {
+    "columbia-computer-science-bs": {
+        "summary": (
+            "Students and third-party guides describe Columbia as academically rigorous and "
+            "intellectually enriching — the Core Curriculum and distinguished faculty draw "
+            "consistent praise, and Columbia's New York City location is repeatedly cited as "
+            "an advantage for research, internships and computer-science careers (Niche rates "
+            "Columbia the No. 1 college for computer science in New York). Common cautions are "
+            "that the academic pressure can feel intense, the atmosphere competitive, and "
+            "administrative support uneven, so students are advised to self-advocate."
+        ),
+        "themes": [
+            {
+                "label": "Core Curriculum & academic rigor",
+                "sentiment": "positive",
+                "detail": "The Core Curriculum and rigorous teaching are widely praised.",
+            },
+            {
+                "label": "Distinguished faculty",
+                "sentiment": "positive",
+                "detail": "Knowledgeable, accomplished professors across departments.",
+            },
+            {
+                "label": "New York City advantage",
+                "sentiment": "positive",
+                "detail": "NYC drives research, internship and CS-career access.",
+            },
+            {
+                "label": "Academic pressure",
+                "sentiment": "caution",
+                "detail": "Reviewers note the workload and pressure can feel intense.",
+            },
+            {
+                "label": "Administrative support",
+                "sentiment": "caution",
+                "detail": "Bureaucracy can be slow; students must self-advocate.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Columbia University",
+                "url": "https://www.niche.com/colleges/columbia-university/",
+            },
+            {
+                "label": "U.S. News — Columbia University",
+                "url": "https://www.usnews.com/best-colleges/columbia-university-2707",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
     "columbia-mba": {
         "summary": (
             "Students and third-party guides describe Columbia Business School as a "
@@ -1031,7 +1457,10 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             },
             {
                 "label": "U.S. News — Columbia Business School (Best Business Schools)",
-                "url": "https://www.usnews.com/best-graduate-schools/top-business-schools/columbia-university-01060",
+                "url": (
+                    "https://www.usnews.com/best-graduate-schools/top-business-schools/"
+                    "columbia-university-01060"
+                ),
             },
         ],
         "disclaimer": (
@@ -1046,23 +1475,23 @@ _INTL_VISA = {
     "types": ["F-1", "J-1"],
     "note": "International students are issued an I-20 (F-1) or DS-2019 (J-1) after admission.",
 }
-# Undergraduate (Columbia College) admission via the Common Application. Columbia is
-# test-optional: SAT/ACT scores are not required but are considered if submitted
-# (CDS 2024-25 item C8).
+# Undergraduate (Columbia College / Columbia Engineering) admission via the Common
+# Application or QuestBridge. Columbia is permanently test-optional.
 _REQ_UNDERGRAD = {
     "materials": [
-        {"name": "Common Application", "required": True},
+        {"name": "Common Application or QuestBridge Application", "required": True},
         {"name": "Columbia-specific writing supplement", "required": True},
-        {"name": "Secondary-school report + transcript", "required": True},
+        {"name": "Secondary-school transcript + school report", "required": True},
         {"name": "Counselor recommendation", "required": True},
         {"name": "Two teacher recommendations", "required": True},
         {"name": "$85 application fee; need-based fee waivers available", "required": True},
         {
-            "name": "Standardized test scores (optional)",
+            "name": "Standardized test scores",
             "required": False,
             "note": (
-                "Columbia is test-optional: SAT/ACT scores are not required for admission "
-                "but are considered if submitted."
+                "Columbia is permanently test-optional for applicants to Columbia College "
+                "and Columbia Engineering; applicants who do not submit SAT/ACT scores are "
+                "not disadvantaged."
             ),
         },
     ],
@@ -1089,59 +1518,13 @@ _REQ_UNDERGRAD = {
         ],
     },
     "source": "Columbia Undergraduate Admissions",
-    "source_url": "https://undergrad.admissions.columbia.edu/apply/first-year",
+    "source_url": "https://undergrad.admissions.columbia.edu/apply/process",
 }
 
-# Graduate (Columbia Business School MBA) admission via the CBS application.
-_REQ_MBA = {
-    "materials": [
-        {"name": "Columbia Business School online application", "required": True},
-        {"name": "Essays (per the application prompts)", "required": True},
-        {"name": "Transcripts from all post-secondary institutions", "required": True},
-        {"name": "One professional recommendation", "required": True},
-        {"name": "Résumé", "required": True},
-        {
-            "name": "GMAT, GRE or Executive Assessment",
-            "required": True,
-            "note": "GMAT, GRE or the Executive Assessment accepted; a waiver may be requested.",
-        },
-        {"name": "Interview (by invitation)", "required": False},
-        {"name": "$250 application fee", "required": True},
-    ],
-    "deadlines": [
-        {"round": "Early Decision (binding)", "date": "Early October"},
-        {"round": "Regular Decision — January start", "date": "Rolling, see program page"},
-        {"round": "Regular Decision — August start", "date": "Rolling, see program page"},
-    ],
-    "recommendations": {
-        "required": 1,
-        "note": "One professional recommendation submitted through the application.",
-    },
-    "international": {
-        "english": {
-            "tests": ["TOEFL", "IELTS", "PTE"],
-            "required": False,
-            "note": (
-                "An English-proficiency test may be required for applicants whose native "
-                "language is not English."
-            ),
-        },
-        "visa": _INTL_VISA,
-        "sources": [
-            {
-                "label": "Columbia Business School — Full-Time MBA Admissions",
-                "url": "https://business.columbia.edu/mba/admissions",
-            }
-        ],
-    },
-    "source": "Columbia Business School — Full-Time MBA Admissions",
-    "source_url": "https://business.columbia.edu/mba/admissions",
-}
-
-# Generic Columbia graduate / professional admission set. Each school administers its own
-# admissions; the materials below are common across Columbia graduate programs, and
-# deadlines vary by program (commonly winter) — applicants are pointed to the program's own
-# admissions page via the program website.
+# Generic Columbia graduate / professional admission set. Each professional school
+# administers its own admissions; the materials below are common across Columbia graduate
+# and professional programs, and deadlines vary by program — applicants are pointed to the
+# program's own admissions page via the program website.
 _REQ_GRAD_GENERIC = {
     "materials": [
         {"name": "Program online application", "required": True},
@@ -1151,10 +1534,10 @@ _REQ_GRAD_GENERIC = {
         {
             "name": "Letters of recommendation",
             "required": True,
-            "note": "Most Columbia graduate programs require two to three letters.",
+            "note": "Most Columbia graduate/professional programs require two to three letters.",
         },
         {
-            "name": "Standardized test scores (GRE)",
+            "name": "Standardized test scores (GRE/GMAT/LSAT/MCAT)",
             "required": False,
             "note": "Test requirements vary by program (required, optional or not accepted).",
         },
@@ -1165,8 +1548,8 @@ _REQ_GRAD_GENERIC = {
     "recommendations": {
         "required": 3,
         "note": (
-            "Most Columbia graduate programs require three letters of recommendation "
-            "(some require two)."
+            "Most Columbia graduate and professional programs require two to three letters of "
+            "recommendation."
         ),
     },
     "international": {
@@ -1174,40 +1557,36 @@ _REQ_GRAD_GENERIC = {
             "tests": ["TOEFL", "IELTS"],
             "required": True,
             "note": (
-                "Required for applicants whose native language is not English; an "
-                "exemption applies to degrees earned where English is the language of "
-                "instruction."
+                "Required for applicants whose native language is not English; an exemption "
+                "applies to degrees earned where English is the language of instruction."
             ),
         },
         "visa": _INTL_VISA,
         "sources": [
             {
-                "label": "Columbia University — Graduate admissions (by school)",
-                "url": "https://www.columbia.edu/content/academics/schools",
+                "label": "Columbia — International Students and Scholars Office",
+                "url": "https://isso.columbia.edu/",
             }
         ],
     },
-    "source": "Columbia University graduate & professional admissions",
+    "source": "Columbia graduate & professional admissions",
     "source_url": "https://www.columbia.edu/content/academics/schools",
 }
 
 
 def _requirements_for(spec: dict) -> dict:
-    """Pick the admissions requirement set for a program by slug / degree type."""
-    if spec["slug"] == "columbia-mba":
-        return dict(_REQ_MBA)
+    """Pick the admissions requirement set for a program by degree type."""
     if spec["degree_type"] == "masters":
         return dict(_REQ_GRAD_GENERIC)
     return dict(_REQ_UNDERGRAD)
 
 
-# Real Columbia campus photo (Low Memorial Library on the Morningside Heights campus) —
-# Wikimedia Commons, hotlinkable landscape JPG (verified HTTP 200). Leads the institution
-# hero.
+# Real Columbia campus photo (Butler Library) — Wikimedia Commons, CC BY-SA 4.0,
+# hotlinkable landscape JPG (verified HTTP 200). Leads the institution hero.
 _CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/"
-    "Low_Memorial_Library_Columbia_University_NYC.jpg/"
-    "1920px-Low_Memorial_Library_Columbia_University_NYC.jpg"
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/"
+    "Butler_Library_-_Columbia_University.jpg/"
+    "1920px-Butler_Library_-_Columbia_University.jpg"
 )
 
 
@@ -1223,17 +1602,6 @@ def apply(session: Session) -> bool:
     # Shallow-merge JSONB: every sub-object we provide is complete.
     inst.ranking_data = {**(inst.ranking_data or {}), **RANKING_DATA}
     school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
-    # Drop any stale value for a path we explicitly declare omitted, so the merge can't
-    # keep serving a figure the enrichment run refused to assert.
-    for _path in _OMITTED_INSTITUTION:
-        if _path.startswith("school_outcomes."):
-            rest = _path.split(".", 1)[1]
-            if "." not in rest:
-                school_outcomes.pop(rest, None)
-            else:
-                head, leaf = rest.split(".", 1)
-                if isinstance(school_outcomes.get(head), dict):
-                    school_outcomes[head].pop(leaf, None)
     school_outcomes["_standard"] = _standard(_OMITTED_INSTITUTION)
     inst.school_outcomes = school_outcomes
     inst.description_text = DESCRIPTION
@@ -1257,6 +1625,7 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
     existing = {
         s.name: s for s in session.scalars(select(School).where(School.institution_id == inst.id))
     }
+    canonical_names = {s["name"] for s in SCHOOLS}
     by_name: dict[str, School] = {}
     for spec in SCHOOLS:
         sc = existing.get(spec["name"])
@@ -1276,9 +1645,10 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
         # always assign None so a stale value on a pre-existing row is cleared.
         sc.content_sources = None
         by_name[spec["name"]] = sc
-    # This is a PARTIAL enrichment: more Columbia schools exist and are added by a resume
-    # run. We deliberately DO NOT delete schools outside our canonical set, so the partial
-    # composes safely with later runs on the same university.
+    # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is FK-safe.
+    for name, sc in existing.items():
+        if name not in canonical_names:
+            session.delete(sc)
     session.flush()
     return by_name
 
@@ -1314,14 +1684,13 @@ def _program_has_dependents(session: Session, program_id) -> bool:
 def _program_standard(slug: str) -> dict:
     """Per-program omitted-field list (verified-unavailable), for _standard."""
     omitted: list[str] = []
-    # Only the Columbia Business School MBA flagship carries a per-program employment rate
-    # and industry breakdown. Every other program reports a program-scope median earnings
-    # (Scorecard FOS) and honestly omits the program-level employment rate / top industries.
-    if slug != "columbia-mba":
-        omitted += [
-            "outcomes_data.employment_rate",
-            "outcomes_data.top_industries",
-        ]
+    # Columbia publishes no per-program employment report or industry breakdown (its
+    # first-destination data is reported college-wide at the institution level), so every
+    # program omits the program-level employment rate and top industries.
+    omitted += [
+        "outcomes_data.employment_rate",
+        "outcomes_data.top_industries",
+    ]
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
     if slug not in _CLASS_PROFILE_BY_SLUG:
@@ -1330,24 +1699,29 @@ def _program_standard(slug: str) -> dict:
         omitted.append("faculty_contacts.lead")
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
-    if slug != "columbia-mba":
-        # Only the flagship carries its own keyword-relevant feed; catalog programs
+    # Cost: undergraduate programs all carry the published Columbia undergraduate tuition;
+    # graduate programs carry tuition only where it was verified first-party. Programs
+    # whose graduate tuition is published only on bot-blocked pages omit the figure.
+    is_undergrad = any(p["slug"] == slug and p["degree_type"] == "bachelors" for p in PROGRAMS)
+    if not is_undergrad and slug not in _COST_BY_SLUG:
+        # cost_data is cleared entirely for these programs, so both the figure and its
+        # source path are absent — record both as verified-unavailable.
+        omitted += ["cost_data.tuition_usd", "cost_data.source"]
+    if slug not in _PROGRAM_CONTENT:
+        # Only the two flagships carry their own keyword-relevant feed; catalog programs
         # surface the institution feed rather than a per-program one.
         omitted.append("content_sources")
-    if slug in _TUITION_OMITTED_SLUGS:
-        # Graduate programs whose program tuition is published only on the
-        # JavaScript-rendered Bursar pages (omitted rather than guessed).
-        omitted.append("cost_data.tuition_usd")
     return _standard(omitted)
 
 
 def _apply_programs(session: Session, inst: Institution, school_by_name: dict[str, School]) -> None:
-    canonical = set(PROGRAM_SLUGS)
     existing = {
         p.slug: p
         for p in session.scalars(select(Program).where(Program.institution_id == inst.id))
         if p.slug
     }
+    canonical = set(PROGRAM_SLUGS)
+    undergrad_slugs = {p["slug"] for p in PROGRAMS if p["degree_type"] == "bachelors"}
     for spec in PROGRAMS:
         slug = spec["slug"]
         p = existing.get(slug)
@@ -1370,15 +1744,13 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
-        # Only the flagship carries its own feed (content_sources omitted for the rest).
-        p.content_sources = _MBA_CONTENT if slug == "columbia-mba" else None
-        # Cost: graduate programs use verified per-program cost where available;
-        # undergraduate uses the published College rates.
+        # Only the two flagships carry their own feed (content_sources omitted for the rest).
+        p.content_sources = _PROGRAM_CONTENT.get(slug)
+        # Cost: undergraduate uses the published Columbia undergraduate rates; graduate
+        # programs use verified per-program tuition where available, else omit (cost_data
+        # cleared and the path recorded in _standard.omitted).
         cost_override = _COST_BY_SLUG.get(slug)
-        if cost_override is not None:
-            p.tuition = cost_override.get("tuition_usd")
-            p.cost_data = dict(cost_override)
-        else:
+        if slug in undergrad_slugs:
             p.tuition = _TUITION_UG
             p.cost_data = {
                 "tuition_usd": _TUITION_UG,
@@ -1386,29 +1758,66 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "avg_net_price": _AVG_NET_PRICE,
                 "breakdown": {
                     "tuition": _TUITION_UG,
+                    "mandatory_fees": _UNDERGRAD_FEES,
                     "total_cost_of_attendance": _UNDERGRAD_COA,
                 },
                 "funded": False,
                 "note": (
-                    "Published 2024-25 Columbia tuition with the College Scorecard cost of "
-                    "attendance and average net price. Columbia is need-blind for domestic "
-                    "first-year applicants and meets 100% of demonstrated need, so most "
+                    "Published 2025-26 Columbia undergraduate tuition ($35,085 per term × 2 = "
+                    "$70,170, shared by Columbia College and Columbia Engineering) plus "
+                    "$3,280 in mandatory fees, with the College Scorecard cost of attendance "
+                    "and average net price. Columbia is need-blind for U.S. applicants and "
+                    "meets 100% of demonstrated need with grants rather than loans, so most "
                     "families pay far less than the sticker price (average net price ≈ "
                     "$21,600)."
                 ),
-                "source": (
-                    "Columbia Student Financial Services (2024-25) + "
-                    "College Scorecard (UNITID 190150)"
-                ),
-                "source_url": (
-                    "https://collegescorecard.ed.gov/school/?190150-Columbia-University-in-the-City-of-New-York"
-                ),
-                "year": "2024-25",
+                "source": "Columbia College bulletin (2025-26) + College Scorecard (UNITID 190150)",
+                "source_url": "https://bulletin.columbia.edu/columbia-college/fees-expenses-financial-aid/",
+                "year": "2025-26",
             }
-        # Admissions: undergraduate, MBA or generic graduate set by slug / degree type.
+        elif cost_override is not None:
+            p.tuition = cost_override.get("tuition_usd")
+            p.cost_data = dict(cost_override)
+        else:
+            p.tuition = None
+            p.cost_data = None
+        # Admissions: undergraduate or generic graduate set by degree type.
         p.application_requirements = _requirements_for(spec)
-        # Outcomes precedence: CBS flagship → Scorecard FOS (program) → institution median.
-        outcomes = _outcomes_for(slug)
+        # Outcomes precedence: Scorecard FOS (program) → institution median.
+        if slug == "columbia-md":
+            salary, cip = _MD_OUTCOME
+            outcomes = {
+                "median_salary": salary,
+                "scope": "program",
+                "cip": cip,
+                "earnings_timeframe": "median earnings 1 year after completion",
+                "conditions": (
+                    _FOS_CONDITIONS
+                    + " For the M.D. this one-year figure reflects residency stipends rather "
+                    "than attending-physician compensation, because graduates are in "
+                    "residency one year after completion."
+                ),
+                "source": "U.S. Dept. of Education College Scorecard — Field of Study",
+                "source_url": "https://collegescorecard.ed.gov/school/?190150",
+            }
+        else:
+            fos = _FOS_OUTCOMES.get(slug)
+            if fos is not None:
+                salary, cip = fos
+                outcomes = {
+                    "median_salary": salary,
+                    "scope": "program",
+                    "cip": cip,
+                    "earnings_timeframe": "median earnings 1 year after completion",
+                    "conditions": _FOS_CONDITIONS,
+                    "source": "U.S. Dept. of Education College Scorecard — Field of Study",
+                    "source_url": "https://collegescorecard.ed.gov/school/?190150",
+                }
+                awards = _AWARDS_BY_SLUG.get(slug)
+                if awards is not None:
+                    outcomes["degrees_conferred_annual"] = awards
+            else:
+                outcomes = dict(_OUTCOMES_INSTITUTION)
         outcomes["_standard"] = _program_standard(slug)
         p.outcomes_data = outcomes
         if spec["degree_type"] == "masters":
@@ -1423,19 +1832,16 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        # Application deadline (upcoming undergraduate Regular Decision closes Jan 1).
-        p.application_deadline = (
-            None if spec["degree_type"] == "masters" and slug != "columbia-mba"
-            else date(2026, 1, 6) if slug == "columbia-mba"
-            else date(2027, 1, 1)
-        )
+        # Application deadline: only undergraduate admission (Columbia College / Columbia
+        # Engineering) has a single fixed Columbia Regular Decision date (Jan 1). Graduate
+        # and professional deadlines vary by program (see _REQ_GRAD_GENERIC), so we leave
+        # them null rather than stamp a fabricated date that the APIs, saved lists, checklist
+        # reminders and Connect deadline-sort would surface.
+        p.application_deadline = date(2027, 1, 1) if slug in undergrad_slugs else None
     session.flush()
-    # Reconcile every non-canonical Columbia program so the live catalog shows ONLY the
-    # curated, gold programs (no un-enriched seed duplicates) — the same clean-catalog
-    # behaviour the full-university profiles use. FK-safe: unpublish a row that any
-    # application/match references, otherwise delete it. Deferred subjects (Public Health,
-    # Law, Nursing, …) return as curated programs in the resume run on this same
-    # university. (Schools outside our canonical set are left intact — see _apply_schools.)
+    # Reconcile legacy Columbia programs (slug not in the canonical set): delete when
+    # unreferenced, otherwise unpublish so the catalog stays clean without breaking any
+    # application/match rows that point at them.
     for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
         if (p.slug or "") in canonical:
             continue

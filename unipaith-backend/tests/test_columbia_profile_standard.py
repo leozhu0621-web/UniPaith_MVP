@@ -1,30 +1,22 @@
-"""The Columbia University profile (this run's verified partial) conforms to the gold
-standard across the nodes it models — the institution, five schools, and their programs —
-mirroring the MIT/Sloan/MBAn and the Chicago/Yale reference certifications.
+"""The Columbia University profile (the completed tree) conforms to the gold standard
+across every node it models — the institution, twelve schools, and their twenty-five
+programs — mirroring the MIT/Sloan/MBAn and the Chicago/Yale reference certifications.
 
 Pure (no DB): builds each node's persisted snapshot from the columbia_profile module and
-runs ``check_conformance``. The only gaps permitted are the fields the module honestly
-records in its ``_standard.omitted`` lists. The flagship is the Columbia Business School
-MBA. (Columbia is a giant; the remaining schools/programs are deferred to a resume run.)
+runs ``check_conformance``. The only gaps permitted are the fields each node honestly
+records in its ``_standard.omitted`` lists. Columbia carries two deeply-enriched
+flagships: undergraduate Computer Science and the Columbia Business School MBA.
 """
 
 from unipaith.data import columbia_profile as p
 from unipaith.profile_standard import STANDARD_VERSION, check_conformance
 
-_FLAGSHIP = "columbia-mba"
+_CS_FLAGSHIP = "columbia-computer-science-bs"
+_MBA_FLAGSHIP = "columbia-mba"
 
 
 def _institution_snapshot() -> dict:
     school_outcomes = {**p.SCHOOL_OUTCOMES}
-    for path in p._OMITTED_INSTITUTION:
-        if path.startswith("school_outcomes."):
-            rest = path.split(".", 1)[1]
-            if "." not in rest:
-                school_outcomes.pop(rest, None)
-            else:
-                head, leaf = rest.split(".", 1)
-                if isinstance(school_outcomes.get(head), dict):
-                    school_outcomes[head].pop(leaf, None)
     school_outcomes["_standard"] = p._standard(p._OMITTED_INSTITUTION)
     return {
         "description_text": p.DESCRIPTION,
@@ -53,10 +45,26 @@ def _school_snapshot(name: str) -> dict:
 def _program_snapshot(slug: str) -> dict:
     """Mirror the columns _apply_programs writes for a program slug."""
     spec = next(pr for pr in p.PROGRAMS if pr["slug"] == slug)
-    outcomes = p._outcomes_for(slug)
+    is_undergrad = spec["degree_type"] == "bachelors"
+    if slug == "columbia-md":
+        salary, cip = p._MD_OUTCOME
+        outcomes = {"median_salary": salary, "scope": "program", "cip": cip,
+                    "conditions": p._FOS_CONDITIONS, "source": "x", "source_url": "x"}
+    else:
+        fos = p._FOS_OUTCOMES.get(slug)
+        if fos is not None:
+            outcomes = {"median_salary": fos[0], "scope": "program", "cip": fos[1],
+                        "conditions": p._FOS_CONDITIONS, "source": "x", "source_url": "x"}
+        else:
+            outcomes = dict(p._OUTCOMES_INSTITUTION)
     outcomes["_standard"] = p._program_standard(slug)
     cost_override = p._COST_BY_SLUG.get(slug)
-    cost = dict(cost_override) if cost_override else {"tuition_usd": p._TUITION_UG, "source": "x"}
+    if is_undergrad:
+        cost = {"tuition_usd": p._TUITION_UG, "source": "x"}
+    elif cost_override is not None:
+        cost = dict(cost_override)
+    else:
+        cost = None
     return {
         "program_name": p._FULL_NAME_BY_SLUG.get(slug) or spec["program_name"],
         "degree_type": spec["degree_type"],
@@ -70,10 +78,10 @@ def _program_snapshot(slug: str) -> dict:
         "application_requirements": p._requirements_for(spec),
         "cost_data": cost,
         "outcomes_data": outcomes,
-        "class_profile": p._CLASS_PROFILE_BY_SLUG.get(slug, {}),
-        "faculty_contacts": p._FACULTY_BY_SLUG.get(slug, {}),
-        "external_reviews": p._REVIEWS_BY_SLUG.get(slug, {}),
-        "content_sources": p._MBA_CONTENT if slug == _FLAGSHIP else None,
+        "class_profile": p._CLASS_PROFILE_BY_SLUG.get(slug),
+        "faculty_contacts": p._FACULTY_BY_SLUG.get(slug),
+        "external_reviews": p._REVIEWS_BY_SLUG.get(slug),
+        "content_sources": p._PROGRAM_CONTENT.get(slug),
     }
 
 
@@ -85,10 +93,10 @@ def test_columbia_institution_is_gold_except_recorded_omission():
         f"Unexpected institution gaps: {res.missing_fields} {res.missing_sections}"
     )
     assert not res.missing_sections
-    assert "school_outcomes.scale.faculty_count" in p._OMITTED_INSTITUTION
 
 
 def test_every_school_is_gold_except_recorded_omissions():
+    assert len(p.SCHOOLS) == 12
     for school in p.SCHOOLS:
         name = school["name"]
         res = check_conformance("school", _school_snapshot(name), profile_version=STANDARD_VERSION)
@@ -99,19 +107,24 @@ def test_every_school_is_gold_except_recorded_omissions():
         assert not res.missing_sections, f"{name} missing sections: {res.missing_sections}"
 
 
-def test_flagship_mba_program_is_conformant():
-    res = check_conformance(
-        "program", _program_snapshot(_FLAGSHIP), profile_version=STANDARD_VERSION
-    )
-    assert not res.missing_sections, f"MBA missing sections: {res.missing_sections}"
-    assert set(res.missing_fields) <= set(p._program_standard(_FLAGSHIP)["omitted"]), (
-        f"MBA unexpected gaps: {res.missing_fields}"
-    )
-    assert not p._program_standard(_FLAGSHIP)["omitted"], "flagship should have no omissions"
+def test_two_flagships_are_deeply_enriched():
+    # Both flagships carry curriculum, class profile, faculty, reviews and their own feed —
+    # so the only recorded omissions are the college-wide employment fields.
+    for slug in (_CS_FLAGSHIP, _MBA_FLAGSHIP):
+        assert slug in p._TRACKS_BY_SLUG
+        assert slug in p._CLASS_PROFILE_BY_SLUG
+        assert slug in p._FACULTY_BY_SLUG
+        assert slug in p._REVIEWS_BY_SLUG
+        assert slug in p._PROGRAM_CONTENT
+        assert set(p._program_standard(slug)["omitted"]) == {
+            "outcomes_data.employment_rate",
+            "outcomes_data.top_industries",
+        }
 
 
 def test_every_program_is_gold_except_recorded_omissions():
-    omittable_sections = {"tracks", "insights", "feeds"}
+    omittable_sections = {"tracks", "costs", "insights", "feeds"}
+    assert len(p.PROGRAMS) == 25
     for spec in p.PROGRAMS:
         slug = spec["slug"]
         res = check_conformance(
