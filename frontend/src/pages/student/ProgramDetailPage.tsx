@@ -1308,7 +1308,7 @@ export default function ProgramDetailPage() {
             const scopeNote = od.scope === 'institution'
               ? (od.scope_note || 'Institution-wide figures across all graduates — not specific to this program.')
               : null
-            const hasData = !!(salary || empRate || topEmployers.length > 0 || topIndustries.length > 0)
+            const hasData = !!(salary || empRate || classSize != null || knowledgeRate != null || topEmployers.length > 0 || topIndustries.length > 0)
             const fmtPct = (f: number) => {
               const v = f <= 1 ? f * 100 : f
               return Number.isInteger(v) ? `${v}%` : `${v.toFixed(1)}%`
@@ -1351,7 +1351,7 @@ export default function ProgramDetailPage() {
             return (
               <>
                 {/* Employment & Placement — rate, class size, industries/employers + conditions */}
-                {(empRate != null || internRate != null || topIndustries.length > 0 || topEmployers.length > 0) && (
+                {(empRate != null || internRate != null || classSize != null || knowledgeRate != null || topIndustries.length > 0 || topEmployers.length > 0) && (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Briefcase size={14} className="text-secondary" />
