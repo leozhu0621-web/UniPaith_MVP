@@ -1467,8 +1467,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
-        if slug == "stanford-mba":
-            p.content_sources = _MBA_CONTENT
+        # Always assign so a stale value on a pre-existing row is cleared: only the
+        # flagship carries its own feed (content_sources is omitted for the rest),
+        # and leaving an old value would keep it in ContentIngestService's selection.
+        p.content_sources = _MBA_CONTENT if slug == "stanford-mba" else None
         # Cost: program override (official) → MBA rate → funded PhD → standard rate.
         cost_override = _COST_BY_SLUG.get(slug)
         if cost_override is not None:
@@ -1526,8 +1528,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.outcomes_data = outcomes
         p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BY_TYPE.get(spec["degree_type"])
         p.highlights = _HL_BY_SLUG.get(slug) or _HL_BY_TYPE.get(spec["degree_type"])
-        if slug in _TRACKS_BY_SLUG:
-            p.tracks = _TRACKS_BY_SLUG[slug]
+        # Always assign so a stale value on a pre-existing row is cleared (tracks is
+        # recorded as omitted where unverified, and match_service reads program.tracks).
+        p.tracks = _TRACKS_BY_SLUG.get(slug)
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)

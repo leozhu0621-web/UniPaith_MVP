@@ -37,7 +37,9 @@ async def _make_stanford(db_session) -> Institution:
         student_body_size=1,
         is_verified=True,
         ranking_data={"qs_world_university_rankings": {"rank": 3, "year": 2026}},
-        school_outcomes={"admit_rate": 0.0361},
+        # A stale, unverified metric the profile treats as omitted — apply() must
+        # drop it so it is never served despite being recorded in _standard.omitted.
+        school_outcomes={"admit_rate": 0.0361, "employed_or_continuing_ed": 0.99},
     )
     db_session.add(inst)
     await db_session.commit()
@@ -67,8 +69,10 @@ async def test_apply_enriches_institution(db_session):
     assert so["financial_aid"]["cost_of_attendance"] == 87833
     assert any("SLAC" in lab for lab in so["research"]["labs"])
     assert so["campus_life"]["varsity_sports"] == 36
-    # The honest omission is recorded in the institution's _standard stamp.
+    # The honest omission is recorded in the institution's _standard stamp, and the
+    # stale pre-existing value is actively dropped (not preserved by the merge).
     assert "school_outcomes.employed_or_continuing_ed" in so["_standard"]["omitted"]
+    assert "employed_or_continuing_ed" not in so
     assert inst.student_body_size == 7554
     assert "Silicon Valley" in inst.description_text
     # Gallery leads with a real raster campus photo (the hero picks the first raster).
@@ -106,14 +110,29 @@ async def test_apply_sets_seven_real_schools(db_session):
 
 async def test_apply_builds_real_program_catalog_idempotently(db_session):
     inst = await _make_stanford(db_session)
-    db_session.add(
-        Program(
-            institution_id=inst.id,
-            program_name="Legacy MS in Widgets",
-            degree_type="masters",
-            is_published=True,
-            slug="stanford-legacy-widgets",
-        )
+    db_session.add_all(
+        [
+            Program(
+                institution_id=inst.id,
+                program_name="Legacy MS in Widgets",
+                degree_type="masters",
+                is_published=True,
+                slug="stanford-legacy-widgets",
+            ),
+            # A pre-existing canonical row carrying stale, unverified tracks + feeds
+            # (e.g. crawled or admin-created). apply() must clear both, since the
+            # profile records them as omitted for this program and they feed the
+            # matcher / the content-ingest selection.
+            Program(
+                institution_id=inst.id,
+                program_name="Computer Science",
+                degree_type="bachelors",
+                is_published=True,
+                slug="stanford-cs-bs",
+                tracks={"label": "Stale", "items": [{"name": "old"}]},
+                content_sources={"news_rss": "https://stale.example/feed"},
+            ),
+        ]
     )
     await db_session.commit()
 
@@ -152,6 +171,11 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert cs.outcomes_data["cip"] == "11.07"
     # Catalog programs honestly record their omitted outcome fields in _standard.
     assert "outcomes_data.employment_rate" in cs.outcomes_data["_standard"]["omitted"]
+    # Stale tracks + feeds on the pre-existing canonical CS BS row were cleared
+    # (it is not the flagship and has no verified tracks), matching its _standard.
+    cs_bs = next(p for p in progs if p.slug == "stanford-cs-bs")
+    assert cs_bs.tracks is None
+    assert cs_bs.content_sources is None
     # Professional degrees carry the professional admissions baseline.
     jd = next(p for p in progs if p.slug == "stanford-jd")
     assert jd.degree_type == "professional"
