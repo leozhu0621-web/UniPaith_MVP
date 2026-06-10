@@ -204,6 +204,13 @@ other sessions ship migrations concurrently, so never trust a stale checkout.
    empty upgrade/downgrade) before ending the run. Never leave `main` with two
    heads — `test_alembic_has_single_head` fails CI and every deploy is blocked
    until someone fixes it.
+   **Anti-fix-race:** before authoring that merge migration, RE-FETCH
+   `origin/main` and check both the tree and the OPEN PRs for an existing merge
+   migration covering the same head pair — two sessions once both shipped merges
+   for the same pair, which itself created a new dual head. If one already
+   exists/is open, do NOT author a duplicate; wait for it to land, re-fetch, and
+   re-run `alembic heads`. If your merge still lands second and creates a new
+   dual pair anyway, ship a merge-of-merges (`down_revision = (mergeA, mergeB)`).
 4. Use READABLE revision ids (e.g. `nyuprof1`, `feedspennmerge1`) — auto-generated
    hex ids trip the repo's detect-secrets pre-commit hook as false positives.
 
