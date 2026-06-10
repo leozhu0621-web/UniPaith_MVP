@@ -1,14 +1,20 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Sparkles, ChevronRight, ChevronLeft, Compass } from 'lucide-react'
 import Card from '../../../components/ui/Card'
 import { DEGREE_LABELS } from '../../../utils/constants'
+import { formatCurrency } from '../../../utils/format'
 
 interface ProgramLink {
   id: string
   program_name: string
   department?: string | null
   degree_type?: string
+  institution_name?: string | null
+  duration_months?: number | null
+  delivery_format?: string | null
+  tuition?: number | null
+  median_salary?: number | null
 }
 
 interface Props {
@@ -18,6 +24,26 @@ interface Props {
   bgPhoto?: string | null
   /** Spec 11 §4 — back to Discovery with this program's attributes pre-applied. */
   discoveryBackHref?: string
+}
+
+const FORMAT_LABELS: Record<string, string> = {
+  on_campus: 'On-campus',
+  in_person: 'On-campus',
+  online: 'Online',
+  hybrid: 'Hybrid',
+}
+
+function prettyFormat(f: string): string {
+  return FORMAT_LABELS[f] || f.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function fmtDuration(m?: number | null): string | null {
+  if (!m || m <= 0) return null
+  if (m % 12 === 0) {
+    const y = m / 12
+    return `${y} yr${y > 1 ? 's' : ''}`
+  }
+  return `${m} mo`
 }
 
 export default function RelatedSidebar({
@@ -38,10 +64,20 @@ export default function RelatedSidebar({
   const safeIdx = Math.min(idx, Math.max(0, fitPrograms.length - 1))
   const current = fitPrograms[safeIdx]
 
+  const meta: string[] = []
+  if (current) {
+    const dur = fmtDuration(current.duration_months)
+    if (dur) meta.push(dur)
+    if (current.delivery_format) meta.push(prettyFormat(current.delivery_format))
+    if (current.tuition) meta.push(`${formatCurrency(current.tuition)}/yr`)
+    else if (current.median_salary) meta.push(`${formatCurrency(current.median_salary)} median`)
+  }
+  const subtitle = current?.department || current?.institution_name || null
+
   return (
     <aside className="space-y-4">
 
-      {/* Programs that fit you — one card at a time, paged with arrows. */}
+      {/* Programs that fit you — one richer card at a time, paged with arrows. */}
       {fitPrograms.length > 0 && current && (
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-3">
@@ -56,20 +92,33 @@ export default function RelatedSidebar({
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/15 to-muted" />
             {bgPhoto && (
               <div
-                className="absolute inset-0 bg-cover bg-center opacity-0 group-hover:opacity-30 transition-opacity duration-300"
+                className="absolute inset-0 bg-cover bg-center opacity-0 group-hover:opacity-25 transition-opacity duration-300"
                 style={{ backgroundImage: `url(${bgPhoto})` }}
               />
             )}
-            <div className="relative p-4 min-h-[96px] flex flex-col justify-end">
+            <div className="relative p-5 min-h-[156px] flex flex-col justify-end">
               {current.degree_type && (
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-secondary mb-0.5">
+                <p className="text-[10px] uppercase tracking-wider font-semibold text-secondary mb-1">
                   {DEGREE_LABELS[current.degree_type] || current.degree_type}
                 </p>
               )}
-              <p className="text-sm font-semibold text-foreground leading-snug group-hover:text-secondary">{current.program_name}</p>
-              {current.department && (
-                <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{current.department}</p>
+              <p className="text-base font-bold text-foreground leading-snug group-hover:text-secondary line-clamp-2">{current.program_name}</p>
+              {subtitle && (
+                <p className="text-[11px] text-muted-foreground mt-1 truncate">{subtitle}</p>
               )}
+              {meta.length > 0 && (
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2.5 text-[11px] text-foreground/70">
+                  {meta.map((m, i) => (
+                    <Fragment key={i}>
+                      {i > 0 && <span className="text-border" aria-hidden="true">·</span>}
+                      <span>{m}</span>
+                    </Fragment>
+                  ))}
+                </div>
+              )}
+              <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-secondary opacity-0 group-hover:opacity-100 transition-opacity">
+                View program <ChevronRight size={12} />
+              </span>
             </div>
           </Link>
 

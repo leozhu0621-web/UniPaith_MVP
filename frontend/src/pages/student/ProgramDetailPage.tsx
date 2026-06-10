@@ -11,7 +11,6 @@ import SocialLinks from '../../components/SocialLinks'
 import { pushRecentProgram } from '../../lib/recentPrograms'
 import { getMatchDetail, logEngagement } from '../../api/matching'
 import { listEvents } from '../../api/events'
-import { listMyApplications } from '../../api/applications'
 import { saveProgram, unsaveProgram, listSaved } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
 import { useCounselorStore } from '../../stores/counselor-store'
@@ -24,7 +23,7 @@ import { differenceInDays } from 'date-fns'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare, Megaphone,
   Briefcase, Building2, Users, Clock, Sparkles, Mail, Archive,
-  Bookmark, BookmarkCheck, FileText, ArrowRightLeft, ChevronRight, ArrowLeft, ExternalLink, Star,
+  Bookmark, BookmarkCheck, ArrowRightLeft, ChevronRight, ArrowLeft, ExternalLink, Star,
 } from 'lucide-react'
 import { DEGREE_LABELS } from '../../utils/constants'
 import type { EventItem } from '../../types'
@@ -155,7 +154,6 @@ export default function ProgramDetailPage() {
   })
   const programPosts = Array.isArray(programPostsData) ? programPostsData : []
   const { data: saved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
-  const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
   const { data: reviewsData } = useQuery({ queryKey: ['program-reviews', programId], queryFn: () => getProgramReviews(programId!), retry: false })
   const { data: employerData } = useQuery({ queryKey: ['employer-feedback', programId], queryFn: () => getEmployerFeedback(programId!), retry: false })
   const { data: sameSchoolData } = useQuery({
@@ -182,8 +180,6 @@ export default function ProgramDetailPage() {
 
   const savedList: any[] = Array.isArray(saved) ? saved : []
   const isSaved = savedList.some((s: any) => s.program_id === programId)
-  const applicationsList: any[] = Array.isArray(applications) ? applications : []
-  const existingApp = applicationsList.find((a: any) => a.program_id === programId)
   const eventsList: EventItem[] = Array.isArray(events) ? events : []
 
   const saveMut = useMutation({
@@ -229,16 +225,6 @@ export default function ProgramDetailPage() {
   const recommendations = extractRecommendations(p.application_requirements)
   const fundingSignals = extractFundingSignals(p.cost_data)
   const salaryBands = extractSalaryBands(p.outcomes_data)
-  const costBandMin =
-    cd.estimated_total_cost_band?.min != null && !Number.isNaN(Number(cd.estimated_total_cost_band.min))
-      ? Number(cd.estimated_total_cost_band.min)
-      : null
-  const costBandMax =
-    cd.estimated_total_cost_band?.max != null && !Number.isNaN(Number(cd.estimated_total_cost_band.max))
-      ? Number(cd.estimated_total_cost_band.max)
-      : cd.total_cost_attendance != null && !Number.isNaN(Number(cd.total_cost_attendance))
-        ? Number(cd.total_cost_attendance)
-        : null
   const instName = p.institution_name || ''
 
   // Spec 11 §6 — archived program. No dedicated column exists yet, so key on the
@@ -452,11 +438,6 @@ export default function ProgramDetailPage() {
           {/* Actions — Save + Ask counselor + Compare. Applications are started
               from the saved list, not here; only a link to an existing app shows. */}
           <div className="flex flex-wrap items-center gap-2 mt-5">
-            {existingApp && (
-              <Button size="sm" variant="secondary" onClick={() => navigate(`/s/applications/${existingApp.id}`)}>
-                <FileText size={14} className="mr-1.5" /> My application
-              </Button>
-            )}
             <Button
               size="sm"
               variant={isSaved ? 'secondary' : 'tertiary'}
@@ -1090,18 +1071,10 @@ export default function ProgramDetailPage() {
           })()}
 
           {tab === 'costs' && (() => {
-            const years = (p.duration_months || (p.degree_type === 'bachelors' ? 48 : 24)) / 12
             const annual = effectiveTuition || 0
             const fees = cd.fees || {}
             const feeTotal = Object.values(fees).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
-            const living = cd.estimated_living_cost || 15000
-            const books = cd.book_supplies || 1200
             const intlPremium = cd.international_premium || 0
-            const totalTuitionOnly = annual * years
-            const totalMid = costBandMin != null && costBandMax != null
-              ? Math.round((costBandMin + costBandMax) / 2)
-              : (annual + feeTotal + living + books) * years
-            const totalHigh = costBandMax ?? Math.round(totalMid * 1.15)
             const netPriceByIncome: Record<string, number> = cd.net_price_by_income || {}
             return (
               <>
@@ -1170,28 +1143,6 @@ export default function ProgramDetailPage() {
                       </dl>
                     </div>
                   )}
-                </Card>
-
-                <Card className="p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <GraduationCap size={14} className="text-secondary" />
-                    <h3 className="font-semibold text-foreground">Estimated Total Cost ({years.toFixed(1)} years)</h3>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="bg-muted/60 rounded-lg p-3">
-                      <p className="text-lg font-bold text-foreground" title={costBandMin != null ? 'Low estimate' : 'Tuition Only'}>{formatCurrency(costBandMin ?? totalTuitionOnly)}</p>
-                    </div>
-                    <div className="bg-muted/60 rounded-lg p-3">
-                      <p className="text-lg font-bold text-foreground" title={costBandMax != null ? 'Expected range' : 'With Living Costs'}>
-                        {costBandMin != null && costBandMax != null
-                          ? `${formatCurrency(costBandMin)} – ${formatCurrency(costBandMax)}`
-                          : formatCurrency(totalMid)}
-                      </p>
-                    </div>
-                    <div className="bg-muted/60 rounded-lg p-3">
-                      <p className="text-lg font-bold text-foreground" title={costBandMax != null ? 'High estimate' : 'High Estimate'}>{formatCurrency(totalHigh)}</p>
-                    </div>
-                  </div>
                 </Card>
 
                 {fundingSignals && (
@@ -1344,173 +1295,183 @@ export default function ProgramDetailPage() {
             const salary = od.median_salary ? Number(od.median_salary) : (rd.earnings_10yr_median || null)
             const salaryLow = od.salary_25th ? Number(od.salary_25th) : (salary ? Math.round(salary * 0.75) : null)
             const salaryHigh = od.salary_75th ? Number(od.salary_75th) : (salary ? Math.round(salary * 1.3) : null)
+            const meanSalary = od.mean_salary ? Number(od.mean_salary) : null
+            const signingBonus = od.median_signing_bonus ? Number(od.median_signing_bonus) : null
             const empRate = od.employment_rate ? Number(od.employment_rate) : null
-            const payback = od.payback_months ? Number(od.payback_months) : null
-            const roiYears = (p.duration_months || (p.degree_type === 'bachelors' ? 48 : 24)) / 12
-            const roiTotalCost = effectiveTuition ? Number(effectiveTuition) * roiYears : 0
             const empTimeframe = od.employment_timeframe || '6 months after graduation'
             const internRate = od.internship_conversion_rate ? Number(od.internship_conversion_rate) : null
+            const classSize = od.class_size ? Number(od.class_size) : null
+            const knowledgeRate = od.knowledge_rate != null ? Number(od.knowledge_rate) : null
             const topEmployers: string[] = od.top_employers || []
             const topIndustries: string[] = od.top_industries || []
-            const hasData = salary || empRate || topEmployers.length > 0
+            const conditions: string[] = Array.isArray(od.conditions) ? od.conditions : []
+            const scopeNote = od.scope === 'institution'
+              ? (od.scope_note || 'Institution-wide figures across all graduates — not specific to this program.')
+              : null
+            const hasData = !!(salary || empRate || topEmployers.length > 0 || topIndustries.length > 0)
+            const fmtPct = (f: number) => {
+              const v = f <= 1 ? f * 100 : f
+              return Number.isInteger(v) ? `${v}%` : `${v.toFixed(1)}%`
+            }
+            // Shared "reference + details on conditions" footnote for each card.
+            const referenceBlock = (scopeNote || conditions.length > 0 || od.source) ? (
+              <div className="mt-4 pt-3 border-t border-border space-y-1.5">
+                {scopeNote && <p className="text-[11px] italic text-muted-foreground">{scopeNote}</p>}
+                {conditions.length > 0 && (
+                  <ul className="space-y-1">
+                    {conditions.map((c: string, i: number) => (
+                      <li key={i} className="flex gap-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                        <span aria-hidden="true" className="text-foreground/30">·</span>
+                        <span>{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {od.source && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Source:{' '}
+                    {od.source_url
+                      ? <a href={od.source_url} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">{od.source}</a>
+                      : od.source}.
+                  </p>
+                )}
+              </div>
+            ) : null
+
+            if (!hasData) {
+              return (
+                <Card className="p-6 text-center">
+                  <TrendingUp size={32} className="text-foreground/30 mx-auto mb-3" />
+                  <p className="text-sm text-foreground">Outcomes data is not yet available for this program.</p>
+                  <p className="text-xs text-foreground/60 mt-1">Check back later or contact the program directly.</p>
+                </Card>
+              )
+            }
 
             return (
               <>
-                <StatGroup
-                  earnings6yr={rd.earnings_6yr_median}
-                  earnings10yr={rd.earnings_10yr_median}
-                  graduationRate={rd.graduation_rate}
-                  retentionRate={rd.retention_rate}
-                  employmentRate={od.employment_rate}
-                />
-
-                {(salary || empRate || payback) && (
+                {/* Employment & Placement — rate, class size, industries/employers + conditions */}
+                {(empRate != null || internRate != null || topIndustries.length > 0 || topEmployers.length > 0) && (
                   <Card className="p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <TrendingUp size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">ROI Snapshot</h3>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Briefcase size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">Employment &amp; Placement</h3>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      {salary && <div><p className="text-foreground text-xs">Median Salary</p><p className="font-bold text-foreground text-lg">{formatCurrency(salary)}</p></div>}
-                      {empRate && <div><p className="text-foreground text-xs">Grad/Employment Rate</p><p className="font-bold text-foreground text-lg">{(empRate * 100).toFixed(0)}%</p></div>}
-                      {payback && <div><p className="text-foreground text-xs">Payback Period</p><p className="font-medium text-foreground">{payback} months</p></div>}
-                      {salary && roiTotalCost > 0 && <div><p className="text-foreground text-xs">Salary-to-Cost</p><p className="font-medium text-foreground">1:{(salary / roiTotalCost).toFixed(1)}x</p></div>}
-                    </div>
-                  </Card>
-                )}
-
-                {(salary || empRate) && (od.scope || od.source) && (
-                  <Card className="p-3 border-secondary/30 bg-secondary/[0.05]">
-                    <p className="text-[12px] text-muted-foreground">
-                      {od.scope === 'institution'
-                        ? (od.scope_note || 'Institution-wide figures across all graduates — not specific to this program.')
-                        : 'Program-level median earnings (College Scorecard, Field of Study).'}
-                      {od.source && (
-                        <>
-                          {' '}Source:{' '}
-                          {od.source_url ? (
-                            <a href={od.source_url} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">{od.source}</a>
-                          ) : od.source}.
-                        </>
+                    <div className="flex flex-wrap gap-x-10 gap-y-4">
+                      {empRate != null && (
+                        <div>
+                          <p className="text-3xl font-bold text-foreground leading-none">{fmtPct(empRate)}</p>
+                          <p className="text-xs text-muted-foreground mt-1 max-w-[22ch]">{empTimeframe}</p>
+                        </div>
                       )}
-                    </p>
-                  </Card>
-                )}
-
-                {!hasData ? (
-                  <Card className="p-6 text-center">
-                    <TrendingUp size={32} className="text-foreground/30 mx-auto mb-3" />
-                    <p className="text-sm text-foreground">Outcomes data is not yet available for this program.</p>
-                    <p className="text-xs text-foreground/60 mt-1">Check back later or contact the program directly.</p>
-                  </Card>
-                ) : (
-                  <>
-                    {salary && (
-                      <Card className="p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <DollarSign size={14} className="text-secondary" />
-                          <h3 className="font-semibold text-foreground" title={odn.outcome_reporting_window || undefined}>Salary Distribution</h3>
+                      {classSize != null && (
+                        <div>
+                          <p className="text-3xl font-bold text-foreground leading-none">{classSize}</p>
+                          <p className="text-xs text-muted-foreground mt-1">graduates{knowledgeRate != null ? ` · ${fmtPct(knowledgeRate)} reporting` : ''}</p>
                         </div>
-                        {salaryBands.length > 0 ? (
-                          <div className="space-y-2">
-                            {salaryBands.map(b => (
-                              <div key={b.band_label} className="grid grid-cols-[1fr_48px_40px] gap-3 items-center">
-                                <p className="text-sm text-foreground">{b.band_label}</p>
-                                <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
-                                  <div className="h-full rounded-pill bg-secondary" style={{ width: `${Math.min(100, b.percent)}%` }} />
-                                </div>
-                                <p className="text-xs font-semibold text-foreground text-right tabular-nums">{b.percent}%</p>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <>
-                            <div className="flex items-end justify-between mb-2">
-                              <div className="text-center flex-1">
-                                <p className="text-xs text-foreground/60">25th %ile</p>
-                                <p className="text-sm font-medium text-foreground">{salaryLow ? formatCurrency(salaryLow) : '—'}</p>
-                              </div>
-                              <div className="text-center flex-1">
-                                <p className="text-xs text-foreground/60">Median</p>
-                                <p className="text-2xl font-bold text-foreground">{formatCurrency(salary)}</p>
-                              </div>
-                              <div className="text-center flex-1">
-                                <p className="text-xs text-foreground/60">75th %ile</p>
-                                <p className="text-sm font-medium text-foreground">{salaryHigh ? formatCurrency(salaryHigh) : '—'}</p>
-                              </div>
-                            </div>
-                            <div className="relative h-2 bg-muted rounded-pill mt-3">
-                              <div className="absolute h-full bg-secondary/30 rounded-pill" style={{ left: '15%', width: '70%' }} />
-                              <div className="absolute h-full bg-secondary rounded-pill" style={{ left: '40%', width: '20%' }} />
-                            </div>
-                          </>
-                        )}
-                      </Card>
-                    )}
-
-                    {(empRate || internRate) && (
-                      <Card className="p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Briefcase size={14} className="text-secondary" />
-                          <h3 className="font-semibold text-foreground">Employment & Placement</h3>
+                      )}
+                      {internRate != null && (
+                        <div>
+                          <p className="text-3xl font-bold text-foreground leading-none">{fmtPct(internRate)}</p>
+                          <p className="text-xs text-muted-foreground mt-1">interns → full-time offers</p>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          {empRate != null && (
-                            <div>
-                              <p className="text-xs text-foreground">Employment Rate</p>
-                              <p className="text-2xl font-bold text-foreground" title={`Within ${empTimeframe}`}>{(empRate * 100).toFixed(0)}%</p>
-                            </div>
-                          )}
-                          {internRate != null && (
-                            <div>
-                              <p className="text-xs text-foreground">Internship Conversion</p>
-                              <p className="text-2xl font-bold text-foreground" title="Interns → full-time offers">{(internRate * 100).toFixed(0)}%</p>
-                            </div>
-                          )}
-                        </div>
-                      </Card>
-                    )}
-
-                    {topEmployers.length > 0 && (
-                      <Card className="p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Building2 size={14} className="text-secondary" />
-                          <h3 className="font-semibold text-foreground">Top Employers</h3>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {topEmployers.map((e: string) => <Badge key={e} variant="neutral" size="sm">{e}</Badge>)}
-                        </div>
-                      </Card>
-                    )}
-
+                      )}
+                    </div>
                     {topIndustries.length > 0 && (
-                      <Card className="p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Users size={14} className="text-secondary" />
-                          <h3 className="font-semibold text-foreground">Industry Placement</h3>
-                        </div>
+                      <div className="mt-4">
+                        <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">Top industries</p>
                         <div className="flex flex-wrap gap-2">
                           {topIndustries.map((ind: string) => <Badge key={ind} variant="info" size="sm">{ind}</Badge>)}
                         </div>
-                      </Card>
+                      </div>
                     )}
-
-                    {/* Employer feedback now lives in the Insights tab (§3.6). */}
-                    {(employerData?.total_feedback ?? 0) > 0 && (
-                      <button
-                        onClick={() => setTab('insights')}
-                        className="w-full text-left rounded-lg border border-border hover:border-secondary hover:bg-muted transition-colors p-4 flex items-center justify-between gap-3"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Briefcase size={14} className="text-secondary" />
-                          <span className="text-sm text-foreground">
-                            See what <span className="font-semibold">{employerData?.total_feedback}</span> employers say about graduates
-                          </span>
+                    {topEmployers.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">Top employers</p>
+                        <div className="flex flex-wrap gap-2">
+                          {topEmployers.map((e: string) => <Badge key={e} variant="neutral" size="sm">{e}</Badge>)}
                         </div>
-                        <span className="text-xs font-semibold text-secondary">Insights →</span>
-                      </button>
+                      </div>
                     )}
-                  </>
+                    {referenceBlock}
+                  </Card>
+                )}
+
+                {/* Salary Distribution — median + percentiles + bonus + conditions */}
+                {salary && (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <DollarSign size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">Salary Distribution</h3>
+                    </div>
+                    {salaryBands.length > 0 ? (
+                      <div className="space-y-2">
+                        {salaryBands.map(b => (
+                          <div key={b.band_label} className="grid grid-cols-[1fr_48px_40px] gap-3 items-center">
+                            <p className="text-sm text-foreground">{b.band_label}</p>
+                            <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
+                              <div className="h-full rounded-pill bg-secondary" style={{ width: `${Math.min(100, b.percent)}%` }} />
+                            </div>
+                            <p className="text-xs font-semibold text-foreground text-right tabular-nums">{b.percent}%</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-end justify-between mb-2">
+                          <div className="text-center flex-1">
+                            <p className="text-xs text-foreground/60">25th %ile</p>
+                            <p className="text-sm font-medium text-foreground">{salaryLow ? formatCurrency(salaryLow) : '—'}</p>
+                          </div>
+                          <div className="text-center flex-1">
+                            <p className="text-xs text-foreground/60">Median base</p>
+                            <p className="text-2xl font-bold text-foreground">{formatCurrency(salary)}</p>
+                          </div>
+                          <div className="text-center flex-1">
+                            <p className="text-xs text-foreground/60">75th %ile</p>
+                            <p className="text-sm font-medium text-foreground">{salaryHigh ? formatCurrency(salaryHigh) : '—'}</p>
+                          </div>
+                        </div>
+                        <div className="relative h-2 bg-muted rounded-pill mt-3">
+                          <div className="absolute h-full bg-secondary/30 rounded-pill" style={{ left: '15%', width: '70%' }} />
+                          <div className="absolute h-full bg-secondary rounded-pill" style={{ left: '40%', width: '20%' }} />
+                        </div>
+                      </>
+                    )}
+                    {(meanSalary || signingBonus) && (
+                      <div className="flex flex-wrap gap-x-8 gap-y-2 mt-4">
+                        {meanSalary != null && (
+                          <div>
+                            <p className="text-[11px] text-muted-foreground">Mean base</p>
+                            <p className="text-sm font-semibold text-foreground">{formatCurrency(meanSalary)}</p>
+                          </div>
+                        )}
+                        {signingBonus != null && (
+                          <div>
+                            <p className="text-[11px] text-muted-foreground">Median signing bonus</p>
+                            <p className="text-sm font-semibold text-foreground">{formatCurrency(signingBonus)}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {referenceBlock}
+                  </Card>
+                )}
+
+                {/* Employer feedback now lives in the Insights tab (§3.6). */}
+                {(employerData?.total_feedback ?? 0) > 0 && (
+                  <button
+                    onClick={() => setTab('insights')}
+                    className="w-full text-left rounded-lg border border-border hover:border-secondary hover:bg-muted transition-colors p-4 flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Briefcase size={14} className="text-secondary" />
+                      <span className="text-sm text-foreground">
+                        See what <span className="font-semibold">{employerData?.total_feedback}</span> employers say about graduates
+                      </span>
+                    </div>
+                    <span className="text-xs font-semibold text-secondary">Insights →</span>
+                  </button>
                 )}
               </>
             )
