@@ -647,7 +647,7 @@ export default function ApplicationDetailPage() {
                 </Card>
                 {essayRunsLoading ? (
                   <SkeletonCard />
-                ) : essayRunsError ? (
+                ) : essayRunsError && essayRunsList.length === 0 ? (
                   <QueryError
                     variant="inline"
                     detail="We couldn't load your essay feedback."
