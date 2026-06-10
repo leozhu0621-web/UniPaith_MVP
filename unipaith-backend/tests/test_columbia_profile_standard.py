@@ -1,6 +1,6 @@
-"""The Columbia University profile (this run's verified partial) conforms to the gold
-standard across the nodes it models — the institution, five schools, and their programs —
-mirroring the MIT/Sloan/MBAn and the Chicago/Yale reference certifications.
+"""The Columbia University profile (a verified partial, grown across resume runs) conforms
+to the gold standard across the nodes it models — the institution, ten schools, and their
+programs — mirroring the MIT/Sloan/MBAn and the Chicago/Yale reference certifications.
 
 Pure (no DB): builds each node's persisted snapshot from the columbia_profile module and
 runs ``check_conformance``. The only gaps permitted are the fields the module honestly

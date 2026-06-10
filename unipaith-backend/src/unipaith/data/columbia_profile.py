@@ -13,17 +13,24 @@ institution row, upserts its real degree-granting schools, and builds its progra
 across them.
 
 This is a **verified partial** of Columbia's tree (Columbia is a giant — ~20 schools).
-Per the routine's resumption design for large universities, this run brings the
-**institution node + five schools + their programs to the gold standard**, with the
-Columbia Business School MBA as the most-enriched flagship; the remaining schools/programs
-(Public Health, Social Work, Law, Nursing, Architecture, Climate, the Graduate School of
-Arts and Sciences, and additional Engineering/SEAS master's) are deferred to a resume run
-on the SAME university. The five schools modelled here:
+Per the routine's resumption design for large universities, the tree is grown across
+consecutive runs on the SAME university. It now models the **institution node + ten
+schools + their programs to the gold standard**, with the Columbia Business School MBA as
+the most-enriched flagship; the remaining schools/programs (the Graduate School of Arts
+and Sciences, Climate, the Vagelos College of Physicians and Surgeons, Dental Medicine,
+the School of the Arts, General Studies, Professional Studies, Teachers College, and
+additional Engineering/SEAS master's) are deferred to later resume runs. The ten schools
+modelled here:
   - Columbia College (undergraduate B.A./B.S. majors)
   - The Fu Foundation School of Engineering and Applied Science (Columbia Engineering)
   - Columbia Business School (the MBA — the most-enriched flagship)
   - School of International and Public Affairs (SIPA)
   - Columbia Journalism School
+  - Columbia Law School (J.D.)
+  - Mailman School of Public Health (MPH)
+  - Columbia University School of Nursing (Master's Direct Entry, MS)
+  - Graduate School of Architecture, Planning and Preservation / GSAPP (M.Arch)
+  - Columbia School of Social Work (M.S. in Social Work)
 
 It **flushes but does not commit** — the caller (the Alembic data migration, the CLI
 script, or the dev seed) owns the transaction. It is a **no-op** (returns ``False``) when
@@ -293,6 +300,12 @@ _SEAS = "The Fu Foundation School of Engineering and Applied Science"
 _CBS = "Columbia Business School"
 _SIPA = "School of International and Public Affairs"
 _JOURNALISM = "Columbia Journalism School"
+# Resume-run batch (this run): five more of Columbia's real degree-granting schools.
+_LAW = "Columbia Law School"
+_PUBLIC_HEALTH = "Mailman School of Public Health"
+_NURSING = "Columbia University School of Nursing"
+_GSAPP = "Graduate School of Architecture, Planning and Preservation"
+_SOCIAL_WORK = "Columbia School of Social Work"
 
 SCHOOLS: list[dict] = [
     {
@@ -350,6 +363,67 @@ SCHOOLS: list[dict] = [
             "world."
         ),
     },
+    {
+        "name": _LAW,
+        "sort_order": 6,
+        "description": (
+            "Columbia Law School, which opened in 1858, is one of the nation's oldest and "
+            "most influential law schools and a global leader in legal education. It "
+            "awards the Juris Doctor (J.D.), the Master of Laws (LL.M.) and the Doctor of "
+            "the Science of Law (J.S.D.), and is home to centers including the Sabin "
+            "Center for Climate Change Law and the Human Rights Institute, set at the "
+            "heart of New York's legal and financial worlds."
+        ),
+    },
+    {
+        "name": _PUBLIC_HEALTH,
+        "sort_order": 7,
+        "description": (
+            "The Columbia Mailman School of Public Health, founded in 1922 as the DeLamar "
+            "Institute of Public Health, is one of the oldest and largest schools of "
+            "public health in the United States. Organized around six departments — "
+            "biostatistics, environmental health sciences, epidemiology, health policy "
+            "and management, population and family health, and sociomedical sciences — it "
+            "awards the Master of Public Health and doctoral degrees and is home to "
+            "research centers including the Center for Infection and Immunity and ICAP."
+        ),
+    },
+    {
+        "name": _NURSING,
+        "sort_order": 8,
+        "description": (
+            "Columbia University School of Nursing, founded in 1892, is one of the oldest "
+            "nursing schools in the United States and a pioneer in advanced-practice "
+            "nursing. Based at the Columbia University Irving Medical Center, it awards "
+            "the Master of Science, the Doctor of Nursing Practice (DNP) and the Ph.D., "
+            "and prepares masters-credentialed registered nurses and nurse practitioners "
+            "for an evolving health-care system."
+        ),
+    },
+    {
+        "name": _GSAPP,
+        "sort_order": 9,
+        "description": (
+            "The Graduate School of Architecture, Planning and Preservation (GSAPP), "
+            "founded in 1881 by William R. Ware, is one of the oldest schools of "
+            "architecture in the United States. It awards the Master of Architecture "
+            "along with master's and doctoral degrees in urban planning, historic "
+            "preservation, urban design, real-estate development and advanced "
+            "architectural design, and is home to the Temple Hoyne Buell Center and the "
+            "Avery Architectural & Fine Arts Library."
+        ),
+    },
+    {
+        "name": _SOCIAL_WORK,
+        "sort_order": 10,
+        "description": (
+            "The Columbia School of Social Work, with roots reaching to 1898, is one of "
+            "the oldest schools of social work in the United States. It awards the Master "
+            "of Science in Social Work and the Ph.D., grounded in a power-, race- and "
+            "justice-oriented curriculum, and is home to research centers including the "
+            "Columbia Population Research Center and the Social Intervention Group."
+        ),
+    },
 ]
 
 # Each school's official website (verified to resolve at author time).
@@ -359,6 +433,11 @@ _SCHOOL_WEBSITE: dict[str, str] = {
     _CBS: "https://business.columbia.edu/",
     _SIPA: "https://www.sipa.columbia.edu/",
     _JOURNALISM: "https://journalism.columbia.edu/",
+    _LAW: "https://www.law.columbia.edu/",
+    _PUBLIC_HEALTH: "https://www.publichealth.columbia.edu/",
+    _NURSING: "https://www.nursing.columbia.edu/",
+    _GSAPP: "https://www.arch.columbia.edu/",
+    _SOCIAL_WORK: "https://socialwork.columbia.edu/",
 }
 
 # Rich, sourced About-tab content per school. Deans + titles are quoted from each school's
@@ -442,6 +521,99 @@ _ABOUT_DETAIL: dict[str, dict] = {
             "url": "https://journalism.columbia.edu/dean-jelani-cobb",
         },
     },
+    _LAW: {
+        "founded": 1858,
+        "leadership": "Daniel Abebe — Dean and Lucy G. Moses Professor of Law",
+        "research_centers": [
+            "Sabin Center for Climate Change Law",
+            "Human Rights Institute",
+        ],
+        "named_for": "Opened in 1858 as the Columbia College Law School",
+        "source": {
+            "label": "Columbia Law School — Leadership (Dean Daniel Abebe)",
+            "url": "https://www.law.columbia.edu/about/leadership",
+        },
+    },
+    _PUBLIC_HEALTH: {
+        "founded": 1922,
+        "leadership": (
+            "Jonathan Mermin — Dean of the Mailman School of Public Health, Professor of "
+            "Epidemiology and Medicine, and Senior Vice President, Columbia University "
+            "Irving Medical Center"
+        ),
+        "research_centers": [
+            "Center for Infection and Immunity",
+            "ICAP at Columbia University",
+            "Robert N. Butler Columbia Aging Center",
+        ],
+        "named_for": (
+            "Joseph L. Mailman (1999 naming gift); founded 1922 as the DeLamar Institute "
+            "of Public Health"
+        ),
+        "source": {
+            "label": "Columbia Mailman School of Public Health — Dean Jonathan Mermin",
+            "url": "https://www.publichealth.columbia.edu/about-us/dean-jonathan-mermin",
+        },
+    },
+    _NURSING: {
+        "founded": 1892,
+        "leadership": (
+            "Lorraine Frazier — Dean, Mary O'Neil Mundinger Professor of Nursing, and "
+            "Senior Vice President, Columbia University Irving Medical Center"
+        ),
+        "research_centers": [
+            "Center for Healthcare Delivery Research and Innovations",
+            "Center for Health Policy",
+            "Center for Research on People of Color",
+            "Center for Community-Engaged Health Informatics and Data Science",
+        ],
+        "named_for": "Founded in 1892 as the Presbyterian Hospital Training School for Nurses",
+        "source": {
+            "label": "Columbia School of Nursing — Dean Lorraine Frazier",
+            "url": "https://www.nursing.columbia.edu/profile/lorraine-frazier-phd",
+        },
+    },
+    _GSAPP: {
+        "founded": 1881,
+        "leadership": (
+            "Andrés Jaque — Dean and Professor of the Graduate School of Architecture, "
+            "Planning and Preservation"
+        ),
+        "research_centers": [
+            "Temple Hoyne Buell Center for the Study of American Architecture",
+            "Center for Spatial Research",
+            "Center for Resilient Cities and Landscapes",
+            "Avery Architectural & Fine Arts Library",
+        ],
+        "named_for": "Founded in 1881 by William R. Ware within the School of Mines",
+        "source": {
+            "label": "Columbia GSAPP — Dean Andrés Jaque (Office of the President)",
+            "url": (
+                "https://president.columbia.edu/news/"
+                "andres-jaque-appointed-dean-graduate-school-architecture-planning-and-preservation"
+            ),
+        },
+    },
+    _SOCIAL_WORK: {
+        "founded": 1898,
+        "leadership": (
+            "Melissa Begg — Dean and Professor (announced to step down August 31, 2026)"
+        ),
+        "research_centers": [
+            "Columbia Population Research Center",
+            "Social Intervention Group",
+        ],
+        "named_for": "Founded in 1898 as the New York School of Philanthropy",
+        "source": {
+            "label": (
+                "Columbia School of Social Work — Dean Melissa Begg (Office of the President)"
+            ),
+            "url": (
+                "https://president.columbia.edu/news/"
+                "melissa-begg-stepping-down-dean-columbia-school-social-work"
+            ),
+        },
+    },
 }
 
 # About-detail fields omitted per school (verified-unavailable), recorded in each school's
@@ -453,6 +625,11 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
     _CBS: list(_FACULTY_OMIT),
     _SIPA: list(_FACULTY_OMIT),
     _JOURNALISM: list(_FACULTY_OMIT),
+    _LAW: list(_FACULTY_OMIT),
+    _PUBLIC_HEALTH: list(_FACULTY_OMIT),
+    _NURSING: list(_FACULTY_OMIT),
+    _GSAPP: list(_FACULTY_OMIT),
+    _SOCIAL_WORK: list(_FACULTY_OMIT),
 }
 
 # ── Channel feeds + official social links ──────────────────────────────────
@@ -647,6 +824,80 @@ PROGRAMS: list[dict] = [
             "an intensive program in reporting, writing and multimedia journalism."
         ),
     },
+    # ── Columbia Law School ──
+    {
+        "slug": "columbia-jd",
+        "school": _LAW,
+        "program_name": "Juris Doctor (J.D.)",
+        "degree_type": "professional",
+        "cip": "22.01",
+        "duration_months": 36,
+        "description": (
+            "Columbia Law School's Juris Doctor — a three-year professional degree taught "
+            "at the heart of New York's legal and financial industries, with renowned "
+            "strength across corporate, constitutional, human-rights and international law "
+            "and an extensive clinical and externship program."
+        ),
+    },
+    # ── Mailman School of Public Health ──
+    {
+        "slug": "columbia-mph",
+        "school": _PUBLIC_HEALTH,
+        "program_name": "Master of Public Health (MPH)",
+        "degree_type": "masters",
+        "cip": "51.22",
+        "duration_months": 24,
+        "description": (
+            "The two-year Master of Public Health — an integrated core across the school's "
+            "six departments, a practicum, and a department- or certificate-based "
+            "specialization, preparing graduates for research, policy and practice in "
+            "public health."
+        ),
+    },
+    # ── Columbia University School of Nursing ──
+    {
+        "slug": "columbia-nursing-ms",
+        "school": _NURSING,
+        "program_name": "Master of Science in Nursing — Master's Direct Entry (MDE)",
+        "degree_type": "masters",
+        "cip": "51.38",
+        "duration_months": 15,
+        "description": (
+            "The Master's Direct Entry program — a fifteen-month, intensive pathway for "
+            "non-nurses to become masters-credentialed registered nurses, pairing advanced "
+            "assessment, pharmacology and pathophysiology with more than 1,000 clinical "
+            "hours and leading to the MS and eligibility for the NCLEX licensing exam."
+        ),
+    },
+    # ── Graduate School of Architecture, Planning and Preservation (GSAPP) ──
+    {
+        "slug": "columbia-march",
+        "school": _GSAPP,
+        "program_name": "Master of Architecture (M.Arch)",
+        "degree_type": "masters",
+        "cip": "04.02",
+        "duration_months": 36,
+        "description": (
+            "GSAPP's Master of Architecture — a three-year professional degree pairing "
+            "design studios with technical, historical and critical coursework, taught in "
+            "New York City at one of the oldest schools of architecture in the United "
+            "States."
+        ),
+    },
+    # ── Columbia School of Social Work ──
+    {
+        "slug": "columbia-msw",
+        "school": _SOCIAL_WORK,
+        "program_name": "Master of Science in Social Work (M.S.)",
+        "degree_type": "masters",
+        "cip": "44.07",
+        "duration_months": 24,
+        "description": (
+            "Columbia's two-year Master of Science in Social Work — 60 credits and roughly "
+            "1,200 hours of practicum across a generalist first year and a specialized "
+            "second year, grounded in a power-, race- and justice-oriented framework."
+        ),
+    },
 ]
 
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
@@ -669,6 +920,16 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
     "columbia-public-administration-mpa": "https://www.sipa.columbia.edu/sipa-education/degrees/master-public-administration-mpa",
     "columbia-international-affairs-mia": "https://www.sipa.columbia.edu/sipa-education/degrees/master-international-affairs-mia",
     "columbia-journalism-ms": "https://journalism.columbia.edu/ms-degree",
+    "columbia-jd": "https://www.law.columbia.edu/admissions/jd",
+    "columbia-mph": (
+        "https://www.publichealth.columbia.edu/academics/degrees/master-public-health/columbia-mph"
+    ),
+    "columbia-nursing-ms": (
+        "https://www.nursing.columbia.edu/academics/academic-programs/"
+        "masters-direct-entry-program-non-nurses"
+    ),
+    "columbia-march": "https://www.arch.columbia.edu/programs",
+    "columbia-msw": "https://socialwork.columbia.edu/academics/msw-program/",
 }
 
 # ── Who-it's-for + highlights (catalog baselines) ──────────────────────────
@@ -827,6 +1088,59 @@ _COST_BY_SLUG: dict[str, dict] = {
         "source": "Columbia University — Office of the Bursar / SFS Tuition tool (Journalism)",
         "source_url": "https://tuition.sfs.columbia.edu/",
     },
+    "columbia-jd": {
+        "funded": False,
+        "note": (
+            "J.D. tuition is published on the Law School's cost-of-attendance page, which "
+            "renders the current figure dynamically; the exact 2025-26 amount could not be "
+            "verified from a static source and is omitted rather than estimated."
+        ),
+        "source": "Columbia Law School — Cost of Attendance",
+        "source_url": "https://www.law.columbia.edu/admissions-financial-aid",
+    },
+    "columbia-mph": {
+        "funded": False,
+        "note": (
+            "Mailman tuition uses a flat-fee, per-semester model published on the school's "
+            "tuition pages; the exact 2025-26 figure could not be verified from a static "
+            "source and is omitted rather than estimated."
+        ),
+        "source": "Columbia Mailman School of Public Health — Tuition & Fees",
+        "source_url": "https://www.publichealth.columbia.edu/admissions/tuition-fees",
+    },
+    "columbia-nursing-ms": {
+        "funded": False,
+        "note": (
+            "MDE tuition is set per-point on the School of Nursing's tuition-and-fees "
+            "page; the exact 2025-26 figure could not be verified from a static source and "
+            "is omitted rather than estimated."
+        ),
+        "source": "Columbia School of Nursing — MDE Tuition and Fees",
+        "source_url": (
+            "https://www.nursing.columbia.edu/academics/academic-programs/"
+            "masters-direct-entry-program-non-nurses/mde-tuition-and-fees"
+        ),
+    },
+    "columbia-march": {
+        "funded": False,
+        "note": (
+            "GSAPP tuition is set per-point on the Office of the Bursar's GSAPP page; the "
+            "exact 2025-26 figure could not be verified from a static source and is omitted "
+            "rather than estimated."
+        ),
+        "source": "Columbia University — Office of the Bursar / SFS Tuition tool (GSAPP)",
+        "source_url": "https://tuition.sfs.columbia.edu/",
+    },
+    "columbia-msw": {
+        "funded": False,
+        "note": (
+            "Social Work tuition is set per-credit on the school's tuition page; the exact "
+            "2025-26 figure could not be verified from a static source and is omitted "
+            "rather than estimated."
+        ),
+        "source": "Columbia School of Social Work — Tuition & Fees",
+        "source_url": "https://socialwork.columbia.edu/admissions/tuition-financial-aid/",
+    },
 }
 
 # Programs whose program tuition is omitted (recorded per program in _standard.omitted).
@@ -853,6 +1167,14 @@ _FOS_OUTCOMES: dict[str, tuple[int, str]] = {
     "columbia-public-administration-mpa": (89478, "44.04"),
     "columbia-international-affairs-mia": (80448, "45.09"),
     "columbia-journalism-ms": (54170, "09.04"),
+    # Resume-run batch — College Scorecard Field-of-Study median earnings one year after
+    # completion (highest available cohort) for UNITID 190150, by CIP + credential level,
+    # retrieved from the College Scorecard API (2026-06-10).
+    "columbia-jd": (193362, "22.01"),  # Law, first-professional
+    "columbia-mph": (74805, "51.22"),  # Public Health, master's
+    "columbia-nursing-ms": (111569, "51.38"),  # Registered Nursing, master's
+    "columbia-march": (58013, "04.02"),  # Architecture, master's
+    "columbia-msw": (51895, "44.07"),  # Social Work, master's
 }
 
 # Verbatim methodology for the program-scope Scorecard FOS earnings figure.
@@ -1189,11 +1511,67 @@ _REQ_GRAD_GENERIC = {
 }
 
 
+# Columbia Law School J.D. admission, via the LSAC application. Columbia Law accepts the
+# LSAT or the GRE; applications for the fall 2026 class opened September 15, 2025 and are
+# due February 15, 2026, evaluated on a rolling basis (Columbia Law admissions calendar).
+_REQ_JD = {
+    "materials": [
+        {"name": "LSAC electronic application", "required": True},
+        {
+            "name": "LSAT or GRE score",
+            "required": True,
+            "note": "Columbia Law accepts either the LSAT or the GRE.",
+        },
+        {
+            "name": "Credential Assembly Service (CAS) report with all transcripts",
+            "required": True,
+        },
+        {"name": "Personal statement", "required": True},
+        {"name": "Résumé", "required": True},
+        {
+            "name": "Two letters of recommendation",
+            "required": True,
+            "note": "At least two letters of recommendation submitted through LSAC.",
+        },
+        {"name": "Application fee; fee waivers available", "required": True},
+    ],
+    "deadlines": [
+        {"round": "Early Decision (binding)", "date": "Fall — see the admissions calendar"},
+        {"round": "Regular Decision", "date": "February 15, 2026"},
+    ],
+    "recommendations": {
+        "required": 2,
+        "note": "At least two letters of recommendation, submitted through LSAC.",
+    },
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS"],
+            "required": False,
+            "note": (
+                "An English-proficiency test may be required for applicants whose first "
+                "language is not English."
+            ),
+        },
+        "visa": _INTL_VISA,
+        "sources": [
+            {
+                "label": "Columbia Law School — J.D. Application Process",
+                "url": "https://www.law.columbia.edu/admissions/jd/apply",
+            }
+        ],
+    },
+    "source": "Columbia Law School — J.D. Admissions",
+    "source_url": "https://www.law.columbia.edu/admissions/jd/apply",
+}
+
+
 def _requirements_for(spec: dict) -> dict:
     """Pick the admissions requirement set for a program by slug / degree type."""
     if spec["slug"] == "columbia-mba":
         return dict(_REQ_MBA)
-    if spec["degree_type"] == "masters":
+    if spec["slug"] == "columbia-jd":
+        return dict(_REQ_JD)
+    if spec["degree_type"] in ("masters", "professional", "phd"):
         return dict(_REQ_GRAD_GENERIC)
     return dict(_REQ_UNDERGRAD)
 
@@ -1408,7 +1786,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         outcomes = _outcomes_for(slug)
         outcomes["_standard"] = _program_standard(slug)
         p.outcomes_data = outcomes
-        if spec["degree_type"] == "masters":
+        if spec["degree_type"] in ("masters", "professional", "phd"):
             p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_GRAD_BASELINE
             p.highlights = _HL_BY_SLUG.get(slug) or _HL_GRAD_BASELINE
         else:
@@ -1420,12 +1798,18 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        # Application deadline (upcoming undergraduate Regular Decision closes Jan 1).
-        p.application_deadline = (
-            None if spec["degree_type"] == "masters" and slug != "columbia-mba"
-            else date(2026, 1, 6) if slug == "columbia-mba"
-            else date(2027, 1, 1)
-        )
+        # Application deadline: the MBA (Jan) and J.D. (Regular Decision, Feb 15, 2026)
+        # carry a concrete upcoming date; other graduate/professional programs admit on
+        # rolling/varies-by-program timelines (None); undergraduate Regular Decision is
+        # Jan 1.
+        if slug == "columbia-mba":
+            p.application_deadline = date(2026, 1, 6)
+        elif slug == "columbia-jd":
+            p.application_deadline = date(2026, 2, 15)
+        elif spec["degree_type"] in ("masters", "professional", "phd"):
+            p.application_deadline = None
+        else:
+            p.application_deadline = date(2027, 1, 1)
     session.flush()
     # Reconcile only the programs THIS partial owns (those whose slug starts with the
     # canonical prefix but is no longer in the set). We do NOT touch Columbia's other
