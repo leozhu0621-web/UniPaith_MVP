@@ -31,11 +31,16 @@ source; anything that could not be verified from a first-party or two-independen
 basis is **omitted** (recorded in the relevant ``_standard.omitted`` list), never guessed.
 The Wharton MBA is the most-enriched flagship program (its real Class-of-2024 employment
 report, majors, class profile, and aggregated reviews), mirroring MIT Sloan's MBAn in the
-reference instance — with the honest caveat that this run brings the institution, all
-twelve schools, and the undergraduate + Wharton-MBA program catalog to the gold standard;
-the eight graduate/professional schools' own program catalogs are the resumption scope
-for a later run on the same university (their cost-of-attendance budgets vary per program
-and were not yet individually verified).
+reference instance. This profile brings the institution and all twelve schools to the gold
+standard, and the program catalog now carries at least one verified flagship degree for
+**every** school: the undergraduate majors and the Wharton MBA, the Perelman MD, the Penn
+Carey Law JD, and — added in the latest resume run — the Penn Dental DMD, the Penn Vet VMD,
+the Weitzman Master of Architecture, the SP2 Master of Social Work, the GSE Higher
+Education M.S.Ed., and the Annenberg PhD in Communication. Each of the six newly added
+graduate/professional programs carries a first-party-verified cost of attendance and
+admissions set; their per-program tracks, class profiles, named faculty and aggregated
+third-party reviews remain the resumption scope for a later run and are recorded in each
+program's ``_standard.omitted`` rather than guessed.
 """
 
 from __future__ import annotations
@@ -673,11 +678,13 @@ _WHARTON_MBA_CONTENT: dict = {
 # slug = idempotency key. Every program maps to its owning school from Penn's official
 # structure. The profile covers the institution and all twelve schools; the program
 # catalog spans the undergraduate majors (A.B./B.A., B.S.E. and B.S.N.), the Wharton
-# MBA, and — added in the resume run — the Perelman School of Medicine MD and the Penn
-# Carey Law JD (each with a first-party-verified cost of attendance and admissions set).
-# The remaining graduate/professional schools (Dental, Vet, GSE, Weitzman/Design, SP2,
-# Annenberg) are enriched at the school level and are queued for a later resume run,
-# pending first-party-verifiable per-program tuition.
+# MBA, the Perelman School of Medicine MD, the Penn Carey Law JD, and — added in the
+# latest resume run — a verified flagship degree for each of the remaining six
+# graduate/professional schools: the Penn Dental DMD, the Penn Vet VMD, the Weitzman
+# Master of Architecture, the SP2 Master of Social Work, the GSE Higher Education
+# M.S.Ed., and the Annenberg PhD in Communication. Every program carries a
+# first-party-verified cost of attendance and admissions set, so each of the twelve
+# schools now has at least one fully enriched program.
 _FLAGSHIP = "penn-wharton-mba"
 PROGRAMS: list[dict] = [
     # ── The Wharton School ──
@@ -888,6 +895,102 @@ PROGRAMS: list[dict] = [
             "and by a wide range of joint degrees, certificates and clinics."
         ),
     },
+    # ── School of Dental Medicine ──
+    {
+        "slug": "penn-dmd",
+        "school": _DENTAL,
+        "program_name": "Doctor of Dental Medicine (DMD)",
+        "degree_type": "masters",
+        "cip": "51.04",
+        "duration_months": 48,
+        "description": (
+            "The Doctor of Dental Medicine at Penn Dental Medicine — founded in 1878 and "
+            "among the oldest university-affiliated dental schools in the nation. A "
+            "four-year DMD that pairs the biomedical sciences with extensive clinical "
+            "training, including care delivered through the school's Personalized Care "
+            "(PASS) clinics and its Care Center for Persons with Disabilities."
+        ),
+    },
+    # ── School of Veterinary Medicine ──
+    {
+        "slug": "penn-vmd",
+        "school": _VET,
+        "program_name": "Doctor of Veterinary Medicine (VMD)",
+        "degree_type": "masters",
+        "cip": "51.24",
+        "duration_months": 48,
+        "description": (
+            "Penn Vet's four-year professional doctorate, which uniquely awards the "
+            "Veterinariae Medicinae Doctoris (VMD) degree rather than the DVM. Established "
+            "in 1884, Penn Vet is one of only a handful of private veterinary schools and "
+            "the only one developed in association with a medical school, with a "
+            "curriculum that moves from 'the animal in health' to extensive clinical "
+            "training in years three and four."
+        ),
+    },
+    # ── Stuart Weitzman School of Design ──
+    {
+        "slug": "penn-march",
+        "school": _DESIGN,
+        "program_name": "Master of Architecture (M.Arch)",
+        "degree_type": "masters",
+        "cip": "04.02",
+        "duration_months": 36,
+        "description": (
+            "The professional Master of Architecture at the Stuart Weitzman School of "
+            "Design — a NAAB-accredited, STEM-designated degree leading toward "
+            "architectural licensure. The standard track is three years for applicants "
+            "with an architecture background and three-and-a-half years (beginning in "
+            "the summer) for those entering from another field."
+        ),
+    },
+    # ── School of Social Policy and Practice ──
+    {
+        "slug": "penn-msw",
+        "school": _SP2,
+        "program_name": "Master of Social Work (MSW)",
+        "degree_type": "masters",
+        "cip": "44.07",
+        "duration_months": 24,
+        "description": (
+            "The Master of Social Work at Penn's School of Social Policy & Practice — a "
+            "CSWE-accredited clinical and macro practice degree earned over two academic "
+            "years full-time, with part-time (three-year) and Advanced Standing "
+            "(ten-month, for holders of a CSWE-accredited BSW) pathways."
+        ),
+    },
+    # ── Graduate School of Education ──
+    {
+        "slug": "penn-gse-higher-education-msed",
+        "school": _GSE,
+        "program_name": "Higher Education (M.S.Ed.)",
+        "degree_type": "masters",
+        "cip": "13.04",
+        "duration_months": 12,
+        "description": (
+            "Penn GSE's one-year, ten-course-unit Master of Science in Education in "
+            "Higher Education — preparing students for administration, leadership and "
+            "research roles across colleges, universities, nonprofits and "
+            "education-related government agencies."
+        ),
+    },
+    # ── Annenberg School for Communication ──
+    {
+        "slug": "penn-communication-phd",
+        "school": _ANNENBERG,
+        "program_name": "Communication (PhD)",
+        "degree_type": "phd",
+        "cip": "09.01",
+        "duration_months": 60,
+        "description": (
+            "The fully funded, five-year doctoral program at the Annenberg School for "
+            "Communication — one of the leading communication research programs in the "
+            "nation, founded in 1958 by Walter Annenberg. Students are admitted directly "
+            "into the PhD (a master's is earned en route) to study media, politics, "
+            "health, journalism, networks and digital culture with both qualitative and "
+            "quantitative methods."
+        ),
+    },
 ]
 
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
@@ -915,6 +1018,14 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
     "penn-physics-ba": "https://www.physics.upenn.edu/",
     "penn-md": "https://www.med.upenn.edu/admiss/",
     "penn-jd": "https://www.law.upenn.edu/admissions/jd/",
+    "penn-dmd": "https://www.dental.upenn.edu/admissions-academics/dmd-program/",
+    "penn-vmd": "https://www.vet.upenn.edu/programs/vmd-program/",
+    "penn-march": (
+        "https://www.design.upenn.edu/architecture/master-architecture-professional-degree"
+    ),
+    "penn-msw": "https://sp2.upenn.edu/program/master-of-social-work/",
+    "penn-gse-higher-education-msed": "https://www.gse.upenn.edu/academics/higher-education-msed",
+    "penn-communication-phd": "https://www.asc.upenn.edu/graduate/doctorate-communication",
 }
 
 # ── Who-it's-for + highlights (catalog baselines) ──────────────────────────
@@ -950,6 +1061,34 @@ _WHO_BY_SLUG = {
         "Aspiring lawyers seeking a top-tier JD with deep cross-disciplinary access to "
         "Penn's business, medical and policy schools and a wide range of joint degrees."
     ),
+    "penn-dmd": (
+        "Students committed to dentistry who want a four-year DMD at one of the nation's "
+        "oldest university-affiliated dental schools, with early and extensive clinical "
+        "training inside a major research university."
+    ),
+    "penn-vmd": (
+        "Students pursuing veterinary medicine who want a four-year professional doctorate "
+        "at a private, research-intensive school uniquely developed alongside a medical "
+        "school, with broad dual-degree pathways."
+    ),
+    "penn-march": (
+        "Designers seeking a NAAB-accredited, STEM-designated professional architecture "
+        "degree — including applicants from non-architecture backgrounds, who enter a "
+        "three-and-a-half-year track."
+    ),
+    "penn-msw": (
+        "Aspiring and current social workers seeking a CSWE-accredited clinical and macro "
+        "practice master's, with full-time, part-time and BSW-holder Advanced Standing "
+        "pathways."
+    ),
+    "penn-gse-higher-education-msed": (
+        "Individuals seeking leadership roles in colleges, universities, nonprofits and "
+        "education-related government agencies through a focused one-year master's."
+    ),
+    "penn-communication-phd": (
+        "Aspiring communication scholars pursuing a research and academic career, admitted "
+        "directly into a fully funded five-year PhD with no terminal research master's."
+    ),
 }
 _HL_BY_SLUG = {
     "penn-wharton-mba": [
@@ -981,6 +1120,36 @@ _HL_BY_SLUG = {
         "Top-tier law school",
         "Cross-disciplinary joint degrees",
         "University City, Philadelphia",
+    ],
+    "penn-dmd": [
+        "Founded 1878",
+        "Among the oldest university-affiliated dental schools",
+        "Care Center for Persons with Disabilities",
+    ],
+    "penn-vmd": [
+        "Awards the distinctive VMD degree",
+        "95% NAVLE pass rate (Class of 2025)",
+        "Founded 1884",
+    ],
+    "penn-march": [
+        "NAAB-accredited professional degree",
+        "STEM-designated",
+        "GRE-free admission",
+    ],
+    "penn-msw": [
+        "CSWE-accredited",
+        "Full-time, part-time & Advanced Standing tracks",
+        ">90% of students receive aid",
+    ],
+    "penn-gse-higher-education-msed": [
+        "One-year, 10-course-unit master's",
+        "Higher-ed administration & leadership",
+        "Penn GSE",
+    ],
+    "penn-communication-phd": [
+        "Fully funded for five years",
+        "Founded 1958 by Walter Annenberg",
+        "Leading communication research program",
     ],
 }
 
@@ -1099,6 +1268,203 @@ _COST_BY_SLUG: dict[str, dict] = {
         "source": "Penn Student Registration & Financial Services — Penn Carey Law JD",
         "source_url": "https://srfs.upenn.edu/penn-carey-law-jd",
         "year": "2026-27",
+    },
+    # Penn Dental Medicine DMD — official Penn SRFS DMD-PASS cost-of-attendance budget,
+    # 2026-27 (Year 1, 11 months). Tuition $97,848; total first-year COA $162,342.
+    "penn-dmd": {
+        "tuition_usd": 97848,
+        "total_cost_of_attendance": 162342,
+        "breakdown": {
+            "tuition": 97848,
+            "general_fee": 4268,
+            "technology_fee": 1316,
+            "clinical_fee": 770,
+            "dental_clinical_fee": 1050,
+            "instrument_management_service_fee": 15258,
+            "housing": 20130,
+            "food": 7316,
+            "books_supplies": 4958,
+            "personal_expenses": 3090,
+            "transportation": 1320,
+            "health_insurance": 5018,
+            "total_cost_of_attendance": 162342,
+        },
+        "funded": False,
+        "note": (
+            "Official Penn SRFS DMD (Personalized Care) cost-of-attendance budget for "
+            "2026-27 (Year 1, 11 months): tuition $97,848 and a total first-year cost of "
+            "attendance of $162,342 including fees, living expenses and health insurance. "
+            "Published subsequent-year totals are $151,718 (Year 2), $160,904 (Year 3) and "
+            "$161,684 (Year 4). Penn Dental awards need- and merit-based aid that reduces "
+            "the net cost for many students."
+        ),
+        "source": (
+            "Penn Student Registration & Financial Services — DMD Cost of Attendance, 2026-27"
+        ),
+        "source_url": (
+            "https://srfs.upenn.edu/costs-budgeting/graduate-cost-attendance/"
+            "school-dental-medicine/dmd-pass"
+        ),
+        "year": "2026-27",
+    },
+    # Penn Vet VMD — official Penn SRFS cost-of-attendance budget, 2026-27 (Year 1, 9
+    # months), out-of-state. Tuition $68,712; total first-year COA $106,764. PA residents
+    # pay lower tuition ($58,710) for a Year-1 total of $96,762.
+    "penn-vmd": {
+        "tuition_usd": 68712,
+        "total_cost_of_attendance": 106764,
+        "breakdown": {
+            "tuition": 68712,
+            "general_fee": 4268,
+            "technology_fee": 1484,
+            "clinical_fee": 770,
+            "housing": 12978,
+            "food": 5988,
+            "books_supplies": 1530,
+            "computer_costs": 2050,
+            "personal_expenses": 2008,
+            "transportation": 1958,
+            "health_insurance": 5018,
+            "total_cost_of_attendance": 106764,
+        },
+        "funded": False,
+        "note": (
+            "Official Penn SRFS VMD cost-of-attendance budget for 2026-27 (Year 1, 9 "
+            "months), out-of-state: tuition $68,712 and a total first-year cost of "
+            "attendance of $106,764 including fees, living expenses and health insurance. "
+            "Pennsylvania residents pay lower tuition ($58,710) for a first-year total of "
+            "$96,762. Penn Vet awards need- and merit-based aid."
+        ),
+        "source": (
+            "Penn Student Registration & Financial Services — VMD Cost of Attendance "
+            "(Out-of-State), 2026-27"
+        ),
+        "source_url": "https://srfs.upenn.edu/vmd-out-state-residents",
+        "year": "2026-27",
+    },
+    # Stuart Weitzman School of Design (M.Arch) — official Penn SRFS graduate cost of
+    # attendance, 2025-26. Billable tuition + fees $68,158 (tuition $63,308); estimated
+    # living up to $29,216. SRFS publishes a school-wide graduate budget (not M.Arch-only).
+    "penn-march": {
+        "tuition_usd": 63308,
+        "total_cost_of_attendance": 97374,
+        "breakdown": {
+            "tuition": 63308,
+            "general_fee": 4108,
+            "clinical_fee": 742,
+            "tuition_and_fees_subtotal": 68158,
+            "housing_max": 12978,
+            "food_max": 5988,
+            "books_supplies_max": 2500,
+            "personal_expenses": 2008,
+            "transportation": 1080,
+            "health_insurance": 4662,
+            "estimated_living_max": 29216,
+            "total_cost_of_attendance": 97374,
+        },
+        "funded": False,
+        "note": (
+            "Official Penn SRFS Stuart Weitzman School of Design graduate cost of "
+            "attendance for 2025-26: billable tuition and fees $68,158 (tuition $63,308) "
+            "plus estimated living expenses of $20,500-$29,216, for an estimated total of "
+            "up to $97,374. The living-expense figures are the published upper-bound "
+            "federal-loan budget and the budget is school-wide for Weitzman graduate "
+            "programs (not M.Arch-specific); actual costs vary. Weitzman awards "
+            "merit-based scholarships."
+        ),
+        "source": (
+            "Penn Student Registration & Financial Services — Weitzman School of Design "
+            "Cost of Attendance, 2025-26"
+        ),
+        "source_url": "https://srfs.upenn.edu/costs-budgeting/design",
+        "year": "2025-26",
+    },
+    # Penn SP2 MSW — official SP2 tuition & fees + SRFS living budget, 2026-27 (one
+    # academic year, full-time, 8 c.u.). Tuition $60,272; tuition+fees $66,054; total
+    # academic-year COA $94,538 (tuition+fees + SRFS living $28,484).
+    "penn-msw": {
+        "tuition_usd": 60272,
+        "total_cost_of_attendance": 94538,
+        "breakdown": {
+            "tuition": 60272,
+            "general_fee": 4268,
+            "technology_fee": 744,
+            "clinical_fee": 770,
+            "tuition_and_fees_subtotal": 66054,
+            "housing": 12978,
+            "food": 5988,
+            "books_supplies": 1412,
+            "personal_expenses": 2008,
+            "transportation": 1080,
+            "health_insurance": 5018,
+            "total_cost_of_attendance": 94538,
+        },
+        "funded": False,
+        "note": (
+            "Official Penn SP2 tuition & fees and SRFS cost of attendance for 2026-27 "
+            "(one academic year, full-time, 8 course units): tuition $60,272, tuition and "
+            "fees $66,054, and a total academic-year cost of attendance of $94,538 "
+            "including living expenses and health insurance. The full-time MSW is "
+            "completed over two academic years; more than 90% of MSW students receive "
+            "financial assistance."
+        ),
+        "source": "Penn SP2 Tuition & Fees and SRFS MSW Cost of Attendance, 2026-27",
+        "source_url": "https://sp2.upenn.edu/tuition-and-fees/",
+        "year": "2026-27",
+    },
+    # Penn GSE Higher Education M.S.Ed. — derived from Penn GSE's published per-course-unit
+    # tuition (2026-27, $8,280/c.u.) × the program's required 10 c.u. = $82,800, plus the
+    # $2,134 general fee and the SRFS GSE standard on-campus living budget ($28,484). Penn
+    # does not publish a single bundled total; the components are each first-party-sourced.
+    "penn-gse-higher-education-msed": {
+        "tuition_usd": 82800,
+        "total_cost_of_attendance": 113418,
+        "breakdown": {
+            "tuition_per_course_unit": 8280,
+            "course_units": 10,
+            "tuition": 82800,
+            "general_fee": 2134,
+            "tuition_and_fees_subtotal": 84934,
+            "living_expenses": 28484,
+            "total_cost_of_attendance": 113418,
+        },
+        "funded": False,
+        "note": (
+            "Penn GSE bills per course unit; the Higher Education M.S.Ed. requires 10 "
+            "course units. At the published 2026-27 master's rate of $8,280 per course "
+            "unit, program tuition is $82,800; with the $2,134 general fee and the SRFS "
+            "standard on-campus living budget of $28,484, the estimated total cost of "
+            "attendance is $113,418. These figures are derived from Penn GSE's published "
+            "per-course-unit tuition and the SRFS budget — Penn does not publish a single "
+            "bundled total. Penn GSE awards merit- and need-based aid."
+        ),
+        "source": "Penn GSE Tuition & Fees and SRFS GSE Cost of Attendance, 2026-27",
+        "source_url": "https://www.gse.upenn.edu/admissions-and-aid/tuition-and-fees",
+        "year": "2026-27",
+    },
+    # Annenberg PhD in Communication — fully funded. Tuition and fees are waived; admitted
+    # students receive an annual stipend ($44,075 in 2025-26) for four guaranteed years
+    # plus a fifth after the dissertation proposal defense, with health-premium coverage.
+    "penn-communication-phd": {
+        "tuition_usd": 0,
+        "total_cost_of_attendance": 0,
+        "breakdown": {
+            "tuition": 0,
+            "annual_stipend": 44075,
+            "guaranteed_years": 4,
+        },
+        "funded": True,
+        "note": (
+            "The Annenberg PhD in Communication is fully funded. Admitted students — "
+            "including international students — receive a waiver of tuition and fees, "
+            "Penn Student Insurance Plan premium coverage, and an annual stipend of "
+            "$44,075 (2025-26) for four guaranteed years of fellowship support, with a "
+            "fifth year available after a successful dissertation-proposal defense. There "
+            "is no out-of-pocket tuition for students in good standing."
+        ),
+        "source": "Annenberg School for Communication — Doctoral Program Financial Support",
+        "source_url": "https://www.asc.upenn.edu/graduate/doctorate-communication/financial-support",
+        "year": "2025-26",
     },
 }
 
@@ -1479,14 +1845,341 @@ _REQ_LAW = {
 }
 
 
+# Penn Dental Medicine DMD admission (ADEA AADSAS).
+_REQ_DENTAL = {
+    "materials": [
+        {"name": "ADEA AADSAS application", "required": True},
+        {
+            "name": "DAT (Dental Admission Test) score",
+            "required": True,
+            "note": (
+                "DAT scores from test dates of January 2024 or later are required for the "
+                "2026-27 admissions cycle; the ADA and Canadian DAT are both accepted."
+            ),
+        },
+        {
+            "name": "A minimum of two letters of recommendation from professors",
+            "required": True,
+            "note": "A pre-health committee letter is accepted as an alternative.",
+        },
+        {
+            "name": "A minimum of 100 hours of dental observation (≥50 in general practice)",
+            "required": True,
+        },
+        {"name": "Penn Dental supplemental application", "required": True},
+        {"name": "Official transcripts (via AADSAS)", "required": True},
+        {"name": "$100 non-refundable application fee", "required": True},
+    ],
+    "deadlines": [
+        {"round": "AADSAS application & supplemental materials", "date": "December 1"},
+        {"round": "Official DAT scores", "date": "December 1"},
+    ],
+    "recommendations": {
+        "required": 2,
+        "note": (
+            "A minimum of two letters from professors, or an accepted pre-health "
+            "committee letter."
+        ),
+    },
+    "application_fee": "$100 (non-refundable)",
+    "international": {
+        "visa": _INTL_VISA,
+        "sources": [
+            {
+                "label": "Penn Dental Medicine — DMD Admissions",
+                "url": "https://www.dental.upenn.edu/admissions-academics/dmd-program/admissions/",
+            }
+        ],
+    },
+    "source": "Penn Dental Medicine — DMD Admissions",
+    "source_url": "https://www.dental.upenn.edu/admissions-academics/dmd-program/admissions/",
+}
+
+# Penn Vet VMD admission (VMCAS). Penn Vet no longer accepts the GRE.
+_REQ_VET = {
+    "materials": [
+        {"name": "VMCAS application (AAVMC)", "required": True},
+        {
+            "name": "Three electronic letters of recommendation (eLORs)",
+            "required": True,
+            "note": (
+                "One from a faculty member (a science academic is highly recommended), "
+                "one from a veterinarian, and one of the applicant's choice."
+            ),
+        },
+        {"name": "VMCAS personal statement essay", "required": True},
+        {"name": "Penn Vet Supplemental Information Form", "required": True},
+        {"name": "Official transcripts", "required": True},
+        {
+            "name": "$75 Penn supplemental processing fee",
+            "required": True,
+            "note": "Payable to The Trustees of the University of Pennsylvania (plus VMCAS fees).",
+        },
+        {
+            "name": "GRE",
+            "required": False,
+            "note": "Penn Vet no longer considers or accepts the GRE.",
+        },
+    ],
+    "deadlines": [
+        {"round": "VMCAS application", "date": "September 15"},
+    ],
+    "recommendations": {
+        "required": 3,
+        "note": (
+            "Three eLORs: a faculty member (science academic recommended), a "
+            "veterinarian, and one of the applicant's choice."
+        ),
+    },
+    "application_fee": "$75 Penn supplemental fee (plus VMCAS fees)",
+    "international": {
+        "visa": _INTL_VISA,
+        "sources": [
+            {
+                "label": "Penn Vet — How to Apply",
+                "url": "https://www.vet.upenn.edu/admissions/how-to-apply/",
+            }
+        ],
+    },
+    "source": "Penn Vet — VMD Admissions",
+    "source_url": "https://www.vet.upenn.edu/admissions/how-to-apply/",
+}
+
+# Stuart Weitzman School of Design M.Arch admission. GRE not required; portfolio required.
+_REQ_DESIGN = {
+    "materials": [
+        {"name": "Weitzman online application", "required": True},
+        {
+            "name": "Digital portfolio",
+            "required": True,
+            "note": "One PDF no larger than 30 MB, with no more than 20 pages.",
+        },
+        {
+            "name": "Personal statement (no more than 500 words)",
+            "required": True,
+        },
+        {"name": "Résumé", "required": True},
+        {"name": "Transcripts from each college/university attended", "required": True},
+        {
+            "name": "Three letters of recommendation (at least two from college instructors)",
+            "required": True,
+        },
+        {"name": "$80 non-refundable application fee", "required": True},
+        {
+            "name": "GRE",
+            "required": False,
+            "note": "GRE scores are not required of M.Arch applicants.",
+        },
+    ],
+    "deadlines": [
+        {"round": "Application deadline", "date": "January 7"},
+    ],
+    "recommendations": {
+        "required": 3,
+        "note": "Three letters of recommendation, at least two from college instructors.",
+    },
+    "application_fee": "$80 (non-refundable)",
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS"],
+            "required": False,
+            "note": (
+                "Required for non-native English speakers without four or more years of "
+                "English-medium undergraduate study."
+            ),
+        },
+        "visa": _INTL_VISA,
+        "sources": [
+            {
+                "label": "Weitzman School of Design — How to Apply",
+                "url": "https://www.design.upenn.edu/graduate-admissions/how-apply",
+            }
+        ],
+    },
+    "source": "Stuart Weitzman School of Design — Graduate Admissions",
+    "source_url": "https://www.design.upenn.edu/graduate-admissions/how-apply",
+}
+
+# Penn SP2 MSW admission. GRE not required; three letters of recommendation.
+_REQ_SP2 = {
+    "materials": [
+        {"name": "SP2 online application", "required": True},
+        {"name": "Résumé", "required": True},
+        {"name": "Application essay (responses to required questions)", "required": True},
+        {
+            "name": "Transcripts of all undergraduate and postgraduate study",
+            "required": True,
+        },
+        {
+            "name": "Three letters of recommendation",
+            "required": True,
+            "note": (
+                "At least one work-related (internship, job, community service) and at "
+                "least one academic reference."
+            ),
+        },
+        {
+            "name": "Application fee ($25 by December 1, then $65)",
+            "required": True,
+        },
+        {
+            "name": "GRE",
+            "required": False,
+            "note": "Applicants are not required to submit GRE scores.",
+        },
+    ],
+    "deadlines": [
+        {"round": "Priority deadline", "date": "December 1"},
+        {"round": "Final deadline", "date": "February 1"},
+    ],
+    "recommendations": {
+        "required": 3,
+        "note": (
+            "Three letters, including at least one work-related and at least one academic "
+            "reference."
+        ),
+    },
+    "application_fee": "$25 (by December 1) / $65 (after); non-refundable",
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS", "Duolingo English Test"],
+            "required": False,
+            "note": "TOEFL 100+, IELTS 7.5+, or Duolingo 135+ for non-native speakers.",
+        },
+        "visa": _INTL_VISA,
+        "sources": [
+            {
+                "label": "Penn SP2 — How to Apply (MSW)",
+                "url": "https://sp2.upenn.edu/how-to-apply-msw/",
+            }
+        ],
+    },
+    "source": "Penn SP2 — MSW Admissions",
+    "source_url": "https://sp2.upenn.edu/how-to-apply-msw/",
+}
+
+# Penn GSE Higher Education M.S.Ed. admission. Program-specific deadline dates are served
+# only via a dynamic dropdown on the official page and could not be verified verbatim, so
+# the deadlines field is recorded in this program's _standard.omitted rather than guessed.
+_REQ_GSE = {
+    "materials": [
+        {"name": "Penn GSE online application", "required": True},
+        {
+            "name": "Statement of purpose (750 words or fewer)",
+            "required": True,
+        },
+        {
+            "name": "Three references / letters of recommendation",
+            "required": True,
+            "note": (
+                "If you received a degree within the last five years, include at least "
+                "one academic reference."
+            ),
+        },
+        {"name": "Transcripts of prior study", "required": True},
+        {
+            "name": "$75 application fee (waived for applications submitted Sept 1–Mar 1)",
+            "required": True,
+        },
+    ],
+    "deadlines": [],
+    "recommendations": {
+        "required": 3,
+        "note": (
+            "Three references; at least one academic reference if a degree was received "
+            "within the last five years."
+        ),
+    },
+    "application_fee": "$75 (automatically waived for applications submitted Sept 1–Mar 1)",
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS"],
+            "required": False,
+            "note": "Required supplemental materials for applicants with international coursework.",
+        },
+        "visa": _INTL_VISA,
+        "sources": [
+            {
+                "label": "Penn GSE — How to Apply",
+                "url": "https://www.gse.upenn.edu/admissions-and-aid/how-to-apply",
+            }
+        ],
+    },
+    "source": "Penn GSE — How to Apply",
+    "source_url": "https://www.gse.upenn.edu/admissions-and-aid/how-to-apply",
+}
+
+# Annenberg PhD in Communication admission. GRE optional.
+_REQ_ANNENBERG = {
+    "materials": [
+        {"name": "Annenberg online application", "required": True},
+        {
+            "name": "Statement of purpose (must not exceed 1,000 words)",
+            "required": True,
+            "note": "Should discuss your potential research area or topic.",
+        },
+        {"name": "CV or résumé", "required": True},
+        {"name": "Transcripts", "required": True},
+        {
+            "name": "Writing sample (optional, no more than 10 pages double-spaced)",
+            "required": False,
+        },
+        {
+            "name": "Up to three letters of recommendation",
+            "required": True,
+            "note": "From individuals familiar with your academic abilities.",
+        },
+        {"name": "$90 application fee", "required": True},
+        {
+            "name": "GRE",
+            "required": False,
+            "note": "The GRE is optional.",
+        },
+    ],
+    "deadlines": [
+        {"round": "Application, statement, CV, transcripts & fee", "date": "December 1"},
+        {"round": "Letters of recommendation", "date": "December 15"},
+    ],
+    "recommendations": {
+        "required": 3,
+        "note": (
+            "Submit no more than three letters from individuals familiar with your "
+            "academic abilities."
+        ),
+    },
+    "application_fee": (
+        "$90 (waivers for U.S. citizens / permanent residents with financial hardship)"
+    ),
+    "international": {
+        "visa": _INTL_VISA,
+        "sources": [
+            {
+                "label": "Annenberg School — Apply to the PhD Program",
+                "url": "https://www.asc.upenn.edu/graduate/doctorate-communication/apply-phd-program",
+            }
+        ],
+    },
+    "source": "Annenberg School for Communication — PhD Admissions",
+    "source_url": "https://www.asc.upenn.edu/graduate/doctorate-communication/apply-phd-program",
+}
+
+
 def _requirements_for(spec: dict) -> dict:
     """Pick the admissions requirement set for a program by slug / degree type."""
-    if spec["slug"] == "penn-wharton-mba":
-        return dict(_REQ_MBA)
-    if spec["slug"] == "penn-md":
-        return dict(_REQ_MD)
-    if spec["slug"] == "penn-jd":
-        return dict(_REQ_LAW)
+    by_slug = {
+        "penn-wharton-mba": _REQ_MBA,
+        "penn-md": _REQ_MD,
+        "penn-jd": _REQ_LAW,
+        "penn-dmd": _REQ_DENTAL,
+        "penn-vmd": _REQ_VET,
+        "penn-march": _REQ_DESIGN,
+        "penn-msw": _REQ_SP2,
+        "penn-gse-higher-education-msed": _REQ_GSE,
+        "penn-communication-phd": _REQ_ANNENBERG,
+    }
+    req = by_slug.get(spec["slug"])
+    if req is not None:
+        return dict(req)
     return dict(_REQ_UNDERGRAD)
 
 
@@ -1623,6 +2316,11 @@ def _program_standard(slug: str) -> dict:
         # Only the flagship carries its own keyword-relevant feed; catalog programs
         # surface the institution feed rather than a per-program one.
         omitted.append("content_sources")
+    if slug == "penn-gse-higher-education-msed":
+        # Penn GSE serves program-specific deadline dates only via a dynamic dropdown on
+        # the official requirements page; no static, verbatim date could be verified, so
+        # the deadlines field is honestly omitted rather than guessed.
+        omitted.append("application_requirements.deadlines")
     return _standard(omitted)
 
 
