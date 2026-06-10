@@ -1713,7 +1713,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
         # Application deadline (upcoming): Booth Round 1, else undergraduate RD.
-        p.application_deadline = date(2025, 9, 16) if slug == "uchicago-mba" else date(2026, 1, 5)
+        p.application_deadline = date(2026, 9, 16) if slug == "uchicago-mba" else date(2027, 1, 5)
     session.flush()
     # Reconcile legacy UChicago programs (slug not in the canonical set): delete when
     # unreferenced, otherwise unpublish so the catalog stays clean without breaking any
