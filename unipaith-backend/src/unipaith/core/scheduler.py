@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -122,6 +123,10 @@ def setup_scheduler() -> None:
             hours=settings.content_ingest_refresh_hours,
             id="content_ingest_refresh",
             name="Daily Content Ingest Refresh",
+            # Also run once shortly after startup so newly-added / backfilled
+            # content_sources populate Updates/Events promptly after a deploy
+            # instead of waiting up to a full interval. Idempotent + fail-soft.
+            next_run_time=datetime.now() + timedelta(seconds=90),
             **_job_defaults(),
         )
 
