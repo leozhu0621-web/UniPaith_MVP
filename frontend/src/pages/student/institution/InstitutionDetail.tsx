@@ -115,19 +115,41 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   }
 
   // ── Save school (= follow) ──────────────────────────────────────────────
+  // Optimistic so the button flips instantly on click; rolls back on error.
+  // The action is captured explicitly (not from the `isSaved` closure) so the
+  // optimistic cache write can't race the in-flight request.
   const followMut = useMutation({
-    mutationFn: () => (isSaved ? unfollowInstitution(institutionId) : followInstitution(institutionId)),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-follows'] })
-      queryClient.invalidateQueries({ queryKey: ['student-feed'] })
-      showToast(isSaved ? 'Removed from your schools.' : 'Saved. You’ll see this school’s updates in Connect.', 'success')
+    mutationFn: (action: 'follow' | 'unfollow') =>
+      action === 'unfollow' ? unfollowInstitution(institutionId) : followInstitution(institutionId),
+    onMutate: async (action: 'follow' | 'unfollow') => {
+      await queryClient.cancelQueries({ queryKey: ['my-follows'] })
+      const prev = queryClient.getQueryData(['my-follows'])
+      queryClient.setQueryData(['my-follows'], (old: any) => {
+        const list = Array.isArray(old) ? old : []
+        if (action === 'unfollow') {
+          return list.filter((f: any) => String(f.institution_id) !== String(institutionId))
+        }
+        if (list.some((f: any) => String(f.institution_id) === String(institutionId))) return list
+        return [...list, { institution_id: institutionId }]
+      })
+      return { prev }
     },
-    onError: (err: any) =>
-      showToast(err?.response?.data?.detail || 'Something didn’t work. Try again.', 'error'),
+    onError: (err: any, _action, ctx: any) => {
+      if (ctx?.prev !== undefined) queryClient.setQueryData(['my-follows'], ctx.prev)
+      showToast(err?.response?.data?.detail || 'Something didn’t work. Try again.', 'error')
+    },
+    onSuccess: (_data, action) => {
+      queryClient.invalidateQueries({ queryKey: ['student-feed'] })
+      showToast(
+        action === 'unfollow' ? 'Removed from your schools.' : 'Saved. You’ll see this school’s updates in Connect.',
+        'success',
+      )
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['my-follows'] }),
   })
   const onSaveSchool = () => {
     if (!isAuthenticated) { navigate('/login'); return }
-    followMut.mutate()
+    followMut.mutate(isSaved ? 'unfollow' : 'follow')
   }
 
   // Save/unsave a program. Guarded against double-clicks: a per-id in-flight set
