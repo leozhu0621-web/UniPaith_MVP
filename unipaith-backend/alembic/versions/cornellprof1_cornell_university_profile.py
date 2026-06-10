@@ -19,8 +19,13 @@ so this migration is safe on every environment (and on CI databases built with
 ``create_all``, which never run migrations anyway). It ships to production automatically:
 the container entrypoint runs ``alembic upgrade heads`` before serving.
 
+This revision also merges the two pre-existing migration heads (``pennprof3`` and
+``feedsbackfill1``, both children of ``pennprof2``) into a single head, so the chain stays
+unambiguous for ``alembic upgrade head`` (see test_spec_03_compliance::
+test_alembic_has_single_head).
+
 Revision ID: cornellprof1
-Revises: pennprof3
+Revises: pennprof3, feedsbackfill1
 Create Date: 2026-06-10
 """
 
@@ -32,7 +37,8 @@ from alembic import op
 from unipaith.data import cornell_profile
 
 revision = "cornellprof1"
-down_revision = "pennprof3"
+# Merge the two existing heads so the chain has a single head again.
+down_revision = ("pennprof3", "feedsbackfill1")
 branch_labels = None
 depends_on = None
 
