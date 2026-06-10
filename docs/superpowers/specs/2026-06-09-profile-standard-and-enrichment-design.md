@@ -67,6 +67,7 @@ Per-field, human-readable rules the enrichment engine follows:
 ## 5. Data model change
 
 - Add a `standard_version` stamp per profile. Lowest-risk option: a `_standard` key inside the existing JSONB blobs (`{"version": N, "enriched_at": ..., "omitted": [...]}`) — **no migration of table schema**, written by `base.apply`. (Alternative: a dedicated nullable `smallint` column per level; decide in the plan. Default to the JSONB `_standard` key to avoid schema churn.)
+- **One canonical `_standard` per profile level.** A level's entities use several JSONB columns (institution: `ranking_data`/`school_outcomes`; program: `outcomes_data`/`cost_data`/`application_requirements`/`tracks`), so the spec designates **one canonical blob per level** as the authoritative stamp (e.g. institution → `ranking_data`, school → `about_detail`, program → `outcomes_data`). `base.apply` always writes a complete `_standard` to that canonical blob — even a partial single-column update mirrors the current stamp there — and §3.3 / §6 / the §9 scheduler read `version`/`omitted` **only** from the canonical blob. The `omitted` list aggregates across all of the level's columns so coverage stays whole regardless of which column an enrichment touched. This removes any chance of two blobs disagreeing on `version`/`omitted`.
 - `omitted` records fields the verification gate could not confirm, so the conformance report can show coverage honestly.
 
 ## 6. Conformance & render parity
@@ -77,7 +78,7 @@ Per-field, human-readable rules the enrichment engine follows:
 
 ## 7. Enrichment engine (`services/profile_enrichment/`)
 
-Input: `(target, level, manifest, current_data)`. For each missing or stale field:
+Input: `(target, level, manifest, current_data)`. Build the field worklist from the §6 conformance report: when the profile is **stale** (§3.3 — a `STANDARD_VERSION` bump), the worklist is **every** manifest field (the whole blueprint is re-checked against the new standard, even fields already present); otherwise it is the `missing required` fields plus any `omitted` fields due for refresh (§9). For each field in that worklist:
 1. **Research** — web search/fetch the playbook's authoritative sources. Reuse Spec 60's `services/crawler` pipeline + `services/uni_knowledge.py` retriever (grounded-extractor-never-invents).
 2. **Verify (the gate, §8)** — extract, cross-check, confidence-score.
 3. **Conform** — write the value in the manifest's shape with `{source, source_url}` (+ `conditions` where the field type calls for it); OR **omit** and append to `_standard.omitted`.
