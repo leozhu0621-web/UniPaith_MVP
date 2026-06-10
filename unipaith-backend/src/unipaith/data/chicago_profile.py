@@ -1638,6 +1638,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.school_id = school_by_name[spec["school"]].id
         p.is_published = True
         p.catalog_source = "curated"
+        # Persist the curated CIP so the matching feature path (program_features
+        # featurize_program → cip_code) gets the CIP-family signal; already in the
+        # normalized 4-digit dotted form (e.g. "45.06").
+        p.cip_code = spec.get("cip")
         p.delivery_format = spec.get("delivery_format", "in_person")
         # Only the flagship carries its own feed (content_sources omitted for the rest).
         p.content_sources = _BOOTH_CONTENT if slug == "uchicago-mba" else None
