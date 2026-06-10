@@ -1440,6 +1440,10 @@ def _program_standard(slug: str, degree_type: str, has_program_outcomes: bool) -
         # Only the flagship carries its own keyword-relevant feed; catalog
         # programs surface the institution/school feed rather than a per-program one.
         omitted.append("content_sources")
+    if degree_type == "professional":
+        # Professional-school tuition varies by school and is omitted (not the
+        # standard graduate rate) rather than shown as a wrong sticker price.
+        omitted.append("cost_data.tuition_usd")
     return _standard(omitted)
 
 
@@ -1474,7 +1478,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # flagship carries its own feed (content_sources is omitted for the rest),
         # and leaving an old value would keep it in ContentIngestService's selection.
         p.content_sources = _MBA_CONTENT if slug == "stanford-mba" else None
-        # Cost: program override (official) → funded PhD → undergrad rate → standard grad rate.
+        # Cost: program override (official) → funded PhD → undergrad rate →
+        # professional (omitted, varies) → standard grad rate.
         cost_override = _COST_BY_SLUG.get(slug)
         if cost_override is not None:
             p.tuition = cost_override.get("tuition_usd")
@@ -1496,6 +1501,18 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "funded": False,
                 "source": "Stanford Student Services — 2025-26 Undergraduate Tuition",
                 "source_url": "https://studentservices.stanford.edu/tuition-rates/2025-2026-undergraduate-tuition-rates",
+                "year": "2025-26",
+            }
+        elif spec["degree_type"] == "professional":
+            # Professional-school tuition (Law J.D., Medicine M.D.) is set per school
+            # and is not the standard graduate rate; omit the figure rather than
+            # show a wrong sticker price.
+            p.tuition = None
+            p.cost_data = {
+                "funded": False,
+                "note": "Professional-school tuition varies by school — see the official page.",
+                "source": "Stanford Student Services — 2025-26 Graduate & Professional Tuition",
+                "source_url": "https://studentservices.stanford.edu/tuition-rates/2025-2026-graduate-and-professional-tuition-rates",
                 "year": "2025-26",
             }
         else:

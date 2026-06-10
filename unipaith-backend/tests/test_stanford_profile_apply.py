@@ -176,7 +176,12 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     cs_bs = next(p for p in progs if p.slug == "stanford-cs-bs")
     assert cs_bs.tracks is None
     assert cs_bs.content_sources is None
-    # Professional degrees carry the professional admissions baseline.
+    # Undergraduate programs carry Stanford's undergrad tuition, not the grad rate.
+    assert cs_bs.tuition == 67731
+    # Professional degrees carry the professional admissions baseline, and their
+    # per-school tuition is omitted (not shown as the wrong standard grad rate).
     jd = next(p for p in progs if p.slug == "stanford-jd")
     assert jd.degree_type == "professional"
     assert jd.application_requirements["source"].startswith("Stanford")
+    assert jd.tuition is None
+    assert "tuition_usd" not in jd.cost_data
