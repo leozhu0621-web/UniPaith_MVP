@@ -7,6 +7,7 @@ import Badge from '../../../../components/ui/Badge'
 import Textarea from '../../../../components/ui/Textarea'
 import Select from '../../../../components/ui/Select'
 import Skeleton from '../../../../components/ui/Skeleton'
+import QueryError from '../../../../components/ui/QueryError'
 import { showToast } from '../../../../stores/toast-store'
 import {
   getMyEnrollment,
@@ -137,12 +138,16 @@ export default function EnrollmentPanel({ application }: { application: Applicat
 
   const [depositCheckout, setDepositCheckout] = useState<CheckoutSession | null>(null)
 
-  const { data: enr, isLoading } = useQuery({
+  const { data: enr, isLoading, isError, refetch } = useQuery({
     queryKey: ['enrollment', appId],
     queryFn: () => getMyEnrollment(appId),
   })
   // Spec 39 §3 — deposit config (amount/currency/payable) lives on the cost tracker.
-  const { data: cost } = useQuery({
+  const {
+    data: cost,
+    isError: costIsError,
+    refetch: refetchCost,
+  } = useQuery({
     queryKey: ['payment', appId],
     queryFn: () => getCostTracker(appId),
     enabled: !!appId,
@@ -191,7 +196,18 @@ export default function EnrollmentPanel({ application }: { application: Applicat
   })
 
   if (isLoading) return <Skeleton className="h-64 w-full rounded-xl" />
-  if (!enr) return null
+  // Never blank on error — this panel carries enrollment + deposit (money-adjacent).
+  if (isError || !enr) {
+    return (
+      <Card className="p-6">
+        <QueryError
+          title="We couldn't load your enrollment."
+          detail="Your enrollment status didn't load just now."
+          onRetry={() => refetch()}
+        />
+      </Card>
+    )
+  }
 
   const e = enr as Enrollment
   if (!e.available) {
@@ -459,6 +475,13 @@ export default function EnrollmentPanel({ application }: { application: Applicat
                   Pay enrollment deposit
                 </Button>
               </>
+            ) : costIsError ? (
+              // The cost tracker carries the payable amount — don't silently hide the deposit.
+              <QueryError
+                variant="inline"
+                detail="Your deposit details didn't load just now."
+                onRetry={() => refetchCost()}
+              />
             ) : (
               <p className="text-sm text-foreground">
                 Status:{' '}

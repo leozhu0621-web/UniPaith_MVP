@@ -102,16 +102,22 @@ export default function FinancialAidPage() {
         netCost: Math.max(0, netCost),
       }
     }).sort((a, b) => {
+      // Unknown tuition → the cost can't be ranked; always sort last.
+      if ((a.tuition == null) !== (b.tuition == null)) return a.tuition == null ? 1 : -1
       if (sortBy === 'net') return a.netCost - b.netCost
       return (a.tuition ?? Infinity) - (b.tuition ?? Infinity)
     })
   }, [allPrograms, expectedAid, sortBy])
 
-  // Summary stats
-  const cheapest = programCosts.length > 0 ? programCosts[0] : null
-  const mostExpensive = programCosts.length > 0 ? programCosts[programCosts.length - 1] : null
-  const avgNet = programCosts.length > 0
-    ? Math.round(programCosts.reduce((sum, p) => sum + p.netCost, 0) / programCosts.length)
+  // Summary stats — only programs with a known tuition can be ranked by cost.
+  const knownCosts = useMemo(
+    () => programCosts.filter(p => p.tuition != null).sort((a, b) => a.netCost - b.netCost),
+    [programCosts],
+  )
+  const cheapest = knownCosts.length > 0 ? knownCosts[0] : null
+  const mostExpensive = knownCosts.length > 0 ? knownCosts[knownCosts.length - 1] : null
+  const avgNet = knownCosts.length > 0
+    ? Math.round(knownCosts.reduce((sum, p) => sum + p.netCost, 0) / knownCosts.length)
     : 0
 
   if (isLoading) return <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
@@ -141,8 +147,8 @@ export default function FinancialAidPage() {
             <Card className="p-4 text-center">
               <ArrowUpDown size={20} className="mx-auto text-secondary mb-1" />
               <p className="text-xs text-muted-foreground">Average net cost</p>
-              <p className="text-lg font-bold text-foreground">{formatCurrency(avgNet)}</p>
-              <p className="text-xs text-muted-foreground">{programCosts.length} programs</p>
+              <p className="text-lg font-bold text-foreground">{knownCosts.length > 0 ? formatCurrency(avgNet) : '—'}</p>
+              <p className="text-xs text-muted-foreground">{knownCosts.length} program{knownCosts.length !== 1 ? 's' : ''} with known costs</p>
             </Card>
             <Card className="p-4 text-center">
               <TrendingUp size={20} className="mx-auto text-error mb-1" />
@@ -183,8 +189,17 @@ export default function FinancialAidPage() {
                     <p className="text-xs text-muted-foreground">{pc.institution} — {pc.country}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-bold text-foreground">{formatCurrency(pc.netCost)}</p>
-                    <p className="text-xs text-muted-foreground">Net annual cost</p>
+                    {pc.tuition == null ? (
+                      <>
+                        <p className="text-lg font-bold text-muted-foreground">Cost unknown</p>
+                        <p className="text-xs text-muted-foreground">Tuition unavailable</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-lg font-bold text-foreground">{formatCurrency(pc.netCost)}</p>
+                        <p className="text-xs text-muted-foreground">Net annual cost</p>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -218,7 +233,11 @@ export default function FinancialAidPage() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Net cost</p>
-                    <p className="font-bold text-success">{formatCurrency(pc.netCost)}</p>
+                    {pc.tuition == null ? (
+                      <p className="font-medium text-muted-foreground">—</p>
+                    ) : (
+                      <p className="font-bold text-success">{formatCurrency(pc.netCost)}</p>
+                    )}
                   </div>
                 </div>
 

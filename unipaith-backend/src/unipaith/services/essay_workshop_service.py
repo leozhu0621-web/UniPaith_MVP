@@ -176,7 +176,7 @@ class EssayWorkshopService:
         program = await self._load_program(essay.program_id)
 
 
-        if settings.ai_discovery_v2_enabled:
+        if settings.ai_workshops_v2_enabled:
             feedback = await self._llm_feedback(essay, program, feedback_type)
         else:
             feedback = {
@@ -184,7 +184,7 @@ class EssayWorkshopService:
                 "strengths": [],
                 "improvements": [
                     "AI essay feedback is currently disabled. Enable "
-                    "AI_DISCOVERY_V2_ENABLED to receive structured coach feedback.",
+                    "AI_WORKSHOPS_V2_ENABLED to receive structured coach feedback.",
                 ],
                 "prompt_alignment_score": None,
                 "raw_feedback": None,

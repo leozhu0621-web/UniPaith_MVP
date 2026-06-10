@@ -46,3 +46,6 @@ class RecommendationResponse(BaseModel):
     target_program_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
+    # True only on the /send response when a request email actually went out
+    # to the recommender; False everywhere else (not persisted on the model).
+    email_sent: bool = False

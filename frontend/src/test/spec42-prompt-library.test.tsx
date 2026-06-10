@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
@@ -16,6 +16,7 @@ import {
 import type {
   BehavioralPrompt,
   PromptLibrarySummary,
+  Story,
 } from '../types/promptLibrary'
 
 const STAR_ANSWER =
@@ -89,9 +90,15 @@ vi.mock('../api/prompt-library', () => ({
     revision_priority_list: [],
     suggested_practice_plan: 'Start with the core interview set.',
   } as PromptLibrarySummary),
+  createStory: vi.fn().mockResolvedValue({}),
+  updateStory: vi.fn().mockResolvedValue({}),
+  deleteStory: vi.fn().mockResolvedValue(undefined),
+  upsertResponse: vi.fn().mockResolvedValue({}),
 }))
 
+import { updateStory } from '../api/prompt-library'
 import PromptLibraryTab from '../pages/student/apply/promptlibrary/PromptLibraryTab'
+import StoryEditor from '../pages/student/apply/promptlibrary/StoryEditor'
 
 function renderTab(ui: ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -112,5 +119,49 @@ describe('Spec 42 — Prompt Library tab renders, never ghost-writes', () => {
     const labels = screen.getAllByRole('button').map(b => (b.textContent ?? '').toLowerCase())
     // Feedback-only ethos — coach structure, never write the answer.
     expect(labels.some(t => /generate|write (my|your)|rewrite|model answer/.test(t))).toBe(false)
+  })
+})
+
+// ── Story editor — editing must round-trip every saved field ──────────────────
+
+const EXISTING_STORY: Story = {
+  id: 'story-1',
+  title: 'Rebuilt a failing robotics team',
+  summary: 'Took over a struggling team and turned the season around.',
+  primary_competency: 'leadership',
+  secondary_competency: null,
+  competency_tags: ['leadership'],
+  context_tags: ['school'],
+  role_type: 'leader',
+  stakeholder_type: 'peers',
+  conflict_type: null,
+  difficulty_tier: 3,
+  recency: null,
+  duration: '6 months',
+  scale_tier: 2,
+  evidence_link: null,
+  referenceable_contact_flag: true,
+  source: 'student-typed',
+  confidence: 70,
+  record_version: 1,
+  created_at: '2026-01-01T00:00:00Z',
+  updated_at: '2026-01-01T00:00:00Z',
+}
+
+describe('Spec 42 — StoryEditor edit round-trip', () => {
+  it('saving an untouched edit preserves stakeholder_type (PUT is a full replace)', async () => {
+    renderTab(<StoryEditor story={EXISTING_STORY} isOpen onClose={() => {}} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => expect(updateStory).toHaveBeenCalled())
+    expect(updateStory).toHaveBeenCalledWith(
+      'story-1',
+      expect.objectContaining({
+        title: 'Rebuilt a failing robotics team',
+        role_type: 'leader',
+        stakeholder_type: 'peers',
+      }),
+    )
   })
 })

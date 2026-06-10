@@ -5,8 +5,7 @@ import {
   getMyApplication, submitApplication, getChecklist, generateChecklist,
   getReadiness, patchApplication, guardrailScan, toggleChecklistItem,
 } from '../../api/applications'
-import { listEssays, createEssay, updateEssay, requestEssayFeedback } from '../../api/essays'
-import { listResumes, generateResume } from '../../api/resumes'
+import { listWorkshopRuns } from '../../api/workshops-feedback'
 import { requestUpload, uploadToS3, confirmUpload, listDocuments } from '../../api/documents'
 import { listRecommendations, sendRecommendationRequest } from '../../api/recommendations'
 import Button from '../../components/ui/Button'
@@ -19,13 +18,14 @@ import Select from '../../components/ui/Select'
 import ProgressBar from '../../components/ui/ProgressBar'
 import Skeleton, { SkeletonCard } from '../../components/ui/Skeleton'
 import QueryError from '../../components/ui/QueryError'
+import AIBadge from '../../components/ui/AIBadge'
+import { RubricScores } from './apply/RubricDots'
 import { showToast } from '../../stores/toast-store'
 import type { Interview } from '../../types'
-import { STATUS_COLORS } from '../../utils/constants'
 import { getMyInterviews } from '../../api/interviews'
 import InterviewRespondPanel from './interviews/InterviewRespondPanel'
 import {
-  ArrowLeft, Check, Circle, Upload, Sparkles, AlertCircle, FileCheck, ListChecks,
+  ArrowLeft, Check, Circle, Upload, Sparkles, AlertCircle, FileCheck, FileText, ListChecks,
   Users, AlertTriangle, ShieldCheck, Award, Send, Building2, CreditCard, Receipt, HandCoins, Download,
 } from 'lucide-react'
 import Breadcrumbs from '../../components/ui/Breadcrumbs'
@@ -41,7 +41,7 @@ import {
   getCostTracker, payApplicationFee, requestFeeWaiver, isFeeClear, formatMoney, downloadReceipt,
   type CheckoutSession, type FeeView,
 } from '../../api/payments'
-import type { Application, Essay, Resume, ChecklistItem } from '../../types'
+import type { Application, ChecklistItem, WorkshopFeedbackRun } from '../../types'
 
 const STATUS_STEPS = ['draft', 'submitted', 'under_review', 'interview', 'decision_made']
 const STATUS_STEP_LABELS: Record<string, string> = {
@@ -82,11 +82,6 @@ export default function ApplicationDetailPage() {
   const queryClient = useQueryClient()
   // Honor /s/applications/:id?tab=offer deep links (spec 18 §5).
   const [tab, setTab] = useState(searchParams.get('tab') || 'checklist')
-  const [showEssayModal, setShowEssayModal] = useState(false)
-  const [editingEssay, setEditingEssay] = useState<Essay | null>(null)
-  const [essayContent, setEssayContent] = useState('')
-  const [essayPrompt, setEssayPrompt] = useState('')
-  const [essayType, setEssayType] = useState('personal_statement')
 
   // Upload state
   const [uploading, setUploading] = useState(false)
@@ -98,10 +93,6 @@ export default function ApplicationDetailPage() {
   const [showReadiness, setShowReadiness] = useState(false)
   const [markedReady, setMarkedReady] = useState(false)
   const [submitBlockers, setSubmitBlockers] = useState<string[] | null>(null)
-
-  // Essay feedback state
-  const [feedbackLoading, setFeedbackLoading] = useState<string | null>(null)
-  const [feedbackResults, setFeedbackResults] = useState<Record<string, any>>({})
 
   // Guardrails state (G-S4)
   const [guardrailResult, setGuardrailResult] = useState<any>(null)
@@ -131,8 +122,14 @@ export default function ApplicationDetailPage() {
         throw err
       }),
   })
-  const { data: essays, isLoading: essaysLoading, isError: essaysError, refetch: refetchEssays } = useQuery({ queryKey: ['essays', app?.program_id], queryFn: () => listEssays(app?.program_id), enabled: !!app?.program_id && (tab === 'essays' || tab === 'documents') })
-  const { data: resumes } = useQuery({ queryKey: ['resumes', app?.program_id], queryFn: () => listResumes(app?.program_id), enabled: !!app?.program_id && tab === 'documents' })
+  // Essays tab — workshop feedback runs (feedback-only by spec). The legacy
+  // /students/me/essays endpoints are Phase-E deletion targets; drafting lives
+  // with the student, feedback lives in Apply → Workshops.
+  const { data: essayRuns, isLoading: essayRunsLoading, isError: essayRunsError, refetch: refetchEssayRuns } = useQuery({
+    queryKey: ['workshop-runs', 'essay'],
+    queryFn: () => listWorkshopRuns('essay'),
+    enabled: tab === 'essays',
+  })
   const { data: documents, isError: documentsError, refetch: refetchDocuments } = useQuery({ queryKey: ['documents'], queryFn: listDocuments, enabled: tab === 'documents' })
   const { data: interviews, isLoading: interviewsLoading, isError: interviewsError, refetch: refetchInterviews } = useQuery({ queryKey: ['interviews', appId], queryFn: getMyInterviews, enabled: tab === 'interviews' })
   const { data: recommenders, isLoading: recommendersLoading, isError: recommendersError, refetch: refetchRecommenders } = useQuery({ queryKey: ['recommendations'], queryFn: listRecommendations, enabled: tab === 'recommenders' })
@@ -181,9 +178,6 @@ export default function ApplicationDetailPage() {
     },
     onError: (err: any) => showToast(err?.response?.data?.detail || 'Could not request a waiver', 'error'),
   })
-  const essayMut = useMutation({ mutationFn: (data: any) => createEssay(data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); queryClient.invalidateQueries({ queryKey: ['checklist', appId] }); setShowEssayModal(false); setEssayContent(''); setEssayPrompt(''); showToast('Essay created', 'success') } })
-  const essayUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateEssay(id, data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setEditingEssay(null); showToast('Essay updated', 'success') } })
-  const resumeGenMut = useMutation({ mutationFn: () => generateResume({ format_type: 'standard', target_program_id: app?.program_id }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['resumes'] }); queryClient.invalidateQueries({ queryKey: ['checklist', appId] }); showToast('Resume generated', 'success') } })
   const modeMut = useMutation({
     mutationFn: (mode: 'internal' | 'external') => patchApplication(appId!, { submission_mode: mode }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Submission mode updated', 'success') },
@@ -260,20 +254,6 @@ export default function ApplicationDetailPage() {
     }
   }
 
-  const handleEssayFeedback = async (essayId: string) => {
-    setFeedbackLoading(essayId)
-    try {
-      const result = await requestEssayFeedback(essayId)
-      setFeedbackResults(prev => ({ ...prev, [essayId]: result }))
-    } catch {
-      showToast('Could not get feedback', 'error')
-    } finally {
-      setFeedbackLoading(null)
-    }
-  }
-
-  const wordCount = (text: string) => text.trim() ? text.trim().split(/\s+/).length : 0
-
   usePageTitle(app?.program?.program_name || 'Application')
 
   if (isLoading) return <div className="p-6"><Skeleton className="h-64" /></div>
@@ -291,8 +271,12 @@ export default function ApplicationDetailPage() {
   const checklistItems: ChecklistItem[] = checklist?.items ?? []
   const completionPct = checklist?.completion_percentage ?? application.readiness_pct ?? 0
   const documentsList: any[] = Array.isArray(documents) ? documents : []
-  const essaysList: Essay[] = Array.isArray(essays) ? essays : []
-  const resumesList: Resume[] = Array.isArray(resumes) ? resumes : []
+  const resumeDocs = documentsList.filter((d: any) => d.document_type === 'resume')
+  // Essay workshop runs relevant to this application — program-specific runs
+  // targeting this program, plus general (untargeted) runs. Newest first.
+  const essayRunsList: WorkshopFeedbackRun[] = (Array.isArray(essayRuns) ? essayRuns : [])
+    .filter(r => !r.target_program_id || r.target_program_id === application.program_id)
+    .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
   const recommendersList: any[] = Array.isArray(recommenders) ? recommenders : []
   const isExternal = application.submission_mode === 'external'
   // Fitness on a 0-100 scale (score stored 0-1). Spec 15 §6.5 low-fit ≤ 30.
@@ -416,9 +400,10 @@ export default function ApplicationDetailPage() {
         </div>
       </div>
 
-      <div className="flex gap-6">
-        {/* Sidebar */}
-        <div className="w-60 flex-shrink-0 space-y-4">
+      <div className="flex flex-col gap-6 lg:flex-row">
+        {/* Sidebar — stacks full-width above the tabs on narrow viewports,
+            becomes the 240px column from lg up. */}
+        <div className="w-full space-y-4 lg:w-60 lg:flex-shrink-0">
           <Card className="p-4">
             <h3 className="font-medium text-sm text-foreground mb-3">Checklist</h3>
             <div className="space-y-2 mb-3">
@@ -628,13 +613,13 @@ export default function ApplicationDetailPage() {
                   </div>
                 )}
 
-                {/* Resume (a document) */}
-                <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+                {/* Resume / CV (a document — upload it via the dropzone above) */}
+                <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border">
                   <div className="text-sm text-foreground">
-                    Resume / CV {resumesList.length > 0 && <Badge variant="success">v{resumesList[0].resume_version}</Badge>}
+                    Resume / CV {resumeDocs.length > 0 && <Badge variant="success">On file</Badge>}
                   </div>
-                  {resumesList.length === 0 && (
-                    <Button size="sm" variant="tertiary" onClick={() => resumeGenMut.mutate()} loading={resumeGenMut.isPending}>Generate</Button>
+                  {resumeDocs.length === 0 && (
+                    <span className="text-xs text-muted-foreground">Upload your resume or CV above.</span>
                   )}
                 </div>
 
@@ -646,46 +631,60 @@ export default function ApplicationDetailPage() {
 
             {tab === 'essays' && (
               <div className="space-y-4">
-                <Button size="sm" onClick={() => setShowEssayModal(true)}>+ New essay</Button>
-                {essaysLoading ? (
+                {/* Workshops are feedback-only by spec — no drafting here. This
+                    tab shows past essay-feedback runs relevant to this program;
+                    new feedback happens in Apply → Workshops. */}
+                <Card className="p-4 flex items-center justify-between gap-3 flex-wrap">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">Essay feedback</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Workshops score your draft and flag what's missing — they never write it for you.
+                    </p>
+                  </div>
+                  <Button size="sm" variant="secondary" className="shrink-0" onClick={() => navigate('/s/manage?tab=workshops')}>
+                    <Sparkles size={14} className="mr-1" /> Get essay feedback
+                  </Button>
+                </Card>
+                {essayRunsLoading ? (
                   <SkeletonCard />
-                ) : essaysError && essaysList.length === 0 ? (
+                ) : essayRunsError ? (
                   <QueryError
                     variant="inline"
-                    detail="We couldn't load your essays."
-                    onRetry={() => refetchEssays()}
+                    detail="We couldn't load your essay feedback."
+                    onRetry={() => refetchEssayRuns()}
                   />
-                ) : essaysList.length === 0 ? (
-                  <p className="text-sm text-muted-foreground mt-2">No essays yet for this application.</p>
+                ) : essayRunsList.length === 0 ? (
+                  <Card className="p-6 text-center">
+                    <FileText size={32} className="text-muted-foreground mx-auto mb-3" />
+                    <p className="text-sm text-foreground">No essay feedback yet.</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Run a draft through the essay workshop to see its feedback here.
+                    </p>
+                  </Card>
                 ) : (
-                  essaysList.map((e: Essay) => (
-                    <Card key={e.id} className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <p className="font-medium text-sm text-foreground">{e.prompt_text || 'Essay'}</p>
+                  essayRunsList.map(run => (
+                    <Card key={run.id} className="p-4">
+                      <div className="flex justify-between items-start gap-3 mb-3 flex-wrap">
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm text-foreground">{run.prompt_text || 'Essay draft'}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-muted-foreground">{e.word_count ?? wordCount(e.content)} words</span>
-                            <Badge variant={(STATUS_COLORS[e.status] || 'neutral') as never}>{e.status}</Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(run.created_at).toLocaleDateString()}
+                            </span>
+                            <Badge variant={run.target_program_id ? 'info' : 'neutral'}>
+                              {run.target_program_id ? 'This program' : 'General'}
+                            </Badge>
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="tertiary" onClick={() => handleEssayFeedback(e.id)} loading={feedbackLoading === e.id}>
-                            <Sparkles size={12} className="mr-1" /> Get feedback
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => { setEditingEssay(e); setEssayContent(e.content); setEssayPrompt(e.prompt_text || '') }}>Edit</Button>
-                        </div>
+                        <AIBadge fallback={run.is_stub} />
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-3">{e.content}</p>
-                      {feedbackResults[e.id] && (
-                        <div className="mt-3 bg-muted rounded-lg p-3">
-                          <div className="flex items-center gap-2 mb-2"><Sparkles size={14} className="text-secondary" /><span className="text-sm font-medium text-foreground">Feedback</span></div>
-                          {feedbackResults[e.id].feedback && <p className="text-sm text-foreground whitespace-pre-wrap">{feedbackResults[e.id].feedback}</p>}
-                          {feedbackResults[e.id].suggestions && (
-                            <ul className="text-sm text-foreground list-disc list-inside mt-2 space-y-1">
-                              {feedbackResults[e.id].suggestions.map((s: string, i: number) => <li key={i}>{s}</li>)}
-                            </ul>
-                          )}
-                        </div>
+                      <RubricScores scores={run.rubric_scores} />
+                      {((run.structural_issues?.length ?? 0) > 0 || (run.missing_elements?.length ?? 0) > 0) && (
+                        <p className="text-xs text-muted-foreground mt-3">
+                          {run.structural_issues?.length ?? 0} structural issue{(run.structural_issues?.length ?? 0) !== 1 ? 's' : ''}
+                          {' · '}
+                          {run.missing_elements?.length ?? 0} missing element{(run.missing_elements?.length ?? 0) !== 1 ? 's' : ''}
+                        </p>
                       )}
                     </Card>
                   ))
@@ -838,38 +837,6 @@ export default function ApplicationDetailPage() {
           </div>
         </div>
       </div>
-
-      {/* New Essay Modal */}
-      <Modal isOpen={showEssayModal} onClose={() => setShowEssayModal(false)} title="New essay">
-        <div className="space-y-3">
-          <Select label="Type" options={[
-            { value: 'personal_statement', label: 'Personal Statement' },
-            { value: 'diversity', label: 'Diversity Statement' },
-            { value: 'why_school', label: 'Why This School' },
-            { value: 'research', label: 'Research Statement' },
-          ]} value={essayType} onChange={e => setEssayType(e.target.value)} />
-          <Textarea label="Prompt" value={essayPrompt} onChange={e => setEssayPrompt(e.target.value)} placeholder="The essay question…" />
-          <div>
-            <Textarea label="Content" value={essayContent} onChange={e => setEssayContent(e.target.value)} placeholder="Write your essay…" />
-            <p className="text-xs text-muted-foreground mt-1 text-right">{wordCount(essayContent)} words</p>
-          </div>
-          <Button onClick={() => essayMut.mutate({ program_id: application.program_id, essay_type: essayType, content: essayContent, prompt_text: essayPrompt })} loading={essayMut.isPending} className="w-full">Save essay</Button>
-        </div>
-      </Modal>
-
-      {/* Edit Essay Modal */}
-      <Modal isOpen={!!editingEssay} onClose={() => setEditingEssay(null)} title="Edit essay" size="lg">
-        {editingEssay && (
-          <div className="space-y-3">
-            <Textarea label="Prompt" value={essayPrompt} onChange={e => setEssayPrompt(e.target.value)} />
-            <div>
-              <Textarea label="Content" value={essayContent} onChange={e => setEssayContent(e.target.value)} />
-              <p className="text-xs text-muted-foreground mt-1 text-right">{wordCount(essayContent)} words</p>
-            </div>
-            <Button onClick={() => essayUpdateMut.mutate({ id: editingEssay.id, data: { content: essayContent, prompt_text: essayPrompt } })} loading={essayUpdateMut.isPending} className="w-full">Save changes</Button>
-          </div>
-        )}
-      </Modal>
 
       {/* Readiness Check Modal */}
       <Modal isOpen={showReadiness} onClose={() => setShowReadiness(false)} title="Application readiness">
