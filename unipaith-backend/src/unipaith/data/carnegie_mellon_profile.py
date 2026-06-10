@@ -1059,11 +1059,20 @@ def _deadline_for(spec: dict) -> date | None:
     return date(2026, 12, 15)  # graduate baseline (varies by program)
 
 
+# Professional/terminal doctorates registered under degree_type "phd" that are
+# NOT funded research Ph.D.s (so they must not inherit zero, fully-funded tuition).
+_UNFUNDED_DOCTORATE_SLUGS = {"cmu-ddes", "cmu-da-math"}
+
+
+def _is_funded_phd(spec: dict) -> bool:
+    return spec["degree_type"] == "phd" and spec["slug"] not in _UNFUNDED_DOCTORATE_SLUGS
+
+
 def _tuition_for(spec: dict) -> int | None:
     if spec["degree_type"] == "bachelors":
         return _TUITION_UNDERGRAD
-    if spec["degree_type"] == "phd":
-        return 0  # doctoral programs are funded
+    if _is_funded_phd(spec):
+        return 0  # funded research doctorates
     return None  # per-program graduate tuition deepened on a resume run
 
 
@@ -1216,7 +1225,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p.tuition = tuition
             p.cost_data = {
                 "tuition_usd": tuition,
-                "funded": spec["degree_type"] == "phd",
+                "funded": _is_funded_phd(spec),
                 "source": _COST_SRC[0],
                 "source_url": _COST_SRC[1],
                 "year": "2025-26",
