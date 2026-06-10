@@ -2,190 +2,161 @@
 name: enrich-profile
 description: >
   Autonomously develop the UniPaith profile database toward the gold standard,
-  one verified unit of work per run. Use when asked to enrich a profile, raise a
-  school/program/institution to standard, or as a scheduled routine that keeps
-  growing the database. Picks the next-best target by conformance, researches
-  missing fields from authoritative sources, VERIFIES (never fabricates — omits
-  if unverifiable), writes the data + an idempotent migration, and ships it live.
+  ONE COMPLETE UNIVERSITY per run — the institution page + every school + every
+  program + all their details — verified and shipped as one atomic unit. Use as a
+  scheduled routine that keeps growing the database. Discovers a university's real
+  structure, researches every field from authoritative sources, VERIFIES (never
+  fabricates — omits if unverifiable), writes the data + an idempotent migration,
+  and ships it live. Full spec:
+  docs/superpowers/specs/2026-06-10-university-enrichment-routine.md.
 ---
 
-# Enrich a profile to the gold standard
+# Enrich a whole university to the gold standard
 
 You develop the UniPaith profile database so every institution / school / program
-profile reaches the **gold standard** defined by the MIT / Sloan / MBAn reference
-instance — with **real, cited data and zero fabrication**. This skill is the
-complete operating manual for one run. It is designed to be driven by a scheduled
-Claude routine; the human controls the frequency, you do exactly one clean,
-shippable unit of work each run.
+reaches the **gold standard** defined by the MIT / Sloan / MBAn reference instance
+— with **real, cited data and zero fabrication**. This skill is the complete
+operating manual for one run. The human drives it on a schedule and controls the
+frequency; you do exactly **one whole university** each run.
+
+**Unit of work = one complete university** = the institution + **all** its schools
++ **all** their programs + every detail, enriched to gold, verified, shipped as one
+PR. It is a large job per run, and that is intentional — it satisfies the
+cross-level dependencies (schools inherit institution stats; programs inherit the
+campus photo) atomically, so you never publish a half-built university or an
+orphaned child.
 
 ## The one inviolable rule
 
-**Never fabricate. Ever.** A field ships only when it is verified against
-authoritative sources and carries a citation. If you cannot verify it, **omit it**
-(record it in the profile's `_standard.omitted`) — an honestly-empty field is
-correct; a guessed one is a defect. Extra research tokens are acceptable; a wrong
-fact on a student-facing page is not.
+**Never fabricate. Ever.** A field ships only when verified against authoritative
+sources and carrying a citation. If you cannot verify it, **omit it** (record it in
+that node's `_standard.omitted`). An honestly-empty field is correct; a guessed one
+is a defect. Extra research tokens are acceptable; a wrong fact on a student-facing
+page is not.
 
 ## What "the standard" is (read these first)
 
-The standard is machine-checkable and lives in the repo:
-
 - **`unipaith-backend/src/unipaith/profile_standard/manifest.py`** — `STANDARD_VERSION`
-  + the ordered `Section`/`Field` blueprint for each level (`institution`, `school`,
-  `program`). Each `Field` has a dotted `path` into the profile's persisted shape,
-  a `required` flag, a `sourcing` rule, and an `enrich` flag (`False` = inherited
-  from a parent or render-only → not this profile's job).
-- **`unipaith-backend/src/unipaith/profile_standard/conformance.py`** —
-  `check_conformance(level, snapshot, profile_version=) -> {missing_sections, missing_fields, stale}`.
-  This tells you exactly what a profile is missing.
-- **`unipaith-backend/src/unipaith/profile_standard/playbook.md`** — the per-field
-  **authoritative source** + the verification-gate rules. This is your source map.
-- **`unipaith-backend/src/unipaith/services/profile_enrichment/gate.py`** — the
-  deterministic verification rules you must satisfy (`verify(sourcing, evidence)`).
-- **The gold reference:** `unipaith-backend/src/unipaith/data/mit_profile.py`. This
-  is what a fully-enriched profile looks like — copy its *shape*, never its values.
-- **Design + plans:** `docs/superpowers/specs/2026-06-09-profile-standard-and-enrichment-design.md`,
-  `docs/superpowers/specs/2026-06-10-profile-standard-completion.md`,
-  `docs/superpowers/plans/2026-06-10-mass-enrichment-plan.md`.
+  + the ordered `Section`/`Field` blueprint per level (`institution`, `school`,
+  `program`); each `Field` has a dotted `path`, a `required` flag, a `sourcing`
+  rule, and an `enrich` flag (`False` = inherited-from-parent or render-only).
+- **`profile_standard/conformance.py`** — `check_conformance(level, snapshot,
+  profile_version=)` → `{missing_sections, missing_fields, stale}`.
+- **`profile_standard/playbook.md`** — the per-field authoritative-source + gate rules.
+- **`services/profile_enrichment/gate.py`** — the deterministic verify rules.
+- **`unipaith-backend/src/unipaith/data/mit_profile.py`** — the gold reference and the
+  data-module template (copy its *shape*, never its values).
+- **Full routine spec:** `docs/superpowers/specs/2026-06-10-university-enrichment-routine.md`.
+  Parent design: `docs/superpowers/specs/2026-06-09-profile-standard-and-enrichment-design.md`.
 
-A profile is **gold** when `check_conformance` returns `conformant: True` against
-the current `STANDARD_VERSION`.
+A node is **gold** when `check_conformance` returns no missing required fields
+(except fields legitimately in its `_standard.omitted`). A **university is gold**
+when every node in its tree is gold.
 
-## Per-run algorithm
+## Per-run algorithm (one whole university)
 
-Do these in order. Bound the run to **one profile** (or a small set of fields)
-so each run is a clean, shippable, reviewable unit.
-
-### 1. Health check (don't build on a broken base)
+### 1. Health check
 ```bash
 cd unipaith-backend && PYTHONPATH=src AI_MOCK_MODE=true .venv/bin/pytest tests/test_profile_standard.py tests/test_profile_enrichment.py -q
 cd ../frontend && npm run build >/dev/null 2>&1 && echo FE_OK
 ```
-Confirm the working tree is clean and `main` is healthy before starting.
+Confirm the working tree is clean and `main` is healthy.
 
-### 2. Pick the target (conformance-driven)
-List the fleet and find the highest-value gap. Targets are the institution profile
-modules in `unipaith-backend/src/unipaith/data/*_profile.py` (and any institutions
-seeded in prod). For each candidate, build a **snapshot** of its persisted shape and
-run `check_conformance`. Prioritize, in order:
-1. **Parent before child** — never enrich a school/program whose parent institution
-   is below standard (schools inherit institution stats; programs inherit the
-   institution photo).
-2. **Profiles students actually hit** — higher saved-school / match / view counts first.
-3. **Lowest conformance first** — biggest gap-closing per unit of work.
-4. **Field priority** — deterministic federal-dataset fields first (cheapest,
-   safest), then first-party official pages, then `authoritative_2x` reviews last.
+### 2. Select the target university
+Pick the single highest-priority university **not yet gold** — a new one to add, or
+an existing under-conformant one. **Finish any university already in progress before
+starting a new one.** Prioritize by: student demand (saved-school / match / view
+counts) → size of gaps → finish-in-flight. If every university is gold at the current
+`STANDARD_VERSION`, report and stop.
 
-Pick **one** target + the specific missing required fields to fill this run. If the
-whole fleet is already conformant at the current `STANDARD_VERSION`, report that and
-exit — there is nothing to do.
+### 3. Discover the university's real structure (never invent it)
+- Resolve the official name + **UNITID** (College Scorecard / IPEDS key). No UNITID →
+  flag for manual mapping and skip.
+- **Schools/colleges:** the university's official "Schools & Colleges" / "Academics"
+  page; cross-check IPEDS.
+- **Programs:** enumerate degree programs per school from the official catalog **and**
+  the IPEDS / College Scorecard program list (by CIP for that UNITID) for completeness.
+- Dedupe; assign stable slugs (`<univ>-<program>-<degree>`); map each program to its
+  owning school by name. If a school/program can't be confirmed officially, **do not
+  add it.**
 
-> To build a snapshot for an existing institution module: import it and read the
-> same constants its `apply()` writes (e.g. `RANKING_DATA`, `SCHOOL_OUTCOMES`,
-> `_OUTCOMES_BY_SLUG[slug]`, `_COST_BY_SLUG[slug]`, `_REQ_*`, `_TRACKS_BY_SLUG`,
-> `_CLASS_PROFILE_BY_SLUG`, `_FACULTY_BY_SLUG` → `faculty_contacts`,
-> `_REVIEWS_BY_SLUG` → `external_reviews`). See `tests/test_profile_standard.py`
-> for the exact snapshot shape per level.
+### 4. Enrich the institution FIRST (parent before children)
+Fill every required institution-level field (rankings · report-card · admissions
+funnel · diversity · recognition · scale · outcomes · cost & aid · location · campus
+resources · feeds · sources) from authoritative sources. Verify each (§Verify); cite;
+omit-if-unverifiable. The institution must reach gold first so schools/programs
+inherit its stats + photo.
 
-### 3. Research each missing field (authoritative sources only)
-Use `playbook.md`'s source map to know **where** each field comes from, then use
-your web tools (WebSearch / WebFetch) to find and READ the authoritative source.
-Source map (summary):
+### 5. Enrich every school
+For each school: `about_detail` (founded, leadership, faculty, research centers,
+named-for) + feeds. Verify; cite; omit-if-unverifiable.
 
-| Field group | Authoritative source | Gate tier |
-|---|---|---|
-| Report-card stats, financial aid, demographics, test scores | College Scorecard (by UNITID) + IPEDS; cross-check Common Data Set | `authoritative_2x` / `first_party` |
-| Median earnings 10yr; program Field-of-Study outcomes | Scorecard (+ institution outcomes page) | `authoritative_2x` |
-| Program career outcomes (salary dist, employers, industries, conditions) | The institution's **career-office Employment Report** (PDF) for the most recent class | `first_party` cited |
-| Tuition / cost breakdown / fees | Registrar / bursar / financing page | `first_party` cited |
-| Rankings (QS / THE / U.S. News) | Each ranking body's own page | `first_party` per body |
-| Carnegie / accreditor | Carnegie listing / regional accreditor | `first_party` |
-| Admissions (materials, deadlines, recs, test policy, international/visa/OPT) | Official how-to-apply page | `first_party` cited |
-| Class profile (cohort, intl%, GPA/GRE/GMAT, work-exp) | Program Class Profile page | `first_party` cited |
-| Faculty roster / tracks-curriculum | Faculty directory / curriculum page | `official_or_curated`, verbatim |
-| Recognition / scale (Nobel, endowment, ratio, acres) | Institution Facts / news pages | `first_party` |
-| Reviews ("what students say") | ≥2 reputable third-party guides, paraphrased + attributed | `authoritative_2x` |
-| Feeds (Updates + Events) | Institution's own RSS / iCal / verified socials | `first_party` |
+### 6. Enrich every program
+For each program: basics, curriculum/tracks, admissions (incl. international / recs /
+fee), costs (breakdown), outcomes (salary distribution + employment + top industries
+/ employers + **conditions/methodology verbatim** + source), insights (class profile,
+faculty, reviews from ≥2 sources), feeds. Verify each; cite; omit-if-unverifiable.
 
-For statistical fields (outcomes especially), capture the report's **conditions /
-methodology** verbatim (knowledge rate, sample size, base-vs-total comp, reporting
-window, reporting standard) — students must see the caveats, exactly as the MBAn
-outcomes do.
+### Verify (the gate — every value, every level)
+Ships only if: `first_party` = one official source; `authoritative_2x` = **≥2
+independent (distinct-domain) sources agreeing** within ~5%; a **citation** (`source`
++ resolvable `source_url`) is attached; numbers cross-check; and a careful re-read of
+the cited text confirms it (multi-pass for contested numbers — extra tokens are fine).
+Else → **omit** (add the path to that node's `_standard.omitted`). Never guess, infer,
+or round into a stronger claim. Capture stats' conditions verbatim.
 
-### 4. Verify (the gate — do this for every value)
-A value may ship **only if all hold**:
-1. `first_party` fields: one designated official source. `authoritative_2x`: **≥2
-   independent (distinct-domain) authoritative sources that agree** (numbers within
-   ~5%).
-2. A **citation** is attached: `source` (label) + a resolvable `source_url`.
-3. Numbers **cross-check** across sources.
-4. Re-read the cited source text and confirm it actually supports the value (do this
-   carefully, more than once for contested numbers — extra tokens are fine).
+### 7. Write the data module
+Author/extend `unipaith-backend/src/unipaith/data/<university>_profile.py`, mirroring
+`mit_profile.py`: per-university constants (`RANKING_DATA`, `SCHOOL_OUTCOMES`,
+`SCHOOLS[]`, `PROGRAMS[]`) + per-slug dicts (`_OUTCOMES_BY_SLUG`, `_COST_BY_SLUG`,
+`_REQ_*`, `_TRACKS_BY_SLUG`, `_CLASS_PROFILE_BY_SLUG`, `_FACULTY_BY_SLUG` →
+`faculty_contacts`, `_REVIEWS_BY_SLUG` → `external_reviews`, school `about_detail` /
+`content_sources`) + an idempotent `apply(session)`. Stamp every node's `_standard =
+{"version": STANDARD_VERSION, "enriched_at": <date>, "omitted": [...]}`.
 
-If any fails → **omit** the field and add its path to the profile's
-`_standard.omitted`. Do not guess, round into a stronger claim, or infer.
+### 8. Migration + scratch-DB validation
+Add an Alembic data migration whose `upgrade()` calls
+`<university>_profile.apply(Session(bind=op.get_bind()))` (idempotent, flush-not-
+commit, `replace=True`/dedup). Validate the full chain on a fresh scratch DB
+(CREATE EXTENSION vector,pgcrypto → `alembic upgrade head`). Single head.
 
-### 5. Write the data (conform to the manifest shape)
-Edit the institution's profile module (`data/<institution>_profile.py`), adding the
-verified, cited values in the manifest's shape — mirror `mit_profile.py` exactly
-(e.g. add a `_OUTCOMES_BY_SLUG[slug]` entry with `median_salary`, `salary_25th/75th`,
-`top_industries`, `conditions`, `source`, `source_url`; or a school `about_detail`
-with `founded`, `leadership`, `faculty`, `research_centers`, `source`). For a brand
-new institution, create a new `<name>_profile.py` modeled on `mit_profile.py` and an
-`apply(session)` that maps the data onto the columns. Stamp `_standard = {"version":
-STANDARD_VERSION, "enriched_at": <date>, "omitted": [...]}`.
+### 9. Ship
+`ruff check src/<changed> tests/<changed>` (NOT `ruff check .`) + the profile tests +
+`npm run build`; branch off `origin/main` → commit → PR → squash-merge → watch Deploy
+Backend → **verify live** (query the public API for the institution + a sample school
++ a sample program; confirm new fields + citations).
 
-### 6. Migration (idempotent) + scratch-DB validation
-Create an Alembic **data migration** that re-applies the profile, following the
-existing pattern (a `revision`/`down_revision` module whose `upgrade()` calls
-`<institution>_profile.apply(Session(bind=op.get_bind()))`; idempotent, flush-not-
-commit; `replace=True`/dedup so re-runs are safe). Validate the full chain on a
-fresh scratch DB before shipping:
-```bash
-# create scratch DB via the docker pg container, CREATE EXTENSION vector,pgcrypto,
-# then: PYTHONPATH=src DATABASE_URL=...scratch... .venv/bin/alembic upgrade head
-```
-(Note: `apply()` no-ops when the institution isn't already seeded — so on a fresh
-scratch DB it validates the migration *runs cleanly*; the data lands in prod where
-the institution exists.)
+### 10. Report
+University name · #schools · #programs · per-level fields filled (with sources) vs
+omitted (with reasons) · conformance before/after · PR link.
 
-### 7. Ship (the standard pipeline)
-```
-backend: .venv/bin/ruff check src/<changed> tests/<changed>   (NOT ruff check .)
-backend: PYTHONPATH=src AI_MOCK_MODE=true .venv/bin/pytest <relevant tests>
-frontend: npm run build           # tsc -b && vite build — the deploy gate
-single alembic head, then: branch off origin/main → commit → PR → squash-merge → watch Deploy Backend → verify live
-```
-Verify live by querying the public API for the enriched profile and confirming the
-new fields are present + cited (e.g. `GET https://api.unipaith.co/api/v1/programs/<id>`).
+## Scope & resumption for very large universities
 
-### 8. Log the run
-Report: target, fields filled (with sources), fields omitted (with reason), the PR,
-and the deploy result. If a `STANDARD_VERSION` bump is warranted (only after a
-manifest change — not during routine enrichment), note it; bumping marks the whole
-fleet stale so the next runs re-plan only the new/changed fields.
+The unit is the whole tree, but a giant (100+ programs) may exceed one run. Each field
+is independently verified-or-omitted, so a partial tree is always consistent and
+shippable. If a run can't finish, **ship the verified partial**; because step 2 prefers
+finishing in-flight universities, the next run **resumes the SAME university** (re-plans
+only what's missing — conformance-driven) until its whole tree is gold, *then* moves on.
+Idempotent migrations make resumption and overlap safe.
 
 ## Guardrails (every run)
 
-- **No fabrication. Omit, never guess. Cite everything.** (The one rule.)
-- **Bounded:** one profile (or a few fields) per run → a clean shippable unit. Do not
-  try to enrich the whole fleet in one run.
-- **Parent before child.** Enrich the institution before its schools/programs.
-- **Idempotent migrations** (`replace=True`/dedup keys) so overlapping/repeat runs
-  are safe.
-- **Match the editorial standard:** content-rich, program-specific, sentence case,
-  numbers with units + reporting window — never generic marketing.
-- **Never expose secrets / API keys.** Do not enter credentials anywhere.
-- **Ship every time** a unit is verified (commit → merge → deploy → verify live), per
-  the project's standing rule; if a value can't be verified, leave it omitted and move on.
-- **Stop condition:** if the chosen target is already conformant (or the fleet is),
-  say so and end the run cleanly.
+- **Never fabricate. Omit if unverifiable. Cite everything.**
+- **One whole university per run** (or finish an in-flight one) — atomic + shippable.
+- **Institution before its schools/programs.**
+- **Idempotent migrations** (`replace=True` / dedup).
+- **Editorial standard:** content-rich, program-specific, sentence case, numbers with
+  units + reporting window — never generic marketing.
+- **Never expose secrets / API keys.**
+- **Ship every verified unit** (commit → merge → deploy → verify live); never block the
+  tree on one unverifiable field — omit and continue.
+- **Stop condition:** all universities gold at the current `STANDARD_VERSION` → report
+  and end.
 
 ## Using this as a scheduled routine
 
-The human schedules this skill (e.g. via `/schedule`) at whatever cadence they want;
-each firing runs the algorithm above once and ships one verified unit. Suggested
-prompt to schedule: *"Run the enrich-profile skill: pick the next-best target by
-conformance and bring it one verified step closer to the gold standard, then ship."*
-Because every run is bounded, idempotent, and verified, the database grows safely and
-continuously without ever shipping a fabricated fact.
+The human schedules this skill at any cadence they choose; each firing enriches one
+whole university (or advances an in-flight one) and ships it. See §11 of the spec for
+the exact prompt to schedule. Because every run is whole-tree, idempotent, and verified,
+the database grows one complete university at a time, safely, without ever shipping a
+fabricated fact.
