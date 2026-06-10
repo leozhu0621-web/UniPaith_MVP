@@ -34,6 +34,59 @@ that node's `_standard.omitted`). An honestly-empty field is correct; a guessed 
 is a defect. Extra research tokens are acceptable; a wrong fact on a student-facing
 page is not.
 
+## Completeness is non-negotiable — verify before you ship
+
+The first routine runs shipped **shallow** universities (only the cheap federal
+report-card stats), which broke the pages. Do **not** repeat these misses. A node
+is not done until `check_conformance` says so.
+
+**Before shipping any node, run `check_conformance(level, snapshot,
+profile_version=)` and only treat it as done when it is gold OR every remaining
+required field is recorded in that node's `_standard.omitted` with a real
+reason.** Stamp `_standard = {"version": STANDARD_VERSION, "enriched_at": <date>,
+"omitted": [...]}` on every node — a node with no `_standard` is treated as
+never-enriched and will be redone. **Do not ship a node as "done" with empty
+`ranking_data` / `content_sources` / `research` / `campus_life`.**
+
+Concrete misses observed in the first runs — each broke a real page:
+
+1. **Feeds / updates (`content_sources`) — was empty → zero news (issue: no
+   updates).** Set `content_sources = {news_rss, events_feed: {url, type:
+   "ical"}, social: {instagram, linkedin, x, youtube, facebook}}` on the
+   institution (and on a school/program when it has its own), from the official
+   site / verified official social accounts. The daily ingest job fills Updates +
+   Events FROM these — **no `content_sources` ⇒ no news/events at all.**
+2. **All programs incl. ONLINE — was incomplete (issue: missing online
+   programs).** Structure discovery must enumerate EVERY degree-granting program:
+   residential **and** online / hybrid / professional / continuing-education /
+   extension / part-time. Check the university's "online programs", "professional
+   & continuing studies", and "extension/university college" divisions, plus the
+   IPEDS distance-education program list. Set `delivery_format` (`on_campus` /
+   `online` / `hybrid`) on every program.
+3. **Links everywhere — were missing (issue: campus resources & others have no
+   links).** Whenever you name a lab, institute, research center, campus resource,
+   or employer, capture its official URL into the matching links map:
+   `school_outcomes.research.lab_links` as `{name: url}`,
+   `school_outcomes.campus_life.resources` as `[{name, url}]`, faculty `url`,
+   every stat's `source_url`. A named entity without its link is a half-filled
+   field — put a link wherever an authoritative one exists.
+4. **`ranking_data` — was empty (issue: card has no Private/Public type).**
+   Populate `ranking_data.{ownership_type (`private`|`public`),
+   carnegie_classification, accreditor}` + the rankings the university actually
+   holds (QS / THE / U.S. National, each cited). `ownership_type` +
+   `carnegie_classification` drive the explore-card "Private/Public Research"
+   eyebrow and the detail-page rankings section.
+5. **Lead the description with the institution's character** so the card + filters
+   classify it: e.g. *"Harvard University is a private research university in
+   Cambridge, MA, founded in 1636…"* (MIT's description does this — that's why its
+   card shows the eyebrow). Never bury or omit "private/public research
+   university".
+6. **Use the manifest's EXACT paths.** Ownership goes in
+   `ranking_data.ownership_type`, NOT a stray `school_outcomes.ownership`; faculty
+   → `faculty_contacts`; reviews → `external_reviews`. The conformance check is
+   keyed on these exact dotted paths — run it to confirm every value landed where
+   the standard expects, not just "somewhere".
+
 ## What "the standard" is (read these first)
 
 - **`unipaith-backend/src/unipaith/profile_standard/manifest.py`** — `STANDARD_VERSION`
@@ -120,11 +173,21 @@ Add an Alembic data migration whose `upgrade()` calls
 commit, `replace=True`/dedup). Validate the full chain on a fresh scratch DB
 (CREATE EXTENSION vector,pgcrypto → `alembic upgrade head`). Single head.
 
+### 8.5 Conformance gate (do NOT skip — this is what the first runs missed)
+For the institution and **every** school and program in the tree, build its
+snapshot and run `check_conformance`. A node may ship only when it is **gold**
+(no missing required fields) OR every remaining required field is in its
+`_standard.omitted` with a real reason. If a node is neither, it is **not done** —
+go back and fill it (or omit-with-reason). Confirm `ranking_data`,
+`content_sources`, `research`/`campus_life` (with links), and program
+`delivery_format` are all populated. Stamp `_standard` on every node.
+
 ### 9. Ship
 `ruff check src/<changed> tests/<changed>` (NOT `ruff check .`) + the profile tests +
 `npm run build`; branch off `origin/main` → commit → PR → squash-merge → watch Deploy
 Backend → **verify live** (query the public API for the institution + a sample school
-+ a sample program; confirm new fields + citations).
++ a sample program; confirm new fields + citations + that the explore-card eyebrow,
+updates feed, online programs, and resource links all render).
 
 ### 10. Report
 University name · #schools · #programs · per-level fields filled (with sources) vs

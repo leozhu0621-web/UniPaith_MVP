@@ -11,6 +11,8 @@ interface UniversityData {
   city?: string | null
   region?: string | null
   type?: string | null
+  ownership?: string | null
+  carnegie_classification?: string | null
   campus_setting?: string | null
   student_body_size?: number | null
   logo_url?: string | null
@@ -38,6 +40,8 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
   const classification = classifyInstitution({
     description_text: inst.description_text,
     type: inst.type,
+    ownership: inst.ownership,
+    carnegie_classification: inst.carnegie_classification,
   })
   const settingLabel = formatSetting(inst.campus_setting)
   const size = sizeBucket(inst.student_body_size)

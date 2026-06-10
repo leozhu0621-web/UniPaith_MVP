@@ -64,12 +64,30 @@ const CLASS_DEFS: Array<{ code: InstitutionClassification; label: string; patter
 export function classifyInstitution(input: {
   description_text?: string | null
   type?: string | null
+  ownership?: string | null
+  carnegie_classification?: string | null
 }): ClassificationResult {
   const text = (input.description_text || '').trim()
   for (const def of CLASS_DEFS) {
     if (def.patterns.some(re => re.test(text))) {
       return { code: def.code, label: def.label }
     }
+  }
+  // Structured fallback: classify from ownership (+ a research signal) when the
+  // prose didn't name the school's character. Keeps the card eyebrow correct
+  // even when a description doesn't happen to contain "private/public research".
+  const own = (input.ownership || '').toLowerCase()
+  const carnegie = (input.carnegie_classification || '').toLowerCase()
+  const isResearch = /research|doctoral/.test(carnegie) || /\bresearch (univ|institut)/i.test(text)
+  if (own.includes('private')) {
+    return isResearch
+      ? { code: 'private_research', label: 'Private Research' }
+      : { code: 'private_university', label: 'Private' }
+  }
+  if (own.includes('public') || own.includes('state')) {
+    return isResearch
+      ? { code: 'public_research', label: 'Public Research' }
+      : { code: 'public_university', label: 'Public' }
   }
   // Fallbacks based on the raw `type` column.
   const t = (input.type || '').toLowerCase()
