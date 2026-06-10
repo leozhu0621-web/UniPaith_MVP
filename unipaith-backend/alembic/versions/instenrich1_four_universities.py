@@ -91,15 +91,15 @@ _DATA = {
                 "hockey)",
                 "resources": [
                     {
-                        "name": "Boston University Athletics (GoTerriers)",
+                        "label": "Boston University Athletics (GoTerriers)",
                         "url": "https://goterriers.com/",
                     },
                     {
-                        "name": "Student Leadership & Impact Center (student organizations)",
+                        "label": "Student Leadership & Impact Center (student organizations)",
                         "url": "https://www.bu.edu/studentactivities/",
                     },
-                    {"name": "Boston University Housing", "url": "https://www.bu.edu/housing/"},
-                    {"name": "BU Office for the Arts", "url": "https://www.bu.edu/arts/"},
+                    {"label": "Boston University Housing", "url": "https://www.bu.edu/housing/"},
+                    {"label": "BU Office for the Arts", "url": "https://www.bu.edu/arts/"},
                 ],
             },
             "scale": {
@@ -187,18 +187,18 @@ _DATA = {
                 "varsity_sports": 37,
                 "athletics_division": "NCAA Division I (Ivy League)",
                 "resources": [
-                    {"name": "Cornell Athletics (Big Red)", "url": "https://cornellbigred.com/"},
-                    {"name": "Student & Campus Life", "url": "https://scl.cornell.edu/"},
+                    {"label": "Cornell Athletics (Big Red)", "url": "https://cornellbigred.com/"},
+                    {"label": "Student & Campus Life", "url": "https://scl.cornell.edu/"},
                     {
-                        "name": "Housing & Residential Life",
+                        "label": "Housing & Residential Life",
                         "url": "https://scl.cornell.edu/residential-life/housing",
                     },
                     {
-                        "name": "CampusGroups — student organizations portal",
+                        "label": "CampusGroups — student organizations portal",
                         "url": "https://cornell.campusgroups.com/",
                     },
                     {
-                        "name": "Herbert F. Johnson Museum of Art",
+                        "label": "Herbert F. Johnson Museum of Art",
                         "url": "https://museum.cornell.edu/",
                     },
                 ],
@@ -290,17 +290,17 @@ _DATA = {
                 "varsity_sports": 27,
                 "athletics_division": "NCAA Division I (Atlantic Coast Conference)",
                 "resources": [
-                    {"name": "Duke Athletics", "url": "https://goduke.com/"},
+                    {"label": "Duke Athletics", "url": "https://goduke.com/"},
                     {
-                        "name": "DukeGroups — Student Organizations Portal",
+                        "label": "DukeGroups — Student Organizations Portal",
                         "url": "https://dukegroups.com/",
                     },
                     {
-                        "name": "Living at Duke — Housing & Residence Life",
+                        "label": "Living at Duke — Housing & Residence Life",
                         "url": "https://students.duke.edu/living/",
                     },
-                    {"name": "Duke Arts", "url": "https://arts.duke.edu/"},
-                    {"name": "Duke Student Affairs", "url": "https://students.duke.edu/"},
+                    {"label": "Duke Arts", "url": "https://arts.duke.edu/"},
+                    {"label": "Duke Student Affairs", "url": "https://students.duke.edu/"},
                 ],
             },
             "scale": {
@@ -397,18 +397,18 @@ _DATA = {
                 "varsity_sports": 19,
                 "athletics_division": "NCAA Division I (Big Ten)",
                 "resources": [
-                    {"name": "Northwestern Athletics", "url": "https://nusports.com/"},
+                    {"label": "Northwestern Athletics", "url": "https://nusports.com/"},
                     {
-                        "name": "Student Organizations & Activities",
+                        "label": "Student Organizations & Activities",
                         "url": "https://www.northwestern.edu/studentorgs/",
                     },
                     {
-                        "name": "Norris University Center",
+                        "label": "Norris University Center",
                         "url": "https://www.northwestern.edu/norris/",
                     },
-                    {"name": "Residential Services", "url": "https://www.northwestern.edu/living/"},
+                    {"label": "Residential Services", "url": "https://www.northwestern.edu/living/"},
                     {
-                        "name": "Campus Experience",
+                        "label": "Campus Experience",
                         "url": "https://www.northwestern.edu/campus-experience/",
                     },
                 ],
