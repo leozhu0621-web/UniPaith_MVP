@@ -1,0 +1,1424 @@
+"""Canonical California Institute of Technology (Caltech) profile — the single
+source of truth.
+
+Real, sourced data only (U.S. Dept. of Education College Scorecard, UNITID 110404 ·
+Caltech Common Data Set 2024-2025, Institutional Research Office · Caltech "At a
+Glance" facts · Caltech FY2024 Endowment Report · Caltech's official University &
+College Rankings page · the Caltech Class of 2023 Undergraduate Outcomes report ·
+QS · Times Higher Education · U.S. News · each division's official chair/leadership
+page). ``apply(session)`` idempotently enriches the Caltech institution row,
+upserts the six real academic divisions, and builds Caltech's program catalog
+across them.
+
+Caltech is organized into SIX academic DIVISIONS (its own word — it has no
+"schools" or "colleges"); we map them onto the platform's ``School`` model. It
+**flushes but does not commit** — the caller (the Alembic data migration, the CLI
+script, or the dev seed) owns the transaction. It is a **no-op** (returns
+``False``) when Caltech is absent, so it is safe to run against a fresh or CI
+database. Re-running is safe: divisions key off ``(institution_id, name)`` and
+programs off ``slug``; stale rows are reconciled without breaking foreign keys.
+
+This mirrors ``mit_profile`` / ``stanford_profile`` / ``harvard_profile`` so the
+migration, the standalone script, and the dev seed all agree (DRY). Every figure
+traces to a public, citable source; anything that could not be verified from a
+first-party or two-independent-source basis is **omitted** (recorded in the
+relevant ``_standard.omitted`` list), never guessed. The Computer Science
+undergraduate option is the most-enriched flagship program (its real curriculum
+tracks, faculty, class profile, and aggregated reviews), mirroring MIT Sloan's
+MBAn and Stanford GSB's MBA in the reference instances — with the honest caveat
+that Caltech does not publish per-program employment reports, so program-level
+employment / industry / methodology fields are omitted rather than invented.
+"""
+
+from __future__ import annotations
+
+from datetime import date
+
+from sqlalchemy import select, text
+from sqlalchemy.orm import Session
+
+from unipaith.models.institution import Institution, Program, School
+from unipaith.profile_standard import STANDARD_VERSION
+
+INSTITUTION_NAME = "California Institute of Technology"
+
+# Date this profile was researched + verified; stamped into every node's _standard.
+ENRICHED_AT = "2026-06-10"
+
+
+def _standard(omitted: list[str] | None = None) -> dict:
+    """The per-node provenance stamp the routine writes onto every enriched node."""
+    return {
+        "version": STANDARD_VERSION,
+        "enriched_at": ENRICHED_AT,
+        "omitted": omitted or [],
+    }
+
+
+# Institution-level fields that could NOT be verified from a citable source and are
+# therefore honestly omitted rather than guessed.
+_OMITTED_INSTITUTION = [
+    # Caltech's Class of 2023 Undergraduate Outcomes report explicitly withheld
+    # employer names and industries ("aren't being released at this time"), and no
+    # other first-party industry breakdown was verifiable. We publish the verified
+    # placement rate but omit the top-industries list rather than guess it.
+    "school_outcomes.top_employer_industries",
+]
+
+# ── Institution-level data ────────────────────────────────────────────────
+# Rankings are stored as {rank, year} objects because the page renders every
+# ranking_data entry that is an object with a numeric `rank` (labelled via the
+# frontend `rankingLabel` map, which already knows these keys). All three ranks are
+# quoted from Caltech's own official "University and College Rankings" page.
+RANKING_DATA: dict = {
+    "ownership_type": "private_nonprofit",
+    # Caltech is accredited by the WASC Senior College and University Commission.
+    "accreditor": "WSCUC",
+    # Carnegie 2021 basic classification.
+    "carnegie_classification": "Doctoral Universities: Very High Research Activity",
+    # QS World University Rankings 2026 (Caltech official rankings page): rank 10.
+    "qs_world_university_rankings": {"rank": 10, "year": 2026},
+    # THE World University Rankings 2026 (Caltech official rankings page): rank 7.
+    "times_higher_education": {"rank": 7, "year": 2026},
+    # U.S. News Best Colleges (National Universities) 2026 (Caltech official
+    # rankings page): rank 11.
+    "us_news_national": {"rank": 11, "year": 2026},
+}
+
+# school_outcomes is shallow-merged into the existing JSONB; each sub-object below
+# is complete, so a shallow merge is correct. Figures are College Scorecard
+# (UNITID 110404) cross-checked against Caltech's Common Data Set 2024-2025 where
+# both publish the metric.
+SCHOOL_OUTCOMES: dict = {
+    # CDS 2024-25 C1: 356 admitted / 13,856 first-year applicants = 2.57%.
+    "admit_rate": 0.0257,
+    "avg_net_price": 16075,
+    "median_earnings_10yr": 128566,
+    "completion_rate_4yr_150pct": 0.9437,
+    "retention_rate_first_year": 0.974,
+    # CDS 2024-25 B22: six-year graduation rate for the full cohort = 94.40%.
+    "graduation_rate_6yr": 0.944,
+    # Class of 2023 Undergraduate Outcomes: 44% accepted a full-time job + 43%
+    # entered graduate/professional school = 87% employed or continuing education.
+    "employed_or_continuing_ed": 0.87,
+    # SAT/ACT 25th-75th from IPEDS (Fall 2020) — the last cohort for which Caltech
+    # reported scores before its test-blind/optional period; SAT or ACT is required
+    # again beginning with the Class of 2029. The CDS 2024-25 reports no percentiles
+    # (test-optional cycle), so these IPEDS figures are the most recent verifiable.
+    "test_scores": {
+        "sat_reading_25_75": [740, 780],
+        "sat_math_25_75": [790, 800],
+        "act_25_75": [35, 36],
+        "year": 2020,
+        "note": (
+            "Fall 2020 — the most recent cohort for which Caltech reported SAT/ACT "
+            "percentiles to IPEDS, before its test-blind/optional period. SAT or "
+            "ACT is required again beginning with the Class of 2029."
+        ),
+    },
+    "financial_aid": {
+        "pell_grant_rate": 0.1799,
+        "federal_loan_rate": 0.043,
+        "cost_of_attendance": 86886,
+        # CDS 2024-25 H2: Caltech meets 100% of every admitted student's
+        # demonstrated financial need; the average need-based aid package among
+        # first-year aid recipients was $74,780.
+        "need_fully_met": True,
+        "avg_need_based_package_first_year": 74780,
+    },
+    # CDS 2024-25 B2 — undergraduate enrollment by race/ethnicity (of 987
+    # degree-seeking undergraduates); women share = 446/987 of degree-seeking
+    # undergraduates (CDS B1).
+    "demographics": {
+        "white": 0.1874,
+        "black": 0.0466,
+        "hispanic": 0.1743,
+        "asian": 0.3587,
+        "women": 0.4519,
+    },
+    # Caltech main campus, Pasadena.
+    "location": {"lat": 34.1377, "lng": -118.1253},
+    "campus_basics": {"location": "Pasadena, California (greater Los Angeles)"},
+    "scale": {
+        # Caltech "At a Glance": 323 professorial faculty; 3:1 student-faculty ratio.
+        "faculty_count": 323,
+        "student_faculty_ratio": "3:1",
+        # College Scorecard end-of-year endowment value (UNITID 110404).
+        "endowment_usd": 4228841000,
+        # Caltech "At a Glance": 124-acre Pasadena campus.
+        "campus_acres": 124,
+    },
+    "research": {
+        "labs": [
+            "Jet Propulsion Laboratory (JPL)",
+            "LIGO (Laser Interferometer Gravitational-Wave Observatory)",
+            "Palomar Observatory",
+            "W. M. Keck Observatory",
+            "Beckman Institute",
+            "Kavli Nanoscience Institute",
+            "Institute for Quantum Information and Matter (IQIM)",
+            "Seismological Laboratory",
+        ],
+        "areas": [
+            "Astronomy & astrophysics",
+            "Quantum science & matter",
+            "Bioengineering & neuroscience",
+            "Chemistry & catalysis",
+            "Planetary & environmental science",
+            "Computing & data science",
+            "Aerospace & applied physics",
+        ],
+        "lab_links": {
+            "Jet Propulsion Laboratory (JPL)": "https://www.jpl.nasa.gov/",
+            "LIGO (Laser Interferometer Gravitational-Wave Observatory)": (
+                "https://www.ligo.caltech.edu/"
+            ),
+            "Palomar Observatory": "https://sites.astro.caltech.edu/palomar/",
+            "W. M. Keck Observatory": "https://keckobservatory.org/",
+        },
+    },
+    "campus_life": {
+        # Caltech competes in NCAA Division III in the Southern California
+        # Intercollegiate Athletic Conference (SCIAC) as the Beavers.
+        "athletics_division": "NCAA Division III (SCIAC)",
+        "mascot": "Beavers",
+        "housing": "Undergraduate residential house system (eight houses)",
+        "resources": [
+            {"label": "Caltech Athletics (Beavers)", "url": "https://gocaltech.com/"},
+            {"label": "Housing — Undergraduate Houses", "url": "https://housing.caltech.edu/"},
+        ],
+    },
+    "flagship": {
+        # CDS 2024-25 B1 grand total enrollment: 987 undergraduate + 1,443 graduate.
+        "enrollment_total": 2430,
+        "applicants": 13856,
+        "admits": 356,
+        "admissions_cycle": "Entering class fall 2024 (Common Data Set 2024-2025)",
+        # Caltech "At a Glance": 49 Nobel laureates associated with Caltech.
+        "nobel_laureates": 49,
+        # Caltech "At a Glance": 68 National Medal of Science recipients.
+        "national_medal_science": 68,
+        # Caltech "At a Glance": 15 National Medal of Technology and Innovation.
+        "national_medal_technology": 15,
+        # Founded as Throop University in 1891; renamed Caltech in 1920.
+        "founded_year": 1891,
+    },
+    "sources": [
+        {
+            "label": "U.S. Dept. of Education — College Scorecard (Caltech, UNITID 110404)",
+            "url": "https://collegescorecard.ed.gov/school/?110404",
+        },
+        {
+            "label": "Caltech Common Data Set 2024-2025 (Institutional Research Office)",
+            "url": "https://iro.caltech.edu/documents/31491/Caltech_CDS_2024-2025_May_2025.pdf",
+        },
+        {"label": "Caltech — At a Glance", "url": "https://www.caltech.edu/about/at-a-glance"},
+        {
+            "label": "Caltech FY2024 Endowment Report",
+            "url": (
+                "https://investments.caltech.edu/documents/31209/"
+                "Caltech_Endowment_Brochure_FY24_Final_Pages_compressed2.pdf"
+            ),
+        },
+        {
+            "label": "Caltech — University and College Rankings",
+            "url": "https://www.caltech.edu/about/university-and-college-rankings",
+        },
+        {
+            "label": "Caltech Class of 2023 Undergraduate Outcomes",
+            "url": (
+                "https://www.finaid.caltech.edu/documents/27967/"
+                "Caltech_Class_of_2023_Undergraduate_Outcomes.pdf"
+            ),
+        },
+        {
+            "label": "QS World University Rankings 2026",
+            "url": "https://www.topuniversities.com/universities/california-institute-technology-caltech",
+        },
+        {
+            "label": "Times Higher Education — Caltech",
+            "url": (
+                "https://www.timeshighereducation.com/world-university-rankings/"
+                "california-institute-technology"
+            ),
+        },
+        {
+            "label": "U.S. News — California Institute of Technology",
+            "url": "https://www.usnews.com/best-colleges/california-institute-of-technology-1131",
+        },
+    ],
+}
+
+# student_body_size is the undergraduate count (the page labels it
+# "Undergraduates"); the total (2,430) lives in flagship.enrollment_total and
+# renders as "Total enrollment". 987 = CDS 2024-25 / College Scorecard
+# degree-seeking undergraduates (UNITID 110404).
+UNDERGRAD_COUNT = 987
+
+DESCRIPTION = (
+    "Founded as Throop University in 1891 and renamed the California Institute of "
+    "Technology in 1920, Caltech is a private research university on a 124-acre "
+    "campus in Pasadena, California, in greater Los Angeles. It is one of the "
+    "smallest top-tier research universities in the world — roughly 990 "
+    "undergraduates and about 1,440 graduate students — by deliberate design.\n\n"
+    "Caltech is organized into six academic divisions: Biology and Biological "
+    "Engineering; Chemistry and Chemical Engineering; Engineering and Applied "
+    "Science; Geological and Planetary Sciences; the Humanities and Social "
+    "Sciences; and Physics, Mathematics and Astronomy. Its 323 professorial "
+    "faculty teach at a 3:1 student-faculty ratio, and the Institute manages NASA's "
+    "Jet Propulsion Laboratory and operates landmark research facilities including "
+    "LIGO, the Palomar Observatory, and the W. M. Keck Observatory.\n\n"
+    "For its size, Caltech's record is singular: it is associated with 49 Nobel "
+    "laureates, 68 National Medal of Science recipients, and 15 National Medal of "
+    "Technology and Innovation recipients. It ranks among the very best "
+    "universities in the world — No. 7 by Times Higher Education and No. 10 by QS "
+    "— and admits about 2.6% of first-year applicants.\n\n"
+    "A famously rigorous, science-and-engineering-centered education is paired with "
+    "need-based aid that meets 100% of demonstrated need and holds the average net "
+    "price near $16,000 a year. Caltech graduates leave with a median income of "
+    "roughly $129,000 a decade after entry, and most go directly into industry or "
+    "on to graduate and professional school."
+)
+
+# ── The six real academic divisions (in display order) ──────────────────────
+_BBE = "Division of Biology and Biological Engineering"
+_CCE = "Division of Chemistry and Chemical Engineering"
+_EAS = "Division of Engineering and Applied Science"
+_GPS = "Division of Geological and Planetary Sciences"
+_HSS = "Division of the Humanities and Social Sciences"
+_PMA = "Division of Physics, Mathematics and Astronomy"
+
+SCHOOLS: list[dict] = [
+    {
+        "name": _BBE,
+        "sort_order": 1,
+        "description": (
+            "Established in 1928 by Nobel laureate Thomas Hunt Morgan, Caltech's "
+            "biology division spans biological engineering, cellular and "
+            "developmental biology, evolutionary and organismal biology, "
+            "microbiology, molecular biology and biophysics, and neuroscience — "
+            "a lineage that has produced an extraordinary number of Nobel Prizes."
+        ),
+    },
+    {
+        "name": _CCE,
+        "sort_order": 2,
+        "description": (
+            "Caltech's chemistry and chemical engineering division conducts research "
+            "across organic, inorganic, physical, and theoretical chemistry, "
+            "biochemistry, and chemical engineering — tackling challenges in energy, "
+            "medicine, climate science, and catalysis."
+        ),
+    },
+    {
+        "name": _EAS,
+        "sort_order": 3,
+        "description": (
+            "Engineering and Applied Science spans aerospace, applied physics, "
+            "computing and mathematical sciences, electrical engineering, materials "
+            "science, medical engineering, environmental science and engineering, "
+            "and mechanical and civil engineering — and is home to Caltech's "
+            "Computing and Mathematical Sciences (CMS) department."
+        ),
+    },
+    {
+        "name": _GPS,
+        "sort_order": 4,
+        "description": (
+            "Geological and Planetary Sciences studies the Earth and the solar "
+            "system across environmental science and engineering, geobiology, "
+            "geochemistry, geology, geophysics, and planetary science, supported by "
+            "the Seismological Laboratory and major observational facilities."
+        ),
+    },
+    {
+        "name": _HSS,
+        "sort_order": 5,
+        "description": (
+            "The Humanities and Social Sciences division offers options in "
+            "economics, business, history, philosophy, and political science "
+            "alongside doctoral programs in the social sciences — with particular "
+            "strength in experimental and behavioral economics."
+        ),
+    },
+    {
+        "name": _PMA,
+        "sort_order": 6,
+        "description": (
+            "Physics, Mathematics and Astronomy encompasses physics, mathematics, "
+            "and astronomy and operates landmark facilities including LIGO, the "
+            "Palomar Observatory, and the W. M. Keck Observatory — a center of "
+            "theoretical physics, quantum information, and astrophysics."
+        ),
+    },
+]
+
+# Each division's official website (verified to resolve at author time).
+_SCHOOL_WEBSITE: dict[str, str] = {
+    _BBE: "https://www.bbe.caltech.edu/",
+    _CCE: "https://www.cce.caltech.edu/",
+    _EAS: "https://www.eas.caltech.edu/",
+    _GPS: "https://www.gps.caltech.edu/",
+    _HSS: "https://www.hss.caltech.edu/",
+    _PMA: "https://pma.caltech.edu/",
+}
+
+# Rich, sourced About-tab content per division. Chairs + endowed-chair titles are
+# quoted from each division's official catalog / chair-appointment page (verified
+# 2026-06-10). Only the Division of Biology publishes an explicit founding year
+# (1928); the other five divisions' founding years could not be verified from a
+# first-party source and are honestly omitted (recorded in _ABOUT_OMITTED).
+_ABOUT_DETAIL: dict[str, dict] = {
+    _BBE: {
+        "founded": 1928,
+        "leadership": (
+            "Paul W. Sternberg — Bren Professor of Biology; William K. Bowes Jr. "
+            "Leadership Chair (chair since 2024)"
+        ),
+        "faculty": [
+            {
+                "name": "Frances H. Arnold",
+                "title": (
+                    "Linus Pauling Professor of Chemical Engineering, "
+                    "Bioengineering & Biochemistry"
+                ),
+                "focus": "Directed evolution of enzymes (2018 Nobel Prize in Chemistry)",
+            },
+            {
+                "name": "David J. Anderson",
+                "title": "Seymour Benzer Professor of Biology; HHMI Investigator",
+                "focus": "Neural circuits of emotion and behavior",
+            },
+            {
+                "name": "Elliot M. Meyerowitz",
+                "title": "George W. Beadle Professor of Biology; HHMI Investigator",
+                "focus": "Plant developmental biology",
+            },
+        ],
+        "research_centers": [
+            "Beckman Institute",
+            "Tianqiao and Chrissy Chen Institute for Neuroscience",
+            "Merkin Institute for Translational Research",
+            "Center for Environmental Microbial Interactions (CEMI)",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Caltech BBE — History",
+            "url": "https://www.bbe.caltech.edu/about-menu/history",
+        },
+    },
+    _CCE: {
+        "leadership": (
+            "Sarah E. Reisman — Norman Davidson Leadership Chair, Division of "
+            "Chemistry and Chemical Engineering"
+        ),
+        "faculty": [
+            {
+                "name": "Frances H. Arnold",
+                "title": (
+                    "Linus Pauling Professor of Chemical Engineering, "
+                    "Bioengineering & Biochemistry"
+                ),
+                "focus": "Directed evolution (2018 Nobel Prize in Chemistry)",
+            },
+            {
+                "name": "Rudolph A. Marcus",
+                "title": "John G. Kirkwood and Arthur A. Noyes Professor of Chemistry",
+                "focus": "Theory of electron-transfer reactions (1992 Nobel Prize in Chemistry)",
+            },
+        ],
+        "research_centers": [
+            "Rudolph A. Marcus Center for Theoretical Chemistry",
+            "Center for Catalysis and Chemical Synthesis (3CS)",
+            "Donna and Benjamin M. Rosen Bioengineering Center",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Caltech CCE — Division",
+            "url": "https://www.cce.caltech.edu/",
+        },
+    },
+    _EAS: {
+        "leadership": (
+            "Harry A. Atwater, Jr. — Otis Booth Leadership Chair; Howard Hughes "
+            "Professor of Applied Physics and Materials Science (chair since 2021)"
+        ),
+        "faculty": [
+            {
+                "name": "Kerry J. Vahala",
+                "title": (
+                    "Ted and Ginger Jenkins Professor of Information Science & "
+                    "Technology and Applied Physics"
+                ),
+                "focus": "Photonics and optical microresonators",
+            },
+            {
+                "name": "Tim Colonius",
+                "title": (
+                    "Cecil and Sally Drinkward Leadership Chair; Executive "
+                    "Officer for Mechanical & Civil Engineering"
+                ),
+                "focus": "Computational fluid dynamics",
+            },
+        ],
+        "research_centers": [
+            "Kavli Nanoscience Institute (KNI)",
+            "Keck Institute for Space Studies (KISS)",
+            "Center for Autonomous Systems and Technologies (CAST)",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Caltech EAS — Division",
+            "url": "https://www.eas.caltech.edu/",
+        },
+    },
+    _GPS: {
+        "leadership": (
+            "John M. Eiler — Robert P. Sharp Professor of Geology and Geochemistry; "
+            "Ted and Ginger Jenkins Leadership Chair (chair since 2024)"
+        ),
+        "faculty": [
+            {
+                "name": "Michael E. Brown",
+                "title": "Richard and Barbara Rosenberg Professor of Planetary Astronomy",
+                "focus": "Outer solar system; discovery of dwarf planets",
+            },
+            {
+                "name": "Shrinivas R. Kulkarni",
+                "title": "George Ellery Hale Professor of Astronomy and Planetary Science",
+                "focus": "Time-domain astronomy and transients",
+            },
+        ],
+        "research_centers": [
+            "Seismological Laboratory",
+            "Linde Center for Global Environmental Science",
+            "Caltech Center for Comparative Planetary Evolution (3CPE)",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Caltech GPS — Division",
+            "url": "https://www.gps.caltech.edu/",
+        },
+    },
+    _HSS: {
+        "leadership": (
+            "Tracy K. Dennison — Edie and Lew Wasserman Professor of Social Science "
+            "History; Ronald and Maxine Linde Leadership Chair (chair since 2022)"
+        ),
+        "faculty": [
+            {
+                "name": "Colin F. Camerer",
+                "title": "Robert Kirby Professor of Behavioral Economics",
+                "focus": "Behavioral and neuroeconomics",
+            },
+            {
+                "name": "Jed Z. Buchwald",
+                "title": "Doris and Henry Dreyfuss Professor of History",
+                "focus": "History of science",
+            },
+        ],
+        "research_centers": [
+            "T&C Chen Center for Social and Decision Neuroscience",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Caltech HSS — Division",
+            "url": "https://www.hss.caltech.edu/",
+        },
+    },
+    _PMA: {
+        "leadership": (
+            "Hirosi Ooguri — Fred Kavli Professor of Theoretical Physics and "
+            "Mathematics; Kent and Joyce Kresa Leadership Chair (chair since 2025)"
+        ),
+        "faculty": [
+            {
+                "name": "John P. Preskill",
+                "title": "Richard P. Feynman Professor of Theoretical Physics",
+                "focus": "Quantum information and quantum computing",
+            },
+            {
+                "name": "H. David Politzer",
+                "title": "Richard Chace Tolman Professor of Theoretical Physics",
+                "focus": "Quantum chromodynamics (2004 Nobel Prize in Physics)",
+            },
+        ],
+        "research_centers": [
+            "Walter Burke Institute for Theoretical Physics",
+            "Institute for Quantum Information and Matter (IQIM)",
+            "Keck Institute for Space Studies (KISS)",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Caltech PMA — Division",
+            "url": "https://pma.caltech.edu/",
+        },
+    },
+}
+
+# About-detail fields omitted per division (verified-unavailable), recorded in each
+# division node's _standard.omitted. Only the Division of Biology publishes a
+# first-party founding year; the rest are honestly omitted.
+_ABOUT_OMITTED: dict[str, list[str]] = {
+    _CCE: ["about_detail.founded"],
+    _EAS: ["about_detail.founded"],
+    _GPS: ["about_detail.founded"],
+    _HSS: ["about_detail.founded"],
+    _PMA: ["about_detail.founded"],
+}
+
+# ── Channel feeds + official social links ──────────────────────────────────
+# Institution-wide socials (verified official Caltech handles) + news page.
+_INSTITUTION_CONTENT: dict = {
+    "news_url": "https://www.caltech.edu/about/news",
+    "social": {
+        "instagram": "https://www.instagram.com/caltech/",
+        "linkedin": "https://www.linkedin.com/school/california-institute-of-technology/",
+        "x": "https://x.com/Caltech",
+        "youtube": "https://www.youtube.com/caltech",
+        "facebook": "https://www.facebook.com/californiainstituteoftechnology",
+    },
+}
+
+# Computer Science keyword-relevant feed (the flagship program), inheriting the
+# institution socials (the CMS department does not publish distinct channels).
+_CS_CONTENT: dict = {
+    "news_url": "https://www.cms.caltech.edu/",
+    "keywords": ["computer science", "caltech cs", "computing and mathematical sciences"],
+    "social": _INSTITUTION_CONTENT["social"],
+}
+
+# ── The program catalog (real degree programs, organized by division) ───────
+# slug = idempotency key. degree_type ∈ {bachelors, phd}. Caltech is overwhelmingly
+# PhD-focused for graduate study and awards few terminal master's (most M.S. degrees
+# are milestones en route to the Ph.D.), so graduate programs are modeled as fully
+# funded PhDs. Options are grounded in the official Caltech catalog
+# (catalog.caltech.edu) and the Graduate Office option list; none are invented.
+PROGRAMS: list[dict] = [
+    # ── Engineering and Applied Science ──
+    {
+        "slug": "caltech-cs-bs",
+        "school": _EAS,
+        "program_name": "Computer Science",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "Caltech's most-awarded undergraduate option — CS theory, systems, and AI.",
+    },
+    {
+        "slug": "caltech-cs-phd",
+        "school": _EAS,
+        "program_name": "Computer Science",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in computer science (CMS department).",
+    },
+    {
+        "slug": "caltech-ee-bs",
+        "school": _EAS,
+        "program_name": "Electrical Engineering",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Electrical Engineering — devices, signals, and systems.",
+    },
+    {
+        "slug": "caltech-ee-phd",
+        "school": _EAS,
+        "program_name": "Electrical Engineering",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in electrical engineering.",
+    },
+    {
+        "slug": "caltech-me-bs",
+        "school": _EAS,
+        "program_name": "Mechanical Engineering",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Mechanical Engineering — mechanics, design, and thermal sciences.",
+    },
+    {
+        "slug": "caltech-me-phd",
+        "school": _EAS,
+        "program_name": "Mechanical Engineering",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in mechanical engineering.",
+    },
+    {
+        "slug": "caltech-aph-bs",
+        "school": _EAS,
+        "program_name": "Applied Physics",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Applied Physics — physics applied to engineering problems.",
+    },
+    {
+        "slug": "caltech-acm-bs",
+        "school": _EAS,
+        "program_name": "Applied and Computational Mathematics",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Applied and Computational Mathematics — modeling and computation.",
+    },
+    {
+        "slug": "caltech-ids-bs",
+        "school": _EAS,
+        "program_name": "Information and Data Sciences",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Information and Data Sciences — data, learning, and information.",
+    },
+    {
+        "slug": "caltech-mse-bs",
+        "school": _EAS,
+        "program_name": "Materials Science",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Materials Science — structure, properties, and processing.",
+    },
+    {
+        "slug": "caltech-aero-phd",
+        "school": _EAS,
+        "program_name": "Aeronautics",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in aeronautics (GALCIT).",
+    },
+    {
+        "slug": "caltech-cms-phd",
+        "school": _EAS,
+        "program_name": "Computing and Mathematical Sciences",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in computing and mathematical sciences.",
+    },
+    # ── Biology and Biological Engineering ──
+    {
+        "slug": "caltech-biology-bs",
+        "school": _BBE,
+        "program_name": "Biology",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Biology — molecular, cellular, organismal, and neuro-biology.",
+    },
+    {
+        "slug": "caltech-biology-phd",
+        "school": _BBE,
+        "program_name": "Biology",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in biology.",
+    },
+    {
+        "slug": "caltech-bioengineering-bs",
+        "school": _BBE,
+        "program_name": "Bioengineering",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Bioengineering — engineering at the interface with biology.",
+    },
+    {
+        "slug": "caltech-bioengineering-phd",
+        "school": _BBE,
+        "program_name": "Bioengineering",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in bioengineering.",
+    },
+    {
+        "slug": "caltech-cns-phd",
+        "school": _BBE,
+        "program_name": "Computation and Neural Systems",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate bridging neuroscience and computation.",
+    },
+    # ── Chemistry and Chemical Engineering ──
+    {
+        "slug": "caltech-chemistry-bs",
+        "school": _CCE,
+        "program_name": "Chemistry",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Chemistry — organic, inorganic, physical, and theoretical chemistry.",
+    },
+    {
+        "slug": "caltech-chemistry-phd",
+        "school": _CCE,
+        "program_name": "Chemistry",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in chemistry.",
+    },
+    {
+        "slug": "caltech-cheme-bs",
+        "school": _CCE,
+        "program_name": "Chemical Engineering",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Chemical Engineering — reaction engineering and process design.",
+    },
+    {
+        "slug": "caltech-cheme-phd",
+        "school": _CCE,
+        "program_name": "Chemical Engineering",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in chemical engineering.",
+    },
+    # ── Geological and Planetary Sciences ──
+    {
+        "slug": "caltech-gps-bs",
+        "school": _GPS,
+        "program_name": "Geological and Planetary Sciences",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Geological and Planetary Sciences — Earth and planetary science.",
+    },
+    {
+        "slug": "caltech-planetary-phd",
+        "school": _GPS,
+        "program_name": "Planetary Science",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in planetary science.",
+    },
+    {
+        "slug": "caltech-geophysics-phd",
+        "school": _GPS,
+        "program_name": "Geophysics",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in geophysics.",
+    },
+    {
+        "slug": "caltech-ese-phd",
+        "school": _GPS,
+        "program_name": "Environmental Science and Engineering",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded doctorate in environmental science and engineering.",
+    },
+    # ── Humanities and Social Sciences ──
+    {
+        "slug": "caltech-bem-bs",
+        "school": _HSS,
+        "program_name": "Business, Economics, and Management",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Business, Economics, and Management — quantitative economics.",
+    },
+    {
+        "slug": "caltech-economics-bs",
+        "school": _HSS,
+        "program_name": "Economics",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Economics — micro, macro, and econometrics with a quantitative core.",
+    },
+    {
+        "slug": "caltech-polisci-bs",
+        "school": _HSS,
+        "program_name": "Political Science",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Political Science — formal and quantitative political analysis.",
+    },
+    {
+        "slug": "caltech-social-science-phd",
+        "school": _HSS,
+        "program_name": "Social Science",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in the social sciences.",
+    },
+    # ── Physics, Mathematics and Astronomy ──
+    {
+        "slug": "caltech-physics-bs",
+        "school": _PMA,
+        "program_name": "Physics",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Physics — Caltech's signature rigorous physics curriculum.",
+    },
+    {
+        "slug": "caltech-physics-phd",
+        "school": _PMA,
+        "program_name": "Physics",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in physics.",
+    },
+    {
+        "slug": "caltech-math-bs",
+        "school": _PMA,
+        "program_name": "Mathematics",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Mathematics — pure and applied, with deep research access.",
+    },
+    {
+        "slug": "caltech-math-phd",
+        "school": _PMA,
+        "program_name": "Mathematics",
+        "degree_type": "phd",
+        "duration_months": 60,
+        "description": "A fully funded research doctorate in mathematics.",
+    },
+    {
+        "slug": "caltech-astrophysics-bs",
+        "school": _PMA,
+        "program_name": "Astrophysics",
+        "degree_type": "bachelors",
+        "duration_months": 48,
+        "description": "BS in Astrophysics — observational and theoretical astrophysics.",
+    },
+]
+
+PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+
+# Full official degree names (program-page title in place of the short label).
+_FULL_NAME_BY_SLUG: dict[str, str] = {
+    "caltech-cs-bs": "Bachelor of Science in Computer Science",
+    "caltech-cs-phd": "Doctor of Philosophy in Computer Science",
+    "caltech-ee-bs": "Bachelor of Science in Electrical Engineering",
+    "caltech-ee-phd": "Doctor of Philosophy in Electrical Engineering",
+    "caltech-me-bs": "Bachelor of Science in Mechanical Engineering",
+    "caltech-me-phd": "Doctor of Philosophy in Mechanical Engineering",
+    "caltech-aph-bs": "Bachelor of Science in Applied Physics",
+    "caltech-acm-bs": "Bachelor of Science in Applied and Computational Mathematics",
+    "caltech-ids-bs": "Bachelor of Science in Information and Data Sciences",
+    "caltech-mse-bs": "Bachelor of Science in Materials Science",
+    "caltech-aero-phd": "Doctor of Philosophy in Aeronautics",
+    "caltech-cms-phd": "Doctor of Philosophy in Computing and Mathematical Sciences",
+    "caltech-biology-bs": "Bachelor of Science in Biology",
+    "caltech-biology-phd": "Doctor of Philosophy in Biology",
+    "caltech-bioengineering-bs": "Bachelor of Science in Bioengineering",
+    "caltech-bioengineering-phd": "Doctor of Philosophy in Bioengineering",
+    "caltech-cns-phd": "Doctor of Philosophy in Computation and Neural Systems",
+    "caltech-chemistry-bs": "Bachelor of Science in Chemistry",
+    "caltech-chemistry-phd": "Doctor of Philosophy in Chemistry",
+    "caltech-cheme-bs": "Bachelor of Science in Chemical Engineering",
+    "caltech-cheme-phd": "Doctor of Philosophy in Chemical Engineering",
+    "caltech-gps-bs": "Bachelor of Science in Geological and Planetary Sciences",
+    "caltech-planetary-phd": "Doctor of Philosophy in Planetary Science",
+    "caltech-geophysics-phd": "Doctor of Philosophy in Geophysics",
+    "caltech-ese-phd": "Doctor of Philosophy in Environmental Science and Engineering",
+    "caltech-bem-bs": "Bachelor of Science in Business, Economics, and Management",
+    "caltech-economics-bs": "Bachelor of Science in Economics",
+    "caltech-polisci-bs": "Bachelor of Science in Political Science",
+    "caltech-social-science-phd": "Doctor of Philosophy in Social Science",
+    "caltech-physics-bs": "Bachelor of Science in Physics",
+    "caltech-physics-phd": "Doctor of Philosophy in Physics",
+    "caltech-math-bs": "Bachelor of Science in Mathematics",
+    "caltech-math-phd": "Doctor of Philosophy in Mathematics",
+    "caltech-astrophysics-bs": "Bachelor of Science in Astrophysics",
+}
+
+# Official program/option home pages. The Computer Science option has its own
+# verified catalog page; the other options use their owning division's official
+# site (the authoritative home for the option) and the Graduate Office for PhDs —
+# all verified to resolve at author time.
+_CS_OPTION_URL = (
+    "https://catalog.caltech.edu/current/information-for-undergraduate-students/"
+    "graduation-requirements-all-options/computer-science-option-and-minor-cs/"
+)
+_GRAD_OPTIONS_URL = "https://gradoffice.caltech.edu/academics/optionreps"
+_WEBSITE_BY_SLUG: dict[str, str] = {
+    "caltech-cs-bs": _CS_OPTION_URL,
+    "caltech-cs-phd": "https://www.cms.caltech.edu/academics/grad/grad_cs",
+}
+
+# ── Who-it's-for + highlights, by degree type (catalog fallbacks) ──────────
+_WHO_BY_TYPE = {
+    "bachelors": "Undergraduates seeking a deeply rigorous grounding in science and engineering.",
+    "phd": "Aspiring scholars pursuing an academic or research career (fully funded).",
+}
+_HL_BY_TYPE = {
+    "bachelors": ["Core curriculum", "3:1 student-faculty ratio", "Undergraduate research (SURF)"],
+    "phd": ["Full funding & stipend", "World-class advisors", "Research apprenticeship"],
+}
+_WHO_BY_SLUG = {
+    "caltech-cs-bs": (
+        "Technically exceptional undergraduates who want a deeply rigorous CS "
+        "education — theory, systems, and AI — with early access to faculty research."
+    ),
+}
+_HL_BY_SLUG = {
+    "caltech-cs-bs": ["Most-awarded option", "Six project tracks", "CMS faculty & research"],
+}
+
+# ── Curriculum / tracks, where published (the flagship) ────────────────────
+# Caltech's CS option page publishes its requirement structure and six "project
+# sequences" (specialization tracks). Quoted from the official option page.
+_TRACKS_BY_SLUG: dict[str, dict] = {
+    "caltech-cs-bs": {
+        "label": "Project-sequence tracks",
+        "note": (
+            "The Computer Science option builds on a CS fundamentals and "
+            "intermediate core, then a required three-quarter project sequence "
+            "chosen from six specialization areas, plus advanced CS, mathematical, "
+            "and communication requirements."
+        ),
+        "items": [
+            {"name": "Graphics"},
+            {"name": "Learning & Vision"},
+            {"name": "Networks & Communication"},
+            {"name": "Quantum & Molecular Computing"},
+            {"name": "Robotics"},
+            {"name": "Programming Languages"},
+        ],
+        "source": "Caltech Catalog — Computer Science Option (CS)",
+        "source_url": _CS_OPTION_URL,
+    },
+}
+
+# ── Program-specific cost (official published rates) ───────────────────────
+# Caltech full-time tuition (College Scorecard, UNITID 110404). PhDs are fully
+# funded (tuition + stipend). Undergraduates pay the published tuition; total cost
+# of attendance is the Scorecard academic-year COA.
+_TUITION_UNDERGRAD = 65898
+_UNDERGRAD_COA = 86886
+_COST_BY_SLUG: dict[str, dict] = {}
+
+# ── Program-specific outcomes ──────────────────────────────────────────────
+# Caltech does NOT publish per-program employment reports, so no program carries
+# employment_rate / top_industries / a methodology block (those are recorded as
+# omitted per program). Where the federal College Scorecard publishes a Field-of-
+# Study median earnings for an awarded CIP at UNITID 110404, we use it (program
+# scope); otherwise programs fall back to the institution-wide 10-year median.
+# Only Computer Science (CIP 11.07, bachelor's) has a non-suppressed FOS figure.
+_FOS_OUTCOMES: dict[str, tuple[int, str]] = {
+    "caltech-cs-bs": (129693, "11.07"),
+}
+
+# Institution-wide outcomes fallback (College Scorecard, UNITID 110404), used for
+# degree programs without a published program-level report or FOS earnings.
+_OUTCOMES_INSTITUTION = {
+    "median_salary": 128566,
+    "scope": "institution",
+    "note": "Caltech institution-wide median earnings 10 years after entry.",
+    "source": "U.S. Dept. of Education College Scorecard (UNITID 110404)",
+    "source_url": "https://collegescorecard.ed.gov/school/?110404",
+}
+
+# ── Class profile, where published (the flagship) ──────────────────────────
+_CLASS_PROFILE_BY_SLUG: dict[str, dict] = {
+    "caltech-cs-bs": {
+        "cohort_size": "≈67 bachelor's degrees awarded annually (Caltech's most-awarded option)",
+        "note": (
+            "Caltech does not publish per-option cohort sizes; the figure is the "
+            "annual count of CS bachelor's degrees awarded (College Scorecard "
+            "Field of Study, CIP 11.07), the largest of any Caltech option."
+        ),
+        "source": "U.S. Dept. of Education College Scorecard — Field of Study (CIP 11.07)",
+        "source_url": "https://collegescorecard.ed.gov/school/?110404",
+    },
+}
+
+# ── Faculty (lead + directory link), where confidently sourced ─────────────
+_FACULTY_BY_SLUG: dict[str, dict] = {
+    "caltech-cs-bs": {
+        "lead": [
+            {
+                "name": "Christopher Umans",
+                "title": (
+                    "Professor of Computer Science; Coughran Leadership Chair, "
+                    "CMS; Executive Officer for CMS"
+                ),
+            },
+            {
+                "name": "Leonard J. Schulman",
+                "title": "Professor of Computer Science; Graduate Option Representative for CS",
+            },
+            {
+                "name": "Erik Winfree",
+                "title": (
+                    "Professor of Computer Science, Computation and Neural "
+                    "Systems, and Bioengineering"
+                ),
+            },
+        ],
+        "note": "Taught by Caltech Computing and Mathematical Sciences (CMS) faculty.",
+        "directory_url": "https://www.cms.caltech.edu/people/faculty",
+    },
+}
+
+# ── Aggregated, cited student-review themes (≥2 third-party sources) ────────
+_REVIEWS_BY_SLUG: dict[str, dict] = {
+    "caltech-cs-bs": {
+        "summary": (
+            "Students and third-party guides consistently describe Caltech CS as "
+            "extraordinarily rigorous, with small classes, deep faculty access, and "
+            "strong research and industry placement; the most common cautions are "
+            "the intense, problem-set-heavy workload and the very small, "
+            "high-pressure environment."
+        ),
+        "themes": [
+            {
+                "label": "Academic rigor",
+                "sentiment": "positive",
+                "detail": "A demanding core and CS curriculum among the most rigorous anywhere.",
+            },
+            {
+                "label": "Faculty access & research",
+                "sentiment": "positive",
+                "detail": "A 3:1 student-faculty ratio and early research (SURF) access.",
+            },
+            {
+                "label": "Strong tech placement",
+                "sentiment": "positive",
+                "detail": "Graduates place strongly into top technology firms and PhD programs.",
+            },
+            {
+                "label": "Intense workload",
+                "sentiment": "caution",
+                "detail": "A heavy, problem-set-driven course load is a recurring theme.",
+            },
+            {
+                "label": "Very small environment",
+                "sentiment": "caution",
+                "detail": "Fewer than 1,000 undergraduates: a small, high-pressure community.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+            {
+                "label": "U.S. News — Caltech Computer Science",
+                "url": "https://www.usnews.com/best-colleges/california-institute-of-technology-1131",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+}
+
+# ── Application requirements (degree-type baselines) ────────────────────────
+_INTL_VISA = {
+    "types": ["F-1", "J-1"],
+    "note": "International students are issued an I-20 (F-1) or DS-2019 (J-1) after admission.",
+}
+_REQ_UNDERGRAD = {
+    "materials": [
+        {"name": "Common Application or QuestBridge Application", "required": True},
+        {"name": "Caltech short-answer questions", "required": True},
+        {"name": "School report + counselor recommendation", "required": True},
+        {"name": "Two STEM teacher recommendations", "required": True},
+        {"name": "Official transcript", "required": True},
+        {
+            "name": "SAT or ACT scores",
+            "required": True,
+            "note": "Required again from the Class of 2029 — verify on the official page.",
+        },
+        {"name": "$75 application fee or fee waiver", "required": True},
+    ],
+    "deadlines": [
+        {"round": "Restrictive Early Action", "date": "November 1"},
+        {"round": "Regular Decision", "date": "January 3"},
+    ],
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS"],
+            "required": False,
+            "note": "English-proficiency proof recommended for non-native speakers.",
+        },
+        "visa": _INTL_VISA,
+        "sources": [
+            {"label": "Caltech Undergraduate Admissions", "url": "https://www.admissions.caltech.edu/"}
+        ],
+    },
+    "source": "Caltech Undergraduate Admissions",
+    "source_url": "https://www.admissions.caltech.edu/apply/first-year-applicants",
+}
+_REQ_GRAD = {
+    "materials": [
+        {"name": "Online graduate application", "required": True},
+        {"name": "Statement of purpose", "required": True},
+        {"name": "Three letters of recommendation", "required": True},
+        {"name": "Transcripts from all institutions attended", "required": True},
+        {
+            "name": "GRE",
+            "required": False,
+            "note": "Most options are GRE-optional or do not require it — check the option page.",
+        },
+        {
+            "name": "TOEFL or IELTS for international applicants",
+            "required": False,
+            "note": "Required if your first language is not English; waivers available.",
+        },
+    ],
+    "recommendations": {
+        "required_count": 3,
+        "types": ["Three academic or research letters of recommendation"],
+    },
+    "deadlines": [
+        {
+            "round": "Option deadlines (typically December 15)",
+            "date": "Varies by option — verify on the option page",
+        }
+    ],
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS"],
+            "required": True,
+            "note": "Required if your first language is not English; waivers available.",
+        },
+        "visa": _INTL_VISA,
+        "sources": [
+            {"label": "Caltech Graduate Studies Office", "url": "https://gradoffice.caltech.edu/"}
+        ],
+    },
+    "source": "Caltech Graduate Studies Office",
+    "source_url": "https://gradoffice.caltech.edu/admissions",
+}
+
+
+# Real Caltech campus photo (Arms Courtyard / the Caltech campus) — Wikimedia
+# Commons, CC BY-SA 4.0 (User:Antony-22), hotlinkable landscape JPG. Leads the
+# institution hero.
+_CAMPUS_PHOTO = (
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/"
+    "Arms_Courtyard_Caltech_2017.jpg/1920px-Arms_Courtyard_Caltech_2017.jpg"
+)
+
+
+# ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
+def apply(session: Session) -> bool:
+    """Enrich Caltech to the canonical profile. Flushes; caller commits.
+
+    Returns False (no-op) when Caltech is absent — safe on fresh/CI databases.
+    """
+    inst = session.scalar(select(Institution).where(Institution.name == INSTITUTION_NAME))
+    if inst is None:
+        return False
+    # Shallow-merge JSONB: every sub-object we provide is complete.
+    inst.ranking_data = {**(inst.ranking_data or {}), **RANKING_DATA}
+    school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
+    # Drop any stale value for a path we explicitly declare omitted, so the merge
+    # can't keep serving a figure the enrichment run refused to assert.
+    for _path in _OMITTED_INSTITUTION:
+        if _path.startswith("school_outcomes."):
+            school_outcomes.pop(_path.split(".", 1)[1], None)
+    school_outcomes["_standard"] = _standard(_OMITTED_INSTITUTION)
+    inst.school_outcomes = school_outcomes
+    inst.description_text = DESCRIPTION
+    inst.student_body_size = UNDERGRAD_COUNT
+    inst.founded_year = 1891
+    inst.campus_setting = "suburban"
+    if not inst.website_url:
+        inst.website_url = "https://www.caltech.edu"
+    # Lead the gallery with a real campus photo (dedupe + prepend; idempotent).
+    _gallery = [u for u in (inst.media_gallery or []) if u != _CAMPUS_PHOTO]
+    inst.media_gallery = [_CAMPUS_PHOTO, *_gallery]
+    inst.content_sources = _INSTITUTION_CONTENT
+    session.flush()
+    school_by_name = _apply_schools(session, inst)
+    _apply_programs(session, inst, school_by_name)
+    session.flush()
+    return True
+
+
+def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
+    existing = {
+        s.name: s for s in session.scalars(select(School).where(School.institution_id == inst.id))
+    }
+    canonical_names = {s["name"] for s in SCHOOLS}
+    by_name: dict[str, School] = {}
+    for spec in SCHOOLS:
+        sc = existing.get(spec["name"])
+        if sc is None:
+            sc = School(institution_id=inst.id, name=spec["name"])
+            session.add(sc)
+        sc.description_text = spec["description"]
+        sc.sort_order = spec["sort_order"]
+        sc.catalog_source = "curated"
+        sc.website_url = _SCHOOL_WEBSITE.get(spec["name"])
+        about = _ABOUT_DETAIL.get(spec["name"])
+        if about is not None:
+            about = dict(about)
+            about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
+            sc.about_detail = about
+        # No division carries its own keyword-relevant feed (only the flagship
+        # program does); always assign None so a stale value on a pre-existing row
+        # is cleared and never kept in ContentIngestService's selection.
+        sc.content_sources = None
+        by_name[spec["name"]] = sc
+    # Drop legacy divisions — programs.school_id is ON DELETE SET NULL, so this is
+    # FK-safe (any orphaned programs are handled by the program reconcile).
+    for name, sc in existing.items():
+        if name not in canonical_names:
+            session.delete(sc)
+    session.flush()
+    return by_name
+
+
+def _program_has_dependents(session: Session, program_id) -> bool:
+    """True if any FK in the schema references this programs row (delete unsafe)."""
+    fks = session.execute(
+        text("""
+        SELECT tc.table_name, kcu.column_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+          ON tc.constraint_name = kcu.constraint_name
+         AND tc.table_schema = kcu.table_schema
+        JOIN information_schema.constraint_column_usage ccu
+          ON tc.constraint_name = ccu.constraint_name
+         AND tc.table_schema = ccu.table_schema
+        WHERE tc.constraint_type = 'FOREIGN KEY'
+          AND ccu.table_name = 'programs'
+          AND ccu.column_name = 'id'
+          AND tc.table_name <> 'programs'
+        """)
+    ).fetchall()
+    for table, col in fks:
+        hit = session.execute(
+            text(f'SELECT 1 FROM "{table}" WHERE "{col}" = :pid LIMIT 1'),
+            {"pid": program_id},
+        ).first()
+        if hit:
+            return True
+    return False
+
+
+def _program_standard(slug: str, degree_type: str, has_program_outcomes: bool) -> dict:
+    """Per-program omitted-field list (verified-unavailable), for _standard."""
+    omitted: list[str] = []
+    # Caltech publishes no per-program employment report, so every program omits
+    # the program-level employment rate, top industries, and methodology block.
+    omitted += [
+        "outcomes_data.employment_rate",
+        "outcomes_data.top_industries",
+        "outcomes_data.conditions",
+    ]
+    if slug not in _TRACKS_BY_SLUG:
+        omitted.append("tracks")
+    if slug not in _CLASS_PROFILE_BY_SLUG:
+        omitted.append("class_profile.cohort_size")
+    if slug not in _FACULTY_BY_SLUG:
+        omitted.append("faculty_contacts.lead")
+    if slug not in _REVIEWS_BY_SLUG:
+        omitted.append("external_reviews.summary")
+    if slug != "caltech-cs-bs":
+        # Only the flagship carries its own keyword-relevant feed; catalog
+        # programs surface the institution/division feed rather than a per-program one.
+        omitted.append("content_sources")
+    if degree_type == "phd":
+        # Funded PhDs carry tuition $0 (not a sticker price); cost breakdown N/A.
+        pass
+    return _standard(omitted)
+
+
+def _apply_programs(session: Session, inst: Institution, school_by_name: dict[str, School]) -> None:
+    existing = {
+        p.slug: p
+        for p in session.scalars(select(Program).where(Program.institution_id == inst.id))
+        if p.slug
+    }
+    canonical = set(PROGRAM_SLUGS)
+    for spec in PROGRAMS:
+        slug = spec["slug"]
+        p = existing.get(slug)
+        if p is None:
+            p = Program(
+                institution_id=inst.id,
+                program_name=spec["program_name"],
+                degree_type=spec["degree_type"],
+                slug=slug,
+            )
+            session.add(p)
+        p.program_name = _FULL_NAME_BY_SLUG.get(slug) or spec["program_name"]
+        p.degree_type = spec["degree_type"]
+        p.duration_months = spec.get("duration_months")
+        p.description_text = spec["description"]
+        # Website: verified option/grad page where available, else the owning
+        # division's official site (the authoritative home for the option).
+        p.website_url = _WEBSITE_BY_SLUG.get(slug) or (
+            _GRAD_OPTIONS_URL
+            if spec["degree_type"] == "phd"
+            else _SCHOOL_WEBSITE.get(spec["school"])
+        )
+        p.school_id = school_by_name[spec["school"]].id
+        p.is_published = True
+        p.catalog_source = "curated"
+        p.delivery_format = spec.get("delivery_format", "in_person")
+        # Always assign so a stale value on a pre-existing row is cleared: only the
+        # flagship carries its own feed (content_sources is omitted for the rest).
+        p.content_sources = _CS_CONTENT if slug == "caltech-cs-bs" else None
+        # Cost: funded PhD → undergrad rate (published tuition + COA).
+        cost_override = _COST_BY_SLUG.get(slug)
+        if cost_override is not None:
+            p.tuition = cost_override.get("tuition_usd")
+            p.cost_data = dict(cost_override)
+        elif spec["degree_type"] == "phd":
+            p.tuition = 0
+            p.cost_data = {
+                "tuition_usd": 0,
+                "funded": True,
+                "note": "Caltech PhD students receive full tuition plus a stipend.",
+                "source": "Caltech Graduate Studies Office",
+                "source_url": "https://gradoffice.caltech.edu/admissions/financial-support",
+                "year": "2025-26",
+            }
+        else:  # bachelors
+            p.tuition = _TUITION_UNDERGRAD
+            p.cost_data = {
+                "tuition_usd": _TUITION_UNDERGRAD,
+                "total_cost_of_attendance": _UNDERGRAD_COA,
+                "funded": False,
+                "source": "U.S. Dept. of Education College Scorecard (UNITID 110404)",
+                "source_url": "https://collegescorecard.ed.gov/school/?110404",
+                "year": "2024-25",
+            }
+        # Admissions: undergrad vs grad baseline.
+        if spec["degree_type"] == "bachelors":
+            p.application_requirements = dict(_REQ_UNDERGRAD)
+        else:
+            p.application_requirements = dict(_REQ_GRAD)
+        # Outcomes precedence: Scorecard FOS (program) → institution median.
+        fos = _FOS_OUTCOMES.get(slug)
+        if fos is not None:
+            salary, cip = fos
+            outcomes = {
+                "median_salary": salary,
+                "scope": "program",
+                "cip": cip,
+                "earnings_timeframe": "median earnings 1 year after completion",
+                "source": "U.S. Dept. of Education College Scorecard — Field of Study",
+                "source_url": "https://collegescorecard.ed.gov/school/?110404",
+            }
+            has_program_outcomes = True
+        else:
+            outcomes = dict(_OUTCOMES_INSTITUTION)
+            has_program_outcomes = False
+        outcomes["_standard"] = _program_standard(slug, spec["degree_type"], has_program_outcomes)
+        p.outcomes_data = outcomes
+        p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BY_TYPE.get(spec["degree_type"])
+        p.highlights = _HL_BY_SLUG.get(slug) or _HL_BY_TYPE.get(spec["degree_type"])
+        # Always assign so a stale value on a pre-existing row is cleared (tracks is
+        # recorded as omitted where unverified, and match_service reads program.tracks).
+        p.tracks = _TRACKS_BY_SLUG.get(slug)
+        p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
+        p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
+        p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
+        # Application deadline (upcoming cycle).
+        if spec["degree_type"] == "bachelors":
+            p.application_deadline = date(2027, 1, 3)
+        else:
+            p.application_deadline = date(2026, 12, 15)
+    session.flush()
+    # Reconcile legacy Caltech programs (slug not in the canonical set): delete when
+    # unreferenced, otherwise unpublish so the catalog stays clean without breaking
+    # any application/match rows that point at them.
+    for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
+        if (p.slug or "") in canonical:
+            continue
+        if _program_has_dependents(session, p.id):
+            p.is_published = False
+        else:
+            session.delete(p)
+    session.flush()
