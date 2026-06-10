@@ -397,20 +397,20 @@ describe('InstitutionDetail — flagship data (MIT overhaul)', () => {
     expect(screen.getByText('64')).toBeInTheDocument()
   })
 
-  it('Research & innovation lists labs + areas (crawl phase 3)', async () => {
+  it('Campus resources lists labs + research areas', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
     clickTab(/about/i)
-    expect(await screen.findByRole('heading', { name: /Research & innovation/ })).toBeInTheDocument()
-    expect(screen.getByText('CSAIL')).toBeInTheDocument()
-    expect(screen.getByText('MIT Media Lab')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Campus resources/ })).toBeInTheDocument()
+    expect(screen.getByText(/CSAIL/)).toBeInTheDocument()
+    expect(screen.getByText(/MIT Media Lab/)).toBeInTheDocument()
   })
 
-  it('Campus life shows athletics + arts (crawl phase 3)', async () => {
+  it('Campus resources shows campus-life stats (athletics + arts)', async () => {
     renderMit()
     await screen.findByRole('heading', { name: /Massachusetts Institute of Technology/ })
     clickTab(/about/i)
-    expect(await screen.findByRole('heading', { name: /Campus life/ })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Campus resources/ })).toBeInTheDocument()
     expect(screen.getByText(/Varsity sports/)).toBeInTheDocument()
     expect(screen.getByText('Arts groups')).toBeInTheDocument()
   })
