@@ -11,7 +11,7 @@ overwrites a value the routine sets later. No-ops for any institution not presen
 (e.g. fresh/CI databases).
 
 Revision ID: feedsbackfill1
-Revises: pennprof2
+Revises: pennprof3
 """
 
 import json
@@ -21,7 +21,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = "feedsbackfill1"
-down_revision = "pennprof2"
+down_revision = "pennprof3"
 branch_labels = None
 depends_on = None
 
@@ -129,7 +129,8 @@ def upgrade() -> None:
     bind = op.get_bind()
     stmt = sa.text(
         "UPDATE institutions SET content_sources = CAST(:cs AS jsonb) "
-        "WHERE name = :name AND content_sources IS NULL"
+        "WHERE name = :name "
+        "AND (content_sources IS NULL OR jsonb_typeof(content_sources) = 'null')"
     )
     for name, cs in _FEEDS.items():
         bind.execute(stmt, {"cs": json.dumps(cs), "name": name})
