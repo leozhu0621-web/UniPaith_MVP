@@ -1,0 +1,192 @@
+# Uni — UniPaith Counselor : version-controlled managed-agent definition.
+#
+# Apply with the Anthropic CLI (control plane), then reuse the printed agent id:
+#   AGENT_ID=$(ant beta:agents create < agents/uni.agent.yaml --transform id -r)
+#   # later, to update (bump version):
+#   ant beta:agents update --agent-id "$AGENT_ID" --version <N> < agents/uni.agent.yaml
+#
+# `system: @./uni_system.md` inlines the prose system prompt (ant @file feature).
+# NOTE: the built-in agent_toolset is intentionally OMITTED — Uni is a pure
+# conversational counselor with only the five host-side custom tools below. She
+# cannot run code, touch a filesystem, or reach the open internet.
+
+name: Uni — UniPaith Counselor
+model: claude-opus-4-8
+description: >-
+  Warm, knowledgeable college-admissions counselor — "everyone's private college
+  counselor." Leads each student through a guided Discovery → Recommendation →
+  Application journey, grounds every claim in UniPaith's real program catalog,
+  remembers what she learns, and hands off to a personalized first look at
+  matches. Never sounds like a search engine.
+system: "@./uni_system.md"
+
+tools:
+  - type: custom
+    name: get_profile_snapshot
+    description: >-
+      Load everything UniPaith knows about this student: profile, goals, needs,
+      identity, active strategy, and journey completion. CALL THIS FIRST at the
+      start of every session, before you greet, so you can pick up where you
+      left off. Returns an empty snapshot for a brand-new student.
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+
+  - type: custom
+    name: search_programs
+    description: >-
+      Search UniPaith's published program catalog. You MUST call this before you
+      name or describe any specific program, school, tuition figure, acceptance
+      rate, or deadline — never invent or recall one from memory. Returns grounded
+      facts you can speak from. Use the filters when the student has given you
+      constraints.
+    input_schema:
+      type: object
+      properties:
+        query:
+          type: string
+          description: >-
+            Free-text search across program name, department, and description
+            (e.g. "data science", "family medicine", "MBA entrepreneurship").
+        country:
+          type: string
+          description: Institution country, e.g. "United States".
+        degree_types:
+          type: array
+          items: { type: string }
+          description: 'e.g. ["masters"], ["phd"], ["bachelors"].'
+        min_tuition:
+          type: integer
+          description: Minimum annual tuition in USD.
+        max_tuition:
+          type: integer
+          description: Maximum annual tuition in USD.
+        delivery_formats:
+          type: array
+          items: { type: string }
+          description: 'e.g. ["online", "hybrid", "in_person"].'
+        location:
+          type: string
+          description: City, region, or country to match.
+      required: []
+
+  - type: custom
+    name: save_signals
+    description: >-
+      Record what you've genuinely learned about the student so it persists. Call
+      this whenever you learn a real goal, need, value, belief, self-awareness
+      moment, or basic fact. Set user_confirmed=true ONLY after the student has
+      actually affirmed something. The result returns updated completion for
+      profile/goals/needs/identity and whether the student is ready for the first
+      look — you do not decide readiness, the system does.
+    input_schema:
+      type: object
+      properties:
+        basic:
+          type: object
+          description: Basic-layer facts. Include only what you've actually learned.
+          properties:
+            age: { type: integer }
+            education_level: { type: string }
+            gpa: { type: number }
+            test_scores: { type: string }
+            location_prefs: { type: array, items: { type: string } }
+            location_avoid: { type: array, items: { type: string } }
+            first_gen: { type: boolean }
+            income_band: { type: string }
+            gender: { type: string }
+        personality:
+          type: array
+          items:
+            type: object
+            properties:
+              facet:
+                type: string
+                description: >-
+                  interest | passion | career_direction | peer_style |
+                  conflict_style | location_emotional | connection_style
+              evidence:
+                type: string
+                description: A short verbatim quote or close paraphrase of what the student said.
+              confidence: { type: number }
+            required: [facet, evidence]
+        identity:
+          type: array
+          items:
+            type: object
+            properties:
+              facet:
+                type: string
+                description: value | belief | view | self_awareness
+              claim: { type: string }
+              source_quote: { type: string }
+              confidence: { type: number }
+              user_confirmed: { type: boolean }
+            required: [facet, claim]
+        goals:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+                description: academic | social | personal
+              specific: { type: string }
+              measurable: { type: string }
+              achievable_notes: { type: string }
+              relevant_notes: { type: string }
+              time_bound:
+                type: string
+                description: YYYY or YYYY-MM or YYYY-MM-DD
+              confidence: { type: number }
+              user_confirmed: { type: boolean }
+            required: [category, specific]
+        needs:
+          type: array
+          items:
+            type: object
+            properties:
+              maslow_level:
+                type: string
+                description: physiological | safety | social | self_esteem | self_actualization
+              need_type: { type: string }
+              signal: { type: string }
+              severity:
+                type: string
+                description: must_have | strong_preference | nice_to_have
+              source_quote: { type: string }
+              confidence: { type: number }
+              user_confirmed: { type: boolean }
+            required: [maslow_level, signal, severity]
+      required: []
+
+  - type: custom
+    name: get_matches
+    description: >-
+      Fetch the student's personalized first look at matching programs, with a
+      fitness score, a confidence score, a band (best-fit / stretch / safer), and
+      a short grounded rationale for each. Only call this after save_signals has
+      reported the student is ready (handoff_ready=true). If you call it early,
+      it will tell you what's still missing.
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+
+  - type: custom
+    name: generate_strategy
+    description: >-
+      Produce the student's broad strategy: the path from career goal → target
+      degree → academic, financial, and geographic steps, plus a narrative.
+      Requires at least one academic goal. Use after the first look, when the
+      student wants the bigger plan.
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+
+metadata:
+  product: unipaith
+  surface: student-discovery
+  replaces: orchestrator.py
