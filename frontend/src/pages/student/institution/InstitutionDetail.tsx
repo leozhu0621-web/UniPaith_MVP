@@ -135,7 +135,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
       return { prev }
     },
     onError: (err: any, _action, ctx: any) => {
-      if (ctx?.prev !== undefined) queryClient.setQueryData(['my-follows'], ctx.prev)
+      queryClient.setQueryData(['my-follows'], ctx?.prev)
       showToast(err?.response?.data?.detail || 'Something didn’t work. Try again.', 'error')
     },
     onSuccess: (_data, action) => {
