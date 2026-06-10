@@ -8,7 +8,7 @@ import type {
 } from '../types'
 
 // Spec 17 — student Inbox. baseURL already includes /api/v1, so paths are
-// /students/me/inbox/... (mirrors api/messaging.ts → /messages/...).
+// /students/me/inbox/... — the student messaging surface (Spec 17).
 
 export interface ThreadFilters {
   application_id?: string
