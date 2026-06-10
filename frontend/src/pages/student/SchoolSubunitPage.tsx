@@ -201,9 +201,6 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
                 <Globe size={14} /> Website
               </a>
             )}
-            <Button size="sm" variant="ghost" onClick={() => navigate(instHref)}>
-              <ArrowLeft size={14} className="mr-1" /> Back to {institution?.name || 'university'}
-            </Button>
           </div>
         </div>
       </div>

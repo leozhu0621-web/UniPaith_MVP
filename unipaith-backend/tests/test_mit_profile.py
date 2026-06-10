@@ -217,7 +217,12 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert any(it["amount"] < 0 for it in mban.cost_data["breakdown"])  # Capstone subsidy
     assert mban.cost_data["total_cost_of_attendance"] == 122799
     assert mban.outcomes_data["scope"] == "program"
-    assert mban.outcomes_data["median_salary"] == 135000
+    # Verified Class of 2025 employment report (real base-salary percentiles).
+    assert mban.outcomes_data["median_salary"] == 143000
+    assert mban.outcomes_data["salary_25th"] == 120000
+    assert mban.outcomes_data["salary_75th"] == 155000
+    assert "Consulting" in mban.outcomes_data["top_industries"]
+    assert len(mban.outcomes_data["conditions"]) >= 3
     assert mban.outcomes_data["source"].startswith("MIT Sloan")
     assert mban.application_requirements["test_policy"]["stance"] == "optional"
     assert "data-science" in mban.application_requirements["evaluation"].lower()

@@ -1593,17 +1593,43 @@ _COST_BY_SLUG: dict[str, dict] = {
 
 # Program-specific outcomes from the program's own published employment report
 # (scope="program"), overriding the institution-level / Field-of-Study fallback.
+# Outcomes are quoted verbatim from the official MIT Sloan Career Development
+# Office employment reports — never estimated. MBAn = Class of 2025 (most recent;
+# the first year MIT Sloan published base-salary percentiles).
 _OUTCOMES_BY_SLUG: dict[str, dict] = {
     "mit-sloan-mban": {
-        "median_salary": 135000,
-        "mean_salary": 136152,
-        "median_signing_bonus": 24163,
-        "employment_rate": 0.986,
-        "employment_timeframe": "received offers within 6 months of graduation",
+        "median_salary": 143000,
+        "mean_salary": 139496,
+        "salary_25th": 120000,
+        "salary_75th": 155000,
+        "median_signing_bonus": 15000,
+        "employment_rate": 0.985,
+        "employment_timeframe": "accepted an offer within 6 months of graduation",
+        "class_size": 80,
+        "knowledge_rate": 1.0,
         "scope": "program",
-        "top_industries": ["Retail & CPG", "Healthcare & Biotech", "Technology", "Finance"],
-        "source": "MIT Sloan 2024 Master of Business Analytics Employment Report",
-        "source_url": "https://mitsloan.mit.edu/career-development-office/employment-reports",
+        "top_industries": ["Technology", "Consulting", "Finance", "CPG/Retail"],
+        "top_employers": [
+            "Palantir",
+            "Boston Consulting Group",
+            "Invisible Technologies",
+            "Amazon",
+            "Microsoft",
+            "McKinsey & Company",
+        ],
+        "conditions": [
+            "Class of 2025 (N = 80); employment data covers 100% of MBAn graduates.",
+            "Compensation reported by 96.9% of students who accepted an offer; base "
+            "salary in USD, not adjusted for purchasing power parity.",
+            "Median signing bonus $15,000; 61.9% of compensation-reporting graduates received one.",
+            "Reported under the Career Services & Employer Alliance (CSEA) Standards "
+            "for Reporting Employment Statistics.",
+        ],
+        "source": "MIT Sloan Master of Business Analytics Employment Report, Class of 2025",
+        "source_url": (
+            "https://mitsloan.mit.edu/sites/default/files/2026-04/"
+            "2025%20MBAn%20Employment%20Report.pdf"
+        ),
     },
 }
 
