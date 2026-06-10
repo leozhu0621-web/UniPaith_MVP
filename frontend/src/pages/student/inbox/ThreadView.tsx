@@ -159,7 +159,7 @@ export default function ThreadView({
             )}
             {thread.linked_calendar_item_id && (
               <button
-                onClick={() => onNavigate('/s/manage?tab=calendar')}
+                onClick={() => onNavigate('/s/calendar')}
                 className="inline-flex items-center gap-1 text-[11px] text-secondary hover:underline"
               >
                 Calendar <ExternalLink size={9} />

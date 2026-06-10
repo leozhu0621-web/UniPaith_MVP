@@ -317,10 +317,10 @@ export default function ApplicationDetailPage() {
     <div className="p-6 max-w-5xl w-full mx-auto">
       <Breadcrumbs
         className="mb-4"
-        items={[{ label: 'Apply', to: '/s/manage' }, { label: 'Applications', to: '/s/manage' }, { label: programName }]}
+        items={[{ label: 'My Space', to: '/s/space' }, { label: 'Applications', to: '/s/applications' }, { label: programName }]}
       />
-      <button onClick={() => navigate('/s/manage')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-secondary mb-4">
-        <ArrowLeft size={16} /> Back to Apply
+      <button onClick={() => navigate('/s/applications')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-secondary mb-4">
+        <ArrowLeft size={16} /> Back to applications
       </button>
 
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -641,7 +641,7 @@ export default function ApplicationDetailPage() {
                       Workshops score your draft and flag what's missing — they never write it for you.
                     </p>
                   </div>
-                  <Button size="sm" variant="secondary" className="shrink-0" onClick={() => navigate('/s/manage?tab=workshops')}>
+                  <Button size="sm" variant="secondary" className="shrink-0" onClick={() => navigate('/s/prep?tab=workshops')}>
                     <Sparkles size={14} className="mr-1" /> Get essay feedback
                   </Button>
                 </Card>

@@ -200,7 +200,7 @@ export default function OverviewTab({ onOpenTab }: { onOpenTab: (tab: string) =>
             </p>
             <div className="flex gap-3 pt-1">
               <button
-                onClick={() => navigate('/s/manage')}
+                onClick={() => navigate('/s/applications')}
                 className="text-sm font-semibold text-secondary hover:underline inline-flex items-center gap-1"
               >
                 Applications <ArrowRight size={13} />

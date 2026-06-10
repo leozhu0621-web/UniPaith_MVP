@@ -16,7 +16,7 @@ export default function MessagesNavButton() {
   const count = Array.isArray(data) ? data.filter((t) => t.unread).length : 0
   return (
     <Link
-      to="/s/manage?tab=messages"
+      to="/s/messages"
       aria-label={count ? `Messages, ${count} unread` : 'Messages'}
       className="ui-btn relative p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
     >

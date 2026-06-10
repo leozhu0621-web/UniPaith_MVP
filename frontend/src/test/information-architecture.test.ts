@@ -3,6 +3,7 @@ import {
   PROFILE_TABS_SPEC,
   PROFILE_TAB_ALIASES,
   STUDENT_LEGACY_REDIRECTS,
+  MANAGE_TAB_REDIRECTS,
   normalizeProfileTab,
 } from '../utils/information-architecture'
 import { postLoginDestination, roleDefaultPath, resolveNextParam } from '../utils/auth-redirect'
@@ -18,7 +19,7 @@ describe('Spec/04 information architecture', () => {
   })
 
   it('maps legacy profile tab aliases', () => {
-    expect(PROFILE_TAB_ALIASES.essays).toBe('/s/manage?tab=workshops')
+    expect(PROFILE_TAB_ALIASES.essays).toBe('/s/prep?tab=workshops')
     expect(PROFILE_TAB_ALIASES.recommenders).toContain('tab=preparation')
   })
 
@@ -30,9 +31,31 @@ describe('Spec/04 information architecture', () => {
 
   it('lists student legacy redirects from §4.4', () => {
     expect(STUDENT_LEGACY_REDIRECTS['/s/discover']).toBe('/s/explore')
-    expect(STUDENT_LEGACY_REDIRECTS['/s/messages']).toBe('/s/manage?tab=messages')
     expect(STUDENT_LEGACY_REDIRECTS['/s/recommendations']).toContain('preparation')
     expect(STUDENT_LEGACY_REDIRECTS['/s/test-scores']).toBe('/s/profile?tab=academics')
+  })
+
+  // My Space (Spec 2026-06-10 §2) — /s/manage retired; rooms are real routes.
+  it('retires /s/manage into My Space rooms', () => {
+    expect(STUDENT_LEGACY_REDIRECTS['/s/manage']).toBe('/s/space')
+    expect(STUDENT_LEGACY_REDIRECTS['/s/dashboard']).toBe('/s/space')
+    expect(STUDENT_LEGACY_REDIRECTS['/s/deadlines']).toBe('/s/calendar')
+    expect(STUDENT_LEGACY_REDIRECTS['/s/decisions']).toBe('/s/applications')
+    expect(STUDENT_LEGACY_REDIRECTS['/s/essay-workshop']).toBe('/s/prep?tab=workshops')
+    // Rooms resurrected as first-class routes — they must NOT be redirects.
+    for (const room of ['/s/applications', '/s/calendar', '/s/messages', '/s/saved', '/s/profile', '/s/space', '/s/prep']) {
+      expect(STUDENT_LEGACY_REDIRECTS[room]).toBeUndefined()
+    }
+    // Tab deep links keep working, one hop, param-preserving (ManageRedirect).
+    expect(MANAGE_TAB_REDIRECTS.applications).toBe('/s/applications')
+    expect(MANAGE_TAB_REDIRECTS.calendar).toBe('/s/calendar')
+    expect(MANAGE_TAB_REDIRECTS.messages).toBe('/s/messages')
+    expect(MANAGE_TAB_REDIRECTS.prompts).toBe('/s/prep?tab=prompts')
+    expect(MANAGE_TAB_REDIRECTS.workshops).toBe('/s/prep?tab=workshops')
+    // No redirect target may itself be a legacy path (no chains).
+    for (const target of [...Object.values(STUDENT_LEGACY_REDIRECTS), ...Object.values(MANAGE_TAB_REDIRECTS)]) {
+      expect(STUDENT_LEGACY_REDIRECTS[target.split('?')[0]]).toBeUndefined()
+    }
   })
 
   it('uses role-default landing paths from §9', () => {

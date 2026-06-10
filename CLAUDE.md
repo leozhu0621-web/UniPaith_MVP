@@ -28,18 +28,20 @@ Before starting new feature work, always verify the environment is healthy first
 
 This is a TypeScript + Python monorepo (UniPaith MVP). Frontend is TypeScript/React, backend has both TypeScript and Python services. Infrastructure is Terraform/AWS (ECS, RDS, Cognito, SES). Domain: unipaith.co.
 
-## Student-side IA — 3-stage journey
+## Student-side IA — 3 world surfaces + My Space
 
-The student app at `app.unipaith.co/s` is structured around the journey from the business spec, not by tool type. Four top-level surfaces, each tied to a stage:
+The student app at `app.unipaith.co/s` is structured around the journey from the business spec, not by tool type. Three surfaces about the world + one personal hub (see `docs/superpowers/specs/2026-06-10-my-space-design.md`):
 
 | URL | Label | Stage | What |
 |---|---|---|---|
-| `/s` | **Discover** | 1. Discovery | LLM-led 3-track journey (Profile / Goals / Needs) with chat + live artifact rail |
+| `/s` | **Uni** | 1. Discovery | LLM-led guided journey (Profile / Goals / Needs) with chat + journey rail |
 | `/s/explore` | **Match** | 2. Recommendation | Strategy view (top) + Programs/Schools grid; dual scores (fitness + confidence) |
-| `/s/manage` | **Apply** | 3b/3c. Preparation + Application Mgmt | Applications · Calendar · Messages · **Workshops (feedback-only)** |
 | `/s/posts` | **Connect** | 3a. Connection & Outreach | Updates / Events / Peers tabs from followed institutions |
+| `/s/space` | **My Space** | Me — spans all stages | Mission-control Home + journey-ordered rooms (below) |
 
-Profile (`/s/profile`) is the durable record across all stages — 7 tabs: Overview, Identity, Goals, Needs, Strategy, Recommenders, Financial. Saved (`/s/saved`) and Settings (`/s/settings`) live under the avatar dropdown.
+**My Space rooms** (flat URLs, shared shell `pages/student/myspace/MySpaceShell.tsx`, journey-ordered rail): Home `/s/space` (mission control) · Saved `/s/saved` (Plan) · Prep `/s/prep` (Prepare — Workshops + Prompts tabs) · Applications `/s/applications` (Apply & decide) · Calendar `/s/calendar` + Messages `/s/messages` (Anytime) · Profile `/s/profile` (Record). `/s/manage` is RETIRED — `ManageRedirect` in `App.tsx` maps its tab deep links one-hop into the rooms (contract: `MANAGE_TAB_REDIRECTS` in `utils/information-architecture.ts`, tested by `test/information-architecture.test.ts`).
+
+Profile (`/s/profile`) is the durable record across all stages — 13 tabs (see `PROFILE_TABS_SPEC`). Settings (`/s/settings`) lives under the avatar dropdown.
 
 **Workshops are feedback-only by spec.** The schema mechanically excludes any field that could carry a generated essay / model answer — see `tests/test_workshop_no_generation_contract.py`. Plan 2's LLM swap-in cannot break this without failing CI.
 

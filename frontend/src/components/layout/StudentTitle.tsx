@@ -13,26 +13,26 @@ const ROUTE_TITLES: Record<string, string> = {
   '/s': 'Uni',
   '/s/explore': 'Match',
   '/s/posts': 'Connect',
+  // My Space rooms (Spec 2026-06-10) — each room titles itself.
+  '/s/space': 'My Space',
+  '/s/applications': 'Applications',
+  '/s/calendar': 'Calendar',
+  '/s/messages': 'Messages',
   '/s/profile': 'Profile',
   '/s/saved': 'Saved',
   '/s/settings': 'Settings',
-  '/s/recommendations': 'Matches',
-  '/s/financial-aid': 'Financial aid',
   '/s/onboarding': 'Welcome',
   '/s/feedback': 'Feedback',
 }
 
-// Apply (/s/manage) sub-tabs — the title reflects the active tab.
-const MANAGE_TABS: Record<string, string> = {
-  applications: 'Applications',
-  calendar: 'Calendar',
-  messages: 'Messages',
-  prompts: 'Prompt Library',
+// My Space › Prep sub-tabs — the title reflects the active tab.
+const PREP_TABS: Record<string, string> = {
   workshops: 'Workshops',
+  prompts: 'Prompt Library',
 }
 
 function titleFor(pathname: string, tab: string | null): string | undefined {
-  if (pathname.startsWith('/s/manage')) return MANAGE_TABS[tab ?? 'applications'] ?? 'Applications'
+  if (pathname.startsWith('/s/prep')) return PREP_TABS[tab ?? 'workshops'] ?? 'Workshops'
   if (pathname in ROUTE_TITLES) return ROUTE_TITLES[pathname]
   // Dynamic detail routes: applications set their own specific title; programs /
   // schools get a generic fallback (no per-page wiring needed, never stale).

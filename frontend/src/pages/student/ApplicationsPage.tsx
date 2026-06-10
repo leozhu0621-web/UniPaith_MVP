@@ -212,7 +212,7 @@ export default function ApplicationsPage() {
   if (isError)
     return (
       <div className="p-4 max-w-5xl w-full mx-auto">
-        <PageHeader eyebrow="Apply" title="Your portfolio" sub="Turn saved targets into application projects" />
+        <PageHeader eyebrow="My Space" title="Your portfolio" sub="Turn saved targets into application projects" />
         <QueryError detail="We couldn't load your applications." onRetry={() => refetch()} />
       </div>
     )
@@ -220,7 +220,7 @@ export default function ApplicationsPage() {
   if (apps.length === 0)
     return (
       <div className="p-4 max-w-5xl w-full mx-auto">
-        <PageHeader eyebrow="Apply" title="Your portfolio" sub="Turn saved targets into application projects" />
+        <PageHeader eyebrow="My Space" title="Your portfolio" sub="Turn saved targets into application projects" />
         <EmptyState
           icon={<FileText size={48} />}
           title="No applications yet"
@@ -233,7 +233,7 @@ export default function ApplicationsPage() {
   return (
     <div className="p-4 max-w-5xl w-full mx-auto">
       <PageHeader
-        eyebrow="Apply"
+        eyebrow="My Space"
         title="Your portfolio"
         sub={`${apps.length} application${apps.length !== 1 ? 's' : ''} across your journey`}
       />

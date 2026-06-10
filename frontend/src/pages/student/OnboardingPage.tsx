@@ -46,8 +46,8 @@ const STAGES = [
   },
   {
     icon: ClipboardList,
-    title: 'Apply',
-    body: 'Stay on top of deadlines, tasks, and essay feedback — all the way to decision day.',
+    title: 'My Space',
+    body: 'Your home for the whole cycle — deadlines, tasks, prep, and essay feedback, all the way to decision day.',
   },
 ]
 
