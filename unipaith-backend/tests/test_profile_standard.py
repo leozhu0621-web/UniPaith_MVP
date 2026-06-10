@@ -76,3 +76,42 @@ def test_mit_institution_is_conformant():
     }
     res = check_conformance("institution", snap, profile_version=STANDARD_VERSION)
     assert res.conformant, f"MIT gaps: {res.missing_fields} {res.missing_sections}"
+
+
+# ── Harvard — institution + every school certified to STANDARD_VERSION ──────
+from unipaith.data import harvard_profile as harvard  # noqa: E402
+
+
+def test_harvard_institution_is_conformant():
+    snap = {
+        "description_text": harvard.DESCRIPTION,
+        "student_body_size": harvard.UNDERGRAD_COUNT,
+        "media_gallery": [harvard._CAMPUS_PHOTO],
+        "ranking_data": harvard.RANKING_DATA,
+        "school_outcomes": harvard.SCHOOL_OUTCOMES,
+        "content_sources": {"news_rss": "x", "events_feed": {}, "social": {}},
+    }
+    res = check_conformance("institution", snap, profile_version=STANDARD_VERSION)
+    assert res.conformant, f"Harvard gaps: {res.missing_fields} {res.missing_sections}"
+
+
+def test_harvard_every_school_is_gold():
+    """Every Harvard school is conformant once its legitimately-omitted required
+    fields (recorded in _SCHOOL_STANDARD) are accounted for."""
+    for spec in harvard.SCHOOLS:
+        name = spec["name"]
+        snap = {
+            "name": name,
+            "description_text": spec["description"],
+            "website_url": harvard._SCHOOL_WEBSITE.get(name),
+            "about_detail": harvard._SCHOOL_ABOUT_DETAIL.get(name, {}),
+            "content_sources": {},
+        }
+        res = check_conformance("school", snap, profile_version=STANDARD_VERSION)
+        omitted = set(harvard._SCHOOL_STANDARD.get(name, {}).get("omitted", []))
+        real_missing = [m for m in res.missing_fields if m not in omitted]
+        assert not real_missing and not res.missing_sections, (
+            f"{name} gaps: missing={real_missing} sections={res.missing_sections}"
+        )
+        # Every school carries a current-version standard stamp.
+        assert harvard._SCHOOL_STANDARD[name]["version"] == STANDARD_VERSION

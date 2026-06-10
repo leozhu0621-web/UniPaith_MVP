@@ -27,8 +27,13 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.models.institution import Institution, Program, School
+from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Harvard University"
+
+# Date this run certified Harvard's institution + school nodes against the
+# profile standard (used in the per-node _standard stamps below).
+_ENRICHED_AT = "2026-06-10"
 
 # ── Institution-level data ────────────────────────────────────────────────
 # Rankings are stored as {rank, year} objects because the page renders every
@@ -91,6 +96,10 @@ SCHOOL_OUTCOMES: dict = {
         "Government & public service",
     ],
     "scale": {
+        # Total instructional faculty (full-time 1,846 + part-time 316) per the
+        # Harvard Common Data Set 2024-2025, Section I-1 — the same CDS/IPEDS
+        # "instructional faculty" definition MIT's count uses.
+        "faculty_count": 2162,
         "student_faculty_ratio": "7:1",
         "research_centers": 100,
         "endowment_usd": 53200000000,
@@ -178,6 +187,12 @@ SCHOOL_OUTCOMES: dict = {
             "source": "Harvard College Admissions Statistics",
             "year": 2024,
             "url": "https://college.harvard.edu/admissions/admissions-statistics",
+        },
+        {
+            "label": "Instructional faculty count (CDS-I)",
+            "source": "Harvard Common Data Set 2024-2025",
+            "year": 2024,
+            "url": "https://oira.harvard.edu/factbook/",
         },
     ],
 }
@@ -352,6 +367,434 @@ _SCHOOL_WEBSITE: dict[str, str] = {
     "Harvard School of Dental Medicine": "https://hsdm.harvard.edu/",
     "Harvard Division of Continuing Education": "https://extension.harvard.edu/",
 }
+
+# ── School "About" tabs — founded · leadership · notable faculty · research
+# centers · named-for · source. Every value verified against the school's own
+# official harvard.edu page (cross-checked against Harvard Gazette / official
+# announcements for the current 2025-26 deans). Faculty rosters list only
+# currently-active professors confirmed on official profile pages (deceased and
+# emeritus names were deliberately excluded). The Division of Continuing
+# Education legitimately omits faculty/research_centers (a teaching division
+# with no citable notable-faculty roster or named research centers) — recorded
+# in _SCHOOL_STANDARD[...].omitted.
+_SCHOOL_ABOUT_DETAIL: dict[str, dict] = {
+    "Harvard Faculty of Arts & Sciences": {
+        "founded": 1890,
+        "leadership": "Hopi E. Hoekstra, Edgerley Family Dean of the Faculty of Arts and Sciences",
+        "faculty": [
+            {
+                "name": "Claudia Goldin",
+                "title": "Henry Lee Professor of Economics",
+                "focus": "Labor economics and economic history of gender — 2023 Nobel laureate",
+            },
+            {
+                "name": "Henry Louis Gates Jr.",
+                "title": "Alphonse Fletcher University Professor",
+                "focus": "African & African American studies; directs the Hutchins Center",
+            },
+            {
+                "name": "Steven Pinker",
+                "title": "Johnstone Family Professor of Psychology",
+                "focus": "Cognitive psychology, psycholinguistics, and human rationality",
+            },
+        ],
+        "research_centers": [
+            "Weatherhead Center for International Affairs",
+            "Davis Center for Russian & Eurasian Studies",
+            "Hutchins Center for African & African American Research",
+            "Fairbank Center for Chinese Studies",
+            "David Rockefeller Center for Latin American Studies",
+        ],
+        "source": {
+            "label": "Harvard Faculty of Arts & Sciences",
+            "url": "https://www.fas.harvard.edu/",
+        },
+    },
+    "Harvard John A. Paulson School of Engineering & Applied Sciences": {
+        "founded": 2007,
+        "named_for": (
+            "Named in June 2015 for hedge-fund manager and alumnus John A. Paulson "
+            "(M.B.A. 1980) following his $400 million gift — the largest in "
+            "Harvard's history at the time."
+        ),
+        "leadership": (
+            "David C. Parkes, Dean; George F. Colony Professor of Computer Science"
+        ),
+        "faculty": [
+            {
+                "name": "Joanna Aizenberg",
+                "title": "Amy Smith Berylson Professor of Materials Science",
+                "focus": "Bio-inspired materials, surfaces, and self-assembly",
+            },
+            {
+                "name": "Michael P. Brenner",
+                "title": "Catalyst Professor of Applied Mathematics and Applied Physics",
+                "focus": "Applied mathematics, computational physics, and ML for science",
+            },
+            {
+                "name": "Katia Bertoldi",
+                "title": "William and Ami Kuan Danoff Professor of Applied Mechanics",
+                "focus": "Mechanical metamaterials and the mechanics of soft structures",
+            },
+            {
+                "name": "Michael J. Aziz",
+                "title": "Gene and Tracy Sykes Professor of Materials and Energy Technologies",
+                "focus": "Grid-scale energy storage and flow batteries",
+            },
+        ],
+        "research_centers": [
+            "Center for Integrated Quantum Materials",
+            "Kempner Institute for the Study of Natural & Artificial Intelligence",
+            "Max Planck–Harvard Research Center for Quantum Optics",
+            "Materials Research Science and Engineering Center (MRSEC)",
+            "Harvard–China Project on Energy, Economy and Environment",
+        ],
+        "source": {
+            "label": "Harvard SEAS — School overview",
+            "url": "https://seas.harvard.edu/about-us/school-overview",
+        },
+    },
+    "Harvard Business School": {
+        "founded": 1908,
+        "leadership": "Srikant M. Datar, Dean",
+        "faculty": [
+            {
+                "name": "Amy C. Edmondson",
+                "title": "Novartis Professor of Leadership and Management",
+                "focus": "Teaming, organizational learning, and psychological safety",
+            },
+            {
+                "name": "Michael E. Porter",
+                "title": "Bishop William Lawrence University Professor",
+                "focus": "Competitive strategy and the competitiveness of nations",
+            },
+            {
+                "name": "Rebecca M. Henderson",
+                "title": "John and Natty McArthur University Professor",
+                "focus": "Capitalism, climate change, and reimagining the firm",
+            },
+        ],
+        "research_centers": [
+            "Institute for Strategy and Competitiveness",
+            "Arthur Rock Center for Entrepreneurship",
+            "Laboratory for Innovation Science at Harvard",
+            "Institute for Business in Global Society (BiGS)",
+            "Health Care Initiative",
+        ],
+        "source": {
+            "label": "Harvard Business School — History",
+            "url": "https://www.hbs.edu/about/history",
+        },
+    },
+    "Harvard Law School": {
+        "founded": 1817,
+        "leadership": "John C.P. Goldberg, Morgan and Helen Chu Dean and Professor of Law",
+        "faculty": [
+            {
+                "name": "Cass R. Sunstein",
+                "title": "Robert Walmsley University Professor",
+                "focus": "Behavioral economics, administrative and constitutional law",
+            },
+            {
+                "name": "Noah Feldman",
+                "title": "Felix Frankfurter Professor of Law",
+                "focus": "Constitutional studies, international law, and legal history",
+            },
+            {
+                "name": "Jeannie Suk Gersen",
+                "title": "John H. Watson, Jr. Professor of Law",
+                "focus": "Constitutional, criminal, and family law",
+            },
+        ],
+        "research_centers": [
+            "Program on Negotiation",
+            "Harvard Negotiation and Mediation Clinical Program",
+            "Center on the Legal Profession",
+            "Program on International Legal Studies",
+            "Program on Behavioral Economics and Public Policy",
+        ],
+        "source": {
+            "label": "Harvard Law School — Founding history",
+            "url": "https://hls.harvard.edu/today/looking-back-founding-harvard-law-school/",
+        },
+    },
+    "Harvard Medical School": {
+        "founded": 1782,
+        "leadership": (
+            "George Q. Daley, Dean of the Faculty of Medicine; "
+            "Caroline Shields Walker Professor of Medicine"
+        ),
+        "faculty": [
+            {
+                "name": "George M. Church",
+                "title": "Robert Winthrop Professor of Genetics",
+                "focus": "Genomics, synthetic biology, and gene editing",
+            },
+            {
+                "name": "David A. Sinclair",
+                "title": "Professor of Genetics",
+                "focus": "Biology of aging, cellular reprogramming, and longevity",
+            },
+            {
+                "name": "Clifford J. Tabin",
+                "title": "George Jacob and Jacqueline Hazel Leder Professor of Genetics",
+                "focus": "Developmental and evolutionary genetics",
+            },
+        ],
+        "research_centers": [
+            "Blavatnik Institute at Harvard Medical School",
+            "Wyss Institute for Biologically Inspired Engineering",
+            "Harvard Stem Cell Institute",
+            "Broad Institute of MIT and Harvard",
+            "Harvard Catalyst (Clinical and Translational Science Center)",
+        ],
+        "source": {
+            "label": "Harvard Medical School — History of HMS",
+            "url": "https://hms.harvard.edu/about-hms/history-hms",
+        },
+    },
+    "Harvard T.H. Chan School of Public Health": {
+        "founded": 1913,
+        "named_for": (
+            "Renamed in 2014 in recognition of a $350 million gift from alumnus "
+            "Gerald L. Chan, his family, and the Morningside Foundation, given in "
+            "memory of his father, T.H. Chan — the largest gift in Harvard's "
+            "history at the time."
+        ),
+        "leadership": "Andrea A. Baccarelli, Dean of the Faculty",
+        "faculty": [
+            {
+                "name": "Walter C. Willett",
+                "title": "Professor of Epidemiology and Nutrition",
+                "focus": "Nutritional epidemiology and diet's effect on chronic disease",
+            },
+            {
+                "name": "Marc Lipsitch",
+                "title": "Professor of Epidemiology",
+                "focus": "Infectious-disease dynamics; directs the CCDD",
+            },
+        ],
+        "research_centers": [
+            "Center for Communicable Disease Dynamics",
+            "Harvard Center for Climate, Health, and the Global Environment (C-CHANGE)",
+            "Harvard Center for Population and Development Studies",
+            "Center for Health Communication",
+            "India Research Center",
+        ],
+        "source": {
+            "label": "Harvard T.H. Chan School of Public Health — History",
+            "url": "https://hsph.harvard.edu/history/",
+        },
+    },
+    "Harvard Kennedy School": {
+        "founded": 1936,
+        "named_for": (
+            "Founded in 1936 as the Graduate School of Public Administration with a "
+            "gift from Lucius Littauer; renamed the John F. Kennedy School of "
+            "Government in 1966 in honor of President John F. Kennedy."
+        ),
+        "leadership": (
+            "Jeremy M. Weinstein, Dean of the Faculty; "
+            "Don K. Price Professor of Public Policy"
+        ),
+        "faculty": [
+            {
+                "name": "Dani Rodrik",
+                "title": "Ford Foundation Professor of International Political Economy",
+                "focus": "Economic development, globalization, and political economy",
+            },
+            {
+                "name": "Pippa Norris",
+                "title": "Paul F. McGuire Lecturer in Comparative Politics",
+                "focus": "Comparative democracy, elections, and political communication",
+            },
+        ],
+        "research_centers": [
+            "Belfer Center for Science and International Affairs",
+            "Ash Center for Democratic Governance and Innovation",
+            "Carr-Ryan Center for Human Rights",
+            "Bloomberg Center for Cities",
+            "Center for International Development",
+        ],
+        "source": {
+            "label": "Harvard Kennedy School — History timeline",
+            "url": "https://www.hks.harvard.edu/more/about/timeline-harvard-kennedy-schools-history",
+        },
+    },
+    "Harvard Graduate School of Education": {
+        "founded": 1920,
+        "leadership": (
+            "Nonie K. Lesaux, Dean; "
+            "Roy E. Larsen Professor of Education and Human Development"
+        ),
+        "faculty": [
+            {
+                "name": "Howard Gardner",
+                "title": (
+                    "John H. and Elisabeth A. Hobbs Research Professor "
+                    "of Cognition and Education"
+                ),
+                "focus": "Theory of multiple intelligences; cognition and education",
+            },
+            {
+                "name": "Fernando M. Reimers",
+                "title": "Ford Foundation Professor of Practice in International Education",
+                "focus": "Global and comparative education and educational innovation",
+            },
+            {
+                "name": "Karen L. Mapp",
+                "title": "Professor of Practice in Adult Learning and Professional Development",
+                "focus": "Family–school–community partnerships and school improvement",
+            },
+        ],
+        "research_centers": [
+            "Project Zero",
+            "Center for Education Policy Research",
+            "Center on the Developing Child",
+            "Center for Digital Thriving",
+            "Making Caring Common",
+        ],
+        "source": {
+            "label": "Harvard Graduate School of Education — About",
+            "url": "https://www.gse.harvard.edu/about",
+        },
+    },
+    "Harvard Graduate School of Design": {
+        "founded": 1936,
+        "leadership": "Sarah M. Whiting, Dean; Josep Lluís Sert Professor of Architecture",
+        "faculty": [
+            {
+                "name": "Charles Waldheim",
+                "title": "John E. Irving Professor of Landscape Architecture",
+                "focus": "Landscape urbanism; directs the Office for Urbanization",
+            },
+            {
+                "name": "Anita Berrizbeitia",
+                "title": "Professor of Landscape Architecture",
+                "focus": "Landscape architecture theory, design, and history",
+            },
+            {
+                "name": "Ann Forsyth",
+                "title": "Ruth and Frank Stanton Professor of Urban Planning",
+                "focus": "Urban planning, health, and the built environment",
+            },
+        ],
+        "research_centers": [
+            "Joint Center for Housing Studies",
+            "Harvard Center for Green Buildings and Cities",
+            "Office for Urbanization",
+        ],
+        "source": {
+            "label": "Harvard Graduate School of Design — About",
+            "url": "https://www.gsd.harvard.edu/about/",
+        },
+    },
+    "Harvard Divinity School": {
+        "founded": 1816,
+        "leadership": "Marla F. Frederick, Dean of Harvard Divinity School",
+        "faculty": [
+            {
+                "name": "Catherine A. Brekus",
+                "title": "Charles Warren Professor of the History of Religion in America",
+                "focus": "Religion and American culture; gender and Christianity",
+            },
+            {
+                "name": "Benjamin H. Dunning",
+                "title": "Florence Corliss Lamont Professor of Divinity",
+                "focus": "New Testament and early Christianity",
+            },
+            {
+                "name": "Matthew Ichihashi Potts",
+                "title": "Plummer Professor of Christian Morals; Pusey Minister",
+                "focus": "Christian ethics and theology",
+            },
+        ],
+        "research_centers": [
+            "Center for the Study of World Religions",
+            "Religion and Public Life",
+            "Women's Studies in Religion Program",
+            "Religious Literacy Project",
+        ],
+        "source": {
+            "label": "Harvard Divinity School — History and mission",
+            "url": "https://www.hds.harvard.edu/about/history-and-mission",
+        },
+    },
+    "Harvard School of Dental Medicine": {
+        "founded": 1867,
+        "named_for": (
+            "Its shield's tower (a heraldic 'keep') honors founding dean Nathan "
+            "Cooley Keep; the school itself carries no personal eponym."
+        ),
+        "leadership": (
+            "William V. Giannobile, Dean; "
+            "A. Lee Loomis, Jr. Professor of Oral Medicine, Infection, and Immunity"
+        ),
+        "faculty": [
+            {
+                "name": "Vicki Rosen",
+                "title": "Doctors Samuel and Ida Gelfand Professor; Chair of Developmental Biology",
+                "focus": "Bone biology and skeletal development",
+            },
+            {
+                "name": "Yingzi Yang",
+                "title": "Professor of Developmental Biology; Associate Dean for Research",
+                "focus": "Signaling in skeletal and craniofacial development",
+            },
+            {
+                "name": "Magda Feres",
+                "title": "Chair, Department of Oral Medicine, Infection, and Immunity",
+                "focus": "Periodontology and periodontal microbiology",
+            },
+        ],
+        "research_centers": [
+            "Initiative to Integrate Oral Health and Medicine",
+            "HSDM Office of Research",
+        ],
+        "source": {
+            "label": "Harvard School of Dental Medicine — History",
+            "url": "https://www.hsdm.harvard.edu/history",
+        },
+    },
+    "Harvard Division of Continuing Education": {
+        # DCE is a teaching division (Harvard Extension School, est. 1910;
+        # Harvard Summer School, est. 1871) formally organized as the Division
+        # of Continuing Education in 1975. faculty + research_centers are
+        # legitimately omitted (no citable DCE-specific roster or named centers;
+        # courses are taught by Harvard and visiting faculty across schools) —
+        # see _SCHOOL_STANDARD[...].omitted.
+        "founded": 1975,
+        "leadership": "Nancy J. Coleman, Dean of Continuing Education and University Extension",
+        "source": {
+            "label": "Harvard Division of Continuing Education — About",
+            "url": "https://www.dce.harvard.edu/about",
+        },
+    },
+}
+
+# ── Profile-standard stamps (provenance for the gold-standard routine) ──────
+# version = the STANDARD_VERSION the node was certified against; enriched_at =
+# the run date; omitted = required fields legitimately unavailable for that node
+# (verified-absent, recorded so conformance treats the node as gold). Programs
+# are not yet certified to v2 — they are enriched in a subsequent run.
+INSTITUTION_STANDARD: dict = {
+    "version": STANDARD_VERSION,
+    "enriched_at": _ENRICHED_AT,
+    "omitted": [],
+}
+
+_SCHOOL_STANDARD: dict[str, dict] = {
+    name: {"version": STANDARD_VERSION, "enriched_at": _ENRICHED_AT, "omitted": []}
+    for name in _SCHOOL_ABOUT_DETAIL
+}
+# The Division of Continuing Education is a teaching division: it has no citable
+# school-specific notable-faculty roster and operates no named research centers
+# (courses are taught by Harvard and visiting faculty across the schools), so
+# those two required about_detail fields are omitted rather than fabricated.
+_SCHOOL_STANDARD["Harvard Division of Continuing Education"]["omitted"] = [
+    "about_detail.faculty",
+    "about_detail.research_centers",
+]
 
 # ── The program catalog (real degree programs, organized by school) ────────
 # slug = idempotency key. degree_type ∈ {bachelors, masters, phd, certificate};
@@ -1574,6 +2017,9 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
         sc.sort_order = spec["sort_order"]
         sc.catalog_source = "curated"
         sc.website_url = _SCHOOL_WEBSITE.get(spec["name"])
+        about = _SCHOOL_ABOUT_DETAIL.get(spec["name"])
+        if about is not None:
+            sc.about_detail = about
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is
     # FK-safe (any orphaned programs are handled by the program reconcile).
