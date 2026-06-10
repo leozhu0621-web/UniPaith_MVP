@@ -61,7 +61,7 @@ Per-field, human-readable rules the enrichment engine follows:
 - Extract the duplicated `apply()` JSONB-mapping out of `mit_profile`/`harvard_profile` into one `profile_base.apply(profile_data, session)` that maps **manifest-shaped data** → the JSONB columns.
 - Each institution becomes **data + base**: `mit_profile` keeps only its DATA constants (the reference values) and delegates mapping to the base. Harvard is migrated the same way as a regular (initially incomplete) member.
 - This is the change that lets the engine *grow new profiles* (write data) without hand-authoring a 90 KB module.
-- **Safety:** the refactor is behavior-preserving — a test asserts `base.apply(mit_data)` produces byte-identical JSONB to today's `mit_profile.apply()` before the old code is deleted (golden-output test on a scratch DB).
+- **Safety:** the refactor is behavior-preserving — a test asserts `base.apply(mit_data)` produces byte-identical JSONB to today's `mit_profile.apply()` for the legacy-mapped payloads, before the old code is deleted (golden-output test on a scratch DB). The additive `_standard` metadata key (§5) is excluded from this comparison since legacy `mit_profile.apply()` never emitted it; the golden test compares everything *except* `_standard`.
 
 ## 5. Data model change
 
@@ -120,7 +120,7 @@ Changing the blueprint, end to end:
 
 ## 12. Testing
 
-- Phase 1: manifest ↔ MIT-reference conformance · render ↔ manifest parity · `base.apply` golden-output (byte-identical to legacy) + idempotency · migration scratch-DB validation.
+- Phase 1: manifest ↔ MIT-reference conformance · render ↔ manifest parity · `base.apply` golden-output (byte-identical to legacy, excluding the additive `_standard` key) + idempotency · migration scratch-DB validation.
 - Phase 2: verification-gate units (reject single-source · reject source-disagreement · require citation · omit-unverifiable) · engine produces conformant + cited output for a fixture · **no-fabrication contract test** (gate can never emit an uncited field) · Harvard run leaves only verifiable fields.
 - Phase 3: scheduler picks-stalest · version-bump-marks-all-stale · bounded-per-run · refresh-detects-newer-report.
 
