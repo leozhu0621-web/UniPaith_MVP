@@ -123,7 +123,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
       showToast(isSaved ? 'Removed from your schools.' : 'Saved. You’ll see this school’s updates in Connect.', 'success')
     },
     onError: (err: any) =>
-      showToast(err?.response?.data?.detail || 'Something didn’t work. Try again.', 'error'),
+      showToast(err?.response?.data?.detail || err?.message || 'Something didn’t work. Try again.', 'error'),
   })
   const onSaveSchool = () => {
     if (!isAuthenticated) { navigate('/login'); return }
