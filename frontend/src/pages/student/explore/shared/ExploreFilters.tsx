@@ -63,6 +63,8 @@ interface UniversityForFilters {
   country?: string | null
   campus_setting?: string | null
   type?: string | null
+  ownership?: string | null
+  carnegie_classification?: string | null
   description_text?: string | null
   subjects_offered?: string[] | null
   top_industries?: string[] | null
@@ -115,7 +117,12 @@ export function applyFilters(
     if (filters.setting.length && !filters.setting.includes((u.campus_setting || '').toLowerCase())) return false
 
     if (filters.type.length) {
-      const c = classifyInstitution({ description_text: u.description_text, type: u.type })
+      const c = classifyInstitution({
+        description_text: u.description_text,
+        type: u.type,
+        ownership: u.ownership,
+        carnegie_classification: u.carnegie_classification,
+      })
       if (!filters.type.includes(c.code)) return false
     }
 
