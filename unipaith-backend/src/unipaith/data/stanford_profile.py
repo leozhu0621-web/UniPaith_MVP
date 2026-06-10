@@ -1374,8 +1374,10 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
             about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
             sc.about_detail = about
         # GSB is the standard-setting school: its own keyword-relevant feeds + socials.
-        if spec["name"] == _GSB:
-            sc.content_sources = _GSB_CONTENT
+        # Always assign so a stale value on a pre-existing row is cleared: only GSB
+        # carries its own feed, and leaving an old value would keep it in
+        # ContentIngestService's selection.
+        sc.content_sources = _GSB_CONTENT if spec["name"] == _GSB else None
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is
     # FK-safe (any orphaned programs are handled by the program reconcile).
