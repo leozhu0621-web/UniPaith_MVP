@@ -115,8 +115,8 @@ async def list_following(
 ):
     """Followed institutions for the Manage-Following panel (Spec 20 §3).
 
-    Each row carries ``muted`` / ``source`` / ``can_unfollow`` (false while an
-    active application keeps the relationship pinned).
+    Each row carries ``muted`` / ``source`` / ``can_unfollow`` (always true —
+    following is reversible even while an application is active).
     """
     pid = await _profile_id(user, db)
     rows = await FollowService(db).list_detailed(pid)

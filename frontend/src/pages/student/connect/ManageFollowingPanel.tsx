@@ -1,8 +1,8 @@
 // Manage Following panel (Spec 20 §3). Lists followed institutions with
-// mute / unfollow. Unfollow is blocked while an active application exists —
-// the panel shows why (Spec 20 §2).
+// mute / unfollow. Following is a user-controlled choice, so unfollow is
+// always available — even with an active application at the institution.
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Bell, BellOff, GraduationCap, Lock } from 'lucide-react'
+import { Bell, BellOff, GraduationCap } from 'lucide-react'
 import { getFollowing, muteFollowing, unfollowInstitution, type FollowDetail } from '../../../api/connect'
 import { confirmDialog } from '../../../stores/confirm-store'
 import Sheet from '../../../components/ui/Sheet'
@@ -54,30 +54,21 @@ export default function ManageFollowingPanel({ onClose }: { onClose: () => void 
               >
                 {f.muted ? <BellOff size={15} /> : <Bell size={15} />}
               </button>
-              {f.can_unfollow ? (
-                <button
-                  onClick={async () => {
-                    if (await confirmDialog({
-                      title: 'Unfollow?',
-                      body: "You'll stop seeing their updates.",
-                      confirmLabel: 'Unfollow',
-                      destructive: true,
-                    })) {
-                      unfollowMut.mutate(f.institution_id)
-                    }
-                  }}
-                  className="text-xs font-medium text-muted-foreground hover:text-error transition-colors"
-                >
-                  Unfollow
-                </button>
-              ) : (
-                <span
-                  title="You have an active application here. Withdraw it to unfollow."
-                  className="inline-flex items-center gap-1 text-[10px] text-muted-foreground"
-                >
-                  <Lock size={11} /> Applying
-                </span>
-              )}
+              <button
+                onClick={async () => {
+                  if (await confirmDialog({
+                    title: 'Unfollow?',
+                    body: "You'll stop seeing their updates.",
+                    confirmLabel: 'Unfollow',
+                    destructive: true,
+                  })) {
+                    unfollowMut.mutate(f.institution_id)
+                  }
+                }}
+                className="text-xs font-medium text-muted-foreground hover:text-error transition-colors"
+              >
+                Unfollow
+              </button>
             </li>
           ))}
         </ul>

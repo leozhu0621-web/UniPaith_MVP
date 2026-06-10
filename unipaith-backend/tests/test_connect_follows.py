@@ -62,7 +62,7 @@ async def test_saving_program_auto_follows_institution(
 
 
 @pytest.mark.asyncio
-async def test_starting_application_auto_follows_and_blocks_unfollow(
+async def test_starting_application_auto_follows_and_allows_unfollow(
     student_client: AsyncClient,
     db_session: AsyncSession,
     mock_student_user: User,
@@ -72,24 +72,18 @@ async def test_starting_application_auto_follows_and_blocks_unfollow(
         db_session, mock_student_user, mock_institution_user
     )
 
-    app = await ApplicationService(db_session).create_application(profile.id, program.id)
+    await ApplicationService(db_session).create_application(profile.id, program.id)
     await db_session.commit()
 
     resp = await student_client.get("/api/v1/connect/follows")
     follows = resp.json()
     assert len(follows) == 1
     assert follows[0]["source"] == "application"
-    assert follows[0]["can_unfollow"] is False  # active application pins the follow
+    # Following is a user-controlled choice → always reversible (pin removed).
+    assert follows[0]["can_unfollow"] is True
 
-    # Unfollow is blocked while the application is active (Spec 20 §2).
-    blocked = await student_client.delete(f"/api/v1/connect/follows/{institution.id}")
-    assert blocked.status_code == 400
-    assert "application" in blocked.json()["detail"].lower()
-
-    # Withdraw the application → relationship no longer pinned → unfollow works.
-    await ApplicationService(db_session).withdraw_application(profile.id, app.id)
-    await db_session.commit()
-
+    # Unfollow succeeds even while the application is active — saving/following
+    # must always be reversible (fixes "I can't unsave the school").
     ok = await student_client.delete(f"/api/v1/connect/follows/{institution.id}")
     assert ok.status_code == 204
     assert (await student_client.get("/api/v1/connect/follows")).json() == []
