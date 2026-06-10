@@ -1208,7 +1208,7 @@ _MBA_OUTCOMES = {
 _CLASS_PROFILE_BY_SLUG: dict[str, dict] = {
     "uchicago-mba": {
         "cohort_size": "635 students in the entering Full-Time MBA class (Class of 2027)",
-        "international_pct": 37,
+        "international_pct": 0.37,
         "note": (
             "Entering Full-Time MBA Class of 2027: 635 students, 41% women, 37% "
             "international; average GMAT 729 (median 730)."
