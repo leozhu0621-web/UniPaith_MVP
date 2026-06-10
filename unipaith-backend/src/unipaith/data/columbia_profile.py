@@ -28,8 +28,11 @@ on the SAME university. The five schools modelled here:
 It **flushes but does not commit** — the caller (the Alembic data migration, the CLI
 script, or the dev seed) owns the transaction. It is a **no-op** (returns ``False``) when
 Columbia is absent, so it is safe to run against a fresh or CI database. Re-running is
-safe: schools key off ``(institution_id, name)`` and programs off ``slug``; stale rows are
-reconciled without breaking foreign keys.
+safe: schools key off ``(institution_id, name)`` and programs off ``slug``. The program
+catalog is reconciled to ONLY the curated, gold set (non-canonical/seed programs are
+unpublished when referenced, otherwise deleted) so the live page shows no un-enriched
+duplicates; SCHOOLS outside the canonical five are left intact so the partial composes
+with the resume run. All FK-safe.
 
 This mirrors ``mit_profile`` / ``chicago_profile`` so the migration, the standalone
 script, and the dev seed all agree (DRY). Every figure traces to a public, citable source;
@@ -1427,13 +1430,14 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             else date(2027, 1, 1)
         )
     session.flush()
-    # Reconcile only the programs THIS partial owns (those whose slug starts with the
-    # canonical prefix but is no longer in the set). We do NOT touch Columbia's other
-    # programs (added/enriched by other runs), so this partial composes safely with the
-    # resume run. Unpublish or delete only stale "columbia-*" rows we previously created.
+    # Reconcile every non-canonical Columbia program so the live catalog shows ONLY the
+    # curated, gold programs (no un-enriched seed duplicates) — the same clean-catalog
+    # behaviour the full-university profiles use. FK-safe: unpublish a row that any
+    # application/match references, otherwise delete it. Deferred subjects (Public Health,
+    # Law, Nursing, …) return as curated programs in the resume run on this same
+    # university. (Schools outside our canonical set are left intact — see _apply_schools.)
     for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
-        sl = p.slug or ""
-        if sl in canonical or not sl.startswith("columbia-"):
+        if (p.slug or "") in canonical:
             continue
         if _program_has_dependents(session, p.id):
             p.is_published = False
