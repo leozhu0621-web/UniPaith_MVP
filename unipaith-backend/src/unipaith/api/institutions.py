@@ -1441,6 +1441,17 @@ async def search_institutions(
                 "country": inst.country,
                 "city": inst.city,
                 "type": inst.type,
+                # Structured classification hints so the explore-card eyebrow
+                # ("Private/Public Research") works without relying on the
+                # description prose. ownership_type lives in ranking_data;
+                # school_outcomes.ownership is the federal-data fallback.
+                "ownership": (
+                    rd.get("ownership_type") or (inst.school_outcomes or {}).get("ownership")
+                ),
+                "carnegie_classification": (
+                    rd.get("carnegie_classification")
+                    or (inst.school_outcomes or {}).get("carnegie_classification")
+                ),
                 "campus_setting": inst.campus_setting,
                 "student_body_size": inst.student_body_size,
                 # Geo for the "near me" distance sort (from school_outcomes.location).
