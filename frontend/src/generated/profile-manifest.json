@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "levels": {
     "institution": [
       {
@@ -11,7 +11,12 @@
         "fields": [
           "description_text",
           "student_body_size",
-          "campus_photo"
+          "campus_photo",
+          "website_url",
+          "type",
+          "campus_setting",
+          "founded_year",
+          "social_links"
         ]
       },
       {
@@ -21,10 +26,10 @@
         "required": true,
         "widget": "chip-list",
         "fields": [
-          "qs_world_university_rankings",
-          "times_higher_education",
-          "us_news_national",
-          "carnegie_classification",
+          "qs",
+          "the",
+          "usnews",
+          "carnegie",
           "accreditor"
         ]
       },
@@ -37,9 +42,10 @@
         "fields": [
           "admit_rate",
           "avg_net_price",
-          "median_earnings_10yr",
-          "graduation_rate_6yr",
-          "retention_rate_first_year"
+          "earnings_10yr",
+          "grad_rate",
+          "retention",
+          "completion_4yr"
         ]
       },
       {
@@ -49,14 +55,87 @@
         "required": true,
         "widget": "stat-grid",
         "fields": [
-          "test_scores",
+          "applicants",
+          "admits",
+          "cycle",
+          "test_scores"
+        ]
+      },
+      {
+        "id": "diversity",
+        "title": "Diversity",
+        "order": 5,
+        "required": true,
+        "widget": "stat-grid",
+        "fields": [
           "demographics"
+        ]
+      },
+      {
+        "id": "recognition",
+        "title": "Recognition",
+        "order": 6,
+        "required": false,
+        "widget": "chip-list",
+        "fields": [
+          "nobel",
+          "macarthur",
+          "medal_science"
+        ]
+      },
+      {
+        "id": "scale",
+        "title": "By the numbers",
+        "order": 7,
+        "required": true,
+        "widget": "stat-grid",
+        "fields": [
+          "faculty_count",
+          "sf_ratio",
+          "research_centers",
+          "endowment"
+        ]
+      },
+      {
+        "id": "outcomes",
+        "title": "Outcomes",
+        "order": 8,
+        "required": true,
+        "widget": "stat-grid",
+        "fields": [
+          "placement",
+          "industries"
+        ]
+      },
+      {
+        "id": "cost_aid",
+        "title": "Cost & aid",
+        "order": 9,
+        "required": true,
+        "widget": "stat-grid",
+        "fields": [
+          "coa",
+          "pell",
+          "loan",
+          "median_debt"
+        ]
+      },
+      {
+        "id": "location",
+        "title": "Location & campus basics",
+        "order": 10,
+        "required": true,
+        "widget": "none",
+        "fields": [
+          "lat",
+          "lng",
+          "campus_location"
         ]
       },
       {
         "id": "campus_resources",
         "title": "Campus resources",
-        "order": 5,
+        "order": 11,
         "required": true,
         "widget": "chip-list",
         "fields": [
@@ -67,7 +146,7 @@
       {
         "id": "feeds",
         "title": "Events & updates feeds",
-        "order": 6,
+        "order": 12,
         "required": false,
         "widget": "none",
         "fields": [
@@ -77,7 +156,7 @@
       {
         "id": "citation",
         "title": "Sources",
-        "order": 7,
+        "order": 13,
         "required": true,
         "widget": "citation-block",
         "fields": [
@@ -109,13 +188,26 @@
           "leadership",
           "faculty",
           "research_centers",
+          "named_for",
           "source"
+        ]
+      },
+      {
+        "id": "quick_facts",
+        "title": "Quick facts (inherited from institution)",
+        "order": 3,
+        "required": false,
+        "widget": "none",
+        "fields": [
+          "admit_rate",
+          "grad_rate",
+          "students"
         ]
       },
       {
         "id": "feeds",
         "title": "Events & updates feeds",
-        "order": 3,
+        "order": 4,
         "required": false,
         "widget": "none",
         "fields": [
@@ -136,38 +228,54 @@
           "duration_months",
           "delivery_format",
           "description_text",
-          "website_url"
+          "website_url",
+          "department",
+          "highlights",
+          "who_its_for"
+        ]
+      },
+      {
+        "id": "tracks",
+        "title": "Curriculum & structure",
+        "order": 2,
+        "required": true,
+        "widget": "stat-grid",
+        "fields": [
+          "tracks"
         ]
       },
       {
         "id": "admissions",
         "title": "Admissions",
-        "order": 2,
+        "order": 3,
         "required": true,
         "widget": "stat-grid",
         "fields": [
           "materials",
           "deadlines",
-          "evaluation",
+          "recommendations",
+          "international",
+          "application_fee",
           "req_source"
         ]
       },
       {
         "id": "costs",
         "title": "Costs & aid",
-        "order": 3,
+        "order": 4,
         "required": true,
         "widget": "stat-grid",
         "fields": [
-          "tuition_usd",
-          "total_cost_of_attendance",
+          "tuition",
+          "total_coa",
+          "breakdown",
           "cost_source"
         ]
       },
       {
         "id": "outcomes",
         "title": "Outcomes",
-        "order": 4,
+        "order": 5,
         "required": true,
         "widget": "distribution",
         "fields": [
@@ -175,21 +283,41 @@
           "median_salary",
           "salary_25th",
           "salary_75th",
+          "mean_salary",
+          "signing_bonus",
           "top_industries",
+          "top_employers",
+          "class_size",
           "conditions",
-          "outcomes_source"
+          "outcomes_source",
+          "outcomes_source_url"
         ]
       },
       {
         "id": "insights",
         "title": "Insights \u2014 class profile, faculty, reviews",
-        "order": 5,
-        "required": false,
+        "order": 6,
+        "required": true,
         "widget": "stat-grid",
         "fields": [
           "class_profile",
+          "class_intl",
+          "class_source",
           "faculty",
-          "reviews"
+          "faculty_dir",
+          "reviews",
+          "reviews_themes",
+          "reviews_sources"
+        ]
+      },
+      {
+        "id": "feeds",
+        "title": "Events & updates feeds",
+        "order": 7,
+        "required": true,
+        "widget": "none",
+        "fields": [
+          "content_sources"
         ]
       }
     ]

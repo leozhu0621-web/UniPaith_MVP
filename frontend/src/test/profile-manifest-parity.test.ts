@@ -21,14 +21,22 @@ const ANCHORS: Record<string, string> = {
   'institution:rankings': 'ranking',
   'institution:report_card': 'report card',
   'institution:admissions_funnel': 'admissions',
+  'institution:diversity': 'diversity',
+  'institution:scale': 'by the numbers',
+  'institution:outcomes': 'outcomes',
+  'institution:cost_aid': 'cost',
+  'institution:location': 'location',
   'institution:campus_resources': 'campus resources',
   'institution:citation': 'source',
   'school:identity': 'website',
   'school:about_detail': 'leadership',
   'program:basics': 'length',
+  'program:tracks': 'curriculum',
   'program:admissions': 'admissions',
   'program:costs': 'tuition',
   'program:outcomes': 'outcomes',
+  'program:insights': 'insights',
+  'program:feeds': 'events',
 }
 
 describe('profile manifest ↔ render parity', () => {
