@@ -4,11 +4,13 @@ Single source of truth for the Connect following graph:
 - auto-follow on save (`saved`) and on start-application (`application`),
 - explicit follow from a school/program page (`explicit`),
 - mute (keeps the follow, suppresses feed items),
-- unfollow, **blocked while an active application exists** at that institution.
+- unfollow — always available; saving/following is a user-controlled choice
+  and stays reversible even while an application is active.
 
-Because ``ApplicationService.withdraw_application`` *deletes* the row, the
-presence of *any* ``Application`` for a program at an institution means the
-relationship is active — that is the unfollow-block condition (Spec 20 §2).
+An active application no longer *pins* the follow (it previously raised a 400
+on unfollow, which surfaced to students as "I can't unsave the school"). The
+Connect feed still independently surfaces institutions of saved programs, so
+unfollowing never silently breaks an in-flight application's feed.
 """
 
 from __future__ import annotations
@@ -20,8 +22,7 @@ from sqlalchemy import delete as sa_delete
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.core.exceptions import BadRequestException, NotFoundException
-from unipaith.models.application import Application
+from unipaith.core.exceptions import NotFoundException
 from unipaith.models.follow import InstitutionFollow
 from unipaith.models.institution import Institution, Program
 from unipaith.models.student import StudentPreference
@@ -127,16 +128,13 @@ class FollowService:
         return follow
 
     async def unfollow(self, student_id: UUID, institution_id: UUID) -> None:
-        """Remove a follow. Blocked while an active application exists (Spec 20 §2).
+        """Remove a follow. Always available; idempotent when not following.
 
-        Idempotent when not following. Raises ``BadRequestException`` with an
-        explanation when an application ties the student to the institution.
+        Saving/following a school is a user-controlled choice, so unsaving must
+        always succeed — even with an active application at the institution. The
+        Connect feed still independently surfaces institutions of saved programs,
+        so an in-flight application's feed is not silently broken by unfollowing.
         """
-        if await self.has_active_application_at(student_id, institution_id):
-            raise BadRequestException(
-                "You have an active application with this institution, so it stays "
-                "in your Connect feed. Withdraw the application first to unfollow."
-            )
         await self.db.execute(
             sa_delete(InstitutionFollow).where(
                 InstitutionFollow.student_id == student_id,
@@ -148,27 +146,6 @@ class FollowService:
     # ------------------------------------------------------------------
     # Reads
     # ------------------------------------------------------------------
-
-    async def has_active_application_at(self, student_id: UUID, institution_id: UUID) -> bool:
-        row = await self.db.scalar(
-            select(Application.id)
-            .join(Program, Program.id == Application.program_id)
-            .where(
-                Application.student_id == student_id,
-                Program.institution_id == institution_id,
-            )
-            .limit(1)
-        )
-        return row is not None
-
-    async def _active_application_institution_ids(self, student_id: UUID) -> set[UUID]:
-        rows = await self.db.execute(
-            select(Program.institution_id)
-            .join(Application, Application.program_id == Program.id)
-            .where(Application.student_id == student_id)
-            .distinct()
-        )
-        return {r[0] for r in rows.all() if r[0] is not None}
 
     async def followed_institution_ids(
         self, student_id: UUID, *, include_muted: bool = True, include_saved: bool = True
@@ -213,8 +190,8 @@ class FollowService:
     async def list_detailed(self, student_id: UUID) -> list[dict]:
         """Followed institutions enriched for the Manage-Following panel.
 
-        Each row carries ``muted``, ``source``, ``can_unfollow`` (false while an
-        active application exists), and a published-program count.
+        Each row carries ``muted``, ``source``, ``can_unfollow`` (always true —
+        following is reversible), and a published-program count.
         """
         prog_count_sq = (
             select(Program.institution_id, func.count(Program.id).label("pc"))
@@ -242,7 +219,6 @@ class FollowService:
             .where(InstitutionFollow.student_id == student_id)
             .order_by(InstitutionFollow.created_at.desc())
         )
-        active_inst = await self._active_application_institution_ids(student_id)
         out: list[dict] = []
         for row in result.all():
             inst_id = row[0]
@@ -258,7 +234,8 @@ class FollowService:
                     "source": row[7],
                     "muted": row[8],
                     "program_count": row[9] or 0,
-                    "can_unfollow": inst_id not in active_inst,
+                    # Following is always reversible (Spec 20 §2 pin removed).
+                    "can_unfollow": True,
                 }
             )
         return out

@@ -122,7 +122,8 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
       queryClient.invalidateQueries({ queryKey: ['student-feed'] })
       showToast(isSaved ? 'Removed from your schools.' : 'Saved. You’ll see this school’s updates in Connect.', 'success')
     },
-    onError: () => showToast('Something didn’t work. Try again.', 'error'),
+    onError: (err: any) =>
+      showToast(err?.response?.data?.detail || 'Something didn’t work. Try again.', 'error'),
   })
   const onSaveSchool = () => {
     if (!isAuthenticated) { navigate('/login'); return }

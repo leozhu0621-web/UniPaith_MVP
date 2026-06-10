@@ -1892,8 +1892,8 @@ async def unfollow_institution(
 ):
     """Unfollow an institution. Idempotent when not following.
 
-    Blocked while an active application exists at the institution (Spec 20 §2)
-    — FollowService raises a 400 explaining why.
+    Always available — saving/following a school is a user-controlled choice and
+    stays reversible even while an application is active (Spec 20 §2 pin removed).
     """
     from unipaith.services.follow_service import FollowService
 
