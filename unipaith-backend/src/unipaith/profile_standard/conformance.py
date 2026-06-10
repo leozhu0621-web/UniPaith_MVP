@@ -30,6 +30,18 @@ def _present(value) -> bool:
     return True
 
 
+def _omitted_paths(snapshot: dict) -> set[str]:
+    """The field paths the node has legitimately recorded as verified-unavailable
+    in ``_standard.omitted`` — these don't block conformance."""
+    std = snapshot.get("_standard")
+    if not isinstance(std, dict):
+        return set()
+    raw = std.get("omitted")
+    if not isinstance(raw, (list, tuple)):
+        return set()
+    return {str(p) for p in raw}
+
+
 @dataclass
 class ConformanceResult:
     level: str
@@ -48,6 +60,7 @@ def check_conformance(
     sections: list[Section] = MANIFEST[level]
     missing_sections: list[str] = []
     missing_fields: list[str] = []
+    omitted = _omitted_paths(snapshot)
     for sec in sections:
         sec_has_any = False
         for f in sec.fields:
@@ -57,6 +70,11 @@ def check_conformance(
                 continue
             present = _present(_resolve(snapshot, f.path))
             if present:
+                sec_has_any = True
+            elif f.path in omitted:
+                # Verified-unavailable and recorded in _standard.omitted — an
+                # honest omission, so it doesn't count as a missing field and
+                # satisfies the section's "has content" requirement.
                 sec_has_any = True
             elif f.required and sec.required:
                 missing_fields.append(f.path)
@@ -70,4 +88,5 @@ def check_conformance(
         missing_sections=missing_sections,
         missing_fields=missing_fields,
         stale=stale,
+        omitted=sorted(omitted),
     )

@@ -15,7 +15,7 @@
 
 A **university unit** = `{institution} + {all its schools/colleges} + {all programs under each school}`.
 
-A university is **done (gold)** for a `STANDARD_VERSION` when, for every node in its tree, `check_conformance(level, snapshot)` returns no `missing_sections`/`missing_fields` **except** fields legitimately recorded in that node's `_standard.omitted` (verified-unavailable). Every node carries `_standard = {version, enriched_at, omitted:[...]}`.
+A university is **done (gold)** for a `STANDARD_VERSION` when, for every node in its tree, `check_conformance(level, snapshot, profile_version=<the node's `_standard.version`>)` returns `conformant: True` — no `missing_sections`/`missing_fields` (fields legitimately recorded in that node's `_standard.omitted` are verified-unavailable and don't count as missing) **and** not `stale` versus the current `STANDARD_VERSION`. Always pass each node's `profile_version`: after a `STANDARD_VERSION` bump a node with full data is still `stale` (not gold) and must be re-enriched. Every node carries `_standard = {version, enriched_at, omitted:[...]}`.
 
 "Everything" means: institution (rankings · report-card · admissions funnel · diversity · recognition · scale · outcomes · cost & aid · location · campus resources · feeds · sources) + each school (about-detail · feeds) + each program (basics · curriculum/tracks · admissions · costs · outcomes-with-conditions · insights · feeds), all per the manifest (`profile_standard/manifest.py`).
 

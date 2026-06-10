@@ -49,9 +49,13 @@ page is not.
 - **Full routine spec:** `docs/superpowers/specs/2026-06-10-university-enrichment-routine.md`.
   Parent design: `docs/superpowers/specs/2026-06-09-profile-standard-and-enrichment-design.md`.
 
-A node is **gold** when `check_conformance` returns no missing required fields
-(except fields legitimately in its `_standard.omitted`). A **university is gold**
-when every node in its tree is gold.
+A node is **gold** when `check_conformance(level, snapshot, profile_version=<the
+node's `_standard.version`>)` returns `conformant: True` against the current
+`STANDARD_VERSION` — i.e. no missing required sections/fields (fields legitimately
+recorded in its `_standard.omitted` don't count as missing) **and** not `stale`.
+Always pass the node's `profile_version`: after a `STANDARD_VERSION` bump a node
+with full data is still `stale` (not gold) and must be re-enriched. A **university
+is gold** when every node in its tree is gold.
 
 ## Per-run algorithm (one whole university)
 
