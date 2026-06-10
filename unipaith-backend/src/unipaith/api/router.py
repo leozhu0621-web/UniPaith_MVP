@@ -14,6 +14,7 @@ from unipaith.api.auth import router as auth_router
 from unipaith.api.billing import router as billing_router
 from unipaith.api.build import router as build_router
 from unipaith.api.calendar import router as calendar_router
+from unipaith.api.checklists import router as checklists_router
 from unipaith.api.connect import router as connect_router
 from unipaith.api.content_ingest import router as content_ingest_router
 from unipaith.api.discovery import router as discovery_router
@@ -31,7 +32,6 @@ from unipaith.api.institutions import router as institutions_router
 from unipaith.api.intake import router as intake_router
 from unipaith.api.interviews import router as interviews_router
 from unipaith.api.major_specific import router as major_specific_router
-from unipaith.api.messaging import router as messaging_router
 from unipaith.api.needs import router as needs_router
 from unipaith.api.notifications import router as notifications_router
 from unipaith.api.payments import router as payments_router
@@ -48,7 +48,6 @@ from unipaith.api.settings import router as settings_router
 from unipaith.api.strategy import router as strategy_router
 from unipaith.api.students import router as students_router
 from unipaith.api.workshop_feedback import router as workshop_feedback_router
-from unipaith.api.workshops import router as workshops_router
 from unipaith.database import get_db
 from unipaith.models.institution import CampaignLink, CampaignRecipient
 from unipaith.services.campaign_email_service import verify_unsubscribe_token
@@ -116,10 +115,13 @@ api_router.include_router(documents_router)
 api_router.include_router(saved_lists_router)
 api_router.include_router(saved_search_router)
 api_router.include_router(search_router)
-api_router.include_router(workshops_router)
+# Phase E (Spec 2026-06-10 §7): the deprecated essay/resume drafting router
+# (api/workshops.py) and the orphaned /messages conversations router are gone —
+# workshops are feedback-only (workshop_feedback), student messaging is the
+# inbox. Checklist/readiness endpoints kept their paths via api/checklists.py.
+api_router.include_router(checklists_router)
 api_router.include_router(workshop_feedback_router)
 api_router.include_router(ai_feedback_router)
-api_router.include_router(messaging_router)
 api_router.include_router(inbox_router)
 api_router.include_router(events_router)
 api_router.include_router(reviews_router)
