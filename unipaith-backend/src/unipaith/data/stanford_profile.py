@@ -974,7 +974,8 @@ _TRACKS_BY_SLUG: dict[str, dict] = {
 # ── Program-specific cost (official published rates) ───────────────────────
 # Stanford's standard full-time graduate tuition for 2025-26 is $65,910/year
 # (College Scorecard, UNITID 243744); the GSB MBA carries its own professional
-# rate. PhDs are fully funded. Undergraduate tuition is part of the COA band.
+# rate. PhDs are fully funded. Undergraduate tuition is its own published rate.
+_TUITION_UNDERGRAD = 67731  # Stanford full-time undergraduate tuition, 2025-26
 _COST_BY_SLUG: dict[str, dict] = {
     "stanford-mba": {
         "tuition_usd": 85755,
@@ -1471,7 +1472,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # flagship carries its own feed (content_sources is omitted for the rest),
         # and leaving an old value would keep it in ContentIngestService's selection.
         p.content_sources = _MBA_CONTENT if slug == "stanford-mba" else None
-        # Cost: program override (official) → MBA rate → funded PhD → standard rate.
+        # Cost: program override (official) → funded PhD → undergrad rate → standard grad rate.
         cost_override = _COST_BY_SLUG.get(slug)
         if cost_override is not None:
             p.tuition = cost_override.get("tuition_usd")
@@ -1484,6 +1485,15 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "note": "PhD students receive full tuition plus a stipend.",
                 "source": "Stanford Graduate Admissions",
                 "source_url": "https://gradadmissions.stanford.edu/",
+                "year": "2025-26",
+            }
+        elif spec["degree_type"] == "bachelors":
+            p.tuition = _TUITION_UNDERGRAD
+            p.cost_data = {
+                "tuition_usd": _TUITION_UNDERGRAD,
+                "funded": False,
+                "source": "Stanford Student Services — 2025-26 Undergraduate Tuition",
+                "source_url": "https://studentservices.stanford.edu/tuition-rates/2025-2026-undergraduate-tuition-rates",
                 "year": "2025-26",
             }
         else:
