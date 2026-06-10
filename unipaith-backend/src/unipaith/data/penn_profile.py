@@ -671,9 +671,13 @@ _WHARTON_MBA_CONTENT: dict = {
 
 # ── The program catalog (real majors, organized by school) ─────────────────
 # slug = idempotency key. Every program maps to its owning school from Penn's official
-# structure. This run enriches the institution, all twelve schools, and the
-# undergraduate + Wharton-MBA program catalog (where cost-of-attendance is uniform/
-# verified). Penn awards the A.B./B.A., B.S.E. and B.S.N. at the undergraduate level.
+# structure. The profile covers the institution and all twelve schools; the program
+# catalog spans the undergraduate majors (A.B./B.A., B.S.E. and B.S.N.), the Wharton
+# MBA, and — added in the resume run — the Perelman School of Medicine MD and the Penn
+# Carey Law JD (each with a first-party-verified cost of attendance and admissions set).
+# The remaining graduate/professional schools (Dental, Vet, GSE, Weitzman/Design, SP2,
+# Annenberg) are enriched at the school level and are queued for a later resume run,
+# pending first-party-verifiable per-program tuition.
 _FLAGSHIP = "penn-wharton-mba"
 PROGRAMS: list[dict] = [
     # ── The Wharton School ──
@@ -851,6 +855,39 @@ PROGRAMS: list[dict] = [
         "duration_months": 48,
         "description": "Physics — from particles and fields to condensed matter and astrophysics.",
     },
+    # ── Perelman School of Medicine ──
+    {
+        "slug": "penn-md",
+        "school": _MED,
+        # Professional doctorate — modeled as a graduate ("masters") program, matching
+        # the fleet convention for MD/JD/DMD professional degrees.
+        "program_name": "Doctor of Medicine (MD)",
+        "degree_type": "masters",
+        "cip": "51.12",
+        "duration_months": 48,
+        "description": (
+            "The Doctor of Medicine at the Perelman School of Medicine — founded in 1765 "
+            "as the first medical school in the United States. A four-year MD combining "
+            "foundational biomedical science, early and extensive clinical training "
+            "across the Penn Medicine academic health system, and broad research and "
+            "dual-degree pathways (including MD-PhD and MD-MBA)."
+        ),
+    },
+    # ── University of Pennsylvania Carey Law School ──
+    {
+        "slug": "penn-jd",
+        "school": _LAW,
+        "program_name": "Juris Doctor (JD)",
+        "degree_type": "masters",
+        "cip": "22.01",
+        "duration_months": 36,
+        "description": (
+            "The Juris Doctor at the University of Pennsylvania Carey Law School, one of "
+            "the nation's leading law schools. A three-year program distinguished by "
+            "cross-disciplinary study with Penn's business, medical and policy schools "
+            "and by a wide range of joint degrees, certificates and clinics."
+        ),
+    },
 ]
 
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
@@ -876,6 +913,8 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
     "penn-english-ba": "https://www.english.upenn.edu/",
     "penn-chemistry-ba": "https://www.chem.upenn.edu/",
     "penn-physics-ba": "https://www.physics.upenn.edu/",
+    "penn-md": "https://www.med.upenn.edu/admiss/",
+    "penn-jd": "https://www.law.upenn.edu/admissions/jd/",
 }
 
 # ── Who-it's-for + highlights (catalog baselines) ──────────────────────────
@@ -902,6 +941,15 @@ _WHO_BY_SLUG = {
         "Students drawn to nursing and health who want a clinical education at the "
         "top-ranked Penn Nursing inside a major research university and health system."
     ),
+    "penn-md": (
+        "Students committed to medicine who want an MD at the first U.S. medical school, "
+        "within one of the nation's leading academic health systems, with strong "
+        "research and dual-degree pathways."
+    ),
+    "penn-jd": (
+        "Aspiring lawyers seeking a top-tier JD with deep cross-disciplinary access to "
+        "Penn's business, medical and policy schools and a wide range of joint degrees."
+    ),
 }
 _HL_BY_SLUG = {
     "penn-wharton-mba": [
@@ -923,6 +971,16 @@ _HL_BY_SLUG = {
         "Top-ranked nursing school",
         "Clinical + research",
         "Penn Medicine health system",
+    ],
+    "penn-md": [
+        "First U.S. medical school (1765)",
+        "Penn Medicine academic health system",
+        "MD-PhD & dual-degree options",
+    ],
+    "penn-jd": [
+        "Top-tier law school",
+        "Cross-disciplinary joint degrees",
+        "University City, Philadelphia",
     ],
 }
 
@@ -985,7 +1043,63 @@ _COST_BY_SLUG: dict[str, dict] = {
         "source": "The Wharton School — MBA Tuition & Fees",
         "source_url": "https://mba-inside.wharton.upenn.edu/financial-aid/tuition-fees/",
         "year": "2026-27",
-    }
+    },
+    # Perelman School of Medicine MD — official PSOM student budget for 2026-27
+    # (Year 1, 10 months). Tuition $73,852; tuition+fees subtotal $80,511; grand total
+    # (incl. health insurance + living expenses) $117,173.
+    "penn-md": {
+        "tuition_usd": 73852,
+        "total_cost_of_attendance": 117173,
+        "breakdown": {
+            "tuition": 73852,
+            "general_fee": 4268,
+            "clinical_fee": 770,
+            "technology_fee": 1566,
+            "disability_fee": 55,
+            "tuition_and_fees_subtotal": 80511,
+            "health_insurance": 4662,
+            "total_cost_of_attendance": 117173,
+        },
+        "funded": False,
+        "note": (
+            "Official Perelman School of Medicine MD student budget for 2026-27 (first "
+            "year, 10 months): tuition $73,852, tuition and fees $80,511, and a total "
+            "first-year cost of attendance of $117,173 including health insurance and "
+            "living expenses. Penn Medicine offers need-based scholarships that reduce "
+            "the net cost for many students."
+        ),
+        "source": "Perelman School of Medicine — MD Student Budget, Academic Year 2026-27",
+        "source_url": (
+            "https://www.med.upenn.edu/student/assets/user-content/documents/policies/"
+            "tuition-2026-27.pdf"
+        ),
+        "year": "2026-27",
+    },
+    # Penn Carey Law JD — official SRFS JD cost of attendance for 2026-27.
+    # Tuition $81,796; fees general $4,268 + clinical $770 + learning support $1,350;
+    # total budgeted cost of attendance $120,294.
+    "penn-jd": {
+        "tuition_usd": 81796,
+        "total_cost_of_attendance": 120294,
+        "breakdown": {
+            "tuition": 81796,
+            "general_fee": 4268,
+            "clinical_fee": 770,
+            "learning_support_fee": 1350,
+            "total_cost_of_attendance": 120294,
+        },
+        "funded": False,
+        "note": (
+            "Official Penn Student Registration & Financial Services JD cost of "
+            "attendance for 2026-27: tuition $81,796 plus the general ($4,268), clinical "
+            "($770) and learning-support ($1,350) fees, for a total budgeted cost of "
+            "attendance of $120,294. Penn Carey Law awards need- and merit-based grants "
+            "that reduce the net cost for many students."
+        ),
+        "source": "Penn Student Registration & Financial Services — Penn Carey Law JD",
+        "source_url": "https://srfs.upenn.edu/penn-carey-law-jd",
+        "year": "2026-27",
+    },
 }
 
 # ── Program-specific outcomes ──────────────────────────────────────────────
@@ -1276,10 +1390,103 @@ _REQ_MBA = {
 }
 
 
+# Perelman School of Medicine MD admission (AMCAS). Letters-of-evaluation counts and the
+# secondary fee are not asserted without an official figure; the universal AMCAS
+# materials and Penn's published deadlines are listed.
+_REQ_MD = {
+    "materials": [
+        {"name": "AMCAS primary application", "required": True},
+        {"name": "MCAT score", "required": True},
+        {
+            "name": "AMCAS letters of evaluation",
+            "required": True,
+            "note": (
+                "A committee / health-professions advisory letter where available, or "
+                "individual letters of evaluation submitted through AMCAS."
+            ),
+        },
+        {"name": "Perelman secondary (supplemental) application", "required": True},
+        {"name": "Official transcripts (via AMCAS)", "required": True},
+    ],
+    "deadlines": [
+        {"round": "AMCAS primary application", "date": "October 15"},
+        {"round": "Secondary application", "date": "November 15"},
+    ],
+    "international": {
+        "visa": _INTL_VISA,
+        "sources": [
+            {
+                "label": "Perelman School of Medicine — Admissions",
+                "url": "https://www.med.upenn.edu/admiss/",
+            }
+        ],
+    },
+    "source": "Perelman School of Medicine — Admissions",
+    "source_url": "https://www.med.upenn.edu/admiss/",
+}
+
+# University of Pennsylvania Carey Law School JD admission (LSAC). Penn accepts the LSAT,
+# GRE or GMAT; two recommendations are required (up to four accepted).
+_REQ_LAW = {
+    "materials": [
+        {
+            "name": "LSAT, GRE, or GMAT score",
+            "required": True,
+            "note": "Penn Carey Law accepts the LSAT, the GRE General Test, or the GMAT.",
+        },
+        {"name": "LSAC Credential Assembly Service (transcripts)", "required": True},
+        {"name": "Personal statement", "required": True},
+        {
+            "name": "Two letters of recommendation (up to four accepted)",
+            "required": True,
+            "note": "Submitted through the LSAC Letter of Recommendation Service.",
+        },
+        {"name": "Résumé", "required": True},
+        {"name": "$80 application fee; fee waivers available", "required": True},
+    ],
+    "deadlines": [
+        {"round": "Early Decision I", "date": "November 15"},
+        {"round": "Early Decision II", "date": "January 7"},
+        {"round": "Regular Decision", "date": "March 1"},
+    ],
+    "recommendations": {
+        "required": 2,
+        "note": (
+            "At least two letters of recommendation (up to four accepted), submitted "
+            "through the LSAC Letter of Recommendation Service."
+        ),
+    },
+    "application_fee": "$80 (fee waivers available)",
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS"],
+            "required": False,
+            "note": (
+                "International applicants follow Penn Carey Law's "
+                "English-proficiency guidance."
+            ),
+        },
+        "visa": _INTL_VISA,
+        "sources": [
+            {
+                "label": "Penn Carey Law — JD Admissions",
+                "url": "https://www.law.upenn.edu/admissions/jd/",
+            }
+        ],
+    },
+    "source": "University of Pennsylvania Carey Law School — JD Admissions",
+    "source_url": "https://www.law.upenn.edu/admissions/jd/",
+}
+
+
 def _requirements_for(spec: dict) -> dict:
     """Pick the admissions requirement set for a program by slug / degree type."""
     if spec["slug"] == "penn-wharton-mba":
         return dict(_REQ_MBA)
+    if spec["slug"] == "penn-md":
+        return dict(_REQ_MD)
+    if spec["slug"] == "penn-jd":
+        return dict(_REQ_LAW)
     return dict(_REQ_UNDERGRAD)
 
 
