@@ -35,6 +35,14 @@ export default function RelatedSidebar({
   const fitPrograms = [...fitById.values()].slice(0, 6)
 
   const [idx, setIdx] = useState(0)
+  // Reset to the first card whenever the viewed program changes (the component
+  // instance is reused across /s/programs/:programId routes).
+  const fitKey = fitPrograms.map((p) => p.id).join(',')
+  const [prevFitKey, setPrevFitKey] = useState(fitKey)
+  if (fitKey !== prevFitKey) {
+    setPrevFitKey(fitKey)
+    setIdx(0)
+  }
   const safeIdx = Math.min(idx, Math.max(0, fitPrograms.length - 1))
   const current = fitPrograms[safeIdx]
 
