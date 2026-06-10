@@ -6,6 +6,7 @@ import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Select from '../../components/ui/Select'
 import EmptyState from '../../components/ui/EmptyState'
+import QueryError from '../../components/ui/QueryError'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { PageHeader } from '../../components/student/density'
 import { formatDate } from '../../utils/format'
@@ -118,7 +119,7 @@ export default function ApplicationsPage() {
   const [sort, setSort] = useState<'deadline' | 'readiness' | 'fit'>('deadline')
   const [showCompare, setShowCompare] = useState(false)
 
-  const { data, isLoading } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
+  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
   const apps: Application[] = useMemo(() => (Array.isArray(data) ? data : []), [data])
 
   // Spec 18 — offer/decision summary for the portfolio banners.
@@ -206,6 +207,15 @@ export default function ApplicationsPage() {
 
   if (isLoading)
     return <div className="p-4 max-w-5xl w-full mx-auto space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+
+  // A failed fetch must not read as "No applications yet" (empty state).
+  if (isError)
+    return (
+      <div className="p-4 max-w-5xl w-full mx-auto">
+        <PageHeader eyebrow="Apply" title="Your portfolio" sub="Turn saved targets into application projects" />
+        <QueryError detail="We couldn't load your applications." onRetry={() => refetch()} />
+      </div>
+    )
 
   if (apps.length === 0)
     return (

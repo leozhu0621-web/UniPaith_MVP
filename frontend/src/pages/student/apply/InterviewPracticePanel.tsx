@@ -49,33 +49,35 @@ export default function InterviewPracticePanel() {
   const [mode, setMode] = useState<WorkshopMode>('general')
   const [program, setProgram] = useState<ProgramOption | null>(null)
   const [run, setRun] = useState<WorkshopFeedbackRun | null>(null)
+  // The program the displayed run was generated for — snapshotted at request
+  // time so switching the picker afterwards never relabels a stale run.
+  const [runProgram, setRunProgram] = useState<ProgramOption | null>(null)
 
   const hasResponse = responseText.trim().length > 0
 
   const practiceMut = useMutation({
-    mutationFn: () =>
+    mutationFn: (target: ProgramOption | null) =>
       requestInterviewPractice({
         interview_type: interviewType,
         focus_area: focus.trim() || null,
         response_text: responseText.trim() || null,
         question_text: questionText.trim() || null,
-        target_program_id: mode === 'program_specific' ? program?.programId ?? null : null,
+        target_program_id: target?.programId ?? null,
       }),
-    onSuccess: r => {
+    onSuccess: (r, target) => {
       setRun(r)
+      setRunProgram(target)
       showToast(hasResponse ? 'Coaching ready.' : 'Practice questions ready.', 'success')
     },
     onError: (err: unknown) =>
       showToast((err as Error).message ?? 'Could not get feedback.', 'error'),
   })
 
+  const targetProgram = mode === 'program_specific' ? program : null
   // Score mode produces a non-zero rubric; practice mode returns an all-zero
   // placeholder rubric (we hide that).
   const scored = run ? Object.values(run.rubric_scores ?? {}).some(v => Number(v) > 0) : false
-  const readiness =
-    run && mode === 'program_specific' && program
-      ? readinessSummary(run, program.programName)
-      : null
+  const readiness = run && runProgram ? readinessSummary(run, runProgram.programName) : null
 
   return (
     <div className="space-y-4">
@@ -165,7 +167,7 @@ export default function InterviewPracticePanel() {
         <div className="flex justify-end">
           <Button
             variant="secondary"
-            onClick={() => practiceMut.mutate()}
+            onClick={() => practiceMut.mutate(targetProgram)}
             loading={practiceMut.isPending}
           >
             {hasResponse ? 'Get feedback' : 'Get practice questions'}
@@ -179,12 +181,12 @@ export default function InterviewPracticePanel() {
         </EmptyHint>
       )}
 
-      {practiceMut.isError && !run && <ErrorNote onRetry={() => practiceMut.mutate()} />}
+      {practiceMut.isError && !run && <ErrorNote onRetry={() => practiceMut.mutate(targetProgram)} />}
 
       {run && (
         <>
-          {readiness && program && (
-            <ReadinessCard programName={program.programName} summary={readiness} />
+          {readiness && runProgram && (
+            <ReadinessCard programName={runProgram.programName} summary={readiness} />
           )}
 
           {scored && (
