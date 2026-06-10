@@ -50,9 +50,6 @@ export default function CostsAidTab() {
     onError: () => showToast("Something didn't work. Try again.", 'error'),
   })
 
-  if (isError) return <QueryError onRetry={() => refetch()} />
-  if (isLoading || !form) return <div className="space-y-3"><SkeletonCard /></div>
-
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }))
   const save = () => {
     const min = form.budget_min === '' ? null : Number(form.budget_min)
@@ -72,12 +69,13 @@ export default function CostsAidTab() {
     })
   }
 
-  const band =
-    form.funding_requirement === 'full_scholarship'
+  const band = form
+    ? form.funding_requirement === 'full_scholarship'
       ? { label: 'Aid-dependent', tone: 'text-warning' }
       : form.funding_requirement === 'self_funded'
         ? { label: 'Self-funded', tone: 'text-success' }
         : { label: 'Mixed funding', tone: 'text-secondary' }
+    : { label: 'Mixed funding', tone: 'text-secondary' }
 
   const matchList = Array.isArray(scholarships.data) ? scholarships.data : []
 
@@ -85,27 +83,33 @@ export default function CostsAidTab() {
     <div className="space-y-8">
       <section>
         <SectionHeader title="Budget & funding" description="Your annual ceiling and how you plan to fund it." />
-        <Card className="p-5 space-y-4">
-          <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1">
-            <Input label="Annual budget — minimum (USD)" type="number" min={0} placeholder="0" value={form.budget_min} onChange={e => set('budget_min', e.target.value)} />
-            <Input label="Annual budget — maximum (USD)" type="number" min={0} placeholder="50000" value={form.budget_max} onChange={e => set('budget_max', e.target.value)} />
-          </div>
-          <div className="max-w-xs">
-            <Select label="Funding plan" placeholder="Select…" options={FUNDING_OPTIONS} value={form.funding_requirement} onChange={e => set('funding_requirement', e.target.value)} />
-          </div>
-          {(form.budget_min || form.budget_max) && (
-            <p className="text-sm text-muted-foreground">
-              Targeting{' '}
-              <span className="font-semibold text-foreground">
-                {formatCurrency(Number(form.budget_min) || 0)}–{formatCurrency(Number(form.budget_max) || 0)}
-              </span>{' '}
-              per year · <span className={`font-semibold ${band.tone}`}>{band.label}</span>
-            </p>
-          )}
-          <div className="flex justify-end">
-            <Button onClick={save} loading={saveMut.isPending}>Save</Button>
-          </div>
-        </Card>
+        {isError ? (
+          <QueryError variant="inline" detail="We couldn't load your budget preferences." onRetry={() => refetch()} />
+        ) : isLoading || !form ? (
+          <SkeletonCard />
+        ) : (
+          <Card className="p-5 space-y-4">
+            <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1">
+              <Input label="Annual budget — minimum (USD)" type="number" min={0} placeholder="0" value={form.budget_min} onChange={e => set('budget_min', e.target.value)} />
+              <Input label="Annual budget — maximum (USD)" type="number" min={0} placeholder="50000" value={form.budget_max} onChange={e => set('budget_max', e.target.value)} />
+            </div>
+            <div className="max-w-xs">
+              <Select label="Funding plan" placeholder="Select…" options={FUNDING_OPTIONS} value={form.funding_requirement} onChange={e => set('funding_requirement', e.target.value)} />
+            </div>
+            {(form.budget_min || form.budget_max) && (
+              <p className="text-sm text-muted-foreground">
+                Targeting{' '}
+                <span className="font-semibold text-foreground">
+                  {formatCurrency(Number(form.budget_min) || 0)}–{formatCurrency(Number(form.budget_max) || 0)}
+                </span>{' '}
+                per year · <span className={`font-semibold ${band.tone}`}>{band.label}</span>
+              </p>
+            )}
+            <div className="flex justify-end">
+              <Button onClick={save} loading={saveMut.isPending}>Save</Button>
+            </div>
+          </Card>
+        )}
       </section>
 
       {/* Scholarship matcher (Spec 70 §3) — deterministic, profile-driven. */}

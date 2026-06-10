@@ -259,16 +259,8 @@ export default function ApplicationsPage() {
   if (isLoading)
     return <div className="p-4 max-w-5xl w-full mx-auto space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 
-  // A failed fetch must not read as "No applications yet" (empty state).
-  if (isError)
-    return (
-      <div className="p-4 max-w-5xl w-full mx-auto">
-        <PageHeader eyebrow="My Space" title="Your portfolio" sub="Turn saved targets into application projects" />
-        {viewSwitcher}
-        <QueryError detail="We couldn't load your applications." onRetry={() => refetch()} />
-      </div>
-    )
-
+  // Offers renders ahead of the portfolio error guard so cached offers stay
+  // reachable even when a later refetch of the applications list fails.
   if (view === 'offers')
     return (
       <div className="p-4 max-w-5xl w-full mx-auto">
@@ -327,6 +319,16 @@ export default function ApplicationsPage() {
           </div>
         )}
         <DecisionComparison isOpen={showCompare} onClose={() => setShowCompare(false)} />
+      </div>
+    )
+
+  // A failed fetch must not read as "No applications yet" (empty state).
+  if (isError)
+    return (
+      <div className="p-4 max-w-5xl w-full mx-auto">
+        <PageHeader eyebrow="My Space" title="Your portfolio" sub="Turn saved targets into application projects" />
+        {viewSwitcher}
+        <QueryError detail="We couldn't load your applications." onRetry={() => refetch()} />
       </div>
     )
 
