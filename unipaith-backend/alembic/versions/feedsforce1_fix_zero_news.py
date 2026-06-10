@@ -95,6 +95,7 @@ _FEEDS = {
     },
     "University of California-San Diego": {
         "news_rss": "https://today.ucsd.edu/rss/topstories",
+        "events_feed": {"url": "https://calendar.ucsd.edu/calendar.ics", "type": "ical"},
         "social": {
             "instagram": "https://instagram.com/ucsandiego",
             "facebook": "https://facebook.com/ucsandiego",
