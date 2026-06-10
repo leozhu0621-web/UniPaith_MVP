@@ -1,0 +1,197 @@
+{
+  "version": 1,
+  "levels": {
+    "institution": [
+      {
+        "id": "identity",
+        "title": "Identity & description",
+        "order": 1,
+        "required": true,
+        "widget": "prose",
+        "fields": [
+          "description_text",
+          "student_body_size",
+          "campus_photo"
+        ]
+      },
+      {
+        "id": "rankings",
+        "title": "Rankings & classification",
+        "order": 2,
+        "required": true,
+        "widget": "chip-list",
+        "fields": [
+          "qs_world_university_rankings",
+          "times_higher_education",
+          "us_news_national",
+          "carnegie_classification",
+          "accreditor"
+        ]
+      },
+      {
+        "id": "report_card",
+        "title": "Report-card key stats",
+        "order": 3,
+        "required": true,
+        "widget": "stat-grid",
+        "fields": [
+          "admit_rate",
+          "avg_net_price",
+          "median_earnings_10yr",
+          "graduation_rate_6yr",
+          "retention_rate_first_year"
+        ]
+      },
+      {
+        "id": "admissions_funnel",
+        "title": "Admissions funnel",
+        "order": 4,
+        "required": true,
+        "widget": "stat-grid",
+        "fields": [
+          "test_scores",
+          "demographics"
+        ]
+      },
+      {
+        "id": "campus_resources",
+        "title": "Campus resources",
+        "order": 5,
+        "required": true,
+        "widget": "chip-list",
+        "fields": [
+          "research",
+          "campus_life"
+        ]
+      },
+      {
+        "id": "feeds",
+        "title": "Events & updates feeds",
+        "order": 6,
+        "required": false,
+        "widget": "none",
+        "fields": [
+          "content_sources"
+        ]
+      },
+      {
+        "id": "citation",
+        "title": "Sources",
+        "order": 7,
+        "required": true,
+        "widget": "citation-block",
+        "fields": [
+          "sources"
+        ]
+      }
+    ],
+    "school": [
+      {
+        "id": "identity",
+        "title": "Identity",
+        "order": 1,
+        "required": true,
+        "widget": "prose",
+        "fields": [
+          "name",
+          "description",
+          "website_url"
+        ]
+      },
+      {
+        "id": "about_detail",
+        "title": "About \u2014 facts, leadership, faculty",
+        "order": 2,
+        "required": true,
+        "widget": "stat-grid",
+        "fields": [
+          "founded",
+          "leadership",
+          "faculty",
+          "research_centers",
+          "source"
+        ]
+      },
+      {
+        "id": "feeds",
+        "title": "Events & updates feeds",
+        "order": 3,
+        "required": false,
+        "widget": "none",
+        "fields": [
+          "content_sources"
+        ]
+      }
+    ],
+    "program": [
+      {
+        "id": "basics",
+        "title": "Basic info",
+        "order": 1,
+        "required": true,
+        "widget": "stat-grid",
+        "fields": [
+          "program_name",
+          "degree_type",
+          "duration_months",
+          "delivery_format",
+          "description_text",
+          "website_url"
+        ]
+      },
+      {
+        "id": "admissions",
+        "title": "Admissions",
+        "order": 2,
+        "required": true,
+        "widget": "stat-grid",
+        "fields": [
+          "materials",
+          "deadlines",
+          "evaluation",
+          "req_source"
+        ]
+      },
+      {
+        "id": "costs",
+        "title": "Costs & aid",
+        "order": 3,
+        "required": true,
+        "widget": "stat-grid",
+        "fields": [
+          "tuition_usd",
+          "total_cost_of_attendance",
+          "cost_source"
+        ]
+      },
+      {
+        "id": "outcomes",
+        "title": "Outcomes",
+        "order": 4,
+        "required": true,
+        "widget": "distribution",
+        "fields": [
+          "employment_rate",
+          "median_salary",
+          "salary_25th",
+          "salary_75th",
+          "top_industries",
+          "conditions",
+          "outcomes_source"
+        ]
+      },
+      {
+        "id": "insights",
+        "title": "Insights \u2014 class profile, faculty, reviews",
+        "order": 5,
+        "required": false,
+        "widget": "stat-grid",
+        "fields": [
+          "class_profile",
+          "faculty",
+          "reviews"
+        ]
+      }
+    ]
+  }
+}
