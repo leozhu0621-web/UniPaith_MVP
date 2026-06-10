@@ -27,8 +27,32 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.models.institution import Institution, Program, School
+from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Harvard University"
+
+# Date this profile was researched + verified; stamped into every node's _standard.
+ENRICHED_AT = "2026-06-10"
+
+
+def _standard(omitted: list[str] | None = None) -> dict:
+    """The per-node provenance stamp the routine writes onto every enriched node."""
+    return {
+        "version": STANDARD_VERSION,
+        "enriched_at": ENRICHED_AT,
+        "omitted": omitted or [],
+    }
+
+
+# Institution-level fields that could NOT be verified from a clean citable source
+# and are therefore honestly omitted rather than guessed.
+_OMITTED_INSTITUTION = [
+    # Harvard does not publish a clean university-wide undergraduate first-destination
+    # ("employed or continuing education") rate; the headline figure conflates schools
+    # with very different outcomes, so it is omitted rather than asserted. Per-program
+    # outcomes (e.g. the HBS MBA employment report) are captured at program level.
+    "school_outcomes.employed_or_continuing_ed",
+]
 
 # ── Institution-level data ────────────────────────────────────────────────
 # Rankings are stored as {rank, year} objects because the page renders every
@@ -91,6 +115,10 @@ SCHOOL_OUTCOMES: dict = {
         "Government & public service",
     ],
     "scale": {
+        # University-wide faculty headcount (Fall 2025), Harvard OIRA Fact Book —
+        # Harvard's core ladder + non-ladder faculty, excluding the separately
+        # counted ~12,600 clinical faculty at HMS-affiliated hospitals.
+        "faculty_count": 2352,
         "student_faculty_ratio": "7:1",
         "research_centers": 100,
         "endowment_usd": 53200000000,
@@ -178,6 +206,12 @@ SCHOOL_OUTCOMES: dict = {
             "source": "Harvard College Admissions Statistics",
             "year": 2024,
             "url": "https://college.harvard.edu/admissions/admissions-statistics",
+        },
+        {
+            "label": "Faculty headcount (Fall 2025)",
+            "source": "Harvard Office of Institutional Research & Analytics — Fact Book",
+            "year": 2025,
+            "url": "https://oira.harvard.edu/factbook/fact-book-faculty-staff/",
         },
     ],
 }
@@ -369,6 +403,266 @@ _GSD = "Harvard Graduate School of Design"
 _HDS = "Harvard Divinity School"
 _HSDM = "Harvard School of Dental Medicine"
 _DCE = "Harvard Division of Continuing Education"
+
+# ── Rich, sourced About-tab content per school ─────────────────────────────
+# Deans + endowed-chair titles are quoted from each school's official leadership
+# page (verified 2026-06-10); founding years from each school's official history.
+# Named individual faculty are only listed where verified to a citable source at
+# author time (the flagship HBS); for the other schools the notable-faculty field
+# is honestly omitted (recorded in each node's _standard.omitted) rather than
+# populated with unverified names. Research centers are first-party verifiable.
+_ABOUT_DETAIL: dict[str, dict] = {
+    _FAS: {
+        "founded": 1890,
+        "leadership": (
+            "Hopi Hoekstra — Edgerley Family Dean of the Faculty of Arts and Sciences (since 2023)"
+        ),
+        "research_centers": [
+            "Center for Brain Science",
+            "Radcliffe Institute for Advanced Study",
+            "Harvard-Smithsonian Center for Astrophysics",
+            "Weatherhead Center for International Affairs",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Harvard FAS — Leadership / About Dean Hoekstra",
+            "url": "https://www.fas.harvard.edu/about-dean-hoekstra",
+        },
+    },
+    _SEAS: {
+        "founded": 2007,
+        "leadership": (
+            "David C. Parkes — John A. Paulson Dean of SEAS; "
+            "George F. Colony Professor of Computer Science (since 2023)"
+        ),
+        "research_centers": [
+            "Wyss Institute for Biologically Inspired Engineering",
+            "Harvard Center for Green Buildings and Cities",
+            "Institute for Applied Computational Science (IACS)",
+            "Harvard Materials Research Science and Engineering Center (MRSEC)",
+        ],
+        "named_for": (
+            "John A. Paulson, whose $400 million gift in 2015 named the school"
+        ),
+        "source": {
+            "label": "Harvard SEAS — Office of the Dean",
+            "url": "https://seas.harvard.edu/office-dean",
+        },
+    },
+    _HBS: {
+        "founded": 1908,
+        "leadership": (
+            "Srikant M. Datar — George F. Baker Professor of Administration; 11th dean (since 2021)"
+        ),
+        "faculty": [
+            {
+                "name": "Michael E. Porter",
+                "title": "Bishop William Lawrence University Professor",
+                "focus": "Competitive strategy; directs the Institute for Strategy",
+            },
+            {
+                "name": "Matthew C. Weinzierl",
+                "title": "Joseph and Jacqueline Elbling Professor of Business Administration",
+                "focus": "Senior Associate Dean and Chair of the MBA Program",
+            },
+        ],
+        "research_centers": [
+            "Arthur Rock Center for Entrepreneurship",
+            "Institute for Strategy and Competitiveness",
+            "Social Enterprise Initiative",
+            "Baker Library",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Harvard Business School — School Leadership",
+            "url": "https://www.hbs.edu/about/leadership",
+        },
+    },
+    _HLS: {
+        "founded": 1817,
+        "leadership": (
+            "John C. P. Goldberg — Morgan and Helen Chu Dean and Professor of Law "
+            "(since 2025; interim from 2024)"
+        ),
+        "research_centers": [
+            "Berkman Klein Center for Internet & Society",
+            "Petrie-Flom Center for Health Law Policy, Biotechnology & Bioethics",
+            "Charles Hamilton Houston Institute for Race & Justice",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "John C. P. Goldberg named Harvard Law School dean (Harvard Gazette)",
+            "url": "https://news.harvard.edu/gazette/story/2025/06/john-c-p-goldberg-named-harvard-law-school-dean/",
+        },
+    },
+    _HMS: {
+        "founded": 1782,
+        "leadership": "George Q. Daley — Dean of the Faculty of Medicine (since 2017)",
+        "research_centers": [
+            "Blavatnik Institute at Harvard Medical School",
+            "Massachusetts General Hospital (affiliated)",
+            "Brigham and Women's Hospital (affiliated)",
+            "Boston Children's Hospital (affiliated)",
+            "Dana-Farber Cancer Institute (affiliated)",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Harvard Medical School — Office of the Dean",
+            "url": "https://hms.harvard.edu/about-hms/office-dean",
+        },
+    },
+    _HSPH: {
+        "founded": 1913,
+        "leadership": (
+            "Andrea Baccarelli — Dean of the Faculty, "
+            "Harvard T.H. Chan School of Public Health (since 2024)"
+        ),
+        "research_centers": [
+            "Harvard Center for Population and Development Studies",
+            "Harvard Chan-NIEHS Center for Environmental Health",
+            "Center for Health Decision Science",
+        ],
+        "named_for": (
+            "T.H. Chan, recognized through a $350 million gift from the Morningside "
+            "Foundation in 2014"
+        ),
+        "source": {
+            "label": "Harvard T.H. Chan School of Public Health — Office of the Dean",
+            "url": "https://hsph.harvard.edu/office/dean/",
+        },
+    },
+    _HKS: {
+        "founded": 1936,
+        "leadership": "Jeremy Weinstein — Dean of Harvard Kennedy School (since 2024)",
+        "research_centers": [
+            "Belfer Center for Science and International Affairs",
+            "Ash Center for Democratic Governance and Innovation",
+            "Shorenstein Center on Media, Politics and Public Policy",
+            "Center for Public Leadership",
+        ],
+        "named_for": (
+            "President John F. Kennedy, in whose memory the school was renamed in 1966"
+        ),
+        "source": {
+            "label": "Harvard Kennedy School — About",
+            "url": "https://www.hks.harvard.edu/more/about",
+        },
+    },
+    _HGSE: {
+        "founded": 1920,
+        "leadership": (
+            "Nonie K. Lesaux — Roy E. Larsen Dean; 13th dean of HGSE (since 2025)"
+        ),
+        "research_centers": [
+            "Project Zero",
+            "EdRedesign Lab",
+            "Center on the Developing Child (Harvard-wide)",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Nonie Lesaux named HGSE dean (Harvard Gazette)",
+            "url": "https://news.harvard.edu/gazette/story/2025/03/nonie-lesaux-named-hgse-dean/",
+        },
+    },
+    _GSD: {
+        "founded": 1936,
+        "leadership": (
+            "Sarah M. Whiting — Dean and Josep Lluís Sert Professor of Architecture (since 2019)"
+        ),
+        "research_centers": [
+            "Joint Center for Housing Studies",
+            "Office for Urbanization",
+            "Harvard Center for Green Buildings and Cities",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Harvard Graduate School of Design — Dean's Office",
+            "url": "https://www.gsd.harvard.edu/deans-office/",
+        },
+    },
+    _HDS: {
+        "founded": 1816,
+        "leadership": "Marla F. Frederick — 18th dean of Harvard Divinity School (since 2024)",
+        "research_centers": [
+            "Center for the Study of World Religions",
+            "Religion and Public Life program",
+            "Women's Studies in Religion Program",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Harvard Divinity School — Dean Marla F. Frederick",
+            "url": "https://www.hds.harvard.edu/about/dean",
+        },
+    },
+    _HSDM: {
+        "founded": 1867,
+        "leadership": "William Giannobile — Dean of Harvard School of Dental Medicine",
+        "research_centers": [
+            "Harvard Dental Center (clinical affiliate)",
+            "Research in oral medicine, infection and immunity, and craniofacial biology",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Harvard School of Dental Medicine — Office of the Dean",
+            "url": "https://www.hsdm.harvard.edu/administrative-offices/office-dean",
+        },
+    },
+    _DCE: {
+        "founded": 1910,
+        "leadership": "Nancy Coleman — Dean of the Division of Continuing Education",
+        "research_centers": [
+            "Harvard Extension School",
+            "Harvard Summer School",
+            "HarvardX",
+        ],
+        "named_for": None,
+        "source": {
+            "label": "Harvard Division of Continuing Education — About",
+            "url": "https://extension.harvard.edu/about/",
+        },
+    },
+}
+
+# About-detail fields omitted per school (verified-unavailable), recorded in each
+# school node's _standard.omitted. Only the flagship HBS carries a verified named
+# faculty roster; the other schools' notable-faculty lists are honestly omitted.
+_ABOUT_OMITTED: dict[str, list[str]] = {
+    name: ["about_detail.faculty"] for name in _SCHOOL_WEBSITE if name != _HBS
+}
+
+# ── Channel feeds + official social links ──────────────────────────────────
+# Institution-wide feed (Harvard Gazette) + verified official social handles.
+_INSTITUTION_CONTENT: dict = {
+    "news_rss": "https://news.harvard.edu/gazette/feed/",
+    "social": {
+        "instagram": "https://www.instagram.com/harvard/",
+        "linkedin": "https://www.linkedin.com/school/harvard-university/",
+        "x": "https://x.com/Harvard",
+        "youtube": "https://www.youtube.com/harvard",
+        "facebook": "https://www.facebook.com/Harvard",
+    },
+}
+
+# Harvard Business School keyword-relevant feeds + official social links (the
+# standard-setting school, mirroring how MIT Sloan carries its own feeds).
+_HBS_CONTENT: dict = {
+    "news_rss": "https://www.library.hbs.edu/working-knowledge/feed",
+    "keywords": ["hbs", "harvard business school"],
+    "social": {
+        "instagram": "https://www.instagram.com/harvardhbs/",
+        "linkedin": "https://www.linkedin.com/school/harvard-business-school/",
+        "x": "https://x.com/HarvardHBS",
+        "youtube": "https://www.youtube.com/user/harvardbusinessschool",
+        "facebook": "https://www.facebook.com/HarvardHBS",
+    },
+}
+
+# MBA keyword-relevant feeds (the flagship program), inheriting HBS's socials.
+_MBA_CONTENT: dict = {
+    "news_rss": _HBS_CONTENT["news_rss"],
+    "keywords": ["mba", "harvard mba"],
+    "social": _HBS_CONTENT["social"],
+}
 
 PROGRAMS: list[dict] = [
     # ── Faculty of Arts & Sciences — Harvard College (A.B.) ───────────────────
@@ -1001,14 +1295,40 @@ _REQ_MBA = {
         {"name": "Application essay", "required": True},
         {"name": "Résumé & transcripts", "required": True},
         {"name": "GMAT or GRE score", "required": True},
+        {
+            "name": "Two professional letters of recommendation",
+            "required": True,
+        },
+        {
+            "name": "TOEFL / IELTS / PTE for non-native English speakers",
+            "required": False,
+            "note": "Required where prior instruction was not in English",
+        },
     ],
     "test_policy": {"stance": "required", "note": "GMAT or GRE required"},
     "recommendations": {
         "required_count": 2,
         "types": ["Two professional letters of recommendation"],
     },
+    "deadlines": [
+        {"round": "Round 1", "date": "September 2026"},
+        {"round": "Round 2", "date": "January 2027"},
+    ],
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS", "PTE"],
+            "required": False,
+            "note": "Required for applicants whose prior degree was not taught in English.",
+        },
+        "note": "Admitted international students receive an I-20 (F-1) or DS-2019 (J-1).",
+    },
+    "evaluation": (
+        "HBS admits in two rounds and evaluates candidates holistically on a "
+        "habit of leadership, analytical aptitude, and engaged community citizenship; "
+        "exact round dates are published each cycle on the official application-dates page."
+    ),
     "source": "Harvard Business School MBA Admissions",
-    "source_url": "https://www.hbs.edu/mba/admissions",
+    "source_url": "https://www.hbs.edu/mba/admissions/application-dates",
 }
 _REQ_LAW = {
     "materials": [
@@ -1097,6 +1417,162 @@ _FOS_OUTCOMES: dict[str, tuple[int, int | None, str]] = {
     "harvard-mcb-phd": (117155, None, "26.01"),
     "harvard-public-policy-phd": (129458, None, "44.05"),
     "harvard-public-health-phd": (120143, None, "51.22"),
+}
+
+# ── Program-level employment report (the flagship), first-party + cross-checked ──
+# The HBS MBA carries its own career-office employment report rather than the
+# federal earnings figure. Class of 2025 numbers are from the HBS MBA Employment
+# Report, cross-checked against Poets&Quants' and Fortune's reproductions of the
+# same report. (The Scorecard Field-of-Study 10-year earnings figure for the MBA
+# remains available but measures a different thing and is superseded here.)
+_OUTCOMES_BY_SLUG: dict[str, dict] = {
+    "harvard-mba": {
+        "median_salary": 184500,
+        "median_signing_bonus": 30000,
+        "signing_bonus_rate": 0.58,
+        "median_performance_bonus": 46100,
+        "performance_bonus_rate": 0.67,
+        "total_median_comp": 232800,
+        "employment_rate": 0.90,
+        "employment_timeframe": "received a job offer within three months of graduation",
+        "class_size": 925,
+        "scope": "program",
+        "top_industries": [
+            "Technology (22%)",
+            "Consulting (21%)",
+            "Private equity (14%)",
+            "Investment management & hedge funds (7%)",
+            "Venture capital (4%)",
+        ],
+        "conditions": [
+            "Class of 2025 (925 graduates); 65% of the class sought post-MBA "
+            "employment — the rest pursued ventures, sponsored returns, or further study.",
+            "90% of job-seeking graduates had received an offer and 84% had accepted "
+            "one within three months of graduation (about 94% had offers by the time "
+            "HBS published the report).",
+            "Median base salary $184,500; 58% reported a signing bonus at a median of "
+            "$30,000 and 67% an expected performance bonus at a median of $46,100, for "
+            "total median first-year compensation of $232,800.",
+            "Compensation and employment status are self-reported by graduates; the "
+            "salary figure is the median base salary and excludes bonuses.",
+        ],
+        "source": "Harvard Business School — MBA Class of 2025 Employment Report",
+        "source_url": "https://www.hbs.edu/recruiting/employment-data/Pages/default.aspx",
+    },
+}
+
+# ── Class profile, where published (the flagship) ──────────────────────────
+_CLASS_PROFILE_BY_SLUG: dict[str, dict] = {
+    "harvard-mba": {
+        "cohort_size": "943 students (Class of 2027)",
+        "applicants": 9409,
+        "international_pct": 0.37,
+        "countries": 62,
+        "women_pct": 0.44,
+        "median_gmat": 685,
+        "median_gmat_note": "GMAT Focus Edition scale",
+        "avg_gpa": 3.76,
+        "avg_work_experience_years": 4.9,
+        "source": "Harvard Business School — MBA Class Profile (Class of 2027)",
+        "source_url": "https://www.hbs.edu/mba/admissions/class-profile",
+    },
+}
+
+# ── Faculty (lead + directory link), where confidently sourced (the flagship) ──
+_FACULTY_BY_SLUG: dict[str, dict] = {
+    "harvard-mba": {
+        "lead": [
+            {
+                "name": "Matthew C. Weinzierl",
+                "title": "Senior Associate Dean and Chair of the MBA Program",
+            },
+            {
+                "name": "Srikant M. Datar",
+                "title": "George F. Baker Professor of Administration; Dean",
+            },
+            {
+                "name": "Michael E. Porter",
+                "title": "Bishop William Lawrence University Professor",
+            },
+        ],
+        "note": "Taught by Harvard Business School faculty, almost entirely by the case method.",
+        "directory_url": "https://www.hbs.edu/faculty/",
+    },
+}
+
+# ── Aggregated, cited student-review themes (≥2 third-party sources) ────────
+_REVIEWS_BY_SLUG: dict[str, dict] = {
+    "harvard-mba": {
+        "summary": (
+            "Students and third-party guides consistently rank the HBS MBA among the "
+            "most coveted in the world — praising the case-method classroom, the "
+            "general-management breadth, and the unrivaled alumni network — while the "
+            "most common cautions are the very low admit rate, the cost of a two-year "
+            "residential program, and softer recent placement that pulled Harvard down "
+            "some employment-weighted rankings before offers rebounded."
+        ),
+        "themes": [
+            {
+                "label": "Case method & general management",
+                "sentiment": "positive",
+                "detail": (
+                    "Almost all teaching is by the case method, building decision-making "
+                    "across every business function."
+                ),
+            },
+            {
+                "label": "Alumni network & brand",
+                "sentiment": "positive",
+                "detail": (
+                    "One of the largest, most influential business alumni networks; HBS "
+                    "topped Fortune's MBA ranking four years running and led Bloomberg's "
+                    "'most desired MBA' survey."
+                ),
+            },
+            {
+                "label": "Entrepreneurship",
+                "sentiment": "positive",
+                "detail": (
+                    "About 150 graduates of the Class of 2025 launched ventures, backed by "
+                    "the Rock Center and a startup-heavy alumni base."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Admission is highly competitive — a median GMAT of 685 (Focus scale) "
+                    "from roughly 9,400 applications."
+                ),
+            },
+            {
+                "label": "Cost & recent placement",
+                "sentiment": "caution",
+                "detail": (
+                    "Two-year residential tuition near $78,700/year before living costs; a "
+                    "tougher 2024 job market drew a sharp Financial Times ranking drop."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Poets&Quants / Bloomberg — 'Because It's Harvard'",
+                "url": "https://poetsandquants.com/2025/10/03/because-its-harvard-hbs-is-still-the-most-desired-mba/",
+            },
+            {
+                "label": "Fortune — Harvard MBA graduate outcomes 2025",
+                "url": "https://fortune.com/2025/12/02/harvard-business-school-mba-graduate-outcomes-2025-record-salaries-shift-to-entrepreneurship-tech-jobs/",
+            },
+            {
+                "label": "U.S. News — Harvard University (Business)",
+                "url": "https://www.usnews.com/best-graduate-schools/top-business-schools/harvard-university-01110",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
 }
 
 # ── Per-school official tuition (2025-26 unless noted) and cost source ──────
@@ -1543,7 +2019,14 @@ def apply(session: Session) -> bool:
         return False
     # Shallow-merge JSONB: every sub-object we provide is complete.
     inst.ranking_data = {**(inst.ranking_data or {}), **RANKING_DATA}
-    inst.school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
+    school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
+    # Drop any stale value for a path we explicitly declare omitted, so the merge
+    # can't keep serving a figure the enrichment run refused to assert.
+    for _path in _OMITTED_INSTITUTION:
+        if _path.startswith("school_outcomes."):
+            school_outcomes.pop(_path.split(".", 1)[1], None)
+    school_outcomes["_standard"] = _standard(_OMITTED_INSTITUTION)
+    inst.school_outcomes = school_outcomes
     inst.description_text = DESCRIPTION
     inst.student_body_size = UNDERGRAD_COUNT
     inst.founded_year = FOUNDED_YEAR
@@ -1552,6 +2035,7 @@ def apply(session: Session) -> bool:
     # first raster image; the gallery otherwise holds only the logo SVG).
     _gallery = [u for u in (inst.media_gallery or []) if u != _CAMPUS_PHOTO]
     inst.media_gallery = [_CAMPUS_PHOTO, *_gallery]
+    inst.content_sources = _INSTITUTION_CONTENT
     session.flush()
     school_by_name = _apply_schools(session, inst)
     _apply_programs(session, inst, school_by_name)
@@ -1574,6 +2058,14 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
         sc.sort_order = spec["sort_order"]
         sc.catalog_source = "curated"
         sc.website_url = _SCHOOL_WEBSITE.get(spec["name"])
+        about = _ABOUT_DETAIL.get(spec["name"])
+        if about is not None:
+            about = dict(about)
+            about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
+            sc.about_detail = about
+        # HBS is the standard-setting school: its own keyword-relevant feeds + socials.
+        # Always assign so a stale value on a pre-existing row is cleared.
+        sc.content_sources = _HBS_CONTENT if spec["name"] == _HBS else None
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is
     # FK-safe (any orphaned programs are handled by the program reconcile).
@@ -1646,6 +2138,33 @@ def _deadline_for(spec: dict) -> date | None:
     return date(2026, 12, 15)  # graduate baseline (varies by program)
 
 
+def _program_standard(slug: str, degree_type: str, has_program_outcomes: bool) -> dict:
+    """Per-program omitted-field list (verified-unavailable), for _standard."""
+    omitted: list[str] = []
+    if not has_program_outcomes:
+        # Catalog programs rely on College Scorecard FOS / institution medians,
+        # which do not publish a program-level employment rate, top industries, or a
+        # methodology block — those required outcome fields are honestly omitted.
+        omitted += [
+            "outcomes_data.employment_rate",
+            "outcomes_data.top_industries",
+            "outcomes_data.conditions",
+        ]
+    if slug not in _TRACKS_BY_SLUG:
+        omitted.append("tracks")
+    if slug not in _CLASS_PROFILE_BY_SLUG:
+        omitted.append("class_profile.cohort_size")
+    if slug not in _FACULTY_BY_SLUG:
+        omitted.append("faculty_contacts.lead")
+    if slug not in _REVIEWS_BY_SLUG:
+        omitted.append("external_reviews.summary")
+    if slug != "harvard-mba":
+        # Only the flagship carries its own keyword-relevant feed; catalog programs
+        # surface the institution/school feed rather than a per-program one.
+        omitted.append("content_sources")
+    return _standard(omitted)
+
+
 def _apply_programs(session: Session, inst: Institution, school_by_name: dict[str, School]) -> None:
     existing = {
         p.slug: p
@@ -1709,10 +2228,17 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # Harvard reports non-suppressed figures; otherwise Harvard-wide
         # institution outcomes, explicitly labelled (degree programs only);
         # non-degree credentials: none.
+        # Outcomes precedence: program employment report (flagship) → Scorecard FOS
+        # → institution median; non-degree credentials get none.
+        out_override = _OUTCOMES_BY_SLUG.get(spec["slug"])
         fos = _FOS_OUTCOMES.get(spec["slug"])
-        if fos is not None:
+        has_program_outcomes = False
+        if out_override is not None:
+            outcomes = dict(out_override)
+            has_program_outcomes = True
+        elif fos is not None:
             salary, debt, cip = fos
-            p.outcomes_data = {
+            outcomes = {
                 "median_salary": salary,
                 "scope": "program",
                 "cip": cip,
@@ -1720,16 +2246,26 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source_url": "https://collegescorecard.ed.gov/",
             }
             if debt is not None:
-                p.outcomes_data["median_debt_completers"] = debt
+                outcomes["median_debt_completers"] = debt
         elif spec["degree_type"] in ("bachelors", "masters", "phd"):
-            p.outcomes_data = dict(_OUTCOMES_INSTITUTION)
+            outcomes = dict(_OUTCOMES_INSTITUTION)
         else:
-            p.outcomes_data = None
+            outcomes = None
+        if outcomes is not None:
+            outcomes["_standard"] = _program_standard(
+                spec["slug"], spec["degree_type"], has_program_outcomes
+            )
+        p.outcomes_data = outcomes
         # Audience + highlights: per-program for flagship, else by degree type.
         p.who_its_for = _WHO_BY_SLUG.get(spec["slug"]) or _WHO_BY_TYPE.get(spec["degree_type"])
         p.highlights = _HL_BY_SLUG.get(spec["slug"]) or _HL_BY_TYPE.get(spec["degree_type"])
-        if spec["slug"] in _TRACKS_BY_SLUG:
-            p.tracks = _TRACKS_BY_SLUG[spec["slug"]]
+        # Always assign so a stale value on a pre-existing row is cleared.
+        p.tracks = _TRACKS_BY_SLUG.get(spec["slug"])
+        # Insights (class profile, faculty, reviews) + per-program feed: flagship only.
+        p.class_profile = _CLASS_PROFILE_BY_SLUG.get(spec["slug"])
+        p.faculty_contacts = _FACULTY_BY_SLUG.get(spec["slug"])
+        p.external_reviews = _REVIEWS_BY_SLUG.get(spec["slug"])
+        p.content_sources = _MBA_CONTENT if spec["slug"] == "harvard-mba" else None
         p.application_deadline = _deadline_for(spec)
     session.flush()
     # Reconcile legacy Harvard programs (slug not in the canonical set): delete
