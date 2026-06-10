@@ -7,6 +7,7 @@ import ConfirmHost from './components/ui/ConfirmDialog'
 import DemoNotice from './components/system/DemoNotice'
 import FeedbackWidget from './components/system/FeedbackWidget'
 import AppErrorBoundary from './components/system/AppErrorBoundary'
+import { MANAGE_TAB_REDIRECTS } from './utils/information-architecture'
 
 // Layouts
 import AuthLayout from './components/layout/AuthLayout'
@@ -122,14 +123,7 @@ function ManageRedirect() {
   const tab = params.get('tab')
   const rest = new URLSearchParams(params)
   rest.delete('tab')
-  const TARGETS: Record<string, string> = {
-    applications: '/s/applications',
-    calendar: '/s/calendar',
-    messages: '/s/messages',
-    prompts: '/s/prep?tab=prompts',
-    workshops: '/s/prep?tab=workshops',
-  }
-  const base = tab ? TARGETS[tab] ?? '/s/space' : '/s/space'
+  const base = tab ? MANAGE_TAB_REDIRECTS[tab] ?? '/s/space' : '/s/space'
   const qs = rest.toString()
   const sep = base.includes('?') ? '&' : '?'
   return <Navigate to={qs ? `${base}${sep}${qs}` : base} replace />

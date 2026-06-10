@@ -16,6 +16,7 @@ import { listRecommendations } from '../../../api/recommendations'
 import { listWorkshopRuns } from '../../../api/workshops-feedback'
 import { getThreads } from '../../../api/inbox'
 import { listClarifications } from '../../../api/intake'
+import { hasPendingOfferResponse } from '../apply/offer/offerFormat'
 import { useAuthStore } from '../../../stores/auth-store'
 import type { Application, WorkshopFeedbackRun } from '../../../types'
 
@@ -47,7 +48,7 @@ export default function MySpaceHomePage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
 
-  const apps = useQuery({ queryKey: ['applications'], queryFn: listMyApplications, staleTime: STALE })
+  const apps = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications, staleTime: STALE })
   const saved = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, staleTime: STALE })
   const fortnight = useMemo(() => {
     const from = new Date().toISOString().slice(0, 10)
@@ -102,7 +103,7 @@ export default function MySpaceHomePage() {
         to: '/s/calendar',
       })
     }
-    for (const app of offers.filter(a => !a.student_decision)) {
+    for (const app of offers.filter(hasPendingOfferResponse)) {
       actions.push({
         key: `offer-${app.id}`,
         icon: Award,

@@ -31,9 +31,13 @@ export default function PrepPage() {
     setTab(t)
     // Preserve deep-link params other than tab (e.g. prompts ?view=major).
     const params = new URLSearchParams(searchParams)
-    params.delete('view')
-    if (t === 'workshops') params.delete('tab')
-    else params.set('tab', t)
+    if (t === 'workshops') {
+      // `view` only applies to the Prompts tab — drop it when leaving.
+      params.delete('view')
+      params.delete('tab')
+    } else {
+      params.set('tab', t)
+    }
     const qs = params.toString()
     navigate(qs ? `/s/prep?${qs}` : '/s/prep', { replace: true })
   }
