@@ -51,6 +51,10 @@ def check_conformance(
     for sec in sections:
         sec_has_any = False
         for f in sec.fields:
+            if not f.enrich:
+                # Inherited from a parent profile or render-only — not this
+                # profile's responsibility; documented but not required here.
+                continue
             present = _present(_resolve(snapshot, f.path))
             if present:
                 sec_has_any = True

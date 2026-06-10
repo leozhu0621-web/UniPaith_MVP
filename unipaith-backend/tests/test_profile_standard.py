@@ -19,6 +19,9 @@ def test_stale_version_flags_non_conformant():
 
 
 def _program_snapshot(slug: str) -> dict:
+    """Build the program's persisted shape from the MIT module, mirroring the
+    column names _apply_programs writes (faculty_contacts / external_reviews /
+    tracks / content_sources)."""
     spec = next(p for p in mit.PROGRAMS if p["slug"] == slug)
     return {
         "program_name": mit._FULL_NAME_BY_SLUG.get(slug) or spec["program_name"],
@@ -27,12 +30,16 @@ def _program_snapshot(slug: str) -> dict:
         "delivery_format": spec.get("delivery_format", "in_person"),
         "description_text": mit._DESC_RICH_BY_SLUG.get(slug) or spec["description"],
         "website_url": mit._WEBSITE_BY_SLUG.get(slug),
+        "highlights": mit._HL_BY_SLUG.get(slug) or mit._HL_BY_TYPE.get(spec["degree_type"]),
+        "who_its_for": mit._WHO_BY_SLUG.get(slug) or mit._WHO_BY_TYPE.get(spec["degree_type"]),
+        "tracks": mit._TRACKS_BY_SLUG.get(slug),
         "application_requirements": mit._REQ_BY_SLUG.get(slug, mit._REQ_MBA),
         "cost_data": mit._COST_BY_SLUG.get(slug, {}),
         "outcomes_data": mit._OUTCOMES_BY_SLUG.get(slug, {}),
         "class_profile": mit._CLASS_PROFILE_BY_SLUG.get(slug, {}),
-        "faculty": mit._FACULTY_BY_SLUG.get(slug, {}),
-        "reviews": mit._REVIEWS_BY_SLUG.get(slug, {}),
+        "faculty_contacts": mit._FACULTY_BY_SLUG.get(slug, {}),
+        "external_reviews": mit._REVIEWS_BY_SLUG.get(slug, {}),
+        "content_sources": mit._MBAN_CONTENT,
     }
 
 
@@ -49,7 +56,7 @@ def test_sloan_school_is_conformant():
     sloan = next(s for s in mit.SCHOOLS if "Sloan" in s["name"])
     snap = {
         "name": sloan["name"],
-        "description": sloan.get("description", ""),
+        "description_text": sloan.get("description", ""),
         "website_url": mit._SCHOOL_WEBSITE.get(sloan["name"]),
         "about_detail": mit._SLOAN_ABOUT_DETAIL,
         "content_sources": mit._SLOAN_CONTENT,
