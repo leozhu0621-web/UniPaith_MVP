@@ -5,9 +5,10 @@ import { useAuthStore } from '../../stores/auth-store'
 import { useCounselorStore } from '../../stores/counselor-store'
 import MiniCounselorPanel from '../student/MiniCounselorPanel'
 import {
-  Compass, Target, FolderKanban, Newspaper,
+  Compass, Target, Backpack, Newspaper,
   LogOut, User, Bookmark, Settings, MessageSquare, Inbox, WifiOff,
 } from 'lucide-react'
+import { MY_SPACE_ROUTES } from '../../pages/student/myspace/MySpaceShell'
 import Avatar from '../ui/Avatar'
 import Dropdown from '../ui/Dropdown'
 import NotificationBell from '../notifications/NotificationBell'
@@ -23,13 +24,19 @@ import LiveAnnouncer from '../a11y/LiveAnnouncer'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { COPY } from '../../lib/copy'
 
-// Stage-ordered navigation (Spec/02 §7): Uni · Match · Apply · Connect.
+// Journey-ordered navigation (Spec 2026-06-10 §1): Uni · Match · Connect ·
+// My Space — three surfaces about the world, one about you, at the end next
+// to the avatar. My Space owns every room route, so its active state is
+// computed from the location rather than NavLink's single-path match.
 const NAV_ITEMS = [
   { to: '/s', icon: Compass, label: 'Uni', end: true },
   { to: '/s/explore', icon: Target, label: 'Match', end: false },
-  { to: '/s/manage', icon: FolderKanban, label: 'Apply', end: false },
   { to: '/s/posts', icon: Newspaper, label: 'Connect', end: false },
+  { to: '/s/space', icon: Backpack, label: 'My Space', end: false },
 ]
+
+const isMySpacePath = (pathname: string) =>
+  MY_SPACE_ROUTES.some(p => pathname === p || pathname.startsWith(`${p}/`))
 
 export default function StudentLayout() {
   const { user, logout } = useAuthStore()
@@ -72,18 +79,22 @@ export default function StudentLayout() {
               <NavLink
                 to={item.to}
                 end={item.end}
-                className={({ isActive }) =>
-                  `ui-btn relative px-4 h-16 inline-flex items-center text-sm transition-colors ${
-                    isActive ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground font-medium'
+                className={({ isActive }) => {
+                  const active = item.to === '/s/space' ? isMySpacePath(location.pathname) : isActive
+                  return `ui-btn relative px-4 h-16 inline-flex items-center text-sm transition-colors ${
+                    active ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground font-medium'
                   }`
-                }
+                }}
               >
-                {({ isActive }) => (
-                  <>
-                    {item.label}
-                    {isActive && <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-secondary rounded-full" />}
-                  </>
-                )}
+                {({ isActive }) => {
+                  const active = item.to === '/s/space' ? isMySpacePath(location.pathname) : isActive
+                  return (
+                    <>
+                      {item.label}
+                      {active && <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-secondary rounded-full" />}
+                    </>
+                  )
+                }}
               </NavLink>
               {i === 0 && <span className="w-px h-6 bg-border mx-2" />}
             </div>
@@ -167,13 +178,13 @@ export default function StudentLayout() {
           id="main"
           tabIndex={-1}
           className={`flex min-h-0 flex-1 flex-col outline-none transition-all duration-300 ease-in-out ${
-            location.pathname.startsWith('/s/manage') ? 'overflow-hidden' : 'overflow-y-auto'
+            location.pathname.startsWith('/s/messages') ? 'overflow-hidden' : 'overflow-y-auto'
           }`}
         >
           <div
             key={location.pathname}
             className={`animate-page-in flex min-h-0 flex-1 flex-col pb-[calc(64px+env(safe-area-inset-bottom))] lg:pb-0 ${
-              location.pathname.startsWith('/s/manage') ? '' : 'min-h-full'
+              location.pathname.startsWith('/s/messages') ? '' : 'min-h-full'
             }`}
           >
             <Outlet />
@@ -191,11 +202,12 @@ export default function StudentLayout() {
             key={item.to}
             to={item.to}
             end={item.end}
-            className={({ isActive }) =>
-              `touch-target flex-1 flex flex-col items-center justify-center gap-0.5 ${
-                isActive ? 'text-secondary' : 'text-muted-foreground'
+            className={({ isActive }) => {
+              const active = item.to === '/s/space' ? isMySpacePath(location.pathname) : isActive
+              return `touch-target flex-1 flex flex-col items-center justify-center gap-0.5 ${
+                active ? 'text-secondary' : 'text-muted-foreground'
               }`
-            }
+            }}
           >
             <item.icon size={20} strokeWidth={1.75} />
             <span className="text-[10px] font-semibold">{item.label}</span>

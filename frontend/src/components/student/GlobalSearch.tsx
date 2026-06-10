@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Search, GraduationCap, Building2, Compass, Target, FolderKanban, Newspaper,
-  User, Bookmark, Settings, CornerDownLeft, ArrowRight,
+  User, Bookmark, Settings, CornerDownLeft, ArrowRight, Backpack, PenLine,
 } from 'lucide-react'
 import { searchPrograms, getProgram } from '../../api/programs'
 import { searchInstitutions } from '../../api/institutions'
@@ -39,8 +39,10 @@ const DEGREE_LABEL: Record<string, string> = {
 const QUICK_NAV = [
   { label: 'Uni', sub: 'Build your profile with Uni', to: '/s', icon: Compass },
   { label: 'Match', sub: 'Programs & schools for you', to: '/s/explore', icon: Target },
-  { label: 'Apply', sub: 'Your applications & deadlines', to: '/s/manage', icon: FolderKanban },
   { label: 'Connect', sub: 'Updates from schools you follow', to: '/s/posts', icon: Newspaper },
+  { label: 'My Space', sub: 'Your home — what to do next', to: '/s/space', icon: Backpack },
+  { label: 'Applications', sub: 'Your portfolio & deadlines', to: '/s/applications', icon: FolderKanban },
+  { label: 'Prep', sub: 'Workshops & prompt library', to: '/s/prep', icon: PenLine },
   { label: 'My Profile', sub: 'Your durable record', to: '/s/profile', icon: User },
   { label: 'Saved', sub: 'Programs you bookmarked', to: '/s/saved', icon: Bookmark },
   { label: 'Settings', sub: 'Account & preferences', to: '/s/settings', icon: Settings },
