@@ -6,7 +6,7 @@ import { useCounselorStore } from '../../stores/counselor-store'
 import MiniCounselorPanel from '../student/MiniCounselorPanel'
 import {
   Compass, Target, Backpack, Newspaper,
-  LogOut, User, Bookmark, Settings, MessageSquare, Inbox, WifiOff,
+  LogOut, Settings, MessageSquare, Inbox, WifiOff,
 } from 'lucide-react'
 import { MY_SPACE_ROUTES } from '../../pages/student/myspace/MySpaceShell'
 import Avatar from '../ui/Avatar'
@@ -51,9 +51,9 @@ export default function StudentLayout() {
   const isOtherTab = !isDiscoverTab
   const showMiniCounselor = isOtherTab && !isMinimized
 
+  // Spec 2026-06-10 §1 — Profile and Saved live in the My Space rail now;
+  // the account menu keeps only account-level items.
   const accountItems = [
-    { label: 'My Profile', to: '/s/profile', icon: <User size={16} /> },
-    { label: 'Saved', to: '/s/saved', icon: <Bookmark size={16} /> },
     { label: 'Settings', to: '/s/settings', icon: <Settings size={16} /> },
     // Owner-only: in-app feedback inbox (gated server-side by the email allowlist).
     ...(user?.is_owner
@@ -111,8 +111,6 @@ export default function StudentLayout() {
               </button>
             }
             items={[
-              { label: 'My Profile', onClick: () => navigate('/s/profile'), icon: <User size={14} /> },
-              { label: 'Saved', onClick: () => navigate('/s/saved'), icon: <Bookmark size={14} /> },
               { label: 'Settings', onClick: () => navigate('/s/settings'), icon: <Settings size={14} /> },
               ...(user?.is_owner
                 ? [{ label: 'Feedback inbox', onClick: () => navigate('/s/feedback'), icon: <Inbox size={14} /> }]

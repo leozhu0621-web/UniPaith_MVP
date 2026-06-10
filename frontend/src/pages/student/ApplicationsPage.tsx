@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { lazy, Suspense, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { listMyApplications } from '../../api/applications'
 import Card from '../../components/ui/Card'
@@ -15,6 +15,17 @@ import { FileText, Star, ChevronRight, CalendarClock, PartyPopper, ArrowRight, M
 import DecisionComparison from './apply/offer/DecisionComparison'
 import { deadlineTone, DEADLINE_TONE_CLASS, hasPendingOfferResponse } from './apply/offer/offerFormat'
 import type { Application } from '../../types'
+
+// My Space › Applications views (Spec 2026-06-10 §5): All · Offers · Costs & aid.
+const CostsAidTab = lazy(() => import('./myspace/applications/CostsAidTab'))
+
+type AppView = 'all' | 'offers' | 'costs'
+
+const APP_VIEWS: { key: AppView; label: string }[] = [
+  { key: 'all', label: 'All applications' },
+  { key: 'offers', label: 'Offers' },
+  { key: 'costs', label: 'Costs & aid' },
+]
 
 type Bucket =
   | 'not_started'
@@ -112,6 +123,9 @@ function actionScore(app: Application): number {
 
 export default function ApplicationsPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const rawView = searchParams.get('tab')
+  const view: AppView = rawView === 'offers' ? 'offers' : rawView === 'costs' ? 'costs' : 'all'
   const [statusFilter, setStatusFilter] = useState<'all' | Bucket>('all')
   const [institution, setInstitution] = useState('all')
   const [deadlineWindow, setDeadlineWindow] = useState('all')
@@ -205,6 +219,43 @@ export default function ApplicationsPage() {
     return sorted
   }, [apps, statusFilter, institution, deadlineWindow, priorityFilter, sort])
 
+  const viewSwitcher = (
+    <div role="tablist" aria-label="Applications views" className="mb-4 flex gap-1 border-b border-border">
+      {APP_VIEWS.map(v => (
+        <button
+          key={v.key}
+          role="tab"
+          aria-selected={view === v.key}
+          tabIndex={view === v.key ? 0 : -1}
+          onClick={() => navigate(v.key === 'all' ? '/s/applications' : `/s/applications?tab=${v.key}`, { replace: true })}
+          className={`border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+            view === v.key
+              ? 'border-secondary text-foreground'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {v.label}
+          {v.key === 'offers' && offerApps.length > 0 && (
+            <span className="ml-1.5 text-xs text-muted-foreground">{offerApps.length}</span>
+          )}
+        </button>
+      ))}
+    </div>
+  )
+
+  // Costs & aid stands alone — it draws on saved programs and preferences,
+  // so it renders even when the portfolio is empty or failed to load.
+  if (view === 'costs')
+    return (
+      <div className="p-4 max-w-5xl w-full mx-auto">
+        <PageHeader eyebrow="My Space" title="Costs & aid" sub="Budget, scholarships, and net-cost comparison" />
+        {viewSwitcher}
+        <Suspense fallback={<SkeletonCard />}>
+          <CostsAidTab />
+        </Suspense>
+      </div>
+    )
+
   if (isLoading)
     return <div className="p-4 max-w-5xl w-full mx-auto space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 
@@ -213,7 +264,69 @@ export default function ApplicationsPage() {
     return (
       <div className="p-4 max-w-5xl w-full mx-auto">
         <PageHeader eyebrow="My Space" title="Your portfolio" sub="Turn saved targets into application projects" />
+        {viewSwitcher}
         <QueryError detail="We couldn't load your applications." onRetry={() => refetch()} />
+      </div>
+    )
+
+  if (view === 'offers')
+    return (
+      <div className="p-4 max-w-5xl w-full mx-auto">
+        <PageHeader
+          eyebrow="My Space"
+          title="Your offers"
+          count={offerApps.length}
+          sub="Every admission offer across your portfolio"
+        />
+        {viewSwitcher}
+        {offerApps.length === 0 ? (
+          <EmptyState
+            icon={<Mail size={48} />}
+            title="No offers yet"
+            description="Offers land here the moment a program admits you."
+          />
+        ) : (
+          <div className="space-y-2">
+            {offerApps.map(a => {
+              const responded = a.offer?.student_response || a.student_decision
+              return (
+                <Card
+                  key={a.id}
+                  className="p-4 flex items-center justify-between gap-3 cursor-pointer hover:border-secondary/40 transition-colors"
+                  onClick={() => navigate(`/s/applications/${a.id}?tab=offer`)}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">{a.program?.program_name ?? 'Program'}</p>
+                    <p className="truncate text-xs text-muted-foreground">{a.program?.institution_name ?? ''}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Badge variant={responded ? 'neutral' : 'warning'}>
+                      {a.student_decision === 'accepted_by_student'
+                        ? 'accepted'
+                        : a.student_decision === 'declined_by_student'
+                          ? 'declined'
+                          : responded
+                            ? String(responded).replace(/_/g, ' ')
+                            : 'response needed'}
+                    </Badge>
+                    <ChevronRight size={16} className="text-muted-foreground" />
+                  </div>
+                </Card>
+              )
+            })}
+            {offerApps.length >= 2 && (
+              <div className="pt-2">
+                <button
+                  onClick={() => setShowCompare(true)}
+                  className="text-sm text-secondary font-medium inline-flex items-center gap-1 hover:underline"
+                >
+                  Compare your {offerApps.length} offers <ArrowRight size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        <DecisionComparison isOpen={showCompare} onClose={() => setShowCompare(false)} />
       </div>
     )
 
@@ -221,6 +334,7 @@ export default function ApplicationsPage() {
     return (
       <div className="p-4 max-w-5xl w-full mx-auto">
         <PageHeader eyebrow="My Space" title="Your portfolio" sub="Turn saved targets into application projects" />
+        {viewSwitcher}
         <EmptyState
           icon={<FileText size={48} />}
           title="No applications yet"
