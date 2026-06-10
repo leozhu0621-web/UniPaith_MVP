@@ -1328,6 +1328,11 @@ def apply(session: Session) -> bool:
     # Shallow-merge JSONB: every sub-object we provide is complete.
     inst.ranking_data = {**(inst.ranking_data or {}), **RANKING_DATA}
     school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
+    # Drop any stale value for a path we explicitly declare omitted, so the merge
+    # can't keep serving a figure the enrichment run refused to assert.
+    for _path in _OMITTED_INSTITUTION:
+        if _path.startswith("school_outcomes."):
+            school_outcomes.pop(_path.split(".", 1)[1], None)
     school_outcomes["_standard"] = _standard(_OMITTED_INSTITUTION)
     inst.school_outcomes = school_outcomes
     inst.description_text = DESCRIPTION
