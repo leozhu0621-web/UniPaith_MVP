@@ -100,6 +100,32 @@ Concrete misses observed in the first runs — each broke a real page:
    → `faculty_contacts`; reviews → `external_reviews`. The conformance check is
    keyed on these exact dotted paths — run it to confirm every value landed where
    the standard expects, not just "somewhere".
+7. **Campus photo + its credit — an uncredited photo is a defect (issue: pics
+   have no credit/reference).** When you lead an institution's `media_gallery`
+   with a campus photo, you MUST also record its attribution in
+   `school_outcomes.media_credit` — the detail-page hero renders it as a "Photo: …"
+   caption. Use a freely-licensed image (Wikimedia Commons file, or an institution
+   press-kit photo that permits reuse) and **VERIFY the author + license on the
+   source's own file page**, then write the credit as
+   `"Wikimedia Commons / <Author> (<License>)"` — e.g.
+   `"Wikimedia Commons / Peacearth (CC BY-SA 4.0)"`, or `"… (public domain)"` /
+   `"… (CC0)"`. Never invent an author or license; if you cannot verify
+   attribution, pick a different freely-licensed photo or omit the photo. **No
+   photo is better than an uncredited one.**
+8. **Reviews (`external_reviews`) — were EMPTY (issue: all reviews are blank).**
+   Every program — and any school/institution with third-party coverage — gets an
+   `external_reviews` object in the **MBAn shape** (copy the gold example
+   `_REVIEWS_BY_SLUG["mit-sloan-mban"]` in `mit_profile.py`):
+   `{summary, themes: [{label, sentiment: "positive"|"mixed"|"caution", detail}],
+   sources: [{label, url}], disclaimer}`. **GATHER → SUMMARIZE → CITE:** read real
+   third-party coverage online (Poets&Quants, BusinessBecause, U.S. News, Niche,
+   official employment reports, reputable forum sentiment), distil it into an
+   honest paragraph + 4–6 themes that **include the common cautions** (not just
+   praise), and attach every source with a resolvable URL. The `disclaimer` must
+   say the reviews are aggregated/paraphrased from public sources, not individual
+   verbatim quotes. **Never fabricate a quote, rating, or theme**, and never leave
+   reviews blank when reputable coverage exists — only record `external_reviews` in
+   `_standard.omitted` when a program genuinely has no third-party coverage.
 
 ## What "the standard" is (read these first)
 
@@ -175,7 +201,8 @@ the one thing this routine must NOT do.**
 ### 4. Enrich the institution FIRST (parent before children)
 Fill every required institution-level field (rankings · report-card · admissions
 funnel · diversity · recognition · scale · outcomes · cost & aid · location · campus
-resources · feeds · sources) from authoritative sources. Verify each (§Verify); cite;
+resources · **campus photo + `media_credit`** (completeness item 7) · feeds ·
+sources) from authoritative sources. Verify each (§Verify); cite;
 omit-if-unverifiable. The institution must reach gold first so schools/programs
 inherit its stats + photo.
 
@@ -192,7 +219,9 @@ shared feed is filtered to school-relevant items. Verify; cite; omit-if-unverifi
 For each program: basics, curriculum/tracks, admissions (incl. international / recs /
 fee), costs (breakdown), outcomes (salary distribution + employment + top industries
 / employers + **conditions/methodology verbatim** + source), insights (class profile,
-faculty, reviews from ≥2 sources), and **`content_sources` (so the program's Events &
+faculty, **reviews — `external_reviews` in the MBAn shape, completeness item 8,
+gathered→summarized→cited, never left blank when coverage exists**), and
+**`content_sources` (so the program's Events &
 Updates populate — empty today because the routine only set institution feeds)**. A
 program rarely has its own news site, so use the school's/institution's `news_rss` +
 `events_feed` **plus `keywords`** naming the program/department (the MBAn pattern in
