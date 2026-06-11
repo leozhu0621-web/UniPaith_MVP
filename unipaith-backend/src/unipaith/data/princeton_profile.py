@@ -48,13 +48,14 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.princeton_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Princeton University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-10"
+ENRICHED_AT = "2026-06-11"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -199,6 +200,7 @@ SCHOOL_OUTCOMES: dict = {
         # Chartered in 1746 as the College of New Jersey; renamed Princeton University 1896.
         "founded_year": 1746,
     },
+    "media_credit": "Wikimedia Commons / Smallbones (CC0)",
     "sources": [
         {
             "label": "U.S. Dept. of Education — College Scorecard (Princeton, UNITID 186131)",
@@ -258,9 +260,9 @@ SCHOOL_OUTCOMES: dict = {
 UNDERGRAD_COUNT = 5826
 
 DESCRIPTION = (
-    "Chartered in 1746 as the College of New Jersey and renamed Princeton University "
-    "in 1896, Princeton is a private Ivy League research university in Princeton, New "
-    "Jersey. It is distinctively small for its stature — about 5,800 undergraduates and "
+    "Princeton University is a private research university in Princeton, NJ, chartered "
+    "in 1746 as the College of New Jersey and renamed Princeton University in 1896. "
+    "It is distinctively small for its stature — about 5,800 undergraduates and "
     "3,300 graduate students, some 9,100 in all — and pairs a deep commitment to "
     "undergraduate teaching with a 5:1 student-faculty ratio and 1,313 faculty.\n\n"
     "Princeton's faculty are organized into four academic divisions: the humanities, the "
@@ -450,24 +452,95 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
 }
 
 # ── Channel feeds + official social links ──────────────────────────────────
-# Institution-wide socials (official Princeton handles) + news page.
+# The daily content-ingest reads ``news_rss`` (RSS), ``events_feed`` (iCalendar or RSS),
+# and ``keywords`` (filter gate). Without a real ``news_rss`` a node's Events & Updates
+# tab is empty — so every school and program below carries a feed.
+_PRINCETON_NEWS_RSS = "https://www.princeton.edu/feed"
+_PRINCETON_EVENTS_RSS = {"url": "https://www.princeton.edu/feed/events", "type": "rss"}
+_SOCIAL_PRINCETON = {
+    "instagram": "https://www.instagram.com/princeton/",
+    "linkedin": "https://www.linkedin.com/school/princeton-university/",
+    "x": "https://x.com/Princeton",
+    "youtube": "https://www.youtube.com/princetonuniversity",
+    "facebook": "https://www.facebook.com/princetonu",
+}
+
 _INSTITUTION_CONTENT: dict = {
+    "news_rss": _PRINCETON_NEWS_RSS,
     "news_url": "https://www.princeton.edu/news",
-    "social": {
-        "instagram": "https://www.instagram.com/princeton/",
-        "linkedin": "https://www.linkedin.com/school/princeton-university/",
-        "x": "https://x.com/Princeton",
-        "youtube": "https://www.youtube.com/princetonuniversity",
-        "facebook": "https://www.facebook.com/princetonu",
+    "news_curated": False,
+    "events_feed": dict(_PRINCETON_EVENTS_RSS),
+    "social": dict(_SOCIAL_PRINCETON),
+}
+
+_SCHOOL_FEED_SPEC: dict[str, dict] = {
+    _SEAS: {"keywords": ["engineering", "SEAS", "computer science", "B.S.E.", "robotics"]},
+    _SPIA: {
+        "keywords": ["SPIA", "public affairs", "public policy", "international affairs", "MPA"]
+    },
+    _HUM: {
+        "keywords": ["humanities", "English", "philosophy", "classics", "literature", "history"]
+    },
+    _SOC: {
+        "keywords": [
+            "social sciences",
+            "economics",
+            "politics",
+            "sociology",
+            "anthropology",
+            "history",
+        ]
+    },
+    _NAT: {
+        "keywords": [
+            "natural sciences",
+            "physics",
+            "chemistry",
+            "biology",
+            "mathematics",
+            "neuroscience",
+        ]
     },
 }
 
-# Computer Science keyword-relevant feed (the flagship program), inheriting the
-# institution socials (the department surfaces its news through the CS site).
+_KW_STOP = {"and", "of", "the", "in", "for", "with", "science", "sciences", "engineering"}
+
+
+def _school_content(name: str) -> dict:
+    """A school's content_sources: Princeton News RSS + public events filtered by keywords."""
+    spec = _SCHOOL_FEED_SPEC[name]
+    return {
+        "news_rss": _PRINCETON_NEWS_RSS,
+        "news_url": _SCHOOL_WEBSITE.get(name, "https://www.princeton.edu"),
+        "news_curated": False,
+        "events_feed": dict(_PRINCETON_EVENTS_RSS),
+        "keywords": list(spec["keywords"]),
+        "social": dict(_SOCIAL_PRINCETON),
+    }
+
+
+def _program_keywords(spec: dict) -> list[str]:
+    school_kw = list(_SCHOOL_FEED_SPEC[spec["school"]]["keywords"])
+    name = spec["program_name"].replace("&", " ").replace("/", " ")
+    terms = [w for w in name.split() if len(w) > 3 and w.lower() not in _KW_STOP]
+    program_term = " ".join(terms[:3]).strip()
+    return ([program_term] if program_term else []) + school_kw
+
+
+def _program_content(spec: dict) -> dict:
+    base = _school_content(spec["school"])
+    base["keywords"] = _program_keywords(spec)
+    return base
+
+
+# Computer Science keyword-relevant feed (the flagship program) — department news + shared feeds.
 _CS_CONTENT: dict = {
+    "news_rss": _PRINCETON_NEWS_RSS,
     "news_url": "https://www.cs.princeton.edu/news",
+    "news_curated": False,
+    "events_feed": dict(_PRINCETON_EVENTS_RSS),
     "keywords": ["computer science", "princeton cs", "machine learning", "princeton engineering"],
-    "social": _INSTITUTION_CONTENT["social"],
+    "social": dict(_SOCIAL_PRINCETON),
 }
 
 # ── The program catalog (real majors, organized by academic unit) ──────────
@@ -699,7 +772,36 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
+_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _build_catalog() -> list[dict]:
+    """Append breadth-first program nodes from the IPEDS Field-of-Study catalog."""
+    out: list[dict] = []
+    seen = set(_EXISTING_SLUGS)
+    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+        if slug in seen:
+            continue
+        if (cip, dtype) in _EXISTING_CIP_KEYS:
+            continue
+        seen.add(slug)
+        out.append({
+            "slug": slug,
+            "school": school,
+            "program_name": name,
+            "degree_type": dtype,
+            "cip": cip,
+            "duration_months": dur,
+            "delivery_format": fmt,
+            "description": desc,
+        })
+    return out
+
+
+PROGRAMS += _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
 # Full official program names (program-page title); equal to the major name here.
 _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROGRAMS}
@@ -1139,9 +1241,8 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
             about = dict(about)
             about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
             sc.about_detail = about
-        # No unit carries its own keyword-relevant feed (only the flagship program does);
-        # always assign None so a stale value on a pre-existing row is cleared.
-        sc.content_sources = None
+        # Every school carries Princeton News RSS + public events filtered by keywords.
+        sc.content_sources = _school_content(spec["name"])
         by_name[spec["name"]] = sc
     # Drop legacy units — programs.school_id is ON DELETE SET NULL, so this is FK-safe.
     for name, sc in existing.items():
@@ -1196,10 +1297,6 @@ def _program_standard(slug: str) -> dict:
         omitted.append("faculty_contacts.lead")
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
-    if slug != "princeton-computer-science-bs":
-        # Only the flagship carries its own keyword-relevant feed; catalog programs
-        # surface the institution feed rather than a per-program one.
-        omitted.append("content_sources")
     return _standard(omitted)
 
 
@@ -1231,8 +1328,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
-        # Only the flagship carries its own feed (content_sources omitted for the rest).
-        p.content_sources = _CS_CONTENT if slug == "princeton-computer-science-bs" else None
+        if slug == "princeton-computer-science-bs":
+            p.content_sources = _CS_CONTENT
+        else:
+            p.content_sources = _program_content(spec)
         # Cost: SPIA MPA is fully funded (per-slug); undergraduate uses published rates.
         cost_override = _COST_BY_SLUG.get(slug)
         if cost_override is not None:

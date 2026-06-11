@@ -82,6 +82,8 @@ async def test_apply_enriches_institution(db_session):
     # Gallery leads with a real raster campus photo (the hero picks the first raster).
     assert inst.media_gallery[0].startswith("https://upload.wikimedia.org")
     assert inst.media_gallery[0].lower().endswith(".jpg")
+    assert inst.content_sources and inst.content_sources.get("news_rss")
+    assert so.get("media_credit")
 
 
 async def test_apply_sets_real_academic_units(db_session):
@@ -172,11 +174,12 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert mpa.degree_type == "masters"
     assert mpa.cost_data and mpa.cost_data["funded"] is True
     assert mpa.outcomes_data["median_salary"] == 85111
-    # Stale tracks + feeds on the pre-existing canonical Physics BS row were cleared
+    # Stale tracks on the pre-existing canonical Physics BS row were cleared
     # (it is not the flagship and has no verified tracks), matching its _standard.
     phys_bs = next(pr for pr in progs if pr.slug == "princeton-physics-bs")
     assert phys_bs.tracks is None
-    assert phys_bs.content_sources is None
+    assert phys_bs.content_sources and phys_bs.content_sources.get("news_rss")
+    assert phys_bs.content_sources.get("keywords")
     assert phys_bs.tuition == 62688
     # A catalog program with no FOS earnings falls back to the institution median.
     assert phys_bs.outcomes_data["median_salary"] == 110066
