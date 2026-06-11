@@ -244,7 +244,7 @@ export default function SavedListPage() {
 
   if (isLoading) {
     return (
-      <div className="p-4 max-w-5xl w-full mx-auto space-y-4">
+      <div className="p-4 w-full space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
           <SkeletonCard key={i} />
         ))}
@@ -254,14 +254,14 @@ export default function SavedListPage() {
 
   if (isError && programs.length === 0) {
     return (
-      <div className="p-4 max-w-5xl w-full mx-auto">
+      <div className="p-4 w-full">
         <QueryError detail="We couldn't load your saved list." onRetry={() => refetch()} />
       </div>
     )
   }
 
   return (
-    <div className="p-4 max-w-5xl w-full mx-auto pb-28">
+    <div className="p-4 w-full pb-28">
       <header className="mb-6">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
           Saved
@@ -319,7 +319,7 @@ export default function SavedListPage() {
             action={{ label: 'Open Match →', onClick: () => navigate('/s/explore') }}
           />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {follows.map(f => (
               <SavedSchoolCard
                 key={f.institution_id}

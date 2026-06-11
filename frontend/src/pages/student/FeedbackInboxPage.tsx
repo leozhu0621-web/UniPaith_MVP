@@ -50,7 +50,7 @@ export default function FeedbackInboxPage() {
   const forbidden = isError && error instanceof ApiError && error.status === 403
 
   return (
-    <div className="p-4 max-w-5xl w-full mx-auto space-y-4">
+    <div className="p-4 w-full space-y-4">
       <header className="flex items-end justify-between gap-4">
         <div>
           <p className="text-eyebrow text-accent mb-1">Owner</p>

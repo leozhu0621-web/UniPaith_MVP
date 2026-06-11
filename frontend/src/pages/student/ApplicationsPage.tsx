@@ -247,7 +247,7 @@ export default function ApplicationsPage() {
   // so it renders even when the portfolio is empty or failed to load.
   if (view === 'costs')
     return (
-      <div className="p-4 max-w-5xl w-full mx-auto">
+      <div className="p-4 w-full">
         <PageHeader eyebrow="My Space" title="Costs & aid" sub="Budget, scholarships, and net-cost comparison" />
         {viewSwitcher}
         <Suspense fallback={<SkeletonCard />}>
@@ -257,12 +257,12 @@ export default function ApplicationsPage() {
     )
 
   if (isLoading)
-    return <div className="p-4 max-w-5xl w-full mx-auto space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+    return <div className="p-4 w-full space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 
   // A failed fetch must not read as "No applications yet" (empty state).
   if (isError)
     return (
-      <div className="p-4 max-w-5xl w-full mx-auto">
+      <div className="p-4 w-full">
         <PageHeader eyebrow="My Space" title="Your portfolio" sub="Turn saved targets into application projects" />
         {viewSwitcher}
         <QueryError detail="We couldn't load your applications." onRetry={() => refetch()} />
@@ -271,7 +271,7 @@ export default function ApplicationsPage() {
 
   if (view === 'offers')
     return (
-      <div className="p-4 max-w-5xl w-full mx-auto">
+      <div className="p-4 w-full">
         <PageHeader
           eyebrow="My Space"
           title="Your offers"
@@ -332,7 +332,7 @@ export default function ApplicationsPage() {
 
   if (apps.length === 0)
     return (
-      <div className="p-4 max-w-5xl w-full mx-auto">
+      <div className="p-4 w-full">
         <PageHeader eyebrow="My Space" title="Your portfolio" sub="Turn saved targets into application projects" />
         {viewSwitcher}
         <EmptyState
@@ -345,7 +345,7 @@ export default function ApplicationsPage() {
     )
 
   return (
-    <div className="p-4 max-w-5xl w-full mx-auto">
+    <div className="p-4 w-full">
       <PageHeader
         eyebrow="My Space"
         title="Your portfolio"

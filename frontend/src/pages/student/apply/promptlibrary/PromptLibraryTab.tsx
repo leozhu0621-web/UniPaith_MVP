@@ -121,7 +121,7 @@ export default function PromptLibraryTab() {
   const isError = prompts.isError
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5 p-6">
+    <div className="w-full space-y-5 p-6">
       <header>
         <h2 className="flex items-center gap-2 text-h3 text-foreground">
           <MessagesSquare size={20} /> Prompt Library

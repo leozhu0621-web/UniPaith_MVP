@@ -91,7 +91,7 @@ export default function ProfilePage() {
   const panelId = `profile-panel-${activeTab}`
 
   return (
-    <div className="max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="w-full p-4 sm:p-6 lg:p-8">
       {/* Header — eyebrow + H1 + completion ring */}
       <div className="flex items-center gap-4 mb-6">
         {/* Finding 3: don't show 0% during load — render the ring dimmed */}
