@@ -1,0 +1,1473 @@
+"""Rice University — gold-standard profile data (institution + schools + program catalog).
+
+Mirrors the MIT / Sloan / MBAn reference instance (see ``mit_profile.py`` /
+``duke_profile.py``): every value is researched from an authoritative source and carries a
+citation, or is honestly omitted (recorded in that node's ``_standard.omitted``) — never
+guessed. Built 2026-06-11 from:
+
+  • U.S. Dept. of Education **College Scorecard** API + **NCES College Navigator** (IPEDS,
+    UNITID 227757) — net price, earnings, completion/retention, Pell/loan, median debt.
+  • Rice **Common Data Set 2024-25** (Office of Institutional Effectiveness) — enrollment,
+    faculty, race/ethnicity, test scores, retention, six-year graduation rate.
+  • Rice **Admission Class Profile** (Class of 2029) — applicants / admits / admit rate.
+  • Rice **Center for Career Development** first-destination outcomes (Class of 2024).
+  • Each school's official site + the Rice **General Announcements** catalog (ga.rice.edu)
+    for deans, founding, research centers, and the full degree catalog; each program's
+    official program page (degree, format, published tuition where Rice states one).
+  • Rankings: **QS 2026**, **THE 2026**, **U.S. News 2026** (each cited), Carnegie (R1),
+    SACSCOC accreditation.
+
+Honest caveats stamped into ``_standard.omitted``: Rice publishes career outcomes
+institution-wide (no per-program employment/industry split), so those program fields are
+omitted; graduate/professional programs without a verified per-program tuition carry a
+sourced "see the program's tuition page" record rather than a guessed number; notable-
+faculty rosters are omitted for schools where no current named distinction could be
+verified from an official page; and Rice's news site exposes no editorial RSS feed, so the
+verified LiveWhale events RSS (current, image-carrying) feeds the Updates surface while the
+iCalendar feeds Events (both verified HTTP 200 on 2026-06-11).
+"""
+
+# ruff: noqa: E501
+
+from __future__ import annotations
+
+import re
+from datetime import date
+
+from sqlalchemy import select, text
+from sqlalchemy.orm import Session
+
+from unipaith.models.institution import Institution, Program, School
+from unipaith.profile_standard import STANDARD_VERSION
+
+INSTITUTION_NAME = "Rice University"
+
+# Date this profile was researched + verified; stamped into every node's _standard.
+ENRICHED_AT = "2026-06-11"
+
+
+def _standard(omitted: list[str] | None = None) -> dict:
+    """The per-node provenance stamp the routine writes onto every enriched node."""
+    return {
+        "version": STANDARD_VERSION,
+        "enriched_at": ENRICHED_AT,
+        "omitted": omitted or [],
+    }
+
+
+# Every required institution-level field was verified from a citable source, so nothing is
+# omitted at the institution level.
+_OMITTED_INSTITUTION: list[str] = []
+
+# ── Institution-level data ────────────────────────────────────────────────
+# Rankings are stored as {rank, year} objects; each rank is quoted from the official ranking
+# body for the 2026 edition. These already match the live Rice ranking_data (instenrich2);
+# re-asserted here so the module is self-contained and idempotent.
+RANKING_DATA: dict = {
+    "ownership_type": "private",
+    "accreditor": "SACSCOC (Southern Association of Colleges and Schools Commission on Colleges)",
+    # Carnegie 2025 basic classification (R1).
+    "carnegie_classification": (
+        "Doctoral Universities: Very High Research Spending and Doctorate Production (R1)"
+    ),
+    # QS World University Rankings 2026: Rice is #119 worldwide.
+    "qs_world_university_rankings": {
+        "rank": 119,
+        "year": 2026,
+        "source_url": "https://news.rice.edu/news/2025/rice-moves-more-20-spots-qs-world-university-rankings",
+    },
+    # THE World University Rankings 2026: #103 in the world.
+    "times_higher_education": {
+        "rank": 103,
+        "year": 2026,
+        "source_url": "https://news.rice.edu/news/2025/rice-climbs-9-spots-times-higher-education-global-rankings-places-among-worlds-top",
+    },
+    # U.S. News Best Colleges (National Universities) 2026: #17 nationally.
+    "us_news_national": {
+        "rank": 17,
+        "year": 2026,
+        "source_url": "https://news.rice.edu/news/2025/rice-rises-us-news-rankings-recognized-value-teaching-and-innovation",
+    },
+}
+
+# school_outcomes is shallow-merged into the existing JSONB. The College Scorecard seed +
+# instenrich2 already wrote admit_rate / avg_net_price / median_earnings_10yr / scale /
+# research / campus_life / location; the sub-objects below fill the verified gaps the
+# conformance check flagged (funnel, diversity, outcomes, cost & aid, retention/grad rate,
+# feeds, citations) without clobbering the good existing values.
+SCHOOL_OUTCOMES: dict = {
+    # Rice Common Data Set 2024-25 (CDS-B22): first-year retention = 97.41% (Scorecard
+    # pooled = 0.975). Six-year graduation rate (Fall 2018 cohort) = 94.6%.
+    "retention_rate_first_year": 0.97,
+    "graduation_rate_6yr": 0.946,
+    # College Scorecard completion rate at 150% of normal time.
+    "completion_rate_4yr_150pct": 0.9464,
+    # Rice Admission Class Profile, Class of 2029: 2,948 admits / 36,791 applicants = 8.0%.
+    "admit_rate": 0.080,
+    # College Scorecard average annual net price (overall) + institution-wide median
+    # earnings 10 years after entry (re-asserted from the live instenrich2 values, both cited
+    # to the College Scorecard for UNITID 227757).
+    "avg_net_price": 13370,
+    "median_earnings_10yr": 89718,
+    "financial_aid": {
+        # NCES / College Scorecard (IPEDS): 17.0% of undergraduates received a Pell grant;
+        # 6.5% took federal student loans (the Scorecard authoritative figure).
+        "pell_grant_rate": 0.17,
+        "federal_loan_rate": 0.065,
+        # Rice Common Data Set 2025-26 (CDS-G) first-year billed direct cost:
+        # tuition $66,540 + required fees $957 + food & housing $19,550 = $87,047.
+        "cost_of_attendance": 87047,
+        # College Scorecard median federal debt of completers.
+        "median_debt_completers": 11000,
+        # College Scorecard average annual net price (overall).
+        "avg_net_price": 13370,
+    },
+    # Undergraduate race/ethnicity (Rice Common Data Set 2024-25, CDS-B2, degree-seeking
+    # undergraduates, n = 4,776).
+    "demographics": {
+        "white": 0.256,
+        "asian": 0.291,
+        "hispanic": 0.167,
+        "black": 0.079,
+        "two_or_more": 0.055,
+        "international": 0.128,
+        "american_indian": 0.0015,
+        "native_hawaiian": 0.0006,
+        "unknown": 0.022,
+    },
+    # SAT/ACT 25th-75th percentiles of enrolled first-years (Rice CDS 2024-25, C9). Rice is
+    # test-recommended (effectively test-optional) for the Fall 2026 cycle.
+    "test_scores": {
+        "sat_reading_25_75": [740, 770],
+        "sat_math_25_75": [770, 800],
+        "act_25_75": [34, 35],
+    },
+    # Rice Center for Career Development, Class of 2024 (97% knowledge rate): 86% employed or
+    # continuing education within six months (53% working + 33% continuing education).
+    "employed_or_continuing_ed": 0.86,
+    # Rice CCD — bachelor's graduates' employment by industry, in rank order.
+    "top_employer_industries": [
+        "Technology",
+        "Finance",
+        "Consulting",
+        "Healthcare & Biotech",
+        "Energy",
+        "Education",
+        "Media",
+        "Manufacturing",
+    ],
+    "campus_basics": {"location": "Houston, Texas"},
+    # Scale, research, campus life, and geo-coordinates re-asserted from the live instenrich2
+    # values (Rice Common Data Set / Rice Management Company / official institute pages); each
+    # institute carries its official link so the campus-resources section renders with URLs.
+    "scale": {
+        "campus_acres": 300,
+        "endowment_usd": 7900000000,
+        "faculty_count": 896,
+        "student_faculty_ratio": "6:1",
+    },
+    "location": {"lat": 29.7174, "lng": -95.4018},
+    "research": {
+        "labs": [
+            "Smalley-Curl Institute",
+            "Ken Kennedy Institute",
+            "Baker Institute for Public Policy",
+            "Kinder Institute for Urban Research",
+            "Rice 360 Institute for Global Health",
+            "Rice Space Institute",
+            "Rice Advanced Materials Institute",
+            "Rice Sustainability Institute",
+        ],
+        "areas": [
+            "Nanoscale science and nanotechnology",
+            "Quantum materials and quantum information science",
+            "Computing, data science and information technology",
+            "Public policy",
+            "Bioengineering and global health",
+            "Urban research and sustainability",
+        ],
+        "lab_links": {
+            "Smalley-Curl Institute": "https://sci.rice.edu/",
+            "Ken Kennedy Institute": "https://kenkennedy.rice.edu/",
+            "Baker Institute for Public Policy": "https://www.bakerinstitute.org/",
+            "Kinder Institute for Urban Research": "https://kinder.rice.edu/",
+            "Rice 360 Institute for Global Health": "https://www.rice360.rice.edu/",
+            "Rice Space Institute": "https://rsi.rice.edu/",
+            "Rice Advanced Materials Institute": "https://rami.rice.edu/",
+            "Rice Sustainability Institute": "https://si.rice.edu/",
+        },
+    },
+    "campus_life": {
+        "athletics_division": "NCAA Division I (American Conference)",
+        "varsity_sports": 14,
+        "student_orgs": 300,
+        "resources": [
+            {"name": "Rice Student Center", "url": "https://studentcenter.rice.edu/"},
+            {"name": "Rice Owls Athletics", "url": "https://riceowls.com/"},
+            {"name": "Housing & Residential Colleges", "url": "https://housing.rice.edu/"},
+            {"name": "Campus Life", "url": "https://www.rice.edu/campus-life"},
+        ],
+    },
+    "flagship": {
+        # Rice Common Data Set 2024-25 (CDS-B1): 4,789 undergraduate + 4,172 graduate = 8,961.
+        "enrollment_total": 8961,
+        # Rice Admission Class Profile — Class of 2029 (entering fall 2025).
+        "applicants": 36791,
+        "admits": 2948,
+        "admissions_cycle": "Class of 2029 (entering fall 2025; Rice Admission Class Profile)",
+        # Chartered 1891 by William Marsh Rice; opened to students September 23, 1912.
+        "founded_year": 1912,
+    },
+    "sources": [
+        {
+            "label": "U.S. Dept. of Education — College Scorecard (Rice, UNITID 227757)",
+            "url": "https://collegescorecard.ed.gov/school/?227757-Rice-University",
+        },
+        {
+            "label": "NCES College Navigator — Rice University (IPEDS)",
+            "url": "https://nces.ed.gov/collegenavigator/?id=227757",
+        },
+        {
+            "label": "Rice University — Common Data Set 2024-25",
+            "url": "https://ideas.rice.edu/wp-content/uploads/2025/10/CDS_2024-25_WEBSITE.pdf",
+        },
+        {
+            "label": "Rice Admission — Class Profile (Class of 2029)",
+            "url": "https://admission.rice.edu/apply/class-profile",
+        },
+        {
+            "label": "Rice Center for Career Development — Career Outcomes",
+            "url": "https://ccd.rice.edu/about/career-outcomes",
+        },
+        {
+            "label": "Rice Management Company / Investments — Endowment",
+            "url": "https://investments.rice.edu/",
+        },
+        {
+            "label": "Carnegie Classifications — Rice University (R1)",
+            "url": "https://carnegieclassifications.acenet.edu/institution/rice-university/",
+        },
+        {
+            "label": "QS World University Rankings 2026 — Rice University (#119)",
+            "url": "https://news.rice.edu/news/2025/rice-moves-more-20-spots-qs-world-university-rankings",
+        },
+        {
+            "label": "Times Higher Education World University Rankings 2026 — Rice (#103)",
+            "url": "https://news.rice.edu/news/2025/rice-climbs-9-spots-times-higher-education-global-rankings-places-among-worlds-top",
+        },
+        {
+            "label": "U.S. News Best Colleges 2026 — Rice University (#17 National Universities)",
+            "url": "https://www.usnews.com/best-colleges/rice-3604",
+        },
+        {
+            "label": "Rice General Announcements — Accreditation",
+            "url": "https://ga.rice.edu/important-notices/accreditation/",
+        },
+    ],
+}
+
+# student_body_size is the undergraduate count (the page labels it "Undergraduates"); the
+# total (8,961) lives in flagship.enrollment_total and renders as "Total enrollment".
+UNDERGRAD_COUNT = 4789
+
+DESCRIPTION = (
+    "Rice University is a private research university in Houston, Texas. Chartered in 1891 "
+    "by the Massachusetts-born cotton merchant William Marsh Rice and opened to students on "
+    "September 23, 1912 as the William Marsh Rice Institute, it sits on a wooded 300-acre "
+    "campus in the heart of Houston, next to the Texas Medical Center and the Museum "
+    "District. It enrolls roughly 4,800 undergraduates and about 4,200 graduate and "
+    "professional students — some 8,900 in all — under a residential-college system and a "
+    "6:1 student-faculty ratio.\n\n"
+    "Rice is organized into eight schools: the Wiess School of Natural Sciences, the George "
+    "R. Brown School of Engineering and Computing, the School of Humanities and Arts, the "
+    "School of Social Sciences, the Rice School of Architecture, the Shepherd School of "
+    "Music, the Jesse H. Jones Graduate School of Business, and the Susanne M. Glasscock "
+    "School of Continuing Studies. Undergraduates choose among more than fifty majors, and "
+    "the graduate schools confer the master's, Ph.D., and professional degrees — including "
+    "online and professional master's programs in business, computing, data science, and "
+    "engineering.\n\n"
+    "A Carnegie R1 university accredited by SACSCOC, Rice ranks among the strongest research "
+    "universities in the country: No. 17 among national universities by U.S. News, No. 103 "
+    "in the world by Times Higher Education, and No. 119 by QS. It admitted 8.0% of "
+    "first-year applicants for the Class of 2029.\n\n"
+    "Rice meets the full demonstrated financial need of admitted undergraduates through The "
+    "Rice Investment, and its average net price is about $13,000 a year against a billed "
+    "cost of attendance near $87,000; the median federal debt of completers is about "
+    "$11,000. Among the Class of 2024, 86% of graduates were employed or continuing their "
+    "education within six months, most heavily in technology, finance, and consulting. "
+    "Rice's teams, the Owls, compete in NCAA Division I (the American Athletic Conference)."
+)
+
+# ── The real degree-granting schools (display order) ───────────────────────
+_NS = "Wiess School of Natural Sciences"
+_ENG = "George R. Brown School of Engineering and Computing"
+_HUM = "School of Humanities and Arts"
+_SOC = "School of Social Sciences"
+_ARCH = "Rice School of Architecture"
+_MUS = "The Shepherd School of Music"
+_BIZ = "Jesse H. Jones Graduate School of Business"
+_GLAS = "Susanne M. Glasscock School of Continuing Studies"
+
+SCHOOLS: list[dict] = [
+    {
+        "name": _NS,
+        "sort_order": 1,
+        "description": (
+            "The Wiess School of Natural Sciences advances fundamental understanding of the "
+            "natural world while educating future discoverers. It comprises six departments — "
+            "Chemistry; Physics & Astronomy; Mathematics; BioSciences; Earth, Environmental & "
+            "Planetary Sciences; and Statistics-adjacent programs — and awards undergraduate "
+            "majors, research Ph.D. and master's degrees, and a portfolio of industry-oriented "
+            "professional science master's degrees."
+        ),
+    },
+    {
+        "name": _ENG,
+        "sort_order": 2,
+        "description": (
+            "The George R. Brown School of Engineering and Computing — which added 'and "
+            "Computing' to its name in 2024 — spans nine departments from bioengineering and "
+            "computer science to materials science and statistics. It offers undergraduate "
+            "degrees, thesis-based MS and Ph.D. programs, and a large slate of professional "
+            "and online master's degrees in computing, data science, and engineering "
+            "management."
+        ),
+    },
+    {
+        "name": _HUM,
+        "sort_order": 3,
+        "description": (
+            "The School of Humanities and Arts — renamed in 2025 to recognize its growing "
+            "investment in the visual arts, theatre, and creative writing — offers globally "
+            "engaged programs across art history, English, history, philosophy, religion, and "
+            "the languages, awarding the B.A., M.A., M.F.A., and Ph.D."
+        ),
+    },
+    {
+        "name": _SOC,
+        "sort_order": 4,
+        "description": (
+            "The School of Social Sciences connects teaching and research with policy for the "
+            "betterment of society. It comprises seven departments, serves more than a third "
+            "of Rice undergraduates, and offers undergraduate majors, professional master's "
+            "degrees, and Ph.D. programs in economics, political science, psychology, "
+            "anthropology, and sociology."
+        ),
+    },
+    {
+        "name": _ARCH,
+        "sort_order": 5,
+        "description": (
+            "The Rice School of Architecture is an international center of design research, "
+            "experimentation, and debate. A small, selective school, it offers the "
+            "professional Bachelor of Architecture and Master of Architecture degrees with an "
+            "emphasis on global engagement and cross-disciplinary collaboration."
+        ),
+    },
+    {
+        "name": _MUS,
+        "sort_order": 6,
+        "description": (
+            "The Shepherd School of Music cultivates the mastery of musical performance, "
+            "combining a conservatory experience with the educational opportunities of a "
+            "leading research university. It enrolls a selective community of about 275 "
+            "musicians and awards the Bachelor of Music, Master of Music, Artist Diploma, and "
+            "Doctor of Musical Arts."
+        ),
+    },
+    {
+        "name": _BIZ,
+        "sort_order": 7,
+        "description": (
+            "The Jesse H. Jones Graduate School of Business — known publicly as Rice Business — "
+            "offers a broad graduate portfolio: Full-Time, Professional, Hybrid, Executive, "
+            "and Online MBA formats, a Master of Accounting, and a Ph.D. in Business. It now "
+            "also houses the Virani Undergraduate School of Business."
+        ),
+    },
+    {
+        "name": _GLAS,
+        "sort_order": 8,
+        "description": (
+            "The Susanne M. Glasscock School of Continuing Studies is Rice's continuing and "
+            "professional education division, offering graduate degrees (the Master of Liberal "
+            "Studies, Master of Interdisciplinary Studies, and Master of Arts in Teaching), "
+            "professional development, educator certification, and lifelong-learning courses."
+        ),
+    },
+]
+
+_SCHOOL_WEBSITE: dict[str, str] = {
+    _NS: "https://naturalsciences.rice.edu/",
+    _ENG: "https://engineering.rice.edu/",
+    _HUM: "https://humanities.rice.edu/",
+    _SOC: "https://socialsciences.rice.edu/",
+    _ARCH: "https://arch.rice.edu/",
+    _MUS: "https://music.rice.edu/",
+    _BIZ: "https://business.rice.edu/",
+    _GLAS: "https://glasscock.rice.edu/",
+}
+
+# Per-school about_detail (founded, leadership, notable faculty, research centers, named_for,
+# source). Notable faculty are listed only where a current named distinction was verified
+# from an official page; otherwise about_detail.faculty is omitted (recorded in
+# _ABOUT_OMITTED), never guessed.
+_ABOUT_DETAIL: dict[str, dict] = {
+    _NS: {
+        "founded": 1975,
+        "leadership": "Thomas C. Killian — Dean of the Wiess School of Natural Sciences",
+        "faculty": [
+            "James M. Tour — T.T. and W.F. Chao Professor of Chemistry; elected to the "
+            "National Academy of Engineering (2024)",
+        ],
+        "research_centers": [
+            "Center for Theoretical Biological Physics",
+            "Smalley-Curl Institute",
+            "Rice Center for Quantum Materials",
+            "Rice Space Institute",
+            "Laboratory for Nanophotonics",
+            "T. W. Bonner Nuclear Laboratory",
+        ],
+        "named_for": (
+            "Harry and Olga Keith Wiess (renamed 1979); Harry C. Wiess co-founded Humble Oil, "
+            "a predecessor of Exxon"
+        ),
+        "source": {
+            "label": "Wiess School of Natural Sciences — About",
+            "url": "https://naturalsciences.rice.edu/about",
+        },
+    },
+    _ENG: {
+        "founded": 1975,
+        "leadership": (
+            "Luay Nakhleh — William and Stephanie Sick Dean of the George R. Brown School of "
+            "Engineering and Computing"
+        ),
+        "research_centers": [
+            "Ken Kennedy Institute (K2I)",
+            "Data to Knowledge Lab (D2K Lab)",
+            "Richard Tapia Center for Excellence and Equity",
+            "Smalley-Curl Institute",
+            "Center for Theoretical Biological Physics",
+            "SSPEED Center (Severe Storm Prediction, Education and Evacuation from Disasters)",
+        ],
+        "named_for": (
+            "George Rufus Brown (1898–1983), Rice alumnus, co-founder of Brown & Root, and "
+            "chairman of the Rice Board of Trustees"
+        ),
+        "source": {
+            "label": "George R. Brown School of Engineering and Computing — About the Dean",
+            "url": "https://engineering.rice.edu/about/leadership/about-dean",
+        },
+    },
+    _HUM: {
+        "founded": 1959,
+        "leadership": (
+            "Kathleen Canning — Andrew W. Mellon Professor of History and Dean of the School "
+            "of Humanities and Arts"
+        ),
+        "faculty": [
+            "W. Caleb McDaniel — Department of History; 2020 Pulitzer Prize for History "
+            "('Sweet Taste of Liberty')",
+            "Kathleen Canning — Andrew W. Mellon Professor of History (Dean)",
+        ],
+        "research_centers": [
+            "Humanities Research Center",
+            "Chao Center for Asian Studies",
+            "Center for Latin American and Latinx Studies",
+            "Center for the Study of Women, Gender and Sexuality",
+            "Center for Environmental Studies",
+            "Center for Languages and Intercultural Communication",
+        ],
+        "source": {
+            "label": "School of Humanities and Arts — History",
+            "url": "https://humanities.rice.edu/history-school-humanities-and-arts",
+        },
+    },
+    _SOC: {
+        "founded": 1979,
+        "leadership": "Rachel Tolbert Kimbro — Dean of the School of Social Sciences",
+        "faculty": [
+            "Fred Oswald — Herbert S. Autrey Chair in Social Sciences; national associate of "
+            "the National Academies of Sciences, Engineering and Medicine",
+        ],
+        "research_centers": [
+            "Social Sciences Research Institute (SSRI)",
+            "Center for African and African American Studies (CAAAS)",
+            "Center for Coastal Futures and Adaptive Resilience",
+            "Center for Computational Insights on Inequality and Society",
+            "Institute of Health Resilience and Innovation",
+            "Rice Center for Voting",
+        ],
+        "source": {
+            "label": "School of Social Sciences — Dean Rachel Tolbert Kimbro",
+            "url": "https://socialsciences.rice.edu/dean-rachel-tolbert-kimbro",
+        },
+    },
+    _ARCH: {
+        "leadership": "Igor Marjanović — William Ward Watkin Dean of the Rice School of Architecture",
+        "faculty": [
+            "Albert Pope — Gus Sessions Wortham Professor of Architecture",
+            "Mónica Rivera — Harry K. and Albert K. Smith Professor of Architecture",
+        ],
+        "research_centers": [
+            "Rice Design Alliance",
+            "Rice Building Workshop",
+            "Construct (design-build program)",
+            "Rice Architecture Paris (global program)",
+        ],
+        "source": {
+            "label": "Rice School of Architecture — Dean",
+            "url": "https://arch.rice.edu/school/dean",
+        },
+    },
+    _MUS: {
+        "founded": 1975,
+        "leadership": "Matthew Loden — Lynette S. Autrey Dean of Music",
+        "research_centers": [
+            "Brockman Hall for Opera",
+            "Alice Pratt Brown Hall",
+            "Stude Concert Hall",
+            "Duncan Recital Hall",
+            "Edythe Bates Old Recital Hall",
+        ],
+        "named_for": "Sallie Shepherd Perkins, who endowed the school",
+        "source": {
+            "label": "The Shepherd School of Music — History",
+            "url": "https://music.rice.edu/about/history-shepherd-school",
+        },
+    },
+    _BIZ: {
+        "founded": 1974,
+        "leadership": (
+            "Jeff Fleming — Interim Dean and Fayez Sarofim Vanguard Professor of Finance"
+        ),
+        "faculty": [
+            "Kerry Back — J. Howard Creekmore Professor of Finance; Financial Management "
+            "Association Innovation in Teaching Award",
+        ],
+        "research_centers": [
+            "Liu Idea Lab for Innovation and Entrepreneurship (Lilie)",
+            "Rice Alliance for Technology and Entrepreneurship",
+            "Center for Customer-Based Execution and Strategy (C-CUBES)",
+            "Rice Business Finance Center",
+        ],
+        "named_for": (
+            "Jesse H. Jones, the Houston business and civic leader; the school was established "
+            "in 1974 with a gift from Houston Endowment Inc."
+        ),
+        "source": {
+            "label": "Jesse H. Jones Graduate School of Business — About",
+            "url": "https://business.rice.edu/about",
+        },
+    },
+    _GLAS: {
+        "founded": 1967,
+        "leadership": "Robert Bruce Jr. — Dean of the Glasscock School of Continuing Studies",
+        "research_centers": [
+            "Rice Center for Education",
+            "Center for Philanthropy and Nonprofit Leadership",
+            "Center for Community Learning and Engagement",
+            "English as a Second Language and Foreign Languages programs",
+        ],
+        "named_for": (
+            "Susanne M. Glasscock; the school was renamed in 2006 following an endowment gift "
+            "from the Glasscock Foundation"
+        ),
+        "source": {
+            "label": "Glasscock School of Continuing Studies — About",
+            "url": "https://glasscock.rice.edu/continuing-studies",
+        },
+    },
+}
+
+# Per-school honestly-omitted about_detail fields (verified-unavailable), for _standard.
+_ABOUT_OMITTED: dict[str, list[str]] = {
+    # No current named-prize holder verified from an official engineering page (the school
+    # reports ~16 NAE members among faculty but does not name them).
+    _ENG: ["about_detail.faculty"],
+    # Not a named school (descriptive discipline name).
+    _HUM: ["about_detail.named_for"],
+    _SOC: ["about_detail.named_for"],
+    # Rice's School of Architecture is not given a founding year on its official pages
+    # (architecture has been taught since Rice's 1912 opening, corroborated but not
+    # first-party), and the school carries no honorific name.
+    _ARCH: ["about_detail.founded", "about_detail.named_for"],
+    # The current-faculty page lists musicians by instrument without named chairs or awards.
+    _MUS: ["about_detail.faculty"],
+    # A continuing/professional-education school staffed by Rice faculty and practitioners;
+    # no current named-prize holder is verified on an official page.
+    _GLAS: ["about_detail.faculty"],
+}
+
+# ── Feeds (content_sources) ────────────────────────────────────────────────
+# The daily content-ingest reads news_rss (RSS), events_feed (iCalendar), keywords (a
+# word-boundary relevance filter) and news_curated (keep every item). Rice's news site
+# (news.rice.edu, Drupal) exposes NO editorial RSS feed (all feed paths 404, verified
+# 2026-06-11), so the verified LiveWhale events RSS — current and image-carrying — feeds the
+# Updates surface, while the LiveWhale iCalendar feeds Events. Both verified HTTP 200.
+_RICE_EVENTS_RSS = "https://events.rice.edu/live/rss/events"
+_RICE_EVENTS_ICS = {"url": "https://events.rice.edu/live/ical/events", "type": "ical"}
+_RICE_NEWS_URL = "https://news.rice.edu"
+
+# Official university social handles (rice.edu site footer, verified 2026-06-11).
+_SOCIAL_RICE = {
+    "instagram": "https://www.instagram.com/riceuniversity/",
+    "linkedin": "https://www.linkedin.com/school/riceuniversity/",
+    "x": "https://twitter.com/riceuniversity",
+    "youtube": "https://www.youtube.com/riceuniversity",
+    "facebook": "https://www.facebook.com/RiceUniversity/",
+}
+
+# Per-school official handles, verified per channel 2026-06-11 (school sites + social pages).
+# Only handles confirmed to exist are listed; a school that does not run a given channel
+# simply omits that key (never guessed).
+_SOCIAL_BY_SCHOOL: dict[str, dict] = {
+    _NS: {
+        "instagram": "https://www.instagram.com/RiceNatSci/",
+        "x": "https://twitter.com/RiceNatSci",
+        "facebook": "https://www.facebook.com/RiceNatSci",
+    },
+    _ENG: {
+        "instagram": "https://www.instagram.com/riceengineering/",
+        "linkedin": "https://www.linkedin.com/school/riceengineering/",
+        "x": "https://twitter.com/riceengineering",
+        "youtube": "https://www.youtube.com/riceengineering",
+        "facebook": "https://www.facebook.com/riceengineering",
+    },
+    _HUM: {
+        "instagram": "https://www.instagram.com/ricehumanities/",
+        "linkedin": "https://www.linkedin.com/school/rice-humanities-and-arts/",
+        "x": "https://x.com/RiceHumanities",
+        "youtube": "https://www.youtube.com/ricehumanities",
+        "facebook": "https://www.facebook.com/RiceHumanities/",
+    },
+    _SOC: {
+        "instagram": "https://www.instagram.com/ricesocsci/",
+        "linkedin": "https://www.linkedin.com/school/rice-university-school-of-social-sciences",
+        "x": "https://twitter.com/RiceSocSci",
+        "facebook": "https://www.facebook.com/RiceSocSci/",
+    },
+    _ARCH: {
+        "instagram": "https://www.instagram.com/ricearch/",
+        "linkedin": "https://www.linkedin.com/company/rice-school-of-architecture/",
+        "facebook": "https://www.facebook.com/RiceArch/",
+    },
+    _MUS: {
+        "instagram": "https://www.instagram.com/shepherd_school/",
+        "facebook": "https://www.facebook.com/ShepherdSchool/",
+    },
+    _BIZ: {
+        "instagram": "https://www.instagram.com/rice_business/",
+        "linkedin": "https://www.linkedin.com/school/rice-business/",
+        "x": "https://x.com/Rice_Biz",
+        "youtube": "https://www.youtube.com/c/ricebusiness",
+        "facebook": "https://www.facebook.com/BusinessRice",
+    },
+    _GLAS: {
+        "instagram": "https://www.instagram.com/ricecontinuingstudies/",
+        "linkedin": "https://www.linkedin.com/company/ricecontinuingstudies",
+        "x": "https://twitter.com/glasscockschool",
+        "youtube": "https://www.youtube.com/user/ricecontstudies",
+        "facebook": "https://www.facebook.com/ricecontinuingstudies/",
+    },
+}
+
+# Per-school feed config: the shared Rice events RSS + iCalendar, a school news page, and
+# keywords that identify the school's items in the shared feed (the MIT/MBAn pattern). Rice
+# has no per-school RSS, so the shared feed is keyword-filtered per school.
+_SCHOOL_FEED_SPEC: dict[str, dict] = {
+    _NS: {
+        "news_url": "https://news.rice.edu/tag/natural-sciences",
+        "keywords": ["natural sciences", "Wiess School", "Rice Natural Sciences"],
+    },
+    _ENG: {
+        "news_url": "https://engineering.rice.edu/news-events",
+        "keywords": ["Rice engineering", "computing", "George R. Brown"],
+    },
+    _HUM: {
+        "news_url": "https://humanities.rice.edu/news",
+        "keywords": ["humanities", "arts", "Sarofim Hall"],
+    },
+    _SOC: {
+        "news_url": "https://news.rice.edu/tag/social-sciences",
+        "keywords": ["social sciences", "Kraft Hall"],
+    },
+    _ARCH: {
+        "news_url": "https://arch.rice.edu/school/news",
+        "keywords": ["Rice Architecture", "School of Architecture", "Rice Building Workshop"],
+    },
+    _MUS: {
+        "news_url": "https://music.rice.edu/news",
+        "keywords": ["Shepherd School", "music", "Brockman Hall"],
+    },
+    _BIZ: {
+        "news_url": "https://business.rice.edu/news",
+        "keywords": ["Rice Business", "Jones Graduate School", "MBA"],
+    },
+    _GLAS: {
+        "news_url": "https://glasscock.rice.edu/blog",
+        "keywords": ["Glasscock School", "continuing studies", "lifelong learning"],
+    },
+}
+
+
+def _school_content(name: str) -> dict:
+    """Build a school's content_sources from the shared Rice feeds + keywords + socials."""
+    spec = _SCHOOL_FEED_SPEC[name]
+    return {
+        "news_rss": _RICE_EVENTS_RSS,
+        "news_url": spec["news_url"],
+        "news_curated": False,
+        "events_feed": dict(_RICE_EVENTS_ICS),
+        "keywords": list(spec["keywords"]),
+        "social": _SOCIAL_BY_SCHOOL.get(name, _SOCIAL_RICE),
+    }
+
+
+def _program_content(school_name: str, keywords: list[str]) -> dict:
+    """Build a program's content_sources from its school feed, refined by program keywords."""
+    base = _school_content(school_name)
+    base["keywords"] = list(keywords)
+    return base
+
+
+# Institution-wide feed: the verified Rice events RSS (every item is official Rice content)
+# + the Rice events iCalendar, with the official university social handles.
+_INSTITUTION_CONTENT: dict = {
+    "news_rss": _RICE_EVENTS_RSS,
+    "news_url": _RICE_NEWS_URL,
+    "news_curated": True,
+    "events_feed": dict(_RICE_EVENTS_ICS),
+    "social": _SOCIAL_RICE,
+}
+
+# ── The program catalog (real majors/degrees, organized by school) ─────────
+# Undergraduate majors per school (Rice General Announcements — Departments & Programs;
+# cross-checked against the College Scorecard Fields of Study for UNITID 227757). Each tuple
+# is (major name, degree codes) and produces one residential bachelor's program.
+_UG_BY_SCHOOL: dict[str, list[tuple[str, str]]] = {
+    _NS: [
+        ("Astronomy", "BA"),
+        ("Astrophysics", "BS"),
+        ("Biosciences", "BA/BS"),
+        ("Chemical Physics", "BS"),
+        ("Chemistry", "BA/BS"),
+        ("Earth, Environmental and Planetary Sciences", "BA/BS"),
+        ("Environmental Science", "BA/BS"),
+        ("Health Sciences", "BA"),
+        ("Mathematics", "BA/BS"),
+        ("Neuroscience", "BA/BS"),
+        ("Physics", "BA/BS"),
+        ("Sports Medicine and Exercise Physiology", "BA"),
+    ],
+    _ENG: [
+        ("Artificial Intelligence", "BS"),
+        ("Bioengineering", "BS"),
+        ("Chemical and Biomolecular Engineering", "BS"),
+        ("Chemical Engineering", "BA"),
+        ("Civil Engineering", "BS"),
+        ("Civil and Environmental Engineering", "BA"),
+        ("Computational and Applied Mathematics", "BA"),
+        ("Computer Science", "BA/BS"),
+        ("Electrical and Computer Engineering", "BA/BS"),
+        ("Environmental Engineering", "BS"),
+        ("Materials Science and NanoEngineering", "BA/BS"),
+        ("Mechanical Engineering", "BA/BS"),
+        ("Operations Research", "BS"),
+        ("Statistics", "BA/BS"),
+    ],
+    _HUM: [
+        ("Ancient Mediterranean Civilizations", "BA"),
+        ("Art (Studio Art)", "BA"),
+        ("Art History", "BA"),
+        ("Asian Studies", "BA"),
+        ("Classical Studies", "BA"),
+        ("English", "BA"),
+        ("European Studies", "BA"),
+        ("French Studies", "BA"),
+        ("German Studies", "BA"),
+        ("History", "BA"),
+        ("Latin American and Latinx Studies", "BA"),
+        ("Media Studies", "BA"),
+        ("Philosophy", "BA"),
+        ("Religion", "BA"),
+        ("Spanish and Portuguese", "BA"),
+        ("Study of Women, Gender and Sexuality", "BA"),
+    ],
+    _SOC: [
+        ("Anthropology", "BA"),
+        ("Cognitive Sciences", "BA"),
+        ("Economics", "BA"),
+        ("Global Affairs", "BA"),
+        ("Linguistics", "BA"),
+        ("Managerial Economics and Organizational Sciences", "BA"),
+        ("Mathematical Economic Analysis", "BA"),
+        ("Psychology", "BA"),
+        ("Social Policy Analysis", "BA"),
+        ("Sociology", "BA"),
+        ("Sport Analytics", "BA"),
+        ("Sport Management", "BA"),
+    ],
+    _ARCH: [
+        ("Architecture", "BA/BArch"),
+        ("Architectural Studies", "BA"),
+    ],
+    _MUS: [
+        ("Music", "BA/BMus"),
+        ("Music Composition", "BMus"),
+        ("Music History", "BMus"),
+        ("Music Theory", "BMus"),
+    ],
+    _BIZ: [
+        ("Business", "BA"),
+    ],
+}
+
+# Graduate / professional programs (degree-granting), each verified from its school's
+# official program page or the Rice General Announcements catalog. Tuple:
+#   (name, degree_type, school, department, duration_months, delivery_format, website,
+#    tuition_usd | None, tuition_kind)
+#   degree_type ∈ {masters, professional, phd, certificate}
+#   tuition_kind ∈ {"year", "total", None}; None tuition → cost recorded "see program page".
+_GA = "https://ga.rice.edu/programs-study/departments-programs"
+_GRAD_EXPLICIT: list[tuple] = [
+    # ── Jesse H. Jones Graduate School of Business ──
+    ("Master of Business Administration (Full-Time MBA)", "masters", _BIZ, "Rice Business", 22, "on_campus", "https://business.rice.edu/rice-mba/full-time-mba", None, None),
+    ("Professional MBA — Evening", "professional", _BIZ, "Rice Business", 22, "on_campus", "https://business.rice.edu/rice-mba/professional-mba", None, None),
+    ("Professional MBA — Weekend", "professional", _BIZ, "Rice Business", 22, "on_campus", "https://business.rice.edu/rice-mba/professional-mba", None, None),
+    ("Hybrid MBA", "professional", _BIZ, "Rice Business", 22, "hybrid", "https://business.rice.edu/rice-mba/hybrid-mba", 137700, "total"),
+    ("Executive MBA", "professional", _BIZ, "Rice Business", 22, "on_campus", "https://business.rice.edu/rice-mba/executive-mba", None, None),
+    ("MBA@Rice (Online MBA)", "professional", _BIZ, "Rice Business", 24, "online", "https://business.rice.edu/rice-mba/online-mba", None, None),
+    ("Master of Accounting (MAcc)", "masters", _BIZ, "Rice Business", 10, "on_campus", "https://business.rice.edu/graduate-programs/master-accounting", None, None),
+    ("Doctor of Philosophy in Business", "phd", _BIZ, "Rice Business", 60, "on_campus", "https://business.rice.edu/graduate-programs/phd-business", None, None),
+    ("Graduate Certificate in Healthcare Management", "certificate", _BIZ, "Rice Business", 10, "on_campus", "https://business.rice.edu/graduate-programs/healthcare/healthcare-certificate", 25000, "total"),
+    # ── George R. Brown School of Engineering and Computing ──
+    ("Doctor of Philosophy in Bioengineering", "phd", _ENG, "Bioengineering", 60, "on_campus", "https://bioengineering.rice.edu/academics/phd-program", None, None),
+    ("Master of Bioengineering (MBE) — Applied Bioengineering", "professional", _ENG, "Bioengineering", 24, "on_campus", "https://bioengineering.rice.edu/academics/masters-programs", None, None),
+    ("Master of Bioengineering (MBE) — Global Medical Innovation", "professional", _ENG, "Bioengineering", 12, "on_campus", "https://bioengineering.rice.edu/academics/masters-programs", None, None),
+    ("Doctor of Philosophy in Chemical and Biomolecular Engineering", "phd", _ENG, "Chemical and Biomolecular Engineering", 60, "on_campus", "https://chbe.rice.edu/academics/graduate-programs/phd-program", None, None),
+    ("Master of Chemical Engineering (MChE)", "professional", _ENG, "Chemical and Biomolecular Engineering", 18, "on_campus", "https://chbe.rice.edu/academics/graduate-programs/mche-program", None, None),
+    ("Doctor of Philosophy in Civil and Environmental Engineering", "phd", _ENG, "Civil and Environmental Engineering", 60, "on_campus", "https://cee.rice.edu/academics/graduate-programs/phd-program", None, None),
+    ("Master of Science in Civil and Environmental Engineering", "masters", _ENG, "Civil and Environmental Engineering", 24, "on_campus", "https://cee.rice.edu/prospective-current-students/graduate-programs/master-science-program", None, None),
+    ("Master of Civil and Environmental Engineering (MCEE)", "professional", _ENG, "Civil and Environmental Engineering", 18, "on_campus", "https://cee.rice.edu/academics/graduate-programs/master-civil-and-environmental-engineering", None, None),
+    ("Doctor of Philosophy in Computer Science", "phd", _ENG, "Computer Science", 60, "on_campus", "https://cs.rice.edu/academics/graduate-programs/phd-program", None, None),
+    ("Master of Science in Computer Science", "masters", _ENG, "Computer Science", 24, "on_campus", f"{_GA}/engineering/computer-science/", None, None),
+    ("Master of Computer Science (MCS)", "professional", _ENG, "Computer Science", 18, "on_campus", "https://cs.rice.edu/academics/graduate-programs/professional-masters", None, None),
+    ("Master of Computer Science (MCS@Rice, Online)", "professional", _ENG, "Computer Science", 18, "online", "https://cs.rice.edu/academics/graduate-programs/online-mcs", 51000, "total"),
+    ("Doctor of Philosophy in Computational Applied Mathematics and Operations Research", "phd", _ENG, "Computational Applied Mathematics and Operations Research", 60, "on_campus", "https://cmor.rice.edu/academics/graduate-programs/phd-program", None, None),
+    ("Master of Computational and Applied Mathematics (MCAAM)", "professional", _ENG, "Computational Applied Mathematics and Operations Research", 18, "on_campus", "https://cmor.rice.edu/academics/graduate-programs/professional-masters-programs", None, None),
+    ("Master of Industrial Engineering (MIE)", "professional", _ENG, "Computational Applied Mathematics and Operations Research", 18, "on_campus", "https://epmp.rice.edu/programs/master-industrial-engineering", None, None),
+    ("Master of Data Science (MDS)", "professional", _ENG, "Computer Science", 18, "on_campus", "https://csweb.rice.edu/academics/graduate-programs/professional-master-data-science", None, None),
+    ("Master of Data Science (MDS@Rice, Online)", "professional", _ENG, "Computer Science", 24, "online", "https://cs.rice.edu/academics/graduate-programs/online-mds", 52700, "total"),
+    ("Doctor of Philosophy in Electrical and Computer Engineering", "phd", _ENG, "Electrical and Computer Engineering", 60, "on_campus", "https://ece.rice.edu/academics/graduate-programs/phd-program", None, None),
+    ("Master of Science in Electrical and Computer Engineering", "masters", _ENG, "Electrical and Computer Engineering", 24, "on_campus", "https://ece.rice.edu/academics/graduate-programs", None, None),
+    ("Master of Electrical and Computer Engineering (MECE)", "professional", _ENG, "Electrical and Computer Engineering", 18, "on_campus", "https://ece.rice.edu/academics/graduate-programs/mee-program", None, None),
+    ("Doctor of Philosophy in Materials Science and NanoEngineering", "phd", _ENG, "Materials Science and NanoEngineering", 60, "on_campus", "https://msne.rice.edu/academics/graduate-programs/phd-program", None, None),
+    ("Master of Materials Science and NanoEngineering (MMSNE)", "professional", _ENG, "Materials Science and NanoEngineering", 18, "on_campus", "https://msne.rice.edu/academics/graduate-programs/mmsne-program", None, None),
+    ("Doctor of Philosophy in Mechanical Engineering", "phd", _ENG, "Mechanical Engineering", 60, "on_campus", "https://mech.rice.edu/academics/graduate-programs/professional-masters-program", None, None),
+    ("Master of Science in Mechanical Engineering", "masters", _ENG, "Mechanical Engineering", 24, "on_campus", f"{_GA}/engineering/mechanical-engineering/", None, None),
+    ("Master of Mechanical Engineering (MME)", "professional", _ENG, "Mechanical Engineering", 18, "on_campus", "https://mech.rice.edu/academics/graduate-programs/professional-masters-program", None, None),
+    ("Doctor of Philosophy in Statistics", "phd", _ENG, "Statistics", 60, "on_campus", "https://statistics.rice.edu/academics/graduate/phd", None, None),
+    ("Master of Arts in Statistics", "masters", _ENG, "Statistics", 24, "on_campus", f"{_GA}/engineering/statistics/", None, None),
+    ("Master of Statistics (MStat)", "professional", _ENG, "Statistics", 18, "on_campus", "https://statistics.rice.edu/academics/graduate/master-statistics", None, None),
+    ("Master of Computational Science and Engineering (MCSE)", "professional", _ENG, "Engineering and Computing", 18, "on_campus", f"{_GA}/engineering/computational-science-engineering/computational-science-engineering-mcse/", None, None),
+    ("Master of Energy Transition and Sustainability (METS)", "professional", _ENG, "Engineering and Natural Sciences", 18, "on_campus", "https://mets.rice.edu", 59100, "total"),
+    ("Master of Engineering Management and Leadership (MEML)", "professional", _ENG, "Engineering and Computing", 18, "on_campus", "https://engineering.rice.edu/academics/graduate-programs/master-engineering-management-and-leadership/oncampus", None, None),
+    ("Master of Engineering Management and Leadership (MEML, Online)", "professional", _ENG, "Engineering and Computing", 18, "online", "https://engineering.rice.edu/academics/graduate-programs/online-meml", None, None),
+    ("Master of Digital Health (MDH)", "professional", _ENG, "Engineering and Computing", 18, "on_campus", f"{_GA}/engineering/digital-health/", None, None),
+    # ── Wiess School of Natural Sciences ──
+    ("Doctor of Philosophy in Biochemistry and Cell Biology", "phd", _NS, "BioSciences", 60, "on_campus", f"{_GA}/natural-sciences/biosciences/", None, None),
+    ("Doctor of Philosophy in Ecology and Evolutionary Biology", "phd", _NS, "BioSciences", 60, "on_campus", f"{_GA}/natural-sciences/biosciences/", None, None),
+    ("Master of Science in Biochemistry and Cell Biology", "masters", _NS, "BioSciences", 24, "on_campus", f"{_GA}/natural-sciences/biosciences/", None, None),
+    ("Master of Science in Ecology and Evolutionary Biology", "masters", _NS, "BioSciences", 24, "on_campus", f"{_GA}/natural-sciences/biosciences/", None, None),
+    ("Doctor of Philosophy in Chemistry", "phd", _NS, "Chemistry", 60, "on_campus", f"{_GA}/natural-sciences/chemistry/", None, None),
+    ("Master of Arts in Chemistry", "masters", _NS, "Chemistry", 24, "on_campus", f"{_GA}/natural-sciences/chemistry/", None, None),
+    ("Doctor of Philosophy in Earth, Environmental and Planetary Sciences", "phd", _NS, "Earth, Environmental and Planetary Sciences", 60, "on_campus", f"{_GA}/natural-sciences/earth-environmental-planetary-sciences/", None, None),
+    ("Master of Science in Earth, Environmental and Planetary Sciences", "masters", _NS, "Earth, Environmental and Planetary Sciences", 24, "on_campus", f"{_GA}/natural-sciences/earth-environmental-planetary-sciences/", None, None),
+    ("Doctor of Philosophy in Physics", "phd", _NS, "Physics and Astronomy", 60, "on_campus", f"{_GA}/natural-sciences/physics-astronomy/", None, None),
+    ("Master of Science in Physics", "masters", _NS, "Physics and Astronomy", 24, "on_campus", "https://physics.rice.edu/ms-degree", None, None),
+    ("Doctor of Philosophy in Applied Physics", "phd", _NS, "Applied Physics", 60, "on_campus", f"{_GA}/interdisciplinary/applied-physics/applied-physics-phd/", None, None),
+    ("Doctor of Philosophy in Mathematics", "phd", _NS, "Mathematics", 60, "on_campus", f"{_GA}/natural-sciences/mathematics/", None, None),
+    ("Master of Arts in Mathematics", "masters", _NS, "Mathematics", 24, "on_campus", f"{_GA}/natural-sciences/mathematics/", None, None),
+    ("Doctor of Philosophy in Systems, Synthetic, and Physical Biology", "phd", _NS, "Systems, Synthetic and Physical Biology", 60, "on_campus", f"{_GA}/engineering/systems-synthetic-physical-biology/", None, None),
+    ("Master of Science Teaching (MST)", "professional", _NS, "Science Teaching", 24, "on_campus", f"{_GA}/natural-sciences/science-teaching/teaching-mst/", None, None),
+    ("Master of Science in Applied Chemical Sciences (MSACS)", "professional", _NS, "Professional Science Master's", 18, "on_campus", "https://profms.rice.edu/programs/applied-chemical-sciences", 59850, "total"),
+    ("Master of Science in Bioscience and Health Policy (MSBHP)", "professional", _NS, "Professional Science Master's", 18, "on_campus", "https://profms.rice.edu/programs/bioscience-and-health-policy", 59850, "total"),
+    ("Master of Science in Energy Geoscience (MSEG)", "professional", _NS, "Professional Science Master's", 18, "on_campus", "https://profms.rice.edu/programs/energy-geoscience", 59850, "total"),
+    ("Master of Science in Environmental Analysis (MSEA)", "professional", _NS, "Professional Science Master's", 18, "on_campus", "https://profms.rice.edu/programs/environmental-analysis", 59850, "total"),
+    ("Master of Science in Space Studies (MSSpS)", "professional", _NS, "Professional Science Master's", 18, "on_campus", "https://profms.rice.edu/programs/space-studies", 59850, "total"),
+    # ── School of Humanities and Arts ──
+    ("Master of Arts in Art History", "masters", _HUM, "Art History", 24, "on_campus", "https://arthistory.rice.edu/graduate-about", None, None),
+    ("Doctor of Philosophy in Art History", "phd", _HUM, "Art History", 60, "on_campus", "https://arthistory.rice.edu/graduate-about", None, None),
+    ("Master of Arts in English", "masters", _HUM, "English", 24, "on_campus", "https://english.rice.edu/what-we-do", None, None),
+    ("Doctor of Philosophy in English", "phd", _HUM, "English", 60, "on_campus", f"{_GA}/humanities/english/english-phd/", None, None),
+    ("Master of Fine Arts in Creative Writing", "masters", _HUM, "English", 24, "on_campus", "https://english.rice.edu/what-we-do", None, None),
+    ("Master of Arts in History", "masters", _HUM, "History", 24, "on_campus", "https://history.rice.edu/graduate-program-overview", None, None),
+    ("Doctor of Philosophy in History", "phd", _HUM, "History", 60, "on_campus", "https://history.rice.edu/graduate-program-overview", None, None),
+    ("Master of Arts in Philosophy", "masters", _HUM, "Philosophy", 24, "on_campus", "https://philosophy.rice.edu/phd-philosophy", None, None),
+    ("Doctor of Philosophy in Philosophy", "phd", _HUM, "Philosophy", 60, "on_campus", "https://philosophy.rice.edu/phd-philosophy", None, None),
+    ("Master of Arts in Religion", "masters", _HUM, "Religion", 24, "on_campus", "https://reli.rice.edu/graduate-studies-religion", None, None),
+    ("Doctor of Philosophy in Religion", "phd", _HUM, "Religion", 60, "on_campus", "https://reli.rice.edu/graduate-studies-religion", None, None),
+    # ── School of Social Sciences ──
+    ("Master of Arts in Anthropology", "masters", _SOC, "Anthropology", 24, "on_campus", "https://anthropology.rice.edu/graduate-studies", None, None),
+    ("Doctor of Philosophy in Anthropology", "phd", _SOC, "Anthropology", 60, "on_campus", "https://anthropology.rice.edu/graduate-studies", None, None),
+    ("Master of Arts in Economics", "masters", _SOC, "Economics", 24, "on_campus", "https://economics.rice.edu/graduate-program", None, None),
+    ("Doctor of Philosophy in Economics", "phd", _SOC, "Economics", 60, "on_campus", "https://economics.rice.edu/graduate-program", None, None),
+    ("Master of Arts in Political Science", "masters", _SOC, "Political Science", 24, "on_campus", "https://politicalscience.rice.edu/graduate-studies", None, None),
+    ("Doctor of Philosophy in Political Science", "phd", _SOC, "Political Science", 60, "on_campus", "https://politicalscience.rice.edu/graduate-studies", None, None),
+    ("Master of Arts in Psychology", "masters", _SOC, "Psychological Sciences", 24, "on_campus", "https://psychology.rice.edu/graduate", None, None),
+    ("Doctor of Philosophy in Psychology", "phd", _SOC, "Psychological Sciences", 60, "on_campus", "https://psychology.rice.edu/graduate", None, None),
+    ("Master of Arts in Sociology", "masters", _SOC, "Sociology", 24, "on_campus", "https://sociology.rice.edu/graduate", None, None),
+    ("Doctor of Philosophy in Sociology", "phd", _SOC, "Sociology", 60, "on_campus", f"{_GA}/social-sciences/sociology/sociology-phd/", None, None),
+    ("Master of Computational Economics (MCEcon)", "professional", _SOC, "Economics", 24, "on_campus", "https://economics.rice.edu/graduate-program/mcecon", None, None),
+    ("Master of Energy Economics (MEEcon)", "professional", _SOC, "Economics", 24, "on_campus", "https://economics.rice.edu/graduate-program/MEECON", None, None),
+    ("Master of Global Affairs (MGA)", "professional", _SOC, "Global Affairs", 24, "on_campus", "https://mga.rice.edu", None, None),
+    ("Master of Human-Computer Interaction and Human Factors (MHCIHF)", "professional", _SOC, "Psychological Sciences", 24, "on_campus", "https://psychology.rice.edu/MHCIHF", None, None),
+    ("Master of Industrial-Organizational Psychology (MIOP)", "professional", _SOC, "Psychological Sciences", 24, "on_campus", "https://psychology.rice.edu/miop", None, None),
+    ("Master of Social Policy Evaluation (MSPE)", "professional", _SOC, "Social Policy Analysis", 12, "on_campus", "https://socialpolicy.rice.edu/", None, None),
+    # ── Rice School of Architecture ──
+    ("Master of Architecture (MArch) — Option 1 (Professional)", "professional", _ARCH, "Architecture", 42, "on_campus", f"{_GA}/architecture/architecture/architecture-march/", 41333, "year"),
+    ("Master of Architecture (MArch) — Option 2 (Post-Professional)", "professional", _ARCH, "Architecture", 30, "on_campus", f"{_GA}/architecture/architecture/architecture-march/", 41333, "year"),
+    ("Master of Science in Architecture (Option 3)", "masters", _ARCH, "Architecture", 18, "on_campus", f"{_GA}/architecture/architecture/architecture-ms/", None, None),
+    # ── The Shepherd School of Music ──
+    ("Master of Music", "masters", _MUS, "Music", 24, "on_campus", f"{_GA}/music/music/", None, None),
+    ("Doctor of Musical Arts (DMA)", "phd", _MUS, "Music", 60, "on_campus", f"{_GA}/music/music/", None, None),
+    ("Artist Diploma", "certificate", _MUS, "Music", 24, "on_campus", "https://music.rice.edu/admissions/shepherd-school-degree-plans", None, None),
+    # ── Susanne M. Glasscock School of Continuing Studies ──
+    ("Master of Liberal Studies (MLS)", "masters", _GLAS, "Continuing Studies", 24, "hybrid", "https://glasscock.rice.edu/degrees-certificates/degrees/master-liberal-studies", None, None),
+    ("Master of Interdisciplinary Studies (MIS)", "masters", _GLAS, "Continuing Studies", 24, "on_campus", "https://glasscock.rice.edu/master-interdisciplinary-studies", None, None),
+    ("Master of Arts in Teaching (MAT)", "masters", _GLAS, "Continuing Studies", 36, "hybrid", "https://glasscock.rice.edu/master-arts-teaching", None, None),
+]
+
+
+def _slugify(name: str) -> str:
+    s = name.lower()
+    s = s.replace("&", " and ")
+    s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+    return s
+
+
+_DELIVERY_PHRASE = {
+    "online": " Delivered fully online.",
+    "hybrid": " Delivered in a hybrid format.",
+}
+_DEGREE_ROLE = {
+    "phd": "a research doctorate",
+    "masters": "a master's program",
+    "professional": "a professional master's program",
+    "certificate": "a graduate certificate",
+}
+
+
+def _school_display(school: str) -> str:
+    """The school name as it reads mid-sentence (drop a leading 'The ')."""
+    return school[4:] if school.startswith("The ") else school
+
+
+# Department labels that are really the school itself or a program family, not a single
+# academic department — for these the description omits the "in the … department" clause.
+_NON_DEPARTMENTS = {
+    "Rice Business",
+    "Engineering and Computing",
+    "Engineering and Natural Sciences",
+    "Professional Science Master's",
+    "Continuing Studies",
+}
+
+
+def _grad_description(name: str, dtype: str, school: str, dept: str, fmt: str) -> str:
+    role = _DEGREE_ROLE.get(dtype, "a graduate program")
+    dept_phrase = ""
+    if dept and dept not in _NON_DEPARTMENTS and dept != school:
+        dept_phrase = f", in the {dept} department"
+    delivery = _DELIVERY_PHRASE.get(fmt, "")
+    return (
+        f"{name} is {role} offered through Rice University's "
+        f"{_school_display(school)}{dept_phrase}.{delivery}"
+    )
+
+
+def _build_catalog() -> list[dict]:
+    out: list[dict] = []
+    seen: set[str] = set()
+
+    def _add(rec: dict) -> None:
+        if rec["slug"] in seen:
+            return
+        seen.add(rec["slug"])
+        out.append(rec)
+
+    for school, majors in _UG_BY_SCHOOL.items():
+        for name, codes in majors:
+            _add({
+                "slug": f"rice-{_slugify(name)}-ug",
+                "school": school,
+                "program_name": name,
+                "degree_type": "bachelors",
+                "department": name,
+                "duration_months": 48,
+                "delivery_format": "in_person",
+                "description": (
+                    f"{name} is an undergraduate {codes} major in Rice University's "
+                    f"{_school_display(school)}."
+                ),
+            })
+    suffix = {"phd": "phd", "professional": "prof", "certificate": "cert", "masters": "ms"}
+    for name, dtype, school, dept, dur, fmt, website, tuition, tkind in _GRAD_EXPLICIT:
+        _add({
+            "slug": f"rice-{_slugify(name)}-{suffix.get(dtype, 'ms')}",
+            "school": school,
+            "program_name": name,
+            "degree_type": dtype,
+            "department": dept,
+            "duration_months": dur,
+            "delivery_format": fmt,
+            "website": website,
+            "tuition": tuition,
+            "tuition_kind": tkind,
+            "description": _grad_description(name, dtype, school, dept, fmt),
+        })
+    return out
+
+
+PROGRAMS: list[dict] = _build_catalog()
+# Normalize residential delivery to the fleet-wide "in_person" value (the catalog tuples use
+# "on_campus" for readability); "online"/"hybrid" are preserved.
+for _p in PROGRAMS:
+    if _p["delivery_format"] == "on_campus":
+        _p["delivery_format"] = "in_person"
+PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
+_WEBSITE_BY_SLUG: dict[str, str] = {p["slug"]: p["website"] for p in PROGRAMS if p.get("website")}
+
+# Per-program keyword overrides (department/program-naming terms). Programs without an entry
+# inherit their school's keywords (still school-scoped).
+_PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
+    "rice-master-of-business-administration-full-time-mba-ms": ["MBA", "Rice Business"],
+    "rice-computer-science-ug": ["computer science", "Rice CS"],
+    "rice-master-of-computer-science-mcs-rice-online-prof": ["online MCS", "computer science"],
+    "rice-master-of-data-science-mds-rice-online-prof": ["data science", "MDS"],
+    "rice-doctor-of-philosophy-in-bioengineering-phd": ["bioengineering", "Rice engineering"],
+    "rice-master-of-architecture-march-option-1-professional-prof": ["architecture", "MArch"],
+    "rice-economics-ug": ["economics", "Rice economics"],
+}
+
+# ── Costs ──────────────────────────────────────────────────────────────────
+# Published 2025-26 Rice undergraduate figures (Rice Bursar / Common Data Set). Used for
+# every residential bachelor's major.
+_TUITION_UG = 66540
+_UNDERGRAD_COA = 87047
+_AVG_NET_PRICE = 13370
+_COST_SRC = (
+    "Rice Bursar 2025-26 + Rice Common Data Set + College Scorecard (UNITID 227757)",
+    "https://bursar.rice.edu/tuition_fee_rates/undergraduate-programs",
+)
+
+
+def _grad_cost(spec: dict) -> dict | None:
+    """A verified per-program graduate cost record, or None when tuition is unverified."""
+    tuition = spec.get("tuition")
+    if tuition is None:
+        return None
+    kind = spec.get("tuition_kind")
+    label = "annual tuition" if kind == "year" else "total program tuition"
+    return {
+        "tuition_usd": tuition,
+        "tuition_basis": kind,
+        "funded": False,
+        "note": (
+            f"Published {label} from the program's official Rice tuition page (2025-26 / "
+            "2026-27). Many professional and online programs are billed per credit hour; "
+            "research master's and doctoral students are typically funded."
+        ),
+        "source": "Rice program tuition page / Rice Bursar",
+        "source_url": spec.get("website") or _SCHOOL_WEBSITE.get(spec["school"]),
+        "year": "2025-26",
+    }
+
+
+# ── Outcomes ──────────────────────────────────────────────────────────────
+# Rice publishes career outcomes institution-wide (no per-program employment/industry
+# split), so every program carries the institution-wide median earnings as its outcomes
+# record and omits the program-level employment_rate / top_industries (in _program_standard).
+_OUTCOMES_CONDITIONS = (
+    "Institution-wide median earnings of federally aided students measured 10 years after "
+    "entry (U.S. Dept. of Education College Scorecard); not a program-specific figure."
+)
+_OUTCOMES_INSTITUTION = {
+    "median_salary": 89718,
+    "scope": "institution",
+    "earnings_timeframe": "median earnings 10 years after entry (institution-wide)",
+    "conditions": _OUTCOMES_CONDITIONS,
+    "source": "U.S. Dept. of Education College Scorecard (Rice, UNITID 227757)",
+    "source_url": "https://collegescorecard.ed.gov/school/?227757-Rice-University",
+}
+
+# ── Admissions requirement sets ────────────────────────────────────────────
+_INTL_VISA = {
+    "types": ["F-1", "J-1"],
+    "note": "International students are issued an I-20 (F-1) or DS-2019 (J-1) after admission.",
+}
+# Undergraduate (first-year) admission via the Common Application / Coalition; Rice is
+# test-recommended (effectively test-optional) for the Fall 2026 cycle.
+_REQ_UNDERGRAD = {
+    "materials": [
+        {"name": "Common Application or Coalition Application", "required": True},
+        {"name": "Rice writing supplement", "required": True},
+        {"name": "Official high school transcript", "required": True},
+        {"name": "School counselor recommendation", "required": True},
+        {"name": "One teacher recommendation (a second is optional)", "required": True},
+        {"name": "$75 nonrefundable application fee; fee waivers available", "required": True},
+        {
+            "name": "Standardized test scores (SAT/ACT)",
+            "required": False,
+            "note": "Rice is test-recommended (effectively test-optional) for the Fall 2026 cycle.",
+        },
+    ],
+    "deadlines": [
+        {"round": "Early Decision I", "date": "November 1"},
+        {"round": "Early Decision II", "date": "January 4"},
+        {"round": "Regular Decision", "date": "January 4"},
+    ],
+    "recommendations": {
+        "required": 2,
+        "note": "A school counselor recommendation plus one teacher recommendation (a second teacher letter is optional).",
+    },
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS", "Duolingo English Test"],
+            "required": False,
+            "note": "English-proficiency proof may be required for non-native speakers.",
+        },
+        "visa": _INTL_VISA,
+        "sources": [
+            {"label": "Rice Admission — First-Year Applicants", "url": "https://admission.rice.edu/apply/first-year-applicants"}
+        ],
+    },
+    "source": "Rice Undergraduate Admission",
+    "source_url": "https://admission.rice.edu/apply/first-year-applicants",
+}
+
+# Rice Business Full-Time MBA admission.
+_REQ_MBA = {
+    "materials": [
+        {"name": "Rice Business online application", "required": True},
+        {"name": "Required essays", "required": True},
+        {"name": "Transcripts from all post-secondary institutions", "required": True},
+        {"name": "One letter of recommendation", "required": True},
+        {"name": "Resume", "required": True},
+        {
+            "name": "GMAT or GRE scores",
+            "required": False,
+            "note": "A test waiver is available for qualified applicants.",
+        },
+        {"name": "Interview (by invitation)", "required": False},
+        {"name": "Application fee", "required": True},
+    ],
+    "deadlines": [
+        {"round": "Round 1", "date": "October"},
+        {"round": "Round 2", "date": "January"},
+        {"round": "Round 3", "date": "March"},
+        {"round": "Round 4", "date": "April"},
+    ],
+    "recommendations": {
+        "required": 1,
+        "note": "One letter of recommendation submitted through the Rice Business application.",
+    },
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS", "PTE"],
+            "required": True,
+            "note": "Required for applicants whose first language is not English (waivers apply).",
+        },
+        "visa": _INTL_VISA,
+        "sources": [
+            {"label": "Rice Business — Full-Time MBA Admissions", "url": "https://business.rice.edu/rice-mba/full-time-mba"}
+        ],
+    },
+    "source": "Jesse H. Jones Graduate School of Business — Full-Time MBA",
+    "source_url": "https://business.rice.edu/rice-mba/full-time-mba",
+}
+
+# Generic Rice graduate / professional admission set. Each school administers its own
+# admissions; the materials below are common, and deadlines vary by program — applicants are
+# pointed to the program's own admissions page via the program website.
+_REQ_GRAD_GENERIC = {
+    "materials": [
+        {"name": "Program online application", "required": True},
+        {"name": "Transcripts from all post-secondary institutions", "required": True},
+        {"name": "Statement of purpose / personal statement", "required": True},
+        {"name": "Résumé / CV", "required": True},
+        {
+            "name": "Letters of recommendation",
+            "required": True,
+            "note": "Most Rice graduate and professional programs require three letters.",
+        },
+        {
+            "name": "Standardized test scores (GRE/GMAT)",
+            "required": False,
+            "note": "Test requirements vary by program (required, optional or not accepted).",
+        },
+    ],
+    "deadlines": [
+        {"round": "Application deadline", "date": "Varies by program — see the program page"},
+    ],
+    "recommendations": {
+        "required": 3,
+        "note": "Most Rice graduate and professional programs require three letters of recommendation.",
+    },
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS"],
+            "required": True,
+            "note": (
+                "Required for applicants whose native language is not English; an exemption "
+                "applies to degrees earned where English is the language of instruction."
+            ),
+        },
+        "visa": _INTL_VISA,
+        "sources": [
+            {
+                "label": "Rice Graduate and Postdoctoral Studies — Admissions",
+                "url": "https://graduate.rice.edu/",
+            }
+        ],
+    },
+    "source": "Rice graduate & professional admissions",
+    "source_url": "https://graduate.rice.edu/",
+}
+
+
+def _requirements_for(spec: dict) -> dict:
+    """Pick the admissions requirement set for a program by slug / degree type."""
+    if spec["slug"] == "rice-master-of-business-administration-full-time-mba-ms":
+        return dict(_REQ_MBA)
+    if spec["degree_type"] == "bachelors":
+        return dict(_REQ_UNDERGRAD)
+    return dict(_REQ_GRAD_GENERIC)
+
+
+# Real Rice campus photo (the Founder's statue with Lovett Hall) — Wikimedia Commons
+# landscape JPG (verified HTTP 200, image/jpeg). Leads the institution hero.
+_CAMPUS_PHOTO = (
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/"
+    "Rice_University_-_Rice_statue_with_Lovett_Hall.JPG/"
+    "1920px-Rice_University_-_Rice_statue_with_Lovett_Hall.JPG"
+)
+
+
+# ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
+def apply(session: Session) -> bool:
+    """Enrich Rice to the canonical profile. Flushes; caller commits.
+
+    Returns False (no-op) when Rice is absent — safe on fresh/CI databases.
+    """
+    inst = session.scalar(select(Institution).where(Institution.name == INSTITUTION_NAME))
+    if inst is None:
+        return False
+    inst.ranking_data = {**(inst.ranking_data or {}), **RANKING_DATA}
+    school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
+    school_outcomes["_standard"] = _standard(_OMITTED_INSTITUTION)
+    inst.school_outcomes = school_outcomes
+    inst.description_text = DESCRIPTION
+    inst.student_body_size = UNDERGRAD_COUNT
+    inst.founded_year = 1912
+    inst.campus_setting = "urban"
+    if not inst.website_url:
+        inst.website_url = "https://www.rice.edu"
+    _gallery = [u for u in (inst.media_gallery or []) if u != _CAMPUS_PHOTO]
+    inst.media_gallery = [_CAMPUS_PHOTO, *_gallery]
+    inst.content_sources = _INSTITUTION_CONTENT
+    session.flush()
+    school_by_name = _apply_schools(session, inst)
+    _apply_programs(session, inst, school_by_name)
+    session.flush()
+    return True
+
+
+def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
+    existing = {
+        s.name: s for s in session.scalars(select(School).where(School.institution_id == inst.id))
+    }
+    canonical_names = {s["name"] for s in SCHOOLS}
+    by_name: dict[str, School] = {}
+    for spec in SCHOOLS:
+        sc = existing.get(spec["name"])
+        if sc is None:
+            sc = School(institution_id=inst.id, name=spec["name"])
+            session.add(sc)
+        sc.description_text = spec["description"]
+        sc.sort_order = spec["sort_order"]
+        sc.catalog_source = "curated"
+        sc.website_url = _SCHOOL_WEBSITE.get(spec["name"])
+        about = _ABOUT_DETAIL.get(spec["name"])
+        if about is not None:
+            about = dict(about)
+            about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
+            sc.about_detail = about
+        # Every school gets a working feed (the verified Rice events RSS + iCalendar, filtered
+        # to school-relevant items by keywords) so its Events & Updates tab populates —
+        # overwriting any stale value on a pre-existing row.
+        sc.content_sources = _school_content(spec["name"])
+        by_name[spec["name"]] = sc
+    # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is FK-safe.
+    for name, sc in existing.items():
+        if name not in canonical_names:
+            session.delete(sc)
+    session.flush()
+    return by_name
+
+
+def _program_has_dependents(session: Session, program_id) -> bool:
+    """True if any FK in the schema references this programs row (delete unsafe)."""
+    fks = session.execute(
+        text("""
+        SELECT tc.table_name, kcu.column_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+          ON tc.constraint_name = kcu.constraint_name
+         AND tc.table_schema = kcu.table_schema
+        JOIN information_schema.constraint_column_usage ccu
+          ON tc.constraint_name = ccu.constraint_name
+         AND tc.table_schema = ccu.table_schema
+        WHERE tc.constraint_type = 'FOREIGN KEY'
+          AND ccu.table_name = 'programs'
+          AND ccu.column_name = 'id'
+          AND tc.table_name <> 'programs'
+        """)
+    ).fetchall()
+    for table, col in fks:
+        hit = session.execute(
+            text(f'SELECT 1 FROM "{table}" WHERE "{col}" = :pid LIMIT 1'),
+            {"pid": program_id},
+        ).first()
+        if hit:
+            return True
+    return False
+
+
+def _program_standard(slug: str) -> dict:
+    """Per-program omitted-field list (verified-unavailable), for _standard."""
+    omitted: list[str] = []
+    spec = _SPEC_BY_SLUG.get(slug, {})
+    # Rice publishes no per-program employment report or industry breakdown (its career
+    # outcomes are reported institution-wide, captured at the institution level), so every
+    # program omits the program-level employment rate and top industries.
+    omitted += [
+        "outcomes_data.employment_rate",
+        "outcomes_data.top_industries",
+    ]
+    # Deeper insight fields are deepened on resume runs; honestly omitted until then.
+    omitted += [
+        "tracks",
+        "class_profile.cohort_size",
+        "faculty_contacts.lead",
+        "external_reviews.summary",
+    ]
+    # Graduate/professional programs without a verified per-program tuition omit tuition_usd
+    # (their cost_data carries a sourced "see the program page" record instead).
+    if spec.get("degree_type") != "bachelors" and spec.get("tuition") is None:
+        omitted.append("cost_data.tuition_usd")
+    # content_sources is set on every program (school feed + program keywords), never omitted.
+    return _standard(omitted)
+
+
+def _apply_programs(session: Session, inst: Institution, school_by_name: dict[str, School]) -> None:
+    existing = {
+        p.slug: p
+        for p in session.scalars(select(Program).where(Program.institution_id == inst.id))
+        if p.slug
+    }
+    canonical = set(PROGRAM_SLUGS)
+    for spec in PROGRAMS:
+        slug = spec["slug"]
+        p = existing.get(slug)
+        if p is None:
+            p = Program(
+                institution_id=inst.id,
+                program_name=spec["program_name"],
+                degree_type=spec["degree_type"],
+                slug=slug,
+            )
+            session.add(p)
+        p.program_name = spec["program_name"]
+        p.degree_type = spec["degree_type"]
+        p.department = spec.get("department")
+        p.duration_months = spec.get("duration_months")
+        p.description_text = spec["description"]
+        p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
+        p.school_id = school_by_name[spec["school"]].id
+        p.is_published = True
+        p.catalog_source = "curated"
+        p.delivery_format = spec.get("delivery_format", "in_person")
+        _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_SCHOOL_FEED_SPEC[spec["school"]]["keywords"])
+        p.content_sources = _program_content(spec["school"], _kw)
+        # Cost precedence: published Rice College rates for bachelor's majors → a verified
+        # per-program graduate tuition → a sourced "see the program page" record (tuition_usd
+        # recorded omitted, never guessed and never set to the undergraduate rate).
+        if spec["degree_type"] == "bachelors":
+            p.tuition = _TUITION_UG
+            p.cost_data = {
+                "tuition_usd": _TUITION_UG,
+                "total_cost_of_attendance": _UNDERGRAD_COA,
+                "avg_net_price": _AVG_NET_PRICE,
+                "breakdown": {
+                    "tuition": _TUITION_UG,
+                    "total_cost_of_attendance": _UNDERGRAD_COA,
+                },
+                "funded": False,
+                "note": (
+                    "Published 2025-26 Rice undergraduate tuition with the billed cost of "
+                    "attendance and the College Scorecard average net price. Rice meets 100% "
+                    "of demonstrated financial need through The Rice Investment, so most "
+                    "families pay far less than the sticker price (average net price ≈ $13,000)."
+                ),
+                "source": _COST_SRC[0],
+                "source_url": _COST_SRC[1],
+                "year": "2025-26",
+            }
+        else:
+            grad_cost = _grad_cost(spec)
+            if grad_cost is not None:
+                p.tuition = grad_cost["tuition_usd"]
+                p.cost_data = grad_cost
+            else:
+                p.tuition = None
+                p.cost_data = {
+                    "note": (
+                        "Tuition for this graduate/professional program varies and is "
+                        "published on the program's official Rice tuition page; a verified "
+                        "per-program figure is not yet recorded here. Research master's and "
+                        "doctoral students are typically funded."
+                    ),
+                    "source": "Rice University — program tuition page",
+                    "source_url": spec.get("website") or _SCHOOL_WEBSITE.get(spec["school"]),
+                }
+        p.application_requirements = _requirements_for(spec)
+        outcomes = dict(_OUTCOMES_INSTITUTION)
+        outcomes["_standard"] = _program_standard(slug)
+        p.outcomes_data = outcomes
+        # Deep fields recorded omitted (deepened on resume runs); always assign so a stale
+        # value on a pre-existing row is cleared.
+        p.tracks = None
+        p.class_profile = None
+        p.faculty_contacts = None
+        p.external_reviews = None
+        p.who_its_for = None
+        p.highlights = None
+        p.application_deadline = (
+            date(2027, 1, 4) if spec["degree_type"] == "bachelors" else None
+        )
+    session.flush()
+    # Reconcile legacy Rice programs (slug not in the canonical set): delete when
+    # unreferenced, otherwise unpublish so the catalog stays clean without breaking any
+    # application/match rows that point at them.
+    for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
+        if (p.slug or "") in canonical:
+            continue
+        if _program_has_dependents(session, p.id):
+            p.is_published = False
+        else:
+            session.delete(p)
+    session.flush()
