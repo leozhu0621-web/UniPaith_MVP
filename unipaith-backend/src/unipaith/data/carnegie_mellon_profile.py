@@ -206,16 +206,30 @@ DESCRIPTION = (
 )
 
 # Channel feeds + official social links (drives the daily Updates/Events ingest).
+# Verified HTTP 200, 2026-06-11:
+#   • CMU News RSS — 40 items, each with a media:content webp cover image:
+#     https://www.cmu.edu/news/feeds/news.rss
+#   • CMU Events iCalendar (BEGIN:VCALENDAR): https://events.cmu.edu/live/ical/events
+# CMU runs a single university-wide news system (no per-college RSS), so every school
+# and program below filters this shared feed by keywords naming the college/department
+# (the MIT/MBAn pattern) — content_sources is never left null, so their Events & Updates
+# tabs populate just like the institution's.
+_CMU_NEWS_RSS = "https://www.cmu.edu/news/feeds/news.rss"
+_CMU_EVENTS_ICS = {"url": "https://events.cmu.edu/live/ical/events", "type": "ical"}
+_SOCIAL_CMU = {
+    "instagram": "https://www.instagram.com/carnegiemellon/",
+    "linkedin": "https://www.linkedin.com/company/carnegie-mellon-university/",
+    "x": "https://x.com/carnegiemellon",
+    "youtube": "https://www.youtube.com/carnegiemellonu",
+    "facebook": "https://www.facebook.com/carnegiemellonu",
+}
+
 _INSTITUTION_CONTENT = {
-    "news_rss": "https://www.cmu.edu/news/feeds/news.rss",
-    "events_feed": {"url": "https://events.cmu.edu/live/ical/events", "type": "ical"},
-    "social": {
-        "instagram": "https://www.instagram.com/carnegiemellon/",
-        "linkedin": "https://www.linkedin.com/company/carnegie-mellon-university/",
-        "x": "https://x.com/carnegiemellon",
-        "youtube": "https://www.youtube.com/carnegiemellonu",
-        "facebook": "https://www.facebook.com/carnegiemellonu",
-    },
+    "news_rss": _CMU_NEWS_RSS,
+    "news_url": "https://www.cmu.edu/news/",
+    "news_curated": True,  # the CMU News feed is all-university news — keep every item
+    "events_feed": dict(_CMU_EVENTS_ICS),
+    "social": dict(_SOCIAL_CMU),
 }
 
 _CAMPUS_PHOTO = (
@@ -313,6 +327,111 @@ _SCHOOL_WEBSITE = {
     _TEPPER: "https://www.cmu.edu/tepper/",
     _HEINZ: "https://www.heinz.cmu.edu/",
 }
+
+# Per-school keyword filters over the shared CMU News feed (OR-matched, case-
+# insensitive, word-boundary by the ingest). Terms name the college/department as it
+# appears in CMU headlines, so each school's Events & Updates tab is populated (never
+# null) without inventing a per-school feed CMU does not publish.
+_SCHOOL_KEYWORDS: dict[str, list[str]] = {
+    _SCS: [
+        "School of Computer Science",
+        "computer science",
+        "robotics",
+        "machine learning",
+        "artificial intelligence",
+        "AI",
+        "language technologies",
+        "software",
+        "algorithm",
+    ],
+    _CIT: [
+        "College of Engineering",
+        "engineering",
+        "engineers",
+        "materials",
+        "electronics",
+        "robotics",
+    ],
+    _DIETRICH: [
+        "Dietrich College",
+        "humanities",
+        "social sciences",
+        "psychology",
+        "neuroscience",
+        "learning",
+        "policy",
+        "history",
+    ],
+    _MCS: [
+        "Mellon College",
+        "physics",
+        "physicist",
+        "chemistry",
+        "biology",
+        "biological",
+        "bacteria",
+        "brain",
+        "neuroscience",
+        "quantum",
+        "mathematics",
+        "mathematical",
+        "universe",
+        "molecular",
+    ],
+    _CFA: [
+        "College of Fine Arts",
+        "School of Drama",
+        "School of Music",
+        "School of Art",
+        "architecture",
+        "design",
+        "artist",
+        "artists",
+        "theatre",
+        "Broadway",
+        "Tony",
+    ],
+    _TEPPER: [
+        "Tepper",
+        "business",
+        "MBA",
+        "management",
+        "economics",
+        "economist",
+        "finance",
+        "entrepreneur",
+        "entrepreneurship",
+    ],
+    _HEINZ: [
+        "Heinz College",
+        "public policy",
+        "information systems",
+        "policy",
+        "data",
+        "analytics",
+    ],
+}
+
+
+def _school_content(name: str) -> dict:
+    """A school's content_sources: the shared, verified CMU feeds filtered to
+    school-relevant items by keywords (the MIT/MBAn pattern)."""
+    return {
+        "news_rss": _CMU_NEWS_RSS,
+        "news_curated": False,
+        "events_feed": dict(_CMU_EVENTS_ICS),
+        "keywords": list(_SCHOOL_KEYWORDS[name]),
+        "social": dict(_SOCIAL_CMU),
+    }
+
+
+def _program_content(school_name: str, keywords: list[str]) -> dict:
+    """A program's content_sources: its school's feed, refined by program keywords
+    (defaults to the school keywords so the program tab is never empty)."""
+    base = _school_content(school_name)
+    base["keywords"] = list(keywords)
+    return base
+
 
 # Rich, sourced About-tab content per school. faculty are verified-current; where
 # a required about field could not be cleanly verified it is listed in _ABOUT_OMITTED.
@@ -1100,7 +1219,6 @@ def _program_standard(spec: dict, has_tuition: bool, has_outcomes: bool) -> dict
         "class_profile.cohort_size",
         "faculty_contacts.lead",
         "external_reviews.summary",
-        "content_sources",
     ]
     return _standard(omitted)
 
@@ -1155,7 +1273,7 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
             about = dict(about)
             about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
             sc.about_detail = about
-        sc.content_sources = None
+        sc.content_sources = _school_content(spec["name"])
         by_name[spec["name"]] = sc
     for name, sc in existing.items():
         if name not in canonical_names:
@@ -1250,7 +1368,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = None
         p.faculty_contacts = None
         p.external_reviews = None
-        p.content_sources = None
+        p.content_sources = _program_content(
+            spec["school"], _SCHOOL_KEYWORDS[spec["school"]]
+        )
         p.application_deadline = _deadline_for(spec)
     session.flush()
     for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
