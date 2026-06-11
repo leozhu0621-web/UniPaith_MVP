@@ -219,6 +219,8 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   const eyebrow = classifyType(inst)
   // Hero campus photo — first raster image in the gallery (logos are SVG → skipped).
   const heroPhoto = (inst.media_gallery ?? []).find(u => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) ?? null
+  // Attribution for the campus hero photo (e.g. "Wikimedia Commons / Author (CC BY-SA 4.0)").
+  const mediaCredit: string | null = ((inst.school_outcomes as any)?.media_credit) || null
   // The header is intentionally chip-free — no founded/ranking/acceptance/enrollment
   // line. Founded lives in Quick facts; ranking in the Rankings section; acceptance
   // in the Overview stat card; enrollment in Quick facts / Diversity.
@@ -272,6 +274,11 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
                 'linear-gradient(to bottom, rgba(10,18,36,0.30) 0%, rgba(10,18,36,0.04) 24%, rgba(10,18,36,0) 44%, hsl(var(--background)) 97%)',
             }}
           />
+          {heroPhoto && mediaCredit && (
+            <p className="absolute top-1.5 right-2.5 text-[10px] text-white/75 drop-shadow-sm" title="Campus photo credit">
+              Photo: {mediaCredit}
+            </p>
+          )}
         </div>
 
         {/* Identity — overlaps onto the cream gradient base; dark text reads cleanly. */}
@@ -770,7 +777,14 @@ function AboutTab({ inst }: { inst: Institution }) {
   if (campusLife.residence_halls != null) campusStats.push({ value: String(campusLife.residence_halls), label: 'Residence halls' })
   if (campusLife.housing) campusStats.push({ value: String(campusLife.housing), label: 'On-campus housing' })
   const labLinks: Record<string, string> = (research.lab_links && typeof research.lab_links === 'object') ? research.lab_links : {}
-  const campusResources: { label: string; url: string }[] = Array.isArray(campusLife.resources) ? campusLife.resources : []
+  // Resources come from the routine as {name,url} and from MIT as {label,url};
+  // accept either (and a bare url) so the "Explore & get involved" links always
+  // show a label instead of an empty arrow button.
+  const campusResources: { label: string; url: string }[] = (Array.isArray(campusLife.resources) ? campusLife.resources : [])
+    .map((r: any) => (typeof r === 'string'
+      ? { label: r, url: r }
+      : { label: r?.label || r?.name || r?.title || r?.url || '', url: r?.url || r?.href || '' }))
+    .filter((r: { label: string; url: string }) => r.label && r.url)
   const basics: any = outcomes.campus_basics || {}
   const facts = [
     inst.type ? { label: 'Type', value: titleCase(inst.type) } : null,
