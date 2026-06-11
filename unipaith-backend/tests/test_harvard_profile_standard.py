@@ -38,7 +38,7 @@ def _school_snapshot(name: str) -> dict:
         "description_text": next(s["description"] for s in h.SCHOOLS if s["name"] == name),
         "website_url": h._SCHOOL_WEBSITE.get(name),
         "about_detail": about,
-        "content_sources": h._HBS_CONTENT if name == h._HBS else None,
+        "content_sources": h._school_content(name),
     }
 
 
@@ -47,10 +47,8 @@ def _program_snapshot(slug: str) -> dict:
     spec = next(p for p in h.PROGRAMS if p["slug"] == slug)
     out_override = h._OUTCOMES_BY_SLUG.get(slug)
     fos = h._FOS_OUTCOMES.get(slug)
-    has_program_outcomes = False
     if out_override is not None:
         outcomes = dict(out_override)
-        has_program_outcomes = True
     elif fos is not None:
         salary, debt, cip = fos
         outcomes = {"median_salary": salary, "scope": "program", "cip": cip, "source": "x"}
@@ -58,10 +56,10 @@ def _program_snapshot(slug: str) -> dict:
         outcomes = dict(h._OUTCOMES_INSTITUTION)
     else:
         outcomes = None
-    if outcomes is not None:
-        outcomes["_standard"] = h._program_standard(
-            slug, spec["degree_type"], has_program_outcomes
-        )
+    if outcomes is None:
+        outcomes = {"_standard": h._program_standard(spec)}
+    else:
+        outcomes["_standard"] = h._program_standard(spec)
     return {
         "program_name": h._FULL_NAME_BY_SLUG.get(slug) or spec["program_name"],
         "degree_type": spec["degree_type"],
@@ -78,7 +76,7 @@ def _program_snapshot(slug: str) -> dict:
         "class_profile": h._CLASS_PROFILE_BY_SLUG.get(slug, {}),
         "faculty_contacts": h._FACULTY_BY_SLUG.get(slug, {}),
         "external_reviews": h._REVIEWS_BY_SLUG.get(slug, {}),
-        "content_sources": h._MBA_CONTENT if slug == "harvard-mba" else None,
+        "content_sources": h._MBA_CONTENT if slug == "harvard-mba" else h._program_content(spec),
     }
 
 
@@ -117,3 +115,22 @@ def test_every_program_maps_to_a_real_school():
     for spec in h.PROGRAMS:
         assert spec["school"] in school_names, f"{spec['slug']} maps to unknown school"
     assert len(h.PROGRAM_SLUGS) == len(set(h.PROGRAM_SLUGS)), "duplicate program slug"
+
+
+def test_every_school_has_a_news_feed_so_updates_never_empty():
+    """The prior bug left 11/12 schools with null content_sources → empty Events &
+    Updates. Guard that every school now routes through a real news feed + keywords."""
+    for school in h.SCHOOLS:
+        cs = h._school_content(school["name"])
+        assert cs.get("news_rss"), f"{school['name']} has no news_rss"
+        assert cs.get("events_feed", {}).get("url"), f"{school['name']} has no events feed"
+        assert cs.get("keywords"), f"{school['name']} has no filter keywords"
+
+
+def test_every_program_has_a_news_feed_so_updates_never_empty():
+    """The prior bug left 62/63 programs with null content_sources. Guard that every
+    program now carries a real news feed filtered by program keywords."""
+    for spec in h.PROGRAMS:
+        cs = h._MBA_CONTENT if spec["slug"] == "harvard-mba" else h._program_content(spec)
+        assert cs.get("news_rss"), f"{spec['slug']} has no news_rss"
+        assert cs.get("keywords"), f"{spec['slug']} has no filter keywords"

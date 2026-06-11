@@ -630,38 +630,110 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
     name: ["about_detail.faculty"] for name in _SCHOOL_WEBSITE if name != _HBS
 }
 
-# ── Channel feeds + official social links ──────────────────────────────────
-# Institution-wide feed (Harvard Gazette) + verified official social handles.
+# ── Per-node content feeds (so EVERY school + program has a populated Events &
+# Updates tab, not just HBS + the MBA) ─────────────────────────────────────────
+# Harvard runs one university-wide news system (the Harvard Gazette) whose RSS is
+# refreshed hourly and carries inline article images, plus a public university
+# events calendar exposed as iCal (Harvard College's Localist calendar). Both are
+# live-verified Harvard-owned feeds (checked 2026-06-11). Each school/program below
+# filters the shared Gazette feed by keywords naming the school / department (the
+# MIT/MBAn pattern) so content_sources is never left null and the tab populates
+# with relevant items. HBS keeps its own verified events calendar + social handles;
+# its legacy Working Knowledge RSS went stale (last item Nov 2024, no images), so
+# its news now routes through the fresh, image-rich Gazette filtered to HBS items.
+_HARVARD_NEWS_RSS = "https://news.harvard.edu/gazette/feed/"
+_HARVARD_EVENTS_ICS = {"url": "https://calendar.college.harvard.edu/calendar.ics", "type": "ical"}
+# Official Harvard social handles (verified at author time).
+_SOCIAL_HARVARD = {
+    "instagram": "https://www.instagram.com/harvard/",
+    "linkedin": "https://www.linkedin.com/school/harvard-university/",
+    "x": "https://x.com/Harvard",
+    "youtube": "https://www.youtube.com/harvard",
+    "facebook": "https://www.facebook.com/Harvard",
+}
+# HBS's own verified events calendar (Localist iCal) + official HBS social handles.
+_HBS_EVENTS_ICS = {"url": "https://events.hbs.edu/calendar.ics", "type": "ical"}
+_SOCIAL_HBS = {
+    "instagram": "https://www.instagram.com/harvardhbs/",
+    "linkedin": "https://www.linkedin.com/school/harvard-business-school/",
+    "x": "https://x.com/HarvardHBS",
+    "youtube": "https://www.youtube.com/user/harvardbusinessschool",
+    "facebook": "https://www.facebook.com/HarvardHBS",
+}
+
+# Institution-wide feeds (no keywords → kept wholesale on the institution page).
 _INSTITUTION_CONTENT: dict = {
-    "news_rss": "https://news.harvard.edu/gazette/feed/",
-    "social": {
-        "instagram": "https://www.instagram.com/harvard/",
-        "linkedin": "https://www.linkedin.com/school/harvard-university/",
-        "x": "https://x.com/Harvard",
-        "youtube": "https://www.youtube.com/harvard",
-        "facebook": "https://www.facebook.com/Harvard",
-    },
+    "news_rss": _HARVARD_NEWS_RSS,
+    "events_feed": dict(_HARVARD_EVENTS_ICS),
+    "social": dict(_SOCIAL_HARVARD),
 }
 
-# Harvard Business School keyword-relevant feeds + official social links (the
-# standard-setting school, mirroring how MIT Sloan carries its own feeds).
-_HBS_CONTENT: dict = {
-    "news_rss": "https://www.library.hbs.edu/working-knowledge/feed",
-    "keywords": ["hbs", "harvard business school"],
-    "social": {
-        "instagram": "https://www.instagram.com/harvardhbs/",
-        "linkedin": "https://www.linkedin.com/school/harvard-business-school/",
-        "x": "https://x.com/HarvardHBS",
-        "youtube": "https://www.youtube.com/user/harvardbusinessschool",
-        "facebook": "https://www.facebook.com/HarvardHBS",
-    },
+# Keywords filter the shared Gazette feed to school-relevant items. They are filter
+# terms (not displayed facts) drawn from each school's official name + disciplines.
+_SCHOOL_KEYWORDS: dict[str, list[str]] = {
+    _FAS: ["Faculty of Arts and Sciences", "Harvard College", "humanities", "social sciences"],
+    _SEAS: ["engineering", "applied sciences", "computer science", "SEAS"],
+    _HBS: ["Harvard Business School", "HBS", "business", "management"],
+    _HLS: ["Harvard Law School", "law", "legal"],
+    _HMS: ["Harvard Medical School", "medicine", "biomedical", "medical"],
+    _HSPH: ["public health", "Chan School", "epidemiology", "global health"],
+    _HKS: ["Kennedy School", "public policy", "government", "HKS"],
+    _HGSE: ["Graduate School of Education", "education", "teaching", "learning"],
+    _GSD: ["Graduate School of Design", "architecture", "urban planning", "design"],
+    _HDS: ["Divinity School", "religion", "theology"],
+    _HSDM: ["Dental Medicine", "dental", "oral health"],
+    _DCE: ["Extension School", "Continuing Education", "HarvardX", "online learning"],
 }
 
-# MBA keyword-relevant feeds (the flagship program), inheriting HBS's socials.
+# Per-program stop-words stripped when deriving a keyword from a program's name, so
+# the keyword that reaches the feed is the distinctive discipline term.
+_KW_STOP = {"and", "of", "the", "in", "for", "with", "master", "doctor", "bachelor", "studies"}
+
+
+def _school_content(name: str) -> dict:
+    """A school's content_sources: the shared, verified Harvard feeds filtered to
+    school-relevant items by keywords (the MIT/MBAn pattern). HBS keeps its own
+    events calendar + socials; every school routes news through the Gazette."""
+    base = {
+        "news_rss": _HARVARD_NEWS_RSS,
+        "news_curated": False,
+        "events_feed": dict(_HARVARD_EVENTS_ICS),
+        "keywords": list(_SCHOOL_KEYWORDS[name]),
+        "social": dict(_SOCIAL_HARVARD),
+    }
+    if name == _HBS:
+        base["events_feed"] = dict(_HBS_EVENTS_ICS)
+        base["social"] = dict(_SOCIAL_HBS)
+    return base
+
+
+def _program_keywords(spec: dict) -> list[str]:
+    """Program keywords = the program's distinctive discipline term(s) (from its
+    name) layered on top of its school's keywords, so the program tab is relevant
+    yet never empty."""
+    school_kw = list(_SCHOOL_KEYWORDS[spec["school"]])
+    name = spec["program_name"].replace("&", " ").replace("/", " ")
+    terms = [w for w in name.split() if len(w) > 3 and w.lower() not in _KW_STOP]
+    program_term = " ".join(terms[:3]).strip()
+    return ([program_term] if program_term else []) + school_kw
+
+
+def _program_content(spec: dict) -> dict:
+    """A program's content_sources: its school's shared feed refined by program
+    keywords (the MBA keeps its own keyword-relevant feed via _MBA_CONTENT)."""
+    base = _school_content(spec["school"])
+    base["keywords"] = _program_keywords(spec)
+    return base
+
+
+# MBA keyword-relevant feed (the flagship program): the Gazette filtered to MBA
+# items + HBS's own events calendar and socials.
 _MBA_CONTENT: dict = {
-    "news_rss": _HBS_CONTENT["news_rss"],
-    "keywords": ["mba", "harvard mba"],
-    "social": _HBS_CONTENT["social"],
+    "news_rss": _HARVARD_NEWS_RSS,
+    "news_curated": False,
+    "events_feed": dict(_HBS_EVENTS_ICS),
+    "keywords": ["MBA", "Harvard MBA", "Harvard Business School", "HBS"],
+    "social": dict(_SOCIAL_HBS),
 }
 
 PROGRAMS: list[dict] = [
@@ -1365,6 +1437,21 @@ _REQ_OPEN = {
     "source_url": "https://extension.harvard.edu/",
 }
 
+# Per-program application deadlines for the professional doctorates whose shared
+# requirement template (_REQ_LAW / _REQ_MED) is degree-agnostic. Each date is the
+# official published deadline for the current cycle (verified 2026-06-11):
+#   • J.D. — regular decision Feb 15 (hls.harvard.edu J.D. Admissions)
+#   • LL.M. — Dec 1 (hls.harvard.edu Graduate Program / LL.M. Admissions)
+#   • M.D. — AMCAS Oct 15, HMS Supplemental Oct 22 (hms.harvard.edu MD Admissions)
+_DEADLINES_BY_SLUG: dict[str, list[dict]] = {
+    "harvard-jd": [{"round": "Regular decision", "date": "February 15"}],
+    "harvard-llm": [{"round": "Application deadline", "date": "December 1"}],
+    "harvard-md": [
+        {"round": "AMCAS application", "date": "October 15"},
+        {"round": "HMS Supplemental application", "date": "October 22"},
+    ],
+}
+
 # ── Outcomes ───────────────────────────────────────────────────────────────
 # Harvard-wide institution outcome, used (explicitly labelled) where the College
 # Scorecard Field-of-Study earnings are privacy-suppressed for a program.
@@ -2063,9 +2150,11 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
             about = dict(about)
             about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
             sc.about_detail = about
-        # HBS is the standard-setting school: its own keyword-relevant feeds + socials.
-        # Always assign so a stale value on a pre-existing row is cleared.
-        sc.content_sources = _HBS_CONTENT if spec["name"] == _HBS else None
+        # Every school carries a populated Events & Updates feed: the Gazette news
+        # feed filtered by school keywords + the university (or, for HBS, the
+        # school's own) events calendar. Always assign so a stale value on a
+        # pre-existing row is cleared. None is never left here (the prior bug).
+        sc.content_sources = _school_content(spec["name"])
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is
     # FK-safe (any orphaned programs are handled by the program reconcile).
@@ -2138,18 +2227,46 @@ def _deadline_for(spec: dict) -> date | None:
     return date(2026, 12, 15)  # graduate baseline (varies by program)
 
 
-def _program_standard(slug: str, degree_type: str, has_program_outcomes: bool) -> dict:
-    """Per-program omitted-field list (verified-unavailable), for _standard."""
+def _resolved_tuition_present(spec: dict) -> bool:
+    """True when the program ends up with a real cost_data.tuition_usd (mirrors the
+    tuition branch in _apply_programs). Funded PhDs carry tuition_usd = 0 (present);
+    the ALM, online, and certificate credentials are priced per-course → null."""
+    slug, dt = spec["slug"], spec["degree_type"]
+    if slug in _TUITION_BY_SLUG:
+        return True
+    if dt == "phd":
+        return True
+    if slug == "harvard-alm" or spec.get("delivery_format") == "online" or dt == "certificate":
+        return False
+    if dt == "bachelors":
+        return True
+    return False  # a master's with no published flat rate → null rather than guessed
+
+
+def _uses_open_admissions(spec: dict) -> bool:
+    """True for open-enrollment / online credentials (the _REQ_OPEN path), which
+    publish no fixed application deadline (rolling) → deadlines honestly omitted."""
+    return spec["degree_type"] == "certificate" or spec.get("delivery_format") == "online"
+
+
+def _outcomes_kind(spec: dict) -> str:
+    """Which outcomes source a program resolves to (mirrors _apply_programs)."""
+    if spec["slug"] in _OUTCOMES_BY_SLUG:
+        return "full"  # program-level employment report (e.g. the MBA)
+    if spec["slug"] in _FOS_OUTCOMES:
+        return "fos"  # College Scorecard Field of Study: median_salary + source only
+    if spec["degree_type"] in ("bachelors", "masters", "phd"):
+        return "institution"  # Harvard-wide proxy: salary + employment_rate + industries
+    return "none"  # non-degree credential: no outcomes published
+
+
+def _program_standard(spec: dict) -> dict:
+    """Per-program omitted-field list (verified-unavailable), for _standard. Derives,
+    purely from the spec, exactly what _apply_programs persists so the stamp matches
+    the row. content_sources is now always set (Gazette/school feed filtered by
+    program keywords) → never omitted."""
+    slug = spec["slug"]
     omitted: list[str] = []
-    if not has_program_outcomes:
-        # Catalog programs rely on College Scorecard FOS / institution medians,
-        # which do not publish a program-level employment rate, top industries, or a
-        # methodology block — those required outcome fields are honestly omitted.
-        omitted += [
-            "outcomes_data.employment_rate",
-            "outcomes_data.top_industries",
-            "outcomes_data.conditions",
-        ]
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
     if slug not in _CLASS_PROFILE_BY_SLUG:
@@ -2158,10 +2275,27 @@ def _program_standard(slug: str, degree_type: str, has_program_outcomes: bool) -
         omitted.append("faculty_contacts.lead")
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
-    if slug != "harvard-mba":
-        # Only the flagship carries its own keyword-relevant feed; catalog programs
-        # surface the institution/school feed rather than a per-program one.
-        omitted.append("content_sources")
+    if not _resolved_tuition_present(spec):
+        omitted += ["cost_data.tuition_usd", "cost_data.source"]
+    if _uses_open_admissions(spec):
+        omitted.append("application_requirements.deadlines")
+    kind = _outcomes_kind(spec)
+    if kind == "fos":
+        omitted += [
+            "outcomes_data.employment_rate",
+            "outcomes_data.top_industries",
+            "outcomes_data.conditions",
+        ]
+    elif kind == "institution":
+        omitted.append("outcomes_data.conditions")
+    elif kind == "none":
+        omitted += [
+            "outcomes_data.median_salary",
+            "outcomes_data.employment_rate",
+            "outcomes_data.top_industries",
+            "outcomes_data.conditions",
+            "outcomes_data.source",
+        ]
     return _standard(omitted)
 
 
@@ -2224,6 +2358,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             else None
         )
         p.application_requirements = _requirements_for(spec)
+        # Inject per-program deadlines for the professional doctorates whose shared
+        # requirement template is degree-agnostic (J.D. / LL.M. / M.D.).
+        deadlines = _DEADLINES_BY_SLUG.get(spec["slug"])
+        if deadlines is not None:
+            p.application_requirements["deadlines"] = deadlines
         # Real per-program outcomes from College Scorecard Field-of-Study where
         # Harvard reports non-suppressed figures; otherwise Harvard-wide
         # institution outcomes, explicitly labelled (degree programs only);
@@ -2232,10 +2371,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # → institution median; non-degree credentials get none.
         out_override = _OUTCOMES_BY_SLUG.get(spec["slug"])
         fos = _FOS_OUTCOMES.get(spec["slug"])
-        has_program_outcomes = False
         if out_override is not None:
             outcomes = dict(out_override)
-            has_program_outcomes = True
         elif fos is not None:
             salary, debt, cip = fos
             outcomes = {
@@ -2251,10 +2388,13 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             outcomes = dict(_OUTCOMES_INSTITUTION)
         else:
             outcomes = None
-        if outcomes is not None:
-            outcomes["_standard"] = _program_standard(
-                spec["slug"], spec["degree_type"], has_program_outcomes
-            )
+        # Stamp every program with its _standard (version + honest omitted list).
+        # outcomes_data is the carrier; non-degree credentials get a bare holder so
+        # they are never left un-stamped (the prior bug for the certificates).
+        if outcomes is None:
+            outcomes = {"_standard": _program_standard(spec)}
+        else:
+            outcomes["_standard"] = _program_standard(spec)
         p.outcomes_data = outcomes
         # Audience + highlights: per-program for flagship, else by degree type.
         p.who_its_for = _WHO_BY_SLUG.get(spec["slug"]) or _WHO_BY_TYPE.get(spec["degree_type"])
@@ -2265,7 +2405,13 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(spec["slug"])
         p.faculty_contacts = _FACULTY_BY_SLUG.get(spec["slug"])
         p.external_reviews = _REVIEWS_BY_SLUG.get(spec["slug"])
-        p.content_sources = _MBA_CONTENT if spec["slug"] == "harvard-mba" else None
+        # Every program carries a populated Events & Updates feed: the MBA keeps
+        # its own keyword-relevant feed; the rest filter their school's feed by
+        # program keywords (the MBAn pattern) so none is ever empty (the prior bug).
+        if spec["slug"] == "harvard-mba":
+            p.content_sources = _MBA_CONTENT
+        else:
+            p.content_sources = _program_content(spec)
         p.application_deadline = _deadline_for(spec)
     session.flush()
     # Reconcile legacy Harvard programs (slug not in the canonical set): delete
