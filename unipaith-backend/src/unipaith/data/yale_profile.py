@@ -2339,12 +2339,12 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             outcomes = dict(_OUTCOMES_INSTITUTION)
         outcomes["_standard"] = _program_standard(slug)
         p.outcomes_data = outcomes
-        if spec["degree_type"] == "masters":
-            p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_GRAD_BASELINE
-            p.highlights = _HL_BY_SLUG.get(slug) or _HL_GRAD_BASELINE
-        else:
+        if spec["degree_type"] == "bachelors":
             p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BASELINE
             p.highlights = _HL_BY_SLUG.get(slug) or _HL_BASELINE
+        else:
+            p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_GRAD_BASELINE
+            p.highlights = _HL_BY_SLUG.get(slug) or _HL_GRAD_BASELINE
         # Always assign so a stale value on a pre-existing row is cleared (tracks is
         # recorded as omitted where unverified, and match_service reads program.tracks).
         p.tracks = _TRACKS_BY_SLUG.get(slug)
