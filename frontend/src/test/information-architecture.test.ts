@@ -10,28 +10,32 @@ import { postLoginDestination, roleDefaultPath, resolveNextParam } from '../util
 
 /** Spec/04 compliance — route contract tests. */
 describe('Spec/04 information architecture', () => {
-  it('defines 13 profile tabs per §4.6', () => {
-    expect(PROFILE_TABS_SPEC).toHaveLength(13)
+  it('defines 11 profile tabs (Spec 2026-06-10 §5 — Preparation/Financial moved to My Space)', () => {
+    expect(PROFILE_TABS_SPEC).toHaveLength(11)
     expect(PROFILE_TABS_SPEC[0]).toBe('overview')
-    expect(PROFILE_TABS_SPEC).toContain('preparation')
+    expect(PROFILE_TABS_SPEC).not.toContain('preparation')
+    expect(PROFILE_TABS_SPEC).not.toContain('financial')
     expect(PROFILE_TABS_SPEC).toContain('analytics')
     expect(PROFILE_TABS_SPEC).toContain('data')
   })
 
-  it('maps legacy profile tab aliases', () => {
+  it('maps legacy profile tab aliases out to My Space', () => {
     expect(PROFILE_TAB_ALIASES.essays).toBe('/s/prep?tab=workshops')
-    expect(PROFILE_TAB_ALIASES.recommenders).toContain('tab=preparation')
+    expect(PROFILE_TAB_ALIASES.recommenders).toBe('/s/prep?tab=recommenders')
+    expect(PROFILE_TAB_ALIASES.preparation).toBe('/s/prep?tab=documents')
+    expect(PROFILE_TAB_ALIASES.financial).toBe('/s/applications?tab=costs')
   })
 
   it('normalizes deprecated tab keys', () => {
-    expect(normalizeProfileTab('recommenders')).toBe('preparation')
+    expect(normalizeProfileTab('preparation')).toBe('overview')
     expect(normalizeProfileTab(null)).toBe('overview')
     expect(normalizeProfileTab('academics')).toBe('academics')
   })
 
   it('lists student legacy redirects from §4.4', () => {
     expect(STUDENT_LEGACY_REDIRECTS['/s/discover']).toBe('/s/explore')
-    expect(STUDENT_LEGACY_REDIRECTS['/s/recommendations']).toContain('preparation')
+    expect(STUDENT_LEGACY_REDIRECTS['/s/recommendations']).toBe('/s/prep?tab=recommenders')
+    expect(STUDENT_LEGACY_REDIRECTS['/s/financial-aid']).toBe('/s/applications?tab=costs')
     expect(STUDENT_LEGACY_REDIRECTS['/s/test-scores']).toBe('/s/profile?tab=academics')
   })
 

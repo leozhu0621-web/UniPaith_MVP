@@ -230,10 +230,8 @@ When asked to review or audit code, go directly to the code files. Do NOT set up
 ## Phase E follow-ups (deferred until dual-score / new IA have soaked ≥1 release)
 
 - **Drop `match_results.match_score` and `score_breakdown`** — see migration `bd5c6e3f2a1b`. These are kept for rollback safety and currently dual-written. Safe to drop once: (a) all consumers read `fitness_score` / `confidence_score` directly (currently `SchoolDetailPage` reads legacy), (b) no rollback to pre-Phase-A is anticipated.
-- **Delete the legacy Essays & Resume tab from ProfilePage** — it now redirects to `/s/manage?tab=workshops`. Deletion blocked until no remaining links reference `?tab=essays`.
-- **Delete `unipaith-backend/src/unipaith/services/essay_workshop_service.py` + `resume_workshop_service.py`** — replaced by `workshop_feedback_service.py`. Old endpoints in `api/workshops.py` are deprecated shims; delete after the frontend stops calling them.
-- **Delete `pages/student/EssayWorkshopPage.tsx` + `ResumeWorkshopPage.tsx`** — once no Suspense lazy-import references remain.
 - **Rename `pages/student/DiscoverPage.tsx`** to `DiscoverSearchView.tsx` or similar — the file is the legacy NLP-search engine, misnamed since the rebuild. Used only by `explore/SearchView.tsx`.
+- ~~Essays/Resume shims~~ DONE 2026-06-10 (My Space Ships 1+4): frontend migrated off `/students/me/essays*` + `/resume*`; `api/workshops.py`, `essay_workshop_service.py`, `resume_workshop_service.py`, `schemas/workshop.py` deleted (checklist endpoints kept their paths via `api/checklists.py`); the orphaned `/messages` conversations router (`api/messaging.py` + `schemas/messaging.py`) deleted — student messaging is the inbox; `EssayWorkshopPage`/`ResumeWorkshopPage` were already gone.
 
 ## Infrastructure
 

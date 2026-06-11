@@ -294,7 +294,7 @@ export default function MySpaceHomePage() {
                     title={`Rec letter — ${r.recommender_name}`}
                     sub={r.requested_at ? `Requested ${new Date(r.requested_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'Requested'}
                     trailing={<Badge variant="neutral">waiting</Badge>}
-                    onClick={() => navigate('/s/profile?tab=preparation&section=recommenders')}
+                    onClick={() => navigate('/s/prep?tab=recommenders')}
                   />
                 ))
               )}

@@ -92,3 +92,14 @@ export const getTimeline = () => apiClient.get('/students/me/timeline').then(r =
 
 export const getPreferences = () => apiClient.get('/students/me/preferences').then(r => r.data)
 export const upsertPreferences = (data: any) => apiClient.put('/students/me/preferences', data).then(r => r.data)
+
+// Spec 70 §3 — scholarships this student may qualify for (deterministic, no LLM).
+export interface ScholarshipMatch {
+  scholarship_id: string
+  name: string
+  award_estimate: number
+  reasons: string[]
+  scholarship_type: string
+}
+export const getScholarshipMatches = (limit = 20): Promise<ScholarshipMatch[]> =>
+  apiClient.get('/students/me/scholarships/match', { params: { limit } }).then(r => r.data)

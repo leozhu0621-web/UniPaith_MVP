@@ -1,19 +1,25 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { GraduationCap, NotebookPen } from 'lucide-react'
+import { GraduationCap, NotebookPen, CalendarClock, Mail, FileText } from 'lucide-react'
 
-// My Space › Prep (Spec 2026-06-10 §5) — the preparation room. Ship 2 gathers
-// Workshops + Prompts here (from /s/manage); Ship 3 adds Interviews,
-// Recommenders and Documents. Workshops stay feedback-only by spec.
+// My Space › Prep (Spec 2026-06-10 §5) — the preparation room. Gathers
+// Workshops + Prompts (from /s/manage) and Interviews + Recommenders +
+// Documents (from Profile › Preparation). Workshops stay feedback-only by spec.
 
 const WorkshopsTab = lazy(() => import('../apply/WorkshopsTab'))
 const PromptLibraryTab = lazy(() => import('../apply/promptlibrary/PromptLibraryTab'))
+const InterviewsTab = lazy(() => import('./prep/InterviewsTab'))
+const RecommendersTab = lazy(() => import('./prep/RecommendersTab'))
+const DocumentsTab = lazy(() => import('./prep/DocumentsTab'))
 
-type Tab = 'workshops' | 'prompts'
+type Tab = 'workshops' | 'prompts' | 'interviews' | 'recommenders' | 'documents'
 
 const TABS: { key: Tab; label: string; icon: typeof GraduationCap }[] = [
   { key: 'workshops', label: 'Workshops', icon: GraduationCap },
   { key: 'prompts', label: 'Prompts', icon: NotebookPen },
+  { key: 'interviews', label: 'Interviews', icon: CalendarClock },
+  { key: 'recommenders', label: 'Recommenders', icon: Mail },
+  { key: 'documents', label: 'Documents', icon: FileText },
 ]
 
 export default function PrepPage() {
@@ -89,6 +95,9 @@ export default function PrepPage() {
         <Suspense fallback={<div className="p-6 text-center text-muted-foreground">Loading...</div>}>
           {tab === 'workshops' && <WorkshopsTab />}
           {tab === 'prompts' && <PromptLibraryTab />}
+          {tab === 'interviews' && <InterviewsTab />}
+          {tab === 'recommenders' && <RecommendersTab />}
+          {tab === 'documents' && <DocumentsTab />}
         </Suspense>
       </div>
     </div>

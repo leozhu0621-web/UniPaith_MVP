@@ -1,28 +1,32 @@
 /**
- * Profile → Financial tab (Spec/08 §13).
- * Budget band + funding intent (writes to preferences) + the legacy
- * financial-aid intent surface.
+ * My Space › Applications › Costs & aid (Spec 2026-06-10 §5).
+ * Moved from Profile › Financial: budget band + funding intent (writes to
+ * preferences) + the cost-comparison surface — plus the scholarship matcher
+ * (Spec 70 §3), surfaced in the UI for the first time.
  */
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Award } from 'lucide-react'
 
-import Button from '../../../components/ui/Button'
-import Card from '../../../components/ui/Card'
-import Input from '../../../components/ui/Input'
-import QueryError from '../../../components/ui/QueryError'
-import Select from '../../../components/ui/Select'
-import { SkeletonCard } from '../../../components/ui/Skeleton'
-import { getPreferences, upsertPreferences } from '../../../api/students'
-import { showToast } from '../../../stores/toast-store'
-import { formatCurrency } from '../../../utils/format'
-import { FUNDING_OPTIONS } from '../../../utils/constants'
-import { SectionHeader } from './shared'
+import Button from '../../../../components/ui/Button'
+import Card from '../../../../components/ui/Card'
+import Badge from '../../../../components/ui/Badge'
+import Input from '../../../../components/ui/Input'
+import QueryError from '../../../../components/ui/QueryError'
+import Select from '../../../../components/ui/Select'
+import { SkeletonCard } from '../../../../components/ui/Skeleton'
+import { getPreferences, upsertPreferences, getScholarshipMatches } from '../../../../api/students'
+import { showToast } from '../../../../stores/toast-store'
+import { formatCurrency } from '../../../../utils/format'
+import { FUNDING_OPTIONS } from '../../../../utils/constants'
+import { SectionHeader } from '../../profile/shared'
 
-const FinancialAidPage = lazy(() => import('../FinancialAidPage'))
+const FinancialAidPage = lazy(() => import('../../FinancialAidPage'))
 
-export default function FinancialTab() {
+export default function CostsAidTab() {
   const qc = useQueryClient()
   const { data: prefs, isLoading, isError, refetch } = useQuery({ queryKey: ['preferences'], queryFn: getPreferences, retry: false })
+  const scholarships = useQuery({ queryKey: ['scholarship-matches'], queryFn: () => getScholarshipMatches(10), retry: false })
   const [form, setForm] = useState<any>(null)
 
   useEffect(() => {
@@ -75,6 +79,8 @@ export default function FinancialTab() {
         ? { label: 'Self-funded', tone: 'text-success' }
         : { label: 'Mixed funding', tone: 'text-secondary' }
 
+  const matchList = Array.isArray(scholarships.data) ? scholarships.data : []
+
   return (
     <div className="space-y-8">
       <section>
@@ -100,6 +106,40 @@ export default function FinancialTab() {
             <Button onClick={save} loading={saveMut.isPending}>Save</Button>
           </div>
         </Card>
+      </section>
+
+      {/* Scholarship matcher (Spec 70 §3) — deterministic, profile-driven. */}
+      <section>
+        <SectionHeader title="Scholarships you may qualify for" description="Matched from your profile — a verified mismatch excludes an award, an unknown field never does." />
+        {scholarships.isLoading ? (
+          <SkeletonCard />
+        ) : scholarships.isError ? (
+          <QueryError variant="inline" detail="We couldn't load scholarship matches." onRetry={() => scholarships.refetch()} />
+        ) : matchList.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No matches yet — completing your profile (academics, identity, goals) unlocks more awards.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {matchList.map(s => (
+              <div key={s.scholarship_id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2.5">
+                <div className="min-w-0 flex items-start gap-2.5">
+                  <Award size={15} className="mt-0.5 shrink-0 text-secondary" />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{s.name}</p>
+                    {s.reasons.length > 0 && (
+                      <p className="truncate text-xs text-muted-foreground">{s.reasons.join(' · ')}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Badge variant="neutral">{s.scholarship_type.replace(/_/g, ' ')}</Badge>
+                  <span className="text-sm font-semibold text-foreground">{formatCurrency(s.award_estimate)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section>

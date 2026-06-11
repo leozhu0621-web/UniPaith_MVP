@@ -29,6 +29,9 @@ const ROUTE_TITLES: Record<string, string> = {
 const PREP_TABS: Record<string, string> = {
   workshops: 'Workshops',
   prompts: 'Prompt Library',
+  interviews: 'Interviews',
+  recommenders: 'Recommenders',
+  documents: 'Documents',
 }
 
 function titleFor(pathname: string, tab: string | null): string | undefined {
