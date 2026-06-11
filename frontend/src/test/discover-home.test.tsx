@@ -63,12 +63,14 @@ describe('DiscoverHomePage — Uni guided workspace', () => {
     expect(screen.getByText('Your matches')).toBeInTheDocument()
   })
 
-  it('shows the living profile in the rail', async () => {
+  it('shows the living profile (rail on lg, its own column on xl)', async () => {
     renderHome()
-    // Await the living-profile query, then the static section labels are present.
-    expect(await screen.findByText(/You light up around hands-on problems/)).toBeInTheDocument()
-    expect(screen.getByText('What Uni knows about you')).toBeInTheDocument()
-    expect(screen.getByText('What lights you up')).toBeInTheDocument()
+    // The living profile renders in both responsive slots — inside the rail (shown
+    // at lg, xl:hidden) and as its own right column (hidden xl:block). jsdom has no
+    // breakpoints, so both copies are in the DOM; assert it's present at least once.
+    expect((await screen.findAllByText(/You light up around hands-on problems/)).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('What Uni knows about you').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('What lights you up').length).toBeGreaterThan(0)
   })
 
   it('drops the old track/layer/strategy chrome', () => {
