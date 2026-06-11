@@ -48,7 +48,7 @@ def _program_snapshot(slug: str) -> dict:
         "class_profile": ct._CLASS_PROFILE_BY_SLUG.get(slug, {}),
         "faculty_contacts": ct._FACULTY_BY_SLUG.get(slug, {}),
         "external_reviews": ct._REVIEWS_BY_SLUG.get(slug, {}),
-        "content_sources": ct._CS_CONTENT if slug == "caltech-cs-bs" else None,
+        "content_sources": ct._CS_CONTENT if slug == "caltech-cs-bs" else ct._program_content(spec),
     }
 
 
@@ -58,7 +58,7 @@ def _school_snapshot(name: str) -> dict:
         "description_text": next(s["description"] for s in ct.SCHOOLS if s["name"] == name),
         "website_url": ct._SCHOOL_WEBSITE.get(name),
         "about_detail": ct._ABOUT_DETAIL.get(name),
-        "content_sources": None,
+        "content_sources": ct._school_content(name),
     }
 
 
@@ -101,7 +101,8 @@ def test_caltech_cs_flagship_has_full_insights_and_tracks():
     assert snap["class_profile"].get("cohort_size")
     assert snap["faculty_contacts"].get("lead")
     assert snap["external_reviews"].get("summary")
-    std = ct._program_standard("caltech-cs-bs", "bachelors", True)
+    spec = ct._SPEC_BY_SLUG["caltech-cs-bs"]
+    std = ct._program_standard("caltech-cs-bs", spec, has_program_outcomes=True)
     for path in res.missing_fields:
         assert path in std["omitted"], f"Unrecorded flagship gap: {path}"
 

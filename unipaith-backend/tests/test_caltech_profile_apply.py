@@ -168,11 +168,12 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert phd.tuition == 0
     assert phd.cost_data and phd.cost_data["funded"] is True
     assert phd.degree_type == "phd"
-    # Stale tracks + feeds on the pre-existing canonical Physics BS row were cleared
+    # Stale tracks on the pre-existing canonical Physics BS row were cleared
     # (it is not the flagship and has no verified tracks), matching its _standard.
     phys_bs = next(p for p in progs if p.slug == "caltech-physics-bs")
     assert phys_bs.tracks is None
-    assert phys_bs.content_sources is None
+    assert phys_bs.content_sources and phys_bs.content_sources.get("news_rss")
+    assert phys_bs.content_sources.get("keywords")
     # Undergraduate programs carry Caltech's published tuition.
     assert phys_bs.tuition == 65898
     # A catalog program with no FOS earnings falls back to the institution median.
