@@ -63,7 +63,11 @@ def _program_snapshot(slug: str) -> dict:
         "class_profile": cu._CLASS_PROFILE_BY_SLUG.get(slug, {}),
         "faculty_contacts": cu._FACULTY_BY_SLUG.get(slug, {}),
         "external_reviews": cu._REVIEWS_BY_SLUG.get(slug, {}),
-        "content_sources": cu._CS_CONTENT if slug == "cornell-computer-science-bs" else None,
+        "content_sources": (
+            cu._CS_CONTENT
+            if slug == "cornell-computer-science-bs"
+            else cu._program_content(spec)
+        ),
     }
 
 
@@ -73,7 +77,7 @@ def _school_snapshot(name: str) -> dict:
         "description_text": next(s["description"] for s in cu.SCHOOLS if s["name"] == name),
         "website_url": cu._SCHOOL_WEBSITE.get(name),
         "about_detail": cu._ABOUT_DETAIL.get(name),
-        "content_sources": None,
+        "content_sources": cu._school_content(name),
     }
 
 
@@ -151,10 +155,26 @@ def test_structure_integrity():
         assert cu._ABOUT_DETAIL.get(school["name"]), f"{school['name']} missing about_detail"
     # Slugs are unique.
     assert len(cu.PROGRAM_SLUGS) == len(set(cu.PROGRAM_SLUGS)), "duplicate program slug"
+    # Full catalog breadth: College Scorecard Field-of-Study list for UNITID 190415.
+    assert len(cu.PROGRAMS) >= 250, "Cornell catalog should cover the federal program list"
     # Every program sets a delivery_format, and at least one online + one hybrid exist.
     fmts = {p.get("delivery_format") for p in cu.PROGRAMS}
     assert None not in fmts
     assert "online" in fmts and "hybrid" in fmts and "in_person" in fmts
+
+
+def test_every_node_has_content_sources():
+    assert cu._INSTITUTION_CONTENT.get("news_rss")
+    for school in cu.SCHOOLS:
+        cs = cu._school_content(school["name"])
+        assert cs.get("news_rss") and cs.get("events_feed") and cs.get("keywords"), school["name"]
+    for spec in cu.PROGRAMS:
+        cs = (
+            cu._CS_CONTENT
+            if spec["slug"] == "cornell-computer-science-bs"
+            else cu._program_content(spec)
+        )
+        assert cs.get("news_rss") and cs.get("keywords"), spec["slug"]
 
 
 def test_every_node_has_standard_stamp():
