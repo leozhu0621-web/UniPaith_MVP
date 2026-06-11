@@ -14,6 +14,7 @@ import Card from '../../components/ui/Card'
 import Sheet from '../../components/ui/Sheet'
 import { useAuthStore } from '../../stores/auth-store'
 import JourneyRail from './discover/JourneyRail'
+import LivingProfilePanel from './discover/LivingProfilePanel'
 import UniConversation from './discover/UniConversation'
 import { useJourneyState, type StageKey } from './discover/useJourneyState'
 
@@ -68,7 +69,7 @@ export default function DiscoverHomePage() {
   }
 
   return (
-    <div className="p-4 lg:p-6 mx-auto max-w-6xl w-full">
+    <div className="p-4 lg:p-6 w-full">
       {/* Mobile journey bar — opens the rail as a bottom sheet. */}
       <button
         type="button"
@@ -85,21 +86,30 @@ export default function DiscoverHomePage() {
         <ChevronDown size={16} className="text-muted-foreground shrink-0" />
       </button>
 
-      <div className="flex gap-6">
-        <aside className="hidden lg:block w-64 shrink-0">
+      <div className="flex gap-6 xl:gap-8">
+        <aside className="hidden lg:block w-60 shrink-0">
           <JourneyRail {...railProps} />
         </aside>
 
-        <div className="flex-1 min-w-0">
-          <Card className="p-4 sm:p-5">
-            <UniConversation
-              guided
-              profileOpen={profileOpen}
-              onProfileOpenChange={setProfileOpen}
-              onReady={onReady}
-            />
-          </Card>
+        <div className="flex min-w-0 flex-1 justify-center">
+          <div className="w-full max-w-[720px]">
+            <Card className="p-4 sm:p-5">
+              <UniConversation
+                guided
+                profileOpen={profileOpen}
+                onProfileOpenChange={setProfileOpen}
+                onReady={onReady}
+              />
+            </Card>
+          </div>
         </div>
+
+        {/* Living profile gets its own column at xl+ (it's xl:hidden in the rail,
+            so it appears in exactly one place per breakpoint). */}
+        <aside className="hidden xl:block w-72 shrink-0">
+          <p className="text-eyebrow text-muted-foreground mb-3">What Uni knows about you</p>
+          <LivingProfilePanel onAsk={railProps.onAsk} />
+        </aside>
       </div>
 
       <Sheet

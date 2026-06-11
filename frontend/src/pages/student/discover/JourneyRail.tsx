@@ -89,7 +89,9 @@ export default function JourneyRail({
         </button>
       </div>
 
-      <div className="border-t border-border pt-4">
+      {/* Living profile shows in the rail on mobile (sheet) + lg; at xl+ it moves
+          to its own right column in DiscoverHomePage, so hide it here then. */}
+      <div className="border-t border-border pt-4 xl:hidden">
         <p className="text-eyebrow text-muted-foreground mb-3">What Uni knows about you</p>
         <LivingProfilePanel onAsk={onAsk} />
       </div>
