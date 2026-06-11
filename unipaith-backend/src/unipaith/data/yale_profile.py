@@ -303,6 +303,11 @@ _DIVINITY = "Yale Divinity School"
 _ARCH = "Yale School of Architecture"
 _ART = "Yale School of Art"
 _MUSIC = "Yale School of Music"
+_GSAS = "Yale Graduate School of Arts and Sciences"
+_LAW = "Yale Law School"
+_DRAMA = "David Geffen School of Drama at Yale"
+_JACKSON = "Jackson School of Global Affairs"
+_SEAS = "Yale School of Engineering & Applied Science"
 
 SCHOOLS: list[dict] = [
     {
@@ -406,6 +411,57 @@ SCHOOLS: list[dict] = [
             "conservatory-level schools embedded in a research university."
         ),
     },
+    {
+        "name": _GSAS,
+        "sort_order": 11,
+        "description": (
+            "The Yale Graduate School of Arts and Sciences administers Yale's Ph.D. and "
+            "terminal master's degrees across the Faculty of Arts and Sciences and allied "
+            "departments — more than seventy programs of study spanning the humanities, "
+            "social sciences, natural sciences and engineering."
+        ),
+    },
+    {
+        "name": _LAW,
+        "sort_order": 12,
+        "description": (
+            "Yale Law School, whose origins trace to the early 1800s, is among the most "
+            "selective law schools in the United States. It awards the J.D., the LL.M., the "
+            "M.S.L. for non-lawyers, and the doctoral J.S.D. and Ph.D. in Law, and is known "
+            "for its small classes and scholarly orientation."
+        ),
+    },
+    {
+        "name": _SEAS,
+        "sort_order": 13,
+        "description": (
+            "Yale's School of Engineering & Applied Science traces to one of the first "
+            "engineering professorships in the United States (1852) and was formally "
+            "established as a school in 1919. Across seven departments it awards the B.S. "
+            "(through Yale College) and, through the Graduate School, the M.S. and Ph.D. in "
+            "engineering and applied science."
+        ),
+    },
+    {
+        "name": _JACKSON,
+        "sort_order": 14,
+        "description": (
+            "The Jackson School of Global Affairs, which opened in 2022 as Yale's newest "
+            "professional school, educates leaders in global affairs. It awards the Master "
+            "of Public Policy in Global Affairs and the mid-career Master of Advanced Study, "
+            "and anchors Yale College's undergraduate Global Affairs major."
+        ),
+    },
+    {
+        "name": _DRAMA,
+        "sort_order": 15,
+        "description": (
+            "The David Geffen School of Drama at Yale, founded as a Department of Drama in "
+            "1924 and tuition-free since 2021, is one of the foremost professional theater "
+            "training conservatories. It awards the M.F.A., the doctoral D.F.A. and a "
+            "Certificate in Drama, and is affiliated with the Yale Repertory Theatre."
+        ),
+    },
 ]
 
 # Each school's official website (verified to resolve at author time).
@@ -420,6 +476,11 @@ _SCHOOL_WEBSITE: dict[str, str] = {
     _ARCH: "https://www.architecture.yale.edu/",
     _ART: "https://www.art.yale.edu/",
     _MUSIC: "https://music.yale.edu/",
+    _GSAS: "https://gsas.yale.edu/",
+    _LAW: "https://law.yale.edu/",
+    _SEAS: "https://engineering.yale.edu/",
+    _JACKSON: "https://jackson.yale.edu/",
+    _DRAMA: "https://www.drama.yale.edu/",
 }
 
 # Rich, sourced About-tab content per school. Deans + titles are quoted from each
@@ -577,6 +638,82 @@ _ABOUT_DETAIL: dict[str, dict] = {
             "url": "https://music.yale.edu/about",
         },
     },
+    _GSAS: {
+        # Founding year is omitted: GSAS's own about/history pages do not state a single
+        # founding year, so it is recorded in _ABOUT_OMITTED rather than guessed.
+        "leadership": (
+            "Lynn Cooley — Dean of the Yale Graduate School of Arts and Sciences and "
+            "C.N.H. Long Professor of Genetics"
+        ),
+        "research_centers": [
+            "Interdepartmental Neuroscience Program",
+        ],
+        "source": {
+            "label": "Yale Graduate School of Arts and Sciences — Dean's Office",
+            "url": "https://gsas.yale.edu/about/deans-welcome-message",
+        },
+    },
+    _LAW: {
+        "founded": 1824,
+        "leadership": (
+            "Cristina Rodríguez — Sol and Lillian Goldman Dean and Professor of Law"
+        ),
+        "research_centers": [
+            "The Information Society Project",
+            "Paul Tsai China Center",
+        ],
+        "source": {
+            "label": "Yale Law School — Office of the Dean",
+            "url": "https://law.yale.edu/about-yale-law-school/office-dean",
+        },
+    },
+    _SEAS: {
+        "founded": 1852,
+        "leadership": (
+            "Jeffrey F. Brock — Dean of Yale Engineering and William S. Massey Professor "
+            "of Mathematics"
+        ),
+        # Named school-owned research centers could not be verified on the SEAS pages;
+        # research_centers is recorded in _ABOUT_OMITTED rather than guessed (the seven
+        # academic departments are named in the school description instead).
+        "source": {
+            "label": "Yale School of Engineering & Applied Science — About",
+            "url": "https://engineering.yale.edu/about",
+        },
+    },
+    _JACKSON: {
+        "founded": 2022,
+        "leadership": (
+            "James A. Levinsohn — Dean of the Jackson School of Global Affairs and "
+            "Charles Goodyear Professor of Global Affairs"
+        ),
+        "research_centers": [
+            "Johnson Center for the Study of American Diplomacy",
+            "Schmidt Program on Artificial Intelligence, Emerging Technologies, and "
+            "National Power",
+            "Leitner Program on Effective Democratic Governance",
+        ],
+        "source": {
+            "label": "Jackson School of Global Affairs — Centers & Initiatives",
+            "url": "https://jackson.yale.edu/centers-initiatives/",
+        },
+    },
+    _DRAMA: {
+        "founded": 1924,
+        "leadership": (
+            "James Bundy — Elizabeth Parker Ware Dean of the David Geffen School of Drama "
+            "at Yale and Artistic Director of Yale Repertory Theatre"
+        ),
+        "research_centers": [
+            "Yale Repertory Theatre",
+            "Binger Center for New Theatre",
+            "Yale Institute for Music Theatre",
+        ],
+        "source": {
+            "label": "David Geffen School of Drama at Yale — About",
+            "url": "https://www.drama.yale.edu/about-us/",
+        },
+    },
 }
 
 # About-detail fields omitted per school (verified-unavailable), recorded in each
@@ -595,27 +732,205 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
     _ARCH: list(_FACULTY_OMIT),
     _ART: list(_FACULTY_OMIT),
     _MUSIC: list(_FACULTY_OMIT),
+    # GSAS's own pages state no single founding year; omit founded rather than guess.
+    _GSAS: [*_FACULTY_OMIT, "about_detail.founded"],
+    _LAW: list(_FACULTY_OMIT),
+    # SEAS named research centers were not verifiable on its pages; omit rather than guess.
+    _SEAS: [*_FACULTY_OMIT, "about_detail.research_centers"],
+    _JACKSON: list(_FACULTY_OMIT),
+    _DRAMA: list(_FACULTY_OMIT),
 }
 
 # ── Channel feeds + official social links ──────────────────────────────────
-# Institution-wide socials (official Yale handles) + news page.
-_INSTITUTION_CONTENT: dict = {
-    "news_url": "https://news.yale.edu",
-    "social": {
-        "instagram": "https://www.instagram.com/yale/",
-        "linkedin": "https://www.linkedin.com/school/yale-university/",
-        "x": "https://x.com/yale",
-        "youtube": "https://www.youtube.com/user/YaleUniversity",
-        "facebook": "https://www.facebook.com/YaleUniversity",
+# The daily content-ingest reads ``news_rss`` (an RSS feed), an optional ``events_feed``
+# (an iCalendar URL), ``keywords`` (word-boundary relevance filter) and ``news_curated``
+# (keep every item, no keyword filter) from each node's content_sources. Without a real
+# ``news_rss`` a node's Events & Updates tab is empty — so every school and program below
+# carries one. Feeds verified 2026-06-11:
+#   • Yale News RSS index: https://news.yale.edu/rss-feeds (all-topics + per-topic feeds)
+#   • Yale events iCalendar: https://events.yale.edu/calendar.ics (BEGIN:VCALENDAR, VEVENTs)
+_YALE_NEWS_RSS = "https://news.yale.edu/news-rss"  # all-topics feed
+_YALE_EVENTS_ICS = {"url": "https://events.yale.edu/calendar.ics", "type": "ical"}
+
+
+def _news_topic(topic: str) -> str:
+    """A verified Yale News per-topic RSS feed (news.yale.edu/topics/<topic>/rss)."""
+    return f"https://news.yale.edu/topics/{topic}/rss"
+
+
+# Official social handles, verified per channel 2026-06-11 (school footers + the Yale
+# social-media directory at yale.edu/social-media). Only handles confirmed to exist are
+# listed; a school that does not run a given channel simply omits that key (never guessed).
+_SOCIAL_YALE = {
+    "instagram": "https://www.instagram.com/yale/",
+    "linkedin": "https://www.linkedin.com/school/yale-university/",
+    "x": "https://x.com/yale",
+    "youtube": "https://www.youtube.com/user/YaleUniversity",
+    "facebook": "https://www.facebook.com/YaleUniversity",
+}
+_SOCIAL_BY_SCHOOL: dict[str, dict] = {
+    _COLLEGE: _SOCIAL_YALE,  # Yale College uses the university @yale channels
+    _SOM: {
+        "instagram": "https://www.instagram.com/yalesom/",
+        "linkedin": "https://www.linkedin.com/school/yale-school-of-management/",
+        "youtube": "https://www.youtube.com/yalesom",
+        "facebook": "https://www.facebook.com/yalesom",
+    },
+    _YSE: {
+        "instagram": "https://www.instagram.com/EnvironmentYale/",
+        "linkedin": "https://www.linkedin.com/school/5527901/",
+        "youtube": "https://www.youtube.com/channel/UCMLSDzZ9VCUUFUOT3lD815A",
+        "facebook": "https://www.facebook.com/YaleEnvironment",
+    },
+    _YSPH: {
+        "instagram": "https://www.instagram.com/yalesph/",
+        "linkedin": "https://www.linkedin.com/school/yale-school-of-public-health/",
+        "youtube": "https://www.youtube.com/user/YSPH1",
+        "facebook": "https://www.facebook.com/YaleSPH",
+    },
+    _MED: {
+        "instagram": "https://www.instagram.com/yaleschoolofmed/",
+        "linkedin": "https://www.linkedin.com/school/yale-university-school-of-medicine/",
+        "x": "https://twitter.com/yalemed",
+        "facebook": "https://www.facebook.com/YaleSchoolOfMedicine",
+    },
+    _NURSING: {
+        "instagram": "https://www.instagram.com/yalenursing/",
+        "linkedin": "https://www.linkedin.com/school/yale-school-of-nursing/",
+        "x": "https://twitter.com/YaleNursing",
+        "youtube": "https://www.youtube.com/@yaleschoolofnursing4248",
+        "facebook": "https://www.facebook.com/yalenurse",
+    },
+    _DIVINITY: {
+        "instagram": "https://www.instagram.com/yaledivinityschool/",
+        "linkedin": "https://www.linkedin.com/school/2723646/",
+        "youtube": "https://www.youtube.com/user/YaleDivinitySchool",
+        "facebook": "https://www.facebook.com/yaledivinityschool",
+    },
+    _ARCH: {
+        "instagram": "https://www.instagram.com/yalearchitecture/",
+        "facebook": "https://www.facebook.com/yalearchitecture",
+    },
+    _ART: {
+        "instagram": "https://www.instagram.com/yaleschoolofart/",
+        "facebook": "https://www.facebook.com/YaleSchoolofArt/",
+    },
+    _MUSIC: {
+        "instagram": "https://www.instagram.com/yale.music/",
+        "youtube": "https://www.youtube.com/c/YaleSchoolofMusicOfficial",
+        "facebook": "https://www.facebook.com/yalemusic/",
+    },
+    _GSAS: {
+        "instagram": "https://www.instagram.com/yalegsas/",
+        "linkedin": "https://www.linkedin.com/company/yale-graduate-school-of-arts-sciences",
+        "x": "https://x.com/yalegsas",
+        "facebook": "https://www.facebook.com/YaleGSAS/",
+    },
+    _LAW: {
+        "instagram": "https://www.instagram.com/yalelawschool/",
+        "linkedin": "https://www.linkedin.com/school/yale-law-school/",
+        "x": "https://x.com/YaleLawSch",
+        "youtube": "https://www.youtube.com/user/YaleLawSchool",
+        "facebook": "https://www.facebook.com/YaleLawSchool",
+    },
+    _SEAS: {
+        "instagram": "https://www.instagram.com/yaleengineering/",
+        "linkedin": "https://www.linkedin.com/school/yaleengineering/",
+        "x": "https://x.com/yaleengineering",
+        "youtube": "https://www.youtube.com/@yaleengineering",
+        "facebook": "https://www.facebook.com/yaleengineering",
+    },
+    _JACKSON: {
+        "instagram": "https://www.instagram.com/yalejacksonschool/",
+        "linkedin": "https://www.linkedin.com/company/yalejacksonschool",
+        "x": "https://x.com/yalejacksonsch",
+        "facebook": "https://www.facebook.com/yalejacksonschool",
+    },
+    _DRAMA: {
+        "instagram": "https://www.instagram.com/geffenyale/",
+        "youtube": "https://www.youtube.com/c/DavidGeffenSchoolofDramaatYale",
+        "facebook": "https://www.facebook.com/geffenyale/",
     },
 }
 
-# Computer Science keyword-relevant feed (the flagship program), inheriting the
-# institution socials (the department surfaces its news through Yale Engineering).
-_CS_CONTENT: dict = {
-    "news_url": "https://news.yale.edu/topics/science-technology",
-    "keywords": ["computer science", "yale cs", "machine learning", "yale engineering"],
-    "social": _INSTITUTION_CONTENT["social"],
+# Per-school feed config: the best-matching verified Yale News topic RSS + the Yale events
+# iCalendar, filtered to school-relevant items by ``keywords`` (the MIT/MBAn pattern). Each
+# school that runs its own social channels uses them; the rest inherit the university's.
+# (school_name -> {news_topic, keywords}); topic "" means the all-topics feed.
+_SCHOOL_FEED_SPEC: dict[str, dict] = {
+    _COLLEGE: {"topic": "", "keywords": ["Yale College", "undergraduate", "undergraduates"]},
+    _SOM: {"topic": "business", "keywords": ["School of Management", "Yale SOM", "MBA"]},
+    _YSE: {
+        "topic": "environment",
+        "keywords": ["School of the Environment", "forestry", "environmental"],
+    },
+    _YSPH: {
+        "topic": "health-medicine",
+        "keywords": ["Public Health", "epidemiology", "YSPH"],
+    },
+    _MED: {
+        "topic": "health-medicine",
+        "keywords": ["School of Medicine", "medical school", "physicians"],
+    },
+    _NURSING: {"topic": "health-medicine", "keywords": ["Nursing", "nurse", "nurses"]},
+    _DIVINITY: {"topic": "arts-humanities", "keywords": ["Divinity", "theology", "religion"]},
+    _ARCH: {"topic": "arts-humanities", "keywords": ["architecture", "architect"]},
+    _ART: {"topic": "arts-humanities", "keywords": ["School of Art", "artist", "exhibition"]},
+    _MUSIC: {"topic": "arts-humanities", "keywords": ["School of Music", "music", "musician"]},
+    _GSAS: {"topic": "", "keywords": ["Graduate School", "GSAS", "doctoral"]},
+    _LAW: {"topic": "law", "keywords": ["Law School", "Yale Law"]},
+    _SEAS: {"topic": "science-technology", "keywords": ["engineering", "Yale Engineering"]},
+    _JACKSON: {"topic": "international", "keywords": ["Jackson School", "global affairs"]},
+    _DRAMA: {
+        "topic": "arts-humanities",
+        "keywords": ["Drama", "theater", "Geffen", "Yale Repertory"],
+    },
+}
+
+
+def _school_content(name: str) -> dict:
+    """Build a school's content_sources from its verified topic RSS + keywords + socials."""
+    spec = _SCHOOL_FEED_SPEC[name]
+    topic = spec["topic"]
+    return {
+        "news_rss": _news_topic(topic) if topic else _YALE_NEWS_RSS,
+        "news_curated": False,
+        "events_feed": dict(_YALE_EVENTS_ICS),
+        "keywords": list(spec["keywords"]),
+        "social": _SOCIAL_BY_SCHOOL.get(name, _SOCIAL_YALE),
+    }
+
+
+def _program_content(school_name: str, keywords: list[str]) -> dict:
+    """Build a program's content_sources from its school feed, refined by program keywords."""
+    base = _school_content(school_name)
+    base["keywords"] = list(keywords)
+    return base
+
+
+# Institution-wide feed: the all-topics Yale News RSS (curated — every item is Yale news)
+# + the Yale events calendar, with the official university social handles.
+_INSTITUTION_CONTENT: dict = {
+    "news_rss": _YALE_NEWS_RSS,
+    "news_url": "https://news.yale.edu",
+    "news_curated": True,
+    "events_feed": dict(_YALE_EVENTS_ICS),
+    "social": _SOCIAL_YALE,
+}
+
+# Per-program keyword overrides (department/program-naming terms). Programs without an
+# entry inherit their school's keywords (still school-scoped). Used by _apply_programs.
+_PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
+    "yale-computer-science-bs": ["computer science", "Yale computer science"],
+    "yale-economics-bs": ["economics", "economist"],
+    "yale-political-science-bs": ["political science", "politics"],
+    "yale-history-bs": ["history", "historian"],
+    "yale-mcdb-bs": ["molecular biology", "cell biology", "developmental biology"],
+    "yale-psychology-bs": ["psychology", "psychologist"],
+    "yale-english-bs": ["English literature", "writing"],
+    "yale-statistics-bs": ["statistics", "data science"],
+    "yale-mathematics-bs": ["mathematics", "mathematician"],
+    "yale-mba": ["MBA", "School of Management"],
 }
 
 # ── The program catalog (real majors/degrees, organized by school) ─────────
@@ -865,10 +1180,381 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+# ── Full catalog (breadth) ─────────────────────────────────────────────────
+# The explicit PROGRAMS above carry rich, individually-sourced detail. The blocks below
+# complete Yale's *published* degree catalog with verified BASICS (full name, degree,
+# delivery_format, owning school, factual description) so no real program is missing;
+# deeper fields (tracks/outcomes/faculty/reviews) are omitted-pending per _program_standard
+# and deepened on resume runs. Cross-checked against the College Scorecard Field-of-Study
+# list for UNITID 130794. Sources:
+#   • Yale College majors (82): https://catalog.yale.edu/ycps/majors-in-yale-college/
+#   • Graduate & professional degrees: each owning school's official degree page
+#     (som.yale.edu/programs · law.yale.edu/study-law-yale/degree-programs ·
+#     medicine.yale.edu/edu · nursing.yale.edu/academics ·
+#     ysph.yale.edu/school-of-public-health/graduate-programs ·
+#     environment.yale.edu/academics · divinity.yale.edu/programs/degrees ·
+#     architecture.yale.edu/academics · music.yale.edu/degrees-and-programs ·
+#     bulletin.yale.edu/bulletins/drama/degrees · jackson.yale.edu/academics ·
+#     gsas.yale.edu/programs-of-study).
+
+
+_SLUG_REPL = {"&": "and", "—": " ", "/": " ", "'": "", ".": "", ",": "", "(": "", ")": ""}
+
+
+def _slugify(text: str) -> str:
+    s = text.lower()
+    for a, b in _SLUG_REPL.items():
+        s = s.replace(a, b)
+    return "-".join(s.split())
+
+
+_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
+
+# Yale College majors NOT already represented above (the existing 10 carry rich detail).
+# (name, degree_label, owning_school). Engineering / applied-physics majors are owned by
+# SEAS; all other majors by Yale College. Degree labels are verbatim from the catalog.
+_UG_MAJORS: list[tuple[str, str, str]] = [
+    ("African Studies", "B.A.", _COLLEGE),
+    ("American Studies", "B.A.", _COLLEGE),
+    ("Anthropology", "B.A.", _COLLEGE),
+    ("Applied Mathematics", "B.A. or B.S.", _COLLEGE),
+    ("Applied Physics", "B.S.", _SEAS),
+    ("Archaeological Studies", "B.A.", _COLLEGE),
+    ("Architecture", "B.A.", _COLLEGE),
+    ("Art", "B.A.", _COLLEGE),
+    ("Astronomy", "B.A.", _COLLEGE),
+    ("Astrophysics", "B.S.", _COLLEGE),
+    ("Biomedical Engineering", "B.S.", _SEAS),
+    ("Black Studies", "B.A.", _COLLEGE),
+    ("Chemical Engineering", "B.S.", _SEAS),
+    ("Chemistry", "B.A. or B.S.", _COLLEGE),
+    ("Classical Civilization", "B.A.", _COLLEGE),
+    ("Classics", "B.A.", _COLLEGE),
+    ("Cognitive Science", "B.A. or B.S.", _COLLEGE),
+    ("Comparative Literature", "B.A.", _COLLEGE),
+    ("Computer Science and Economics", "B.S.", _SEAS),
+    ("Computer Science and Mathematics", "B.S.", _SEAS),
+    ("Computer Science and Psychology", "B.A.", _SEAS),
+    ("Computing and Linguistics", "B.A. or B.S.", _SEAS),
+    ("Computing and the Arts", "B.A.", _SEAS),
+    ("Earth and Planetary Sciences", "B.A. or B.S.", _COLLEGE),
+    ("East Asian Languages and Literatures", "B.A.", _COLLEGE),
+    ("East Asian Studies", "B.A.", _COLLEGE),
+    ("Ecology and Evolutionary Biology", "B.A. or B.S.", _COLLEGE),
+    ("Economics and Mathematics", "B.A.", _COLLEGE),
+    ("Electrical Engineering", "B.S.", _SEAS),
+    ("Electrical Engineering and Computer Science", "B.S.", _SEAS),
+    ("Engineering Sciences (Chemical)", "B.S.", _SEAS),
+    ("Engineering Sciences (Electrical)", "B.A. or B.S.", _SEAS),
+    ("Engineering Sciences (Environmental)", "B.A.", _SEAS),
+    ("Engineering Sciences (Mechanical)", "B.A. or B.S.", _SEAS),
+    ("Environmental Engineering", "B.S.", _SEAS),
+    ("Environmental Studies", "B.A. or B.S.", _COLLEGE),
+    ("Ethics, Politics, and Economics", "B.A.", _COLLEGE),
+    ("Ethnicity, Race, and Migration", "B.A.", _COLLEGE),
+    ("Film and Media Studies", "B.A.", _COLLEGE),
+    ("French", "B.A.", _COLLEGE),
+    ("German Studies", "B.A.", _COLLEGE),
+    ("Greek, Ancient and Modern", "B.A.", _COLLEGE),
+    ("History of Art", "B.A.", _COLLEGE),
+    ("History of Science, Medicine, and Public Health", "B.A.", _COLLEGE),
+    ("Humanities", "B.A.", _COLLEGE),
+    ("Italian Studies", "B.A.", _COLLEGE),
+    ("Jewish Studies", "B.A.", _COLLEGE),
+    ("Latin American Studies", "B.A.", _COLLEGE),
+    ("Linguistics", "B.A.", _COLLEGE),
+    ("Mathematics and Philosophy", "B.A.", _COLLEGE),
+    ("Mathematics and Physics", "B.S.", _COLLEGE),
+    ("Mechanical Engineering", "B.S.", _SEAS),
+    ("Modern Middle East Studies", "B.A.", _COLLEGE),
+    ("Molecular Biophysics and Biochemistry", "B.A. or B.S.", _COLLEGE),
+    ("Music", "B.A.", _COLLEGE),
+    ("Near Eastern Languages and Civilizations", "B.A.", _COLLEGE),
+    ("Neuroscience", "B.A. or B.S.", _COLLEGE),
+    ("Philosophy", "B.A.", _COLLEGE),
+    ("Physics", "B.S.", _COLLEGE),
+    ("Physics and Geosciences", "B.S.", _COLLEGE),
+    ("Physics and Philosophy", "B.A. or B.S.", _COLLEGE),
+    ("Portuguese", "B.A.", _COLLEGE),
+    ("Religious Studies", "B.A.", _COLLEGE),
+    ("Russian", "B.A.", _COLLEGE),
+    ("Russian, East European, and Eurasian Studies", "B.A.", _COLLEGE),
+    ("Sociology", "B.A.", _COLLEGE),
+    ("Spanish", "B.A.", _COLLEGE),
+    ("Theater, Dance, and Performance Studies", "B.A.", _COLLEGE),
+    ("Urban Studies", "B.A.", _COLLEGE),
+    ("Women's, Gender, and Sexuality Studies", "B.A.", _COLLEGE),
+]
+
+# Graduate & professional degrees NOT already represented above.
+# (program_name, degree_type, owning_school, duration_months, delivery_format, description)
+_GRAD_PROGRAMS: list[tuple[str, str, str, int, str, str]] = [
+    # ── Law ──
+    ("Juris Doctor (J.D.)", "professional", _LAW, 36, "in_person",
+     "Yale Law School's three-year professional law degree, known for small classes and a "
+     "scholarly, public-interest orientation."),
+    ("Master of Laws (LL.M.)", "masters", _LAW, 12, "in_person",
+     "A one-year degree for lawyers who already hold a first degree in law, oriented toward "
+     "those pursuing careers in legal teaching."),
+    ("Master of Studies in Law (M.S.L.)", "masters", _LAW, 12, "in_person",
+     "A one-year degree introducing legal reasoning to accomplished professionals in other "
+     "fields who are not seeking to practice law."),
+    ("Doctor of the Science of Law (J.S.D.)", "phd", _LAW, 36, "in_person",
+     "Yale Law School's advanced research doctorate for graduates of its LL.M. program."),
+    ("Doctor of Philosophy in Law (Ph.D.)", "phd", _LAW, 48, "in_person",
+     "A Ph.D. in Law for J.D. holders preparing for careers as legal scholars, administered "
+     "with the Graduate School."),
+    # ── School of Management ──
+    ("MBA for Executives (EMBA)", "masters", _SOM, 22, "hybrid",
+     "A 22-month MBA for working professionals, combining on-campus sessions with distance "
+     "learning across a focus in asset management, healthcare or sustainability."),
+    ("Master of Advanced Management (MAM)", "masters", _SOM, 12, "in_person",
+     "A one-year degree for graduates of top business schools in the Global Network for "
+     "Advanced Management."),
+    ("Master's Degree in Asset Management", "masters", _SOM, 12, "in_person",
+     "A one-year, STEM-designated master's in asset management for early-career investment "
+     "professionals."),
+    ("Master's Degree in Global Business & Society", "masters", _SOM, 12, "in_person",
+     "A one-year master's preparing early-career professionals to lead at the intersection "
+     "of business and society."),
+    ("Master's Degree in Systemic Risk", "masters", _SOM, 12, "in_person",
+     "A one-year master's for early-career central bankers and financial regulators studying "
+     "systemic financial risk."),
+    ("Master's Degree in Technology Management", "masters", _SOM, 12, "in_person",
+     "A one-year master's for Yale College engineering and computer-science graduates, "
+     "bridging technology and management."),
+    ("Master's Degree in Public Education Management", "masters", _SOM, 12, "in_person",
+     "A one-year master's for senior leaders managing large public-school systems."),
+    ("Doctor of Philosophy in Management (Ph.D.)", "phd", _SOM, 60, "in_person",
+     "A doctoral program training scholars in accounting, financial economics, marketing, "
+     "operations and organizations & management."),
+    # ── Medicine ──
+    ("Doctor of Medicine (M.D.)", "professional", _MED, 48, "in_person",
+     "Yale School of Medicine's four-year M.D. program, distinguished by the 'Yale System' "
+     "of non-graded, self-directed preclinical study and a required research thesis."),
+    ("M.D.–Ph.D. Program", "phd", _MED, 96, "in_person",
+     "An NIH-supported Medical Scientist Training Program integrating the M.D. with a Ph.D. "
+     "for students preparing for careers as physician-scientists."),
+    ("Master of Health Science (M.H.S.)", "masters", _MED, 24, "in_person",
+     "A research master's for clinicians and scientists building careers in clinical and "
+     "translational investigation."),
+    # ── Nursing ──
+    ("Doctor of Nursing Practice (D.N.P.)", "phd", _NURSING, 36, "in_person",
+     "A practice doctorate for advanced-practice nurses, offered in clinical and leadership "
+     "tracks."),
+    ("Doctor of Philosophy in Nursing (Ph.D.)", "phd", _NURSING, 48, "in_person",
+     "A research doctorate preparing nurse scientists, administered with the Graduate "
+     "School."),
+    # ── Public Health ──
+    ("Master of Science in Public Health (M.S.)", "masters", _YSPH, 24, "in_person",
+     "A research-oriented two-year master's across biostatistics, epidemiology, health "
+     "informatics and related concentrations."),
+    ("Doctor of Philosophy in Public Health (Ph.D.)", "phd", _YSPH, 60, "in_person",
+     "A funded research doctorate across the school's departments, administered with the "
+     "Graduate School."),
+    # ── Environment ──
+    ("Master of Forestry (M.F.)", "masters", _YSE, 24, "in_person",
+     "A two-year professional forestry degree from the oldest graduate forestry school in "
+     "the United States."),
+    ("Master of Forest Science (M.F.S.)", "masters", _YSE, 24, "in_person",
+     "A two-year, research-oriented master's in forest science."),
+    ("Doctor of Philosophy in Environment (Ph.D.)", "phd", _YSE, 60, "in_person",
+     "A funded research doctorate in environmental science, management and policy, "
+     "administered with the Graduate School."),
+    # ── Divinity ──
+    ("Master of Arts in Religion (M.A.R.)", "masters", _DIVINITY, 24, "in_person",
+     "A two-year academic master's in religion, offered in a comprehensive track or a "
+     "concentrated area of study."),
+    ("Master of Sacred Theology (S.T.M.)", "masters", _DIVINITY, 12, "in_person",
+     "A one-year advanced theological degree for those who already hold an M.Div. or "
+     "equivalent first theological degree."),
+    # ── Architecture ──
+    ("Master of Architecture II (M.Arch II)", "masters", _ARCH, 24, "in_person",
+     "A post-professional two-year degree for students who already hold a professional "
+     "architecture degree."),
+    ("Master of Environmental Design (M.E.D.)", "masters", _ARCH, 24, "in_person",
+     "A two-year research and thesis degree in the history, theory and criticism of the "
+     "built environment."),
+    ("Doctor of Philosophy in Architecture (Ph.D.)", "phd", _ARCH, 60, "in_person",
+     "A research doctorate in the history and theory of architecture, administered with the "
+     "Graduate School."),
+    # ── Music ──
+    ("Master of Musical Arts (M.M.A.)", "masters", _MUSIC, 24, "in_person",
+     "An advanced performance degree beyond the M.M., tuition-free like all School of Music "
+     "degrees."),
+    ("Doctor of Musical Arts (D.M.A.)", "phd", _MUSIC, 60, "in_person",
+     "The School of Music's terminal performance doctorate, completed after the M.M.A. with "
+     "a dissertation."),
+    ("Artist Diploma (A.D.)", "certificate", _MUSIC, 12, "in_person",
+     "A performance diploma for exceptional instrumentalists, awarded tuition-free."),
+    ("Certificate in Performance", "certificate", _MUSIC, 36, "in_person",
+     "A three-year performance certificate for outstanding musicians who do not hold a "
+     "bachelor's degree."),
+    # ── David Geffen School of Drama ──
+    ("Master of Fine Arts in Drama (M.F.A.)", "masters", _DRAMA, 36, "in_person",
+     "A three-year professional conservatory M.F.A. across acting, directing, design, "
+     "dramaturgy, playwriting, stage management, sound design, technical design & "
+     "production and theater management."),
+    ("Doctor of Fine Arts (D.F.A.)", "phd", _DRAMA, 36, "in_person",
+     "A research doctorate in dramaturgy and dramatic criticism for holders of the school's "
+     "M.F.A."),
+    ("Certificate in Drama", "certificate", _DRAMA, 36, "in_person",
+     "The same conservatory training as the M.F.A., awarded to admitted students who do not "
+     "hold an undergraduate degree."),
+    # ── Jackson School of Global Affairs ──
+    ("Master of Public Policy in Global Affairs (M.P.P.)", "masters", _JACKSON, 24, "in_person",
+     "A two-year professional degree in global affairs preparing leaders for the public, "
+     "private and nonprofit sectors."),
+    ("Master of Advanced Study in Global Affairs (M.A.S.)", "masters", _JACKSON, 12, "in_person",
+     "A one-year degree for accomplished mid-career professionals in global affairs."),
+]
+
+# Yale Graduate School of Arts and Sciences — arts-&-sciences Ph.D./terminal-master's
+# programs (the professional-school doctorates above are not duplicated here).
+# (name, degree_type). Verbatim from gsas.yale.edu/programs-of-study.
+_GSAS_PROGRAMS: list[tuple[str, str]] = [
+    ("African Studies", "masters"),
+    ("American Studies", "phd"),
+    ("Anthropology", "phd"),
+    ("Applied and Computational Mathematics", "phd"),
+    ("Applied Physics", "phd"),
+    ("Archaeological Studies", "masters"),
+    ("Astronomy", "phd"),
+    ("Biological and Biomedical Sciences", "phd"),
+    ("Biomedical Engineering", "phd"),
+    ("Cell Biology", "phd"),
+    ("Cellular and Molecular Physiology", "phd"),
+    ("Chemical and Environmental Engineering", "phd"),
+    ("Chemistry", "phd"),
+    ("Classics", "phd"),
+    ("Comparative Literature", "phd"),
+    ("Computational Biology and Biomedical Informatics", "phd"),
+    ("Computer Science", "phd"),
+    ("Earth and Planetary Sciences", "phd"),
+    ("East Asian Languages and Literatures", "phd"),
+    ("East Asian Studies", "masters"),
+    ("Ecology and Evolutionary Biology", "phd"),
+    ("Economics", "phd"),
+    ("Electrical and Computer Engineering", "phd"),
+    ("English Language and Literature", "phd"),
+    ("European and Russian Studies", "masters"),
+    ("Film and Media Studies", "phd"),
+    ("French", "phd"),
+    ("Genetics", "phd"),
+    ("Germanic Languages and Literatures", "phd"),
+    ("History", "phd"),
+    ("History of Art", "phd"),
+    ("History of Science and Medicine", "phd"),
+    ("Immunobiology", "phd"),
+    ("Interdepartmental Neuroscience Program", "phd"),
+    ("International and Development Economics", "masters"),
+    ("Investigative Medicine", "phd"),
+    ("Italian Studies", "phd"),
+    ("Linguistics", "phd"),
+    ("Materials Science", "phd"),
+    ("Mathematics", "phd"),
+    ("Mechanical Engineering", "phd"),
+    ("Medieval Studies", "phd"),
+    ("Microbiology", "phd"),
+    ("Molecular Biophysics and Biochemistry", "phd"),
+    ("Molecular, Cellular, and Developmental Biology", "phd"),
+    ("Music", "phd"),
+    ("Near Eastern Languages and Civilizations", "phd"),
+    ("Pathology and Molecular Medicine", "phd"),
+    ("Personalized Medicine and Applied Engineering", "masters"),
+    ("Pharmacology", "phd"),
+    ("Philosophy", "phd"),
+    ("Physics", "phd"),
+    ("Political Science", "phd"),
+    ("Psychology", "phd"),
+    ("Religious Studies", "phd"),
+    ("Slavic Languages and Literatures", "phd"),
+    ("Sociology", "phd"),
+    ("Spanish and Portuguese", "phd"),
+    ("Statistics", "masters"),
+    ("Statistics and Data Science", "phd"),
+    ("Translational Biomedicine", "phd"),
+    ("Women's, Gender, and Sexuality Studies", "phd"),
+]
+
+
+def _build_catalog() -> list[dict]:
+    """Append verified-basics program nodes for the rest of Yale's published catalog."""
+    out: list[dict] = []
+    seen = set(_EXISTING_SLUGS)
+    for name, label, school in _UG_MAJORS:
+        slug = f"yale-{_slugify(name)}-{'bs' if label == 'B.S.' else 'ba'}"
+        if slug in seen:
+            continue
+        seen.add(slug)
+        via = (
+            " offered through Yale's School of Engineering & Applied Science"
+            if school == _SEAS
+            else ""
+        )
+        out.append({
+            "slug": slug,
+            "school": school,
+            "program_name": name,
+            "degree_type": "bachelors",
+            "duration_months": 48,
+            "delivery_format": "in_person",
+            "description": f"{name} — an undergraduate {label} major in Yale College{via}.",
+        })
+    for name, dtype, school, dur, fmt, desc in _GRAD_PROGRAMS:
+        suffix = {"phd": "phd", "professional": "prof", "certificate": "cert"}.get(dtype, "ms")
+        slug = f"yale-{_slugify(name)}-{suffix}"
+        if slug in seen:
+            continue
+        seen.add(slug)
+        out.append({
+            "slug": slug,
+            "school": school,
+            "program_name": name,
+            "degree_type": dtype,
+            "duration_months": dur,
+            "delivery_format": fmt,
+            "description": desc,
+        })
+    for name, dtype in _GSAS_PROGRAMS:
+        suffix = "phd" if dtype == "phd" else "ma"
+        slug = f"yale-{_slugify(name)}-gsas-{suffix}"
+        if slug in seen:
+            continue
+        seen.add(slug)
+        if dtype == "phd":
+            desc = (
+                f"{name} — a Ph.D. program of the Yale Graduate School of Arts and Sciences, "
+                "with full funding for admitted doctoral students."
+            )
+        else:
+            desc = (
+                f"{name} — a terminal master's program of the Yale Graduate School of Arts "
+                "and Sciences."
+            )
+        out.append({
+            "slug": slug,
+            "school": _GSAS,
+            "program_name": name,
+            "degree_type": dtype,
+            "duration_months": 60 if dtype == "phd" else 24,
+            "delivery_format": "in_person",
+            "description": desc,
+        })
+    return out
+
+
+PROGRAMS += _build_catalog()
+
+# Ensure every explicit program also carries a delivery_format (all residential).
+for _p in PROGRAMS:
+    _p.setdefault("delivery_format", "in_person")
+
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
 # Full official program names (program-page title); equal to the program name here.
 _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROGRAMS}
+_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
 # Official program/department/school home pages.
 _WEBSITE_BY_SLUG: dict[str, str] = {
@@ -1405,9 +2091,11 @@ def _requirements_for(spec: dict) -> dict:
     """Pick the admissions requirement set for a program by slug / degree type."""
     if spec["slug"] == "yale-mba":
         return dict(_REQ_MBA)
-    if spec["degree_type"] == "masters":
-        return dict(_REQ_GRAD_GENERIC)
-    return dict(_REQ_UNDERGRAD)
+    if spec["degree_type"] == "bachelors":
+        return dict(_REQ_UNDERGRAD)
+    # All graduate/professional/doctoral programs share the generic Yale graduate set,
+    # which points applicants to the program's own admissions page for exact deadlines.
+    return dict(_REQ_GRAD_GENERIC)
 
 
 # Real Yale campus photo (Harkness Tower) — Wikimedia Commons, CC BY 2.0, hotlinkable
@@ -1481,9 +2169,10 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
             about = dict(about)
             about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
             sc.about_detail = about
-        # No school carries its own keyword-relevant feed (only the flagship program does);
-        # always assign None so a stale value on a pre-existing row is cleared.
-        sc.content_sources = None
+        # Every school gets a working feed (verified Yale News topic RSS + the Yale events
+        # iCalendar, filtered to school-relevant items by keywords) so its Events & Updates
+        # tab populates — overwriting any stale value on a pre-existing row.
+        sc.content_sources = _school_content(spec["name"])
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is FK-safe.
     for name, sc in existing.items():
@@ -1539,10 +2228,14 @@ def _program_standard(slug: str) -> dict:
         omitted.append("faculty_contacts.lead")
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
-    if slug != "yale-computer-science-bs":
-        # Only the flagship carries its own keyword-relevant feed; catalog programs
-        # surface the institution feed rather than a per-program one.
-        omitted.append("content_sources")
+    # Graduate/professional programs without a verified per-program tuition omit tuition_usd
+    # (their cost_data carries a sourced "see the school's tuition page" record instead) —
+    # never the undergraduate rate.
+    spec = _SPEC_BY_SLUG.get(slug)
+    if spec and spec["degree_type"] != "bachelors" and slug not in _COST_BY_SLUG:
+        omitted.append("cost_data.tuition_usd")
+    # content_sources is set on every program now (school feed + program keywords), so it
+    # is never omitted.
     return _standard(omitted)
 
 
@@ -1575,15 +2268,23 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
-        # Only the flagship carries its own feed (content_sources omitted for the rest).
-        p.content_sources = _CS_CONTENT if slug == "yale-computer-science-bs" else None
-        # Cost: graduate programs use verified per-program tuition; undergraduate uses the
-        # published Yale College rates.
+        # Every program gets a working feed: its school's verified Yale News topic RSS +
+        # the Yale events iCalendar, filtered by program-naming keywords where defined
+        # (else the school's keywords). This is why each program's Events & Updates tab
+        # populates rather than sitting empty.
+        _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(
+            _SCHOOL_FEED_SPEC[spec["school"]]["keywords"]
+        )
+        p.content_sources = _program_content(spec["school"], _kw)
+        # Cost precedence: a verified per-program override → published Yale College rates for
+        # undergraduate majors → a sourced "tuition varies, see the school page" record for
+        # graduate/professional programs whose per-program tuition is not yet verified (their
+        # tuition_usd is recorded omitted, never guessed and never set to the undergrad rate).
         cost_override = _COST_BY_SLUG.get(slug)
         if cost_override is not None:
             p.tuition = cost_override.get("tuition_usd")
             p.cost_data = dict(cost_override)
-        else:
+        elif spec["degree_type"] == "bachelors":
             p.tuition = _TUITION_UG
             p.cost_data = {
                 "tuition_usd": _TUITION_UG,
@@ -1604,6 +2305,17 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source": "Yale Student Accounts (2024-25) + College Scorecard (UNITID 130794)",
                 "source_url": "https://collegescorecard.ed.gov/school/?130794",
                 "year": "2024-25",
+            }
+        else:
+            p.tuition = None
+            p.cost_data = {
+                "note": (
+                    "Tuition for this graduate/professional program varies and is published "
+                    "on the school's official tuition page; a verified per-program figure is "
+                    "not yet recorded here."
+                ),
+                "source": "Yale University Catalog — Tuition & Fees",
+                "source_url": _SCHOOL_WEBSITE.get(spec["school"], "https://www.yale.edu"),
             }
         # Admissions: undergraduate, MBA or generic graduate set by slug / degree type.
         p.application_requirements = _requirements_for(spec)
