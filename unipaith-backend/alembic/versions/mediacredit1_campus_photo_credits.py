@@ -62,7 +62,8 @@ _CREDITS = {
 
 _SET = text(
     "UPDATE institutions SET school_outcomes = jsonb_set("
-    "coalesce(school_outcomes, '{}'::jsonb), '{media_credit}', "
+    "CASE WHEN school_outcomes IS NULL OR jsonb_typeof(school_outcomes) = 'null' "
+    "THEN '{}'::jsonb ELSE school_outcomes END, '{media_credit}', "
     "to_jsonb(cast(:cred AS text)), true) "
     "WHERE name = :name"
 )
