@@ -40,7 +40,7 @@ def _school_snapshot(name: str) -> dict:
         "description_text": next(s["description"] for s in c.SCHOOLS if s["name"] == name),
         "website_url": c._SCHOOL_WEBSITE.get(name),
         "about_detail": about,
-        "content_sources": None,
+        "content_sources": c._school_content(name),
     }
 
 
@@ -70,7 +70,7 @@ def _program_snapshot(spec: dict) -> dict:
         "class_profile": None,
         "faculty_contacts": None,
         "external_reviews": None,
-        "content_sources": None,
+        "content_sources": c._program_content(spec["school"], c._SCHOOL_KEYWORDS[spec["school"]]),
     }
 
 
@@ -111,6 +111,9 @@ def test_all_seven_schools_done():
         omitted = set(c._ABOUT_OMITTED.get(name, []))
         assert set(res.missing_fields) <= omitted, f"{name}: unexpected gaps {res.missing_fields}"
         assert not _section_gaps_unexpected("school", res.missing_sections, omitted), name
+        # every school carries a real feed so its Events & Updates tab is never empty
+        cs = c._school_content(name)
+        assert cs["news_rss"] and cs["events_feed"] and cs["keywords"], name
 
 
 def test_every_program_is_done():
@@ -120,6 +123,10 @@ def test_every_program_is_done():
         omitted = _omitted_for(spec)
         assert set(res.missing_fields) <= omitted, f"{spec['slug']}: gaps {set(res.missing_fields) - omitted}"
         assert not _section_gaps_unexpected("program", res.missing_sections, omitted), spec["slug"]
+        # content_sources is REQUIRED at program level and must never be omitted now
+        assert "content_sources" not in omitted, spec["slug"]
+        cs = c._program_content(spec["school"], c._SCHOOL_KEYWORDS[spec["school"]])
+        assert cs["news_rss"] and cs["events_feed"] and cs["keywords"], spec["slug"]
 
 
 def test_every_program_maps_to_a_real_school():
