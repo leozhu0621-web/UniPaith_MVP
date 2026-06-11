@@ -55,13 +55,14 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.chicago_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Chicago"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-10"
+ENRICHED_AT = "2026-06-11"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -618,22 +619,87 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
 }
 
 # ── Channel feeds + official social links ──────────────────────────────────
-# Institution-wide socials (official UChicago handles) + news page.
-_INSTITUTION_CONTENT: dict = {
-    "news_url": "https://news.uchicago.edu",
-    "social": {
-        "instagram": "https://www.instagram.com/uchicago/",
-        "linkedin": "https://www.linkedin.com/school/university-of-chicago/",
-        "x": "https://x.com/UChicago",
-        "youtube": "https://www.youtube.com/user/uchicago",
-        "facebook": "https://www.facebook.com/uchicago",
-    },
+# The daily content-ingest reads ``news_rss`` (RSS), ``events_feed`` (iCalendar), and
+# ``keywords`` (filter gate). Without a real ``news_rss`` a node's Events & Updates tab
+# is empty — so every school and program below carries a feed.
+_UCHICAGO_NEWS_RSS = "http://feeds.feedburner.com/UChicago"
+_UCHICAGO_EVENTS_ICS = {"url": "https://events.uchicago.edu/live/ical/events", "type": "ical"}
+_SOCIAL_UCHICAGO = {
+    "instagram": "https://www.instagram.com/uchicago/",
+    "linkedin": "https://www.linkedin.com/school/university-of-chicago/",
+    "x": "https://x.com/UChicago",
+    "youtube": "https://www.youtube.com/user/uchicago",
+    "facebook": "https://www.facebook.com/uchicago",
 }
 
-# Booth MBA keyword-relevant feed (the flagship), inheriting the institution socials and
-# surfacing Booth's own channels.
+_INSTITUTION_CONTENT: dict = {
+    "news_rss": _UCHICAGO_NEWS_RSS,
+    "news_url": "https://news.uchicago.edu/",
+    "news_curated": False,
+    "events_feed": dict(_UCHICAGO_EVENTS_ICS),
+    "social": dict(_SOCIAL_UCHICAGO),
+}
+
+_SCHOOL_FEED_SPEC: dict[str, dict] = {
+    _COLLEGE: {"keywords": ["College", "undergraduate", "Core curriculum", "bachelor"]},
+    _BOOTH: {"keywords": ["Booth", "business school", "MBA", "finance", "economics"]},
+    _HARRIS: {"keywords": ["Harris", "public policy", "MPP", "policy"]},
+    _LAW: {"keywords": ["Law School", "law", "legal", "JD"]},
+    _PRITZKER_MED: {"keywords": ["Pritzker", "medicine", "medical school", "MD"]},
+    _CROWN: {"keywords": ["Crown", "social work", "Crown Family School"]},
+    _DIVINITY: {"keywords": ["Divinity", "religion", "ministry", "theology"]},
+    _PME: {"keywords": ["molecular engineering", "PME", "quantum", "materials"]},
+    _PHYS_SCI: {
+        "keywords": [
+            "Physical Sciences",
+            "mathematics",
+            "statistics",
+            "computer science",
+            "physics",
+            "chemistry",
+        ]
+    },
+    _SOC_SCI: {
+        "keywords": ["Social Sciences", "economics", "sociology", "political science", "MAPSS"]
+    },
+    _HUMANITIES: {"keywords": ["Humanities", "literature", "philosophy", "MAPH", "arts"]},
+}
+
+_KW_STOP = {"and", "of", "the", "in", "for", "with", "science", "sciences", "engineering"}
+
+
+def _school_content(name: str) -> dict:
+    """A school's content_sources: UChicago News RSS + campus events filtered by keywords."""
+    spec = _SCHOOL_FEED_SPEC[name]
+    return {
+        "news_rss": _UCHICAGO_NEWS_RSS,
+        "news_url": _SCHOOL_WEBSITE.get(name, "https://www.uchicago.edu"),
+        "news_curated": False,
+        "events_feed": dict(_UCHICAGO_EVENTS_ICS),
+        "keywords": list(spec["keywords"]),
+        "social": dict(_SOCIAL_UCHICAGO),
+    }
+
+
+def _program_keywords(spec: dict) -> list[str]:
+    school_kw = list(_SCHOOL_FEED_SPEC[spec["school"]]["keywords"])
+    name = spec["program_name"].replace("&", " ").replace("/", " ")
+    terms = [w for w in name.split() if len(w) > 3 and w.lower() not in _KW_STOP]
+    program_term = " ".join(terms[:3]).strip()
+    return ([program_term] if program_term else []) + school_kw
+
+
+def _program_content(spec: dict) -> dict:
+    base = _school_content(spec["school"])
+    base["keywords"] = _program_keywords(spec)
+    return base
+
+
+# Booth MBA keyword-relevant feed (the flagship) — Booth news RSS + shared campus calendar.
 _BOOTH_CONTENT: dict = {
+    "news_rss": "http://feeds.chicagobooth.edu/boothnews",
     "news_url": "https://www.chicagobooth.edu/review",
+    "events_feed": dict(_UCHICAGO_EVENTS_ICS),
     "keywords": ["chicago booth", "mba", "business school", "finance", "economics"],
     "social": {
         "instagram": "https://www.instagram.com/chicagobooth/",
@@ -930,7 +996,36 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
+_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _build_catalog() -> list[dict]:
+    """Append breadth-first program nodes from the IPEDS completions-cip-6 catalog."""
+    out: list[dict] = []
+    seen = set(_EXISTING_SLUGS)
+    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+        if slug in seen:
+            continue
+        if (cip, dtype) in _EXISTING_CIP_KEYS:
+            continue
+        seen.add(slug)
+        out.append({
+            "slug": slug,
+            "school": school,
+            "program_name": name,
+            "degree_type": dtype,
+            "cip": cip,
+            "duration_months": dur,
+            "delivery_format": fmt,
+            "description": desc,
+        })
+    return out
+
+
+PROGRAMS += _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
 # Full official program names (program-page title); equal to the program name here.
 _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROGRAMS}
@@ -1538,9 +1633,7 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
             about = dict(about)
             about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
             sc.about_detail = about
-        # No school carries its own keyword-relevant feed (only the flagship program does);
-        # always assign None so a stale value on a pre-existing row is cleared.
-        sc.content_sources = None
+        sc.content_sources = _school_content(spec["name"])
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is FK-safe.
     for name, sc in existing.items():
@@ -1578,8 +1671,10 @@ def _program_has_dependents(session: Session, program_id) -> bool:
     return False
 
 
-def _program_standard(slug: str) -> dict:
+def _program_standard(slug: str, spec: dict | None = None) -> dict:
     """Per-program omitted-field list (verified-unavailable), for _standard."""
+    if spec is None:
+        spec = _SPEC_BY_SLUG[slug]
     omitted: list[str] = []
     # The Booth MBA carries its own employment-report outcomes; every other program uses
     # the federal Field-of-Study one-year earnings, which publishes neither a program
@@ -1593,7 +1688,7 @@ def _program_standard(slug: str) -> dict:
         # Booth reports placement qualitatively (no single first-party employment %), so
         # the numeric employment_rate is omitted even for the flagship.
         omitted.append("outcomes_data.employment_rate")
-    if slug in _COST_OMITTED_SLUGS:
+    if spec["degree_type"] != "bachelors" and slug not in _COST_BY_SLUG:
         omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
@@ -1603,10 +1698,6 @@ def _program_standard(slug: str) -> dict:
         omitted.append("faculty_contacts.lead")
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
-    if slug != "uchicago-mba":
-        # Only the flagship carries its own keyword-relevant feed; catalog programs
-        # surface the institution feed rather than a per-program one.
-        omitted.append("content_sources")
     return _standard(omitted)
 
 
@@ -1643,8 +1734,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # normalized 4-digit dotted form (e.g. "45.06").
         p.cip_code = spec.get("cip")
         p.delivery_format = spec.get("delivery_format", "in_person")
-        # Only the flagship carries its own feed (content_sources omitted for the rest).
-        p.content_sources = _BOOTH_CONTENT if slug == "uchicago-mba" else None
+        p.content_sources = _BOOTH_CONTENT if slug == "uchicago-mba" else _program_content(spec)
         # Cost: verified per-program tuition where available; undergraduate uses the
         # published College rates; tuition-omitted graduate programs carry the bursar
         # source without a figure.
@@ -1652,10 +1742,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         if cost_override is not None:
             p.tuition = cost_override.get("tuition_usd")
             p.cost_data = dict(cost_override)
-        elif slug in _COST_OMITTED_SLUGS:
-            p.tuition = None
-            p.cost_data = dict(_COST_OMITTED_RECORD)
-        else:
+        elif spec["degree_type"] == "bachelors":
             p.tuition = _TUITION_UG
             p.cost_data = {
                 "tuition_usd": _TUITION_UG,
@@ -1681,6 +1768,26 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source_url": "https://collegescorecard.ed.gov/school/?144050",
                 "year": "2025-26",
             }
+        elif slug in _COST_OMITTED_SLUGS:
+            p.tuition = None
+            p.cost_data = dict(_COST_OMITTED_RECORD)
+        else:
+            p.tuition = None
+            p.cost_data = {
+                "funded": spec["degree_type"] == "phd",
+                "note": (
+                    "UChicago does not publish a single citable per-program tuition for this "
+                    "degree on a public page; see the program website for current tuition."
+                    + (
+                        " Doctoral students are typically funded via fellowships or "
+                        "assistantships when admitted."
+                        if spec["degree_type"] == "phd"
+                        else ""
+                    )
+                ),
+                "source": "University of Chicago program website",
+                "source_url": _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"]),
+            }
         # Admissions: undergraduate, MBA or generic graduate set by slug / degree type.
         p.application_requirements = _requirements_for(spec)
         # Outcomes precedence: Booth employment report (flagship) → Scorecard FOS
@@ -1702,7 +1809,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 }
             else:
                 outcomes = dict(_OUTCOMES_INSTITUTION)
-        outcomes["_standard"] = _program_standard(slug)
+        outcomes["_standard"] = _program_standard(slug, spec)
         p.outcomes_data = outcomes
         if spec["degree_type"] in ("masters", "professional"):
             p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_GRAD_BASELINE
