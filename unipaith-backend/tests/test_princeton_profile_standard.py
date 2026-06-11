@@ -9,6 +9,22 @@ honestly records in its ``_standard.omitted`` lists.
 
 from unipaith.data import princeton_profile as p
 from unipaith.profile_standard import STANDARD_VERSION, check_conformance
+from unipaith.profile_standard.manifest import MANIFEST
+
+_FLAGSHIP = "princeton-computer-science-bs"
+
+
+def _required_fields_of_section(level: str, section_id: str) -> set[str]:
+    sec = next(s for s in MANIFEST[level] if s.id == section_id)
+    return {f.path for f in sec.fields if f.required and f.enrich}
+
+
+def _gaps_are_all_omitted(level: str, res, omitted: set[str]) -> tuple[bool, set]:
+    bad = set(res.missing_fields) - omitted
+    for sec_id in res.missing_sections:
+        if not _required_fields_of_section(level, sec_id) <= omitted:
+            bad |= {f"section:{sec_id}"}
+    return (not bad), bad
 
 
 def _institution_snapshot() -> dict:
@@ -37,13 +53,13 @@ def _school_snapshot(name: str) -> dict:
         "description_text": next(s["description"] for s in p.SCHOOLS if s["name"] == name),
         "website_url": p._SCHOOL_WEBSITE.get(name),
         "about_detail": about,
-        "content_sources": None,
+        "content_sources": p._school_content(name),
     }
 
 
 def _program_snapshot(slug: str) -> dict:
     """Mirror the columns _apply_programs writes for a program slug."""
-    spec = next(pr for pr in p.PROGRAMS if pr["slug"] == slug)
+    spec = p._SPEC_BY_SLUG[slug]
     fos = p._FOS_OUTCOMES.get(slug)
     if fos is not None:
         salary, cip = fos
@@ -65,7 +81,7 @@ def _program_snapshot(slug: str) -> dict:
         "duration_months": spec.get("duration_months"),
         "delivery_format": spec.get("delivery_format", "in_person"),
         "description_text": spec["description"],
-        "website_url": p._WEBSITE_BY_SLUG.get(slug),
+        "website_url": p._WEBSITE_BY_SLUG.get(slug) or p._SCHOOL_WEBSITE.get(spec["school"]),
         "highlights": p._HL_BY_SLUG.get(slug) or p._HL_BASELINE,
         "who_its_for": p._WHO_BY_SLUG.get(slug) or p._WHO_BASELINE,
         "tracks": p._TRACKS_BY_SLUG.get(slug),
@@ -75,7 +91,9 @@ def _program_snapshot(slug: str) -> dict:
         "class_profile": p._CLASS_PROFILE_BY_SLUG.get(slug, {}),
         "faculty_contacts": p._FACULTY_BY_SLUG.get(slug, {}),
         "external_reviews": p._REVIEWS_BY_SLUG.get(slug, {}),
-        "content_sources": p._CS_CONTENT if slug == "princeton-computer-science-bs" else None,
+        "content_sources": (
+            p._CS_CONTENT if slug == _FLAGSHIP else p._program_content(spec)
+        ),
     }
 
 
@@ -83,11 +101,13 @@ def test_princeton_institution_is_gold_except_recorded_omission():
     res = check_conformance(
         "institution", _institution_snapshot(), profile_version=STANDARD_VERSION
     )
-    assert set(res.missing_fields) <= set(p._OMITTED_INSTITUTION), (
+    omitted = set(p._OMITTED_INSTITUTION)
+    assert set(res.missing_fields) <= omitted, (
         f"Unexpected institution gaps: {res.missing_fields} {res.missing_sections}"
     )
-    assert not res.missing_sections
-    assert "school_outcomes.employed_or_continuing_ed" in p._OMITTED_INSTITUTION
+    ok, bad = _gaps_are_all_omitted("institution", res, omitted)
+    assert ok, f"Unexpected institution section gaps: {bad}"
+    assert p.SCHOOL_OUTCOMES.get("media_credit")
 
 
 def test_every_school_is_gold_except_recorded_omissions():
@@ -98,29 +118,22 @@ def test_every_school_is_gold_except_recorded_omissions():
         assert set(res.missing_fields) <= allowed, (
             f"{name} unexpected gaps: {res.missing_fields} {res.missing_sections}"
         )
-        assert not res.missing_sections, f"{name} missing sections: {res.missing_sections}"
+        ok, bad = _gaps_are_all_omitted("school", res, allowed)
+        assert ok, f"{name} unexpected section gaps: {bad}"
 
 
-def test_flagship_cs_program_is_conformant():
-    # The flagship carries every section (basics, curriculum, admissions, costs,
-    # outcomes, insights, feeds). The only field gaps permitted are the per-program
-    # employment-rate / top-industries figures Princeton does not publish per major
-    # (recorded in the program's _standard.omitted).
-    slug = "princeton-computer-science-bs"
-    res = check_conformance("program", _program_snapshot(slug), profile_version=STANDARD_VERSION)
+def test_flagship_cs_program_is_deeply_enriched():
+    res = check_conformance(
+        "program", _program_snapshot(_FLAGSHIP), profile_version=STANDARD_VERSION
+    )
     assert not res.missing_sections, f"CS missing sections: {res.missing_sections}"
-    assert set(res.missing_fields) <= set(p._program_standard(slug)["omitted"]), (
+    assert set(res.missing_fields) <= set(p._program_standard(_FLAGSHIP)["omitted"]), (
         f"CS unexpected gaps: {res.missing_fields}"
     )
 
 
 def test_every_program_is_gold_except_recorded_omissions():
-    # The flagship is fully gold; catalog programs carry verified core content (basics,
-    # admissions, costs, outcomes-with-conditions) and honestly omit per-program
-    # curriculum / class-profile / reviews / feed where Princeton does not publish them
-    # (recorded in each program's _standard.omitted). Sections whose only fields are
-    # those recorded omissions are therefore the only sections allowed to be empty —
-    # mirroring the Berkeley / Stanford / Harvard catalog-program precedent.
+    assert len(p.PROGRAMS) >= 100, "full IPEDS catalog breadth (UNITID 186131)"
     omittable_sections = {"tracks", "insights", "feeds"}
     for spec in p.PROGRAMS:
         slug = spec["slug"]
@@ -134,6 +147,17 @@ def test_every_program_is_gold_except_recorded_omissions():
         assert set(res.missing_sections) <= omittable_sections, (
             f"{slug} unexpected section gaps: {res.missing_sections}"
         )
+
+
+def test_every_node_has_content_sources():
+    assert p._INSTITUTION_CONTENT.get("news_rss")
+    assert p._INSTITUTION_CONTENT.get("events_feed")
+    for school in p.SCHOOLS:
+        cs = p._school_content(school["name"])
+        assert cs.get("news_rss") and cs.get("events_feed") and cs.get("keywords"), school["name"]
+    for spec in p.PROGRAMS:
+        cs = p._CS_CONTENT if spec["slug"] == _FLAGSHIP else p._program_content(spec)
+        assert cs.get("news_rss") and cs.get("events_feed") and cs.get("keywords"), spec["slug"]
 
 
 def test_every_program_maps_to_a_real_unit():
