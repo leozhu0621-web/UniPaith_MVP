@@ -50,13 +50,14 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.penn_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Pennsylvania"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-10"
+ENRICHED_AT = "2026-06-11"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -202,6 +203,8 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Penn College Houses & Academic Services", "url": "https://www.collegehouses.upenn.edu/"},
         ],
     },
+    # Hero photo attribution (Wikimedia Commons file page verified 2026-06-11).
+    "media_credit": "Wikimedia Commons / Detroit Publishing Co. (public domain)",
     "flagship": {
         # Penn "Facts" (Fall 2025): 29,384 total students (10,325 undergraduate + 14,006
         # graduate/professional full-time, plus part-time).
@@ -269,8 +272,8 @@ SCHOOL_OUTCOMES: dict = {
 UNDERGRAD_COUNT = 10325
 
 DESCRIPTION = (
-    "Founded by Benjamin Franklin and tracing its origins to 1740, the University of "
-    "Pennsylvania is a private Ivy League research university in Philadelphia. Penn pairs "
+    "The University of Pennsylvania is a private research university in Philadelphia, PA, "
+    "founded by Benjamin Franklin and tracing its origins to 1740. Penn pairs "
     "the breadth of a large research university — about 10,300 undergraduates and roughly "
     "29,400 students in all, taught by some 6,000 faculty — with Franklin's founding idea "
     "of a practical, interdisciplinary education.\n\n"
@@ -649,21 +652,83 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
 }
 
 # ── Channel feeds + official social links ──────────────────────────────────
-# Institution-wide socials (official Penn handles) + news page (Penn Today).
-_INSTITUTION_CONTENT: dict = {
-    "news_url": "https://penntoday.upenn.edu/",
-    "social": {
-        "instagram": "https://www.instagram.com/uofpenn/",
-        "linkedin": "https://www.linkedin.com/school/university-of-pennsylvania/",
-        "x": "https://x.com/Penn",
-        "youtube": "https://www.youtube.com/UnivPennsylvania",
-        "facebook": "https://www.facebook.com/UnivPennsylvania",
-    },
+# Penn Today RSS (verified application/rss+xml at author time) + the Almanac
+# three-year academic calendar iCal (Google Calendar public feed linked from
+# almanac.upenn.edu). Schools/programs filter the shared feed by keywords.
+_PENN_NEWS_RSS = "https://penntoday.upenn.edu/rss.xml"
+_PENN_EVENTS_ICS = {
+    "url": "https://calendar.google.com/calendar/ical/pennalmanac@gmail.com/public/basic.ics",
+    "type": "ical",
 }
+_SOCIAL_PENN = {
+    "instagram": "https://www.instagram.com/uofpenn/",
+    "linkedin": "https://www.linkedin.com/school/university-of-pennsylvania/",
+    "x": "https://x.com/Penn",
+    "youtube": "https://www.youtube.com/UnivPennsylvania",
+    "facebook": "https://www.facebook.com/UnivPennsylvania",
+}
+
+_INSTITUTION_CONTENT: dict = {
+    "news_rss": _PENN_NEWS_RSS,
+    "news_url": "https://penntoday.upenn.edu/",
+    "news_curated": False,
+    "events_feed": dict(_PENN_EVENTS_ICS),
+    "social": dict(_SOCIAL_PENN),
+}
+
+_SCHOOL_KEYWORDS: dict[str, list[str]] = {
+    _SAS: ["Arts and Sciences", "College of Arts", "SAS", "humanities", "social sciences"],
+    _WHARTON: ["Wharton", "business school", "MBA", "finance", "management"],
+    _SEAS: ["Engineering", "SEAS", "computer science", "bioengineering", "robotics"],
+    _NURSING: ["Nursing", "BSN", "clinical nursing", "Penn Nursing"],
+    _MED: ["Perelman", "Medical School", "medicine", "Penn Medicine", "biomedical"],
+    _LAW: ["Penn Carey Law", "law school", "legal", "JD"],
+    _GSE: ["Graduate School of Education", "GSE", "education", "teaching"],
+    _DENTAL: ["Dental Medicine", "DMD", "dentistry", "Penn Dental"],
+    _DESIGN: ["Weitzman", "Design", "architecture", "planning", "landscape"],
+    _SP2: ["Social Policy", "SP2", "social work", "MSW", "nonprofit"],
+    _VET: ["Veterinary", "VMD", "Penn Vet", "animal health"],
+    _ANNENBERG: ["Annenberg", "communication", "media studies", "journalism"],
+}
+
+_KW_STOP = {
+    "and", "of", "the", "in", "for", "with", "science", "sciences", "engineering",
+    "master", "doctor", "bachelor", "studies", "general",
+}
+
+
+def _school_content(name: str) -> dict:
+    """A school's content_sources: Penn Today RSS + academic calendar filtered by keywords."""
+    return {
+        "news_rss": _PENN_NEWS_RSS,
+        "news_url": _SCHOOL_WEBSITE.get(name, "https://www.upenn.edu"),
+        "news_curated": False,
+        "events_feed": dict(_PENN_EVENTS_ICS),
+        "keywords": list(_SCHOOL_KEYWORDS[name]),
+        "social": dict(_SOCIAL_PENN),
+    }
+
+
+def _program_keywords(spec: dict) -> list[str]:
+    school_kw = list(_SCHOOL_KEYWORDS[spec["school"]])
+    name = spec["program_name"].replace("&", " ").replace("/", " ")
+    terms = [w for w in name.split() if len(w) > 3 and w.lower() not in _KW_STOP]
+    program_term = " ".join(terms[:3]).strip()
+    return ([program_term] if program_term else []) + school_kw
+
+
+def _program_content(spec: dict) -> dict:
+    base = _school_content(spec["school"])
+    base["keywords"] = _program_keywords(spec)
+    return base
+
 
 # Wharton MBA keyword-relevant feed (the flagship program).
 _WHARTON_MBA_CONTENT: dict = {
+    "news_rss": _PENN_NEWS_RSS,
     "news_url": "https://www.wharton.upenn.edu/story/",
+    "news_curated": False,
+    "events_feed": dict(_PENN_EVENTS_ICS),
     "keywords": ["wharton", "mba", "business school", "finance", "consulting"],
     "social": {
         "instagram": "https://www.instagram.com/whartonschool/",
@@ -993,7 +1058,36 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
+_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _build_catalog() -> list[dict]:
+    """Append breadth-first program nodes from the IPEDS completions-cip-6 catalog."""
+    out: list[dict] = []
+    seen = set(_EXISTING_SLUGS)
+    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+        if slug in seen:
+            continue
+        if (cip, dtype) in _EXISTING_CIP_KEYS:
+            continue
+        seen.add(slug)
+        out.append({
+            "slug": slug,
+            "school": school,
+            "program_name": name,
+            "degree_type": dtype,
+            "cip": cip,
+            "duration_months": dur,
+            "delivery_format": fmt,
+            "description": desc,
+        })
+    return out
+
+
+PROGRAMS += _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
 # Full official program names (program-page title); equal to the program name here.
 _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROGRAMS}
@@ -1706,6 +1800,23 @@ _REQ_UNDERGRAD = {
     "source_url": "https://admissions.upenn.edu/how-to-apply/first-year-applicants",
 }
 
+# Generic graduate/professional admissions pointer for catalog breadth nodes whose
+# per-program requirements are not yet individually verified.
+_REQ_GRAD_GENERIC = {
+    "materials": [
+        {
+            "name": "Program-specific application materials",
+            "required": True,
+            "note": (
+                "Requirements vary by school and degree; see the program's official "
+                "admissions page on the Penn website."
+            ),
+        },
+    ],
+    "source": "University of Pennsylvania — Graduate Admissions",
+    "source_url": "https://www.upenn.edu/admissions/graduate",
+}
+
 # Wharton full-time MBA admission (official requirements).
 _REQ_MBA = {
     "materials": [
@@ -2180,7 +2291,9 @@ def _requirements_for(spec: dict) -> dict:
     req = by_slug.get(spec["slug"])
     if req is not None:
         return dict(req)
-    return dict(_REQ_UNDERGRAD)
+    if spec["degree_type"] == "bachelors":
+        return dict(_REQ_UNDERGRAD)
+    return dict(_REQ_GRAD_GENERIC)
 
 
 # Slug-specific persisted application deadline (next upcoming cycle), where a program's
@@ -2269,9 +2382,7 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
             about = dict(about)
             about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
             sc.about_detail = about
-        # No school carries its own keyword-relevant feed (only the flagship program
-        # does); always assign None so a stale value on a pre-existing row is cleared.
-        sc.content_sources = None
+        sc.content_sources = _school_content(spec["name"])
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is FK-safe.
     for name, sc in existing.items():
@@ -2309,16 +2420,18 @@ def _program_has_dependents(session: Session, program_id) -> bool:
     return False
 
 
-def _program_standard(slug: str) -> dict:
+def _program_standard(slug: str, spec: dict | None = None) -> dict:
     """Per-program omitted-field list (verified-unavailable), for _standard."""
+    if spec is None:
+        spec = _SPEC_BY_SLUG[slug]
     omitted: list[str] = []
     if slug != _FLAGSHIP:
-        # Only the flagship carries the program-level employment report; catalog programs
-        # report a Scorecard/institution median earnings figure and omit the rest.
         omitted += [
             "outcomes_data.employment_rate",
             "outcomes_data.top_industries",
         ]
+    if spec["degree_type"] != "bachelors" and slug not in _COST_BY_SLUG:
+        omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
     if slug not in _CLASS_PROFILE_BY_SLUG:
@@ -2327,14 +2440,13 @@ def _program_standard(slug: str) -> dict:
         omitted.append("faculty_contacts.lead")
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
-    if slug != _FLAGSHIP:
-        # Only the flagship carries its own keyword-relevant feed; catalog programs
-        # surface the institution feed rather than a per-program one.
-        omitted.append("content_sources")
+    explicit_req_slugs = {
+        "penn-wharton-mba", "penn-md", "penn-jd", "penn-dmd", "penn-vmd",
+        "penn-march", "penn-msw", "penn-gse-higher-education-msed", "penn-communication-phd",
+    }
+    if slug not in explicit_req_slugs and spec["degree_type"] != "bachelors":
+        omitted.append("application_requirements.deadlines")
     if slug == "penn-gse-higher-education-msed":
-        # Penn GSE serves program-specific deadline dates only via a dynamic dropdown on
-        # the official requirements page; no static, verbatim date could be verified, so
-        # the deadlines field is honestly omitted rather than guessed.
         omitted.append("application_requirements.deadlines")
     return _standard(omitted)
 
@@ -2367,14 +2479,16 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
-        # Only the flagship carries its own feed (content_sources omitted for the rest).
-        p.content_sources = _WHARTON_MBA_CONTENT if slug == _FLAGSHIP else None
+        if slug == _FLAGSHIP:
+            p.content_sources = _WHARTON_MBA_CONTENT
+        else:
+            p.content_sources = _program_content(spec)
         # Cost: Wharton MBA carries its own budget; undergraduate uses published rates.
         cost_override = _COST_BY_SLUG.get(slug)
         if cost_override is not None:
             p.tuition = cost_override.get("tuition_usd")
             p.cost_data = dict(cost_override)
-        else:
+        elif spec["degree_type"] == "bachelors":
             p.tuition = _TUITION_UG
             p.cost_data = {
                 "tuition_usd": _TUITION_UG,
@@ -2394,6 +2508,17 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source": "U.S. Dept. of Education College Scorecard (UNITID 215062)",
                 "source_url": "https://collegescorecard.ed.gov/school/?215062",
                 "year": "2024-25",
+            }
+        else:
+            p.tuition = None
+            p.cost_data = {
+                "funded": spec["degree_type"] == "phd",
+                "note": (
+                    "Penn does not publish a single citable per-program tuition for this "
+                    "catalog node; see the program's official admissions/tuition page."
+                ),
+                "source": "University of Pennsylvania — Graduate Admissions",
+                "source_url": "https://www.upenn.edu/admissions/graduate",
             }
         # Admissions: Wharton MBA set or undergraduate set.
         p.application_requirements = _requirements_for(spec)
@@ -2415,7 +2540,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 }
             else:
                 outcomes = dict(_OUTCOMES_INSTITUTION)
-        outcomes["_standard"] = _program_standard(slug)
+        outcomes["_standard"] = _program_standard(slug, spec)
         p.outcomes_data = outcomes
         p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BASELINE
         p.highlights = _HL_BY_SLUG.get(slug) or _HL_BASELINE

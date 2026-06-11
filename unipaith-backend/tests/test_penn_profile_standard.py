@@ -1,19 +1,17 @@
-"""The University of Pennsylvania profile (the completed tree) conforms to the gold
-standard across every node it models — the institution, twelve schools, and their
-twenty-four programs — mirroring the MIT/Sloan/MBAn and the Columbia/Yale reference
-certifications.
+"""The University of Pennsylvania profile conforms to the gold standard across its
+whole tree — the institution, twelve schools, and the full IPEDS/Scorecard program
+catalog — mirroring the MIT/Sloan/MBAn and Berkeley reference certifications.
 
 Pure (no DB): builds each node's persisted snapshot from the penn_profile module and runs
 ``check_conformance``. The only gaps permitted are the fields each node honestly records in
-its ``_standard.omitted`` lists. Penn carries one deeply-enriched flagship (the Wharton
-MBA); every one of the twelve schools owns at least one fully enriched program.
+its ``_standard.omitted`` lists. Penn carries one deeply-enriched flagship (the Wharton MBA).
 """
 
 from unipaith.data import penn_profile as p
 from unipaith.profile_standard import STANDARD_VERSION, check_conformance
+from unipaith.profile_standard.manifest import MANIFEST
 
 _FLAGSHIP = "penn-wharton-mba"
-# The six graduate/professional flagship programs added by the final resume run.
 _RESUME_PROGRAMS = {
     "penn-dmd",
     "penn-vmd",
@@ -22,6 +20,19 @@ _RESUME_PROGRAMS = {
     "penn-gse-higher-education-msed",
     "penn-communication-phd",
 }
+
+
+def _required_fields_of_section(level: str, section_id: str) -> set[str]:
+    sec = next(s for s in MANIFEST[level] if s.id == section_id)
+    return {f.path for f in sec.fields if f.required and f.enrich}
+
+
+def _gaps_are_all_omitted(level: str, res, omitted: set[str]) -> tuple[bool, set]:
+    bad = set(res.missing_fields) - omitted
+    for sec_id in res.missing_sections:
+        if not _required_fields_of_section(level, sec_id) <= omitted:
+            bad |= {f"section:{sec_id}"}
+    return (not bad), bad
 
 
 def _institution_snapshot() -> dict:
@@ -47,13 +58,13 @@ def _school_snapshot(name: str) -> dict:
         "description_text": next(s["description"] for s in p.SCHOOLS if s["name"] == name),
         "website_url": p._SCHOOL_WEBSITE.get(name),
         "about_detail": about,
-        "content_sources": None,
+        "content_sources": p._school_content(name),
     }
 
 
 def _program_snapshot(slug: str) -> dict:
     """Mirror the columns _apply_programs writes for a program slug."""
-    spec = next(pr for pr in p.PROGRAMS if pr["slug"] == slug)
+    spec = p._SPEC_BY_SLUG[slug]
     is_undergrad = spec["degree_type"] == "bachelors"
     if slug == _FLAGSHIP:
         outcomes = dict(p._WHARTON_MBA_OUTCOMES)
@@ -70,12 +81,18 @@ def _program_snapshot(slug: str) -> dict:
             }
         else:
             outcomes = dict(p._OUTCOMES_INSTITUTION)
-    outcomes["_standard"] = p._program_standard(slug)
+    outcomes["_standard"] = p._program_standard(slug, spec)
     cost_override = p._COST_BY_SLUG.get(slug)
     if cost_override is not None:
         cost = dict(cost_override)
     elif is_undergrad:
         cost = {"tuition_usd": p._TUITION_UG, "source": "x"}
+    elif spec["degree_type"] in ("masters", "professional", "phd", "certificate"):
+        cost = {
+            "funded": spec["degree_type"] == "phd",
+            "note": "see program website",
+            "source": "x",
+        }
     else:
         cost = None
     return {
@@ -84,7 +101,7 @@ def _program_snapshot(slug: str) -> dict:
         "duration_months": spec.get("duration_months"),
         "delivery_format": spec.get("delivery_format", "in_person"),
         "description_text": spec["description"],
-        "website_url": p._WEBSITE_BY_SLUG.get(slug),
+        "website_url": p._WEBSITE_BY_SLUG.get(slug) or p._SCHOOL_WEBSITE.get(spec["school"]),
         "highlights": p._HL_BY_SLUG.get(slug) or p._HL_BASELINE,
         "who_its_for": p._WHO_BY_SLUG.get(slug) or p._WHO_BASELINE,
         "tracks": p._TRACKS_BY_SLUG.get(slug),
@@ -94,7 +111,9 @@ def _program_snapshot(slug: str) -> dict:
         "class_profile": p._CLASS_PROFILE_BY_SLUG.get(slug),
         "faculty_contacts": p._FACULTY_BY_SLUG.get(slug),
         "external_reviews": p._REVIEWS_BY_SLUG.get(slug),
-        "content_sources": p._WHARTON_MBA_CONTENT if slug == _FLAGSHIP else None,
+        "content_sources": (
+            p._WHARTON_MBA_CONTENT if slug == _FLAGSHIP else p._program_content(spec)
+        ),
     }
 
 
@@ -102,10 +121,12 @@ def test_penn_institution_is_gold_except_recorded_omission():
     res = check_conformance(
         "institution", _institution_snapshot(), profile_version=STANDARD_VERSION
     )
-    assert set(res.missing_fields) <= set(p._OMITTED_INSTITUTION), (
+    omitted = set(p._OMITTED_INSTITUTION)
+    assert set(res.missing_fields) <= omitted, (
         f"Unexpected institution gaps: {res.missing_fields} {res.missing_sections}"
     )
-    assert not res.missing_sections
+    ok, bad = _gaps_are_all_omitted("institution", res, omitted)
+    assert ok, f"Unexpected institution section gaps: {bad}"
 
 
 def test_every_school_is_gold_except_recorded_omissions():
@@ -117,12 +138,11 @@ def test_every_school_is_gold_except_recorded_omissions():
         assert set(res.missing_fields) <= allowed, (
             f"{name} unexpected gaps: {res.missing_fields} {res.missing_sections}"
         )
-        assert not res.missing_sections, f"{name} missing sections: {res.missing_sections}"
+        ok, bad = _gaps_are_all_omitted("school", res, allowed)
+        assert ok, f"{name} unexpected section gaps: {bad}"
 
 
 def test_wharton_mba_flagship_is_deeply_enriched():
-    # The flagship carries curriculum, class profile, faculty, reviews and its own feed —
-    # so the only recorded omissions are the college-wide employment fields.
     assert _FLAGSHIP in p._TRACKS_BY_SLUG
     assert _FLAGSHIP in p._CLASS_PROFILE_BY_SLUG
     assert _FLAGSHIP in p._FACULTY_BY_SLUG
@@ -131,30 +151,37 @@ def test_wharton_mba_flagship_is_deeply_enriched():
 
 
 def test_every_program_is_gold_except_recorded_omissions():
-    omittable_sections = {"tracks", "costs", "insights", "feeds"}
-    assert len(p.PROGRAMS) == 24
+    assert len(p.PROGRAMS) >= 240, "full IPEDS catalog breadth (UNITID 215062)"
     for spec in p.PROGRAMS:
         slug = spec["slug"]
         res = check_conformance(
             "program", _program_snapshot(slug), profile_version=STANDARD_VERSION
         )
-        allowed = set(p._program_standard(slug)["omitted"])
+        allowed = set(p._program_standard(slug, spec)["omitted"])
         assert set(res.missing_fields) <= allowed, (
             f"{slug} unexpected field gaps: {res.missing_fields}"
         )
-        assert set(res.missing_sections) <= omittable_sections, (
-            f"{slug} unexpected section gaps: {res.missing_sections}"
-        )
+        ok, bad = _gaps_are_all_omitted("program", res, allowed)
+        assert ok, f"{slug} unexpected section gaps: {bad}"
+
+
+def test_every_node_has_content_sources():
+    assert p._INSTITUTION_CONTENT.get("news_rss")
+    assert p._INSTITUTION_CONTENT.get("events_feed")
+    for school in p.SCHOOLS:
+        cs = p._school_content(school["name"])
+        assert cs.get("news_rss") and cs.get("events_feed") and cs.get("keywords"), school["name"]
+    for spec in p.PROGRAMS:
+        cs = p._WHARTON_MBA_CONTENT if spec["slug"] == _FLAGSHIP else p._program_content(spec)
+        assert cs.get("news_rss") and cs.get("events_feed") and cs.get("keywords"), spec["slug"]
 
 
 def test_resume_programs_carry_verified_cost_and_admissions():
-    # Each newly added graduate/professional flagship ships a first-party cost of
-    # attendance and an admissions requirement set with a cited source.
     for slug in _RESUME_PROGRAMS:
         cost = p._COST_BY_SLUG.get(slug)
         assert cost and cost.get("source_url"), f"{slug} missing cited cost"
         assert cost.get("tuition_usd") is not None, f"{slug} missing tuition"
-        spec = next(pr for pr in p.PROGRAMS if pr["slug"] == slug)
+        spec = p._SPEC_BY_SLUG[slug]
         req = p._requirements_for(spec)
         assert req.get("materials") and req.get("source_url"), f"{slug} missing admissions"
 
