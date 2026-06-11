@@ -3,11 +3,11 @@
 Real, sourced data only (U.S. Dept. of Education College Scorecard, UNITID 186131 ·
 NCES College Navigator / IPEDS · Princeton's Office of Institutional Research Common
 Data Set 2024-25 · the official Princeton "Facts & Figures" page · the official QS /
-Times Higher Education / U.S. News rankings · Princeton's Office of the Dean of the
-Faculty Chapter III "Academic Divisions" · each school's official leadership / about
-page · the College Scorecard Field-of-Study earnings by CIP). ``apply(session)``
+Times Higher Education / U.S. News rankings · Princeton's official "Areas of Study"
+catalog and the Graduate School "Fields of Study" listing · each department's official
+site · the College Scorecard Field-of-Study earnings by CIP). ``apply(session)``
 idempotently enriches the Princeton institution row, upserts its real degree-granting
-academic units, and builds Princeton's program catalog across them.
+academic units, and builds Princeton's FULL published degree catalog across them.
 
 Princeton's academic structure (Office of the Dean of the Faculty, Chapter III):
 the faculty is organized into four divisions — I the Humanities (incl. Architecture),
@@ -18,9 +18,27 @@ administrative or instructional responsibilities — they group departments. We 
 Princeton's units onto the platform's ``School`` model as:
   - School of Engineering and Applied Science (SEAS — Division IV, a real dean-led school)
   - Princeton School of Public and International Affairs (SPIA — a real dean-led school)
-  - The Humanities (Division I)
+  - The Humanities (Division I — incl. the School of Architecture)
   - The Social Sciences (Division II)
   - The Natural Sciences (Division III)
+
+The program set is the FULL published catalog: all 37 undergraduate concentrations
+(A.B. / B.S.E., from Princeton's official "Areas of Study" + Admission "Degrees &
+Departments" pages) and every degree-granting Graduate School field of study
+(Ph.D. fields plus the professional/terminal master's — MPA, MPP, M.Arch, M.Fin,
+M.S.E./M.Eng — from the Graduate School "Fields of Study" listing). Graduate
+certificate-only areas (Statistics & Machine Learning, Hellenic Studies) and
+joint-only add-ons (Interdisciplinary Humanities) are excluded because they grant no
+standalone degree. Every program carries its ``delivery_format`` (Princeton's degrees
+are residential / ``in_person``).
+
+Every node also carries ``content_sources`` so its Events & Updates tab populates:
+the institution, every school, and every program point at Princeton's official news
+RSS (``/news/feed/all`` — RSS 2.0 with ``<enclosure>`` cover images) filtered by
+node-relevant ``keywords`` (the MIT/MBAn pattern), plus the official social handles.
+Princeton publishes no public university-wide events iCalendar (its event feeds sit
+behind NetID at ``my.princeton.edu``), so ``events_feed`` is honestly omitted rather
+than guessed; Updates still populate from the verified news feed.
 
 It **flushes but does not commit** — the caller (the Alembic data migration, the CLI
 script, or the dev seed) owns the transaction. It is a **no-op** (returns ``False``)
@@ -28,21 +46,17 @@ when Princeton is absent, so it is safe to run against a fresh or CI database.
 Re-running is safe: units key off ``(institution_id, name)`` and programs off ``slug``;
 stale rows are reconciled without breaking foreign keys.
 
-This mirrors ``mit_profile`` / ``berkeley_profile`` / ``harvard_profile`` so the
-migration, the standalone script, and the dev seed all agree (DRY). Every figure
-traces to a public, citable source; anything that could not be verified from a
-first-party or two-independent-source basis is **omitted** (recorded in the relevant
-``_standard.omitted`` list), never guessed. Computer Science is the most-enriched
-flagship program (its real research areas, faculty, class profile, and aggregated
-reviews), mirroring MIT Sloan's MBAn in the reference instance — with the honest
-caveats that Princeton is test-optional through the fall-2027 entry cycle (returning to
-required testing for the 2027-28 cycle) and that the canonical program set is the
-complete federal College Scorecard Field-of-Study list for UNITID 186131; the School
-of Architecture and the broader Graduate School are the resumption scope for a later run.
+Every figure traces to a public, citable source; anything that could not be verified
+from a first-party or two-independent-source basis is **omitted** (recorded in the
+relevant ``_standard.omitted`` list), never guessed. Computer Science is the
+most-enriched flagship program (its real research areas, faculty, class profile and
+aggregated reviews); the breadth-first catalog carries verified basics on every other
+program with deeper fields omitted-pending for resume runs.
 """
 
 from __future__ import annotations
 
+# ruff: noqa: E501
 from datetime import date
 
 from sqlalchemy import select, text
@@ -54,7 +68,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Princeton University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-10"
+ENRICHED_AT = "2026-06-11"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -217,6 +231,14 @@ SCHOOL_OUTCOMES: dict = {
             "url": "https://www.princeton.edu/meet-princeton/facts-figures",
         },
         {
+            "label": "Princeton University — Areas of Study (full catalog)",
+            "url": "https://www.princeton.edu/academics/areas-of-study",
+        },
+        {
+            "label": "Princeton Graduate School — Fields of Study",
+            "url": "https://gradschool.princeton.edu/academics/degrees-requirements/fields-study",
+        },
+        {
             "label": "Princeton — endowment reaches $36.4 billion (FY2025)",
             "url": "https://paw.princeton.edu/article/princeton-endowment-earns-11-return-reaches-364-billion",
         },
@@ -267,10 +289,12 @@ DESCRIPTION = (
     "social sciences, the natural sciences, and engineering and applied science. Two "
     "dean-led professional schools sit alongside them — the School of Engineering and "
     "Applied Science (founded 1921) and the School of Public and International Affairs "
-    "(founded 1930) — and undergraduates earn the A.B. or the B.S.E. across 36 academic "
-    "departments. The university manages the Princeton Plasma Physics Laboratory, a U.S. "
-    "Department of Energy national laboratory, and is home to the Princeton Neuroscience "
-    "Institute and the Lewis-Sigler Institute for Integrative Genomics.\n\n"
+    "(founded 1930) — and undergraduates earn the A.B. or the B.S.E. across 37 academic "
+    "concentrations, while the Graduate School awards the Ph.D. and professional master's "
+    "degrees across more than forty fields of study. The university manages the Princeton "
+    "Plasma Physics Laboratory, a U.S. Department of Energy national laboratory, and is "
+    "home to the Princeton Neuroscience Institute and the Lewis-Sigler Institute for "
+    "Integrative Genomics.\n\n"
     "Princeton ranks among the very best universities in the world: No. 1 among national "
     "universities by U.S. News for the 15th consecutive year, a joint No. 3 in the world "
     "by Times Higher Education (its best-ever finish), and No. 25 by QS. Fifty-four Nobel "
@@ -311,7 +335,8 @@ SCHOOLS: list[dict] = [
             "International Affairs in 2020), SPIA is Princeton's multidisciplinary "
             "school for public service, spanning an undergraduate A.B. in public and "
             "international affairs and graduate degrees including the Master in Public "
-            "Affairs. It fully funds all of its MPA, MPP and PhD students."
+            "Affairs, the Master in Public Policy and the Ph.D. It fully funds all of its "
+            "MPA, MPP and PhD students."
         ),
     },
     {
@@ -320,9 +345,9 @@ SCHOOLS: list[dict] = [
         "description": (
             "Division I of Princeton's faculty, the humanities span the departments and "
             "programs in literature, languages, history of art, music, philosophy, "
-            "religion and the classical and modern world. (Per the Office of the Dean of "
-            "the Faculty, the divisions group departments for faculty representation and "
-            "are not administrative units.)"
+            "religion, architecture and the classical and modern world. (Per the Office "
+            "of the Dean of the Faculty, the divisions group departments for faculty "
+            "representation and are not administrative units.)"
         ),
     },
     {
@@ -330,9 +355,9 @@ SCHOOLS: list[dict] = [
         "sort_order": 4,
         "description": (
             "Division II of Princeton's faculty, the social sciences span anthropology, "
-            "economics, history, politics, sociology and the School of Public and "
-            "International Affairs — studying human behavior, institutions and society "
-            "with both quantitative and interpretive methods."
+            "economics, history, politics, sociology, population studies and the School "
+            "of Public and International Affairs — studying human behavior, institutions "
+            "and society with both quantitative and interpretive methods."
         ),
     },
     {
@@ -350,7 +375,7 @@ SCHOOLS: list[dict] = [
 
 # Each unit's official website (verified to resolve at author time). The divisions have
 # no standalone site; they point to Princeton's official academics / areas-of-study page.
-_ACADEMICS_URL = "https://www.princeton.edu/academics"
+_ACADEMICS_URL = "https://www.princeton.edu/academics/areas-of-study"
 _SCHOOL_WEBSITE: dict[str, str] = {
     _SEAS: "https://engineering.princeton.edu/",
     _SPIA: "https://spia.princeton.edu/",
@@ -407,9 +432,10 @@ _ABOUT_DETAIL: dict[str, dict] = {
             "Humanities Council (Council of the Humanities)",
             "Center for Digital Humanities",
             "University Center for Human Values",
+            "School of Architecture",
         ],
         "source": {
-            "label": "Princeton — Academics (Areas of Study)",
+            "label": "Princeton — Areas of Study",
             "url": _ACADEMICS_URL,
         },
     },
@@ -420,7 +446,7 @@ _ABOUT_DETAIL: dict[str, dict] = {
             "Center for the Study of Religion",
         ],
         "source": {
-            "label": "Princeton — Academics (Areas of Study)",
+            "label": "Princeton — Areas of Study",
             "url": _ACADEMICS_URL,
         },
     },
@@ -431,7 +457,7 @@ _ABOUT_DETAIL: dict[str, dict] = {
             "Princeton Plasma Physics Laboratory",
         ],
         "source": {
-            "label": "Princeton — Academics (Areas of Study)",
+            "label": "Princeton — Areas of Study",
             "url": _ACADEMICS_URL,
         },
     },
@@ -450,286 +476,517 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
 }
 
 # ── Channel feeds + official social links ──────────────────────────────────
-# Institution-wide socials (official Princeton handles) + news page.
+# Princeton's official news RSS (Site Builder ``/news/feed/all`` — RSS 2.0 whose items
+# carry <enclosure> cover images the ingest captures) is the single verified, fetchable
+# feed. Princeton publishes NO public university-wide events iCalendar (its event feeds
+# sit behind NetID at my.princeton.edu/ics_helper), so events_feed is honestly omitted
+# rather than guessed; the daily ingest still populates each node's Updates from the news
+# RSS, filtered by node-relevant keywords (the MIT/MBAn pattern).
+_PRINCETON_NEWS_RSS = "https://www.princeton.edu/news/feed/all"
+_PRINCETON_NEWS_URL = "https://www.princeton.edu/news"
+
+_SOCIAL_PRINCETON: dict = {
+    "instagram": "https://www.instagram.com/princeton/",
+    "linkedin": "https://www.linkedin.com/school/princeton-university/",
+    "x": "https://x.com/Princeton",
+    "youtube": "https://www.youtube.com/princetonuniversity",
+    "facebook": "https://www.facebook.com/princetonu",
+}
+
+# Institution-wide feed: the all-news Princeton RSS (curated — every item is Princeton
+# news) with the official university social handles.
 _INSTITUTION_CONTENT: dict = {
-    "news_url": "https://www.princeton.edu/news",
-    "social": {
-        "instagram": "https://www.instagram.com/princeton/",
-        "linkedin": "https://www.linkedin.com/school/princeton-university/",
-        "x": "https://x.com/Princeton",
-        "youtube": "https://www.youtube.com/princetonuniversity",
-        "facebook": "https://www.facebook.com/princetonu",
-    },
+    "news_rss": _PRINCETON_NEWS_RSS,
+    "news_url": _PRINCETON_NEWS_URL,
+    "news_curated": True,
+    "social": _SOCIAL_PRINCETON,
 }
 
-# Computer Science keyword-relevant feed (the flagship program), inheriting the
-# institution socials (the department surfaces its news through the CS site).
-_CS_CONTENT: dict = {
-    "news_url": "https://www.cs.princeton.edu/news",
-    "keywords": ["computer science", "princeton cs", "machine learning", "princeton engineering"],
-    "social": _INSTITUTION_CONTENT["social"],
+# Per-unit feed config: the shared Princeton news RSS filtered to unit-relevant items by
+# ``keywords`` (no Princeton unit publishes its own fetchable topic RSS, so each inherits
+# the university feed + a keyword filter naming the unit's departments).
+_SCHOOL_FEED_SPEC: dict[str, list[str]] = {
+    _SEAS: [
+        "engineering",
+        "School of Engineering",
+        "Princeton Engineering",
+        "computer science",
+        "robotics",
+    ],
+    _SPIA: [
+        "School of Public and International Affairs",
+        "SPIA",
+        "public policy",
+        "public affairs",
+    ],
+    _HUM: [
+        "humanities",
+        "English",
+        "philosophy",
+        "history of art",
+        "music",
+        "classics",
+        "architecture",
+        "religion",
+    ],
+    _SOC: [
+        "economics",
+        "politics",
+        "sociology",
+        "anthropology",
+        "history",
+        "social science",
+    ],
+    _NAT: [
+        "physics",
+        "chemistry",
+        "biology",
+        "neuroscience",
+        "mathematics",
+        "astrophysics",
+        "geosciences",
+    ],
 }
 
-# ── The program catalog (real majors, organized by academic unit) ──────────
-# slug = idempotency key. Every program is mapped to its owning unit from Princeton's
-# official department structure (Dean of the Faculty divisions). The program set is the
-# complete College Scorecard Field-of-Study list for UNITID 186131 (the deterministic
-# federal view). Princeton awards the A.B. and the B.S.E.; the platform models the
-# undergraduate degrees with the generic ``bachelors`` type and the SPIA MPA as
-# ``masters``.
-PROGRAMS: list[dict] = [
-    # ── School of Engineering and Applied Science (Division IV) ──
-    {
-        "slug": "princeton-computer-science-bs",
-        "school": _SEAS,
-        "program_name": "Computer Science",
-        "degree_type": "bachelors",
-        "cip": "11.07",
-        "duration_months": 48,
-        "description": (
-            "Princeton's flagship and largest major — computer science, offered as both "
-            "the A.B. and the B.S.E., spanning theory, systems, AI and machine learning."
-        ),
-    },
-    {
-        "slug": "princeton-operations-research-bs",
-        "school": _SEAS,
-        "program_name": "Operations Research and Financial Engineering",
-        "degree_type": "bachelors",
-        "cip": "14.37",
-        "duration_months": 48,
-        "description": (
-            "Operations research and financial engineering — optimization, probability, "
-            "statistics and financial mathematics."
-        ),
-    },
-    {
-        "slug": "princeton-mechanical-engineering-bs",
-        "school": _SEAS,
-        "program_name": "Mechanical and Aerospace Engineering",
-        "degree_type": "bachelors",
-        "cip": "14.19",
-        "duration_months": 48,
-        "description": "Mechanical and aerospace engineering — mechanics, design and propulsion.",
-    },
-    {
-        "slug": "princeton-electrical-engineering-bs",
-        "school": _SEAS,
-        "program_name": "Electrical and Computer Engineering",
-        "degree_type": "bachelors",
-        "cip": "14.10",
-        "duration_months": 48,
-        "description": "Electrical and computer engineering — circuits, devices and systems.",
-    },
-    {
-        "slug": "princeton-civil-engineering-bs",
-        "school": _SEAS,
-        "program_name": "Civil and Environmental Engineering",
-        "degree_type": "bachelors",
-        "cip": "14.08",
-        "duration_months": 48,
-        "description": (
-            "Civil and environmental engineering — structures, mechanics and environment."
-        ),
-    },
-    {
-        "slug": "princeton-chemical-engineering-bs",
-        "school": _SEAS,
-        "program_name": "Chemical and Biological Engineering",
-        "degree_type": "bachelors",
-        "cip": "14.07",
-        "duration_months": 48,
-        "description": "Chemical and biological engineering — reaction engineering and design.",
-    },
-    # ── Princeton School of Public and International Affairs ──
-    {
-        "slug": "princeton-public-affairs-ab",
-        "school": _SPIA,
-        "program_name": "Public and International Affairs",
-        "degree_type": "bachelors",
-        "cip": "44.05",
-        "duration_months": 48,
-        "description": (
-            "The undergraduate A.B. in public and international affairs — policy analysis "
-            "grounded in the social sciences, with policy research seminars and task forces."
-        ),
-    },
+
+def _school_content(name: str) -> dict:
+    """Build a unit's content_sources from the Princeton news RSS + unit keywords + socials."""
+    return {
+        "news_rss": _PRINCETON_NEWS_RSS,
+        "news_url": _PRINCETON_NEWS_URL,
+        "news_curated": False,
+        "keywords": list(_SCHOOL_FEED_SPEC[name]),
+        "social": _SOCIAL_PRINCETON,
+    }
+
+
+def _program_content(school_name: str, keywords: list[str]) -> dict:
+    """Build a program's content_sources from its unit feed, refined by program keywords."""
+    base = _school_content(school_name)
+    base["keywords"] = list(keywords) or list(_SCHOOL_FEED_SPEC[school_name])
+    return base
+
+
+# ── The program catalog (the FULL published degree catalog, by academic unit) ──
+# slug = idempotency key. Each program maps to its owning unit. Undergraduate degrees use
+# the generic ``bachelors`` type (A.B./B.S.E. noted in the program name + description);
+# graduate degrees use ``masters`` (terminal/professional master's) or ``phd``. Every
+# program's website is its official department/program page; ``delivery_format`` is
+# in_person (Princeton's degrees are residential).
+
+# Short factual blurbs (what each field studies) — shared between a field's undergraduate
+# concentration and its doctoral program so descriptions stay DRY and program-specific.
+_BLURB: dict[str, str] = {
+    "computer-science": (
+        "Princeton's flagship and largest major, spanning theory, systems, AI and machine "
+        "learning across the department's thirteen official research areas"
+    ),
+    "orfe": "optimization, probability, statistics and financial mathematics for decisions under uncertainty",
+    "mae": "mechanics, dynamics, propulsion, robotics and aerospace systems",
+    "ece": "circuits, devices, signals, computer architecture and photonics",
+    "cee": "structures, mechanics, environmental engineering and sustainable infrastructure",
+    "cbe": "reaction engineering, thermodynamics, materials and bioengineering",
+    "public-affairs": "policy analysis grounded in the social sciences, with policy task forces and junior seminars",
+    "african-american-studies": "the history, politics, culture and social life of people of African descent",
+    "architecture": "the design, history and theory of the built environment",
+    "art-archaeology": "the history of art and archaeology from antiquity to the present",
+    "classics": "the languages, literature, history and philosophy of the ancient Greek and Roman worlds",
+    "comparative-literature": "literature across languages, national traditions and media",
+    "east-asian-studies": "the languages, history and cultures of China, Japan and Korea",
+    "english": "literatures in English, literary criticism and creative writing",
+    "french-italian": "French and Italian language, literature and culture",
+    "german": "German language, literature, philosophy and intellectual history",
+    "linguistics": "the scientific study of language — phonology, syntax, semantics and psycholinguistics",
+    "music": "musical composition, history, theory and performance",
+    "near-eastern-studies": "the languages, history, religions and politics of the Near East",
+    "philosophy": "logic, ethics, metaphysics, epistemology and the history of philosophy",
+    "religion": "the comparative and historical study of the world's religious traditions",
+    "slavic": "Russian and other Slavic languages, literatures and cultures",
+    "spanish-portuguese": "the languages, literatures and cultures of the Spanish- and Portuguese-speaking world",
+    "anthropology": "the comparative study of human societies, cultures and institutions",
+    "economics": "microeconomics, macroeconomics and econometrics",
+    "history": "the human past across periods, regions and methods",
+    "politics": "American, comparative and international politics and political theory",
+    "sociology": "social structure, inequality, institutions and social change",
+    "astrophysical-sciences": "stars, galaxies, cosmology and the physics of the universe",
+    "chemistry": "organic, inorganic, physical and biological chemistry",
+    "eeb": "organisms, populations, ecosystems and evolution",
+    "geosciences": "the Earth's structure, climate history and surface processes",
+    "mathematics": "analysis, algebra, geometry, topology and number theory",
+    "molecular-biology": "biochemistry, genetics, genomics, cell and developmental biology",
+    "neuroscience": "the molecular, cellular, systems and computational study of the brain",
+    "physics": "from particles and fields to condensed matter, biophysics and cosmology",
+    "psychology": "cognition, perception, development, social behavior and systems neuroscience",
+    # graduate-only fields
+    "pacm": "interdisciplinary applied mathematics, numerical analysis and mathematical modeling across science and engineering",
+    "aos": "the dynamics, physics and chemistry of the atmosphere, oceans and climate",
+    "biophysics": "quantitative and physical approaches to biological systems at the Lewis-Sigler Institute",
+    "plasma-physics": "the physics of plasmas and fusion energy, in partnership with the Princeton Plasma Physics Laboratory",
+    "qcb": "genomics, systems biology and computational approaches to living systems at the Lewis-Sigler Institute",
+    "population-studies": "demography, health and the social and economic dynamics of populations at the Office of Population Research",
+    "history-of-science": "the history of science, medicine and technology",
+    "music-composition": "original musical composition and the creation of new work",
+    "musicology": "the historical and critical study of music",
+    "materials-science": "the structure, properties and processing of advanced materials",
+    "quantum-science": "the science and engineering of quantum information, devices and materials",
+}
+
+# Undergraduate concentrations (37). Tuple: (slug, school, name, degree_label, dept_url,
+# blurb_key). Princeton awards the A.B. for all non-engineering concentrations and the
+# B.S.E. for the six engineering departments (Computer Science is offered as both).
+_UG_SPECS: list[tuple] = [
+    # School of Engineering and Applied Science (B.S.E.; CS also A.B.)
+    ("princeton-computer-science-bs", _SEAS, "Computer Science", "A.B. or B.S.E.",
+     "https://www.cs.princeton.edu/", "computer-science"),
+    ("princeton-operations-research-bs", _SEAS, "Operations Research and Financial Engineering",
+     "B.S.E.", "https://orfe.princeton.edu/", "orfe"),
+    ("princeton-mechanical-engineering-bs", _SEAS, "Mechanical and Aerospace Engineering",
+     "B.S.E.", "https://mae.princeton.edu/", "mae"),
+    ("princeton-electrical-engineering-bs", _SEAS, "Electrical and Computer Engineering",
+     "B.S.E.", "https://ece.princeton.edu/", "ece"),
+    ("princeton-civil-engineering-bs", _SEAS, "Civil and Environmental Engineering",
+     "B.S.E.", "https://cee.princeton.edu/", "cee"),
+    ("princeton-chemical-engineering-bs", _SEAS, "Chemical and Biological Engineering",
+     "B.S.E.", "https://cbe.princeton.edu/", "cbe"),
+    # School of Public and International Affairs (A.B.)
+    ("princeton-public-affairs-ab", _SPIA, "Public and International Affairs", "A.B.",
+     "https://spia.princeton.edu/undergraduate-program", "public-affairs"),
+    # The Humanities (A.B.)
+    ("princeton-african-american-studies-ab", _HUM, "African American Studies", "A.B.",
+     "https://aas.princeton.edu/", "african-american-studies"),
+    ("princeton-architecture-ab", _HUM, "Architecture", "A.B.",
+     "https://soa.princeton.edu/", "architecture"),
+    ("princeton-art-archaeology-ab", _HUM, "Art and Archaeology", "A.B.",
+     "https://artandarchaeology.princeton.edu/", "art-archaeology"),
+    ("princeton-classics-ab", _HUM, "Classics", "A.B.",
+     "https://classics.princeton.edu/", "classics"),
+    ("princeton-comparative-literature-ab", _HUM, "Comparative Literature", "A.B.",
+     "https://complit.princeton.edu/", "comparative-literature"),
+    ("princeton-east-asian-studies-ab", _HUM, "East Asian Studies", "A.B.",
+     "https://eas.princeton.edu/", "east-asian-studies"),
+    ("princeton-english-bs", _HUM, "English", "A.B.",
+     "https://english.princeton.edu/", "english"),
+    ("princeton-french-italian-ab", _HUM, "French and Italian", "A.B.",
+     "https://fit.princeton.edu/", "french-italian"),
+    ("princeton-german-ab", _HUM, "German", "A.B.",
+     "https://german.princeton.edu/", "german"),
+    ("princeton-linguistics-ab", _HUM, "Linguistics", "A.B.",
+     "https://linguistics.princeton.edu/", "linguistics"),
+    ("princeton-music-ab", _HUM, "Music", "A.B.",
+     "https://music.princeton.edu/", "music"),
+    ("princeton-near-eastern-studies-ab", _HUM, "Near Eastern Studies", "A.B.",
+     "https://nes.princeton.edu/", "near-eastern-studies"),
+    ("princeton-philosophy-bs", _HUM, "Philosophy", "A.B.",
+     "https://philosophy.princeton.edu/", "philosophy"),
+    ("princeton-religion-ab", _HUM, "Religion", "A.B.",
+     "https://religion.princeton.edu/", "religion"),
+    ("princeton-slavic-ab", _HUM, "Slavic Languages and Literatures", "A.B.",
+     "https://slavic.princeton.edu/", "slavic"),
+    ("princeton-spanish-portuguese-ab", _HUM, "Spanish and Portuguese", "A.B.",
+     "https://spo.princeton.edu/", "spanish-portuguese"),
+    # The Social Sciences (A.B.)
+    ("princeton-anthropology-bs", _SOC, "Anthropology", "A.B.",
+     "https://anthropology.princeton.edu/", "anthropology"),
+    ("princeton-economics-bs", _SOC, "Economics", "A.B.",
+     "https://economics.princeton.edu/", "economics"),
+    ("princeton-history-bs", _SOC, "History", "A.B.",
+     "https://history.princeton.edu/", "history"),
+    ("princeton-politics-bs", _SOC, "Politics", "A.B.",
+     "https://politics.princeton.edu/", "politics"),
+    ("princeton-sociology-bs", _SOC, "Sociology", "A.B.",
+     "https://sociology.princeton.edu/", "sociology"),
+    # The Natural Sciences (A.B.)
+    ("princeton-astrophysical-sciences-ab", _NAT, "Astrophysical Sciences", "A.B.",
+     "https://web.astro.princeton.edu/", "astrophysical-sciences"),
+    ("princeton-chemistry-bs", _NAT, "Chemistry", "A.B.",
+     "https://chemistry.princeton.edu/", "chemistry"),
+    ("princeton-eeb-bs", _NAT, "Ecology and Evolutionary Biology", "A.B.",
+     "https://eeb.princeton.edu/", "eeb"),
+    ("princeton-geosciences-ab", _NAT, "Geosciences", "A.B.",
+     "https://geosciences.princeton.edu/", "geosciences"),
+    ("princeton-mathematics-bs", _NAT, "Mathematics", "A.B.",
+     "https://www.math.princeton.edu/", "mathematics"),
+    ("princeton-molecular-biology-bs", _NAT, "Molecular Biology", "A.B.",
+     "https://molbio.princeton.edu/", "molecular-biology"),
+    ("princeton-neuroscience-bs", _NAT, "Neuroscience", "A.B.",
+     "https://pni.princeton.edu/", "neuroscience"),
+    ("princeton-physics-bs", _NAT, "Physics", "A.B.",
+     "https://phy.princeton.edu/", "physics"),
+    ("princeton-psychology-bs", _NAT, "Psychology", "A.B.",
+     "https://psychology.princeton.edu/", "psychology"),
+]
+
+# Graduate degree programs (Graduate School fields of study). Tuple:
+# (slug, school, name, degree_type, duration_months, dept_url, blurb_key_or_None, desc_override_or_None).
+# Ph.D. programs are fully funded by Princeton; professional master's carry published
+# tuition (SPIA's MPA/MPP are fully funded). blurb_key reuses the shared _BLURB; where a
+# program needs a bespoke line, desc_override is given.
+_GRAD_SPECS: list[tuple] = [
+    # ── School of Engineering and Applied Science — Ph.D. ──
+    ("princeton-cbe-phd", _SEAS, "Chemical and Biological Engineering (Ph.D.)", "phd", 60,
+     "https://cbe.princeton.edu/", "cbe", None),
+    ("princeton-cee-phd", _SEAS, "Civil and Environmental Engineering (Ph.D.)", "phd", 60,
+     "https://cee.princeton.edu/", "cee", None),
+    ("princeton-cs-phd", _SEAS, "Computer Science (Ph.D.)", "phd", 60,
+     "https://www.cs.princeton.edu/grad", "computer-science", None),
+    ("princeton-ece-phd", _SEAS, "Electrical and Computer Engineering (Ph.D.)", "phd", 60,
+     "https://ece.princeton.edu/", "ece", None),
+    ("princeton-mae-phd", _SEAS, "Mechanical and Aerospace Engineering (Ph.D.)", "phd", 60,
+     "https://mae.princeton.edu/", "mae", None),
+    ("princeton-orfe-phd", _SEAS, "Operations Research and Financial Engineering (Ph.D.)", "phd", 60,
+     "https://orfe.princeton.edu/", "orfe", None),
+    ("princeton-materials-science-phd", _SEAS, "Materials Science and Engineering (Ph.D.)", "phd", 60,
+     "https://materials.princeton.edu/", "materials-science", None),
+    ("princeton-quantum-science-phd", _SEAS, "Quantum Science and Engineering (Ph.D.)", "phd", 60,
+     "https://quantum.princeton.edu/", "quantum-science", None),
+    # ── School of Engineering and Applied Science — professional master's (M.S.E./M.Eng.) ──
+    ("princeton-cbe-mse", _SEAS, "Chemical and Biological Engineering (M.S.E. / M.Eng.)", "masters", 24,
+     "https://cbe.princeton.edu/", None,
+     "Graduate master's program (M.S.E. or M.Eng.) in chemical and biological engineering — advanced coursework with a research thesis (M.S.E.) or professional non-thesis track (M.Eng.)."),
+    ("princeton-cee-mse", _SEAS, "Civil and Environmental Engineering (M.S.E. / M.Eng.)", "masters", 24,
+     "https://cee.princeton.edu/", None,
+     "Graduate master's program (M.S.E. or M.Eng.) in civil and environmental engineering — advanced coursework with a research thesis (M.S.E.) or professional non-thesis track (M.Eng.)."),
+    ("princeton-cs-mse", _SEAS, "Computer Science (M.S.E.)", "masters", 24,
+     "https://www.cs.princeton.edu/grad", None,
+     "Graduate master's program (M.S.E.) in computer science — advanced coursework and research, with an optional non-thesis M.Eng. track."),
+    ("princeton-ece-mse", _SEAS, "Electrical and Computer Engineering (M.Eng.)", "masters", 24,
+     "https://ece.princeton.edu/", None,
+     "Professional master's program (M.Eng.) in electrical and computer engineering — advanced coursework across circuits, devices, signals and computer architecture."),
+    ("princeton-mae-mse", _SEAS, "Mechanical and Aerospace Engineering (M.S.E. / M.Eng.)", "masters", 24,
+     "https://mae.princeton.edu/", None,
+     "Graduate master's program (M.S.E. or M.Eng.) in mechanical and aerospace engineering — advanced coursework with a research thesis (M.S.E.) or professional non-thesis track (M.Eng.)."),
+    ("princeton-orfe-mse", _SEAS, "Operations Research and Financial Engineering (M.S.E.)", "masters", 24,
+     "https://orfe.princeton.edu/", None,
+     "Graduate master's program (M.S.E.) in operations research and financial engineering — optimization, probability, statistics and financial mathematics."),
+    # ── Bendheim Center for Finance (interdisciplinary; grouped under Social Sciences) ──
+    ("princeton-finance-mfin", _SOC, "Master in Finance (M.Fin.)", "masters", 24,
+     "https://bcf.princeton.edu/academic-programs/master-in-finance/", None,
+     "The Bendheim Center for Finance Master in Finance (M.Fin.) — a quantitative, four-semester degree in financial and monetary economics with analytical and computational methods."),
+    # ── School of Public and International Affairs — MPP + Ph.D. (MPA modeled separately) ──
+    ("princeton-public-affairs-mpp", _SPIA, "Master in Public Policy (MPP)", "masters", 12,
+     "https://spia.princeton.edu/graduate-admissions/master-public-policy", None,
+     "The one-year Master in Public Policy — a fully-funded mid-career degree for experienced professionals in public service."),
+    ("princeton-public-affairs-phd", _SPIA, "Public Affairs (Ph.D.)", "phd", 60,
+     "https://spia.princeton.edu/graduate-admissions/phd-program", None,
+     "The Ph.D. in Public Affairs — fully-funded doctoral training in policy-relevant social science (economics, politics, sociology, demography and security studies)."),
+    # ── The Humanities — Ph.D. (+ Architecture M.Arch) ──
+    ("princeton-art-archaeology-phd", _HUM, "Art and Archaeology (Ph.D.)", "phd", 60,
+     "https://artandarchaeology.princeton.edu/", "art-archaeology", None),
+    ("princeton-classics-phd", _HUM, "Classics (Ph.D.)", "phd", 60,
+     "https://classics.princeton.edu/", "classics", None),
+    ("princeton-comparative-literature-phd", _HUM, "Comparative Literature (Ph.D.)", "phd", 60,
+     "https://complit.princeton.edu/", "comparative-literature", None),
+    ("princeton-east-asian-studies-phd", _HUM, "East Asian Studies (Ph.D.)", "phd", 60,
+     "https://eas.princeton.edu/", "east-asian-studies", None),
+    ("princeton-english-phd", _HUM, "English (Ph.D.)", "phd", 60,
+     "https://english.princeton.edu/", "english", None),
+    ("princeton-french-italian-phd", _HUM, "French and Italian (Ph.D.)", "phd", 60,
+     "https://fit.princeton.edu/", "french-italian", None),
+    ("princeton-german-phd", _HUM, "German (Ph.D.)", "phd", 60,
+     "https://german.princeton.edu/", "german", None),
+    ("princeton-history-of-science-phd", _HUM, "History of Science (Ph.D.)", "phd", 60,
+     "https://history.princeton.edu/graduate/phd-history-science", "history-of-science", None),
+    ("princeton-music-composition-phd", _HUM, "Music Composition (Ph.D.)", "phd", 60,
+     "https://music.princeton.edu/", "music-composition", None),
+    ("princeton-musicology-phd", _HUM, "Musicology (Ph.D.)", "phd", 60,
+     "https://music.princeton.edu/", "musicology", None),
+    ("princeton-near-eastern-studies-phd", _HUM, "Near Eastern Studies (Ph.D.)", "phd", 60,
+     "https://nes.princeton.edu/", "near-eastern-studies", None),
+    ("princeton-philosophy-phd", _HUM, "Philosophy (Ph.D.)", "phd", 60,
+     "https://philosophy.princeton.edu/", "philosophy", None),
+    ("princeton-religion-phd", _HUM, "Religion (Ph.D.)", "phd", 60,
+     "https://religion.princeton.edu/", "religion", None),
+    ("princeton-slavic-phd", _HUM, "Slavic Languages and Literatures (Ph.D.)", "phd", 60,
+     "https://slavic.princeton.edu/", "slavic", None),
+    ("princeton-spanish-portuguese-phd", _HUM, "Spanish and Portuguese (Ph.D.)", "phd", 60,
+     "https://spo.princeton.edu/", "spanish-portuguese", None),
+    ("princeton-architecture-phd", _HUM, "Architecture (Ph.D.)", "phd", 60,
+     "https://soa.princeton.edu/", "architecture", None),
+    ("princeton-architecture-march", _HUM, "Architecture (M.Arch.)", "masters", 36,
+     "https://soa.princeton.edu/content/master-architecture", None,
+     "The professional Master of Architecture (M.Arch.) — a three-year, NAAB-accredited degree in architectural design, history, theory and technology (a two-year post-professional track is also offered)."),
+    # ── The Social Sciences — Ph.D. ──
+    ("princeton-anthropology-phd", _SOC, "Anthropology (Ph.D.)", "phd", 60,
+     "https://anthropology.princeton.edu/", "anthropology", None),
+    ("princeton-economics-phd", _SOC, "Economics (Ph.D.)", "phd", 60,
+     "https://economics.princeton.edu/", "economics", None),
+    ("princeton-history-phd", _SOC, "History (Ph.D.)", "phd", 60,
+     "https://history.princeton.edu/", "history", None),
+    ("princeton-politics-phd", _SOC, "Politics (Ph.D.)", "phd", 60,
+     "https://politics.princeton.edu/", "politics", None),
+    ("princeton-population-studies-phd", _SOC, "Population Studies (Ph.D.)", "phd", 60,
+     "https://opr.princeton.edu/", "population-studies", None),
+    ("princeton-sociology-phd", _SOC, "Sociology (Ph.D.)", "phd", 60,
+     "https://sociology.princeton.edu/", "sociology", None),
+    # ── The Natural Sciences — Ph.D. ──
+    ("princeton-pacm-phd", _NAT, "Applied and Computational Mathematics (Ph.D.)", "phd", 60,
+     "https://www.pacm.princeton.edu/", "pacm", None),
+    ("princeton-astrophysical-sciences-phd", _NAT, "Astrophysical Sciences (Ph.D.)", "phd", 60,
+     "https://web.astro.princeton.edu/", "astrophysical-sciences", None),
+    ("princeton-aos-phd", _NAT, "Atmospheric and Oceanic Sciences (Ph.D.)", "phd", 60,
+     "https://aos.princeton.edu/", "aos", None),
+    ("princeton-biophysics-phd", _NAT, "Biophysics (Ph.D.)", "phd", 60,
+     "https://lsi.princeton.edu/education/graduate-program-biophysics", "biophysics", None),
+    ("princeton-chemistry-phd", _NAT, "Chemistry (Ph.D.)", "phd", 60,
+     "https://chemistry.princeton.edu/", "chemistry", None),
+    ("princeton-eeb-phd", _NAT, "Ecology and Evolutionary Biology (Ph.D.)", "phd", 60,
+     "https://eeb.princeton.edu/", "eeb", None),
+    ("princeton-geosciences-phd", _NAT, "Geosciences (Ph.D.)", "phd", 60,
+     "https://geosciences.princeton.edu/", "geosciences", None),
+    ("princeton-mathematics-phd", _NAT, "Mathematics (Ph.D.)", "phd", 60,
+     "https://www.math.princeton.edu/", "mathematics", None),
+    ("princeton-molecular-biology-phd", _NAT, "Molecular Biology (Ph.D.)", "phd", 60,
+     "https://molbio.princeton.edu/", "molecular-biology", None),
+    ("princeton-neuroscience-phd", _NAT, "Neuroscience (Ph.D.)", "phd", 60,
+     "https://pni.princeton.edu/", "neuroscience", None),
+    ("princeton-physics-phd", _NAT, "Physics (Ph.D.)", "phd", 60,
+     "https://phy.princeton.edu/", "physics", None),
+    ("princeton-plasma-physics-phd", _NAT, "Plasma Physics (Ph.D.)", "phd", 60,
+     "https://plasma.princeton.edu/", "plasma-physics", None),
+    ("princeton-psychology-phd", _NAT, "Psychology (Ph.D.)", "phd", 60,
+     "https://psychology.princeton.edu/", "psychology", None),
+    ("princeton-qcb-phd", _NAT, "Quantitative and Computational Biology (Ph.D.)", "phd", 60,
+     "https://lsi.princeton.edu/education/quantitative-computational-biology-graduate-program",
+     "qcb", None),
+]
+
+_AB_DESC_SUFFIX = {
+    "A.B.": "Princeton awards the A.B.",
+    "B.S.E.": "Princeton awards the B.S.E.",
+    "A.B. or B.S.E.": "Princeton awards the A.B. or the B.S.E.",
+}
+
+
+def _build_programs() -> list[dict]:
+    out: list[dict] = []
+    for slug, school, name, degree_label, url, blurb_key in _UG_SPECS:
+        out.append(
+            {
+                "slug": slug,
+                "school": school,
+                "program_name": name,
+                "degree_type": "bachelors",
+                "duration_months": 48,
+                "delivery_format": "in_person",
+                "website_url": url,
+                "description": f"{name} — {_BLURB[blurb_key]}. {_AB_DESC_SUFFIX[degree_label]}.",
+            }
+        )
+    for slug, school, name, degree_type, dur, url, blurb_key, desc_override in _GRAD_SPECS:
+        if desc_override is not None:
+            desc = desc_override
+        else:
+            desc = (
+                f"Doctoral (Ph.D.) program in {name.split(' (')[0].lower()} — "
+                f"{_BLURB[blurb_key]}, with original dissertation research. Princeton fully "
+                f"funds all Ph.D. students."
+            )
+        out.append(
+            {
+                "slug": slug,
+                "school": school,
+                "program_name": name,
+                "degree_type": degree_type,
+                "duration_months": dur,
+                "delivery_format": "in_person",
+                "website_url": url,
+                "description": desc,
+            }
+        )
+    return out
+
+
+# The SPIA MPA keeps its original slug + bespoke description (fully-funded two-year degree).
+PROGRAMS: list[dict] = _build_programs() + [
     {
         "slug": "princeton-public-affairs-mpa",
         "school": _SPIA,
         "program_name": "Master in Public Affairs (MPA)",
         "degree_type": "masters",
-        "cip": "44.05",
         "duration_months": 24,
+        "delivery_format": "in_person",
+        "website_url": "https://spia.princeton.edu/graduate-admissions/master-public-affairs",
         "description": (
             "The two-year Master in Public Affairs — a fully-funded graduate degree in "
             "policy analysis and leadership for public service."
         ),
     },
-    # ── The Humanities (Division I) ──
-    {
-        "slug": "princeton-english-bs",
-        "school": _HUM,
-        "program_name": "English",
-        "degree_type": "bachelors",
-        "cip": "23.01",
-        "duration_months": 48,
-        "description": "English — literature in English, criticism and creative writing.",
-    },
-    {
-        "slug": "princeton-philosophy-bs",
-        "school": _HUM,
-        "program_name": "Philosophy",
-        "degree_type": "bachelors",
-        "cip": "38.01",
-        "duration_months": 48,
-        "description": "Philosophy — logic, ethics, metaphysics and the history of philosophy.",
-    },
-    # ── The Social Sciences (Division II) ──
-    {
-        "slug": "princeton-economics-bs",
-        "school": _SOC,
-        "program_name": "Economics",
-        "degree_type": "bachelors",
-        "cip": "45.06",
-        "duration_months": 48,
-        "description": "Economics — micro, macro and econometrics.",
-    },
-    {
-        "slug": "princeton-politics-bs",
-        "school": _SOC,
-        "program_name": "Politics",
-        "degree_type": "bachelors",
-        "cip": "45.10",
-        "duration_months": 48,
-        "description": (
-            "Politics — American, comparative and international politics and political theory."
-        ),
-    },
-    {
-        "slug": "princeton-sociology-bs",
-        "school": _SOC,
-        "program_name": "Sociology",
-        "degree_type": "bachelors",
-        "cip": "45.11",
-        "duration_months": 48,
-        "description": "Sociology — social structure, inequality and institutions.",
-    },
-    {
-        "slug": "princeton-anthropology-bs",
-        "school": _SOC,
-        "program_name": "Anthropology",
-        "degree_type": "bachelors",
-        "cip": "45.02",
-        "duration_months": 48,
-        "description": "Anthropology — the comparative study of human societies and cultures.",
-    },
-    {
-        "slug": "princeton-history-bs",
-        "school": _SOC,
-        "program_name": "History",
-        "degree_type": "bachelors",
-        "cip": "54.01",
-        "duration_months": 48,
-        "description": "History — the study of the human past across periods and regions.",
-    },
-    # ── The Natural Sciences (Division III) ──
-    {
-        "slug": "princeton-molecular-biology-bs",
-        "school": _NAT,
-        "program_name": "Molecular Biology",
-        "degree_type": "bachelors",
-        "cip": "26.02",
-        "duration_months": 48,
-        "description": "Molecular biology — biochemistry, biophysics, genetics and cell biology.",
-    },
-    {
-        "slug": "princeton-psychology-bs",
-        "school": _NAT,
-        "program_name": "Psychology",
-        "degree_type": "bachelors",
-        "cip": "42.27",
-        "duration_months": 48,
-        "description": "Psychology — cognitive, developmental, social and systems neuroscience.",
-    },
-    {
-        "slug": "princeton-mathematics-bs",
-        "school": _NAT,
-        "program_name": "Mathematics",
-        "degree_type": "bachelors",
-        "cip": "27.01",
-        "duration_months": 48,
-        "description": "Mathematics — analysis, algebra, geometry and number theory.",
-    },
-    {
-        "slug": "princeton-eeb-bs",
-        "school": _NAT,
-        "program_name": "Ecology and Evolutionary Biology",
-        "degree_type": "bachelors",
-        "cip": "26.13",
-        "duration_months": 48,
-        "description": "Ecology and evolutionary biology — organisms, populations and ecosystems.",
-    },
-    {
-        "slug": "princeton-physics-bs",
-        "school": _NAT,
-        "program_name": "Physics",
-        "degree_type": "bachelors",
-        "cip": "40.08",
-        "duration_months": 48,
-        "description": "Physics — from particles and fields to condensed matter and biophysics.",
-    },
-    {
-        "slug": "princeton-chemistry-bs",
-        "school": _NAT,
-        "program_name": "Chemistry",
-        "degree_type": "bachelors",
-        "cip": "40.05",
-        "duration_months": 48,
-        "description": "Chemistry — organic, inorganic, physical and chemical biology.",
-    },
-    {
-        "slug": "princeton-neuroscience-bs",
-        "school": _NAT,
-        "program_name": "Neuroscience",
-        "degree_type": "bachelors",
-        "cip": "26.15",
-        "duration_months": 48,
-        "description": "Neuroscience — the molecular, cellular and systems study of the brain.",
-    },
 ]
 
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
-# Full official program names (program-page title); equal to the major name here.
+# Full official program names (program-page title); equal to the program name here.
 _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROGRAMS}
 
-# Official program/department home pages. The flagship CS major has its own verified
-# department page; the others use their owning unit's official site.
-_WEBSITE_BY_SLUG: dict[str, str] = {
-    "princeton-computer-science-bs": "https://www.cs.princeton.edu/",
-    "princeton-operations-research-bs": "https://orfe.princeton.edu/",
-    "princeton-mechanical-engineering-bs": "https://mae.princeton.edu/",
-    "princeton-electrical-engineering-bs": "https://ece.princeton.edu/",
-    "princeton-civil-engineering-bs": "https://cee.princeton.edu/",
-    "princeton-chemical-engineering-bs": "https://cbe.princeton.edu/",
-    "princeton-public-affairs-ab": "https://spia.princeton.edu/undergraduate-program",
-    "princeton-public-affairs-mpa": "https://spia.princeton.edu/graduate-admissions/master-public-affairs",
-    "princeton-english-bs": "https://english.princeton.edu/",
-    "princeton-philosophy-bs": "https://philosophy.princeton.edu/",
-    "princeton-economics-bs": "https://economics.princeton.edu/",
-    "princeton-politics-bs": "https://politics.princeton.edu/",
-    "princeton-sociology-bs": "https://sociology.princeton.edu/",
-    "princeton-anthropology-bs": "https://anthropology.princeton.edu/",
-    "princeton-history-bs": "https://history.princeton.edu/",
-    "princeton-molecular-biology-bs": "https://molbio.princeton.edu/",
-    "princeton-psychology-bs": "https://psych.princeton.edu/",
-    "princeton-mathematics-bs": "https://www.math.princeton.edu/",
-    "princeton-eeb-bs": "https://eeb.princeton.edu/",
-    "princeton-physics-bs": "https://phy.princeton.edu/",
-    "princeton-chemistry-bs": "https://chemistry.princeton.edu/",
-    "princeton-neuroscience-bs": "https://pni.princeton.edu/",
+# Official program/department home pages (built from the specs; verified at author time).
+_WEBSITE_BY_SLUG: dict[str, str] = {p["slug"]: p["website_url"] for p in PROGRAMS}
+
+# Per-program feed keywords (department/program-naming terms) so the shared Princeton news
+# RSS is filtered to program-relevant items. Derived from the program's blurb key / name.
+_PROGRAM_KEYWORDS: dict[str, list[str]] = {
+    "computer-science": ["computer science", "Princeton CS"],
+    "orfe": ["operations research", "financial engineering", "ORFE"],
+    "mae": ["mechanical engineering", "aerospace"],
+    "ece": ["electrical engineering", "computer engineering"],
+    "cee": ["civil engineering", "environmental engineering"],
+    "cbe": ["chemical engineering", "biological engineering"],
+    "public-affairs": ["public affairs", "public policy", "SPIA"],
+    "african-american-studies": ["African American Studies"],
+    "architecture": ["architecture", "School of Architecture"],
+    "art-archaeology": ["art and archaeology", "art history"],
+    "classics": ["classics", "classical"],
+    "comparative-literature": ["comparative literature"],
+    "east-asian-studies": ["East Asian"],
+    "english": ["English literature", "creative writing"],
+    "french-italian": ["French", "Italian"],
+    "german": ["German"],
+    "linguistics": ["linguistics"],
+    "music": ["music"],
+    "music-composition": ["music", "composition", "composer"],
+    "musicology": ["music", "musicology"],
+    "near-eastern-studies": ["Near Eastern"],
+    "philosophy": ["philosophy"],
+    "religion": ["religion"],
+    "slavic": ["Slavic", "Russian"],
+    "spanish-portuguese": ["Spanish", "Portuguese"],
+    "anthropology": ["anthropology"],
+    "economics": ["economics", "economist"],
+    "history": ["history", "historian"],
+    "history-of-science": ["history of science"],
+    "politics": ["politics", "political science"],
+    "population-studies": ["population", "demography"],
+    "sociology": ["sociology"],
+    "astrophysical-sciences": ["astrophysics", "astronomy", "astronomer"],
+    "chemistry": ["chemistry", "chemist"],
+    "eeb": ["ecology", "evolutionary biology"],
+    "geosciences": ["geosciences", "geology", "climate"],
+    "mathematics": ["mathematics", "mathematician"],
+    "molecular-biology": ["molecular biology", "genomics"],
+    "neuroscience": ["neuroscience", "brain"],
+    "physics": ["physics", "physicist"],
+    "psychology": ["psychology", "psychologist"],
+    "pacm": ["applied mathematics", "computational"],
+    "aos": ["atmospheric", "oceanic", "climate"],
+    "biophysics": ["biophysics"],
+    "plasma-physics": ["plasma physics", "fusion"],
+    "qcb": ["computational biology", "genomics"],
+    "materials-science": ["materials science"],
+    "quantum-science": ["quantum"],
 }
+
+# Map each program slug → its keyword list (via the spec's blurb key where available).
+_PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {}
+for _slug, _sch, _name, _dl, _url, _bk in _UG_SPECS:
+    _PROGRAM_KEYWORDS_BY_SLUG[_slug] = _PROGRAM_KEYWORDS.get(_bk, [_name])
+for _slug, _sch, _name, _dt, _dur, _url, _bk, _ov in _GRAD_SPECS:
+    if _bk and _bk in _PROGRAM_KEYWORDS:
+        _PROGRAM_KEYWORDS_BY_SLUG[_slug] = _PROGRAM_KEYWORDS[_bk]
+    else:
+        _PROGRAM_KEYWORDS_BY_SLUG[_slug] = [_name.split(" (")[0]]
+_PROGRAM_KEYWORDS_BY_SLUG["princeton-public-affairs-mpa"] = ["public affairs", "public policy", "SPIA"]
+_PROGRAM_KEYWORDS_BY_SLUG["princeton-finance-mfin"] = ["finance", "Bendheim"]
+_PROGRAM_KEYWORDS_BY_SLUG["princeton-public-affairs-mpp"] = ["public policy", "SPIA"]
+_PROGRAM_KEYWORDS_BY_SLUG["princeton-public-affairs-phd"] = ["public affairs", "public policy", "SPIA"]
 
 # ── Who-it's-for + highlights (catalog baselines) ──────────────────────────
 _WHO_BASELINE = (
@@ -737,6 +994,11 @@ _WHO_BASELINE = (
     "uniquely devoted to undergraduate teaching, with full-need financial aid met by grants."
 )
 _HL_BASELINE = ["Ivy League", "5:1 student-faculty ratio", "Need-met-with-grants aid"]
+_WHO_GRAD_BASELINE = (
+    "Prospective doctoral and master's students seeking research-intensive graduate study "
+    "at a small, research-first Ivy League university; Princeton fully funds its Ph.D. students."
+)
+_HL_GRAD_BASELINE = ["Research-first graduate study", "Fully-funded Ph.D.", "World-class faculty"]
 _WHO_BY_SLUG = {
     "princeton-computer-science-bs": (
         "Technically exceptional students who want a rigorous computer science education "
@@ -793,8 +1055,8 @@ _TRACKS_BY_SLUG: dict[str, dict] = {
 }
 
 # ── Program-specific cost ──────────────────────────────────────────────────
-# Princeton undergraduate cost (College Scorecard, UNITID 186131). The SPIA MPA is
-# fully funded (handled per-slug below).
+# Princeton undergraduate cost (College Scorecard, UNITID 186131). The SPIA MPA/MPP are
+# fully funded, and Princeton fully funds all Ph.D. students.
 _TUITION_UG = 62688
 _UNDERGRAD_COA = 84040
 _AVG_NET_PRICE = 6128
@@ -813,8 +1075,72 @@ _COST_BY_SLUG: dict[str, dict] = {
         "source": "Princeton SPIA — MPA Financial Aid",
         "source_url": "https://spia.princeton.edu/graduate-admissions/master-public-affairs/financial-aid",
         "year": "2024-25",
-    }
+    },
+    "princeton-public-affairs-mpp": {
+        "tuition_usd": _TUITION_GRAD,
+        "total_cost_of_attendance": _TUITION_GRAD,
+        "funded": True,
+        "note": (
+            "Princeton SPIA fully funds all admitted MPP students — 100% of tuition and "
+            "required fees plus a living stipend. Published full-time graduate tuition shown."
+        ),
+        "source": "Princeton SPIA — Graduate Funding",
+        "source_url": "https://spia.princeton.edu/graduate-admissions",
+        "year": "2024-25",
+    },
 }
+
+
+def _cost_for(spec: dict) -> dict:
+    """Cost block for a program: undergrad COA, per-slug override, funded Ph.D., or master's."""
+    slug = spec["slug"]
+    if slug in _COST_BY_SLUG:
+        return dict(_COST_BY_SLUG[slug])
+    if spec["degree_type"] == "bachelors":
+        return {
+            "tuition_usd": _TUITION_UG,
+            "total_cost_of_attendance": _UNDERGRAD_COA,
+            "avg_net_price": _AVG_NET_PRICE,
+            "breakdown": {"tuition": _TUITION_UG, "total_cost_of_attendance": _UNDERGRAD_COA},
+            "funded": False,
+            "note": (
+                "Published undergraduate cost of attendance and average net price. "
+                "Princeton is need-blind and meets 100% of demonstrated need with grants "
+                "rather than loans, so most families pay far less than the sticker price "
+                "(average net price ≈ $6,100)."
+            ),
+            "source": "U.S. Dept. of Education College Scorecard (UNITID 186131)",
+            "source_url": "https://collegescorecard.ed.gov/school/?186131",
+            "year": "2024-25",
+        }
+    if spec["degree_type"] == "phd":
+        return {
+            "tuition_usd": _TUITION_GRAD,
+            "total_cost_of_attendance": _TUITION_GRAD,
+            "funded": True,
+            "note": (
+                "Princeton fully funds all Ph.D. students — a full tuition fellowship plus "
+                "a stipend for the regular period of enrollment. Published full-time "
+                "graduate tuition shown."
+            ),
+            "source": "Princeton Graduate School — Financial Support",
+            "source_url": "https://gradschool.princeton.edu/costs-funding",
+            "year": "2024-25",
+        }
+    # Professional / terminal master's (M.S.E./M.Eng./M.Arch/M.Fin): published tuition.
+    return {
+        "tuition_usd": _TUITION_GRAD,
+        "total_cost_of_attendance": _TUITION_GRAD,
+        "funded": False,
+        "note": (
+            "Published full-time Princeton Graduate School tuition. Funding for "
+            "professional master's programs varies by program and year."
+        ),
+        "source": "Princeton Graduate School — Tuition & Fees",
+        "source_url": "https://gradschool.princeton.edu/costs-funding",
+        "year": "2024-25",
+    }
+
 
 # ── Program-specific outcomes (College Scorecard Field of Study, by CIP) ────
 # Where the federal College Scorecard publishes a Field-of-Study median earnings (one
@@ -1020,52 +1346,52 @@ _REQ_UNDERGRAD = {
     "source_url": "https://admission.princeton.edu/apply/application-checklist",
 }
 
-# Graduate (SPIA MPA) admission via the Princeton Graduate School application.
-_REQ_GRAD_MPA = {
+# Graduate admission via the Princeton Graduate School application (Ph.D. + master's,
+# incl. SPIA MPA/MPP). The Graduate School is the common application portal for all fields.
+_REQ_GRAD = {
     "materials": [
         {"name": "Princeton Graduate School online application", "required": True},
-        {"name": "Statement of purpose / policy memo", "required": True},
+        {"name": "Statement of academic purpose", "required": True},
         {"name": "Three letters of recommendation", "required": True},
         {"name": "Transcripts from all post-secondary institutions", "required": True},
         {"name": "Résumé / CV", "required": True},
-        {"name": "GRE scores", "required": False, "note": "Optional for the MPA."},
+        {
+            "name": "GRE scores",
+            "required": False,
+            "note": "Required only by some fields; many programs are GRE-optional.",
+        },
         {"name": "$75 application fee; fee waivers available", "required": True},
     ],
     "deadlines": [
-        {"round": "MPA application deadline", "date": "Early December"},
+        {"round": "Most fall-entry fields", "date": "Early-to-mid December (varies by field)"},
     ],
     "recommendations": {
         "required": 3,
-        "note": (
-            "Three letters of recommendation submitted through the Graduate School application."
-        ),
+        "note": "Three letters of recommendation submitted through the Graduate School application.",
     },
     "international": {
         "english": {
             "tests": ["TOEFL", "IELTS"],
             "required": True,
-            "note": (
-                "Required for applicants whose native language is not English "
-                "(waivers may apply)."
-            ),
+            "note": "Required for applicants whose native language is not English (waivers may apply).",
         },
         "visa": _INTL_VISA,
         "sources": [
             {
-                "label": "Princeton SPIA — Graduate Admissions",
-                "url": "https://spia.princeton.edu/graduate-admissions",
+                "label": "Princeton Graduate School — How to Apply",
+                "url": "https://gradschool.princeton.edu/admission/how-apply",
             }
         ],
     },
-    "source": "Princeton SPIA — Master in Public Affairs Admissions",
-    "source_url": "https://spia.princeton.edu/graduate-admissions/master-public-affairs",
+    "source": "Princeton Graduate School — Admission",
+    "source_url": "https://gradschool.princeton.edu/admission/how-apply",
 }
 
 
 def _requirements_for(spec: dict) -> dict:
     """Pick the admissions requirement set for a program by degree type."""
-    if spec["degree_type"] == "masters":
-        return dict(_REQ_GRAD_MPA)
+    if spec["degree_type"] in {"masters", "phd"}:
+        return dict(_REQ_GRAD)
     return dict(_REQ_UNDERGRAD)
 
 
@@ -1139,9 +1465,10 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
             about = dict(about)
             about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
             sc.about_detail = about
-        # No unit carries its own keyword-relevant feed (only the flagship program does);
-        # always assign None so a stale value on a pre-existing row is cleared.
-        sc.content_sources = None
+        # Every unit gets a working feed (Princeton news RSS filtered to unit-relevant
+        # items by keywords) so its Events & Updates tab populates — overwriting any stale
+        # value on a pre-existing row.
+        sc.content_sources = _school_content(spec["name"])
         by_name[spec["name"]] = sc
     # Drop legacy units — programs.school_id is ON DELETE SET NULL, so this is FK-safe.
     for name, sc in existing.items():
@@ -1196,10 +1523,6 @@ def _program_standard(slug: str) -> dict:
         omitted.append("faculty_contacts.lead")
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
-    if slug != "princeton-computer-science-bs":
-        # Only the flagship carries its own keyword-relevant feed; catalog programs
-        # surface the institution feed rather than a per-program one.
-        omitted.append("content_sources")
     return _standard(omitted)
 
 
@@ -1231,35 +1554,16 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
-        # Only the flagship carries its own feed (content_sources omitted for the rest).
-        p.content_sources = _CS_CONTENT if slug == "princeton-computer-science-bs" else None
-        # Cost: SPIA MPA is fully funded (per-slug); undergraduate uses published rates.
-        cost_override = _COST_BY_SLUG.get(slug)
-        if cost_override is not None:
-            p.tuition = cost_override.get("tuition_usd")
-            p.cost_data = dict(cost_override)
-        else:
-            p.tuition = _TUITION_UG
-            p.cost_data = {
-                "tuition_usd": _TUITION_UG,
-                "total_cost_of_attendance": _UNDERGRAD_COA,
-                "avg_net_price": _AVG_NET_PRICE,
-                "breakdown": {
-                    "tuition": _TUITION_UG,
-                    "total_cost_of_attendance": _UNDERGRAD_COA,
-                },
-                "funded": False,
-                "note": (
-                    "Published undergraduate cost of attendance and average net price. "
-                    "Princeton is need-blind and meets 100% of demonstrated need with "
-                    "grants rather than loans, so most families pay far less than the "
-                    "sticker price (average net price ≈ $6,100)."
-                ),
-                "source": "U.S. Dept. of Education College Scorecard (UNITID 186131)",
-                "source_url": "https://collegescorecard.ed.gov/school/?186131",
-                "year": "2024-25",
-            }
-        # Admissions: undergraduate or MPA graduate set by degree type.
+        # Every program carries a working feed: the Princeton news RSS filtered to
+        # program-relevant items by keywords (the MBAn pattern) so its Events & Updates
+        # populate — never null.
+        kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_SCHOOL_FEED_SPEC[spec["school"]])
+        p.content_sources = _program_content(spec["school"], kw)
+        # Cost: undergrad COA / funded Ph.D. / professional master's / per-slug override.
+        cost = _cost_for(spec)
+        p.tuition = cost.get("tuition_usd")
+        p.cost_data = cost
+        # Admissions: undergraduate or graduate set by degree type.
         p.application_requirements = _requirements_for(spec)
         # Outcomes precedence: Scorecard FOS (program) → institution median.
         fos = _FOS_OUTCOMES.get(slug)
@@ -1281,17 +1585,22 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             outcomes = dict(_OUTCOMES_INSTITUTION)
         outcomes["_standard"] = _program_standard(slug)
         p.outcomes_data = outcomes
-        p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BASELINE
-        p.highlights = _HL_BY_SLUG.get(slug) or _HL_BASELINE
+        if spec["degree_type"] == "bachelors":
+            p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BASELINE
+            p.highlights = _HL_BY_SLUG.get(slug) or _HL_BASELINE
+        else:
+            p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_GRAD_BASELINE
+            p.highlights = _HL_BY_SLUG.get(slug) or _HL_GRAD_BASELINE
         # Always assign so a stale value on a pre-existing row is cleared (tracks is
         # recorded as omitted where unverified, and match_service reads program.tracks).
         p.tracks = _TRACKS_BY_SLUG.get(slug)
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
-        # Application deadline (upcoming undergraduate Regular Decision closes Jan 1).
+        # Application deadline (upcoming undergraduate Regular Decision closes Jan 1;
+        # graduate fall-entry deadlines cluster in December).
         p.application_deadline = (
-            date(2026, 12, 1) if spec["degree_type"] == "masters" else date(2027, 1, 1)
+            date(2026, 12, 1) if spec["degree_type"] in {"masters", "phd"} else date(2027, 1, 1)
         )
     session.flush()
     # Reconcile legacy Princeton programs (slug not in the canonical set): delete when
