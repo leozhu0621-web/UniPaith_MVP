@@ -53,9 +53,12 @@ Concrete misses observed in the first runs — each broke a real page:
 1. **Feeds / updates (`content_sources`) — was empty → zero news (issue: no
    updates).** Set `content_sources = {news_rss, events_feed: {url, type:
    "ical"}, social: {instagram, linkedin, x, youtube, facebook}}` on the
-   institution (and on a school/program when it has its own), from the official
-   site / verified official social accounts. The daily ingest job fills Updates +
-   Events FROM these — **no `content_sources` ⇒ no news/events at all.**
+   institution **and on every school and every program** (see steps 5–6 — schools
+   use their own feed or the institution feed + school `keywords`; programs use the
+   institution/school feed + program `keywords`). The daily ingest fills Updates +
+   Events FROM these — **a school/program with null `content_sources` shows an empty
+   Events & Updates tab, which is the current bug.** Also confirm news posts get a
+   cover image (the ingest now reads media/enclosure/inline `<img>`).
 2. **Program-set BREADTH — do not curate a flagship subset (issue: too few
    programs).** The standard for a university's program set is the **FULL
    published degree catalog**, not a hand-picked "gold" handful. Penn shipped
@@ -126,12 +129,32 @@ cd ../frontend && npm run build >/dev/null 2>&1 && echo FE_OK
 ```
 Confirm the working tree is clean and `main` is healthy.
 
-### 2. Select the target university
-Pick the single highest-priority university **not yet gold** — a new one to add, or
-an existing under-conformant one. **Finish any university already in progress before
-starting a new one.** Prioritize by: student demand (saved-school / match / view
-counts) → size of gaps → finish-in-flight. If every university is gold at the current
-`STANDARD_VERSION`, report and stop.
+### 2. Select the target university — REPAIR EXISTING BEFORE ADDING NEW
+**Never create or import a new university while any existing one has issues.**
+Otherwise the fleet sprawls and the same gaps recur forever. Each run, in this
+STRICT order:
+
+1. **Finish any university a prior run left partial** (in-flight) first.
+2. **Then repair the worst-off EXISTING university that is not fully gold.** Survey
+   the institutions already in the DB and treat a university as *not gold* if ANY
+   node has an issue:
+   - `check_conformance` reports a missing required field at the institution, **any
+     school**, or **any program**;
+   - a **short program catalog** — missing online / professional / continuing-ed /
+     extension programs, or a school showing far fewer programs than it really has;
+   - **schools or programs with no `content_sources`** → their Events & Updates are
+     empty (the routine has been setting feeds only on the institution — fix this);
+   - news posts with **no cover image** (the feed has images the ingest can now
+     capture from media/enclosure/inline `<img>`);
+   - **no `_standard` stamp**, or stamped at an older `STANDARD_VERSION`.
+3. **Only when EVERY existing university is fully gold** (institution + all schools
+   + all programs, each conformant or honestly-omitted) may you add a brand-new
+   university.
+
+Within that order, prioritize by student demand (saved-school / match / view counts)
+then by size of gaps. If every existing university is gold and no new target is
+requested, report and stop. **Adding breadth while existing profiles are broken is
+the one thing this routine must NOT do.**
 
 ### 3. Discover the university's real structure (never invent it)
 - Resolve the official name + **UNITID** (College Scorecard / IPEDS key). No UNITID →
@@ -158,13 +181,23 @@ inherit its stats + photo.
 
 ### 5. Enrich every school
 For each school: `about_detail` (founded, leadership, faculty, research centers,
-named-for) + feeds. Verify; cite; omit-if-unverifiable.
+named-for) + **`content_sources` (REQUIRED — this is why school Events & Updates are
+empty today)**. Set the school's `content_sources` to its OWN official feeds when it
+has them (e.g. `news.hbs.edu`, a school events calendar, the school's social
+accounts); otherwise set the institution's `news_rss`/`events_feed` **plus
+`keywords`** naming the school (e.g. `["Harvard Business School","HBS"]`) so the
+shared feed is filtered to school-relevant items. Verify; cite; omit-if-unverifiable.
 
 ### 6. Enrich every program
 For each program: basics, curriculum/tracks, admissions (incl. international / recs /
 fee), costs (breakdown), outcomes (salary distribution + employment + top industries
 / employers + **conditions/methodology verbatim** + source), insights (class profile,
-faculty, reviews from ≥2 sources), feeds. Verify each; cite; omit-if-unverifiable.
+faculty, reviews from ≥2 sources), and **`content_sources` (so the program's Events &
+Updates populate — empty today because the routine only set institution feeds)**. A
+program rarely has its own news site, so use the school's/institution's `news_rss` +
+`events_feed` **plus `keywords`** naming the program/department (the MBAn pattern in
+`_MBAN_CONTENT`) so the shared feed is filtered to program-relevant items — never
+leave program `content_sources` null. Verify each; cite; omit-if-unverifiable.
 
 ### Verify (the gate — every value, every level)
 Ships only if: `first_party` = one official source; `authoritative_2x` = **≥2
@@ -220,7 +253,9 @@ snapshot and run `check_conformance`. A node may ship only when it is **gold**
 (no missing required fields) OR every remaining required field is in its
 `_standard.omitted` with a real reason. If a node is neither, it is **not done** —
 go back and fill it (or omit-with-reason). Confirm `ranking_data`,
-`content_sources`, `research`/`campus_life` (with links), and program
+institution **and every school and every program** `content_sources` (so their
+Events & Updates aren't empty), `research`/`campus_life` (with links), the FULL
+program catalog (cross-checked against the IPEDS/Scorecard count), and program
 `delivery_format` are all populated. Stamp `_standard` on every node.
 
 ### 9. Ship
