@@ -7,7 +7,8 @@
  * slim journey bar that opens a bottom sheet, so the conversation owns the
  * screen. The rail drives the conversation through an imperative `ask`.
  */
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ChevronDown, Sparkles } from 'lucide-react'
 
 import Card from '../../components/ui/Card'
@@ -21,6 +22,19 @@ export default function DiscoverHomePage() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [journeySheetOpen, setJourneySheetOpen] = useState(false)
   const askRef = useRef<(t: string) => void>(() => {})
+  // A question routed in from another surface (e.g. ProgramDetail's "Ask
+  // counselor" → /s?prefill=…). Captured once so it survives clearing the URL,
+  // then auto-sent by UniConversation when the session settles.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [initialPrompt] = useState(() => searchParams.get('prefill') ?? undefined)
+  useEffect(() => {
+    if (!searchParams.has('prefill')) return
+    const next = new URLSearchParams(searchParams)
+    next.delete('prefill')
+    setSearchParams(next, { replace: true })
+    // Run once on mount; later searchParams changes shouldn't re-trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // Guided workspace shell is gated on the backend ai_uni_guided_v1 flag
   // (spec §9). Flag off → the prior single-column open Uni experience (no rail,
   // no journey chrome) so nothing regresses.
@@ -61,6 +75,7 @@ export default function DiscoverHomePage() {
             profileOpen={profileOpen}
             onProfileOpenChange={setProfileOpen}
             onReady={onReady}
+            initialPrompt={initialPrompt}
           />
         </Card>
       </div>
@@ -97,6 +112,7 @@ export default function DiscoverHomePage() {
               profileOpen={profileOpen}
               onProfileOpenChange={setProfileOpen}
               onReady={onReady}
+              initialPrompt={initialPrompt}
             />
           </Card>
         </div>

@@ -68,6 +68,7 @@ export default function UniConversation({
   onProfileOpenChange,
   guided = false,
   onReady,
+  initialPrompt,
 }: {
   /** Living-profile drawer open state (the trigger lives in DiscoverHomePage). */
   profileOpen?: boolean
@@ -76,6 +77,8 @@ export default function UniConversation({
   guided?: boolean
   /** Register an imperative `ask` so the rail can drive the conversation. */
   onReady?: (api: { ask: (text: string) => void }) => void
+  /** A question routed in from another surface (e.g. "Ask counselor"); auto-sent once the session is ready. */
+  initialPrompt?: string
 } = {}) {
   const qc = useQueryClient()
   const user = useAuthStore(s => s.user)
@@ -305,6 +308,16 @@ export default function UniConversation({
   useEffect(() => {
     onReady?.({ ask: (t: string) => sendRef.current(t) })
   }, [onReady])
+
+  // An "Ask counselor"-style prompt routed in via the URL: auto-send it once the
+  // existing-session lookup has settled, so it lands in the active conversation
+  // rather than spawning a duplicate session (matches the old auto-send flow).
+  const initialPromptSent = useRef(false)
+  useEffect(() => {
+    if (!initialPrompt || initialPromptSent.current || sessionsLoading) return
+    initialPromptSent.current = true
+    sendRef.current(initialPrompt)
+  }, [initialPrompt, sessionsLoading])
 
   return (
     <div className="flex flex-col h-full min-h-[520px] max-w-[640px] mx-auto w-full">
