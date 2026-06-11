@@ -64,7 +64,7 @@ export default function PostsPage() {
 
         {/* Tabs + Manage following */}
         <div className="flex items-end justify-between border-b border-border mb-5">
-          <div ref={tablistRef} role="tablist" aria-label="Connect sections" className="flex gap-1">
+          <div ref={tablistRef} role="tablist" aria-label="Connectors sections" className="flex gap-1">
             {TABS.map((t, idx) => (
               <button
                 key={t.key}

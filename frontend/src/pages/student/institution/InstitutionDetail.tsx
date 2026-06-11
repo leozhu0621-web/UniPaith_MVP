@@ -210,7 +210,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
         <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
         <p className="text-sm text-foreground mb-4">Institution not found.</p>
         <Button size="sm" variant="secondary" onClick={() => navigate(isAuthenticated ? '/s/explore' : '/browse')}>
-          {isAuthenticated ? 'Back to Match' : 'Browse programs'}
+          {isAuthenticated ? 'Back to Discover' : 'Browse programs'}
         </Button>
       </div>
     )
