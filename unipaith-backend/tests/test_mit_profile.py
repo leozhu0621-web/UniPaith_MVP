@@ -110,9 +110,14 @@ async def test_apply_sets_six_real_schools(db_session):
     assert cs["keywords"] == ["sloan", "mit sloan"]
     assert cs["social"]["instagram"] == "https://www.instagram.com/mitsloan/"
     assert len(cs["social"]) == 5
-    # Other schools carry no feeds yet (Sloan is the standard-setting example).
+    # Every school now carries a populated feed (the shared MIT feed filtered by
+    # school keywords) so none has an empty Events & Updates tab.
     eng = next(s for s in rows if s.name == "School of Engineering")
-    assert eng.content_sources is None
+    assert eng.content_sources is not None
+    assert eng.content_sources["news_rss"] == "https://news.mit.edu/rss/feed"
+    assert "engineering" in eng.content_sources["keywords"]
+    assert eng.content_sources["events_feed"]["type"] == "ical"
+    assert len(eng.content_sources["social"]) == 5
     # Sloan carries a rich, sourced About tab (founded + faculty + centers).
     ad = sloan.about_detail
     assert ad is not None
@@ -123,7 +128,12 @@ async def test_apply_sets_six_real_schools(db_session):
     assert "Dimitris Bertsimas" in names and "Simon Johnson" in names
     assert len(ad["faculty"]) >= 4
     assert any("Digital Economy" in c for c in ad["research_centers"])
-    assert eng.about_detail is None
+    # Every school is stamped with _standard and carries a rich About tab.
+    assert eng.about_detail is not None
+    assert eng.about_detail["founded"] == 1932
+    assert eng.about_detail["leadership"].startswith("Paula T. Hammond")
+    assert eng.about_detail["_standard"]["version"] >= 2
+    assert any("RLE" in c["name"] for c in eng.about_detail["research_centers"])
 
 
 async def test_apply_builds_real_program_catalog_idempotently(db_session):
@@ -177,7 +187,10 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert cs.outcomes_data["scope"] == "program"
     chem = next(p for p in progs if p.slug == "mit-chemistry-bs")
     assert chem.outcomes_data["scope"] == "institution"  # suppressed → MIT-wide labelled
-    assert mm.outcomes_data is None  # non-degree credential → no outcomes
+    # Non-degree credential: no real outcomes, just the _standard stamp holder
+    # (which honestly omits every outcomes field).
+    assert set(mm.outcomes_data) == {"_standard"}
+    assert "outcomes_data.median_salary" in mm.outcomes_data["_standard"]["omitted"]
     # Audience + highlights populate (flagship override + by-type fallback).
     assert eecs.who_its_for and "education" in eecs.who_its_for
     assert eecs.highlights and any("CSAIL" in h for h in eecs.highlights)

@@ -23,8 +23,24 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.models.institution import Institution, Program, School
+from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Massachusetts Institute of Technology"
+
+# Date this profile was researched + verified; stamped into every node's _standard.
+ENRICHED_AT = "2026-06-11"
+
+
+def _standard(omitted: list[str] | None = None) -> dict:
+    """Build the ``_standard`` stamp written onto every node (institution, school,
+    program). A node carries the current ``STANDARD_VERSION`` and an honest list
+    of required fields that are verified-unavailable (omitted, never guessed)."""
+    return {"version": STANDARD_VERSION, "enriched_at": ENRICHED_AT, "omitted": omitted or []}
+
+
+# Institution-level required fields that MIT publishes in full — nothing is
+# omitted at the institution level (every required stat is sourced below).
+_OMITTED_INSTITUTION: list[str] = []
 
 # ── Institution-level data ────────────────────────────────────────────────
 # Rankings are stored as {rank, year} objects because the page renders every
@@ -411,6 +427,319 @@ _SHASS = "School of Humanities, Arts, and Social Sciences"
 _SLOAN = "MIT Sloan School of Management"
 _SAP = "School of Architecture and Planning"
 _COMPUTING = "MIT Stephen A. Schwarzman College of Computing"
+
+# ── Per-node content feeds (so EVERY school + program has a populated Events &
+# Updates tab, not just Sloan + MBAn) ─────────────────────────────────────────
+# MIT runs a single all-Institute news system (news.mit.edu) plus one all-Institute
+# events calendar (calendar.mit.edu). Both are live-verified MIT-owned feeds. Each
+# school/program below filters this shared feed by keywords naming the school /
+# department (the MIT/MBAn pattern already proven by _SLOAN_CONTENT + _MBAN_CONTENT)
+# so content_sources is never left null and the tab populates with school-relevant
+# items. Sloan + MBAn keep their own topic feeds (defined above).
+_MIT_NEWS_RSS = "https://news.mit.edu/rss/feed"
+_MIT_EVENTS_ICS = {"url": "https://calendar.mit.edu/calendar.ics", "type": "ical"}
+# Official MIT social handles, verified from www.mit.edu / socialmediahub.mit.edu.
+_SOCIAL_MIT = {
+    "instagram": "https://www.instagram.com/mit/",
+    "linkedin": "https://www.linkedin.com/school/mit/",
+    "x": "https://x.com/mit",
+    "youtube": "https://www.youtube.com/mit",
+    "facebook": "https://www.facebook.com/MITnews",
+}
+
+# Institution-wide feeds (no keywords → kept wholesale on the institution page).
+_INSTITUTION_CONTENT: dict = {
+    "news_rss": _MIT_NEWS_RSS,
+    "events_feed": dict(_MIT_EVENTS_ICS),
+    "social": dict(_SOCIAL_MIT),
+}
+
+# Keywords filter the shared MIT feed to school-relevant items. They are filter
+# terms (not displayed facts) drawn from each school's official name + departments.
+_SCHOOL_KEYWORDS: dict[str, list[str]] = {
+    _ENG: ["engineering", "MIT Engineering", "aeronautics", "mechanical engineering"],
+    _SCI: ["physics", "biology", "chemistry", "mathematics", "neuroscience", "MIT Science"],
+    _SHASS: ["humanities", "social sciences", "economics", "linguistics", "political science"],
+    _SLOAN: ["sloan", "mit sloan", "management"],
+    _SAP: ["architecture", "urban planning", "Media Lab", "design"],
+    _COMPUTING: [
+        "computing",
+        "computer science",
+        "artificial intelligence",
+        "machine learning",
+        "Schwarzman College",
+    ],
+}
+
+# Per-school stop-words stripped when deriving a program keyword from its name, so
+# the keyword that reaches the feed is the distinctive discipline term.
+_KW_STOP = {"and", "of", "the", "in", "for", "with", "science", "sciences", "engineering"}
+
+
+def _school_content(name: str) -> dict:
+    """A school's content_sources: the shared, verified MIT feeds filtered to
+    school-relevant items by keywords (the MIT/MBAn pattern). Sloan keeps its own
+    topic feed via _SLOAN_CONTENT; every other school routes through here."""
+    return {
+        "news_rss": _MIT_NEWS_RSS,
+        "news_curated": False,
+        "events_feed": dict(_MIT_EVENTS_ICS),
+        "keywords": list(_SCHOOL_KEYWORDS[name]),
+        "social": dict(_SOCIAL_MIT),
+    }
+
+
+def _program_keywords(spec: dict) -> list[str]:
+    """Program keywords = the program's distinctive discipline term(s) (from its
+    name) layered on top of its school's keywords, so the program tab is relevant
+    yet never empty."""
+    school_kw = list(_SCHOOL_KEYWORDS[spec["school"]])
+    name = spec["program_name"].replace("&", " ").replace("/", " ")
+    terms = [w for w in name.split() if len(w) > 3 and w.lower() not in _KW_STOP]
+    program_term = " ".join(terms[:3]).strip()
+    return ([program_term] if program_term else []) + school_kw
+
+
+def _program_content(spec: dict) -> dict:
+    """A program's content_sources: its school's shared feed refined by program
+    keywords (MBAn keeps its own topic feed via _MBAN_CONTENT)."""
+    base = _school_content(spec["school"])
+    base["keywords"] = _program_keywords(spec)
+    return base
+
+
+# ── Rich, sourced About-tab content for the five non-Sloan schools ─────────────
+# Every fact below is verified against the school's official site, the MIT org
+# chart, and the MIT Institute-Professors directory (researched 2026-06-11). Deans
+# are confirmed current as of June 2026 (note: Paula T. Hammond became Dean of
+# Engineering effective Jan 2026, succeeding Anantha Chandrakasan, who became
+# Provost). Research centers carry their official URLs; entities that span schools
+# (CSAIL, EECS, LIDS, IDSS, Jameel Clinic, ORC, MIT-IBM Watson) are listed under
+# the Schwarzman College of Computing — their primary administrative home — to
+# avoid double-counting. Where a value could not be cleanly verified (e.g. live
+# faculty/student headcounts), it is left out rather than guessed.
+_ENG_ABOUT_DETAIL: dict = {
+    "founded": 1932,
+    "leadership": "Paula T. Hammond, Dean of Engineering",
+    "faculty": [
+        {
+            "name": "Paula T. Hammond",
+            "title": "Institute Professor; Dean of Engineering (Chemical Engineering)",
+            "focus": "Nanomaterials for drug delivery, regenerative medicine, and batteries",
+        },
+        {
+            "name": "Robert S. Langer",
+            "title": "Institute Professor (Chemical & Biological Engineering)",
+            "focus": "Drug delivery, biomaterials, and tissue engineering",
+        },
+        {
+            "name": "Arup K. Chakraborty",
+            "title": "Institute Professor (Chemical Engineering, Physics, Chemistry)",
+            "focus": "Theoretical immunology and vaccine design",
+        },
+        {
+            "name": "Thomas L. Magnanti",
+            "title": "Institute Professor; former Dean of Engineering",
+            "focus": "Operations research and optimization",
+        },
+    ],
+    "research_centers": [
+        {"name": "Research Laboratory of Electronics (RLE)", "url": "https://www.rle.mit.edu/"},
+        {"name": "Microsystems Technology Laboratories (MTL)", "url": "https://www.mtl.mit.edu/"},
+        {
+            "name": "Institute for Medical Engineering and Science (IMES)",
+            "url": "https://imes.mit.edu/",
+        },
+        {
+            "name": "MIT Center for Transportation & Logistics (CTL)",
+            "url": "https://ctl.mit.edu/",
+        },
+        {
+            "name": "Deshpande Center for Technological Innovation",
+            "url": "https://deshpande.mit.edu/",
+        },
+    ],
+    "source": {"label": "MIT School of Engineering", "url": "https://engineering.mit.edu/about/"},
+}
+_SCI_ABOUT_DETAIL: dict = {
+    "founded": 1932,
+    "leadership": (
+        "Nergis Mavalvala, Dean of the School of Science; Curtis (1963) and "
+        "Kathleen Marble Professor of Astrophysics"
+    ),
+    "faculty": [
+        {
+            "name": "Wolfgang Ketterle",
+            "title": "John D. MacArthur Professor of Physics",
+            "focus": "Atomic physics and Bose-Einstein condensation (2001 Nobel laureate)",
+        },
+        {
+            "name": "Sallie W. (Penny) Chisholm",
+            "title": "Institute Professor (Biology; Civil & Environmental Engineering)",
+            "focus": "Marine microbial ecology; discoverer of Prochlorococcus",
+        },
+        {
+            "name": "Ann M. Graybiel",
+            "title": "Institute Professor (Brain and Cognitive Sciences)",
+            "focus": "Basal ganglia, habit formation, and neural circuits",
+        },
+        {
+            "name": "Nergis Mavalvala",
+            "title": "Curtis (1963) and Kathleen Marble Professor of Astrophysics; Dean",
+            "focus": "Gravitational-wave detection (LIGO) and quantum measurement",
+        },
+    ],
+    "research_centers": [
+        {"name": "McGovern Institute for Brain Research", "url": "https://mcgovern.mit.edu/"},
+        {"name": "Picower Institute for Learning and Memory", "url": "https://picower.mit.edu/"},
+        {
+            "name": "MIT Kavli Institute for Astrophysics and Space Research",
+            "url": "https://space.mit.edu/",
+        },
+        {"name": "Laboratory for Nuclear Science (LNS)", "url": "https://web.mit.edu/lns/"},
+    ],
+    "source": {"label": "MIT School of Science", "url": "https://science.mit.edu/about/leadership/"},
+}
+_SHASS_ABOUT_DETAIL: dict = {
+    "founded": 1950,
+    "leadership": (
+        "Agustín Rayo, Kenan Sahin Dean of the School of Humanities, Arts, and Social Sciences"
+    ),
+    "faculty": [
+        {
+            "name": "Daron Acemoglu",
+            "title": "Institute Professor (Economics)",
+            "focus": "Political economy, institutions, and growth (2024 Nobel laureate)",
+        },
+        {
+            "name": "Suzanne Berger",
+            "title": "John M. Deutch Institute Professor (Political Science)",
+            "focus": "Comparative politics, globalization, and innovation",
+        },
+        {
+            "name": "Marcus A. Thompson",
+            "title": "Institute Professor (Music and Theater Arts)",
+            "focus": "Viola performance and chamber music",
+        },
+    ],
+    "research_centers": [
+        {"name": "MIT Center for International Studies (CIS)", "url": "https://cis.mit.edu/"},
+        {
+            "name": "Abdul Latif Jameel Poverty Action Lab (J-PAL)",
+            "url": "https://www.povertyactionlab.org/",
+        },
+        {"name": "MIT Human Insight Collaborative (MITHIC)", "url": "https://mithic.mit.edu/"},
+    ],
+    "source": {
+        "label": "MIT SHASS",
+        "url": "https://shass.mit.edu/about-the-school/about-shass/",
+    },
+}
+_SAP_ABOUT_DETAIL: dict = {
+    "founded": 1865,
+    "leadership": "Hashim Sarkis, Dean of the School of Architecture and Planning",
+    "faculty": [
+        {
+            "name": "John Ochsendorf",
+            "title": "Class of 1942 Professor; Associate Dean for Research, SA+P",
+            "focus": "Structural engineering, masonry, and sustainable design (MacArthur Fellow)",
+        },
+        {
+            "name": "Ana Miljački",
+            "title": "Professor of Architecture; Head, Department of Architecture",
+            "focus": "Architectural history, theory, and criticism",
+        },
+        {
+            "name": "Nicholas Negroponte",
+            "title": "Professor Emeritus; co-founder, MIT Media Lab",
+            "focus": "Human-computer interaction and media technology",
+        },
+    ],
+    "research_centers": [
+        {"name": "MIT Media Lab", "url": "https://www.media.mit.edu/"},
+        {"name": "MIT Center for Real Estate (CRE)", "url": "https://cre.mit.edu/"},
+        {
+            "name": "Norman B. Leventhal Center for Advanced Urbanism (LCAU)",
+            "url": "https://lcau.mit.edu/",
+        },
+        {"name": "MIT Senseable City Lab", "url": "https://senseable.mit.edu/"},
+        {"name": "Art, Culture and Technology Program (ACT)", "url": "https://act.mit.edu/"},
+        {"name": "Aga Khan Program for Islamic Architecture", "url": "https://akpia.mit.edu/"},
+    ],
+    "source": {
+        "label": "MIT School of Architecture and Planning",
+        "url": "https://sap.mit.edu/mit-school-architecture-and-planning",
+    },
+}
+_COMPUTING_ABOUT_DETAIL: dict = {
+    "founded": 2019,
+    "named_for": (
+        "Stephen A. Schwarzman — chairman and CEO of Blackstone, whose $350M lead "
+        "gift founded the college in 2018."
+    ),
+    "leadership": (
+        "Daniel P. Huttenlocher, Dean of the MIT Stephen A. Schwarzman College of "
+        "Computing; Henry Ellis Warren (1894) Professor of EECS"
+    ),
+    "faculty": [
+        {
+            "name": "Daniel P. Huttenlocher",
+            "title": "Henry Ellis Warren (1894) Professor of EECS; Dean",
+            "focus": "Computer vision and computing & society",
+        },
+        {
+            "name": "Regina Barzilay",
+            "title": "School of Engineering Distinguished Professor for AI and Health (EECS)",
+            "focus": "NLP and machine learning for drug discovery and oncology (MacArthur Fellow)",
+        },
+        {
+            "name": "Tomaso Poggio",
+            "title": "Eugene McDermott Professor (Brain and Cognitive Sciences); CSAIL",
+            "focus": "Computational neuroscience and the theory of deep learning",
+        },
+    ],
+    "research_centers": [
+        {
+            "name": "Computer Science and Artificial Intelligence Laboratory (CSAIL)",
+            "url": "https://www.csail.mit.edu/",
+        },
+        {
+            "name": "Department of Electrical Engineering and Computer Science (EECS)",
+            "url": "https://www.eecs.mit.edu/",
+        },
+        {
+            "name": "Laboratory for Information and Decision Systems (LIDS)",
+            "url": "https://lids.mit.edu/",
+        },
+        {
+            "name": "Institute for Data, Systems, and Society (IDSS)",
+            "url": "https://idss.mit.edu/",
+        },
+        {
+            "name": "Abdul Latif Jameel Clinic for Machine Learning in Health",
+            "url": "https://www.jclinic.mit.edu/",
+        },
+        {"name": "Operations Research Center (ORC)", "url": "https://orc.mit.edu/"},
+        {"name": "MIT-IBM Watson AI Lab", "url": "https://mitibmwatsonailab.mit.edu/"},
+    ],
+    "source": {
+        "label": "MIT Schwarzman College of Computing",
+        "url": "https://computing.mit.edu/about/",
+    },
+}
+
+# Every school's About-tab content, keyed by name. All six are fully filled, so
+# none has omitted required about fields.
+_SCHOOL_ABOUT: dict[str, dict] = {
+    _ENG: _ENG_ABOUT_DETAIL,
+    _SCI: _SCI_ABOUT_DETAIL,
+    _SHASS: _SHASS_ABOUT_DETAIL,
+    _SLOAN: _SLOAN_ABOUT_DETAIL,
+    _SAP: _SAP_ABOUT_DETAIL,
+    _COMPUTING: _COMPUTING_ABOUT_DETAIL,
+}
+_ABOUT_OMITTED: dict[str, list[str]] = {name: [] for name in _SCHOOL_ABOUT}
+
 
 PROGRAMS: list[dict] = [
     # School of Engineering
@@ -1999,6 +2328,83 @@ _CAMPUS_PHOTO = (
 )
 
 
+# ── Per-program _standard (honest omitted list) ────────────────────────────────
+# MIT publishes its program catalog breadth-first: every program carries verified
+# basics (name, degree, delivery, description, website, tuition, requirements) plus
+# institution / Field-of-Study outcomes, while deeper per-program fields (tracks,
+# class profile, named faculty, review themes, program-level employment
+# conditions) are published only for flagships like the MBAn. The rest are
+# honestly omitted — recorded here, never guessed. These helpers re-derive, purely
+# from the spec, exactly what _apply_programs persists, so the stamp matches the row.
+def _has_tuition(spec: dict) -> bool:
+    """True when the program ends up with a real cost_data.tuition_usd + source."""
+    if spec["slug"] in _COST_BY_SLUG:
+        return True
+    if spec.get("tuition") is not None:
+        return True
+    if spec["slug"] == "mit-sloan-mba":
+        return True
+    if spec["degree_type"] == "phd":  # fully funded → tuition_usd = 0 (present)
+        return True
+    if spec.get("delivery_format") == "online" or spec["degree_type"] == "certificate":
+        return False
+    return True
+
+
+def _uses_req_open(spec: dict) -> bool:
+    """True when the program uses _REQ_OPEN (rolling admission, no fixed deadlines)."""
+    if spec["slug"] in _REQ_BY_SLUG or spec["slug"] == "mit-sloan-mba":
+        return False
+    return spec.get("delivery_format") == "online" or spec["degree_type"] == "certificate"
+
+
+def _outcomes_kind(spec: dict) -> str:
+    """Which outcomes source a program resolves to (mirrors _apply_programs)."""
+    if spec["slug"] in _OUTCOMES_BY_SLUG:
+        return "full"  # program-level report with conditions (e.g. MBAn)
+    if spec["slug"] in _FOS_OUTCOMES:
+        return "fos"  # College Scorecard Field of Study: median_salary + source only
+    if spec["degree_type"] in ("bachelors", "masters", "phd"):
+        return "institution"  # MIT-wide proxy: salary + employment_rate + industries
+    return "none"  # non-degree credential: no outcomes published
+
+
+def _program_standard(spec: dict) -> dict:
+    """Per-program omitted-field list (verified-unavailable), for _standard."""
+    slug = spec["slug"]
+    omitted: list[str] = []
+    if slug not in _TRACKS_BY_SLUG:
+        omitted.append("tracks")
+    if slug not in _CLASS_PROFILE_BY_SLUG:
+        omitted.append("class_profile.cohort_size")
+    if slug not in _FACULTY_BY_SLUG:
+        omitted.append("faculty_contacts.lead")
+    if slug not in _REVIEWS_BY_SLUG:
+        omitted.append("external_reviews.summary")
+    if not _has_tuition(spec):
+        omitted += ["cost_data.tuition_usd", "cost_data.source"]
+    if _uses_req_open(spec):
+        omitted.append("application_requirements.deadlines")
+    kind = _outcomes_kind(spec)
+    if kind == "fos":
+        omitted += [
+            "outcomes_data.employment_rate",
+            "outcomes_data.top_industries",
+            "outcomes_data.conditions",
+        ]
+    elif kind == "institution":
+        omitted.append("outcomes_data.conditions")
+    elif kind == "none":
+        omitted += [
+            "outcomes_data.median_salary",
+            "outcomes_data.employment_rate",
+            "outcomes_data.top_industries",
+            "outcomes_data.conditions",
+            "outcomes_data.source",
+        ]
+    return _standard(omitted)
+
+
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
 def apply(session: Session) -> bool:
     """Enrich MIT to the canonical profile. Flushes; caller commits.
@@ -2010,7 +2416,9 @@ def apply(session: Session) -> bool:
         return False
     # Shallow-merge JSONB: every sub-object we provide is complete.
     inst.ranking_data = {**(inst.ranking_data or {}), **RANKING_DATA}
-    inst.school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
+    school_outcomes = {**(inst.school_outcomes or {}), **SCHOOL_OUTCOMES}
+    school_outcomes["_standard"] = _standard(_OMITTED_INSTITUTION)
+    inst.school_outcomes = school_outcomes
     inst.description_text = DESCRIPTION
     inst.student_body_size = UNDERGRAD_COUNT
     # Lead the gallery with a real campus photo. The detail-page hero shows the
@@ -2020,19 +2428,8 @@ def apply(session: Session) -> bool:
     _gallery = [u for u in (inst.media_gallery or []) if u != _CAMPUS_PHOTO]
     inst.media_gallery = [_CAMPUS_PHOTO, *_gallery]
     # Public channel feeds → auto-sourced Updates (news) + Events (calendar).
-    # Institution-wide (no keywords) → kept wholesale. Social handles verified
-    # official from www.mit.edu / socialmediahub.mit.edu (2026-06-09).
-    inst.content_sources = {
-        "news_rss": "https://news.mit.edu/rss/feed",
-        "events_feed": {"url": "https://calendar.mit.edu/calendar.ics", "type": "ical"},
-        "social": {
-            "instagram": "https://www.instagram.com/mit/",
-            "linkedin": "https://www.linkedin.com/school/mit/",
-            "x": "https://x.com/mit",
-            "youtube": "https://www.youtube.com/mit",
-            "facebook": "https://www.facebook.com/MITnews",
-        },
-    }
+    # Institution-wide (no keywords) → kept wholesale.
+    inst.content_sources = dict(_INSTITUTION_CONTENT)
     session.flush()
     school_by_name = _apply_schools(session, inst)
     _apply_programs(session, inst, school_by_name)
@@ -2055,11 +2452,16 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
         sc.sort_order = spec["sort_order"]
         sc.catalog_source = "curated"
         sc.website_url = _SCHOOL_WEBSITE.get(spec["name"])
-        # Sloan is the standard-setting school: its own keyword-relevant feeds +
-        # official social links + a rich, sourced About tab. Others: follow-up.
-        if spec["name"] == _SLOAN:
-            sc.content_sources = _SLOAN_CONTENT
-            sc.about_detail = _SLOAN_ABOUT_DETAIL
+        # Every school carries a populated Events & Updates feed: Sloan keeps its
+        # own keyword-relevant topic feed; the rest filter MIT's all-Institute
+        # feed by school keywords (the MIT/MBAn pattern) so none is ever empty.
+        sc.content_sources = _SLOAN_CONTENT if spec["name"] == _SLOAN else _school_content(
+            spec["name"]
+        )
+        # Rich, sourced About tab on every school, stamped with its _standard.
+        about = dict(_SCHOOL_ABOUT[spec["name"]])
+        about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
+        sc.about_detail = about
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this
     # is FK-safe (any orphaned programs are handled by the program reconcile).
@@ -2129,10 +2531,13 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.school_id = school_by_name[spec["school"]].id
         p.is_published = True
         p.catalog_source = "curated"
-        # MBAn is the standard-setting program: its own keyword-relevant feeds
-        # (operations-research news + business-analytics calendar) + social.
+        # Every program carries a populated Events & Updates feed: MBAn keeps its
+        # own keyword-relevant topic feed; the rest filter their school's feed by
+        # program keywords (the MBAn pattern) so none is ever empty.
         if spec["slug"] == "mit-sloan-mban":
             p.content_sources = _MBAN_CONTENT
+        else:
+            p.content_sources = _program_content(spec)
         p.delivery_format = spec.get("delivery_format", "in_person")
         # Tuition by program (MIT official 2025-26 rates). Standard degree
         # programs pay MIT's single published tuition; PhDs are fully funded;
@@ -2199,6 +2604,12 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p.outcomes_data = dict(_OUTCOMES_INSTITUTION)
         else:
             p.outcomes_data = None
+        # Stamp every program with its _standard (version + honest omitted list).
+        # outcomes_data is the carrier; non-degree credentials get a bare holder.
+        if p.outcomes_data is None:
+            p.outcomes_data = {"_standard": _program_standard(spec)}
+        else:
+            p.outcomes_data["_standard"] = _program_standard(spec)
         # Audience + highlights: per-program for flagship, else by degree type.
         p.who_its_for = _WHO_BY_SLUG.get(spec["slug"]) or _WHO_BY_TYPE.get(spec["degree_type"])
         p.highlights = _HL_BY_SLUG.get(spec["slug"]) or _HL_BY_TYPE.get(spec["degree_type"])
