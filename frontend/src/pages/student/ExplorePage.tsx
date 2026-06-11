@@ -195,7 +195,7 @@ export default function ExplorePage() {
   }, [filteredUniList, nearMe])
 
   return (
-    <div className="p-4 max-w-5xl w-full mx-auto">
+    <div className="p-4 w-full">
       {/* Spec 09 §13 H1 + brand framing ("Fit, not fame", Spec 07 §2/§6). */}
       <PageHeader
         eyebrow="Discover"
@@ -212,7 +212,7 @@ export default function ExplorePage() {
       {!searchActive && featuredPromos && featuredPromos.length > 0 && (
         <div className="mb-6">
           <h2 className="text-eyebrow uppercase text-muted-foreground font-semibold mb-3">Featured programs</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {featuredPromos.slice(0, 3).map(promo => (
               <PromoCard
                 key={promo.id}
@@ -266,7 +266,7 @@ export default function ExplorePage() {
           {uniError ? (
             <QueryError detail="We couldn't load universities." onRetry={() => refetchUni()} />
           ) : uniLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {[1, 2, 3].map(i => <div key={i} className="h-80 bg-card rounded-xl border border-border animate-pulse" />)}
             </div>
           ) : uniList.length === 0 ? (
@@ -294,7 +294,7 @@ export default function ExplorePage() {
                   Showing <span className="font-semibold text-foreground">{filteredUniList.length}</span> of {uniList.length} universities
                 </p>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {displayUniList.map((inst: UniversityRow) => (
                   <UniversityCard
                     key={inst.id}

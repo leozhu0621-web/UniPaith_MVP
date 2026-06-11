@@ -166,7 +166,7 @@ export default function MySpaceHomePage() {
   const firstName = user?.email?.split('@')[0] ?? ''
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-5">
+    <div className="w-full px-4 sm:px-6 py-5">
       <PageHeader
         eyebrow="My Space"
         title={`${greeting}${firstName ? `, ${firstName}` : ''}`}

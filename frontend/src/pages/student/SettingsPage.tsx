@@ -51,14 +51,14 @@ export default function SettingsPage() {
 
   if (isError && !settings) {
     return (
-      <div className="px-4 sm:px-6 py-6 max-w-5xl w-full mx-auto">
+      <div className="px-4 sm:px-6 py-6 w-full">
         <QueryError detail="We could not load your settings." onRetry={() => refetch()} />
       </div>
     )
   }
 
   return (
-    <div className="px-4 sm:px-6 py-6 max-w-5xl w-full mx-auto">
+    <div className="px-4 sm:px-6 py-6 w-full">
       <header className="mb-6">
         <p className="up-eyebrow text-muted-foreground">Settings</p>
         <h1 className="text-lg font-bold text-foreground mt-1">Your account</h1>

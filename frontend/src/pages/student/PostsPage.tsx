@@ -54,7 +54,7 @@ export default function PostsPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-5xl w-full mx-auto px-6 py-6">
+      <div className="w-full px-6 py-6">
         {/* Header (Spec 20 §3; eyebrow = surface name, Spec 2026-06-10 §3) */}
         <PageHeader
           eyebrow="Connectors"

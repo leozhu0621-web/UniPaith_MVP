@@ -76,7 +76,7 @@ export default function InterviewsTab() {
   const past = list.filter(iv => !RESPOND_STATUSES.has(String(iv.status)) && !SCHEDULED_STATUSES.has(String(iv.status)))
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 py-6 space-y-10">
+    <div className="w-full px-4 sm:px-6 py-6 space-y-10">
       <section>
         <SectionHeader title="Interviews" description="Everything proposed, scheduled, or done — across all your applications." />
         {isLoading ? (
