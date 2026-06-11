@@ -865,7 +865,7 @@ _GRAD_EXPLICIT: list[tuple] = [
     ("Master of Electrical and Computer Engineering (MECE)", "professional", _ENG, "Electrical and Computer Engineering", 18, "on_campus", "https://ece.rice.edu/academics/graduate-programs/mee-program", None, None),
     ("Doctor of Philosophy in Materials Science and NanoEngineering", "phd", _ENG, "Materials Science and NanoEngineering", 60, "on_campus", "https://msne.rice.edu/academics/graduate-programs/phd-program", None, None),
     ("Master of Materials Science and NanoEngineering (MMSNE)", "professional", _ENG, "Materials Science and NanoEngineering", 18, "on_campus", "https://msne.rice.edu/academics/graduate-programs/mmsne-program", None, None),
-    ("Doctor of Philosophy in Mechanical Engineering", "phd", _ENG, "Mechanical Engineering", 60, "on_campus", "https://mech.rice.edu/academics/graduate-programs/professional-masters-program", None, None),
+    ("Doctor of Philosophy in Mechanical Engineering", "phd", _ENG, "Mechanical Engineering", 60, "on_campus", "https://mech.rice.edu/academics/graduate-programs/phd-program", None, None),
     ("Master of Science in Mechanical Engineering", "masters", _ENG, "Mechanical Engineering", 24, "on_campus", f"{_GA}/engineering/mechanical-engineering/", None, None),
     ("Master of Mechanical Engineering (MME)", "professional", _ENG, "Mechanical Engineering", 18, "on_campus", "https://mech.rice.edu/academics/graduate-programs/professional-masters-program", None, None),
     ("Doctor of Philosophy in Statistics", "phd", _ENG, "Statistics", 60, "on_campus", "https://statistics.rice.edu/academics/graduate/phd", None, None),
