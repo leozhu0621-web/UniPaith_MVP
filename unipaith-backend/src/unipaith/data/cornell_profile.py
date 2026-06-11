@@ -55,13 +55,14 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.cornell_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Cornell University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-10"
+ENRICHED_AT = "2026-06-11"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -701,35 +702,171 @@ _FACULTY_OMIT = ["about_detail.faculty"]
 _ABOUT_OMITTED: dict[str, list[str]] = {name: list(_FACULTY_OMIT) for name in _SCHOOL_WEBSITE}
 
 # ── Channel feeds + official social links ──────────────────────────────────
+# Verified server-fetchable RSS (HTTP 200, 2026-06-11):
+#   • Ithaca campus: https://news.cornell.edu/taxonomy/term/63/feed
+#   • Bowers CIS: https://news.cornell.edu/taxonomy/term/14256/feed
+#   • Engineering: https://engineering.cornell.edu/feed/
+#   • Johnson / SC Johnson: https://www.johnson.cornell.edu/feed/
+#   • Hotel School: https://sha.cornell.edu/feed/
+#   • Law School: https://www.lawschool.cornell.edu/feed/
+#   • SC Johnson umbrella: https://business.cornell.edu/feed/
+_CORNELL_ITHACA_RSS = "https://news.cornell.edu/taxonomy/term/63/feed"
+_BOWERS_RSS = "https://news.cornell.edu/taxonomy/term/14256/feed"
+_ENGINEERING_RSS = "https://engineering.cornell.edu/feed/"
+_JOHNSON_RSS = "https://www.johnson.cornell.edu/feed/"
+_NOLAN_RSS = "https://sha.cornell.edu/feed/"
+_LAW_RSS = "https://www.lawschool.cornell.edu/feed/"
+_BUSINESS_RSS = "https://business.cornell.edu/feed/"
+_CORNELL_EVENTS_ICS = {"url": "https://events.cornell.edu/calendar/1.ics", "type": "ical"}
+
+_SOCIAL_CORNELL = {
+    "instagram": "https://www.instagram.com/cornelluniversity/",
+    "linkedin": "https://www.linkedin.com/school/cornell-university/",
+    "x": "https://x.com/Cornell",
+    "youtube": "https://www.youtube.com/c/cornell",
+    "facebook": "https://www.facebook.com/Cornell/",
+}
+_SOCIAL_JOHNSON = {
+    "instagram": "https://www.instagram.com/cornelljohnson/",
+    "linkedin": "https://www.linkedin.com/school/cornell-johnson-graduate-school-of-management/",
+    "x": "https://x.com/CornellJohnson",
+    "youtube": "https://www.youtube.com/user/CornellJohnson",
+    "facebook": "https://www.facebook.com/CornellJohnson/",
+}
+_SOCIAL_LAW = {
+    "instagram": "https://www.instagram.com/cornelllaw/",
+    "linkedin": "https://www.linkedin.com/school/cornell-law-school/",
+    "x": "https://x.com/CornellLaw",
+    "facebook": "https://www.facebook.com/CornellLawSchool/",
+}
+
+# Each school's verified RSS + keyword filter. Schools without their own fetchable RSS
+# inherit the Ithaca-campus feed filtered by school-naming keywords.
+_SCHOOL_FEED_SPEC: dict[str, dict] = {
+    _AS: {
+        "rss": _CORNELL_ITHACA_RSS,
+        "keywords": ["Arts and Sciences", "humanities", "social sciences"],
+    },
+    _ENGINEERING: {
+        "rss": _ENGINEERING_RSS,
+        "keywords": ["engineering", "Duffield", "Cornell Engineering"],
+    },
+    _BOWERS: {
+        "rss": _BOWERS_RSS,
+        "keywords": ["Bowers", "computer science", "information science", "computing"],
+    },
+    _CALS: {
+        "rss": _CORNELL_ITHACA_RSS,
+        "keywords": ["CALS", "agriculture", "life sciences", "plant science"],
+    },
+    _DYSON: {"rss": _BUSINESS_RSS, "keywords": ["Dyson", "applied economics", "business"]},
+    _JOHNSON: {
+        "rss": _JOHNSON_RSS,
+        "keywords": ["Johnson", "MBA", "business school", "management"],
+        "social": _SOCIAL_JOHNSON,
+    },
+    _NOLAN: {
+        "rss": _NOLAN_RSS,
+        "keywords": ["Hotel Administration", "hospitality", "SHA", "hotel"],
+    },
+    _HUMAN_ECOLOGY: {
+        "rss": _CORNELL_ITHACA_RSS,
+        "keywords": ["Human Ecology", "human development", "nutrition"],
+    },
+    _ILR: {
+        "rss": _CORNELL_ITHACA_RSS,
+        "keywords": ["ILR", "labor relations", "industrial relations", "workplace"],
+    },
+    _AAP: {"rss": _CORNELL_ITHACA_RSS, "keywords": ["architecture", "planning", "AAP", "art"]},
+    _BROOKS: {
+        "rss": _CORNELL_ITHACA_RSS,
+        "keywords": ["Brooks School", "public policy", "policy"],
+    },
+    _LAW: {
+        "rss": _LAW_RSS,
+        "keywords": ["Cornell Law", "law school", "legal"],
+        "social": _SOCIAL_LAW,
+    },
+    _VET: {
+        "rss": _CORNELL_ITHACA_RSS,
+        "keywords": ["veterinary", "Vet college", "animal health", "DVM"],
+    },
+    _WEILL: {
+        "rss": _CORNELL_ITHACA_RSS,
+        "keywords": ["Weill Cornell", "medical school", "medicine", "physicians"],
+    },
+}
+
+_KW_STOP = {"and", "of", "the", "in", "for", "with", "master", "doctor", "bachelor", "studies"}
+
+
+def _school_content(name: str) -> dict:
+    """A school's content_sources: its verified RSS feed filtered by school keywords."""
+    spec = _SCHOOL_FEED_SPEC[name]
+    return {
+        "news_rss": spec["rss"],
+        "news_url": _SCHOOL_WEBSITE.get(name, "https://www.cornell.edu"),
+        "news_curated": False,
+        "events_feed": dict(_CORNELL_EVENTS_ICS),
+        "keywords": list(spec["keywords"]),
+        "social": spec.get("social", _SOCIAL_CORNELL),
+    }
+
+
+def _program_keywords(spec: dict) -> list[str]:
+    """Program keywords = distinctive discipline term(s) from the program name layered
+    on the school's keywords, so the program tab stays relevant yet never empty."""
+    school_kw = list(_SCHOOL_FEED_SPEC[spec["school"]]["keywords"])
+    name = spec["program_name"].replace("&", " ").replace("/", " ")
+    terms = [w for w in name.split() if len(w) > 3 and w.lower() not in _KW_STOP]
+    program_term = " ".join(terms[:3]).strip()
+    return ([program_term] if program_term else []) + school_kw
+
+
+def _program_content(spec: dict) -> dict:
+    """A program's content_sources: its school's shared feed refined by program keywords."""
+    base = _school_content(spec["school"])
+    base["keywords"] = _program_keywords(spec)
+    return base
+
+
 # Institution-wide feeds (Cornell Chronicle Ithaca RSS + the official events iCal feed) +
 # the official Cornell University social accounts. The daily ingest fills Updates + Events
 # from news_rss + events_feed; social is rendered on the profile.
 _INSTITUTION_CONTENT: dict = {
-    # Cornell Chronicle has no single site-wide "all stories" RSS; the broadest verified
-    # feed is the Ithaca-campus taxonomy feed.
-    "news_rss": "https://news.cornell.edu/taxonomy/term/63/feed",
-    "events_feed": {"url": "https://events.cornell.edu/calendar/1.ics", "type": "ical"},
-    "social": {
-        "instagram": "https://www.instagram.com/cornelluniversity/",
-        "linkedin": "https://www.linkedin.com/school/cornell-university/",
-        "x": "https://x.com/Cornell",
-        "youtube": "https://www.youtube.com/c/cornell",
-        "facebook": "https://www.facebook.com/Cornell/",
-    },
+    "news_rss": _CORNELL_ITHACA_RSS,
+    "news_url": "https://news.cornell.edu",
+    "news_curated": False,
+    "events_feed": dict(_CORNELL_EVENTS_ICS),
+    "social": dict(_SOCIAL_CORNELL),
 }
 
 # Computer Science keyword-relevant feed (the flagship program). The Cornell Chronicle
 # Computing & Information Sciences taxonomy feed surfaces CS/Bowers news.
 _CS_CONTENT: dict = {
-    "news_rss": "https://news.cornell.edu/taxonomy/term/14256/feed",
-    "events_feed": {"url": "https://events.cornell.edu/calendar/1.ics", "type": "ical"},
+    "news_rss": _BOWERS_RSS,
+    "events_feed": dict(_CORNELL_EVENTS_ICS),
     "keywords": [
         "computer science",
         "cornell bowers",
         "machine learning",
         "artificial intelligence",
     ],
-    "social": _INSTITUTION_CONTENT["social"],
+    "social": dict(_SOCIAL_CORNELL),
+}
+
+_PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
+    "cornell-computer-science-bs": [
+        "computer science",
+        "cornell bowers",
+        "machine learning",
+        "artificial intelligence",
+    ],
+    "cornell-computer-science-ms": ["computer science", "graduate CS", "Bowers"],
+    "cornell-jd": ["Cornell Law", "J.D.", "law school"],
+    "cornell-md": ["Weill Cornell", "medical school", "M.D."],
+    "cornell-dvm": ["veterinary", "DVM", "Vet college"],
+    "cornell-march": ["architecture", "M.Arch", "AAP"],
 }
 
 # ── The program catalog (real majors/degrees, organized by school) ─────────
@@ -1155,7 +1292,36 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
+
+
+def _build_catalog() -> list[dict]:
+    """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
+    out: list[dict] = []
+    seen = set(_EXISTING_SLUGS)
+    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+        if slug in seen:
+            continue
+        seen.add(slug)
+        out.append({
+            "slug": slug,
+            "school": school,
+            "program_name": name,
+            "degree_type": dtype,
+            "cip": cip,
+            "duration_months": dur,
+            "delivery_format": fmt,
+            "description": desc,
+        })
+    return out
+
+
+PROGRAMS += _build_catalog()
+for _p in PROGRAMS:
+    _p.setdefault("delivery_format", "in_person")
+
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
 # Full official program names (program-page title); equal to the program name here.
 _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROGRAMS}
@@ -1646,9 +1812,10 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
             about = dict(about)
             about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
             sc.about_detail = about
-        # No school carries its own keyword-relevant feed (only the flagship program does);
-        # always assign None so a stale value on a pre-existing row is cleared.
-        sc.content_sources = None
+        # Every school carries a populated Events & Updates feed: the Chronicle news
+        # feed filtered by school keywords + the university events calendar. Always
+        # assign so a stale value on a pre-existing row is cleared. None is never left.
+        sc.content_sources = _school_content(spec["name"])
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is FK-safe.
     for name, sc in existing.items():
@@ -1748,10 +1915,6 @@ def _program_standard(slug: str, spec: dict) -> dict:
         omitted.append("faculty_contacts.lead")
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
-    if slug != "cornell-computer-science-bs":
-        # Only the flagship carries its own keyword-relevant feed; catalog programs surface
-        # the institution feed rather than a per-program one.
-        omitted.append("content_sources")
     return _standard(omitted)
 
 
@@ -1784,8 +1947,14 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
-        # Only the flagship carries its own feed (content_sources omitted for the rest).
-        p.content_sources = _CS_CONTENT if slug == "cornell-computer-science-bs" else None
+        if slug == "cornell-computer-science-bs":
+            p.content_sources = _CS_CONTENT
+        elif slug in _PROGRAM_KEYWORDS_BY_SLUG:
+            cs = _program_content(spec)
+            cs["keywords"] = list(_PROGRAM_KEYWORDS_BY_SLUG[slug])
+            p.content_sources = cs
+        else:
+            p.content_sources = _program_content(spec)
         # Cost: undergraduate uses published Cornell rates; graduate/professional/online
         # programs omit a per-program tuition (recorded in _standard.omitted).
         cost = _cost_for(spec)
