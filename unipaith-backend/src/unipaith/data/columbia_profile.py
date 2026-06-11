@@ -63,7 +63,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Columbia University in the City of New York"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-10"
+ENRICHED_AT = "2026-06-11"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -205,6 +205,9 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Columbia University Events Calendar", "url": "https://events.columbia.edu/"},
         ],
     },
+    # Butler Library campus photo — Wikimedia Commons / Bitterteayen (CC BY-SA 4.0),
+    # verified on the file page 2026-06-11.
+    "media_credit": "Wikimedia Commons / Bitterteayen (CC BY-SA 4.0)",
     "flagship": {
         # "Columbia Facts 2024" (OPIR): 35,769 total students (Fall 2024).
         "enrollment_total": 35769,
@@ -665,47 +668,145 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
     _NURSING: [*_FACULTY_OMIT, "about_detail.research_centers"],
 }
 
-# ── Channel feeds + official social links ──────────────────────────────────
-# Institution-wide socials (official Columbia handles, from the Columbia social-media
-# directory) + the Columbia News page. The YouTube channel and a documented RSS feed URL
-# could not be confirmed and are omitted rather than guessed.
+# ── Per-node content feeds (so EVERY school + program has a populated Events &
+# Updates tab, not just the CS + MBA flagships) ─────────────────────────────────
+# The daily content-ingest reads ``news_rss`` (RSS), optional ``events_feed``
+# (iCalendar), ``keywords`` (word-boundary relevance filter) and ``news_curated``
+# from each node's content_sources. Columbia News (news.columbia.edu) and the
+# university events calendar are Cloudflare-gated to server fetches (HTTP 403,
+# verified 2026-06-11), so the routine routes every node through the verified,
+# server-fetchable school RSS feeds below — filtering by school/program keywords
+# (the MIT/Harvard pattern) so content_sources is never left null.
+#
+# Verified server-fetchable RSS (HTTP 200, 2026-06-11):
+#   • CC + SEAS shared feed: https://www.cc-seas.columbia.edu/rss.xml
+#   • Mailman School of Public Health: https://www.publichealth.columbia.edu/rss.xml
+#   • School of Nursing: https://www.nursing.columbia.edu/rss.xml
+#   • Columbia University Irving Medical Center: https://www.cuimc.columbia.edu/rss.xml
+#   • GSAPP: https://www.arch.columbia.edu/feed
+#   • Data Science Institute (CS flagship): https://datascience.columbia.edu/feed/
+_CC_SEAS_RSS = "https://www.cc-seas.columbia.edu/rss.xml"
+_MAILMAN_RSS = "https://www.publichealth.columbia.edu/rss.xml"
+_NURSING_RSS = "https://www.nursing.columbia.edu/rss.xml"
+_CUIMC_RSS = "https://www.cuimc.columbia.edu/rss.xml"
+_GSAPP_RSS = "https://www.arch.columbia.edu/feed"
+_DATA_SCIENCE_RSS = "https://datascience.columbia.edu/feed/"
+
+# Official Columbia social handles (Columbia social-media directory, verified 2026-06-11).
+_SOCIAL_COLUMBIA = {
+    "instagram": "https://www.instagram.com/columbia/",
+    "linkedin": "https://www.linkedin.com/school/columbia-university/",
+    "x": "https://x.com/columbia",
+    "youtube": "https://www.youtube.com/user/columbiauniversity",
+    "facebook": "https://www.facebook.com/columbia/",
+}
+# Columbia Business School official handles (business.columbia.edu footer, verified 2026-06-11).
+_SOCIAL_CBS = {
+    "instagram": "https://www.instagram.com/columbiabusiness/",
+    "linkedin": "https://www.linkedin.com/school/columbia-business-school/",
+    "x": "https://x.com/Columbia_Biz",
+    "youtube": "https://www.youtube.com/user/ColumbiaBusiness",
+    "facebook": "https://www.facebook.com/columbiabusiness",
+}
+
+# Each school's verified RSS + keyword filter. Schools without their own fetchable RSS
+# inherit the CC/SEAS feed filtered by school-naming keywords.
+_SCHOOL_FEED_SPEC: dict[str, dict] = {
+    _CC: {
+        "rss": _CC_SEAS_RSS,
+        "keywords": ["Columbia College", "undergraduate", "Core Curriculum"],
+    },
+    _SEAS: {
+        "rss": _CC_SEAS_RSS,
+        "keywords": ["engineering", "Fu Foundation", "SEAS", "applied science"],
+    },
+    _CBS: {
+        "rss": _CC_SEAS_RSS,
+        "keywords": ["Columbia Business School", "MBA", "business", "finance"],
+        "social": _SOCIAL_CBS,
+    },
+    _LAW: {"rss": _CC_SEAS_RSS, "keywords": ["Columbia Law", "law school", "legal"]},
+    _PS: {
+        "rss": _CUIMC_RSS,
+        "keywords": ["Vagelos", "medical school", "medicine", "physicians", "surgeons"],
+    },
+    _JOUR: {"rss": _CC_SEAS_RSS, "keywords": ["Journalism School", "journalism", "reporting"]},
+    _SIPA: {"rss": _CC_SEAS_RSS, "keywords": ["SIPA", "international affairs", "public policy"]},
+    _MAILMAN: {
+        "rss": _MAILMAN_RSS,
+        "keywords": ["Mailman", "public health", "epidemiology", "health policy"],
+    },
+    _SSW: {"rss": _CC_SEAS_RSS, "keywords": ["School of Social Work", "social work"]},
+    _GSAPP: {"rss": _GSAPP_RSS, "keywords": ["GSAPP", "architecture", "planning", "preservation"]},
+    _ARTS: {"rss": _CC_SEAS_RSS, "keywords": ["School of the Arts", "MFA", "film", "theatre"]},
+    _NURSING: {"rss": _NURSING_RSS, "keywords": ["School of Nursing", "nursing"]},
+}
+
+# Per-program keyword overrides (department/program-naming terms). Programs without an
+# entry inherit their school's keywords via _program_keywords().
+_PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
+    "columbia-computer-science-bs": [
+        "computer science",
+        "Columbia CS",
+        "artificial intelligence",
+        "data science",
+    ],
+    "columbia-mba": ["MBA", "Columbia Business School", "finance", "value investing"],
+}
+
+_KW_STOP = {"and", "of", "the", "in", "for", "with", "master", "doctor", "bachelor", "studies"}
+
+
+def _school_content(name: str) -> dict:
+    """A school's content_sources: its verified RSS feed filtered by school keywords."""
+    spec = _SCHOOL_FEED_SPEC[name]
+    return {
+        "news_rss": spec["rss"],
+        "news_url": _SCHOOL_WEBSITE.get(name, "https://www.columbia.edu"),
+        "news_curated": False,
+        "keywords": list(spec["keywords"]),
+        "social": spec.get("social", _SOCIAL_COLUMBIA),
+    }
+
+
+def _program_keywords(spec: dict) -> list[str]:
+    """Program keywords = distinctive discipline term(s) from the program name layered
+    on the school's keywords, so the program tab stays relevant yet never empty."""
+    slug = spec["slug"]
+    if slug in _PROGRAM_KEYWORDS_BY_SLUG:
+        return list(_PROGRAM_KEYWORDS_BY_SLUG[slug])
+    school_kw = list(_SCHOOL_FEED_SPEC[spec["school"]]["keywords"])
+    name = spec["program_name"].replace("&", " ").replace("/", " ")
+    terms = [w for w in name.split() if len(w) > 3 and w.lower() not in _KW_STOP]
+    program_term = " ".join(terms[:3]).strip()
+    return ([program_term] if program_term else []) + school_kw
+
+
+def _program_content(spec: dict) -> dict:
+    """A program's content_sources: its school's verified feed refined by program keywords.
+    The CS flagship uses the Data Science Institute RSS (server-fetchable, CS-relevant)."""
+    if spec["slug"] == "columbia-computer-science-bs":
+        return {
+            "news_rss": _DATA_SCIENCE_RSS,
+            "news_url": "https://datascience.columbia.edu/",
+            "news_curated": False,
+            "keywords": _PROGRAM_KEYWORDS_BY_SLUG["columbia-computer-science-bs"],
+            "social": _SOCIAL_COLUMBIA,
+        }
+    base = _school_content(spec["school"])
+    base["keywords"] = _program_keywords(spec)
+    return base
+
+
+# Institution-wide feed: the verified CC/SEAS RSS (curated — every item is official
+# Columbia College / Engineering news) + the official university social handles.
+# Columbia News (news.columbia.edu) RSS is Cloudflare-gated to server fetches and is
+# omitted rather than guessed; the CC/SEAS feed is the broadest verified alternative.
 _INSTITUTION_CONTENT: dict = {
+    "news_rss": _CC_SEAS_RSS,
     "news_url": "https://news.columbia.edu",
-    "social": {
-        "instagram": "https://www.instagram.com/columbia/",
-        "linkedin": "https://www.linkedin.com/school/columbia-university/",
-        "x": "https://x.com/columbia",
-        "facebook": "https://www.facebook.com/columbia/",
-    },
-}
-
-# Computer Science keyword-relevant feed (a flagship program), inheriting the
-# institution socials.
-_CS_CONTENT: dict = {
-    "news_url": "https://news.columbia.edu",
-    "keywords": ["computer science", "columbia cs", "artificial intelligence", "data science"],
-    "social": _INSTITUTION_CONTENT["social"],
-}
-
-# Columbia Business School keyword-relevant feed (the MBA flagship), with the school's own
-# official social handles.
-_MBA_CONTENT: dict = {
-    "news_url": "https://business.columbia.edu/insights",
-    "keywords": ["columbia business school", "mba", "finance", "value investing", "new york"],
-    "social": {
-        "instagram": "https://www.instagram.com/columbiabusiness/",
-        "linkedin": "https://www.linkedin.com/school/columbia-business-school/",
-        "x": "https://x.com/Columbia_Biz",
-        "youtube": "https://www.youtube.com/user/ColumbiaBusiness",
-        "facebook": "https://www.facebook.com/columbiabusiness",
-    },
-}
-
-# Programs that carry their own keyword-relevant feed (the two deep flagships); every other
-# catalog program surfaces the institution feed and records content_sources as omitted.
-_PROGRAM_CONTENT: dict[str, dict] = {
-    "columbia-computer-science-bs": _CS_CONTENT,
-    "columbia-mba": _MBA_CONTENT,
+    "news_curated": True,
+    "social": dict(_SOCIAL_COLUMBIA),
 }
 
 # ── The program catalog (real majors/degrees, organized by school) ─────────
@@ -1641,9 +1742,9 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
             about = dict(about)
             about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
             sc.about_detail = about
-        # No school carries its own keyword-relevant feed (only the flagship program does);
-        # always assign None so a stale value on a pre-existing row is cleared.
-        sc.content_sources = None
+        # Every school gets a working feed: its verified RSS (or the shared CC/SEAS feed
+        # filtered by school keywords) so the Events & Updates tab populates.
+        sc.content_sources = _school_content(spec["name"])
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is FK-safe.
     for name, sc in existing.items():
@@ -1707,10 +1808,6 @@ def _program_standard(slug: str) -> dict:
         # cost_data is cleared entirely for these programs, so both the figure and its
         # source path are absent — record both as verified-unavailable.
         omitted += ["cost_data.tuition_usd", "cost_data.source"]
-    if slug not in _PROGRAM_CONTENT:
-        # Only the two flagships carry their own keyword-relevant feed; catalog programs
-        # surface the institution feed rather than a per-program one.
-        omitted.append("content_sources")
     return _standard(omitted)
 
 
@@ -1744,8 +1841,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
-        # Only the two flagships carry their own feed (content_sources omitted for the rest).
-        p.content_sources = _PROGRAM_CONTENT.get(slug)
+        # Every program gets a working feed: its school's verified RSS filtered by
+        # program-naming keywords (CS uses the Data Science Institute feed).
+        p.content_sources = _program_content(spec)
         # Cost: undergraduate uses the published Columbia undergraduate rates; graduate
         # programs use verified per-program tuition where available, else omit (cost_data
         # cleared and the path recorded in _standard.omitted).
