@@ -198,7 +198,7 @@ export default function ExplorePage() {
     <div className="p-4 max-w-5xl w-full mx-auto">
       {/* Spec 09 §13 H1 + brand framing ("Fit, not fame", Spec 07 §2/§6). */}
       <PageHeader
-        eyebrow="Match"
+        eyebrow="Discover"
         title="Your strategy and your matches"
         sub="Ranked for fit, not fame — and every score explains itself."
       />

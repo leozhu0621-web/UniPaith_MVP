@@ -41,7 +41,7 @@ const STAGES = [
   },
   {
     icon: Target,
-    title: 'Match',
+    title: 'Discover',
     body: 'See programs ranked by real fit, each with a confidence score so you know how sure we are.',
   },
   {

@@ -57,7 +57,7 @@ export default function PostsPage() {
       <div className="max-w-5xl w-full mx-auto px-6 py-6">
         {/* Header (Spec 20 §3; eyebrow = surface name, Spec 2026-06-10 §3) */}
         <PageHeader
-          eyebrow="Connect"
+          eyebrow="Connectors"
           title="Updates, events, and peers"
           sub="From the institutions you follow"
         />

@@ -38,8 +38,8 @@ const DEGREE_LABEL: Record<string, string> = {
 
 const QUICK_NAV = [
   { label: 'Uni', sub: 'Build your profile with Uni', to: '/s', icon: Compass },
-  { label: 'Match', sub: 'Programs & schools for you', to: '/s/explore', icon: Target },
-  { label: 'Connect', sub: 'Updates from schools you follow', to: '/s/posts', icon: Newspaper },
+  { label: 'Discover', sub: 'Programs & schools for you', to: '/s/explore', icon: Target },
+  { label: 'Connectors', sub: 'Updates from schools you follow', to: '/s/posts', icon: Newspaper },
   { label: 'My Space', sub: 'Your home — what to do next', to: '/s/space', icon: Backpack },
   { label: 'Applications', sub: 'Your portfolio & deadlines', to: '/s/applications', icon: FolderKanban },
   { label: 'Prep', sub: 'Workshops & prompt library', to: '/s/prep', icon: PenLine },

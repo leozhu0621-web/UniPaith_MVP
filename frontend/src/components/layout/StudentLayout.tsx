@@ -30,8 +30,8 @@ import { COPY } from '../../lib/copy'
 // computed from the location rather than NavLink's single-path match.
 const NAV_ITEMS = [
   { to: '/s', icon: Compass, label: 'Uni', end: true },
-  { to: '/s/explore', icon: Target, label: 'Match', end: false },
-  { to: '/s/posts', icon: Newspaper, label: 'Connect', end: false },
+  { to: '/s/explore', icon: Target, label: 'Discover', end: false },
+  { to: '/s/posts', icon: Newspaper, label: 'Connectors', end: false },
   { to: '/s/space', icon: Backpack, label: 'My Space', end: false },
 ]
 
