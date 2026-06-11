@@ -172,11 +172,16 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert mpa.degree_type == "masters"
     assert mpa.cost_data and mpa.cost_data["funded"] is True
     assert mpa.outcomes_data["median_salary"] == 85111
-    # Stale tracks + feeds on the pre-existing canonical Physics BS row were cleared
-    # (it is not the flagship and has no verified tracks), matching its _standard.
+    # Stale tracks on the pre-existing canonical Physics BS row were cleared (it is not
+    # the flagship and has no verified tracks). Its stale feed is REPLACED with the real
+    # Princeton news feed filtered to physics-relevant items — every program now carries a
+    # working content_sources so its Events & Updates populate (never null).
     phys_bs = next(pr for pr in progs if pr.slug == "princeton-physics-bs")
     assert phys_bs.tracks is None
-    assert phys_bs.content_sources is None
+    assert phys_bs.content_sources is not None
+    assert phys_bs.content_sources["news_rss"].startswith("https://www.princeton.edu/news")
+    assert "physics" in phys_bs.content_sources["keywords"]
+    assert phys_bs.content_sources["news_rss"] != "https://stale.example/feed"
     assert phys_bs.tuition == 62688
     # A catalog program with no FOS earnings falls back to the institution median.
     assert phys_bs.outcomes_data["median_salary"] == 110066
