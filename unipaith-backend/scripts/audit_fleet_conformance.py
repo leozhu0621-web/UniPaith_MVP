@@ -80,9 +80,10 @@ async def main() -> None:
     if "--detail" in sys.argv:
         detail = sys.argv[sys.argv.index("--detail") + 1]
     engine = create_async_engine(DB)
-    Sess = async_sessionmaker(engine)
-    async with Sess() as session:
-        insts = (await session.execute(select(Institution).order_by(Institution.name))).scalars().all()
+    sess = async_sessionmaker(engine)
+    async with sess() as session:
+        result = await session.execute(select(Institution).order_by(Institution.name))
+        insts = result.scalars().all()
         rows = []
         for i in insts:
             snap = inst_snapshot(i)
@@ -171,7 +172,10 @@ async def main() -> None:
             f"{'schools-ok':10} {'progs-ok':9} {'s-nostamp':9} {'p-nostamp':9}"
         )
         for r in rows:
-            print(f"{r[0]:44.44} {r[1]:4} {r[2]:<9} {r[3]:5} {r[4]:10} {r[5]:9} {r[6]:<9} {r[7]:<9}")
+            print(
+                f"{r[0]:44.44} {r[1]:4} {r[2]:<9} {r[3]:5} {r[4]:10} "
+                f"{r[5]:9} {r[6]:<9} {r[7]:<9}"
+            )
     await engine.dispose()
 
 

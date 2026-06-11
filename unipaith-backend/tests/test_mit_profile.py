@@ -110,9 +110,10 @@ async def test_apply_sets_six_real_schools(db_session):
     assert cs["keywords"] == ["sloan", "mit sloan"]
     assert cs["social"]["instagram"] == "https://www.instagram.com/mitsloan/"
     assert len(cs["social"]) == 5
-    # Other schools carry no feeds yet (Sloan is the standard-setting example).
+    # Every school now carries its own verified feeds (2026-06-10 run).
     eng = next(s for s in rows if s.name == "School of Engineering")
-    assert eng.content_sources is None
+    assert eng.content_sources is not None
+    assert eng.content_sources["news_rss"].endswith("/rss/school/engineering")
     # Sloan carries a rich, sourced About tab (founded + faculty + centers).
     ad = sloan.about_detail
     assert ad is not None
@@ -123,7 +124,13 @@ async def test_apply_sets_six_real_schools(db_session):
     assert "Dimitris Bertsimas" in names and "Simon Johnson" in names
     assert len(ad["faculty"]) >= 4
     assert any("Digital Economy" in c for c in ad["research_centers"])
-    assert eng.about_detail is None
+    # ... and so does every other school, with a conformance stamp.
+    ead = eng.about_detail
+    assert ead is not None
+    assert ead["founded"] == 1932
+    assert ead["leadership"].startswith("Paula T. Hammond")
+    assert len(ead["research_centers"]) >= 4
+    assert ead["_standard"]["omitted"] == []
 
 
 async def test_apply_builds_real_program_catalog_idempotently(db_session):
@@ -177,12 +184,15 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert cs.outcomes_data["scope"] == "program"
     chem = next(p for p in progs if p.slug == "mit-chemistry-bs")
     assert chem.outcomes_data["scope"] == "institution"  # suppressed → MIT-wide labelled
-    assert mm.outcomes_data is None  # non-degree credential → no outcomes
+    # non-degree credential → no outcome facts, only the conformance stamp
+    assert set(mm.outcomes_data) == {"_standard"}
     # Audience + highlights populate (flagship override + by-type fallback).
     assert eecs.who_its_for and "education" in eecs.who_its_for
     assert eecs.highlights and any("CSAIL" in h for h in eecs.highlights)
     assert chem.highlights  # by-type (bachelors) fallback
-    assert eecs.tracks and any("6-3" in c for c in eecs.tracks["concentrations"])
+    # tracks refreshed from the official catalog (items shape + citation)
+    assert eecs.tracks and len(eecs.tracks["items"]) >= 5
+    assert eecs.tracks["source_url"].startswith("http")
     assert "CSAIL" in eecs.description_text  # richer description override
     assert eecs.application_deadline is not None  # undergrad deadline (Jan 1)
     assert mm.application_deadline is None  # online/MicroMasters → no fixed deadline

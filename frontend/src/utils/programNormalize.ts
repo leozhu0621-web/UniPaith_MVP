@@ -148,9 +148,12 @@ export function extractTracksMeta(tracks: unknown): {
   if (Array.isArray(tracks)) {
     out.concentrations = tracks.filter(t => typeof t === 'string') as string[]
   } else if (isObj(tracks)) {
-    for (const key of ['concentrations', 'tracks', 'subfields', 'specializations']) {
+    for (const key of ['concentrations', 'tracks', 'subfields', 'specializations', 'items']) {
       if (Array.isArray(tracks[key])) {
-        out.concentrations = (tracks[key] as unknown[]).filter(t => typeof t === 'string') as string[]
+        // entries are plain strings or {name} objects (the data-module shape)
+        out.concentrations = (tracks[key] as unknown[])
+          .map(t => (typeof t === 'string' ? t : isObj(t) ? String(t.name ?? '') : ''))
+          .filter(Boolean)
         break
       }
     }

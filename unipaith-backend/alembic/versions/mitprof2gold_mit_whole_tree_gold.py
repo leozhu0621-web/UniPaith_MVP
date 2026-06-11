@@ -14,7 +14,7 @@ Idempotent: ``mit_profile.apply`` upserts schools by (institution_id, name)
 and programs by slug; no-op when MIT is absent.
 
 Revision ID: mitprof2gold
-Revises: instenrich2
+Revises: cmuprof1, feedsforce1
 """
 
 from sqlalchemy.orm import Session
@@ -23,7 +23,9 @@ from alembic import op
 from unipaith.data import mit_profile
 
 revision = "mitprof2gold"
-down_revision = "instenrich2"
+# Also merges the dual head that PRs #435 (cmuprof1) and #436 (feedsforce1)
+# raced onto main — this revision is the single resulting head.
+down_revision = ("cmuprof1", "feedsforce1")
 branch_labels = None
 depends_on = None
 
