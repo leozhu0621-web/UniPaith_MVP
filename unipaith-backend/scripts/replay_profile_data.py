@@ -18,8 +18,10 @@ from sqlalchemy.orm import Session
 from unipaith.data import (
     berkeley_profile,
     caltech_profile,
+    carnegie_mellon_profile,
     chicago_profile,
     columbia_profile,
+    cornell_profile,
     harvard_profile,
     mit_profile,
     penn_profile,
@@ -50,6 +52,13 @@ INLINE = [
     "instenrich2_remaining_14.py",
 ]
 
+# Profile data modules whose migrations chain after the INLINE migrations
+# (cornellprof1 -> cmuprof1 follow instenrich2).
+POST_MODULES = [
+    cornell_profile,
+    carnegie_mellon_profile,
+]
+
 
 def run_inline(fname: str, conn) -> None:
     spec = importlib.util.spec_from_file_location(fname[:-3], VERSIONS / fname)
@@ -70,6 +79,10 @@ def main() -> None:
         for fname in INLINE:
             run_inline(fname, conn)
             print(f"applied {fname}")
+        for m in POST_MODULES:
+            m.apply(session)
+            session.flush()
+            print(f"applied {m.__name__}")
         session.flush()
     print("replay complete")
 
