@@ -13,6 +13,7 @@ from sqlalchemy import select
 from unipaith.data import harvard_profile
 from unipaith.models.institution import Institution, Program, School
 from unipaith.models.user import User, UserRole
+from unipaith.profile_standard import STANDARD_VERSION
 
 pytestmark = pytest.mark.asyncio
 
@@ -158,7 +159,12 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     chem = next(p for p in progs if p.slug == "harvard-chemistry-ab")
     assert chem.outcomes_data["scope"] == "institution"  # suppressed → Harvard-wide labelled
     cert = next(p for p in progs if p.slug == "harvard-cs50-cert")
-    assert cert.outcomes_data is None  # non-degree credential → no outcomes
+    # Non-degree credential: no published outcome figures, but still carries a
+    # _standard stamp (a bare holder) so the node is conformant-or-honestly-omitted
+    # rather than silently un-stamped (the prior bug).
+    assert cert.outcomes_data is not None
+    assert "median_salary" not in cert.outcomes_data
+    assert cert.outcomes_data["_standard"]["version"] == STANDARD_VERSION
     # Audience + highlights populate (flagship override + by-type fallback).
     assert mba.who_its_for and "management" in mba.who_its_for
     econ = next(p for p in progs if p.slug == "harvard-economics-ab")
