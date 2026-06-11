@@ -22,7 +22,7 @@ This re-runs harvard_profile.apply(), which now:
 Idempotent; no-ops when Harvard is absent (fresh / CI databases).
 
 Revision ID: harvardfeeds1
-Revises: mitfeeds1
+Revises: mediacredit1
 """
 
 from sqlalchemy.orm import Session
@@ -31,7 +31,7 @@ from alembic import op
 from unipaith.data import harvard_profile
 
 revision = "harvardfeeds1"
-down_revision = "mitfeeds1"
+down_revision = "mediacredit1"
 branch_labels = None
 depends_on = None
 
