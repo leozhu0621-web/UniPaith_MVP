@@ -597,7 +597,7 @@ _INSTITUTION_CONTENT: dict = {
 # CS keyword-relevant feed (the flagship program), inheriting the institution
 # socials (the School of Computer Science surfaces its news through its own site).
 _CS_CONTENT: dict = {
-    "news_url": "https://www.scs.cmu.edu/news/",
+    "news_rss": "https://www.scs.cmu.edu/news/",
     "keywords": [
         "computer science",
         "school of computer science",
