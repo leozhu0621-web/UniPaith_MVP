@@ -46,13 +46,14 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.berkeley_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of California-Berkeley"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-10"
+ENRICHED_AT = "2026-06-11"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -235,6 +236,7 @@ SCHOOL_OUTCOMES: dict = {
             ),
         },
     ],
+    "media_credit": "Wikimedia Commons / Wil540 art (CC BY-SA 4.0)",
 }
 
 # student_body_size is the undergraduate count (the page labels it "Undergraduates");
@@ -243,11 +245,11 @@ SCHOOL_OUTCOMES: dict = {
 UNDERGRAD_COUNT = 33070
 
 DESCRIPTION = (
-    "Founded by the State of California in 1868, the University of California, "
-    "Berkeley is the founding campus of the University of California system — a "
-    "public land-grant research university on a campus in Berkeley, in the San "
-    "Francisco Bay Area. It enrolls roughly 33,000 undergraduates and about 12,800 "
-    "graduate students, some 45,900 students in all.\n\n"
+    "The University of California, Berkeley is a public research university in "
+    "Berkeley, CA — the founding campus of the University of California system and "
+    "a public land-grant institution in the San Francisco Bay Area. Founded by the "
+    "State of California in 1868, it enrolls roughly 33,000 undergraduates and "
+    "about 12,800 graduate students, some 45,900 students in all.\n\n"
     "Berkeley admits undergraduates into six colleges and one school: the College "
     "of Letters & Science — the largest, holding about three-quarters of "
     "undergraduates — together with the College of Engineering; the College of "
@@ -276,6 +278,11 @@ _CED = "College of Environmental Design"
 _RAUSSER = "Rausser College of Natural Resources"
 _HAAS = "Haas School of Business"
 _CDSS = "College of Computing, Data Science, and Society"
+_LAW = "Berkeley Law"
+_GSPP = "Goldman School of Public Policy"
+_GSE = "Graduate School of Education"
+_GRAD = "Graduate Division"
+_SPH = "School of Public Health"
 
 SCHOOLS: list[dict] = [
     {
@@ -349,6 +356,50 @@ SCHOOLS: list[dict] = [
             "with an emphasis on societal applications."
         ),
     },
+    {
+        "name": _LAW,
+        "sort_order": 8,
+        "description": (
+            "Berkeley Law is one of the nation's leading public law schools, offering "
+            "the J.D., LL.M., and J.S.D. together with interdisciplinary legal studies "
+            "and clinics across environmental, technology, business, and social-justice law."
+        ),
+    },
+    {
+        "name": _GSPP,
+        "sort_order": 9,
+        "description": (
+            "The Goldman School of Public Policy trains leaders in public policy through "
+            "the Master of Public Policy (M.P.P.), concurrent degrees, and doctoral study "
+            "in policy analysis and governance."
+        ),
+    },
+    {
+        "name": _GSE,
+        "sort_order": 10,
+        "description": (
+            "The Graduate School of Education prepares scholars and practitioners across "
+            "teacher education, educational leadership, policy, and learning sciences."
+        ),
+    },
+    {
+        "name": _SPH,
+        "sort_order": 11,
+        "description": (
+            "The School of Public Health advances population health through M.P.H., Dr.P.H., "
+            "and Ph.D. programs in epidemiology, biostatistics, health policy, and "
+            "environmental health."
+        ),
+    },
+    {
+        "name": _GRAD,
+        "sort_order": 12,
+        "description": (
+            "The Graduate Division confers master's and doctoral degrees across Berkeley's "
+            "departments and interdisciplinary programs, administering graduate admissions, "
+            "fellowships, and degree requirements university-wide."
+        ),
+    },
 ]
 
 # Each college's official website (verified to resolve at author time).
@@ -360,6 +411,11 @@ _SCHOOL_WEBSITE: dict[str, str] = {
     _RAUSSER: "https://nature.berkeley.edu/",
     _HAAS: "https://haas.berkeley.edu/",
     _CDSS: "https://cdss.berkeley.edu/",
+    _LAW: "https://www.law.berkeley.edu/",
+    _GSPP: "https://gspp.berkeley.edu/",
+    _GSE: "https://bears.berkeley.edu/",
+    _SPH: "https://publichealth.berkeley.edu/",
+    _GRAD: "https://grad.berkeley.edu/",
 }
 
 # Rich, sourced About-tab content per college. Deans + titles are quoted from each
@@ -455,6 +511,41 @@ _ABOUT_DETAIL: dict[str, dict] = {
             "url": "https://cdss.berkeley.edu/leadership",
         },
     },
+    _LAW: {
+        "leadership": "Erwin Chemerinsky — Dean and Jesse H. Choper Distinguished Professor of Law",
+        "source": {
+            "label": "Berkeley Law — Dean Chemerinsky",
+            "url": "https://www.law.berkeley.edu/our-faculty/dean-erwin-chemerinsky/",
+        },
+    },
+    _GSPP: {
+        "leadership": "David C. Wilson — Dean, Goldman School of Public Policy",
+        "source": {
+            "label": "Goldman School of Public Policy — Leadership",
+            "url": "https://gspp.berkeley.edu/about/leadership",
+        },
+    },
+    _GSE: {
+        "leadership": "Cynthia Carter Ching — Dean, Graduate School of Education",
+        "source": {
+            "label": "Berkeley Graduate School of Education — Dean",
+            "url": "https://bears.berkeley.edu/about/deans-office",
+        },
+    },
+    _SPH: {
+        "leadership": "Michael C. Lu — Dean, School of Public Health",
+        "source": {
+            "label": "Berkeley School of Public Health — Leadership",
+            "url": "https://publichealth.berkeley.edu/about/leadership/",
+        },
+    },
+    _GRAD: {
+        "leadership": "Lisa García Bedolla — Dean of the Graduate Division",
+        "source": {
+            "label": "Berkeley Graduate Division — Dean",
+            "url": "https://grad.berkeley.edu/about/dean/",
+        },
+    },
 }
 
 # About-detail fields omitted per college (verified-unavailable), recorded in each
@@ -469,27 +560,95 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
     _RAUSSER: ["about_detail.founded", "about_detail.faculty"],
     _HAAS: ["about_detail.faculty"],
     _CDSS: ["about_detail.founded", "about_detail.faculty"],
+    _LAW: ["about_detail.founded", "about_detail.faculty", "about_detail.research_centers"],
+    _GSPP: ["about_detail.founded", "about_detail.faculty", "about_detail.research_centers"],
+    _GSE: ["about_detail.founded", "about_detail.faculty", "about_detail.research_centers"],
+    _SPH: ["about_detail.founded", "about_detail.faculty", "about_detail.research_centers"],
+    _GRAD: ["about_detail.founded", "about_detail.faculty", "about_detail.research_centers"],
 }
 
-# ── Channel feeds + official social links ──────────────────────────────────
-# Institution-wide socials (official UC Berkeley handles) + news page.
+# ── Per-node content feeds (so EVERY school + program has a populated Events &
+# Updates tab, not just the EECS flagship) ─────────────────────────────────────
+# Berkeley News RSS (news.berkeley.edu/feed/) is server-fetchable (HTTP 200,
+# verified 2026-06-11) and carries media:content cover images. The UC Berkeley
+# Academic Calendar public iCal feed (Registrar toolbox, verified 2026-06-11)
+# supplies institution-wide events.
+_BERKELEY_NEWS_RSS = "https://news.berkeley.edu/feed/"
+_BERKELEY_EVENTS_ICS = {
+    "url": (
+        "https://calendar.google.com/calendar/ical/"
+        "berkeley.edu_lrpagcvovu47raj72dmpatjou4%40group.calendar.google.com/public/basic.ics"
+    ),
+    "type": "ical",
+}
+_SOCIAL_BERKELEY = {
+    "instagram": "https://www.instagram.com/ucberkeleyofficial/",
+    "linkedin": "https://www.linkedin.com/school/uc-berkeley/",
+    "x": "https://x.com/UCBerkeley",
+    "youtube": "https://www.youtube.com/UCBerkeley",
+    "facebook": "https://www.facebook.com/UCBerkeley",
+}
+
 _INSTITUTION_CONTENT: dict = {
+    "news_rss": _BERKELEY_NEWS_RSS,
     "news_url": "https://news.berkeley.edu/",
-    "social": {
-        "instagram": "https://www.instagram.com/ucberkeleyofficial/",
-        "linkedin": "https://www.linkedin.com/school/uc-berkeley/",
-        "x": "https://x.com/UCBerkeley",
-        "youtube": "https://www.youtube.com/UCBerkeley",
-        "facebook": "https://www.facebook.com/UCBerkeley",
-    },
+    "news_curated": False,
+    "events_feed": dict(_BERKELEY_EVENTS_ICS),
+    "social": dict(_SOCIAL_BERKELEY),
 }
 
-# EECS keyword-relevant feed (the flagship program), inheriting the institution
-# socials (the department surfaces its news through the EECS site).
+_SCHOOL_FEED_SPEC: dict[str, dict] = {
+    _LS: {"keywords": ["Letters & Science", "L&S", "undergraduate", "humanities"]},
+    _COE: {"keywords": ["engineering", "Berkeley Engineering", "EECS"]},
+    _CHEM: {"keywords": ["chemistry", "College of Chemistry", "chemical engineering"]},
+    _CED: {"keywords": ["environmental design", "architecture", "planning", "CED"]},
+    _RAUSSER: {"keywords": ["natural resources", "Rausser", "agriculture", "environment"]},
+    _HAAS: {"keywords": ["Haas", "business", "MBA"]},
+    _CDSS: {"keywords": ["computing", "data science", "CDSS", "computer science"]},
+    _LAW: {"keywords": ["Berkeley Law", "law school", "legal"]},
+    _GSPP: {"keywords": ["public policy", "Goldman", "GSPP"]},
+    _GSE: {"keywords": ["education", "Graduate School of Education", "teacher"]},
+    _SPH: {"keywords": ["public health", "epidemiology", "School of Public Health"]},
+    _GRAD: {"keywords": ["graduate", "Graduate Division", "doctoral", "Ph.D."]},
+}
+
+_KW_STOP = {"and", "of", "the", "in", "for", "with", "science", "sciences", "engineering"}
+
+
+def _school_content(name: str) -> dict:
+    """A school's content_sources: Berkeley News RSS + academic calendar filtered by keywords."""
+    spec = _SCHOOL_FEED_SPEC[name]
+    return {
+        "news_rss": _BERKELEY_NEWS_RSS,
+        "news_url": _SCHOOL_WEBSITE.get(name, "https://www.berkeley.edu"),
+        "news_curated": False,
+        "events_feed": dict(_BERKELEY_EVENTS_ICS),
+        "keywords": list(spec["keywords"]),
+        "social": dict(_SOCIAL_BERKELEY),
+    }
+
+
+def _program_keywords(spec: dict) -> list[str]:
+    school_kw = list(_SCHOOL_FEED_SPEC[spec["school"]]["keywords"])
+    name = spec["program_name"].replace("&", " ").replace("/", " ")
+    terms = [w for w in name.split() if len(w) > 3 and w.lower() not in _KW_STOP]
+    program_term = " ".join(terms[:3]).strip()
+    return ([program_term] if program_term else []) + school_kw
+
+
+def _program_content(spec: dict) -> dict:
+    base = _school_content(spec["school"])
+    base["keywords"] = _program_keywords(spec)
+    return base
+
+
+# EECS keyword-relevant feed (the flagship program) — department news page + shared calendar.
 _EECS_CONTENT: dict = {
+    "news_rss": _BERKELEY_NEWS_RSS,
     "news_url": "https://eecs.berkeley.edu/about/news/",
+    "events_feed": dict(_BERKELEY_EVENTS_ICS),
     "keywords": ["eecs", "electrical engineering", "computer science", "berkeley engineering"],
-    "social": _INSTITUTION_CONTENT["social"],
+    "social": dict(_SOCIAL_BERKELEY),
 }
 
 # ── The undergraduate program catalog (real majors, organized by college) ───
@@ -667,7 +826,9 @@ PROGRAMS: list[dict] = [
     },
 ]
 
-PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+for _p in PROGRAMS:
+    _p.setdefault("degree_type", "bachelors")
+    _p.setdefault("delivery_format", "in_person")
 
 # Full official major names (program-page title); for Berkeley these equal the
 # major name (the B.A./B.S. designation varies per major and is not asserted).
@@ -780,6 +941,42 @@ _FOS_OUTCOMES: dict[str, tuple[int, str]] = {
     "berkeley-business-administration-bs": (74034, "52.02"),
     "berkeley-architecture-bs": (52215, "04.02"),
 }
+
+_CIP_BY_SLUG: dict[str, str] = {slug: cip for slug, (_, cip) in _FOS_OUTCOMES.items()}
+for _p in PROGRAMS:
+    if _p["slug"] in _CIP_BY_SLUG:
+        _p.setdefault("cip", _CIP_BY_SLUG[_p["slug"]])
+
+_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
+_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _build_catalog() -> list[dict]:
+    """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
+    out: list[dict] = []
+    seen = set(_EXISTING_SLUGS)
+    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+        if slug in seen:
+            continue
+        if (cip, dtype) in _EXISTING_CIP_KEYS:
+            continue
+        seen.add(slug)
+        out.append({
+            "slug": slug,
+            "school": school,
+            "program_name": name,
+            "degree_type": dtype,
+            "cip": cip,
+            "duration_months": dur,
+            "delivery_format": fmt,
+            "description": desc,
+        })
+    return out
+
+
+PROGRAMS += _build_catalog()
+PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
 # Verbatim methodology for the program-scope Scorecard FOS earnings figure.
 _FOS_CONDITIONS = (
@@ -947,6 +1144,49 @@ _REQ_UNDERGRAD = {
     "source_url": "https://admissions.berkeley.edu/apply/",
 }
 
+# Graduate / professional baseline — Berkeley Graduate Division application.
+_REQ_GRAD_GENERIC = {
+    "materials": [
+        {"name": "Graduate Division online application", "required": True},
+        {"name": "Statement of purpose", "required": True},
+        {"name": "Personal history statement", "required": True},
+        {"name": "Three letters of recommendation", "required": True},
+        {"name": "Official transcripts (upload; official on enrollment)", "required": True},
+        {
+            "name": "$155 application fee ($80 for U.S. citizens/permanent residents)",
+            "required": True,
+        },
+    ],
+    "deadlines": [
+        {"round": "Application deadline", "date": "Varies by program — see the program page"},
+    ],
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS"],
+            "required": True,
+            "note": (
+                "English-proficiency scores required for applicants from "
+                "non-English-speaking countries."
+            ),
+        },
+        "visa": _INTL_VISA,
+        "sources": [
+            {
+                "label": "Berkeley Graduate Division — Admissions",
+                "url": "https://grad.berkeley.edu/admissions/",
+            }
+        ],
+    },
+    "source": "UC Berkeley Graduate Division",
+    "source_url": "https://grad.berkeley.edu/admissions/apply/",
+}
+
+
+def _requirements_for(spec: dict) -> dict:
+    if spec["degree_type"] == "bachelors":
+        return dict(_REQ_UNDERGRAD)
+    return dict(_REQ_GRAD_GENERIC)
+
 
 # Real UC Berkeley campus photo (Sather Tower / the Campanile at sunset) — Wikimedia
 # Commons, CC BY-SA 4.0, hotlinkable landscape JPG. Leads the institution hero.
@@ -1019,10 +1259,7 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
             about = dict(about)
             about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
             sc.about_detail = about
-        # No college carries its own keyword-relevant feed (only the flagship
-        # program does); always assign None so a stale value on a pre-existing row
-        # is cleared and never kept in ContentIngestService's selection.
-        sc.content_sources = None
+        sc.content_sources = _school_content(spec["name"])
         by_name[spec["name"]] = sc
     # Drop legacy colleges — programs.school_id is ON DELETE SET NULL, so this is
     # FK-safe (any orphaned programs are handled by the program reconcile).
@@ -1061,15 +1298,15 @@ def _program_has_dependents(session: Session, program_id) -> bool:
     return False
 
 
-def _program_standard(slug: str) -> dict:
+def _program_standard(slug: str, spec: dict) -> dict:
     """Per-program omitted-field list (verified-unavailable), for _standard."""
     omitted: list[str] = []
-    # Berkeley publishes no per-program employment report or industry breakdown, so
-    # every program omits the program-level employment rate and top industries.
     omitted += [
         "outcomes_data.employment_rate",
         "outcomes_data.top_industries",
     ]
+    if spec["degree_type"] != "bachelors":
+        omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
     if slug not in _CLASS_PROFILE_BY_SLUG:
@@ -1078,10 +1315,6 @@ def _program_standard(slug: str) -> dict:
         omitted.append("faculty_contacts.lead")
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
-    if slug != "berkeley-eecs-bs":
-        # Only the flagship carries its own keyword-relevant feed; catalog programs
-        # surface the institution/college feed rather than a per-program one.
-        omitted.append("content_sources")
     return _standard(omitted)
 
 
@@ -1099,53 +1332,64 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p = Program(
                 institution_id=inst.id,
                 program_name=spec["program_name"],
-                degree_type="bachelors",
+                degree_type=spec["degree_type"],
                 slug=slug,
             )
             session.add(p)
         p.program_name = _FULL_NAME_BY_SLUG.get(slug) or spec["program_name"]
-        p.degree_type = "bachelors"
+        p.degree_type = spec["degree_type"]
         p.duration_months = spec.get("duration_months")
         p.description_text = spec["description"]
-        # Website: verified department page where available, else the owning
-        # college's official site (the authoritative home for the major).
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
-        # Always assign so a stale value on a pre-existing row is cleared: only the
-        # flagship carries its own feed (content_sources is omitted for the rest).
-        p.content_sources = _EECS_CONTENT if slug == "berkeley-eecs-bs" else None
-        # Cost: published Berkeley undergraduate rates (College Scorecard).
-        cost_override = _COST_BY_SLUG.get(slug)
-        if cost_override is not None:
-            p.tuition = cost_override.get("tuition_usd")
-            p.cost_data = dict(cost_override)
+        if slug == "berkeley-eecs-bs":
+            p.content_sources = _EECS_CONTENT
         else:
-            p.tuition = _TUITION_IN_STATE
+            p.content_sources = _program_content(spec)
+        cost_override = _COST_BY_SLUG.get(slug)
+        if spec["degree_type"] == "bachelors":
+            if cost_override is not None:
+                p.tuition = cost_override.get("tuition_usd")
+                p.cost_data = dict(cost_override)
+            else:
+                p.tuition = _TUITION_IN_STATE
+                p.cost_data = {
+                    "tuition_usd": _TUITION_IN_STATE,
+                    "total_cost_of_attendance": _UNDERGRAD_COA,
+                    "avg_net_price": _AVG_NET_PRICE,
+                    "breakdown": {
+                        "tuition_in_state": _TUITION_IN_STATE,
+                        "tuition_out_of_state": _TUITION_OUT_OF_STATE,
+                        "room_board": _ROOM_BOARD,
+                        "books_supplies": _BOOKS_SUPPLIES,
+                    },
+                    "funded": False,
+                    "note": (
+                        "In-state cost of attendance and net price; nonresidents pay an "
+                        "additional nonresident supplemental tuition (out-of-state "
+                        "tuition shown in the breakdown)."
+                    ),
+                    "source": "U.S. Dept. of Education College Scorecard (UNITID 110635)",
+                    "source_url": "https://collegescorecard.ed.gov/school/?110635",
+                    "year": "2024-25",
+                }
+        else:
+            p.tuition = None
             p.cost_data = {
-                "tuition_usd": _TUITION_IN_STATE,
-                "total_cost_of_attendance": _UNDERGRAD_COA,
-                "avg_net_price": _AVG_NET_PRICE,
-                "breakdown": {
-                    "tuition_in_state": _TUITION_IN_STATE,
-                    "tuition_out_of_state": _TUITION_OUT_OF_STATE,
-                    "room_board": _ROOM_BOARD,
-                    "books_supplies": _BOOKS_SUPPLIES,
-                },
-                "funded": False,
+                "funded": spec["degree_type"] == "phd",
                 "note": (
-                    "In-state cost of attendance and net price; nonresidents pay an "
-                    "additional nonresident supplemental tuition (out-of-state "
-                    "tuition shown in the breakdown)."
+                    "Berkeley does not publish a single citable per-program tuition for this "
+                    "degree on a public page; see the program website for current tuition."
+                    + (" Doctoral students are typically funded via fellowships or "
+                       "assistantships when admitted." if spec["degree_type"] == "phd" else "")
                 ),
-                "source": "U.S. Dept. of Education College Scorecard (UNITID 110635)",
-                "source_url": "https://collegescorecard.ed.gov/school/?110635",
-                "year": "2024-25",
+                "source": "UC Berkeley program / Graduate Division",
+                "source_url": _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"]),
             }
-        # Admissions: UC undergraduate baseline.
-        p.application_requirements = dict(_REQ_UNDERGRAD)
+        p.application_requirements = _requirements_for(spec)
         # Outcomes precedence: Scorecard FOS (program) → institution median.
         fos = _FOS_OUTCOMES.get(slug)
         if fos is not None:
@@ -1161,7 +1405,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             }
         else:
             outcomes = dict(_OUTCOMES_INSTITUTION)
-        outcomes["_standard"] = _program_standard(slug)
+        outcomes["_standard"] = _program_standard(slug, spec)
         p.outcomes_data = outcomes
         p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BASELINE
         p.highlights = _HL_BY_SLUG.get(slug) or _HL_BASELINE
