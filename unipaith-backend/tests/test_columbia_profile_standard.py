@@ -38,7 +38,7 @@ def _school_snapshot(name: str) -> dict:
         "description_text": next(s["description"] for s in p.SCHOOLS if s["name"] == name),
         "website_url": p._SCHOOL_WEBSITE.get(name),
         "about_detail": about,
-        "content_sources": None,
+        "content_sources": p._school_content(name),
     }
 
 
@@ -81,7 +81,7 @@ def _program_snapshot(slug: str) -> dict:
         "class_profile": p._CLASS_PROFILE_BY_SLUG.get(slug),
         "faculty_contacts": p._FACULTY_BY_SLUG.get(slug),
         "external_reviews": p._REVIEWS_BY_SLUG.get(slug),
-        "content_sources": p._PROGRAM_CONTENT.get(slug),
+        "content_sources": p._program_content(spec),
     }
 
 
@@ -115,11 +115,25 @@ def test_two_flagships_are_deeply_enriched():
         assert slug in p._CLASS_PROFILE_BY_SLUG
         assert slug in p._FACULTY_BY_SLUG
         assert slug in p._REVIEWS_BY_SLUG
-        assert slug in p._PROGRAM_CONTENT
+        spec = next(pr for pr in p.PROGRAMS if pr["slug"] == slug)
+        cs = p._program_content(spec)
+        assert cs.get("news_rss"), f"{slug} missing news_rss"
+        assert cs.get("keywords"), f"{slug} missing keywords"
         assert set(p._program_standard(slug)["omitted"]) == {
             "outcomes_data.employment_rate",
             "outcomes_data.top_industries",
         }
+
+
+def test_every_school_and_program_has_content_sources():
+    for school in p.SCHOOLS:
+        cs = p._school_content(school["name"])
+        assert cs.get("news_rss"), f"{school['name']} missing news_rss"
+        assert cs.get("keywords"), f"{school['name']} missing keywords"
+    for spec in p.PROGRAMS:
+        cs = p._program_content(spec)
+        assert cs.get("news_rss"), f"{spec['slug']} missing news_rss"
+        assert cs.get("keywords"), f"{spec['slug']} missing keywords"
 
 
 def test_every_program_is_gold_except_recorded_omissions():
