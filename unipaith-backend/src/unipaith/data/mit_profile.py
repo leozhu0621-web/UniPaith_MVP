@@ -544,20 +544,11 @@ _ENG_ABOUT_DETAIL: dict = {
         },
     ],
     "research_centers": [
-        {"name": "Research Laboratory of Electronics (RLE)", "url": "https://www.rle.mit.edu/"},
-        {"name": "Microsystems Technology Laboratories (MTL)", "url": "https://www.mtl.mit.edu/"},
-        {
-            "name": "Institute for Medical Engineering and Science (IMES)",
-            "url": "https://imes.mit.edu/",
-        },
-        {
-            "name": "MIT Center for Transportation & Logistics (CTL)",
-            "url": "https://ctl.mit.edu/",
-        },
-        {
-            "name": "Deshpande Center for Technological Innovation",
-            "url": "https://deshpande.mit.edu/",
-        },
+        "Research Laboratory of Electronics (RLE)",
+        "Microsystems Technology Laboratories (MTL)",
+        "Institute for Medical Engineering and Science (IMES)",
+        "MIT Center for Transportation & Logistics (CTL)",
+        "Deshpande Center for Technological Innovation",
     ],
     "source": {"label": "MIT School of Engineering", "url": "https://engineering.mit.edu/about/"},
 }
@@ -590,13 +581,10 @@ _SCI_ABOUT_DETAIL: dict = {
         },
     ],
     "research_centers": [
-        {"name": "McGovern Institute for Brain Research", "url": "https://mcgovern.mit.edu/"},
-        {"name": "Picower Institute for Learning and Memory", "url": "https://picower.mit.edu/"},
-        {
-            "name": "MIT Kavli Institute for Astrophysics and Space Research",
-            "url": "https://space.mit.edu/",
-        },
-        {"name": "Laboratory for Nuclear Science (LNS)", "url": "https://web.mit.edu/lns/"},
+        "McGovern Institute for Brain Research",
+        "Picower Institute for Learning and Memory",
+        "MIT Kavli Institute for Astrophysics and Space Research",
+        "Laboratory for Nuclear Science (LNS)",
     ],
     "source": {"label": "MIT School of Science", "url": "https://science.mit.edu/about/leadership/"},
 }
@@ -623,12 +611,9 @@ _SHASS_ABOUT_DETAIL: dict = {
         },
     ],
     "research_centers": [
-        {"name": "MIT Center for International Studies (CIS)", "url": "https://cis.mit.edu/"},
-        {
-            "name": "Abdul Latif Jameel Poverty Action Lab (J-PAL)",
-            "url": "https://www.povertyactionlab.org/",
-        },
-        {"name": "MIT Human Insight Collaborative (MITHIC)", "url": "https://mithic.mit.edu/"},
+        "MIT Center for International Studies (CIS)",
+        "Abdul Latif Jameel Poverty Action Lab (J-PAL)",
+        "MIT Human Insight Collaborative (MITHIC)",
     ],
     "source": {
         "label": "MIT SHASS",
@@ -656,15 +641,12 @@ _SAP_ABOUT_DETAIL: dict = {
         },
     ],
     "research_centers": [
-        {"name": "MIT Media Lab", "url": "https://www.media.mit.edu/"},
-        {"name": "MIT Center for Real Estate (CRE)", "url": "https://cre.mit.edu/"},
-        {
-            "name": "Norman B. Leventhal Center for Advanced Urbanism (LCAU)",
-            "url": "https://lcau.mit.edu/",
-        },
-        {"name": "MIT Senseable City Lab", "url": "https://senseable.mit.edu/"},
-        {"name": "Art, Culture and Technology Program (ACT)", "url": "https://act.mit.edu/"},
-        {"name": "Aga Khan Program for Islamic Architecture", "url": "https://akpia.mit.edu/"},
+        "MIT Media Lab",
+        "MIT Center for Real Estate (CRE)",
+        "Norman B. Leventhal Center for Advanced Urbanism (LCAU)",
+        "MIT Senseable City Lab",
+        "Art, Culture and Technology Program (ACT)",
+        "Aga Khan Program for Islamic Architecture",
     ],
     "source": {
         "label": "MIT School of Architecture and Planning",
@@ -699,28 +681,13 @@ _COMPUTING_ABOUT_DETAIL: dict = {
         },
     ],
     "research_centers": [
-        {
-            "name": "Computer Science and Artificial Intelligence Laboratory (CSAIL)",
-            "url": "https://www.csail.mit.edu/",
-        },
-        {
-            "name": "Department of Electrical Engineering and Computer Science (EECS)",
-            "url": "https://www.eecs.mit.edu/",
-        },
-        {
-            "name": "Laboratory for Information and Decision Systems (LIDS)",
-            "url": "https://lids.mit.edu/",
-        },
-        {
-            "name": "Institute for Data, Systems, and Society (IDSS)",
-            "url": "https://idss.mit.edu/",
-        },
-        {
-            "name": "Abdul Latif Jameel Clinic for Machine Learning in Health",
-            "url": "https://www.jclinic.mit.edu/",
-        },
-        {"name": "Operations Research Center (ORC)", "url": "https://orc.mit.edu/"},
-        {"name": "MIT-IBM Watson AI Lab", "url": "https://mitibmwatsonailab.mit.edu/"},
+        "Computer Science and Artificial Intelligence Laboratory (CSAIL)",
+        "Department of Electrical Engineering and Computer Science (EECS)",
+        "Laboratory for Information and Decision Systems (LIDS)",
+        "Institute for Data, Systems, and Society (IDSS)",
+        "Abdul Latif Jameel Clinic for Machine Learning in Health",
+        "Operations Research Center (ORC)",
+        "MIT-IBM Watson AI Lab",
     ],
     "source": {
         "label": "MIT Schwarzman College of Computing",
