@@ -156,6 +156,16 @@ describe('extractStructuredFields', () => {
     expect(meta.learning_format).toBe('Cohort-based')
   })
 
+  it('extracts tracks from the data-module items shape ({name} objects)', () => {
+    const meta = extractTracksMeta({
+      label: 'MBA certificates',
+      note: 'Seven optional certificates',
+      items: [{ name: 'Finance Certificate' }, { name: 'Healthcare Certificate' }],
+    })
+    expect(meta.concentrations).toEqual(['Finance Certificate', 'Healthcare Certificate'])
+    expect(meta.note).toBe('Seven optional certificates')
+  })
+
   it('extracts prerequisites, test policy, and recommendations', () => {
     expect(extractPrerequisites(appReqs)).toHaveLength(1)
     const tp = extractTestPolicy(appReqs)
