@@ -14,7 +14,7 @@ Idempotent: ``mit_profile.apply`` upserts schools by (institution_id, name)
 and programs by slug; no-op when MIT is absent.
 
 Revision ID: mitprof2gold
-Revises: cmuprof1, feedsforce1
+Revises: cmufeedsmerge1
 """
 
 from sqlalchemy.orm import Session
@@ -23,9 +23,11 @@ from alembic import op
 from unipaith.data import mit_profile
 
 revision = "mitprof2gold"
-# Also merges the dual head that PRs #435 (cmuprof1) and #436 (feedsforce1)
-# raced onto main — this revision is the single resulting head.
-down_revision = ("cmuprof1", "feedsforce1")
+# Chains after the cmuprof1+feedsforce1 merge. PRs #438 and #440 raced the
+# SAME fix onto main and produced two files with the identical revision id
+# `cmufeedsmerge1`; this branch deletes the duplicate file and leaves
+# mitprof2gold as the single head.
+down_revision = "cmufeedsmerge1"
 branch_labels = None
 depends_on = None
 
