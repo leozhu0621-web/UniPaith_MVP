@@ -13,7 +13,6 @@ import { getMatchDetail, logEngagement } from '../../api/matching'
 import { listEvents } from '../../api/events'
 import { saveProgram, unsaveProgram, listSaved } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
-import { useCounselorStore } from '../../stores/counselor-store'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -86,7 +85,6 @@ export default function ProgramDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const compareStore = useCompareStore()
-  const askCounselor = useCounselorStore(s => s.askQuestion)
 
   // Spec 11 §10 — active tab + Insights filters live in the URL so they
   // persist on reload and are shareable.
@@ -451,7 +449,7 @@ export default function ProgramDetailPage() {
             <Button
               size="sm"
               variant="tertiary"
-              onClick={() => askCounselor(`Is ${p.program_name} at ${instName} a good fit for me? Why or why not?`)}
+              onClick={() => navigate(`/s?prefill=${encodeURIComponent(`Is ${p.program_name} at ${instName} a good fit for me? Why or why not?`)}`)}
             >
               <Sparkles size={14} className="mr-1.5" /> Ask counselor
             </Button>

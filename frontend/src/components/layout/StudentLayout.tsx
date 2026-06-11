@@ -2,11 +2,9 @@ import { useState } from 'react'
 import SkipLink from './SkipLink'
 import { Outlet, NavLink, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
-import { useCounselorStore } from '../../stores/counselor-store'
-import MiniCounselorPanel from '../student/MiniCounselorPanel'
 import {
   Compass, Target, Backpack, Newspaper,
-  LogOut, Settings, MessageSquare, Inbox, WifiOff,
+  LogOut, Settings, Inbox, WifiOff,
 } from 'lucide-react'
 import { MY_SPACE_ROUTES } from '../../pages/student/myspace/MySpaceShell'
 import Avatar from '../ui/Avatar'
@@ -43,13 +41,8 @@ export default function StudentLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
-  const { isMinimized, setMinimized } = useCounselorStore()
   const [accountSheetOpen, setAccountSheetOpen] = useState(false)
   const online = useOnlineStatus()
-
-  const isDiscoverTab = location.pathname === '/s' || location.pathname === '/s/'
-  const isOtherTab = !isDiscoverTab
-  const showMiniCounselor = isOtherTab && !isMinimized
 
   // Spec 2026-06-10 §1 — Profile and Saved live in the My Space rail now;
   // the account menu keeps only account-level items.
@@ -147,30 +140,8 @@ export default function StudentLayout() {
       {/* Trial / plan nudge (Spec 05 §9, 07 §4.1) */}
       <TrialBanner />
 
-      {/* Body with sliding panels */}
-      <div className="flex-1 flex overflow-hidden relative">
-        {/* Mini counselor — docked on lg+ only; on mobile, Discover tab is the chat. */}
-        <div
-          className={`hidden lg:block flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
-            showMiniCounselor ? 'w-72 opacity-100' : 'w-0 opacity-0'
-          }`}
-        >
-          <div className="w-72 h-full">
-            <MiniCounselorPanel />
-          </div>
-        </div>
-
-        {isOtherTab && isMinimized && (
-          <button
-            onClick={() => setMinimized(false)}
-            className="hidden lg:flex absolute left-0 top-3 z-20 items-center gap-1 pl-1.5 pr-3 py-2 bg-card border border-border border-l-0 rounded-r-xl elev-subtle text-secondary hover:bg-muted transition-all duration-200 animate-slide-in-left"
-            title="Show counselor"
-          >
-            <MessageSquare size={14} />
-            <span className="text-[10px] font-medium">Chat</span>
-          </button>
-        )}
-
+      {/* Body */}
+      <div className="flex-1 flex overflow-hidden">
         {/* Main content — bottom padding on mobile to clear the tab bar. */}
         <main
           id="main"
