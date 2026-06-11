@@ -71,8 +71,8 @@ describe('InstitutionDetail (Spec 12)', () => {
   it('renders the header with breadcrumb; Schools tab shows sub-schools', async () => {
     renderDetail(true)
     expect(await screen.findByRole('heading', { name: 'University of Foo' })).toBeInTheDocument()
-    // Breadcrumb: Match · Search · University of Foo
-    expect(screen.getByRole('button', { name: 'Match' })).toBeInTheDocument()
+    // Breadcrumb: Discover · Search · University of Foo
+    expect(screen.getByRole('button', { name: 'Discover' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument()
     // Founded year now lives in Quick facts / About (the header is chip-free).
     expect(screen.getAllByText(/1831/).length).toBeGreaterThan(0)

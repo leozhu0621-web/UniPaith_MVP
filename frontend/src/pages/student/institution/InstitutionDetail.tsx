@@ -242,7 +242,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
       <nav className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-4 flex-wrap" aria-label="Breadcrumb">
         {isAuthenticated ? (
           <>
-            <button onClick={() => navigate('/s/explore')} className="hover:text-secondary transition-colors">Match</button>
+            <button onClick={() => navigate('/s/explore')} className="hover:text-secondary transition-colors">Discover</button>
             <span className="text-muted-foreground">·</span>
             <button onClick={() => navigate('/s/explore')} className="hover:text-secondary transition-colors">Search</button>
           </>

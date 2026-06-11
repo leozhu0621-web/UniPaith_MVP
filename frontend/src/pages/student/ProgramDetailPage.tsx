@@ -345,7 +345,7 @@ export default function ProgramDetailPage() {
 
       {/* ── Breadcrumb (mirrors the school pages) ── */}
       <nav className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-4 flex-wrap" aria-label="Breadcrumb">
-        <button onClick={() => navigate('/s/explore')} className="hover:text-secondary transition-colors">Match</button>
+        <button onClick={() => navigate('/s/explore')} className="hover:text-secondary transition-colors">Discover</button>
         <span className="text-muted-foreground" aria-hidden="true">·</span>
         <Link to={`/s/institutions/${p.institution_id}`} className="hover:text-secondary transition-colors truncate max-w-[28ch]">
           {instName || 'School'}
