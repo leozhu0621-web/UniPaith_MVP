@@ -2220,6 +2220,8 @@ def _deadline_for(spec: dict) -> date | None:
         return date(2027, 1, 6)  # HBS Round 2
     if slug == "harvard-jd":
         return date(2027, 2, 15)  # HLS J.D.
+    if slug == "harvard-llm":
+        return date(2026, 12, 1)  # HLS LL.M.
     if slug == "harvard-md":
         return date(2026, 10, 15)  # AMCAS cycle
     if dtype == "bachelors":
