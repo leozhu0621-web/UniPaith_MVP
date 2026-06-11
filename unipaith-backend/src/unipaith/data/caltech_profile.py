@@ -43,7 +43,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "California Institute of Technology"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-10"
+ENRICHED_AT = "2026-06-11"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -175,6 +175,10 @@ SCHOOL_OUTCOMES: dict = {
             ),
             "Palomar Observatory": "https://sites.astro.caltech.edu/palomar/",
             "W. M. Keck Observatory": "https://keckobservatory.org/",
+            "Beckman Institute": "https://beckmaninstitute.caltech.edu/",
+            "Kavli Nanoscience Institute": "https://www.kni.caltech.edu/",
+            "Institute for Quantum Information and Matter (IQIM)": "https://iqim.caltech.edu/",
+            "Seismological Laboratory": "https://www.seismolab.caltech.edu/",
         },
     },
     "campus_life": {
@@ -188,6 +192,7 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Housing — Undergraduate Houses", "url": "https://housing.caltech.edu/"},
         ],
     },
+    "media_credit": "Wikimedia Commons / Antony-22 (CC BY-SA 4.0)",
     "flagship": {
         # CDS 2024-25 B1 grand total enrollment: 987 undergraduate + 1,443 graduate.
         "enrollment_total": 2430,
@@ -256,9 +261,10 @@ SCHOOL_OUTCOMES: dict = {
 UNDERGRAD_COUNT = 987
 
 DESCRIPTION = (
-    "Founded as Throop University in 1891 and renamed the California Institute of "
-    "Technology in 1920, Caltech is a private research university on a 124-acre "
-    "campus in Pasadena, California, in greater Los Angeles. It is one of the "
+    "California Institute of Technology (Caltech) is a private research university "
+    "in Pasadena, CA, on a 124-acre campus in greater Los Angeles. Founded as "
+    "Throop University in 1891 and renamed the California Institute of Technology "
+    "in 1920, it is one of the "
     "smallest top-tier research universities in the world — roughly 990 "
     "undergraduates and about 1,440 graduate students — by deliberate design.\n\n"
     "Caltech is organized into six academic divisions: Biology and Biological "
@@ -567,25 +573,104 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
     _PMA: ["about_detail.founded"],
 }
 
-# ── Channel feeds + official social links ──────────────────────────────────
-# Institution-wide socials (verified official Caltech handles) + news page.
-_INSTITUTION_CONTENT: dict = {
-    "news_url": "https://www.caltech.edu/about/news",
-    "social": {
-        "instagram": "https://www.instagram.com/caltech/",
-        "linkedin": "https://www.linkedin.com/school/california-institute-of-technology/",
-        "x": "https://x.com/Caltech",
-        "youtube": "https://www.youtube.com/caltech",
-        "facebook": "https://www.facebook.com/californiainstituteoftechnology",
-    },
+# ── Per-node content feeds (so EVERY division + program has a populated Events &
+# Updates tab, not just the CS flagship) ───────────────────────────────────────
+# Caltech News Atom feed (www.caltech.edu/about/news/rss/) is server-fetchable
+# (HTTP 200, verified 2026-06-11) and carries enclosure cover images. Campus-
+# events items are filtered from the same feed via the official ``campus events``
+# tag RSS URL (verified 2026-06-11).
+_CALTECH_NEWS_RSS = "https://www.caltech.edu/about/news/rss/"
+_CALTECH_EVENTS_FEED = {
+    "url": "https://www.caltech.edu/about/news/rss?tag=campus%20events",
+    "type": "rss",
+}
+_SOCIAL_CALTECH = {
+    "instagram": "https://www.instagram.com/caltech/",
+    "linkedin": "https://www.linkedin.com/school/california-institute-of-technology/",
+    "x": "https://x.com/Caltech",
+    "youtube": "https://www.youtube.com/caltech",
+    "facebook": "https://www.facebook.com/californiainstituteoftechnology",
 }
 
-# Computer Science keyword-relevant feed (the flagship program), inheriting the
-# institution socials (the CMS department does not publish distinct channels).
+_INSTITUTION_CONTENT: dict = {
+    "news_rss": _CALTECH_NEWS_RSS,
+    "news_url": "https://www.caltech.edu/about/news",
+    "news_curated": False,
+    "events_feed": dict(_CALTECH_EVENTS_FEED),
+    "social": dict(_SOCIAL_CALTECH),
+}
+
+# Keywords filter the shared Caltech feed to division-relevant items (the MIT/MBAn
+# pattern). They are filter terms drawn from each division's official name + fields.
+_SCHOOL_KEYWORDS: dict[str, list[str]] = {
+    _BBE: ["biology", "biological engineering", "neuroscience", "BBE", "genetics"],
+    _CCE: ["chemistry", "chemical engineering", "CCE", "catalysis"],
+    _EAS: [
+        "engineering",
+        "applied science",
+        "electrical engineering",
+        "mechanical engineering",
+        "aerospace",
+        "CMS",
+        "computing",
+    ],
+    _GPS: [
+        "geological",
+        "planetary",
+        "geophysics",
+        "GPS",
+        "seismology",
+        "environmental science",
+    ],
+    _HSS: ["humanities", "social sciences", "economics", "political science", "HSS"],
+    _PMA: ["physics", "mathematics", "astronomy", "PMA", "LIGO", "astrophysics"],
+}
+
+_KW_STOP = {"and", "of", "the", "in", "for", "with", "science", "sciences", "engineering"}
+
+
+def _school_content(name: str) -> dict:
+    """A division's content_sources: Caltech News RSS + campus-events feed filtered by keywords."""
+    return {
+        "news_rss": _CALTECH_NEWS_RSS,
+        "news_url": _SCHOOL_WEBSITE.get(name, "https://www.caltech.edu"),
+        "news_curated": False,
+        "events_feed": dict(_CALTECH_EVENTS_FEED),
+        "keywords": list(_SCHOOL_KEYWORDS[name]),
+        "social": dict(_SOCIAL_CALTECH),
+    }
+
+
+def _program_keywords(spec: dict) -> list[str]:
+    school_kw = list(_SCHOOL_KEYWORDS[spec["school"]])
+    name = spec["program_name"].replace("&", " ").replace("/", " ")
+    terms = [w for w in name.split() if len(w) > 3 and w.lower() not in _KW_STOP]
+    program_term = " ".join(terms[:3]).strip()
+    return ([program_term] if program_term else []) + school_kw
+
+
+def _program_content(spec: dict) -> dict:
+    """A program's content_sources: its division's shared feed refined by program keywords."""
+    base = _school_content(spec["school"])
+    base["keywords"] = _program_keywords(spec)
+    return base
+
+
+# Computer Science keyword-relevant feed (the flagship program) — CMS department
+# page + shared Caltech News RSS with CS-specific keywords.
 _CS_CONTENT: dict = {
+    "news_rss": _CALTECH_NEWS_RSS,
     "news_url": "https://www.cms.caltech.edu/",
-    "keywords": ["computer science", "caltech cs", "computing and mathematical sciences"],
-    "social": _INSTITUTION_CONTENT["social"],
+    "news_curated": False,
+    "events_feed": dict(_CALTECH_EVENTS_FEED),
+    "keywords": [
+        "computer science",
+        "computing and mathematical sciences",
+        "CMS",
+        "electrical engineering",
+        "information and data sciences",
+    ],
+    "social": dict(_SOCIAL_CALTECH),
 }
 
 # ── The program catalog (real degree programs, organized by division) ───────
@@ -876,6 +961,7 @@ PROGRAMS: list[dict] = [
 ]
 
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
 # Full official degree names (program-page title in place of the short label).
 _FULL_NAME_BY_SLUG: dict[str, str] = {
@@ -1243,10 +1329,8 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
             about = dict(about)
             about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
             sc.about_detail = about
-        # No division carries its own keyword-relevant feed (only the flagship
-        # program does); always assign None so a stale value on a pre-existing row
-        # is cleared and never kept in ContentIngestService's selection.
-        sc.content_sources = None
+        # Every division carries keyword-filtered Caltech News + campus-events feeds.
+        sc.content_sources = _school_content(spec["name"])
         by_name[spec["name"]] = sc
     # Drop legacy divisions — programs.school_id is ON DELETE SET NULL, so this is
     # FK-safe (any orphaned programs are handled by the program reconcile).
@@ -1285,7 +1369,7 @@ def _program_has_dependents(session: Session, program_id) -> bool:
     return False
 
 
-def _program_standard(slug: str, degree_type: str, has_program_outcomes: bool) -> dict:
+def _program_standard(slug: str, spec: dict, *, has_program_outcomes: bool) -> dict:
     """Per-program omitted-field list (verified-unavailable), for _standard."""
     omitted: list[str] = []
     # Caltech publishes no per-program employment report, so every program omits
@@ -1303,11 +1387,7 @@ def _program_standard(slug: str, degree_type: str, has_program_outcomes: bool) -
         omitted.append("faculty_contacts.lead")
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
-    if slug != "caltech-cs-bs":
-        # Only the flagship carries its own keyword-relevant feed; catalog
-        # programs surface the institution/division feed rather than a per-program one.
-        omitted.append("content_sources")
-    if degree_type == "phd":
+    if spec["degree_type"] == "phd":
         # Funded PhDs carry tuition $0 (not a sticker price); cost breakdown N/A.
         pass
     return _standard(omitted)
@@ -1346,9 +1426,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
-        # Always assign so a stale value on a pre-existing row is cleared: only the
-        # flagship carries its own feed (content_sources is omitted for the rest).
-        p.content_sources = _CS_CONTENT if slug == "caltech-cs-bs" else None
+        # Always assign so a stale value on a pre-existing row is cleared.
+        p.content_sources = _CS_CONTENT if slug == "caltech-cs-bs" else _program_content(spec)
         # Cost: funded PhD → undergrad rate (published tuition + COA).
         cost_override = _COST_BY_SLUG.get(slug)
         if cost_override is not None:
@@ -1395,7 +1474,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         else:
             outcomes = dict(_OUTCOMES_INSTITUTION)
             has_program_outcomes = False
-        outcomes["_standard"] = _program_standard(slug, spec["degree_type"], has_program_outcomes)
+        outcomes["_standard"] = _program_standard(
+            slug, spec, has_program_outcomes=has_program_outcomes
+        )
         p.outcomes_data = outcomes
         p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BY_TYPE.get(spec["degree_type"])
         p.highlights = _HL_BY_SLUG.get(slug) or _HL_BY_TYPE.get(spec["degree_type"])
