@@ -597,7 +597,7 @@ _INSTITUTION_CONTENT: dict = {
 # CS keyword-relevant feed (the flagship program), inheriting the institution
 # socials (the School of Computer Science surfaces its news through its own site).
 _CS_CONTENT: dict = {
-    "news_rss": "https://www.scs.cmu.edu/news/",
+    "news_rss": "https://www.cmu.edu/news/feeds/news.rss",
     "keywords": [
         "computer science",
         "school of computer science",
@@ -937,7 +937,7 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
     "cmu-mathematical-sciences-bs": "https://www.cmu.edu/math/",
     "cmu-physics-bs": "https://www.cmu.edu/physics/",
     "cmu-neuroscience-bs": "https://www.cmu.edu/ni/",
-    "cmu-economics-bs": "https://www.cmu.edu/dietrich/sds/",
+    "cmu-economics-bs": "https://www.cmu.edu/dietrich/academics/economics",
     "cmu-english-bs": "https://www.cmu.edu/dietrich/english/",
     "cmu-history-bs": "https://www.cmu.edu/dietrich/history/",
     "cmu-philosophy-bs": "https://www.cmu.edu/dietrich/philosophy/",
