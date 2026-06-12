@@ -1092,6 +1092,7 @@ def _enrich_match_for_student(
     acceptance_rate: float | None = None
     if program is not None:
         resp.program_name = getattr(program, "program_name", None)
+        resp.institution_id = getattr(program, "institution_id", None)
         resp.degree_type = getattr(program, "degree_type", None)
         resp.tuition = getattr(program, "tuition", None)
         ar = getattr(program, "acceptance_rate", None)
