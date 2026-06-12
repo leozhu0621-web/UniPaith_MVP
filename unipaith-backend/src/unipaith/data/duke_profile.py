@@ -38,7 +38,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Duke University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-11"
+ENRICHED_AT = "2026-06-12"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -202,6 +202,8 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Duke Arts", "url": "https://arts.duke.edu/"},
         ],
     },
+    # Wikimedia Commons file page verified 2026-06-12: author Sdkb, CC BY-SA 4.0.
+    "media_credit": "Wikimedia Commons / Sdkb (CC BY-SA 4.0)",
     "flagship": {
         # Duke Facts / NCES College Navigator (Fall 2024): 17,499 total students —
         # 6,523 undergraduate + 10,976 graduate and professional.
@@ -1848,11 +1850,556 @@ _REQ_GRAD_GENERIC = {
 
 def _requirements_for(spec: dict) -> dict:
     """Pick the admissions requirement set for a program by slug / degree type."""
-    if spec["slug"] == "duke-daytime-mba-ms":
+    if spec["slug"] == _FLAGSHIP:
         return dict(_REQ_MBA)
     if spec["degree_type"] == "bachelors":
         return dict(_REQ_UNDERGRAD)
     return dict(_REQ_GRAD_GENERIC)
+
+
+# ── Flagship + coverable-program depth ─────────────────────────────────────
+_FLAGSHIP = "duke-daytime-mba-ms"
+
+# Fuqua Daytime MBA employment-report outcomes (Class of 2025).
+_MBA_OUTCOMES: dict = {
+    "median_salary": 160000,
+    "employment_rate": 0.79,
+    "top_industries": [
+        {"name": "Consulting", "share": 0.34},
+        {"name": "Financial Services", "share": 0.209},
+        {"name": "Technology", "share": 0.156},
+    ],
+    "scope": "program",
+    "earnings_timeframe": "median base salary at graduation",
+    "conditions": (
+        "Fuqua Daytime MBA Class of 2025: median base salary $160,000 and median "
+        "signing bonus $30,000; 79% of job seekers accepted offers within three "
+        "months of graduation (82.2% received offers). Top industries: consulting "
+        "34%, financial services 20.9%, technology 15.6%."
+    ),
+    "source": "The Fuqua School of Business — Daytime MBA Employment Report 2025",
+    "source_url": (
+        "https://www.fuqua.duke.edu/sites/default/files/media/programs/daytime/"
+        "duke-mba-employment-2025.pdf"
+    ),
+}
+
+_TRACKS_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "tracks": [
+            "Decision Sciences",
+            "Marketing",
+            "Operations",
+            "Strategic Consulting",
+            "FinTech",
+            "Entrepreneurship & Innovation",
+            "Energy & Environment",
+            "Leadership & Ethics",
+            "Certificate in Finance",
+            "Certificate in Health Sector Management (HSM)",
+        ],
+        "source": "Fuqua School of Business — Daytime MBA Concentrations + Certificates",
+        "source_url": (
+            "https://www.fuqua.duke.edu/programs/daytime-mba/concentrations-certificates"
+        ),
+    },
+}
+
+_CLASS_PROFILE_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "cohort_size": "426 students in the entering Daytime MBA class (Class of 2027)",
+        "international_pct": 0.35,
+        "note": (
+            "Entering Daytime MBA Class of 2027: 426 students, 35% international "
+            "citizens, 47% women, 5.8 average years of work experience, middle 80% "
+            "GMAT range 680–770."
+        ),
+        "source": "Fuqua School of Business — Daytime MBA Class Profile",
+        "source_url": "https://www.fuqua.duke.edu/programs/daytime-mba/class-profile",
+    },
+}
+
+_FACULTY_BY_SLUG: dict[str, dict] = {}
+
+# Aggregated, cited student-review themes (≥2 third-party sources per coverable program).
+_REVIEWS_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "summary": (
+            "Students and third-party guides describe Fuqua's Daytime MBA as a "
+            "STEM-designated, team-based program built on the 'Team Fuqua' culture — "
+            "collaborative rather than cutthroat — with strong finance and consulting "
+            "placement (Class of 2025 median base salary $160,000). Common cautions are "
+            "that the brand footprint trails M7 peers, Durham's location is less central "
+            "than coastal MBA hubs, and the intensive mini-term pace demands heavy "
+            "teamwork from day one."
+        ),
+        "themes": [
+            {
+                "label": "Team Fuqua culture",
+                "sentiment": "positive",
+                "detail": (
+                    "Collaborative, values-driven community with six Defining Principles "
+                    "and team-based learning."
+                ),
+            },
+            {
+                "label": "Finance & consulting outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Class of 2025: $160K median base; financial services and consulting "
+                    "are top destinations."
+                ),
+            },
+            {
+                "label": "STEM designation",
+                "sentiment": "positive",
+                "detail": (
+                    "The full Daytime MBA carries an official STEM designation, extending "
+                    "OPT for eligible international graduates."
+                ),
+            },
+            {
+                "label": "Brand vs. M7 peers",
+                "sentiment": "mixed",
+                "detail": (
+                    "Strong outcomes but a smaller national MBA brand than M7 schools "
+                    "in some markets."
+                ),
+            },
+            {
+                "label": "Pace & location",
+                "sentiment": "caution",
+                "detail": (
+                    "Six-week terms move quickly; Durham is livable but not a major "
+                    "finance/consulting hub."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Fuqua — Daytime MBA Employment Report 2025",
+                "url": (
+                    "https://www.fuqua.duke.edu/sites/default/files/media/programs/"
+                    "daytime/duke-mba-employment-2025.pdf"
+                ),
+            },
+            {
+                "label": "Poets&Quants — Meet Duke Fuqua's MBA Class Of 2027",
+                "url": (
+                    "https://poetsandquants.com/2025/12/06/"
+                    "meet-duke-fuquas-mba-class-of-2027/"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "duke-computer-science-ab": {
+        "summary": (
+            "Students and guides describe Duke's computer science major as rigorous and "
+            "research-oriented — Niche ranks it #15 nationally for CS (2026) and the "
+            "department notes a U.S. News graduate ranking of #20 — with flexible "
+            "B.S./B.A. paths and concentrations in AI, data science, and software "
+            "systems. Common cautions are competitive grading, large introductory "
+            "lectures, and a smaller CS cohort than peer giants like CMU or MIT."
+        ),
+        "themes": [
+            {
+                "label": "Research depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Interdisciplinary research in AI, systems, and computational biology "
+                    "with strong faculty."
+                ),
+            },
+            {
+                "label": "Flexible degree paths",
+                "sentiment": "positive",
+                "detail": (
+                    "B.S., B.A., and interdepartmental majors plus AI/data-science "
+                    "concentrations."
+                ),
+            },
+            {
+                "label": "National CS standing",
+                "sentiment": "positive",
+                "detail": (
+                    "Niche #15 for undergraduate CS; graduate program ranked #20 "
+                    "by U.S. News."
+                ),
+            },
+            {
+                "label": "Competitive atmosphere",
+                "sentiment": "caution",
+                "detail": (
+                    "Selective major with demanding coursework and pre-professional "
+                    "pressure."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Best Colleges for Computer Science",
+                "url": "https://www.niche.com/colleges/search/best-colleges-for-computer-science/",
+            },
+            {
+                "label": "Duke CS — About the Department",
+                "url": "https://cs.duke.edu/about",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "duke-juris-doctor-jd-prof": {
+        "summary": (
+            "Students and third-party guides describe Duke Law as a rigorous top-tier "
+            "program — U.S. News ranked it #7 nationally in 2026 — with strong clinical "
+            "offerings, accessible faculty, and excellent Big Law and clerkship "
+            "placement (97.5% bar passage among takers). Common cautions are high tuition, "
+            "graded legal-writing pressure, and a competitive admissions pool (12.9% "
+            "acceptance rate)."
+        ),
+        "themes": [
+            {
+                "label": "Top-tier national rank",
+                "sentiment": "positive",
+                "detail": "U.S. News ranks Duke Law #7 nationally (2026).",
+            },
+            {
+                "label": "Clinical & writing skills",
+                "sentiment": "positive",
+                "detail": (
+                    "Experiential clinics and a graded legal-writing program build "
+                    "practical skills."
+                ),
+            },
+            {
+                "label": "Collegial community",
+                "sentiment": "positive",
+                "detail": (
+                    "Small class size and non-competitive grading foster collaboration "
+                    "(Princeton Review student surveys)."
+                ),
+            },
+            {
+                "label": "Cost & selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "High tuition and a 12.9% acceptance rate make admission and "
+                    "financing demanding."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Above the Law — 2026 U.S. News Law Rankings",
+                "url": (
+                    "https://davidlat.substack.com/p/"
+                    "2026-us-news-law-school-rankings-stanford-new-number-one-over-yale"
+                ),
+            },
+            {
+                "label": "The Princeton Review — Duke Law student surveys",
+                "url": "https://www.princetonreview.com/law/duke-university-school-law-1035810",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "duke-doctor-of-medicine-md-prof": {
+        "summary": (
+            "Applicants and guides describe Duke's School of Medicine as a top-tier "
+            "research medical school — U.S. News ranks Duke #6 for research in 2025 — "
+            "with an innovative curriculum, strong clinical training at Duke University "
+            "Hospital, and interdisciplinary research through the Duke Clinical Research "
+            "Institute. Common cautions are extremely competitive admission, high cost of "
+            "attendance, and the intensity of the four-year professional curriculum."
+        ),
+        "themes": [
+            {
+                "label": "Top research ranking",
+                "sentiment": "positive",
+                "detail": "U.S. News ranks Duke #6 among medical schools for research (2025).",
+            },
+            {
+                "label": "Clinical & research integration",
+                "sentiment": "positive",
+                "detail": (
+                    "Duke University Hospital and DCRI provide hands-on clinical and "
+                    "research training."
+                ),
+            },
+            {
+                "label": "Innovative curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Patient-first, team-based curriculum with early clinical exposure."
+                ),
+            },
+            {
+                "label": "Selectivity & cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Highly selective admission with substantial tuition and living "
+                    "expenses in Durham."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Best Medical Schools: Research",
+                "url": "https://www.usnews.com/best-graduate-schools/top-medical-schools/research-rankings",
+            },
+            {
+                "label": "Duke University School of Medicine — About",
+                "url": "https://medschool.duke.edu/about",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "duke-master-of-public-policy-mpp-ms": {
+        "summary": (
+            "Students and guides describe Duke's Sanford MPP as a quantitative, "
+            "policy-analytic program with strong faculty in economics, health, and "
+            "environmental policy and placement in government, consulting, and "
+            "nonprofits. Common cautions are a smaller cohort than peer MPP programs "
+            "at Harvard or Princeton, limited DC proximity compared with Georgetown, "
+            "and the quantitative rigor of the core curriculum."
+        ),
+        "themes": [
+            {
+                "label": "Quantitative policy training",
+                "sentiment": "positive",
+                "detail": (
+                    "Econometrics and data-driven policy analysis are core to the "
+                    "two-year MPP."
+                ),
+            },
+            {
+                "label": "Interdisciplinary faculty",
+                "sentiment": "positive",
+                "detail": (
+                    "Strength in health, environment, and development policy with "
+                    "Duke research centers."
+                ),
+            },
+            {
+                "label": "Career versatility",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates enter federal/state government, consulting, and "
+                    "international organizations."
+                ),
+            },
+            {
+                "label": "Cohort size & location",
+                "sentiment": "mixed",
+                "detail": (
+                    "Smaller program than some peer MPPs; Durham is not adjacent to "
+                    "Washington, D.C."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Sanford School of Public Policy — Master of Public Policy",
+                "url": "https://sanford.duke.edu/master-public-policy",
+            },
+            {
+                "label": "Niche — Duke University reviews",
+                "url": "https://www.niche.com/colleges/duke-university/reviews/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "duke-economics-ab": {
+        "summary": (
+            "Students and guides describe Duke's economics major as rigorous and "
+            "quantitatively demanding, with strong faculty in micro, macro, and "
+            "econometrics and excellent placement in finance, consulting, and graduate "
+            "programs. Common cautions are large intermediate courses, competitive "
+            "grading relative to some peer departments, and the need to self-direct "
+            "research opportunities beyond the core."
+        ),
+        "themes": [
+            {
+                "label": "Quantitative rigor",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong econometrics and theory sequence prepares students for "
+                    "graduate study and finance."
+                ),
+            },
+            {
+                "label": "Career placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates enter investment banking, consulting, and top Ph.D. "
+                    "programs."
+                ),
+            },
+            {
+                "label": "Faculty depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Research-active faculty in applied micro, development, and "
+                    "financial economics."
+                ),
+            },
+            {
+                "label": "Course scale",
+                "sentiment": "caution",
+                "detail": (
+                    "Large intermediate lectures can feel impersonal before students "
+                    "reach seminars."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Duke Department of Economics — Undergraduate",
+                "url": "https://econ.duke.edu/undergraduate",
+            },
+            {
+                "label": "Niche — Duke University reviews",
+                "url": "https://www.niche.com/colleges/duke-university/reviews/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "duke-electrical-and-computer-engineering-bse": {
+        "summary": (
+            "Students and guides describe Duke's ECE major as rigorous and "
+            "research-oriented within Pratt, with strengths in signal processing, "
+            "computer engineering, and photonics and strong placement in tech and "
+            "graduate programs. Common cautions are demanding prerequisites, limited "
+            "course flexibility in the first two years, and a smaller engineering "
+            "community than large public tech schools."
+        ),
+        "themes": [
+            {
+                "label": "Research & lab access",
+                "sentiment": "positive",
+                "detail": (
+                    "Undergraduates can join labs in photonics, AI hardware, and "
+                    "biomedical devices."
+                ),
+            },
+            {
+                "label": "Tech placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates enter semiconductor, software, and consulting roles at "
+                    "major firms."
+                ),
+            },
+            {
+                "label": "Pratt integration",
+                "sentiment": "positive",
+                "detail": (
+                    "Small engineering school with close faculty access on a research "
+                    "university campus."
+                ),
+            },
+            {
+                "label": "Curriculum rigidity",
+                "sentiment": "caution",
+                "detail": (
+                    "Structured core limits early electives; prerequisites are "
+                    "demanding."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Pratt School of Engineering — ECE",
+                "url": "https://ece.duke.edu/undergrad",
+            },
+            {
+                "label": "Niche — Duke University reviews",
+                "url": "https://www.niche.com/colleges/duke-university/reviews/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "duke-public-policy-studies-ab": {
+        "summary": (
+            "Students describe Duke's public policy studies major (Sanford) as an "
+            "interdisciplinary, analytically rigorous program bridging economics, "
+            "political science, and ethics with strong internship placement in "
+            "government and nonprofits. Common cautions are that the major is smaller "
+            "than economics or political science alone, course offerings can be "
+            "limited in niche subfields, and pre-professional students may need to "
+            "supplement with quantitative coursework."
+        ),
+        "themes": [
+            {
+                "label": "Interdisciplinary breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "Combines economics, politics, and ethics for policy analysis "
+                    "across sectors."
+                ),
+            },
+            {
+                "label": "Sanford connection",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to Sanford faculty, research centers, and policy "
+                    "internships."
+                ),
+            },
+            {
+                "label": "Internship placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Students intern in federal/state government, NGOs, and research "
+                    "organizations."
+                ),
+            },
+            {
+                "label": "Program scale",
+                "sentiment": "mixed",
+                "detail": (
+                    "Smaller major with fewer specialized electives than standalone "
+                    "departments."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Sanford School — Public Policy Studies (Trinity)",
+                "url": "https://sanford.duke.edu/academics/undergraduate/public-policy-studies",
+            },
+            {
+                "label": "Niche — Duke University reviews",
+                "url": "https://www.niche.com/colleges/duke-university/reviews/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+}
 
 
 # Real Duke campus photo (Duke Chapel) — Wikimedia Commons landscape JPG (verified HTTP
@@ -1963,28 +2510,32 @@ def _program_has_dependents(session: Session, program_id) -> bool:
     return False
 
 
-def _program_standard(slug: str) -> dict:
+def _program_standard(slug: str, spec: dict | None = None) -> dict:
     """Per-program omitted-field list (verified-unavailable), for _standard."""
+    if spec is None:
+        spec = _SPEC_BY_SLUG.get(slug, {})
     omitted: list[str] = []
-    spec = _SPEC_BY_SLUG.get(slug, {})
     # Duke publishes no per-program employment report or industry breakdown (its first-
     # destination data is reported college-wide, captured at the institution level), so
-    # every program omits the program-level employment rate and top industries.
-    omitted += [
-        "outcomes_data.employment_rate",
-        "outcomes_data.top_industries",
-    ]
-    # Deeper insight fields are deepened on resume runs; honestly omitted until then.
-    omitted += [
-        "tracks",
-        "class_profile.cohort_size",
-        "faculty_contacts.lead",
-        "external_reviews.summary",
-    ]
+    # every program except the Fuqua Daytime MBA omits the program-level employment rate
+    # and top industries.
+    if slug != _FLAGSHIP:
+        omitted += [
+            "outcomes_data.employment_rate",
+            "outcomes_data.top_industries",
+        ]
     # Graduate/professional programs without a verified per-program tuition omit tuition_usd
     # (their cost_data carries a sourced "see the school's tuition page" record instead).
     if spec.get("degree_type") != "bachelors" and spec.get("tuition") is None:
         omitted.append("cost_data.tuition_usd")
+    if slug not in _TRACKS_BY_SLUG:
+        omitted.append("tracks")
+    if slug not in _CLASS_PROFILE_BY_SLUG:
+        omitted.append("class_profile.cohort_size")
+    if slug not in _FACULTY_BY_SLUG:
+        omitted.append("faculty_contacts.lead")
+    if slug not in _REVIEWS_BY_SLUG:
+        omitted.append("external_reviews.summary")
     # content_sources is set on every program (school feed + program keywords), never omitted.
     return _standard(omitted)
 
@@ -2062,20 +2613,23 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                     "source_url": spec.get("website") or _SCHOOL_WEBSITE.get(spec["school"]),
                 }
         p.application_requirements = _requirements_for(spec)
-        outcomes = dict(_OUTCOMES_INSTITUTION)
-        outcomes["_standard"] = _program_standard(slug)
+        if slug == _FLAGSHIP:
+            outcomes = dict(_MBA_OUTCOMES)
+        else:
+            outcomes = dict(_OUTCOMES_INSTITUTION)
+        outcomes["_standard"] = _program_standard(slug, spec)
         p.outcomes_data = outcomes
-        # Deep fields recorded omitted (deepened on resume runs); always assign so a stale
-        # value on a pre-existing row is cleared.
-        p.tracks = None
-        p.class_profile = None
-        p.faculty_contacts = None
-        p.external_reviews = None
+        p.tracks = _TRACKS_BY_SLUG.get(slug)
+        p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
+        p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
+        p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
         p.who_its_for = None
         p.highlights = None
         p.application_deadline = (
             date(2027, 1, 5) if spec["degree_type"] == "bachelors" else None
         )
+        if slug == _FLAGSHIP:
+            p.application_deadline = date(2027, 1, 5)
     session.flush()
     # Reconcile legacy Duke programs (slug not in the canonical set): delete when
     # unreferenced, otherwise unpublish so the catalog stays clean without breaking any
