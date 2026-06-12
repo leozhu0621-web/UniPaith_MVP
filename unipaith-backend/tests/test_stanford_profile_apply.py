@@ -69,6 +69,7 @@ async def test_apply_enriches_institution(db_session):
     assert so["financial_aid"]["cost_of_attendance"] == 87833
     assert any("SLAC" in lab for lab in so["research"]["labs"])
     assert so["campus_life"]["varsity_sports"] == 36
+    assert so.get("media_credit", "").startswith("Wikimedia Commons")
     # The honest omission is recorded in the institution's _standard stamp, and the
     # stale pre-existing value is actively dropped (not preserved by the merge).
     assert "school_outcomes.employed_or_continuing_ed" in so["_standard"]["omitted"]
@@ -106,6 +107,10 @@ async def test_apply_sets_seven_real_schools(db_session):
     # Medicine honestly omits its faculty roster — recorded in the school _standard.
     med = next(s for s in rows if s.name == stanford_profile._MED)
     assert "about_detail.faculty" in med.about_detail["_standard"]["omitted"]
+    # Every school carries content_sources (GSB its own Insights RSS; others keyword-filtered).
+    hs = next(s for s in rows if s.name == stanford_profile._HS)
+    assert hs.content_sources and hs.content_sources.get("news_rss")
+    assert gsb.content_sources and gsb.content_sources.get("news_rss")
 
 
 async def test_apply_builds_real_program_catalog_idempotently(db_session):
@@ -171,11 +176,15 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert cs.outcomes_data["cip"] == "11.07"
     # Catalog programs honestly record their omitted outcome fields in _standard.
     assert "outcomes_data.employment_rate" in cs.outcomes_data["_standard"]["omitted"]
-    # Stale tracks + feeds on the pre-existing canonical CS BS row were cleared
-    # (it is not the flagship and has no verified tracks), matching its _standard.
+    # Stale tracks on the pre-existing canonical CS BS row were cleared; stale feeds
+    # were replaced with the profile's keyword-filtered program feed (not left null).
     cs_bs = next(p for p in progs if p.slug == "stanford-cs-bs")
     assert cs_bs.tracks is None
-    assert cs_bs.content_sources is None
+    assert cs_bs.content_sources is not None
+    assert cs_bs.content_sources["news_rss"] == stanford_profile._STANFORD_NEWS_RSS
+    assert cs_bs.content_sources["events_feed"]["url"] == stanford_profile._STANFORD_EVENTS_ICS["url"]
+    assert cs_bs.content_sources["keywords"]
+    assert len(progs) >= 170  # full IPEDS/Scorecard catalog breadth
     # Undergraduate programs carry Stanford's undergrad tuition, not the grad rate.
     assert cs_bs.tuition == 67731
     # Professional degrees carry the professional admissions baseline, and their
