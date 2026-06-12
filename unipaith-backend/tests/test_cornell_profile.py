@@ -193,7 +193,7 @@ def test_institution_has_media_credit():
 
 
 def test_coverable_programs_have_reviews():
-    """Eight coverable programs carry aggregated external_reviews (not merely omitted)."""
+    """Thirteen coverable programs carry aggregated external_reviews (not merely omitted)."""
     expected = {
         "cornell-computer-science-bs",
         "cornell-mba",
@@ -204,11 +204,17 @@ def test_coverable_programs_have_reviews():
         "cornell-hotel-administration-bs",
         "cornell-emba-americas",
         "cornell-ilr-bs",
+        "cornell-economics-bs",
+        "cornell-applied-economics-bs",
+        "cornell-electrical-computer-eng-ms",
+        "cornell-mechanical-eng-bs",
     }
     reviewed = {
         slug for slug, rev in cu._REVIEWS_BY_SLUG.items() if rev and rev.get("summary")
     }
     assert expected <= reviewed, f"Missing reviews for {expected - reviewed}"
+    for slug in expected:
+        assert len(cu._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
 
 
 def test_johnson_mba_flagship_is_deeply_enriched():
