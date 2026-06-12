@@ -26,6 +26,7 @@ import type {
   DiscoverySession,
   DiscoverySessionDetail,
 } from '../../../types'
+import AnswerChoices from './AnswerChoices'
 import FirstLookCard from './FirstLookCard'
 import NoticedCard from './NoticedCard'
 import { attachRefs, noticedItemsFromSignals } from './noticed'
@@ -412,20 +413,24 @@ export default function UniConversation({
           </Button>
         </div>
       )}
-      {!turnMut.isPending && !streaming && (
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          {(llmChips.length > 0 ? llmChips : [...QUICK_REPLIES]).map(s => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => send(s)}
-              className="text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:border-foreground/30 transition-colors"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
+      {!turnMut.isPending &&
+        !streaming &&
+        (llmChips.length > 0 ? (
+          <AnswerChoices options={llmChips} onPick={send} />
+        ) : (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {QUICK_REPLIES.map(s => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => send(s)}
+                className="text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:border-foreground/30 transition-colors"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        ))}
 
       <form
         onSubmit={e => {
