@@ -62,7 +62,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of Chicago"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-11"
+ENRICHED_AT = "2026-06-12"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -153,6 +153,8 @@ SCHOOL_OUTCOMES: dict = {
     # UChicago main campus, Hyde Park, Chicago, Illinois (College Scorecard location).
     "location": {"lat": 41.787994, "lng": -87.599539},
     "campus_basics": {"location": "Chicago, Illinois"},
+    # Wikimedia Commons file page verified: Michael Barera, CC BY-SA 4.0 (Main Quadrangles).
+    "media_credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)",
     "scale": {
         # CDS 2024-25 (item I-1): 2,007 total instructional faculty (1,759 full-time +
         # 248 part-time).
@@ -274,9 +276,9 @@ SCHOOL_OUTCOMES: dict = {
 UNDERGRAD_COUNT = 7519
 
 DESCRIPTION = (
-    "Incorporated in 1890 with a gift from John D. Rockefeller and opening to students in "
-    "1892, the University of Chicago is a private research university in the Hyde Park "
-    "neighborhood on the South Side of Chicago. It enrolls about 7,500 undergraduates and "
+    "University of Chicago is a private research university in Chicago, IL, incorporated "
+    "in 1890 with a gift from John D. Rockefeller and opening to students in 1892 in the "
+    "Hyde Park neighborhood on the South Side. It enrolls about 7,500 undergraduates and "
     "roughly 8,700 graduate and professional students — some 16,200 in all — and is known "
     "for an intense intellectual culture, its undergraduate Core curriculum, and a 5:1 "
     "student-faculty ratio across a faculty of about 2,000.\n\n"
@@ -1379,6 +1381,280 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {
                 "label": "U.S. News — University of Chicago (Booth) Best Business Schools",
                 "url": "https://www.usnews.com/best-graduate-schools/top-business-schools/university-of-chicago-01073",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-computer-science-bs": {
+        "summary": (
+            "Students and third-party guides describe UChicago's computer-science major as "
+            "a fast-rising, theory-strong program — Niche ranks it #20 nationally for "
+            "undergraduate CS (2026) and the department notes a U.S. News graduate ranking "
+            "of #27 (2025), up from the mid-30s a decade ago — with growing enrollments "
+            "and interdisciplinary ties to economics, data science, and public policy. "
+            "Common cautions are that CS is still smaller than peer flagships like CMU or "
+            "MIT, introductory courses can feel large, and the Core curriculum adds breadth "
+            "beyond a purely technical track."
+        ),
+        "themes": [
+            {
+                "label": "Rising national standing",
+                "sentiment": "positive",
+                "detail": (
+                    "Niche #20 Best Colleges for Computer Science (2026); U.S. News "
+                    "graduate CS #27 (2025)."
+                ),
+            },
+            {
+                "label": "Theory & research depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Top-20 subfield rankings in theory and systems; strong faculty hiring "
+                    "and research momentum."
+                ),
+            },
+            {
+                "label": "Interdisciplinary campus",
+                "sentiment": "positive",
+                "detail": (
+                    "CS is the College's second-largest major, paired with a renowned "
+                    "data-science program and policy/economics pathways."
+                ),
+            },
+            {
+                "label": "Smaller than CS flagships",
+                "sentiment": "caution",
+                "detail": (
+                    "Department scale and industry-recruiting volume trail the very largest "
+                    "CS schools."
+                ),
+            },
+            {
+                "label": "Core + quantitative load",
+                "sentiment": "mixed",
+                "detail": (
+                    "UChicago's broad Core adds intellectual breadth but can compete with "
+                    "technical electives for some CS students."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Best Colleges for Computer Science (2026)",
+                "url": "https://www.niche.com/colleges/search/best-colleges-for-computer-science/",
+            },
+            {
+                "label": "UChicago CS — A Bet Worth Placing: Computing and Data Science",
+                "url": (
+                    "https://cs.uchicago.edu/news/"
+                    "a-bet-worth-placing-computing-and-data-science-at-uchicago/"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-jd": {
+        "summary": (
+            "Students and third-party guides describe Chicago Law as one of the nation's "
+            "most rigorous top-tier programs — U.S. News ranked it #2 nationally (tie with "
+            "Yale) in 2026 — praised for its quarter system, accessible faculty, and strong "
+            "Big Law and clerkship placement. Common cautions are extremely competitive "
+            "admission, high tuition, and an intellectually demanding culture that can feel "
+            "intense for students seeking a more relaxed law-school experience."
+        ),
+        "themes": [
+            {
+                "label": "Elite national rank",
+                "sentiment": "positive",
+                "detail": "U.S. News Best Law Schools 2026: #2 (tie with Yale).",
+            },
+            {
+                "label": "Rigorous quarter system",
+                "sentiment": "positive",
+                "detail": (
+                    "A fast-paced, analytically demanding curriculum with small sections "
+                    "and strong faculty engagement."
+                ),
+            },
+            {
+                "label": "Career outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Consistently strong placement in federal clerkships, Big Law, and "
+                    "academia (Princeton Review student surveys)."
+                ),
+            },
+            {
+                "label": "Selectivity & cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Among the most selective J.D. programs with tuition exceeding $83,000 "
+                    "per year."
+                ),
+            },
+            {
+                "label": "Intense culture",
+                "sentiment": "mixed",
+                "detail": (
+                    "Reviewers note the intellectual intensity can feel less collegial than "
+                    "some peer schools."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "ABA Journal — 2026 U.S. News law school rankings",
+                "url": (
+                    "https://www.abajournal.com/news/article/"
+                    "stanford-tops-us-news-law-school-rankings-while-yale-slips-to-second-place"
+                ),
+            },
+            {
+                "label": "The Princeton Review — University of Chicago Law School",
+                "url": "https://www.princetonreview.com/law/university-chicago--law-school-1035807",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-md": {
+        "summary": (
+            "Applicants and guides describe Pritzker as a top-tier research medical school "
+            "with an innovative, patient-centered curriculum and strong clinical training at "
+            "UChicago Medicine — it ranked #20 among U.S. research medical schools in U.S. "
+            "News's 2023 survey before withdrawing from future rankings over methodology "
+            "concerns. Common cautions are extremely competitive admission, high cost of "
+            "attendance in Chicago, and the intensity of the four-year professional "
+            "curriculum."
+        ),
+        "themes": [
+            {
+                "label": "Research medical school",
+                "sentiment": "positive",
+                "detail": (
+                    "Historically a top-20 U.S. research medical school with close ties to "
+                    "UChicago Medicine and the Biological Sciences Division."
+                ),
+            },
+            {
+                "label": "Innovative curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Team-based, patient-first training with early clinical exposure through "
+                    "UChicago Medicine."
+                ),
+            },
+            {
+                "label": "Clinical & research integration",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to a major academic medical center and interdisciplinary "
+                    "research across the BSD."
+                ),
+            },
+            {
+                "label": "Ranking transparency",
+                "sentiment": "mixed",
+                "detail": (
+                    "Pritzker withdrew from U.S. News medical-school rankings in 2023, "
+                    "citing methodology concerns, but continues publishing admissions data."
+                ),
+            },
+            {
+                "label": "Selectivity & cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Highly selective admission with first-year tuition near $65,000 plus "
+                    "Chicago living expenses."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Pritzker School of Medicine — U.S. News rankings withdrawal",
+                "url": "https://pritzker.uchicago.edu/news/us-news-rankings",
+            },
+            {
+                "label": "The Chicago Maroon — Pritzker withdraws from U.S. News (2023 rank #20)",
+                "url": (
+                    "https://chicagomaroon.com/37932/news/"
+                    "pritzker-withdraws-from-u-s-news-rankings-citing-methodological-concerns/"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-mpp": {
+        "summary": (
+            "Students and policy guides describe Harris's two-year MPP as a quantitative, "
+            "economics-grounded program that trains data-minded policy leaders — Harris was "
+            "ranked #3 in U.S. News public-policy analysis in 2022 and remains widely cited "
+            "among top MPP programs alongside Harvard Kennedy, Berkeley Goldman, and "
+            "Princeton SPIA. Common cautions are the program's analytical rigor (heavy "
+            "econometrics and microeconomics in the core), a large cohort that can feel "
+            "impersonal, and tuition in Chicago without the D.C. proximity of Georgetown."
+        ),
+        "themes": [
+            {
+                "label": "Quantitative policy training",
+                "sentiment": "positive",
+                "detail": (
+                    "Core courses in microeconomics, econometrics, and policy analysis "
+                    "ground every specialization."
+                ),
+            },
+            {
+                "label": "Top-tier reputation",
+                "sentiment": "positive",
+                "detail": (
+                    "Harris ranked #3 in U.S. News public-policy analysis (2022) and is "
+                    "consistently listed among elite MPP programs."
+                ),
+            },
+            {
+                "label": "Interdisciplinary UChicago ecosystem",
+                "sentiment": "positive",
+                "detail": (
+                    "Joint degrees and cross-registration with Booth, Law, SSA, and the "
+                    "College's public-policy major."
+                ),
+            },
+            {
+                "label": "Analytical rigor",
+                "sentiment": "caution",
+                "detail": (
+                    "The core expects strong math and statistics; students without "
+                    "quantitative preparation may struggle."
+                ),
+            },
+            {
+                "label": "Cohort scale & location",
+                "sentiment": "mixed",
+                "detail": (
+                    "A large MPP class (~300+ students in recent cycles) and a Hyde Park "
+                    "campus distant from Washington policy hubs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harris School — Master of Public Policy (MPP)",
+                "url": "https://harris.uchicago.edu/academics/degrees/master-public-policy-mpp",
+            },
+            {
+                "label": "Admit Lab — Best MPP Programs (Harris acceptance & placement data)",
+                "url": "https://admit-lab.com/blog/best-mpp-programs/",
             },
         ],
         "disclaimer": (

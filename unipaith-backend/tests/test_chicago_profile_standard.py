@@ -173,6 +173,31 @@ def test_booth_mba_flagship_is_deeply_enriched():
     }
 
 
+def test_coverable_programs_have_external_reviews():
+    """Coverable programs (MBA, JD, MD, MPP, flagship CS) must carry reviews."""
+    coverable = [
+        _FLAGSHIP,
+        "uchicago-computer-science-bs",
+        "uchicago-jd",
+        "uchicago-md",
+        "uchicago-mpp",
+    ]
+    for slug in coverable:
+        assert slug in c._REVIEWS_BY_SLUG, slug
+        assert c._REVIEWS_BY_SLUG[slug].get("summary"), slug
+        assert len(c._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
+
+
+def test_institution_has_media_credit():
+    assert c.SCHOOL_OUTCOMES.get("media_credit"), "campus photo must carry attribution"
+
+
+def test_description_leads_with_research_university():
+    assert c.DESCRIPTION.startswith(
+        "University of Chicago is a private research university in Chicago, IL"
+    )
+
+
 def test_every_program_maps_to_a_real_school():
     names = {s["name"] for s in c.SCHOOLS}
     for spec in c.PROGRAMS:
