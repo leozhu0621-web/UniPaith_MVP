@@ -146,6 +146,13 @@ export default function UniConversation({
   const llmChips = Array.isArray(lastSignals?.suggested_options)
     ? (lastSignals.suggested_options as string[]).filter(s => typeof s === 'string' && s.trim())
     : []
+  // Phase 2 affordance hint — render the options as multi-select or a 1–5
+  // importance slider when the orchestrator asks for it; default single-choice.
+  const sugInput = (lastSignals?.suggested_input ?? null) as
+    | { kind?: string; low_label?: string; high_label?: string }
+    | null
+  const answerKind: 'choice' | 'multi' | 'scale' =
+    sugInput?.kind === 'multi' || sugInput?.kind === 'scale' ? sugInput.kind : 'choice'
   // Earned Continue: the orchestrator can proactively offer to advance
   // (`requested_layer_advance`), but readiness is ultimately driven by the
   // engine's per-layer completion (spec §4). When the deterministic handoff
@@ -416,7 +423,13 @@ export default function UniConversation({
       {!turnMut.isPending &&
         !streaming &&
         (llmChips.length > 0 ? (
-          <AnswerChoices options={llmChips} onPick={send} />
+          <AnswerChoices
+            options={llmChips}
+            onPick={send}
+            kind={answerKind}
+            lowLabel={sugInput?.low_label}
+            highLabel={sugInput?.high_label}
+          />
         ) : (
           <div className="mb-2 flex flex-wrap gap-1.5">
             {QUICK_REPLIES.map(s => (

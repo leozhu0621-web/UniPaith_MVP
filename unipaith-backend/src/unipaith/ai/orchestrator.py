@@ -132,6 +132,11 @@ class OrchestratorResponse:
     # Spec 19 §3/§5 — short tappable replies rendered as cobalt chips. Empty
     # when the orchestrator declined to call `suggest_replies` this turn.
     suggested_options: list[str] = field(default_factory=list)
+    # Interactive UX Phase 2 — optional affordance hint so the frontend can
+    # render the options as multi-select or a 1-5 importance slider instead of
+    # plain choice cards. None ⇒ default single-choice. Shape:
+    # {"kind": "choice"|"multi"|"scale", "low_label"?: str, "high_label"?: str}.
+    suggested_input: dict[str, Any] | None = None
     cost_usd: float = 0.0
     latency_ms: int = 0
     raw_blocks: list[dict[str, Any]] = field(default_factory=list)
@@ -369,6 +374,7 @@ class Orchestrator:
         advance = False
         advance_rationale: str | None = None
         suggested_options: list[str] = []
+        suggested_input: dict[str, Any] | None = None
 
         for block in response.content_blocks:
             btype = block.get("type")
@@ -382,12 +388,22 @@ class Orchestrator:
                     advance = True
                     advance_rationale = (block.get("input") or {}).get("rationale")
                 elif tname == "suggest_replies":
-                    raw = (block.get("input") or {}).get("options") or []
+                    inp = block.get("input") or {}
+                    raw = inp.get("options") or []
                     # Defensive: keep only non-empty strings, cap at 4 (the
                     # schema bounds this, but a degraded provider might not).
                     suggested_options = [
                         s.strip() for s in raw if isinstance(s, str) and s.strip()
                     ][:4]
+                    # Phase 2 affordance hint (optional) — only surface a
+                    # non-default kind so untouched turns stay plain choice cards.
+                    kind = inp.get("kind")
+                    if kind in ("multi", "scale"):
+                        suggested_input = {"kind": kind}
+                        for label_key in ("low_label", "high_label"):
+                            val = inp.get(label_key)
+                            if isinstance(val, str) and val.strip():
+                                suggested_input[label_key] = val.strip()
 
         return OrchestratorResponse(
             text="".join(text_chunks).strip(),
@@ -395,6 +411,7 @@ class Orchestrator:
             requested_layer_advance=advance,
             advance_rationale=advance_rationale,
             suggested_options=suggested_options,
+            suggested_input=suggested_input,
             cost_usd=float(response.cost_usd),
             latency_ms=response.latency_ms,
             raw_blocks=response.content_blocks,

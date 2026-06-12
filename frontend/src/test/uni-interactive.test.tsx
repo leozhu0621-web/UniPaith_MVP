@@ -38,4 +38,30 @@ describe('Uni interactive UX — Phase 1', () => {
     const { container } = render(<NoticedCard items={[]} />)
     expect(container).toBeEmptyDOMElement()
   })
+
+  it('AnswerChoices multi-select sends the joined picks on Continue', () => {
+    const onPick = vi.fn()
+    render(<AnswerChoices kind="multi" options={['Research', 'Teaching', 'Industry']} onPick={onPick} />)
+    fireEvent.click(screen.getByRole('button', { name: /research/i }))
+    fireEvent.click(screen.getByRole('button', { name: /industry/i }))
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+    expect(onPick).toHaveBeenCalledWith('Research and Industry')
+  })
+
+  it('AnswerChoices scale renders a slider and sends an importance phrase', () => {
+    const onPick = vi.fn()
+    render(
+      <AnswerChoices
+        kind="scale"
+        options={['nice to have', 'must have']}
+        onPick={onPick}
+        lowLabel="nice to have"
+        highLabel="must have"
+      />,
+    )
+    const slider = screen.getByRole('slider', { name: /how important/i })
+    fireEvent.change(slider, { target: { value: '5' } })
+    fireEvent.click(screen.getByRole('button', { name: /^set$/i }))
+    expect(onPick).toHaveBeenCalledWith('must have')
+  })
 })
