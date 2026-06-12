@@ -2984,6 +2984,7 @@ export interface MatchResultDual {
   computed_at: string
   is_stale: boolean
   program_name?: string | null
+  institution_id?: string | null
   institution_name?: string | null
   degree_type?: string | null
   tuition?: number | null

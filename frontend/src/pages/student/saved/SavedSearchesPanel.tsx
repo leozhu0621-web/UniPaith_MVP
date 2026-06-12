@@ -13,8 +13,7 @@ import {
   updateSavedSearch,
   type SavedSearch,
 } from '../../../api/savedSearches'
-import { encodeChipsParam } from '../explore/discovery/chipUtils'
-import { encodeFiltersParam } from '../explore/discovery/filterUtils'
+import { exploreUrlFromSavedQuery } from '../explore/discovery/searchUrl'
 import SavedSearchRow from './SavedSearchRow'
 
 // Spec 56 §6 — the Saved-searches tab: list, toggle alerts (optimistic), run now,
@@ -67,16 +66,7 @@ export default function SavedSearchesPanel() {
     onError: () => showToast('Could not delete that search', 'error'),
   })
 
-  const openInMatch = (s: SavedSearch) => {
-    const p = new URLSearchParams()
-    const q = s.query?.query
-    if (q && q.trim()) p.set('q', q.trim())
-    if (s.query?.chips && s.query.chips.length) p.set('chips', encodeChipsParam(s.query.chips))
-    if (s.query?.filters && Object.keys(s.query.filters).length)
-      p.set('filters', encodeFiltersParam(s.query.filters))
-    if (s.query?.sort && s.query.sort !== 'relevance') p.set('sort', s.query.sort)
-    navigate(`/s/explore?${p.toString()}`)
-  }
+  const openInMatch = (s: SavedSearch) => navigate(exploreUrlFromSavedQuery(s.query))
 
   if (isLoading) {
     return (

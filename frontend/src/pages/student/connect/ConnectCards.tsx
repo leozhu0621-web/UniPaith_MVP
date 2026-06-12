@@ -161,6 +161,8 @@ function PostCardLarge({ item, onViewProgram, onAddToCalendar, onStartApplicatio
   const body = item.body || ''
   const isLong = body.length > 220
   const shown = expanded || !isLong ? body : body.slice(0, 220).trimEnd() + '…'
+  // institution_id is null only for saved_search_alert items, never for posts.
+  const instId = item.institution_id
   return (
     <CardShell accent={item.pinned ? 'border-primary' : undefined}>
       <div className="p-4">
@@ -174,9 +176,9 @@ function PostCardLarge({ item, onViewProgram, onAddToCalendar, onStartApplicatio
               </span>
             )}
             <span className="text-[10px] text-muted-foreground">{relativeTime(item.date)}</span>
-            {onMute && (
+            {onMute && instId && (
               <button
-                onClick={() => onMute(item.institution_id)}
+                onClick={() => onMute(instId)}
                 title="Mute this institution"
                 className="text-foreground hover:text-foreground p-0.5 rounded"
               >

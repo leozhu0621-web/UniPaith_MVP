@@ -5,7 +5,7 @@ import { toArrayData } from './normalize'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-export type FeedItemKind = 'post' | 'deadline' | 'program_change'
+export type FeedItemKind = 'post' | 'deadline' | 'program_change' | 'saved_search_alert'
 
 export interface ConnectCta {
   type: string
@@ -17,8 +17,8 @@ export interface ConnectFeedItem {
   kind: FeedItemKind
   id: string
   date: string
-  institution_id: string
-  institution_name: string
+  institution_id: string | null
+  institution_name: string | null
   program_id: string | null
   program_name: string | null
   muted?: boolean
@@ -35,6 +35,13 @@ export interface ConnectFeedItem {
   days_until?: number
   // program_change
   change_summary?: string
+  // Spec 2026-06-12 §6.2 — follow attribution ("because you follow X").
+  follow_source?: 'saved' | 'application' | 'explicit' | null
+  // saved_search_alert (Spec 2026-06-12 §5.4)
+  saved_search_id?: string
+  search_name?: string
+  match_count?: number
+  search_query?: { query?: string; chips?: unknown[]; filters?: Record<string, unknown>; sort?: string }
 }
 
 export interface ConnectFeed {
@@ -109,12 +116,30 @@ export interface PeerVisibilityProfile {
 
 // ── Updates feed (§4) ────────────────────────────────────────────────────────
 
-export const getConnectFeed = (rank: 'recent' | 'relevant' = 'recent', cursor?: string | null) =>
+export const getConnectFeed = (
+  rank: 'recent' | 'relevant' = 'recent',
+  cursor?: string | null,
+  opts?: { limit?: number; kinds?: string },
+) =>
   apiClient
     .get('/connect/feed', {
-      params: { tab: 'updates', rank, limit: 50, ...(cursor ? { cursor } : {}) },
+      params: {
+        tab: 'updates',
+        rank,
+        limit: opts?.limit ?? 50,
+        ...(opts?.kinds ? { kinds: opts.kinds } : {}),
+        ...(cursor ? { cursor } : {}),
+      },
     })
     .then(r => r.data as ConnectFeed)
+
+/** New-posts count since the last Updates visit (nav/tab badge). 0 when never visited. */
+export const getUnseenCount = (since: string | null) =>
+  since
+    ? apiClient
+        .get('/connect/feed/unseen-count', { params: { since } })
+        .then(r => (r.data as { count: number }).count)
+    : Promise.resolve(0)
 
 // ── Events (§5) ──────────────────────────────────────────────────────────────
 
