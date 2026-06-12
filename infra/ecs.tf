@@ -50,6 +50,7 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
         aws_secretsmanager_secret.openai_api_key.arn,
         aws_secretsmanager_secret.anthropic_api_key.arn,
         aws_secretsmanager_secret.voyage_api_key.arn,
+        aws_secretsmanager_secret.crawler_ops_token.arn,
       ]
     }]
   })
@@ -317,9 +318,6 @@ resource "aws_ecs_task_definition" "backend" {
       # GET /feedback/inbox + the account-menu link. Not a secret — an email, not a
       # credential (Google sign-in controls who actually holds the address).
       { name = "OWNER_EMAILS", value = "leozjc@unipaith.co" },
-      # Ops token for programmatic access to internal reporting endpoints
-      # (GET /feedback/admin, crawler ops). Internal-only; not a user credential.
-      { name = "CRAWLER_OPS_TOKEN", value = "unipaith-ops-fbx-2026" },
     ]
 
     secrets = [
@@ -346,6 +344,13 @@ resource "aws_ecs_task_definition" "backend" {
       {
         name      = "VOYAGE_API_KEY"
         valueFrom = aws_secretsmanager_secret.voyage_api_key.arn
+      },
+      # Ops token for programmatic access to internal reporting endpoints
+      # (GET /feedback/admin, crawler ops). Internal-only credential — sourced
+      # from Secrets Manager so it never lives in version control.
+      {
+        name      = "CRAWLER_OPS_TOKEN"
+        valueFrom = aws_secretsmanager_secret.crawler_ops_token.arn
       },
     ]
 

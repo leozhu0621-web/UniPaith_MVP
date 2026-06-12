@@ -65,6 +65,27 @@ resource "aws_secretsmanager_secret_version" "anthropic_api_key" {
   }
 }
 
+# --- Crawler/ops token (programmatic access to internal reporting endpoints) ---
+resource "random_password" "crawler_ops_token" {
+  length  = 40
+  special = false
+}
+
+resource "aws_secretsmanager_secret" "crawler_ops_token" {
+  name                    = "${var.project}/${var.environment}/crawler-ops-token"
+  recovery_window_in_days = 7
+}
+
+resource "aws_secretsmanager_secret_version" "crawler_ops_token" {
+  secret_id     = aws_secretsmanager_secret.crawler_ops_token.id
+  secret_string = random_password.crawler_ops_token.result
+  # Rotations write a new value here; ignore drift so a Terraform apply
+  # doesn't reset the secret back to the bootstrap-time random value.
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
+}
+
 # --- Voyage embeddings API key (paired with Anthropic for the new feature pipeline) ---
 resource "aws_secretsmanager_secret" "voyage_api_key" {
   name                    = "${var.project}/${var.environment}/voyage-api-key"
