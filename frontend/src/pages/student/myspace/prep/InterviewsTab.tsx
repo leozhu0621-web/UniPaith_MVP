@@ -123,7 +123,7 @@ export default function InterviewsTab() {
           description="When you're available for interviews, advising, or visits."
           action={<Button size="sm" variant="tertiary" onClick={() => setModal('scheduling')}><Pencil size={14} /> Edit</Button>}
         />
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           {!scheduling ? (
             <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
               <Clock size={16} /> No scheduling preferences set.
@@ -145,7 +145,7 @@ export default function InterviewsTab() {
           description="Private to you — used only to support your experience."
           action={<Button size="sm" variant="tertiary" onClick={() => setModal('accommodations')}><Pencil size={14} /> Edit</Button>}
         />
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           {!accommodations?.accommodations_needed ? (
             <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
               <Accessibility size={16} /> No accommodations specified (optional).

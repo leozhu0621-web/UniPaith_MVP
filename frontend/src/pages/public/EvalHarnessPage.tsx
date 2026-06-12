@@ -96,7 +96,7 @@ function HardFloorChip() {
 function ConsumerCard({ consumer }: { consumer: EvalHarnessConsumer }) {
   const Icon = CONSUMER_ICONS[consumer.key] ?? Layers
   return (
-    <Card className="flex h-full flex-col gap-3 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-start justify-between gap-3">
         <CardTitle icon={Icon} className="leading-snug">
           {consumer.title}
@@ -160,7 +160,7 @@ function ConsumerCard({ consumer }: { consumer: EvalHarnessConsumer }) {
 function ModeCard({ mode }: { mode: EvalHarnessMode }) {
   const Icon = MODE_ICONS[mode.key] ?? Gauge
   return (
-    <Card className="flex h-full flex-col gap-2 p-4">
+    <Card pad={false} className="flex h-full flex-col gap-2 p-4">
       <div className="flex items-center justify-between gap-2">
         <span className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
           <Icon size={16} className="shrink-0 text-secondary" />
@@ -352,7 +352,7 @@ export default function EvalHarnessPage() {
         />
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           {(data?.adapter_hooks ?? []).map(h => (
-            <Card key={h.hook} className="flex flex-col gap-2 p-5">
+            <Card pad={false} key={h.hook} className="flex flex-col gap-2 p-5">
               <code className="font-mono text-sm text-secondary">{h.hook}</code>
               <p className="text-sm text-muted-foreground">{h.blurb}</p>
             </Card>
@@ -370,7 +370,7 @@ export default function EvalHarnessPage() {
         />
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {judges.map(c => (
-            <Card key={c.key} className="flex flex-col gap-2 p-5">
+            <Card pad={false} key={c.key} className="flex flex-col gap-2 p-5">
               <div className="flex items-start justify-between gap-3">
                 <CardTitle icon={Scale}>{c.title}</CardTitle>
                 {c.judge?.independent ? (
@@ -407,7 +407,7 @@ export default function EvalHarnessPage() {
           {(data?.consumers ?? [])
             .filter(c => c.deterministic_checks.length > 0)
             .map(c => (
-              <Card key={c.key} className="flex flex-col gap-3 p-5">
+              <Card pad={false} key={c.key} className="flex flex-col gap-3 p-5">
                 <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
                   <Ruler size={18} className="text-secondary" />
                   {c.title}
@@ -453,7 +453,7 @@ export default function EvalHarnessPage() {
           title="The CI gate — deterministic, blocks with no key"
           sub="The extraction consumer's suites run through the shared harness and are confirmed present in the live runner. The no-fabrication suite is a hard floor; a single ungrounded field blocks the release."
         />
-        <Card className="mt-6 p-2 sm:p-5">
+        <Card pad={false} className="mt-6 p-2 sm:p-5">
           <ul className="divide-y divide-border">
             {(data?.suites ?? []).map(s => (
               <SuiteRow key={s.key} suite={s} />
@@ -476,7 +476,7 @@ export default function EvalHarnessPage() {
           sub="The harness reuses the ml_loop tables and the ai_turns ledger; it adds exactly two. Presence + column counts are introspected from the running SQLAlchemy metadata — the page can't claim a table the app doesn't have."
         />
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <Card className="p-5">
+          <Card pad={false} className="p-5">
             <h3 className="mb-2 inline-flex items-center gap-2 text-h3 text-foreground">
               <Database size={18} className="text-secondary" />
               Added (§8)
@@ -488,7 +488,7 @@ export default function EvalHarnessPage() {
               {!data && [0, 1].map(i => <li key={i} className="h-10 animate-pulse" />)}
             </ul>
           </Card>
-          <Card className="p-5">
+          <Card pad={false} className="p-5">
             <h3 className="mb-2 inline-flex items-center gap-2 text-h3 text-foreground">
               <RefreshCw size={18} className="text-secondary" />
               Reused
@@ -512,7 +512,7 @@ export default function EvalHarnessPage() {
         />
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           {(data?.synthetic_redteam ?? []).map(s => (
-            <Card key={s.key} className="flex h-full flex-col gap-2 p-5">
+            <Card pad={false} key={s.key} className="flex h-full flex-col gap-2 p-5">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="text-h3 text-foreground">{s.title}</h3>
                 <StatusChip status={s.status} />
@@ -526,7 +526,7 @@ export default function EvalHarnessPage() {
 
       {/* §9/§10 — SLOs + cost controls */}
       <section className="mt-16 grid gap-4 lg:grid-cols-2">
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <h3 className="mb-3 inline-flex items-center gap-2 text-h3 text-foreground">
             <Target size={18} className="text-secondary" />
             SLOs (§9)
@@ -537,7 +537,7 @@ export default function EvalHarnessPage() {
             <div className="h-32 animate-pulse rounded bg-muted" />
           )}
         </Card>
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <h3 className="mb-3 inline-flex items-center gap-2 text-h3 text-foreground">
             <Gauge size={18} className="text-secondary" />
             Cost control (§10)
@@ -559,7 +559,7 @@ export default function EvalHarnessPage() {
         />
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {(data?.phases ?? []).map(p => (
-            <Card key={p.key} className="flex h-full flex-col gap-2 p-4">
+            <Card pad={false} key={p.key} className="flex h-full flex-col gap-2 p-4">
               <div className="flex items-center justify-between gap-2">
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-secondary/10 text-[12px] font-semibold text-secondary">
                   {p.key}
@@ -581,7 +581,7 @@ export default function EvalHarnessPage() {
           title="Acceptance"
           sub="Spec 62 §12 — the definition of done, held to the same honest live / in-progress / planned bar."
         />
-        <Card className="mt-6 p-5">
+        <Card pad={false} className="mt-6 p-5">
           {data ? (
             <StatusList items={data.acceptance} />
           ) : (
@@ -598,7 +598,7 @@ export default function EvalHarnessPage() {
           sub="The AI surfaces the harness governs — resolved straight from the running route table."
         />
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <Card className="flex flex-col gap-3 p-5">
+          <Card pad={false} className="flex flex-col gap-3 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <Bot size={18} className="text-secondary" />
               Chatbot (Discovery)
@@ -619,7 +619,7 @@ export default function EvalHarnessPage() {
               ))}
             </ul>
           </Card>
-          <Card className="flex flex-col gap-3 p-5">
+          <Card pad={false} className="flex flex-col gap-3 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <Database size={18} className="text-secondary" />
               Extraction (Reference)
@@ -653,7 +653,7 @@ export default function EvalHarnessPage() {
           />
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {data.open_questions.map(q => (
-              <Card key={q.q} className="flex h-full flex-col gap-2 p-5">
+              <Card pad={false} key={q.q} className="flex h-full flex-col gap-2 p-5">
                 <h3 className="text-h3 text-foreground">{q.q}</h3>
                 <p className="text-sm text-muted-foreground">{q.a}</p>
               </Card>

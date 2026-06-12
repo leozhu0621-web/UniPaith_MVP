@@ -50,7 +50,7 @@ export default function TrackForm({
       <p className="text-sm text-muted-foreground">{schema.blurb}</p>
 
       {schema.groups.map(group => (
-        <Card key={group.key} variant="card-flush" className="space-y-1 p-4">
+        <Card pad={false} key={group.key} variant="card-flush" className="space-y-1 p-4">
           <h4 className="mb-1 text-eyebrow uppercase tracking-wide text-muted-foreground">
             {group.label}
           </h4>

@@ -123,7 +123,7 @@ function StrategyCard({
   isActivating?: boolean
 }) {
   return (
-    <Card className="p-5 space-y-3">
+    <Card pad={false} className="p-5 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -330,7 +330,7 @@ export default function StrategyTab() {
       )}
 
       {!isLoading && !active && drafts.length === 0 && versions.length === 0 && (
-        <Card className="p-5 text-sm text-muted-foreground">
+        <Card pad={false} className="p-5 text-sm text-muted-foreground">
           You don't have a strategy yet. Generation needs at least one active academic goal — add
           one in the Goals tab, then come back and select "Generate new draft."
         </Card>

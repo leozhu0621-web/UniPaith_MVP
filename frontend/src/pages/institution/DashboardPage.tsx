@@ -120,7 +120,7 @@ export default function DashboardPage() {
   if (institutionQ.isError) {
     return (
       <div className="p-6">
-        <Card className="p-8 text-center border-dashed border-2 border-border bg-muted/30">
+        <Card pad={false} className="p-8 text-center border-dashed border-2 border-border bg-muted/30">
           <LayoutDashboard size={48} className="mx-auto text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold text-foreground mb-2">Welcome to UniPaith</h2>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
@@ -231,7 +231,7 @@ export default function DashboardPage() {
       )}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         {executiveKpis.map(kpi => (
-          <Card key={kpi.label} className="p-5">
+          <Card pad={false} key={kpi.label} className="p-5">
             <div className="flex items-center gap-3">
               <div className={`p-2.5 rounded-lg ${kpi.color}`}>
                 <kpi.icon size={20} />
@@ -247,7 +247,7 @@ export default function DashboardPage() {
 
       {/* Priority Queue — Spec 31 §2: categorized, actionable, with deep links. */}
       {priorityQueue.length > 0 && (
-        <Card className="p-4">
+        <Card pad={false} className="p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-foreground">Priority Queue</h3>
             <Badge variant="info">{priorityQueue.length} to triage</Badge>
@@ -276,7 +276,7 @@ export default function DashboardPage() {
 
       {/* Intelligence Digest — Spec 31 §2 */}
       {digestQ.isError && (
-        <Card className="p-4 border-border bg-card">
+        <Card pad={false} className="p-4 border-border bg-card">
           <div className="flex items-center gap-2 mb-1">
             <Brain size={18} className="text-muted-foreground" />
             <h3 className="text-sm font-semibold text-foreground">Intelligence Digest</h3>
@@ -285,7 +285,7 @@ export default function DashboardPage() {
         </Card>
       )}
       {digestQ.data?.digest && (
-        <Card className="p-4 border-border bg-card">
+        <Card pad={false} className="p-4 border-border bg-card">
           <div className="flex items-center gap-2 mb-3">
             <Brain size={18} className="text-muted-foreground" />
             <h3 className="text-sm font-semibold text-foreground">Intelligence Digest</h3>
@@ -300,7 +300,7 @@ export default function DashboardPage() {
 
       {/* Yield-Risk Alerts — Spec 31 §2 */}
       {yieldRiskQ.isError && (
-        <Card className="p-4 border-warning/30 bg-warning-soft/20">
+        <Card pad={false} className="p-4 border-warning/30 bg-warning-soft/20">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp size={16} className="text-warning" />
             <h3 className="text-sm font-semibold text-foreground">Yield-Risk Alerts</h3>
@@ -309,7 +309,7 @@ export default function DashboardPage() {
         </Card>
       )}
       {(yieldRiskQ.data?.alerts?.length ?? 0) > 0 && (
-        <Card className="p-4 border-warning/30 bg-warning-soft/20">
+        <Card pad={false} className="p-4 border-warning/30 bg-warning-soft/20">
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp size={16} className="text-warning" />
             <h3 className="text-sm font-semibold text-foreground">Yield-Risk Alerts</h3>
@@ -346,7 +346,7 @@ export default function DashboardPage() {
 
       {/* Integrity Signals + New Inquiries — Spec 31 §2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <Card className={`p-4 ${openAlerts.length > 0 || integrityQ.isError ? 'border-warning/40' : ''}`}>
+        <Card pad={false} className={`p-4 ${openAlerts.length > 0 || integrityQ.isError ? 'border-warning/40' : ''}`}>
           <div className="flex items-center gap-2 mb-2">
             <Shield size={18} className={openAlerts.length > 0 || integrityQ.isError ? 'text-warning' : 'text-success'} />
             <h3 className="text-sm font-semibold text-foreground">Integrity Signals</h3>
@@ -372,7 +372,7 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        <Card className={`p-4 ${(summary?.new_inquiries_24h ?? 0) > 0 ? 'border-secondary/30' : ''}`}>
+        <Card pad={false} className={`p-4 ${(summary?.new_inquiries_24h ?? 0) > 0 ? 'border-secondary/30' : ''}`}>
           <div className="flex items-center gap-2 mb-2">
             <Inbox size={18} className={(summary?.new_inquiries_24h ?? 0) > 0 ? 'text-secondary' : 'text-muted-foreground'} />
             <h3 className="text-sm font-semibold text-foreground">New Inquiries</h3>
@@ -396,7 +396,7 @@ export default function DashboardPage() {
 
       {/* AI Priority Queue Preview */}
       {priorityQ.isError && (
-        <Card className="p-4">
+        <Card pad={false} className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <Zap size={16} className="text-warning" />
             <h3 className="text-sm font-semibold text-foreground">Priority Review Queue</h3>
@@ -405,7 +405,7 @@ export default function DashboardPage() {
         </Card>
       )}
       {topPriority.length > 0 && (
-        <Card className="p-4">
+        <Card pad={false} className="p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Zap size={16} className="text-warning" />
@@ -438,7 +438,7 @@ export default function DashboardPage() {
       )}
 
       {/* Quick Actions */}
-      <Card className="p-4">
+      <Card pad={false} className="p-4">
         <h3 className="text-sm font-semibold text-foreground mb-3">Quick Actions</h3>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => navigate('/i/programs/new')} className="flex items-center gap-2">
@@ -460,7 +460,7 @@ export default function DashboardPage() {
         <h3 className="text-sm font-semibold text-foreground mb-3">Operational KPIs</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {operationalKpis.map(kpi => (
-            <Card key={kpi.label} className="p-5">
+            <Card pad={false} key={kpi.label} className="p-5">
               <div className="flex items-center gap-3">
                 <div className={`p-2.5 rounded-lg ${kpi.color}`}>
                   <kpi.icon size={20} />
@@ -476,7 +476,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="p-4 lg:col-span-1">
+        <Card pad={false} className="p-4 lg:col-span-1">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
             {unreadNotifications > 0 && <Badge variant="info">{unreadNotifications} unread</Badge>}
@@ -498,7 +498,7 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        <Card className="p-4 lg:col-span-2">
+        <Card pad={false} className="p-4 lg:col-span-2">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-foreground">Program Readiness</h3>
             <Button variant="ghost" size="sm" onClick={() => navigate('/i/programs')}>View All</Button>

@@ -205,15 +205,15 @@ export default function InterviewsPage({ embedded = false }: { embedded?: boolea
 
       {/* KPI row (§4) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Card className="p-3">
+        <Card pad={false} className="p-3">
           <p className="text-xs text-muted-foreground">Confirmed</p>
           <p className="text-xl font-semibold text-success">{confirmedCount}</p>
         </Card>
-        <Card className="p-3">
+        <Card pad={false} className="p-3">
           <p className="text-xs text-muted-foreground">Awaiting student</p>
           <p className="text-xl font-semibold text-warning">{awaitingCount}</p>
         </Card>
-        <Card className="p-3">
+        <Card pad={false} className="p-3">
           <p className="text-xs text-muted-foreground">Completed</p>
           <p className="text-xl font-semibold text-foreground">{completedCount}</p>
         </Card>
@@ -246,7 +246,7 @@ export default function InterviewsPage({ embedded = false }: { embedded?: boolea
       </div>
 
       {/* Table */}
-      <Card>
+      <Card pad={false}>
         {interviewsQ.isLoading ? (
           <div className="p-4 space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (

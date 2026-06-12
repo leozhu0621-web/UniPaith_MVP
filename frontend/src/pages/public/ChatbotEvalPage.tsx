@@ -106,7 +106,7 @@ function AgentCard({ agent }: { agent: ChatbotAgent }) {
   const Icon = AGENT_ICONS[agent.key] ?? Bot
   const isClaude = agent.provider === 'anthropic'
   return (
-    <Card className="flex h-full flex-col gap-3 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-start justify-between gap-3">
         <CardTitle icon={Icon} className="leading-snug">
           {agent.title}
@@ -127,7 +127,7 @@ function AgentCard({ agent }: { agent: ChatbotAgent }) {
 function DimensionCard({ dimension }: { dimension: ChatbotConstitutionDimension }) {
   const Icon = DIMENSION_ICONS[dimension.key] ?? ClipboardCheck
   return (
-    <Card className="flex h-full flex-col gap-2 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-2 p-5">
       <div className="flex items-start justify-between gap-3">
         <CardTitle icon={Icon} className="leading-snug">
           {dimension.label}
@@ -142,7 +142,7 @@ function DimensionCard({ dimension }: { dimension: ChatbotConstitutionDimension 
 
 function LoopStageCard({ stage }: { stage: ChatbotLoopStage }) {
   return (
-    <Card className="flex h-full flex-col gap-2 p-4">
+    <Card pad={false} className="flex h-full flex-col gap-2 p-4">
       <div className="flex items-center justify-between gap-2">
         <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-secondary/10 text-[12px] font-semibold text-secondary">
           {stage.n}
@@ -352,7 +352,7 @@ export default function ChatbotEvalPage() {
           title="Eval suites — gated, not asserted"
           sub="Each suite's case count is read off disk by the runner's own loaders; the safety and red-team suites are deterministic, so they block in CI with no API key — exactly what a hard floor demands."
         />
-        <Card className="mt-6 p-2 sm:p-5">
+        <Card pad={false} className="mt-6 p-2 sm:p-5">
           <ul className="divide-y divide-border">
             {(data?.eval_suites ?? []).map(s => (
               <SuiteRow key={s.key} suite={s} />
@@ -369,7 +369,7 @@ export default function ChatbotEvalPage() {
 
       {/* §4/§5 — safety floor + deterministic checks */}
       <section className="mt-16 grid gap-4 lg:grid-cols-2">
-        <Card className="flex flex-col gap-3 p-5">
+        <Card pad={false} className="flex flex-col gap-3 p-5">
           <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
             <ShieldAlert size={18} className="text-secondary" />
             Safety & crisis floor
@@ -406,7 +406,7 @@ export default function ChatbotEvalPage() {
           )}
         </Card>
 
-        <Card className="flex flex-col gap-3 p-5">
+        <Card pad={false} className="flex flex-col gap-3 p-5">
           <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
             <Ruler size={18} className="text-secondary" />
             Deterministic checks — before the judge
@@ -439,7 +439,7 @@ export default function ChatbotEvalPage() {
           title="Build-task checklist"
           sub="Spec 61 §10 — each task classified by what's shipped versus what's next. The traffic-dependent halves (the production sample→judge cron, A/B promotion, the live 👍/👎 curate job) are named as in-progress, not hidden."
         />
-        <Card className="mt-6 p-2 sm:p-5">
+        <Card pad={false} className="mt-6 p-2 sm:p-5">
           <ul className="divide-y divide-border">
             {(data?.build_tasks ?? []).map(t => (
               <TaskRow key={t.text} task={t} />
@@ -461,7 +461,7 @@ export default function ChatbotEvalPage() {
           title="Acceptance"
           sub="Spec 61 §11 — the definition of done, held to the same honest live/in-progress/planned bar."
         />
-        <Card className="mt-6 p-2 sm:p-5">
+        <Card pad={false} className="mt-6 p-2 sm:p-5">
           <ul className="divide-y divide-border">
             {(data?.acceptance ?? []).map(a => (
               <li key={a.text} className="flex items-start gap-3 py-3">
@@ -487,7 +487,7 @@ export default function ChatbotEvalPage() {
           sub="Resolved straight from the running route table — the loop only governs surfaces the deployed app actually serves."
         />
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <Card className="flex flex-col gap-3 p-5">
+          <Card pad={false} className="flex flex-col gap-3 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <GraduationCap size={18} className="text-secondary" />
               Student advisor (Discovery)
@@ -503,7 +503,7 @@ export default function ChatbotEvalPage() {
               {!data && [0, 1, 2].map(i => <li key={i} className="h-4 w-2/3 animate-pulse rounded bg-muted" />)}
             </ul>
           </Card>
-          <Card className="flex flex-col gap-3 p-5">
+          <Card pad={false} className="flex flex-col gap-3 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <Bot size={18} className="text-secondary" />
               Faculty assistant (Inbox)
@@ -532,7 +532,7 @@ export default function ChatbotEvalPage() {
           />
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             {data.open_questions.map(q => (
-              <Card key={q.q} className="flex h-full flex-col gap-2 p-5">
+              <Card pad={false} key={q.q} className="flex h-full flex-col gap-2 p-5">
                 <h3 className="text-h3 text-foreground">{q.q}</h3>
                 <p className="text-sm text-muted-foreground">{q.a}</p>
               </Card>

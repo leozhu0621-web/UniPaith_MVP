@@ -61,7 +61,7 @@ export function SectionCard({
   }
 
   return (
-    <Card
+    <Card pad={false}
       className={clsx('overflow-hidden p-0', invalid && 'ring-2 ring-error/60')}
     >
       <button

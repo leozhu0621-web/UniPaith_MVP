@@ -56,7 +56,7 @@ export default function GraduateIntentCard({ applicationId }: { applicationId: s
   if (!data?.is_graduate) return null
 
   return (
-    <Card className="mb-4 p-5">
+    <Card pad={false} className="mb-4 p-5">
       <div className="mb-1 flex items-center gap-2">
         <span className="text-secondary">
           <GraduationCap size={16} />

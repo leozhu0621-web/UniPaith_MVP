@@ -49,7 +49,7 @@ const JOURNEY_ICON: Record<string, typeof GraduationCap> = {
 function LevelCard({ level }: { level: AcceptanceLevel }) {
   const isRed = level.status === 'red'
   return (
-    <Card className="flex flex-col gap-2 p-5">
+    <Card pad={false} className="flex flex-col gap-2 p-5">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Level {level.order}
@@ -76,7 +76,7 @@ function LevelCard({ level }: { level: AcceptanceLevel }) {
 function JourneyCard({ journey }: { journey: AcceptanceJourney }) {
   const Icon = JOURNEY_ICON[journey.key] ?? GraduationCap
   return (
-    <Card className="p-6">
+    <Card pad={false} className="p-6">
       <div className="flex items-start justify-between gap-3">
         <h3 className="flex items-center gap-2 text-h3 text-foreground">
           <Icon size={20} className="text-secondary" />
@@ -267,7 +267,7 @@ export default function AcceptancePage() {
             : [0, 1].map(i => <CardSkeleton key={i} className="h-96" />)}
         </div>
         {data && (
-          <Card variant="card-flush" className="mt-4 flex items-start gap-3 p-4">
+          <Card pad={false} variant="card-flush" className="mt-4 flex items-start gap-3 p-4">
             <ShieldCheck size={18} className="mt-0.5 shrink-0 text-secondary" />
             <p className="text-sm text-muted-foreground">
               <span className="font-semibold text-foreground">Acceptance bar: </span>
@@ -353,7 +353,7 @@ export default function AcceptancePage() {
           />
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {data.seed.items.map(item => (
-              <Card key={item.label} className="p-4">
+              <Card pad={false} key={item.label} className="p-4">
                 <h3 className="text-[14px] font-semibold text-foreground">{item.label}</h3>
                 <p className="mt-1 text-[13px] text-muted-foreground">{item.detail}</p>
               </Card>

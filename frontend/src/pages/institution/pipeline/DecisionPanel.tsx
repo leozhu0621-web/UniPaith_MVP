@@ -174,7 +174,7 @@ export default function DecisionPanel({
 
   return (
     <div className="space-y-4">
-      <Card className="p-5 space-y-3">
+      <Card pad={false} className="p-5 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-foreground">Current decision</h3>
           {app.decision ? (
@@ -266,7 +266,7 @@ export default function DecisionPanel({
         )}
       </Card>
 
-      <Card className="p-5 space-y-4">
+      <Card pad={false} className="p-5 space-y-4">
         <div className="flex items-center gap-2">
           <Award size={18} className="text-secondary" />
           <h3 className="font-semibold text-foreground">

@@ -29,7 +29,9 @@ export default function ToastContainer() {
   const visible = [...toasts].slice(-4).reverse()
 
   return (
-    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-4 w-[min(360px,calc(100vw-2rem))] pb-safe">
+    // Below lg the stack clears the fixed 56px mobile bottom tab bar (+ safe
+    // area); at lg+ there is no tab bar, so it sits at the normal offset.
+    <div className="fixed right-4 z-[100] flex flex-col gap-4 w-[min(360px,calc(100vw-2rem))] bottom-[calc(56px+env(safe-area-inset-bottom)+0.5rem)] lg:bottom-4 lg:pb-safe">
       {visible.map(toast => (
         <div
           key={toast.id}

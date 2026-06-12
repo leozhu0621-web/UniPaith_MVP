@@ -8,7 +8,7 @@ import Select from '../../components/ui/Select'
 import EmptyState from '../../components/ui/EmptyState'
 import QueryError from '../../components/ui/QueryError'
 import { SkeletonCard } from '../../components/ui/Skeleton'
-import { PageHeader } from '../../components/student/density'
+import { PageContainer, PageHeader } from '../../components/student/density'
 import { formatDate } from '../../utils/format'
 import { STATUS_COLORS } from '../../utils/constants'
 import { FileText, Star, ChevronRight, CalendarClock, PartyPopper, ArrowRight, Mail } from 'lucide-react'
@@ -251,31 +251,31 @@ export default function ApplicationsPage() {
   // so it renders even when the portfolio is empty or failed to load.
   if (view === 'costs')
     return (
-      <div className="p-4 w-full">
+      <PageContainer>
         <PageHeader eyebrow="My Space" title="Costs & aid" sub="Budget, scholarships, and net-cost comparison" />
         {viewSwitcher}
         <Suspense fallback={<SkeletonCard />}>
           <CostsAidTab />
         </Suspense>
-      </div>
+      </PageContainer>
     )
 
   if (isLoading)
-    return <div className="p-4 w-full space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+    return <PageContainer className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</PageContainer>
 
   // A failed fetch must not read as "No applications yet" (empty state).
   if (isError)
     return (
-      <div className="p-4 w-full">
+      <PageContainer>
         <PageHeader eyebrow="My Space" title="Your portfolio" sub="Turn saved targets into application projects" />
         {viewSwitcher}
         <QueryError detail="We couldn't load your applications." onRetry={() => refetch()} />
-      </div>
+      </PageContainer>
     )
 
   if (view === 'offers')
     return (
-      <div className="p-4 w-full">
+      <PageContainer>
         <PageHeader
           eyebrow="My Space"
           title="Your offers"
@@ -294,7 +294,7 @@ export default function ApplicationsPage() {
             {offerApps.map(a => {
               const responded = a.offer?.student_response || a.student_decision
               return (
-                <Card
+                <Card pad={false}
                   key={a.id}
                   className="p-4 flex items-center justify-between gap-3 cursor-pointer hover:border-secondary/40 transition-colors"
                   onClick={() => navigate(`/s/applications/${a.id}?tab=offer`)}
@@ -331,12 +331,12 @@ export default function ApplicationsPage() {
           </div>
         )}
         <DecisionComparison isOpen={showCompare} onClose={() => setShowCompare(false)} />
-      </div>
+      </PageContainer>
     )
 
   if (apps.length === 0)
     return (
-      <div className="p-4 w-full">
+      <PageContainer>
         <PageHeader eyebrow="My Space" title="Your portfolio" sub="Turn saved targets into application projects" />
         {viewSwitcher}
         <EmptyState
@@ -345,11 +345,11 @@ export default function ApplicationsPage() {
           description="Start one from your Saved list or Match when you're ready."
           action={{ label: 'Explore programs', onClick: () => navigate('/s/explore') }}
         />
-      </div>
+      </PageContainer>
     )
 
   return (
-    <div className="p-4 w-full">
+    <PageContainer>
       <PageHeader
         eyebrow="My Space"
         title="Your portfolio"
@@ -359,7 +359,7 @@ export default function ApplicationsPage() {
 
       {/* Spec 18 — "You're in" celebration once an offer is accepted (§6/§13) */}
       {acceptedApp && (
-        <Card className="p-4 mb-6 bg-success-soft border-0 flex items-center gap-3">
+        <Card pad={false} className="p-4 mb-6 bg-success-soft border-0 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-success/15 flex items-center justify-center shrink-0">
             <PartyPopper size={20} className="text-success" />
           </div>
@@ -375,7 +375,7 @@ export default function ApplicationsPage() {
 
       {/* Spec 18 — no offers yet, decisions pending (§8) */}
       {!acceptedApp && offerApps.length === 0 && awaitingDecisionApps.length > 0 && (
-        <Card className="p-4 mb-6 bg-muted border-0">
+        <Card pad={false} className="p-4 mb-6 bg-muted border-0">
           <p className="text-sm text-foreground">
             Decisions usually arrive within 4–8 weeks of submission. You'll be notified here.
           </p>
@@ -388,7 +388,7 @@ export default function ApplicationsPage() {
 
       {/* Spec 18 — offer-received banner + compare CTA (§5/§8) */}
       {!acceptedApp && offerApps.length > 0 && (
-        <Card className="p-4 mb-6 flex items-center gap-3">
+        <Card pad={false} className="p-4 mb-6 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0">
             <Mail size={20} className="text-secondary" />
           </div>
@@ -438,7 +438,7 @@ export default function ApplicationsPage() {
 
       {/* Next actions */}
       {topActions.length > 0 && (
-        <Card className="p-4 mb-6">
+        <Card pad={false} className="p-4 mb-6">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground mb-3">Next actions</h2>
           <div className="space-y-2">
             {topActions.map(a => {
@@ -539,7 +539,7 @@ export default function ApplicationsPage() {
             const isDraft = app.status === 'draft'
             const pendingOffer = hasPendingOfferResponse(app)
             return (
-              <Card
+              <Card pad={false}
                 key={app.id}
                 onClick={() => navigate(appHref(app))}
                 className="p-4 hover:shadow-sm transition-shadow cursor-pointer"
@@ -603,6 +603,6 @@ export default function ApplicationsPage() {
       </div>
 
       <DecisionComparison isOpen={showCompare} onClose={() => setShowCompare(false)} />
-    </div>
+    </PageContainer>
   )
 }

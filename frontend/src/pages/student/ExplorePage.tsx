@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import QueryError from '../../components/ui/QueryError'
-import { PageHeader } from '../../components/student/density'
+import Skeleton from '../../components/ui/Skeleton'
+import { PageContainer, PageHeader } from '../../components/student/density'
 import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { getConnectEvents, getFollowing, followInstitution, unfollowInstitution } from '../../api/connect'
@@ -272,7 +273,7 @@ export default function ExplorePage() {
   }, [filteredUniList, nearMe])
 
   return (
-    <div className="p-4 w-full">
+    <PageContainer>
       {/* Spec 09 §13 H1 + brand framing ("Fit, not fame", Spec 07 §2/§6). */}
       <PageHeader eyebrow="Discover" title={TAB_HEADERS[tab].title} sub={TAB_HEADERS[tab].sub} />
 
@@ -283,7 +284,7 @@ export default function ExplorePage() {
           id="discover-panel-foryou"
           role="tabpanel"
           aria-labelledby="discover-tab-foryou"
-          className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_19rem] gap-6 items-start"
+          className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] gap-6 items-start"
         >
           <div className="min-w-0">
             {/* Spec 09 §2 — strategy lands first. */}
@@ -295,7 +296,7 @@ export default function ExplorePage() {
             {!searchActive && featuredPromos && featuredPromos.length > 0 && (
               <div className="mb-6">
                 <h2 className="text-eyebrow uppercase text-muted-foreground font-semibold mb-3">Featured programs</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
                   {featuredPromos.slice(0, 3).map(promo => (
                     <PromoCard
                       key={promo.id}
@@ -359,8 +360,17 @@ export default function ExplorePage() {
                 {uniError ? (
                   <QueryError detail="We couldn't load universities." onRetry={() => refetchUni()} />
                 ) : uniLoading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[1, 2, 3].map(i => <div key={i} className="h-80 bg-card rounded-xl border border-border animate-pulse" />)}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="bg-card rounded-lg border border-border overflow-hidden">
+                        <div className="up-skeleton h-36" />
+                        <div className="p-5 space-y-2.5">
+                          <Skeleton className="h-4 w-3/4" />
+                          <Skeleton className="h-3 w-1/2" />
+                          <Skeleton className="h-3 w-2/3" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : uniList.length === 0 ? (
                   <div className="text-center py-16 bg-card rounded-xl border border-border">
@@ -387,7 +397,8 @@ export default function ExplorePage() {
                         Showing <span className="font-semibold text-foreground">{filteredUniList.length}</span> of {uniList.length} universities
                       </p>
                     )}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* 3 per row at lg+ — explicit founder direction (#498); do not add a 4th column. */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
                       {displayUniList.map((inst: UniversityRow) => (
                         <UniversityCard
                           key={inst.id}
@@ -404,8 +415,10 @@ export default function ExplorePage() {
             )}
           </div>
 
-          {/* Live rail (Spec 2026-06-12 §2) — xl+ only; tab badges carry the signal below xl. */}
-          <aside className="hidden xl:block sticky top-4">
+          {/* Live rail (Spec 2026-06-12 §2) — xl+ only; tab badges carry the signal below xl.
+              Caps at the visible window (h-16 header + top-4 + breathing room) and scrolls
+              within itself so a tall rail never pins the page. */}
+          <aside className="hidden xl:block sticky top-4 min-w-0 xl:max-h-[calc(100dvh-6rem)] overflow-y-auto">
             <DiscoverRail
               followedIds={followedIds}
               onToggleFollow={toggleFollow}
@@ -429,7 +442,7 @@ export default function ExplorePage() {
       )}
 
       {managing && <ManageFollowingPanel onClose={() => setManaging(false)} />}
-    </div>
+    </PageContainer>
   )
 }
 

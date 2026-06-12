@@ -314,7 +314,7 @@ export default function ApplicationDetailPage() {
   const programName = application.program?.program_name || 'Application'
 
   return (
-    <div className="p-6 w-full">
+    <div className="p-6 w-full animate-page-in">
       <Breadcrumbs
         className="mb-4"
         items={[{ label: 'My Space', to: '/s/space' }, { label: 'Applications', to: '/s/applications' }, { label: programName }]}
@@ -404,7 +404,7 @@ export default function ApplicationDetailPage() {
         {/* Sidebar — stacks full-width above the tabs on narrow viewports,
             becomes the 240px column from lg up. */}
         <div className="w-full space-y-4 lg:w-60 lg:flex-shrink-0">
-          <Card className="p-4">
+          <Card pad={false} className="p-4">
             <h3 className="font-medium text-sm text-foreground mb-3">Checklist</h3>
             <div className="space-y-2 mb-3">
               {checklistItems.map((item, i) => (
@@ -507,7 +507,7 @@ export default function ApplicationDetailPage() {
           {/* Fee info is money-critical — surface a load failure rather than
               silently hiding a fee the student may owe. */}
           {costError && (
-            <Card className="p-4">
+            <Card pad={false} className="p-4">
               <QueryError
                 variant="inline"
                 detail="We couldn't load fee details."
@@ -518,7 +518,7 @@ export default function ApplicationDetailPage() {
 
           {/* Submission mode (§7) */}
           {application.status === 'draft' && (
-            <Card className="p-4">
+            <Card pad={false} className="p-4">
               <h3 className="font-medium text-sm text-foreground mb-2">How will you submit?</h3>
               <div className="flex rounded-lg border border-border overflow-hidden text-xs">
                 <button
@@ -634,7 +634,7 @@ export default function ApplicationDetailPage() {
                 {/* Workshops are feedback-only by spec — no drafting here. This
                     tab shows past essay-feedback runs relevant to this program;
                     new feedback happens in Apply → Workshops. */}
-                <Card className="p-4 flex items-center justify-between gap-3 flex-wrap">
+                <Card pad={false} className="p-4 flex items-center justify-between gap-3 flex-wrap">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground">Essay feedback</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
@@ -654,7 +654,7 @@ export default function ApplicationDetailPage() {
                     onRetry={() => refetchEssayRuns()}
                   />
                 ) : essayRunsList.length === 0 ? (
-                  <Card className="p-6 text-center">
+                  <Card pad={false} className="p-6 text-center">
                     <FileText size={32} className="text-muted-foreground mx-auto mb-3" />
                     <p className="text-sm text-foreground">No essay feedback yet.</p>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -663,7 +663,7 @@ export default function ApplicationDetailPage() {
                   </Card>
                 ) : (
                   essayRunsList.map(run => (
-                    <Card key={run.id} className="p-4">
+                    <Card pad={false} key={run.id} className="p-4">
                       <div className="flex justify-between items-start gap-3 mb-3 flex-wrap">
                         <div className="min-w-0">
                           <p className="font-medium text-sm text-foreground">{run.prompt_text || 'Essay draft'}</p>
@@ -723,7 +723,7 @@ export default function ApplicationDetailPage() {
                       <InterviewRespondPanel key={iv.id} interview={iv} />
                     ))
                   ) : interviewsError ? (
-                    <Card className="p-6">
+                    <Card pad={false} className="p-6">
                       <QueryError
                         variant="inline"
                         detail="We couldn't load your interviews."
@@ -731,7 +731,7 @@ export default function ApplicationDetailPage() {
                       />
                     </Card>
                   ) : (
-                    <Card className="p-6 text-center">
+                    <Card pad={false} className="p-6 text-center">
                       <Users size={32} className="text-muted-foreground mx-auto mb-3" />
                       <p className="text-sm text-foreground">No interviews scheduled yet.</p>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -757,7 +757,7 @@ export default function ApplicationDetailPage() {
                   </div>
                 )}
 
-                <Card className="p-4">
+                <Card pad={false} className="p-4">
                   <div className="flex items-center gap-2 mb-3"><ShieldCheck size={16} className="text-secondary" /><h3 className="text-sm font-medium text-foreground">Why are you applying?</h3></div>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {INTENT_OPTIONS.map(opt => (
@@ -799,7 +799,7 @@ export default function ApplicationDetailPage() {
                   </Button>
                 </Card>
 
-                <Card className="p-4">
+                <Card pad={false} className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-medium text-foreground">Guardrail scan</h3>
                     <Button size="sm" onClick={runGuardrailScan} loading={scanning}>Run scan</Button>
@@ -975,7 +975,7 @@ function FeeCard({ fee, isDraft, payPending, onPay, onRequestWaiver, programName
     })
 
   return (
-    <Card className="p-4">
+    <Card pad={false} className="p-4">
       <div className="flex items-center gap-2 mb-1">
         <HandCoins size={15} className="text-secondary" />
         <h3 className="font-medium text-sm text-foreground">Application fee</h3>
@@ -1056,7 +1056,7 @@ function ChecklistTab({ items, completionPct, isExternal, canToggle, onToggle }:
 
   return (
     <div className="space-y-4">
-      <Card className="p-4">
+      <Card pad={false} className="p-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2"><ListChecks size={16} className="text-secondary" /><span className="text-sm font-medium text-foreground">Readiness: {completionPct}%</span></div>
           {completionPct >= 100 && <Badge variant="success">Ready to submit</Badge>}
@@ -1069,7 +1069,7 @@ function ChecklistTab({ items, completionPct, isExternal, canToggle, onToggle }:
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{cat.replace(/_/g, ' ')}</p>
           <div className="space-y-2">
             {catItems.map((item, idx) => (
-              <Card key={item.key || idx} className="p-3 flex items-center justify-between gap-3">
+              <Card pad={false} key={item.key || idx} className="p-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <input
                     type="checkbox"
@@ -1096,7 +1096,7 @@ function ChecklistTab({ items, completionPct, isExternal, canToggle, onToggle }:
         </div>
       ))}
       {items.length === 0 && (
-        <Card className="p-6 text-center"><ListChecks size={32} className="text-muted-foreground mx-auto mb-3" /><p className="text-sm text-foreground">No checklist items yet.</p></Card>
+        <Card pad={false} className="p-6 text-center"><ListChecks size={32} className="text-muted-foreground mx-auto mb-3" /><p className="text-sm text-foreground">No checklist items yet.</p></Card>
       )}
     </div>
   )
@@ -1114,7 +1114,7 @@ function RecommendersTab({ recommenders, programId, onNudge }: {
   }
   if (relevant.length === 0)
     return (
-      <Card className="p-6 text-center">
+      <Card pad={false} className="p-6 text-center">
         <Users size={32} className="text-muted-foreground mx-auto mb-3" />
         <p className="text-sm text-foreground">No recommenders yet.</p>
         <p className="text-xs text-muted-foreground mt-1">Add recommenders from your Profile to request letters for this program.</p>
@@ -1123,7 +1123,7 @@ function RecommendersTab({ recommenders, programId, onNudge }: {
   return (
     <div className="space-y-3">
       {relevant.map(r => (
-        <Card key={r.id} className="p-4 flex items-center justify-between gap-3">
+        <Card pad={false} key={r.id} className="p-4 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground">{r.recommender_name}</p>
             <p className="text-xs text-muted-foreground">{r.recommender_title || r.relationship || r.recommender_institution || 'Recommender'}</p>

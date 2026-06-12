@@ -163,7 +163,7 @@ export default function EventsPage() {
         )}
       />
 
-      <Card className="p-3">
+      <Card pad={false} className="p-3">
         <p className="text-xs text-muted-foreground">Operational cue</p>
         <p className="text-sm text-foreground">
           Compare event fill rates to identify which event types and programs attract stronger applicant intent.
@@ -172,15 +172,15 @@ export default function EventsPage() {
 
       {events.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Card className="p-3">
+          <Card pad={false} className="p-3">
             <p className="text-xs text-muted-foreground">Open Events</p>
             <p className="text-xl font-semibold text-foreground">{events.filter(e => e.status === 'open').length}</p>
           </Card>
-          <Card className="p-3">
+          <Card pad={false} className="p-3">
             <p className="text-xs text-muted-foreground">Total RSVPs</p>
             <p className="text-xl font-semibold text-foreground">{events.reduce((sum, e) => sum + e.rsvp_count, 0)}</p>
           </Card>
-          <Card className="p-3">
+          <Card pad={false} className="p-3">
             <p className="text-xs text-muted-foreground">Average Fill</p>
             <p className="text-xl font-semibold text-foreground">
               {(() => {
@@ -214,7 +214,7 @@ export default function EventsPage() {
           {events.map(ev => {
             const prog = programs.find(p => p.id === ev.program_id)
             return (
-              <Card key={ev.id} className="p-4">
+              <Card pad={false} key={ev.id} className="p-4">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="font-semibold text-foreground">{ev.event_name}</h3>
                   <Badge variant={(STATUS_COLORS[ev.status] as any) ?? 'neutral'}>{ev.status}</Badge>

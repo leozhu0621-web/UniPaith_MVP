@@ -27,7 +27,7 @@ export default function ApplyReadyChecklist({ programId }: { programId?: string 
 
   if (isLoading) {
     return (
-      <Card className="space-y-2 p-4">
+      <Card pad={false} className="space-y-2 p-4">
         <Skeleton className="h-4 w-32" />
         <Skeleton className="h-3 w-full" />
         <Skeleton className="h-3 w-2/3" />
@@ -40,7 +40,7 @@ export default function ApplyReadyChecklist({ programId }: { programId?: string 
   const ready = data.ready_to_submit;
 
   return (
-    <Card className="space-y-3 p-4">
+    <Card pad={false} className="space-y-3 p-4">
       <div className="flex items-center gap-2">
         <ShieldCheck size={15} className={ready ? "text-success" : "text-secondary"} />
         <h3 className="text-sm font-medium text-foreground">Apply-readiness</h3>

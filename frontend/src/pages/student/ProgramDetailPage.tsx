@@ -320,7 +320,7 @@ export default function ProgramDetailPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl w-full mx-auto">
+    <div className="p-6 max-w-5xl w-full mx-auto animate-page-in">
       {/* ── Archived banner (§6) ── */}
       {isArchived && (
         <div className="mb-4 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3">
@@ -487,7 +487,7 @@ export default function ProgramDetailPage() {
         return (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
             {tiles.map(t => (
-              <Card key={t.label} className="p-4">
+              <Card pad={false} key={t.label} className="p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <t.icon size={13} className="text-secondary" />
                   <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">{t.label}</span>
@@ -502,7 +502,7 @@ export default function ProgramDetailPage() {
       {/* ── Your realistic shot — probability bands (Spec 09 §4A).
             The DualRing + redacted "why this match" now lead the fact strip (§2). ── */}
       {hasMatch && (
-        <Card className="mb-5 p-4">
+        <Card pad={false} className="mb-5 p-4">
           <ProbabilityBands
             bands={match.probability_bands ?? null}
             reason={match.acceptance_rate == null ? 'no_history' : 'not_match_ready'}
@@ -556,7 +556,7 @@ export default function ProgramDetailPage() {
                   dedicated "Events & Updates" tab (NewsGrid). */}
 
               {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format || tracksMeta.curriculum.length > 0) && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <BookOpen size={14} className="text-secondary" />
                     <h3 className="font-semibold text-foreground">Curriculum & Structure</h3>
@@ -634,7 +634,7 @@ export default function ProgramDetailPage() {
                 if (cp.avg_work_experience_months != null) rows.push({ label: 'Avg work experience', value: `${cp.avg_work_experience_months} mo` })
                 if (!rows.length) return null
                 return (
-                  <Card className="p-5">
+                  <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <Users size={14} className="text-secondary" />
                       <h3 className="font-semibold text-foreground">Class Profile</h3>
@@ -666,7 +666,7 @@ export default function ProgramDetailPage() {
                 const lead: Array<Record<string, any>> = facObj && Array.isArray(facObj.lead) ? facObj.lead : []
                 if (!facObj || (!lead.length && !facObj.directory_url && !facObj.note)) return null
                 return (
-                  <Card className="p-5">
+                  <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <Users size={14} className="text-secondary" />
                       <h3 className="font-semibold text-foreground">Faculty</h3>
@@ -701,7 +701,7 @@ export default function ProgramDetailPage() {
 
               {/* Highlights as editorial chips */}
               {Array.isArray(p.highlights) && p.highlights.length > 0 && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles size={14} className="text-secondary" />
                     <h3 className="font-semibold text-foreground">Program Highlights</h3>
@@ -726,7 +726,7 @@ export default function ProgramDetailPage() {
                 rows = rows.filter(r => r && (r.name || r.email))
                 if (!rows.length) return null
                 return (
-                  <Card className="p-5">
+                  <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <Mail size={14} className="text-secondary" />
                       <h3 className="font-semibold text-foreground">Program Contacts</h3>
@@ -796,7 +796,7 @@ export default function ProgramDetailPage() {
                 />
 
                 {/* Application Requirements */}
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <GraduationCap size={14} className="text-secondary" />
                     <h3
@@ -863,7 +863,7 @@ export default function ProgramDetailPage() {
                 </Card>
 
                 {prerequisites.length > 0 && (
-                  <Card className="p-5">
+                  <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <GraduationCap size={14} className="text-secondary" />
                       <h3 className="font-semibold text-foreground">Prerequisites</h3>
@@ -890,7 +890,7 @@ export default function ProgramDetailPage() {
 
                 {/* Application Timeline */}
                 {admissionTimeline && (
-                  <Card className="p-5">
+                  <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Clock size={14} className="text-secondary" />
                       <h3 className="font-semibold text-foreground" title={admissionTimeline.term || undefined}>Application Timeline</h3>
@@ -944,7 +944,7 @@ export default function ProgramDetailPage() {
 
                 {/* Application Timeline — rounds + key dates merged into one card. */}
                 {!admissionTimeline && (deadlineRounds.length > 0 || effectiveDeadline || p.program_start_date) && (
-                  <Card className="p-5">
+                  <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <Clock size={14} className="text-secondary" />
                       <h3 className="font-semibold text-foreground">Application Timeline</h3>
@@ -980,7 +980,7 @@ export default function ProgramDetailPage() {
                   const intlSources: Array<Record<string, any>> = Array.isArray(intl.sources) ? intl.sources : []
                   if (!eng && !visa && !intl.opt) return null
                   return (
-                    <Card className="p-5">
+                    <Card pad={false} className="p-5">
                       <div className="flex items-center gap-2 mb-3">
                         <Building2 size={14} className="text-secondary" />
                         <h3 className="font-semibold text-foreground">International Students</h3>
@@ -1029,7 +1029,7 @@ export default function ProgramDetailPage() {
                 {/* Admissions profile (Key Dates merged into Application Timeline above) */}
                 <div className="grid grid-cols-1 gap-4">
                   {(p.acceptance_rate ?? rd.acceptance_rate) != null && (
-                    <Card className="p-5">
+                    <Card pad={false} className="p-5">
                       <div className="flex items-center gap-2 mb-3">
                         <Sparkles size={14} className="text-secondary" />
                         <h3 className="font-semibold text-foreground">Admissions Profile</h3>
@@ -1087,7 +1087,7 @@ export default function ProgramDetailPage() {
                   pellGrantRate={cd.pell_grant_rate ?? rd.pell_grant_rate}
                 />
 
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <DollarSign size={14} className="text-secondary" />
                     <h3 className="font-semibold text-foreground">Tuition & Fees</h3>
@@ -1144,7 +1144,7 @@ export default function ProgramDetailPage() {
                 </Card>
 
                 {fundingSignals && (
-                  <Card className="p-5">
+                  <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <DollarSign size={14} className="text-secondary" />
                       <h3 className="font-semibold text-foreground">Funding & Aid Signals</h3>
@@ -1187,7 +1187,7 @@ export default function ProgramDetailPage() {
                   if (rows.length === 0) return null
                   const maxPrice = Math.max(...rows.map(r => netPriceByIncome[r.key]))
                   return (
-                    <Card className="p-5">
+                    <Card pad={false} className="p-5">
                       <div className="flex items-center gap-2 mb-2">
                         <DollarSign size={14} className="text-secondary" />
                         <h3 className="font-semibold text-foreground">Net Price by Household Income</h3>
@@ -1245,7 +1245,7 @@ export default function ProgramDetailPage() {
                   if (rows.length === 0) return null
                   const max = Math.max(...rows.map(r => r.value))
                   return (
-                    <Card className="p-5">
+                    <Card pad={false} className="p-5">
                       <div className="flex items-center gap-2 mb-2">
                         <DollarSign size={14} className="text-secondary" />
                         <h3 className="font-semibold text-foreground">Graduate Debt Distribution</h3>
@@ -1338,7 +1338,7 @@ export default function ProgramDetailPage() {
 
             if (!hasData) {
               return (
-                <Card className="p-6 text-center">
+                <Card pad={false} className="p-6 text-center">
                   <TrendingUp size={32} className="text-foreground/30 mx-auto mb-3" />
                   <p className="text-sm text-foreground">Outcomes data is not yet available for this program.</p>
                   <p className="text-xs text-foreground/60 mt-1">Check back later or contact the program directly.</p>
@@ -1350,7 +1350,7 @@ export default function ProgramDetailPage() {
               <>
                 {/* Employment & Placement — rate, class size, industries/employers + conditions */}
                 {(empRate != null || internRate != null || topIndustries.length > 0 || topEmployers.length > 0) && (
-                  <Card className="p-5">
+                  <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Briefcase size={14} className="text-secondary" />
                       <h3 className="font-semibold text-foreground">Employment &amp; Placement</h3>
@@ -1397,7 +1397,7 @@ export default function ProgramDetailPage() {
 
                 {/* Salary Distribution — median + percentiles + bonus + conditions */}
                 {salary && (
-                  <Card className="p-5">
+                  <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <DollarSign size={14} className="text-secondary" />
                       <h3 className="font-semibold text-foreground">Salary Distribution</h3>
@@ -1486,7 +1486,7 @@ export default function ProgramDetailPage() {
                 const tone = (s: string) => s === 'positive' ? 'text-success' : s === 'caution' ? 'text-warning' : 'text-foreground'
                 const dot = (s: string) => s === 'positive' ? 'bg-success' : s === 'caution' ? 'bg-warning' : 'bg-secondary'
                 return (
-                  <Card className="p-5">
+                  <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-2">
                       <Star size={14} className="text-secondary" />
                       <h3 className="font-semibold text-foreground">What students say</h3>

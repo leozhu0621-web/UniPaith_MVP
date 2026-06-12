@@ -40,7 +40,7 @@ export default function FairnessPanel() {
   // glancing at the dashboard must not read "no card" as "all clear".
   if (isError) {
     return (
-      <Card className="p-4">
+      <Card pad={false} className="p-4">
         <div className="flex items-center gap-2 mb-1">
           <ShieldAlert size={16} className="text-warning" />
           <h3 className="text-sm font-semibold text-foreground">Fairness</h3>
@@ -61,7 +61,7 @@ export default function FairnessPanel() {
     .slice(0, 3)
 
   return (
-    <Card className={`p-4 ${meta.cardClass}`}>
+    <Card pad={false} className={`p-4 ${meta.cardClass}`}>
       <div className="flex items-center justify-between gap-2 mb-1">
         <div className="flex items-center gap-2">
           <Icon size={16} className={meta.tone} />

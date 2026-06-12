@@ -113,7 +113,7 @@ export default function FundingBuilder({
   if (poolsQ.isLoading || budgetQ.isLoading || packageQ.isLoading) return <Skeleton className="h-72" />
   if (poolsQ.isError || budgetQ.isError || packageQ.isError)
     return (
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <QueryError
           variant="inline"
           detail="Couldn’t load the funding package."
@@ -142,7 +142,7 @@ export default function FundingBuilder({
   }
 
   return (
-    <Card className="p-5">
+    <Card pad={false} className="p-5">
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-secondary">

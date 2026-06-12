@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getSettings, updateSettings, type UpdateSettingsPayload } from '../../api/settings'
 import { useThemeStore, type FontSize, type Theme } from '../../stores/theme-store'
 import { showToast } from '../../stores/toast-store'
+import { PageContainer, PageHeader } from '../../components/student/density'
 import QueryError from '../../components/ui/QueryError'
 import AccountCard from './settings/AccountCard'
 import SecurityCard from './settings/SecurityCard'
@@ -51,18 +52,15 @@ export default function SettingsPage() {
 
   if (isError && !settings) {
     return (
-      <div className="px-4 sm:px-6 py-6 w-full">
+      <PageContainer>
         <QueryError detail="We could not load your settings." onRetry={() => refetch()} />
-      </div>
+      </PageContainer>
     )
   }
 
   return (
-    <div className="px-4 sm:px-6 py-6 w-full">
-      <header className="mb-6">
-        <p className="up-eyebrow text-muted-foreground">Settings</p>
-        <h1 className="text-lg font-bold text-foreground mt-1">Your account</h1>
-      </header>
+    <PageContainer>
+      <PageHeader eyebrow="Settings" title="Your account" />
 
       {isLoading || !settings ? (
         <div className="space-y-4">
@@ -94,6 +92,6 @@ export default function SettingsPage() {
           <DangerZone deletion={settings.deletion} onChanged={refetch} />
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

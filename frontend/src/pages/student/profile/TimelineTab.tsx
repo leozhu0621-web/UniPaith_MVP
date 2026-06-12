@@ -78,7 +78,7 @@ export default function TimelineTab() {
           description="Your timeline fills in as you complete sections, upload documents, and move applications forward."
         />
       ) : (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <ol className="relative pl-6">
             <span className="absolute left-[7px] top-1 bottom-1 w-px bg-border" aria-hidden="true" />
             {items.map((item, i) => (

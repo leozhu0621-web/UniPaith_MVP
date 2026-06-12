@@ -214,7 +214,7 @@ export default function InsightsPanel({
       )}
 
       {/* ══ Panel 1 — Student / alumni reviews ══ */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <div className="flex items-center gap-2 mb-1">
           <MessageSquareText size={15} className="text-secondary" />
           <h3 className="font-semibold text-foreground">Student &amp; alumni reviews</h3>
@@ -390,7 +390,7 @@ export default function InsightsPanel({
       </Card>
 
       {/* ══ Panel 2 — Professional / employer feedback ══ */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <div className="flex items-center gap-2 mb-4">
           <Briefcase size={15} className="text-secondary" />
           <h3 className="font-semibold text-foreground">Employer feedback</h3>

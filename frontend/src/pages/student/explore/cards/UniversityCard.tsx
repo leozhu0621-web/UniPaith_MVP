@@ -116,7 +116,7 @@ export default function UniversityCard({ institution: inst, onClick, following, 
                 {classification.label}
               </p>
             )}
-            <h3 className="text-lg leading-tight font-bold text-foreground line-clamp-2">
+            <h3 className="text-lg leading-tight font-bold text-foreground line-clamp-2 break-words">
               {inst.name}
             </h3>
             <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">

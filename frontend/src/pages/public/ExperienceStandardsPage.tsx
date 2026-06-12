@@ -52,7 +52,7 @@ const BENCH_LABELS: Record<string, string> = {
 
 function SurfaceCard({ surface }: { surface: UxSurface }) {
   return (
-    <Card className="flex h-full flex-col gap-3 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-h3 leading-snug text-foreground">{surface.name}</h3>
         <span
@@ -208,7 +208,7 @@ export default function ExperienceStandardsPage() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data
             ? data.standards.map(s => (
-                <Card key={s.title} className="flex h-full flex-col gap-2 p-5">
+                <Card pad={false} key={s.title} className="flex h-full flex-col gap-2 p-5">
                   <h3 className="text-h3 text-foreground">{s.title}</h3>
                   <p className="text-sm text-muted-foreground">{s.body}</p>
                   <div className="mt-auto pt-1">
@@ -227,7 +227,7 @@ export default function ExperienceStandardsPage() {
           title="First-run polish"
           sub="The highest-churn moment. Every surface ships a real empty-state component, not a generic “no data”."
         />
-        <Card className="mt-6 p-6">
+        <Card pad={false} className="mt-6 p-6">
           <p className="text-foreground">{data?.empty_state.rule ?? ''}</p>
           {!data && <div className="h-5 w-3/4 animate-pulse rounded bg-muted" />}
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -254,7 +254,7 @@ export default function ExperienceStandardsPage() {
           title="Acceptance"
           sub="A surface ships when it passes a side-by-side click test against its named competitor — no drop the visitor can feel."
         />
-        <Card className="mt-6 p-6">
+        <Card pad={false} className="mt-6 p-6">
           <ul className="space-y-3">
             {(data?.acceptance ?? []).map(item => (
               <li key={item} className="flex gap-3 text-sm text-foreground">

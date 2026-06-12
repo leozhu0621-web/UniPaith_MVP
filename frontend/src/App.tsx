@@ -1,101 +1,113 @@
 import { createBrowserRouter, RouterProvider, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect, type ReactNode } from 'react'
 import { useAuthStore } from './stores/auth-store'
 import ToastContainer from './components/ui/Toast'
 import ConfirmHost from './components/ui/ConfirmDialog'
 import DemoNotice from './components/system/DemoNotice'
 import FeedbackWidget from './components/system/FeedbackWidget'
 import AppErrorBoundary from './components/system/AppErrorBoundary'
+import PageLoader from './components/ui/PageLoader'
 
-// Layouts
+// Layouts — eager: the shell must mount instantly and stay mounted while page
+// chunks load (UX overhaul Ship A, 2026-06-12 spec §1).
 import AuthLayout from './components/layout/AuthLayout'
 import StudentLayout from './components/layout/StudentLayout'
 import InstitutionLayout from './components/layout/InstitutionLayout'
 import RequireAuth from './components/layout/RequireAuth'
 import PublicLayout from './components/layout/PublicLayout'
+import MySpaceShell from './pages/student/myspace/MySpaceShell'
+
+// Redirect components — eager (tiny, and a redirect must never wait on a chunk).
+import { LegacyApplicantRedirect, LegacyPipelineRedirect } from './pages/institution/LegacyPipelineRedirect'
+import { POSTS_TAB_REDIRECTS } from './utils/information-architecture'
+
+// Route error element — eager so it can render even when a page chunk fails to load.
+import RouteErrorPage from './pages/system/RouteErrorPage'
+
+// ─── Route-level code splitting (UX overhaul Ship A, 2026-06-12 spec §1) ───
+// Every page is a lazy chunk; each route element wraps its page in
+// <Suspense fallback={<PageLoader/>}> via page() below, so the boundary sits
+// INSIDE the layout's <Outlet> and the nav/shell stays mounted while a chunk
+// loads. Layouts, auth guards, and redirects above stay eager.
 
 // Auth pages
-import LoginPage from './pages/auth/LoginPage'
-import SignupPage from './pages/auth/SignupPage'
-import AuthCallbackPage from './pages/auth/AuthCallbackPage'
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'))
+const SignupPage = lazy(() => import('./pages/auth/SignupPage'))
+const AuthCallbackPage = lazy(() => import('./pages/auth/AuthCallbackPage'))
 
 // Public pages (program browsing — linked from the marketing site at unipaith.co)
-import ProgramBrowsePage from './pages/public/ProgramBrowsePage'
-import InstitutionPage from './pages/public/InstitutionPage'
-import ProgramDetailPage from './pages/public/ProgramDetailPage'
-import ClaudeApiGoalPage from './pages/public/ClaudeApiGoalPage'
-import GoalHubPage from './pages/public/GoalHubPage'
-import BuildRoadmapPage from './pages/public/BuildRoadmapPage'
-import FeatureBacklogPage from './pages/public/FeatureBacklogPage'
-import ApiContractPage from './pages/public/ApiContractPage'
-import DataModelPage from './pages/public/DataModelPage'
-import AcceptancePage from './pages/public/AcceptancePage'
-import ExperienceStandardsPage from './pages/public/ExperienceStandardsPage'
-import FrontendStandardsPage from './pages/public/FrontendStandardsPage'
-import MlCorePage from './pages/public/MlCorePage'
-import ProductionReadinessPage from './pages/public/ProductionReadinessPage'
-import SearchFeedRecsPage from './pages/public/SearchFeedRecsPage'
-import SecurityTrustPage from './pages/public/SecurityTrustPage'
-import RealtimeNotificationsPage from './pages/public/RealtimeNotificationsPage'
-import ChatbotEvalPage from './pages/public/ChatbotEvalPage'
-import EvalHarnessPage from './pages/public/EvalHarnessPage'
+const ProgramBrowsePage = lazy(() => import('./pages/public/ProgramBrowsePage'))
+const InstitutionPage = lazy(() => import('./pages/public/InstitutionPage'))
+const ProgramDetailPage = lazy(() => import('./pages/public/ProgramDetailPage'))
+const ClaudeApiGoalPage = lazy(() => import('./pages/public/ClaudeApiGoalPage'))
+const GoalHubPage = lazy(() => import('./pages/public/GoalHubPage'))
+const BuildRoadmapPage = lazy(() => import('./pages/public/BuildRoadmapPage'))
+const FeatureBacklogPage = lazy(() => import('./pages/public/FeatureBacklogPage'))
+const ApiContractPage = lazy(() => import('./pages/public/ApiContractPage'))
+const DataModelPage = lazy(() => import('./pages/public/DataModelPage'))
+const AcceptancePage = lazy(() => import('./pages/public/AcceptancePage'))
+const ExperienceStandardsPage = lazy(() => import('./pages/public/ExperienceStandardsPage'))
+const FrontendStandardsPage = lazy(() => import('./pages/public/FrontendStandardsPage'))
+const MlCorePage = lazy(() => import('./pages/public/MlCorePage'))
+const ProductionReadinessPage = lazy(() => import('./pages/public/ProductionReadinessPage'))
+const SearchFeedRecsPage = lazy(() => import('./pages/public/SearchFeedRecsPage'))
+const SecurityTrustPage = lazy(() => import('./pages/public/SecurityTrustPage'))
+const RealtimeNotificationsPage = lazy(() => import('./pages/public/RealtimeNotificationsPage'))
+const ChatbotEvalPage = lazy(() => import('./pages/public/ChatbotEvalPage'))
+const EvalHarnessPage = lazy(() => import('./pages/public/EvalHarnessPage'))
 
-// Student pages — 4 main + profile/saved/settings from avatar
-// Discover (Stage 1) is the new student home — replaces CounselorHomePage
-// per the Phase B Discover-page rebuild. Track-segmented journey + chat
-// + artifact rail.
-import DiscoverHomePage from './pages/student/DiscoverHomePage'
-import ExplorePage from './pages/student/ExplorePage'
-import { POSTS_TAB_REDIRECTS } from './utils/information-architecture'
-// My Space (Spec 2026-06-10) — personal hub shell + rooms. ApplicationsPage /
-// CalendarPage are code-split (they were lazy children of the old ManagementPage).
-import MySpaceShell from './pages/student/myspace/MySpaceShell'
-import MySpaceHomePage from './pages/student/myspace/MySpaceHomePage'
-import PrepPage from './pages/student/myspace/PrepPage'
-import MessagesRoom from './pages/student/myspace/MessagesRoom'
-import ApplicationsPage from './pages/student/ApplicationsPage'
-import CalendarPage from './pages/student/CalendarPage'
-import ProfilePage from './pages/student/ProfilePage'
-import StudentProgramDetailPage from './pages/student/ProgramDetailPage'
-import InstitutionDetailPage from './pages/student/InstitutionDetailPage'
-import SchoolSubunitPage from './pages/student/SchoolSubunitPage'
-import ApplicationDetailPage from './pages/student/ApplicationDetailPage'
-import SavedListPage from './pages/student/SavedListPage'
-import StudentSettingsPage from './pages/student/SettingsPage'
-import FeedbackInboxPage from './pages/student/FeedbackInboxPage'
-import OnboardingPage from './pages/student/OnboardingPage'
+// Student pages — Discover (Stage 1) is the student home; My Space rooms render
+// inside the eager MySpaceShell.
+const DiscoverHomePage = lazy(() => import('./pages/student/DiscoverHomePage'))
+const ExplorePage = lazy(() => import('./pages/student/ExplorePage'))
+const MySpaceHomePage = lazy(() => import('./pages/student/myspace/MySpaceHomePage'))
+const PrepPage = lazy(() => import('./pages/student/myspace/PrepPage'))
+const MessagesRoom = lazy(() => import('./pages/student/myspace/MessagesRoom'))
+const ApplicationsPage = lazy(() => import('./pages/student/ApplicationsPage'))
+const CalendarPage = lazy(() => import('./pages/student/CalendarPage'))
+const ProfilePage = lazy(() => import('./pages/student/ProfilePage'))
+const StudentProgramDetailPage = lazy(() => import('./pages/student/ProgramDetailPage'))
+const InstitutionDetailPage = lazy(() => import('./pages/student/InstitutionDetailPage'))
+const SchoolSubunitPage = lazy(() => import('./pages/student/SchoolSubunitPage'))
+const ApplicationDetailPage = lazy(() => import('./pages/student/ApplicationDetailPage'))
+const SavedListPage = lazy(() => import('./pages/student/SavedListPage'))
+const StudentSettingsPage = lazy(() => import('./pages/student/SettingsPage'))
+const FeedbackInboxPage = lazy(() => import('./pages/student/FeedbackInboxPage'))
+const OnboardingPage = lazy(() => import('./pages/student/OnboardingPage'))
 
 // Institution pages
-import DashboardPage from './pages/institution/DashboardPage'
-import SetupPage from './pages/institution/SetupPage'
-import ProgramsPage from './pages/institution/ProgramsPage'
-import ProgramEditorPage from './pages/institution/ProgramEditorPage'
-import { LegacyApplicantRedirect, LegacyPipelineRedirect } from './pages/institution/LegacyPipelineRedirect'
-import StudentDetailPage from './pages/institution/StudentDetailPage'
-import InterviewsPage from './pages/institution/InterviewsPage'
-import SegmentsPage from './pages/institution/SegmentsPage'
-import CampaignsPage from './pages/institution/CampaignsPage'
-import EventsPage from './pages/institution/EventsPage'
-import AnalyticsPage from './pages/institution/AnalyticsPage'
-import InstitutionSettingsPage from './pages/institution/SettingsPage'
-import DataUploadPage from './pages/institution/DataUploadPage'
-import PostsPage from './pages/institution/PostsPage'
-import InquiriesPage from './pages/institution/InquiriesPage'
-import PromotionsPage from './pages/institution/PromotionsPage'
-import AuditLogPage from './pages/institution/AuditLogPage'
-import TemplatesPage from './pages/institution/TemplatesPage'
-import CohortComparisonPage from './pages/institution/CohortComparisonPage'
-import IntakeRoundsPage from './pages/institution/IntakeRoundsPage'
-import RequirementsChecklistPage from './pages/institution/RequirementsChecklistPage'
-import AdmissionsPage from './pages/institution/AdmissionsPage'
-import OutreachPage from './pages/institution/OutreachPage'
-import CommunicationsPage from './pages/institution/CommunicationsPage'
-import RecruitmentPage from './pages/institution/RecruitmentPage'
-import DepartmentPortalPage from './pages/institution/graduate/DepartmentPortalPage'
+const DashboardPage = lazy(() => import('./pages/institution/DashboardPage'))
+const SetupPage = lazy(() => import('./pages/institution/SetupPage'))
+const ProgramsPage = lazy(() => import('./pages/institution/ProgramsPage'))
+const ProgramEditorPage = lazy(() => import('./pages/institution/ProgramEditorPage'))
+const StudentDetailPage = lazy(() => import('./pages/institution/StudentDetailPage'))
+const InterviewsPage = lazy(() => import('./pages/institution/InterviewsPage'))
+const SegmentsPage = lazy(() => import('./pages/institution/SegmentsPage'))
+const CampaignsPage = lazy(() => import('./pages/institution/CampaignsPage'))
+const EventsPage = lazy(() => import('./pages/institution/EventsPage'))
+const AnalyticsPage = lazy(() => import('./pages/institution/AnalyticsPage'))
+const InstitutionSettingsPage = lazy(() => import('./pages/institution/SettingsPage'))
+const DataUploadPage = lazy(() => import('./pages/institution/DataUploadPage'))
+const PostsPage = lazy(() => import('./pages/institution/PostsPage'))
+const InquiriesPage = lazy(() => import('./pages/institution/InquiriesPage'))
+const PromotionsPage = lazy(() => import('./pages/institution/PromotionsPage'))
+const AuditLogPage = lazy(() => import('./pages/institution/AuditLogPage'))
+const TemplatesPage = lazy(() => import('./pages/institution/TemplatesPage'))
+const CohortComparisonPage = lazy(() => import('./pages/institution/CohortComparisonPage'))
+const IntakeRoundsPage = lazy(() => import('./pages/institution/IntakeRoundsPage'))
+const RequirementsChecklistPage = lazy(() => import('./pages/institution/RequirementsChecklistPage'))
+const AdmissionsPage = lazy(() => import('./pages/institution/AdmissionsPage'))
+const OutreachPage = lazy(() => import('./pages/institution/OutreachPage'))
+const CommunicationsPage = lazy(() => import('./pages/institution/CommunicationsPage'))
+const RecruitmentPage = lazy(() => import('./pages/institution/RecruitmentPage'))
+const DepartmentPortalPage = lazy(() => import('./pages/institution/graduate/DepartmentPortalPage'))
 
-import RouteErrorPage from './pages/system/RouteErrorPage'
-import NotFoundPage from './pages/system/NotFoundPage'
+const NotFoundPage = lazy(() => import('./pages/system/NotFoundPage'))
+
+// Per-route Suspense boundary: the fallback (a fixed 2px top progress bar)
+// replaces only the page slot, never the surrounding layout/nav.
+const page = (node: ReactNode) => <Suspense fallback={<PageLoader />}>{node}</Suspense>
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -159,51 +171,51 @@ const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/login" replace />, errorElement: <RouteErrorPage /> },
 
   // Public program browsing (linked from marketing-site CTAs)
-  { path: '/browse', element: <PublicLayout><ProgramBrowsePage /></PublicLayout>, errorElement: <RouteErrorPage /> },
-  { path: '/school/:institutionId', element: <PublicLayout><InstitutionPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
-  { path: '/school/:institutionId/schools/:schoolId', element: <PublicLayout><SchoolSubunitPage isAuthenticated={false} /></PublicLayout>, errorElement: <RouteErrorPage /> },
-  { path: '/program/:programId', element: <PublicLayout><ProgramDetailPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/browse', element: <PublicLayout>{page(<ProgramBrowsePage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/school/:institutionId', element: <PublicLayout>{page(<InstitutionPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/school/:institutionId/schools/:schoolId', element: <PublicLayout>{page(<SchoolSubunitPage isAuthenticated={false} />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/program/:programId', element: <PublicLayout>{page(<ProgramDetailPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 07 pricing/about now live on the marketing site (unipaith.co); preserve
   // the public app URLs by redirecting there rather than 404ing (PR #265 review).
   { path: '/pricing', element: <ExternalRedirect to="https://unipaith.co/pricing" />, errorElement: <RouteErrorPage /> },
   { path: '/about', element: <ExternalRedirect to="https://unipaith.co/about" />, errorElement: <RouteErrorPage /> },
   // Specs 48/49/50 — public build-transparency hub + surfaces (live data).
-  { path: '/goal', element: <PublicLayout><GoalHubPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal', element: <PublicLayout>{page(<GoalHubPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 45 — public "Claude API" AI-agent transparency surface (live registry).
-  { path: '/goal/claude-api', element: <PublicLayout><ClaudeApiGoalPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/claude-api', element: <PublicLayout>{page(<ClaudeApiGoalPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 48 — phased build roadmap.
-  { path: '/goal/roadmap', element: <PublicLayout><BuildRoadmapPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/roadmap', element: <PublicLayout>{page(<BuildRoadmapPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 49 — Feature-List V1 coverage map.
-  { path: '/goal/features', element: <PublicLayout><FeatureBacklogPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/features', element: <PublicLayout>{page(<FeatureBacklogPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 50 — front↔back API contract (router map read live from the routes).
-  { path: '/goal/api', element: <PublicLayout><ApiContractPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/api', element: <PublicLayout>{page(<ApiContractPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 51 — persisted data model (table map introspected live from the models).
-  { path: '/goal/data-model', element: <PublicLayout><DataModelPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/data-model', element: <PublicLayout>{page(<DataModelPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 52 — MVP acceptance & runbook (readiness read live from the running system).
-  { path: '/goal/acceptance', element: <PublicLayout><AcceptancePage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/acceptance', element: <PublicLayout>{page(<AcceptancePage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 53 — UX benchmark & interaction standards (per-surface backing read live).
-  { path: '/goal/experience', element: <PublicLayout><ExperienceStandardsPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/experience', element: <PublicLayout>{page(<ExperienceStandardsPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 54 — frontend engineering build spec (api↔router parity read live).
-  { path: '/goal/frontend', element: <PublicLayout><FrontendStandardsPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/frontend', element: <PublicLayout>{page(<FrontendStandardsPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 55 — backend production readiness (config / middleware / health read live).
-  { path: '/goal/backend', element: <PublicLayout><ProductionReadinessPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/backend', element: <PublicLayout>{page(<ProductionReadinessPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 56 — search / feed / recommendations substrate (routes / flags / table read live).
-  { path: '/goal/search', element: <PublicLayout><SearchFeedRecsPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/search', element: <PublicLayout>{page(<SearchFeedRecsPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 57 — realtime & notifications (SSE/WS routes, event catalog, broker read live).
-  { path: '/goal/realtime', element: <PublicLayout><RealtimeNotificationsPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/realtime', element: <PublicLayout>{page(<RealtimeNotificationsPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 61 — chatbot training & evaluation loop (constitution / safety floor / eval suites read live).
-  { path: '/goal/chatbot-eval', element: <PublicLayout><ChatbotEvalPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/chatbot-eval', element: <PublicLayout>{page(<ChatbotEvalPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 62 — shared evaluation harness (consumers / golden sets / judge / modes / tables read live).
-  { path: '/goal/eval-harness', element: <PublicLayout><EvalHarnessPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/eval-harness', element: <PublicLayout>{page(<EvalHarnessPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 58 — security, trust & compliance posture (controls / consent / PII / headers read live).
-  { path: '/goal/security', element: <PublicLayout><SecurityTrustPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/security', element: <PublicLayout>{page(<SecurityTrustPage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 63 — ML core & knowledge processing (the Qwen↔Claude boundary, read live from the routing layer).
-  { path: '/goal/ml-core', element: <PublicLayout><MlCorePage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/ml-core', element: <PublicLayout>{page(<MlCorePage />)}</PublicLayout>, errorElement: <RouteErrorPage /> },
 
-  { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
-  { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
-  { path: '/auth/callback', element: <AuthCallbackPage />, errorElement: <RouteErrorPage /> },
-  { path: '/onboarding', element: <RequireAuth role="student"><OnboardingPage /></RequireAuth>, errorElement: <RouteErrorPage /> },
+  { path: '/login', element: <AuthLayout>{page(<LoginPage />)}</AuthLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/signup', element: <AuthLayout>{page(<SignupPage />)}</AuthLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/auth/callback', element: page(<AuthCallbackPage />), errorElement: <RouteErrorPage /> },
+  { path: '/onboarding', element: <RequireAuth role="student">{page(<OnboardingPage />)}</RequireAuth>, errorElement: <RouteErrorPage /> },
 
   // Student routes
   {
@@ -212,34 +224,34 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorPage />,
     children: [
       // === 4 Main Pages ===
-      { index: true, element: <DiscoverHomePage /> },          // Stage 1 — Discovery
+      { index: true, element: page(<DiscoverHomePage />) },          // Stage 1 — Discovery
       // /s/posts retired (Spec 2026-06-12) — Connect lives in the Discover hub tabs.
       { path: 'posts', element: <PostsRedirect /> },
-      { path: 'explore', element: <ExplorePage /> },            // Discover hub (match + connect)
+      { path: 'explore', element: page(<ExplorePage />) },            // Discover hub (match + connect)
       // === My Space (Spec 2026-06-10) — mission-control home + journey-ordered rooms ===
       {
         element: <MySpaceShell />,
         children: [
-          { path: 'space', element: <MySpaceHomePage /> },        // Home — mission control
-          { path: 'saved', element: <SavedListPage /> },          // Plan
-          { path: 'prep', element: <PrepPage /> },                // Prepare — workshops · prompts
-          { path: 'applications', element: <ApplicationsPage /> }, // Apply & decide
-          { path: 'calendar', element: <CalendarPage /> },        // Anytime
-          { path: 'messages', element: <MessagesRoom /> },        // Anytime
-          { path: 'profile', element: <ProfilePage /> },          // Record
+          { path: 'space', element: page(<MySpaceHomePage />) },        // Home — mission control
+          { path: 'saved', element: page(<SavedListPage />) },          // Plan
+          { path: 'prep', element: page(<PrepPage />) },                // Prepare — workshops · prompts
+          { path: 'applications', element: page(<ApplicationsPage />) }, // Apply & decide
+          { path: 'calendar', element: page(<CalendarPage />) },        // Anytime
+          { path: 'messages', element: page(<MessagesRoom />) },        // Anytime
+          { path: 'profile', element: page(<ProfilePage />) },          // Record
         ],
       },
-      { path: 'settings', element: <StudentSettingsPage /> },
+      { path: 'settings', element: page(<StudentSettingsPage />) },
       // Owner-only in-app feedback inbox (gated server-side by the email allowlist).
-      { path: 'feedback', element: <FeedbackInboxPage /> },
+      { path: 'feedback', element: page(<FeedbackInboxPage />) },
       // === Drill-down pages ===
-      { path: 'programs/:programId', element: <StudentProgramDetailPage /> },
+      { path: 'programs/:programId', element: page(<StudentProgramDetailPage />) },
       // Legacy alias — /s/schools/:id was the same page; redirect to the canonical
       // program route (Spec/90 G-A1).
       { path: 'schools/:programId', element: <LegacySchoolRedirect /> },
-      { path: 'institutions/:institutionId', element: <InstitutionDetailPage /> },
-      { path: 'institutions/:institutionId/schools/:schoolId', element: <SchoolSubunitPage /> },
-      { path: 'applications/:appId', element: <ApplicationDetailPage /> },
+      { path: 'institutions/:institutionId', element: page(<InstitutionDetailPage />) },
+      { path: 'institutions/:institutionId/schools/:schoolId', element: page(<SchoolSubunitPage />) },
+      { path: 'applications/:appId', element: page(<ApplicationDetailPage />) },
       // === Redirects (all old routes still work) ===
       // /s/manage retired — tab deep links map into the My Space rooms.
       { path: 'manage', element: <ManageRedirect /> },
@@ -270,43 +282,43 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <Navigate to="/i/dashboard" replace /> },
-      { path: 'dashboard', element: <DashboardPage /> },
-      { path: 'setup', element: <SetupPage /> },
+      { path: 'dashboard', element: page(<DashboardPage />) },
+      { path: 'setup', element: page(<SetupPage />) },
       // Unified pages
-      { path: 'programs', element: <ProgramsPage /> },
-      { path: 'programs/new', element: <ProgramEditorPage /> },
-      { path: 'programs/:id/edit', element: <ProgramEditorPage /> },
-      { path: 'admissions', element: <AdmissionsPage /> },
-      { path: 'admissions/applicant/:appId', element: <StudentDetailPage /> },
-      { path: 'recruitment', element: <RecruitmentPage /> },
+      { path: 'programs', element: page(<ProgramsPage />) },
+      { path: 'programs/new', element: page(<ProgramEditorPage />) },
+      { path: 'programs/:id/edit', element: page(<ProgramEditorPage />) },
+      { path: 'admissions', element: page(<AdmissionsPage />) },
+      { path: 'admissions/applicant/:appId', element: page(<StudentDetailPage />) },
+      { path: 'recruitment', element: page(<RecruitmentPage />) },
       // Spec 41 — graduate department review portal (scoped review + faculty + funding)
-      { path: 'departments/:deptId', element: <DepartmentPortalPage /> },
-      { path: 'outreach', element: <OutreachPage /> },
-      { path: 'communications', element: <CommunicationsPage /> },
+      { path: 'departments/:deptId', element: page(<DepartmentPortalPage />) },
+      { path: 'outreach', element: page(<OutreachPage />) },
+      { path: 'communications', element: page(<CommunicationsPage />) },
       // Spec 31 — legacy pipeline URLs redirect into admissions intake
       { path: 'pipeline', element: <LegacyPipelineRedirect /> },
       { path: 'pipeline/:studentId', element: <LegacyApplicantRedirect /> },
-      { path: 'interviews', element: <InterviewsPage /> },
+      { path: 'interviews', element: page(<InterviewsPage />) },
       { path: 'messages', element: <Navigate to="/i/communications?tab=inbox" replace /> },
-      { path: 'segments', element: <SegmentsPage /> },
-      { path: 'campaigns', element: <CampaignsPage /> },
-      { path: 'events', element: <EventsPage /> },
-      { path: 'posts', element: <PostsPage /> },
-      { path: 'inquiries', element: <InquiriesPage /> },
-      { path: 'promotions', element: <PromotionsPage /> },
-      { path: 'audit-log', element: <AuditLogPage /> },
-      { path: 'templates', element: <TemplatesPage /> },
-      { path: 'cohort-compare', element: <CohortComparisonPage /> },
-      { path: 'intake-rounds', element: <IntakeRoundsPage /> },
-      { path: 'requirements', element: <RequirementsChecklistPage /> },
-      { path: 'analytics', element: <AnalyticsPage /> },
-      { path: 'data', element: <DataUploadPage /> },
-      { path: 'settings', element: <InstitutionSettingsPage /> },
+      { path: 'segments', element: page(<SegmentsPage />) },
+      { path: 'campaigns', element: page(<CampaignsPage />) },
+      { path: 'events', element: page(<EventsPage />) },
+      { path: 'posts', element: page(<PostsPage />) },
+      { path: 'inquiries', element: page(<InquiriesPage />) },
+      { path: 'promotions', element: page(<PromotionsPage />) },
+      { path: 'audit-log', element: page(<AuditLogPage />) },
+      { path: 'templates', element: page(<TemplatesPage />) },
+      { path: 'cohort-compare', element: page(<CohortComparisonPage />) },
+      { path: 'intake-rounds', element: page(<IntakeRoundsPage />) },
+      { path: 'requirements', element: page(<RequirementsChecklistPage />) },
+      { path: 'analytics', element: page(<AnalyticsPage />) },
+      { path: 'data', element: page(<DataUploadPage />) },
+      { path: 'settings', element: page(<InstitutionSettingsPage />) },
     ],
   },
 
   // Catch-all → login
-  { path: '*', element: <NotFoundPage />, errorElement: <RouteErrorPage /> },
+  { path: '*', element: page(<NotFoundPage />), errorElement: <RouteErrorPage /> },
 ])
 
 export default function App() {

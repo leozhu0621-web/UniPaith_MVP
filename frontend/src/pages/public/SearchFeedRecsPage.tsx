@@ -91,7 +91,7 @@ function StatusChip({ status }: { status: ReadinessStatus }) {
 function CapabilityCard({ capability }: { capability: SearchCapability }) {
   const Icon = CAPABILITY_ICONS[capability.key] ?? Search
   return (
-    <Card className="flex h-full flex-col gap-3 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-start justify-between gap-3">
         <CardTitle icon={Icon} className="leading-snug">
           {capability.title}
@@ -197,7 +197,7 @@ function RouteList({
   routes: string[] | undefined
 }) {
   return (
-    <Card className="flex flex-col gap-3 p-5">
+    <Card pad={false} className="flex flex-col gap-3 p-5">
       <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
         <Icon size={18} className="text-secondary" />
         {title}
@@ -361,7 +361,7 @@ export default function SearchFeedRecsPage() {
           title="Live configuration"
           sub="The deployed values, read straight off the running settings — the NL-interpreter and connect-ranker flags, and the saved-search alert caps."
         />
-        <Card className="mt-6 p-5">
+        <Card pad={false} className="mt-6 p-5">
           <dl className="divide-y divide-border">
             {data
               ? data.config_knobs.map(k => <KnobRow key={k.name} knob={k} />)
@@ -381,7 +381,7 @@ export default function SearchFeedRecsPage() {
           title="Build-task checklist"
           sub="Spec 56 §8 — each task classified by what's shipped versus what's next. The embedding-dependent halves (pgvector fusion, Qwen3-Reranker, the A/B harness) are named as planned, not hidden."
         />
-        <Card className="mt-6 p-2 sm:p-5">
+        <Card pad={false} className="mt-6 p-2 sm:p-5">
           <ul className="divide-y divide-border">
             {(data?.build_tasks ?? []).map(t => (
               <TaskRow key={`${t.section}-${t.text}`} task={t} />
@@ -403,7 +403,7 @@ export default function SearchFeedRecsPage() {
           title="Acceptance"
           sub="Spec 56 §9 — the definition of done, with each criterion held to the same honest live/in-progress/planned bar."
         />
-        <Card className="mt-6 p-2 sm:p-5">
+        <Card pad={false} className="mt-6 p-2 sm:p-5">
           <ul className="divide-y divide-border">
             {(data?.acceptance ?? []).map(a => (
               <AcceptanceRow key={a.text} item={a} />
@@ -428,7 +428,7 @@ export default function SearchFeedRecsPage() {
           />
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             {data.open_questions.map(q => (
-              <Card key={q.q} className="flex h-full flex-col gap-2 p-5">
+              <Card pad={false} key={q.q} className="flex h-full flex-col gap-2 p-5">
                 <h3 className="text-h3 text-foreground">{q.q}</h3>
                 <p className="text-sm text-muted-foreground">{q.a}</p>
               </Card>

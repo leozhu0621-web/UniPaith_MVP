@@ -7,7 +7,7 @@ import Card from '../../../components/ui/Card'
 /** First-run / no-result hint (Spec/14-workshops.md §8 empty state). */
 export function EmptyHint({ children }: { children: ReactNode }) {
   return (
-    <Card variant="card-flush" className="px-4 py-10 text-center text-sm text-muted-foreground">
+    <Card pad={false} variant="card-flush" className="px-4 py-10 text-center text-sm text-muted-foreground">
       {children}
     </Card>
   )

@@ -314,7 +314,7 @@ export default function ProgramDetailPage() {
               {keyStats.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {keyStats.map(s => (
-                    <Card key={s.label} className="p-4">
+                    <Card pad={false} key={s.label} className="p-4">
                       <p className="text-[1.9rem] leading-none font-bold text-foreground tracking-tight tabular-nums">{s.value}</p>
                       <p className="text-[12px] font-medium text-foreground/80 mt-2">{s.label}</p>
                       {s.hint && <p className="text-[10.5px] text-muted-foreground/70 mt-0.5">{s.hint}</p>}
@@ -324,7 +324,7 @@ export default function ProgramDetailPage() {
               )}
 
               {programRanking && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Trophy size={15} className="text-secondary" /> Ranking</h2>
                   <div className="flex items-baseline gap-3">
                     <span className="text-2xl font-bold text-foreground tabular-nums leading-none">#{programRanking.rank}</span>
@@ -334,21 +334,21 @@ export default function ProgramDetailPage() {
               )}
 
               {p.description_text && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-2">About this program</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{p.description_text}</p>
                 </Card>
               )}
 
               {p.who_its_for && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-2">Who it&apos;s for</h2>
                   <p className="text-sm text-foreground whitespace-pre-wrap">{p.who_its_for}</p>
                 </Card>
               )}
 
               {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format) && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-3">Tracks & Structure</h2>
                   {tracksMeta.concentrations.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
@@ -365,7 +365,7 @@ export default function ProgramDetailPage() {
               )}
 
               {highlights.length > 0 && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-3">Highlights</h2>
                   <ul className="space-y-2">
                     {highlights.map((h, i) => (
@@ -379,7 +379,7 @@ export default function ProgramDetailPage() {
               )}
 
               {faculty.length > 0 && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-3">Faculty Contacts</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {faculty.map((f, i) => (
@@ -397,7 +397,7 @@ export default function ProgramDetailPage() {
                 </Card>
               )}
 
-              <Card className="p-5">
+              <Card pad={false} className="p-5">
                 <h2 className="font-semibold text-foreground mb-3">Quick Facts</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div><span className="text-foreground/70">Degree:</span> <span className="font-medium">{DEGREE_LABELS[p.degree_type] || p.degree_type}</span></div>
@@ -414,7 +414,7 @@ export default function ProgramDetailPage() {
           {tab === 'admissions' && (
             <div className="space-y-6">
               {(effectiveDeadline || p.program_start_date) && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-3">Key Dates</h2>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     {effectiveDeadline && (
@@ -434,7 +434,7 @@ export default function ProgramDetailPage() {
               )}
 
               {appMaterials.length > 0 && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-3">Application Materials</h2>
                   <ul className="space-y-2">
                     {appMaterials.map((req, i) => (
@@ -452,7 +452,7 @@ export default function ProgramDetailPage() {
               )}
 
               {prerequisites.length > 0 && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-3">Prerequisites</h2>
                   <ul className="space-y-2 text-sm">
                     {prerequisites.map((pr, i) => (
@@ -471,7 +471,7 @@ export default function ProgramDetailPage() {
               )}
 
               {testPolicy && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <h2 className="font-semibold text-foreground">Test Policy</h2>
                     {testPolicy.stance_label && <Badge variant="info" size="sm">{testPolicy.stance_label}</Badge>}
@@ -497,7 +497,7 @@ export default function ProgramDetailPage() {
               )}
 
               {recommendations && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-2">Recommendations</h2>
                   <p className="text-sm text-foreground">
                     {recommendations.required_count > 0
@@ -509,7 +509,7 @@ export default function ProgramDetailPage() {
               )}
 
               {admissionTimeline && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-3">Intake Rounds — {admissionTimeline.term}</h2>
                   <div className="space-y-2">
                     {admissionTimeline.rounds.map((round: any, i: number) => (
@@ -526,7 +526,7 @@ export default function ProgramDetailPage() {
               )}
 
               {p.requirements && Object.keys(p.requirements).length > 0 && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-3">Other Requirements</h2>
                   <dl className="space-y-2 text-sm">
                     {Object.entries(p.requirements).map(([k, v]) => (
@@ -547,7 +547,7 @@ export default function ProgramDetailPage() {
 
           {tab === 'costs' && (
             <div className="space-y-6">
-              <Card className="p-5">
+              <Card pad={false} className="p-5">
                 <h2 className="font-semibold text-foreground mb-3">Tuition & Fees</h2>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -564,7 +564,7 @@ export default function ProgramDetailPage() {
               </Card>
 
               {(costBandMin != null || costBandMax != null) && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-2">Estimated Total Cost</h2>
                   <p className="text-lg font-semibold text-foreground">
                     {costBandMin != null && costBandMax != null
@@ -575,7 +575,7 @@ export default function ProgramDetailPage() {
               )}
 
               {fundingSignals && (
-                <Card className="p-5">
+                <Card pad={false} className="p-5">
                   <h2 className="font-semibold text-foreground mb-3">Funding & Aid Signals</h2>
                   <ul className="space-y-1.5 text-sm text-foreground">
                     {fundingSignals.ta_funded && <li>TA funding available</li>}
@@ -587,7 +587,7 @@ export default function ProgramDetailPage() {
               )}
 
               {effectiveTuition == null && !costBandMin && !fundingSignals && (
-                <Card className="p-5 text-center">
+                <Card pad={false} className="p-5 text-center">
                   <p className="text-sm text-foreground/70">Cost data has not been published for this program yet.</p>
                 </Card>
               )}
@@ -597,14 +597,14 @@ export default function ProgramDetailPage() {
           {tab === 'outcomes' && (
             <div className="space-y-6">
               {!hasOutcomes ? (
-                <Card className="p-5 text-center">
+                <Card pad={false} className="p-5 text-center">
                   <TrendingUp size={32} className="text-foreground/30 mx-auto mb-3" />
                   <p className="text-sm text-foreground/70">Outcomes data has not been published for this program yet.</p>
                 </Card>
               ) : (
                 <>
                   {(odn.median_salary != null || salaryBands.length > 0) && (
-                    <Card className="p-5">
+                    <Card pad={false} className="p-5">
                       <div className="flex items-center gap-2 mb-3">
                         <DollarSign size={14} className="text-secondary" />
                         <h2 className="font-semibold text-foreground">Salary</h2>
@@ -625,7 +625,7 @@ export default function ProgramDetailPage() {
                   )}
 
                   {(odn.employment_rate != null || odn.internship_conversion_rate != null) && (
-                    <Card className="p-5">
+                    <Card pad={false} className="p-5">
                       <div className="flex items-center gap-2 mb-3">
                         <Briefcase size={14} className="text-secondary" />
                         <h2 className="font-semibold text-foreground">Employment & Placement</h2>
@@ -649,7 +649,7 @@ export default function ProgramDetailPage() {
                   )}
 
                   {(odn.top_employers?.length ?? 0) > 0 && (
-                    <Card className="p-5">
+                    <Card pad={false} className="p-5">
                       <h2 className="font-semibold text-foreground mb-3">Top employers</h2>
                       <div className="flex flex-wrap gap-2">
                         {odn.top_employers.map((e: string) => <Badge key={e} variant="neutral" size="sm">{e}</Badge>)}
@@ -676,7 +676,7 @@ export default function ProgramDetailPage() {
                 <EmptyState icon={<CalendarDays size={40} />} title="No upcoming events" description="Check back later for program-specific events." />
               ) : (
                 events.map(e => (
-                  <Card key={e.id} className="p-4 flex items-center justify-between">
+                  <Card pad={false} key={e.id} className="p-4 flex items-center justify-between">
                     <div>
                       <h4 className="font-medium text-foreground">{e.event_name}</h4>
                       <p className="text-sm text-foreground/70">{formatDate(e.start_time)}{e.location ? ` · ${e.location}` : ''}</p>

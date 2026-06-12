@@ -56,8 +56,8 @@ export default function DiscoverHomePage() {
   // Flag off — single-column open Uni, no guided chrome (spec §9 fallback).
   if (!guided) {
     return (
-      <div className="p-4 lg:p-6 mx-auto max-w-6xl w-full">
-        <Card className="p-4 sm:p-5">
+      <div className="p-4 lg:p-6 mx-auto max-w-6xl w-full animate-page-in">
+        <Card pad={false} className="p-4 sm:p-5">
           <UniConversation
             profileOpen={profileOpen}
             onProfileOpenChange={setProfileOpen}
@@ -69,7 +69,7 @@ export default function DiscoverHomePage() {
   }
 
   return (
-    <div className="p-4 lg:p-6 w-full">
+    <div className="p-4 lg:p-6 w-full animate-page-in">
       {/* Mobile journey bar — opens the rail as a bottom sheet. */}
       <button
         type="button"
@@ -93,7 +93,7 @@ export default function DiscoverHomePage() {
 
         <div className="flex min-w-0 flex-1 justify-center">
           <div className="w-full max-w-[720px]">
-            <Card className="p-4 sm:p-5">
+            <Card pad={false} className="p-4 sm:p-5">
               <UniConversation
                 guided
                 profileOpen={profileOpen}

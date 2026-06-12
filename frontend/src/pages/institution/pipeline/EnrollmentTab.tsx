@@ -94,7 +94,7 @@ export default function EnrollmentTab({ applicationId }: { applicationId: string
 
   if (!e.available) {
     return (
-      <Card className="p-6">
+      <Card pad={false} className="p-6">
         <p className="text-sm font-medium text-foreground mb-1">Enrollment hasn't started</p>
         <p className="text-sm text-muted-foreground">
           The enrollment window opens once {e.student_name || 'the applicant'} accepts their offer.
@@ -115,7 +115,7 @@ export default function EnrollmentTab({ applicationId }: { applicationId: string
   return (
     <div className="space-y-4">
       {/* State + deposit summary */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <GraduationCap size={18} className="text-secondary" />
@@ -137,7 +137,7 @@ export default function EnrollmentTab({ applicationId }: { applicationId: string
       </Card>
 
       {/* Deposit (status-only — no money moves, §3.1) */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <div className="flex items-center gap-2 mb-2">
           <Wallet size={16} className="text-muted-foreground" />
           <p className="text-sm font-medium text-foreground">Enrollment deposit</p>
@@ -172,7 +172,7 @@ export default function EnrollmentTab({ applicationId }: { applicationId: string
       </Card>
 
       {/* Checklist completion (read-only mirror of the student's) */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">
           Pre-arrival checklist
         </p>
@@ -198,7 +198,7 @@ export default function EnrollmentTab({ applicationId }: { applicationId: string
 
       {/* Staff actions */}
       {!withdrew && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="text-sm font-medium text-foreground mb-3">Actions</p>
           <div className="flex flex-wrap items-center gap-2">
             {!enrolled && (
@@ -254,7 +254,7 @@ export default function EnrollmentTab({ applicationId }: { applicationId: string
 
       {/* Timeline */}
       {(e.timeline?.length ?? 0) > 0 && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">
             Timeline
           </p>

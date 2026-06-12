@@ -115,11 +115,11 @@ export default function IntegrityQueuePage({ embedded = false }: { embedded?: bo
 
       {signals.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <Card className="p-3">
+          <Card pad={false} className="p-3">
             <p className="text-xs text-muted-foreground">Open</p>
             <p className="text-xl font-bold text-foreground">{openCount}</p>
           </Card>
-          <Card className="p-3 border-warning-soft">
+          <Card pad={false} className="p-3 border-warning-soft">
             <p className="text-xs text-warning">High severity</p>
             <p className="text-xl font-bold text-warning">{highCount}</p>
           </Card>
@@ -144,7 +144,7 @@ export default function IntegrityQueuePage({ embedded = false }: { embedded?: bo
       ) : (
         <div className="space-y-2">
           {signals.map(sig => (
-            <Card key={sig.id} className="p-4">
+            <Card pad={false} key={sig.id} className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -187,7 +187,7 @@ export default function IntegrityQueuePage({ embedded = false }: { embedded?: bo
       <Modal isOpen={!!selected} onClose={() => setSelected(null)} title="Resolve integrity signal">
         {selected && (
           <div className="space-y-4">
-            <Card className="p-3 bg-muted">
+            <Card pad={false} className="p-3 bg-muted">
               <p className="text-sm font-medium text-foreground">{selected.title}</p>
               <p className="mt-1 text-xs text-muted-foreground">{selected.description}</p>
             </Card>

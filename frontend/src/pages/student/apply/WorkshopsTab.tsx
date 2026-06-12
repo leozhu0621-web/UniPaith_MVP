@@ -64,7 +64,7 @@ export default function WorkshopsTab() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
+    <div className="w-full p-6">
       <header className="mb-4">
         <h2 className="text-h3 text-foreground">Workshops</h2>
         <p className="mt-1 text-sm text-muted-foreground">

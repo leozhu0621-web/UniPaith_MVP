@@ -253,7 +253,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   // configured routing keys, with a generic "general" always available.
 
   return (
-    <div className="p-6 max-w-5xl w-full mx-auto">
+    <div className="p-6 max-w-5xl w-full mx-auto animate-page-in">
       {/* Breadcrumb (Spec 12 §2, design system §7) */}
       <nav className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-4 flex-wrap" aria-label="Breadcrumb">
         {isAuthenticated ? (
@@ -655,7 +655,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
       {keyStats.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {keyStats.map(s => (
-            <Card key={s.label} className="p-4">
+            <Card pad={false} key={s.label} className="p-4">
               <p className="text-[1.9rem] leading-none font-bold text-foreground tracking-tight tabular-nums">{s.value}</p>
               {/* The hint qualifier (e.g. "per year, after aid", "10 yrs after
                   entry") lives in the label's hover tooltip to declutter. */}
@@ -667,7 +667,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
 
       {/* Editorial intro */}
       {inst.description_text && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trimSource(inst.description_text)}</p>
           <IntroSourceLine outcomes={outcomes} />
         </Card>
@@ -675,7 +675,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
 
       {/* Rankings — badge row; the #1 earns the gold beat */}
       {rankings.length > 0 && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Trophy size={15} className="text-secondary" /> Rankings</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             {rankings.map(r => (
@@ -694,7 +694,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
 
       {/* Admissions — funnel + test scores + retention */}
       {(hasFunnel || rng(ts.sat_reading_25_75) || rng(ts.sat_math_25_75) || rng(ts.act_25_75) || retention != null) && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <h2 className="font-semibold text-foreground mb-3">Admissions</h2>
           {hasFunnel && (
             <div className="mb-4">
@@ -714,7 +714,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
 
       {/* Cost & aid — net price lead + aid bars + debt (parent-facing) */}
       {(netPrice != null || aid.pell_grant_rate != null || aid.federal_loan_rate != null || aid.median_debt_completers != null) && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><DollarSign size={15} className="text-secondary" /> Cost &amp; aid</h2>
           <div className="grid md:grid-cols-2 gap-x-6 gap-y-4">
             <div className="space-y-3">
@@ -761,7 +761,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
 
       {/* Outcomes — placement, earnings, top industries */}
       {(placement != null || earn10 != null || industries.length > 0) && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><TrendingUp size={15} className="text-secondary" /> Outcomes</h2>
           {(placement != null || earn10 != null) && (
             <div className="grid grid-cols-2 gap-3 mb-3">
@@ -780,7 +780,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
 
       {/* Diversity — race/ethnicity + women lead; compact enrollment underneath */}
       {(diversity.length > 0 || demo.women != null || enrollTotal != null) && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           {/* Enrollment breakdown folded into the heading's hover tooltip (was a
               muted caption line under the bar — declutter). */}
           <h2
@@ -811,7 +811,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
       {/* Quick facts — deduped (no duplicate acceptance/size band) + enriched.
           The Carnegie classification is folded into the heading's hover tooltip
           (was an italic caption line — declutter). */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <h2
           className="font-semibold text-foreground mb-3"
           title={rd.carnegie_classification ? String(rd.carnegie_classification) : undefined}
@@ -830,7 +830,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
 
       {/* Location — small Google Map showing where the campus is. */}
       {loc.lat != null && loc.lng != null && (
-        <Card className="p-0 overflow-hidden">
+        <Card pad={false} className="p-0 overflow-hidden">
           <div className="px-5 pt-5 pb-2 flex items-center gap-2">
             <MapPin size={14} className="text-secondary" />
             <h2 className="font-semibold text-foreground">Location</h2>
@@ -851,7 +851,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
       {/* Sources — data-driven from school_outcomes.sources when present
           (each with year + link), else a generic citation line. */}
       {Array.isArray(outcomes.sources) && outcomes.sources.length > 0 ? (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2">
             <BookOpen size={15} className="text-secondary" /> Sources
           </h2>
@@ -953,7 +953,7 @@ function AboutTab({ inst }: { inst: Institution }) {
 
       {/* Recognition — accolades with context */}
       {recognition.length > 0 && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           {/* "Among faculty & alumni" scope note → heading hover tooltip. */}
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2" title="Among faculty & alumni"><Award size={15} className="text-secondary" /> Recognition</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -964,7 +964,7 @@ function AboutTab({ inst }: { inst: Institution }) {
 
       {/* By the numbers — institutional scale (MIT Facts) */}
       {scaleStats.length > 0 && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Building2 size={15} className="text-secondary" /> By the numbers</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {scaleStats.map(s => <Fact key={s.label} label={s.label} value={s.value} />)}
@@ -974,7 +974,7 @@ function AboutTab({ inst }: { inst: Institution }) {
 
       {/* Campus resources — research + campus life + links, merged. */}
       {(researchLabs.length > 0 || researchAreas.length > 0 || campusStats.length > 0 || campusResources.length > 0) && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <h2
             className="font-semibold text-foreground mb-3 flex items-center gap-2"
             title={
@@ -1041,7 +1041,7 @@ function AboutTab({ inst }: { inst: Institution }) {
       )}
 
       {facts.length > 0 && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <h2 className="font-semibold text-foreground mb-3">Basic Info</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {facts.map(f => (
@@ -1055,7 +1055,7 @@ function AboutTab({ inst }: { inst: Institution }) {
       )}
 
       {supportKeys.length > 0 && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <h2 className="font-semibold text-foreground mb-3">Support services</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {supportKeys.map(key => {
@@ -1077,7 +1077,7 @@ function AboutTab({ inst }: { inst: Institution }) {
       )}
 
       {intlKeys.length > 0 && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <h2 className="font-semibold text-foreground mb-3">International students</h2>
           <div className="space-y-2 text-sm">
             {intlKeys.map(key => {
@@ -1096,7 +1096,7 @@ function AboutTab({ inst }: { inst: Institution }) {
       )}
 
       {policyKeys.length > 0 && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <h2 className="font-semibold text-foreground mb-3">Policies</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {policyKeys.map(key => {

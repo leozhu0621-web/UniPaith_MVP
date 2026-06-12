@@ -119,22 +119,22 @@ export default function ProgramsPage() {
 
       {programs.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Card className="p-3">
+          <Card pad={false} className="p-3">
             <p className="text-xs text-muted-foreground">Total Programs</p>
             <p className="text-xl font-semibold text-foreground">{programs.length}</p>
           </Card>
-          <Card className="p-3">
+          <Card pad={false} className="p-3">
             <p className="text-xs text-muted-foreground">Published</p>
             <p className="text-xl font-semibold text-success">{programs.filter(p => p.is_published).length}</p>
           </Card>
-          <Card className="p-3">
+          <Card pad={false} className="p-3">
             <p className="text-xs text-muted-foreground">Drafts to Publish</p>
             <p className="text-xl font-semibold text-warning">{programs.filter(p => !p.is_published).length}</p>
           </Card>
         </div>
       )}
 
-      <Card>
+      <Card pad={false}>
         {programsQ.isError ? (
           <QueryError detail="Couldn’t load programs." onRetry={() => programsQ.refetch()} />
         ) : programs.length === 0 && !programsQ.isLoading ? (

@@ -107,7 +107,7 @@ export default function NextStepsCard({
   if (steps.length === 0) return null
 
   return (
-    <Card className="p-5">
+    <Card pad={false} className="p-5">
       <div className="flex items-center gap-2 mb-3">
         <ChevronRight size={14} className="text-secondary" />
         <h3 className="font-semibold text-foreground">Next Steps</h3>

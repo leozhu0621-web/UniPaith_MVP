@@ -79,7 +79,7 @@ export default function RelatedSidebar({
 
       {/* Programs that fit you — one richer card at a time, paged with arrows. */}
       {fitPrograms.length > 0 && current && (
-        <Card className="p-4">
+        <Card pad={false} className="p-4">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles size={14} className="text-secondary" />
             <h3 className="text-sm font-semibold text-foreground">Programs that fit you</h3>

@@ -399,19 +399,19 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-            <Card className="p-3">
+            <Card pad={false} className="p-3">
               <p className="text-xs text-muted-foreground">Program</p>
               <p className="text-sm font-semibold text-foreground truncate">{selectedProgramName}</p>
             </Card>
-            <Card className="p-3">
+            <Card pad={false} className="p-3">
               <p className="text-xs text-muted-foreground">Total Applications</p>
               <p className="text-xl font-semibold text-foreground">{applications.length}</p>
             </Card>
-            <Card className="p-3">
+            <Card pad={false} className="p-3">
               <p className="text-xs text-muted-foreground">Needs Review</p>
               <p className="text-xl font-semibold text-warning">{reviewableApps.length}</p>
             </Card>
-            <Card className="p-3">
+            <Card pad={false} className="p-3">
               <p className="text-xs text-muted-foreground">Interview Stage</p>
               <p className="text-xl font-bold text-secondary">{interviewStageCount}</p>
             </Card>
@@ -447,7 +447,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
           )}
 
           {activeView === 'review' && (
-            <Card className="p-4">
+            <Card pad={false} className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-foreground">Needs Review ({filteredReviewableApps.length})</h3>
                 <Badge variant="warning" className="flex items-center gap-1">
@@ -464,7 +464,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
           )}
 
           {activeView === 'list' && (
-            <Card className="p-4">
+            <Card pad={false} className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-foreground">All Applications ({filteredAllApps.length})</h3>
                 <Badge variant="info" className="flex items-center gap-1">
@@ -490,7 +490,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
                 <EmptyState icon={<Zap size={40} />} title="No applications to prioritize" description="Applications needing review will be ranked here by urgency." />
               ) : (
                 prioritized.map((p, i) => (
-                  <Card key={p.application_id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => goApplicant(p.application_id)}>
+                  <Card pad={false} key={p.application_id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => goApplicant(p.application_id)}>
                     <div className="flex items-center gap-4">
                       <div className={`flex items-center justify-center w-10 h-10 rounded-full shrink-0 font-bold text-white text-sm ${
                         p.priority_score >= 70 ? 'bg-error' : p.priority_score >= 40 ? 'bg-warning' : 'bg-success'

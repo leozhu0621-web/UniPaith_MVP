@@ -78,7 +78,7 @@ export default function MatchCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <button onClick={onView} className="min-w-0 text-left">
-              <h3 className="text-[15px] font-bold text-foreground leading-tight line-clamp-2 hover:text-secondary transition-colors">
+              <h3 className="text-[15px] font-bold text-foreground leading-tight line-clamp-2 break-words hover:text-secondary transition-colors">
                 {match.program_name ?? 'Program'}
               </h3>
               {match.institution_name && (

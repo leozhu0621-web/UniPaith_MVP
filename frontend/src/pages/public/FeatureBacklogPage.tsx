@@ -28,7 +28,7 @@ const STATUS_TONE = { covered: 'neutral', written: 'cobalt', net_new: 'warning' 
 function FeatureCard({ feature }: { feature: FeatureItem }) {
   const aheadOfPlan = feature.klass === 'defer' && feature.delivered
   return (
-    <Card className="flex h-full flex-col gap-2 p-4">
+    <Card pad={false} className="flex h-full flex-col gap-2 p-4">
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-[15px] font-semibold leading-snug text-foreground">{feature.name}</h3>
         {feature.delivered ? (

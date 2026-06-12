@@ -571,7 +571,7 @@ export default function DataUploadPage() {
         </div>
       </header>
 
-      <Card>
+      <Card pad={false}>
         {datasetsQ.isError ? (
           <QueryError detail="Couldn’t load datasets." onRetry={() => datasetsQ.refetch()} />
         ) : datasetsQ.isLoading ? (

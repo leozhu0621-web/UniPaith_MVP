@@ -66,7 +66,7 @@ export default function RecommendationsPage() {
   if (isError) {
     const message = error instanceof Error ? error.message : "We couldn't load your recommendation requests."
     return (
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <p className="text-sm text-error">{message}</p>
         <Button size="sm" className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['recommendations'] })}>
           Retry
@@ -125,7 +125,7 @@ export default function RecommendationsPage() {
           {recs.map(rec => {
             const config = STATUS_CONFIG[rec.status] || STATUS_CONFIG.draft
             return (
-              <Card key={rec.id} className="p-4">
+              <Card pad={false} key={rec.id} className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">

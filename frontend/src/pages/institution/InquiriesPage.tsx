@@ -119,19 +119,19 @@ export default function InquiriesPage({ embedded = false }: { embedded?: boolean
 
       {inquiries.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <Card className="p-3">
+          <Card pad={false} className="p-3">
             <p className="text-xs text-muted-foreground">Total</p>
             <p className="text-xl font-semibold text-foreground">{inquiries.length}</p>
           </Card>
-          <Card className="p-3 border-warning-soft">
+          <Card pad={false} className="p-3 border-warning-soft">
             <p className="text-xs text-warning">New</p>
             <p className="text-xl font-bold text-warning">{newCount}</p>
           </Card>
-          <Card className="p-3">
+          <Card pad={false} className="p-3">
             <p className="text-xs text-muted-foreground">In Progress</p>
             <p className="text-xl font-semibold text-foreground">{inquiries.filter(i => i.status === 'in_progress').length}</p>
           </Card>
-          <Card className="p-3">
+          <Card pad={false} className="p-3">
             <p className="text-xs text-muted-foreground">Responded</p>
             <p className="text-xl font-semibold text-foreground">{inquiries.filter(i => i.status === 'responded').length}</p>
           </Card>
@@ -153,7 +153,7 @@ export default function InquiriesPage({ embedded = false }: { embedded?: boolean
       ) : (
         <div className="space-y-2">
           {inquiries.map(inq => (
-            <Card key={inq.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => openDetail(inq)}>
+            <Card pad={false} key={inq.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => openDetail(inq)}>
               <div className="flex items-start justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-foreground text-sm">{inq.subject}</h3>
@@ -188,14 +188,14 @@ export default function InquiriesPage({ embedded = false }: { embedded?: boolean
             {selected.program_name && (
               <Badge variant="info">Program: {selected.program_name}</Badge>
             )}
-            <Card className="p-3 bg-muted">
+            <Card pad={false} className="p-3 bg-muted">
               <p className="text-xs text-muted-foreground mb-1">Student's message</p>
               <p className="text-sm text-foreground whitespace-pre-wrap">{selected.message}</p>
             </Card>
             <p className="text-xs text-muted-foreground/70">Received: {formatDateTime(selected.created_at)}</p>
 
             {selected.response_text && selected.responded_at && (
-              <Card className="p-3 bg-success-soft border-success-soft">
+              <Card pad={false} className="p-3 bg-success-soft border-success-soft">
                 <p className="text-xs text-success mb-1 flex items-center gap-1"><CheckCircle2 size={12} /> Responded {formatDateTime(selected.responded_at)}</p>
                 <p className="text-sm text-foreground whitespace-pre-wrap">{selected.response_text}</p>
               </Card>

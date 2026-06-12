@@ -184,7 +184,7 @@ export default function InternationalTab({ applicationId }: { applicationId: str
 
   if (isError && !data) {
     return (
-      <Card className="p-2">
+      <Card pad={false} className="p-2">
         <QueryError detail="We couldn't load this applicant's international processing." onRetry={() => refetch()} />
       </Card>
     )
@@ -193,7 +193,7 @@ export default function InternationalTab({ applicationId }: { applicationId: str
 
   if (!data.is_international) {
     return (
-      <Card className="p-6 text-center">
+      <Card pad={false} className="p-6 text-center">
         <Globe size={28} className="mx-auto mb-3 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
           This applicant is domestic — no international processing needed.
@@ -260,7 +260,7 @@ export default function InternationalTab({ applicationId }: { applicationId: str
       </div>
 
       {/* Credential evaluation (§2.1) */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <SectionTitle icon={<GraduationCap size={16} />}>Credential evaluation</SectionTitle>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
@@ -336,7 +336,7 @@ export default function InternationalTab({ applicationId }: { applicationId: str
       </Card>
 
       {/* English proficiency (§2.2) */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <SectionTitle icon={<Languages size={16} />}>English proficiency</SectionTitle>
         {waiverSuggestion.eligible && !draft.english_waiver_eligible && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-secondary/30 bg-secondary/5 px-3 py-2">
@@ -406,7 +406,7 @@ export default function InternationalTab({ applicationId }: { applicationId: str
       </Card>
 
       {/* Country requirements (§2.3) */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <div className="flex items-center justify-between gap-2 mb-4">
           <SectionTitle icon={<FileText size={16} />}>Country-specific requirements</SectionTitle>
           <div className="flex items-center gap-2">
@@ -486,7 +486,7 @@ export default function InternationalTab({ applicationId }: { applicationId: str
       </Card>
 
       {/* Immigration document — HIGH SENSITIVITY (§2.4 / §7 / 46) */}
-      <Card className="p-5 border-warning/40">
+      <Card pad={false} className="p-5 border-warning/40">
         <div className="flex items-center gap-2 mb-1">
           <Lock size={15} className="text-warning" />
           <h3 className="text-sm font-semibold text-foreground">Immigration document</h3>
@@ -564,7 +564,7 @@ export default function InternationalTab({ applicationId }: { applicationId: str
       </Card>
 
       {/* Visa interview (§2.5) */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <SectionTitle icon={<Plane size={16} />}>Visa interview</SectionTitle>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input

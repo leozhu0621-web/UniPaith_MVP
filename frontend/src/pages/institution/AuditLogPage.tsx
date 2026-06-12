@@ -289,7 +289,7 @@ export default function AuditLogPage() {
       />
 
       {/* Filters (Spec 36 §4) */}
-      <Card className="p-4">
+      <Card pad={false} className="p-4">
         <div className="flex flex-wrap items-end gap-3">
           <Select
             label="Action"

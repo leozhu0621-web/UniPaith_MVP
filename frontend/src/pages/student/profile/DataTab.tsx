@@ -208,7 +208,7 @@ export default function DataTab() {
       {/* Consent levers */}
       <section>
         <SectionHeader title="Consent" description="Independent controls over how your data is used." />
-        <Card className="divide-y divide-border">
+        <Card pad={false} className="divide-y divide-border">
           {LEVERS.map(lever => (
             <div key={lever.key} className="flex items-start justify-between gap-4 p-4">
               <div className="min-w-0">
@@ -242,14 +242,14 @@ export default function DataTab() {
       <section>
         <SectionHeader title="Export your data" description="Take your work anywhere — your record is yours." />
         <div className="grid sm:grid-cols-2 gap-3">
-          <Card className="p-5 flex items-start justify-between gap-3">
+          <Card pad={false} className="p-5 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2"><FileJson size={16} className="text-secondary" /><p className="font-semibold text-foreground">Full data (JSON)</p></div>
               <p className="text-sm text-muted-foreground mt-1">Every signal in a structured, portable file.</p>
             </div>
             <Button size="sm" variant="tertiary" onClick={handleJson}><Download size={14} /> JSON</Button>
           </Card>
-          <Card className="p-5 flex items-start justify-between gap-3">
+          <Card pad={false} className="p-5 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2"><FileText size={16} className="text-secondary" /><p className="font-semibold text-foreground">Human-readable (PDF)</p></div>
               <p className="text-sm text-muted-foreground mt-1">A printable summary of your profile.</p>
@@ -258,14 +258,14 @@ export default function DataTab() {
               {exporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} PDF
             </Button>
           </Card>
-          <Card className="p-5 flex items-start justify-between gap-3">
+          <Card pad={false} className="p-5 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2"><FileJson size={16} className="text-secondary" /><p className="font-semibold text-foreground">Common App format</p></div>
               <p className="text-sm text-muted-foreground mt-1">Map your record onto Common App fields. Unmapped fields are listed so nothing is dropped.</p>
             </div>
             <Button size="sm" variant="tertiary" onClick={handleCommonApp}><Download size={14} /> Export</Button>
           </Card>
-          <Card className="p-5 flex items-start justify-between gap-3">
+          <Card pad={false} className="p-5 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2"><Link2 size={16} className="text-secondary" /><p className="font-semibold text-foreground">Import from LinkedIn</p></div>
               <p className="text-sm text-muted-foreground mt-1">One-way: connect your LinkedIn so you can fill work and education faster.</p>
@@ -279,9 +279,9 @@ export default function DataTab() {
       <section>
         <SectionHeader title="Access log" description="Who and what touched your data, and when." />
         {logEntries.length === 0 ? (
-          <Card className="p-5"><p className="text-sm text-muted-foreground">No access recorded yet. Activity on your data — by you, the institutions you apply to, and AI — will appear here.</p></Card>
+          <Card pad={false} className="p-5"><p className="text-sm text-muted-foreground">No access recorded yet. Activity on your data — by you, the institutions you apply to, and AI — will appear here.</p></Card>
         ) : (
-          <Card className="p-0 overflow-x-auto">
+          <Card pad={false} className="p-0 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground bg-muted">
@@ -309,7 +309,7 @@ export default function DataTab() {
       {/* Danger zone */}
       <section>
         <SectionHeader title="Danger zone" />
-        <Card className="p-5 border-error/40">
+        <Card pad={false} className="p-5 border-error/40">
           {dr.deletion_requested ? (
             <div className="flex items-start justify-between gap-4">
               <div>

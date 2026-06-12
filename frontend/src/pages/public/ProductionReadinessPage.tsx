@@ -86,7 +86,7 @@ function StatusChip({ status }: { status: ReadinessStatus }) {
 function PillarCard({ pillar }: { pillar: ProductionPillar }) {
   const Icon = PILLAR_ICONS[pillar.key] ?? Server
   return (
-    <Card className="flex h-full flex-col gap-3 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-start justify-between gap-3">
         <CardTitle icon={Icon} className="leading-snug">
           {pillar.title}
@@ -143,7 +143,7 @@ function KnobValue({ value }: { value: string | number | boolean }) {
 
 function ConfigCard({ group }: { group: ConfigGroup }) {
   return (
-    <Card className="flex h-full flex-col gap-3 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-h3 text-foreground">{group.title}</h3>
         <Chip tone="neutral">Spec 55 {group.section}</Chip>
@@ -307,7 +307,7 @@ export default function ProductionReadinessPage() {
           sub="The probes that keep the fleet healthy, the middleware stack on every request, and the cadence jobs the scheduler runs."
         />
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
-          <Card className="flex flex-col gap-3 p-5">
+          <Card pad={false} className="flex flex-col gap-3 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <HeartPulse size={18} className="text-secondary" />
               Health probes
@@ -324,7 +324,7 @@ export default function ProductionReadinessPage() {
             {data && <p className="mt-auto text-[12px] text-muted-foreground">{data.health_probes.note}</p>}
           </Card>
 
-          <Card className="flex flex-col gap-3 p-5">
+          <Card pad={false} className="flex flex-col gap-3 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <Network size={18} className="text-secondary" />
               Middleware stack
@@ -339,7 +339,7 @@ export default function ProductionReadinessPage() {
             </ul>
           </Card>
 
-          <Card className="flex flex-col gap-3 p-5">
+          <Card pad={false} className="flex flex-col gap-3 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <Workflow size={18} className="text-secondary" />
               Scheduler jobs
@@ -364,7 +364,7 @@ export default function ProductionReadinessPage() {
           title="Service-level objectives"
           sub={data?.the_bar.slo_headline}
         />
-        <Card className="mt-6 overflow-hidden p-0">
+        <Card pad={false} className="mt-6 overflow-hidden p-0">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-muted/40">
               <tr className="text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -403,7 +403,7 @@ export default function ProductionReadinessPage() {
           title="Build-task checklist"
           sub="Spec 55 §9 — each task classified by what's shipped versus what's next. The infra-dependent halves (ElastiCache, arq, /metrics, PgBouncer) are named as planned, not hidden."
         />
-        <Card className="mt-6 p-2 sm:p-5">
+        <Card pad={false} className="mt-6 p-2 sm:p-5">
           <ul className="divide-y divide-border">
             {(data?.build_tasks ?? []).map(t => (
               <TaskRow key={`${t.section}-${t.text}`} task={t} />
@@ -428,7 +428,7 @@ export default function ProductionReadinessPage() {
           />
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             {data.open_questions.map(q => (
-              <Card key={q.q} className="flex h-full flex-col gap-2 p-5">
+              <Card pad={false} key={q.q} className="flex h-full flex-col gap-2 p-5">
                 <h3 className="text-h3 text-foreground">{q.q}</h3>
                 <p className="text-sm text-muted-foreground">{q.a}</p>
               </Card>

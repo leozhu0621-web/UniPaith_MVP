@@ -108,7 +108,7 @@ export default function ProfileStep({
   )
 
   return (
-    <Card className="p-5 sm:p-6">
+    <Card pad={false} className="p-5 sm:p-6">
       <h2 className="text-lg font-semibold text-foreground">Institution profile</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         The basics students see first. You can add more in Settings later.

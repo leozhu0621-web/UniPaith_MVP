@@ -132,7 +132,7 @@ export default function PreferencesTab() {
     <div className="space-y-8">
       <section>
         <SectionHeader title="Location & setting" description="Where you'd like to study." />
-        <Card className="p-5 grid sm:grid-cols-2 gap-x-4 gap-y-1">
+        <Card pad={false} className="p-5 grid sm:grid-cols-2 gap-x-4 gap-y-1">
           <Input label="Preferred countries" placeholder="United States, Canada" value={form.preferred_countries} onChange={e => set('preferred_countries', e.target.value)} />
           <Input label="Preferred regions" placeholder="Northeast, West Coast" value={form.preferred_regions} onChange={e => set('preferred_regions', e.target.value)} />
           <Select label="City size" placeholder="No preference" options={CITY_SIZE_OPTIONS} value={form.preferred_city_size} onChange={e => set('preferred_city_size', e.target.value)} />
@@ -142,7 +142,7 @@ export default function PreferencesTab() {
 
       <section>
         <SectionHeader title="Program" description="The shape of the program you're after." />
-        <Card className="p-5 grid sm:grid-cols-2 gap-x-4 gap-y-1">
+        <Card pad={false} className="p-5 grid sm:grid-cols-2 gap-x-4 gap-y-1">
           <Select label="Program size" placeholder="No preference" options={PROGRAM_SIZE} value={form.program_size_preference} onChange={e => set('program_size_preference', e.target.value)} />
           <Input label="Target degree level" placeholder="Master's, PhD…" value={form.target_degree_level} onChange={e => set('target_degree_level', e.target.value)} />
           <Input label="Target start term" placeholder="Fall 2027" value={form.target_start_term} onChange={e => set('target_start_term', e.target.value)} />
@@ -154,7 +154,7 @@ export default function PreferencesTab() {
 
       <section>
         <SectionHeader title="What matters most" description="Tune how strongly each factor weighs on your matches (0–10)." />
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
             {WEIGHTS.map(w => (
               <WeightSlider key={w.key} label={w.label} value={form[w.key]} onChange={v => set(w.key, v)} />

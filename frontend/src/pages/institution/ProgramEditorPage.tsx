@@ -813,7 +813,7 @@ function EditorSkeleton() {
       </div>
       <div className="space-y-4">
         {[0, 1, 2, 3].map(i => (
-          <Card key={i} className="p-6">
+          <Card pad={false} key={i} className="p-6">
             <Skeleton className="mb-4 h-6 w-40" />
             <div className="space-y-3">
               <Skeleton className="h-10 w-full" />

@@ -5,7 +5,7 @@ import {
   PenLine, Calendar as CalendarIcon, Mail, FolderKanban, Compass, Target,
   AlertTriangle, Award, MessageSquare, GraduationCap, ArrowRight,
 } from 'lucide-react'
-import { PageHeader, SectionHeader, ListRow, StatTile } from '../../../components/student/density'
+import { PageContainer, PageHeader, SectionHeader, ListRow, StatTile } from '../../../components/student/density'
 import Card from '../../../components/ui/Card'
 import Badge from '../../../components/ui/Badge'
 import Skeleton from '../../../components/ui/Skeleton'
@@ -172,7 +172,7 @@ export default function MySpaceHomePage() {
   const firstName = profile.data?.first_name || user?.email?.split('@')[0] || ''
 
   return (
-    <div className="w-full px-4 sm:px-6 py-5">
+    <PageContainer>
       <Coachmark
         id="myspace-home"
         title="Your new home base"
@@ -193,7 +193,7 @@ export default function MySpaceHomePage() {
         </div>
       ) : brandNew ? (
         // Empty state — a brand-new student's space fills as they work.
-        <Card className="p-6 mt-2">
+        <Card pad={false} className="p-6 mt-2">
           <p className="text-sm font-medium text-foreground">Your space fills as you work.</p>
           <p className="text-xs text-muted-foreground mt-1 mb-4">
             Start with Uni to build your profile, then save programs you like — applications,
@@ -355,6 +355,6 @@ export default function MySpaceHomePage() {
           </div>
         </>
       )}
-    </div>
+    </PageContainer>
   )
 }

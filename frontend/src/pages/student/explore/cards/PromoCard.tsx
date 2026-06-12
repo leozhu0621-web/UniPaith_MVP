@@ -19,7 +19,7 @@ export default function PromoCard({ promo, onView }: Props) {
         <span className="text-[10px] font-semibold text-secondary uppercase tracking-wider">Featured program</span>
       </div>
       <div className="px-4 pb-4">
-        <h3 className="text-sm font-semibold text-foreground mb-1">{promo.title}</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1 break-words">{promo.title}</h3>
         {promo.description && <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{promo.description}</p>}
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-muted-foreground">{(promo as { institution_name?: string }).institution_name || ''}</span>

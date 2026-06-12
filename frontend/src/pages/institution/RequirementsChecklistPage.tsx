@@ -79,7 +79,7 @@ function SortableChecklistItem({
 
   return (
     <div ref={setNodeRef} style={style}>
-      <Card className={`p-3 flex items-center gap-3 ${!item.is_active ? 'opacity-50' : ''}`}>
+      <Card pad={false} className={`p-3 flex items-center gap-3 ${!item.is_active ? 'opacity-50' : ''}`}>
       <button
         type="button"
         aria-label={`Reorder ${item.item_name}`}
@@ -255,7 +255,7 @@ export default function RequirementsChecklistPage() {
         actions={selectedProgram ? <Button onClick={openCreate} className="flex items-center gap-2"><Plus size={16} /> Add Item</Button> : undefined}
       />
 
-      <Card className="p-4">
+      <Card pad={false} className="p-4">
         <Select label="Program" options={programOptions} value={selectedProgram} onChange={e => setSelectedProgram(e.target.value)} />
       </Card>
 
@@ -271,15 +271,15 @@ export default function RequirementsChecklistPage() {
         <div className="space-y-4">
           {/* Summary */}
           <div className="grid grid-cols-3 gap-3">
-            <Card className="p-3 border-warning-soft">
+            <Card pad={false} className="p-3 border-warning-soft">
               <p className="text-xs text-warning">Required</p>
               <p className="text-xl font-bold text-warning">{requiredItems.length}</p>
             </Card>
-            <Card className="p-3 border-secondary/30">
+            <Card pad={false} className="p-3 border-secondary/30">
               <p className="text-xs text-secondary">Optional</p>
               <p className="text-xl font-bold text-secondary">{optionalItems.length}</p>
             </Card>
-            <Card className="p-3">
+            <Card pad={false} className="p-3">
               <p className="text-xs text-muted-foreground">Other</p>
               <p className="text-xl font-semibold text-foreground">{otherItems.length}</p>
             </Card>

@@ -63,7 +63,7 @@ export default function PersonalitySignalsWidget() {
 
   if (isLoading) {
     return (
-      <Card className="space-y-3 p-4">
+      <Card pad={false} className="space-y-3 p-4">
         <Skeleton className="h-4 w-32" />
         <Skeleton className="h-3 w-full" />
         <Skeleton className="h-3 w-4/5" />
