@@ -127,6 +127,15 @@ All flags are **enabled in production** (see `infra/ecs.tf` env block).
 
 **Integration-test invariant:** when an LLM agent fails (timeout, parse error, guardrail trip), the service falls back to the rule-based path so the caller never sees a 5xx. See `tests/test_plan2_integration.py`.
 
+## Uni runs as a managed agent on platform.claude.com (the cutover)
+
+The Stage-1 discovery conversation (`/s` → `POST /me/discovery/sessions/{id}/messages/stream`) is driven by **"Uni," a managed agent on platform.claude.com** (agent `agent_019QbYB93Ykh8Y58RBHquiQ6`, env `env_01N43sA3tmVhij3YYZgWzAP2`), gated by `ai_uni_managed_agent_v1` (**ON in prod**, `infra/ecs.tf`).
+
+- **Host:** `services/uni_agent_host.py::UniAgentHost.stream_turn` opens the Anthropic session event stream, relays the existing SSE contract (`student_message`/`delta`/`tool_use`/`assistant_message`/`error`/`done`), and answers the agent's **6 host-side custom tools** (`services/uni_tools.py::dispatch_tool` + `suggest_replies`) against RDS via the existing services. `ai/managed_agent_client.py` is the thin SDK facade (`anthropic>=0.105`, `beta.sessions(.events)`).
+- **Interactive UX preserved:** the agent calls `suggest_replies` (choice/multi/scale); the host stamps `{suggested_options, suggested_input}` onto the assistant message's `extracted_signals`, so the Discover frontend renders tap-chips / the 1–5 slider with **no frontend change**.
+- **Fallback (never a 5xx):** on host/platform **setup** failure the endpoint falls back to the in-app `orchestrator.py` for the whole turn; a **mid-stream** failure closes with a calm message. `orchestrator.py` is intentionally **kept** as the safety net — to revert the cutover, set `AI_UNI_MANAGED_AGENT_V1=false`.
+- **Agent config is version-controlled** in `agents/` (`uni.agent.yaml` tools + `uni_system.md` persona). `python agents/apply_agent.py` read-modify-writes it onto the live agent (optimistic version lock). Tune Uni's behavior there → it affects production. `agents/live_smoke_host.py` is an end-to-end host-mechanics smoke against the real agent.
+
 ## Backend Conventions
 
 - **Models:** `src/unipaith/models/` — SQLAlchemy declarative with `UUIDPrimaryKeyMixin` + `TimestampMixin`
