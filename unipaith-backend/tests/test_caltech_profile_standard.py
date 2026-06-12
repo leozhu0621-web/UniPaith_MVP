@@ -141,7 +141,7 @@ def test_every_division_is_gold_except_recorded_omissions():
 
 
 def test_every_program_is_gold_except_recorded_omissions():
-    assert len(c.PROGRAMS) >= 30, "full Caltech catalog (catalog.caltech.edu options)"
+    assert len(c.PROGRAMS) >= 70, "full IPEDS/Scorecard catalog breadth (UNITID 110404)"
     for spec in c.PROGRAMS:
         slug = spec["slug"]
         res = check_conformance(
