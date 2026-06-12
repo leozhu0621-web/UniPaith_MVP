@@ -126,7 +126,11 @@ export default function ApplicationsPage() {
   const [searchParams] = useSearchParams()
   const rawView = searchParams.get('tab')
   const view: AppView = rawView === 'offers' ? 'offers' : rawView === 'costs' ? 'costs' : 'all'
-  const [statusFilter, setStatusFilter] = useState<'all' | Bucket>('all')
+  // ?status= deep links (the home pipeline tiles) pre-select a bucket filter.
+  const [statusFilter, setStatusFilter] = useState<'all' | Bucket>(() => {
+    const s = searchParams.get('status')
+    return s && BUCKET_ORDER.includes(s as Bucket) ? (s as Bucket) : 'all'
+  })
   const [institution, setInstitution] = useState('all')
   const [deadlineWindow, setDeadlineWindow] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'reach' | 'target' | 'safer'>('all')
@@ -351,6 +355,7 @@ export default function ApplicationsPage() {
         title="Your portfolio"
         sub={`${apps.length} application${apps.length !== 1 ? 's' : ''} across your journey`}
       />
+      {viewSwitcher}
 
       {/* Spec 18 — "You're in" celebration once an offer is accepted (§6/§13) */}
       {acceptedApp && (

@@ -185,6 +185,15 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "AI_DISCOVERY_V2_ENABLED", value = "true" },
       { name = "AI_UNI_GUIDED_V1", value = "true" },
       { name = "AI_UNI_KNOWLEDGE_V1", value = "true" },
+      # Uni runs as a managed agent on platform.claude.com (the cutover). The
+      # discovery /messages/stream turn is driven by the platform agent + the
+      # in-app host's 6 custom tools; on host/platform failure the in-app
+      # orchestrator serves the whole turn (never a 5xx), so this is a graceful,
+      # reversible flip. agent/env ids are non-secret resource identifiers; the
+      # managed-agents API authenticates with the existing ANTHROPIC_API_KEY.
+      { name = "AI_UNI_MANAGED_AGENT_V1", value = "true" },
+      { name = "UNI_AGENT_ID", value = "agent_019QbYB93Ykh8Y58RBHquiQ6" },
+      { name = "UNI_ENVIRONMENT_ID", value = "env_01N43sA3tmVhij3YYZgWzAP2" },
       { name = "AI_WORKSHOPS_V2_ENABLED", value = "true" },
       { name = "AI_MATCH_RATIONALE_V2_ENABLED", value = "true" },
       { name = "AI_STRATEGY_V2_ENABLED", value = "true" },

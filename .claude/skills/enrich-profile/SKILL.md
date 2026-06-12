@@ -107,18 +107,25 @@ Concrete misses observed in the first runs — each broke a real page:
    → `faculty_contacts`; reviews → `external_reviews`. The conformance check is
    keyed on these exact dotted paths — run it to confirm every value landed where
    the standard expects, not just "somewhere".
-7. **Campus photo + its credit — an uncredited photo is a defect (issue: pics
-   have no credit/reference).** When you lead an institution's `media_gallery`
-   with a campus photo, you MUST also record its attribution in
-   `school_outcomes.media_credit` — the detail-page hero renders it as a "Photo: …"
-   caption. Use a freely-licensed image (Wikimedia Commons file, or an institution
-   press-kit photo that permits reuse) and **VERIFY the author + license on the
-   source's own file page**, then write the credit as
+7. **Campus photos + per-photo credit — a GALLERY, not a single shot, and an
+   uncredited photo is a defect (issues: pics have no credit/reference; only one
+   pic).** Every institution gets `school_outcomes.campus_photos` — a list of
+   **4–5** verified `{url, credit}` entries (recognizable OUTDOOR campus scenes:
+   named buildings, quads, towers/gates, aerials — no logos/maps/portraits/
+   interiors; landscape orientation, ≥1000px wide; use the Commons 1600px
+   `thumburl`). The detail-page hero shows `[0]` and opens the rest in a
+   click-through lightbox; the explore card uses `[0]` for its gradient header.
+   Source from the university's Wikimedia Commons category
+   (`action=query&list=categorymembers&cmtitle=Category:<University>&cmtype=file`),
+   then **VERIFY each file's author + license via the Commons API extmetadata
+   (`Artist` + `LicenseShortName`)** — keep only freely-licensed files (CC BY /
+   CC BY-SA / CC0 / public domain / no-restrictions) and write each credit as
    `"Wikimedia Commons / <Author> (<License>)"` — e.g.
    `"Wikimedia Commons / Peacearth (CC BY-SA 4.0)"`, or `"… (public domain)"` /
-   `"… (CC0)"`. Never invent an author or license; if you cannot verify
-   attribution, pick a different freely-licensed photo or omit the photo. **No
-   photo is better than an uncredited one.**
+   `"… (CC0)"`. Also keep `media_gallery` leading with `campus_photos[0].url` and
+   `school_outcomes.media_credit` = its credit (legacy single-hero fallback).
+   Never invent an author or license; a file you cannot verify gets replaced or
+   dropped, and **3 verified photos beat 5 with one guessed credit.**
 8. **Reviews (`external_reviews`) — were EMPTY (issue: all reviews are blank).**
    Every program — and any school/institution with third-party coverage — gets an
    `external_reviews` object in the **MBAn shape** (copy the gold example
@@ -203,6 +210,10 @@ STRICT order:
      popular professional or STEM master's with blank reviews is *not gold*
      (miss #8). Repairing this comes before any new university — and MIT itself
      (1/65) is a valid repair target;
+   - **missing or single-photo `school_outcomes.campus_photos`** — the standard
+     is a 4–5 photo verified gallery (miss #7); an institution with no campus
+     photo at all (most beyond the original 14) breaks both the card header and
+     the detail hero;
    - **no `_standard` stamp**, or stamped at an older `STANDARD_VERSION`.
 3. **Only when EVERY existing university is fully gold** (institution + all schools
    + all programs, each conformant or honestly-omitted) may you add a brand-new
@@ -232,7 +243,8 @@ the one thing this routine must NOT do.**
 ### 4. Enrich the institution FIRST (parent before children)
 Fill every required institution-level field (rankings · report-card · admissions
 funnel · diversity · recognition · scale · outcomes · cost & aid · location · campus
-resources · **campus photo + `media_credit`** (completeness item 7) · feeds ·
+resources · **`campus_photos` gallery (4–5, each with verified credit) +
+`media_credit`** (completeness item 7) · feeds ·
 sources) from authoritative sources. Verify each (§Verify); cite;
 omit-if-unverifiable. The institution must reach gold first so schools/programs
 inherit its stats + photo.

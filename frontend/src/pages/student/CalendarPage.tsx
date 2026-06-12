@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { PageHeader } from '../../components/student/density'
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
   format, addMonths, subMonths, addWeeks, subWeeks, isSameDay, isToday, parseISO,
@@ -228,21 +229,23 @@ export default function CalendarPage() {
 
   return (
     <div className="p-4 w-full">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">Your admissions timeline</h1>
-          <p className="text-sm text-muted-foreground mt-1">{filtered.length} item{filtered.length !== 1 ? 's' : ''}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="secondary" onClick={() => setShowReminder(true)}>
-            <Plus size={14} className="mr-1" /> Add reminder
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => setShowWorkBlock(true)}>
-            <Plus size={14} className="mr-1" /> Add work block
-          </Button>
-        </div>
-      </div>
+      {/* Room header — consistent with the other My Space rooms (eyebrow = surface). */}
+      <PageHeader
+        eyebrow="My Space"
+        title="Calendar"
+        count={filtered.length}
+        sub="Your admissions timeline — deadlines, interviews, reminders, and work blocks"
+        actions={
+          <>
+            <Button size="sm" variant="secondary" onClick={() => setShowReminder(true)}>
+              <Plus size={14} className="mr-1" /> Add reminder
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => setShowWorkBlock(true)}>
+              <Plus size={14} className="mr-1" /> Add work block
+            </Button>
+          </>
+        }
+      />
 
       {/* Controls: view switcher + filters */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">

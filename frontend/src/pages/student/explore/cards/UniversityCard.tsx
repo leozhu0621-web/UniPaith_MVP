@@ -17,6 +17,7 @@ interface UniversityData {
   student_body_size?: number | null
   logo_url?: string | null
   image_url?: string | null
+  image_credit?: string | null
   program_count?: number
   school_count?: number
   description_text?: string | null
@@ -37,8 +38,10 @@ interface Props {
   onToggleFollow?: () => void
 }
 
-// Editorial, text-driven school card (Spec/02 §5, /14). No campus imagery, no
-// gradient banner — the school name is the anchor; gold/cobalt only as accents.
+// Editorial school card (Spec/02 §5, /14) with a campus-photo header that fades
+// into the card background — the same gradient treatment as the detail-page hero
+// (set 2026-06-12, supersedes the earlier text-only card rule). Falls back to the
+// clean text header when the university has no photo.
 export default function UniversityCard({ institution: inst, onClick, following, onToggleFollow }: Props) {
   const classification = classifyInstitution({
     description_text: inst.description_text,
@@ -50,14 +53,47 @@ export default function UniversityCard({ institution: inst, onClick, following, 
   const size = sizeBucket(inst.student_body_size)
   const sizeLabel = size ? SIZE_OPTIONS.find(s => s.code === size)?.label ?? null : null
   const locationStr = `${inst.city ? inst.city + ', ' : ''}${inst.region ? inst.region + ' · ' : ''}${inst.country}`
+  // Campus photo for the header banner — raster only (logos are SVG → skipped).
+  const photo = inst.image_url && /\.(jpe?g|png|webp|avif)(\?|$)/i.test(inst.image_url) ? inst.image_url : null
 
   return (
     <div
       onClick={onClick}
       className="bg-card rounded-lg border border-border hover:elev-raised transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
     >
-      {/* Header — school crest/logo + name (identity, not decorative imagery). */}
-      <div className="px-5 pt-5 pb-3 border-b border-border">
+      {/* Header — campus photo fading into the card; name overlaps the fade
+          (mirrors the detail-page hero). Text-only fallback when no photo. */}
+      {photo && (
+        <div className="relative h-28">
+          <img
+            src={photo}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+            onError={e => {
+              ;(e.currentTarget.parentElement as HTMLElement).style.display = 'none'
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(to bottom, rgba(10,18,36,0.42) 0%, rgba(10,18,36,0.08) 32%, rgba(10,18,36,0) 48%, hsl(var(--card)) 88%)',
+            }}
+          />
+          {inst.image_credit && (
+            <p
+              className="absolute top-1 right-2 text-[9px] text-white/80"
+              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.55)' }}
+              title="Campus photo credit"
+            >
+              {inst.image_credit}
+            </p>
+          )}
+        </div>
+      )}
+      <div className={`px-5 pb-3 border-b border-border ${photo ? 'relative -mt-9' : 'pt-5'}`}>
         <div className="flex items-start gap-3">
           {inst.logo_url && (
             <img
