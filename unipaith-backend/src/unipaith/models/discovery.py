@@ -59,6 +59,7 @@ class DiscoverySession(Base):
             "track",
             "status",
         ),
+        Index("ix_discovery_sessions_agent_session_id", "agent_session_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -79,6 +80,9 @@ class DiscoverySession(Base):
     # to the handoff gate (otherwise an average ≥ threshold masks a weak track).
     completion_breakdown: Mapped[dict | None] = mapped_column(JSONB)
     exit_signal: Mapped[dict | None] = mapped_column(JSONB)
+    # Anthropic managed-agent session id (sesn_...) bound to this journey.
+    # NULL until the first turn creates the platform session. See uni_agent_host.
+    agent_session_id: Mapped[str | None] = mapped_column(String(64))
     started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
