@@ -171,3 +171,43 @@ def test_all_units_have_about_detail():
     assert {s["name"] for s in p.SCHOOLS} == set(p._SCHOOL_WEBSITE)
     for school in p.SCHOOLS:
         assert p._ABOUT_DETAIL.get(school["name"]), f"{school['name']} missing about_detail"
+
+
+def test_coverable_programs_have_external_reviews():
+    """Coverable programs (SPIA, CS, core STEM/engineering, key sciences) must carry reviews."""
+    coverable = [
+        _FLAGSHIP,
+        "princeton-public-affairs-mpa",
+        "princeton-public-affairs-ab",
+        "princeton-economics-bs",
+        "princeton-physics-bs",
+        "princeton-mathematics-bs",
+        "princeton-electrical-engineering-bs",
+        "princeton-mechanical-engineering-bs",
+        "princeton-chemical-engineering-bs",
+        "princeton-operations-research-bs",
+        "princeton-civil-engineering-bs",
+        "princeton-architecture-bs",
+        "princeton-psychology-bs",
+        "princeton-molecular-biology-bs",
+        "princeton-neuroscience-bs",
+        "princeton-chemistry-bs",
+        "princeton-computer-science-ms",
+    ]
+    for slug in coverable:
+        assert slug in p._REVIEWS_BY_SLUG, slug
+        assert p._REVIEWS_BY_SLUG[slug].get("summary"), slug
+        assert len(p._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
+
+
+def test_institution_research_labs_have_links():
+    labs = p.SCHOOL_OUTCOMES.get("research", {}).get("labs", [])
+    links = p.SCHOOL_OUTCOMES.get("research", {}).get("lab_links", {})
+    for lab in labs:
+        assert lab in links, f"Missing lab link for {lab}"
+
+
+def test_description_leads_with_research_university():
+    assert p.DESCRIPTION.startswith(
+        "Princeton University is a private research university in Princeton, NJ"
+    )
