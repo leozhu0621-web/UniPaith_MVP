@@ -422,7 +422,9 @@ export default function UniConversation({
       )}
       {!turnMut.isPending &&
         !streaming &&
-        (llmChips.length > 0 ? (
+        // The scale slider doesn't need tap options, so render it even when the
+        // managed agent suggests `kind: scale` with an empty `options` array.
+        (llmChips.length > 0 || answerKind === 'scale' ? (
           <AnswerChoices
             options={llmChips}
             onPick={send}
