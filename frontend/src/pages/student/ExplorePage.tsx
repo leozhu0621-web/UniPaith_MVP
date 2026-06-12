@@ -266,7 +266,7 @@ export default function ExplorePage() {
           {uniError ? (
             <QueryError detail="We couldn't load universities." onRetry={() => refetchUni()} />
           ) : uniLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map(i => <div key={i} className="h-80 bg-card rounded-xl border border-border animate-pulse" />)}
             </div>
           ) : uniList.length === 0 ? (
@@ -294,7 +294,9 @@ export default function ExplorePage() {
                   Showing <span className="font-semibold text-foreground">{filteredUniList.length}</span> of {uniList.length} universities
                 </p>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {/* University cards cap at 3 per row (user direction 2026-06-12) —
+                  the photo header needs the wider card to keep a natural ratio. */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {displayUniList.map((inst: UniversityRow) => (
                   <UniversityCard
                     key={inst.id}
