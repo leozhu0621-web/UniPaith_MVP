@@ -7,8 +7,10 @@
  * data + scores + rationale; no new backend, no grid/filters/compare here. The
  * `always` variant offers an honest "look anytime" card before readiness.
  */
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import clsx from 'clsx'
 import { ArrowRight, Compass } from 'lucide-react'
 
 import { getHandoffVerdict } from '../../../api/discovery'
@@ -44,6 +46,19 @@ export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', 
   })
   const top = matches.slice(0, 3)
 
+  // Fire the earned-gold beat once — the first time the student becomes
+  // match-ready (not on every re-render or for a returning ready student).
+  const beaten = useRef(false)
+  const [justReady, setJustReady] = useState(false)
+  useEffect(() => {
+    if (ready && !beaten.current) {
+      beaten.current = true
+      setJustReady(true)
+      const t = setTimeout(() => setJustReady(false), 420)
+      return () => clearTimeout(t)
+    }
+  }, [ready])
+
   if (variant === 'auto' && !ready) return null
   // Hold the card back while a verdict fetch is in flight so a stale verdict
   // can't flash the wrong copy at the moment readiness may have flipped.
@@ -54,7 +69,13 @@ export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', 
       <div className="h-7 w-7 rounded-full bg-secondary text-white flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold">
         U
       </div>
-      <div className="flex-1 rounded-2xl rounded-bl-sm border border-secondary/30 bg-secondary/5 px-4 py-3 max-w-[88%]">
+      <div
+        className={clsx(
+          'flex-1 rounded-2xl rounded-bl-sm px-4 py-3 max-w-[88%]',
+          ready ? 'border-2 border-primary bg-card elev-glow' : 'border border-secondary/30 bg-secondary/5',
+          justReady && 'motion-safe:animate-beat',
+        )}
+      >
         <p className="text-sm leading-relaxed text-foreground">
           {ready ? (
             <>

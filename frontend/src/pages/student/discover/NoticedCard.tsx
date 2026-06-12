@@ -97,12 +97,15 @@ export default function NoticedCard({
 }) {
   if (items.length === 0) return null
   return (
-    <div className="flex justify-start pl-9" data-testid="noticed-card">
+    <div className="flex justify-start pl-9 motion-safe:animate-slide-up-fade" data-testid="noticed-card">
       <div className="rounded-xl bg-muted/40 border border-border/60 px-3 py-2 max-w-[80%]">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5">
           <Check size={12} className="text-secondary" /> Noticed
+          <span className="ml-1 rounded-full bg-secondary/10 text-secondary px-1.5 py-px text-[10px] font-medium">
+            +{items.length}
+          </span>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 stagger-list">
           {items.map(item =>
             item.ref ? (
               <EditableChip key={`${item.ref.kind}:${item.ref.id}`} item={item} />
