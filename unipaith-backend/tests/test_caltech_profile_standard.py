@@ -178,6 +178,31 @@ def test_cs_flagship_is_deeply_enriched():
     assert _FLAGSHIP in c._REVIEWS_BY_SLUG
 
 
+def test_coverable_programs_have_external_reviews():
+    """Coverable programs (flagship CS, core STEM options, key MS degrees) must carry reviews."""
+    coverable = [
+        _FLAGSHIP,
+        "caltech-ee-bs",
+        "caltech-me-bs",
+        "caltech-physics-bs",
+        "caltech-math-bs",
+        "caltech-chemistry-bs",
+        "caltech-cheme-bs",
+        "caltech-biology-bs",
+        "caltech-ids-bs",
+        "caltech-bem-bs",
+        "caltech-computer-science-ms",
+        "caltech-physics-ms",
+        "caltech-electrical-electronics-and-communications-engineering-ms",
+        "caltech-mechanical-engineering-ms",
+        "caltech-aerospace-aeronautical-and-astronautical-space-engineering-ms",
+    ]
+    for slug in coverable:
+        assert slug in c._REVIEWS_BY_SLUG, slug
+        assert c._REVIEWS_BY_SLUG[slug].get("summary"), slug
+        assert len(c._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
+
+
 def test_every_program_maps_to_a_real_division():
     names = {s["name"] for s in c.SCHOOLS}
     for spec in c.PROGRAMS:

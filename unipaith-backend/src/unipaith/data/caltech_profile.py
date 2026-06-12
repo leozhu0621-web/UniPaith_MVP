@@ -1253,7 +1253,973 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    "caltech-ee-bs": {
+        "summary": (
+            "Students and third-party guides describe Caltech electrical engineering as "
+            "among the most rigorous undergraduate EE programs in the United States — "
+            "U.S. News ranks Caltech No. 11 among National Universities (2026) with "
+            "leading engineering research — praising small classes, early lab access, and "
+            "ties to JPL and campus quantum institutes; common cautions are the "
+            "problem-set-heavy core, limited course variety versus larger schools, and "
+            "the intense pace shared across all Caltech majors."
+        ),
+        "themes": [
+            {
+                "label": "Rigorous EE core",
+                "sentiment": "positive",
+                "detail": (
+                    "A mathematically demanding curriculum with hands-on labs from the "
+                    "Division of Engineering and Applied Science."
+                ),
+            },
+            {
+                "label": "Research & JPL ties",
+                "sentiment": "positive",
+                "detail": (
+                    "Undergraduates access SURF research and Caltech-managed JPL "
+                    "facilities on aerospace and communications projects."
+                ),
+            },
+            {
+                "label": "Faculty access",
+                "sentiment": "positive",
+                "detail": "A 3:1 student-faculty ratio supports close mentoring in a tiny cohort.",
+            },
+            {
+                "label": "Workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Long problem sets and a fast quarter system are recurring themes in "
+                    "student guides."
+                ),
+            },
+            {
+                "label": "Small-program trade-offs",
+                "sentiment": "mixed",
+                "detail": (
+                    "Fewer elective breadth options than at large engineering colleges."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+            {
+                "label": "Caltech — Electrical Engineering",
+                "url": "https://www.ee.caltech.edu/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "caltech-me-bs": {
+        "summary": (
+            "Students and college guides consistently rank Caltech mechanical engineering "
+            "among the nation's most selective and research-intensive undergraduate ME "
+            "programs — Caltech reports mechanical engineering as one of its most popular "
+            "majors — praising design-and-analysis depth, robotics and aerospace labs, and "
+            "strong graduate-school placement; common cautions are the heavy physics and "
+            "math core, limited class size, and an workload students describe as among "
+            "the most demanding in the country."
+        ),
+        "themes": [
+            {
+                "label": "Design & analysis depth",
+                "sentiment": "positive",
+                "detail": (
+                    "A quantitative ME curriculum spanning dynamics, thermodynamics, and "
+                    "modern fabrication."
+                ),
+            },
+            {
+                "label": "Research labs",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to Caltech robotics, fluid mechanics, and materials labs from "
+                    "undergraduate research programs."
+                ),
+            },
+            {
+                "label": "Graduate placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Many graduates continue to top PhD programs or aerospace and tech "
+                    "roles."
+                ),
+            },
+            {
+                "label": "Core intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Shared Caltech physics and math requirements create a heavy first two "
+                    "years."
+                ),
+            },
+            {
+                "label": "Small cohort",
+                "sentiment": "caution",
+                "detail": (
+                    "Fewer than 1,000 undergraduates campus-wide limits peer group size "
+                    "within ME."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+            {
+                "label": "Caltech — Mechanical and Civil Engineering",
+                "url": "https://www.mce.caltech.edu/",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "caltech-physics-bs": {
+        "summary": (
+            "Students and guides universally describe Caltech physics as one of the world's "
+            "premier undergraduate physics programs — home to LIGO, Nobel-laureate "
+            "faculty, and a legacy of fundamental discovery — praising unmatched research "
+            "access for undergraduates and theoretical depth; common cautions are extreme "
+            "selectivity (~2.6% admit rate), a punishing problem-set culture, and that "
+            "the program assumes exceptional mathematical preparation from day one."
+        ),
+        "themes": [
+            {
+                "label": "World-leading physics",
+                "sentiment": "positive",
+                "detail": (
+                    "Caltech's Division of Physics, Mathematics and Astronomy anchors "
+                    "facilities like LIGO and Palomar Observatory."
+                ),
+            },
+            {
+                "label": "Undergraduate research",
+                "sentiment": "positive",
+                "detail": (
+                    "SURF and faculty-led projects expose undergraduates to frontier "
+                    "experiments early."
+                ),
+            },
+            {
+                "label": "Theoretical depth",
+                "sentiment": "positive",
+                "detail": (
+                    "A mathematically rigorous curriculum spanning classical mechanics, "
+                    "quantum theory, and modern physics."
+                ),
+            },
+            {
+                "label": "Selectivity & pace",
+                "sentiment": "caution",
+                "detail": (
+                    "Admission is among the most competitive nationally; the quarter system "
+                    "moves quickly."
+                ),
+            },
+            {
+                "label": "Math prerequisites",
+                "sentiment": "caution",
+                "detail": (
+                    "Students report that strong multivariable calculus and linear algebra "
+                    "are essential from the start."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Caltech — Division of Physics, Mathematics and Astronomy",
+                "url": "https://www.pma.caltech.edu/",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "caltech-math-bs": {
+        "summary": (
+            "Students and academic guides describe Caltech mathematics as a deeply "
+            "theoretical undergraduate major within a research powerhouse — Times Higher "
+            "Education ranks Caltech seventh globally (2026) with leading physical-sciences "
+            "strength — praising proof-based coursework, small seminars, and a pipeline to "
+            "top PhD programs; common cautions are the abstract, fast-paced curriculum, "
+            "limited applied-business pathways, and the shared Caltech workload that "
+            "students call exceptionally demanding."
+        ),
+        "themes": [
+            {
+                "label": "Proof-based rigor",
+                "sentiment": "positive",
+                "detail": (
+                    "A pure-mathematics core emphasizing analysis, algebra, and topology."
+                ),
+            },
+            {
+                "label": "Research culture",
+                "sentiment": "positive",
+                "detail": (
+                    "Faculty in PMA and CMS collaborate on theory, computation, and "
+                    "mathematical physics."
+                ),
+            },
+            {
+                "label": "PhD pipeline",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates frequently continue to leading mathematics and quantitative "
+                    "PhD programs."
+                ),
+            },
+            {
+                "label": "Abstract pace",
+                "sentiment": "caution",
+                "detail": (
+                    "Courses move quickly through graduate-level material for undergraduates."
+                ),
+            },
+            {
+                "label": "Limited pre-professional focus",
+                "sentiment": "mixed",
+                "detail": (
+                    "The major targets research careers more than corporate finance or "
+                    "consulting tracks."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Caltech — Division of Physics, Mathematics and Astronomy",
+                "url": "https://www.pma.caltech.edu/",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "caltech-chemistry-bs": {
+        "summary": (
+            "Students and third-party guides rank Caltech chemistry among the strongest "
+            "undergraduate programs in the United States — the Division of Chemistry and "
+            "Chemical Engineering hosts Nobel-caliber faculty and major research centers — "
+            "praising early lab research, small classes, and depth in physical and synthetic "
+            "chemistry; common cautions are long lab hours stacked on Caltech's heavy core, "
+            "limited non-research career advising, and the pressure of a tiny, high-achieving "
+            "peer group."
+        ),
+        "themes": [
+            {
+                "label": "Research-intensive labs",
+                "sentiment": "positive",
+                "detail": (
+                    "Undergraduates join synthesis, catalysis, and chemical biology groups "
+                    "through SURF and term-time research."
+                ),
+            },
+            {
+                "label": "Faculty depth",
+                "sentiment": "positive",
+                "detail": (
+                    "A small division with direct access to leading experimental and "
+                    "theoretical chemists."
+                ),
+            },
+            {
+                "label": "Graduate-school outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Most graduates pursue PhD programs or research careers in industry R&D."
+                ),
+            },
+            {
+                "label": "Lab workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Multi-hour lab sections on top of problem sets are a recurring theme."
+                ),
+            },
+            {
+                "label": "Narrow career services",
+                "sentiment": "mixed",
+                "detail": (
+                    "Career paths skew toward academia and research labs versus large "
+                    "corporate recruiting."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Caltech — Division of Chemistry and Chemical Engineering",
+                "url": "https://www.cce.caltech.edu/",
+            },
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "caltech-cheme-bs": {
+        "summary": (
+            "Students and engineering guides describe Caltech chemical engineering as a "
+            "small, elite program blending molecular science with quantitative transport "
+            "and reaction engineering — U.S. News ranks Caltech among the top National "
+            "Universities (No. 11, 2026) with leading engineering research output — "
+            "praising faculty mentorship and interdisciplinary ties to chemistry and "
+            "biology; common cautions are demanding thermodynamics and math prerequisites, "
+            "a limited alumni network versus larger ChemE schools, and Caltech's "
+            "notoriously heavy workload."
+        ),
+        "themes": [
+            {
+                "label": "Quantitative ChemE core",
+                "sentiment": "positive",
+                "detail": (
+                    "Transport, thermodynamics, and reaction engineering taught with "
+                    "rigorous mathematical modeling."
+                ),
+            },
+            {
+                "label": "Interdisciplinary research",
+                "sentiment": "positive",
+                "detail": (
+                    "Links to catalysis, bioengineering, and materials labs across CCE and "
+                    "BBE."
+                ),
+            },
+            {
+                "label": "Small-class mentoring",
+                "sentiment": "positive",
+                "detail": (
+                    "A tiny ChemE cohort enables close faculty advising and lab placement."
+                ),
+            },
+            {
+                "label": "Prerequisite intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Shared Caltech physics and chemistry sequences are time-consuming."
+                ),
+            },
+            {
+                "label": "Career breadth",
+                "sentiment": "mixed",
+                "detail": (
+                    "Placement skews toward PhD study and specialized R&D rather than "
+                    "large-process engineering roles."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Caltech — Chemical Engineering",
+                "url": "https://www.cce.caltech.edu/academics/chemical-engineering",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "caltech-biology-bs": {
+        "summary": (
+            "Students and guides describe Caltech biology as a research-first "
+            "undergraduate major in a division built for bioengineering and "
+            "neuroscience discovery — praising early bench research, access to the "
+            "Beckman Institute and affiliated medical centers, and quantitative training "
+            "unusual for a biology degree; common cautions are that courses assume strong "
+            "chemistry and math, pre-med support is less centralized than at larger "
+            "universities, and the overall Caltech workload leaves little slack."
+        ),
+        "themes": [
+            {
+                "label": "Research from year one",
+                "sentiment": "positive",
+                "detail": (
+                    "SURF placements in molecular biology, neuroscience, and "
+                    "bioengineering labs are common."
+                ),
+            },
+            {
+                "label": "Quantitative biology",
+                "sentiment": "positive",
+                "detail": (
+                    "The curriculum integrates genetics, biochemistry, and computational "
+                    "methods."
+                ),
+            },
+            {
+                "label": "Interdisciplinary ties",
+                "sentiment": "positive",
+                "detail": (
+                    "BBE connects biology to chemical engineering and applied physics "
+                    "across campus."
+                ),
+            },
+            {
+                "label": "Pre-med advising",
+                "sentiment": "caution",
+                "detail": (
+                    "Students note fewer structured pre-med resources than at large "
+                    "research universities."
+                ),
+            },
+            {
+                "label": "Workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Lab time plus Caltech core requirements create a packed schedule."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Caltech — Division of Biology and Biological Engineering",
+                "url": "https://www.bbe.caltech.edu/",
+            },
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "caltech-ids-bs": {
+        "summary": (
+            "Students and data-science guides describe Caltech's Information and Data "
+            "Sciences option as a rigorous, math-forward major bridging CMS computing "
+            "with statistics and machine learning — launched as Caltech expanded its "
+            "computing footprint — praising small cohorts, faculty-led projects, and "
+            "strong placement into tech and graduate analytics programs; common cautions "
+            "are that the major is newer and smaller than peer CS programs, course "
+            "offerings can feel narrow, and the standard Caltech workload remains intense."
+        ),
+        "themes": [
+            {
+                "label": "Math-forward data science",
+                "sentiment": "positive",
+                "detail": (
+                    "Combines probability, inference, and computing in CMS with Caltech's "
+                    "quantitative core."
+                ),
+            },
+            {
+                "label": "Research projects",
+                "sentiment": "positive",
+                "detail": (
+                    "Undergraduates work on machine learning and information theory with "
+                    "CMS faculty."
+                ),
+            },
+            {
+                "label": "Tech placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates target data-science, quant, and software roles leveraging "
+                    "the Caltech brand."
+                ),
+            },
+            {
+                "label": "Newer major",
+                "sentiment": "mixed",
+                "detail": (
+                    "The option is still growing compared with long-established CS "
+                    "programs elsewhere."
+                ),
+            },
+            {
+                "label": "Course breadth",
+                "sentiment": "caution",
+                "detail": (
+                    "Fewer electives than at large CS departments can limit specialization "
+                    "outside core strengths."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Caltech CMS — Information and Data Sciences",
+                "url": "https://www.cms.caltech.edu/academics/undergrad",
+            },
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "caltech-bem-bs": {
+        "summary": (
+            "Students and guides describe Caltech's Business, Economics, and Management "
+            "option as a quantitative social-science major inside a STEM institute — "
+            "emphasizing microeconomics, econometrics, and decision science rather than a "
+            "traditional undergraduate business school — praising analytical rigor and "
+            "faculty research access; common cautions are that it is not a pre-MBA "
+            "pipeline like peer business colleges, recruiting is self-directed, and the "
+            "humanities division is tiny relative to engineering."
+        ),
+        "themes": [
+            {
+                "label": "Quantitative economics",
+                "sentiment": "positive",
+                "detail": (
+                    "Coursework stresses micro theory, game theory, and econometrics with "
+                    "Caltech-level math."
+                ),
+            },
+            {
+                "label": "Faculty research",
+                "sentiment": "positive",
+                "detail": (
+                    "HSS economists work on industrial organization, finance, and "
+                    "experimental economics."
+                ),
+            },
+            {
+                "label": "Analytical toolkit",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates pursue PhD economics, quant finance, consulting, and policy "
+                    "analysis."
+                ),
+            },
+            {
+                "label": "Not a B-school",
+                "sentiment": "mixed",
+                "detail": (
+                    "There is no separate undergraduate business college or corporate "
+                    "recruiting cycle."
+                ),
+            },
+            {
+                "label": "Small division",
+                "sentiment": "caution",
+                "detail": (
+                    "Fewer humanities peers and electives than at liberal-arts colleges."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Caltech — Business, Economics, and Management",
+                "url": "https://www.hss.caltech.edu/academics/bem",
+            },
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "caltech-computer-science-ms": {
+        "summary": (
+            "Students and graduate guides describe Caltech's MS in Computer Science as a "
+            "selective, research-oriented degree within CMS — Caltech ranks among the "
+            "world's top universities for engineering and technology in Times Higher "
+            "Education (No. 7 globally, 2026) — praising thesis and project paths with "
+            "leading faculty; common cautions are limited seats, fewer industry "
+            "recruiting events than larger CS schools, and a curriculum that assumes "
+            "strong theoretical and mathematical preparation."
+        ),
+        "themes": [
+            {
+                "label": "Research-oriented MS",
+                "sentiment": "positive",
+                "detail": (
+                    "Thesis and project tracks connect students to algorithms, ML, and "
+                    "systems groups in CMS."
+                ),
+            },
+            {
+                "label": "Faculty depth",
+                "sentiment": "positive",
+                "detail": (
+                    "A small graduate cohort works directly with faculty on publishing "
+                    "research."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": "Admission is highly competitive with a small entering class.",
+            },
+            {
+                "label": "Industry recruiting",
+                "sentiment": "caution",
+                "detail": (
+                    "Fewer on-campus corporate events than at large CS graduate programs "
+                    "— students often network independently."
+                ),
+            },
+            {
+                "label": "Theoretical prerequisites",
+                "sentiment": "caution",
+                "detail": (
+                    "Courses expect strong algorithms, linear algebra, and probability "
+                    "backgrounds."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Caltech CMS — Graduate Programs",
+                "url": "https://www.cms.caltech.edu/academics/grad",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "caltech-physics-ms": {
+        "summary": (
+            "Students and academic guides rank Caltech's physics MS among the most "
+            "prestigious physics graduate credentials — the division operates LIGO and "
+            "partners with Palomar and Keck observatories — praising frontier thesis "
+            "research and faculty mentorship; common cautions are that many MS students "
+            "continue toward the PhD, funding packages vary by group, and the program "
+            "expects exceptional physics and math preparation."
+        ),
+        "themes": [
+            {
+                "label": "Frontier research",
+                "sentiment": "positive",
+                "detail": (
+                    "Thesis work spans astrophysics, quantum matter, and gravitational-wave "
+                    "science."
+                ),
+            },
+            {
+                "label": "Observatory access",
+                "sentiment": "positive",
+                "detail": (
+                    "Caltech-managed observatories and LIGO provide unique experimental "
+                    "platforms."
+                ),
+            },
+            {
+                "label": "PhD pipeline",
+                "sentiment": "mixed",
+                "detail": (
+                    "Many MS students treat the degree as a step toward Caltech's PhD "
+                    "program or other top doctorates."
+                ),
+            },
+            {
+                "label": "Funding variability",
+                "sentiment": "caution",
+                "detail": (
+                    "Research-group support differs; students should confirm funding when "
+                    "joining a lab."
+                ),
+            },
+            {
+                "label": "Preparation bar",
+                "sentiment": "caution",
+                "detail": (
+                    "Graduate coursework assumes mastery of undergraduate quantum mechanics "
+                    "and math methods."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Caltech PMA — Graduate Studies",
+                "url": "https://www.pma.caltech.edu/academics/grad",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "caltech-electrical-electronics-and-communications-engineering-ms": {
+        "summary": (
+            "Students and engineering guides describe Caltech's electrical engineering MS "
+            "as a research-intensive graduate option with strengths in communications, "
+            "photonics, and quantum hardware — praising close faculty collaboration and "
+            "ties to JPL and campus quantum institutes; common cautions are a small "
+            "program with limited coursework breadth, competitive lab placement, and "
+            "fewer corporate recruiting events than at large EE graduate schools."
+        ),
+        "themes": [
+            {
+                "label": "Research depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Thesis research spans photonics, circuits, communications, and "
+                    "quantum engineering."
+                ),
+            },
+            {
+                "label": "JPL & lab ties",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduate students collaborate with JPL and on-campus quantum and "
+                    "nanotechnology centers."
+                ),
+            },
+            {
+                "label": "Faculty mentoring",
+                "sentiment": "positive",
+                "detail": "Small cohorts enable direct advising from EE faculty.",
+            },
+            {
+                "label": "Limited breadth",
+                "sentiment": "caution",
+                "detail": (
+                    "Course offerings are narrower than at large EE departments with many "
+                    "specializations."
+                ),
+            },
+            {
+                "label": "Recruiting",
+                "sentiment": "caution",
+                "detail": (
+                    "Industry placement often relies on faculty networks rather than large "
+                    "career fairs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Caltech — Electrical Engineering graduate program",
+                "url": "https://www.ee.caltech.edu/academics/grad",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "caltech-mechanical-engineering-ms": {
+        "summary": (
+            "Students and guides describe Caltech's mechanical engineering MS as a "
+            "thesis-centered graduate program emphasizing fluid mechanics, robotics, and "
+            "materials — praising hands-on experimental work and interdisciplinary ties "
+            "to aerospace and bioengineering; common cautions are limited class offerings "
+            "relative to large ME departments, funding tied to research groups, and the "
+            "expectation that students arrive with strong continuum mechanics and math "
+            "backgrounds."
+        ),
+        "themes": [
+            {
+                "label": "Experimental thesis work",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduate research in fluids, robotics, and materials with access to "
+                    "Caltech's fabrication facilities."
+                ),
+            },
+            {
+                "label": "Interdisciplinary links",
+                "sentiment": "positive",
+                "detail": (
+                    "Collaboration with GALCIT aerospace and BBE bioengineering is common."
+                ),
+            },
+            {
+                "label": "Faculty access",
+                "sentiment": "positive",
+                "detail": "Small program size supports close mentoring relationships.",
+            },
+            {
+                "label": "Course breadth",
+                "sentiment": "caution",
+                "detail": (
+                    "Fewer specialized ME electives than at large public engineering "
+                    "colleges."
+                ),
+            },
+            {
+                "label": "Funding",
+                "sentiment": "caution",
+                "detail": (
+                    "Research assistantships depend on faculty grants; not all groups fund "
+                    "every admit."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Caltech — Mechanical and Civil Engineering graduate",
+                "url": "https://www.mce.caltech.edu/academics/grad",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+            {
+                "label": "Niche — California Institute of Technology",
+                "url": "https://www.niche.com/colleges/california-institute-of-technology/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "caltech-aerospace-aeronautical-and-astronautical-space-engineering-ms": {
+        "summary": (
+            "Students and aerospace guides rank Caltech's GALCIT aerospace MS among the "
+            "most prestigious aeronautics programs — Caltech operates and co-manages JPL "
+            "for NASA — praising thesis research in propulsion, structures, and space "
+            "systems with unmatched access to JPL mentors; common cautions are extremely "
+            "selective admission, funding tied to research contracts, and a curriculum "
+            "that assumes strong physics and engineering mathematics."
+        ),
+        "themes": [
+            {
+                "label": "JPL partnership",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduate students routinely collaborate with Jet Propulsion Laboratory "
+                    "scientists and engineers."
+                ),
+            },
+            {
+                "label": "Thesis research",
+                "sentiment": "positive",
+                "detail": (
+                    "Work spans hypersonics, space systems, and computational aerodynamics."
+                ),
+            },
+            {
+                "label": "Prestige",
+                "sentiment": "positive",
+                "detail": (
+                    "GALCIT alumni feed NASA, aerospace primes, and leading PhD programs."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": "Admission is highly competitive with a very small cohort.",
+            },
+            {
+                "label": "Funding dependence",
+                "sentiment": "caution",
+                "detail": (
+                    "Research assistantships follow faculty and JPL project funding cycles."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Caltech — GALCIT Graduate Aerospace",
+                "url": "https://www.galcit.caltech.edu/academics/grad",
+            },
+            {
+                "label": "Caltech — Jet Propulsion Laboratory",
+                "url": "https://www.jpl.nasa.gov/",
+            },
+            {
+                "label": "Caltech — University and College Rankings",
+                "url": "https://www.caltech.edu/about/university-and-college-rankings",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
 }
+
+# Coverable programs that must carry external_reviews (the MBAn/CMU pattern).
+_COVERABLE_REVIEWS = frozenset(_REVIEWS_BY_SLUG.keys())
 
 # ── Application requirements (degree-type baselines) ────────────────────────
 _INTL_VISA = {
