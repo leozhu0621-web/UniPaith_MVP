@@ -100,6 +100,10 @@ def test_institution_is_gold():
     omitted = set(m._OMITTED_INSTITUTION)
     assert set(res.missing_fields) <= omitted, f"Unexpected institution gaps: {res.missing_fields}"
     assert not _section_gaps_unexpected("institution", res.missing_sections, omitted)
+    assert m.SCHOOL_OUTCOMES.get("media_credit"), "Campus photo must carry attribution"
+    assert m.DESCRIPTION.startswith(
+        "Massachusetts Institute of Technology is a private research university in Cambridge, MA"
+    )
 
 
 def test_all_six_schools_done():
@@ -144,3 +148,21 @@ def test_every_node_has_content_sources():
     for spec in m.PROGRAMS:
         cs = m._MBAN_CONTENT if spec["slug"] == "mit-sloan-mban" else m._program_content(spec)
         assert cs.get("news_rss") and cs.get("events_feed") and cs.get("keywords"), spec["slug"]
+
+
+def test_coverable_programs_have_external_reviews():
+    """Coverable programs (MBA, MFin, MBAn, EECS, management, MArch, economics) must carry reviews."""
+    coverable = [
+        "mit-sloan-mban",
+        "mit-sloan-mba",
+        "mit-sloan-mfin",
+        "mit-eecs-bs",
+        "mit-management-bs",
+        "mit-architecture-march",
+        "mit-economics-bs",
+        "mit-business-analytics-bs",
+    ]
+    for slug in coverable:
+        assert slug in m._REVIEWS_BY_SLUG, slug
+        assert m._REVIEWS_BY_SLUG[slug].get("summary"), slug
+        assert len(m._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
