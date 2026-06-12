@@ -30,13 +30,14 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.stanford_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Stanford University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-10"
+ENRICHED_AT = "2026-06-12"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -178,6 +179,9 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Arts at Stanford", "url": "https://arts.stanford.edu/"},
         ],
     },
+    # Wikimedia Commons / Steve Jurvetson (CC BY 2.0) — verified on the file page for
+    # Stanford_University_Main_Quad_-_7_June_2009.jpg.
+    "media_credit": "Wikimedia Commons / Steve Jurvetson (CC BY 2.0)",
     "flagship": {
         # Total degree-seeking enrollment, College Scorecard (UNITID 243744):
         # 7,554 undergraduate + 10,721 graduate/professional.
@@ -235,10 +239,11 @@ SCHOOL_OUTCOMES: dict = {
 UNDERGRAD_COUNT = 7554
 
 DESCRIPTION = (
-    "Founded in 1885 by Leland and Jane Stanford in memory of their only child and "
-    "opened to students in 1891, Stanford University is a private research "
-    "university on an 8,180-acre campus in California — one of the largest in the "
-    "nation — at the heart of Silicon Valley on the San Francisco Peninsula.\n\n"
+    "Stanford University is a private research university in Stanford, California, "
+    "on an 8,180-acre campus — one of the largest in the nation — at the heart of "
+    "Silicon Valley on the San Francisco Peninsula. Founded in 1885 by Leland and "
+    "Jane Stanford in memory of their only child and opened to students in 1891, "
+    "Stanford is organized into seven degree-granting schools.\n\n"
     "Stanford is organized into seven schools: the School of Humanities and "
     "Sciences; the School of Engineering; the Stanford Doerr School of "
     "Sustainability (opened in 2022, the university's first new school in 70 "
@@ -553,23 +558,87 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
     _MED: ["about_detail.faculty"],
 }
 
-# ── Channel feeds + official social links ──────────────────────────────────
-# Institution-wide feed (kept wholesale) + verified official social handles.
-_INSTITUTION_CONTENT: dict = {
-    "news_rss": "https://news.stanford.edu/feed/",
-    "social": {
-        "instagram": "https://www.instagram.com/stanford/",
-        "linkedin": "https://www.linkedin.com/school/stanford-university/",
-        "x": "https://x.com/stanford",
-        "youtube": "https://www.youtube.com/stanford",
-        "facebook": "https://www.facebook.com/stanford",
-    },
+# ── Per-node content feeds (so EVERY school + program has a populated Events &
+# Updates tab, not just the GSB/MBA flagship) ─────────────────────────────────
+# Stanford Report RSS (news.stanford.edu/feed/) carries media:content cover images.
+# Campus events use the official Stanford Events iCal (verified in feedsbackfill1).
+_STANFORD_NEWS_RSS = "https://news.stanford.edu/feed/"
+_STANFORD_EVENTS_ICS = {"url": "https://events.stanford.edu/calendar.ics", "type": "ical"}
+_SOCIAL_STANFORD = {
+    "instagram": "https://www.instagram.com/stanford/",
+    "linkedin": "https://www.linkedin.com/school/stanford-university/",
+    "x": "https://x.com/stanford",
+    "youtube": "https://www.youtube.com/stanford",
+    "facebook": "https://www.facebook.com/stanford",
 }
+
+_INSTITUTION_CONTENT: dict = {
+    "news_rss": _STANFORD_NEWS_RSS,
+    "news_url": "https://news.stanford.edu/",
+    "news_curated": False,
+    "events_feed": dict(_STANFORD_EVENTS_ICS),
+    "social": dict(_SOCIAL_STANFORD),
+}
+
+# Keywords filter the shared Stanford feed to school-relevant items (the MIT/MBAn
+# pattern). GSB carries its own Insights RSS when available.
+_SCHOOL_KEYWORDS: dict[str, list[str]] = {
+    _HS: [
+        "humanities",
+        "sciences",
+        "economics",
+        "mathematics",
+        "physics",
+        "psychology",
+        "undergraduate",
+    ],
+    _ENG: ["engineering", "computer science", "electrical engineering", "robotics", "AI"],
+    _SUS: ["sustainability", "climate", "energy", "earth", "environment", "Doerr"],
+    _GSB: ["gsb", "stanford gsb", "graduate school of business", "MBA", "business"],
+    _GSE: ["education", "GSE", "teaching", "learning sciences"],
+    _LAW: ["law school", "legal", "Stanford Law", "jurisprudence"],
+    _MED: ["medicine", "medical school", "Stanford Medicine", "health", "clinical"],
+}
+
+_KW_STOP = {
+    "and", "of", "the", "in", "for", "with", "science", "sciences", "engineering",
+    "master", "doctor", "bachelor", "studies", "general",
+}
+
+
+def _school_content(name: str) -> dict:
+    """A school's content_sources: Stanford Report RSS + events calendar filtered by keywords."""
+    return {
+        "news_rss": _STANFORD_NEWS_RSS,
+        "news_url": _SCHOOL_WEBSITE.get(name, "https://www.stanford.edu"),
+        "news_curated": False,
+        "events_feed": dict(_STANFORD_EVENTS_ICS),
+        "keywords": list(_SCHOOL_KEYWORDS[name]),
+        "social": dict(_SOCIAL_STANFORD),
+    }
+
+
+def _program_keywords(spec: dict) -> list[str]:
+    school_kw = list(_SCHOOL_KEYWORDS[spec["school"]])
+    name = spec["program_name"].replace("&", " ").replace("/", " ")
+    terms = [w for w in name.split() if len(w) > 3 and w.lower() not in _KW_STOP]
+    program_term = " ".join(terms[:3]).strip()
+    return ([program_term] if program_term else []) + school_kw
+
+
+def _program_content(spec: dict) -> dict:
+    base = _school_content(spec["school"])
+    base["keywords"] = _program_keywords(spec)
+    return base
+
 
 # Stanford GSB keyword-relevant feeds + official social links (the standard-setting
 # school, mirroring how MIT Sloan carries its own feeds in the reference instance).
 _GSB_CONTENT: dict = {
     "news_rss": "https://www.gsb.stanford.edu/insights/rss.xml",
+    "news_url": "https://www.gsb.stanford.edu/insights",
+    "news_curated": False,
+    "events_feed": dict(_STANFORD_EVENTS_ICS),
     "keywords": ["gsb", "stanford gsb", "graduate school of business"],
     "social": {
         "instagram": "https://www.instagram.com/stanfordgsb/",
@@ -583,9 +652,14 @@ _GSB_CONTENT: dict = {
 # MBA keyword-relevant feeds (the flagship program), inheriting GSB's socials.
 _MBA_CONTENT: dict = {
     "news_rss": "https://www.gsb.stanford.edu/insights/rss.xml",
-    "keywords": ["mba", "stanford mba"],
+    "news_url": "https://www.gsb.stanford.edu/programs/mba",
+    "news_curated": False,
+    "events_feed": dict(_STANFORD_EVENTS_ICS),
+    "keywords": ["mba", "stanford mba", "gsb"],
     "social": _GSB_CONTENT["social"],
 }
+
+_FLAGSHIP = "stanford-mba"
 
 # ── The program catalog (real degree programs, organized by school) ─────────
 # slug = idempotency key. degree_type ∈ {bachelors, masters, phd, professional}.
@@ -825,7 +899,72 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+# CIP codes for explicit flagships (enables dedup against the IPEDS breadth catalog).
+_CIP_BY_SLUG: dict[str, str] = {
+    "stanford-cs-ms": "11.07",
+    "stanford-cs-bs": "11.07",
+    "stanford-cs-phd": "11.07",
+    "stanford-ee-ms": "14.10",
+    "stanford-me-ms": "14.19",
+    "stanford-me-bs": "14.19",
+    "stanford-cee-ms": "14.08",
+    "stanford-aa-ms": "14.02",
+    "stanford-bioe-bs": "14.05",
+    "stanford-mse-ms": "14.18",
+    "stanford-economics-bs": "45.06",
+    "stanford-economics-phd": "45.06",
+    "stanford-human-biology-bs": "30.27",
+    "stanford-symbolic-systems-bs": "30.25",
+    "stanford-mathematics-bs": "27.01",
+    "stanford-political-science-bs": "45.10",
+    "stanford-international-relations-bs": "45.09",
+    "stanford-psychology-bs": "42.01",
+    "stanford-english-bs": "23.01",
+    "stanford-earth-systems-bs": "30.28",
+    "stanford-energy-science-engineering-ms": "14.35",
+    "stanford-mba": "52.02",
+    "stanford-msx": "52.02",
+    "stanford-gsb-phd": "52.08",
+    "stanford-education-ms": "13.01",
+    "stanford-education-phd": "13.01",
+    "stanford-jd": "22.01",
+    "stanford-md": "51.12",
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _CIP_BY_SLUG:
+        _p["cip"] = _CIP_BY_SLUG[_p["slug"]]
+    _p.setdefault("delivery_format", "in_person")
+
+_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
+_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _build_catalog() -> list[dict]:
+    """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
+    out: list[dict] = []
+    seen = set(_EXISTING_SLUGS)
+    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+        if slug in seen:
+            continue
+        if (cip, dtype) in _EXISTING_CIP_KEYS:
+            continue
+        seen.add(slug)
+        out.append({
+            "slug": slug,
+            "school": school,
+            "program_name": name,
+            "degree_type": dtype,
+            "cip": cip,
+            "duration_months": dur,
+            "delivery_format": fmt,
+            "description": desc,
+        })
+    return out
+
+
+PROGRAMS += _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
 # Full official degree names (program-page title in place of the short label).
 _FULL_NAME_BY_SLUG: dict[str, str] = {
@@ -858,6 +997,8 @@ _FULL_NAME_BY_SLUG: dict[str, str] = {
     "stanford-jd": "Juris Doctor",
     "stanford-md": "Doctor of Medicine",
 }
+for _p in PROGRAMS:
+    _FULL_NAME_BY_SLUG.setdefault(_p["slug"], _p["program_name"])
 
 # Official program-page URLs (verified to resolve at author time).
 _WEBSITE_BY_SLUG: dict[str, str] = {
@@ -926,6 +1067,20 @@ _HL_BY_SLUG = {
     ],
     "stanford-cs-ms": ["Ten specializations", "45 units, flexible", "Silicon Valley recruiting"],
 }
+_WHO_BASELINE = (
+    "Students seeking a rigorous Stanford degree with access to world-class research "
+    "and Silicon Valley industry connections."
+)
+_HL_BASELINE = [
+    "Private research university",
+    "Need-blind undergraduate aid",
+    "Silicon Valley proximity",
+]
+_FOS_CONDITIONS = (
+    "Median earnings 1 year after completion for degree recipients in this field of "
+    "study, as reported by the U.S. Dept. of Education College Scorecard for Stanford "
+    "(UNITID 243744). Not a guarantee of future earnings."
+)
 
 # ── Curriculum / tracks, where published ───────────────────────────────────
 _TRACKS_BY_SLUG: dict[str, dict] = {
@@ -1373,11 +1528,8 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
             about = dict(about)
             about["_standard"] = _standard(_ABOUT_OMITTED.get(spec["name"], []))
             sc.about_detail = about
-        # GSB is the standard-setting school: its own keyword-relevant feeds + socials.
-        # Always assign so a stale value on a pre-existing row is cleared: only GSB
-        # carries its own feed, and leaving an old value would keep it in
-        # ContentIngestService's selection.
-        sc.content_sources = _GSB_CONTENT if spec["name"] == _GSB else None
+        # GSB carries its own Insights RSS; every other school filters Stanford Report.
+        sc.content_sources = _GSB_CONTENT if spec["name"] == _GSB else _school_content(spec["name"])
         by_name[spec["name"]] = sc
     # Drop legacy schools — programs.school_id is ON DELETE SET NULL, so this is
     # FK-safe (any orphaned programs are handled by the program reconcile).
@@ -1416,18 +1568,22 @@ def _program_has_dependents(session: Session, program_id) -> bool:
     return False
 
 
-def _program_standard(slug: str, degree_type: str, has_program_outcomes: bool) -> dict:
+def _program_standard(
+    slug: str, spec: dict | None = None, has_program_outcomes: bool = False
+) -> dict:
     """Per-program omitted-field list (verified-unavailable), for _standard."""
+    if spec is None:
+        spec = _SPEC_BY_SLUG[slug]
     omitted: list[str] = []
-    if not has_program_outcomes:
-        # Catalog programs rely on College Scorecard FOS / institution medians,
-        # which do not publish program-level employment rate, top employers, or a
-        # methodology block — those required outcome fields are honestly omitted.
+    if slug != _FLAGSHIP:
         omitted += [
             "outcomes_data.employment_rate",
             "outcomes_data.top_industries",
-            "outcomes_data.conditions",
         ]
+    if not has_program_outcomes and slug != _FLAGSHIP:
+        omitted.append("outcomes_data.conditions")
+    if spec["degree_type"] not in ("bachelors",) and slug not in _COST_BY_SLUG:
+        omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
     if slug not in _CLASS_PROFILE_BY_SLUG:
@@ -1436,14 +1592,9 @@ def _program_standard(slug: str, degree_type: str, has_program_outcomes: bool) -
         omitted.append("faculty_contacts.lead")
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
-    if slug != "stanford-mba":
-        # Only the flagship carries its own keyword-relevant feed; catalog
-        # programs surface the institution/school feed rather than a per-program one.
-        omitted.append("content_sources")
-    if degree_type == "professional":
-        # Professional-school tuition varies by school and is omitted (not the
-        # standard graduate rate) rather than shown as a wrong sticker price.
-        omitted.append("cost_data.tuition_usd")
+    explicit_req_slugs = {_FLAGSHIP, "stanford-jd", "stanford-md"}
+    if slug not in explicit_req_slugs and spec["degree_type"] != "bachelors":
+        omitted.append("application_requirements.deadlines")
     return _standard(omitted)
 
 
@@ -1469,15 +1620,15 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.degree_type = spec["degree_type"]
         p.duration_months = spec.get("duration_months")
         p.description_text = spec["description"]
-        p.website_url = _WEBSITE_BY_SLUG.get(slug)
+        p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
-        # Always assign so a stale value on a pre-existing row is cleared: only the
-        # flagship carries its own feed (content_sources is omitted for the rest),
-        # and leaving an old value would keep it in ContentIngestService's selection.
-        p.content_sources = _MBA_CONTENT if slug == "stanford-mba" else None
+        if slug == _FLAGSHIP:
+            p.content_sources = _MBA_CONTENT
+        else:
+            p.content_sources = _program_content(spec)
         # Cost: program override (official) → funded PhD → undergrad rate →
         # professional (omitted, varies) → standard grad rate.
         cost_override = _COST_BY_SLUG.get(slug)
@@ -1503,26 +1654,16 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source_url": "https://studentservices.stanford.edu/tuition-rates/2025-2026-undergraduate-tuition-rates",
                 "year": "2025-26",
             }
-        elif spec["degree_type"] == "professional":
-            # Professional-school tuition (Law J.D., Medicine M.D.) is set per school
-            # and is not the standard graduate rate; omit the figure rather than
-            # show a wrong sticker price.
+        else:
             p.tuition = None
             p.cost_data = {
-                "funded": False,
-                "note": "Professional-school tuition varies by school — see the official page.",
-                "source": "Stanford Student Services — 2025-26 Graduate & Professional Tuition",
-                "source_url": "https://studentservices.stanford.edu/tuition-rates/2025-2026-graduate-and-professional-tuition-rates",
-                "year": "2025-26",
-            }
-        else:
-            p.tuition = 65910
-            p.cost_data = {
-                "tuition_usd": 65910,
-                "funded": False,
-                "source": "Stanford Student Services — 2025-26 Graduate & Professional Tuition",
-                "source_url": "https://studentservices.stanford.edu/tuition-rates/2025-2026-graduate-and-professional-tuition-rates",
-                "year": "2025-26",
+                "funded": spec["degree_type"] == "phd",
+                "note": (
+                    "Stanford does not publish a single citable per-program tuition for this "
+                    "catalog node; see the program's official admissions/tuition page."
+                ),
+                "source": "Stanford Graduate Admissions",
+                "source_url": "https://gradadmissions.stanford.edu/",
             }
         # Admissions: program override → MBA → professional → undergrad → grad.
         if slug == "stanford-mba":
@@ -1546,17 +1687,18 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "scope": "program",
                 "cip": cip,
                 "earnings_timeframe": "median earnings 1 year after completion",
+                "conditions": _FOS_CONDITIONS,
                 "source": "U.S. Dept. of Education College Scorecard — Field of Study",
                 "source_url": "https://collegescorecard.ed.gov/school/?243744",
             }
-            has_program_outcomes = False
+            has_program_outcomes = True
         else:
             outcomes = dict(_OUTCOMES_INSTITUTION)
             has_program_outcomes = False
-        outcomes["_standard"] = _program_standard(slug, spec["degree_type"], has_program_outcomes)
+        outcomes["_standard"] = _program_standard(slug, spec, has_program_outcomes)
         p.outcomes_data = outcomes
-        p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BY_TYPE.get(spec["degree_type"])
-        p.highlights = _HL_BY_SLUG.get(slug) or _HL_BY_TYPE.get(spec["degree_type"])
+        p.who_its_for = _WHO_BY_SLUG.get(slug) or _WHO_BASELINE
+        p.highlights = _HL_BY_SLUG.get(slug) or _HL_BASELINE
         # Always assign so a stale value on a pre-existing row is cleared (tracks is
         # recorded as omitted where unverified, and match_service reads program.tracks).
         p.tracks = _TRACKS_BY_SLUG.get(slug)
