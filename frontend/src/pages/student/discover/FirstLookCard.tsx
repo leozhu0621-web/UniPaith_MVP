@@ -7,62 +7,76 @@
  * data + scores + rationale; no new backend, no grid/filters/compare here. The
  * `always` variant offers an honest "look anytime" card before readiness.
  */
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import clsx from 'clsx'
-import { ArrowRight, Compass } from 'lucide-react'
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import clsx from "clsx";
+import { ArrowRight, Compass } from "lucide-react";
 
-import { getHandoffVerdict } from '../../../api/discovery'
-import { getMatches } from '../../../api/matching'
-import Button from '../../../components/ui/Button'
-import type { HandoffVerdict, MatchResultDual } from '../../../types'
-import DualRing from '../match/DualRing'
+import { getHandoffVerdict } from "../../../api/discovery";
+import { getMatches } from "../../../api/matching";
+import Button from "../../../components/ui/Button";
+import type { HandoffVerdict, MatchResultDual } from "../../../types";
+import DualRing from "../match/DualRing";
 
 interface Props {
   /** Pass an already-fetched verdict to skip the query (used in the thread). */
-  verdict?: HandoffVerdict
+  verdict?: HandoffVerdict;
   /** `auto` renders only when ready; `always` shows a look-anytime card too. */
-  variant?: 'auto' | 'always'
-  onKeepTalking?: () => void
+  variant?: "auto" | "always";
+  onKeepTalking?: () => void;
 }
 
-export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', onKeepTalking }: Props) {
-  const navigate = useNavigate()
+export default function FirstLookCard({
+  verdict: verdictProp,
+  variant = "auto",
+  onKeepTalking,
+}: Props) {
+  const navigate = useNavigate();
   const { data: fetched, isFetching } = useQuery<HandoffVerdict>({
-    queryKey: ['discovery', 'handoff'],
+    queryKey: ["discovery", "handoff"],
     queryFn: getHandoffVerdict,
     enabled: verdictProp === undefined,
-  })
-  const verdict = verdictProp ?? fetched
-  const ready = !!verdict?.should_handoff
+  });
+  const verdict = verdictProp ?? fetched;
+  const ready = !!verdict?.should_handoff;
 
   // Only pull matches once the student is ready — the first look is the reward
   // for covering the three Discovery stages.
   const { data: matches = [] } = useQuery<MatchResultDual[]>({
-    queryKey: ['matches', 'first-look'],
+    queryKey: ["matches", "first-look"],
     queryFn: () => getMatches(false),
     enabled: ready,
-  })
-  const top = matches.slice(0, 3)
+  });
+  const top = matches.slice(0, 3);
 
-  // Fire the earned-gold beat once — the first time the student becomes
-  // match-ready (not on every re-render or for a returning ready student).
-  const beaten = useRef(false)
-  const [justReady, setJustReady] = useState(false)
+  // Fire the earned-gold beat once — only when readiness flips on *in-session*.
+  // The first settled render records a baseline (like useMilestoneBeat), so a
+  // returning student who arrives already ready doesn't replay the beat on every
+  // navigation/remount. `verdict === undefined` means it hasn't settled yet.
+  const initialized = useRef(false);
+  const prevReady = useRef(false);
+  const [justReady, setJustReady] = useState(false);
   useEffect(() => {
-    if (ready && !beaten.current) {
-      beaten.current = true
-      setJustReady(true)
-      const t = setTimeout(() => setJustReady(false), 420)
-      return () => clearTimeout(t)
+    if (verdict === undefined) return;
+    if (!initialized.current) {
+      initialized.current = true;
+      prevReady.current = ready;
+      return;
     }
-  }, [ready])
+    if (ready && !prevReady.current) {
+      prevReady.current = ready;
+      setJustReady(true);
+      const t = setTimeout(() => setJustReady(false), 420);
+      return () => clearTimeout(t);
+    }
+    prevReady.current = ready;
+  }, [ready, verdict]);
 
-  if (variant === 'auto' && !ready) return null
+  if (variant === "auto" && !ready) return null;
   // Hold the card back while a verdict fetch is in flight so a stale verdict
   // can't flash the wrong copy at the moment readiness may have flipped.
-  if (verdictProp === undefined && isFetching) return null
+  if (verdictProp === undefined && isFetching) return null;
 
   return (
     <div className="flex gap-2.5" data-testid="first-look-card">
@@ -71,9 +85,11 @@ export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', 
       </div>
       <div
         className={clsx(
-          'flex-1 rounded-2xl rounded-bl-sm px-4 py-3 max-w-[88%]',
-          ready ? 'border-2 border-primary bg-card elev-glow' : 'border border-secondary/30 bg-secondary/5',
-          justReady && 'motion-safe:animate-beat',
+          "flex-1 rounded-2xl rounded-bl-sm px-4 py-3 max-w-[88%]",
+          ready
+            ? "border-2 border-primary bg-card elev-glow"
+            : "border border-secondary/30 bg-secondary/5",
+          justReady && "animate-beat",
         )}
       >
         <p className="text-sm leading-relaxed text-foreground">
@@ -92,8 +108,8 @@ export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', 
 
         {ready && top.length > 0 && (
           <div className="mt-3 rounded-xl border border-border bg-card divide-y divide-border overflow-hidden">
-            {top.map(m => {
-              const why = m.rationale_text || ''
+            {top.map((m) => {
+              const why = m.rationale_text || "";
               // Grounded facts straight from the catalog — real cost + selectivity.
               const facts = [
                 m.tuition != null ? `$${m.tuition.toLocaleString()}/yr` : null,
@@ -101,7 +117,7 @@ export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', 
                 m.band_label ? `${m.band_label} fit` : null,
               ]
                 .filter(Boolean)
-                .join(' · ')
+                .join(" · ");
               return (
                 <div key={m.program_id} className="flex items-center gap-3 px-3 py-2.5">
                   <DualRing
@@ -113,13 +129,13 @@ export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', 
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium text-foreground truncate">
                       {m.program_name}
-                      {m.institution_name ? ` · ${m.institution_name}` : ''}
+                      {m.institution_name ? ` · ${m.institution_name}` : ""}
                     </div>
                     {facts && <div className="text-xs text-muted-foreground">{facts}</div>}
                     {why && <div className="text-xs text-muted-foreground line-clamp-2">{why}</div>}
                   </div>
                 </div>
-              )
+              );
             })}
             <div className="px-3 py-2 text-xs text-muted-foreground bg-muted/40">
               These sharpen the more we talk — and there are more where these came from.
@@ -128,9 +144,9 @@ export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', 
         )}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={() => navigate('/s/explore')}>
+          <Button variant="secondary" size="sm" onClick={() => navigate("/s/explore")}>
             <Compass size={14} className="mr-1.5" />
-            {ready ? 'Go deeper in Match' : 'See programs that fit me'}
+            {ready ? "Go deeper in Match" : "See programs that fit me"}
             <ArrowRight size={14} className="ml-1" />
           </Button>
           {onKeepTalking && (
@@ -145,5 +161,5 @@ export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', 
         </div>
       </div>
     </div>
-  )
+  );
 }

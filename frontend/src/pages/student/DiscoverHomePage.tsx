@@ -7,51 +7,53 @@
  * slim journey bar that opens a bottom sheet, so the conversation owns the
  * screen. The rail drives the conversation through an imperative `ask`.
  */
-import { useCallback, useMemo, useRef, useState } from 'react'
-import { ChevronDown, Sparkles } from 'lucide-react'
+import { useCallback, useMemo, useRef, useState } from "react";
+import { ChevronDown, Sparkles } from "lucide-react";
 
-import Card from '../../components/ui/Card'
-import Sheet from '../../components/ui/Sheet'
-import { useAuthStore } from '../../stores/auth-store'
-import JourneyRail from './discover/JourneyRail'
-import LivingProfilePanel from './discover/LivingProfilePanel'
-import UniConversation from './discover/UniConversation'
-import { useJourneyState, type StageKey } from './discover/useJourneyState'
+import Card from "../../components/ui/Card";
+import Sheet from "../../components/ui/Sheet";
+import { useAuthStore } from "../../stores/auth-store";
+import JourneyRail from "./discover/JourneyRail";
+import LivingProfileHeader from "./discover/LivingProfileHeader";
+import LivingProfilePanel from "./discover/LivingProfilePanel";
+import UniConversation from "./discover/UniConversation";
+import { useJourneyState, type StageKey } from "./discover/useJourneyState";
 
 export default function DiscoverHomePage() {
-  const [profileOpen, setProfileOpen] = useState(false)
-  const [journeySheetOpen, setJourneySheetOpen] = useState(false)
-  const askRef = useRef<(t: string) => void>(() => {})
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [journeySheetOpen, setJourneySheetOpen] = useState(false);
+  const askRef = useRef<(t: string) => void>(() => {});
   // Guided workspace shell is gated on the backend ai_uni_guided_v1 flag
   // (spec §9). Flag off → the prior single-column open Uni experience (no rail,
   // no journey chrome) so nothing regresses.
-  const guided = !!useAuthStore(s => s.user?.uni_guided)
-  const journey = useJourneyState(guided)
+  const guided = !!useAuthStore((s) => s.user?.uni_guided);
+  const journey = useJourneyState(guided);
 
   const onReady = useCallback((api: { ask: (t: string) => void }) => {
-    askRef.current = api.ask
-  }, [])
+    askRef.current = api.ask;
+  }, []);
 
   const railProps = useMemo(
     () => ({
       stages: journey.stages,
       matchesUnlocked: journey.matchesUnlocked,
+      journeyLoaded: journey.loaded,
       onRevisit: (key: StageKey) => {
-        const label = journey.stages.find(s => s.key === key)?.label ?? 'that'
-        askRef.current(`Let's revisit ${label}.`)
-        setJourneySheetOpen(false)
+        const label = journey.stages.find((s) => s.key === key)?.label ?? "that";
+        askRef.current(`Let's revisit ${label}.`);
+        setJourneySheetOpen(false);
       },
       onOpenMatches: () => {
-        askRef.current('Can I see a first look at my matches?')
-        setJourneySheetOpen(false)
+        askRef.current("Can I see a first look at my matches?");
+        setJourneySheetOpen(false);
       },
       onAsk: (p: string) => {
-        askRef.current(p)
-        setJourneySheetOpen(false)
+        askRef.current(p);
+        setJourneySheetOpen(false);
       },
     }),
-    [journey.stages, journey.matchesUnlocked],
-  )
+    [journey.stages, journey.matchesUnlocked, journey.loaded],
+  );
 
   // Flag off — single-column open Uni, no guided chrome (spec §9 fallback).
   if (!guided) {
@@ -65,7 +67,7 @@ export default function DiscoverHomePage() {
           />
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -79,7 +81,7 @@ export default function DiscoverHomePage() {
         <span className="flex items-center gap-2 text-sm">
           <Sparkles size={15} className="text-secondary shrink-0" />
           <span className="font-medium text-foreground">
-            {journey.currentStage?.label ?? 'Your journey'}
+            {journey.currentStage?.label ?? "Your journey"}
           </span>
           <span className="text-muted-foreground">· journey &amp; profile</span>
         </span>
@@ -107,7 +109,7 @@ export default function DiscoverHomePage() {
         {/* Living profile gets its own column at xl+ (it's xl:hidden in the rail,
             so it appears in exactly one place per breakpoint). */}
         <aside className="hidden xl:block w-72 shrink-0">
-          <p className="text-eyebrow text-muted-foreground mb-3">What Uni knows about you</p>
+          <LivingProfileHeader />
           <LivingProfilePanel onAsk={railProps.onAsk} />
         </aside>
       </div>
@@ -121,5 +123,5 @@ export default function DiscoverHomePage() {
         <JourneyRail {...railProps} />
       </Sheet>
     </div>
-  )
+  );
 }
