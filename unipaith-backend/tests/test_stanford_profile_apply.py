@@ -182,7 +182,8 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     assert cs_bs.tracks is None
     assert cs_bs.content_sources is not None
     assert cs_bs.content_sources["news_rss"] == stanford_profile._STANFORD_NEWS_RSS
-    assert cs_bs.content_sources["events_feed"]["url"] == stanford_profile._STANFORD_EVENTS_ICS["url"]
+    events_url = stanford_profile._STANFORD_EVENTS_ICS["url"]
+    assert cs_bs.content_sources["events_feed"]["url"] == events_url
     assert cs_bs.content_sources["keywords"]
     assert len(progs) >= 170  # full IPEDS/Scorecard catalog breadth
     # Undergraduate programs carry Stanford's undergrad tuition, not the grad rate.
