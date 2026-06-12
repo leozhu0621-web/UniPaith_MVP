@@ -43,7 +43,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Rice University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-11"
+ENRICHED_AT = "2026-06-12"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -208,6 +208,7 @@ SCHOOL_OUTCOMES: dict = {
             {"name": "Campus Life", "url": "https://www.rice.edu/campus-life"},
         ],
     },
+    "media_credit": "Wikimedia Commons / Daderot (public domain)",
     "flagship": {
         # Rice Common Data Set 2024-25 (CDS-B1): 4,789 undergraduate + 4,172 graduate = 8,961.
         "enrollment_total": 8961,
@@ -1248,6 +1249,477 @@ def _requirements_for(spec: dict) -> dict:
     return dict(_REQ_GRAD_GENERIC)
 
 
+# ── Flagship + coverable-program depth ─────────────────────────────────────
+_FLAGSHIP = "rice-master-of-business-administration-full-time-mba-ms"
+
+# Rice Business Full-Time MBA employment-report outcomes (Class of 2025).
+_MBA_OUTCOMES: dict = {
+    "median_salary": 149000,
+    "employment_rate": 0.72,
+    "top_industries": [
+        {"name": "Consulting", "share": 0.24},
+        {"name": "Energy", "share": 0.24},
+        {"name": "Technology", "share": 0.16},
+        {"name": "Financial Services", "share": 0.15},
+    ],
+    "scope": "program",
+    "earnings_timeframe": "base salary at graduation",
+    "conditions": (
+        "Rice Business Full-Time MBA Class of 2025: reported base salary of $149,000, "
+        "average starting salary of $146,000, and average signing bonus of $32,000; 72% "
+        "of students accepted job offers from the Rice Business community. Top industries "
+        "by share of graduates: consulting 24%, energy 24%, technology 16%, financial "
+        "services 15%."
+    ),
+    "source": "Rice Business — 2025 Full-Time MBA Employment Outcomes Report",
+    "source_url": (
+        "https://cdn.uconnectlabs.com/wp-content/uploads/sites/99/2026/02/"
+        "2025-Full-Time-MBA-Employment-Outcomes-Report-Final-for-Web.pdf"
+    ),
+}
+
+# Rice Business Full-Time MBA 2025-26 tuition (Rice Bursar published rate).
+_MBA_TUITION = 76073
+_COST_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "tuition_usd": _MBA_TUITION,
+        "breakdown": {
+            "tuition": _MBA_TUITION,
+            "mba_fees": 1230,
+        },
+        "funded": False,
+        "note": (
+            "Published 2025-26 Rice Business Full-Time MBA tuition ($76,073 per year) plus "
+            "required MBA fees ($1,230). Rice Business reports that 96% of Full-Time MBA "
+            "students receive merit-based scholarships with average awards exceeding $80,000."
+        ),
+        "source": "Rice University Bursar — Business Full-Time MBA",
+        "source_url": "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/business/business-full-time-mba",
+        "year": "2025-26",
+    },
+}
+
+_TRACKS_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "tracks": [
+            "Accounting",
+            "Energy",
+            "Entrepreneurship",
+            "Finance",
+            "Healthcare",
+            "Marketing",
+            "Operations Management",
+            "Organizational Behavior",
+            "Real Estate",
+            "Strategic Management",
+        ],
+        "source": "Rice Business — Full-Time MBA Specializations",
+        "source_url": "https://business.rice.edu/rice-mba/full-time-mba/degree-specializations",
+    },
+}
+
+_CLASS_PROFILE_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "cohort_size": "137 students in the entering Full-Time MBA class (Class of 2027)",
+        "international_pct": 0.34,
+        "note": (
+            "Entering Full-Time MBA Class of 2027: 137 students, average GMAT 692, "
+            "average GPA 3.4, 5.7 average years of work experience, 34% women, 47% "
+            "students of color, 31% underrepresented minorities."
+        ),
+        "source": "Rice Business — Full-Time MBA Class Profile",
+        "source_url": "https://business.rice.edu/rice-mba/full-time-mba/class-profile",
+    },
+}
+
+_FACULTY_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "lead": [
+            {
+                "name": "Peter Rodriguez",
+                "title": (
+                    "Houston Endowment Dean of Jones Graduate School and Virani "
+                    "Undergraduate School of Business; Professor of Strategic Management"
+                ),
+            },
+            {
+                "name": "Kerry Back",
+                "title": "J. Howard Creekmore Professor of Finance and Professor of Economics",
+            },
+        ],
+        "note": (
+            "Rice Business faculty spans finance, accounting, marketing, and strategy; "
+            "Dean Peter Rodriguez leads the school and finance professor Kerry Back "
+            "coordinates the finance area."
+        ),
+        "directory_url": "https://business.rice.edu/faculty-research/faculty",
+    },
+}
+
+# Aggregated, cited student-review themes (≥2 third-party sources per coverable program).
+_REVIEWS_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "summary": (
+            "Students and third-party guides describe Rice Business's Full-Time MBA as a "
+            "STEM-designated program with world-leading entrepreneurship resources — "
+            "The Princeton Review has ranked Jones #1 for graduate entrepreneurship five "
+            "years running — and strong Houston energy/consulting placement (Class of 2025 "
+            "average starting salary $146,000). Common cautions are that the national MBA "
+            "brand is smaller than coastal M7 peers, Houston is less central than NYC/SF "
+            "for some finance paths, and the cohort is relatively small."
+        ),
+        "themes": [
+            {
+                "label": "Entrepreneurship ecosystem",
+                "sentiment": "positive",
+                "detail": (
+                    "Jones ranked #1 graduate entrepreneurship program by The Princeton "
+                    "Review; Liu Idea Lab, OwlSpark, and the Rice Business Plan Competition "
+                    "anchor startup activity."
+                ),
+            },
+            {
+                "label": "Energy & consulting outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Class of 2025: consulting and energy each drew 24% of graduates; "
+                    "average starting salary $146K with $32K signing bonus."
+                ),
+            },
+            {
+                "label": "STEM designation",
+                "sentiment": "positive",
+                "detail": (
+                    "The Full-Time MBA curriculum is STEM-designated, extending OPT for "
+                    "eligible international graduates."
+                ),
+            },
+            {
+                "label": "Brand vs. M7 peers",
+                "sentiment": "mixed",
+                "detail": (
+                    "Strong regional outcomes but a smaller national MBA brand than M7 "
+                    "schools in some markets."
+                ),
+            },
+            {
+                "label": "Houston location",
+                "sentiment": "caution",
+                "detail": (
+                    "Houston's energy and healthcare ecosystems are strengths, but the city "
+                    "is less of a traditional finance/consulting hub than NYC or Chicago."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Rice Business — 2025 Full-Time MBA Career Highlights",
+                "url": "https://business.rice.edu/rice-mba/full-time-mba/career-highlights",
+            },
+            {
+                "label": "Poets&Quants — Meet The Rice Jones MBA Class Of 2025",
+                "url": "https://poetsandquants.com/2024/07/14/meet-the-rice-jones-mba-class-of-2025/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "rice-computer-science-ug": {
+        "summary": (
+            "Students and guides describe Rice's computer science major as rigorous and "
+            "research-oriented — Niche ranks it #17 nationally for CS (2026) and College "
+            "Factual ranks Rice #20 for computer & information sciences — with B.A., B.S., "
+            "and B.S. in Artificial Intelligence paths. Common cautions are competitive "
+            "grading, large introductory lectures, and a smaller CS cohort than peer "
+            "giants like CMU or MIT."
+        ),
+        "themes": [
+            {
+                "label": "Research depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Interdisciplinary research in AI, systems, and computational biology "
+                    "with strong faculty in a top-20 CS program."
+                ),
+            },
+            {
+                "label": "Flexible degree paths",
+                "sentiment": "positive",
+                "detail": (
+                    "B.A., B.S., and B.S. in Artificial Intelligence majors plus "
+                    "interdisciplinary options."
+                ),
+            },
+            {
+                "label": "National CS standing",
+                "sentiment": "positive",
+                "detail": "Niche #17 for undergraduate CS (2026); College Factual #20 nationally.",
+            },
+            {
+                "label": "Competitive atmosphere",
+                "sentiment": "caution",
+                "detail": (
+                    "Selective engineering school with demanding coursework and "
+                    "pre-professional pressure."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Best Colleges for Computer Science (2026)",
+                "url": "https://www.niche.com/colleges/search/best-colleges-for-computer-science/",
+            },
+            {
+                "label": "Rice Engineering — Computer Science",
+                "url": "https://engineering.rice.edu/academics/undergraduate-programs/majors-minors/computer-science",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "rice-master-of-computer-science-mcs-rice-online-prof": {
+        "summary": (
+            "Students and guides describe Rice's online MCS as a high-touch alternative to "
+            "MOOC-style degrees — U.S. News ranked it #3 nationally for online master's in "
+            "information technology (2026), up from #10 in 2025 — with small classes and "
+            "faculty who know students by name. Common cautions are the part-time pace "
+            "(typically 2–3 years), tuition comparable to other top online CS programs, and "
+            "less on-campus recruiting than residential MSCS peers."
+        ),
+        "themes": [
+            {
+                "label": "National online rank",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News #3 for Best Online Master's in Information Technology "
+                    "Programs (2026); #1 in Texas."
+                ),
+            },
+            {
+                "label": "High-touch online model",
+                "sentiment": "positive",
+                "detail": (
+                    "Not hosted on Coursera/edX; faculty-led courses with personalized "
+                    "engagement similar to on-campus MCS."
+                ),
+            },
+            {
+                "label": "AI & systems curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Covers algorithms, machine learning, AI systems, and software "
+                    "engineering for working professionals."
+                ),
+            },
+            {
+                "label": "Pace & cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Designed for working professionals over 2–3 years; tuition is "
+                    "published per credit on Rice's site."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Rice CS — Online MCS ranked #3 by U.S. News (2026)",
+                "url": (
+                    "https://csweb.rice.edu/news/rice-online-master-computer-science-ranked-3-nation-"
+                    "us-news-world-report-2026"
+                ),
+            },
+            {
+                "label": "Rice CS — Online Master of Computer Science",
+                "url": "https://csweb.rice.edu/academics/graduate-programs/online-mcs",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "rice-master-of-data-science-mds-rice-online-prof": {
+        "summary": (
+            "Students and guides describe Rice's online MDS as an interactive, project-based "
+            "data-science degree — Fortune ranked it among the top 20 online data-science "
+            "programs (2024) and College Factual ranks Rice among the best computer & "
+            "information sciences master's programs — with real datasets from companies and "
+            "nonprofits. Common cautions are the newer online format (launched after MCS), "
+            "part-time completion timelines, and less third-party review coverage than the "
+            "flagship online MCS."
+        ),
+        "themes": [
+            {
+                "label": "Project-based curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Students work with real-world datasets from companies, nonprofits, "
+                    "and government partners."
+                ),
+            },
+            {
+                "label": "National recognition",
+                "sentiment": "positive",
+                "detail": (
+                    "Fortune top-20 online data-science program (2024); College Factual "
+                    "ranks Rice CS master's programs highly."
+                ),
+            },
+            {
+                "label": "AI & ML focus",
+                "sentiment": "positive",
+                "detail": (
+                    "Prepares graduates for data science, analytics, and AI/machine-learning "
+                    "roles."
+                ),
+            },
+            {
+                "label": "Limited public reviews",
+                "sentiment": "mixed",
+                "detail": (
+                    "Fewer independent student-review sites cover MDS than the longer-"
+                    "running online MCS program."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Rice CS — Online Master of Data Science",
+                "url": "https://csweb.rice.edu/academics/graduate-programs/online-mds",
+            },
+            {
+                "label": "Rice News — Online programs climb in U.S. News rankings (2026)",
+                "url": (
+                    "https://news.rice.edu/news/2026/rice-online-programs-climb-us-news-world-"
+                    "report-rankings-led-top-tier-computer-science"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "rice-master-of-architecture-march-option-1-professional-prof": {
+        "summary": (
+            "Students and guides describe Rice's NAAB-accredited M.Arch as a small, rigorous "
+            "studio program — Niche ranked Rice #1 for architecture majors (2023) and "
+            "Black Spectacles cites a 76% ARE pass rate — with a Paris campus and Houston's "
+            "architectural diversity as differentiators. Common cautions are the intensive "
+            "studio workload, limited cohort size, and Rice's 2022 decision to distance "
+            "itself from DesignIntelligence rankings."
+        ),
+        "themes": [
+            {
+                "label": "Small cohort & faculty access",
+                "sentiment": "positive",
+                "detail": (
+                    "Highly personalized instruction within a top-20 research university; "
+                    "NAAB-accredited and STEM-designated."
+                ),
+            },
+            {
+                "label": "Licensure outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Black Spectacles cites a 76% ARE pass rate, among the highest "
+                    "nationally."
+                ),
+            },
+            {
+                "label": "Global studio opportunities",
+                "sentiment": "positive",
+                "detail": (
+                    "Paris campus semester and Houston's diverse built environment "
+                    "provide real-world design context."
+                ),
+            },
+            {
+                "label": "Intensive studio culture",
+                "sentiment": "caution",
+                "detail": (
+                    "Seven-semester professional track demands sustained studio work "
+                    "and crit-heavy semesters."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Rice School of Architecture — Graduate",
+                "url": "https://arch.rice.edu/academics/graduate",
+            },
+            {
+                "label": "Black Spectacles — Top M.Arch Programs (ARE pass rates)",
+                "url": "https://www.blackspectacles.com/blog/top-10-masters-of-architecture-programs-in-the-us",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "rice-economics-ug": {
+        "summary": (
+            "Students and guides describe Rice's economics major as analytically rigorous — "
+            "Niche ranks it #18 nationally for economics (2026) — within a small "
+            "undergraduate college where economics is the largest social-sciences major. "
+            "Common cautions are that Rice lacks a standalone undergraduate business school "
+            "(business is a minor/ concentration), quantitative courses can be demanding, "
+            "and the Houston finance recruiting network is smaller than coastal peers."
+        ),
+        "themes": [
+            {
+                "label": "National economics standing",
+                "sentiment": "positive",
+                "detail": "Niche #18 Best Colleges for Economics in America (2026).",
+            },
+            {
+                "label": "Quantitative training",
+                "sentiment": "positive",
+                "detail": (
+                    "School of Social Sciences emphasizes econometrics and data-driven "
+                    "analysis with research-active faculty."
+                ),
+            },
+            {
+                "label": "Small-college experience",
+                "sentiment": "positive",
+                "detail": (
+                    "6:1 student-faculty ratio and residential-college system support "
+                    "close faculty access."
+                ),
+            },
+            {
+                "label": "Finance recruiting footprint",
+                "sentiment": "caution",
+                "detail": (
+                    "Strong Houston energy/consulting ties but fewer Wall Street "
+                    "on-campus recruiters than coastal Ivies."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Best Colleges for Economics (2026)",
+                "url": "https://www.niche.com/colleges/search/best-colleges-for-economics/",
+            },
+            {
+                "label": "Rice Economics — Department News",
+                "url": "https://economics.rice.edu/news/social-sciences-undergraduate-majors-see-rise-rankings",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+}
+
+
 # Real Rice campus photo (the Founder's statue with Lovett Hall) — Wikimedia Commons
 # landscape JPG (verified HTTP 200, image/jpeg). Leads the institution hero.
 _CAMPUS_PHOTO = (
@@ -1347,28 +1819,32 @@ def _program_has_dependents(session: Session, program_id) -> bool:
     return False
 
 
-def _program_standard(slug: str) -> dict:
+def _program_standard(slug: str, spec: dict | None = None) -> dict:
     """Per-program omitted-field list (verified-unavailable), for _standard."""
+    if spec is None:
+        spec = _SPEC_BY_SLUG.get(slug, {})
     omitted: list[str] = []
-    spec = _SPEC_BY_SLUG.get(slug, {})
     # Rice publishes no per-program employment report or industry breakdown (its career
     # outcomes are reported institution-wide, captured at the institution level), so every
-    # program omits the program-level employment rate and top industries.
-    omitted += [
-        "outcomes_data.employment_rate",
-        "outcomes_data.top_industries",
-    ]
-    # Deeper insight fields are deepened on resume runs; honestly omitted until then.
-    omitted += [
-        "tracks",
-        "class_profile.cohort_size",
-        "faculty_contacts.lead",
-        "external_reviews.summary",
-    ]
+    # program except the Full-Time MBA omits the program-level employment rate and top
+    # industries.
+    if slug != _FLAGSHIP:
+        omitted += [
+            "outcomes_data.employment_rate",
+            "outcomes_data.top_industries",
+        ]
     # Graduate/professional programs without a verified per-program tuition omit tuition_usd
     # (their cost_data carries a sourced "see the program page" record instead).
-    if spec.get("degree_type") != "bachelors" and spec.get("tuition") is None:
+    if spec.get("degree_type") != "bachelors" and slug not in _COST_BY_SLUG and spec.get("tuition") is None:
         omitted.append("cost_data.tuition_usd")
+    if slug not in _TRACKS_BY_SLUG:
+        omitted.append("tracks")
+    if slug not in _CLASS_PROFILE_BY_SLUG:
+        omitted.append("class_profile.cohort_size")
+    if slug not in _FACULTY_BY_SLUG:
+        omitted.append("faculty_contacts.lead")
+    if slug not in _REVIEWS_BY_SLUG:
+        omitted.append("external_reviews.summary")
     # content_sources is set on every program (school feed + program keywords), never omitted.
     return _standard(omitted)
 
@@ -1429,7 +1905,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             }
         else:
             grad_cost = _grad_cost(spec)
-            if grad_cost is not None:
+            cost_override = _COST_BY_SLUG.get(slug)
+            if cost_override is not None:
+                p.tuition = cost_override["tuition_usd"]
+                p.cost_data = cost_override
+            elif grad_cost is not None:
                 p.tuition = grad_cost["tuition_usd"]
                 p.cost_data = grad_cost
             else:
@@ -1445,15 +1925,16 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                     "source_url": spec.get("website") or _SCHOOL_WEBSITE.get(spec["school"]),
                 }
         p.application_requirements = _requirements_for(spec)
-        outcomes = dict(_OUTCOMES_INSTITUTION)
-        outcomes["_standard"] = _program_standard(slug)
+        if slug == _FLAGSHIP:
+            outcomes = dict(_MBA_OUTCOMES)
+        else:
+            outcomes = dict(_OUTCOMES_INSTITUTION)
+        outcomes["_standard"] = _program_standard(slug, spec)
         p.outcomes_data = outcomes
-        # Deep fields recorded omitted (deepened on resume runs); always assign so a stale
-        # value on a pre-existing row is cleared.
-        p.tracks = None
-        p.class_profile = None
-        p.faculty_contacts = None
-        p.external_reviews = None
+        p.tracks = _TRACKS_BY_SLUG.get(slug)
+        p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
+        p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
+        p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
         p.who_its_for = None
         p.highlights = None
         p.application_deadline = (
