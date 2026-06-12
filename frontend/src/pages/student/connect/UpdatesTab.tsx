@@ -129,8 +129,8 @@ export default function UpdatesTab() {
     return <QueryError onRetry={() => refetch()} />
   }
 
-  // No follows (Spec 20 §9)
-  if (followedCount === 0) {
+  // No follows and nothing else to show (e.g. saved-search alerts) (Spec 20 §9)
+  if (followedCount === 0 && items.length === 0) {
     return (
       <div className="text-center py-14">
         <h3 className="text-base font-semibold text-foreground mb-1">Follow a program to see updates here.</h3>
