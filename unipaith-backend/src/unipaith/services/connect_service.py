@@ -78,7 +78,7 @@ class ConnectService:
         muted = await self.follows.muted_institution_ids(student_id)
         visible_insts = followed_all - muted
 
-        want = (kinds & _ALL_FEED_KINDS) if kinds else _ALL_FEED_KINDS
+        want = _ALL_FEED_KINDS if kinds is None else (kinds & _ALL_FEED_KINDS)
 
         items: list[dict] = []
         engagement: dict | None = None
