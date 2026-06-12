@@ -171,3 +171,33 @@ def test_all_units_have_about_detail():
     assert {s["name"] for s in p.SCHOOLS} == set(p._SCHOOL_WEBSITE)
     for school in p.SCHOOLS:
         assert p._ABOUT_DETAIL.get(school["name"]), f"{school['name']} missing about_detail"
+
+
+def test_coverable_programs_have_external_reviews():
+    """Coverable programs (MBA, CS, JD, MD, MPH, MPA, MArch, MSW, economics) must carry reviews."""
+    coverable = [
+        _MBA_FLAGSHIP,
+        _CS_FLAGSHIP,
+        "columbia-jd",
+        "columbia-md",
+        "columbia-public-health-mph",
+        "columbia-economics-ba",
+        "columbia-journalism-ms",
+        "columbia-sipa-mpa",
+        "columbia-architecture-march",
+        "columbia-social-work-msw",
+    ]
+    for slug in coverable:
+        assert slug in p._REVIEWS_BY_SLUG, slug
+        assert p._REVIEWS_BY_SLUG[slug].get("summary"), slug
+        assert len(p._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
+
+
+def test_institution_has_media_credit():
+    assert p.SCHOOL_OUTCOMES.get("media_credit"), "campus photo must carry attribution"
+
+
+def test_description_leads_with_research_university():
+    assert p.DESCRIPTION.startswith(
+        "Columbia University is a private research university in New York, NY"
+    )
