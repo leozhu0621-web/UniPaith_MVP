@@ -41,6 +41,9 @@ _DEADLINE_WINDOW_DAYS = 120
 # Every kind the Updates feed can emit (Spec 2026-06-12 §5.1 — ?kinds= filter).
 _ALL_FEED_KINDS = {"post", "deadline", "program_change", "saved_search_alert"}
 
+# How recently a saved-search alert must have fired to still surface in the feed.
+_SAVED_SEARCH_ALERT_WINDOW_DAYS = 14
+
 
 class ConnectService:
     def __init__(self, db: AsyncSession):
@@ -55,6 +58,7 @@ class ConnectService:
         limit: int = 50,
         cursor: str | None = None,
         kinds: set[str] | None = None,
+        user_id: UUID | None = None,
     ) -> dict:
         """Assemble the Updates feed.
 
@@ -62,7 +66,10 @@ class ConnectService:
         institution) or ``relevant`` (relevance heuristic; optionally refined by
         the ConnectFeedRanker agent). ``kinds`` optionally restricts which item
         kinds are assembled (Spec 2026-06-12 §5.1 — e.g. the rail's deadline
-        radar asks for ``{"deadline"}``); None means all kinds. Returns
+        radar asks for ``{"deadline"}``); None means all kinds. ``user_id`` (the
+        auth user, distinct from the student profile id) enables
+        ``saved_search_alert`` items, which key off ``saved_searches.user_id``
+        (Spec 2026-06-12 §5.4). Returns
         ``{items, followed_count, muted_count, next_cursor}``. ``cursor`` is the
         ``id`` of the last item from the previous page (Spec 56 §4 — keyset
         pagination over the ordered feed); ``next_cursor`` is null on the last page.
@@ -85,6 +92,10 @@ class ConnectService:
                     items += self._deadline_items(engagement, visible_insts, inst_names)
                 if "program_change" in want:
                     items += self._program_change_items(engagement, inst_names, muted)
+
+        # Saved-search alerts are independent of follows (Spec 2026-06-12 §5.4).
+        if "saved_search_alert" in want and user_id is not None:
+            items += await self._saved_search_alert_items(user_id)
 
         # "Because you follow X" attribution (Spec 2026-06-12 §5.2): stamp each
         # item with the follow row's source ('saved' | 'application' | 'explicit').
@@ -358,6 +369,44 @@ class ConnectService:
             )
         return out
 
+    async def _saved_search_alert_items(self, user_id: UUID) -> list[dict]:
+        """Spec 2026-06-12 §5.4 — alert-enabled saved searches that fired
+        recently surface as feed items (LinkedIn job-alerts-in-feed pattern).
+        Derived at read time from the Spec 56 bookkeeping columns; no new table."""
+        from unipaith.models.saved_search import SavedSearch
+
+        cutoff = datetime.now(UTC) - timedelta(days=_SAVED_SEARCH_ALERT_WINDOW_DAYS)
+        rows = await self.db.execute(
+            select(SavedSearch).where(
+                SavedSearch.user_id == user_id,
+                SavedSearch.alert_enabled.is_(True),
+                SavedSearch.last_alerted_at.isnot(None),
+                SavedSearch.last_alerted_at >= cutoff,
+            )
+        )
+        out: list[dict] = []
+        for s in rows.scalars().all():
+            if not s.last_match_count:
+                continue
+            out.append(
+                {
+                    "kind": "saved_search_alert",
+                    "id": f"saved_search_alert:{s.id}",
+                    "date": s.last_alerted_at.isoformat(),
+                    "institution_id": None,
+                    "institution_name": None,
+                    "program_id": None,
+                    "program_name": None,
+                    "muted": False,
+                    "saved_search_id": str(s.id),
+                    "search_name": s.name,
+                    "match_count": int(s.last_match_count),
+                    "search_query": s.query or {},
+                    "ctas": [],
+                }
+            )
+        return out
+
     def _program_change_items(
         self, engagement: dict[UUID, dict], inst_names: dict[UUID, str], muted_insts: set[UUID]
     ) -> list[dict]:
@@ -428,6 +477,8 @@ class ConnectService:
             if kind == "deadline":
                 # Sooner deadline = higher weight (cap at 120-day window).
                 return 900 - min(it.get("days_until", 120), 120)
+            if kind == "saved_search_alert":
+                return 600
             # post
             try:
                 iid = UUID(it["institution_id"])

@@ -66,7 +66,7 @@ async def get_feed(
     pid = await _profile_id(user, db)
     kind_set = {k.strip() for k in kinds.split(",") if k.strip()} if kinds else None
     return await ConnectService(db).build_updates_feed(
-        pid, rank=rank, limit=limit, cursor=cursor, kinds=kind_set
+        pid, rank=rank, limit=limit, cursor=cursor, kinds=kind_set, user_id=user.id
     )
 
 

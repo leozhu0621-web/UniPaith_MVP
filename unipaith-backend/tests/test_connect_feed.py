@@ -208,3 +208,65 @@ async def test_feed_items_carry_follow_source(
     assert items, "expected at least one feed item"
     for it in items:
         assert it["follow_source"] == "saved"
+
+
+@pytest.mark.asyncio
+async def test_saved_search_alert_items_in_feed(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Recently-alerted saved searches surface as feed items; disabled/stale/
+    zero-count don't (Spec 2026-06-12 §5.4)."""
+    from unipaith.models.saved_search import SavedSearch
+
+    await _seed(db_session, mock_student_user, mock_institution_user)
+    now = datetime.now(UTC)
+    db_session.add_all(
+        [
+            SavedSearch(  # should appear
+                user_id=mock_student_user.id,
+                name="CS in California",
+                query={"query": "cs", "chips": [], "filters": {}, "sort": "relevance"},
+                alert_enabled=True,
+                last_alerted_at=now - timedelta(days=2),
+                last_match_count=5,
+            ),
+            SavedSearch(  # alert disabled → absent
+                user_id=mock_student_user.id,
+                name="No alerts",
+                query={},
+                alert_enabled=False,
+                last_alerted_at=now - timedelta(days=2),
+                last_match_count=3,
+            ),
+            SavedSearch(  # stale (>14d) → absent
+                user_id=mock_student_user.id,
+                name="Stale",
+                query={},
+                alert_enabled=True,
+                last_alerted_at=now - timedelta(days=30),
+                last_match_count=3,
+            ),
+            SavedSearch(  # zero matches → absent
+                user_id=mock_student_user.id,
+                name="Empty",
+                query={},
+                alert_enabled=True,
+                last_alerted_at=now - timedelta(days=1),
+                last_match_count=0,
+            ),
+        ]
+    )
+    await db_session.commit()
+
+    res = await student_client.get("/api/v1/connect/feed")
+    assert res.status_code == 200
+    alerts = [it for it in res.json()["items"] if it["kind"] == "saved_search_alert"]
+    assert len(alerts) == 1
+    a = alerts[0]
+    assert a["search_name"] == "CS in California"
+    assert a["match_count"] == 5
+    assert a["search_query"]["query"] == "cs"
+    assert a["institution_id"] is None
