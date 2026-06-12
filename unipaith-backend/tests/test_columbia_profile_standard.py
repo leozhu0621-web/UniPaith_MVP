@@ -1,6 +1,6 @@
-"""The Columbia University profile (the completed tree) conforms to the gold standard
-across every node it models — the institution, twelve schools, and their twenty-five
-programs — mirroring the MIT/Sloan/MBAn and the Chicago/Yale reference certifications.
+"""The Columbia University profile conforms to the gold standard across its whole tree —
+the institution, twelve schools, and the full College Scorecard / IPEDS program catalog —
+mirroring the MIT/Sloan/MBAn and the Chicago/Yale reference certifications.
 
 Pure (no DB): builds each node's persisted snapshot from the columbia_profile module and
 runs ``check_conformance``. The only gaps permitted are the fields each node honestly
@@ -71,7 +71,7 @@ def _program_snapshot(slug: str) -> dict:
         "duration_months": spec.get("duration_months"),
         "delivery_format": spec.get("delivery_format", "in_person"),
         "description_text": spec["description"],
-        "website_url": p._WEBSITE_BY_SLUG.get(slug),
+        "website_url": p._WEBSITE_BY_SLUG.get(slug) or p._SCHOOL_WEBSITE.get(spec["school"]),
         "highlights": p._HL_BY_SLUG.get(slug) or p._HL_BASELINE,
         "who_its_for": p._WHO_BY_SLUG.get(slug) or p._WHO_BASELINE,
         "tracks": p._TRACKS_BY_SLUG.get(slug),
@@ -136,9 +136,16 @@ def test_every_school_and_program_has_content_sources():
         assert cs.get("keywords"), f"{spec['slug']} missing keywords"
 
 
+def test_full_catalog_breadth():
+    assert len(p.PROGRAMS) >= 250, f"catalog too short: {len(p.PROGRAMS)}"
+    assert len(p.PROGRAM_SLUGS) == len(set(p.PROGRAM_SLUGS)), "duplicate program slug"
+    for spec in p.PROGRAMS:
+        assert spec.get("delivery_format") in {"in_person", "online", "hybrid"}, spec["slug"]
+
+
 def test_every_program_is_gold_except_recorded_omissions():
     omittable_sections = {"tracks", "costs", "insights", "feeds"}
-    assert len(p.PROGRAMS) == 25
+    assert len(p.PROGRAMS) >= 250, f"full IPEDS catalog breadth (UNITID 190150): {len(p.PROGRAMS)}"
     for spec in p.PROGRAMS:
         slug = spec["slug"]
         res = check_conformance(
