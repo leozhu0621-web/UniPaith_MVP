@@ -23,7 +23,7 @@ import { formatPercent } from '../../../utils/format'
 
 function Kpi({ label, value }: { label: string; value: string | number }) {
   return (
-    <Card variant="card-flush" className="p-3">
+    <Card pad={false} variant="card-flush" className="p-3">
       <div className="text-2xl font-semibold tabular-nums text-foreground">{value}</div>
       <div className="text-xs text-muted-foreground">{label}</div>
     </Card>
@@ -46,7 +46,7 @@ export default function TerritoriesTab() {
 
   if (isError) {
     return (
-      <Card className="p-0">
+      <Card pad={false} className="p-0">
         <QueryError detail="Couldn’t load territories." onRetry={() => refetch()} />
       </Card>
     )
@@ -65,7 +65,7 @@ export default function TerritoriesTab() {
   if (!data || data.territories.length === 0) {
     return (
       <>
-        <Card className="p-0">
+        <Card pad={false} className="p-0">
           <EmptyState
             icon={<Map size={28} />}
             title="No territories yet"
@@ -141,7 +141,7 @@ function TerritoryCard({
   })
 
   return (
-    <Card className="p-4">
+    <Card pad={false} className="p-4">
       <div className="flex items-start justify-between gap-2">
         <div>
           <h3 className="font-semibold text-foreground">{territory.name}</h3>

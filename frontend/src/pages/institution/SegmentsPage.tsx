@@ -263,7 +263,7 @@ export default function SegmentsPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left: editor */}
         <div className="space-y-5 lg:col-span-2">
-          <Card className="space-y-4 p-5">
+          <Card pad={false} className="space-y-4 p-5">
             <Input
               label="Segment name"
               value={name}
@@ -289,7 +289,7 @@ export default function SegmentsPage() {
 
           <NLAssistBar onApply={applyNl} />
 
-          <Card className="space-y-4 p-5">
+          <Card pad={false} className="space-y-4 p-5">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">Rules</h3>
               <button
@@ -340,7 +340,7 @@ export default function SegmentsPage() {
             )}
           </Card>
 
-          <Card className="flex flex-wrap items-center gap-4 p-5">
+          <Card pad={false} className="flex flex-wrap items-center gap-4 p-5">
             <div className="flex items-center gap-2">
               <label className="text-sm text-muted-foreground" htmlFor="freq-cap">
                 Max sends / week
@@ -426,7 +426,7 @@ function SegmentCard({
   const isLegacy = !seg.rules && seg.criteria && Object.keys(seg.criteria).length > 0
 
   return (
-    <Card className="flex flex-col p-4">
+    <Card pad={false} className="flex flex-col p-4">
       <div className="mb-1 flex items-start justify-between">
         <div>
           <h3 className="font-semibold text-foreground">{seg.segment_name}</h3>

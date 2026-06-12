@@ -49,7 +49,7 @@ export default function FeeConfigCard() {
 
   if (isError && !cfg) {
     return (
-      <Card className="p-6">
+      <Card pad={false} className="p-6">
         <QueryError detail="We couldn't load your fee settings." onRetry={() => refetch()} />
       </Card>
     )
@@ -57,7 +57,7 @@ export default function FeeConfigCard() {
 
   if (isLoading || !cfg) {
     return (
-      <Card className="p-6">
+      <Card pad={false} className="p-6">
         <Skeleton className="h-40" />
       </Card>
     )
@@ -79,7 +79,7 @@ export default function FeeConfigCard() {
     })
 
   return (
-    <Card className="p-5 sm:p-6 space-y-6">
+    <Card pad={false} className="p-5 sm:p-6 space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <HandCoins size={18} className="text-secondary" />

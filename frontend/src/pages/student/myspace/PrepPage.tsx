@@ -63,15 +63,22 @@ export default function PrepPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Room header — consistent with the other My Space rooms (eyebrow = surface). */}
-      <div className="flex-shrink-0 px-6 pt-5">
+      <div className="flex-shrink-0 px-4 sm:px-6 pt-5">
         <PageHeader
           eyebrow="My Space"
           title="Prep"
           sub="Get application-ready — feedback, practice, and the assets behind every submission"
         />
       </div>
-      <div className="flex-shrink-0 border-b border-border bg-card px-6">
-        <div ref={tablistRef} role="tablist" aria-label="Prep" className="flex gap-0.5" onKeyDown={handleTabKeyDown}>
+      <div className="flex-shrink-0 border-b border-border bg-card px-4 sm:px-6">
+        {/* 5 tabs must survive 360px — scroll horizontally instead of wrapping. */}
+        <div
+          ref={tablistRef}
+          role="tablist"
+          aria-label="Prep"
+          className="flex flex-nowrap gap-0.5 overflow-x-auto whitespace-nowrap no-scrollbar"
+          onKeyDown={handleTabKeyDown}
+        >
           {TABS.map(t => (
             <button
               key={t.key}
@@ -81,7 +88,7 @@ export default function PrepPage() {
               aria-controls={`prep-panel-${t.key}`}
               tabIndex={tab === t.key ? 0 : -1}
               onClick={() => switchTab(t.key)}
-              className={`flex items-center gap-1.5 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+              className={`flex shrink-0 items-center gap-1.5 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                 tab === t.key
                   ? 'border-secondary text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground'

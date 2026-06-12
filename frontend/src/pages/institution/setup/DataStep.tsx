@@ -21,7 +21,7 @@ export default function DataStep({
   const hasData = datasetCount > 0
 
   return (
-    <Card className="p-5 sm:p-6">
+    <Card pad={false} className="p-5 sm:p-6">
       <h2 className="text-lg font-semibold text-foreground">Upload data</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Upload admissions history or a prospect list to power analytics + matching. Optional — you can always do this later.

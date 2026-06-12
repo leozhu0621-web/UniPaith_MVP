@@ -51,7 +51,7 @@ function Kpi({
   tone?: 'warning'
 }) {
   return (
-    <Card className="p-4">
+    <Card pad={false} className="p-4">
       <div className="flex items-center gap-2 text-muted-foreground mb-1">
         {icon}
         <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
@@ -66,7 +66,7 @@ function Kpi({
 
 function CohortCard({ cohort }: { cohort: YieldCohort }) {
   return (
-    <Card className={`p-4 ${cohort.fairness_concern ? 'border-l-4 border-l-warning' : ''}`}>
+    <Card pad={false} className={`p-4 ${cohort.fairness_concern ? 'border-l-4 border-l-warning' : ''}`}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-foreground">{cohort.label}</span>
         {cohort.fairness_concern ? (
@@ -144,7 +144,7 @@ export default function YieldPage() {
   if (yieldQ.isLoading) return <Skeleton className="h-96 w-full rounded-xl" />
   if (yieldQ.isError)
     return (
-      <Card className="p-10 text-center">
+      <Card pad={false} className="p-10 text-center">
         <p className="mb-2 text-sm text-error">Couldn’t load yield analytics.</p>
         <button onClick={() => yieldQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
       </Card>
@@ -160,7 +160,7 @@ export default function YieldPage() {
     return (
       <div className="space-y-4">
         <YieldHeader programOptions={programOptions} programId={programId} setProgramId={setProgramId} />
-        <Card className="p-10 text-center">
+        <Card pad={false} className="p-10 text-center">
           <TrendingUp size={28} className="mx-auto mb-3 text-muted-foreground" />
           <p className="text-sm font-medium text-foreground mb-1">No yield to track yet</p>
           <p className="text-sm text-muted-foreground max-w-sm mx-auto">
@@ -187,7 +187,7 @@ export default function YieldPage() {
 
       {/* Next-best-action banner (§4) — AI-refined, falls back to counts. */}
       {topAction && (
-        <Card className="p-4 border-l-4 border-l-cobalt">
+        <Card pad={false} className="p-4 border-l-4 border-l-cobalt">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-1">
@@ -263,13 +263,13 @@ export default function YieldPage() {
 
       {/* Funnel tail + time-to-confirm */}
       <div className="grid lg:grid-cols-2 gap-4">
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-3">
             Funnel tail
           </p>
           <FunnelBars stages={funnelStages} />
         </Card>
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-1">
             Time to confirm
           </p>
@@ -322,7 +322,7 @@ export default function YieldPage() {
       )}
 
       {/* Waitlist movement (§3.3) */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
           <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-muted-foreground">
             Waitlist movement

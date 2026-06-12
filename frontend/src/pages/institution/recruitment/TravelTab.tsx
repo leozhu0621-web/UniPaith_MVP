@@ -43,7 +43,7 @@ export default function TravelTab() {
 
   if (isError) {
     return (
-      <Card className="p-0">
+      <Card pad={false} className="p-0">
         <QueryError detail="Couldn’t load travel plans." onRetry={() => refetch()} />
       </Card>
     )
@@ -62,7 +62,7 @@ export default function TravelTab() {
   if (!trips || trips.length === 0) {
     return (
       <>
-        <Card className="p-0">
+        <Card pad={false} className="p-0">
           <EmptyState
             icon={<Plane size={28} />}
             title="No trips planned"
@@ -122,7 +122,7 @@ function TripCard({
   }
 
   return (
-    <Card className="p-4">
+    <Card pad={false} className="p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">

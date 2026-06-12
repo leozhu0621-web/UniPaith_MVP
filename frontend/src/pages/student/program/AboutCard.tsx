@@ -80,7 +80,7 @@ export default function AboutCard({ description, institutionName, programName, w
   const showSource = sourceUrl && sourceUrl !== websiteUrl
 
   return (
-    <Card className="p-5">
+    <Card pad={false} className="p-5">
       <div className="flex items-center gap-2 mb-3">
         <BookOpen size={14} className="text-secondary" />
         <h3 className="font-semibold text-foreground">About This Program</h3>

@@ -149,7 +149,7 @@ export default function TemplatesPage() {
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {templates.map(t => (
-            <Card key={t.id} className="p-4">
+            <Card pad={false} key={t.id} className="p-4">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-foreground">{t.name}</h3>

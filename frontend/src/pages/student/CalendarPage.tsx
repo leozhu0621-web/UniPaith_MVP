@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { PageHeader } from '../../components/student/density'
+import { PageContainer, PageHeader } from '../../components/student/density'
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
   format, addMonths, subMonths, addWeeks, subWeeks, isSameDay, isToday, parseISO,
@@ -199,18 +199,18 @@ export default function CalendarPage() {
   // ── Loading ──
   if (isLoading) {
     return (
-      <div className="p-4 w-full space-y-4">
+      <PageContainer className="space-y-4">
         {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
-      </div>
+      </PageContainer>
     )
   }
 
   // ── Error ── distinguish a failed fetch from an empty (but successful) timeline.
   if (isError) {
     return (
-      <div className="p-4 w-full">
+      <PageContainer>
         <QueryError detail="We couldn't load your timeline." onRetry={() => refetch()} />
-      </div>
+      </PageContainer>
     )
   }
 
@@ -228,7 +228,7 @@ export default function CalendarPage() {
   const itemsOn = (day: Date) => filtered.filter(i => isSameDay(parseISO(i.start_at), day))
 
   return (
-    <div className="p-4 w-full">
+    <PageContainer>
       {/* Room header — consistent with the other My Space rooms (eyebrow = surface). */}
       <PageHeader
         eyebrow="My Space"
@@ -376,7 +376,7 @@ export default function CalendarPage() {
         onClose={() => setShowWorkBlock(false)}
         onCreated={() => { setShowWorkBlock(false); invalidate() }}
       />
-    </div>
+    </PageContainer>
   )
 }
 
@@ -576,7 +576,7 @@ function AgendaRow({ item, onOpen }: { item: CalendarItem; onOpen: (i: CalendarI
   const Icon = meta.icon
   return (
     <button onClick={() => onOpen(item)} className="w-full text-left group">
-      <Card className="flex items-start gap-3 p-3.5 group-hover:shadow-raised transition-shadow">
+      <Card pad={false} className="flex items-start gap-3 p-3.5 group-hover:shadow-raised transition-shadow">
         <div className={`w-9 h-9 rounded-full ${ICON_SOFT_BG[c]} flex items-center justify-center flex-shrink-0`}>
           <Icon size={17} className={ICON_TEXT[c]} />
         </div>

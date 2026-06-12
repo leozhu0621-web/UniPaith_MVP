@@ -141,7 +141,7 @@ export default function OverviewTab({ onOpenTab }: { onOpenTab: (tab: string) =>
   return (
     <div className="space-y-8">
       {/* Personal header (Section 1) */}
-      <Card className="p-6">
+      <Card pad={false} className="p-6">
         <div className="flex items-start gap-5">
           <div className="h-20 w-20 shrink-0 rounded-full bg-muted text-foreground flex items-center justify-center text-2xl font-bold">
             {initials(fullName)}
@@ -168,7 +168,7 @@ export default function OverviewTab({ onOpenTab }: { onOpenTab: (tab: string) =>
           {stats.map(s => {
             const meta = CATEGORY_META.find(m => m.key === s.key)
             return (
-              <Card key={s.key} className="p-4 flex flex-col gap-2" interactive onClick={() => onOpenTab(s.tab)}>
+              <Card pad={false} key={s.key} className="p-4 flex flex-col gap-2" interactive onClick={() => onOpenTab(s.tab)}>
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-foreground">{s.label}</span>
                   <span className="text-sm font-bold text-foreground tabular-nums">{s.pct}%</span>
@@ -193,7 +193,7 @@ export default function OverviewTab({ onOpenTab }: { onOpenTab: (tab: string) =>
       <section>
         <p className="up-eyebrow mb-3">What's next</p>
         {actions.length === 0 ? (
-          <Card className="p-5 space-y-2">
+          <Card pad={false} className="p-5 space-y-2">
             <p className="text-sm text-foreground font-medium">Your profile is strong.</p>
             <p className="text-sm text-muted-foreground">
               Check in on your applications or explore new programs to keep momentum.
@@ -214,7 +214,7 @@ export default function OverviewTab({ onOpenTab }: { onOpenTab: (tab: string) =>
             </div>
           </Card>
         ) : (
-          <Card className="p-2">
+          <Card pad={false} className="p-2">
             <ol className="divide-y divide-border">
               {actions.map((a, i) => (
                 <li key={i} className="flex items-center gap-3 px-3 py-3">

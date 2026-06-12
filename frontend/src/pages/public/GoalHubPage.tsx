@@ -84,7 +84,7 @@ function SurfaceCard({ surface }: { surface: OverviewSurface }) {
   const Icon = SURFACE_ICONS[surface.key] ?? Network
   return (
     <Link to={surface.path} className="group block h-full">
-      <Card interactive className="flex h-full flex-col gap-3 p-6">
+      <Card pad={false} interactive className="flex h-full flex-col gap-3 p-6">
         <div className="flex items-start justify-between gap-3">
           <CardTitle>
             <Icon size={20} className="text-secondary" />
@@ -200,7 +200,7 @@ export default function GoalHubPage() {
         />
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           {PRINCIPLES.map(p => (
-            <Card key={p.title} className="p-5">
+            <Card pad={false} key={p.title} className="p-5">
               <p.icon size={20} className="text-secondary" />
               <h3 className="mt-3 text-h3 text-foreground">{p.title}</h3>
               <p className="mt-1.5 text-sm text-muted-foreground">{p.body}</p>

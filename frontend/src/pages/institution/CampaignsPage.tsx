@@ -179,7 +179,7 @@ export default function CampaignsPage() {
             { label: 'Scheduled', value: stat('scheduled'), tone: 'text-accent' },
             { label: 'Completed', value: stat('completed') },
           ].map((s) => (
-            <Card key={s.label} className="p-3">
+            <Card pad={false} key={s.label} className="p-3">
               <p className="text-xs text-muted-foreground">{s.label}</p>
               <p className={`text-xl font-semibold ${s.tone ?? 'text-foreground'}`}>{s.value}</p>
             </Card>
@@ -416,7 +416,7 @@ function CampaignCard({
   const status = c.status || 'draft'
   const progNames = (c.associate_program_ids || []).map((id) => programs.find((p) => p.id === id)?.program_name).filter(Boolean)
   return (
-    <Card className="p-4 flex flex-col">
+    <Card pad={false} className="p-4 flex flex-col">
       <div className="flex items-start justify-between gap-2 mb-2">
         <h3 className="font-semibold text-foreground">{c.name}</h3>
         <Badge variant={STATUS_BADGE[status]}>{STATUS_LABELS[status]}</Badge>

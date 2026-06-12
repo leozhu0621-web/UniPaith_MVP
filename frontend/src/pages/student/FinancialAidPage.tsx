@@ -138,19 +138,19 @@ export default function FinancialAidPage() {
         <>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <Card className="p-4 text-center">
+            <Card pad={false} className="p-4 text-center">
               <TrendingDown size={20} className="mx-auto text-success mb-1" />
               <p className="text-xs text-muted-foreground">Lowest net cost</p>
               <p className="text-lg font-bold text-foreground">{cheapest ? formatCurrency(cheapest.netCost) : '—'}</p>
               {cheapest && <p className="text-xs text-muted-foreground truncate">{cheapest.name}</p>}
             </Card>
-            <Card className="p-4 text-center">
+            <Card pad={false} className="p-4 text-center">
               <ArrowUpDown size={20} className="mx-auto text-secondary mb-1" />
               <p className="text-xs text-muted-foreground">Average net cost</p>
               <p className="text-lg font-bold text-foreground">{knownCosts.length > 0 ? formatCurrency(avgNet) : '—'}</p>
               <p className="text-xs text-muted-foreground">{knownCosts.length} program{knownCosts.length !== 1 ? 's' : ''} with known costs</p>
             </Card>
-            <Card className="p-4 text-center">
+            <Card pad={false} className="p-4 text-center">
               <TrendingUp size={20} className="mx-auto text-error mb-1" />
               <p className="text-xs text-muted-foreground">Highest net cost</p>
               <p className="text-lg font-bold text-foreground">{mostExpensive ? formatCurrency(mostExpensive.netCost) : '—'}</p>
@@ -180,7 +180,7 @@ export default function FinancialAidPage() {
           {/* Program cost cards */}
           <div className="space-y-4">
             {programCosts.map(pc => (
-              <Card key={pc.id} className="p-4">
+              <Card pad={false} key={pc.id} className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <p className="font-semibold text-sm text-foreground cursor-pointer hover:underline" onClick={() => navigate(`/s/programs/${pc.id}`)}>

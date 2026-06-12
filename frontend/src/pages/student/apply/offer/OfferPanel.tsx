@@ -157,7 +157,7 @@ export default function OfferPanel({ application }: { application: Application }
   if (!offer) {
     return (
       <>
-        <Card className="p-6 text-center">
+        <Card pad={false} className="p-6 text-center">
           <div className="mx-auto mb-3 w-12 h-12 rounded-full bg-muted flex items-center justify-center">
             <Inbox size={22} className="text-foreground" />
           </div>
@@ -194,7 +194,7 @@ export default function OfferPanel({ application }: { application: Application }
 
   return (
     <div className="space-y-4">
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         {/* Eyebrow — OFFER from <institution> (spec 18 §4) */}
         <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-secondary mb-1">
           Offer from {institutionName}

@@ -122,7 +122,7 @@ export default function IntakeRoundsPage() {
         actions={selectedProgram ? <Button onClick={openCreate} className="flex items-center gap-2"><Plus size={16} /> New Round</Button> : undefined}
       />
 
-      <Card className="p-4">
+      <Card pad={false} className="p-4">
         <Select label="Program" options={programOptions} value={selectedProgram} onChange={e => setSelectedProgram(e.target.value)} />
       </Card>
 
@@ -137,7 +137,7 @@ export default function IntakeRoundsPage() {
       ) : (
         <div className="space-y-3">
           {intakes.map(r => (
-            <Card key={r.id} className="p-4">
+            <Card pad={false} key={r.id} className="p-4">
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <div className="flex items-center gap-2">

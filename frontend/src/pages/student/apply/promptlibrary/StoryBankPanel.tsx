@@ -63,7 +63,7 @@ export default function StoryBankPanel({ stories }: { stories: Story[] }) {
       </div>
 
       {stories.length === 0 ? (
-        <Card variant="card-flush" className="px-4 py-10 text-center">
+        <Card pad={false} variant="card-flush" className="px-4 py-10 text-center">
           <p className="text-sm text-muted-foreground">
             No stories yet. Capture a few defining experiences once — then map them to any prompt.
           </p>

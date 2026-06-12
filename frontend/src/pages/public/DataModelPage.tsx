@@ -136,7 +136,7 @@ export default function DataModelPage() {
 
       {/* Doc-vs-live correction (the running schema is the truth) */}
       {data && (
-        <Card variant="card-flush" className="mt-6 flex items-start gap-3 p-4">
+        <Card pad={false} variant="card-flush" className="mt-6 flex items-start gap-3 p-4">
           <Workflow size={18} className="mt-0.5 shrink-0 text-secondary" />
           <p className="text-sm text-muted-foreground">
             Spec 51 was drafted at{' '}
@@ -167,7 +167,7 @@ export default function DataModelPage() {
             ? data.conventions.map((c, i) => {
                 const Icon = CONVENTION_ICONS[i % CONVENTION_ICONS.length]
                 return (
-                  <Card key={c.title} className="p-5">
+                  <Card pad={false} key={c.title} className="p-5">
                     <Icon size={20} className="text-secondary" />
                     <h3 className="mt-3 text-h3 text-foreground">{c.title}</h3>
                     <p className="mt-1.5 text-sm text-muted-foreground">{c.body}</p>

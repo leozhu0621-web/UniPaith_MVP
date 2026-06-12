@@ -34,7 +34,7 @@ export default function AttributionTab({ filters }: { filters: AnalyticsFilters 
 
   if (!d.has_data) {
     return (
-      <Card className="p-10 text-center">
+      <Card pad={false} className="p-10 text-center">
         <p className="text-sm text-muted-foreground">
           {filters.program_id || filters.segment_id || filters.campaign_id
             ? 'No events match these filters.'
@@ -47,7 +47,7 @@ export default function AttributionTab({ filters }: { filters: AnalyticsFilters 
   return (
     <div className="space-y-6">
       {/* Campaign operational metrics (§6) */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <p className="up-eyebrow mb-3">Campaign performance</p>
         {d.campaigns.length === 0 ? (
           <p className="text-sm text-muted-foreground py-6 text-center">No sent campaigns in this window.</p>
@@ -96,7 +96,7 @@ export default function AttributionTab({ filters }: { filters: AnalyticsFilters 
       </Card>
 
       {/* Event operational metrics (§6) */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <p className="up-eyebrow mb-3">Event performance</p>
         {d.events.length === 0 ? (
           <p className="text-sm text-muted-foreground py-6 text-center">No events in this window.</p>
@@ -134,7 +134,7 @@ export default function AttributionTab({ filters }: { filters: AnalyticsFilters 
 
       {/* Top content (§4) */}
       <div className="grid lg:grid-cols-2 gap-4">
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="up-eyebrow mb-3">Top content by clicks</p>
           {d.top_content_by_clicks.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">No clicks in this window.</p>
@@ -151,7 +151,7 @@ export default function AttributionTab({ filters }: { filters: AnalyticsFilters 
             </ol>
           )}
         </Card>
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="up-eyebrow mb-3">Top content by apply started</p>
           {d.top_content_by_apply_started.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">No apply-starts in this window.</p>

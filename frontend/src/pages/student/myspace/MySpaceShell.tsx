@@ -41,6 +41,10 @@ export default function MySpaceShell() {
   // Messages is a fixed two-pane surface (Spec 17 §2) — it manages its own
   // height; every other room scrolls in the layout's <main>.
   const isMessages = location.pathname.startsWith('/s/messages')
+  // Room path segment (saved / prep / applications / …) — keys the content
+  // column so switching rooms replays the entrance animation while the rail
+  // and pill row persist (UX overhaul Ship A, 2026-06-12 spec §1).
+  const roomSegment = location.pathname.split('/')[2] ?? 'space'
 
   // Live rail badges — both queries share their keys with existing consumers
   // (MessagesNavButton / ApplicationsPage), so the cache is reused, not refetched.
@@ -101,7 +105,7 @@ export default function MySpaceShell() {
 
       {/* Content column — mobile gets the room pills above the page. */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="lg:hidden flex-shrink-0 overflow-x-auto border-b border-border bg-background px-3 py-2 scrollbar-none">
+        <div className="lg:hidden sticky top-0 z-20 flex-shrink-0 overflow-x-auto border-b border-border bg-background px-3 py-2 scrollbar-none">
           <div className="flex items-center gap-1.5 w-max">
             {ALL_ROOMS.map(room => (
               <NavLink
@@ -126,7 +130,8 @@ export default function MySpaceShell() {
           </div>
         </div>
 
-        <div className={`min-h-0 flex-1 ${isMessages ? 'overflow-hidden' : ''}`}>
+        {/* Rooms animate via their own PageContainer; Messages (no PageContainer — full-height split pane) animates here. */}
+        <div key={roomSegment} className={`min-h-0 flex-1 ${isMessages ? 'animate-page-in overflow-hidden' : ''}`}>
           <Outlet />
         </div>
       </div>

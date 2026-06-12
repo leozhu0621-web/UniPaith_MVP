@@ -280,13 +280,13 @@ export default function GoalsTab() {
               <span className="text-xs text-muted-foreground">{cat.hint}</span>
             </div>
             {grouped[cat.key].length === 0 ? (
-              <Card className="p-4 text-sm text-muted-foreground">
+              <Card pad={false} className="p-4 text-sm text-muted-foreground">
                 No {cat.label.toLowerCase()} goals yet — add one above.
               </Card>
             ) : (
               <div className="space-y-2">
                 {grouped[cat.key].map(g => (
-                  <Card key={g.id} className="p-4 space-y-2">
+                  <Card pad={false} key={g.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-3">
                       <div className="text-sm font-medium text-foreground">{g.specific}</div>
                       <div className="flex gap-1 shrink-0">

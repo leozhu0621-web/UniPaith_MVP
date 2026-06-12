@@ -252,7 +252,7 @@ export default function ReadinessRail({
 
   if (matchReady.isLoading || completeness.isLoading) {
     return (
-      <Card className="space-y-3 p-4">
+      <Card pad={false} className="space-y-3 p-4">
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-3/4" />
@@ -262,7 +262,7 @@ export default function ReadinessRail({
 
   if (matchReady.isError || completeness.isError) {
     return (
-      <Card className="p-4">
+      <Card pad={false} className="p-4">
         <QueryError
           variant="inline"
           detail="Couldn't load your readiness."
@@ -281,7 +281,7 @@ export default function ReadinessRail({
   const ready = !!mr?.match_ready;
 
   return (
-    <Card
+    <Card pad={false}
       className={clsx(
         "space-y-4 p-4 transition-colors",
         ready ? "border-primary/50 bg-primary/5" : "border-border",

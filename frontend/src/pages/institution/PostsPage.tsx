@@ -258,7 +258,7 @@ export default function PostsPage() {
       ) : (
         <div className="space-y-4">
           {filtered.map(post => (
-            <Card key={post.id} className="p-4 hover:shadow-md transition-shadow">
+            <Card pad={false} key={post.id} className="p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -568,7 +568,7 @@ export default function PostsPage() {
         ) : (
           <div className="space-y-3">
             {templatesQ.data.map(t => (
-              <Card key={t.id} className="p-3 cursor-pointer hover:bg-muted" onClick={() => fillFromTemplate(t)}>
+              <Card pad={false} key={t.id} className="p-3 cursor-pointer hover:bg-muted" onClick={() => fillFromTemplate(t)}>
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-sm font-medium text-foreground">{t.template_name || t.title}</h4>

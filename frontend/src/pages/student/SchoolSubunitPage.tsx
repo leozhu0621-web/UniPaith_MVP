@@ -144,7 +144,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
   }
 
   return (
-    <div className="p-6 max-w-5xl w-full mx-auto">
+    <div className="p-6 max-w-5xl w-full mx-auto animate-page-in">
       {/* Back to the last level (falls back to the institution when opened directly) */}
       <button
         onClick={() => { if (window.history.length > 1) navigate(-1); else navigate(instHref) }}
@@ -265,7 +265,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
           </div>
         )
       })()}
-      <Card className="p-5 mb-5">
+      <Card pad={false} className="p-5 mb-5">
         <div className="flex items-center gap-2 mb-2">
           <BookOpen size={14} className="text-secondary" />
           <h2 className="font-semibold text-foreground">About this school</h2>
@@ -280,7 +280,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
       {school.about_detail && (
         <>
           {(school.about_detail.founded != null || school.about_detail.named_for || school.about_detail.leadership) && (
-            <Card className="p-5 mb-5">
+            <Card pad={false} className="p-5 mb-5">
               <h2 className="font-semibold text-foreground mb-3">Facts &amp; leadership</h2>
               <dl className="space-y-2.5 text-sm">
                 {school.about_detail.founded != null && (
@@ -306,7 +306,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
           )}
 
           {school.about_detail.faculty && school.about_detail.faculty.length > 0 && (
-            <Card className="p-5 mb-5">
+            <Card pad={false} className="p-5 mb-5">
               <h2 className="font-semibold text-foreground mb-3">Notable faculty</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {school.about_detail.faculty.map(f => (
@@ -321,7 +321,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
           )}
 
           {school.about_detail.research_centers && school.about_detail.research_centers.length > 0 && (
-            <Card className="p-5 mb-5">
+            <Card pad={false} className="p-5 mb-5">
               <h2 className="font-semibold text-foreground mb-3">Research centers &amp; labs</h2>
               <div className="flex flex-wrap gap-2">
                 {school.about_detail.research_centers.map(c => (

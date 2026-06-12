@@ -100,7 +100,7 @@ function StatusChip({ status }: { status: ReadinessStatus }) {
 function ControlCard({ control }: { control: SecurityControl }) {
   const Icon = CONTROL_ICONS[control.key] ?? ShieldCheck
   return (
-    <Card className="flex h-full flex-col gap-3 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-start justify-between gap-3">
         <CardTitle icon={Icon} className="leading-snug">
           {control.title}
@@ -158,7 +158,7 @@ function KnobValue({ value }: { value: string | number | boolean }) {
 
 function ConfigCard({ knobs }: { knobs: SecurityConfigKnob[] }) {
   return (
-    <Card className="flex h-full flex-col gap-3 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-3 p-5">
       <h3 className="text-h3 text-foreground">Live security config</h3>
       <dl className="divide-y divide-border">
         {knobs.map(k => (
@@ -337,7 +337,7 @@ export default function SecurityTrustPage() {
         />
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {/* Consent */}
-          <Card className="flex flex-col gap-4 p-6">
+          <Card pad={false} className="flex flex-col gap-4 p-6">
             <div className="flex items-center justify-between gap-2">
               <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
                 <ShieldCheck size={18} className="text-secondary" />
@@ -375,7 +375,7 @@ export default function SecurityTrustPage() {
           </Card>
 
           {/* PII */}
-          <Card className="flex flex-col gap-4 p-6">
+          <Card pad={false} className="flex flex-col gap-4 p-6">
             <div className="flex items-center justify-between gap-2">
               <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
                 <Lock size={18} className="text-secondary" />
@@ -430,7 +430,7 @@ export default function SecurityTrustPage() {
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
           {data ? <ConfigCard knobs={data.config_knobs} /> : <CardSkeleton className="h-72" />}
 
-          <Card className="flex flex-col gap-3 p-5">
+          <Card pad={false} className="flex flex-col gap-3 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <Server size={18} className="text-secondary" />
               Security headers
@@ -447,7 +447,7 @@ export default function SecurityTrustPage() {
             {data && <p className="mt-auto text-[12px] text-muted-foreground">{data.headers.note}</p>}
           </Card>
 
-          <Card className="flex flex-col gap-3 p-5">
+          <Card pad={false} className="flex flex-col gap-3 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <KeyRound size={18} className="text-secondary" />
               Authentication
@@ -498,7 +498,7 @@ export default function SecurityTrustPage() {
           title="FERPA · GDPR · retention"
           sub="The compliance obligations mapped to the real module that satisfies each — with what's live versus what's the next build."
         />
-        <Card className="mt-6 overflow-hidden p-0">
+        <Card pad={false} className="mt-6 overflow-hidden p-0">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-muted/40">
               <tr className="text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -532,7 +532,7 @@ export default function SecurityTrustPage() {
           title="Build-task checklist"
           sub="Spec 58 §10 — each task classified by what's shipped versus what's next. The infra-dependent halves (column encryption, AV scan, WAF, moderation, incident runbook) are named as planned, not hidden."
         />
-        <Card className="mt-6 p-2 sm:p-5">
+        <Card pad={false} className="mt-6 p-2 sm:p-5">
           <ul className="divide-y divide-border">
             {(data?.build_tasks ?? []).map(t => (
               <TaskRow key={`${t.section}-${t.text}`} task={t} />
@@ -555,7 +555,7 @@ export default function SecurityTrustPage() {
             title="Acceptance"
             sub="Spec 58 §11 — the security bar, line by line, with each item honestly marked live or in progress."
           />
-          <Card className="mt-6 p-2 sm:p-5">
+          <Card pad={false} className="mt-6 p-2 sm:p-5">
             <ul className="divide-y divide-border">
               {data.acceptance.map(a => (
                 <li key={a.text} className="flex items-start gap-3 py-3">
@@ -578,7 +578,7 @@ export default function SecurityTrustPage() {
           />
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             {data.open_questions.map(q => (
-              <Card key={q.q} className="flex h-full flex-col gap-2 p-5">
+              <Card pad={false} key={q.q} className="flex h-full flex-col gap-2 p-5">
                 <h3 className="text-h3 text-foreground">{q.q}</h3>
                 <p className="text-sm text-muted-foreground">{q.a}</p>
               </Card>

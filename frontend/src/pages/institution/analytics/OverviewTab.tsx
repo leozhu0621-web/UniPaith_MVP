@@ -39,7 +39,7 @@ function KpiCard({
 }) {
   const delta = formatDelta(metric.delta_pct, timeWindow)
   return (
-    <Card className="p-5">
+    <Card pad={false} className="p-5">
       <p className="up-eyebrow">{label}</p>
       <p className="mt-2 text-h2 font-bold text-foreground tabular-nums">
         {formatKpi(metric.value, metric.unit)}
@@ -100,7 +100,7 @@ export default function OverviewTab({ filters }: { filters: AnalyticsFilters }) 
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="up-eyebrow mb-3">Applications over time</p>
           {overTime.length < 2 ? (
             <ChartEmpty hint="Not enough events in this window to plot." />
@@ -123,7 +123,7 @@ export default function OverviewTab({ filters }: { filters: AnalyticsFilters }) 
           )}
         </Card>
 
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="up-eyebrow mb-3">Applications by program</p>
           {byProgram.length === 0 ? (
             <ChartEmpty hint="No applications match these filters." />
@@ -140,7 +140,7 @@ export default function OverviewTab({ filters }: { filters: AnalyticsFilters }) 
           )}
         </Card>
 
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="up-eyebrow mb-3">Applications by status</p>
           {byStatus.length === 0 ? (
             <ChartEmpty hint="No applications match these filters." />
@@ -157,7 +157,7 @@ export default function OverviewTab({ filters }: { filters: AnalyticsFilters }) 
           )}
         </Card>
 
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="up-eyebrow mb-3">Decisions breakdown</p>
           {decisions.length === 0 ? (
             <ChartEmpty hint="No decisions in this window yet." />

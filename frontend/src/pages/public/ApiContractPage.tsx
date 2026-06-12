@@ -36,7 +36,7 @@ const ROLE_TONE: Record<string, 'cobalt' | 'neutral' | 'success'> = {
 function GroupCard({ group }: { group: RouterGroup }) {
   const methods = Object.entries(group.methods)
   return (
-    <Card className="flex h-full flex-col gap-2 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-2 p-5">
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-mono text-[15px] font-semibold text-foreground">{group.tag}</h3>
         <Chip tone="cobalt">{group.route_count} routes</Chip>
@@ -118,7 +118,7 @@ export default function ApiContractPage() {
 
       {/* Doc-vs-live correction (spec 50 §5: the running code wins) */}
       {data && (
-        <Card variant="card-flush" className="mt-6 flex items-start gap-3 p-4">
+        <Card pad={false} variant="card-flush" className="mt-6 flex items-start gap-3 p-4">
           <Workflow size={18} className="mt-0.5 shrink-0 text-secondary" />
           <p className="text-sm text-muted-foreground">
             Spec 50 was drafted at{' '}
@@ -147,7 +147,7 @@ export default function ApiContractPage() {
             ? data.conventions.map((c, i) => {
                 const Icon = CONVENTION_ICONS[i % CONVENTION_ICONS.length]
                 return (
-                  <Card key={c.title} className="p-5">
+                  <Card pad={false} key={c.title} className="p-5">
                     <Icon size={20} className="text-secondary" />
                     <h3 className="mt-3 text-h3 text-foreground">{c.title}</h3>
                     <p className="mt-1.5 text-sm text-muted-foreground">{c.body}</p>

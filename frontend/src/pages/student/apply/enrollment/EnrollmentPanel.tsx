@@ -199,7 +199,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
   // Never blank on error — this panel carries enrollment + deposit (money-adjacent).
   if (isError || !enr) {
     return (
-      <Card className="p-6">
+      <Card pad={false} className="p-6">
         <QueryError
           title="We couldn't load your enrollment."
           detail="Your enrollment status didn't load just now."
@@ -212,7 +212,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
   const e = enr as Enrollment
   if (!e.available) {
     return (
-      <Card className="p-6 text-center">
+      <Card pad={false} className="p-6 text-center">
         <p className="text-sm text-foreground font-medium mb-1">Accept your offer first</p>
         <p className="text-sm text-foreground max-w-sm mx-auto">
           Your enrollment window opens once you accept an offer. Head to the Offer tab to respond.
@@ -239,7 +239,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
   // ── Withdrew terminal state ──
   if (withdrew) {
     return (
-      <Card className="p-6">
+      <Card pad={false} className="p-6">
         <Badge variant="neutral">Place released</Badge>
         <h2 className="text-h3 font-bold text-foreground mt-3 mb-1">You declined this place</h2>
         <p className="text-sm text-foreground">
@@ -254,7 +254,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
     <div className="space-y-4">
       {/* ── The celebratory beat (§2.2 / brand §15): gold glow, earned. ── */}
       {confirmed ? (
-        <Card variant="card-accent" className="p-6 text-center animate-beat">
+        <Card pad={false} variant="card-accent" className="p-6 text-center animate-beat">
           <div className="mx-auto mb-3 w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
             {enrolled ? (
               <GraduationCap size={28} className="text-foreground" />
@@ -277,7 +277,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
         </Card>
       ) : (
         // ── Pre-confirm: the confirm CTA (gold, the rare earned accent). ──
-        <Card className="p-6">
+        <Card pad={false} className="p-6">
           <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-secondary mb-1">
             Enrollment · {institutionName}
           </p>
@@ -317,7 +317,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
 
       {/* ── Multi-offer prompt (§2.3) — never auto-declines. ── */}
       {!confirmed && (e.other_active_offers?.length ?? 0) > 0 && (
-        <Card className="p-4 border-l-4 border-l-secondary">
+        <Card pad={false} className="p-4 border-l-4 border-l-secondary">
           <p className="text-sm text-foreground font-medium mb-1">
             You have {e.other_active_offers!.length} other active offer
             {e.other_active_offers!.length !== 1 ? 's' : ''}. Decline them?
@@ -343,7 +343,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
 
       {/* ── Decline-after-accept (inline confirm) ── */}
       {showDecline && !confirmed && (
-        <Card className="p-4">
+        <Card pad={false} className="p-4">
           <p className="text-sm text-foreground font-medium mb-2">Decline after accepting</p>
           <p className="text-xs text-foreground mb-2">
             This releases your seat at {institutionName}. This can't be undone here.
@@ -367,7 +367,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
 
       {/* ── Deferral request form ── */}
       {showDefer && !confirmed && !deferralPending && (
-        <Card className="p-4">
+        <Card pad={false} className="p-4">
           <p className="text-sm text-foreground font-medium mb-2">Request a deferral</p>
           <p className="text-xs text-foreground mb-3">
             Ask {institutionName} to move your start to a later term. Subject to their approval.
@@ -396,7 +396,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
       )}
 
       {/* ── Pre-arrival checklist (§2.1) ── */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <div className="flex items-center justify-between mb-1">
           <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-foreground">
             Pre-arrival checklist
@@ -420,7 +420,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
         const deposit = cost?.deposit
         const settled = e.deposit_status === 'paid' || e.deposit_status === 'waived'
         return (
-          <Card className="p-5">
+          <Card pad={false} className="p-5">
             <div className="flex items-center gap-2 mb-2">
               <Wallet size={16} className="text-foreground" />
               <p className="text-sm font-medium text-foreground">Enrollment deposit</p>
@@ -511,7 +511,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
         </div>
       )}
       {confirmed && !enrolled && showDecline && (
-        <Card className="p-4">
+        <Card pad={false} className="p-4">
           <p className="text-sm text-foreground font-medium mb-2">Decline after confirming</p>
           <Textarea
             label="Reason (optional)"

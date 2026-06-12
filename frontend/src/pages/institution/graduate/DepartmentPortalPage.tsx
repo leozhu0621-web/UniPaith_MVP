@@ -153,7 +153,7 @@ export default function DepartmentPortalPage() {
       <Tabs tabs={TABS} activeTab={tab} onChange={handleTab} />
 
       {tab === 'applicants' && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           {reviewQ.isLoading ? (
             <Skeleton className="h-40" />
           ) : reviewQ.isError ? (

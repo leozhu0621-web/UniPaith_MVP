@@ -11,6 +11,9 @@ interface CardProps {
   variant?: CardVariant
   onClick?: () => void
   interactive?: boolean
+  /** Standard p-5 content padding (UX-overhaul Ship A). Set false when the
+   *  card manages its own padding (flush media headers, custom p-* className). */
+  pad?: boolean
 }
 
 const VARIANT_CLASSES: Record<CardVariant, string> = {
@@ -20,12 +23,13 @@ const VARIANT_CLASSES: Record<CardVariant, string> = {
   'card-accent': 'bg-card border-2 border-primary elev-glow',
 }
 
-export default function Card({ children, className, variant = 'card', onClick, interactive }: CardProps) {
+export default function Card({ children, className, variant = 'card', onClick, interactive, pad = true }: CardProps) {
   const clickable = Boolean(onClick) || interactive
   return (
     <div
       className={clsx(
         'rounded-lg',
+        pad && 'p-5',
         VARIANT_CLASSES[variant],
         clickable &&
           'cursor-pointer transition duration-200 ease-out hover:-translate-y-0.5 hover:border-secondary/40 hover:elev-raised focus-within:-translate-y-0.5 focus-within:border-secondary/40 focus-within:elev-raised',

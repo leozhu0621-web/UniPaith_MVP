@@ -315,7 +315,7 @@ export default function AcademicsTab() {
         ) : (
           <div className="space-y-3">
             {records.map(rec => (
-              <Card key={rec.id} className="p-5">
+              <Card pad={false} key={rec.id} className="p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-semibold text-foreground">
@@ -421,7 +421,7 @@ export default function AcademicsTab() {
             {testScores.map(ts => {
               const superscore = computeSuperscore(testScores, ts.test_type)
               return (
-                <Card key={ts.id} className="p-4">
+                <Card pad={false} key={ts.id} className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="font-semibold text-foreground">
@@ -485,7 +485,7 @@ export default function AcademicsTab() {
         ) : (
           <div className="space-y-2">
             {languages.map(lang => (
-              <Card key={lang.id} className="p-4 flex items-start justify-between gap-2">
+              <Card pad={false} key={lang.id} className="p-4 flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2.5">
                   <LanguagesIcon size={16} className="text-muted-foreground mt-0.5" />
                   <div>
@@ -540,7 +540,7 @@ export default function AcademicsTab() {
         ) : (
           <div className="space-y-3">
             {research.map(r => (
-              <Card key={r.id} className="p-4">
+              <Card pad={false} key={r.id} className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-2.5 min-w-0">
                     <FlaskConical size={16} className="text-muted-foreground mt-0.5" />

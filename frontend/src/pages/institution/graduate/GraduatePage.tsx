@@ -141,7 +141,7 @@ export default function GraduatePage() {
       ) : null}
 
       {/* Departments */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="text-secondary">

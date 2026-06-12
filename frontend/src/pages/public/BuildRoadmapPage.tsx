@@ -37,7 +37,7 @@ function statusChip(status: string) {
 function PhaseCard({ phase }: { phase: RoadmapPhase }) {
   const shipped = phase.status === 'shipped'
   return (
-    <Card
+    <Card pad={false}
       variant={shipped ? 'card' : 'card-flush'}
       className="flex flex-col gap-3 p-5 sm:flex-row sm:gap-5"
     >

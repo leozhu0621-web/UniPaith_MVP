@@ -98,7 +98,7 @@ export default function AnalyticsTab() {
       <section>
         <SectionHeader title="Profile analytics" description="How complete your record is and where the gaps are." />
         <div className="grid lg:grid-cols-2 gap-4">
-          <Card className="p-5 flex items-center gap-5">
+          <Card pad={false} className="p-5 flex items-center gap-5">
             <CompletionRing value={overall} size={96} stroke={8} />
             <div>
               <p className="up-eyebrow">Overall completion</p>
@@ -106,7 +106,7 @@ export default function AnalyticsTab() {
               <p className="text-sm text-muted-foreground mt-0.5">across {stats.length} clusters</p>
             </div>
           </Card>
-          <Card className="p-5">
+          <Card pad={false} className="p-5">
             <p className="up-eyebrow mb-3">By cluster</p>
             <CategoryBars stats={stats} />
           </Card>
@@ -114,7 +114,7 @@ export default function AnalyticsTab() {
       </section>
 
       <section className="grid lg:grid-cols-2 gap-4">
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="up-eyebrow mb-3">Progress over time</p>
           {progressData.length < 2 ? (
             <p className="text-sm text-muted-foreground py-8 text-center">
@@ -138,7 +138,7 @@ export default function AnalyticsTab() {
             </ResponsiveContainer>
           )}
         </Card>
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="up-eyebrow mb-3">Signal density</p>
           {densityData.length === 0 ? (
             <p className="text-sm text-muted-foreground py-8 text-center">Add records to see how your signals stack up by area.</p>
@@ -157,7 +157,7 @@ export default function AnalyticsTab() {
       </section>
 
       <section className="grid sm:grid-cols-2 gap-4">
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp size={16} className="text-success" />
             <p className="font-semibold text-foreground">Strongest sections</p>
@@ -168,7 +168,7 @@ export default function AnalyticsTab() {
             ))}
           </ul>
         </Card>
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <div className="flex items-center gap-2 mb-2">
             <TrendingDown size={16} className="text-warning" />
             <p className="font-semibold text-foreground">Room to grow</p>
@@ -189,7 +189,7 @@ export default function AnalyticsTab() {
       <section>
         <SectionHeader title="Peer comparison" description="Anonymized benchmarks vs students with similar targets." />
         {!analyticsConsent ? (
-          <Card className="p-5">
+          <Card pad={false} className="p-5">
             <p className="text-sm text-muted-foreground">
               Peer comparison requires analytics consent. Manage in{' '}
               <button
@@ -201,7 +201,7 @@ export default function AnalyticsTab() {
             </p>
           </Card>
         ) : peerMetrics.length === 0 ? (
-          <Card className="p-5">
+          <Card pad={false} className="p-5">
             <p className="text-sm text-muted-foreground">
               Not enough data to plot yet. Add a GPA or test score and we'll benchmark you against similar students.
             </p>
@@ -209,7 +209,7 @@ export default function AnalyticsTab() {
         ) : (
           <div className="grid sm:grid-cols-2 gap-3">
             {peerMetrics.map((m: any) => (
-              <Card key={m.metric} className="p-4">
+              <Card pad={false} key={m.metric} className="p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-foreground">{m.metric}</span>
                   <span className="text-sm font-bold text-foreground tabular-nums">{m.value}</span>

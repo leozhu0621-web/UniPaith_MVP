@@ -112,7 +112,7 @@ export default function CohortComparisonPage({ embedded = false }: { embedded?: 
       )}
 
       {/* Program selector */}
-      <Card className="p-4">
+      <Card pad={false} className="p-4">
         <div className="flex items-center gap-4">
           <Select label="Program" options={programOptions} value={selectedProgram} onChange={e => { setSelectedProgram(e.target.value); setSelectedIds([]) }} />
           {selectedIds.length > 0 && (
@@ -123,7 +123,7 @@ export default function CohortComparisonPage({ embedded = false }: { embedded?: 
 
       {/* Reader calibration (§7A.2) — coaching signals only */}
       {selectedProgram && calibration && (calibration.reviewer_drift.length > 0 || calibration.inter_rater.length > 0) && (
-        <Card className="p-4 space-y-3">
+        <Card pad={false} className="p-4 space-y-3">
           <div className="flex items-center gap-2">
             <Scale size={16} className="text-secondary" />
             <h3 className="text-sm font-semibold text-foreground">Reader calibration</h3>
@@ -175,7 +175,7 @@ export default function CohortComparisonPage({ embedded = false }: { embedded?: 
 
       {/* Application picker */}
       {selectedProgram && (
-        <Card className="p-4">
+        <Card pad={false} className="p-4">
           <p className="text-sm font-medium text-foreground mb-2">Select 2+ applicants to compare:</p>
           {appsQ.isLoading ? (
             <Skeleton className="h-20" />

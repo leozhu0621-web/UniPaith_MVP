@@ -276,7 +276,7 @@ export default function StudentDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left */}
         <div className="lg:col-span-1 space-y-4">
-          <Card className="p-5">
+          <Card pad={false} className="p-5">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center shrink-0"><User size={22} className="text-secondary" /></div>
               <div className="min-w-0">
@@ -297,7 +297,7 @@ export default function StudentDetailPage() {
             </div>
           </Card>
 
-          <Card className="p-4 space-y-2">
+          <Card pad={false} className="p-4 space-y-2">
             <div className="flex items-center gap-2"><Globe size={15} className="text-secondary" /><h3 className="text-sm font-semibold text-foreground">Context</h3></div>
             {packet.holistic_context.standard.length === 0 ? (
               <p className="text-xs text-muted-foreground">No additional context flags.</p>
@@ -321,13 +321,13 @@ export default function StudentDetailPage() {
             <p className="text-[11px] leading-snug text-muted-foreground">{packet.holistic_context.note}</p>
           </Card>
 
-          <Card className="p-4 space-y-1.5">
+          <Card pad={false} className="p-4 space-y-1.5">
             <div className="flex items-center gap-2"><FileCheck size={15} className="text-secondary" /><h3 className="text-sm font-semibold text-foreground">Test policy</h3><Badge variant="neutral">{packet.test_optional.policy.replace(/_/g, '-')}</Badge></div>
             <p className="text-xs text-foreground">{packet.test_optional.recommendation}</p>
             <p className="text-[11px] text-muted-foreground">{packet.test_optional.guardrail}</p>
           </Card>
 
-          <Card className="p-4 space-y-2">
+          <Card pad={false} className="p-4 space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground mb-1">Actions</h3>
             <Button variant="secondary" className="w-full flex items-center justify-center gap-2" onClick={() => assignMut.mutate()} disabled={assignMut.isPending}><ClipboardCheck size={16} /> Assign reviewer</Button>
             <Button variant="secondary" className="w-full flex items-center justify-center gap-2" onClick={() => setShowScoringModal(true)} disabled={locked} title={locked ? 'Scoring is read-only after a decision' : undefined}><Star size={16} /> Score this applicant</Button>
@@ -364,7 +364,7 @@ export default function StudentDetailPage() {
             {activeTab === 'documents' && <DocumentsTab packet={packet} />}
             {activeTab === 'essays' && <EssaysTab packet={packet} />}
             {activeTab === 'interview' && (
-              <Card className="p-5">
+              <Card pad={false} className="p-5">
                 <h3 className="font-semibold text-foreground mb-3">Interviews</h3>
                 {interviewsQ.isLoading ? (
                   <Skeleton className="h-24" />
@@ -596,7 +596,7 @@ function CitationChips({ title, items, tone }: { title: string; items: string[];
 function OverviewTab({ packet }: { packet: ReviewPacket }) {
   const s = packet.student
   return (
-    <Card className="p-5 space-y-4">
+    <Card pad={false} className="p-5 space-y-4">
       <h3 className="font-semibold text-foreground">Application overview</h3>
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div><span className="text-muted-foreground">Status:</span> <span className="ml-1 text-foreground">{packet.status}</span></div>
@@ -634,11 +634,11 @@ function ScoresTab({ packet, synthesis, onSynthesize, synthLoading }: { packet: 
   const reviewers = packet.reviewer_notes
   const [expandedCriterion, setExpandedCriterion] = useState<string | null>(null)
   if (packet.reviewer_count === 0) {
-    return <Card className="p-6"><p className="text-sm text-muted-foreground text-center">No one has scored this applicant yet.</p></Card>
+    return <Card pad={false} className="p-6"><p className="text-sm text-muted-foreground text-center">No one has scored this applicant yet.</p></Card>
   }
   return (
     <div className="space-y-4">
-      <Card className="p-0 overflow-x-auto">
+      <Card pad={false} className="p-0 overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="border-b border-border bg-muted/50">
@@ -694,7 +694,7 @@ function ScoresTab({ packet, synthesis, onSynthesize, synthLoading }: { packet: 
       {reviewers.some(r => r.note) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {reviewers.filter(r => r.note).map(r => (
-            <Card key={r.reviewer_id} className="p-3">
+            <Card pad={false} key={r.reviewer_id} className="p-3">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium text-foreground">{r.reviewer_name}</span>
                 {r.total_weighted_score != null && <Badge variant="info">{r.total_weighted_score.toFixed(1)}</Badge>}
@@ -706,7 +706,7 @@ function ScoresTab({ packet, synthesis, onSynthesize, synthLoading }: { packet: 
       )}
 
       {packet.reviewer_count >= 2 && (
-        <Card className="p-4 space-y-3">
+        <Card pad={false} className="p-4 space-y-3">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2">
               <AIBadge label="AI synthesis" fallback={synthesis?.model_used === 'rule_based'} />
@@ -743,7 +743,7 @@ function AISummaryTab({ packet, regen, regenPending, matchRationale, matchLoadin
   const isFallback = !p || p.model_used === 'rule_based'
   return (
     <>
-      <Card className="p-5 space-y-4">
+      <Card pad={false} className="p-5 space-y-4">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <AIBadge label="AI packet summary" fallback={isFallback} />
@@ -807,7 +807,7 @@ function AISummaryTab({ packet, regen, regenPending, matchRationale, matchLoadin
         </div>
       </Card>
 
-      <Card className="p-5 space-y-3">
+      <Card pad={false} className="p-5 space-y-3">
         <div className="flex items-center gap-2"><Brain size={18} className="text-secondary" /><h3 className="font-semibold text-foreground">Match rationale — full evidence view</h3><Badge variant="info"><Shield size={10} className="mr-1" />Reviewer-only</Badge></div>
         <p className="text-xs text-muted-foreground">The applicant sees a redacted version of this. Comparative and internal matching signals shown here are withheld from the student (Spec 06 §3).</p>
         {matchLoading ? <Skeleton className="h-24" /> : !matchRationale?.available ? (
@@ -835,7 +835,7 @@ function IntegrityTab({ packet, onScan, scanning, onAction, actionPending, locke
   const signals = packet.integrity_signals
   const open = signals.filter(s => s.status === 'open').length
   return (
-    <Card className="p-5 space-y-4">
+    <Card pad={false} className="p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2"><Shield size={18} className="text-warning" /><h3 className="font-semibold text-foreground">Integrity signals</h3>{open > 0 && <Badge variant="warning">{open} open</Badge>}</div>
         <Button variant="secondary" size="sm" onClick={onScan} disabled={scanning} className="flex items-center gap-1"><RefreshCw size={14} className={scanning ? 'animate-spin' : ''} />{scanning ? 'Scanning…' : 'Run scan'}</Button>
@@ -870,9 +870,9 @@ function IntegrityTab({ packet, onScan, scanning, onAction, actionPending, locke
 }
 
 function DocumentsTab({ packet }: { packet: ReviewPacket }) {
-  if (packet.documents.length === 0) return <Card className="p-6"><p className="text-sm text-muted-foreground text-center">No documents uploaded.</p></Card>
+  if (packet.documents.length === 0) return <Card pad={false} className="p-6"><p className="text-sm text-muted-foreground text-center">No documents uploaded.</p></Card>
   return (
-    <Card className="p-4 space-y-2">
+    <Card pad={false} className="p-4 space-y-2">
       {packet.documents.map(d => (
         <div key={d.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
           <div className="flex items-center gap-2 min-w-0">
@@ -887,11 +887,11 @@ function DocumentsTab({ packet }: { packet: ReviewPacket }) {
 }
 
 function EssaysTab({ packet }: { packet: ReviewPacket }) {
-  if (packet.essays.length === 0) return <Card className="p-6"><p className="text-sm text-muted-foreground text-center">No essays submitted for this program.</p></Card>
+  if (packet.essays.length === 0) return <Card pad={false} className="p-6"><p className="text-sm text-muted-foreground text-center">No essays submitted for this program.</p></Card>
   return (
     <div className="space-y-3">
       {packet.essays.map(e => (
-        <Card key={e.id} className="p-4 space-y-2">
+        <Card pad={false} key={e.id} className="p-4 space-y-2">
           <div className="flex items-center justify-between gap-2">
             <p className="text-sm font-medium text-foreground">{e.prompt_text ?? 'Essay'}</p>
             <div className="flex items-center gap-2 shrink-0">{e.status && <Badge variant="neutral">{e.status}</Badge>}{e.word_count != null && <span className="text-xs text-muted-foreground">{e.word_count} words</span>}</div>
@@ -909,9 +909,9 @@ function TimelineTab({ packet }: { packet: ReviewPacket }) {
   for (const r of packet.reviewer_notes) if (r.scored_at) events.push({ at: r.scored_at, label: `Scored by ${r.reviewer_name}${r.total_weighted_score != null ? ` (${r.total_weighted_score.toFixed(1)})` : ''}`, icon: Star })
   if (packet.decision?.decision_at) events.push({ at: packet.decision.decision_at, label: `Decision: ${packet.decision.decision}`, icon: Award })
   events.sort((a, b) => (a.at ?? '').localeCompare(b.at ?? ''))
-  if (events.length === 0) return <Card className="p-6"><p className="text-sm text-muted-foreground text-center">No timeline events yet.</p></Card>
+  if (events.length === 0) return <Card pad={false} className="p-6"><p className="text-sm text-muted-foreground text-center">No timeline events yet.</p></Card>
   return (
-    <Card className="p-5">
+    <Card pad={false} className="p-5">
       <ol className="relative border-l border-border ml-3 space-y-5">
         {events.map((ev, i) => {
           const Icon = ev.icon

@@ -102,7 +102,7 @@ export default function WaiverQueuePage() {
         ) : waiversQ.isError ? (
           <QueryError variant="inline" detail="We couldn't load fee-waiver requests." onRetry={() => waiversQ.refetch()} />
         ) : waivers.length === 0 ? (
-          <Card className="p-6 text-center text-sm text-muted-foreground">
+          <Card pad={false} className="p-6 text-center text-sm text-muted-foreground">
             No pending fee-waiver requests. Auto-approved bases never reach this queue.
           </Card>
         ) : (
@@ -110,7 +110,7 @@ export default function WaiverQueuePage() {
             const evidence = (w.evidence || {}) as { note?: string; url?: string }
             const busy = decideMut.isPending && decideMut.variables?.id === w.payment_id
             return (
-              <Card key={w.payment_id} className="p-4">
+              <Card pad={false} key={w.payment_id} className="p-4">
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground">{w.student_name || 'Applicant'}</p>
@@ -173,9 +173,9 @@ export default function WaiverQueuePage() {
         ) : paymentsQ.isError ? (
           <QueryError variant="inline" detail="We couldn't load payments." onRetry={() => paymentsQ.refetch()} />
         ) : payments.length === 0 ? (
-          <Card className="p-6 text-center text-sm text-muted-foreground">No payments yet.</Card>
+          <Card pad={false} className="p-6 text-center text-sm text-muted-foreground">No payments yet.</Card>
         ) : (
-          <Card className="p-0 overflow-hidden">
+          <Card pad={false} className="p-0 overflow-hidden">
             <div className="divide-y divide-border">
               {payments.map(p => (
                 <div key={p.payment_id} className="flex items-center justify-between gap-3 px-4 py-3">

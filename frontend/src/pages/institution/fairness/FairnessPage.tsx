@@ -189,7 +189,7 @@ export default function FairnessPage() {
 
       {/* Status banner */}
       {overview && (
-        <Card className={`p-4 ${meta.cardClass}`}>
+        <Card pad={false} className={`p-4 ${meta.cardClass}`}>
           <div className="flex items-center gap-2 mb-1">
             <meta.Icon size={18} className={meta.tone} />
             <h3 className="text-sm font-semibold text-foreground">{meta.label}</h3>
@@ -228,7 +228,7 @@ export default function FairnessPage() {
 
       {/* Override history */}
       {overrides.length > 0 && (
-        <Card className="p-5">
+        <Card pad={false} className="p-5">
           <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-3">
             Override history
           </p>
@@ -333,7 +333,7 @@ function ProgramCard({
   revoking: boolean
 }) {
   return (
-    <Card className={`p-5 ${program.matching_halted ? 'border-l-4 border-l-error' : ''}`}>
+    <Card pad={false} className={`p-5 ${program.matching_halted ? 'border-l-4 border-l-error' : ''}`}>
       <div className="flex items-start justify-between flex-wrap gap-3 mb-3">
         <div className="flex items-center gap-2 flex-wrap">
           <h3 className="text-base font-semibold text-foreground">{program.program_name}</h3>

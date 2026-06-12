@@ -190,7 +190,7 @@ export default function AdvisorMatchTab({ applicationId }: { applicationId: stri
   if (matchesQ.isLoading) return <Skeleton className="h-96" />
   if (matchesQ.isError)
     return (
-      <Card className="p-6 text-center text-sm text-muted-foreground">
+      <Card pad={false} className="p-6 text-center text-sm text-muted-foreground">
         Advisor matching is available for graduate programs only.
       </Card>
     )
@@ -203,7 +203,7 @@ export default function AdvisorMatchTab({ applicationId }: { applicationId: stri
   return (
     <div className="space-y-4">
       {/* Research intent (§2.2) */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <div className="mb-4 flex items-center gap-2">
           <span className="text-secondary">
             <GraduationCap size={16} />
@@ -250,7 +250,7 @@ export default function AdvisorMatchTab({ applicationId }: { applicationId: stri
       </Card>
 
       {/* Advisor matches (§2.1) */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="text-secondary">
@@ -282,7 +282,7 @@ export default function AdvisorMatchTab({ applicationId }: { applicationId: stri
       <FundingBuilder applicationId={applicationId} />
 
       {/* Two-stage review (§2.4) */}
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <div className="mb-4 flex items-center gap-2">
           <span className="text-secondary">
             <Star size={16} />

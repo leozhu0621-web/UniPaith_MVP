@@ -173,7 +173,7 @@ export default function ProspectsTab() {
 
   if (isError) {
     return (
-      <Card className="p-0">
+      <Card pad={false} className="p-0">
         <QueryError detail="Couldn’t load prospects." onRetry={() => refetch()} />
       </Card>
     )
@@ -182,7 +182,7 @@ export default function ProspectsTab() {
   if (data && data.total === 0 && !hasAnyFilter) {
     return (
       <>
-        <Card className="p-0">
+        <Card pad={false} className="p-0">
           <EmptyState
             icon={<Users size={28} />}
             title="No prospects yet"
@@ -261,7 +261,7 @@ export default function ProspectsTab() {
         </div>
       </div>
 
-      <Card className="overflow-hidden p-0">
+      <Card pad={false} className="overflow-hidden p-0">
         <Table
           columns={columns}
           data={items}
@@ -610,7 +610,7 @@ function ProspectDrawer({
         </dl>
 
         {prospect.apply_likelihood != null && (
-          <Card variant="card-flush" className="space-y-1 p-3">
+          <Card pad={false} variant="card-flush" className="space-y-1 p-3">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-sm font-medium">
                 <AIBadge label="Apply-likelihood" /> {Math.round(prospect.apply_likelihood * 100)}%

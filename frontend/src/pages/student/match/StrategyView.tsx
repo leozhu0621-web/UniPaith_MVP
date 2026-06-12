@@ -31,6 +31,7 @@ import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import QueryError from '../../../components/ui/QueryError'
+import Skeleton from '../../../components/ui/Skeleton'
 import { showToast } from '../../../stores/toast-store'
 import type { StudentGoal, StudentStrategy } from '../../../types'
 
@@ -88,7 +89,17 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
     window.localStorage.setItem(COLLAPSED_KEY, next ? '1' : '0')
   }
 
-  if (strategyLoading) return <Card className="h-28 animate-pulse"><div className="h-full" /></Card>
+  if (strategyLoading) {
+    return (
+      <Card>
+        <div className="space-y-2.5">
+          <Skeleton className="h-4 w-44" />
+          <Skeleton className="h-3 w-3/4" />
+          <Skeleton className="h-3 w-1/2" />
+        </div>
+      </Card>
+    )
+  }
 
   // Fetch failed → show a retry instead of falling through to a misleading
   // "no strategy / no goals" empty state (Spec 78 §3).

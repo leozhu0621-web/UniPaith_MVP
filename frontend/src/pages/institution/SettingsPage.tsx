@@ -274,7 +274,7 @@ export default function SettingsPage() {
 
       {activeTab === 'account' && (
         settingsQ.isLoading || !settingsQ.data ? (
-          <Card className="p-6"><Skeleton className="h-40" /></Card>
+          <Card pad={false} className="p-6"><Skeleton className="h-40" /></Card>
         ) : (
           <OrgAccountCard account={settingsQ.data.account} onChanged={refetchSettings} />
         )
@@ -282,7 +282,7 @@ export default function SettingsPage() {
 
       {/* Public profile (Spec 22 guided editor) */}
       {activeTab === 'profile' && (
-        <Card className="p-5 sm:p-6">
+        <Card pad={false} className="p-5 sm:p-6">
           {instQ.isError ? (
             <QueryError variant="inline" detail="We couldn't load your public profile." onRetry={() => instQ.refetch()} />
           ) : instQ.isLoading || !inst ? (
@@ -373,7 +373,7 @@ export default function SettingsPage() {
       {activeTab === 'review' && (
         <div className="space-y-4">
           {settingsQ.isLoading || !settingsQ.data ? (
-            <Card className="p-6"><Skeleton className="h-32" /></Card>
+            <Card pad={false} className="p-6"><Skeleton className="h-32" /></Card>
           ) : (
             <ReviewConfigCard config={settingsQ.data.review_config} onChanged={refetchSettings} />
           )}
@@ -383,7 +383,7 @@ export default function SettingsPage() {
             </Button>
           </div>
           {showRubricForm && (
-            <Card className="p-5 space-y-4">
+            <Card pad={false} className="p-5 space-y-4">
               <h3 className="font-semibold text-foreground">Create Rubric</h3>
               <Input label="Rubric Name" required value={rubricName} onChange={e => setRubricName(e.target.value)} />
               <div>
@@ -409,10 +409,10 @@ export default function SettingsPage() {
           {rubricsQ.isLoading ? (
             <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
           ) : rubrics.length === 0 ? (
-            <Card className="p-6 text-center text-sm text-muted-foreground">No rubrics yet. Create one to start scoring applications.</Card>
+            <Card pad={false} className="p-6 text-center text-sm text-muted-foreground">No rubrics yet. Create one to start scoring applications.</Card>
           ) : (
             rubrics.map(r => (
-              <Card key={r.id} className="p-4">
+              <Card pad={false} key={r.id} className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-foreground">{r.rubric_name}</h3>
                   <Badge variant={r.is_active ? 'success' : 'neutral'}>{r.is_active ? 'Active' : 'Inactive'}</Badge>
@@ -432,7 +432,7 @@ export default function SettingsPage() {
       {/* AI extensibility (Spec 37 §5) */}
       {activeTab === 'ai' && (
         settingsQ.isLoading || !settingsQ.data ? (
-          <Card className="p-6"><Skeleton className="h-40" /></Card>
+          <Card pad={false} className="p-6"><Skeleton className="h-40" /></Card>
         ) : (
           <AIConfigCard config={settingsQ.data.ai_config} onChanged={refetchSettings} />
         )
@@ -449,7 +449,7 @@ export default function SettingsPage() {
       {/* Notifications (matrix) */}
       {activeTab === 'notifications' && (
         settingsQ.isLoading || !settingsQ.data ? (
-          <Card className="p-6"><Skeleton className="h-40" /></Card>
+          <Card pad={false} className="p-6"><Skeleton className="h-40" /></Card>
         ) : (
           <NotificationsCard
             notifications={settingsQ.data.notifications}
@@ -467,10 +467,10 @@ export default function SettingsPage() {
           <FeeConfigCard />
           <h2 className="text-sm font-semibold text-muted-foreground pt-2">Platform usage billing</h2>
           {billingQ.isLoading || !billingQ.data ? (
-            <Card className="p-6"><Skeleton className="h-28" /></Card>
+            <Card pad={false} className="p-6"><Skeleton className="h-28" /></Card>
           ) : (
             <>
-              <Card className="p-5 sm:p-6">
+              <Card pad={false} className="p-5 sm:p-6">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Current cycle · {billingQ.data.cycle_label}</p>
@@ -487,7 +487,7 @@ export default function SettingsPage() {
                   Usage-based pricing: <span className="font-medium text-foreground">${billingQ.data.per_applicant_usd} per unique applicant processed</span>. No per-seat fees.
                 </p>
               </Card>
-              <Card className="p-5 sm:p-6">
+              <Card pad={false} className="p-5 sm:p-6">
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3"><CreditCard size={16} className="text-secondary" /> Payment method</h3>
                 {billingQ.data.has_payment_method ? (
                   <p className="text-sm text-foreground">{billingQ.data.payment_method_brand} •••• {billingQ.data.payment_method_last4}</p>
@@ -499,7 +499,7 @@ export default function SettingsPage() {
                 )}
               </Card>
               {billingQ.data.invoices.length > 0 && (
-                <Card className="p-5 sm:p-6">
+                <Card pad={false} className="p-5 sm:p-6">
                   <h3 className="text-sm font-semibold text-foreground mb-3">Invoices</h3>
                   <div className="divide-y divide-border">
                     {billingQ.data.invoices.map(inv => (
@@ -519,7 +519,7 @@ export default function SettingsPage() {
       {/* Security + personal preferences (§3.7) */}
       {activeTab === 'security' && (
         settingsQ.isLoading || !settingsQ.data ? (
-          <div className="space-y-4">{Array.from({ length: 2 }).map((_, i) => <Card key={i} className="p-6"><Skeleton className="h-40" /></Card>)}</div>
+          <div className="space-y-4">{Array.from({ length: 2 }).map((_, i) => <Card pad={false} key={i} className="p-6"><Skeleton className="h-40" /></Card>)}</div>
         ) : (
           <div className="space-y-5">
             <SecurityCard

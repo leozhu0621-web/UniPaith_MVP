@@ -32,7 +32,7 @@ export default function CompleteSummary({
   const published = setupState.published_program_count
 
   return (
-    <Card className="p-6 sm:p-8">
+    <Card pad={false} className="p-6 sm:p-8">
       <div className="text-center">
         <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success-soft text-success">
           <CheckCircle2 size={26} />

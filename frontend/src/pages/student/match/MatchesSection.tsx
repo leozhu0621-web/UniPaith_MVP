@@ -16,6 +16,7 @@ import BandBadge from '../../../components/ui/BandBadge'
 import Button from '../../../components/ui/Button'
 import Coachmark from '../../../components/ui/Coachmark'
 import QueryError from '../../../components/ui/QueryError'
+import { SkeletonCard } from '../../../components/ui/Skeleton'
 import { useCompareStore } from '../../../stores/compare-store'
 import { showToast } from '../../../stores/toast-store'
 import type { MatchBand, MatchResultDual } from '../../../types'
@@ -135,9 +136,9 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
     return (
       <section className="mb-6">
         <SectionHeader count={null} />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 [&>*]:min-w-0">
           {[0, 1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="h-56 bg-card rounded-xl border border-border animate-pulse" />
+            <SkeletonCard key={i} />
           ))}
         </div>
       </section>
@@ -213,14 +214,14 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
                 <span className="text-xs text-muted-foreground">{BAND_BLURB[band]}</span>
                 <span className="ml-auto text-[11px] text-muted-foreground">{groups[band].length}</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 [&>*]:min-w-0">
                 {groups[band].map(renderCard)}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 [&>*]:min-w-0">
           {matches.map(renderCard)}
         </div>
       )}

@@ -88,7 +88,7 @@ function Stat({ value, label }: { value: React.ReactNode; label: string }) {
 
 function AgentCard({ agent }: { agent: AiAgent }) {
   return (
-    <Card className="flex h-full flex-col gap-3 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -132,7 +132,7 @@ function AgentCard({ agent }: { agent: AiAgent }) {
 function TierCard({ tier }: { tier: AgentTier }) {
   const isFlagship = tier.tier === 'flagship'
   return (
-    <Card variant={isFlagship ? 'card-accent' : 'card'} className="flex flex-col gap-2 p-5">
+    <Card pad={false} variant={isFlagship ? 'card-accent' : 'card'} className="flex flex-col gap-2 p-5">
       <div className="flex items-center justify-between">
         <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
           {isFlagship ? (
@@ -297,7 +297,7 @@ export default function ClaudeApiGoalPage() {
           {(data?.principles ?? []).map((p, i) => {
             const Icon = PRINCIPLE_ICONS[i] ?? ShieldCheck
             return (
-              <Card key={p.title} className="p-5">
+              <Card pad={false} key={p.title} className="p-5">
                 <Icon size={20} className="text-secondary" />
                 <h3 className="mt-3 text-h3 text-foreground">{p.title}</h3>
                 <p className="mt-1.5 text-sm text-muted-foreground">{p.body}</p>
@@ -342,7 +342,7 @@ export default function ClaudeApiGoalPage() {
         </div>
 
         {isError ? (
-          <Card className="mt-6 p-8 text-center">
+          <Card pad={false} className="mt-6 p-8 text-center">
             <p className="text-foreground">We couldn't load the agent catalog just now.</p>
             <Button variant="secondary" className="mt-4" onClick={() => refetch()}>
               Retry
@@ -429,7 +429,7 @@ export default function ClaudeApiGoalPage() {
               { layer: 'Per-turn tail', ttl: 'Uncached', note: '' },
             ]
           ).map(c => (
-            <Card key={c.layer} className="p-5">
+            <Card pad={false} key={c.layer} className="p-5">
               <div className="flex items-center justify-between">
                 <h3 className="text-h3 text-foreground">{c.layer}</h3>
                 <Chip tone={c.ttl === 'Uncached' ? 'neutral' : 'cobalt'} icon={Workflow}>

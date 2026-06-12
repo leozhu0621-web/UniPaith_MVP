@@ -126,7 +126,7 @@ export default function InternationalPage({ embedded = false }: { embedded?: boo
       </div>
 
       {isError ? (
-        <Card className="p-2">
+        <Card pad={false} className="p-2">
           <QueryError detail="We couldn't load your international applicants." onRetry={() => refetch()} />
         </Card>
       ) : (
@@ -142,7 +142,7 @@ export default function InternationalPage({ embedded = false }: { embedded?: boo
       )}
 
       {/* Country-requirement packs reference (§2.3) */}
-      <Card className="p-0 overflow-hidden">
+      <Card pad={false} className="p-0 overflow-hidden">
         <button
           type="button"
           onClick={() => setShowPacks(v => !v)}

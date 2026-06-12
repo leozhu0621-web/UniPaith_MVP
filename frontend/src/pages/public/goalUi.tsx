@@ -142,7 +142,7 @@ export function CardTitle({
 
 export function ErrorState({ onRetry, label }: { onRetry: () => void; label?: string }) {
   return (
-    <Card className="mt-6 p-8 text-center">
+    <Card pad={false} className="mt-6 p-8 text-center">
       <p className="text-foreground">{label ?? "We couldn't load this just now."}</p>
       <Button variant="secondary" className="mt-4" onClick={onRetry}>
         Retry

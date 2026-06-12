@@ -112,7 +112,7 @@ export default function FairsTab() {
 
   if (isError) {
     return (
-      <Card className="p-0">
+      <Card pad={false} className="p-0">
         <QueryError detail="Couldn’t load schools and fairs." onRetry={() => refetch()} />
       </Card>
     )
@@ -121,7 +121,7 @@ export default function FairsTab() {
   if (!isLoading && (!fairs || fairs.length === 0)) {
     return (
       <>
-        <Card className="p-0">
+        <Card pad={false} className="p-0">
           <EmptyState
             icon={<School size={28} />}
             title="No schools or fairs yet"
@@ -143,7 +143,7 @@ export default function FairsTab() {
         </Button>
       </div>
 
-      <Card className="overflow-hidden p-0">
+      <Card pad={false} className="overflow-hidden p-0">
         <Table columns={columns} data={fairs ?? []} pageSize={25} density="compact" isLoading={isLoading} />
       </Card>
 

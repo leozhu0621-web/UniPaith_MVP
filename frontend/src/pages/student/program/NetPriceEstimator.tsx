@@ -73,7 +73,7 @@ export default function NetPriceEstimator({ estimate, compact = false }: Props) 
   const expectedPct = pct(range.expected)
 
   return (
-    <Card className="p-5 border-secondary/30">
+    <Card pad={false} className="p-5 border-secondary/30">
       <div className="flex items-center gap-2 mb-4">
         <Wallet size={15} className="text-secondary" />
         <h3 className="font-semibold text-foreground">Your estimated net price</h3>

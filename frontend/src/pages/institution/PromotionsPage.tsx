@@ -174,19 +174,19 @@ export default function PromotionsPage() {
 
       {allPromos.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <Card className="p-3">
+          <Card pad={false} className="p-3">
             <p className="text-xs text-muted-foreground">Total</p>
             <p className="text-xl font-semibold text-foreground">{allPromos.length}</p>
           </Card>
-          <Card className="p-3 border-success-soft">
+          <Card pad={false} className="p-3 border-success-soft">
             <p className="text-xs text-success">Active</p>
             <p className="text-xl font-bold text-success">{allPromos.filter(p => p.status === 'active').length}</p>
           </Card>
-          <Card className="p-3">
+          <Card pad={false} className="p-3">
             <p className="text-xs text-muted-foreground flex items-center gap-1"><Eye size={12} /> Impressions</p>
             <p className="text-xl font-semibold text-foreground">{allPromos.reduce((s, p) => s + p.impression_count, 0)}</p>
           </Card>
-          <Card className="p-3">
+          <Card pad={false} className="p-3">
             <p className="text-xs text-muted-foreground flex items-center gap-1"><MousePointerClick size={12} /> Clicks</p>
             <p className="text-xl font-semibold text-foreground">{allPromos.reduce((s, p) => s + p.click_count, 0)}</p>
           </Card>
@@ -209,7 +209,7 @@ export default function PromotionsPage() {
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {promos.map(p => (
-            <Card key={p.id} className="p-4">
+            <Card pad={false} key={p.id} className="p-4">
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <div className="flex items-center gap-2">

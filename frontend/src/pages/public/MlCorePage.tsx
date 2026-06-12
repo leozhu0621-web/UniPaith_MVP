@@ -87,7 +87,7 @@ function StatusChip({ status }: { status: ReadinessStatus }) {
 function CapabilityCard({ capability }: { capability: MlCoreCapability }) {
   const Icon = CAPABILITY_ICONS[capability.key] ?? Cpu
   return (
-    <Card className="flex h-full flex-col gap-3 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-start justify-between gap-3">
         <CardTitle icon={Icon} className="leading-snug">
           {capability.title}
@@ -167,7 +167,7 @@ function AcceptanceRow({ item }: { item: MlCoreAcceptanceItem }) {
 
 function PhaseCard({ phase }: { phase: MlCorePhase }) {
   return (
-    <Card className="flex h-full flex-col gap-2 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-2 p-5">
       <div className="flex items-center justify-between gap-3">
         <CardTitle>
           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-secondary/40 font-mono text-[12px] text-secondary">
@@ -283,7 +283,7 @@ export default function MlCorePage() {
           {(data?.boundary_columns ?? []).map(col => {
             const Icon = SIDE_ICON[col.side] ?? Cpu
             return (
-              <Card key={col.side} className="flex h-full flex-col gap-3 p-6">
+              <Card pad={false} key={col.side} className="flex h-full flex-col gap-3 p-6">
                 <CardTitle>
                   <Icon size={20} className="text-secondary" />
                   {col.title}
@@ -312,7 +312,7 @@ export default function MlCorePage() {
           {!data && [0, 1].map(i => <CardSkeleton key={i} className="h-56" />)}
         </div>
         {data && (
-          <Card className="mt-4 flex items-start gap-3 p-5">
+          <Card pad={false} className="mt-4 flex items-start gap-3 p-5">
             <GitCompareArrows size={18} className="mt-0.5 shrink-0 text-secondary" />
             <p className="text-sm text-foreground">
               <span className="font-semibold">Seam rule.</span> {data.the_rule.seam}
@@ -328,7 +328,7 @@ export default function MlCorePage() {
           title="Model roster"
           sub="Every task, the model that serves it, and which side of the boundary it sits on. Human-facing rows are pinned to Claude by policy — not eligible for reassignment."
         />
-        <Card className="mt-6 overflow-hidden p-0">
+        <Card pad={false} className="mt-6 overflow-hidden p-0">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
@@ -383,7 +383,7 @@ export default function MlCorePage() {
         />
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {(data?.pipeline ?? []).map(stage => (
-            <Card key={stage.n} className="flex flex-col gap-2 p-4">
+            <Card pad={false} key={stage.n} className="flex flex-col gap-2 p-4">
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-secondary/10 font-mono text-[13px] font-semibold text-secondary">
                 {stage.n}
               </span>
@@ -403,7 +403,7 @@ export default function MlCorePage() {
             title="Provider routing"
             sub="Read live from the routing layer. Qwen is registered as a transport but inert until enabled per-env — the default route stays Claude until eval promotes it."
           />
-          <Card className="mt-6 flex flex-col gap-3 p-5">
+          <Card pad={false} className="mt-6 flex flex-col gap-3 p-5">
             <div className="flex items-center justify-between gap-3">
               <span className="text-sm text-muted-foreground">Default provider</span>
               <Chip tone="cobalt">{data?.provider_routing.default_provider ?? '—'}</Chip>
@@ -453,7 +453,7 @@ export default function MlCorePage() {
               title="L3 scoring"
               sub="Qwen embeddings + classical calibrated scoring; every tuned checkpoint is fairness-gated before real cohorts."
             />
-            <Card className="mt-6 flex flex-col gap-2 p-5">
+            <Card pad={false} className="mt-6 flex flex-col gap-2 p-5">
               {Object.entries(data?.l3_scoring.weights ?? {}).map(([k, v]) => (
                 <div key={k} className="flex items-center justify-between gap-3">
                   <span className="font-mono text-[13px] text-foreground">{k}</span>
@@ -475,7 +475,7 @@ export default function MlCorePage() {
               title="Embeddings"
               sub="Voyage 1024-d is live today; Qwen3-Embedding (Matryoshka → the live dim) is wired behind a flag, falling back to Voyage on any failure."
             />
-            <Card className="mt-6 flex flex-col gap-2 p-5">
+            <Card pad={false} className="mt-6 flex flex-col gap-2 p-5">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm text-muted-foreground">Live provider</span>
                 <Chip tone="cobalt">{data?.embeddings.provider ?? '—'}</Chip>
@@ -555,7 +555,7 @@ export default function MlCorePage() {
           title="Observability & SLOs"
           sub="What's tracked and the bar each metric is held to. Tokens and cost split by provider on the ai_turns ledger; a Qwen outage never degrades the Claude conversation."
         />
-        <Card className="mt-6 p-2 sm:p-5">
+        <Card pad={false} className="mt-6 p-2 sm:p-5">
           <ul className="divide-y divide-border">
             {(data?.slos ?? []).map(s => (
               <li key={s.metric} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center">
@@ -583,7 +583,7 @@ export default function MlCorePage() {
           title="Live configuration"
           sub="The deployed values, read straight off the running settings — the default provider, the failover order, the Qwen + embedding gates, the extraction flag and the fairness gate."
         />
-        <Card className="mt-6 p-5">
+        <Card pad={false} className="mt-6 p-5">
           <dl className="divide-y divide-border">
             {data
               ? data.config_knobs.map(k => <KnobRow key={k.name} knob={k} />)
@@ -603,7 +603,7 @@ export default function MlCorePage() {
           title="Acceptance"
           sub="Spec 63 §16 — the definition of done, each criterion held to the same honest live/in-progress/planned bar and backed by a contract test."
         />
-        <Card className="mt-6 p-2 sm:p-5">
+        <Card pad={false} className="mt-6 p-2 sm:p-5">
           <ul className="divide-y divide-border">
             {(data?.acceptance ?? []).map(a => (
               <AcceptanceRow key={a.text} item={a} />
@@ -628,7 +628,7 @@ export default function MlCorePage() {
           />
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {data.open_questions.map(q => (
-              <Card key={q.q} className="flex h-full flex-col gap-2 p-5">
+              <Card pad={false} key={q.q} className="flex h-full flex-col gap-2 p-5">
                 <h3 className="text-h3 text-foreground">{q.q}</h3>
                 <p className="text-sm text-muted-foreground">{q.a}</p>
               </Card>

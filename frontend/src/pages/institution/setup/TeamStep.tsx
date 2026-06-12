@@ -51,7 +51,7 @@ export default function TeamStep({
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
 
   return (
-    <Card className="p-5 sm:p-6">
+    <Card pad={false} className="p-5 sm:p-6">
       <h2 className="text-lg font-semibold text-foreground">Invite your team</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Add colleagues and assign roles. Optional — you can invite anyone later from Settings.

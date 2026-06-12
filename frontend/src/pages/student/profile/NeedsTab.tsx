@@ -281,13 +281,13 @@ export default function NeedsTab() {
               <span className="text-xs text-muted-foreground">{tier.hint}</span>
             </div>
             {grouped[tier.key].length === 0 ? (
-              <Card className="p-4 text-sm text-muted-foreground">
+              <Card pad={false} className="p-4 text-sm text-muted-foreground">
                 No {tier.label.toLowerCase()} signals yet — add one above.
               </Card>
             ) : (
               <div className="space-y-2">
                 {grouped[tier.key].map(n => (
-                  <Card key={n.id} className="p-4 space-y-2">
+                  <Card pad={false} key={n.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-sm font-medium text-foreground">{n.need_type}</div>

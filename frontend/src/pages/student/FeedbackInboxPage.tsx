@@ -4,6 +4,7 @@ import { Download, Inbox, Lock, MessageSquarePlus } from 'lucide-react'
 
 import { getFeedbackInbox, type FeedbackItem } from '../../api/feedback'
 import { ApiError } from '../../api/client'
+import { PageContainer, PageHeader } from '../../components/student/density'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import QueryError from '../../components/ui/QueryError'
@@ -50,21 +51,19 @@ export default function FeedbackInboxPage() {
   const forbidden = isError && error instanceof ApiError && error.status === 403
 
   return (
-    <div className="p-4 w-full space-y-4">
-      <header className="flex items-end justify-between gap-4">
-        <div>
-          <p className="text-eyebrow text-accent mb-1">Owner</p>
-          <h1 className="text-2xl font-semibold text-foreground">Feedback inbox</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Everything submitted through the in-app Feedback button, newest first.
-          </p>
-        </div>
-        {items.length > 0 && (
-          <Button size="sm" variant="secondary" onClick={() => downloadCsv(items)}>
-            <Download size={14} className="mr-1.5" /> Export CSV
-          </Button>
-        )}
-      </header>
+    <PageContainer className="space-y-4">
+      <PageHeader
+        eyebrow="Owner"
+        title="Feedback inbox"
+        sub="Everything submitted through the in-app Feedback button, newest first."
+        actions={
+          items.length > 0 && (
+            <Button size="sm" variant="secondary" onClick={() => downloadCsv(items)}>
+              <Download size={14} className="mr-1.5" /> Export CSV
+            </Button>
+          )
+        }
+      />
 
       {isLoading ? (
         <div className="space-y-3">
@@ -73,7 +72,7 @@ export default function FeedbackInboxPage() {
           ))}
         </div>
       ) : forbidden ? (
-        <Card className="text-center py-16">
+        <Card pad={false} className="text-center py-16">
           <Lock size={28} className="mx-auto text-muted-foreground mb-3" />
           <p className="text-sm font-medium text-foreground mb-1">This inbox is owner-only</p>
           <p className="text-xs text-muted-foreground max-w-sm mx-auto">
@@ -84,7 +83,7 @@ export default function FeedbackInboxPage() {
       ) : isError ? (
         <QueryError detail="We couldn't load the feedback inbox." onRetry={() => refetch()} />
       ) : items.length === 0 ? (
-        <Card className="text-center py-16">
+        <Card pad={false} className="text-center py-16">
           <Inbox size={28} className="mx-auto text-muted-foreground mb-3" />
           <p className="text-sm font-medium text-foreground mb-1">No feedback yet</p>
           <p className="text-xs text-muted-foreground">
@@ -100,7 +99,7 @@ export default function FeedbackInboxPage() {
             {items.map(item => {
               const path = pathOf(item.context)
               return (
-                <Card key={item.id} className="p-4">
+                <Card pad={false} key={item.id} className="p-4">
                   <div className="flex items-start justify-between gap-3 mb-1.5">
                     <h2 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                       <MessageSquarePlus size={14} className="text-secondary flex-shrink-0" />
@@ -131,6 +130,6 @@ export default function FeedbackInboxPage() {
           </div>
         </>
       )}
-    </div>
+    </PageContainer>
   )
 }

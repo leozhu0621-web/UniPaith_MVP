@@ -107,7 +107,7 @@ export default function MajorSpecificPanel() {
           />
         </>
       ) : (
-        <Card variant="card-flush" className="px-4 py-10 text-center text-sm text-muted-foreground">
+        <Card pad={false} variant="card-flush" className="px-4 py-10 text-center text-sm text-muted-foreground">
           Pick a track above to start rating your readiness.
         </Card>
       )}

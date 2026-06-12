@@ -94,7 +94,7 @@ function StatusChip({ status }: { status: ReadinessStatus }) {
 function CapabilityCard({ capability }: { capability: RealtimeCapability }) {
   const Icon = CAPABILITY_ICONS[capability.key] ?? Bell
   return (
-    <Card className="flex h-full flex-col gap-3 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-start justify-between gap-3">
         <CardTitle icon={Icon} className="leading-snug">
           {capability.title}
@@ -197,7 +197,7 @@ function RouteList({
   routes: string[] | undefined
 }) {
   return (
-    <Card className="flex flex-col gap-3 p-5">
+    <Card pad={false} className="flex flex-col gap-3 p-5">
       <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
         <Icon size={18} className="text-secondary" />
         {title}
@@ -373,7 +373,7 @@ export default function RealtimeNotificationsPage() {
           title="The event catalog"
           sub="One registry maps every event type to its preference category, urgency and whether it can be fully silenced. Transactional events (decision · interview · deadline) are marked essential — down-ranked but never silenced (§4)."
         />
-        <Card className="mt-6 p-5">
+        <Card pad={false} className="mt-6 p-5">
           <div className="grid gap-x-8 sm:grid-cols-2">
             {data
               ? data.catalog.map((e) => <CatalogEntry key={e.event_type} entry={e} />)
@@ -393,7 +393,7 @@ export default function RealtimeNotificationsPage() {
           title="Live configuration"
           sub="The deployed values, read straight off the running settings — the realtime + heartbeat knobs, the digest cadence, the delivery retry budget and the web-push fast-follow flag."
         />
-        <Card className="mt-6 p-5">
+        <Card pad={false} className="mt-6 p-5">
           <dl className="divide-y divide-border">
             {data
               ? data.config_knobs.map((k) => <KnobRow key={k.name} knob={k} />)
@@ -413,7 +413,7 @@ export default function RealtimeNotificationsPage() {
           title="Build-task checklist"
           sub="Spec 57 §7 — each task classified by what's shipped versus what's next. The cross-task Redis fan-out, web-push and the durable queue worker are named as the planned halves, not hidden."
         />
-        <Card className="mt-6 p-2 sm:p-5">
+        <Card pad={false} className="mt-6 p-2 sm:p-5">
           <ul className="divide-y divide-border">
             {(data?.build_tasks ?? []).map((t) => (
               <TaskRow key={`${t.section}-${t.text}`} task={t} />
@@ -435,7 +435,7 @@ export default function RealtimeNotificationsPage() {
           title="Acceptance"
           sub="Spec 57 §8 — the definition of done, held to the same honest live/in-progress/planned bar."
         />
-        <Card className="mt-6 p-2 sm:p-5">
+        <Card pad={false} className="mt-6 p-2 sm:p-5">
           <ul className="divide-y divide-border">
             {(data?.acceptance ?? []).map((a) => (
               <AcceptanceRow key={a.text} item={a} />
@@ -460,7 +460,7 @@ export default function RealtimeNotificationsPage() {
           />
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             {data.open_questions.map((q) => (
-              <Card key={q.q} className="flex h-full flex-col gap-2 p-5">
+              <Card pad={false} key={q.q} className="flex h-full flex-col gap-2 p-5">
                 <h3 className="text-h3 text-foreground">{q.q}</h3>
                 <p className="text-sm text-muted-foreground">{q.a}</p>
               </Card>

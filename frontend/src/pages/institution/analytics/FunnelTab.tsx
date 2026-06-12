@@ -9,7 +9,7 @@ import FunnelBars from './FunnelBars'
 
 function TopSourceList({ title, sources }: { title: string; sources: TopSource[] }) {
   return (
-    <Card className="p-5">
+    <Card pad={false} className="p-5">
       <p className="up-eyebrow mb-3">{title}</p>
       {sources.length === 0 ? (
         <p className="text-sm text-muted-foreground py-6 text-center">No activity in this window yet.</p>
@@ -58,7 +58,7 @@ export default function FunnelTab({ filters }: { filters: AnalyticsFilters }) {
 
   if (!d.has_data) {
     return (
-      <Card className="p-10 text-center">
+      <Card pad={false} className="p-10 text-center">
         <p className="text-sm text-muted-foreground">
           {filters.program_id ||
           filters.intake_id ||
@@ -74,7 +74,7 @@ export default function FunnelTab({ filters }: { filters: AnalyticsFilters }) {
 
   return (
     <div className="space-y-6">
-      <Card className="p-5">
+      <Card pad={false} className="p-5">
         <p className="up-eyebrow mb-3">Recruitment funnel</p>
         <FunnelBars stages={d.stages} multicolor />
       </Card>
@@ -97,7 +97,7 @@ export default function FunnelTab({ filters }: { filters: AnalyticsFilters }) {
         <p className="up-eyebrow mb-3">Sub-funnels</p>
         <div className="grid lg:grid-cols-3 gap-4">
           {d.sub_funnels.map(sf => (
-            <Card key={sf.key} className="p-5">
+            <Card pad={false} key={sf.key} className="p-5">
               <p className="text-sm font-bold text-foreground mb-3">{sf.label}</p>
               <FunnelBars stages={sf.stages} height={sf.stages.length * 38} />
             </Card>

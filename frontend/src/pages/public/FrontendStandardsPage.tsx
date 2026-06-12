@@ -102,7 +102,7 @@ function CodeBlock({ children }: { children: string }) {
 function TaskCard({ task }: { task: FrontendBuildTask }) {
   const verified = isVerifiedInBundle(task)
   return (
-    <Card className="flex h-full flex-col gap-2 p-5">
+    <Card pad={false} className="flex h-full flex-col gap-2 p-5">
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-h3 leading-snug text-foreground">{task.title}</h3>
         <Chip tone={STATUS_TONE[task.status]}>{STATUS_LABEL[task.status]}</Chip>
@@ -210,7 +210,7 @@ export default function FrontendStandardsPage() {
           title="One typed module per router"
           sub={data?.parity.statement}
         />
-        <Card className="mt-6 p-6">
+        <Card pad={false} className="mt-6 p-6">
           <div className="grid items-center gap-6 sm:grid-cols-[1fr_auto_1fr]">
             <div className="rounded-lg border border-border bg-background p-5">
               <Chip tone="cobalt">Frontend · this bundle</Chip>
@@ -303,7 +303,7 @@ export default function FrontendStandardsPage() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {data
             ? data.state_rules.map((r) => (
-                <Card key={r.kind} className="flex h-full flex-col gap-2 p-5">
+                <Card pad={false} key={r.kind} className="flex h-full flex-col gap-2 p-5">
                   <h3 className="text-h3 text-foreground">{r.kind}</h3>
                   <Chip tone="cobalt">{r.tool}</Chip>
                   <p className="font-mono text-[11px] text-muted-foreground">{r.where}</p>
@@ -322,7 +322,7 @@ export default function FrontendStandardsPage() {
           sub="A single key factory keeps caches reconcilable; one optimistic-mutation shape keeps every save instant and rollback-safe."
         />
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <Card className="flex flex-col gap-3 p-5">
+          <Card pad={false} className="flex flex-col gap-3 p-5">
             <h3 className="text-h3 text-foreground">Query keys — one factory</h3>
             <p className="text-sm text-muted-foreground">{data?.query_key.rule}</p>
             {data ? (
@@ -332,7 +332,7 @@ export default function FrontendStandardsPage() {
             )}
             <p className="text-[12px] text-muted-foreground">{data?.query_key.stale_time}</p>
           </Card>
-          <Card className="flex flex-col gap-3 p-5">
+          <Card pad={false} className="flex flex-col gap-3 p-5">
             <h3 className="text-h3 text-foreground">Optimistic mutations — one shape</h3>
             <p className="text-sm text-muted-foreground">{data?.mutation.rule}</p>
             {data ? (
@@ -361,7 +361,7 @@ export default function FrontendStandardsPage() {
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           {data
             ? data.perf_budgets.map((b) => (
-                <Card key={b.metric} className="flex h-full flex-col gap-1 p-5">
+                <Card pad={false} key={b.metric} className="flex h-full flex-col gap-1 p-5">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     {b.metric}
                   </span>
@@ -391,7 +391,7 @@ export default function FrontendStandardsPage() {
           sub="Two net-new clients: a reconnecting realtime transport that patches the cache, and a consent-gated analytics bus."
         />
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <Card className="flex flex-col gap-2 p-5">
+          <Card pad={false} className="flex flex-col gap-2 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <Radio size={18} className="text-secondary" />
               Realtime (SSE + WebSocket)
@@ -411,7 +411,7 @@ export default function FrontendStandardsPage() {
               </p>
             )}
           </Card>
-          <Card className="flex flex-col gap-2 p-5">
+          <Card pad={false} className="flex flex-col gap-2 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <Sparkles size={18} className="text-secondary" />
               Analytics event bus
@@ -437,7 +437,7 @@ export default function FrontendStandardsPage() {
           sub="Routing guards, error boundaries, AI fallbacks and the testing bar that keeps them honest."
         />
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
-          <Card className="flex flex-col gap-2 p-5">
+          <Card pad={false} className="flex flex-col gap-2 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <Layers size={18} className="text-secondary" />
               Routing & boundaries
@@ -451,7 +451,7 @@ export default function FrontendStandardsPage() {
               ))}
             </ul>
           </Card>
-          <Card className="flex flex-col gap-2 p-5">
+          <Card pad={false} className="flex flex-col gap-2 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <ShieldCheck size={18} className="text-secondary" />
               Errors & AI fallback
@@ -459,7 +459,7 @@ export default function FrontendStandardsPage() {
             <p className="text-sm text-muted-foreground">{data?.error_handling.interceptor}</p>
             <p className="text-sm text-muted-foreground">{data?.error_handling.ai_fallback}</p>
           </Card>
-          <Card className="flex flex-col gap-2 p-5">
+          <Card pad={false} className="flex flex-col gap-2 p-5">
             <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
               <CircleCheck size={18} className="text-secondary" />
               Testing
@@ -483,7 +483,7 @@ export default function FrontendStandardsPage() {
           title="Acceptance"
           sub="The frontend ships to spec when each of these holds."
         />
-        <Card className="mt-6 p-6">
+        <Card pad={false} className="mt-6 p-6">
           <ul className="space-y-3">
             {(data?.acceptance ?? []).map((item) => (
               <li key={item} className="flex gap-3 text-sm text-foreground">
@@ -509,7 +509,7 @@ export default function FrontendStandardsPage() {
           />
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             {data.open_questions.map((q) => (
-              <Card key={q.question} className="flex h-full flex-col gap-2 p-5">
+              <Card pad={false} key={q.question} className="flex h-full flex-col gap-2 p-5">
                 <h3 className="text-h3 leading-snug text-foreground">{q.question}</h3>
                 <p className="text-sm text-muted-foreground">{q.recommendation}</p>
               </Card>

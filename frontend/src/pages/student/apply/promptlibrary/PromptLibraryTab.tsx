@@ -216,7 +216,7 @@ export default function PromptLibraryTab() {
 
               {/* Catalog grouped by theme */}
               {grouped.length === 0 ? (
-                <Card
+                <Card pad={false}
                   variant="card-flush"
                   className="px-4 py-10 text-center text-sm text-muted-foreground"
                 >

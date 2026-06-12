@@ -85,7 +85,7 @@ export default function CostsAidTab() {
     <div className="space-y-8">
       <section>
         <SectionHeader title="Budget & funding" description="Your annual ceiling and how you plan to fund it." />
-        <Card className="p-5 space-y-4">
+        <Card pad={false} className="p-5 space-y-4">
           <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1">
             <Input label="Annual budget — minimum (USD)" type="number" min={0} placeholder="0" value={form.budget_min} onChange={e => set('budget_min', e.target.value)} />
             <Input label="Annual budget — maximum (USD)" type="number" min={0} placeholder="50000" value={form.budget_max} onChange={e => set('budget_max', e.target.value)} />

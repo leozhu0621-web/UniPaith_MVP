@@ -1,7 +1,7 @@
 /**
  * Universal Profile — the student's durable record (Spec/08-universal-profile.md).
  *
- * Brand shell: eyebrow + H1 "Your record" + 64px gold completion ring + the
+ * Brand shell: density PageHeader ("Your record" + gold completion ring) + the
  * 11-tab strip (active tab = the one gold underline). Each tab is a lazy
  * module under `profile/`. Preparation and Financial left for My Space
  * (Spec 2026-06-10 §5) — their legacy tab params redirect out via
@@ -10,6 +10,7 @@
 import { lazy, Suspense, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
+import { PageContainer, PageHeader } from '../../components/student/density'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import usePageTitle from '../../hooks/usePageTitle'
 import { PROFILE_TAB_ALIASES, normalizeProfileTab, type ProfileTabSpec } from '../../utils/information-architecture'
@@ -91,20 +92,19 @@ export default function ProfilePage() {
   const panelId = `profile-panel-${activeTab}`
 
   return (
-    <div className="w-full p-4 sm:p-6 lg:p-8">
-      {/* Header — eyebrow + H1 + completion ring */}
-      <div className="flex items-center gap-4 mb-6">
-        {/* Finding 3: don't show 0% during load — render the ring dimmed */}
-        <div className={isLoading ? 'opacity-30' : undefined}>
-          <CompletionRing value={isLoading ? overall : overall} size={64} />
-        </div>
-        <div>
-          <p className="up-eyebrow">Profile</p>
-          {/* Finding 5: use semantic heading token */}
-          <h1 className="text-h2 text-foreground">Your record</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">{lastUpdatedLabel(lastUpdated)}</p>
-        </div>
-      </div>
+    <PageContainer>
+      {/* Room header — density PageHeader (eyebrow = surface) + completion ring. */}
+      <PageHeader
+        eyebrow="My Space"
+        title="Your record"
+        sub={lastUpdatedLabel(lastUpdated)}
+        actions={
+          // Finding 3: don't show 0% during load — render the ring dimmed
+          <div className={isLoading ? 'opacity-30' : undefined}>
+            <CompletionRing value={overall} size={48} />
+          </div>
+        }
+      />
 
       {/* Tab strip — finding 8: proper ARIA tablist attributes */}
       <div
@@ -159,6 +159,6 @@ export default function ProfilePage() {
           {activeTab === 'data' && <DataTab />}
         </Suspense>
       </div>
-    </div>
+    </PageContainer>
   )
 }

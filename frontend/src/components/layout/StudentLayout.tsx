@@ -67,7 +67,7 @@ export default function StudentLayout() {
   ]
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-dvh bg-background">
       <SkipLink />
       {/* ─── Desktop top nav (lg+) — Spec/02 §7. 64px, --bg, --border hairline. ─── */}
       <header className="hidden lg:flex h-16 items-center justify-between px-8 bg-background border-b border-border flex-shrink-0 z-30">
@@ -158,16 +158,20 @@ export default function StudentLayout() {
       {/* Body */}
       <div className="flex-1 flex overflow-hidden">
         {/* Main content — bottom padding on mobile to clear the tab bar. */}
+        {/* overflow-x-clip + min-w-0 — a too-wide child can no longer pan the
+            whole shell horizontally (UX overhaul Ship A, 2026-06-12 spec §1).
+            The wrapper below is intentionally NOT keyed by pathname: the shell
+            persists across navigations; page-entrance motion lives in
+            PageContainer / detail-page roots instead. */}
         <main
           id="main"
           tabIndex={-1}
-          className={`flex min-h-0 flex-1 flex-col outline-none transition-all duration-300 ease-in-out ${
+          className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-x-clip outline-none transition-all duration-300 ease-in-out ${
             location.pathname.startsWith('/s/messages') ? 'overflow-hidden' : 'overflow-y-auto'
           }`}
         >
           <div
-            key={location.pathname}
-            className={`animate-page-in flex min-h-0 flex-1 flex-col pb-[calc(64px+env(safe-area-inset-bottom))] lg:pb-0 ${
+            className={`flex min-h-0 flex-1 flex-col pb-[calc(64px+env(safe-area-inset-bottom))] lg:pb-0 ${
               location.pathname.startsWith('/s/messages') ? '' : 'min-h-full'
             }`}
           >
@@ -243,7 +247,9 @@ export default function StudentLayout() {
         syncUrl={location.pathname === '/s/explore'}
       />
 
-      {/* Reset scroll to top on route change (the <main> scroll container persists). */}
+      {/* Scroll policy (the <main> scroll container persists across routes):
+          restore position on back/forward, reset to top on push — and always
+          clear any horizontal pan. */}
       <ScrollReset />
       <StudentTitle />
 

@@ -14,7 +14,7 @@ import SavedSearchesPanel from './saved/SavedSearchesPanel'
 import Button from '../../components/ui/Button'
 import EmptyState from '../../components/ui/EmptyState'
 import QueryError from '../../components/ui/QueryError'
-import { PageHeader } from '../../components/student/density'
+import { PageContainer, PageHeader } from '../../components/student/density'
 import BandBadge from '../../components/ui/BandBadge'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
@@ -245,24 +245,24 @@ export default function SavedListPage() {
 
   if (isLoading) {
     return (
-      <div className="p-4 w-full space-y-4">
+      <PageContainer className="space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
           <SkeletonCard key={i} />
         ))}
-      </div>
+      </PageContainer>
     )
   }
 
   if (isError && programs.length === 0) {
     return (
-      <div className="p-4 w-full">
+      <PageContainer>
         <QueryError detail="We couldn't load your saved list." onRetry={() => refetch()} />
-      </div>
+      </PageContainer>
     )
   }
 
   return (
-    <div className="p-4 w-full pb-28">
+    <PageContainer className="pb-28">
       {/* Room header — consistent with the other My Space rooms (eyebrow = surface). */}
       <PageHeader
         eyebrow="My Space"
@@ -460,6 +460,6 @@ export default function SavedListPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

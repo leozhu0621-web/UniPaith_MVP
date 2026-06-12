@@ -145,7 +145,7 @@ export default function ExperienceTab() {
         ) : (
           <div className="space-y-2">
             {activities.map(act => (
-              <Card key={act.id} className="p-4 flex items-start justify-between gap-2">
+              <Card pad={false} key={act.id} className="p-4 flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-medium text-foreground">{act.title}{act.organization ? ` — ${act.organization}` : ''}</p>
                   <p className="text-sm text-muted-foreground">
@@ -169,7 +169,7 @@ export default function ExperienceTab() {
         ) : (
           <div className="space-y-2">
             {work.map(w => (
-              <Card key={w.id} className="p-4 flex items-start justify-between gap-2">
+              <Card pad={false} key={w.id} className="p-4 flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2.5 min-w-0">
                   <Briefcase size={16} className="text-muted-foreground mt-0.5" />
                   <div className="min-w-0">
@@ -195,7 +195,7 @@ export default function ExperienceTab() {
         ) : (
           <div className="space-y-2">
             {comps.map(c => (
-              <Card key={c.id} className="p-4 flex items-start justify-between gap-2">
+              <Card pad={false} key={c.id} className="p-4 flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2.5 min-w-0">
                   <Trophy size={16} className="text-muted-foreground mt-0.5" />
                   <div className="min-w-0">
@@ -220,7 +220,7 @@ export default function ExperienceTab() {
         ) : (
           <div className="grid sm:grid-cols-2 gap-3">
             {portfolio.map(item => (
-              <Card key={item.id} className="p-4 flex items-start justify-between gap-2">
+              <Card pad={false} key={item.id} className="p-4 flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2.5 min-w-0">
                   <FolderOpen size={16} className="text-muted-foreground mt-0.5" />
                   <div className="min-w-0">
@@ -244,7 +244,7 @@ export default function ExperienceTab() {
         ) : (
           <div className="space-y-2">
             {online.map(op => (
-              <Card key={op.id} className="p-4 flex items-start justify-between gap-2">
+              <Card pad={false} key={op.id} className="p-4 flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2.5 min-w-0">
                   <ExternalLink size={16} className="text-muted-foreground mt-0.5" />
                   <div className="min-w-0">

@@ -27,7 +27,7 @@ export default function SettingsSection({
   const danger = tone === 'danger'
   return (
     <div id={id}>
-      <Card className={clsx('p-5 sm:p-6', danger && 'border-error/40')}>
+      <Card pad={false} className={clsx('p-5 sm:p-6', danger && 'border-error/40')}>
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-start gap-3">
             <span
