@@ -197,6 +197,38 @@ tools:
       properties: {}
       required: []
 
+  # suggest_replies — UI affordance, NOT a data write. Call this on (almost)
+  # every turn, right after you ask your question, to offer the student tappable
+  # answers. The host turns these into chips / a 1-5 slider under your message so
+  # the experience is interactive, not just typing. Always also ask in prose —
+  # these are a shortcut, never the only way to answer.
+  - type: custom
+    name: suggest_replies
+    description: >-
+      Offer 2-5 tappable answer options for the question you just asked, so the
+      student can answer with one tap instead of typing. Call it right after your
+      question on nearly every turn. Use kind="choice" for pick-one, kind="multi"
+      when several can apply, and kind="scale" for "how important / how much" needs
+      questions (a 1-5 slider — give low_label and high_label, options optional).
+      Keep options short (2-5 words), concrete, and in the student's voice. Returns
+      {ok:true}; it does not advance the conversation by itself.
+    input_schema:
+      type: object
+      properties:
+        options:
+          type: array
+          items: { type: string }
+          description: 2-5 short, concrete tap options in the student's voice.
+        kind:
+          type: string
+          enum: [choice, multi, scale]
+          description: >-
+            choice = pick one (default); multi = pick any that apply;
+            scale = a 1-5 importance slider (use low_label/high_label).
+        low_label: { type: string, description: "Left end of the scale, e.g. 'nice to have'." }
+        high_label: { type: string, description: "Right end of the scale, e.g. 'essential'." }
+      required: [options]
+
 metadata:
   product: unipaith
   surface: student-discovery

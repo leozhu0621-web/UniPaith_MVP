@@ -30,9 +30,10 @@ class _Event:
 class _FakeAgentClient:
     """Scripts an Anthropic session: greets, calls one tool, replies, idles."""
 
-    def __init__(self, *, raise_on_create=False, raise_on_stream=False):
+    def __init__(self, *, raise_on_create=False, raise_on_stream=False, chips=False):
         self._raise_create = raise_on_create
         self._raise_stream = raise_on_stream
+        self._chips = chips
         self.sent_results = []
         self.sent_messages = []
 
@@ -53,6 +54,13 @@ class _FakeAgentClient:
             yield  # pragma: no cover — makes this an async generator
         yield _Event("agent.message", content=[_Block("Hi there. ")])
         yield _Event("agent.custom_tool_use", id="sevt_1", name="get_profile_snapshot", input={})
+        if self._chips:
+            yield _Event(
+                "agent.custom_tool_use",
+                id="sevt_2",
+                name="suggest_replies",
+                input={"options": ["Research", "Industry"], "kind": "multi"},
+            )
         yield _Event("agent.message", content=[_Block("Where are you headed?")])
         yield _Event("session.status_idle", stop_reason=_Stop("end_turn"))
 
@@ -74,6 +82,34 @@ async def test_stream_turn_relays_and_answers_tool(db_session, mock_student_user
     assert fake.sent_results and fake.sent_results[0][0] == "sevt_1"
     # The student turn was relayed.
     assert fake.sent_messages == ["hello"]
+
+
+@pytest.mark.asyncio
+async def test_suggest_replies_persisted_as_chips(db_session, mock_student_user):
+    """A suggest_replies tool call is stamped onto the assistant message's
+    extracted_signals so the frontend renders chips — no frontend change."""
+    from sqlalchemy import select
+
+    from unipaith.models.discovery import DiscoveryMessage
+    from unipaith.services.uni_agent_host import UniAgentHost
+
+    await ensure_profile(db_session, mock_student_user)
+    host = UniAgentHost(db_session, client=_FakeAgentClient(chips=True))
+    _ = [ev async for ev in host.stream_turn(mock_student_user.id, content="hello")]
+
+    rows = (
+        (
+            await db_session.execute(
+                select(DiscoveryMessage).where(DiscoveryMessage.role == "assistant")
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert rows, "assistant message was mirrored"
+    sig = rows[-1].extracted_signals or {}
+    assert sig.get("suggested_options") == ["Research", "Industry"]
+    assert sig.get("suggested_input", {}).get("kind") == "multi"
 
 
 @pytest.mark.asyncio
