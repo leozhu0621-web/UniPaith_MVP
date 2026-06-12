@@ -178,6 +178,31 @@ async def tool_get_profile_snapshot(
     return await StudentService(db).get_full_snapshot(user_id)
 
 
+# ── suggest_replies (UI affordance — no DB) ───────────────────────────────
+def build_suggested_signals(tool_input: dict[str, Any]) -> dict[str, Any]:
+    """Translate a ``suggest_replies`` tool call into the ``extracted_signals``
+    shape the Discover frontend already reads off the persisted assistant
+    message: ``suggested_options`` (tap chips) + optional ``suggested_input``
+    ({kind: multi|scale, low_label, high_label}) for multi-select / 1–5 slider.
+    This is what preserves the interactive (not just-talking) experience when
+    Uni runs on the managed platform."""
+    opts = [
+        o.strip() for o in (tool_input.get("options") or []) if isinstance(o, str) and o.strip()
+    ]
+    signals: dict[str, Any] = {"suggested_options": opts}
+    kind = tool_input.get("kind")
+    if kind in ("multi", "scale"):
+        sug: dict[str, Any] = {"kind": kind}
+        for label_key in ("low_label", "high_label"):
+            val = tool_input.get(label_key)
+            if isinstance(val, str) and val.strip():
+                sug[label_key] = val.strip()
+        signals["suggested_input"] = sug
+    if tool_input.get("offer_continue") is True:
+        signals["requested_layer_advance"] = True
+    return signals
+
+
 # ── dispatcher ────────────────────────────────────────────────────────────
 _TOOLS = {
     "get_profile_snapshot": tool_get_profile_snapshot,

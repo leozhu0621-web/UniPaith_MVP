@@ -22,7 +22,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.config import settings
 from unipaith.models.discovery import DiscoveryMessage, DiscoverySession
 from unipaith.services.discovery_service import DiscoveryService
-from unipaith.services.uni_tools import SURFACED_TOOLS, dispatch_tool
+from unipaith.services.uni_tools import (
+    SURFACED_TOOLS,
+    build_suggested_signals,
+    dispatch_tool,
+)
 
 _CALM = "Uni is catching her breath for a moment — please try again shortly."
 
@@ -55,6 +59,7 @@ class UniAgentHost:
 
         # ── Turn (never 5xx — graceful envelope on mid-stream failure) ──
         reply_parts: list[str] = []
+        suggested_signals: dict | None = None
         try:
             stream = self.client.stream(sid)
             await self.client.send_user_message(sid, content)
@@ -66,6 +71,13 @@ class UniAgentHost:
                             reply_parts.append(block.text)
                             yield ("delta", {"text": block.text})
                 elif etype == "agent.custom_tool_use":
+                    if event.name == "suggest_replies":
+                        # UI-only: capture the tap affordances for this turn and
+                        # ack the agent. The chips are persisted onto the
+                        # assistant message so the frontend renders them.
+                        suggested_signals = build_suggested_signals(event.input or {})
+                        await self.client.send_tool_result(sid, event.id, {"ok": True})
+                        continue
                     result = await dispatch_tool(
                         self.db, user_id, event.name, event.input or {}, session_id=row.id
                     )
@@ -82,20 +94,36 @@ class UniAgentHost:
                     break
 
             text = "".join(reply_parts).strip() or "…"
-            await self._mirror(row, content, text)
+            await self._mirror(row, content, text, suggested_signals)
             yield ("assistant_message", {"content": text})
         except Exception as exc:  # mid-stream: close calmly, never 5xx
             yield ("error", {"message": str(exc)[:200]})
             yield ("assistant_message", {"content": _CALM})
 
-    async def _mirror(self, row: DiscoverySession, student_text: str, assistant_text: str) -> None:
+    async def _mirror(
+        self,
+        row: DiscoverySession,
+        student_text: str,
+        assistant_text: str,
+        suggested_signals: dict | None = None,
+    ) -> None:
         """Append the turn to discovery_messages for transcript / audit / eval.
+
+        ``suggested_signals`` (from a ``suggest_replies`` tool call) is stamped
+        onto the assistant message's ``extracted_signals`` so the Discover
+        frontend renders tap-chips / the importance slider — preserving the
+        interactive experience on the managed path with no frontend change.
 
         Best-effort — a mirror failure must not break the conversation."""
         try:
             self.db.add(DiscoveryMessage(session_id=row.id, role="student", content=student_text))
             self.db.add(
-                DiscoveryMessage(session_id=row.id, role="assistant", content=assistant_text)
+                DiscoveryMessage(
+                    session_id=row.id,
+                    role="assistant",
+                    content=assistant_text,
+                    extracted_signals=suggested_signals,
+                )
             )
             await self.db.commit()
         except Exception:
