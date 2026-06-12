@@ -55,7 +55,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Princeton University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-11"
+ENRICHED_AT = "2026-06-12"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -176,6 +176,10 @@ SCHOOL_OUTCOMES: dict = {
             ),
             "Princeton Neuroscience Institute": "https://pni.princeton.edu/",
             "Lewis-Sigler Institute for Integrative Genomics": "https://lsi.princeton.edu/",
+            "Andlinger Center for Energy and the Environment": (
+                "https://andlinger.princeton.edu/"
+            ),
+            "Princeton Materials Institute": "https://materials.princeton.edu/",
         },
     },
     "campus_life": {
@@ -1011,15 +1015,16 @@ _FACULTY_BY_SLUG: dict[str, dict] = {
     },
 }
 
-# ── Aggregated, cited student-review themes (≥2 third-party sources, the flagship) ──
+# ── Aggregated, cited student-review themes (≥2 third-party sources per coverable program) ──
 _REVIEWS_BY_SLUG: dict[str, dict] = {
     "princeton-computer-science-bs": {
         "summary": (
             "Students and third-party guides consistently describe Princeton Computer "
             "Science as academically elite and rigorous, with world-class faculty, strong "
             "undergraduate research access, and exceptional placement into top technology "
-            "firms and graduate programs; common cautions are a fast pace, demanding "
-            "problem sets, and the senior independent-work (thesis) requirement."
+            "firms and graduate programs; U.S. News ranks Princeton fifth in computer "
+            "science among national universities (2026); common cautions are a fast pace, "
+            "demanding problem sets, and the senior independent-work (thesis) requirement."
         ),
         "themes": [
             {
@@ -1057,8 +1062,1065 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "url": "https://www.niche.com/colleges/princeton-university/",
             },
             {
-                "label": "U.S. News — Princeton University",
-                "url": "https://www.usnews.com/best-colleges/princeton-university-2627",
+                "label": "NorthJersey.com — Princeton tops U.S. News 2026 (CS ranked 5th)",
+                "url": (
+                    "https://www.northjersey.com/story/news/2024/09/26/"
+                    "princeton-beats-out-harvard-mit-fous-news-ranks-princeton-university-"
+                    "ranked-the-top-school-heres-why/75377405007/"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-public-affairs-mpa": {
+        "summary": (
+            "Students and policy guides consistently rank Princeton SPIA's Master in Public "
+            "Affairs among the nation's elite MPA programs — a two-year, quantitatively "
+            "rigorous degree with full tuition funding for all admitted students — praising "
+            "policy workshops, qualifying exams, and strong public-sector placement; common "
+            "cautions are extreme selectivity (~70 students per cohort), a demanding methods "
+            "core, and less flexibility than larger policy schools in major cities."
+        ),
+        "themes": [
+            {
+                "label": "Full tuition funding",
+                "sentiment": "positive",
+                "detail": (
+                    "Princeton covers full tuition and required fees for every MPA student, "
+                    "a rare access policy among elite policy schools."
+                ),
+            },
+            {
+                "label": "Quantitative rigor",
+                "sentiment": "positive",
+                "detail": (
+                    "A methods-heavy core with qualifying exams and a required policy workshop."
+                ),
+            },
+            {
+                "label": "Public-service mission",
+                "sentiment": "positive",
+                "detail": (
+                    "Admissions emphasize professional public-service experience and "
+                    "substantive policy careers."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Roughly 70 students per entering MPA class; admission is highly competitive."
+                ),
+            },
+            {
+                "label": "Structured curriculum",
+                "sentiment": "mixed",
+                "detail": (
+                    "Less elective flexibility than programs in larger cities like Washington "
+                    "or New York."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton SPIA — Master in Public Affairs",
+                "url": "https://spia.princeton.edu/graduate-admissions/master-public-affairs",
+            },
+            {
+                "label": "Model Diplomat — Top Graduate International Relations Programs 2026",
+                "url": (
+                    "https://blog.modeldiplomat.com/top-graduate-international-relations-programs"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-public-affairs-ab": {
+        "summary": (
+            "Students and college guides rank Princeton's undergraduate public and "
+            "international affairs major among the nation's strongest policy programs — "
+            "Niche ranks Princeton No. 1 for public policy (2026) — praising a "
+            "quantitatively rigorous core (microeconomics, macroeconomics, econometrics), "
+            "SPIA Policy Task Forces with real-world clients, and a two-year independent-work "
+            "sequence; common cautions are heavy econometrics requirements, limited "
+            "pre-professional flexibility, and Princeton's overall demanding workload."
+        ),
+        "themes": [
+            {
+                "label": "Quantitative policy core",
+                "sentiment": "positive",
+                "detail": (
+                    "Required economics and econometrics sequence plus core domestic and "
+                    "international policy courses."
+                ),
+            },
+            {
+                "label": "Applied task forces",
+                "sentiment": "positive",
+                "detail": (
+                    "Semester-long policy projects commissioned by organizations like the "
+                    "World Bank or U.S. Treasury."
+                ),
+            },
+            {
+                "label": "Independent work",
+                "sentiment": "positive",
+                "detail": (
+                    "A two-year junior and senior independent-work sequence culminating in "
+                    "a senior thesis."
+                ),
+            },
+            {
+                "label": "Methods intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Econometrics and quantitative requirements are heavier than at most "
+                    "peer policy majors."
+                ),
+            },
+            {
+                "label": "Campus workload",
+                "sentiment": "caution",
+                "detail": (
+                    "SPIA students share Princeton's senior-thesis culture and fast academic "
+                    "pace."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": (
+                    "AdmissionSight — Best Colleges for Public Policy 2026 "
+                    "(Princeton #1 Niche)"
+                ),
+                "url": "https://admissionsight.com/best-colleges-for-public-policy/",
+            },
+            {
+                "label": "Princeton SPIA — Undergraduate Program",
+                "url": "https://spia.princeton.edu/undergraduate-program",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-economics-bs": {
+        "summary": (
+            "Students and academic guides consistently rank Princeton Economics among the "
+            "world's premier undergraduate programs — Niche places it ninth nationally "
+            "(2026) and IDEAS/RePEc ranks Princeton's economics department fourth globally "
+            "by graduate placement — praising a research-focused curriculum with junior and "
+            "senior independent work, world-class faculty, and strong finance and PhD "
+            "placement; common cautions are a fast theoretical pace, heavy econometrics "
+            "requirements, and that the major attracts more than 250 juniors and seniors "
+            "each year, making advising competitive."
+        ),
+        "themes": [
+            {
+                "label": "Research-focused curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Two major research projects plus core courses in micro, macro, and "
+                    "econometrics."
+                ),
+            },
+            {
+                "label": "Faculty & reputation",
+                "sentiment": "positive",
+                "detail": (
+                    "A top-ranked department whose graduates place into leading PhD programs "
+                    "and finance roles."
+                ),
+            },
+            {
+                "label": "Career outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Princeton Economics reports that more than 90% of seniors accept job "
+                    "offers or graduate-school admission."
+                ),
+            },
+            {
+                "label": "Theoretical pace",
+                "sentiment": "caution",
+                "detail": (
+                    "Proof- and model-heavy coursework moves quickly for students without "
+                    "strong math preparation."
+                ),
+            },
+            {
+                "label": "Large major",
+                "sentiment": "mixed",
+                "detail": (
+                    "Among Princeton's most popular majors, which can mean competitive "
+                    "access to small seminars."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton Economics — Undergraduate Program",
+                "url": "https://economics.princeton.edu/undergraduate-program/",
+            },
+            {
+                "label": "Niche — 2026 Best Colleges for Economics (Princeton #9)",
+                "url": "https://www.niche.com/colleges/search/best-colleges-for-economics/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-physics-bs": {
+        "summary": (
+            "Students and guides describe Princeton Physics as one of the strongest "
+            "undergraduate programs in the United States — Times Higher Education ranks "
+            "Princeton fifth globally in physical sciences (2026) and home to the Princeton "
+            "Plasma Physics Laboratory — praising deep theoretical training, early research "
+            "access, and a pipeline to top PhD programs; common cautions are mathematically "
+            "demanding coursework, limited applied-industry pathways, and Princeton's "
+            "required senior thesis."
+        ),
+        "themes": [
+            {
+                "label": "World-class physics",
+                "sentiment": "positive",
+                "detail": (
+                    "A leading department with ties to PPPL and major experimental and "
+                    "theoretical groups."
+                ),
+            },
+            {
+                "label": "Undergraduate research",
+                "sentiment": "positive",
+                "detail": (
+                    "Students access faculty labs and independent work from the junior year."
+                ),
+            },
+            {
+                "label": "PhD pipeline",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates frequently continue to leading physics and engineering PhD "
+                    "programs."
+                ),
+            },
+            {
+                "label": "Math intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "A rigorous mathematical core is expected from early in the major."
+                ),
+            },
+            {
+                "label": "Senior thesis",
+                "sentiment": "caution",
+                "detail": (
+                    "All Princeton undergraduates complete substantial independent work."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": (
+                    "Times Higher Education — Princeton University "
+                    "(Physical Sciences #5, 2026)"
+                ),
+                "url": "https://www.timeshighereducation.com/world-university-rankings/princeton-university",
+            },
+            {
+                "label": "Niche — Princeton University (Physics #5 nationally)",
+                "url": "https://www.niche.com/colleges/princeton-university/majors/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-mathematics-bs": {
+        "summary": (
+            "Students and academic guides describe Princeton Mathematics as a deeply "
+            "theoretical undergraduate major within a research powerhouse — Times Higher "
+            "Education ranks Princeton third globally (2026) with leading physical-sciences "
+            "strength — praising proof-based coursework, small seminars, and a pipeline to "
+            "top PhD programs; common cautions are abstract, fast-paced material, limited "
+            "pre-professional business pathways, and the shared Princeton workload."
+        ),
+        "themes": [
+            {
+                "label": "Proof-based rigor",
+                "sentiment": "positive",
+                "detail": (
+                    "A pure-mathematics core emphasizing analysis, algebra, and topology."
+                ),
+            },
+            {
+                "label": "Research culture",
+                "sentiment": "positive",
+                "detail": (
+                    "Faculty in mathematics and affiliated institutes collaborate on theory "
+                    "and applied work."
+                ),
+            },
+            {
+                "label": "PhD pipeline",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates frequently continue to leading mathematics and quantitative "
+                    "PhD programs."
+                ),
+            },
+            {
+                "label": "Abstract pace",
+                "sentiment": "caution",
+                "detail": (
+                    "Courses move quickly through graduate-level material for undergraduates."
+                ),
+            },
+            {
+                "label": "Limited pre-professional focus",
+                "sentiment": "mixed",
+                "detail": (
+                    "The major targets research careers more than corporate finance tracks."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Times Higher Education — Princeton University (2026)",
+                "url": "https://www.timeshighereducation.com/world-university-rankings/princeton-university",
+            },
+            {
+                "label": "Niche — Princeton University",
+                "url": "https://www.niche.com/colleges/princeton-university/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-electrical-engineering-bs": {
+        "summary": (
+            "Students and engineering guides describe Princeton Electrical and Computer "
+            "Engineering as a rigorous B.S.E. program within SEAS — U.S. News ranks "
+            "Princeton eleventh nationally for engineering (2026) — praising strong "
+            "theoretical foundations, research labs, and placement into technology and "
+            "graduate programs; common cautions are a demanding math and physics core, "
+            "the B.S.E. declaration deadline in freshman spring, and limited class size "
+            "versus larger engineering colleges."
+        ),
+        "themes": [
+            {
+                "label": "Rigorous ECE core",
+                "sentiment": "positive",
+                "detail": (
+                    "A mathematically demanding curriculum spanning circuits, signals, and "
+                    "computer systems."
+                ),
+            },
+            {
+                "label": "Research access",
+                "sentiment": "positive",
+                "detail": (
+                    "Undergraduates join SEAS labs in communications, robotics, and quantum "
+                    "systems."
+                ),
+            },
+            {
+                "label": "Tech placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates place into top technology firms and leading ECE PhD programs."
+                ),
+            },
+            {
+                "label": "B.S.E. timeline",
+                "sentiment": "caution",
+                "detail": (
+                    "Engineering students must declare in freshman spring, earlier than A.B. "
+                    "majors."
+                ),
+            },
+            {
+                "label": "Workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Shared Princeton problem-set culture and senior independent project "
+                    "requirements."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton Engineering — Electrical and Computer Engineering",
+                "url": "https://ece.princeton.edu/",
+            },
+            {
+                "label": "Niche — Princeton University (Engineering #11 nationally)",
+                "url": "https://www.niche.com/colleges/princeton-university/majors/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-mechanical-engineering-bs": {
+        "summary": (
+            "Students and guides describe Princeton Mechanical and Aerospace Engineering "
+            "as a selective B.S.E. program with strong ties to robotics, fluid mechanics, "
+            "and materials research — praising design-and-analysis depth, faculty mentorship, "
+            "and graduate-school placement; common cautions are heavy physics and math "
+            "prerequisites, the freshman-spring major declaration, and a demanding "
+            "independent-project requirement."
+        ),
+        "themes": [
+            {
+                "label": "Design & analysis depth",
+                "sentiment": "positive",
+                "detail": (
+                    "A quantitative curriculum spanning dynamics, thermodynamics, and "
+                    "modern fabrication."
+                ),
+            },
+            {
+                "label": "Research labs",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to robotics, fluid mechanics, and aerospace labs within SEAS."
+                ),
+            },
+            {
+                "label": "Graduate placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Many graduates continue to top PhD programs or aerospace and tech roles."
+                ),
+            },
+            {
+                "label": "Core intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Shared engineering physics and math requirements create a heavy first "
+                    "two years."
+                ),
+            },
+            {
+                "label": "Independent project",
+                "sentiment": "caution",
+                "detail": (
+                    "B.S.E. students complete a senior thesis or independent project."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton Engineering — Mechanical and Aerospace Engineering",
+                "url": "https://mae.princeton.edu/",
+            },
+            {
+                "label": "Niche — Princeton University",
+                "url": "https://www.niche.com/colleges/princeton-university/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-chemical-engineering-bs": {
+        "summary": (
+            "Students and engineering guides describe Princeton Chemical and Biological "
+            "Engineering as a small, elite B.S.E. program blending molecular science with "
+            "quantitative transport and reaction engineering — praising faculty mentorship, "
+            "ties to the Andlinger Center and genomics institutes, and interdisciplinary "
+            "research; common cautions are demanding thermodynamics prerequisites, a "
+            "limited alumni network versus larger ChemE schools, and Princeton's heavy "
+            "workload."
+        ),
+        "themes": [
+            {
+                "label": "Quantitative ChemE core",
+                "sentiment": "positive",
+                "detail": (
+                    "Transport, thermodynamics, and reaction engineering with rigorous "
+                    "mathematical modeling."
+                ),
+            },
+            {
+                "label": "Interdisciplinary research",
+                "sentiment": "positive",
+                "detail": (
+                    "Links to energy, bioengineering, and materials labs across campus."
+                ),
+            },
+            {
+                "label": "Small-class mentoring",
+                "sentiment": "positive",
+                "detail": (
+                    "A compact ChemE cohort enables close faculty advising and lab placement."
+                ),
+            },
+            {
+                "label": "Prerequisite intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Shared engineering physics and chemistry sequences are time-consuming."
+                ),
+            },
+            {
+                "label": "Career breadth",
+                "sentiment": "mixed",
+                "detail": (
+                    "Placement skews toward PhD study and specialized R&D rather than "
+                    "large-process engineering roles."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton Engineering — Chemical and Biological Engineering",
+                "url": "https://cbe.princeton.edu/",
+            },
+            {
+                "label": "Niche — Princeton University",
+                "url": "https://www.niche.com/colleges/princeton-university/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-operations-research-bs": {
+        "summary": (
+            "Students and quantitative-finance guides describe Princeton ORFE as a "
+            "mathematically rigorous engineering major centered on statistics, probability, "
+            "optimization, and stochastic processes — one of Princeton's most popular majors "
+            "— praising flexibility across finance, machine learning, and operations "
+            "research electives and strong placement into quant finance, consulting, and "
+            "PhD programs; common cautions are a heavy math core, that the program is more "
+            "quantitative than a traditional finance major, and competitive recruiting for "
+            "top banking roles versus dedicated MFin programs."
+        ),
+        "themes": [
+            {
+                "label": "Quantitative depth",
+                "sentiment": "positive",
+                "detail": (
+                    "A statistics-and-optimization core with electives in ML, finance, and "
+                    "econometrics."
+                ),
+            },
+            {
+                "label": "Career flexibility",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates place into quant finance, consulting, tech, and top PhD "
+                    "programs."
+                ),
+            },
+            {
+                "label": "Popular major",
+                "sentiment": "positive",
+                "detail": (
+                    "Consistently among Princeton's most chosen B.S.E. options for "
+                    "quantitatively minded students."
+                ),
+            },
+            {
+                "label": "Math intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "A fast probability-and-stochastic-processes sequence is foundational."
+                ),
+            },
+            {
+                "label": "Not a finance degree",
+                "sentiment": "mixed",
+                "detail": (
+                    "Students seeking a banking-focused curriculum may prefer dedicated "
+                    "MFin or MBA paths."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton ORFE — Undergraduate Program",
+                "url": "https://orfe.princeton.edu/undergraduate",
+            },
+            {
+                "label": "Career Karma — Princeton University Review (popular majors)",
+                "url": "https://careerkarma.com/blog/princeton-review-college/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-civil-engineering-bs": {
+        "summary": (
+            "Students and guides describe Princeton Civil and Environmental Engineering "
+            "as a research-oriented B.S.E. program with strengths in structures, "
+            "environment, and sustainable infrastructure — praising ties to the "
+            "Andlinger Center for Energy and the Environment, interdisciplinary policy "
+            "electives, and graduate-school placement; common cautions are a smaller program "
+            "than peer civil-engineering colleges, limited corporate recruiting relative to "
+            "larger schools, and demanding independent-project requirements."
+        ),
+        "themes": [
+            {
+                "label": "Environmental strength",
+                "sentiment": "positive",
+                "detail": (
+                    "Close ties to the Andlinger Center and campus sustainability research."
+                ),
+            },
+            {
+                "label": "Interdisciplinary options",
+                "sentiment": "positive",
+                "detail": (
+                    "Students cross-register in SPIA, economics, and architecture courses."
+                ),
+            },
+            {
+                "label": "Research placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates frequently pursue PhD programs or specialized environmental "
+                    "roles."
+                ),
+            },
+            {
+                "label": "Small program",
+                "sentiment": "caution",
+                "detail": (
+                    "Fewer civil-engineering peers on campus than at large public "
+                    "engineering colleges."
+                ),
+            },
+            {
+                "label": "Corporate recruiting",
+                "sentiment": "mixed",
+                "detail": (
+                    "On-campus construction and infrastructure firm recruiting is lighter "
+                    "than at Big Ten engineering schools."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton Engineering — Civil and Environmental Engineering",
+                "url": "https://cee.princeton.edu/",
+            },
+            {
+                "label": "Andlinger Center for Energy and the Environment",
+                "url": "https://andlinger.princeton.edu/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-architecture-bs": {
+        "summary": (
+            "Students and design guides describe Princeton's B.A. in Architecture as a "
+            "theory- and history-rich program within a top research university — praising "
+            "studio access, ties to the humanities division, and a strong pipeline to "
+            "leading M.Arch and PhD programs; common cautions are that the undergraduate "
+            "degree is not a professional NAAB-accredited architecture license, limited "
+            "studio space versus dedicated art schools, and Princeton's overall academic "
+            "intensity."
+        ),
+        "themes": [
+            {
+                "label": "Theory & history depth",
+                "sentiment": "positive",
+                "detail": (
+                    "A humanities-grounded curriculum spanning architectural history, "
+                    "theory, and urbanism."
+                ),
+            },
+            {
+                "label": "Graduate pipeline",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates frequently continue to leading M.Arch and architectural "
+                    "PhD programs."
+                ),
+            },
+            {
+                "label": "Interdisciplinary campus",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to engineering, policy, and visual-arts courses across Princeton."
+                ),
+            },
+            {
+                "label": "Not a professional degree",
+                "sentiment": "caution",
+                "detail": (
+                    "The B.A. does not confer NAAB professional licensure; an M.Arch is "
+                    "typically required."
+                ),
+            },
+            {
+                "label": "Studio resources",
+                "sentiment": "mixed",
+                "detail": (
+                    "Fewer dedicated studio facilities than at RISD or architecture-only "
+                    "colleges."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton School of Architecture — Undergraduate",
+                "url": "https://soa.princeton.edu/undergraduate",
+            },
+            {
+                "label": "Niche — Princeton University",
+                "url": "https://www.niche.com/colleges/princeton-university/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-psychology-bs": {
+        "summary": (
+            "Students and guides rank Princeton Psychology among the strongest "
+            "undergraduate programs nationally — U.S. News ranks Princeton second in "
+            "psychology among national universities (2026) — praising neuroscience "
+            "integration, early research access through the Princeton Neuroscience "
+            "Institute, and graduate-school placement; common cautions are a competitive "
+            "major with limited clinical-training pathways at the undergraduate level and "
+            "Princeton's required independent-work sequence."
+        ),
+        "themes": [
+            {
+                "label": "Research integration",
+                "sentiment": "positive",
+                "detail": (
+                    "Close ties to neuroscience, genomics, and cognitive-science labs on "
+                    "campus."
+                ),
+            },
+            {
+                "label": "National ranking",
+                "sentiment": "positive",
+                "detail": (
+                    "Consistently top-ranked among national universities for psychology."
+                ),
+            },
+            {
+                "label": "PhD pipeline",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates frequently continue to leading psychology and neuroscience "
+                    "PhD programs."
+                ),
+            },
+            {
+                "label": "Limited clinical focus",
+                "sentiment": "caution",
+                "detail": (
+                    "The program emphasizes research over practitioner or counseling "
+                    "training."
+                ),
+            },
+            {
+                "label": "Independent work",
+                "sentiment": "caution",
+                "detail": (
+                    "Junior and senior independent projects add substantial workload."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": (
+                    "NorthJersey.com — Princeton psychology ranked 2nd nationally "
+                    "(U.S. News 2026)"
+                ),
+                "url": (
+                    "https://www.northjersey.com/story/news/2024/09/26/"
+                    "princeton-beats-out-harvard-mit-fous-news-ranks-princeton-university-"
+                    "ranked-the-top-school-heres-why/75377405007/"
+                ),
+            },
+            {
+                "label": "Princeton Neuroscience Institute",
+                "url": "https://pni.princeton.edu/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-molecular-biology-bs": {
+        "summary": (
+            "Students and guides describe Princeton Molecular Biology as a research-intensive "
+            "undergraduate major with ties to the Lewis-Sigler Institute and genomics "
+            "facilities — praising early lab access, Nobel-caliber faculty, and strong "
+            "medical- and PhD-school placement; common cautions are long lab hours stacked "
+            "on Princeton's core requirements, limited pre-med advising relative to larger "
+            "universities, and a competitive pre-health culture."
+        ),
+        "themes": [
+            {
+                "label": "Research-intensive labs",
+                "sentiment": "positive",
+                "detail": (
+                    "Undergraduates join genomics, structural biology, and systems-biology "
+                    "groups early."
+                ),
+            },
+            {
+                "label": "Institute ties",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to Lewis-Sigler and Princeton Genomics Center facilities."
+                ),
+            },
+            {
+                "label": "Graduate & pre-med outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates place strongly into top PhD and medical programs."
+                ),
+            },
+            {
+                "label": "Lab workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Multi-hour lab sections on top of Princeton's core are a recurring theme."
+                ),
+            },
+            {
+                "label": "Pre-health competition",
+                "sentiment": "mixed",
+                "detail": (
+                    "A large share of majors pursue medicine, intensifying peer competition."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Lewis-Sigler Institute for Integrative Genomics",
+                "url": "https://lsi.princeton.edu/",
+            },
+            {
+                "label": "Niche — Princeton University",
+                "url": "https://www.niche.com/colleges/princeton-university/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-neuroscience-bs": {
+        "summary": (
+            "Students and guides describe Princeton Neuroscience as an interdisciplinary "
+            "undergraduate certificate and concentration leveraging the Princeton "
+            "Neuroscience Institute — praising cross-department coursework, early research "
+            "in cognitive and systems neuroscience, and graduate-school placement; common "
+            "cautions are that the program spans multiple departments with varying advising "
+            "structures, limited clinical-neuroscience training, and demanding "
+            "prerequisites in biology, chemistry, and math."
+        ),
+        "themes": [
+            {
+                "label": "PNI integration",
+                "sentiment": "positive",
+                "detail": (
+                    "Direct access to the Princeton Neuroscience Institute's research "
+                    "community."
+                ),
+            },
+            {
+                "label": "Interdisciplinary breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "Courses span psychology, molecular biology, engineering, and computer "
+                    "science."
+                ),
+            },
+            {
+                "label": "Research access",
+                "sentiment": "positive",
+                "detail": (
+                    "Undergraduates join cognitive, computational, and systems-neuroscience "
+                    "labs."
+                ),
+            },
+            {
+                "label": "Cross-department advising",
+                "sentiment": "caution",
+                "detail": (
+                    "Requirements span multiple units, which can complicate course planning."
+                ),
+            },
+            {
+                "label": "Prerequisite load",
+                "sentiment": "caution",
+                "detail": (
+                    "A heavy biology, chemistry, and math foundation is required."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton Neuroscience Institute",
+                "url": "https://pni.princeton.edu/",
+            },
+            {
+                "label": "Niche — Princeton University",
+                "url": "https://www.niche.com/colleges/princeton-university/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-chemistry-bs": {
+        "summary": (
+            "Students and guides rank Princeton Chemistry among the strongest undergraduate "
+            "programs nationally — Niche places it fourth for chemistry (2026) — praising "
+            "early lab research, Nobel-caliber faculty, and depth in physical and synthetic "
+            "chemistry; common cautions are long lab hours stacked on Princeton's heavy "
+            "core, limited non-research career advising, and the pressure of a "
+            "high-achieving peer group."
+        ),
+        "themes": [
+            {
+                "label": "Research-intensive labs",
+                "sentiment": "positive",
+                "detail": (
+                    "Undergraduates join synthesis, catalysis, and chemical-biology groups "
+                    "from early terms."
+                ),
+            },
+            {
+                "label": "Faculty depth",
+                "sentiment": "positive",
+                "detail": (
+                    "A leading department with direct access to experimental and theoretical "
+                    "chemists."
+                ),
+            },
+            {
+                "label": "Graduate-school outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Most graduates pursue PhD programs or research careers in industry R&D."
+                ),
+            },
+            {
+                "label": "Lab workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Multi-hour lab sections on top of problem sets are a recurring theme."
+                ),
+            },
+            {
+                "label": "Research-focused careers",
+                "sentiment": "mixed",
+                "detail": (
+                    "Career paths skew toward academia and research labs versus large "
+                    "corporate recruiting."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Princeton University (Chemistry #4 nationally)",
+                "url": "https://www.niche.com/colleges/princeton-university/majors/",
+            },
+            {
+                "label": "Princeton Department of Chemistry",
+                "url": "https://chemistry.princeton.edu/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-computer-science-ms": {
+        "summary": (
+            "Students and guides describe Princeton's M.S.E. in Computer Science as a "
+            "selective, research-oriented graduate degree within a top-ranked department — "
+            "Times Higher Education ranks Princeton fifth globally in computer science "
+            "(2026) — praising faculty depth, thesis or project options, and placement into "
+            "PhD programs and technology roles; common cautions are that the M.S.E. is not "
+            "a large professional cohort like industry-focused CS master's programs, "
+            "limited career-services infrastructure versus dedicated professional degrees, "
+            "and a demanding qualifying-course sequence."
+        ),
+        "themes": [
+            {
+                "label": "Research depth",
+                "sentiment": "positive",
+                "detail": (
+                    "A faculty-led program with thesis and independent-project pathways."
+                ),
+            },
+            {
+                "label": "Department reputation",
+                "sentiment": "positive",
+                "detail": (
+                    "Among the highest-ranked CS departments globally for theory and systems."
+                ),
+            },
+            {
+                "label": "PhD & industry placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates place into leading PhD programs and top technology firms."
+                ),
+            },
+            {
+                "label": "Small cohort",
+                "sentiment": "caution",
+                "detail": (
+                    "A selective program with fewer students than large professional CS "
+                    "master's degrees."
+                ),
+            },
+            {
+                "label": "Not industry-focused",
+                "sentiment": "mixed",
+                "detail": (
+                    "Less structured career coaching than dedicated MEng or professional "
+                    "master's programs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Times Higher Education — Princeton (Computer Science #5, 2026)",
+                "url": "https://www.timeshighereducation.com/world-university-rankings/princeton-university",
+            },
+            {
+                "label": "Princeton Computer Science — Graduate Program",
+                "url": "https://www.cs.princeton.edu/grad",
             },
         ],
         "disclaimer": (
@@ -1067,6 +2129,8 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         ),
     },
 }
+
+_COVERABLE_REVIEWS = frozenset(_REVIEWS_BY_SLUG.keys())
 
 # ── Application requirements ─────────────────────────────────────────────────
 _INTL_VISA = {
