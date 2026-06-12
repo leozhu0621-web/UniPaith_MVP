@@ -53,7 +53,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of California-Berkeley"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-11"
+ENRICHED_AT = "2026-06-12"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1083,6 +1083,745 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {
                 "label": "U.S. News — UC Berkeley Computer Science / Engineering",
                 "url": "https://www.usnews.com/best-colleges/university-of-california-berkeley-1312",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "berkeley-computer-science-bs": {
+        "summary": (
+            "Students and third-party guides consistently rank Berkeley's "
+            "undergraduate computer science among the nation's elite — U.S. News "
+            "places it No. 2 at the undergraduate level (2026, tied with Carnegie "
+            "Mellon and Stanford) — praising world-class faculty, deep research "
+            "access at a top public university, and exceptional Bay Area tech "
+            "placement; common cautions are very large lower-division courses, a "
+            "fast pace, and a highly competitive environment shared with EECS."
+        ),
+        "themes": [
+            {
+                "label": "Top-tier national standing",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks Berkeley undergraduate CS No. 2 nationally (2026)."
+                ),
+            },
+            {
+                "label": "Research & faculty depth",
+                "sentiment": "positive",
+                "detail": (
+                    "CDSS and EECS share a department with Turing Award-winning "
+                    "faculty and extensive undergraduate research."
+                ),
+            },
+            {
+                "label": "Bay Area tech placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates place strongly into Silicon Valley firms and top PhD "
+                    "programs."
+                ),
+            },
+            {
+                "label": "Large lower-division classes",
+                "sentiment": "caution",
+                "detail": (
+                    "Popular introductory CS courses can be very large before "
+                    "students reach upper-division electives."
+                ),
+            },
+            {
+                "label": "Competitive pace",
+                "sentiment": "caution",
+                "detail": (
+                    "A demanding, fast-paced curriculum is a recurring theme in "
+                    "student guides."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "CDSS at UC Berkeley — U.S. News CS rankings (2026)",
+                "url": "https://cdss.berkeley.edu/news/uc-berkeley-ranked-1-data-science-and-2-computer-science-2026",
+            },
+            {
+                "label": "Niche — University of California, Berkeley",
+                "url": "https://www.niche.com/colleges/university-of-california-berkeley/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "berkeley-data-science-bs": {
+        "summary": (
+            "Students and third-party guides describe Berkeley's undergraduate data "
+            "science as the nation's top-ranked program — U.S. News placed it No. 1 "
+            "in data science at the undergraduate level (2026) — praising its "
+            "interdisciplinary blend of computing, statistics, and societal "
+            "applications within CDSS; common cautions are that the major is still "
+            "relatively new, lower-division demand can be high, and students must "
+            "navigate prerequisites across multiple departments."
+        ),
+        "themes": [
+            {
+                "label": "No. 1 nationally",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks Berkeley undergraduate data science No. 1 (2026)."
+                ),
+            },
+            {
+                "label": "Interdisciplinary design",
+                "sentiment": "positive",
+                "detail": (
+                    "Combines computing, statistics, and domain applications in the "
+                    "College of Computing, Data Science, and Society."
+                ),
+            },
+            {
+                "label": "Industry & research pathways",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates place into analytics, tech, and policy roles across "
+                    "the Bay Area ecosystem."
+                ),
+            },
+            {
+                "label": "Newer major",
+                "sentiment": "mixed",
+                "detail": (
+                    "The program is younger than peer CS majors, so some course "
+                    "sequences are still evolving."
+                ),
+            },
+            {
+                "label": "Prerequisite navigation",
+                "sentiment": "caution",
+                "detail": (
+                    "Students coordinate requirements across CDSS, statistics, and "
+                    "domain departments."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "CDSS at UC Berkeley — U.S. News data science rankings (2026)",
+                "url": "https://cdss.berkeley.edu/news/uc-berkeley-ranked-1-data-science-and-2-computer-science-2026",
+            },
+            {
+                "label": "U.S. News — UC Berkeley (Best Colleges)",
+                "url": "https://www.usnews.com/best-colleges/university-of-california-berkeley-1312",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "berkeley-economics-bs": {
+        "summary": (
+            "Students and third-party guides consistently rank Berkeley economics "
+            "among the nation's strongest undergraduate programs — U.S. News tied "
+            "Berkeley for No. 1 in undergraduate economics when the category "
+            "launched and places it among the top five nationally — praising "
+            "Nobel-laureate faculty, quantitative rigor, and pathways into finance, "
+            "consulting, and PhD programs; common cautions are large lecture "
+            "courses, a competitive curve, and that upper-division seminars require "
+            "proactive outreach to faculty."
+        ),
+        "themes": [
+            {
+                "label": "Elite national standing",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks Berkeley among the top undergraduate economics "
+                    "programs nationally."
+                ),
+            },
+            {
+                "label": "Faculty & research depth",
+                "sentiment": "positive",
+                "detail": (
+                    "The department's faculty includes multiple Nobel laureates and "
+                    "leaders in econometrics and policy."
+                ),
+            },
+            {
+                "label": "Career & PhD placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates place into finance, consulting, tech, and top "
+                    "economics PhD programs."
+                ),
+            },
+            {
+                "label": "Large lectures",
+                "sentiment": "caution",
+                "detail": (
+                    "Introductory and intermediate courses can be very large before "
+                    "students reach seminars."
+                ),
+            },
+            {
+                "label": "Competitive grading",
+                "sentiment": "caution",
+                "detail": (
+                    "A demanding, curve-heavy environment is a recurring theme in "
+                    "student guides."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "MarketWatch — U.S. News undergraduate economics rankings",
+                "url": "https://www.marketwatch.com/story/u-s-news-adds-economics-degree-programs-to-its-college-rankings-and-these-7-schools-tied-for-no-1-dbed4f21",
+            },
+            {
+                "label": "Berkeley News — U.S. News 2026 rankings",
+                "url": "https://news.berkeley.edu/2025/09/22/uc-berkeley-named-top-public-school-in-the-country-by-us-news/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "berkeley-mechanical-engineering-bs": {
+        "summary": (
+            "Students and third-party guides describe Berkeley mechanical "
+            "engineering as a top-tier program — U.S. News ranks undergraduate ME "
+            "No. 2 nationally (2026) within a No. 3 overall engineering college — "
+            "praising design-and-analysis depth, robotics and energy research, and "
+            "strong graduate-school placement; common cautions are a heavy physics "
+            "and math core, large lower-division classes, and the competitive pace "
+            "shared across Berkeley Engineering."
+        ),
+        "themes": [
+            {
+                "label": "Top-ranked ME program",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks Berkeley undergraduate mechanical engineering "
+                    "No. 2 nationally (2026)."
+                ),
+            },
+            {
+                "label": "Design & research depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Students access robotics, energy, and manufacturing labs within "
+                    "a top-three engineering college."
+                ),
+            },
+            {
+                "label": "Graduate placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Many graduates continue to top PhD programs or aerospace and "
+                    "tech roles."
+                ),
+            },
+            {
+                "label": "Heavy core load",
+                "sentiment": "caution",
+                "detail": (
+                    "Shared engineering physics and math requirements create a "
+                    "demanding first two years."
+                ),
+            },
+            {
+                "label": "Large classes",
+                "sentiment": "caution",
+                "detail": (
+                    "Lower-division engineering courses can be very large before "
+                    "students reach ME electives."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Berkeley Engineering — U.S. News rankings",
+                "url": "https://engineering.berkeley.edu/about/rankings/",
+            },
+            {
+                "label": "Berkeley Engineering — undergrad No. 3 (2025)",
+                "url": "https://engineering.berkeley.edu/news/2025/09/u-s-news-ranks-berkeleys-undergrad-engineering-program-no-3-in-the-nation/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "berkeley-chemical-engineering-bs": {
+        "summary": (
+            "Students and third-party guides rank Berkeley chemical engineering "
+            "among the nation's best — U.S. News places undergraduate chemical "
+            "engineering No. 3 nationally (2026) — praising reaction-engineering "
+            "depth, biomolecular research, and ties to the Bay Area biotech "
+            "ecosystem; common cautions are a mathematically demanding curriculum, "
+            "limited class size in upper-division labs, and the competitive "
+            "environment across Berkeley's top-three engineering college."
+        ),
+        "themes": [
+            {
+                "label": "Top-three nationally",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks Berkeley undergraduate chemical engineering "
+                    "No. 3 nationally (2026)."
+                ),
+            },
+            {
+                "label": "Biotech & research ties",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong connections to Bay Area biotech and energy research "
+                    "labs."
+                ),
+            },
+            {
+                "label": "Quantitative rigor",
+                "sentiment": "positive",
+                "detail": (
+                    "A mathematically demanding curriculum spanning transport, "
+                    "thermodynamics, and reactor design."
+                ),
+            },
+            {
+                "label": "Lab capacity",
+                "sentiment": "caution",
+                "detail": (
+                    "Upper-division lab sections can be competitive to access."
+                ),
+            },
+            {
+                "label": "Intense workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Long problem sets and a fast quarter system are recurring "
+                    "themes."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Berkeley Engineering — U.S. News rankings",
+                "url": "https://engineering.berkeley.edu/about/rankings/",
+            },
+            {
+                "label": "Niche — University of California, Berkeley",
+                "url": "https://www.niche.com/colleges/university-of-california-berkeley/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "berkeley-business-administration-bs": {
+        "summary": (
+            "Students and third-party guides describe the Haas undergraduate "
+            "business program as highly selective and analytically rigorous — "
+            "Poets&Quants ranks UC Berkeley No. 5 worldwide for business and "
+            "economics — praising its small cohort after the competitive "
+            "upper-division admission process, Silicon Valley proximity, and "
+            "strong placement into consulting and tech; common cautions are that "
+            "students must first complete two years in another college before "
+            "applying, the program is much smaller than peer business schools, "
+            "and Haas is not part of the M7 MBA consortium despite its strength."
+        ),
+        "themes": [
+            {
+                "label": "Global business standing",
+                "sentiment": "positive",
+                "detail": (
+                    "Poets&Quants ranks UC Berkeley No. 5 worldwide for business "
+                    "and economics."
+                ),
+            },
+            {
+                "label": "Selective Haas admission",
+                "sentiment": "positive",
+                "detail": (
+                    "Upper-division admission creates a small, motivated business "
+                    "cohort."
+                ),
+            },
+            {
+                "label": "Bay Area recruiting",
+                "sentiment": "positive",
+                "detail": (
+                    "Proximity to Silicon Valley supports consulting, tech, and "
+                    "startup placement."
+                ),
+            },
+            {
+                "label": "Two-year prerequisite path",
+                "sentiment": "caution",
+                "detail": (
+                    "Students apply to Haas after completing prerequisites in "
+                    "another UC Berkeley college."
+                ),
+            },
+            {
+                "label": "Smaller than peer programs",
+                "sentiment": "mixed",
+                "detail": (
+                    "The undergraduate business cohort is smaller than at private "
+                    "peer schools."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Poets&Quants For Undergrads — business & economics ranking",
+                "url": "https://poetsandquantsforundergrads.com/news/ranking-worlds-best-universities-for-business-economics/",
+            },
+            {
+                "label": "Haas School of Business — Undergraduate Program",
+                "url": "https://haas.berkeley.edu/undergrad/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "berkeley-business-administration-management-and-operations-prof": {
+        "summary": (
+            "Students and third-party guides consistently praise Berkeley Haas for "
+            "its analytical rigor, entrepreneurship culture, and Bay Area tech "
+            "placement — Poets&Quants ranks Haas No. 14 in its 2025–2026 "
+            "composite MBA ranking and Bloomberg Businessweek vaulted it to No. 3 "
+            "(2025) — while noting common cautions: a smaller class than M7 peers, "
+            "intense competition for top tech and VC roles, and that students must "
+            "be proactive to build community outside the core recruiting "
+            "industries."
+        ),
+        "themes": [
+            {
+                "label": "Entrepreneurship & tech",
+                "sentiment": "positive",
+                "detail": (
+                    "Haas ranks among the top MBA programs for entrepreneurship and "
+                    "Bay Area tech placement."
+                ),
+            },
+            {
+                "label": "Analytical rigor",
+                "sentiment": "positive",
+                "detail": (
+                    "A quantitatively rigorous curriculum respected in finance, "
+                    "consulting, and product roles."
+                ),
+            },
+            {
+                "label": "Rising national standing",
+                "sentiment": "positive",
+                "detail": (
+                    "Bloomberg Businessweek ranked Haas No. 3 (2025); Poets&Quants "
+                    "composite No. 14 (2025–2026)."
+                ),
+            },
+            {
+                "label": "Smaller cohort",
+                "sentiment": "caution",
+                "detail": (
+                    "A smaller class than some M7 peers means students invest effort "
+                    "to build community."
+                ),
+            },
+            {
+                "label": "Competitive recruiting",
+                "sentiment": "caution",
+                "detail": (
+                    "Top tech and VC roles are highly competitive; students outside "
+                    "core industries run a more self-directed search."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Poets&Quants — Berkeley Haas school profile",
+                "url": "https://poetsandquants.com/school-profile/university-of-california-berkeley-haas-school-of-business/",
+            },
+            {
+                "label": "Poets&Quants — 2025 Bloomberg Businessweek MBA ranking",
+                "url": "https://poetsandquants.com/2025/09/16/2025-bloomberg-businessweek-mba-ranking-stanford-retains-1-spot/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "berkeley-law-prof": {
+        "summary": (
+            "Students and third-party guides consistently rank Berkeley Law among "
+            "the nation's elite programs — THE and QS place it as the top public law "
+            "school in the United States and among the top ten globally — praising "
+            "its intellectual-property, environmental-law, and constitutional-law "
+            "strength, faculty scholarly impact, and Bay Area/big-law placement; "
+            "common cautions are that Berkeley withdrew from U.S. News participation "
+            "in 2022, the program is academically intense, and Bay Area cost of "
+            "living is high."
+        ),
+        "themes": [
+            {
+                "label": "Top public law school",
+                "sentiment": "positive",
+                "detail": (
+                    "THE and QS rank Berkeley Law as the leading public law school "
+                    "in the U.S."
+                ),
+            },
+            {
+                "label": "Specialty strength",
+                "sentiment": "positive",
+                "detail": (
+                    "No. 1 intellectual-property and environmental-law programs "
+                    "before Berkeley's U.S. News withdrawal."
+                ),
+            },
+            {
+                "label": "Big-law & public-interest placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong placement into Am Law 100 firms and public-interest "
+                    "roles across California."
+                ),
+            },
+            {
+                "label": "U.S. News non-participation",
+                "sentiment": "mixed",
+                "detail": (
+                    "Berkeley Law stopped submitting data to U.S. News in November "
+                    "2022 over methodology concerns."
+                ),
+            },
+            {
+                "label": "Academic intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "A rigorous, theory-heavy curriculum with high workload "
+                    "expectations."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Berkeley Law — 2026 law school rankings",
+                "url": "https://www.law.berkeley.edu/article/2026-law-school-rankings-faculty-excellence-impact/",
+            },
+            {
+                "label": "Berkeley Law — rankings update (Dean Chemerinsky)",
+                "url": "https://www.law.berkeley.edu/article/berkeley-law-rankings-update-from-dean-chemerinsky/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "berkeley-public-policy-analysis-prof": {
+        "summary": (
+            "Students and third-party guides consistently rank the Goldman School "
+            "among the nation's top policy programs — U.S. News named it No. 1 in "
+            "public policy analysis and No. 3 in public affairs (2026) — praising "
+            "its quantitative rigor, California and federal policy ties, and "
+            "placement into government, consulting, and advocacy; common cautions "
+            "are a demanding econometrics and statistics core, a smaller cohort than "
+            "some D.C.-based peers, and that students targeting federal roles must "
+            "network beyond the Bay Area."
+        ),
+        "themes": [
+            {
+                "label": "No. 1 policy analysis",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks Goldman No. 1 in public policy analysis (2026)."
+                ),
+            },
+            {
+                "label": "Quantitative rigor",
+                "sentiment": "positive",
+                "detail": (
+                    "A data-driven curriculum with econometrics and program-evaluation "
+                    "training."
+                ),
+            },
+            {
+                "label": "California policy ties",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong connections to California state government and Bay Area "
+                    "policy organizations."
+                ),
+            },
+            {
+                "label": "Demanding core",
+                "sentiment": "caution",
+                "detail": (
+                    "Statistics and econometrics requirements are rigorous for "
+                    "students without quantitative backgrounds."
+                ),
+            },
+            {
+                "label": "Bay Area focus",
+                "sentiment": "mixed",
+                "detail": (
+                    "Federal-policy networking requires more self-directed effort "
+                    "than at D.C.-based schools."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Goldman School — 2026 U.S. News rankings",
+                "url": "https://gspp.berkeley.edu/research-and-impact/news/recent-news/2026-u.s-news-rankings-goldman-school-leads-in-policy-analysis-public-affairs",
+            },
+            {
+                "label": "Berkeley News — graduate program rankings (2025)",
+                "url": "https://news.berkeley.edu/2025/04/08/uc-berkeley-graduate-programs-soar-to-elite-status-in-latest-us-news-rankings/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "berkeley-public-health-prof": {
+        "summary": (
+            "Students and third-party guides rank Berkeley Public Health among the "
+            "nation's top MPH programs — U.S. News placed it No. 6 nationally "
+            "(2026, tied with UCLA and Columbia), up from No. 8 — praising its "
+            "epidemiology, environmental-health, and health-policy strengths and "
+            "ties to California's public-health agencies; common cautions are large "
+            "cohorts in some concentrations, limited funding for professional "
+            "master's students compared with PhD peers, and high Bay Area living "
+            "costs."
+        ),
+        "themes": [
+            {
+                "label": "Top-ten MPH program",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks Berkeley Public Health No. 6 nationally (2026)."
+                ),
+            },
+            {
+                "label": "Specialty depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Top-ten rankings in epidemiology, environmental health, and "
+                    "health policy & management."
+                ),
+            },
+            {
+                "label": "California agency ties",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong connections to California state and county public-health "
+                    "organizations."
+                ),
+            },
+            {
+                "label": "Large cohorts",
+                "sentiment": "caution",
+                "detail": (
+                    "Some MPH concentrations enroll large classes, requiring "
+                    "proactive faculty outreach."
+                ),
+            },
+            {
+                "label": "Professional-student funding",
+                "sentiment": "caution",
+                "detail": (
+                    "MPH students receive less institutional funding than PhD "
+                    "trainees."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "UC Berkeley Public Health — U.S. News No. 6 (2026)",
+                "url": "https://publichealth.berkeley.edu/articles/news/ucbph-surges-to-6-in-us-news-rankings",
+            },
+            {
+                "label": "Niche — UC Berkeley School of Public Health",
+                "url": "https://www.niche.com/graduate-schools/uc-berkeley-school-of-public-health/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "berkeley-architecture-prof": {
+        "summary": (
+            "Students and third-party guides describe Berkeley's Master of "
+            "Architecture as a top public program with a strong sustainability and "
+            "social-equity focus — QS ranks Berkeley No. 10 globally for "
+            "architecture (the highest-ranked public U.S. program in many lists) — "
+            "praising its interdisciplinary CED community, design-build studios, and "
+            "value for California residents; common cautions are that U.S. News does "
+            "not publish a standalone M.Arch ranking, studio workloads are intense, "
+            "and out-of-state tuition is far higher than in-state rates."
+        ),
+        "themes": [
+            {
+                "label": "Top public architecture program",
+                "sentiment": "positive",
+                "detail": (
+                    "QS ranks Berkeley among the top global architecture programs and "
+                    "the leading U.S. public option."
+                ),
+            },
+            {
+                "label": "Sustainability & equity focus",
+                "sentiment": "positive",
+                "detail": (
+                    "CED emphasizes climate solutions, social justice, and "
+                    "interdisciplinary design."
+                ),
+            },
+            {
+                "label": "Design-build studios",
+                "sentiment": "positive",
+                "detail": (
+                    "Hands-on studios and research centers connect students to Bay "
+                    "Area practice."
+                ),
+            },
+            {
+                "label": "Intense studio workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Long studio hours and crit-heavy semesters are recurring themes."
+                ),
+            },
+            {
+                "label": "In-state vs. out-of-state cost",
+                "sentiment": "mixed",
+                "detail": (
+                    "California residents pay dramatically less than out-of-state "
+                    "and private-peer tuition."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "UC Berkeley College of Environmental Design",
+                "url": "https://ced.berkeley.edu/",
+            },
+            {
+                "label": "Black Spectacles — top M.Arch programs (Berkeley #7)",
+                "url": "https://www.blackspectacles.com/blog/top-10-masters-of-architecture-programs-in-the-us",
             },
         ],
         "disclaimer": (

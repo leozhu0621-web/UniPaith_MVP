@@ -161,6 +161,28 @@ def test_eecs_flagship_is_deeply_enriched():
     assert _FLAGSHIP in b._REVIEWS_BY_SLUG
 
 
+def test_coverable_programs_have_external_reviews():
+    """Coverable Berkeley programs must carry aggregated external_reviews."""
+    coverable = [
+        _FLAGSHIP,
+        "berkeley-computer-science-bs",
+        "berkeley-data-science-bs",
+        "berkeley-economics-bs",
+        "berkeley-mechanical-engineering-bs",
+        "berkeley-chemical-engineering-bs",
+        "berkeley-business-administration-bs",
+        "berkeley-business-administration-management-and-operations-prof",
+        "berkeley-law-prof",
+        "berkeley-public-policy-analysis-prof",
+        "berkeley-public-health-prof",
+        "berkeley-architecture-prof",
+    ]
+    for slug in coverable:
+        assert slug in b._REVIEWS_BY_SLUG, slug
+        assert b._REVIEWS_BY_SLUG[slug].get("summary"), slug
+        assert len(b._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
+
+
 def test_every_program_maps_to_a_real_school():
     names = {s["name"] for s in b.SCHOOLS}
     for spec in b.PROGRAMS:
