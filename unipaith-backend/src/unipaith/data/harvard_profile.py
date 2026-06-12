@@ -26,13 +26,14 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.harvard_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Harvard University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-10"
+ENRICHED_AT = "2026-06-12"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -59,7 +60,7 @@ _OMITTED_INSTITUTION = [
 # ranking_data entry that is an object with a numeric `rank` (labelled via the
 # frontend `rankingLabel` map, which already knows these keys).
 RANKING_DATA: dict = {
-    "ownership_type": "private_nonprofit",
+    "ownership_type": "private",
     "accreditor": "NECHE",
     "carnegie_classification": "Doctoral Universities: Very High Research Activity",
     # QS World 2026 (released 2025-06)
@@ -144,12 +145,37 @@ SCHOOL_OUTCOMES: dict = {
             "Engineering & applied sciences",
             "Arts & humanities",
         ],
+        "lab_links": {
+            "Wyss Institute for Biologically Inspired Engineering": "https://wyss.harvard.edu/",
+            "Broad Institute (Harvard & MIT)": "https://www.broadinstitute.org/",
+            "Harvard Stem Cell Institute": "https://hsci.harvard.edu/",
+            "Radcliffe Institute for Advanced Study": "https://www.radcliffe.harvard.edu/",
+            "Berkman Klein Center for Internet & Society": "https://cyber.harvard.edu/",
+            "Belfer Center for Science & International Affairs": "https://www.belfercenter.org/",
+            "Harvard-Smithsonian Center for Astrophysics": "https://www.cfa.harvard.edu/",
+            "Dana-Farber/Harvard Cancer Center": "https://www.dfhcc.harvard.edu/",
+            "Weatherhead Center for International Affairs": (
+                "https://weatherheadcenter.fas.harvard.edu/"
+            ),
+        },
     },
     "campus_life": {
         "varsity_sports": 42,
         "athletics_division": "NCAA Division I (Ivy League)",
         "residence_halls": 12,
+        "resources": [
+            {"label": "Harvard Crimson Athletics", "url": "https://gocrimson.com/"},
+            {
+                "label": "Harvard College Residential Life",
+                "url": "https://college.harvard.edu/student-life/residential-life",
+            },
+            {
+                "label": "Harvard Library",
+                "url": "https://library.harvard.edu/",
+            },
+        ],
     },
+    "media_credit": "Wikimedia Commons / Gunnar Klack (CC BY-SA 4.0)",
     "flagship": {
         "nobel_laureates": 161,
         "us_presidents": 8,
@@ -224,10 +250,10 @@ FOUNDED_YEAR = 1636
 CAMPUS_SETTING = "urban"
 
 DESCRIPTION = (
-    "Founded in 1636, Harvard University is the oldest institution of higher "
-    "education in the United States and one of the most influential research "
-    "universities in the world. Its campus centers on Harvard Yard in Cambridge, "
-    "Massachusetts, and extends across the Charles River into the Allston "
+    "Harvard University is a private research university in Cambridge, MA, founded in "
+    "1636 as the oldest institution of higher education in the United States and one "
+    "of the most influential research universities in the world. Its campus centers on "
+    "Harvard Yard in Cambridge and extends across the Charles River into the Allston "
     "neighborhood of Boston and to the Longwood Medical Area.\n\n"
     "Harvard is organized into Harvard College — the undergraduate school — and "
     "twelve graduate and professional schools, including the Business School, "
@@ -1260,6 +1286,34 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
+_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _build_catalog() -> list[dict]:
+    """Append breadth-first program nodes from the IPEDS Field-of-Study catalog."""
+    out: list[dict] = []
+    seen = set(_EXISTING_SLUGS)
+    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+        if slug in seen:
+            continue
+        if (cip, dtype) in _EXISTING_CIP_KEYS:
+            continue
+        seen.add(slug)
+        out.append({
+            "slug": slug,
+            "school": school,
+            "program_name": name,
+            "degree_type": dtype,
+            "cip": cip,
+            "duration_months": dur,
+            "delivery_format": fmt,
+            "description": desc,
+        })
+    return out
+
+
+PROGRAMS += _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
 # ── Application-requirement baselines ──────────────────────────────────────
@@ -1653,6 +1707,431 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {
                 "label": "U.S. News — Harvard University (Business)",
                 "url": "https://www.usnews.com/best-graduate-schools/top-business-schools/harvard-university-01110",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-jd": {
+        "summary": (
+            "Students and guides describe Harvard Law School's J.D. as the most "
+            "prestigious legal credential in the United States — U.S. News ranks it "
+            "No. 4 among law schools (2026) — with unmatched faculty depth, the "
+            "largest academic law library in the world, and extraordinary placement "
+            "into clerkships, Big Law, and public service. Common cautions are the "
+            "intense grading curve, the high cost of a three-year Cambridge "
+            "residence, and a culture that can feel competitive despite recent "
+            "reforms toward pass/fail first-year grading."
+        ),
+        "themes": [
+            {
+                "label": "National prestige & clerkships",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News #4 law school; historically the leading feeder to "
+                    "federal clerkships and elite firms."
+                ),
+            },
+            {
+                "label": "Faculty & library resources",
+                "sentiment": "positive",
+                "detail": (
+                    "World-renowned faculty across every legal field; the largest "
+                    "academic law library globally."
+                ),
+            },
+            {
+                "label": "Career breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong pipelines to private practice, government, academia, "
+                    "and public-interest law."
+                ),
+            },
+            {
+                "label": "Cost & debt",
+                "sentiment": "caution",
+                "detail": (
+                    "Three-year tuition near $78,700/year before living costs in "
+                    "the Boston area."
+                ),
+            },
+            {
+                "label": "Competitive culture",
+                "sentiment": "mixed",
+                "detail": (
+                    "Large 1L sections and a demanding workload; some students "
+                    "report pressure despite pass/fail first-year reforms."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Harvard Law School",
+                "url": "https://www.usnews.com/best-graduate-schools/top-law-schools/harvard-university-03050",
+            },
+            {
+                "label": "Harvard Law School — About",
+                "url": "https://hls.harvard.edu/about/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-md": {
+        "summary": (
+            "Students and guides rank Harvard Medical School among the top medical "
+            "schools in the world — U.S. News #1 for research (2026) — praising "
+            "the Pathways curriculum, the Longwood research ecosystem, and "
+            "affiliated hospitals such as Mass General and Brigham and Women's. "
+            "Common cautions are the extreme selectivity (roughly 3% acceptance), "
+            "the demanding pace of the pre-clinical years, and the high cost of "
+            "living in Boston."
+        ),
+        "themes": [
+            {
+                "label": "Research leadership",
+                "sentiment": "positive",
+                "detail": "U.S. News #1 medical school for research (2026).",
+            },
+            {
+                "label": "Hospital affiliations",
+                "sentiment": "positive",
+                "detail": (
+                    "Clinical training across Harvard's affiliated teaching "
+                    "hospitals in the Longwood Medical Area."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Among the most competitive M.D. programs globally; median "
+                    "MCAT and GPA well above national averages."
+                ),
+            },
+            {
+                "label": "Cost of attendance",
+                "sentiment": "caution",
+                "detail": (
+                    "Tuition near $78,700/year plus Boston-area living expenses "
+                    "over four years."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Harvard Medical School",
+                "url": "https://www.usnews.com/best-graduate-schools/top-medical-schools/harvard-university-04098",
+            },
+            {
+                "label": "Harvard Medical School — Education",
+                "url": "https://hms.harvard.edu/education",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-mph": {
+        "summary": (
+            "Students and public-health guides describe Harvard's M.P.H. as the "
+            "flagship degree at the T.H. Chan School of Public Health — U.S. News "
+            "ranks Harvard #1 among public-health schools (2026) — with strengths "
+            "in epidemiology, biostatistics, and global health. Common cautions are "
+            "the one-year program's fast pace, the high tuition for a professional "
+            "master's, and that career outcomes vary widely by concentration."
+        ),
+        "themes": [
+            {
+                "label": "Public-health ranking",
+                "sentiment": "positive",
+                "detail": "U.S. News #1 school of public health (2026).",
+            },
+            {
+                "label": "Interdisciplinary breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "Multiple fields of study and cross-registration across Harvard "
+                    "schools and Boston-area hospitals."
+                ),
+            },
+            {
+                "label": "Intensive timeline",
+                "sentiment": "caution",
+                "detail": (
+                    "The standard 45-credit M.P.H. is designed to be completed in "
+                    "one academic year."
+                ),
+            },
+            {
+                "label": "Tuition",
+                "sentiment": "caution",
+                "detail": (
+                    "Professional-school tuition without the full-need aid model "
+                    "of Harvard College."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Harvard T.H. Chan School of Public Health",
+                "url": (
+                    "https://www.usnews.com/best-graduate-schools/top-health-"
+                    "schools/harvard-university-04098"
+                ),
+            },
+            {
+                "label": "Harvard Chan — M.P.H. Program",
+                "url": "https://www.hsph.harvard.edu/admissions/degree-programs/master-of-public-health/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-mpp": {
+        "summary": (
+            "Students and policy guides describe the Harvard Kennedy School M.P.P. "
+            "as a rigorous, quantitative policy degree — U.S. News ranks HKS #3 "
+            "among public-affairs schools (2026) — with unmatched access to Harvard "
+            "faculty, Belfer Center research, and a global alumni network in "
+            "government and NGOs. Common cautions are the math-heavy core "
+            "curriculum, limited financial aid relative to Harvard College, and "
+            "that the two-year residential format is costly."
+        ),
+        "themes": [
+            {
+                "label": "Policy-school standing",
+                "sentiment": "positive",
+                "detail": "U.S. News #3 public-affairs school (2026).",
+            },
+            {
+                "label": "Quantitative core",
+                "sentiment": "positive",
+                "detail": (
+                    "Microeconomics, statistics, and policy analysis training "
+                    "valued by governments and multilateral organizations."
+                ),
+            },
+            {
+                "label": "Global alumni network",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates hold leadership roles in governments, NGOs, and "
+                    "international institutions worldwide."
+                ),
+            },
+            {
+                "label": "Quantitative demands",
+                "sentiment": "caution",
+                "detail": (
+                    "The M.P.P. core requires substantial economics and statistics "
+                    "coursework."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Two-year professional tuition without Harvard College's "
+                    "need-blind aid model."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Harvard Kennedy School",
+                "url": (
+                    "https://www.usnews.com/best-graduate-schools/top-public-affairs-"
+                    "schools/harvard-university-21097"
+                ),
+            },
+            {
+                "label": "Harvard Kennedy School — M.P.P.",
+                "url": (
+                    "https://www.hks.harvard.edu/educational-programs/masters-programs/"
+                    "master-public-policy"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-cs-ab": {
+        "summary": (
+            "Students and guides describe Harvard's computer science concentration "
+            "as a fast-growing, research-oriented program housed in SEAS — Niche "
+            "ranks Harvard #12 nationally for undergraduate CS (2026) — with "
+            "strengths in AI, systems, and theory and the cultural reach of CS50. "
+            "Common cautions are that Harvard's CS program is smaller and newer "
+            "than peer giants like MIT or Stanford, introductory courses can be "
+            "large, and the concentration has become increasingly competitive to "
+            "declare."
+        ),
+        "themes": [
+            {
+                "label": "Research & CS50 culture",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to SEAS faculty in AI, systems, and theory; CS50 is "
+                    "among the university's largest courses."
+                ),
+            },
+            {
+                "label": "National CS standing",
+                "sentiment": "positive",
+                "detail": "Niche #12 Best Colleges for Computer Science (2026).",
+            },
+            {
+                "label": "Scale vs. peer giants",
+                "sentiment": "mixed",
+                "detail": (
+                    "Smaller CS department than MIT or Stanford; fewer dedicated "
+                    "CS faculty per student."
+                ),
+            },
+            {
+                "label": "Concentration competition",
+                "sentiment": "caution",
+                "detail": (
+                    "Rising demand has made the CS concentration increasingly "
+                    "selective to enter."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Best Colleges for Computer Science",
+                "url": "https://www.niche.com/colleges/search/best-colleges-for-computer-science/",
+            },
+            {
+                "label": "Harvard SEAS — Computer Science",
+                "url": "https://seas.harvard.edu/computer-science",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-economics-ab": {
+        "summary": (
+            "Students and guides describe Harvard's economics concentration as the "
+            "university's most popular undergraduate field — Niche ranks it #6 "
+            "nationally for economics (2026) — with rigorous training in "
+            "microeconomics, econometrics, and empirical methods and strong "
+            "placement into finance, consulting, and graduate school. Common "
+            "cautions are large intermediate courses, a grading culture that "
+            "students describe as demanding, and that the concentration's size "
+            "can limit individual faculty access."
+        ),
+        "themes": [
+            {
+                "label": "National economics standing",
+                "sentiment": "positive",
+                "detail": "Niche #6 Best Colleges for Economics in America (2026).",
+            },
+            {
+                "label": "Quantitative training",
+                "sentiment": "positive",
+                "detail": (
+                    "Ec 10 and the intermediate sequence build empirical and "
+                    "theoretical foundations valued by employers."
+                ),
+            },
+            {
+                "label": "Recruiting outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Common path into finance, consulting, tech, and top "
+                    "economics Ph.D. programs."
+                ),
+            },
+            {
+                "label": "Course scale",
+                "sentiment": "caution",
+                "detail": (
+                    "Large lecture sections in intermediate courses; concentration "
+                    "size limits small-seminar access."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Best Colleges for Economics",
+                "url": "https://www.niche.com/colleges/search/best-colleges-for-economics/",
+            },
+            {
+                "label": "Harvard Economics — Undergraduate",
+                "url": "https://economics.harvard.edu/undergraduate",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-march": {
+        "summary": (
+            "Students and architecture guides describe Harvard's M.Arch as one of "
+            "the most prestigious professional architecture degrees — DesignIntelligence "
+            "historically ranked GSD at the top tier — with a design-studio culture, "
+            "the Gund Hall community, and global alumni influence. Common cautions "
+            "are the intensive studio workload, high tuition for a three-year "
+            "professional program, and that GSD withdrew from DesignIntelligence "
+            "rankings in 2022, making cross-school comparisons harder."
+        ),
+        "themes": [
+            {
+                "label": "Design prestige",
+                "sentiment": "positive",
+                "detail": (
+                    "GSD is among the most recognized architecture schools "
+                    "worldwide with influential faculty and alumni."
+                ),
+            },
+            {
+                "label": "Studio culture",
+                "sentiment": "positive",
+                "detail": (
+                    "Gund Hall's open studio floors foster interdisciplinary "
+                    "design collaboration."
+                ),
+            },
+            {
+                "label": "Studio intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "The accredited M.Arch track demands sustained studio work "
+                    "across multiple semesters."
+                ),
+            },
+            {
+                "label": "Program cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Professional tuition for a multi-year residential degree in "
+                    "the Boston area."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard GSD — Master in Architecture",
+                "url": "https://www.gsd.harvard.edu/architecture/",
+            },
+            {
+                "label": "Architectural Record — GSD and DesignIntelligence",
+                "url": "https://www.architecturalrecord.com/articles/15457-gsd-pulls-out-of-designintelligence-rankings",
             },
         ],
         "disclaimer": (
@@ -2279,6 +2758,12 @@ def _program_standard(spec: dict) -> dict:
         omitted += ["cost_data.tuition_usd", "cost_data.source"]
     if _uses_open_admissions(spec):
         omitted.append("application_requirements.deadlines")
+    elif (
+        slug not in _DEADLINES_BY_SLUG
+        and slug != "harvard-mba"
+        and spec["degree_type"] != "bachelors"
+    ):
+        omitted.append("application_requirements.deadlines")
     kind = _outcomes_kind(spec)
     if kind == "fos":
         omitted += [
@@ -2322,7 +2807,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.duration_months = spec.get("duration_months")
         p.description_text = _DESC_RICH_BY_SLUG.get(spec["slug"]) or spec["description"]
         # Official program-page URL (read-more link on the program page).
-        p.website_url = _WEBSITE_BY_SLUG.get(spec["slug"])
+        p.website_url = _WEBSITE_BY_SLUG.get(spec["slug"]) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
         p.is_published = True
         p.catalog_source = "curated"
