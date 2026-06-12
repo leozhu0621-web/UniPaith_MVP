@@ -1315,6 +1315,863 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    "stanford-cs-ms": {
+        "summary": (
+            "Students and graduate guides consistently rank Stanford's MS in "
+            "Computer Science among the world's most selective and prestigious "
+            "technical master's programs — QS places Stanford No. 2 globally in "
+            "computer science (2026) — praising ten specialization tracks, "
+            "Silicon Valley recruiting access, and world-class faculty; common "
+            "cautions are that the department offers no financial support for MS "
+            "students, admission is extremely competitive, and total cost of "
+            "attendance can exceed $125,000 including Bay Area living expenses."
+        ),
+        "themes": [
+            {
+                "label": "Global CS standing",
+                "sentiment": "positive",
+                "detail": (
+                    "QS ranks Stanford No. 2 worldwide in computer science (2026), "
+                    "behind only MIT."
+                ),
+            },
+            {
+                "label": "Flexible specializations",
+                "sentiment": "positive",
+                "detail": (
+                    "The 45-unit MS spans ten tracks from AI and systems to HCI "
+                    "and security."
+                ),
+            },
+            {
+                "label": "Silicon Valley access",
+                "sentiment": "positive",
+                "detail": (
+                    "Proximity to major tech employers and startup ecosystems is a "
+                    "recurring theme in student guides."
+                ),
+            },
+            {
+                "label": "No departmental funding",
+                "sentiment": "caution",
+                "detail": (
+                    "Stanford CS does not offer financial support for MS students — "
+                    "only U.S. federal loans are available."
+                ),
+            },
+            {
+                "label": "Extreme selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "The MS admits a small fraction of a very large applicant pool "
+                    "each year."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "QS — Computer Science subject rankings (2026)",
+                "url": "https://www.topuniversities.com/university-subject-rankings/computer-science-information-systems",
+            },
+            {
+                "label": "Stanford CS — MS admissions FAQ",
+                "url": "https://www.cs.stanford.edu/admissions/masters-admissions-frequently-asked-questions",
+            },
+            {
+                "label": "Leland — Stanford MSCS overview",
+                "url": "https://www.joinleland.com/library/a/stanford-mscs",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "stanford-cs-bs": {
+        "summary": (
+            "Students and third-party guides consistently rank Stanford "
+            "undergraduate computer science among the nation's most popular and "
+            "rigorous programs — Niche lists CS as the most common major with "
+            "341 graduates in a recent cycle — praising flexible track options, "
+            "CURIS summer research, and a coterminal BS/MS pathway; common cautions "
+            "are that grading is curved against an exceptionally strong peer group, "
+            "introductory courses are large, and the overall admit rate is about 4%."
+        ),
+        "themes": [
+            {
+                "label": "Top-tier CS department",
+                "sentiment": "positive",
+                "detail": (
+                    "Stanford CS publishes ten undergraduate tracks and is widely "
+                    "cited among the world's leading CS programs."
+                ),
+            },
+            {
+                "label": "Research opportunities",
+                "sentiment": "positive",
+                "detail": (
+                    "CURIS summer research and honors-thesis pathways give "
+                    "undergraduates faculty lab access."
+                ),
+            },
+            {
+                "label": "Coterminal MS pathway",
+                "sentiment": "positive",
+                "detail": (
+                    "Students can complete a BS and MS in roughly five years — a "
+                    "well-established Stanford pathway."
+                ),
+            },
+            {
+                "label": "Curved grading",
+                "sentiment": "caution",
+                "detail": (
+                    "Niche reviewers note that grading on a curve against elite peers "
+                    "can feel more demanding than high school."
+                ),
+            },
+            {
+                "label": "Extreme selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Stanford's undergraduate admit rate is about 4% (Class of 2028)."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Stanford CS — bachelor's program overview",
+                "url": "https://www.cs.stanford.edu/academics-overview/academics-bachelors-program",
+            },
+            {
+                "label": "Niche — Stanford University",
+                "url": "https://www.niche.com/colleges/stanford-university/",
+            },
+            {
+                "label": "Lantern College Counseling — best CS programs (2026)",
+                "url": "https://www.lanterncollegecounseling.com/insights/best-colleges-for-computer-science-how-to-find-the-right-fit-beyond-the-rankings",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "stanford-jd": {
+        "summary": (
+            "Students and legal guides rank Stanford Law School No. 1 nationally "
+            "for 2026 — the first time it holds the top spot alone after years of "
+            "tying Yale — praising a 98.4% full-time employment rate for the Class "
+            "of 2024 and a 98.9% ultimate bar-passage rate; common cautions are "
+            "extreme selectivity (about 6% acceptance), a demanding workload, and "
+            "that California's bar exam is among the nation's more difficult "
+            "jurisdictions."
+        ),
+        "themes": [
+            {
+                "label": "No. 1 national rank (2026)",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News placed Stanford Law alone at No. 1 for 2026, ending "
+                    "Yale's long solo reign."
+                ),
+            },
+            {
+                "label": "Employment outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "98.4% of 2024 graduates had full-time, long-term employment "
+                    "within ten months."
+                ),
+            },
+            {
+                "label": "Bar passage",
+                "sentiment": "positive",
+                "detail": (
+                    "A 98.9% ultimate bar-passage rate (two-year average) in the "
+                    "2026 ranking data."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "About 6% acceptance with a median LSAT of 173 and GPA of 3.96."
+                ),
+            },
+            {
+                "label": "California bar difficulty",
+                "sentiment": "mixed",
+                "detail": (
+                    "Graduates most often sit for California's bar, which has a "
+                    "lower statewide passage rate than many peer states."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Bloomberg Law — Stanford Law No. 1 (2026)",
+                "url": "https://news.bloomberglaw.com/legal-exchange-insights-and-commentary/stanford-law-knocks-yale-off-1-ranking-for-the-first-time",
+            },
+            {
+                "label": "Tipping the Scales — 2026 U.S. News law rankings",
+                "url": "https://tippingthescales.com/rankings/2026-u-s-news-law-school-ranking-stanford-replaces-yale-at-the-top/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "stanford-md": {
+        "summary": (
+            "Students and medical-school guides consistently describe Stanford "
+            "School of Medicine as among the nation's most selective and "
+            "research-intensive M.D. programs — Shemmassian reports a 5.63% "
+            "interview rate and median MCAT of 519 — praising the Discovery "
+            "Curriculum, integration with Stanford Health Care, and a small "
+            "entering class of about 90 students; common cautions are that "
+            "Stanford declined to participate in U.S. News's 2024+ tiered "
+            "rankings (listed as unranked), tuition and fees exceed $89,000, and "
+            "admissions expect demonstrated research interest alongside clinical "
+            "aptitude."
+        ),
+        "themes": [
+            {
+                "label": "Research-intensive training",
+                "sentiment": "positive",
+                "detail": (
+                    "The Discovery Curriculum emphasizes scholarship pathways and "
+                    "physician-scientist development."
+                ),
+            },
+            {
+                "label": "Academic health system",
+                "sentiment": "positive",
+                "detail": (
+                    "Clinical training spans Stanford Health Care and affiliated "
+                    "Bay Area hospitals."
+                ),
+            },
+            {
+                "label": "Small entering class",
+                "sentiment": "positive",
+                "detail": (
+                    "Roughly 90 students per class supports close faculty mentoring."
+                ),
+            },
+            {
+                "label": "Extreme selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "A sub-6% interview rate and median MCAT of 519 make admission "
+                    "highly competitive."
+                ),
+            },
+            {
+                "label": "U.S. News unranked",
+                "sentiment": "mixed",
+                "detail": (
+                    "Stanford no longer submits data to U.S. News medical-school "
+                    "rankings and appears as unranked in tiered lists."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Shemmassian — Medical schools in California (2026)",
+                "url": "https://www.shemmassianconsulting.com/blog/medical-schools-in-california",
+            },
+            {
+                "label": "Stanford School of Medicine — M.D. program",
+                "url": "https://med.stanford.edu/md.html",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "stanford-msx": {
+        "summary": (
+            "Students and third-party guides describe Stanford's MSx as a "
+            "one-year, full-time Master of Science in Management for mid-career "
+            "leaders with at least eight years of work experience — Poets&Quants "
+            "lists tuition at $143,144 for the 12-month residential program — "
+            "praising shared GSB faculty, flexible electives, and full Stanford "
+            "GSB alumni status; common cautions are the high tuition plus "
+            "opportunity cost of a one-year career break, a smaller cohort than "
+            "the two-year MBA, and admissions emphasis on a clear post-program "
+            "career plan."
+        ),
+        "themes": [
+            {
+                "label": "Mid-career leadership focus",
+                "sentiment": "positive",
+                "detail": (
+                    "Designed for experienced managers — the entering class averages "
+                    "roughly 12–14 years of work experience."
+                ),
+            },
+            {
+                "label": "GSB ecosystem access",
+                "sentiment": "positive",
+                "detail": (
+                    "MSx students share faculty, electives, and alumni network with "
+                    "the two-year MBA."
+                ),
+            },
+            {
+                "label": "Entrepreneurship culture",
+                "sentiment": "positive",
+                "detail": (
+                    "BusinessBecause notes a strong startup and executive-placement "
+                    "track among MSx graduates."
+                ),
+            },
+            {
+                "label": "High total cost",
+                "sentiment": "caution",
+                "detail": (
+                    "One-year tuition near $143,000 plus foregone salary makes total "
+                    "cost substantial."
+                ),
+            },
+            {
+                "label": "Career-plan scrutiny",
+                "sentiment": "caution",
+                "detail": (
+                    "Admissions weighs whether applicants have a credible "
+                    "acceleration, pivot, or entrepreneurial rationale."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Poets&Quants — Stanford GSB MSx",
+                "url": "https://poetsandquants.com/specialized-master/stanford-universitys-graduate-school-of-business-ms-in-management-msx/?pq-directory-type=specialized-master",
+            },
+            {
+                "label": "BusinessBecause — Stanford MSx review",
+                "url": "https://www.businessbecause.com/news/reviews/7808/stanford-msx",
+            },
+            {
+                "label": "Stanford GSB — MSx or MBA comparison",
+                "url": "https://www.gsb.stanford.edu/programs/msx-or-mba",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "stanford-mse-ms": {
+        "summary": (
+            "Students and graduate guides describe Stanford's MS in Management "
+            "Science and Engineering as a quantitative, engineering-based "
+            "alternative to an MBA — the department emphasizes optimization, "
+            "analytics, and organizational decision-making across seven "
+            "specialization tracks including Operations and Analytics — praising "
+            "cross-registration with the GSB and d.school and strong placement into "
+            "product management, consulting, and tech; common cautions are that "
+            "some core MS&E courses are considered less polished than equivalent "
+            "GSB offerings and the program is better suited to analytically minded "
+            "early-career professionals than to traditional management trainees."
+        ),
+        "themes": [
+            {
+                "label": "Quantitative management",
+                "sentiment": "positive",
+                "detail": (
+                    "Combines optimization, probability, and organizational science "
+                    "within the School of Engineering."
+                ),
+            },
+            {
+                "label": "Track flexibility",
+                "sentiment": "positive",
+                "detail": (
+                    "Seven specialties span financial analytics, health systems, "
+                    "and computational social science."
+                ),
+            },
+            {
+                "label": "Cross-campus access",
+                "sentiment": "positive",
+                "detail": (
+                    "Students routinely take electives at the GSB, d.school, and "
+                    "peer engineering departments."
+                ),
+            },
+            {
+                "label": "PM & tech placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Product management, consulting, and Silicon Valley tech are "
+                    "the canonical career paths."
+                ),
+            },
+            {
+                "label": "Not a substitute MBA",
+                "sentiment": "mixed",
+                "detail": (
+                    "Student guides note MS&E is more technical and less "
+                    "network-driven than a two-year MBA."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Stanford MS&E — MS program overview",
+                "url": "https://msande.stanford.edu/ms-program",
+            },
+            {
+                "label": "Stanford MS&E — MS admission requirements",
+                "url": "https://msande.stanford.edu/academics-admissions/graduate/admission/ms-admission",
+            },
+            {
+                "label": "Medium — MS&E student perspective",
+                "url": "https://medium.com/@giancarlo_benedetti/ms-e-the-cheaper-mba-de358eaeac20",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "stanford-ee-ms": {
+        "summary": (
+            "Students and graduate guides rank Stanford Electrical Engineering "
+            "among the world's leading EE departments — Times Higher Education "
+            "places Stanford No. 6 globally (2025) with engineering among its "
+            "core strengths — praising depth in integrated circuits, photonics, "
+            "and information systems plus Silicon Valley hardware recruiting; "
+            "common cautions are that the MS is coursework- or research-oriented "
+            "without guaranteed departmental funding, admission is highly "
+            "selective, and Bay Area living costs are high."
+        ),
+        "themes": [
+            {
+                "label": "World-class EE research",
+                "sentiment": "positive",
+                "detail": (
+                    "Faculty strength spans hardware, signals, photonics, and "
+                    "computing systems."
+                ),
+            },
+            {
+                "label": "Silicon Valley hardware ties",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates place into semiconductor, systems, and deep-tech "
+                    "employers across the Bay Area."
+                ),
+            },
+            {
+                "label": "Flexible MS paths",
+                "sentiment": "positive",
+                "detail": (
+                    "The 45-unit MS can be structured around coursework or a "
+                    "research thesis."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Graduate admission to Stanford engineering programs is "
+                    "highly competitive."
+                ),
+            },
+            {
+                "label": "Cost of living",
+                "sentiment": "caution",
+                "detail": (
+                    "Bay Area housing pushes total graduate cost well above tuition "
+                    "alone."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Stanford EE — graduate admissions",
+                "url": "https://ee.stanford.edu/academics/graduate-admissions",
+            },
+            {
+                "label": "Times Higher Education — Stanford University (2025)",
+                "url": "https://www.timeshighereducation.com/world-university-rankings/stanford-university",
+            },
+            {
+                "label": "Niche — Stanford University",
+                "url": "https://www.niche.com/colleges/stanford-university/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "stanford-me-bs": {
+        "summary": (
+            "Students and third-party guides describe Stanford's undergraduate "
+            "mechanical engineering as a rigorous SoE major emphasizing design, "
+            "robotics, thermosciences, and biomechanics — the SoE undergraduate "
+            "handbook highlights extensive lab and project coursework — praising "
+            "small-group design sequences and access to the Product Realization Lab; "
+            "common cautions are a demanding core alongside Stanford's humanities "
+            "requirements, large lower-division math and physics courses, and that "
+            "students must proactively seek research mentors."
+        ),
+        "themes": [
+            {
+                "label": "Design & robotics depth",
+                "sentiment": "positive",
+                "detail": (
+                    "ME at Stanford emphasizes hands-on design, mechanics, and "
+                    "thermosciences."
+                ),
+            },
+            {
+                "label": "Product Realization Lab",
+                "sentiment": "positive",
+                "detail": (
+                    "The PRL gives undergraduates machine-shop and prototyping "
+                    "access rare among peer programs."
+                ),
+            },
+            {
+                "label": "Research pathways",
+                "sentiment": "positive",
+                "detail": (
+                    "SoE summer research programs connect undergraduates to "
+                    "faculty labs."
+                ),
+            },
+            {
+                "label": "Heavy core workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Engineering fundamentals plus Stanford's breadth requirements "
+                    "create a packed schedule."
+                ),
+            },
+            {
+                "label": "Large intro courses",
+                "sentiment": "caution",
+                "detail": (
+                    "Lower-division math and physics sections can be large before "
+                    "students reach ME depth courses."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Stanford SoE — Mechanical Engineering program",
+                "url": "https://ughb.stanford.edu/majors-minors/mechanical-engineering-program",
+            },
+            {
+                "label": "Stanford ME — undergraduate program",
+                "url": "https://me.stanford.edu/academics-admissions/undergraduate-program",
+            },
+            {
+                "label": "Niche — Stanford University",
+                "url": "https://www.niche.com/colleges/stanford-university/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "stanford-economics-bs": {
+        "summary": (
+            "Students and third-party guides rank Stanford's undergraduate "
+            "economics among the nation's strongest — the department sits in the "
+            "School of Humanities and Sciences with ties to SIEPR and the GSB — "
+            "praising rigorous micro, macro, and econometrics training and a path "
+            "into finance, consulting, and PhD programs; common cautions are large "
+            "lecture sections in popular courses, a competitive curve, and that "
+            "students seeking a pre-professional business degree often cross-register "
+            "at the GSB rather than majoring in economics alone."
+        ),
+        "themes": [
+            {
+                "label": "Rigorous quantitative training",
+                "sentiment": "positive",
+                "detail": (
+                    "The major stresses micro theory, econometrics, and mathematical "
+                    "modeling."
+                ),
+            },
+            {
+                "label": "Research institute ties",
+                "sentiment": "positive",
+                "detail": (
+                    "SIEPR and GSB faculty connections give undergraduates exposure "
+                    "to policy and finance research."
+                ),
+            },
+            {
+                "label": "Career versatility",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates pursue consulting, finance, tech, policy, and "
+                    "economics PhD programs."
+                ),
+            },
+            {
+                "label": "Large lectures",
+                "sentiment": "caution",
+                "detail": (
+                    "Popular intermediate courses can enroll hundreds of students."
+                ),
+            },
+            {
+                "label": "Not a business major",
+                "sentiment": "mixed",
+                "detail": (
+                    "Stanford has no undergraduate business school; economics is the "
+                    "closest quantitative social-science option."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Stanford Economics — undergraduate program",
+                "url": "https://economics.stanford.edu/academics/undergraduate-program",
+            },
+            {
+                "label": "Niche — Stanford University",
+                "url": "https://www.niche.com/colleges/stanford-university/",
+            },
+            {
+                "label": "Stanford SIEPR — research overview",
+                "url": "https://siepr.stanford.edu/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "stanford-symbolic-systems-bs": {
+        "summary": (
+            "Students and third-party guides describe Stanford's Symbolic Systems "
+            "major as a signature interdisciplinary program blending computer "
+            "science, linguistics, philosophy, psychology, and statistics — "
+            "IvyWise ranks it among Stanford's most popular and most unique majors "
+            "— praising its focus on human and machine intelligence and strong "
+            "placement into product management and software engineering; common "
+            "cautions are that the concentration is unique to Stanford (less "
+            "recognized off-campus than CS alone), advising can feel fragmented "
+            "across departments, and the curriculum demands breadth across both "
+            "humanities and technical fields."
+        ),
+        "themes": [
+            {
+                "label": "Signature Stanford major",
+                "sentiment": "positive",
+                "detail": (
+                    "SymSys is widely cited as one of Stanford's most distinctive "
+                    "undergraduate programs."
+                ),
+            },
+            {
+                "label": "Human + machine intelligence",
+                "sentiment": "positive",
+                "detail": (
+                    "Coursework spans cognitive science, AI, linguistics, and "
+                    "philosophy of mind."
+                ),
+            },
+            {
+                "label": "Tech career paths",
+                "sentiment": "positive",
+                "detail": (
+                    "Alumni frequently enter product management, software "
+                    "engineering, and research."
+                ),
+            },
+            {
+                "label": "Interdisciplinary complexity",
+                "sentiment": "mixed",
+                "detail": (
+                    "Students navigate requirements across multiple departments with "
+                    "varying advising styles."
+                ),
+            },
+            {
+                "label": "Less portable label",
+                "sentiment": "caution",
+                "detail": (
+                    "Employers off-campus may be less familiar with 'Symbolic "
+                    "Systems' than a straight CS degree."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Stanford Symbolic Systems Program",
+                "url": "https://symsys.stanford.edu/",
+            },
+            {
+                "label": "Stanford Bulletin — SYMBO-BS",
+                "url": "https://bulletin.stanford.edu/programs/SYMBO-BS",
+            },
+            {
+                "label": "IvyWise — top Stanford majors",
+                "url": "https://www.ivywise.com/blog/top-10-most-popular-majors-at-stanford/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "stanford-human-biology-bs": {
+        "summary": (
+            "Students and third-party guides describe Stanford Human Biology as "
+            "one of the university's most popular pre-health majors — Niche lists "
+            "biology among the top three majors by graduates — praising "
+            "interdisciplinary study of human health, behavior, and policy plus "
+            "access to Stanford Medicine research; common cautions are that the "
+            "major is competitive to declare, pre-med course sequencing is "
+            "demanding alongside HumBio breadth requirements, and pre-health "
+            "advising can feel crowded given the large applicant pool."
+        ),
+        "themes": [
+            {
+                "label": "Popular pre-health path",
+                "sentiment": "positive",
+                "detail": (
+                    "Human Biology is a leading route for Stanford students pursuing "
+                    "medicine and health careers."
+                ),
+            },
+            {
+                "label": "Interdisciplinary health focus",
+                "sentiment": "positive",
+                "detail": (
+                    "The major integrates biology, epidemiology, and health policy "
+                    "rather than a narrow molecular track."
+                ),
+            },
+            {
+                "label": "Medical campus access",
+                "sentiment": "positive",
+                "detail": (
+                    "Proximity to Stanford Medicine supports research and clinical "
+                    "shadowing opportunities."
+                ),
+            },
+            {
+                "label": "Crowded pre-med pipeline",
+                "sentiment": "caution",
+                "detail": (
+                    "A large share of undergraduates pursue medicine, intensifying "
+                    "competition for research and advising."
+                ),
+            },
+            {
+                "label": "Heavy course load",
+                "sentiment": "caution",
+                "detail": (
+                    "Pre-med prerequisites plus HumBio core courses create a packed "
+                    "schedule."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Stanford Human Biology Program",
+                "url": "https://humbio.stanford.edu/",
+            },
+            {
+                "label": "Niche — Stanford University",
+                "url": "https://www.niche.com/colleges/stanford-university/",
+            },
+            {
+                "label": "Stanford Bulletin — HUMBIO-BS",
+                "url": "https://bulletin.stanford.edu/programs/HUMBIO-BS",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "stanford-bioe-bs": {
+        "summary": (
+            "Students and third-party guides describe Stanford's undergraduate "
+            "bioengineering as a School of Engineering major at the interface of "
+            "biology and medicine — the SoE handbook emphasizes quantitative "
+            "life-science training with lab and design components — praising "
+            "access to Bio-X and translational research on campus; common cautions "
+            "are that the major requires strong math and chemistry preparation, "
+            "competition for faculty-lab spots is intense, and the program is "
+            "smaller than CS or HumBio with fewer built-in peer cohorts."
+        ),
+        "themes": [
+            {
+                "label": "Biology-meets-engineering",
+                "sentiment": "positive",
+                "detail": (
+                    "BioE trains students at the intersection of molecular biology "
+                    "and engineering design."
+                ),
+            },
+            {
+                "label": "Bio-X research ecosystem",
+                "sentiment": "positive",
+                "detail": (
+                    "Campus institutes connect undergraduates to biomedical "
+                    "engineering research."
+                ),
+            },
+            {
+                "label": "Pre-med & industry paths",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates pursue medicine, biotech, and graduate bioengineering "
+                    "programs."
+                ),
+            },
+            {
+                "label": "Quantitative prerequisites",
+                "sentiment": "caution",
+                "detail": (
+                    "Strong calculus, chemistry, and physics are required before "
+                    "upper-division BioE courses."
+                ),
+            },
+            {
+                "label": "Smaller cohort",
+                "sentiment": "caution",
+                "detail": (
+                    "Fewer majors than CS or HumBio means students build community "
+                    "more proactively."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Stanford Bioengineering — undergraduate program",
+                "url": "https://bioengineering.stanford.edu/academics-admissions/undergraduate-program",
+            },
+            {
+                "label": "Stanford SoE — Bioengineering program sheet",
+                "url": "https://ughb.stanford.edu/majors-minors/bioengineering-program",
+            },
+            {
+                "label": "Niche — Stanford University",
+                "url": "https://www.niche.com/colleges/stanford-university/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
 }
 
 # ── Application requirements (degree-type baselines) ────────────────────────

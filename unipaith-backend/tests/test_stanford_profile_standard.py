@@ -168,6 +168,29 @@ def test_mba_flagship_is_deeply_enriched():
     assert s._program_standard(_FLAGSHIP, s._SPEC_BY_SLUG[_FLAGSHIP], True)["omitted"] == []
 
 
+def test_coverable_programs_have_external_reviews():
+    """Coverable Stanford programs must carry aggregated external_reviews."""
+    coverable = [
+        _FLAGSHIP,
+        "stanford-cs-ms",
+        "stanford-cs-bs",
+        "stanford-jd",
+        "stanford-md",
+        "stanford-msx",
+        "stanford-mse-ms",
+        "stanford-ee-ms",
+        "stanford-me-bs",
+        "stanford-economics-bs",
+        "stanford-symbolic-systems-bs",
+        "stanford-human-biology-bs",
+        "stanford-bioe-bs",
+    ]
+    for slug in coverable:
+        assert slug in s._REVIEWS_BY_SLUG, slug
+        assert s._REVIEWS_BY_SLUG[slug].get("summary"), slug
+        assert len(s._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
+
+
 def test_every_program_is_gold_except_recorded_omissions():
     assert len(s.PROGRAMS) >= 170, "full IPEDS/Scorecard catalog breadth (UNITID 243744)"
     for spec in s.PROGRAMS:
