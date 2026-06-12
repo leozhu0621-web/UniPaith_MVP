@@ -144,6 +144,33 @@ def test_flagship_is_deeply_enriched():
     )
 
 
+def test_coverable_programs_have_external_reviews():
+    """Coverable programs (MBA, JD, MPH, MArch, MEM, flagship majors) must carry reviews."""
+    coverable = [
+        _FLAGSHIP,
+        "yale-mba",
+        "yale-economics-bs",
+        "yale-public-health-mph",
+        "yale-juris-doctor-jd-prof",
+        "yale-architecture-march",
+        "yale-environmental-management-mem",
+    ]
+    for slug in coverable:
+        assert slug in y._REVIEWS_BY_SLUG, slug
+        assert y._REVIEWS_BY_SLUG[slug].get("summary"), slug
+        assert len(y._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
+
+
+def test_institution_has_media_credit():
+    assert y.SCHOOL_OUTCOMES.get("media_credit"), "campus photo must carry attribution"
+
+
+def test_description_leads_with_research_university():
+    assert y.DESCRIPTION.startswith(
+        "Yale University is a private research university in New Haven, CT"
+    )
+
+
 def test_full_catalog_breadth():
     # The short-catalog bug: Yale offers far more than the original 20. The set must be the
     # real published catalog (Yale College majors + every school's graduate/professional
