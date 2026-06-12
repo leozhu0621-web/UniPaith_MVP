@@ -187,3 +187,24 @@ async def test_feed_kinds_filter_deadline_only(
 
     res2 = await student_client.get("/api/v1/connect/feed", params={"kinds": "post"})
     assert all(it["kind"] == "post" for it in res2.json()["items"])
+
+
+@pytest.mark.asyncio
+async def test_feed_items_carry_follow_source(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Each feed item carries the follow row's source for 'because you follow'
+    attribution (Spec 2026-06-12 §5.2)."""
+    _, institution, program = await _seed(db_session, mock_student_user, mock_institution_user)
+    await _publish_post(db_session, institution.id)
+    # Save the program → auto-follow with source='saved'.
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program.id)})
+
+    res = await student_client.get("/api/v1/connect/feed")
+    items = res.json()["items"]
+    assert items, "expected at least one feed item"
+    for it in items:
+        assert it["follow_source"] == "saved"

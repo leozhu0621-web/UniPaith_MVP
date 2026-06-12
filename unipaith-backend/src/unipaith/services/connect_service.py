@@ -86,6 +86,14 @@ class ConnectService:
                 if "program_change" in want:
                     items += self._program_change_items(engagement, inst_names, muted)
 
+        # "Because you follow X" attribution (Spec 2026-06-12 §5.2): stamp each
+        # item with the follow row's source ('saved' | 'application' | 'explicit').
+        if items:
+            sources = await self._follow_sources(student_id)
+            for it in items:
+                iid = it.get("institution_id")
+                it["follow_source"] = sources.get(UUID(iid)) if iid else None
+
         if rank == "relevant":
             if engagement is None:
                 engagement = await self._engagement(student_id)
@@ -521,6 +529,17 @@ class ConnectService:
                 if entry["engaged_at"] is None or (created_at and created_at < entry["engaged_at"]):
                     entry["engaged_at"] = created_at
         return out
+
+    async def _follow_sources(self, student_id: UUID) -> dict[UUID, str]:
+        """institution_id → follow source, for feed-item attribution (§5.2)."""
+        from unipaith.models.follow import InstitutionFollow
+
+        rows = await self.db.execute(
+            select(InstitutionFollow.institution_id, InstitutionFollow.source).where(
+                InstitutionFollow.student_id == student_id
+            )
+        )
+        return {r[0]: r[1] for r in rows.all()}
 
     async def _institution_names(self, ids: set[UUID]) -> dict[UUID, str]:
         if not ids:
