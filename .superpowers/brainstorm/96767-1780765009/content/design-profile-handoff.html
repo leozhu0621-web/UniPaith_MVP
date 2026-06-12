@@ -1,0 +1,90 @@
+<h2>Design · Section 2 — your living profile &amp; the match handoff</h2>
+<p class="subtitle">The quiet "✦ Your profile ▸" opens a warm reflection of what Uni's learned — editable, no tracks/layers/progress-bars. And Uni offers matches the way a counselor would: when she senses she has a real picture, not behind a locked 50% gate.</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">✦ Your profile ▸ (opens from the chat)</div>
+    <div class="mockup-body" style="background:#fff;padding:14px;">
+      <div style="font-size:15px;font-weight:600;margin-bottom:2px;">What Uni's learned about you</div>
+      <div style="font-size:11px;color:#999;margin-bottom:12px;">Edit anything — this is yours, and it sharpens your matches.</div>
+
+      <div style="background:#faf9f5;border:1px solid #eee;border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.55;color:#444;margin-bottom:14px;">
+        "You come alive building things and solving hard problems — robotics, late-night debugging. You're aiming for work that's hands-on and technical, and you do your best when you have a close, collaborative community around you." <span style="color:#2b59ff;">✎</span>
+      </div>
+
+      <div style="font-size:10px;text-transform:uppercase;color:#aaa;margin-bottom:6px;">What lights you up</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        <span style="background:#2b59ff10;border:1px solid #2b59ff33;border-radius:14px;padding:3px 10px;font-size:11px;">building &amp; making</span>
+        <span style="background:#2b59ff10;border:1px solid #2b59ff33;border-radius:14px;padding:3px 10px;font-size:11px;">problem-solving</span>
+        <span style="background:#2b59ff10;border:1px solid #2b59ff33;border-radius:14px;padding:3px 10px;font-size:11px;">robotics</span>
+        <span style="border:1px dashed #ddd;color:#bbb;border-radius:14px;padding:3px 10px;font-size:11px;">＋ add</span>
+      </div>
+
+      <div style="font-size:10px;text-transform:uppercase;color:#aaa;margin-bottom:6px;">Where you're headed</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        <span style="background:#f4f4f0;border:1px solid #e7e7e0;border-radius:14px;padding:3px 10px;font-size:11px;">a hands-on engineering path</span>
+        <span style="border:1px dashed #ddd;color:#bbb;border-radius:14px;padding:3px 10px;font-size:11px;">＋ add</span>
+      </div>
+
+      <div style="font-size:10px;text-transform:uppercase;color:#aaa;margin-bottom:6px;">What you need to thrive</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
+        <span style="background:#f4f4f0;border:1px solid #e7e7e0;border-radius:14px;padding:3px 10px;font-size:11px;">tight-knit community</span>
+        <span style="border:1px dashed #ddd;color:#bbb;border-radius:14px;padding:3px 10px;font-size:11px;">＋ add</span>
+      </div>
+
+      <div style="border-top:1px solid #eee;padding-top:10px;">
+        <div style="font-size:11px;color:#777;margin-bottom:6px;">Uni could understand you better if we talk about:</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <span style="border:1px solid #2b59ff55;color:#2b59ff;border-radius:14px;padding:3px 10px;font-size:11px;">budget &amp; aid →</span>
+          <span style="border:1px solid #2b59ff55;color:#2b59ff;border-radius:14px;padding:3px 10px;font-size:11px;">where you want to be →</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Uni offers matches — in the conversation</div>
+    <div class="mockup-body" style="background:#faf9f5;padding:14px;">
+      <div style="display:flex;gap:9px;margin-bottom:12px;">
+        <div style="width:28px;height:28px;border-radius:50%;background:#2b59ff;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:600;">U</div>
+        <div style="background:#fff;border:1px solid #eee;border-radius:16px;border-bottom-left-radius:4px;padding:10px 13px;font-size:12.5px;line-height:1.5;">
+          Leo, I'm getting a real sense of you now — someone who wants to build and solve hard problems, headed toward a hands-on engineering path, who does best with a close community.<br><br>
+          I think I can show you some programs that genuinely fit. Want to take a look? We'll keep refining together as you explore.
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-left:37px;">
+        <span style="background:#2b59ff;color:#fff;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:500;">See programs that fit me →</span>
+        <span style="border:1px solid #ddd;color:#777;border-radius:10px;padding:8px 14px;font-size:12px;">Keep talking</span>
+      </div>
+      <div style="margin-left:37px;margin-top:12px;font-size:10px;color:#aaa;line-height:1.5;">
+        ↑ Counselor-led, not a locked gate. The student can also ask "show me schools" any time — Uni shows them with an honest confidence note ("these will sharpen the more we talk").
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <span class="label">Design notes</span>
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>How it works</h4>
+      <ul>
+        <li><b>Living profile = warm reflection</b> of the same signals the backend already extracts (interests/personality, goals, needs) — just relabeled human ("What lights you up / Where you're headed / What you need to thrive"), not Profile/Goals/Needs/layers.</li>
+        <li><b>Everything editable</b> (your spec's editable-inference rule); edits feed back into matching.</li>
+        <li><b>Gaps shown as gentle invitations</b> ("Uni could understand you better if we talk about budget →"), never a progress bar or "incomplete."</li>
+        <li><b>Handoff is counselor-led:</b> when signal is strong enough, Uni offers matches in-thread; no "reach 50% on 3 tracks."</li>
+        <li><b>Always-available:</b> student can request matches anytime; Uni shows them with an honest confidence note.</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>Under the hood (keeps your backend)</h4>
+      <ul>
+        <li>Conversation still produces <b>goals / needs / identity signals</b> via the existing discovery extractor → the matching engine is unchanged.</li>
+        <li>"Strong enough to offer matches" = the existing readiness/handoff signal, surfaced as Uni's judgment instead of a % gate.</li>
+        <li>"See programs that fit me" → the existing strategy/match flow (Explore), so nothing downstream breaks.</li>
+        <li>Old tracks/layers/strategy-CTA UI is removed from Discover; the data model stays.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<p class="subtitle">Does the living profile + counselor-led handoff feel right? Anything to change? Next (final section): how this maps onto the codebase — what we keep, what we replace.</p>
