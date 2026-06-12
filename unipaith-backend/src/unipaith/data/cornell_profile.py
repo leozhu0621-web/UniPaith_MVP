@@ -2277,6 +2277,280 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    "cornell-economics-bs": {
+        "summary": (
+            "Students and third-party guides describe Cornell's economics major as a "
+            "flexible, research-oriented program within the College of Arts and Sciences "
+            "— with breadth from micro/macro foundations to behavioral, labor, and "
+            "development electives and strong faculty research opportunities. Positive "
+            "themes include interdisciplinary connections across Cornell's colleges and "
+            "solid placement into finance, consulting, and graduate study; common cautions "
+            "are grade deflation in quantitative courses, large introductory sections, "
+            "and the need to self-direct toward quantitative depth for Ph.D. paths."
+        ),
+        "themes": [
+            {
+                "label": "Flexible curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Wide elective menu from econometrics to behavioral and labor economics."
+                ),
+            },
+            {
+                "label": "Research access",
+                "sentiment": "positive",
+                "detail": (
+                    "Active faculty researchers offer RA opportunities for undergraduates."
+                ),
+            },
+            {
+                "label": "Career versatility",
+                "sentiment": "positive",
+                "detail": (
+                    "DegreeOutlook reports first-year earnings above the national median "
+                    "for economics bachelor's graduates."
+                ),
+            },
+            {
+                "label": "Grade pressure",
+                "sentiment": "caution",
+                "detail": (
+                    "Quantitative core courses can be grade-deflated relative to peer majors."
+                ),
+            },
+            {
+                "label": "Large intro classes",
+                "sentiment": "mixed",
+                "detail": (
+                    "Popular major means some foundational courses run at lecture scale."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cornell Arts & Sciences — Economics",
+                "url": "https://as.cornell.edu/major_minor_gradfield/economics",
+            },
+            {
+                "label": "Niche — Cornell University reviews",
+                "url": "https://www.niche.com/colleges/cornell-university/reviews/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cornell-applied-economics-bs": {
+        "summary": (
+            "Students and Poets&Quants guides describe Cornell Dyson's Applied Economics "
+            "and Management (AEM) as one of the most selective undergraduate business "
+            "programs in the country — Poets&Quants ranked Dyson No. 6 overall and noted "
+            "acceptance rates below 5% — praising its data-driven business foundation, "
+            "concentrations in finance and analytics, and strong placement into banking, "
+            "consulting, and tech. Common cautions are the small cohort's intense "
+            "competition for finance roles, coursework that some peers find less "
+            "quantitatively demanding than engineering majors, and the need to explain "
+            "the AEM brand outside finance/consulting circles."
+        ),
+        "themes": [
+            {
+                "label": "Elite selectivity",
+                "sentiment": "positive",
+                "detail": (
+                    "Poets&Quants reports acceptance rates below 5% — among the nation's "
+                    "most selective undergraduate business programs."
+                ),
+            },
+            {
+                "label": "Finance & consulting outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong placement into investment banking, consulting, and tech "
+                    "with high reported starting salaries."
+                ),
+            },
+            {
+                "label": "Applied, data-driven curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Core AEM courses emphasize spreadsheet modeling, analytics, and "
+                    "real-world case work."
+                ),
+            },
+            {
+                "label": "Competitive peer set",
+                "sentiment": "caution",
+                "detail": (
+                    "Small class size intensifies competition for top finance internships."
+                ),
+            },
+            {
+                "label": "Brand outside finance",
+                "sentiment": "mixed",
+                "detail": (
+                    "Applicants targeting non-business careers may need to articulate "
+                    "how AEM translates."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Poets&Quants — Cornell Dyson School profile",
+                "url": (
+                    "https://poetsandquantsforundergrads.com/school-profile/"
+                    "cornell-universitys-dyson-school/"
+                ),
+            },
+            {
+                "label": "Cornell Dyson — AEM Undergraduate Program",
+                "url": "https://dyson.cornell.edu/programs/undergraduate/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cornell-electrical-computer-eng-ms": {
+        "summary": (
+            "Graduate applicants and guides describe Cornell's M.Eng. in Electrical and "
+            "Computer Engineering as a rigorous, industry-oriented professional degree — "
+            "U.S. News historically ranks Cornell's electrical/electronic engineering "
+            "graduate field in the national top 10 — with a required two-semester design "
+            "project and strong Silicon Valley-adjacent recruiting for systems and "
+            "hardware roles. Common cautions are limited funding for the terminal "
+            "master's (self-funded), demanding project workload across two semesters, "
+            "and Ithaca's smaller local tech market compared with coastal hubs."
+        ),
+        "themes": [
+            {
+                "label": "Top-ranked ECE field",
+                "sentiment": "positive",
+                "detail": (
+                    "Cornell's electrical/electronic engineering graduate field ranks in "
+                    "U.S. News's national top 10."
+                ),
+            },
+            {
+                "label": "Design-project focus",
+                "sentiment": "positive",
+                "detail": (
+                    "Required year-long faculty-supervised design project judged in a "
+                    "poster session."
+                ),
+            },
+            {
+                "label": "Industry placement",
+                "sentiment": "positive",
+                "detail": (
+                    "M.Eng. curriculum targets industry roles with optional third-semester "
+                    "internship extension."
+                ),
+            },
+            {
+                "label": "Self-funded terminal MS",
+                "sentiment": "caution",
+                "detail": (
+                    "Professional M.Eng. is not research-funded; tuition is typically "
+                    "self-paid."
+                ),
+            },
+            {
+                "label": "Location",
+                "sentiment": "mixed",
+                "detail": (
+                    "Ithaca campus is collaborative but geographically distant from major "
+                    "tech hubs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cornell Catalog — ECE M.Eng. Program",
+                "url": "https://catalog.cornell.edu/programs/electrical-computer-engineering-meng/",
+            },
+            {
+                "label": "Cornell Chronicle — Engineering graduate rankings",
+                "url": (
+                    "https://news.cornell.edu/stories/2013/03/"
+                    "engineering-english-graduate-programs-ranked-top-10"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cornell-mechanical-eng-bs": {
+        "summary": (
+            "Students and Cornell Engineering guides describe the mechanical engineering "
+            "major as a hands-on, project-team-driven program — roughly half of "
+            "engineering undergraduates join teams building racecars, drones, and "
+            "robots — with rigorous thermal/fluids and systems coursework and strong "
+            "industry recruiting. Positive themes include accessible faculty mentors and "
+            "a collaborative engineering culture; common cautions are grade deflation, "
+            "heavy workload during project-team seasons, and the competitive atmosphere "
+            "shared across Cornell Engineering."
+        ),
+        "themes": [
+            {
+                "label": "Project teams",
+                "sentiment": "positive",
+                "detail": (
+                    "Cornell Engineering reports about half of undergraduates join "
+                    "competition project teams for hands-on design experience."
+                ),
+            },
+            {
+                "label": "Rigorous ME core",
+                "sentiment": "positive",
+                "detail": (
+                    "Thermal/fluid sciences and mechanical systems prepare graduates "
+                    "for diverse engineering careers."
+                ),
+            },
+            {
+                "label": "Faculty access",
+                "sentiment": "positive",
+                "detail": (
+                    "Students cite supportive professors and shop/lab resources in "
+                    "Duffield Hall."
+                ),
+            },
+            {
+                "label": "Grade deflation",
+                "sentiment": "caution",
+                "detail": (
+                    "Engineering coursework is grade-deflated relative to peer "
+                    "institutions — a known Cornell trait."
+                ),
+            },
+            {
+                "label": "Workload intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Balancing project-team commitments with core ME courses requires "
+                    "strong time management."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cornell Engineering — Mechanical Engineering virtual visit",
+                "url": "https://visit.engineering.cornell.edu/project_category/mechanical-engineering/",
+            },
+            {
+                "label": "Niche — Cornell University reviews",
+                "url": "https://www.niche.com/colleges/cornell-university/reviews/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
 }
 
 # ── Application requirements ─────────────────────────────────────────────────
