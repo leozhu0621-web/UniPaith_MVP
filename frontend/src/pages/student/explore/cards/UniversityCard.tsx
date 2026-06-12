@@ -63,7 +63,7 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
           with the photo (user feedback 2026-06-12). Text-only fallback when no
           photo. */}
       {photo && (
-        <div className="relative h-40">
+        <div className="relative h-64">
           <img
             src={photo}
             alt=""
