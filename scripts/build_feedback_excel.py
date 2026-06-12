@@ -22,7 +22,7 @@ OUTPUT_PATH = Path(__file__).parent.parent / "feedback_export.xlsx"
 
 
 def fetch_json(path: str) -> list[dict]:
-    url = f"{API_BASE}{path}"
+    url = f"{API_BASE}/api/v1{path}"
     req = urllib.request.Request(url, headers={"X-Ops-Token": OPS_TOKEN})
     with urllib.request.urlopen(req, timeout=15) as resp:
         return json.loads(resp.read())
