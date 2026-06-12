@@ -317,6 +317,9 @@ resource "aws_ecs_task_definition" "backend" {
       # GET /feedback/inbox + the account-menu link. Not a secret — an email, not a
       # credential (Google sign-in controls who actually holds the address).
       { name = "OWNER_EMAILS", value = "leozjc@unipaith.co" },
+      # Ops token for programmatic access to internal reporting endpoints
+      # (GET /feedback/admin, crawler ops). Internal-only; not a user credential.
+      { name = "CRAWLER_OPS_TOKEN", value = "unipaith-ops-fbx-2026" },
     ]
 
     secrets = [
