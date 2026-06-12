@@ -6,7 +6,10 @@ import { useNavigate } from 'react-router-dom'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowUp, Loader2, Search } from 'lucide-react'
 import { getConnectFeed, muteFollowing, type ConnectFeedItem } from '../../../api/connect'
+import type { SavedSearch } from '../../../api/savedSearches'
 import { createReminder } from '../../../api/calendar'
+import { markConnectSeen } from '../../../utils/connectSeen'
+import { exploreUrlFromSavedQuery } from '../explore/discovery/searchUrl'
 import FeedItemCard from './ConnectCards'
 import QueryError from '../../../components/ui/QueryError'
 
@@ -56,7 +59,7 @@ export default function UpdatesTab() {
 
   const onViewProgram = (programId: string) => navigate(`/s/programs/${programId}`)
   const onStartApplication = (programId: string) => navigate(`/s/programs/${programId}?apply=1`)
-  const onRsvpEvent = () => navigate('/s/posts?tab=events')
+  const onRsvpEvent = () => navigate('/s/explore?tab=events')
   const onRequestInfo = (programId: string) => navigate(`/s/messages?program=${programId}`)
 
   const onAddToCalendar = async (item: ConnectFeedItem) => {
@@ -83,7 +86,8 @@ export default function UpdatesTab() {
     return items.filter(it => it.date && it.date > since).length
   }, [items])
 
-  // Record this visit's newest item date so the next visit compares against it.
+  // Record this visit's newest item date so the next visit compares against it,
+  // and mark the visit itself so the nav/tab badge clears (Spec 2026-06-12 §6.3).
   useEffect(() => {
     if (!items.length) return
     const newest = items.reduce((m, it) => (it.date > m ? it.date : m), items[0].date)
@@ -92,7 +96,9 @@ export default function UpdatesTab() {
     } catch {
       /* ignore */
     }
-  }, [items])
+    markConnectSeen()
+    qc.invalidateQueries({ queryKey: ['connect-unseen'] })
+  }, [items, qc])
 
   // Infinite-scroll sentinel (Spec 56 §4).
   useEffect(() => {
@@ -193,6 +199,7 @@ export default function UpdatesTab() {
                 onRsvpEvent={onRsvpEvent}
                 onRequestInfo={onRequestInfo}
                 onMute={item.kind === 'post' ? (id => muteMut.mutate(id)) : undefined}
+                onRunSavedSearch={it => navigate(exploreUrlFromSavedQuery(it.search_query as SavedSearch['query']))}
               />
             ))}
           </div>
