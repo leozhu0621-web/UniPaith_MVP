@@ -86,19 +86,22 @@ export default function UpdatesTab() {
     return items.filter(it => it.date && it.date > since).length
   }, [items])
 
-  // Record this visit's newest item date so the next visit compares against it,
-  // and mark the visit itself so the nav/tab badge clears (Spec 2026-06-12 §6.3).
+  // Mark the visit so the nav/tab badge clears (Spec 2026-06-12 §6.3) — this
+  // must happen on any successful visit, including an empty feed. Recording the
+  // newest item date for the in-feed pill only applies when there are items.
   useEffect(() => {
-    if (!items.length) return
-    const newest = items.reduce((m, it) => (it.date > m ? it.date : m), items[0].date)
-    try {
-      localStorage.setItem(SEEN_KEY, newest)
-    } catch {
-      /* ignore */
+    if (isLoading || isError) return
+    if (items.length) {
+      const newest = items.reduce((m, it) => (it.date > m ? it.date : m), items[0].date)
+      try {
+        localStorage.setItem(SEEN_KEY, newest)
+      } catch {
+        /* ignore */
+      }
     }
     markConnectSeen()
     qc.invalidateQueries({ queryKey: ['connect-unseen'] })
-  }, [items, qc])
+  }, [items, isLoading, isError, qc])
 
   // Infinite-scroll sentinel (Spec 56 §4).
   useEffect(() => {

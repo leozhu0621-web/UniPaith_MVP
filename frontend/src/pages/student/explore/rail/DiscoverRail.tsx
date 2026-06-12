@@ -67,7 +67,7 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
       out.push({ id, name: name || 'Institution' })
     }
     for (const m of matches) push(m.institution_id, m.institution_name)
-    for (const s of saved ?? []) push(s.institution_id, s.institution_name)
+    for (const s of saved ?? []) push(s.institution_id ?? s.program?.institution_id, s.institution_name ?? s.program?.institution_name)
     return out.slice(0, 3)
   }, [matches, saved, followedIds])
 
