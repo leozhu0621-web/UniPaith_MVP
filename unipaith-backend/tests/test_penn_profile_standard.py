@@ -4,7 +4,8 @@ catalog — mirroring the MIT/Sloan/MBAn and Berkeley reference certifications.
 
 Pure (no DB): builds each node's persisted snapshot from the penn_profile module and runs
 ``check_conformance``. The only gaps permitted are the fields each node honestly records in
-its ``_standard.omitted`` lists. Penn carries one deeply-enriched flagship (the Wharton MBA).
+its ``_standard.omitted`` lists. Penn carries a deeply-enriched Wharton MBA flagship plus
+coverable external_reviews on every school-flagship and key undergraduate option.
 """
 
 from unipaith.data import penn_profile as p
@@ -148,6 +149,37 @@ def test_wharton_mba_flagship_is_deeply_enriched():
     assert _FLAGSHIP in p._FACULTY_BY_SLUG
     assert _FLAGSHIP in p._REVIEWS_BY_SLUG
     assert p._program_standard(_FLAGSHIP)["omitted"] == []
+
+
+def test_coverable_programs_have_external_reviews():
+    """School flagships, resume programs, and key undergrad options must carry reviews."""
+    coverable = [
+        _FLAGSHIP,
+        "penn-md",
+        "penn-jd",
+        "penn-dmd",
+        "penn-vmd",
+        "penn-march",
+        "penn-msw",
+        "penn-gse-higher-education-msed",
+        "penn-communication-phd",
+        "penn-computer-science-bse",
+        "penn-nursing-bsn",
+        "penn-wharton-economics-bs",
+        "penn-ppe-ba",
+        "penn-bioengineering-bse",
+    ]
+    for slug in coverable:
+        assert slug in p._REVIEWS_BY_SLUG, slug
+        assert p._REVIEWS_BY_SLUG[slug].get("summary"), slug
+        assert len(p._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
+
+
+def test_resume_programs_have_external_reviews():
+    for slug in _RESUME_PROGRAMS:
+        assert slug in p._REVIEWS_BY_SLUG, slug
+        omitted = set(p._program_standard(slug, p._SPEC_BY_SLUG[slug])["omitted"])
+        assert "external_reviews.summary" not in omitted, slug
 
 
 def test_every_program_is_gold_except_recorded_omissions():

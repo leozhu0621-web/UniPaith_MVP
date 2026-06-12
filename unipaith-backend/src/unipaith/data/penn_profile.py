@@ -36,11 +36,13 @@ standard, and the program catalog now carries at least one verified flagship deg
 **every** school: the undergraduate majors and the Wharton MBA, the Perelman MD, the Penn
 Carey Law JD, and — added in the latest resume run — the Penn Dental DMD, the Penn Vet VMD,
 the Weitzman Master of Architecture, the SP2 Master of Social Work, the GSE Higher
-Education M.S.Ed., and the Annenberg PhD in Communication. Each of the six newly added
-graduate/professional programs carries a first-party-verified cost of attendance and
-admissions set; their per-program tracks, class profiles, named faculty and aggregated
-third-party reviews remain the resumption scope for a later run and are recorded in each
-program's ``_standard.omitted`` rather than guessed.
+Education M.S.Ed., and the Annenberg PhD in Communication. Each resume graduate/
+professional program carries a first-party-verified cost of attendance, admissions set,
+and aggregated third-party ``external_reviews`` (this run). Per-program tracks, class
+profiles, and named faculty for those nodes remain honestly omitted where not
+individually verified. Coverable reviews also extend to Perelman (MD), Penn Carey Law
+(JD), and flagship undergraduate options (Wharton B.S.Econ, CIS, Nursing, PPE,
+Bioengineering).
 """
 
 from __future__ import annotations
@@ -57,7 +59,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of Pennsylvania"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-11"
+ENRICHED_AT = "2026-06-12"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1740,7 +1742,890 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "verbatim reviews."
         ),
     },
+    "penn-md": {
+        "summary": (
+            "Students and guides consistently rank Penn's Perelman School of Medicine "
+            "among the nation's elite M.D. programs — it placed sixth (tied with Duke) "
+            "in U.S. News' research ranking before Penn withdrew from those surveys in "
+            "2024 — praising Penn Medicine's translational research, the first U.S. "
+            "medical school (1765), and clinical training across Penn's health system; "
+            "common cautions are extreme selectivity, a demanding pre-clinical pace, "
+            "and a first-year cost of attendance above $117,000."
+        ),
+        "themes": [
+            {
+                "label": "Research & Penn Medicine",
+                "sentiment": "positive",
+                "detail": (
+                    "A top-tier research medical school integrated with Penn Medicine "
+                    "hospitals and Abramson Cancer Center."
+                ),
+            },
+            {
+                "label": "Historical prestige",
+                "sentiment": "positive",
+                "detail": (
+                    "The nation's first medical school, with a long record of "
+                    "physician-scientist training."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Among the most competitive M.D. programs; admissions emphasize "
+                    "academic excellence and service."
+                ),
+            },
+            {
+                "label": "Cost of attendance",
+                "sentiment": "caution",
+                "detail": (
+                    "Official 2026-27 first-year budget exceeds $117,000 including "
+                    "living expenses."
+                ),
+            },
+            {
+                "label": "Ranking participation",
+                "sentiment": "mixed",
+                "detail": (
+                    "Penn no longer submits data to U.S. News medical-school rankings "
+                    "over methodology concerns."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Perelman School of Medicine — U.S. News withdrawal announcement",
+                "url": "https://www.med.upenn.edu/evpdeancommunications/2023-01-24-314.html",
+            },
+            {
+                "label": "The Philadelphia Inquirer — Penn med school withdraws from U.S. News",
+                "url": "https://www.inquirer.com/health/medical-school-rankings-us-news-20230124.html",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "penn-jd": {
+        "summary": (
+            "Students and legal guides rank Penn Carey Law among the top five J.D. "
+            "programs nationally — U.S. News placed it No. 4 (tied with UVA) for 2026 "
+            "despite Penn's decision to stop submitting ranking data — praising strong "
+            "cross-disciplinary options, corporate-law and public-interest placement, "
+            "and a 98.4% two-year ultimate bar-passage rate; common cautions are "
+            "Philadelphia's smaller legal market than New York, intense competition for "
+            "elite firms, and a total J.D. cost of attendance near $120,000."
+        ),
+        "themes": [
+            {
+                "label": "Top-tier national rank",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News No. 4 among law schools for 2026 (tied with UVA), with "
+                    "strong employment-outcome weighting."
+                ),
+            },
+            {
+                "label": "Bar passage & outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "98.4% ultimate bar-passage rate (two-year average) in the 2026 "
+                    "ranking data."
+                ),
+            },
+            {
+                "label": "Cross-registration",
+                "sentiment": "positive",
+                "detail": (
+                    "J.D. students can take courses across Penn's twelve schools, "
+                    "including Wharton and the medical school."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Official 2026-27 J.D. cost of attendance is budgeted at $120,294."
+                ),
+            },
+            {
+                "label": "Market geography",
+                "sentiment": "mixed",
+                "detail": (
+                    "Strong national placement, but fewer on-campus interviews than "
+                    "peer schools in major legal hubs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "The Daily Pennsylvanian — Penn Carey Law No. 4 (2026 U.S. News)",
+                "url": "https://www.thedp.com/article/2026/04/penn-carey-law-us-news-report-ranking-2026",
+            },
+            {
+                "label": "Tipping the Scales — 2026 U.S. News Law School Ranking",
+                "url": (
+                    "https://tippingthescales.com/rankings/"
+                    "2026-u-s-news-law-school-ranking-stanford-replaces-yale-at-the-top/"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "penn-dmd": {
+        "summary": (
+            "Students and dental guides describe Penn Dental Medicine as one of the "
+            "nation's leading D.M.D. programs — QS ranked it fourth in North America "
+            "and sixteenth worldwide for dentistry in 2025 — praising early clinical "
+            "exposure, oral-medicine strength, and dual-degree options within a "
+            "research university; common cautions are a highly selective admissions "
+            "process (roughly 6% acceptance in published guides), a demanding "
+            "instrument-management fee structure, and a first-year cost of attendance "
+            "above $162,000."
+        ),
+        "themes": [
+            {
+                "label": "Global QS recognition",
+                "sentiment": "positive",
+                "detail": (
+                    "QS 2025: No. 4 among North American dental schools and No. 16 "
+                    "worldwide."
+                ),
+            },
+            {
+                "label": "Clinical training",
+                "sentiment": "positive",
+                "detail": (
+                    "A four-year D.M.D. with diverse clinical practice and professional "
+                    "development coursework."
+                ),
+            },
+            {
+                "label": "Research university setting",
+                "sentiment": "positive",
+                "detail": (
+                    "Affiliated with Penn Medicine in a major academic health center."
+                ),
+            },
+            {
+                "label": "Selectivity & cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Highly competitive admissions and among the highest published "
+                    "dental-school costs of attendance."
+                ),
+            },
+            {
+                "label": "No U.S. News dental rank",
+                "sentiment": "mixed",
+                "detail": (
+                    "U.S. News does not publish dental-school rankings after a 1990s "
+                    "industry boycott."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Penn Dental Medicine — QS 2025 dental ranking",
+                "url": (
+                    "https://www.dental.upenn.edu/news-events/2025/11/06/"
+                    "penn-dental-medicine-ranked-among-top-dental-schools/"
+                ),
+            },
+            {
+                "label": "Shemmassian Academic Consulting — Best Dental Schools",
+                "url": "https://www.shemmassianconsulting.com/blog/best-dental-schools",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "penn-vmd": {
+        "summary": (
+            "Students and veterinary guides rank Penn Vet among the top U.S. veterinary "
+            "schools — U.S. News peer surveys place it fifth nationally and QS ranks it "
+            "ninth worldwide in veterinary science — praising Ryan Hospital and the New "
+            "Bolton Center large-animal hospital, translational research with Perelman "
+            "Medicine, and the only Ivy League veterinary school; common cautions are "
+            "extreme selectivity, a modernized but demanding competency-based "
+            "curriculum, and a first-year cost of attendance above $106,000 "
+            "(out-of-state)."
+        ),
+        "themes": [
+            {
+                "label": "Teaching hospitals",
+                "sentiment": "positive",
+                "detail": (
+                    "Ryan Veterinary Hospital (companion animals) and New Bolton Center "
+                    "(large animals and equine surgery)."
+                ),
+            },
+            {
+                "label": "Translational research",
+                "sentiment": "positive",
+                "detail": (
+                    "Co-located with Penn Medicine — unusual among U.S. vet schools — "
+                    "for oncology and gene-therapy research."
+                ),
+            },
+            {
+                "label": "National reputation",
+                "sentiment": "positive",
+                "detail": (
+                    "Top-five U.S. News veterinary-school placement in recent peer "
+                    "assessment cycles."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Among the most competitive V.M.D. programs; small entering classes."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Official 2026-27 out-of-state first-year budget totals $106,764."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "AdmissionSight — Best Veterinary Schools in the US (2026)",
+                "url": "https://admissionsight.com/best-veterinary-schools/",
+            },
+            {
+                "label": "Penn Student Registration & Financial Services — VMD Cost of Attendance",
+                "url": "https://srfs.upenn.edu/vmd-out-state-residents",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "penn-march": {
+        "summary": (
+            "Students and architecture guides describe Penn's Weitzman M.Arch as a "
+            "small, studio-intensive program within a top research university — "
+            "Black Spectacles lists it among the ten best U.S. M.Arch programs for "
+            "dual-degree flexibility across Penn's twelve schools — praising the "
+            "Advanced Research and Innovation Lab (robotics and digital fabrication) "
+            "and Philadelphia's architectural history as a living laboratory; common "
+            "cautions are a demanding studio workload, highly portfolio-driven "
+            "admissions, and relatively small cohorts compared with larger urban "
+            "programs."
+        ),
+        "themes": [
+            {
+                "label": "Dual-degree flexibility",
+                "sentiment": "positive",
+                "detail": (
+                    "M.Arch students can combine architecture with business, city "
+                    "planning, law, and other Penn degrees."
+                ),
+            },
+            {
+                "label": "Digital design & robotics",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to Weitzman's ARI lab for scripting, robotics, and "
+                    "environmental building research."
+                ),
+            },
+            {
+                "label": "Selective admissions",
+                "sentiment": "caution",
+                "detail": (
+                    "Portfolio and academic record weigh heavily; Ivy M.Arch programs "
+                    "are highly selective."
+                ),
+            },
+            {
+                "label": "Studio intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "A rigorous, crit-driven studio sequence is the core of the degree."
+                ),
+            },
+            {
+                "label": "Small cohort",
+                "sentiment": "mixed",
+                "detail": (
+                    "Smaller than mega-programs at Columbia or SCI-Arc, with fewer "
+                    "elective breadth options."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Black Spectacles — Top 10 M.Arch Programs in the US",
+                "url": (
+                    "https://www.blackspectacles.com/blog/"
+                    "top-10-masters-of-architecture-programs-in-the-us"
+                ),
+            },
+            {
+                "label": "Stuart Weitzman School of Design — Architecture",
+                "url": "https://www.design.upenn.edu/architecture",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "penn-msw": {
+        "summary": (
+            "Students and social-work guides rank Penn's School of Social Policy & "
+            "Practice (SP2) among the nation's top M.S.W. programs — U.S. News placed "
+            "SP2 No. 8 among schools of social work for 2024, its highest ranking ever "
+            "— praising the school's social-innovation focus, Philadelphia field "
+            "placements, and interdisciplinary policy work; common cautions are the "
+            "intensity of field-education requirements, limited cohort size relative to "
+            "large public programs, and the cost of a private-university graduate degree."
+        ),
+        "themes": [
+            {
+                "label": "U.S. News top-10 rank",
+                "sentiment": "positive",
+                "detail": (
+                    "No. 8 among graduate schools of social work in the 2024 U.S. News "
+                    "Best Health Schools rankings."
+                ),
+            },
+            {
+                "label": "Field education",
+                "sentiment": "positive",
+                "detail": (
+                    "Clinical and macro field placements across Philadelphia's health "
+                    "and nonprofit sectors."
+                ),
+            },
+            {
+                "label": "Social innovation mission",
+                "sentiment": "positive",
+                "detail": (
+                    "SP2 emphasizes impact, justice, and policy alongside direct "
+                    "clinical practice."
+                ),
+            },
+            {
+                "label": "Workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Field hours plus coursework demand strong time management."
+                ),
+            },
+            {
+                "label": "Private-university cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Graduate tuition at Penn exceeds most public M.S.W. programs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "SP2 — No. 8 U.S. News social work ranking (2024)",
+                "url": (
+                    "https://sp2.upenn.edu/sp2-ranked-8-among-schools-for-social-work-by-u-s-news-world-report/"
+                ),
+            },
+            {
+                "label": "U.S. News — Best Social Work Programs methodology",
+                "url": "https://www.usnews.com/education/best-graduate-schools/articles/social-work-rankings-methodology",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "penn-gse-higher-education-msed": {
+        "summary": (
+            "Students and education guides describe Penn GSE's Higher Education M.S.Ed. "
+            "as a top-tier program within a school ranked No. 3 nationally by U.S. News "
+            "for 2024 — with the Higher Education specialty ranked No. 4 for the "
+            "sixteenth consecutive top-10 year — praising flexible leadership "
+            "preparation, access to Penn's policy and finance faculty, and strong "
+            "placement into college administration and nonprofit roles; common cautions "
+            "are the cost of a private graduate degree and the breadth of the "
+            "ten-course curriculum requiring early specialization."
+        ),
+        "themes": [
+            {
+                "label": "Top-ranked GSE",
+                "sentiment": "positive",
+                "detail": (
+                    "Penn GSE ranked No. 3 among graduate schools of education (2024 "
+                    "U.S. News)."
+                ),
+            },
+            {
+                "label": "Higher-ed specialty strength",
+                "sentiment": "positive",
+                "detail": (
+                    "Higher Education program ranked No. 4 — in the top 10 for 16 "
+                    "straight years."
+                ),
+            },
+            {
+                "label": "Leadership preparation",
+                "sentiment": "positive",
+                "detail": (
+                    "Prepares graduates for roles in postsecondary administration, "
+                    "policy, and nonprofits."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Private-university graduate tuition exceeds most public "
+                    "education programs."
+                ),
+            },
+            {
+                "label": "Broad curriculum",
+                "sentiment": "mixed",
+                "detail": (
+                    "Ten course units span finance, policy, and student development — "
+                    "students must focus early."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Penn GSE — No. 3 U.S. News ranking (2024)",
+                "url": "https://www.gse.upenn.edu/news/penn-gse-ranked-no-3-us-news-world-report-2024",
+            },
+            {
+                "label": "Penn GSE — Higher Education M.S.Ed.",
+                "url": "https://www.gse.upenn.edu/academics/higher-education-msed",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "penn-communication-phd": {
+        "summary": (
+            "Students and communication scholars describe Penn Annenberg's Ph.D. as one "
+            "of the world's leading communication doctorates — QS ranks Penn No. 10 "
+            "globally in Communication & Media Studies — praising cross-disciplinary "
+            "faculty, the Annenberg Public Policy Center, and a selective cohort embedded "
+            "in a major research university; common cautions are the small program size, "
+            "intense competition for academic jobs, and the expectation of substantial "
+            "quantitative or computational methods training."
+        ),
+        "themes": [
+            {
+                "label": "Global QS recognition",
+                "sentiment": "positive",
+                "detail": (
+                    "QS Communication & Media Studies: Penn ranked No. 10 among world "
+                    "universities."
+                ),
+            },
+            {
+                "label": "Research institutes",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to Annenberg Public Policy Center and cross-school "
+                    "collaboration across Penn."
+                ),
+            },
+            {
+                "label": "Selective cohort",
+                "sentiment": "positive",
+                "detail": (
+                    "A small, research-intensive Ph.D. with visiting scholars and "
+                    "practitioners."
+                ),
+            },
+            {
+                "label": "Academic job market",
+                "sentiment": "caution",
+                "detail": (
+                    "Communication Ph.D. graduates face a competitive tenure-track "
+                    "market."
+                ),
+            },
+            {
+                "label": "Methods rigor",
+                "sentiment": "mixed",
+                "detail": (
+                    "Students are expected to develop strong empirical and theoretical "
+                    "toolkits."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "National Communication Association — Penn Annenberg profile",
+                "url": (
+                    "https://www.natcom.org/resources-library/"
+                    "university-pennsylvania-annenberg-school-communication/"
+                ),
+            },
+            {
+                "label": "Annenberg School for Communication — About",
+                "url": "https://www.asc.upenn.edu/about",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "penn-computer-science-bse": {
+        "summary": (
+            "Students and guides describe Penn's B.S.E. in Computer Science as a rigorous "
+            "CIS major within a top-25 national program — College Factual ranks Penn's "
+            "CS bachelor's No. 23 nationally and Penn Engineering moved to No. 21 among "
+            "undergraduate engineering programs in U.S. News (2026) — praising theory, "
+            "AI/ML, and systems strength in the GRASP robotics ecosystem; common cautions "
+            "are competitive grading, large introductory lectures, and fewer CS seats "
+            "than at dedicated tech institutes."
+        ),
+        "themes": [
+            {
+                "label": "Research & robotics",
+                "sentiment": "positive",
+                "detail": (
+                    "Ties to Penn Engineering's GRASP Lab and AI/ML research groups."
+                ),
+            },
+            {
+                "label": "National CS recognition",
+                "sentiment": "positive",
+                "detail": (
+                    "College Factual ranks Penn's CS bachelor's among the top 25 "
+                    "nationally."
+                ),
+            },
+            {
+                "label": "Engineering school rank",
+                "sentiment": "positive",
+                "detail": (
+                    "Penn Engineering ranked No. 21 among undergraduate engineering "
+                    "programs (U.S. News 2026)."
+                ),
+            },
+            {
+                "label": "Competitive environment",
+                "sentiment": "caution",
+                "detail": (
+                    "Selective Penn admissions and demanding SEAS coursework."
+                ),
+            },
+            {
+                "label": "Scale vs. tech peers",
+                "sentiment": "mixed",
+                "detail": (
+                    "Smaller CS cohort than at CMU or MIT, with fewer specialized "
+                    "electives."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "College Factual — Penn Computer Science Rankings",
+                "url": (
+                    "https://www.collegefactual.com/colleges/university-of-pennsylvania/"
+                    "academic-life/academic-majors/computer-information-sciences/computer-science/"
+                ),
+            },
+            {
+                "label": "The Daily Pennsylvanian — Penn U.S. News 2026 (Engineering No. 21)",
+                "url": "https://www.thedp.com/article/2025/09/penn-us-news-ranking-2026",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "penn-nursing-bsn": {
+        "summary": (
+            "Students and nursing guides rank Penn Nursing among the world's top nursing "
+            "schools — Penn Nursing reclaimed QS's No. 1 global nursing ranking for 2026 "
+            "and U.S. News placed Penn's undergraduate nursing program No. 2 (tied with "
+            "Emory) nationally — praising clinical education at Penn Medicine, "
+            "research-driven faculty, and strong health-system placement; common cautions "
+            "are the intensity of clinical rotations, a competitive admissions pool, and "
+            "the cost of a private-university nursing degree."
+        ),
+        "themes": [
+            {
+                "label": "World No. 1 (QS nursing)",
+                "sentiment": "positive",
+                "detail": (
+                    "Penn Nursing ranked the world's top nursing school in QS 2026 "
+                    "subject rankings."
+                ),
+            },
+            {
+                "label": "U.S. undergraduate rank",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News No. 2 among undergraduate nursing programs (2026, tied "
+                    "with Emory)."
+                ),
+            },
+            {
+                "label": "Clinical & research integration",
+                "sentiment": "positive",
+                "detail": (
+                    "Clinical training paired with Penn Medicine and nursing research "
+                    "centers."
+                ),
+            },
+            {
+                "label": "Clinical workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Demanding rotations and simulation requirements across the B.S.N."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Private-university tuition; need-based aid reduces net price for "
+                    "many families."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Penn Nursing — QS No. 1 nursing school (2026)",
+                "url": (
+                    "https://www.nursing.upenn.edu/live/news/3535-penn-nursing-reclaims-the-1-spot-ranked-the-worlds"
+                ),
+            },
+            {
+                "label": "The Daily Pennsylvanian — Penn U.S. News 2026 (Nursing No. 2)",
+                "url": "https://www.thedp.com/article/2025/09/penn-us-news-ranking-2026",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "penn-wharton-economics-bs": {
+        "summary": (
+            "Students and guides describe Wharton's undergraduate B.S. in Economics as "
+            "the flagship pre-professional business degree at the world's first "
+            "collegiate business school — U.S. News tied Wharton with MIT Sloan for No. 1 "
+            "among undergraduate business programs in 2026 — praising finance and "
+            "analytics concentrations, Wall Street and consulting placement, and access "
+            "to Penn's liberal-arts core; common cautions are a competitive internal "
+            "culture, the pressure of recruiting cycles, and Wharton's high sticker price "
+            "even after need-based aid."
+        ),
+        "themes": [
+            {
+                "label": "No. 1 undergrad business (U.S. News)",
+                "sentiment": "positive",
+                "detail": (
+                    "Wharton tied MIT Sloan for the top undergraduate business program "
+                    "in U.S. News 2026."
+                ),
+            },
+            {
+                "label": "Finance & consulting pipelines",
+                "sentiment": "positive",
+                "detail": (
+                    "Deep recruiting into investment banking, consulting, and technology."
+                ),
+            },
+            {
+                "label": "Concentration breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "Concentrations span finance, management, statistics, and "
+                    "business analytics."
+                ),
+            },
+            {
+                "label": "Recruiting pressure",
+                "sentiment": "caution",
+                "detail": (
+                    "Early internship and full-time recruiting can feel intense from "
+                    "sophomore year."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Wharton shares Penn's high sticker price, though need-based aid "
+                    "lowers net cost for many."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "The Daily Pennsylvanian — Wharton No. 1 undergrad business (2026)",
+                "url": "https://www.thedp.com/article/2025/09/penn-us-news-ranking-2026",
+            },
+            {
+                "label": "Niche — University of Pennsylvania",
+                "url": "https://www.niche.com/colleges/university-of-pennsylvania/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "penn-ppe-ba": {
+        "summary": (
+            "Students and college guides describe Penn's Philosophy, Politics & Economics "
+            "(PPE) major as one of the oldest and most prestigious U.S. PPE programs — "
+            "CollegeVine and Penn's program site note it is among the largest majors in "
+            "the College of Arts & Sciences — praising interdisciplinary policy and "
+            "pre-law preparation across four thematic concentrations; common cautions are "
+            "the breadth of required foundation courses, less brand recognition than a "
+            "standalone economics major on Wall Street, and the need to self-direct "
+            "electives toward a clear career path."
+        ),
+        "themes": [
+            {
+                "label": "Pioneer U.S. PPE program",
+                "sentiment": "positive",
+                "detail": (
+                    "One of the oldest and best-known PPE majors in the United States."
+                ),
+            },
+            {
+                "label": "Interdisciplinary depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Combines philosophy, political science, and economics with "
+                    "thematic concentrations."
+                ),
+            },
+            {
+                "label": "Pre-law & policy paths",
+                "sentiment": "positive",
+                "detail": (
+                    "Designed for law, consulting, journalism, and public-policy careers."
+                ),
+            },
+            {
+                "label": "Breadth vs. depth",
+                "sentiment": "mixed",
+                "detail": (
+                    "Wide foundation requirements can leave less room for deep "
+                    "specialization in one field."
+                ),
+            },
+            {
+                "label": "Recruiting brand",
+                "sentiment": "caution",
+                "detail": (
+                    "Finance recruiters may prefer Wharton or pure economics majors."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Penn PPE — Considering PPE?",
+                "url": "https://ppe.sas.upenn.edu/study/considering-ppe",
+            },
+            {
+                "label": "CollegeVine — Top PPE programs in the US",
+                "url": "https://www.collegevine.com/faq/46551/top-ppe-programs-in-the-us",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "penn-bioengineering-bse": {
+        "summary": (
+            "Students and guides describe Penn's bioengineering B.S.E. as a rigorous "
+            "intersection of engineering and medicine — Penn Engineering ranked No. 21 "
+            "among undergraduate engineering programs in U.S. News (2026) and Penn "
+            "Medicine integration supports biomaterials, imaging, and systems biology "
+            "research — praising pre-med and industry flexibility; common cautions are "
+            "demanding math and physics prerequisites, limited class size relative to "
+            "general engineering majors, and competition for lab positions."
+        ),
+        "themes": [
+            {
+                "label": "Engineering + medicine",
+                "sentiment": "positive",
+                "detail": (
+                    "Applies engineering to biomaterials, imaging, and synthetic biology "
+                    "alongside Penn Medicine."
+                ),
+            },
+            {
+                "label": "Engineering school rank",
+                "sentiment": "positive",
+                "detail": (
+                    "Penn Engineering No. 21 among undergraduate engineering programs "
+                    "(U.S. News 2026)."
+                ),
+            },
+            {
+                "label": "Career flexibility",
+                "sentiment": "positive",
+                "detail": (
+                    "Paths into med school, biotech, devices, and graduate research."
+                ),
+            },
+            {
+                "label": "Prerequisite rigor",
+                "sentiment": "caution",
+                "detail": (
+                    "Heavy math, physics, and chemistry core before upper-level BE "
+                    "courses."
+                ),
+            },
+            {
+                "label": "Smaller major",
+                "sentiment": "mixed",
+                "detail": (
+                    "Fewer classmates than CIS or ME, with fewer dedicated BE electives."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "The Daily Pennsylvanian — Penn Engineering No. 21 (U.S. News 2026)",
+                "url": "https://www.thedp.com/article/2025/09/penn-us-news-ranking-2026",
+            },
+            {
+                "label": "Penn Engineering — Bioengineering",
+                "url": "https://be.seas.upenn.edu/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
 }
+
+_COVERABLE_REVIEWS = frozenset(_REVIEWS_BY_SLUG.keys())
 
 # ── Application requirements ─────────────────────────────────────────────────
 _INTL_VISA = {
