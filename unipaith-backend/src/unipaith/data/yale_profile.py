@@ -59,7 +59,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Yale University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-10"
+ENRICHED_AT = "2026-06-12"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -205,6 +205,7 @@ SCHOOL_OUTCOMES: dict = {
             },
         ],
     },
+    "media_credit": "Wikimedia Commons / Ajay Suresh (CC BY 2.0)",
     "flagship": {
         # "Yale Facts": 15,657 total students — 6,667 undergraduate + 8,990 graduate
         # and professional.
@@ -266,9 +267,9 @@ SCHOOL_OUTCOMES: dict = {
 UNDERGRAD_COUNT = 6667
 
 DESCRIPTION = (
-    "Chartered in 1701 as the Collegiate School and renamed Yale College in 1718, Yale "
-    "is a private Ivy League research university in New Haven, Connecticut — the "
-    "third-oldest institution of higher education in the United States. It enrolls about "
+    "Yale University is a private research university in New Haven, CT, chartered in 1701 "
+    "as the Collegiate School and renamed Yale College in 1718 — the third-oldest "
+    "institution of higher education in the United States. It enrolls about "
     "6,700 undergraduates and roughly 9,000 graduate and professional students, some "
     "15,700 in all, and pairs a famously close undergraduate education — a 5:1 "
     "student-faculty ratio and 14 residential colleges — with the research depth of a "
@@ -1924,6 +1925,409 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "disclaimer": (
             "Aggregated and paraphrased from public third-party sources — not individual "
             "verbatim reviews."
+        ),
+    },
+    "yale-mba": {
+        "summary": (
+            "Students and third-party guides describe Yale SOM's two-year MBA as a "
+            "distinctive general-management program — U.S. News ranks it No. 11 (tie, 2026) "
+            "and Poets&Quants' composite places it 17th for 2025-2026 — built around an "
+            "integrated, multidisciplinary core and a mission to educate leaders for "
+            "business and society. Common cautions are a recent slide in composite rankings "
+            "(Poets&Quants fell from 8th to 17th), the cost of a residential Ivy MBA, and "
+            "a New Haven location that is quieter for finance recruiting than New York or "
+            "Boston."
+        ),
+        "themes": [
+            {
+                "label": "Integrated curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "A single, team-taught core spans organizational behavior, economics, "
+                    "accounting, and global business rather than siloed functional courses."
+                ),
+            },
+            {
+                "label": "Business & society mission",
+                "sentiment": "positive",
+                "detail": (
+                    "The school emphasizes leadership with a public-purpose orientation, "
+                    "nonprofit and social-enterprise pathways, and global study options."
+                ),
+            },
+            {
+                "label": "National MBA standing",
+                "sentiment": "positive",
+                "detail": "U.S. News Best Business Schools 2026: No. 11 (tie).",
+            },
+            {
+                "label": "Recent ranking slide",
+                "sentiment": "caution",
+                "detail": (
+                    "Poets&Quants' 2025-2026 composite dropped Yale SOM to 17th from 8th "
+                    "after weaker showings on several constituent lists."
+                ),
+            },
+            {
+                "label": "Cost & location",
+                "sentiment": "caution",
+                "detail": (
+                    "Two-year residential tuition near $84,900/year before living costs; "
+                    "New Haven is less central than NYC for some finance paths."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Yale School of Management",
+                "url": "https://www.usnews.com/best-graduate-schools/top-business-schools/yale-university-01140",
+            },
+            {
+                "label": "Poets&Quants — Yale School of Management profile",
+                "url": "https://poetsandquants.com/school-profile/yale-school-of-management/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "yale-economics-bs": {
+        "summary": (
+            "Students and guides describe Yale's economics major as one of the university's "
+            "most popular and analytically rigorous undergraduate programs — Niche ranks Yale "
+            "No. 3 nationally for economics (2026) and U.S. News places Yale among the top "
+            "economics departments — with strong faculty in micro, macro, and econometrics "
+            "and excellent pipelines to consulting, finance, and graduate study. Common "
+            "cautions are that Yale has no standalone undergraduate business school, "
+            "quantitative theory courses can be demanding, and Wall Street on-campus "
+            "recruiting is lighter than at some peer Ivies."
+        ),
+        "themes": [
+            {
+                "label": "National economics standing",
+                "sentiment": "positive",
+                "detail": "Niche #3 Best Colleges for Economics in America (2026).",
+            },
+            {
+                "label": "Faculty & research depth",
+                "sentiment": "positive",
+                "detail": (
+                    "A top-ranked department with Nobel-caliber faculty and strong "
+                    "undergraduate research opportunities."
+                ),
+            },
+            {
+                "label": "Career versatility",
+                "sentiment": "positive",
+                "detail": (
+                    "Economics is Yale College's largest social-sciences major with "
+                    "strong placement into consulting, finance, and Ph.D. programs."
+                ),
+            },
+            {
+                "label": "No undergrad business school",
+                "sentiment": "mixed",
+                "detail": (
+                    "Students interested in finance often pair economics with extracurricular "
+                    "clubs rather than a dedicated B-school curriculum."
+                ),
+            },
+            {
+                "label": "Quantitative rigor",
+                "sentiment": "caution",
+                "detail": (
+                    "Theory and econometrics sequences are demanding; math preparation "
+                    "matters for the honors track."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Best Colleges for Economics (2026)",
+                "url": "https://www.niche.com/colleges/search/best-colleges-for-economics/",
+            },
+            {
+                "label": "Yale Department of Economics",
+                "url": "https://economics.yale.edu/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "yale-public-health-mph": {
+        "summary": (
+            "Students and public-health guides describe Yale's M.P.H. as the flagship "
+            "degree of an Ivy research school that rose to No. 11 among U.S. public-health "
+            "schools in U.S. News (Yale's best ranking to date) — with interdisciplinary "
+            "training across biostatistics, epidemiology, health policy, and environmental "
+            "health. Common cautions are that peer-assessment rankings can fluctuate, Yale "
+            "is smaller than some flagship public schools, and tuition in New Haven is high "
+            "despite strong scholarship support for many students."
+        ),
+        "themes": [
+            {
+                "label": "Rising national standing",
+                "sentiment": "positive",
+                "detail": (
+                    "YSPH rose to No. 11 in U.S. News public-health schools — Yale's "
+                    "highest-ever placement."
+                ),
+            },
+            {
+                "label": "Interdisciplinary breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "Two-year M.P.H. with departments in biostatistics, epidemiology, "
+                    "health policy, and social & behavioral sciences."
+                ),
+            },
+            {
+                "label": "Research & practice links",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to Yale's medical campus, global-health centers, and "
+                    "policy institutes in New Haven and beyond."
+                ),
+            },
+            {
+                "label": "Peer-assessment volatility",
+                "sentiment": "mixed",
+                "detail": (
+                    "U.S. News public-health rankings rely heavily on dean/faculty surveys "
+                    "and can shift year to year."
+                ),
+            },
+            {
+                "label": "Scale vs. public giants",
+                "sentiment": "caution",
+                "detail": (
+                    "A smaller cohort than schools like Michigan or Johns Hopkins, which "
+                    "some applicants weigh against Ivy prestige."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "YSPH — rises in national rankings",
+                "url": "https://ysph.yale.edu/news-article/ysph-rises-in-national-rankings-for-schools-of-public-health/",
+            },
+            {
+                "label": "U.S. News — Best Public Health Schools",
+                "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/public-health-rankings",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "yale-juris-doctor-jd-prof": {
+        "summary": (
+            "Students and legal guides describe Yale Law School's J.D. as among the most "
+            "prestigious law degrees in the world — U.S. News ranks it No. 2 (tie with "
+            "Chicago, 2026), ending Yale's decades-long solo hold on No. 1 — with "
+            "unusually small classes, a faculty-heavy scholarly culture, and extraordinary "
+            "clerkship and public-interest placement. Common cautions are extreme "
+            "selectivity (roughly 8% acceptance), a culture oriented toward academia and "
+            "clerkships over Big Law volume, and the high cost of three years in New Haven."
+        ),
+        "themes": [
+            {
+                "label": "Elite national standing",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News Best Law Schools 2026: No. 2 (tie with University of "
+                    "Chicago); Stanford now holds No. 1 alone."
+                ),
+            },
+            {
+                "label": "Clerkships & public interest",
+                "sentiment": "positive",
+                "detail": (
+                    "Historically the leading feeder to federal clerkships and a strong "
+                    "public-interest and academic pipeline."
+                ),
+            },
+            {
+                "label": "Small classes & faculty access",
+                "sentiment": "positive",
+                "detail": (
+                    "Very small sections and a scholarly, discussion-driven classroom "
+                    "culture unlike larger law schools."
+                ),
+            },
+            {
+                "label": "Extreme selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Among the lowest acceptance rates of any U.S. law school; median "
+                    "LSAT and GPA well above national norms."
+                ),
+            },
+            {
+                "label": "Academic vs. Big Law tilt",
+                "sentiment": "mixed",
+                "detail": (
+                    "Reviewers note Yale's culture favors clerkships, academia, and "
+                    "public service over maximizing large-firm placement volume."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Yale Law School",
+                "url": "https://www.usnews.com/best-graduate-schools/top-law-schools/yale-university-03094",
+            },
+            {
+                "label": "Yale Law School — About",
+                "url": "https://law.yale.edu/about-yale-law-school",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "yale-architecture-march": {
+        "summary": (
+            "Students and architecture guides describe Yale's NAAB-accredited M.Arch I as "
+            "a small, studio-intensive program within a top research university — "
+            "historically a DesignIntelligence top-five program (Yale opted out of those "
+            "rankings in 2022 over methodology concerns) — with notable alumni including "
+            "Maya Lin and Eero Saarinen and a strong global studio culture. Common cautions "
+            "are the demanding studio workload, a relatively small cohort, and the school's "
+            "decision to stop participating in DesignIntelligence surveys."
+        ),
+        "themes": [
+            {
+                "label": "Studio intensity & faculty access",
+                "sentiment": "positive",
+                "detail": (
+                    "Small cohort with personalized crits and direct access to practicing "
+                    "architect-faculty in a research-university setting."
+                ),
+            },
+            {
+                "label": "Alumni legacy",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates include Maya Lin, Eero Saarinen, Norman Foster, and "
+                    "Richard Rogers among other influential architects."
+                ),
+            },
+            {
+                "label": "Global studio opportunities",
+                "sentiment": "positive",
+                "detail": (
+                    "Travel studios and the school's historic leadership in architectural "
+                    "education since 1916."
+                ),
+            },
+            {
+                "label": "Ranking opt-out",
+                "sentiment": "mixed",
+                "detail": (
+                    "Dean Deborah Berke withdrew Yale Architecture from DesignIntelligence "
+                    "rankings in 2022, citing methodology concerns."
+                ),
+            },
+            {
+                "label": "Studio workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Three-year professional track with sustained studio and crit "
+                    "demands typical of elite M.Arch programs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Yale School of Architecture — M.Arch I",
+                "url": "https://www.architecture.yale.edu/academics/programs/1-m-arch-i",
+            },
+            {
+                "label": "Niche — Yale School of Architecture",
+                "url": "https://www.niche.com/graduate-schools/yale-school-of-architecture/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "yale-environmental-management-mem": {
+        "summary": (
+            "Students and environmental guides describe Yale's MEM as the flagship "
+            "professional degree at the nation's oldest graduate school of forestry and "
+            "environmental studies — Eduniversal ranks it No. 5 among sustainable "
+            "development and environmental-management master's programs — with "
+            "interdisciplinary training across science, policy, and management and access "
+            "to courses across Yale. Common cautions are a research- and policy-heavy "
+            "culture that can feel academic for students seeking purely technical tracks, "
+            "and the cost of two years in New Haven despite generous aid for many admits."
+        ),
+        "themes": [
+            {
+                "label": "Historic school & national rank",
+                "sentiment": "positive",
+                "detail": (
+                    "YSE traces to 1900; Eduniversal ranks the MEM No. 5 in sustainable "
+                    "development and environmental management."
+                ),
+            },
+            {
+                "label": "Interdisciplinary curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Two-year MEM blending natural and social sciences with 18-credit "
+                    "specializations and cross-registration across Yale."
+                ),
+            },
+            {
+                "label": "Professional network",
+                "sentiment": "positive",
+                "detail": (
+                    "Niche graduate reviews praise engaged cohorts and access to "
+                    "environmental leaders on campus."
+                ),
+            },
+            {
+                "label": "Academic vs. technical tilt",
+                "sentiment": "mixed",
+                "detail": (
+                    "Some students note a policy- and research-forward culture relative to "
+                    "purely technical environmental-engineering programs."
+                ),
+            },
+            {
+                "label": "Cost of attendance",
+                "sentiment": "caution",
+                "detail": (
+                    "Two-year residential tuition is published on YSE's site; aid varies "
+                    "by program and background."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Yale School of the Environment — MEM",
+                "url": "https://environment.yale.edu/academics/masters/mem",
+            },
+            {
+                "label": "Eduniversal — Yale MEM ranking",
+                "url": (
+                    "https://www.best-masters.us/ranking-master-sustainable-development-and-"
+                    "environmental-management/master-of-environmental-management-mem-yale-"
+                    "university-yale-school-of-forestry-environmental-studies.html"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
         ),
     },
 }
