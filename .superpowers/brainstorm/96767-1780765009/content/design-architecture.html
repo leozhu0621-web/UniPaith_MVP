@@ -1,0 +1,62 @@
+<h2>Design · Section 3 — how it maps to the codebase</h2>
+<p class="subtitle">The data model, extractor, matching, and strategy flow all stay. We replace the Discover UI and retrain the conversation agent into Uni. One real backend change: extraction stops being gated by a fixed "track."</p>
+
+<h3>Frontend</h3>
+<div class="split">
+  <div class="mockup"><div class="mockup-header" style="background:#e8f5e9;">KEEP</div><div class="mockup-body" style="padding:12px;font-size:12px;line-height:1.7;">
+    • Chat plumbing (TanStack Query, session/message API)<br>
+    • Message send + streaming-dots states<br>
+    • The Explore/match surface ("See programs")<br>
+    • Profile page as the durable record
+  </div></div>
+  <div class="mockup"><div class="mockup-header" style="background:#fff3e0;">REPLACE</div><div class="mockup-body" style="padding:12px;font-size:12px;line-height:1.7;">
+    • <b>DiscoverHomePage</b> → single-column, Uni header, no rails<br>
+    • <b>ChatPanel</b> → Uni conversation (warm bubbles, one-at-a-time, counselor quick-replies)<br>
+    • <b>EmptyState</b> → Uni's warm opening (one question, not a prompt wall)
+  </div></div>
+</div>
+<div class="split" style="margin-top:10px;">
+  <div class="mockup"><div class="mockup-header" style="background:#ffebee;">REMOVE (from Discover)</div><div class="mockup-body" style="padding:12px;font-size:12px;line-height:1.7;">
+    • TrackSelector (Profile/Goals/Needs tabs)<br>
+    • LayerSwitcher (basic/personality/identity)<br>
+    • ReadinessRail + ArtifactRail (main view)<br>
+    • StrategyHandoffCTA (50%-gate bar)
+  </div></div>
+  <div class="mockup"><div class="mockup-header" style="background:#e3f2fd;">ADD</div><div class="mockup-body" style="padding:12px;font-size:12px;line-height:1.7;">
+    • Inline <b>"✓ Noticed…" cards</b> (editable)<br>
+    • <b>Living-profile drawer/view</b> ("✦ Your profile ▸")<br>
+    • <b>In-thread match-handoff</b> card<br>
+    • Uni persona (avatar "U", name, voice)
+  </div></div>
+</div>
+
+<h3 style="margin-top:18px;">Backend</h3>
+<div class="split">
+  <div class="mockup"><div class="mockup-header" style="background:#e8f5e9;">KEEP (data model unchanged)</div><div class="mockup-body" style="padding:12px;font-size:12px;line-height:1.7;">
+    • discovery_sessions / discovery_messages<br>
+    • student_goals / student_needs / student_identity<br>
+    • The extractor, validator, judge, matching, strategy<br>
+    • Feature flags + rule-based fallback
+  </div></div>
+  <div class="mockup"><div class="mockup-header" style="background:#fff3e0;">CHANGE</div><div class="mockup-body" style="padding:12px;font-size:12px;line-height:1.7;">
+    • <b>orchestrator.py</b> → Uni counselor playbook system prompt (always/never)<br>
+    • <b>Extraction routing</b>: by <b>content</b>, not <code>session.track</code> — one convo feeds goals+needs+identity<br>
+    • Readiness/handoff surfaced as <b>Uni's offer</b>, not a % gate<br>
+    • One unified session (track-less / "discovery")
+  </div></div>
+</div>
+
+<div class="section" style="margin-top:18px;">
+  <span class="label">Key decision · data flow</span>
+  <div style="background:#faf9f5;border:1px solid #eee;border-radius:10px;padding:14px;font-size:12.5px;text-align:center;line-height:2;">
+    <b>One Uni conversation</b> &nbsp;→&nbsp; extractor (routes each turn by <i>content</i>) &nbsp;→&nbsp; <b>goals · needs · identity</b><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;↓ read &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓ read<br>
+    <b>"✦ Your profile"</b> (warm, editable) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>matching engine</b> → "See programs that fit me" → Explore
+  </div>
+</div>
+
+<div class="section">
+  <span class="label">Agent training (the part you emphasized)</span>
+  <p style="font-size:12.5px;line-height:1.6;color:#444;">Uni's "always/never" counselor playbook becomes her system prompt <b>and</b> a constitution + eval set — reusing the existing chatbot-eval / constitution infrastructure (§61/§62) so we can <b>measure</b> that Uni behaves like a real counselor (asks open questions, reflects, one-at-a-time, no slang/interrogation) before shipping. Rule-based fallback stays so a flag-off or LLM error never breaks Discovery.</p>
+</div>
+<p class="subtitle">This is the full design. If it looks right, I'll write it up as a spec doc, commit it, and you can review before we turn it into an implementation plan.</p>

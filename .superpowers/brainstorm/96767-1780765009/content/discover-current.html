@@ -1,0 +1,95 @@
+<h2>Discover today — what's the core problem?</h2>
+<p class="subtitle">Here's the current experience as it's built. Pick whatever rings true (you can choose more than one), or tell me in your own words in the terminal.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Current: /s &nbsp;·&nbsp; Discover</div>
+  <div class="mockup-body" style="background:#faf9f5;padding:14px;">
+    <div style="font-size:13px;color:#666;margin-bottom:2px;">Discover</div>
+    <div style="font-size:18px;font-weight:600;margin-bottom:10px;">Let's figure out what you're looking for</div>
+
+    <!-- track tabs + layers -->
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+      <span style="padding:4px 12px;border-radius:16px;background:#2b59ff15;border:1px solid #2b59ff55;font-weight:600;font-size:13px;">Profile</span>
+      <span style="padding:4px 12px;border-radius:16px;border:1px solid #ddd;font-size:13px;color:#777;">Goals</span>
+      <span style="padding:4px 12px;border-radius:16px;border:1px solid #ddd;font-size:13px;color:#777;">Needs</span>
+      <span style="margin-left:10px;font-size:11px;color:#999;">basic › personality › identity</span>
+    </div>
+
+    <!-- strategy CTA -->
+    <div style="border:1px solid #eee;border-radius:8px;padding:8px 12px;font-size:12px;color:#777;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+      <span>✦ Keep going to unlock your strategy — reach 50% on Profile, Goals, Needs</span>
+      <span style="border:1px solid #ddd;border-radius:6px;padding:3px 10px;color:#aaa;">Generate strategy</span>
+    </div>
+
+    <div style="display:flex;gap:12px;">
+      <!-- chat -->
+      <div style="flex:1;border:1px solid #eee;border-radius:8px;padding:12px;background:#fff;min-height:230px;display:flex;flex-direction:column;">
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <div style="width:24px;height:24px;border-radius:50%;background:#eee;flex-shrink:0;"></div>
+          <div style="background:#f4f4f0;border:1px solid #eee;border-radius:14px;border-bottom-left-radius:3px;padding:8px 12px;font-size:13px;max-width:80%;">Tell me about a course you actually enjoyed this year.</div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+          <div style="background:#eef0f4;border-radius:14px;border-bottom-right-radius:3px;padding:8px 12px;font-size:13px;max-width:80%;">I liked my bio class…</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <div style="width:24px;height:24px;border-radius:50%;background:#eee;flex-shrink:0;"></div>
+          <div style="background:#f4f4f0;border:1px solid #eee;border-radius:14px;border-bottom-left-radius:3px;padding:8px 12px;font-size:13px;max-width:80%;">What about it pulled you in?</div>
+        </div>
+        <div style="margin-top:auto;">
+          <div style="font-size:10px;color:#aaa;text-transform:uppercase;margin-bottom:4px;">Suggested prompts</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+            <span style="border:1px solid #2b59ff55;color:#2b59ff;border-radius:14px;padding:2px 10px;font-size:11px;">I don't know yet</span>
+            <span style="border:1px solid #ddd;color:#888;border-radius:14px;padding:2px 10px;font-size:11px;">Skip this</span>
+            <span style="border:1px solid #ddd;color:#888;border-radius:14px;padding:2px 10px;font-size:11px;">Switch track</span>
+          </div>
+          <div style="border:1px solid #ddd;border-radius:8px;padding:8px;font-size:12px;color:#aaa;">Tell me about your life…&nbsp; ↑</div>
+        </div>
+      </div>
+      <!-- sidebar -->
+      <div style="width:150px;display:flex;flex-direction:column;gap:8px;">
+        <div style="border:1px solid #eee;border-radius:8px;padding:8px;background:#fff;">
+          <div style="font-size:11px;font-weight:600;margin-bottom:6px;">Readiness</div>
+          <div style="height:6px;background:#eee;border-radius:3px;margin-bottom:4px;"><div style="width:35%;height:6px;background:#2b59ff;border-radius:3px;"></div></div>
+          <div style="font-size:10px;color:#999;">Match-ready 35%</div>
+        </div>
+        <div style="border:1px solid #eee;border-radius:8px;padding:8px;background:#fff;">
+          <div style="font-size:11px;font-weight:600;margin-bottom:6px;">Artifacts</div>
+          <div style="font-size:10px;color:#999;line-height:1.6;">Goals ·&nbsp;2<br>Needs ·&nbsp;1<br>Identity ·&nbsp;—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>What's not working?</h3>
+<div class="options" data-multiselect>
+  <div class="option" data-choice="interrogation" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Feels like an interrogation, not a conversation</h3>
+      <p>Question → answer → next question. It's a Q&A form wearing a chat skin, not someone who actually talks with you.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="clutter" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Too much UI around the chat</h3>
+      <p>Tracks, layer pills, progress %, strategy CTA, readiness + artifact rails all compete with the actual talking.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="tracks" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>The 3-track structure is rigid / confusing</h3>
+      <p>Having to pick Profile vs Goals vs Needs (and a layer) puts the system's mental model on the student instead of just letting them talk.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="cold" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>It feels cold / robotic, not motivating</h3>
+      <p>Doesn't feel warm, personal, or like it "gets" me — nothing that makes a nervous applicant want to open up and keep going.</p>
+    </div>
+  </div>
+</div>
+<p class="subtitle" style="margin-top:14px;">Or describe the problem your own way — I'm listening in the terminal.</p>

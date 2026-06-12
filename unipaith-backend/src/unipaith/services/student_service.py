@@ -93,6 +93,58 @@ class StudentService:
             raise NotFoundException("Student profile not found")
         return profile
 
+    async def get_full_snapshot(self, user_id: UUID) -> dict:
+        """Consolidated counselor snapshot for the Uni managed agent.
+
+        Composes the existing per-domain loaders into one compact,
+        JSON-serializable dict the host hands back from the
+        ``get_profile_snapshot`` custom tool. The agent uses this to ground
+        the conversation in what UniPaith already knows about the student.
+        Imports are local to avoid a service-layer import cycle.
+        """
+        from unipaith.services.discovery_service import DiscoveryService
+        from unipaith.services.goals_service import GoalsService
+        from unipaith.services.identity_service import IdentityService
+        from unipaith.services.needs_service import NeedsService
+        from unipaith.services.strategy_service import StrategyService
+
+        profile = await self.get_profile(user_id)
+        goals = await GoalsService(self.db).list_goals(user_id)
+        needs = await NeedsService(self.db).list_needs(user_id)
+        identity = await IdentityService(self.db).get(user_id)
+        strategy = await StrategyService(self.db).get_active(user_id)
+        completion = await DiscoveryService(self.db).get_completion_map(user_id)
+
+        return {
+            "profile": {
+                "first_name": profile.first_name,
+                "last_name": profile.last_name,
+            },
+            "goals": [
+                {"category": g.category, "specific": g.specific, "status": g.status} for g in goals
+            ],
+            "needs": [
+                {"maslow_level": n.maslow_level, "signal": n.signal, "severity": n.severity}
+                for n in needs
+            ],
+            "identity": {
+                "core_values": identity.core_values,
+                "worldview": identity.worldview,
+                "self_awareness": identity.self_awareness,
+                "summary": identity.identity_summary,
+            },
+            "active_strategy": (
+                {
+                    "career_target": strategy.career_target,
+                    "target_degree": strategy.target_degree,
+                    "narrative": strategy.narrative,
+                }
+                if strategy
+                else None
+            ),
+            "completion": {k: float(v) for k, v in completion.items()},
+        }
+
     async def update_profile(self, user_id: UUID, data: UpdateProfileRequest) -> StudentProfile:
         profile = await self._get_student_profile(user_id)
         update_data = data.model_dump(exclude_unset=True)

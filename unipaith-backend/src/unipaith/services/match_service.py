@@ -112,6 +112,17 @@ def _program_embedding_text(program: Any) -> str:
     return " — ".join(p for p in parts if p).strip()
 
 
+def _fitness_band(fitness: float) -> str:
+    """One-word descriptor for a fitness score, for conversational surfaces."""
+    if fitness >= 0.75:
+        return "strong"
+    if fitness >= 0.55:
+        return "solid"
+    if fitness >= 0.40:
+        return "possible"
+    return "reach"
+
+
 class MatchService:
     """Stateless service — instantiate per-request with the AsyncSession.
 
@@ -388,6 +399,53 @@ class MatchService:
         rows = list(result.scalars().all())
         calibrator = await self._calibrator()
         return [self._row_to_match(r, calibrator, rank=i + 1) for i, r in enumerate(rows)]
+
+    async def list_matches_for_display(
+        self, student_id: UUID, *, limit: int = 8
+    ) -> list[dict[str, Any]]:
+        """Compact, JSON-serializable matches for conversational surfaces (the
+        Uni ``get_matches`` tool). Joins program + institution names onto the
+        scored rows and bands fitness for a one-word descriptor. Self-contained
+        so it doesn't pull in the probability-band machinery the full
+        ``/me/matches`` endpoint composes."""
+        from unipaith.models.institution import Institution, Program
+
+        matches = await self.list_matches(student_id, limit=limit)
+        if not matches:
+            return []
+        program_ids = [m.program_id for m in matches]
+        programs = (
+            (await self.db.execute(select(Program).where(Program.id.in_(program_ids))))
+            .scalars()
+            .all()
+        )
+        prog_by_id = {p.id: p for p in programs}
+        inst_ids = {p.institution_id for p in programs}
+        inst_name_by_id: dict[UUID, str] = {}
+        if inst_ids:
+            inst_rows = (
+                await self.db.execute(
+                    select(Institution.id, Institution.name).where(Institution.id.in_(inst_ids))
+                )
+            ).all()
+            inst_name_by_id = {iid: name for iid, name in inst_rows}
+        out: list[dict[str, Any]] = []
+        for m in matches:  # preserves fitness-desc order
+            program = prog_by_id.get(m.program_id)
+            fitness = float(m.fitness)
+            out.append(
+                {
+                    "program_id": str(m.program_id),
+                    "program_name": getattr(program, "program_name", None),
+                    "institution_name": (
+                        inst_name_by_id.get(program.institution_id) if program else None
+                    ),
+                    "fitness": round(fitness, 3),
+                    "confidence": round(float(m.confidence), 3),
+                    "band": _fitness_band(fitness),
+                }
+            )
+        return out
 
     @staticmethod
     def _row_to_match(row: MatchResult, calibrator: CalibratorState, *, rank: int) -> MatchRow:

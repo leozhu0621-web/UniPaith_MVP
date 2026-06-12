@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.config import settings
 from unipaith.database import get_db
 from unipaith.dependencies import require_student
 from unipaith.models.user import User
@@ -38,6 +39,7 @@ from unipaith.schemas.discovery import (
     UpdateSessionRequest,
 )
 from unipaith.services.discovery_service import DiscoveryService
+from unipaith.services.uni_agent_host import UniAgentHost
 
 router = APIRouter(prefix="/students/me/discovery", tags=["discovery"])
 
@@ -166,7 +168,7 @@ async def append_message_stream(
     use the non-streaming endpoint.
     """
 
-    async def _event_stream():
+    async def _orchestrator_stream():
         async for event_name, payload in _svc(db).stream_message(
             user.id,
             session_id,
@@ -176,6 +178,33 @@ async def append_message_stream(
         ):
             yield f"event: {event_name}\ndata: {json.dumps(payload, default=str)}\n\n"
         yield "event: done\ndata: {}\n\n"
+
+    async def _event_stream():
+        # Cutover: when the managed agent is on, the platform Uni drives the turn.
+        # Its setup either succeeds (we stream its events) or RAISES before any
+        # output, in which case we fall back to the in-app orchestrator for the
+        # whole turn — students never lose Uni if the platform is unreachable.
+        if settings.ai_uni_managed_agent_v1:
+            host = UniAgentHost(db)
+            turn = host.stream_turn(user.id, content=body.content)
+            try:
+                first = await turn.__anext__()
+            except StopAsyncIteration:
+                first = None
+            except Exception:
+                async for frame in _orchestrator_stream():
+                    yield frame
+                return
+            yield f"event: student_message\ndata: {json.dumps({'content': body.content})}\n\n"
+            if first is not None:
+                name, payload = first
+                yield f"event: {name}\ndata: {json.dumps(payload, default=str)}\n\n"
+            async for event_name, payload in turn:
+                yield f"event: {event_name}\ndata: {json.dumps(payload, default=str)}\n\n"
+            yield "event: done\ndata: {}\n\n"
+            return
+        async for frame in _orchestrator_stream():
+            yield frame
 
     return StreamingResponse(
         _event_stream(),
