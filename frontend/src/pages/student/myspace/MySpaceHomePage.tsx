@@ -85,8 +85,14 @@ export default function MySpaceHomePage() {
   const unreadThreads = threadList.filter(t => t.unread || (t.unread_count ?? 0) > 0).length
 
   // ── Pipeline counts ───────────────────────────────────────────────────────
+  // Tiles deep-link into ApplicationsPage's single-bucket ?status= filter, so
+  // each count must match the bucket it navigates to (bucketOf there).
   const drafts = appList.filter(a => a.status === 'draft')
-  const inFlight = appList.filter(a => ['submitted', 'under_review', 'interview'].includes(a.status))
+  const inProgress = drafts.filter(a => {
+    const pct = a.readiness_pct ?? 0
+    return pct > 0 && pct < 100
+  })
+  const submitted = appList.filter(a => a.status === 'submitted')
   const offers = appList.filter(
     a => a.status === 'decision_made'
       && ['admitted', 'accepted', 'conditional_admission'].includes(a.decision ?? ''),
@@ -222,10 +228,10 @@ export default function MySpaceHomePage() {
               <StatTile label="Saved" value={savedList.length} />
             </button>
             <button onClick={() => navigate('/s/applications?status=in_progress')} className="text-left" aria-label="Applications in progress">
-              <StatTile label="In progress" value={drafts.length} />
+              <StatTile label="In progress" value={inProgress.length} />
             </button>
             <button onClick={() => navigate('/s/applications?status=submitted')} className="text-left" aria-label="Submitted applications">
-              <StatTile label="Submitted" value={inFlight.length} />
+              <StatTile label="Submitted" value={submitted.length} />
             </button>
             <button onClick={() => navigate('/s/applications?tab=offers')} className="text-left" aria-label="Offers">
               <StatTile label="Offers" value={offers.length} />

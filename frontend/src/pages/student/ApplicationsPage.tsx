@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { listMyApplications } from '../../api/applications'
@@ -127,10 +127,17 @@ export default function ApplicationsPage() {
   const rawView = searchParams.get('tab')
   const view: AppView = rawView === 'offers' ? 'offers' : rawView === 'costs' ? 'costs' : 'all'
   // ?status= deep links (the home pipeline tiles) pre-select a bucket filter.
-  const [statusFilter, setStatusFilter] = useState<'all' | Bucket>(() => {
-    const s = searchParams.get('status')
-    return s && BUCKET_ORDER.includes(s as Bucket) ? (s as Bucket) : 'all'
-  })
+  const statusParam = searchParams.get('status')
+  const [statusFilter, setStatusFilter] = useState<'all' | Bucket>(() =>
+    statusParam && BUCKET_ORDER.includes(statusParam as Bucket) ? (statusParam as Bucket) : 'all',
+  )
+  // Follow the ?status= query when it changes while the page stays mounted
+  // (another pipeline deep link or browser back/forward), like `view` above.
+  useEffect(() => {
+    setStatusFilter(
+      statusParam && BUCKET_ORDER.includes(statusParam as Bucket) ? (statusParam as Bucket) : 'all',
+    )
+  }, [statusParam])
   const [institution, setInstitution] = useState('all')
   const [deadlineWindow, setDeadlineWindow] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'reach' | 'target' | 'safer'>('all')
