@@ -34,19 +34,22 @@ def _program_snapshot(slug: str) -> dict:
     cost = cu._cost_for(spec)
     if cost is None:
         cost = {"funded": False, "note": "see program website", "source": "x", "source_url": "x"}
-    fos = cu._FOS_OUTCOMES.get(slug)
-    if fos is not None:
-        salary, cip = fos
-        outcomes = {
-            "median_salary": salary,
-            "scope": "program",
-            "cip": cip,
-            "conditions": cu._FOS_CONDITIONS,
-            "source": "College Scorecard",
-            "source_url": "x",
-        }
+    if slug == cu._FLAGSHIP:
+        outcomes = dict(cu._MBA_OUTCOMES)
     else:
-        outcomes = dict(cu._OUTCOMES_INSTITUTION)
+        fos = cu._FOS_OUTCOMES.get(slug)
+        if fos is not None:
+            salary, cip = fos
+            outcomes = {
+                "median_salary": salary,
+                "scope": "program",
+                "cip": cip,
+                "conditions": cu._FOS_CONDITIONS,
+                "source": "College Scorecard",
+                "source_url": "x",
+            }
+        else:
+            outcomes = dict(cu._OUTCOMES_INSTITUTION)
     return {
         "program_name": spec["program_name"],
         "degree_type": spec["degree_type"],
@@ -66,7 +69,7 @@ def _program_snapshot(slug: str) -> dict:
         "content_sources": (
             cu._CS_CONTENT
             if slug == "cornell-computer-science-bs"
-            else cu._program_content(spec)
+            else (cu._MBA_CONTENT if slug == cu._FLAGSHIP else cu._program_content(spec))
         ),
     }
 
@@ -183,3 +186,41 @@ def test_every_node_has_standard_stamp():
     for spec in cu.PROGRAMS:
         st = cu._program_standard(spec["slug"], spec)
         assert st["version"] == STANDARD_VERSION and st["enriched_at"] == cu.ENRICHED_AT
+
+
+def test_institution_has_media_credit():
+    assert cu.SCHOOL_OUTCOMES.get("media_credit"), "Campus photo must carry attribution"
+
+
+def test_coverable_programs_have_reviews():
+    """Eight coverable programs carry aggregated external_reviews (not merely omitted)."""
+    expected = {
+        "cornell-computer-science-bs",
+        "cornell-mba",
+        "cornell-computer-science-ms",
+        "cornell-jd",
+        "cornell-dvm",
+        "cornell-md",
+        "cornell-hotel-administration-bs",
+        "cornell-emba-americas",
+        "cornell-ilr-bs",
+    }
+    reviewed = {
+        slug for slug, rev in cu._REVIEWS_BY_SLUG.items() if rev and rev.get("summary")
+    }
+    assert expected <= reviewed, f"Missing reviews for {expected - reviewed}"
+
+
+def test_johnson_mba_flagship_is_deeply_enriched():
+    slug = cu._FLAGSHIP
+    spec = next(p for p in cu.PROGRAMS if p["slug"] == slug)
+    snap = _program_snapshot(slug)
+    res = check_conformance("program", snap, profile_version=STANDARD_VERSION)
+    omitted = set(cu._program_standard(slug, spec)["omitted"])
+    assert res.conformant or set(res.missing_fields) <= omitted, (
+        f"MBA gaps: {set(res.missing_fields) - omitted}"
+    )
+    assert cu._MBA_OUTCOMES["median_salary"] == 175000
+    assert snap["external_reviews"].get("summary")
+    assert snap["tracks"] is not None
+    assert snap["class_profile"].get("cohort_size")
