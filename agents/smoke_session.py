@@ -29,6 +29,7 @@ def main() -> int:
     reply: list[str] = []
     tool = None
     seen = 0
+    agent_events = 0  # only the agent's own messages/tool calls drive the cap
     with client.beta.sessions.events.stream(session.id) as stream:
         client.beta.sessions.events.send(
             session.id,
@@ -38,6 +39,7 @@ def main() -> int:
             seen += 1
             et = getattr(event, "type", "")
             if et == "agent.message":
+                agent_events += 1
                 for b in getattr(event, "content", []) or []:
                     if getattr(b, "type", "") == "text":
                         reply.append(b.text)
@@ -46,18 +48,25 @@ def main() -> int:
                 break
             elif et in ("session.status_idle", "session.status_terminated"):
                 break
-            if seen > 60:
+            # Don't let thinking/heartbeat noise trip the cap before Uni acts.
+            if agent_events > 60:
                 break
 
+    text = "".join(reply).strip()
     print("events seen:", seen)
-    print("Uni said:", ("".join(reply).strip()[:500]) or "(no text before tool call)")
+    print("Uni said:", text[:500] or "(no text before tool call)")
     print("first tool call:", tool)
+    ok = True
+    if tool is None and not text:
+        print("smoke FAILED: Uni produced no reply text and no tool call")
+        ok = False
     try:
         client.beta.sessions.archive(session.id)
         print("session archived")
     except Exception as e:  # noqa: BLE001
         print("archive note:", str(e)[:120])
-    return 0
+        ok = False
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":
