@@ -32,6 +32,9 @@ const BAND_BLURB: Record<MatchBand, string> = {
 interface MatchesSectionProps {
   savedIds: Set<string>
   onToggleSave: (programId: string) => void
+  /** Spec 2026-06-12 §6.4 — next upcoming event per institution, for the card event chips. */
+  nextEventByInstitution?: Map<string, { event_name: string; start_time: string }>
+  onEventClick?: () => void
 }
 
 function relativeTime(iso?: string | null): string {
@@ -46,7 +49,7 @@ function relativeTime(iso?: string | null): string {
   return `${Math.round(hrs / 24)}d ago`
 }
 
-export default function MatchesSection({ savedIds, onToggleSave }: MatchesSectionProps) {
+export default function MatchesSection({ savedIds, onToggleSave, nextEventByInstitution, onEventClick }: MatchesSectionProps) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const compareStore = useCompareStore()
@@ -106,6 +109,8 @@ export default function MatchesSection({ savedIds, onToggleSave }: MatchesSectio
               })
         }
         onView={() => navigate(`/s/programs/${m.program_id}`)}
+        nextEvent={m.institution_id ? nextEventByInstitution?.get(m.institution_id) ?? null : null}
+        onEventClick={onEventClick}
       />
     )
     // First-run coachmark on the top match's dual ring (Spec 81 §3.3).

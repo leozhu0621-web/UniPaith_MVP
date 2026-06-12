@@ -2,7 +2,7 @@ import type { ComponentType } from 'react'
 import { formatCurrency } from '../../../../utils/format'
 import type { ProgramSummary, MatchResult } from '../../../../types'
 import {
-  Bookmark, BookmarkCheck, DollarSign, GraduationCap,
+  BellPlus, BellRing, Bookmark, BookmarkCheck, CalendarDays, DollarSign, GraduationCap,
   TrendingUp, Percent, ArrowRightLeft,
   Clock, Building, Calendar, ArrowRight, Sparkles,
 } from 'lucide-react'
@@ -53,6 +53,12 @@ interface Props {
   onCompare?: () => void
   onAskCounselor?: () => void
   onView: () => void
+  /** Spec 2026-06-12 §6.1 — follow the program's institution for updates. */
+  following?: boolean
+  onToggleFollow?: () => void
+  /** Spec 2026-06-12 §6.4 — next upcoming event from this school. */
+  nextEvent?: { event_name: string; start_time: string } | null
+  onEventClick?: () => void
 }
 
 function toUnit(v: number | null | undefined): number {
@@ -61,7 +67,7 @@ function toUnit(v: number | null | undefined): number {
   return Math.max(0, Math.min(1, n))
 }
 
-export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView }: Props) {
+export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView, following, onToggleFollow, nextEvent, onEventClick }: Props) {
   const abbrev = degreeAbbrev(program.degree_type)
   // Dual-score migration: prefer fitness_score, fall back to legacy match_score
   // (Phase E keeps match_score dual-written for one release — see CLAUDE.md).
@@ -95,7 +101,21 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
           {saved ? <BookmarkCheck size={15} /> : <Bookmark size={15} />}
         </button>
 
-        <div className="flex items-start gap-3 pr-9">
+        {/* Follow-school button (Spec 2026-06-12 §6.1) — updates land in Discover. */}
+        {onToggleFollow && (
+          <button
+            onClick={e => { e.stopPropagation(); onToggleFollow() }}
+            className={`absolute top-3 right-12 p-2 rounded-full transition-colors ${
+              following ? 'text-secondary bg-secondary/10' : 'text-muted-foreground hover:bg-muted'
+            }`}
+            aria-label={following ? `Unfollow ${program.institution_name}` : `Follow ${program.institution_name} for updates`}
+            title={following ? `Following ${program.institution_name}` : `Follow ${program.institution_name}`}
+          >
+            {following ? <BellRing size={15} /> : <BellPlus size={15} />}
+          </button>
+        )}
+
+        <div className={`flex items-start gap-3 ${onToggleFollow ? 'pr-[4.5rem]' : 'pr-9'}`}>
           {/* Degree monogram tile — muted surface, cobalt mark (no gradient). */}
           <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-muted border border-border/60 flex flex-col items-center justify-center">
             <GraduationCap size={13} className="text-secondary" />
@@ -117,12 +137,23 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
           </div>
         </div>
 
-        {/* Band / match-ring row — only when there's a match to show. The degree
-            is already conveyed by the monogram tile and the full program name, so
-            no separate degree chip here. */}
-        {(bandLabel || hasDual) && (
+        {/* Band / match-ring / event row — only when there's something to show.
+            The degree is already conveyed by the monogram tile and the full
+            program name, so no separate degree chip here. */}
+        {(bandLabel || hasDual || nextEvent) && (
           <div className="flex items-center gap-1.5 mt-3 flex-wrap">
             {bandLabel && <BandBadge band={bandLabel} />}
+            {nextEvent && (
+              <button
+                onClick={e => { e.stopPropagation(); onEventClick?.() }}
+                className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors"
+                title={`Upcoming: ${nextEvent.event_name}`}
+              >
+                <CalendarDays size={10} />
+                {nextEvent.event_name.length > 18 ? nextEvent.event_name.slice(0, 18) + '…' : nextEvent.event_name} ·{' '}
+                {new Date(nextEvent.start_time).toLocaleDateString('en-US', { weekday: 'short' })}
+              </button>
+            )}
             {hasDual && (
               <span className="ml-auto">
                 <DualRing fitness={fitness} confidence={confidence} size={40} compact />

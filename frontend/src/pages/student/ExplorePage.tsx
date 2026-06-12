@@ -5,6 +5,7 @@ import QueryError from '../../components/ui/QueryError'
 import { PageHeader } from '../../components/student/density'
 import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
+import { getConnectEvents, getFollowing, followInstitution, unfollowInstitution } from '../../api/connect'
 import { showToast } from '../../stores/toast-store'
 import UniversityCard from './explore/cards/UniversityCard'
 import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type FilterState } from './explore/shared/ExploreFilters'
@@ -15,6 +16,12 @@ import PromoCard from './explore/cards/PromoCard'
 import DiscoverySearch from './explore/discovery/DiscoverySearch'
 import { parseChipsParam } from './explore/discovery/chipUtils'
 import { hasActiveFilters as hasProgramFilters, parseFiltersParam } from './explore/discovery/filterUtils'
+import DiscoverTabBar, { DISCOVER_TABS, type DiscoverTab } from './explore/DiscoverTabBar'
+import DiscoverRail from './explore/rail/DiscoverRail'
+import UpdatesTab from './connect/UpdatesTab'
+import EventsTab from './connect/EventsTab'
+import PeersTab from './connect/PeersTab'
+import ManageFollowingPanel from './connect/ManageFollowingPanel'
 import type {
   InstitutionClassification,
   SatTier,
@@ -22,15 +29,24 @@ import type {
 } from './explore/shared/classifyInstitution'
 
 /**
- * ExplorePage — the Stage-2 "Match" surface (Spec 09 + 10) at /s/explore.
+ * ExplorePage — the Discover hub (Spec 2026-06-12: Discover + Connect merge).
  *
- * Top: the active strategy (Spec 09 §2) and the ranked dual-score matches.
- * Then the Spec-10 type-first program search (DiscoverySearch): search box,
- * constraint chips, genre tiles, sort, and a programs-only results grid.
- * When a search is active (chips/query in the URL) the matches + universities
- * browse step aside so the results own the screen; otherwise the universities
- * browse grid remains available below the genre tiles.
+ * Sub-tabs: For you (the Stage-2 Match surface, Spec 09 + 10) · Updates ·
+ * Events · Peers (the absorbed Connect surface, Spec 20). The For-you tab
+ * keeps the original scroll — strategy, ranked dual-score matches, the
+ * Spec-10 type-first program search, and the universities browse — plus a
+ * live right rail (xl+) with updates / events / deadline radar / follow
+ * suggestions. When a program search is active (chips/filters in the URL)
+ * the matches + universities browse step aside so the results own the screen.
  */
+
+// Per-tab header copy (Spec 2026-06-12 §4).
+const TAB_HEADERS: Record<DiscoverTab, { title: string; sub: string }> = {
+  foryou: { title: 'Your strategy and your matches', sub: 'Ranked for fit, not fame — and every score explains itself.' },
+  updates: { title: 'Updates from your schools', sub: 'Posts, deadlines, and changes from the institutions you follow.' },
+  events: { title: 'Events from your schools', sub: 'Info sessions, fairs, and open days — RSVP from here.' },
+  peers: { title: 'Peers on your path', sub: 'Opt-in: find students applying to the same programs.' },
+}
 
 /** Parse filter state from URL search params. List filters are comma-
  *  separated on their own key; boolean toggles are '1' or absent. */
@@ -92,6 +108,18 @@ export default function ExplorePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
 
+  // Hub sub-tabs (Spec 2026-06-12 §2). Unknown/absent tab → For you.
+  const urlTab = searchParams.get('tab') as DiscoverTab | null
+  const tab: DiscoverTab = urlTab && DISCOVER_TABS.includes(urlTab) ? urlTab : 'foryou'
+  const setTab = (t: DiscoverTab) =>
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (t === 'foryou') next.delete('tab')
+      else next.set('tab', t)
+      return next
+    }, { replace: true })
+  const [managing, setManaging] = useState(false)
+
   // A Spec-10 program search is "active" once there are constraint chips in the
   // URL (matching DiscoverySearch's own notion) — drives whether the matches +
   // universities browse stand aside so the programs results own the screen.
@@ -109,7 +137,7 @@ export default function ExplorePage() {
     queryKey: ['explore-universities'],
     queryFn: () => searchInstitutions({ page_size: 50 }),
     staleTime: 5 * 60 * 1000,
-    enabled: !searchActive,
+    enabled: !searchActive && tab === 'foryou',
   })
 
   // Saved programs — for the MatchesSection cards.
@@ -119,7 +147,7 @@ export default function ExplorePage() {
     queryKey: ['featured-promotions', 'explore'],
     queryFn: () => getFeaturedPromotions(),
     staleTime: 5 * 60 * 1000,
-    enabled: !searchActive,
+    enabled: !searchActive && tab === 'foryou',
   })
 
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
@@ -147,6 +175,55 @@ export default function ExplorePage() {
       refetchSaved()
     }
   }
+
+  // Followed institutions — drives card follow toggles + rail suggestions
+  // (Spec 2026-06-12 §6.1/§6.6). Optimistic, same pattern as savedIds.
+  const { data: follows, refetch: refetchFollows } = useQuery({
+    queryKey: ['connect-follows'],
+    queryFn: getFollowing,
+    retry: false,
+  })
+  const [followedIds, setFollowedIds] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    if (follows) setFollowedIds(new Set(follows.map(f => String(f.institution_id))))
+  }, [follows])
+
+  const toggleFollow = async (institutionId: string) => {
+    const was = followedIds.has(institutionId)
+    setFollowedIds(prev => {
+      const n = new Set(prev)
+      if (was) n.delete(institutionId)
+      else n.add(institutionId)
+      return n
+    })
+    try {
+      if (was) await unfollowInstitution(institutionId)
+      else await followInstitution(institutionId)
+      queryClient.invalidateQueries({ queryKey: ['connect-follows'] })
+      queryClient.invalidateQueries({ queryKey: ['connect-feed-rail'] })
+    } catch {
+      showToast(`We couldn't ${was ? 'unfollow' : 'follow'} this school. Please try again.`, 'error')
+      queryClient.invalidateQueries({ queryKey: ['connect-follows'] })
+      refetchFollows()
+    }
+  }
+
+  // Next upcoming event per institution — for the Handshake-style event chips
+  // on cards (Spec 2026-06-12 §6.4). Events arrive start_time-asc.
+  const { data: upcomingEvents } = useQuery({
+    queryKey: ['connect-events', 'upcoming'],
+    queryFn: () => getConnectEvents('upcoming'),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+    enabled: tab === 'foryou',
+  })
+  const nextEventByInst = useMemo(() => {
+    const m = new Map<string, { event_name: string; start_time: string }>()
+    for (const e of upcomingEvents?.events ?? []) {
+      if (!m.has(e.institution_id)) m.set(e.institution_id, { event_name: e.event_name, start_time: e.start_time })
+    }
+    return m
+  }, [upcomingEvents])
 
   const uniList: UniversityRow[] = universities?.items ?? []
   const filteredUniList = useMemo(() => applyFilters(uniList, filters), [uniList, filters])
@@ -197,116 +274,161 @@ export default function ExplorePage() {
   return (
     <div className="p-4 w-full">
       {/* Spec 09 §13 H1 + brand framing ("Fit, not fame", Spec 07 §2/§6). */}
-      <PageHeader
-        eyebrow="Discover"
-        title="Your strategy and your matches"
-        sub="Ranked for fit, not fame — and every score explains itself."
-      />
+      <PageHeader eyebrow="Discover" title={TAB_HEADERS[tab].title} sub={TAB_HEADERS[tab].sub} />
 
-      {/* Spec 09 §2 — strategy lands first. */}
-      <div className="mb-4">
-        <StrategyView forceExpanded={searchParams.get('showStrategy') === 'open'} />
-      </div>
+      <DiscoverTabBar tab={tab} onChange={setTab} onManageFollowing={() => setManaging(true)} />
 
-      {/* Spec 27 §6 — featured promotions from followed / matched institutions. */}
-      {!searchActive && featuredPromos && featuredPromos.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-eyebrow uppercase text-muted-foreground font-semibold mb-3">Featured programs</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {featuredPromos.slice(0, 3).map(promo => (
-              <PromoCard
-                key={promo.id}
-                promo={promo}
-                onView={() => {
-                  recordPromotionClick(promo.id).catch(() => {})
-                  if (promo.program_id) navigate(`/s/programs/${promo.program_id}`)
-                  else if (promo.target_url) window.open(promo.target_url, '_blank', 'noopener,noreferrer')
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Ranked matches — hidden while a program search owns the screen. */}
-      {!searchActive && (
-        <div className="mb-6">
-          <MatchesSection savedIds={savedIds} onToggleSave={toggleSave} />
-        </div>
-      )}
-
-      {/* Spec 10 — type-first program search (search box · chips · genre tiles · sort · results). */}
-      <div className="mb-8">
-        <DiscoverySearch />
-      </div>
-
-      {/* Browse universities — secondary, idle-only (no entity-mixing with the program results). */}
-      {!searchActive && (
-        <div>
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <h2 className="text-eyebrow uppercase text-muted-foreground font-semibold">Browse universities</h2>
-            <button
-              onClick={requestNearMe}
-              aria-pressed={!!nearMe}
-              className={`inline-flex items-center gap-1.5 text-xs font-semibold rounded-md px-2.5 py-1.5 border transition-colors ${
-                nearMe
-                  ? 'bg-secondary text-secondary-foreground border-secondary'
-                  : 'text-secondary border-border hover:bg-muted'
-              }`}
-            >
-              <MapPin size={13} />
-              {nearMe ? 'Near me · on' : geoBusy ? 'Locating…' : 'Near me'}
-            </button>
-          </div>
-
-          {uniList.length > 0 && (
-            <ExploreFilters universities={uniList} filters={filters} onChange={setFilters} />
-          )}
-
-          {uniError ? (
-            <QueryError detail="We couldn't load universities." onRetry={() => refetchUni()} />
-          ) : uniLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {[1, 2, 3].map(i => <div key={i} className="h-80 bg-card rounded-xl border border-border animate-pulse" />)}
+      {tab === 'foryou' ? (
+        <div
+          id="discover-panel-foryou"
+          role="tabpanel"
+          aria-labelledby="discover-tab-foryou"
+          className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_19rem] gap-6 items-start"
+        >
+          <div className="min-w-0">
+            {/* Spec 09 §2 — strategy lands first. */}
+            <div className="mb-4">
+              <StrategyView forceExpanded={searchParams.get('showStrategy') === 'open'} />
             </div>
-          ) : uniList.length === 0 ? (
-            <div className="text-center py-16 bg-card rounded-xl border border-border">
-              <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
-              <p className="text-sm text-foreground font-semibold mb-1">No universities yet</p>
-              <p className="text-xs text-muted-foreground">Universities will appear here as they join the platform.</p>
-            </div>
-          ) : filteredUniList.length === 0 ? (
-            <div className="text-center py-16 bg-card rounded-xl border border-border">
-              <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
-              <p className="text-sm text-foreground font-semibold mb-1">No universities match your filters</p>
-              <p className="text-xs text-muted-foreground mb-4">Try removing a filter or broadening your search.</p>
-              <button
-                onClick={() => setFilters(EMPTY_FILTERS)}
-                className="text-xs font-semibold text-secondary hover:underline"
-              >
-                Clear all filters
-              </button>
-            </div>
-          ) : (
-            <>
-              {hasActiveFilters && (
-                <p className="text-[11px] text-muted-foreground mb-3">
-                  Showing <span className="font-semibold text-foreground">{filteredUniList.length}</span> of {uniList.length} universities
-                </p>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {displayUniList.map((inst: UniversityRow) => (
-                  <UniversityCard
-                    key={inst.id}
-                    institution={inst}
-                    onClick={() => navigate(`/s/institutions/${inst.id}`)}
-                  />
-                ))}
+
+            {/* Spec 27 §6 — featured promotions from followed / matched institutions. */}
+            {!searchActive && featuredPromos && featuredPromos.length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-eyebrow uppercase text-muted-foreground font-semibold mb-3">Featured programs</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {featuredPromos.slice(0, 3).map(promo => (
+                    <PromoCard
+                      key={promo.id}
+                      promo={promo}
+                      onView={() => {
+                        recordPromotionClick(promo.id).catch(() => {})
+                        if (promo.program_id) navigate(`/s/programs/${promo.program_id}`)
+                        else if (promo.target_url) window.open(promo.target_url, '_blank', 'noopener,noreferrer')
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
-            </>
-          )}
+            )}
+
+            {/* Ranked matches — hidden while a program search owns the screen. */}
+            {!searchActive && (
+              <div className="mb-6">
+                <MatchesSection
+                  savedIds={savedIds}
+                  onToggleSave={toggleSave}
+                  nextEventByInstitution={nextEventByInst}
+                  onEventClick={() => setTab('events')}
+                />
+              </div>
+            )}
+
+            {/* Spec 10 — type-first program search (search box · chips · genre tiles · sort · results). */}
+            <div className="mb-8">
+              <DiscoverySearch
+                followedIds={followedIds}
+                onToggleFollow={toggleFollow}
+                nextEventByInstitution={nextEventByInst}
+                onEventClick={() => setTab('events')}
+              />
+            </div>
+
+            {/* Browse universities — secondary, idle-only (no entity-mixing with the program results). */}
+            {!searchActive && (
+              <div>
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <h2 className="text-eyebrow uppercase text-muted-foreground font-semibold">Browse universities</h2>
+                  <button
+                    onClick={requestNearMe}
+                    aria-pressed={!!nearMe}
+                    className={`inline-flex items-center gap-1.5 text-xs font-semibold rounded-md px-2.5 py-1.5 border transition-colors ${
+                      nearMe
+                        ? 'bg-secondary text-secondary-foreground border-secondary'
+                        : 'text-secondary border-border hover:bg-muted'
+                    }`}
+                  >
+                    <MapPin size={13} />
+                    {nearMe ? 'Near me · on' : geoBusy ? 'Locating…' : 'Near me'}
+                  </button>
+                </div>
+
+                {uniList.length > 0 && (
+                  <ExploreFilters universities={uniList} filters={filters} onChange={setFilters} />
+                )}
+
+                {uniError ? (
+                  <QueryError detail="We couldn't load universities." onRetry={() => refetchUni()} />
+                ) : uniLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3].map(i => <div key={i} className="h-80 bg-card rounded-xl border border-border animate-pulse" />)}
+                  </div>
+                ) : uniList.length === 0 ? (
+                  <div className="text-center py-16 bg-card rounded-xl border border-border">
+                    <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
+                    <p className="text-sm text-foreground font-semibold mb-1">No universities yet</p>
+                    <p className="text-xs text-muted-foreground">Universities will appear here as they join the platform.</p>
+                  </div>
+                ) : filteredUniList.length === 0 ? (
+                  <div className="text-center py-16 bg-card rounded-xl border border-border">
+                    <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
+                    <p className="text-sm text-foreground font-semibold mb-1">No universities match your filters</p>
+                    <p className="text-xs text-muted-foreground mb-4">Try removing a filter or broadening your search.</p>
+                    <button
+                      onClick={() => setFilters(EMPTY_FILTERS)}
+                      className="text-xs font-semibold text-secondary hover:underline"
+                    >
+                      Clear all filters
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {hasActiveFilters && (
+                      <p className="text-[11px] text-muted-foreground mb-3">
+                        Showing <span className="font-semibold text-foreground">{filteredUniList.length}</span> of {uniList.length} universities
+                      </p>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {displayUniList.map((inst: UniversityRow) => (
+                        <UniversityCard
+                          key={inst.id}
+                          institution={inst}
+                          onClick={() => navigate(`/s/institutions/${inst.id}`)}
+                          following={followedIds.has(String(inst.id))}
+                          onToggleFollow={() => toggleFollow(String(inst.id))}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Live rail (Spec 2026-06-12 §2) — xl+ only; tab badges carry the signal below xl. */}
+          <aside className="hidden xl:block sticky top-4">
+            <DiscoverRail
+              followedIds={followedIds}
+              onToggleFollow={toggleFollow}
+              onOpenTab={t => setTab(t)}
+              onManageFollowing={() => setManaging(true)}
+            />
+          </aside>
+        </div>
+      ) : (
+        <div
+          id={`discover-panel-${tab}`}
+          role="tabpanel"
+          aria-labelledby={`discover-tab-${tab}`}
+          tabIndex={0}
+          className="focus-visible:outline-none"
+        >
+          {tab === 'updates' && <UpdatesTab />}
+          {tab === 'events' && <EventsTab />}
+          {tab === 'peers' && <PeersTab />}
         </div>
       )}
+
+      {managing && <ManageFollowingPanel onClose={() => setManaging(false)} />}
     </div>
   )
 }
