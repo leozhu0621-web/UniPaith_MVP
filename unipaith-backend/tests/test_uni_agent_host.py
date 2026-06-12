@@ -59,12 +59,19 @@ class _FakeAgentClient:
 
 @pytest.mark.asyncio
 async def test_stream_turn_relays_and_answers_tool(db_session, mock_student_user):
+    from unipaith.services.discovery_service import DiscoveryService
     from unipaith.services.uni_agent_host import UniAgentHost
 
     await ensure_profile(db_session, mock_student_user)
+    session = await DiscoveryService(db_session).start_unified_session(mock_student_user.id)
     fake = _FakeAgentClient()
     host = UniAgentHost(db_session, client=fake)
-    events = [ev async for ev in host.stream_turn(mock_student_user.id, content="hello")]
+    events = [
+        ev
+        async for ev in host.stream_turn(
+            mock_student_user.id, session_id=session.id, content="hello"
+        )
+    ]
     names = [n for n, _ in events]
     assert "delta" in names
     assert "assistant_message" in names
@@ -79,22 +86,36 @@ async def test_stream_turn_relays_and_answers_tool(db_session, mock_student_user
 @pytest.mark.asyncio
 async def test_stream_turn_raises_on_setup_failure(db_session, mock_student_user):
     """Setup failure must propagate so the API can fall back to the orchestrator."""
+    from unipaith.services.discovery_service import DiscoveryService
     from unipaith.services.uni_agent_host import UniAgentHost
 
     await ensure_profile(db_session, mock_student_user)
+    session = await DiscoveryService(db_session).start_unified_session(mock_student_user.id)
     host = UniAgentHost(db_session, client=_FakeAgentClient(raise_on_create=True))
     with pytest.raises(RuntimeError):
-        _ = [ev async for ev in host.stream_turn(mock_student_user.id, content="hello")]
+        _ = [
+            ev
+            async for ev in host.stream_turn(
+                mock_student_user.id, session_id=session.id, content="hello"
+            )
+        ]
 
 
 @pytest.mark.asyncio
 async def test_stream_turn_graceful_on_midstream_failure(db_session, mock_student_user):
     """A failure after setup closes the turn calmly — never a 5xx, no fallback."""
+    from unipaith.services.discovery_service import DiscoveryService
     from unipaith.services.uni_agent_host import UniAgentHost
 
     await ensure_profile(db_session, mock_student_user)
+    session = await DiscoveryService(db_session).start_unified_session(mock_student_user.id)
     host = UniAgentHost(db_session, client=_FakeAgentClient(raise_on_stream=True))
-    events = [ev async for ev in host.stream_turn(mock_student_user.id, content="hello")]
+    events = [
+        ev
+        async for ev in host.stream_turn(
+            mock_student_user.id, session_id=session.id, content="hello"
+        )
+    ]
     names = [n for n, _ in events]
     assert "assistant_message" in names
     text = next(p["content"] for n, p in events if n == "assistant_message")

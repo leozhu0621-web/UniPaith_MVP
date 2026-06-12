@@ -186,7 +186,7 @@ async def append_message_stream(
         # whole turn — students never lose Uni if the platform is unreachable.
         if settings.ai_uni_managed_agent_v1:
             host = UniAgentHost(db)
-            turn = host.stream_turn(user.id, content=body.content)
+            turn = host.stream_turn(user.id, session_id=session_id, content=body.content)
             try:
                 first = await turn.__anext__()
             except StopAsyncIteration:
@@ -195,7 +195,8 @@ async def append_message_stream(
                 async for frame in _orchestrator_stream():
                     yield frame
                 return
-            yield f"event: student_message\ndata: {json.dumps({'content': body.content})}\n\n"
+            # The host emits its own `student_message` (the persisted row) as its
+            # first event, so we just forward the host's stream verbatim.
             if first is not None:
                 name, payload = first
                 yield f"event: {name}\ndata: {json.dumps(payload, default=str)}\n\n"
