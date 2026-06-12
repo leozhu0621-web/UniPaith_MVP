@@ -1458,7 +1458,18 @@ async def search_institutions(
                 "latitude": ((inst.school_outcomes or {}).get("location") or {}).get("lat"),
                 "longitude": ((inst.school_outcomes or {}).get("location") or {}).get("lng"),
                 "logo_url": inst.logo_url,
-                "image_url": ((inst.media_gallery or [None])[0] if inst.media_gallery else None),
+                # Lead campus photo for the explore-card gradient header. Prefer the
+                # verified campus_photos gallery (each carries its own credit); fall
+                # back to media_gallery's first raster. image_credit keeps CC-BY
+                # attribution visible on the card too.
+                "image_url": (
+                    (((inst.school_outcomes or {}).get("campus_photos") or [{}])[0].get("url"))
+                    or ((inst.media_gallery or [None])[0] if inst.media_gallery else None)
+                ),
+                "image_credit": (
+                    (((inst.school_outcomes or {}).get("campus_photos") or [{}])[0].get("credit"))
+                    or (inst.school_outcomes or {}).get("media_credit")
+                ),
                 "program_count": pc_map.get(inst.id, 0),
                 "school_count": sc_map.get(inst.id, 0),
                 "description_text": ((inst.description_text or "")[:200]),

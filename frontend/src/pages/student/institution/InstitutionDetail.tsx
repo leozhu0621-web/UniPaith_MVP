@@ -1,4 +1,4 @@
-import { useMemo, useState, type ComponentType } from 'react'
+import { useEffect, useMemo, useState, type ComponentType } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -20,8 +20,8 @@ import Skeleton from '../../../components/ui/Skeleton'
 import QueryError from '../../../components/ui/QueryError'
 import {
   Bookmark, BookmarkCheck, MapPin, Globe, Building2, BookOpen,
-  Mail, Phone, ChevronDown, X, Search, GraduationCap,
-  Filter, ArrowRight, Link2, Award, Trophy, DollarSign, TrendingUp, Users, FlaskConical,
+  Mail, Phone, ChevronDown, ChevronLeft, ChevronRight, X, Search, GraduationCap,
+  Filter, ArrowRight, Link2, Award, Trophy, DollarSign, TrendingUp, Users, FlaskConical, Camera,
 } from 'lucide-react'
 import type { Institution, ProgramSummary, InstitutionPost, SchoolSummary } from '../../../types'
 import { AdmissionsFunnel, ChipList, DiversityBar, RankingBadge, StatBar } from './overviewWidgets'
@@ -38,8 +38,10 @@ interface Props {
  *
  * One component, two surfaces: rendered authenticated at `/s/institutions/:id`
  * and public at `/school/:id` (Spec 12 §5, gap G-S9 — consolidated). Editorial,
- * text-driven, no campus photos (Spec 12 §9). Save school == follow the
- * institution (drives the Connect feed); public actions become sign-in CTAs.
+ * Niche-modeled, led by a campus-photo hero that fades into the page background;
+ * clicking the hero opens the campus-photo lightbox (school_outcomes.campus_photos).
+ * Save school == follow the institution (drives the Connect feed); public actions
+ * become sign-in CTAs.
  */
 export default function InstitutionDetail({ institutionId, isAuthenticated }: Props) {
   const navigate = useNavigate()
@@ -164,6 +166,8 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
     onError: () => showToast('Couldn’t save that program. Try again.', 'error'),
   })
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
+  // Campus-photo lightbox — null = closed, otherwise the index being viewed.
+  const [galleryAt, setGalleryAt] = useState<number | null>(null)
   const toggleSaveProgram = (programId: string) => {
     if (!isAuthenticated) { navigate('/login'); return }
     if (savingIds.has(programId)) return
@@ -221,6 +225,18 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   const heroPhoto = (inst.media_gallery ?? []).find(u => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) ?? null
   // Attribution for the campus hero photo (e.g. "Wikimedia Commons / Author (CC BY-SA 4.0)").
   const mediaCredit: string | null = ((inst.school_outcomes as any)?.media_credit) || null
+  // Campus-photo gallery — verified [{url, credit}] from school_outcomes.campus_photos;
+  // falls back to the single legacy hero photo. Clicking the hero opens the lightbox.
+  const campusPhotos: { url: string; credit: string | null }[] = (() => {
+    const raw = (inst.school_outcomes as any)?.campus_photos
+    const list = (Array.isArray(raw) ? raw : [])
+      .map((p: any) => ({ url: typeof p?.url === 'string' ? p.url : '', credit: p?.credit || null }))
+      .filter(p => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(p.url))
+    if (list.length) return list
+    return heroPhoto ? [{ url: heroPhoto, credit: mediaCredit }] : []
+  })()
+  const heroUrl = campusPhotos[0]?.url ?? heroPhoto
+  const heroCredit = campusPhotos[0]?.credit ?? mediaCredit
   // The header is intentionally chip-free — no founded/ranking/acceptance/enrollment
   // line. Founded lives in Quick facts; ranking in the Rankings section; acceptance
   // in the Overview stat card; enrollment in Quick facts / Diversity.
@@ -259,10 +275,23 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
 
       {/* Hero — campus photo fading into the page background. No logo, no geo. */}
       <div className="relative rounded-xl overflow-hidden border border-border mb-5 bg-background">
-        {/* Photo banner */}
-        <div className="relative h-52 sm:h-64 md:h-72">
-          {heroPhoto ? (
-            <img src={heroPhoto} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
+        {/* Photo banner — click to browse the campus-photo gallery. */}
+        <div
+          className={`relative h-52 sm:h-64 md:h-72 ${heroUrl ? 'cursor-zoom-in' : ''}`}
+          {...(heroUrl
+            ? {
+                role: 'button' as const,
+                tabIndex: 0,
+                'aria-label': `View ${campusPhotos.length > 1 ? `all ${campusPhotos.length} campus photos` : 'campus photo'}`,
+                onClick: () => setGalleryAt(0),
+                onKeyDown: (e: React.KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setGalleryAt(0) }
+                },
+              }
+            : {})}
+        >
+          {heroUrl ? (
+            <img src={heroUrl} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-background" />
           )}
@@ -274,10 +303,15 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
                 'linear-gradient(to bottom, rgba(10,18,36,0.30) 0%, rgba(10,18,36,0.04) 24%, rgba(10,18,36,0) 44%, hsl(var(--background)) 97%)',
             }}
           />
-          {heroPhoto && mediaCredit && (
+          {heroUrl && heroCredit && (
             <p className="absolute top-1.5 right-2.5 text-[10px] text-white/75 drop-shadow-sm" title="Campus photo credit">
-              Photo: {mediaCredit}
+              Photo: {heroCredit}
             </p>
+          )}
+          {campusPhotos.length > 1 && (
+            <span className="absolute top-1.5 left-2.5 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
+              <Camera size={12} /> {campusPhotos.length} photos
+            </span>
           )}
         </div>
 
@@ -387,6 +421,119 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
         )}
       </div>
 
+      {galleryAt !== null && campusPhotos.length > 0 && (
+        <PhotoLightbox
+          photos={campusPhotos}
+          index={Math.min(galleryAt, campusPhotos.length - 1)}
+          schoolName={inst.name}
+          onNavigate={setGalleryAt}
+          onClose={() => setGalleryAt(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Campus-photo lightbox — opened by clicking the hero banner. Scroll through
+   the gallery with the arrows / arrow keys / dots; Esc or backdrop closes.
+   Each photo shows its own verified credit.
+   ────────────────────────────────────────────────────────────────────────── */
+function PhotoLightbox({ photos, index, schoolName, onNavigate, onClose }: {
+  photos: { url: string; credit: string | null }[]
+  index: number
+  schoolName: string
+  onNavigate: (i: number) => void
+  onClose: () => void
+}) {
+  const count = photos.length
+  const prev = () => onNavigate((index - 1 + count) % count)
+  const next = () => onNavigate((index + 1) % count)
+
+  // Keyboard: Esc closes, arrows navigate. Lock page scroll while open.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+      else if (e.key === 'ArrowLeft' && count > 1) onNavigate((index - 1 + count) % count)
+      else if (e.key === 'ArrowRight' && count > 1) onNavigate((index + 1) % count)
+    }
+    window.addEventListener('keydown', onKey)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+    }
+  }, [index, count, onNavigate, onClose])
+
+  const photo = photos[index]
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4 sm:p-8"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${schoolName} campus photos, ${index + 1} of ${count}`}
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close photo viewer"
+        className="absolute top-3 right-3 rounded-full bg-white/10 hover:bg-white/20 p-2 text-white transition-colors"
+      >
+        <X size={18} />
+      </button>
+
+      <div className="relative max-w-5xl w-full flex items-center justify-center" onClick={e => e.stopPropagation()}>
+        {count > 1 && (
+          <button
+            type="button"
+            onClick={prev}
+            aria-label="Previous photo"
+            className="absolute left-0 sm:-left-2 z-10 rounded-full bg-white/10 hover:bg-white/20 p-2.5 text-white transition-colors"
+          >
+            <ChevronLeft size={20} />
+          </button>
+        )}
+        <img
+          src={photo.url}
+          alt={`${schoolName} campus photo ${index + 1} of ${count}`}
+          className="max-h-[78vh] w-auto max-w-full rounded-lg object-contain select-none"
+          draggable={false}
+        />
+        {count > 1 && (
+          <button
+            type="button"
+            onClick={next}
+            aria-label="Next photo"
+            className="absolute right-0 sm:-right-2 z-10 rounded-full bg-white/10 hover:bg-white/20 p-2.5 text-white transition-colors"
+          >
+            <ChevronRight size={20} />
+          </button>
+        )}
+      </div>
+
+      <div className="mt-3 flex flex-col items-center gap-2" onClick={e => e.stopPropagation()}>
+        {photo.credit && (
+          <p className="text-[11px] text-white/70" title="Photo credit">Photo: {photo.credit}</p>
+        )}
+        {count > 1 && (
+          <div className="flex items-center gap-2" role="tablist" aria-label="Choose photo">
+            {photos.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                role="tab"
+                aria-selected={i === index}
+                aria-label={`Photo ${i + 1}`}
+                onClick={() => onNavigate(i)}
+                className={`h-2 rounded-full transition-all ${i === index ? 'w-5 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'}`}
+              />
+            ))}
+          </div>
+        )}
+        {count > 1 && <p className="text-[11px] text-white/50">{index + 1} / {count}</p>}
+      </div>
     </div>
   )
 }
