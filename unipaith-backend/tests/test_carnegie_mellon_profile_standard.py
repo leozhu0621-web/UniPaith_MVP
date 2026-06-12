@@ -13,6 +13,18 @@ from unipaith.data import carnegie_mellon_profile as c
 from unipaith.profile_standard import STANDARD_VERSION, check_conformance
 from unipaith.profile_standard.manifest import MANIFEST
 
+_FLAGSHIP = "cmu-mba"
+_COVERABLE_REVIEWS = {
+    _FLAGSHIP,
+    "cmu-cs-bs",
+    "cmu-mscs",
+    "cmu-ms-ml",
+    "cmu-mhci",
+    "cmu-msba",
+    "cmu-mscf",
+    "cmu-mism",
+}
+
 
 def _institution_snapshot() -> dict:
     so = {**c.SCHOOL_OUTCOMES}
@@ -45,16 +57,25 @@ def _school_snapshot(name: str) -> dict:
 
 
 def _program_snapshot(spec: dict) -> dict:
-    has_tuition = c._tuition_for(spec) is not None
-    has_outcomes = spec["degree_type"] in ("bachelors", "masters", "phd")
-    outcomes = dict(c._OUTCOMES_INSTITUTION) if has_outcomes else {}
-    outcomes["_standard"] = c._program_standard(spec, has_tuition, has_outcomes)
-    tuition = c._tuition_for(spec)
-    cost = (
-        {"tuition_usd": tuition, "source": c._COST_SRC[0], "source_url": c._COST_SRC[1]}
-        if tuition is not None
-        else None
-    )
+    slug = spec["slug"]
+    if slug == _FLAGSHIP:
+        outcomes = dict(c._MBA_OUTCOMES)
+    elif spec["degree_type"] in ("bachelors", "masters", "phd"):
+        outcomes = dict(c._OUTCOMES_INSTITUTION)
+    else:
+        outcomes = {}
+    outcomes["_standard"] = c._program_standard(slug, spec)
+    cost_override = c._COST_BY_SLUG.get(slug)
+    if cost_override is not None:
+        cost = dict(cost_override)
+    elif c._tuition_for(spec) is not None:
+        cost = {
+            "tuition_usd": c._tuition_for(spec),
+            "source": c._COST_SRC[0],
+            "source_url": c._COST_SRC[1],
+        }
+    else:
+        cost = None
     return {
         "program_name": spec["program_name"],
         "degree_type": spec["degree_type"],
@@ -63,21 +84,21 @@ def _program_snapshot(spec: dict) -> dict:
         "description_text": c._description_for(spec),
         "website_url": spec["website_url"],
         "department": spec["department"],
-        "tracks": None,
+        "tracks": c._TRACKS_BY_SLUG.get(slug),
         "application_requirements": c._requirements_for(spec),
         "cost_data": cost,
         "outcomes_data": outcomes,
-        "class_profile": None,
-        "faculty_contacts": None,
-        "external_reviews": None,
-        "content_sources": c._program_content(spec["school"], c._SCHOOL_KEYWORDS[spec["school"]]),
+        "class_profile": c._CLASS_PROFILE_BY_SLUG.get(slug),
+        "faculty_contacts": c._FACULTY_BY_SLUG.get(slug),
+        "external_reviews": c._REVIEWS_BY_SLUG.get(slug),
+        "content_sources": (
+            c._MBA_CONTENT if slug == _FLAGSHIP else c._program_content_for(spec)
+        ),
     }
 
 
 def _omitted_for(spec: dict) -> set[str]:
-    has_tuition = c._tuition_for(spec) is not None
-    has_outcomes = spec["degree_type"] in ("bachelors", "masters", "phd")
-    return set(c._program_standard(spec, has_tuition, has_outcomes)["omitted"])
+    return set(c._program_standard(spec["slug"], spec)["omitted"])
 
 
 def _section_gaps_unexpected(level: str, missing_sections: list[str], omitted: set[str]) -> list:
@@ -97,7 +118,7 @@ def test_institution_is_gold_except_recorded_omissions():
     omitted = set(c._OMITTED_INSTITUTION)
     assert set(res.missing_fields) <= omitted, f"Unexpected institution gaps: {res.missing_fields}"
     assert not _section_gaps_unexpected("institution", res.missing_sections, omitted)
-    # The two honestly-omitted institution outcome fields.
+    assert c.SCHOOL_OUTCOMES.get("media_credit")
     assert "school_outcomes.employed_or_continuing_ed" in omitted
     assert "school_outcomes.top_employer_industries" in omitted
 
@@ -111,9 +132,27 @@ def test_all_seven_schools_done():
         omitted = set(c._ABOUT_OMITTED.get(name, []))
         assert set(res.missing_fields) <= omitted, f"{name}: unexpected gaps {res.missing_fields}"
         assert not _section_gaps_unexpected("school", res.missing_sections, omitted), name
-        # every school carries a real feed so its Events & Updates tab is never empty
         cs = c._school_content(name)
         assert cs["news_rss"] and cs["events_feed"] and cs["keywords"], name
+
+
+def test_tepper_mba_flagship_is_deeply_enriched():
+    assert _FLAGSHIP in c._TRACKS_BY_SLUG
+    assert _FLAGSHIP in c._CLASS_PROFILE_BY_SLUG
+    assert _FLAGSHIP in c._REVIEWS_BY_SLUG
+    assert _FLAGSHIP in c._COST_BY_SLUG
+    assert c._program_standard(_FLAGSHIP)["omitted"] == [
+        "outcomes_data.employment_rate",
+        "outcomes_data.top_industries",
+        "faculty_contacts.lead",
+    ]
+
+
+def test_coverable_programs_carry_external_reviews():
+    for slug in _COVERABLE_REVIEWS:
+        assert slug in c._REVIEWS_BY_SLUG, slug
+        assert c._REVIEWS_BY_SLUG[slug].get("summary"), slug
+        assert len(c._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
 
 
 def test_every_program_is_done():
@@ -121,11 +160,16 @@ def test_every_program_is_done():
     for spec in c.PROGRAMS:
         res = check_conformance("program", _program_snapshot(spec), profile_version=STANDARD_VERSION)
         omitted = _omitted_for(spec)
-        assert set(res.missing_fields) <= omitted, f"{spec['slug']}: gaps {set(res.missing_fields) - omitted}"
+        assert set(res.missing_fields) <= omitted, (
+            f"{spec['slug']}: gaps {set(res.missing_fields) - omitted}"
+        )
         assert not _section_gaps_unexpected("program", res.missing_sections, omitted), spec["slug"]
-        # content_sources is REQUIRED at program level and must never be omitted now
         assert "content_sources" not in omitted, spec["slug"]
-        cs = c._program_content(spec["school"], c._SCHOOL_KEYWORDS[spec["school"]])
+        cs = (
+            c._MBA_CONTENT
+            if spec["slug"] == _FLAGSHIP
+            else c._program_content_for(spec)
+        )
         assert cs["news_rss"] and cs["events_feed"] and cs["keywords"], spec["slug"]
 
 
@@ -140,6 +184,5 @@ def test_every_program_has_delivery_format():
     assert {p["delivery_format"] for p in c.PROGRAMS} <= {"in_person", "online", "hybrid"}
     for spec in c.PROGRAMS:
         assert spec["delivery_format"], f"{spec['slug']} missing delivery_format"
-    # the catalog includes online + hybrid + bicoastal/multi-campus programs
     assert any(p["delivery_format"] == "online" for p in c.PROGRAMS)
     assert any(p["delivery_format"] == "hybrid" for p in c.PROGRAMS)
