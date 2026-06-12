@@ -14,6 +14,7 @@ import SavedSearchesPanel from './saved/SavedSearchesPanel'
 import Button from '../../components/ui/Button'
 import EmptyState from '../../components/ui/EmptyState'
 import QueryError from '../../components/ui/QueryError'
+import { PageHeader } from '../../components/student/density'
 import BandBadge from '../../components/ui/BandBadge'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
@@ -262,15 +263,12 @@ export default function SavedListPage() {
 
   return (
     <div className="p-4 w-full pb-28">
-      <header className="mb-6">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-          Saved
-        </p>
-        <h1 className="text-lg font-semibold text-foreground">Your shortlist</h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-          Curate programs you are serious about, then compare and start applications when you are ready.
-        </p>
-      </header>
+      {/* Room header — consistent with the other My Space rooms (eyebrow = surface). */}
+      <PageHeader
+        eyebrow="My Space"
+        title="Your shortlist"
+        sub="Curate programs you are serious about, then compare and start applications when you are ready."
+      />
 
       <div className="flex gap-1 border-b border-border mb-5">
         <button

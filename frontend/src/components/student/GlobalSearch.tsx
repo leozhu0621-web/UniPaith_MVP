@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Search, GraduationCap, Building2, Compass, Target, FolderKanban, Newspaper,
   User, Bookmark, Settings, CornerDownLeft, ArrowRight, Backpack, PenLine,
+  CalendarDays, MessageSquare,
 } from 'lucide-react'
 import { searchPrograms, getProgram } from '../../api/programs'
 import { searchInstitutions } from '../../api/institutions'
@@ -43,6 +44,8 @@ const QUICK_NAV = [
   { label: 'My Space', sub: 'Your home — what to do next', to: '/s/space', icon: Backpack },
   { label: 'Applications', sub: 'Your portfolio & deadlines', to: '/s/applications', icon: FolderKanban },
   { label: 'Prep', sub: 'Workshops & prompt library', to: '/s/prep', icon: PenLine },
+  { label: 'Calendar', sub: 'Deadlines & interviews timeline', to: '/s/calendar', icon: CalendarDays },
+  { label: 'Messages', sub: 'Threads with institutions', to: '/s/messages', icon: MessageSquare },
   { label: 'My Profile', sub: 'Your durable record', to: '/s/profile', icon: User },
   { label: 'Saved', sub: 'Programs you bookmarked', to: '/s/saved', icon: Bookmark },
   { label: 'Settings', sub: 'Account & preferences', to: '/s/settings', icon: Settings },

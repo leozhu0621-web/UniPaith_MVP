@@ -1,7 +1,10 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
   Backpack, Bookmark, PenLine, FolderKanban, Calendar, MessageSquare, User,
 } from 'lucide-react'
+import { getThreads } from '../../../api/inbox'
+import { listMyApplications } from '../../../api/applications'
 
 // My Space shell (Spec 2026-06-10 §3) — one personal surface, rooms ordered by
 // the journey sequence: Home on top, then Plan → Prepare → Apply & decide →
@@ -39,6 +42,30 @@ export default function MySpaceShell() {
   // height; every other room scrolls in the layout's <main>.
   const isMessages = location.pathname.startsWith('/s/messages')
 
+  // Live rail badges — both queries share their keys with existing consumers
+  // (MessagesNavButton / ApplicationsPage), so the cache is reused, not refetched.
+  const { data: threads } = useQuery({
+    queryKey: ['inbox-threads-unread'],
+    queryFn: () => getThreads(),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  })
+  const { data: apps } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications, staleTime: 60_000 })
+  const unread = Array.isArray(threads) ? threads.filter((t: { unread?: boolean }) => t.unread).length : 0
+  const appCount = Array.isArray(apps) ? apps.length : 0
+
+  const badgeFor = (to: string) => {
+    if (to === '/s/messages' && unread > 0)
+      return (
+        <span className="ml-auto rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-secondary-foreground">
+          {unread}
+        </span>
+      )
+    if (to === '/s/applications' && appCount > 0)
+      return <span className="ml-auto text-xs text-muted-foreground">{appCount}</span>
+    return null
+  }
+
   return (
     <div className="flex min-h-0 flex-1">
       {/* Desktop rail (lg+) — journey-grouped rooms. */}
@@ -64,6 +91,7 @@ export default function MySpaceShell() {
                 >
                   <room.icon size={15} strokeWidth={1.75} />
                   {room.label}
+                  {badgeFor(room.to)}
                 </NavLink>
               ))}
             </div>
@@ -90,6 +118,9 @@ export default function MySpaceShell() {
               >
                 <room.icon size={13} strokeWidth={1.75} />
                 {room.label}
+                {room.to === '/s/messages' && unread > 0 && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-secondary" aria-label={`${unread} unread`} />
+                )}
               </NavLink>
             ))}
           </div>
