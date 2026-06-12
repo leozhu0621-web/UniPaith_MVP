@@ -422,7 +422,7 @@ export default function UniConversation({
       )}
       {!turnMut.isPending &&
         !streaming &&
-        (llmChips.length > 0 ? (
+        (llmChips.length > 0 || answerKind === 'scale' ? (
           <AnswerChoices
             options={llmChips}
             onPick={send}
