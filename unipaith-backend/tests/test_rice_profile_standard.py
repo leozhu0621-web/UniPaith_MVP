@@ -13,6 +13,8 @@ from unipaith.data import rice_profile as r
 from unipaith.profile_standard import STANDARD_VERSION, check_conformance
 from unipaith.profile_standard.manifest import MANIFEST
 
+_FLAGSHIP = r._FLAGSHIP
+
 
 def _institution_snapshot() -> dict:
     so = {**r.SCHOOL_OUTCOMES}
@@ -45,15 +47,26 @@ def _school_snapshot(name: str) -> dict:
 
 
 def _program_cost(spec: dict):
+    slug = spec["slug"]
+    override = r._COST_BY_SLUG.get(slug)
+    if override is not None:
+        return override
     if spec["degree_type"] == "bachelors":
         return {"tuition_usd": r._TUITION_UG, "source": r._COST_SRC[0], "source_url": r._COST_SRC[1]}
     grad = r._grad_cost(spec)
-    return grad if grad is not None else {"note": "see program page", "source": "x", "source_url": "x"}
+    return grad if grad is not None else {"note": "see school page", "source": "x", "source_url": "x"}
 
 
 def _program_snapshot(spec: dict) -> dict:
-    outcomes = dict(r._OUTCOMES_INSTITUTION)
-    outcomes["_standard"] = r._program_standard(spec["slug"])
+    slug = spec["slug"]
+    if slug == _FLAGSHIP:
+        outcomes = dict(r._MBA_OUTCOMES)
+    else:
+        outcomes = dict(r._OUTCOMES_INSTITUTION)
+    outcomes["_standard"] = r._program_standard(slug, spec)
+    _kw = r._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(
+        r._SCHOOL_FEED_SPEC[spec["school"]]["keywords"]
+    )
     return {
         "program_name": spec["program_name"],
         "degree_type": spec["degree_type"],
@@ -61,14 +74,14 @@ def _program_snapshot(spec: dict) -> dict:
         "delivery_format": spec["delivery_format"],
         "description_text": spec["description"],
         "website_url": spec.get("website") or r._SCHOOL_WEBSITE.get(spec["school"]),
-        "tracks": None,
+        "tracks": r._TRACKS_BY_SLUG.get(slug),
         "application_requirements": r._requirements_for(spec),
         "cost_data": _program_cost(spec),
         "outcomes_data": outcomes,
-        "class_profile": None,
-        "faculty_contacts": None,
-        "external_reviews": None,
-        "content_sources": r._program_content(spec["school"], ["x"]),
+        "class_profile": r._CLASS_PROFILE_BY_SLUG.get(slug),
+        "faculty_contacts": r._FACULTY_BY_SLUG.get(slug),
+        "external_reviews": r._REVIEWS_BY_SLUG.get(slug),
+        "content_sources": r._program_content(spec["school"], _kw),
     }
 
 
@@ -89,6 +102,7 @@ def test_institution_is_gold():
     omitted = set(r._OMITTED_INSTITUTION)
     assert set(res.missing_fields) <= omitted, f"Unexpected institution gaps: {res.missing_fields}"
     assert not _section_gaps_unexpected("institution", res.missing_sections, omitted)
+    assert r.SCHOOL_OUTCOMES.get("media_credit")
 
 
 def test_all_eight_schools_done():
@@ -102,11 +116,32 @@ def test_all_eight_schools_done():
         assert not _section_gaps_unexpected("school", res.missing_sections, omitted), name
 
 
+def test_rice_mba_flagship_is_deeply_enriched():
+    assert _FLAGSHIP in r._TRACKS_BY_SLUG
+    assert _FLAGSHIP in r._CLASS_PROFILE_BY_SLUG
+    assert _FLAGSHIP in r._REVIEWS_BY_SLUG
+    assert r._program_standard(_FLAGSHIP, r._SPEC_BY_SLUG[_FLAGSHIP])["omitted"] == []
+
+
+def test_coverable_programs_have_external_reviews():
+    coverable = [
+        _FLAGSHIP,
+        "rice-computer-science-ug",
+        "rice-master-of-computer-science-mcs-rice-online-prof",
+        "rice-master-of-data-science-mds-rice-online-prof",
+        "rice-master-of-architecture-march-option-1-professional-prof",
+        "rice-economics-ug",
+    ]
+    for slug in coverable:
+        assert slug in r._REVIEWS_BY_SLUG, slug
+        assert r._REVIEWS_BY_SLUG[slug].get("summary"), slug
+
+
 def test_every_program_is_done():
     assert len(r.PROGRAMS) >= 150, "breadth-first catalog should be the full program set"
     for spec in r.PROGRAMS:
         res = check_conformance("program", _program_snapshot(spec), profile_version=STANDARD_VERSION)
-        omitted = set(r._program_standard(spec["slug"])["omitted"])
+        omitted = set(r._program_standard(spec["slug"], spec)["omitted"])
         assert set(res.missing_fields) <= omitted, f"{spec['slug']}: gaps {set(res.missing_fields) - omitted}"
         assert not _section_gaps_unexpected("program", res.missing_sections, omitted), spec["slug"]
 
