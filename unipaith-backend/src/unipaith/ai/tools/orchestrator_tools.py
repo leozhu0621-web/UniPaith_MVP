@@ -82,12 +82,19 @@ SUGGEST_REPLIES_TOOL = {
     "name": "suggest_replies",
     "description": (
         "Offer 2-4 short, tappable example replies the student could give to "
-        "the question you just asked. These render as chips below the chat "
-        "input (spec 19 §3/§5). Use them to lower the activation energy of "
-        "answering — phrase each as something the STUDENT would say in the "
-        "first person, not as instructions. Optional: skip the tool when an "
-        "open-ended question has no natural short answers. Never include "
-        "'I don't know yet' or 'Skip this' — the UI always shows those."
+        "the question you just asked. These render as inviting tap-to-answer "
+        "cards below the chat input (spec 19 §3/§5). Use them to lower the "
+        "activation energy of answering — phrase each as something the STUDENT "
+        "would say in the first person, not as instructions. Never include "
+        "'I don't know yet' or 'Skip this' — the UI always shows those.\n\n"
+        "Optionally set `kind` to choose how they render:\n"
+        "- 'choice' (default): one tap sends that answer.\n"
+        "- 'multi': the student picks several, then confirms — use for "
+        "'which of these / select all that apply' questions.\n"
+        "- 'scale': a 1-5 importance slider — use for 'how important' / 'how "
+        "much does X matter' questions (especially needs). Set low_label and "
+        "high_label for the slider ends (e.g. 'nice to have' / 'must have'); "
+        "still provide the two endpoint phrases as `options` too."
     ),
     "input_schema": {
         "type": "object",
@@ -107,6 +114,21 @@ SUGGEST_REPLIES_TOOL = {
                         "biggest worry'."
                     ),
                 },
+            },
+            "kind": {
+                "type": "string",
+                "enum": ["choice", "multi", "scale"],
+                "description": "How the options render. Defaults to 'choice'.",
+            },
+            "low_label": {
+                "type": "string",
+                "maxLength": 40,
+                "description": "scale only — label for the 1 end (e.g. 'nice to have').",
+            },
+            "high_label": {
+                "type": "string",
+                "maxLength": 40,
+                "description": "scale only — label for the 5 end (e.g. 'must have').",
             },
         },
     },

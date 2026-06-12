@@ -412,6 +412,8 @@ class DiscoveryService:
                 "record_artifact_calls": orch_response.record_artifact_calls,
                 # Spec 19 §3/§5 — tappable reply chips surfaced to the UI.
                 "suggested_options": orch_response.suggested_options,
+                # Interactive UX Phase 2 — optional multi/scale affordance hint.
+                "suggested_input": orch_response.suggested_input,
             }
         except Exception as exc:  # pragma: no cover — degraded path
             logger.exception(
@@ -840,6 +842,7 @@ class DiscoveryService:
                             "advance_rationale": advance_rationale,
                             "record_artifact_calls": record_calls,
                             "suggested_options": payload.suggested_options,
+                            "suggested_input": payload.suggested_input,
                         },
                     )
                     self.db.add(assistant)
