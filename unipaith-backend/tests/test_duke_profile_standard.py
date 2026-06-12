@@ -52,8 +52,12 @@ def _program_cost(spec: dict):
 
 
 def _program_snapshot(spec: dict) -> dict:
-    outcomes = dict(d._OUTCOMES_INSTITUTION)
-    outcomes["_standard"] = d._program_standard(spec["slug"])
+    slug = spec["slug"]
+    if slug == d._FLAGSHIP:
+        outcomes = dict(d._MBA_OUTCOMES)
+    else:
+        outcomes = dict(d._OUTCOMES_INSTITUTION)
+    outcomes["_standard"] = d._program_standard(slug, spec)
     return {
         "program_name": spec["program_name"],
         "degree_type": spec["degree_type"],
@@ -61,14 +65,17 @@ def _program_snapshot(spec: dict) -> dict:
         "delivery_format": spec["delivery_format"],
         "description_text": spec["description"],
         "website_url": spec.get("website") or d._SCHOOL_WEBSITE.get(spec["school"]),
-        "tracks": None,
+        "tracks": d._TRACKS_BY_SLUG.get(slug),
         "application_requirements": d._requirements_for(spec),
         "cost_data": _program_cost(spec),
         "outcomes_data": outcomes,
-        "class_profile": None,
-        "faculty_contacts": None,
-        "external_reviews": None,
-        "content_sources": d._program_content(spec["school"], ["x"]),
+        "class_profile": d._CLASS_PROFILE_BY_SLUG.get(slug),
+        "faculty_contacts": d._FACULTY_BY_SLUG.get(slug),
+        "external_reviews": d._REVIEWS_BY_SLUG.get(slug),
+        "content_sources": d._program_content(
+            spec["school"],
+            d._PROGRAM_KEYWORDS_BY_SLUG.get(slug, ["x"]),
+        ),
     }
 
 
@@ -106,7 +113,7 @@ def test_every_program_is_done():
     assert len(d.PROGRAMS) >= 150, "breadth-first catalog should be the full program set"
     for spec in d.PROGRAMS:
         res = check_conformance("program", _program_snapshot(spec), profile_version=STANDARD_VERSION)
-        omitted = set(d._program_standard(spec["slug"])["omitted"])
+        omitted = set(d._program_standard(spec["slug"], spec)["omitted"])
         assert set(res.missing_fields) <= omitted, f"{spec['slug']}: gaps {set(res.missing_fields) - omitted}"
         assert not _section_gaps_unexpected("program", res.missing_sections, omitted), spec["slug"]
 
