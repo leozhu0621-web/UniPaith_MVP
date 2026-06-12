@@ -29,16 +29,17 @@ Before starting new feature work, always verify the environment is healthy first
 
 This is a TypeScript + Python monorepo (UniPaith MVP). Frontend is TypeScript/React, backend has both TypeScript and Python services. Infrastructure is Terraform/AWS (ECS, RDS, Cognito, SES). Domain: unipaith.co.
 
-## Student-side IA — 3 world surfaces + My Space
+## Student-side IA — 2 world surfaces + My Space
 
-The student app at `app.unipaith.co/s` is structured around the journey from the business spec, not by tool type. Three surfaces about the world + one personal hub (see `docs/superpowers/specs/2026-06-10-my-space-design.md`):
+The student app at `app.unipaith.co/s` is structured around the journey from the business spec, not by tool type. Two surfaces about the world + one personal hub (see `docs/superpowers/specs/2026-06-10-my-space-design.md` and `docs/superpowers/specs/2026-06-12-discover-connect-merge-design.md`):
 
 | URL | Label | Stage | What |
 |---|---|---|---|
 | `/s` | **Uni** | 1. Discovery | LLM-led guided journey (Profile / Goals / Needs) with chat + journey rail |
-| `/s/explore` | **Match** | 2. Recommendation | Strategy view (top) + Programs/Schools grid; dual scores (fitness + confidence) |
-| `/s/posts` | **Connect** | 3a. Connection & Outreach | Updates / Events / Peers tabs from followed institutions |
+| `/s/explore` | **Discover** | 2+3a. Recommendation + Connection | Hub with sub-tabs (`?tab=`): **For you** (strategy + dual-score matches + program search + browse, plus an xl+ live rail: updates / events / deadline radar / follow suggestions) · **Updates** · **Events** · **Peers** (the absorbed Connect surface, Spec 20) |
 | `/s/space` | **My Space** | Me — spans all stages | Mission-control Home + journey-ordered rooms (below) |
+
+`/s/posts` (Connect) is RETIRED (2026-06-12) — `PostsRedirect` in `App.tsx` maps it + its tab deep links one-hop into the Discover hub (contract: `POSTS_TAB_REDIRECTS` in `utils/information-architecture.ts`).
 
 **My Space rooms** (flat URLs, shared shell `pages/student/myspace/MySpaceShell.tsx`, journey-ordered rail): Home `/s/space` (mission control) · Saved `/s/saved` (Plan) · Prep `/s/prep` (Prepare — Workshops + Prompts tabs) · Applications `/s/applications` (Apply & decide) · Calendar `/s/calendar` + Messages `/s/messages` (Anytime) · Profile `/s/profile` (Record). `/s/manage` is RETIRED — `ManageRedirect` in `App.tsx` maps its tab deep links one-hop into the rooms (contract: `MANAGE_TAB_REDIRECTS` in `utils/information-architecture.ts`, tested by `test/information-architecture.test.ts`).
 

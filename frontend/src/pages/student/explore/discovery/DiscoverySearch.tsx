@@ -24,7 +24,15 @@ import { encodeFiltersParam, hasActiveFilters, normalizeFilters, parseFiltersPar
 
 const PAGE_SIZE = 24
 
-export default function DiscoverySearch() {
+interface DiscoverySearchProps {
+  /** Spec 2026-06-12 §6.1/§6.4 — follow toggles + event chips on result cards. */
+  followedIds?: Set<string>
+  onToggleFollow?: (institutionId: string) => void
+  nextEventByInstitution?: Map<string, { event_name: string; start_time: string }>
+  onEventClick?: () => void
+}
+
+export default function DiscoverySearch({ followedIds, onToggleFollow, nextEventByInstitution, onEventClick }: DiscoverySearchProps = {}) {
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -328,6 +336,10 @@ export default function DiscoverySearch() {
                       )
                     }
                     onView={() => navigate(`/s/programs/${p.id}`)}
+                    following={followedIds?.has(p.institution_id)}
+                    onToggleFollow={onToggleFollow ? () => onToggleFollow(p.institution_id) : undefined}
+                    nextEvent={nextEventByInstitution?.get(p.institution_id) ?? null}
+                    onEventClick={onEventClick}
                   />
                 ))}
               </div>

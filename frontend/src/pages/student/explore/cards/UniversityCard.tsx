@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react'
 import {
-  MapPin, Users, Building2, BookOpen, ChevronRight, Sprout,
+  MapPin, Users, Building2, BookOpen, BellPlus, BellRing, ChevronRight, Sprout,
 } from 'lucide-react'
 import { classifyInstitution, sizeBucket, formatSetting, SIZE_OPTIONS } from '../shared/classifyInstitution'
 
@@ -33,13 +33,16 @@ interface UniversityData {
 interface Props {
   institution: UniversityData
   onClick: () => void
+  /** Spec 2026-06-12 §6.1 — grow the follow graph where discovery happens. */
+  following?: boolean
+  onToggleFollow?: () => void
 }
 
 // Editorial school card (Spec/02 §5, /14) with a campus-photo header that fades
 // into the card background — the same gradient treatment as the detail-page hero
 // (set 2026-06-12, supersedes the earlier text-only card rule). Falls back to the
 // clean text header when the university has no photo.
-export default function UniversityCard({ institution: inst, onClick }: Props) {
+export default function UniversityCard({ institution: inst, onClick, following, onToggleFollow }: Props) {
   const classification = classifyInstitution({
     description_text: inst.description_text,
     type: inst.type,
@@ -143,6 +146,17 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
       {/* Footer action. */}
       <div className="flex items-center border-t border-border mt-auto px-5 py-2.5">
         <span className="text-xs font-semibold text-secondary flex-1">View university</span>
+        {onToggleFollow && (
+          <button
+            onClick={e => { e.stopPropagation(); onToggleFollow() }}
+            aria-pressed={!!following}
+            className={`mr-3 inline-flex items-center gap-1 text-xs font-semibold transition-colors ${
+              following ? 'text-muted-foreground hover:text-foreground' : 'text-secondary hover:underline'
+            }`}
+          >
+            {following ? <><BellRing size={12} /> Following</> : <><BellPlus size={12} /> Follow</>}
+          </button>
+        )}
         <ChevronRight size={16} className="text-secondary group-hover/card:translate-x-0.5 transition-transform" />
       </div>
     </div>

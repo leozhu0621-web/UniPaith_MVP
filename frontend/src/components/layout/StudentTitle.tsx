@@ -12,7 +12,6 @@ const APP_SUFFIX = ' · UniPaith'
 const ROUTE_TITLES: Record<string, string> = {
   '/s': 'Uni',
   '/s/explore': 'Discover',
-  '/s/posts': 'Connectors',
   // My Space rooms (Spec 2026-06-10) — each room titles itself.
   '/s/space': 'My Space',
   '/s/applications': 'Applications',

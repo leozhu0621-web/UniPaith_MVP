@@ -161,3 +161,140 @@ async def test_relevant_rank_returns_feed(
     # relevant rank must work (falls back to heuristic if the agent is off/fails).
     feed = (await student_client.get("/api/v1/connect/feed?rank=relevant")).json()
     assert any(i["kind"] == "post" for i in feed["items"])
+
+
+@pytest.mark.asyncio
+async def test_feed_kinds_filter_deadline_only(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """?kinds=deadline returns only deadline items (rail deadline radar)."""
+    deadline = date.today() + timedelta(days=30)
+    _, institution, program = await _seed(
+        db_session, mock_student_user, mock_institution_user, deadline=deadline
+    )
+    await _publish_post(db_session, institution.id)
+    # Save the program → auto-follow (source='saved') → both kinds in the feed.
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program.id)})
+
+    res = await student_client.get("/api/v1/connect/feed", params={"kinds": "deadline"})
+    assert res.status_code == 200
+    items = res.json()["items"]
+    assert len(items) >= 1
+    assert all(it["kind"] == "deadline" for it in items)
+
+    res2 = await student_client.get("/api/v1/connect/feed", params={"kinds": "post"})
+    assert all(it["kind"] == "post" for it in res2.json()["items"])
+
+
+@pytest.mark.asyncio
+async def test_feed_items_carry_follow_source(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Each feed item carries the follow row's source for 'because you follow'
+    attribution (Spec 2026-06-12 §5.2)."""
+    _, institution, program = await _seed(db_session, mock_student_user, mock_institution_user)
+    await _publish_post(db_session, institution.id)
+    # Save the program → auto-follow with source='saved'.
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program.id)})
+
+    res = await student_client.get("/api/v1/connect/feed")
+    items = res.json()["items"]
+    assert items, "expected at least one feed item"
+    for it in items:
+        assert it["follow_source"] == "saved"
+
+
+@pytest.mark.asyncio
+async def test_saved_search_alert_items_in_feed(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Recently-alerted saved searches surface as feed items; disabled/stale/
+    zero-count don't (Spec 2026-06-12 §5.4)."""
+    from unipaith.models.saved_search import SavedSearch
+
+    await _seed(db_session, mock_student_user, mock_institution_user)
+    now = datetime.now(UTC)
+    db_session.add_all(
+        [
+            SavedSearch(  # should appear
+                user_id=mock_student_user.id,
+                name="CS in California",
+                query={"query": "cs", "chips": [], "filters": {}, "sort": "relevance"},
+                alert_enabled=True,
+                last_alerted_at=now - timedelta(days=2),
+                last_match_count=5,
+            ),
+            SavedSearch(  # alert disabled → absent
+                user_id=mock_student_user.id,
+                name="No alerts",
+                query={},
+                alert_enabled=False,
+                last_alerted_at=now - timedelta(days=2),
+                last_match_count=3,
+            ),
+            SavedSearch(  # stale (>14d) → absent
+                user_id=mock_student_user.id,
+                name="Stale",
+                query={},
+                alert_enabled=True,
+                last_alerted_at=now - timedelta(days=30),
+                last_match_count=3,
+            ),
+            SavedSearch(  # zero matches → absent
+                user_id=mock_student_user.id,
+                name="Empty",
+                query={},
+                alert_enabled=True,
+                last_alerted_at=now - timedelta(days=1),
+                last_match_count=0,
+            ),
+        ]
+    )
+    await db_session.commit()
+
+    res = await student_client.get("/api/v1/connect/feed")
+    assert res.status_code == 200
+    alerts = [it for it in res.json()["items"] if it["kind"] == "saved_search_alert"]
+    assert len(alerts) == 1
+    a = alerts[0]
+    assert a["search_name"] == "CS in California"
+    assert a["match_count"] == 5
+    assert a["search_query"]["query"] == "cs"
+    assert a["institution_id"] is None
+
+
+@pytest.mark.asyncio
+async def test_unseen_count(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Counts posts published after `since` from followed unmuted institutions
+    (Spec 2026-06-12 §5.3 — nav/tab badge)."""
+    _, institution, program = await _seed(db_session, mock_student_user, mock_institution_user)
+    # Save the program → auto-follow → its posts count as unseen.
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program.id)})
+    await _publish_post(db_session, institution.id, title="New post")
+
+    past = (datetime.now(UTC) - timedelta(days=1)).isoformat()
+    future = (datetime.now(UTC) + timedelta(hours=1)).isoformat()
+
+    res = await student_client.get("/api/v1/connect/feed/unseen-count", params={"since": past})
+    assert res.status_code == 200
+    assert res.json()["count"] >= 1
+
+    res2 = await student_client.get("/api/v1/connect/feed/unseen-count", params={"since": future})
+    assert res2.json()["count"] == 0
+
+    res3 = await student_client.get("/api/v1/connect/feed/unseen-count")
+    assert res3.status_code == 422  # since is required

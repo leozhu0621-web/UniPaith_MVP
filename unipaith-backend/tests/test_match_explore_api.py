@@ -105,6 +105,7 @@ async def test_list_matches_carry_band_and_probability(
     item = items[0]
     # Program display fields are joined in (cards render from this alone).
     assert item["program_name"] == "Test Program"
+    assert item["institution_id"] is not None
     assert item["institution_name"] == "Test University"
     assert item["acceptance_rate"] is not None
     # Spec 09 §6 — band present.

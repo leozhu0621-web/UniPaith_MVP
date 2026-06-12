@@ -46,8 +46,8 @@ import EvalHarnessPage from './pages/public/EvalHarnessPage'
 // per the Phase B Discover-page rebuild. Track-segmented journey + chat
 // + artifact rail.
 import DiscoverHomePage from './pages/student/DiscoverHomePage'
-import StudentPostsPage from './pages/student/PostsPage'
 import ExplorePage from './pages/student/ExplorePage'
+import { POSTS_TAB_REDIRECTS } from './utils/information-architecture'
 // My Space (Spec 2026-06-10) — personal hub shell + rooms. ApplicationsPage /
 // CalendarPage are code-split (they were lazy children of the old ManagementPage).
 import MySpaceShell from './pages/student/myspace/MySpaceShell'
@@ -135,6 +135,15 @@ function ManageRedirect() {
   return <Navigate to={qs ? `${base}${sep}${qs}` : base} replace />
 }
 
+// /s/posts retired (Spec 2026-06-12) — Connect merged into the Discover hub.
+// One hop, tab-mapping per POSTS_TAB_REDIRECTS.
+function PostsRedirect() {
+  const [params] = useSearchParams()
+  const tab = params.get('tab')
+  const target = (tab && POSTS_TAB_REDIRECTS[tab]) || '/s/explore?tab=updates'
+  return <Navigate to={target} replace />
+}
+
 // /pricing + /about moved to the marketing site (unipaith.co). Preserve the
 // previously-public app URLs by redirecting there rather than dropping them
 // to a 404 (PR #265 review).
@@ -204,8 +213,9 @@ const router = createBrowserRouter([
     children: [
       // === 4 Main Pages ===
       { index: true, element: <DiscoverHomePage /> },          // Stage 1 — Discovery
-      { path: 'posts', element: <StudentPostsPage /> },           // Posts (social feed)
-      { path: 'explore', element: <ExplorePage /> },            // Explore (database)
+      // /s/posts retired (Spec 2026-06-12) — Connect lives in the Discover hub tabs.
+      { path: 'posts', element: <PostsRedirect /> },
+      { path: 'explore', element: <ExplorePage /> },            // Discover hub (match + connect)
       // === My Space (Spec 2026-06-10) — mission-control home + journey-ordered rooms ===
       {
         element: <MySpaceShell />,

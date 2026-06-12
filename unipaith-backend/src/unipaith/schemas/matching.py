@@ -40,6 +40,7 @@ class MatchResultResponse(BaseModel):
     is_stale: bool
 
     program_name: str | None = None
+    institution_id: UUID | None = None
     institution_name: str | None = None
     degree_type: str | None = None
     tuition: int | None = None

@@ -38,6 +38,12 @@ logger = logging.getLogger(__name__)
 # How far ahead a deadline must be to still surface as a feed reminder.
 _DEADLINE_WINDOW_DAYS = 120
 
+# Every kind the Updates feed can emit (Spec 2026-06-12 §5.1 — ?kinds= filter).
+_ALL_FEED_KINDS = {"post", "deadline", "program_change", "saved_search_alert"}
+
+# How recently a saved-search alert must have fired to still surface in the feed.
+_SAVED_SEARCH_ALERT_WINDOW_DAYS = 14
+
 
 class ConnectService:
     def __init__(self, db: AsyncSession):
@@ -51,12 +57,19 @@ class ConnectService:
         rank: str = "recent",
         limit: int = 50,
         cursor: str | None = None,
+        kinds: set[str] | None = None,
+        user_id: UUID | None = None,
     ) -> dict:
         """Assemble the Updates feed.
 
         ``rank`` is ``recent`` (reverse-chronological, pinned floated within an
         institution) or ``relevant`` (relevance heuristic; optionally refined by
-        the ConnectFeedRanker agent). Returns
+        the ConnectFeedRanker agent). ``kinds`` optionally restricts which item
+        kinds are assembled (Spec 2026-06-12 §5.1 — e.g. the rail's deadline
+        radar asks for ``{"deadline"}``); None means all kinds. ``user_id`` (the
+        auth user, distinct from the student profile id) enables
+        ``saved_search_alert`` items, which key off ``saved_searches.user_id``
+        (Spec 2026-06-12 §5.4). Returns
         ``{items, followed_count, muted_count, next_cursor}``. ``cursor`` is the
         ``id`` of the last item from the previous page (Spec 56 §4 — keyset
         pagination over the ordered feed); ``next_cursor`` is null on the last page.
@@ -65,16 +78,36 @@ class ConnectService:
         muted = await self.follows.muted_institution_ids(student_id)
         visible_insts = followed_all - muted
 
+        want = _ALL_FEED_KINDS if kinds is None else (kinds & _ALL_FEED_KINDS)
+
         items: list[dict] = []
+        engagement: dict | None = None
         if followed_all:
             inst_names = await self._institution_names(followed_all)
-            items += await self._post_items(visible_insts, inst_names)
-            engagement = await self._engagement(student_id)
-            items += self._deadline_items(engagement, visible_insts, inst_names)
-            items += self._program_change_items(engagement, inst_names, muted)
+            if "post" in want:
+                items += await self._post_items(visible_insts, inst_names)
+            if want & {"deadline", "program_change"}:
+                engagement = await self._engagement(student_id)
+                if "deadline" in want:
+                    items += self._deadline_items(engagement, visible_insts, inst_names)
+                if "program_change" in want:
+                    items += self._program_change_items(engagement, inst_names, muted)
+
+        # Saved-search alerts are independent of follows (Spec 2026-06-12 §5.4).
+        if "saved_search_alert" in want and user_id is not None:
+            items += await self._saved_search_alert_items(user_id)
+
+        # "Because you follow X" attribution (Spec 2026-06-12 §5.2): stamp each
+        # item with the follow row's source ('saved' | 'application' | 'explicit').
+        if items:
+            sources = await self._follow_sources(student_id)
+            for it in items:
+                iid = it.get("institution_id")
+                it["follow_source"] = sources.get(UUID(iid)) if iid else None
 
         if rank == "relevant":
-            engagement = locals().get("engagement") or await self._engagement(student_id)
+            if engagement is None:
+                engagement = await self._engagement(student_id)
             items = self._order_relevant(items, engagement)
             items = await self._maybe_ai_rerank(items, engagement, student_id)
         else:
@@ -98,6 +131,26 @@ class ConnectService:
             "muted_count": len(muted),
             "next_cursor": next_cursor,
         }
+
+    async def count_unseen_posts(self, student_id: UUID, *, since: datetime) -> int:
+        """Cheap COUNT for the nav badge (Spec 2026-06-12 §5.3). Posts only:
+        deadline items carry future dates by design (urgency mapped onto the
+        recency axis), so they would never 'age out' of an unseen count."""
+        if since.tzinfo is None:
+            since = since.replace(tzinfo=UTC)
+        visible = await self.follows.followed_institution_ids(student_id, include_muted=False)
+        if not visible:
+            return 0
+        n = await self.db.execute(
+            select(func.count())
+            .select_from(InstitutionPost)
+            .where(
+                InstitutionPost.institution_id.in_(visible),
+                InstitutionPost.status == "published",
+                InstitutionPost.published_at > since,
+            )
+        )
+        return int(n.scalar() or 0)
 
     # ------------------------------------------------------------------
     # Events tab (Spec 20 §5)
@@ -336,6 +389,44 @@ class ConnectService:
             )
         return out
 
+    async def _saved_search_alert_items(self, user_id: UUID) -> list[dict]:
+        """Spec 2026-06-12 §5.4 — alert-enabled saved searches that fired
+        recently surface as feed items (LinkedIn job-alerts-in-feed pattern).
+        Derived at read time from the Spec 56 bookkeeping columns; no new table."""
+        from unipaith.models.saved_search import SavedSearch
+
+        cutoff = datetime.now(UTC) - timedelta(days=_SAVED_SEARCH_ALERT_WINDOW_DAYS)
+        rows = await self.db.execute(
+            select(SavedSearch).where(
+                SavedSearch.user_id == user_id,
+                SavedSearch.alert_enabled.is_(True),
+                SavedSearch.last_alerted_at.isnot(None),
+                SavedSearch.last_alerted_at >= cutoff,
+            )
+        )
+        out: list[dict] = []
+        for s in rows.scalars().all():
+            if not s.last_match_count:
+                continue
+            out.append(
+                {
+                    "kind": "saved_search_alert",
+                    "id": f"saved_search_alert:{s.id}",
+                    "date": s.last_alerted_at.isoformat(),
+                    "institution_id": None,
+                    "institution_name": None,
+                    "program_id": None,
+                    "program_name": None,
+                    "muted": False,
+                    "saved_search_id": str(s.id),
+                    "search_name": s.name,
+                    "match_count": int(s.last_match_count),
+                    "search_query": s.query or {},
+                    "ctas": [],
+                }
+            )
+        return out
+
     def _program_change_items(
         self, engagement: dict[UUID, dict], inst_names: dict[UUID, str], muted_insts: set[UUID]
     ) -> list[dict]:
@@ -406,6 +497,8 @@ class ConnectService:
             if kind == "deadline":
                 # Sooner deadline = higher weight (cap at 120-day window).
                 return 900 - min(it.get("days_until", 120), 120)
+            if kind == "saved_search_alert":
+                return 600
             # post
             try:
                 iid = UUID(it["institution_id"])
@@ -507,6 +600,17 @@ class ConnectService:
                 if entry["engaged_at"] is None or (created_at and created_at < entry["engaged_at"]):
                     entry["engaged_at"] = created_at
         return out
+
+    async def _follow_sources(self, student_id: UUID) -> dict[UUID, str]:
+        """institution_id → follow source, for feed-item attribution (§5.2)."""
+        from unipaith.models.follow import InstitutionFollow
+
+        rows = await self.db.execute(
+            select(InstitutionFollow.institution_id, InstitutionFollow.source).where(
+                InstitutionFollow.student_id == student_id
+            )
+        )
+        return {r[0]: r[1] for r in rows.all()}
 
     async def _institution_names(self, ids: set[UUID]) -> dict[UUID, str]:
         if not ids:

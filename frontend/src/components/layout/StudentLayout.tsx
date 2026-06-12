@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import SkipLink from './SkipLink'
 import { Outlet, NavLink, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth-store'
 import {
-  Compass, Target, Backpack, Newspaper,
+  Compass, Target, Backpack,
   LogOut, Settings, Inbox, WifiOff,
 } from 'lucide-react'
+import { getUnseenCount } from '../../api/connect'
+import { getConnectSeenAt } from '../../utils/connectSeen'
 import { MY_SPACE_ROUTES } from '../../pages/student/myspace/MySpaceShell'
 import Avatar from '../ui/Avatar'
 import Dropdown from '../ui/Dropdown'
@@ -22,14 +25,14 @@ import LiveAnnouncer from '../a11y/LiveAnnouncer'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { COPY } from '../../lib/copy'
 
-// Journey-ordered navigation (Spec 2026-06-10 §1): Uni · Match · Connect ·
-// My Space — three surfaces about the world, one about you, at the end next
-// to the avatar. My Space owns every room route, so its active state is
+// Journey-ordered navigation (Spec 2026-06-12): Uni · Discover · My Space —
+// Connect merged into the Discover hub (updates/events/peers tabs + live
+// rail), so the nav is two surfaces about the world + one about you, next to
+// the avatar. My Space owns every room route, so its active state is
 // computed from the location rather than NavLink's single-path match.
 const NAV_ITEMS = [
   { to: '/s', icon: Compass, label: 'Uni', end: true },
   { to: '/s/explore', icon: Target, label: 'Discover', end: false },
-  { to: '/s/posts', icon: Newspaper, label: 'Connectors', end: false },
   { to: '/s/space', icon: Backpack, label: 'My Space', end: false },
 ]
 
@@ -43,6 +46,15 @@ export default function StudentLayout() {
   const [searchParams] = useSearchParams()
   const [accountSheetOpen, setAccountSheetOpen] = useState(false)
   const online = useOnlineStatus()
+
+  // "New updates" dot on Discover (Spec 2026-06-12 §6.3) — posts since the
+  // student last opened the Updates tab; the tab itself clears it.
+  const { data: unseenCount = 0 } = useQuery({
+    queryKey: ['connect-unseen'],
+    queryFn: () => getUnseenCount(getConnectSeenAt()),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  })
 
   // Spec 2026-06-10 §1 — Profile and Saved live in the My Space rail now;
   // the account menu keeps only account-level items.
@@ -84,6 +96,9 @@ export default function StudentLayout() {
                   return (
                     <>
                       {item.label}
+                      {item.to === '/s/explore' && unseenCount > 0 && (
+                        <span className="absolute top-4 right-1 w-1.5 h-1.5 rounded-full bg-secondary" aria-hidden="true" />
+                      )}
                       {active && <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-secondary rounded-full" />}
                     </>
                   )
@@ -178,7 +193,12 @@ export default function StudentLayout() {
               }`
             }}
           >
-            <item.icon size={20} strokeWidth={1.75} />
+            <span className="relative">
+              <item.icon size={20} strokeWidth={1.75} />
+              {item.to === '/s/explore' && unseenCount > 0 && (
+                <span className="absolute -top-0.5 -right-1 w-1.5 h-1.5 rounded-full bg-secondary" aria-hidden="true" />
+              )}
+            </span>
             <span className="text-[10px] font-semibold">{item.label}</span>
           </NavLink>
         ))}

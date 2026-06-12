@@ -3,7 +3,7 @@
 // and the RSVP-confirmed state only (Spec 20 §10). No decorative imagery.
 import { useEffect, useState } from 'react'
 import {
-  AlertTriangle, BellOff, CalendarClock, CalendarPlus, ChevronDown, ChevronUp,
+  AlertTriangle, Bell, BellOff, CalendarClock, CalendarPlus, ChevronDown, ChevronUp,
   GraduationCap, Megaphone, Pin,
 } from 'lucide-react'
 import type { ConnectFeedItem } from '../../../api/connect'
@@ -42,11 +42,13 @@ interface Props {
   onRsvpEvent?: (eventId: string) => void
   onRequestInfo?: (programId: string) => void
   onMute?: (institutionId: string) => void
+  onRunSavedSearch?: (item: ConnectFeedItem) => void
 }
 
 export default function FeedItemCard(props: Props) {
   if (props.item.kind === 'deadline') return <DeadlineCard {...props} />
   if (props.item.kind === 'program_change') return <ProgramChangeCard {...props} />
+  if (props.item.kind === 'saved_search_alert') return <SavedSearchAlertCard {...props} />
   return <PostCardLarge {...props} />
 }
 
@@ -56,6 +58,13 @@ function CardShell({ children, accent }: { children: React.ReactNode; accent?: s
       {children}
     </div>
   )
+}
+
+// Spec 2026-06-12 §6.2 — "because you follow X" attribution captions.
+const SOURCE_LABEL: Record<string, string> = {
+  saved: 'Following · you saved a program here',
+  application: 'Following · you applied here',
+  explicit: 'You follow this school',
 }
 
 function InstitutionRow({ item }: { item: ConnectFeedItem }) {
@@ -68,6 +77,9 @@ function InstitutionRow({ item }: { item: ConnectFeedItem }) {
         <p className="text-xs font-semibold text-foreground truncate">{item.institution_name}</p>
         {item.program_name && (
           <p className="text-[10px] text-muted-foreground truncate">{item.program_name}</p>
+        )}
+        {item.follow_source && (
+          <p className="text-[9px] text-muted-foreground/70 truncate">{SOURCE_LABEL[item.follow_source]}</p>
         )}
       </div>
     </div>
@@ -161,6 +173,8 @@ function PostCardLarge({ item, onViewProgram, onAddToCalendar, onStartApplicatio
   const body = item.body || ''
   const isLong = body.length > 220
   const shown = expanded || !isLong ? body : body.slice(0, 220).trimEnd() + '…'
+  // institution_id is null only for saved_search_alert items, never for posts.
+  const instId = item.institution_id
   return (
     <CardShell accent={item.pinned ? 'border-primary' : undefined}>
       <div className="p-4">
@@ -174,9 +188,9 @@ function PostCardLarge({ item, onViewProgram, onAddToCalendar, onStartApplicatio
               </span>
             )}
             <span className="text-[10px] text-muted-foreground">{relativeTime(item.date)}</span>
-            {onMute && (
+            {onMute && instId && (
               <button
-                onClick={() => onMute(item.institution_id)}
+                onClick={() => onMute(instId)}
                 title="Mute this institution"
                 className="text-foreground hover:text-foreground p-0.5 rounded"
               >
@@ -280,6 +294,39 @@ function ProgramChangeCard({ item, onViewProgram }: Props) {
             className="mt-3 px-3 py-1.5 text-xs font-medium rounded-lg border border-secondary text-secondary hover:bg-secondary/5 transition-colors"
           >
             Review changes
+          </button>
+        )}
+      </div>
+    </CardShell>
+  )
+}
+
+// Saved-search alert card (Spec 2026-06-12 §5.4 / §6.5) — LinkedIn
+// job-alerts-in-feed pattern. Cobalt accents only, consistent with the others.
+function SavedSearchAlertCard({ item, onRunSavedSearch }: Props) {
+  const n = item.match_count ?? 0
+  return (
+    <CardShell>
+      <div className="p-4">
+        <div className="flex items-start gap-2">
+          <div className="w-7 h-7 rounded-md bg-secondary/10 flex items-center justify-center flex-shrink-0">
+            <Bell size={14} className="text-secondary" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-foreground truncate">Saved search alert</p>
+            <p className="text-[10px] text-muted-foreground truncate">“{item.search_name}”</p>
+          </div>
+          <span className="ml-auto text-[10px] text-muted-foreground flex-shrink-0">{relativeTime(item.date)}</span>
+        </div>
+        <h3 className="text-sm font-semibold text-foreground mt-3">
+          New matches for “{item.search_name}” — {n} program{n !== 1 ? 's' : ''} now match{n === 1 ? 'es' : ''}
+        </h3>
+        {onRunSavedSearch && (
+          <button
+            onClick={() => onRunSavedSearch(item)}
+            className="mt-3 px-3 py-1.5 text-xs font-medium rounded-lg border border-secondary text-secondary hover:bg-secondary/5 transition-colors"
+          >
+            Run this search
           </button>
         )}
       </div>
