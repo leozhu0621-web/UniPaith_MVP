@@ -161,3 +161,29 @@ async def test_relevant_rank_returns_feed(
     # relevant rank must work (falls back to heuristic if the agent is off/fails).
     feed = (await student_client.get("/api/v1/connect/feed?rank=relevant")).json()
     assert any(i["kind"] == "post" for i in feed["items"])
+
+
+@pytest.mark.asyncio
+async def test_feed_kinds_filter_deadline_only(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """?kinds=deadline returns only deadline items (rail deadline radar)."""
+    deadline = date.today() + timedelta(days=30)
+    _, institution, program = await _seed(
+        db_session, mock_student_user, mock_institution_user, deadline=deadline
+    )
+    await _publish_post(db_session, institution.id)
+    # Save the program → auto-follow (source='saved') → both kinds in the feed.
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program.id)})
+
+    res = await student_client.get("/api/v1/connect/feed", params={"kinds": "deadline"})
+    assert res.status_code == 200
+    items = res.json()["items"]
+    assert len(items) >= 1
+    assert all(it["kind"] == "deadline" for it in items)
+
+    res2 = await student_client.get("/api/v1/connect/feed", params={"kinds": "post"})
+    assert all(it["kind"] == "post" for it in res2.json()["items"])

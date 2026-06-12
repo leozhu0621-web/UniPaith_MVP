@@ -38,6 +38,9 @@ logger = logging.getLogger(__name__)
 # How far ahead a deadline must be to still surface as a feed reminder.
 _DEADLINE_WINDOW_DAYS = 120
 
+# Every kind the Updates feed can emit (Spec 2026-06-12 §5.1 — ?kinds= filter).
+_ALL_FEED_KINDS = {"post", "deadline", "program_change", "saved_search_alert"}
+
 
 class ConnectService:
     def __init__(self, db: AsyncSession):
@@ -51,12 +54,15 @@ class ConnectService:
         rank: str = "recent",
         limit: int = 50,
         cursor: str | None = None,
+        kinds: set[str] | None = None,
     ) -> dict:
         """Assemble the Updates feed.
 
         ``rank`` is ``recent`` (reverse-chronological, pinned floated within an
         institution) or ``relevant`` (relevance heuristic; optionally refined by
-        the ConnectFeedRanker agent). Returns
+        the ConnectFeedRanker agent). ``kinds`` optionally restricts which item
+        kinds are assembled (Spec 2026-06-12 §5.1 — e.g. the rail's deadline
+        radar asks for ``{"deadline"}``); None means all kinds. Returns
         ``{items, followed_count, muted_count, next_cursor}``. ``cursor`` is the
         ``id`` of the last item from the previous page (Spec 56 §4 — keyset
         pagination over the ordered feed); ``next_cursor`` is null on the last page.
@@ -65,16 +71,24 @@ class ConnectService:
         muted = await self.follows.muted_institution_ids(student_id)
         visible_insts = followed_all - muted
 
+        want = (kinds & _ALL_FEED_KINDS) if kinds else _ALL_FEED_KINDS
+
         items: list[dict] = []
+        engagement: dict | None = None
         if followed_all:
             inst_names = await self._institution_names(followed_all)
-            items += await self._post_items(visible_insts, inst_names)
-            engagement = await self._engagement(student_id)
-            items += self._deadline_items(engagement, visible_insts, inst_names)
-            items += self._program_change_items(engagement, inst_names, muted)
+            if "post" in want:
+                items += await self._post_items(visible_insts, inst_names)
+            if want & {"deadline", "program_change"}:
+                engagement = await self._engagement(student_id)
+                if "deadline" in want:
+                    items += self._deadline_items(engagement, visible_insts, inst_names)
+                if "program_change" in want:
+                    items += self._program_change_items(engagement, inst_names, muted)
 
         if rank == "relevant":
-            engagement = locals().get("engagement") or await self._engagement(student_id)
+            if engagement is None:
+                engagement = await self._engagement(student_id)
             items = self._order_relevant(items, engagement)
             items = await self._maybe_ai_rerank(items, engagement, student_id)
         else:
