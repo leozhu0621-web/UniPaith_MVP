@@ -12,6 +12,7 @@ Routes mount under ``/api/v1/connect``.
 
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -68,6 +69,18 @@ async def get_feed(
     return await ConnectService(db).build_updates_feed(
         pid, rank=rank, limit=limit, cursor=cursor, kinds=kind_set, user_id=user.id
     )
+
+
+@router.get("/feed/unseen-count")
+async def feed_unseen_count(
+    since: datetime = Query(..., description="ISO timestamp of the last Updates visit"),
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """New-posts count since the student last opened Updates (nav/tab badge,
+    Spec 2026-06-12 §6.3). Deliberately posts-only and assembly-free."""
+    pid = await _profile_id(user, db)
+    return {"count": await ConnectService(db).count_unseen_posts(pid, since=since)}
 
 
 # ════════════════════════════════════════════════════════════════════════

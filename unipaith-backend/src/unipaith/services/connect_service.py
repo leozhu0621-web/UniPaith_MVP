@@ -132,6 +132,26 @@ class ConnectService:
             "next_cursor": next_cursor,
         }
 
+    async def count_unseen_posts(self, student_id: UUID, *, since: datetime) -> int:
+        """Cheap COUNT for the nav badge (Spec 2026-06-12 §5.3). Posts only:
+        deadline items carry future dates by design (urgency mapped onto the
+        recency axis), so they would never 'age out' of an unseen count."""
+        if since.tzinfo is None:
+            since = since.replace(tzinfo=UTC)
+        visible = await self.follows.followed_institution_ids(student_id, include_muted=False)
+        if not visible:
+            return 0
+        n = await self.db.execute(
+            select(func.count())
+            .select_from(InstitutionPost)
+            .where(
+                InstitutionPost.institution_id.in_(visible),
+                InstitutionPost.status == "published",
+                InstitutionPost.published_at > since,
+            )
+        )
+        return int(n.scalar() or 0)
+
     # ------------------------------------------------------------------
     # Events tab (Spec 20 §5)
     # ------------------------------------------------------------------

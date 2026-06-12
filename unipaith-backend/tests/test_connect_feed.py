@@ -270,3 +270,31 @@ async def test_saved_search_alert_items_in_feed(
     assert a["match_count"] == 5
     assert a["search_query"]["query"] == "cs"
     assert a["institution_id"] is None
+
+
+@pytest.mark.asyncio
+async def test_unseen_count(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Counts posts published after `since` from followed unmuted institutions
+    (Spec 2026-06-12 §5.3 — nav/tab badge)."""
+    _, institution, program = await _seed(db_session, mock_student_user, mock_institution_user)
+    # Save the program → auto-follow → its posts count as unseen.
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program.id)})
+    await _publish_post(db_session, institution.id, title="New post")
+
+    past = (datetime.now(UTC) - timedelta(days=1)).isoformat()
+    future = (datetime.now(UTC) + timedelta(hours=1)).isoformat()
+
+    res = await student_client.get("/api/v1/connect/feed/unseen-count", params={"since": past})
+    assert res.status_code == 200
+    assert res.json()["count"] >= 1
+
+    res2 = await student_client.get("/api/v1/connect/feed/unseen-count", params={"since": future})
+    assert res2.json()["count"] == 0
+
+    res3 = await student_client.get("/api/v1/connect/feed/unseen-count")
+    assert res3.status_code == 422  # since is required
