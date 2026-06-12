@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import { useState } from 'react'
 import {
   MapPin, Users, Building2, BookOpen, ChevronRight, Sprout,
 } from 'lucide-react'
@@ -51,7 +52,10 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
   const sizeLabel = size ? SIZE_OPTIONS.find(s => s.code === size)?.label ?? null : null
   const locationStr = `${inst.city ? inst.city + ', ' : ''}${inst.region ? inst.region + ' · ' : ''}${inst.country}`
   // Campus photo for the header banner — raster only (logos are SVG → skipped).
-  const photo = inst.image_url && /\.(jpe?g|png|webp|avif)(\?|$)/i.test(inst.image_url) ? inst.image_url : null
+  const photoUrl = inst.image_url && /\.(jpe?g|png|webp|avif)(\?|$)/i.test(inst.image_url) ? inst.image_url : null
+  // Drop the banner (and its overlapping negative margin) if the image 404s/blocks.
+  const [photoFailed, setPhotoFailed] = useState(false)
+  const photo = photoFailed ? null : photoUrl
 
   return (
     <div
@@ -68,9 +72,7 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
             aria-hidden="true"
             loading="lazy"
             className="absolute inset-0 h-full w-full object-cover"
-            onError={e => {
-              ;(e.currentTarget.parentElement as HTMLElement).style.display = 'none'
-            }}
+            onError={() => setPhotoFailed(true)}
           />
           <div
             className="absolute inset-0"

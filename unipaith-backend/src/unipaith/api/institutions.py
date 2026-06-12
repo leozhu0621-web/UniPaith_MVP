@@ -1434,6 +1434,15 @@ async def search_institutions(
 
         next_dl = next_deadline_map.get(inst.id)
 
+        # Lead campus photo — guard against malformed school_outcomes shapes
+        # (campus_photos may be a non-list, or a list of non-dicts).
+        _photos = (inst.school_outcomes or {}).get("campus_photos")
+        _lead_photo = (
+            _photos[0]
+            if isinstance(_photos, list) and _photos and isinstance(_photos[0], dict)
+            else {}
+        )
+
         items.append(
             {
                 "id": str(inst.id),
@@ -1463,11 +1472,11 @@ async def search_institutions(
                 # back to media_gallery's first raster. image_credit keeps CC-BY
                 # attribution visible on the card too.
                 "image_url": (
-                    (((inst.school_outcomes or {}).get("campus_photos") or [{}])[0].get("url"))
+                    _lead_photo.get("url")
                     or ((inst.media_gallery or [None])[0] if inst.media_gallery else None)
                 ),
                 "image_credit": (
-                    (((inst.school_outcomes or {}).get("campus_photos") or [{}])[0].get("credit"))
+                    _lead_photo.get("credit")
                     or (inst.school_outcomes or {}).get("media_credit")
                 ),
                 "program_count": pc_map.get(inst.id, 0),

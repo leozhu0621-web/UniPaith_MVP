@@ -505,7 +505,8 @@ def upgrade() -> None:
         conn.execute(
             sa.text(
                 "UPDATE institutions SET school_outcomes = jsonb_set("
-                "COALESCE(school_outcomes, '{}'::jsonb), '{campus_photos}', "
+                "CASE WHEN jsonb_typeof(school_outcomes) = 'object' "
+                "THEN school_outcomes ELSE '{}'::jsonb END, '{campus_photos}', "
                 "CAST(:v AS jsonb), true) WHERE name = :n"
             ),
             {"v": json.dumps(merged), "n": name},
