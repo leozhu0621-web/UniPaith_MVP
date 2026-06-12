@@ -37,13 +37,14 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.caltech_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "California Institute of Technology"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-11"
+ENRICHED_AT = "2026-06-12"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -960,6 +961,76 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+# CIP codes for explicit catalog entries — used to dedupe against the IPEDS breadth list.
+_CIP_BY_SLUG: dict[str, str] = {
+    "caltech-cs-bs": "11.07",
+    "caltech-cs-phd": "11.07",
+    "caltech-ee-bs": "14.10",
+    "caltech-ee-phd": "14.10",
+    "caltech-me-bs": "14.19",
+    "caltech-me-phd": "14.19",
+    "caltech-aph-bs": "14.12",
+    "caltech-acm-bs": "27.03",
+    "caltech-ids-bs": "11.04",
+    "caltech-mse-bs": "14.18",
+    "caltech-aero-phd": "14.02",
+    "caltech-cms-phd": "11.07",
+    "caltech-biology-bs": "26.01",
+    "caltech-biology-phd": "26.01",
+    "caltech-bioengineering-bs": "14.05",
+    "caltech-bioengineering-phd": "14.05",
+    "caltech-cns-phd": "26.11",
+    "caltech-chemistry-bs": "40.05",
+    "caltech-chemistry-phd": "40.05",
+    "caltech-cheme-bs": "14.07",
+    "caltech-cheme-phd": "14.07",
+    "caltech-gps-bs": "40.06",
+    "caltech-planetary-phd": "40.06",
+    "caltech-geophysics-phd": "40.06",
+    "caltech-ese-phd": "14.14",
+    "caltech-bem-bs": "52.02",
+    "caltech-economics-bs": "45.06",
+    "caltech-polisci-bs": "45.10",
+    "caltech-social-science-phd": "45.99",
+    "caltech-physics-bs": "40.08",
+    "caltech-physics-phd": "40.08",
+    "caltech-math-bs": "27.01",
+    "caltech-math-phd": "27.01",
+    "caltech-astrophysics-bs": "40.02",
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _CIP_BY_SLUG:
+        _p.setdefault("cip", _CIP_BY_SLUG[_p["slug"]])
+    _p.setdefault("delivery_format", "in_person")
+
+_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
+_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _build_catalog() -> list[dict]:
+    """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
+    out: list[dict] = []
+    seen = set(_EXISTING_SLUGS)
+    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+        if slug in seen:
+            continue
+        if (cip, dtype) in _EXISTING_CIP_KEYS:
+            continue
+        seen.add(slug)
+        out.append({
+            "slug": slug,
+            "school": school,
+            "program_name": name,
+            "degree_type": dtype,
+            "cip": cip,
+            "duration_months": dur,
+            "delivery_format": fmt,
+            "description": desc,
+        })
+    return out
+
+
+PROGRAMS += _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
