@@ -29,7 +29,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Carnegie Mellon University"
-ENRICHED_AT = "2026-06-10"
+ENRICHED_AT = "2026-06-12"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -172,6 +172,7 @@ SCHOOL_OUTCOMES: dict = {
     },
     "location": {"lat": 40.4433, "lng": -79.9436},
     "campus_basics": {"location": "Pittsburgh, Pennsylvania"},
+    "media_credit": "Wikimedia Commons / Jiuguang Wang (CC BY-SA 2.0)",
     "sources": [
         {
             "label": "CMU Common Data Set 2024-2025",
@@ -1125,6 +1126,625 @@ _COST_SRC = (
 )
 _TUITION_UNDERGRAD = 67020  # CMU SFS 2025-26 undergraduate tuition
 
+_FLAGSHIP = "cmu-mba"
+
+_INTL_VISA = {
+    "types": ["F-1", "J-1"],
+    "note": "International students are issued an I-20 (F-1) or DS-2019 (J-1) after admission.",
+}
+
+# Tepper Full-Time MBA admission (official application materials and rounds).
+_REQ_MBA = {
+    "materials": [
+        {"name": "Tepper School online MBA application", "required": True},
+        {"name": "Essays (per the current Tepper prompts)", "required": True},
+        {"name": "Transcripts from all post-secondary institutions", "required": True},
+        {"name": "One letter of recommendation", "required": True},
+        {"name": "Resume", "required": True},
+        {
+            "name": "GMAT, GRE, or Executive Assessment scores",
+            "required": True,
+            "note": (
+                "Tepper accepts the GMAT (10th or Focus Edition), GRE, or Executive "
+                "Assessment; a test score is required for the Full-Time MBA."
+            ),
+        },
+        {"name": "Interview (by invitation only)", "required": False},
+        {"name": "$200 application fee (fee waivers available)", "required": True},
+    ],
+    "deadlines": [
+        {"round": "Round 1", "date": "September 30, 2025"},
+        {"round": "Round 2", "date": "January 8, 2026"},
+        {"round": "Round 3", "date": "March 3, 2026"},
+        {"round": "Round 4", "date": "May 5, 2026"},
+    ],
+    "recommendations": {
+        "required": 1,
+        "note": "One letter of recommendation submitted through the Tepper application.",
+    },
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS"],
+            "required": True,
+            "note": (
+                "An English-proficiency test is required for applicants whose first "
+                "language is not English (waivers may apply)."
+            ),
+        },
+        "visa": _INTL_VISA,
+    },
+    "source": "Tepper School of Business — Full-Time MBA Admissions",
+    "source_url": "https://www.cmu.edu/tepper/programs/mba/full-time/",
+}
+
+# Verified per-program tuition overrides (annual or per-semester as noted).
+_COST_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "tuition_usd": 84186,
+        "funded": False,
+        "note": (
+            "2026-27 academic year: $42,093 per semester (four semesters over the "
+            "two-year Full-Time MBA)."
+        ),
+        "source": "CMU Student Financial Services — Tepper Full-Time MBA",
+        "source_url": "https://www.cmu.edu/sfs/tuition/graduate/index.html",
+        "year": "2026-27",
+    },
+}
+
+# Tepper MBA employment-report outcomes (Class of 2025 Full-Time MBA).
+_MBA_OUTCOMES: dict = {
+    "median_salary": 160000,
+    "scope": "program",
+    "earnings_timeframe": "median base salary at graduation",
+    "conditions": (
+        "Tepper School Full-Time MBA Class of 2025: median base salary $160,000 and "
+        "average signing bonus $38,610 (Masters Career Center 2025 MBA Summary "
+        "Employment Report). Approximately 83% of the class reported receiving a job "
+        "offer within three months of graduation; nearly 90% by six months."
+    ),
+    "source": "Tepper School — 2025 MBA Summary Employment Report",
+    "source_url": (
+        "https://www.cmu.edu/tepper/news/stories/2025-mba-summary-employment-report"
+    ),
+}
+
+# MBA curriculum tracks (official Full-Time MBA page).
+_TRACKS_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "tracks": [
+            "Business Analytics",
+            "Energy and Sustainability Business",
+            "Entrepreneurship",
+            "Management of Innovation and Product Development",
+            "Technology Strategy and Product Management",
+        ],
+        "source": "Tepper School — Full-Time MBA Curriculum",
+        "source_url": "https://www.cmu.edu/tepper/programs/mba/full-time/",
+    },
+}
+
+_CLASS_PROFILE_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "cohort_size": "144 students in the entering Full-Time MBA class (Class of 2027)",
+        "international_pct": 0.38,
+        "note": (
+            "Entering Full-Time MBA Class of 2027: 144 students, 38% international "
+            "citizens, median GMAT 710 (10th Edition), median 5 years of work "
+            "experience."
+        ),
+        "source": "Tepper School — Full-Time MBA Class Profile",
+        "source_url": "https://www.cmu.edu/tepper/programs/mba/admissions/ft-class-profile",
+    },
+}
+
+_FACULTY_BY_SLUG: dict[str, dict] = {}
+
+# Program-specific keyword filters for Events & Updates (the MBAn pattern).
+_PROGRAM_KEYWORDS: dict[str, list[str]] = {
+    _FLAGSHIP: ["Tepper", "MBA", "business school", "management"],
+    "cmu-cs-bs": ["computer science", "School of Computer Science", "SCS"],
+    "cmu-mscs": ["computer science", "SCS", "graduate"],
+    "cmu-ms-ml": ["machine learning", "School of Computer Science"],
+    "cmu-mhci": ["human-computer interaction", "HCII", "MHCI"],
+    "cmu-msba": ["business analytics", "Tepper", "MSBA"],
+    "cmu-mscf": ["computational finance", "MSCF", "quantitative finance"],
+    "cmu-mism": ["information systems", "Heinz", "MISM"],
+}
+
+_MBA_CONTENT = {
+    "news_rss": _CMU_NEWS_RSS,
+    "news_curated": False,
+    "events_feed": dict(_CMU_EVENTS_ICS),
+    "keywords": list(_PROGRAM_KEYWORDS[_FLAGSHIP]),
+    "social": dict(_SOCIAL_CMU),
+}
+
+# Aggregated, cited student-review themes (≥2 third-party sources per coverable program).
+_REVIEWS_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "summary": (
+            "Students and third-party guides consistently describe the Tepper MBA as a "
+            "STEM-designated, analytics-forward program that pairs quantitative rigor "
+            "with leadership coaching and a tight-knit Pittsburgh cohort; common "
+            "cautions are a smaller brand footprint than M7 peers, a demanding "
+            "mini-semester pace, and placement volatility in contracting MBA markets."
+        ),
+        "themes": [
+            {
+                "label": "Analytics & STEM curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "A data-driven core (optimization, predictive modeling) plus "
+                    "optional tracks in analytics, entrepreneurship, and product."
+                ),
+            },
+            {
+                "label": "Tight cohort culture",
+                "sentiment": "positive",
+                "detail": (
+                    "A deliberately small full-time class (~144) fosters close "
+                    "collaboration and community."
+                ),
+            },
+            {
+                "label": "Career outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Class of 2025 reported a $160,000 median base salary; consulting "
+                    "and technology are top destinations."
+                ),
+            },
+            {
+                "label": "Brand vs. M7 peers",
+                "sentiment": "caution",
+                "detail": (
+                    "Strong regionally and in analytics-heavy roles, but less global "
+                    "name recognition than the largest MBA brands."
+                ),
+            },
+            {
+                "label": "Intense pace",
+                "sentiment": "caution",
+                "detail": (
+                    "Mini-semesters and a quant-heavy core create a fast, demanding "
+                    "schedule."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Poets&Quants — Tepper School profile",
+                "url": (
+                    "https://poetsandquants.com/school-profile/"
+                    "carnegie-mellon-university-tepper-school-of-business/"
+                ),
+            },
+            {
+                "label": "Poets&Quants — Meet Tepper MBA Class of 2026",
+                "url": (
+                    "https://poetsandquants.com/2025/01/10/"
+                    "meet-carnegie-mellon-teppers-mba-class-of-2026/"
+                ),
+            },
+            {
+                "label": "Tepper School — 2025 MBA Employment Report",
+                "url": (
+                    "https://www.cmu.edu/tepper/news/stories/"
+                    "2025-mba-summary-employment-report"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cmu-cs-bs": {
+        "summary": (
+            "Students and third-party guides consistently rank CMU's undergraduate "
+            "computer science among the nation's best — #1 in multiple U.S. News "
+            "specialties — praising world-class faculty, deep research access, and "
+            "strong tech placement; common cautions are an intense workload, large "
+            "introductory classes, and a highly competitive culture."
+        ),
+        "themes": [
+            {
+                "label": "Top-ranked program",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks CMU #1 in AI, cybersecurity, software engineering, "
+                    "and related CS specialties."
+                ),
+            },
+            {
+                "label": "Research & faculty",
+                "sentiment": "positive",
+                "detail": (
+                    "Undergraduates access leading labs in AI, robotics, and systems "
+                    "from the School of Computer Science."
+                ),
+            },
+            {
+                "label": "Tech placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates place strongly into top technology firms and PhD programs."
+                ),
+            },
+            {
+                "label": "Rigor & workload",
+                "sentiment": "caution",
+                "detail": (
+                    "A fast-paced, demanding curriculum with long hours is a recurring "
+                    "theme."
+                ),
+            },
+            {
+                "label": "Competitive environment",
+                "sentiment": "caution",
+                "detail": (
+                    "Large lower-division courses and peer competition can feel intense."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Carnegie Mellon University",
+                "url": "https://www.niche.com/colleges/carnegie-mellon-university/",
+            },
+            {
+                "label": "CMU News — U.S. News 2025 specialty rankings",
+                "url": (
+                    "https://www.cmu.edu/news/stories/archives/2024/september/"
+                    "us-news-and-world-report-ranks-carnegie-mellon-university-"
+                    "no-1-in-5-categories-21st-among-national"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cmu-mscs": {
+        "summary": (
+            "Students and guides describe CMU's MS in Computer Science as a selective, "
+            "research-oriented master's within the world's top-ranked CS school, with "
+            "strong placement into industry R&D and PhD paths; cautions include "
+            "limited seats, a thesis- or project-heavy workload, and Pittsburgh's "
+            "smaller tech market versus coastal hubs."
+        ),
+        "themes": [
+            {
+                "label": "Elite CS pedigree",
+                "sentiment": "positive",
+                "detail": (
+                    "Built inside the School of Computer Science with access to its "
+                    "departments and institutes."
+                ),
+            },
+            {
+                "label": "Research depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Thesis and project options connect students to faculty-led research."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": "Admission is highly competitive with a small cohort.",
+            },
+            {
+                "label": "Workload",
+                "sentiment": "caution",
+                "detail": "Graduate CS courses are fast-paced and technically demanding.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Best Computer Science Schools",
+                "url": "https://www.usnews.com/best-graduate-schools/top-science-schools/computer-science-rankings",
+            },
+            {
+                "label": "Niche — Carnegie Mellon University Academics",
+                "url": "https://www.niche.com/colleges/carnegie-mellon-university/academics/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cmu-ms-ml": {
+        "summary": (
+            "The MS in Machine Learning is widely regarded as a premier specialized "
+            "master's — CMU founded the first academic ML department — blending theory, "
+            "systems, and applied research; students praise faculty depth but note "
+            "steep prerequisites and an intense, research-heavy pace."
+        ),
+        "themes": [
+            {
+                "label": "Pioneering ML department",
+                "sentiment": "positive",
+                "detail": (
+                    "Home to the first Machine Learning Department (2006) with leading "
+                    "faculty."
+                ),
+            },
+            {
+                "label": "Technical depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Rigorous coursework spanning theory, optimization, and large-scale "
+                    "learning."
+                ),
+            },
+            {
+                "label": "Prerequisites",
+                "sentiment": "caution",
+                "detail": (
+                    "Strong math and CS background is expected; the pace is demanding."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "CMU Machine Learning Department",
+                "url": "https://www.ml.cmu.edu/",
+            },
+            {
+                "label": "U.S. News — CMU AI specialty #1",
+                "url": (
+                    "https://www.cmu.edu/news/stories/archives/2024/september/"
+                    "us-news-and-world-report-ranks-carnegie-mellon-university-"
+                    "no-1-in-5-categories-21st-among-national"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cmu-mhci": {
+        "summary": (
+            "Students and industry guides consistently rank CMU's MHCI as the "
+            "longest-running and most influential HCI master's, highlighting its "
+            "seven-month industry capstone and interdisciplinary electives; common "
+            "cautions are an intense year-long schedule (often 60+ hour weeks), no "
+            "built-in summer internship, and the cost of a full-time Pittsburgh year."
+        ),
+        "themes": [
+            {
+                "label": "Industry capstone",
+                "sentiment": "positive",
+                "detail": (
+                    "A seven-month team project with an external client is the "
+                    "program's signature experience."
+                ),
+            },
+            {
+                "label": "Interdisciplinary breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "Electives span design, CS, psychology, and business across CMU."
+                ),
+            },
+            {
+                "label": "UX career outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Alumni place into user research, product design, and PM roles at "
+                    "major tech firms."
+                ),
+            },
+            {
+                "label": "Intense workload",
+                "sentiment": "caution",
+                "detail": (
+                    "The three-semester calendar is consistently described as "
+                    "demanding."
+                ),
+            },
+            {
+                "label": "No summer internship term",
+                "sentiment": "caution",
+                "detail": (
+                    "The continuous August–August schedule leaves no dedicated "
+                    "internship semester."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "CMU HCII — Master of Human-Computer Interaction",
+                "url": "https://www.hcii.cmu.edu/academics/mhci",
+            },
+            {
+                "label": "Animation Career Review — Top Graduate HCI Programs 2025",
+                "url": (
+                    "https://www.animationcareerreview.com/articles/"
+                    "top-10-private-graduate-uxuihci-schools-and-colleges-us-2025-rankings"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cmu-msba": {
+        "summary": (
+            "Third-party guides rank Tepper's MS in Business Analytics highly (U.S. "
+            "News #1 in business analytics among business schools), praising its "
+            "quantitative curriculum and STEM designation; cautions include a "
+            "shorter, intensive format and competition for analytics roles versus "
+            "longer MBA paths."
+        ),
+        "themes": [
+            {
+                "label": "Top-ranked analytics",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks CMU #1 in business analytics at the business-school "
+                    "level."
+                ),
+            },
+            {
+                "label": "STEM & quant focus",
+                "sentiment": "positive",
+                "detail": (
+                    "Analytics, machine learning, and optimization integrated with "
+                    "business decision-making."
+                ),
+            },
+            {
+                "label": "Intensive timeline",
+                "sentiment": "caution",
+                "detail": (
+                    "The nine-month full-time format moves quickly with heavy project "
+                    "work."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "CMU News — U.S. News business analytics #1",
+                "url": (
+                    "https://www.cmu.edu/news/stories/archives/2024/september/"
+                    "us-news-and-world-report-ranks-carnegie-mellon-university-"
+                    "no-1-in-5-categories-21st-among-national"
+                ),
+            },
+            {
+                "label": "Tepper School — MS in Business Analytics",
+                "url": "https://www.cmu.edu/tepper/programs/master-business-analytics",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cmu-mscf": {
+        "summary": (
+            "Industry observers regard CMU's MSCF as a pioneering quantitative-finance "
+            "master's — celebrating 30 years in 2024 — with an interdisciplinary "
+            "math-finance-stats-CS curriculum and strong sell-side placement; cautions "
+            "include extreme selectivity, a heavy workload, and cyclical hiring in "
+            "quant finance."
+        ),
+        "themes": [
+            {
+                "label": "Quant finance pioneer",
+                "sentiment": "positive",
+                "detail": (
+                    "Among the oldest and best-known computational finance programs "
+                    "globally."
+                ),
+            },
+            {
+                "label": "Placement record",
+                "sentiment": "positive",
+                "detail": (
+                    "MSCF reports 99% of students received offers within three months "
+                    "(recent three-year average)."
+                ),
+            },
+            {
+                "label": "Interdisciplinary rigor",
+                "sentiment": "positive",
+                "detail": (
+                    "Faculty span math, statistics, finance, and computer science."
+                ),
+            },
+            {
+                "label": "Selectivity & pace",
+                "sentiment": "caution",
+                "detail": (
+                    "Admission is highly competitive with a demanding technical workload."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "CMU MSCF program site",
+                "url": "https://www.cmu.edu/mscf/",
+            },
+            {
+                "label": "CMU MSCF — Careers",
+                "url": "https://www.cmu.edu/mscf/careers/index.html",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cmu-mism": {
+        "summary": (
+            "Students and rankings sources highlight Heinz's MISM as a top "
+            "information-systems master's (U.S. News #1 in MIS), blending analytics, "
+            "technology, and policy with strong tech-consulting placement; cautions "
+            "include a fast 16-month schedule and the need to self-direct recruiting "
+            "outside core on-campus paths."
+        ),
+        "themes": [
+            {
+                "label": "Top MIS ranking",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks CMU #1 in management information systems."
+                ),
+            },
+            {
+                "label": "Analytics + policy blend",
+                "sentiment": "positive",
+                "detail": (
+                    "Combines data analytics with organizational and policy context."
+                ),
+            },
+            {
+                "label": "Tech & consulting paths",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates enter product, consulting, and data roles at major firms."
+                ),
+            },
+            {
+                "label": "Accelerated schedule",
+                "sentiment": "caution",
+                "detail": (
+                    "The 16-month curriculum packs internships and coursework tightly."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "CMU News — U.S. News MIS #1",
+                "url": (
+                    "https://www.cmu.edu/news/stories/archives/2024/september/"
+                    "us-news-and-world-report-ranks-carnegie-mellon-university-"
+                    "no-1-in-5-categories-21st-among-national"
+                ),
+            },
+            {
+                "label": "Heinz College — MISM program",
+                "url": (
+                    "https://www.heinz.cmu.edu/programs/"
+                    "information-systems-management-master/16-month"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+}
+
 
 # Built at import (after Tepper/Heinz specs are appended): the canonical program list.
 def _build_programs() -> list[dict]:
@@ -1147,6 +1767,7 @@ def _build_programs() -> list[dict]:
 
 PROGRAMS: list[dict] = _build_programs()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+_SPEC_BY_SLUG = {p["slug"]: p for p in PROGRAMS}
 
 
 def _description_for(spec: dict) -> str:
@@ -1163,6 +1784,8 @@ def _description_for(spec: dict) -> str:
 
 
 def _requirements_for(spec: dict) -> dict:
+    if spec["slug"] == _FLAGSHIP:
+        return dict(_REQ_MBA)
     if spec["delivery_format"] == "online" or spec["degree_type"] == "certificate":
         return dict(_REQ_ONLINE)
     if spec["degree_type"] == "bachelors":
@@ -1195,31 +1818,49 @@ def _tuition_for(spec: dict) -> int | None:
     return None  # per-program graduate tuition deepened on a resume run
 
 
-def _program_standard(spec: dict, has_tuition: bool, has_outcomes: bool) -> dict:
+def _program_content_for(spec: dict) -> dict:
+    """Program-level content_sources with program-specific keywords when defined."""
+    kw = _PROGRAM_KEYWORDS.get(spec["slug"], _SCHOOL_KEYWORDS[spec["school"]])
+    return _program_content(spec["school"], list(kw))
+
+
+def _program_standard(slug: str, spec: dict | None = None) -> dict:
     """Per-program omitted-field list (verified-unavailable), for _standard."""
-    omitted: list[str] = ["tracks"]
-    if not has_tuition:
-        omitted += ["cost_data.tuition_usd", "cost_data.source"]
-    if has_outcomes:
-        # institution-proxy median only; program-level fields are not published.
-        omitted += [
-            "outcomes_data.employment_rate",
-            "outcomes_data.top_industries",
-            "outcomes_data.conditions",
-        ]
+    if spec is None:
+        spec = _SPEC_BY_SLUG[slug]
+    has_tuition = slug in _COST_BY_SLUG or _tuition_for(spec) is not None
+    has_outcomes = spec["degree_type"] in ("bachelors", "masters", "phd")
+    omitted: list[str] = []
+    if slug not in _TRACKS_BY_SLUG:
+        omitted.append("tracks")
+    if slug != _FLAGSHIP:
+        if not has_tuition:
+            omitted += ["cost_data.tuition_usd", "cost_data.source"]
+        if has_outcomes:
+            omitted += [
+                "outcomes_data.employment_rate",
+                "outcomes_data.top_industries",
+                "outcomes_data.conditions",
+            ]
+        else:
+            omitted += [
+                "outcomes_data.employment_rate",
+                "outcomes_data.median_salary",
+                "outcomes_data.top_industries",
+                "outcomes_data.conditions",
+                "outcomes_data.source",
+            ]
     else:
         omitted += [
             "outcomes_data.employment_rate",
-            "outcomes_data.median_salary",
             "outcomes_data.top_industries",
-            "outcomes_data.conditions",
-            "outcomes_data.source",
         ]
-    omitted += [
-        "class_profile.cohort_size",
-        "faculty_contacts.lead",
-        "external_reviews.summary",
-    ]
+    if slug not in _CLASS_PROFILE_BY_SLUG:
+        omitted.append("class_profile.cohort_size")
+    if slug not in _FACULTY_BY_SLUG:
+        omitted.append("faculty_contacts.lead")
+    if slug not in _REVIEWS_BY_SLUG:
+        omitted.append("external_reviews.summary")
     return _standard(omitted)
 
 
@@ -1318,13 +1959,14 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
     }
     canonical = set(PROGRAM_SLUGS)
     for spec in PROGRAMS:
-        p = existing.get(spec["slug"])
+        slug = spec["slug"]
+        p = existing.get(slug)
         if p is None:
             p = Program(
                 institution_id=inst.id,
                 program_name=spec["program_name"],
                 degree_type=spec["degree_type"],
-                slug=spec["slug"],
+                slug=slug,
             )
             session.add(p)
         p.program_name = spec["program_name"]
@@ -1337,41 +1979,45 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec["delivery_format"]
-        tuition = _tuition_for(spec)
-        has_tuition = tuition is not None
-        if has_tuition:
-            p.tuition = tuition
-            p.cost_data = {
-                "tuition_usd": tuition,
-                "funded": _is_funded_phd(spec),
-                "source": _COST_SRC[0],
-                "source_url": _COST_SRC[1],
-                "year": "2025-26",
-            }
+        cost_override = _COST_BY_SLUG.get(slug)
+        if cost_override is not None:
+            p.tuition = cost_override.get("tuition_usd")
+            p.cost_data = dict(cost_override)
         else:
-            p.tuition = None
-            p.cost_data = None
+            tuition = _tuition_for(spec)
+            if tuition is not None:
+                p.tuition = tuition
+                p.cost_data = {
+                    "tuition_usd": tuition,
+                    "funded": _is_funded_phd(spec),
+                    "source": _COST_SRC[0],
+                    "source_url": _COST_SRC[1],
+                    "year": "2025-26",
+                }
+            else:
+                p.tuition = None
+                p.cost_data = None
         p.application_requirements = _requirements_for(spec)
-        has_outcomes = spec["degree_type"] in ("bachelors", "masters", "phd")
-        if has_outcomes:
+        if slug == _FLAGSHIP:
+            outcomes = dict(_MBA_OUTCOMES)
+        elif spec["degree_type"] in ("bachelors", "masters", "phd"):
             outcomes = dict(_OUTCOMES_INSTITUTION)
         else:
             outcomes = None
         if outcomes is not None:
-            outcomes["_standard"] = _program_standard(spec, has_tuition, has_outcomes)
+            outcomes["_standard"] = _program_standard(slug, spec)
         else:
-            # certificates: attach a bare _standard so the node is stamped.
-            p_std_holder = {"_standard": _program_standard(spec, has_tuition, has_outcomes)}
-            outcomes = p_std_holder
+            outcomes = {"_standard": _program_standard(slug, spec)}
         p.outcomes_data = outcomes
-        p.tracks = None
-        p.class_profile = None
-        p.faculty_contacts = None
-        p.external_reviews = None
-        p.content_sources = _program_content(
-            spec["school"], _SCHOOL_KEYWORDS[spec["school"]]
-        )
-        p.application_deadline = _deadline_for(spec)
+        p.tracks = _TRACKS_BY_SLUG.get(slug)
+        p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
+        p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
+        p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
+        if slug == _FLAGSHIP:
+            p.content_sources = dict(_MBA_CONTENT)
+        else:
+            p.content_sources = _program_content_for(spec)
+        p.application_deadline = date(2026, 1, 8) if slug == _FLAGSHIP else _deadline_for(spec)
     session.flush()
     for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
         if (p.slug or "") in canonical:
