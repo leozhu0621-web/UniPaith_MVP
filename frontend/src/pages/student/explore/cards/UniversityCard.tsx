@@ -61,10 +61,12 @@ export default function UniversityCard({ institution: inst, onClick, following, 
       onClick={onClick}
       className="bg-card rounded-lg border border-border hover:elev-raised transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
     >
-      {/* Header — campus photo fading into the card; name overlaps the fade
-          (mirrors the detail-page hero). Text-only fallback when no photo. */}
+      {/* Header — TALLER campus photo fading into the card at its bottom edge;
+          the identity block sits fully BELOW the fade so text never collides
+          with the photo (user feedback 2026-06-12). Text-only fallback when no
+          photo. */}
       {photo && (
-        <div className="relative h-28">
+        <div className="relative h-64">
           <img
             src={photo}
             alt=""
@@ -75,11 +77,13 @@ export default function UniversityCard({ institution: inst, onClick, following, 
               ;(e.currentTarget.parentElement as HTMLElement).style.display = 'none'
             }}
           />
+          {/* Soft top scrim for the credit; full fade into the card by the
+              bottom edge so the photo melts into the header underneath. */}
           <div
             className="absolute inset-0"
             style={{
               background:
-                'linear-gradient(to bottom, rgba(10,18,36,0.42) 0%, rgba(10,18,36,0.08) 32%, rgba(10,18,36,0) 48%, hsl(var(--card)) 88%)',
+                'linear-gradient(to bottom, rgba(10,18,36,0.38) 0%, rgba(10,18,36,0.06) 26%, rgba(10,18,36,0) 55%, hsl(var(--card)) 100%)',
             }}
           />
           {inst.image_credit && (
@@ -93,7 +97,7 @@ export default function UniversityCard({ institution: inst, onClick, following, 
           )}
         </div>
       )}
-      <div className={`px-5 pb-3 border-b border-border ${photo ? 'relative -mt-9' : 'pt-5'}`}>
+      <div className={`px-5 pb-3 border-b border-border ${photo ? 'pt-1' : 'pt-5'}`}>
         <div className="flex items-start gap-3">
           {inst.logo_url && (
             <img
