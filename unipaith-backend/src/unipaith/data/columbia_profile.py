@@ -296,9 +296,9 @@ SCHOOL_OUTCOMES: dict = {
 UNDERGRAD_COUNT = 9359
 
 DESCRIPTION = (
-    "Founded in 1754 as King's College by royal charter of George II, Columbia is a "
-    "private Ivy League research university in the Morningside Heights neighborhood of "
-    "Upper Manhattan — the oldest institution of higher education in New York and the "
+    "Columbia University is a private research university in New York, NY, founded in 1754 "
+    "as King's College by royal charter of George II in the Morningside Heights neighborhood "
+    "of Upper Manhattan — the oldest institution of higher education in New York and the "
     "fifth-oldest in the United States. It enrolls about 9,400 undergraduates and roughly "
     "26,000 graduate and professional students, some 35,800 in all, and pairs the famous "
     "Core Curriculum of its undergraduate colleges — a 6:1 student-faculty ratio — with the "
@@ -1595,6 +1595,543 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                     "https://www.usnews.com/best-graduate-schools/top-business-schools/"
                     "columbia-university-01060"
                 ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "columbia-jd": {
+        "summary": (
+            "Students and third-party guides describe Columbia Law as a top-tier program "
+            "in the heart of New York City — U.S. News ranked it tied for No. 9 nationally "
+            "in 2026 — praised for its corporate-law strength, federal-clerkship placement, "
+            "and proximity to Wall Street and major law firms. Common cautions are extremely "
+            "selective admission, high tuition and New York living costs, and an intense "
+            "academic culture that can feel less collegial than some peer schools."
+        ),
+        "themes": [
+            {
+                "label": "Elite national rank",
+                "sentiment": "positive",
+                "detail": "U.S. News Best Law Schools 2026: tied for No. 9 nationally.",
+            },
+            {
+                "label": "Corporate law & clerkships",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong placement in Big Law, corporate practice, and federal clerkships "
+                    "from a Manhattan campus."
+                ),
+            },
+            {
+                "label": "New York City access",
+                "sentiment": "positive",
+                "detail": (
+                    "Unmatched proximity to courts, firms, and public-interest employers in "
+                    "New York."
+                ),
+            },
+            {
+                "label": "Selectivity & cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Among the most selective J.D. programs with tuition exceeding $80,000 "
+                    "per year plus NYC living expenses."
+                ),
+            },
+            {
+                "label": "Intense culture",
+                "sentiment": "mixed",
+                "detail": (
+                    "Reviewers note the workload and competition can feel less relaxed than "
+                    "some peer law schools."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Columbia University (Law)",
+                "url": (
+                    "https://www.usnews.com/best-graduate-schools/top-law-schools/"
+                    "columbia-university-03011"
+                ),
+            },
+            {
+                "label": "The Princeton Review — Columbia Law School",
+                "url": "https://www.princetonreview.com/law/columbia-university--law-school-1035806",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "columbia-md": {
+        "summary": (
+            "Applicants and guides describe Vagelos as an elite research medical school "
+            "with clinical training at Columbia University Irving Medical Center — it "
+            "withdrew from U.S. News medical-school rankings in 2023 (its last numbered "
+            "rank was fourth) but remains a top NIH-funded institution. Common cautions "
+            "are extremely competitive admission, high cost of attendance in New York, and "
+            "the intensity of a four-year professional curriculum."
+        ),
+        "themes": [
+            {
+                "label": "Research medical school",
+                "sentiment": "positive",
+                "detail": (
+                    "Historically a top-five U.S. research medical school with strong NIH "
+                    "funding and CUIMC clinical integration."
+                ),
+            },
+            {
+                "label": "Clinical training",
+                "sentiment": "positive",
+                "detail": (
+                    "Patient-centered curriculum with training at NewYork-Presbyterian / "
+                    "Columbia University Irving Medical Center."
+                ),
+            },
+            {
+                "label": "Ranking transparency",
+                "sentiment": "mixed",
+                "detail": (
+                    "Vagelos withdrew from U.S. News in 2023 over methodology concerns but "
+                    "continues publishing admissions data."
+                ),
+            },
+            {
+                "label": "Selectivity & cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Highly selective admission with first-year tuition near $70,000 plus "
+                    "Manhattan living expenses."
+                ),
+            },
+            {
+                "label": "Professional intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Reviewers note the four-year M.D. curriculum is demanding even by "
+                    "medical-school standards."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Vagelos College — U.S. News rankings withdrawal",
+                "url": (
+                    "https://www.cuimc.columbia.edu/news/"
+                    "medical-school-rankings"
+                ),
+            },
+            {
+                "label": "Newswise — Vagelos withdraws from U.S. News (2023)",
+                "url": (
+                    "https://www.newswise.com/articles/"
+                    "columbia-university-s-vagelos-college-of-physicians-surgeons-withdraws-"
+                    "from-participation-in-u-s-news-world-report-medical-school-rankings"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "columbia-public-health-mph": {
+        "summary": (
+            "Students and public-health guides describe Mailman's MPH as a top-tier program "
+            "— U.S. News ranked Columbia tied for No. 6 among accredited MPH programs in "
+            "2026 — with strengths in epidemiology, health policy, and global health from "
+            "a Manhattan medical-campus base. Common cautions are the program's analytical "
+            "rigor, high tuition relative to public peers, and a large cohort that can feel "
+            "impersonal without proactive networking."
+        ),
+        "themes": [
+            {
+                "label": "Top national MPH rank",
+                "sentiment": "positive",
+                "detail": "U.S. News 2026: tied for No. 6 among accredited MPH programs.",
+            },
+            {
+                "label": "Epidemiology & policy depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong departments in epidemiology, biostatistics, and health policy "
+                    "with NYC health-agency access."
+                ),
+            },
+            {
+                "label": "Dual-degree pathways",
+                "sentiment": "positive",
+                "detail": (
+                    "MD/MPH, JD/MPH, and MBA/MPH options pair public health with "
+                    "Columbia's professional schools."
+                ),
+            },
+            {
+                "label": "Analytical rigor",
+                "sentiment": "mixed",
+                "detail": (
+                    "Quantitative core courses in biostatistics and epidemiology can feel "
+                    "demanding for non-quant backgrounds."
+                ),
+            },
+            {
+                "label": "Cost & cohort size",
+                "sentiment": "caution",
+                "detail": (
+                    "Tuition exceeds many public MPH programs; students must build community "
+                    "in a large graduate school."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "UC Berkeley Public Health — 2026 U.S. News MPH rankings",
+                "url": (
+                    "https://publichealth.berkeley.edu/articles/news/"
+                    "ucbph-surges-to-6-in-us-news-rankings"
+                ),
+            },
+            {
+                "label": "Columbia Mailman School — About",
+                "url": "https://www.publichealth.columbia.edu/about-us/frequently-asked-questions",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "columbia-economics-ba": {
+        "summary": (
+            "Students and third-party guides describe Columbia's economics major as the "
+            "nation's top undergraduate economics program — Niche ranks Columbia No. 1 for "
+            "economics in America (2026) — with rigorous theory, econometrics, and "
+            "interdisciplinary tracks plus New York City finance and policy access. Common "
+            "cautions are large introductory sections, competitive grading in quantitative "
+            "courses, and the Core Curriculum adding breadth beyond a purely technical track."
+        ),
+        "themes": [
+            {
+                "label": "No. 1 for economics",
+                "sentiment": "positive",
+                "detail": "Niche Best Colleges for Economics 2026: No. 1 nationally.",
+            },
+            {
+                "label": "Theory & econometrics rigor",
+                "sentiment": "positive",
+                "detail": (
+                    "A analytically demanding program with six major tracks and faculty "
+                    "active in top-tier research."
+                ),
+            },
+            {
+                "label": "NYC finance & policy access",
+                "sentiment": "positive",
+                "detail": (
+                    "Wall Street, consulting, and policy employers recruit heavily from "
+                    "Columbia economics graduates."
+                ),
+            },
+            {
+                "label": "Large intro courses",
+                "sentiment": "caution",
+                "detail": (
+                    "Principles and intermediate courses can feel large before students "
+                    "reach smaller seminars."
+                ),
+            },
+            {
+                "label": "Core + quantitative load",
+                "sentiment": "mixed",
+                "detail": (
+                    "Columbia's Core adds intellectual breadth but can compete with "
+                    "economics electives for some students."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Best Colleges for Economics (2026)",
+                "url": "https://www.niche.com/colleges/search/best-colleges-for-economics/",
+            },
+            {
+                "label": "Columbia Economics — About the Program",
+                "url": "https://econ.columbia.edu/undergraduate/the-program/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "columbia-journalism-ms": {
+        "summary": (
+            "Students and industry guides describe Columbia Journalism School as the "
+            "premier graduate journalism program in the United States — it administers the "
+            "Pulitzer Prizes and places graduates at major national outlets — praised for "
+            "investigative reporting training and New York City media access. Common "
+            "cautions are high tuition with uncertain long-term journalism salaries, a "
+            "practitioner-focused (not academic-theory) curriculum, and intense competition "
+            "for the most selective reporting beats."
+        ),
+        "themes": [
+            {
+                "label": "Industry gold standard",
+                "sentiment": "positive",
+                "detail": (
+                    "Widely regarded as the top U.S. graduate journalism program with "
+                    "Pulitzer Prize ties and elite faculty."
+                ),
+            },
+            {
+                "label": "Investigative reporting",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong investigative, data, and documentary tracks with NYC newsroom "
+                    "internships."
+                ),
+            },
+            {
+                "label": "Media placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates regularly place at The New York Times, NPR, and major "
+                    "international outlets."
+                ),
+            },
+            {
+                "label": "Tuition vs. industry pay",
+                "sentiment": "caution",
+                "detail": (
+                    "Tuition near $70,000/year can be hard to recoup given journalism's "
+                    "uneven salary ladder."
+                ),
+            },
+            {
+                "label": "Practitioner not academic",
+                "sentiment": "mixed",
+                "detail": (
+                    "Some students want more media-theory depth; the program prioritizes "
+                    "working-journalist skills."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Columbia Journalism School",
+                "url": "https://www.niche.com/graduate-schools/columbia-journalism-school/",
+            },
+            {
+                "label": "Columbia Journalism School — About",
+                "url": "https://journalism.columbia.edu/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "columbia-sipa-mpa": {
+        "summary": (
+            "Students and policy guides describe SIPA's MPA as a top global-affairs degree "
+            "— U.S. News ranked Columbia No. 1 in International Global Policy and "
+            "Administration in 2025 — with quantitative policy training, UN and NGO "
+            "internships, and a diverse international cohort in New York City. Common "
+            "cautions are high tuition, a large program where students must self-advocate "
+            "for mentorship, and less D.C. proximity than Georgetown for federal-policy "
+            "careers."
+        ),
+        "themes": [
+            {
+                "label": "No. 1 global policy",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News 2025: No. 1 in International Global Policy and "
+                    "Administration."
+                ),
+            },
+            {
+                "label": "Quantitative policy core",
+                "sentiment": "positive",
+                "detail": (
+                    "Economics, statistics, and management courses ground every "
+                    "specialization."
+                ),
+            },
+            {
+                "label": "International cohort",
+                "sentiment": "positive",
+                "detail": (
+                    "Roughly half the student body is international, with strong UN and "
+                    "multilateral ties."
+                ),
+            },
+            {
+                "label": "Large program",
+                "sentiment": "caution",
+                "detail": (
+                    "A big MPA cohort can feel impersonal without proactive faculty "
+                    "outreach."
+                ),
+            },
+            {
+                "label": "NYC not D.C.",
+                "sentiment": "mixed",
+                "detail": (
+                    "Strong for global affairs and finance-policy roles; federal-policy "
+                    "seekers may prefer Washington-based peers."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Global Policy and Administration Programs",
+                "url": (
+                    "https://www.usnews.com/best-graduate-schools/top-public-affairs-schools/"
+                    "global-policy-administration-rankings"
+                ),
+            },
+            {
+                "label": "Columbia SIPA — About",
+                "url": "https://www.sipa.columbia.edu/sipa-education/masters-programs/mpa",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "columbia-architecture-march": {
+        "summary": (
+            "Students and architecture guides describe Columbia GSAPP's M.Arch as an "
+            "intellectually ambitious program in New York City — historically a top-ranked "
+            "NAAB-accredited program on DesignIntelligence surveys — praised for critical "
+            "theory, urban design, and ties to NYC's architecture and real-estate industries. "
+            "Common cautions are high tuition, a theory-heavy curriculum that can feel less "
+            "studio-practical than some peers, and intense studio workloads."
+        ),
+        "themes": [
+            {
+                "label": "Top architecture pedigree",
+                "sentiment": "positive",
+                "detail": (
+                    "GSAPP has repeatedly ranked among the top NAAB-accredited graduate "
+                    "architecture programs nationally."
+                ),
+            },
+            {
+                "label": "Critical & urban design",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong in urban design, preservation, and real-estate development "
+                    "within NYC."
+                ),
+            },
+            {
+                "label": "NYC professional access",
+                "sentiment": "positive",
+                "detail": (
+                    "Proximity to major architecture firms, developers, and cultural "
+                    "institutions."
+                ),
+            },
+            {
+                "label": "Theory-heavy curriculum",
+                "sentiment": "mixed",
+                "detail": (
+                    "Some students want more technical/building-science depth than GSAPP's "
+                    "critical orientation provides."
+                ),
+            },
+            {
+                "label": "Studio intensity & cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Long studio hours plus Manhattan living costs make the M.Arch an "
+                    "expensive commitment."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Columbia GSAPP — About",
+                "url": "https://www.arch.columbia.edu/",
+            },
+            {
+                "label": "Wikipedia — Columbia GSAPP (DesignIntelligence rankings)",
+                "url": (
+                    "https://en.wikipedia.org/wiki/"
+                    "Columbia_Graduate_School_of_Architecture,_Planning_and_Preservation"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "columbia-social-work-msw": {
+        "summary": (
+            "Students and social-work guides describe Columbia's MSW as one of the nation's "
+            "oldest and most respected programs — U.S. News ranked it No. 4 for social work "
+            "in 2025 and TheBestSchools.org lists it among the top ten MSW programs — with "
+            "clinical and policy concentrations, field placements across New York City, and "
+            "dual-degree options. Common cautions are high tuition, emotionally demanding "
+            "field work, and a large program where students must seek out individualized "
+            "faculty support."
+        ),
+        "themes": [
+            {
+                "label": "Top national MSW rank",
+                "sentiment": "positive",
+                "detail": "U.S. News 2025: No. 4 among social-work graduate programs.",
+            },
+            {
+                "label": "Historic program",
+                "sentiment": "positive",
+                "detail": (
+                    "Founded in 1898 as the first social-work school in the United States."
+                ),
+            },
+            {
+                "label": "NYC field placements",
+                "sentiment": "positive",
+                "detail": (
+                    "Clinical and policy field work across hospitals, schools, and "
+                    "nonprofits in New York City."
+                ),
+            },
+            {
+                "label": "Emotional demands",
+                "sentiment": "caution",
+                "detail": (
+                    "Field placements in trauma, mental health, and child welfare can be "
+                    "emotionally taxing."
+                ),
+            },
+            {
+                "label": "Cost & cohort size",
+                "sentiment": "caution",
+                "detail": (
+                    "Tuition is among the highest in social work; students must actively "
+                    "build faculty relationships."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "TheBestSchools.org — Best MSW Programs 2025",
+                "url": "https://thebestschools.org/rankings/masters/best-masters-social-work/",
+            },
+            {
+                "label": "Columbia School of Social Work — About",
+                "url": "https://socialwork.columbia.edu/",
             },
         ],
         "disclaimer": (
