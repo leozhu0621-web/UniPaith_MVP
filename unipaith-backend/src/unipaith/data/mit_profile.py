@@ -28,7 +28,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Massachusetts Institute of Technology"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-11"
+ENRICHED_AT = "2026-06-12"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -154,6 +154,7 @@ SCHOOL_OUTCOMES: dict = {
         "location": "Cambridge, Massachusetts",
         "academic_calendar": "4-1-4 — fall, January IAP, spring",
     },
+    "media_credit": "Wikimedia Commons / Peacearth (CC BY-SA 4.0)",
     "flagship": {
         "nobel_laureates": 106,
         "macarthur_fellows": 85,
@@ -216,12 +217,11 @@ SCHOOL_OUTCOMES: dict = {
 UNDERGRAD_COUNT = 4561
 
 DESCRIPTION = (
-    "Founded in 1861 in Cambridge, Massachusetts, the Massachusetts Institute "
-    "of Technology is a private research university whose motto — Mens et Manus "
-    '("mind and hand") — captures its founding commitment to advancing '
-    "knowledge in the service of real-world problems. Its campus stretches more "
-    "than a mile along the north bank of the Charles River, across from "
-    "downtown Boston.\n\n"
+    "Massachusetts Institute of Technology is a private research university in "
+    "Cambridge, MA, founded in 1861 whose motto — Mens et Manus (\"mind and "
+    "hand\") — captures its founding commitment to advancing knowledge in the "
+    "service of real-world problems. Its campus stretches more than a mile "
+    "along the north bank of the Charles River, across from downtown Boston.\n\n"
     "MIT is organized into five schools and one college: Engineering; Science; "
     "Humanities, Arts, and Social Sciences; the MIT Sloan School of Management; "
     "Architecture and Planning; and the Stephen A. Schwarzman College of "
@@ -2157,6 +2157,527 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {
                 "label": "MIT Sloan 2024 MBAn Employment Report",
                 "url": "https://mitsloan.mit.edu/career-development-office/employment-reports",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "mit-sloan-mba": {
+        "summary": (
+            "Students and third-party guides consistently rank MIT Sloan's MBA among the "
+            "world's most analytical and innovation-oriented full-time programs — U.S. News "
+            "placed it No. 6 among U.S. business schools for 2026 — praising action "
+            "learning, the entrepreneurship ecosystem, and strong placement into tech, "
+            "consulting, and finance. Common cautions are the quantitative rigor of the "
+            "core, the high cost of a two-year Cambridge residence, and that the culture "
+            "can feel intense for students who prefer a less STEM-heavy classroom."
+        ),
+        "themes": [
+            {
+                "label": "Analytical rigor & action learning",
+                "sentiment": "positive",
+                "detail": (
+                    "Data-driven core plus Action Learning Labs and entrepreneurship "
+                    "tracks are hallmarks of the Sloan MBA."
+                ),
+            },
+            {
+                "label": "Innovation & entrepreneurship",
+                "sentiment": "positive",
+                "detail": (
+                    "Close ties to MIT's startup ecosystem and the Martin Trust Center "
+                    "for MIT Entrepreneurship."
+                ),
+            },
+            {
+                "label": "Career outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong placement into technology, consulting, and finance; Financial "
+                    "Times has ranked Sloan No. 1 globally in some recent cycles."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Admission is highly competitive — roughly 1,300 admits from "
+                    "nearly 7,000 applications in recent classes."
+                ),
+            },
+            {
+                "label": "Cost & workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Two-year tuition near $84,000/year before Boston-area living "
+                    "expenses; the pace is demanding."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — MIT Sloan School of Management",
+                "url": (
+                    "https://www.usnews.com/best-graduate-schools/top-business-schools/"
+                    "massachusetts-institute-of-technology-01108"
+                ),
+            },
+            {
+                "label": "Clear Admit — 2026 U.S. News MBA ranking",
+                "url": "https://www.clearadmit.com/mba-rankings/usnews/",
+            },
+            {
+                "label": "MIT Sloan — MBA Class Profile",
+                "url": "https://mitsloan.mit.edu/mba/admissions/class-profile",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "mit-sloan-mfin": {
+        "summary": (
+            "Students and finance guides describe MIT Sloan's Master of Finance as one of "
+            "the most quantitative early-career finance degrees in the United States — the "
+            "Financial Times ranked it the top American pre-experience MFin with the "
+            "highest reported graduate salaries in that survey — praising its STEM "
+            "designation, customizable curriculum, and action-learning Proseminars and "
+            "Finance Lab. Common cautions are the intense math prerequisites, the 12–18 "
+            "month workload, and the high tuition relative to shorter European MFin "
+            "programs."
+        ),
+        "themes": [
+            {
+                "label": "Quantitative depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Rigorous coursework in markets, analytics, and financial engineering "
+                    "with access to Sloan and MIT engineering faculty."
+                ),
+            },
+            {
+                "label": "Action learning",
+                "sentiment": "positive",
+                "detail": (
+                    "Proseminars and Finance Lab pair student teams with real industry "
+                    "finance problems."
+                ),
+            },
+            {
+                "label": "STEM & career mobility",
+                "sentiment": "positive",
+                "detail": (
+                    "STEM designation supports optional practical training for "
+                    "international graduates in the U.S."
+                ),
+            },
+            {
+                "label": "Prerequisites",
+                "sentiment": "caution",
+                "detail": (
+                    "Applicants are expected to arrive with strong calculus, "
+                    "statistics, and programming foundations."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Tuition and living expenses in Cambridge make the total program "
+                    "cost substantial for a one-year degree."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "MIT Sloan — Master of Finance",
+                "url": "https://mitsloan.mit.edu/mfin/explore-program",
+            },
+            {
+                "label": "QuantNet — MIT MFin reviews",
+                "url": (
+                    "https://quantnet.com/resources/"
+                    "massachusetts-institute-of-technology-master-of-finance.9/reviews"
+                ),
+            },
+            {
+                "label": "Poets&Quants for Execs — FT Masters in Finance ranking",
+                "url": (
+                    "https://poetsandquantsforexecs.com/rankings/"
+                    "ranking-masters-in-finance-programs/"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "mit-eecs-bs": {
+        "summary": (
+            "Students and college guides consistently rank MIT's Course 6 "
+            "(Electrical Engineering and Computer Science) among the strongest "
+            "undergraduate CS programs in the world — U.S. News placed MIT No. 1 in "
+            "undergraduate computer science for 2025–26, including No. 1 in artificial "
+            "intelligence and computer systems — while Niche assigns MIT an A+ overall. "
+            "Common cautions are the famously low admit rate, the fast pace of problem "
+            "sets, and that the combined EECS major is broad rather than narrowly "
+            "software-focused."
+        ),
+        "themes": [
+            {
+                "label": "National CS leadership",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News No. 1 undergraduate computer science program (2025–26), "
+                    "leading in AI, systems, and theory specialties."
+                ),
+            },
+            {
+                "label": "Research & faculty depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Undergraduates can join labs across CSAIL and related institutes "
+                    "with world-renowned faculty."
+                ),
+            },
+            {
+                "label": "Career outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates feed top technology, finance, and graduate programs; "
+                    "Niche lists computer science as MIT's most popular major."
+                ),
+            },
+            {
+                "label": "Selectivity & pace",
+                "sentiment": "caution",
+                "detail": (
+                    "Roughly 4–5% undergraduate admit rate and a workload that "
+                    "students describe as intense."
+                ),
+            },
+            {
+                "label": "Breadth vs. specialization",
+                "sentiment": "mixed",
+                "detail": (
+                    "The unified EECS degree covers electrical engineering and computer "
+                    "science rather than a narrow CS-only track."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "MIT News — U.S. News 2025–26 rankings",
+                "url": (
+                    "https://news.mit.edu/2025/"
+                    "mit-named-no-2-university-us-news-2025-26-0923"
+                ),
+            },
+            {
+                "label": "Niche — Massachusetts Institute of Technology",
+                "url": "https://www.niche.com/colleges/massachusetts-institute-of-technology/",
+            },
+            {
+                "label": "MIT EECS — Undergraduate programs",
+                "url": "https://www.eecs.mit.edu/academics/undergraduate-programs/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "mit-management-bs": {
+        "summary": (
+            "Students and guides describe MIT Sloan's undergraduate Course 15 "
+            "(Management) as the analytical business major within the Institute — "
+            "U.S. News ranked MIT No. 1 among undergraduate business programs for "
+            "2025–26 — combining Sloan coursework with MIT's quantitative core. "
+            "Common cautions are that it is not a traditional undergraduate business "
+            "school experience (there is no separate B-school campus), the workload "
+            "is STEM-heavy, and career paths often require graduate study for "
+            "general-management roles."
+        ),
+        "themes": [
+            {
+                "label": "Undergraduate business ranking",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News No. 1 undergraduate business program (2025–26) at a "
+                    "research university."
+                ),
+            },
+            {
+                "label": "Quantitative business training",
+                "sentiment": "positive",
+                "detail": (
+                    "Course 15 pairs finance, operations, and analytics with MIT's "
+                    "math and science requirements."
+                ),
+            },
+            {
+                "label": "Sloan ecosystem access",
+                "sentiment": "positive",
+                "detail": (
+                    "Undergraduates can cross-register with Sloan graduate offerings "
+                    "and entrepreneurship resources."
+                ),
+            },
+            {
+                "label": "Not a standalone B-school",
+                "sentiment": "mixed",
+                "detail": (
+                    "Management is one major within MIT rather than a separate "
+                    "undergraduate business college."
+                ),
+            },
+            {
+                "label": "Intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Students report a demanding pace shared across all MIT majors."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "MIT News — U.S. News 2025–26 rankings",
+                "url": (
+                    "https://news.mit.edu/2025/"
+                    "mit-named-no-2-university-us-news-2025-26-0923"
+                ),
+            },
+            {
+                "label": "MIT Sloan — Course 15 (Management)",
+                "url": "https://mitsloan.mit.edu/undergraduate/course-15",
+            },
+            {
+                "label": "Niche — Massachusetts Institute of Technology",
+                "url": "https://www.niche.com/colleges/massachusetts-institute-of-technology/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "mit-architecture-march": {
+        "summary": (
+            "Students and architecture guides rank MIT's Master of Architecture among "
+            "the most prestigious professional architecture degrees in the United States "
+            "— QS placed MIT No. 2 globally in Architecture & Built Environment — "
+            "praising its design-and-technology integration, computation studios, and "
+            "NAAB-accredited path to licensure. Common cautions are the 3.5-year "
+            "timeline, the high tuition, and a culture that favors experimental and "
+            "research-driven design over purely vocational training."
+        ),
+        "themes": [
+            {
+                "label": "Global architecture standing",
+                "sentiment": "positive",
+                "detail": (
+                    "QS World University Rankings No. 2 in Architecture & Built "
+                    "Environment."
+                ),
+            },
+            {
+                "label": "Technology & computation",
+                "sentiment": "positive",
+                "detail": (
+                    "Design studios integrate digital fabrication, environmental "
+                    "systems, and computational methods."
+                ),
+            },
+            {
+                "label": "Licensure pathway",
+                "sentiment": "positive",
+                "detail": (
+                    "The NAAB-accredited M.Arch. is MIT's professional degree for "
+                    "architecture licensure."
+                ),
+            },
+            {
+                "label": "Program length & cost",
+                "sentiment": "caution",
+                "detail": (
+                    "The standard M.Arch. spans 3.5 years with graduate tuition near "
+                    "$60,000/year before living costs."
+                ),
+            },
+            {
+                "label": "Experimental culture",
+                "sentiment": "mixed",
+                "detail": (
+                    "Some students note the curriculum emphasizes research and "
+                    "speculative design over conventional practice training."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "MIT School of Architecture and Planning",
+                "url": "https://sap.mit.edu/",
+            },
+            {
+                "label": "QS — MIT Architecture & Built Environment",
+                "url": (
+                    "https://www.topuniversities.com/university-subject-rankings/"
+                    "architecture-built-environment"
+                ),
+            },
+            {
+                "label": "PPI — MIT M.Arch. program overview",
+                "url": "https://ppi2pass.com/resources/are-exam/top-programs-for-architecture",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "mit-economics-bs": {
+        "summary": (
+            "Students and guides describe MIT's Course 14 undergraduate economics major "
+            "as one of the most quantitative economics degrees in the United States — "
+            "the department is perennially ranked among the world's best for economics "
+            "research — praising its mathematical rigor, micro/metrics core, and pipeline "
+            "to Ph.D. programs and quantitative finance. Common cautions are the heavy "
+            "math prerequisites, limited class size in upper-level electives, and that "
+            "the major is theory- and methods-focused rather than pre-professional "
+            "business training."
+        ),
+        "themes": [
+            {
+                "label": "Research prestige",
+                "sentiment": "positive",
+                "detail": (
+                    "MIT's economics department ranks among the top globally for "
+                    "faculty research and graduate placement."
+                ),
+            },
+            {
+                "label": "Quantitative training",
+                "sentiment": "positive",
+                "detail": (
+                    "The major emphasizes microeconomics, econometrics, and mathematical "
+                    "modeling from the start."
+                ),
+            },
+            {
+                "label": "Graduate-school pipeline",
+                "sentiment": "positive",
+                "detail": (
+                    "A common path for students aiming at economics Ph.D. programs or "
+                    "quantitative industry roles."
+                ),
+            },
+            {
+                "label": "Math intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Real analysis and linear algebra are expected foundations for "
+                    "upper-level coursework."
+                ),
+            },
+            {
+                "label": "Not a business major",
+                "sentiment": "mixed",
+                "detail": (
+                    "Course 14 is distinct from Sloan's management degree and does not "
+                    "target corporate recruiting in the same way as an MBA."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "MIT Department of Economics — Undergraduate",
+                "url": "https://economics.mit.edu/undergraduate",
+            },
+            {
+                "label": "MIT News — U.S. News 2025–26 rankings",
+                "url": (
+                    "https://news.mit.edu/2025/"
+                    "mit-named-no-2-university-us-news-2025-26-0923"
+                ),
+            },
+            {
+                "label": "Niche — Massachusetts Institute of Technology",
+                "url": "https://www.niche.com/colleges/massachusetts-institute-of-technology/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "mit-business-analytics-bs": {
+        "summary": (
+            "Students and guides describe MIT Sloan's Course 15-2 (Business Analytics) "
+            "as a newer undergraduate major blending management, statistics, and "
+            "computing — launched as part of Sloan's analytics push alongside the "
+            "graduate MBAn — praising its data-driven curriculum and access to Sloan's "
+            "analytics faculty. Common cautions are that the major is still smaller than "
+            "Course 6 or Course 15, career paths overlap with CS and management majors, "
+            "and the overall MIT workload remains intense."
+        ),
+        "themes": [
+            {
+                "label": "Analytics-focused curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Combines statistics, optimization, and computing with Sloan "
+                    "management foundations."
+                ),
+            },
+            {
+                "label": "Sloan & MBAn ecosystem",
+                "sentiment": "positive",
+                "detail": (
+                    "Undergraduates share faculty and themes with MIT's graduate "
+                    "Master of Business Analytics program."
+                ),
+            },
+            {
+                "label": "Industry relevance",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates target data-science, consulting, and tech analytics "
+                    "roles where MIT's brand is strong."
+                ),
+            },
+            {
+                "label": "Smaller cohort",
+                "sentiment": "mixed",
+                "detail": (
+                    "Course 15-2 is newer and less established than EECS or traditional "
+                    "Course 15."
+                ),
+            },
+            {
+                "label": "Overlap with other majors",
+                "sentiment": "caution",
+                "detail": (
+                    "Students note similar outcomes are possible through EECS, math, or "
+                    "management with analytics electives."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "MIT Sloan — Course 15-2 Business Analytics",
+                "url": "https://mitsloan.mit.edu/undergraduate/course-15-2",
+            },
+            {
+                "label": "MIT Sloan — Master of Business Analytics",
+                "url": "https://mitsloan.mit.edu/master-of-business-analytics",
+            },
+            {
+                "label": "Niche — Massachusetts Institute of Technology",
+                "url": "https://www.niche.com/colleges/massachusetts-institute-of-technology/",
             },
         ],
         "disclaimer": (
