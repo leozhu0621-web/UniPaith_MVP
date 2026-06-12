@@ -36,6 +36,7 @@ export default function UpdatesTab() {
   const {
     data,
     isLoading,
+    isFetching,
     isError,
     refetch,
     fetchNextPage,
@@ -90,7 +91,10 @@ export default function UpdatesTab() {
   // must happen on any successful visit, including an empty feed. Recording the
   // newest item date for the in-feed pill only applies when there are items.
   useEffect(() => {
-    if (isLoading || isError) return
+    // Wait for any in-flight fetch (including the refetch-on-mount that runs
+    // while cached pages keep `isLoading` false) so we don't clear the badge
+    // against stale items before fresh posts arrive.
+    if (isLoading || isFetching || isError) return
     if (items.length) {
       const newest = items.reduce((m, it) => (it.date > m ? it.date : m), items[0].date)
       try {
@@ -101,7 +105,7 @@ export default function UpdatesTab() {
     }
     markConnectSeen()
     qc.invalidateQueries({ queryKey: ['connect-unseen'] })
-  }, [items, isLoading, isError, qc])
+  }, [items, isLoading, isFetching, isError, qc])
 
   // Infinite-scroll sentinel (Spec 56 §4).
   useEffect(() => {
