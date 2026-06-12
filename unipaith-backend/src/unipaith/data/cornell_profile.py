@@ -39,13 +39,16 @@ This mirrors ``mit_profile`` / ``yale_profile`` so the migration, the standalone
 and the dev seed all agree (DRY). Every figure traces to a public, citable source;
 anything that could not be verified from a first-party or two-independent-source basis is
 **omitted** (recorded in the relevant ``_standard.omitted`` list), never guessed.
-Computer Science is the most-enriched flagship program (its real research areas, faculty,
-class profile, and aggregated reviews), mirroring MIT Sloan's MBAn in the reference
+Computer Science is the most-enriched undergraduate flagship (research areas, faculty,
+class profile, and aggregated reviews), and the Johnson Two-Year MBA is the deeply
+enriched graduate flagship (employment report, immersions, class profile, cost,
+admissions, and aggregated reviews), mirroring MIT Sloan's MBAn in the reference
 instance — with the honest caveats that the exact admitted-applicant integer for the
 Fall-2024 cohort is not published in a first-party raw count (omitted), that the online /
 hybrid professional master's degrees do not publish per-program tuition on a citable page
 (omitted), and that Cornell reports first-destination outcomes university-wide rather than
-per-program (each program omits the program-level employment rate and industry mix).
+per-program for most degrees (each catalog program omits the program-level employment rate
+and industry mix except the Johnson MBA, which publishes a first-party employment report).
 """
 
 from __future__ import annotations
@@ -62,7 +65,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Cornell University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-11"
+ENRICHED_AT = "2026-06-12"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -227,6 +230,8 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Cornell Student & Campus Life", "url": "https://scl.cornell.edu/"},
         ],
     },
+    # Wikimedia Commons file page verified 2026-06-12: author Eustress, CC BY-SA 4.0.
+    "media_credit": "Wikimedia Commons / Eustress (CC BY-SA 4.0)",
     "flagship": {
         # NCES College Navigator: 26,793 total students (Fall 2024) — 16,128 undergraduate
         # + 10,665 graduate and professional.
@@ -855,7 +860,18 @@ _CS_CONTENT: dict = {
     "social": dict(_SOCIAL_CORNELL),
 }
 
+# Johnson Two-Year MBA keyword-relevant feed (the management-school flagship).
+_MBA_CONTENT: dict = {
+    "news_rss": _JOHNSON_RSS,
+    "news_url": "https://www.johnson.cornell.edu/",
+    "news_curated": False,
+    "events_feed": dict(_CORNELL_EVENTS_ICS),
+    "keywords": ["Johnson", "MBA", "Two-Year MBA", "business school", "management"],
+    "social": dict(_SOCIAL_JOHNSON),
+}
+
 _PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
+    "cornell-mba": ["Johnson", "MBA", "Two-Year MBA", "business school"],
     "cornell-computer-science-bs": [
         "computer science",
         "cornell bowers",
@@ -1085,6 +1101,21 @@ PROGRAMS: list[dict] = [
         ),
     },
     # ── Samuel Curtis Johnson Graduate School of Management ──
+    {
+        "slug": "cornell-mba",
+        "school": _JOHNSON,
+        "program_name": "Two-Year MBA",
+        "degree_type": "masters",
+        "cip": "52.02",
+        "duration_months": 24,
+        "delivery_format": "in_person",
+        "description": (
+            "Cornell's flagship Two-Year MBA at the Samuel Curtis Johnson Graduate "
+            "School of Management — a full-time residential program in Ithaca with "
+            "semester-long immersions, a summer internship, and elective access across "
+            "Cornell's graduate schools and Cornell Tech in New York City."
+        ),
+    },
     {
         "slug": "cornell-business-administration-ms",
         "school": _JOHNSON,
@@ -1344,6 +1375,7 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
     "cornell-biology-bs": "https://biology.cornell.edu/",
     "cornell-biomedical-sciences-bs": "https://cals.cornell.edu/biological-sciences",
     "cornell-applied-economics-bs": "https://dyson.cornell.edu/programs/undergraduate/",
+    "cornell-mba": "https://www.johnson.cornell.edu/programs/full-time-mba/two-year-mba/",
     "cornell-business-administration-ms": "https://www.johnson.cornell.edu/programs/masters-programs/",
     "cornell-hotel-administration-bs": "https://sha.cornell.edu/admissions-programs/undergraduate/",
     "cornell-ilr-bs": "https://www.ilr.cornell.edu/academics/undergraduate-programs",
@@ -1388,6 +1420,10 @@ _WHO_BY_SLUG = {
         "Experienced working professionals seeking a Cornell MBA in a hybrid weekend "
         "format with synchronous online instruction."
     ),
+    "cornell-mba": (
+        "Early- and mid-career professionals seeking a STEM-designated, immersion-based "
+        "Two-Year MBA at Cornell Johnson with strong finance and consulting placement."
+    ),
 }
 _HL_BY_SLUG = {
     "cornell-computer-science-bs": [
@@ -1405,12 +1441,34 @@ _HL_BY_SLUG = {
         "Synchronous online classes",
         "Cornell MBA",
     ],
+    "cornell-mba": [
+        "Two-Year residential MBA",
+        "Semester immersions",
+        "STEM-designated",
+    ],
 }
 
 # ── Curriculum / research areas, where published (the flagship) ────────────
 # Cornell CS publishes 16 official research areas; quoted from the department's official
 # Research page.
+_FLAGSHIP = "cornell-mba"
+
 _TRACKS_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "tracks": [
+            "Corporate Finance",
+            "Digital Technology",
+            "Investment Banking",
+            "Strategy & Consulting",
+            "Strategic Product & Marketing",
+            "Customized Immersion",
+        ],
+        "source": "Cornell Johnson — Immersion Learning",
+        "source_url": (
+            "https://www.johnson.cornell.edu/programs/full-time-mba/two-year-mba/"
+            "curriculum/immersion-learning/"
+        ),
+    },
     "cornell-computer-science-bs": {
         "label": "Computer science research areas",
         "note": (
@@ -1452,6 +1510,101 @@ _AVG_NET_PRICE = 28690
 # Statutory/contract colleges whose undergraduate programs charge a lower NY-resident
 # tuition (non-residents pay the endowed rate).
 _STATUTORY_SCHOOLS = {_CALS, _DYSON, _HUMAN_ECOLOGY, _ILR}
+
+_INTL_VISA = {
+    "types": ["F-1", "J-1"],
+    "note": "International students are issued an I-20 (F-1) or DS-2019 (J-1) after admission.",
+}
+
+# Johnson Two-Year MBA admission (official application materials and rounds).
+_REQ_MBA = {
+    "materials": [
+        {"name": "Johnson School online MBA application", "required": True},
+        {"name": "Essays (per the current Johnson prompts)", "required": True},
+        {"name": "Transcripts from all post-secondary institutions", "required": True},
+        {"name": "One letter of recommendation", "required": True},
+        {"name": "Resume", "required": True},
+        {
+            "name": "GMAT, GRE, or Executive Assessment scores",
+            "required": True,
+            "note": (
+                "Johnson accepts the GMAT (10th or Focus Edition), GRE, or Executive "
+                "Assessment; a test score is required for the Two-Year MBA."
+            ),
+        },
+        {"name": "Interview (by invitation only)", "required": False},
+        {"name": "$200 application fee (fee waivers available)", "required": True},
+    ],
+    "deadlines": [
+        {"round": "Round 1", "date": "September 17, 2025"},
+        {"round": "Round 2", "date": "January 8, 2026"},
+        {"round": "Round 3 (final)", "date": "April 7, 2026"},
+    ],
+    "recommendations": {
+        "required": 1,
+        "note": "One letter of recommendation submitted through the Johnson application.",
+    },
+    "international": {
+        "english": {
+            "tests": ["TOEFL", "IELTS"],
+            "required": True,
+            "note": (
+                "An English-proficiency test is required for applicants whose first "
+                "language is not English (waivers may apply)."
+            ),
+        },
+        "visa": _INTL_VISA,
+    },
+    "source": "Cornell Johnson — Two-Year MBA Admissions",
+    "source_url": "https://www.johnson.cornell.edu/programs/full-time-mba/two-year-mba/",
+}
+
+# Johnson Two-Year MBA Class of 2025 employment outcomes (first-party report).
+_MBA_OUTCOMES: dict = {
+    "median_salary": 175000,
+    "employment_rate": 0.85,
+    "top_industries": [
+        {"name": "Financial Services", "share": 0.41},
+        {"name": "Consulting", "share": 0.28},
+        {"name": "Technology & Telecommunications", "share": 0.11},
+    ],
+    "conditions": (
+        "Cornell Johnson Two-Year MBA Class of 2025: median base salary $175,000, "
+        "average base salary $158,426, average signing bonus $39,795. 239 of 285 "
+        "graduates were seeking employment; 85% received job offers and 83% accepted "
+        "offers within three months of graduation."
+    ),
+    "source": "Cornell Johnson — Two-Year MBA Employment Report (Class of 2025)",
+    "source_url": (
+        "https://www.johnson.cornell.edu/programs/full-time-mba/two-year-mba/"
+        "careers/employment-data/"
+    ),
+}
+
+_COST_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "tuition_usd": 86596,
+        "total_cost_of_attendance": 119994,
+        "breakdown": {
+            "tuition": 86596,
+            "student_activity_fee": 110,
+            "health_fee": 580,
+            "housing": 16796,
+            "meals": 5654,
+            "books_and_supplies": 2466,
+            "transportation": 3544,
+            "miscellaneous": 4248,
+        },
+        "funded": False,
+        "note": (
+            "Cornell Johnson 2025-26 Two-Year MBA estimated first-year cost of attendance "
+            "($86,596 tuition plus billed and non-billed living expenses)."
+        ),
+        "source": "Cornell Johnson — Tuition & Expenses (2025-26)",
+        "source_url": "https://www.johnson.cornell.edu/programs/tuition-expenses/",
+        "year": "2025-26",
+    },
+}
 
 # Programs that publish no citable per-program tuition (graduate/professional/online):
 # cost is recorded as omitted with a reason rather than guessed.
@@ -1533,6 +1686,17 @@ _AWARDS_BY_SLUG: dict[str, int] = {"cornell-computer-science-bs": 507}
 
 # ── Class profile, where published (the flagship) ──────────────────────────
 _CLASS_PROFILE_BY_SLUG: dict[str, dict] = {
+    _FLAGSHIP: {
+        "cohort_size": "276 students in the entering Two-Year MBA class (Class of 2027)",
+        "international_pct": 0.42,
+        "note": (
+            "Entering Two-Year MBA Class of 2027: 276 students, 42% international "
+            "citizens (34 countries), 38% women, median GMAT 710, median undergraduate "
+            "GPA 3.4, average 5.3 years of full-time work experience."
+        ),
+        "source": "Cornell Johnson — Class Profiles",
+        "source_url": "https://www.johnson.cornell.edu/for-recruiters/class-profiles/",
+    },
     "cornell-computer-science-bs": {
         "cohort_size": (
             "≈507 computer science bachelor's degrees awarded annually (one of "
@@ -1629,13 +1793,493 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    _FLAGSHIP: {
+        "summary": (
+            "Students and third-party guides describe Cornell Johnson's Two-Year MBA as "
+            "an immersion-driven, STEM-designated program with strong finance and "
+            "consulting placement and a collaborative Ithaca cohort; the Class of 2025 "
+            "reported a $175,000 median base salary with financial services and consulting "
+            "as top destinations. Common cautions are the demanding mini-semester pace, "
+            "Ithaca's relative isolation compared with coastal MBA hubs, and a brand "
+            "footprint that trails M7 peers despite improving U.S. News rankings."
+        ),
+        "themes": [
+            {
+                "label": "Immersion-based curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Semester-long immersions in finance, consulting, tech, and marketing "
+                    "prepare students for summer internships."
+                ),
+            },
+            {
+                "label": "Finance & consulting outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Class of 2025: $175K median base; financial services (41%) and "
+                    "consulting (28%) lead placements."
+                ),
+            },
+            {
+                "label": "Collaborative cohort",
+                "sentiment": "positive",
+                "detail": (
+                    "A large but tight-knit class (276) with strong veteran and "
+                    "international representation."
+                ),
+            },
+            {
+                "label": "Location & brand",
+                "sentiment": "mixed",
+                "detail": (
+                    "Ithaca campus life is beautiful but remote; Johnson ranks below "
+                    "M7 peers in national MBA brand perception."
+                ),
+            },
+            {
+                "label": "Academic intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Core courses and immersions move quickly; students cite a heavy "
+                    "workload across mini-semesters."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cornell Johnson — Class of 2025 Employment Report",
+                "url": (
+                    "https://www.johnson.cornell.edu/programs/full-time-mba/two-year-mba/"
+                    "careers/employment-data/"
+                ),
+            },
+            {
+                "label": "Clear Admit — Cornell Johnson Class of 2027 Profile",
+                "url": (
+                    "https://www.clearadmit.com/2025/09/"
+                    "cornell-johnson-two-year-mba-class-of-2027-profile/"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cornell-computer-science-ms": {
+        "summary": (
+            "Graduate CS applicants and guides describe Cornell's M.S. as a rigorous, "
+            "research-oriented program within the Bowers College with strong faculty in "
+            "AI, systems, and theory and excellent industry placement for terminal "
+            "master's graduates. Cautions include competitive funding for Ph.D.-bound "
+            "applicants, a smaller cohort than peer CS giants, and Ithaca's limited "
+            "local tech market compared with coastal hubs."
+        ),
+        "themes": [
+            {
+                "label": "Research depth",
+                "sentiment": "positive",
+                "detail": "Sixteen official CS research areas with top faculty in AI and systems.",
+            },
+            {
+                "label": "Industry placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Scorecard reports strong one-year post-completion earnings for the "
+                    "CS master's (CIP 11.07)."
+                ),
+            },
+            {
+                "label": "Funding clarity",
+                "sentiment": "caution",
+                "detail": (
+                    "Terminal M.S. funding is limited; Ph.D. admits receive stronger "
+                    "financial support."
+                ),
+            },
+            {
+                "label": "Location",
+                "sentiment": "mixed",
+                "detail": (
+                    "Ithaca campus is collaborative but geographically distant from major "
+                    "tech hubs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cornell CS — Graduate Program",
+                "url": "https://www.cs.cornell.edu/masters",
+            },
+            {
+                "label": "U.S. News — Cornell University",
+                "url": "https://www.usnews.com/best-colleges/cornell-university-2711",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cornell-jd": {
+        "summary": (
+            "Students and third-party guides describe Cornell Law as a rigorous Ivy "
+            "program with strong clinical offerings, a close-knit community, and "
+            "improving employment outcomes — U.S. News ranked it tied for 13th nationally "
+            "in 2026-27 and No. 1 for graduates at large law firms. Common cautions are "
+            "grade opacity and high-stakes finals, limited criminal-law and tax course "
+            "breadth for niche interests, and a public-interest minority among students "
+            "despite an expanded LRAP."
+        ),
+        "themes": [
+            {
+                "label": "Big Law placement",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News ranks Cornell No. 1 for graduates at large law firms "
+                    "(2026-27)."
+                ),
+            },
+            {
+                "label": "Clinical & lawyering skills",
+                "sentiment": "positive",
+                "detail": (
+                    "Experiential clinics and the Lawyering Program emphasize real-world "
+                    "litigation skills."
+                ),
+            },
+            {
+                "label": "Close-knit community",
+                "sentiment": "positive",
+                "detail": "Small cohort fosters collaboration despite heavy workload.",
+            },
+            {
+                "label": "Grading stress",
+                "sentiment": "caution",
+                "detail": (
+                    "Opaque grading on high-stakes finals affects journal and "
+                    "employment opportunities."
+                ),
+            },
+            {
+                "label": "Course breadth",
+                "sentiment": "mixed",
+                "detail": (
+                    "Fewer criminal-law and tax offerings than some peer schools for "
+                    "specialized interests."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cornell Daily Sun — U.S. News 2026-27 Law Rankings",
+                "url": (
+                    "https://www.cornellsun.com/article/2026/04/"
+                    "cornell-law-school-ranked-no-13-in-the-country"
+                ),
+            },
+            {
+                "label": "Niche — Cornell Law School reviews",
+                "url": "https://www.niche.com/graduate-schools/cornell-law-school/reviews/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cornell-dvm": {
+        "summary": (
+            "Applicants and guides describe Cornell's College of Veterinary Medicine as "
+            "one of the nation's top D.V.M. programs — the only veterinary college in "
+            "the Ivy League — with exceptional clinical training at the Cornell University "
+            "Hospital for Animals and strong research in animal health. Common cautions are "
+            "extremely competitive admission, high total cost of attendance, and the "
+            "intensity of the four-year professional curriculum."
+        ),
+        "themes": [
+            {
+                "label": "Top-tier clinical training",
+                "sentiment": "positive",
+                "detail": (
+                    "Teaching hospital and specialty services provide hands-on caseload "
+                    "experience."
+                ),
+            },
+            {
+                "label": "Research & specialty depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong programs in wildlife, production medicine, and biomedical "
+                    "sciences."
+                ),
+            },
+            {
+                "label": "Selective admission",
+                "sentiment": "caution",
+                "detail": (
+                    "Highly competitive applicant pool with strong academic and "
+                    "experience prerequisites."
+                ),
+            },
+            {
+                "label": "Cost & workload",
+                "sentiment": "caution",
+                "detail": (
+                    "Professional veterinary training is expensive and academically "
+                    "demanding across four years."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cornell College of Veterinary Medicine — D.V.M. Program",
+                "url": "https://www.vet.cornell.edu/education/doctor-veterinary-medicine",
+            },
+            {
+                "label": "U.S. News — Best Veterinary Schools",
+                "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/veterinary-rankings",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cornell-md": {
+        "summary": (
+            "Students and guides describe Weill Cornell Medicine as a top-tier New York "
+            "City medical school with exceptional clinical access through affiliated "
+            "hospitals, strong research funding, and a diverse patient population. Common "
+            "cautions are the high cost of living in Manhattan, intense workload across "
+            "the MD curriculum, and the competitive residency match environment shared by "
+            "all elite medical schools."
+        ),
+        "themes": [
+            {
+                "label": "NYC clinical access",
+                "sentiment": "positive",
+                "detail": (
+                    "Affiliated NewYork-Presbyterian/Weill Cornell network offers diverse "
+                    "clinical training."
+                ),
+            },
+            {
+                "label": "Research excellence",
+                "sentiment": "positive",
+                "detail": (
+                    "Major biomedical research enterprise with strong NIH funding and "
+                    "specialty institutes."
+                ),
+            },
+            {
+                "label": "Cost of attendance",
+                "sentiment": "caution",
+                "detail": (
+                    "Manhattan living costs add substantially to medical-school expenses."
+                ),
+            },
+            {
+                "label": "Academic intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Fast-paced MD curriculum with high expectations across basic and "
+                    "clinical sciences."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Weill Cornell Medicine — MD Program",
+                "url": "https://medicalcollege.weill.cornell.edu/education/md-program",
+            },
+            {
+                "label": "U.S. News — Best Medical Schools (Research)",
+                "url": "https://www.usnews.com/best-graduate-schools/top-medical-schools/research-rankings",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cornell-hotel-administration-bs": {
+        "summary": (
+            "Students and industry guides describe the Nolan School as the world's first "
+            "and top-ranked collegiate hospitality program — teaching business through a "
+            "service lens with strong finance, real-estate, and consulting placement beyond "
+            "traditional hotel operations. Common cautions are that the hospitality brand "
+            "can read niche to recruiters outside service industries unless students "
+            "actively translate skills, and the program is smaller than general business "
+            "schools at peer universities."
+        ),
+        "themes": [
+            {
+                "label": "Hospitality business foundation",
+                "sentiment": "positive",
+                "detail": (
+                    "Core business curriculum (finance, accounting, analytics) taught "
+                    "through a service-industry lens."
+                ),
+            },
+            {
+                "label": "Versatile outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates enter financial services, consulting, and real estate as "
+                    "well as hospitality."
+                ),
+            },
+            {
+                "label": "Industry network",
+                "sentiment": "positive",
+                "detail": (
+                    "Deep alumni and employer ties across global hospitality and "
+                    "related sectors."
+                ),
+            },
+            {
+                "label": "Niche major perception",
+                "sentiment": "mixed",
+                "detail": (
+                    "Applicants targeting pure investment banking may prefer a general "
+                    "business major."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cornell Nolan School — About",
+                "url": "https://sha.cornell.edu/",
+            },
+            {
+                "label": "Poets&Quants For Undergrads — Cornell Hotelie career paths",
+                "url": (
+                    "https://poetsandquantsforundergrads.com/students/"
+                    "the-cornell-connection-using-an-unorthodox-college-major-for-career-success/"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cornell-emba-americas": {
+        "summary": (
+            "Working professionals describe the Cornell Executive MBA Americas as a "
+            "demanding hybrid program pairing weekend residencies with synchronous online "
+            "coursework across North and South America, yielding a Cornell MBA without "
+            "leaving employment. Positive themes include a strong peer network of senior "
+            "leaders and Johnson's analytics-forward curriculum; cautions are the travel "
+            "commitment, limited time for recruiting pivots, and less on-campus immersion "
+            "than the full-time Two-Year MBA."
+        ),
+        "themes": [
+            {
+                "label": "Hybrid for working leaders",
+                "sentiment": "positive",
+                "detail": (
+                    "Weekend format lets executives earn a Cornell MBA while employed."
+                ),
+            },
+            {
+                "label": "Senior peer network",
+                "sentiment": "positive",
+                "detail": (
+                    "Cohorts bring substantial management experience across industries."
+                ),
+            },
+            {
+                "label": "Travel & time commitment",
+                "sentiment": "caution",
+                "detail": (
+                    "Residential weekends and online sync sessions require significant "
+                    "schedule sacrifice."
+                ),
+            },
+            {
+                "label": "Career-switch limits",
+                "sentiment": "mixed",
+                "detail": (
+                    "Better suited to advancement within a career than a full pivot "
+                    "versus the Two-Year MBA."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cornell Johnson — Executive MBA Americas",
+                "url": "https://www.johnson.cornell.edu/programs/emba/americas/",
+            },
+            {
+                "label": "Clear Admit — Cornell Johnson School Overview",
+                "url": "https://www.clearadmit.com/schools/johnson/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "cornell-ilr-bs": {
+        "summary": (
+            "Students and guides describe Cornell ILR as a unique Ivy League program "
+            "combining labor relations, human resources, economics, and law — with strong "
+            "placement into HR, consulting, finance, and law school. Positive themes "
+            "include small classes, passionate faculty, and a tight ILR community; cautions "
+            "include that the specialized major requires explanation to employers outside "
+            "HR/consulting and that coursework can feel interdisciplinary rather than "
+            "purely quantitative."
+        ),
+        "themes": [
+            {
+                "label": "Distinctive HR & labor focus",
+                "sentiment": "positive",
+                "detail": (
+                    "Only Ivy League undergraduate school dedicated to work, labor, and "
+                    "organizations."
+                ),
+            },
+            {
+                "label": "Versatile placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates enter HR, consulting, finance, and top law schools."
+                ),
+            },
+            {
+                "label": "Community & faculty",
+                "sentiment": "positive",
+                "detail": "Small-school feel within Cornell with engaged ILR faculty.",
+            },
+            {
+                "label": "Major branding",
+                "sentiment": "mixed",
+                "detail": (
+                    "Applicants must articulate how ILR translates outside HR-focused "
+                    "roles."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cornell ILR — Undergraduate Programs",
+                "url": "https://www.ilr.cornell.edu/academics/undergraduate-programs",
+            },
+            {
+                "label": "Niche — Cornell University reviews",
+                "url": "https://www.niche.com/colleges/cornell-university/reviews/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
 }
 
 # ── Application requirements ─────────────────────────────────────────────────
-_INTL_VISA = {
-    "types": ["F-1", "J-1"],
-    "note": "International students are issued an I-20 (F-1) or DS-2019 (J-1) after admission.",
-}
 # Undergraduate (Cornell) admission via the Common Application, by specific college/school.
 _REQ_UNDERGRAD = {
     "materials": [
@@ -1737,6 +2381,8 @@ _REQ_GRAD_GENERIC = {
 
 def _requirements_for(spec: dict) -> dict:
     """Pick the admissions requirement set for a program by degree type."""
+    if spec["slug"] == _FLAGSHIP:
+        return dict(_REQ_MBA)
     if spec["degree_type"] == "bachelors":
         return dict(_REQ_UNDERGRAD)
     return dict(_REQ_GRAD_GENERIC)
@@ -1856,6 +2502,8 @@ def _program_has_dependents(session: Session, program_id) -> bool:
 def _cost_for(spec: dict) -> dict | None:
     """Return the program's cost_data dict, or None when cost is omitted-with-reason."""
     slug = spec["slug"]
+    if slug in _COST_BY_SLUG:
+        return dict(_COST_BY_SLUG[slug])
     if slug in _COST_OMIT_SLUGS:
         return None
     # Undergraduate: 2025-26 endowed-college tuition; statutory colleges add the lower
@@ -1897,12 +2545,13 @@ def _program_standard(slug: str, spec: dict) -> dict:
     """Per-program omitted-field list (verified-unavailable), for _standard."""
     omitted: list[str] = []
     # Cornell reports first-destination outcomes university-wide (captured at the
-    # institution level), so every program omits the program-level employment rate and
-    # industry breakdown.
-    omitted += [
-        "outcomes_data.employment_rate",
-        "outcomes_data.top_industries",
-    ]
+    # institution level), so every program except the Johnson MBA omits the program-level
+    # employment rate and industry breakdown.
+    if slug != _FLAGSHIP:
+        omitted += [
+            "outcomes_data.employment_rate",
+            "outcomes_data.top_industries",
+        ]
     if slug in _COST_OMIT_SLUGS:
         # No citable per-program tuition is published for these graduate/professional/online
         # degrees.
@@ -1949,6 +2598,8 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.delivery_format = spec.get("delivery_format", "in_person")
         if slug == "cornell-computer-science-bs":
             p.content_sources = _CS_CONTENT
+        elif slug == _FLAGSHIP:
+            p.content_sources = dict(_MBA_CONTENT)
         elif slug in _PROGRAM_KEYWORDS_BY_SLUG:
             cs = _program_content(spec)
             cs["keywords"] = list(_PROGRAM_KEYWORDS_BY_SLUG[slug])
@@ -1974,9 +2625,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             }
         # Admissions: undergraduate or generic graduate/professional set by degree type.
         p.application_requirements = _requirements_for(spec)
-        # Outcomes precedence: Scorecard FOS (program) → institution median.
+        # Outcomes precedence: Johnson MBA report → Scorecard FOS (program) → institution.
         fos = _FOS_OUTCOMES.get(slug)
-        if fos is not None:
+        if slug == _FLAGSHIP:
+            outcomes = dict(_MBA_OUTCOMES)
+        elif fos is not None:
             salary, cip = fos
             outcomes = {
                 "median_salary": salary,
@@ -2007,7 +2660,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
         # Application deadline (upcoming undergraduate Regular Decision closes Jan 2).
-        p.application_deadline = date(2027, 1, 2) if spec["degree_type"] == "bachelors" else None
+        p.application_deadline = (
+            date(2026, 1, 8)
+            if slug == _FLAGSHIP
+            else (date(2027, 1, 2) if spec["degree_type"] == "bachelors" else None)
+        )
     session.flush()
     # Reconcile legacy Cornell programs (slug not in the canonical set): delete when
     # unreferenced, otherwise unpublish so the catalog stays clean without breaking any
