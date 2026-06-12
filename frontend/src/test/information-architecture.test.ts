@@ -4,6 +4,7 @@ import {
   PROFILE_TAB_ALIASES,
   STUDENT_LEGACY_REDIRECTS,
   MANAGE_TAB_REDIRECTS,
+  POSTS_TAB_REDIRECTS,
   normalizeProfileTab,
 } from '../utils/information-architecture'
 import { postLoginDestination, roleDefaultPath, resolveNextParam } from '../utils/auth-redirect'
@@ -58,6 +59,18 @@ describe('Spec/04 information architecture', () => {
     expect(MANAGE_TAB_REDIRECTS.workshops).toBe('/s/prep?tab=workshops')
     // No redirect target may itself be a legacy path (no chains).
     for (const target of [...Object.values(STUDENT_LEGACY_REDIRECTS), ...Object.values(MANAGE_TAB_REDIRECTS)]) {
+      expect(STUDENT_LEGACY_REDIRECTS[target.split('?')[0]]).toBeUndefined()
+    }
+  })
+
+  // Discover + Connect merge (Spec 2026-06-12) — /s/posts retired into the
+  // Discover hub tabs; one hop, never chains (App.tsx PostsRedirect contract).
+  it('retires /s/posts into Discover hub tabs', () => {
+    expect(STUDENT_LEGACY_REDIRECTS['/s/posts']).toBe('/s/explore?tab=updates')
+    expect(POSTS_TAB_REDIRECTS.updates).toBe('/s/explore?tab=updates')
+    expect(POSTS_TAB_REDIRECTS.events).toBe('/s/explore?tab=events')
+    expect(POSTS_TAB_REDIRECTS.peers).toBe('/s/explore?tab=peers')
+    for (const target of Object.values(POSTS_TAB_REDIRECTS)) {
       expect(STUDENT_LEGACY_REDIRECTS[target.split('?')[0]]).toBeUndefined()
     }
   })

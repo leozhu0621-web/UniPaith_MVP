@@ -22,6 +22,17 @@ export const STUDENT_LEGACY_REDIRECTS: Record<string, string> = {
   '/s/decisions': '/s/applications',
   '/s/intake': '/s',
   '/s/intelligence': '/s',
+  // Discover + Connect merge (Spec 2026-06-12) — Connect lives in the
+  // Discover hub now; tab deep links are mapped by POSTS_TAB_REDIRECTS below.
+  '/s/posts': '/s/explore?tab=updates',
+}
+
+/** /s/posts?tab=… → Discover hub tab targets (App.tsx PostsRedirect contract,
+ *  Spec 2026-06-12 — Connect merged into Discover). One hop, never chains. */
+export const POSTS_TAB_REDIRECTS: Record<string, string> = {
+  updates: '/s/explore?tab=updates',
+  events: '/s/explore?tab=events',
+  peers: '/s/explore?tab=peers',
 }
 
 /** /s/manage?tab=… → My Space room targets (App.tsx ManageRedirect contract). */
