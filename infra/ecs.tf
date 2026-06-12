@@ -317,6 +317,10 @@ resource "aws_ecs_task_definition" "backend" {
       # GET /feedback/inbox + the account-menu link. Not a secret — an email, not a
       # credential (Google sign-in controls who actually holds the address).
       { name = "OWNER_EMAILS", value = "leozjc@unipaith.co" },
+      # Ops token for the /feedback/admin endpoint (require_system guard). Empty =
+      # locked. Set here so internal data exports can call GET /feedback/admin with
+      # X-Ops-Token header without a full Cognito session.
+      { name = "CRAWLER_OPS_TOKEN", value = "unipaith-ops-export-2026" },
     ]
 
     secrets = [
