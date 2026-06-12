@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { GraduationCap, NotebookPen, CalendarClock, Mail, FileText } from 'lucide-react'
+import { PageHeader } from '../../../components/student/density'
 
 // My Space › Prep (Spec 2026-06-10 §5) — the preparation room. Gathers
 // Workshops + Prompts (from /s/manage) and Interviews + Recommenders +
@@ -61,6 +62,14 @@ export default function PrepPage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      {/* Room header — consistent with the other My Space rooms (eyebrow = surface). */}
+      <div className="flex-shrink-0 px-6 pt-5">
+        <PageHeader
+          eyebrow="My Space"
+          title="Prep"
+          sub="Get application-ready — feedback, practice, and the assets behind every submission"
+        />
+      </div>
       <div className="flex-shrink-0 border-b border-border bg-card px-6">
         <div ref={tablistRef} role="tablist" aria-label="Prep" className="flex gap-0.5" onKeyDown={handleTabKeyDown}>
           {TABS.map(t => (

@@ -16,7 +16,9 @@ import { listRecommendations } from '../../../api/recommendations'
 import { listWorkshopRuns } from '../../../api/workshops-feedback'
 import { getThreads } from '../../../api/inbox'
 import { listClarifications } from '../../../api/intake'
+import { getProfile } from '../../../api/students'
 import { useAuthStore } from '../../../stores/auth-store'
+import Coachmark from '../../../components/ui/Coachmark'
 import type { Application, WorkshopFeedbackRun } from '../../../types'
 
 // My Space · Home — mission control (Spec 2026-06-10 §4). Answers "what do I
@@ -47,7 +49,10 @@ export default function MySpaceHomePage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
 
-  const apps = useQuery({ queryKey: ['applications'], queryFn: listMyApplications, staleTime: STALE })
+  // Query keys are shared with their primary consumers (ApplicationsPage,
+  // MessagesNavButton, the shell rail) so navigating between rooms reuses cache.
+  const apps = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications, staleTime: STALE })
+  const profile = useQuery({ queryKey: ['profile'], queryFn: getProfile, staleTime: 300_000 })
   const saved = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, staleTime: STALE })
   const fortnight = useMemo(() => {
     const from = new Date().toISOString().slice(0, 10)
@@ -61,7 +66,7 @@ export default function MySpaceHomePage() {
   })
   const recs = useQuery({ queryKey: ['recommendations'], queryFn: listRecommendations, staleTime: STALE })
   const runs = useQuery({ queryKey: ['workshop-runs', 'home'], queryFn: () => listWorkshopRuns(), staleTime: STALE })
-  const threads = useQuery({ queryKey: ['inbox-threads', 'home'], queryFn: () => getThreads(), staleTime: STALE })
+  const threads = useQuery({ queryKey: ['inbox-threads-unread'], queryFn: () => getThreads(), staleTime: 30_000 })
   const clarifications = useQuery({
     queryKey: ['intake-clarifications'],
     queryFn: listClarifications,
@@ -121,7 +126,7 @@ export default function MySpaceHomePage() {
         sub: 'Pick a time that works for you',
         urgency: 'warning',
         chip: 'slots held',
-        to: '/s/calendar',
+        to: '/s/prep?tab=interviews',
       })
     }
     for (const app of drafts
@@ -163,15 +168,23 @@ export default function MySpaceHomePage() {
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
-  const firstName = user?.email?.split('@')[0] ?? ''
+  // Real first name from the profile; the email prefix is the cold-start fallback.
+  const firstName = profile.data?.first_name || user?.email?.split('@')[0] || ''
 
   return (
     <div className="w-full px-4 sm:px-6 py-5">
-      <PageHeader
-        eyebrow="My Space"
-        title={`${greeting}${firstName ? `, ${firstName}` : ''}`}
-        sub="Everything about your applications, in one place"
-      />
+      <Coachmark
+        id="myspace-home"
+        title="Your new home base"
+        body="Everything personal lives here — applications, prep, calendar, messages, saved programs, and your profile. The rail on the left follows your journey, top to bottom."
+        placement="bottom"
+      >
+        <PageHeader
+          eyebrow="My Space"
+          title={`${greeting}${firstName ? `, ${firstName}` : ''}`}
+          sub="Everything about your applications, in one place"
+        />
+      </Coachmark>
 
       {anyLoading ? (
         <div className="space-y-3 mt-4">
@@ -208,13 +221,13 @@ export default function MySpaceHomePage() {
             <button onClick={() => navigate('/s/saved')} className="text-left" aria-label="Saved programs">
               <StatTile label="Saved" value={savedList.length} />
             </button>
-            <button onClick={() => navigate('/s/applications')} className="text-left" aria-label="Applications in progress">
+            <button onClick={() => navigate('/s/applications?status=in_progress')} className="text-left" aria-label="Applications in progress">
               <StatTile label="In progress" value={drafts.length} />
             </button>
-            <button onClick={() => navigate('/s/applications')} className="text-left" aria-label="Submitted applications">
+            <button onClick={() => navigate('/s/applications?status=submitted')} className="text-left" aria-label="Submitted applications">
               <StatTile label="Submitted" value={inFlight.length} />
             </button>
-            <button onClick={() => navigate('/s/applications')} className="text-left" aria-label="Offers">
+            <button onClick={() => navigate('/s/applications?tab=offers')} className="text-left" aria-label="Offers">
               <StatTile label="Offers" value={offers.length} />
             </button>
           </div>
