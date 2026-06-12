@@ -222,6 +222,17 @@ class Settings(BaseSettings):
     ai_provider_failover_csv: str = "anthropic,openai"
     ai_provider_failover_timeout_ms: int = 30000
 
+    # ── Uni managed agent (platform.claude.com) ──
+    # When True, the student discovery conversation is driven by the managed
+    # agent on the Claude platform (via uni_agent_host) instead of the in-app
+    # orchestrator. Hard cutover: on platform failure the host returns a graceful
+    # message, never a 5xx. Default OFF — the in-app orchestrator stays the live
+    # path until this is flipped per-environment. agent/env ids are non-secret
+    # resource identifiers (see agents/CONFIGURE.md).
+    ai_uni_managed_agent_v1: bool = False
+    uni_agent_id: str = ""
+    uni_environment_id: str = ""
+
     # ── Spec 63 — Qwen ML backend (the invisible processing transport) ──
     # Qwen is registered as a provider transport (OpenAI-compatible /v1 via vLLM
     # or Bedrock). It is the ML backend for processing agents only; the hard
