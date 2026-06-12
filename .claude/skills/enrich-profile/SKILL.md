@@ -69,13 +69,20 @@ Concrete misses observed in the first runs — each broke a real page:
    Scorecard program list (by CIP for the UNITID)** — if the university offers
    ~100 programs and you've added 18, you are NOT done. The gold reference (MIT)
    carries 65 programs; a peer university with a dozen is incomplete.
-   - **Breadth-first, then depth.** Create EVERY program node with verified
-     *basics* first (full name, degree_type, `delivery_format`, department,
-     description, website, tuition — all on the official catalog/program pages).
-     Deeper fields (outcomes, class profile, faculty, reviews) may be
-     omitted-pending and deepened on resume runs. A program that exists with
-     verified basics beats a missing program; never drop a real program just
-     because you can't yet verify its deep fields.
+   - **Breadth-first, then a MANDATORY depth pass — "defer" is not "abandon".**
+     Create EVERY program node with verified *basics* first (full name,
+     degree_type, `delivery_format`, department, description, website, tuition —
+     all on the official catalog/program pages). Then run the **depth pass over
+     the SAME university**: outcomes, class profile, faculty, and
+     **`external_reviews` for every program with third-party coverage** (miss #8 +
+     step 6). A program that exists with verified basics beats a missing one — so
+     never drop a real program over a single unverifiable deep field — **but the
+     university is NOT done until the depth pass is complete.** A genuinely huge
+     catalog (Columbia ~263) may span runs: stop mid-depth and resume next run,
+     BUT repair-first (step 2) forbids starting a NEW university while this one's
+     coverable programs still lack reviews. "Omitted-pending until a resume that
+     never comes" is the exact bug that left the ENTIRE fleet at ~1 reviewed
+     program each — do not repeat it.
    - Set `delivery_format` (`on_campus` / `online` / `hybrid`) on every program.
 3. **Links everywhere — were missing (issue: campus resources & others have no
    links).** Whenever you name a lab, institute, research center, campus resource,
@@ -126,6 +133,24 @@ Concrete misses observed in the first runs — each broke a real page:
    verbatim quotes. **Never fabricate a quote, rating, or theme**, and never leave
    reviews blank when reputable coverage exists — only record `external_reviews` in
    `_standard.omitted` when a program genuinely has no third-party coverage.
+   - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
+     for every program a real applicant would research: MBA / MBAn / MS in
+     CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
+     EdM, every flagship undergraduate major, and anything with a Poets&Quants /
+     U.S. News / Niche / GradReports / reputable-forum footprint. **Filling 1 of
+     60 is the bug;** honest omit-with-reason is only for niche research degrees
+     with genuinely no third-party coverage.
+   - **Do NOT imitate the gold reference's CURRENT review coverage.** MIT today
+     carries `external_reviews` on only the MBAn (1 of 65) — that is a KNOWN GAP,
+     not the standard. Copy MBAn's *shape and sourcing quality*, then apply it to
+     EVERY coverable program (MIT's own MBA, MFin, etc. are themselves repair
+     targets).
+   - **The conformance gate already bites:** `external_reviews.summary` is a
+     `required` program field in `manifest.py`, so `check_conformance` marks any
+     program without it — and without it stamped in `_standard.omitted` — as NOT
+     gold. A university with coverable programs missing reviews cannot be "done",
+     so run the per-program check before you ship and treat a blank-reviews
+     coverable program as a hard failure, not a deferral.
 
 ## What "the standard" is (read these first)
 
@@ -172,6 +197,12 @@ STRICT order:
      empty (the routine has been setting feeds only on the institution — fix this);
    - news posts with **no cover image** (the feed has images the ingest can now
      capture from media/enclosure/inline `<img>`);
+   - **programs lacking `external_reviews` where reputable third-party coverage
+     exists** — the SINGLE biggest gap today: the whole fleet has reviews on ~1
+     program each (MIT 1/65, Columbia 2/263, Caltech 1/91). A flagship / MBA /
+     popular professional or STEM master's with blank reviews is *not gold*
+     (miss #8). Repairing this comes before any new university — and MIT itself
+     (1/65) is a valid repair target;
    - **no `_standard` stamp**, or stamped at an older `STANDARD_VERSION`.
 3. **Only when EVERY existing university is fully gold** (institution + all schools
    + all programs, each conformant or honestly-omitted) may you add a brand-new
