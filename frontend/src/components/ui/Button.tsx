@@ -18,10 +18,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<Variant, string> = {
-  // Gold punctuation — the single accent moment. Ink text.
-  primary: 'bg-primary text-primary-foreground hover:brightness-95 active:brightness-90',
+  // Gold punctuation — the single accent moment. Ink text. Filled CTAs get a
+  // subtle press-scale (UX overhaul §2); ghost/link stay still.
+  primary: 'bg-primary text-primary-foreground hover:brightness-95 active:brightness-90 active:scale-[0.98]',
   // Cobalt workhorse — Save, Submit, Continue, Send.
-  secondary: 'bg-secondary text-secondary-foreground hover:brightness-110 active:brightness-95',
+  secondary: 'bg-secondary text-secondary-foreground hover:brightness-110 active:brightness-95 active:scale-[0.98]',
   // Outline — Cancel / secondary actions beside a primary.
   tertiary: 'border border-border bg-transparent text-secondary hover:bg-muted',
   // Unframed — toolbar, kebab, inline table actions.

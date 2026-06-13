@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Search, Sparkles, X } from 'lucide-react'
 import Button from '../../../../components/ui/Button'
+import Skeleton from '../../../../components/ui/Skeleton'
 import { interpretQuery, searchProgramsTyped } from '../../../../api/search'
 import { listSaved, saveProgram, unsaveProgram } from '../../../../api/saved-lists'
 import { MAX_COMPARE, useCompareStore } from '../../../../stores/compare-store'
@@ -282,7 +283,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
           ) : loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-72 bg-card rounded-xl border border-border animate-pulse" />
+                <Skeleton key={i} className="h-72 rounded-xl" />
               ))}
             </div>
           ) : total === 0 ? (
@@ -319,7 +320,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
                   Showing the top matches — add a constraint to narrow {total} programs.
                 </p>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {results.map(p => (
                   <ProgramCard
                     key={p.id}

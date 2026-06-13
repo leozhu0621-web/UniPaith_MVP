@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import clsx from 'clsx'
+import { usePresence } from './usePresence'
 
 // Popover — Spec/02-design-system.md §6.
 // Compact, anchored to a trigger. Opens on click/tap (not hover) so it has a
@@ -25,6 +26,8 @@ export default function Popover({
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
   const id = useId()
+  // Keep the panel mounted briefly after close so it can animate out.
+  const { mounted, closing } = usePresence(open)
 
   useEffect(() => {
     if (!open) return
@@ -55,13 +58,13 @@ export default function Popover({
       >
         {trigger}
       </button>
-      {open && (
+      {mounted && (
         <div
           id={id}
           role="dialog"
           className={clsx(
             'absolute z-50 w-[min(320px,calc(100vw-2rem))] rounded-lg border border-border bg-card text-foreground elev-raised p-4',
-            'animate-slide-up-fade',
+            closing ? 'animate-slide-down-fade pointer-events-none' : 'animate-slide-up-fade',
             side === 'bottom' ? 'top-[calc(100%+8px)]' : 'bottom-[calc(100%+8px)]',
             align === 'start' && 'left-0',
             align === 'center' && 'left-1/2 -translate-x-1/2',

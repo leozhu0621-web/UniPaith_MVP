@@ -25,6 +25,7 @@ import {
   listStories,
 } from '../../../../api/prompt-library'
 import Card from '../../../../components/ui/Card'
+import Skeleton from '../../../../components/ui/Skeleton'
 import type { BehavioralPrompt } from '../../../../types/promptLibrary'
 
 import MajorSpecificPanel from '../majorspecific/MajorSpecificPanel'
@@ -230,7 +231,7 @@ export default function PromptLibraryTab() {
                         {INTENT_LABELS[tag] ?? tag}
                         <span className="ml-1.5 text-muted-foreground/60">{items.length}</span>
                       </h3>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="stagger-list grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {items.map(p => (
                           <PromptCard
                             key={p.prompt_key}
@@ -297,10 +298,10 @@ function ViewTab({
 function LoadingSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="h-28 animate-pulse rounded-xl bg-muted" />
+      <Skeleton className="h-28 rounded-xl" />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-28 animate-pulse rounded-xl bg-muted" />
+          <Skeleton key={i} className="h-28 rounded-xl" />
         ))}
       </div>
     </div>

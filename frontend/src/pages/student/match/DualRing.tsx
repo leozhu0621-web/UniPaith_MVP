@@ -11,6 +11,9 @@
  * retrofit follows.
  */
 import clsx from 'clsx'
+import { useEffect, useState } from 'react'
+
+import { prefersReducedMotion, useCountUp } from '../../../hooks/useCountUp'
 
 export interface DualRingProps {
   /** 0..1. Match strength against the active strategy. */
@@ -41,13 +44,34 @@ export default function DualRing({
   const confidencePct = Math.round(confidence * 100)
   const stroke = 5
 
+  // Ship B motion: rings mount at 0 progress, then a double rAF flips
+  // `drawn` so the 0.8s dashoffset transition animates the initial fill
+  // (without it the final offset renders immediately and never plays).
+  // Score changes after mount animate via the same CSS transition; re-renders
+  // with the same score change nothing. Reduced motion mounts pre-drawn.
+  const [drawn, setDrawn] = useState(() => prefersReducedMotion())
+  useEffect(() => {
+    if (drawn) return
+    let raf2 = 0
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => setDrawn(true))
+    })
+    return () => {
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
+    }
+  }, [drawn])
+
+  // Center numeral counts up alongside the ring fill (labels + aria stay exact).
+  const countedFitnessPct = useCountUp(fitnessPct)
+
   // Outer ring: full radius - stroke. Inner ring: radius - stroke - gap.
   const outerR = (size - stroke) / 2
   const innerR = outerR - stroke - 3
   const outerC = 2 * Math.PI * outerR
   const innerC = 2 * Math.PI * innerR
-  const outerOffset = outerC * (1 - fitness)
-  const innerOffset = innerC * (1 - confidence)
+  const outerOffset = drawn ? outerC * (1 - fitness) : outerC
+  const innerOffset = drawn ? innerC * (1 - confidence) : innerC
 
   const interactive = !!onClick
 
@@ -131,7 +155,7 @@ export default function DualRing({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-          <span className="text-base font-bold text-foreground">{fitnessPct}</span>
+          <span className="text-base font-bold text-foreground">{countedFitnessPct}</span>
           <span className="text-[9px] uppercase tracking-wide text-muted-foreground mt-0.5">
             fit
           </span>

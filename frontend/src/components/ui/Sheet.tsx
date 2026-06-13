@@ -1,11 +1,13 @@
 import { useEffect, useRef } from 'react'
 import clsx from 'clsx'
 import { X } from 'lucide-react'
+import { usePresence } from './usePresence'
 
 // Sheet — Spec/02-design-system.md §6 + Spec/02b §6.
 // `right` (default): edits a record in context; 480px desktop, full-width mobile.
 // `bottom`: the mobile default for filters, artifact rail, compare, day agenda —
-// has a peek handle and slides up from the bottom.
+// has a peek handle and slides up from the bottom. Exit animation via
+// usePresence; focus restores at close START (focus effect keys on isOpen).
 
 interface SheetProps {
   isOpen: boolean
@@ -32,6 +34,7 @@ export default function Sheet({
 }: SheetProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const previouslyFocused = useRef<HTMLElement | null>(null)
+  const { mounted, closing } = usePresence(isOpen)
 
   // Latest onClose via ref so the focus effect depends only on isOpen — an
   // inline-arrow onClose would otherwise re-run it (and reset focus to the first
@@ -75,26 +78,40 @@ export default function Sheet({
     // Only isOpen — see onCloseRef note above (typing in a sheet form must not reset focus).
   }, [isOpen])
 
-  if (!isOpen) return null
+  if (!mounted) return null
 
   const isBottom = side === 'bottom'
 
   return (
     <div
-      className={clsx('fixed inset-0 z-50 flex', isBottom ? 'items-end' : 'justify-end')}
+      className={clsx(
+        'fixed inset-0 z-50 flex',
+        isBottom ? 'items-end' : 'justify-end',
+        closing && 'pointer-events-none'
+      )}
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
-      <div className="fixed inset-0 bg-scrim" onClick={onClose} />
+      <div
+        className={clsx('fixed inset-0 bg-scrim', closing ? 'animate-fade-out' : 'animate-fade-in')}
+        onClick={onClose}
+      />
       <div
         ref={panelRef}
         tabIndex={-1}
         className={clsx(
           'relative bg-card text-foreground elev-raised outline-none flex flex-col',
           isBottom
-            ? 'w-full max-h-[85vh] rounded-t-2xl animate-slide-up-fade pb-safe'
-            : clsx('h-full w-full border-l border-border animate-slide-in-right', widthClass),
+            ? clsx(
+                'w-full max-h-[85vh] rounded-t-2xl pb-safe',
+                closing ? 'animate-slide-down-fade' : 'animate-slide-up-fade'
+              )
+            : clsx(
+                'h-full w-full border-l border-border',
+                closing ? 'animate-slide-out-right' : 'animate-slide-in-right',
+                widthClass
+              ),
         )}
       >
         {isBottom && (

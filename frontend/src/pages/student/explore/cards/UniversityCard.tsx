@@ -59,7 +59,7 @@ export default function UniversityCard({ institution: inst, onClick, following, 
   return (
     <div
       onClick={onClick}
-      className="bg-card rounded-lg border border-border hover:elev-raised transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
+      className="bg-card rounded-lg border border-border hover-lift hover:elev-raised overflow-hidden cursor-pointer flex flex-col group/card"
     >
       {/* Header — TALLER campus photo fading into the card at its bottom edge;
           the identity block sits fully BELOW the fade so text never collides

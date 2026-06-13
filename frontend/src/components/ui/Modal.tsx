@@ -1,10 +1,13 @@
 import { useEffect, useRef } from 'react'
 import clsx from 'clsx'
 import { X } from 'lucide-react'
+import { usePresence } from './usePresence'
 
 // Modal — Spec/02-design-system.md §6 + Spec/02b §6.
 // Ink-tinted backdrop; focus trap; ESC closes; first focusable receives focus;
-// focus restored on close. On mobile (< sm) it docks as a bottom sheet.
+// focus restored on close (at close START — the focus effect keys on isOpen,
+// not on presence, so restoration is not delayed by the exit animation).
+// On mobile (< sm) it docks as a bottom sheet. Exit animation via usePresence.
 
 interface ModalProps {
   isOpen: boolean
@@ -28,6 +31,7 @@ const FOCUSABLE =
 export default function Modal({ isOpen, onClose, title, children, size = 'md', footer }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const previouslyFocused = useRef<HTMLElement | null>(null)
+  const { mounted, closing } = usePresence(isOpen)
 
   // Keep the latest onClose in a ref so the focus-management effect can depend
   // ONLY on `isOpen`. Callers pass an inline arrow (`onClose={() => setOpen(false)}`)
@@ -81,16 +85,22 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
     // this effect and never resets focus. See test/modal-focus.test.tsx.
   }, [isOpen])
 
-  if (!isOpen) return null
+  if (!mounted) return null
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
+      className={clsx(
+        'fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4',
+        closing && 'pointer-events-none'
+      )}
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
-      <div className="fixed inset-0 bg-scrim" onClick={onClose} />
+      <div
+        className={clsx('fixed inset-0 bg-scrim', closing ? 'animate-fade-out' : 'animate-fade-in')}
+        onClick={onClose}
+      />
       <div
         ref={panelRef}
         tabIndex={-1}
@@ -98,7 +108,9 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
           'relative bg-card text-foreground w-full elev-raised outline-none',
           'rounded-t-2xl sm:rounded-xl',
           'max-h-[92vh] sm:max-h-[88vh] flex flex-col',
-          'animate-slide-up-fade sm:animate-scale-in',
+          closing
+            ? 'animate-slide-down-fade sm:animate-scale-out'
+            : 'animate-slide-up-fade sm:animate-scale-in',
           SIZE_MAP[size]
         )}
       >

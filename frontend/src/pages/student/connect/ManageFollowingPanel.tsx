@@ -6,6 +6,7 @@ import { Bell, BellOff, GraduationCap } from 'lucide-react'
 import { getFollowing, muteFollowing, unfollowInstitution, type FollowDetail } from '../../../api/connect'
 import { confirmDialog } from '../../../stores/confirm-store'
 import Sheet from '../../../components/ui/Sheet'
+import Skeleton from '../../../components/ui/Skeleton'
 
 export default function ManageFollowingPanel({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient()
@@ -29,7 +30,7 @@ export default function ManageFollowingPanel({ onClose }: { onClose: () => void 
   return (
     <Sheet isOpen onClose={onClose} title="Manage following" side="right">
       {isLoading ? (
-        <div className="space-y-2">{[1, 2, 3].map(i => <div key={i} className="h-12 bg-muted rounded-lg animate-pulse" />)}</div>
+        <div className="space-y-2">{[1, 2, 3].map(i => <Skeleton key={i} className="h-12 rounded-lg" />)}</div>
       ) : (follows?.length ?? 0) === 0 ? (
         <p className="text-center text-sm text-muted-foreground py-8">You're not following any institutions yet.</p>
       ) : (

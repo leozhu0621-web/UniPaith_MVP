@@ -290,7 +290,7 @@ export default function ApplicationsPage() {
             description="Offers land here the moment a program admits you."
           />
         ) : (
-          <div className="space-y-2">
+          <div className="stagger-list space-y-2">
             {offerApps.map(a => {
               const responded = a.offer?.student_response || a.student_decision
               return (
@@ -304,7 +304,8 @@ export default function ApplicationsPage() {
                     <p className="truncate text-xs text-muted-foreground">{a.program?.institution_name ?? ''}</p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <Badge variant={responded ? 'neutral' : 'warning'}>
+                    {/* One earned beat as a fresh offer lands (Ship B milestone moment). */}
+                    <Badge variant={responded ? 'neutral' : 'warning'} className={responded ? undefined : 'animate-beat'}>
                       {a.student_decision === 'accepted_by_student'
                         ? 'accepted'
                         : a.student_decision === 'declined_by_student'
@@ -359,7 +360,7 @@ export default function ApplicationsPage() {
 
       {/* Spec 18 — "You're in" celebration once an offer is accepted (§6/§13) */}
       {acceptedApp && (
-        <Card pad={false} className="p-4 mb-6 bg-success-soft border-0 flex items-center gap-3">
+        <Card pad={false} className="animate-beat p-4 mb-6 bg-success-soft border-0 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-success/15 flex items-center justify-center shrink-0">
             <PartyPopper size={20} className="text-success" />
           </div>
@@ -527,7 +528,7 @@ export default function ApplicationsPage() {
       </div>
 
       {/* List */}
-      <div className="space-y-3">
+      <div className="stagger-list space-y-3">
         {filtered.length === 0 ? (
           <p className="text-sm text-foreground py-8 text-center">No applications match these filters.</p>
         ) : (
@@ -560,7 +561,13 @@ export default function ApplicationsPage() {
                         <Badge variant="neutral">External</Badge>
                       )}
                       {app.decision && (
-                        <Badge variant={(STATUS_COLORS[app.decision] || 'neutral') as never}>{app.decision}</Badge>
+                        <Badge
+                          variant={(STATUS_COLORS[app.decision] || 'neutral') as never}
+                          // Admit chips get one earned-gold beat on reveal (Ship B).
+                          className={app.decision === 'admitted' ? 'animate-beat' : undefined}
+                        >
+                          {app.decision}
+                        </Badge>
                       )}
                       {isDraft && (
                         <span className="text-xs text-muted-foreground">{pct}% ready</span>

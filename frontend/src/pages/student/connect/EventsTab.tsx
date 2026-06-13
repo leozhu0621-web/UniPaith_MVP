@@ -10,6 +10,7 @@ import { getConnectEvents, type ConnectEvent } from '../../../api/connect'
 import { rsvpEvent, cancelRsvp, addEventToCalendar } from '../../../api/events'
 import Sheet from '../../../components/ui/Sheet'
 import QueryError from '../../../components/ui/QueryError'
+import Skeleton from '../../../components/ui/Skeleton'
 
 type Scope = 'upcoming' | 'past' | 'mine'
 
@@ -77,7 +78,7 @@ export default function EventsTab() {
 
       {isLoading ? (
         <div className="space-y-3">
-          {[1, 2, 3].map(i => <div key={i} className="h-24 bg-card rounded-xl border border-border animate-pulse" />)}
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
         </div>
       ) : isError ? (
         <QueryError onRetry={() => refetch()} />
@@ -90,16 +91,18 @@ export default function EventsTab() {
           </p>
         </div>
       ) : (
-        events.map(ev => (
-          <EventListCard
-            key={ev.id}
-            event={ev}
-            busy={rsvpMut.isPending}
-            onOpen={() => setDetail(ev)}
-            onRsvp={() => rsvpMut.mutate({ id: ev.id, going: ev.rsvp_state === 'rsvp' || ev.rsvp_state === 'waitlist' })}
-            onAddCalendar={() => addEventToCalendar(ev.id, ev.event_name)}
-          />
-        ))
+        <div className="stagger-list space-y-4">
+          {events.map(ev => (
+            <EventListCard
+              key={ev.id}
+              event={ev}
+              busy={rsvpMut.isPending}
+              onOpen={() => setDetail(ev)}
+              onRsvp={() => rsvpMut.mutate({ id: ev.id, going: ev.rsvp_state === 'rsvp' || ev.rsvp_state === 'waitlist' })}
+              onAddCalendar={() => addEventToCalendar(ev.id, ev.event_name)}
+            />
+          ))}
+        </div>
       )}
 
       {/* Detail sheet — right on desktop, bottom on mobile */}

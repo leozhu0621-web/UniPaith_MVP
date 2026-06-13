@@ -215,7 +215,9 @@ export default function MySpaceHomePage() {
           </div>
         </Card>
       ) : (
-        <>
+        // Modules cascade in as a sequence (Ship B motion sweep) — pipeline,
+        // up-next, the two-column rails, then the footer link.
+        <div className="stagger-list">
           {/* Pipeline — counts linking into the rooms. */}
           <div className="grid grid-cols-4 gap-3 rounded-lg border border-border bg-card px-4 py-3">
             <button onClick={() => navigate('/s/saved')} className="text-left" aria-label="Saved programs">
@@ -233,7 +235,7 @@ export default function MySpaceHomePage() {
           </div>
 
           {/* Up next */}
-          <div className="mt-5">
+          <div className="stagger-list mt-5">
             <SectionHeader>Up next</SectionHeader>
             {upNext.length === 0 ? (
               <p className="py-2 text-sm text-muted-foreground">
@@ -353,7 +355,7 @@ export default function MySpaceHomePage() {
               <FolderKanban size={12} /> All applications <ArrowRight size={12} />
             </button>
           </div>
-        </>
+        </div>
       )}
     </PageContainer>
   )

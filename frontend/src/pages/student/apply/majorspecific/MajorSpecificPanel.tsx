@@ -14,6 +14,7 @@ import { Compass } from 'lucide-react'
 
 import { getCatalog, getSummary, getTracks, upsertTrack } from '../../../../api/major-specific'
 import Card from '../../../../components/ui/Card'
+import Skeleton from '../../../../components/ui/Skeleton'
 import { showToast } from '../../../../stores/toast-store'
 import type { TrackSignals } from '../../../../types/majorSpecific'
 
@@ -118,14 +119,14 @@ export default function MajorSpecificPanel() {
 function LoadingSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="h-8 w-64 animate-pulse rounded bg-muted" />
+      <Skeleton className="h-8 w-64 rounded" />
       <div className="flex gap-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-9 w-32 animate-pulse rounded-full bg-muted" />
+          <Skeleton key={i} className="h-9 w-32 rounded-full" />
         ))}
       </div>
-      <div className="h-28 animate-pulse rounded-xl bg-muted" />
-      <div className="h-64 animate-pulse rounded-xl bg-muted" />
+      <Skeleton className="h-28 rounded-xl" />
+      <Skeleton className="h-64 rounded-xl" />
     </div>
   )
 }

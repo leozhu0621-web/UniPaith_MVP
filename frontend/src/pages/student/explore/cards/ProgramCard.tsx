@@ -87,7 +87,7 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
   const gradPct = program.employment_rate != null ? Math.round(program.employment_rate * 100) : null
 
   return (
-    <div className="h-full bg-card rounded-lg border border-border hover:elev-raised transition-all duration-200 ease-out overflow-hidden flex flex-col group/card">
+    <div className="h-full bg-card rounded-lg border border-border hover-lift hover:elev-raised overflow-hidden flex flex-col group/card">
       {/* ── Header — text-driven, white surface, hairline divider ── */}
       <div onClick={onView} className="relative cursor-pointer px-4 pt-4 pb-3 border-b border-border">
         {/* Save button */}

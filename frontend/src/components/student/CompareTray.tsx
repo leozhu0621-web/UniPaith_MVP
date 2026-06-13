@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
+import clsx from 'clsx'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { useCompareStore } from '../../stores/compare-store'
@@ -7,6 +8,7 @@ import { comparePrograms } from '../../api/saved-lists'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import Coachmark from '../ui/Coachmark'
+import { usePresence } from '../ui/usePresence'
 import { X, ArrowRightLeft, ChevronUp, ChevronDown, GraduationCap } from 'lucide-react'
 import { COMPARE_DIMENSIONS, type CompareProgram } from './compareDimensions'
 
@@ -62,10 +64,18 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [compareRunTick])
 
-  if (items.length === 0) return null
+  // Slide the tray up when the first program is added and back down when the
+  // set empties (usePresence holds it mounted for the exit beat). No backdrop.
+  const { mounted, closing } = usePresence(items.length > 0)
+  if (!mounted) return null
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] lg:bottom-0 z-40">
+    <div
+      className={clsx(
+        'fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] lg:bottom-0 z-40',
+        closing ? 'animate-tray-out pointer-events-none' : 'animate-tray-in'
+      )}
+    >
       {expanded && comparisonResult && (
         <div className="bg-card border-t border-border elev-raised max-h-[60vh] overflow-y-auto">
           <div className="max-w-5xl mx-auto p-4 sm:p-6">

@@ -12,7 +12,7 @@ export default function PromoCard({ promo, onView }: Props) {
   return (
     <div
       onClick={onView}
-      className="bg-card rounded-lg border border-border border-l-2 border-l-secondary hover:elev-raised transition-shadow overflow-hidden cursor-pointer"
+      className="bg-card rounded-lg border border-border border-l-2 border-l-secondary hover-lift hover:elev-raised overflow-hidden cursor-pointer"
     >
       <div className="flex items-center gap-2 px-4 pt-3 pb-1">
         <Sparkles size={12} className="text-secondary" />

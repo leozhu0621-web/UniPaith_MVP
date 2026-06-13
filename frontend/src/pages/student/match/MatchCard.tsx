@@ -71,7 +71,7 @@ export default function MatchCard({
   const bandsReason = match.acceptance_rate == null ? 'no_history' : 'not_match_ready'
 
   return (
-    <div className="bg-card rounded-xl border border-border elev-subtle flex flex-col overflow-hidden hover:elev-raised transition-shadow">
+    <div className="bg-card rounded-xl border border-border elev-subtle flex flex-col overflow-hidden hover-lift hover:elev-raised">
       {/* ── Header ── */}
       <div className="p-4 flex items-start gap-3">
         <DualRing fitness={fitness} confidence={confidence} size={72} compact onClick={() => setRationaleOpen(true)} />

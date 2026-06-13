@@ -91,7 +91,7 @@ export default function InterviewsTab() {
             No interviews yet. When a program proposes one, it shows up here and on your application page.
           </p>
         ) : (
-          <div className="space-y-6">
+          <div className="stagger-list space-y-6">
             {needsResponse.length > 0 && (
               <div>
                 <p className="mb-2 text-eyebrow uppercase text-warning">Needs your response</p>
