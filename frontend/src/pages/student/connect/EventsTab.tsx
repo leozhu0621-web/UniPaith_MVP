@@ -54,9 +54,10 @@ export default function EventsTab() {
     mutationFn: ({ id, going }: { id: string; going: boolean }) =>
       going ? cancelRsvp(id) : rsvpEvent(id),
     onMutate: async ({ id, going }) => {
-      await qc.cancelQueries({ queryKey: ['connect-events', scope] })
-      const previous = qc.getQueryData<{ events: ConnectEvent[] }>(['connect-events', scope])
-      qc.setQueryData<{ events: ConnectEvent[] }>(['connect-events', scope], old => {
+      const mutationScope = scope
+      await qc.cancelQueries({ queryKey: ['connect-events', mutationScope] })
+      const previous = qc.getQueryData<{ events: ConnectEvent[] }>(['connect-events', mutationScope])
+      qc.setQueryData<{ events: ConnectEvent[] }>(['connect-events', mutationScope], old => {
         if (!old?.events) return old
         return {
           ...old,
@@ -79,10 +80,10 @@ export default function EventsTab() {
           }),
         }
       })
-      return { previous }
+      return { previous, mutationScope }
     },
     onError: (_err, vars, ctx) => {
-      if (ctx?.previous !== undefined) qc.setQueryData(['connect-events', scope], ctx.previous)
+      if (ctx?.previous !== undefined) qc.setQueryData(['connect-events', ctx.mutationScope], ctx.previous)
       showToast(
         vars.going
           ? "We couldn't cancel your RSVP. Please try again."
