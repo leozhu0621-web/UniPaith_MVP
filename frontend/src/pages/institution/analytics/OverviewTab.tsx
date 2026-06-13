@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { TrendingDown } from 'lucide-react'
 import {
   Area,
   AreaChart,
@@ -14,9 +15,10 @@ import {
 import Card from '../../../components/ui/Card'
 import QueryError from '../../../components/ui/QueryError'
 import Skeleton from '../../../components/ui/Skeleton'
-import { getAnalyticsOverview } from '../../../api/institutions'
-import type { AnalyticsFilters, KpiMetric } from '../../../types'
+import { getAnalyticsFunnel, getAnalyticsOverview } from '../../../api/institutions'
+import type { AnalyticsFilters, KpiMetric, TopSource } from '../../../types'
 import { AXIS_TICK, CHART, formatDelta, formatKpi, GRID_STROKE, TOOLTIP_STYLE, titleCase } from './constants'
+import FunnelBars from './FunnelBars'
 
 // Institution surfaces stay on the cobalt/neutral palette (no gold). Decisions
 // read by semantic intent: admit=green, reject=amber, waitlist=neutral, defer=cobalt.
@@ -55,13 +57,41 @@ function ChartEmpty({ hint }: { hint: string }) {
   return <p className="text-sm text-muted-foreground py-10 text-center">{hint}</p>
 }
 
+function TopSourceList({ title, sources }: { title: string; sources: TopSource[] }) {
+  return (
+    <Card className="p-5">
+      <p className="up-eyebrow mb-3">{title}</p>
+      {sources.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-6 text-center">No activity in this window yet.</p>
+      ) : (
+        <ol className="space-y-2">
+          {sources.slice(0, 5).map((s, i) => (
+            <li key={`${s.source_kind}-${s.source_id ?? i}`} className="flex items-center gap-3">
+              <span className="w-5 text-xs font-bold text-muted-foreground tabular-nums">{i + 1}</span>
+              <span className="flex-1 min-w-0 truncate text-sm text-foreground">{s.label}</span>
+              <span className="text-xs text-muted-foreground capitalize">{s.source_kind.replace(/_/g, ' ')}</span>
+              <span className="w-12 text-right text-sm font-bold text-foreground tabular-nums">
+                {s.action_count.toLocaleString()}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </Card>
+  )
+}
+
 export default function OverviewTab({ filters }: { filters: AnalyticsFilters }) {
   const q = useQuery({
     queryKey: ['analytics-overview', filters],
     queryFn: () => getAnalyticsOverview(filters),
   })
+  const funnelQ = useQuery({
+    queryKey: ['analytics-funnel', filters],
+    queryFn: () => getAnalyticsFunnel(filters),
+  })
 
-  if (q.isLoading) {
+  if (q.isLoading || funnelQ.isLoading) {
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
@@ -82,6 +112,7 @@ export default function OverviewTab({ filters }: { filters: AnalyticsFilters }) 
   }
 
   const d = q.data
+  const funnel = funnelQ.data
   const tw = filters.time_window
   const overTime = d.apps_over_time.map(p => ({ period: p.period.slice(5), count: p.count }))
   const byProgram = d.apps_by_program
@@ -98,6 +129,42 @@ export default function OverviewTab({ filters }: { filters: AnalyticsFilters }) 
         <KpiCard label="Avg match" metric={d.avg_match_score} timeWindow={tw} />
         <KpiCard label="Yield" metric={d.yield_rate} timeWindow={tw} />
       </div>
+
+      <Card className="p-5">
+        <p className="up-eyebrow mb-3">Recruitment funnel</p>
+        {!funnel?.has_data ? (
+          <ChartEmpty
+            hint={
+              filters.program_id || filters.intake_id || filters.segment_id || filters.campaign_id
+                ? 'No events match these filters.'
+                : 'Not enough events in this window to plot.'
+            }
+          />
+        ) : (
+          <FunnelBars stages={funnel.stages} multicolor />
+        )}
+      </Card>
+
+      {funnel?.drop_off_alerts?.length ? (
+        <div className="space-y-2">
+          {funnel.drop_off_alerts.slice(0, 2).map((a, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-3 rounded-lg bg-warning-soft text-warning p-4"
+            >
+              <TrendingDown size={18} className="mt-0.5 shrink-0" />
+              <p className="text-sm">{a.hint}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {funnel?.has_data ? (
+        <div className="grid lg:grid-cols-2 gap-4">
+          <TopSourceList title="Top content by clicks" sources={funnel.top_sources_by_clicks} />
+          <TopSourceList title="Top content by apply started" sources={funnel.top_sources_by_apply_started} />
+        </div>
+      ) : null}
 
       <div className="grid lg:grid-cols-2 gap-4">
         <Card pad={false} className="p-5">
