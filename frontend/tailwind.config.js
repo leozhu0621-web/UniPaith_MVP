@@ -102,7 +102,7 @@ export default {
           "50%": { transform: "translateY(-6px)" },
         },
         "page-in": {
-          "0%": { opacity: "0", transform: "translateY(6px)" },
+          "0%": { opacity: "0", transform: "translateY(20px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "fade-in": {
@@ -122,7 +122,7 @@ export default {
           "100%": { opacity: "1", transform: "scale(1)" },
         },
         "slide-up-fade": {
-          "0%": { opacity: "0", transform: "translateY(4px)" },
+          "0%": { opacity: "0", transform: "translateY(10px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         // ── Exit counterparts (UX overhaul §2) — driven by usePresence so
@@ -169,21 +169,21 @@ export default {
         "orbit": "orbit 20s linear infinite",
         "pulse-soft": "pulse-soft 3s ease-in-out infinite",
         "bounce-gentle": "bounce-gentle 2s ease-in-out infinite",
-        "page-in": "page-in var(--dur-page) var(--ease-out)",
+        "page-in": "page-in var(--dur-page) var(--ease-entrance)",
         "fade-in": "fade-in var(--dur-fast) var(--ease-out)",
-        "slide-in-right": "slide-in-right var(--dur-base) var(--ease-out)",
-        "slide-in-left": "slide-in-left var(--dur-base) var(--ease-out)",
+        "slide-in-right": "slide-in-right var(--dur-base) var(--ease-entrance)",
+        "slide-in-left": "slide-in-left var(--dur-base) var(--ease-entrance)",
         "scale-in": "scale-in var(--dur-fast) var(--ease-out)",
-        "slide-up-fade": "slide-up-fade var(--dur-base) var(--ease-out)",
+        "slide-up-fade": "slide-up-fade var(--dur-base) var(--ease-entrance)",
         "fade-out": "fade-out var(--dur-fast) var(--ease-in) forwards",
         "scale-out": "scale-out var(--dur-fast) var(--ease-in) forwards",
         "slide-out-right": "slide-out-right var(--dur-base) var(--ease-in) forwards",
         "slide-down-fade": "slide-down-fade var(--dur-base) var(--ease-in) forwards",
         "tray-in": "tray-in var(--dur-base) var(--ease-out)",
         "tray-out": "tray-out var(--dur-base) var(--ease-in) forwards",
-        // Tab panel swap — 160ms fade/rise, keyed on the active tab (reuses
-        // the slide-up-fade keyframes at a tighter duration).
-        "tab-panel-in": "slide-up-fade 160ms var(--ease-out)",
+        // Tab panel swap — fade/rise keyed on the active tab (reuses the
+        // slide-up-fade keyframes; apparent enough to read as a transition).
+        "tab-panel-in": "slide-up-fade 260ms var(--ease-entrance)",
         "page-loader-sweep": "page-loader-sweep 1.4s var(--ease-out) infinite",
       },
     },
