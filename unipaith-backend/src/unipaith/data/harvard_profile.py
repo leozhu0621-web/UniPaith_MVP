@@ -2139,6 +2139,669 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    "harvard-mpa": {
+        "summary": (
+            "Students and guides rank Harvard Kennedy School's two-year Master in "
+            "Public Administration among the world's top public-service degrees — "
+            "U.S. News rates HKS the best graduate school for social policy and "
+            "health policy — praising the build-your-own curriculum, heavyweight "
+            "faculty, and a globally diverse community with roughly 100 student "
+            "organizations and headline speakers at the JFK Jr. Forum. The most "
+            "common cautions are the high cost, the demanding workload, and that "
+            "the two-year MPA assumes prior graduate study or substantial "
+            "professional experience."
+        ),
+        "themes": [
+            {
+                "label": "Curriculum flexibility",
+                "sentiment": "positive",
+                "detail": (
+                    "The MPA lets students design their own course plan and "
+                    "cross-register across Harvard and MIT."
+                ),
+            },
+            {
+                "label": "Faculty & policy network",
+                "sentiment": "positive",
+                "detail": (
+                    "Heavyweight faculty across every major policy field and a "
+                    "deep public-sector alumni network."
+                ),
+            },
+            {
+                "label": "Global community",
+                "sentiment": "positive",
+                "detail": (
+                    "A highly international cohort with nearly 100 student "
+                    "organizations and access to global leaders on campus."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "A two-year residential program near $62,000/year tuition "
+                    "before Cambridge living costs."
+                ),
+            },
+            {
+                "label": "Experienced-cohort prerequisites",
+                "sentiment": "caution",
+                "detail": (
+                    "The two-year MPA expects a prior graduate degree or "
+                    "considerable work experience; the workload is heavy."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard Kennedy School — Master in Public Administration",
+                "url": "https://www.hks.harvard.edu/educational-programs/masters-programs/master-public-administration",
+            },
+            {
+                "label": "Niche — Harvard Kennedy School graduate reviews",
+                "url": "https://www.niche.com/graduate-schools/harvard-kennedy-school/reviews/",
+            },
+            {
+                "label": "Wikipedia — Harvard Kennedy School (rankings)",
+                "url": "https://en.wikipedia.org/wiki/Harvard_Kennedy_School",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-mpa-id": {
+        "summary": (
+            "The two-year MPA in International Development is Harvard Kennedy "
+            "School's quantitatively intensive development-economics degree, widely "
+            "regarded as one of the most rigorous policy master's anywhere. A small "
+            "cohort (about 80, averaging ~4 years of experience) values its "
+            "graduate-level economics and econometrics core and its placement into "
+            "multilaterals, governments, and research. The common cautions are the "
+            "famously heavy math/economics workload and the high cost."
+        ),
+        "themes": [
+            {
+                "label": "Quantitative economics core",
+                "sentiment": "positive",
+                "detail": (
+                    "Built on graduate-level economics and quantitative analysis "
+                    "aimed at evidence-based development policy."
+                ),
+            },
+            {
+                "label": "Development focus",
+                "sentiment": "positive",
+                "detail": (
+                    "Targeted at careers in international development across "
+                    "governments, multilaterals, and research."
+                ),
+            },
+            {
+                "label": "Small, experienced cohort",
+                "sentiment": "positive",
+                "detail": (
+                    "About 80 students per class, averaging roughly four years of "
+                    "prior work experience."
+                ),
+            },
+            {
+                "label": "Workload intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "The economics/econometrics sequence is demanding — among the "
+                    "most quantitative of any policy program."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "A two-year residential program near $62,000/year tuition "
+                    "before living costs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Wikipedia — Harvard Kennedy School (MPA/ID track)",
+                "url": "https://en.wikipedia.org/wiki/Harvard_Kennedy_School",
+            },
+            {
+                "label": "Harvard Kennedy School — master's admissions overview",
+                "url": "https://www.hks.harvard.edu/apply",
+            },
+            {
+                "label": "Niche — Harvard Kennedy School graduate reviews",
+                "url": "https://www.niche.com/graduate-schools/harvard-kennedy-school/reviews/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-edm": {
+        "summary": (
+            "Harvard Graduate School of Education's one-year, full-time residential "
+            "Ed.M. is among the most prestigious education master's — U.S. News "
+            "consistently ranks HGSE a top U.S. school of education. Students apply "
+            "to one of five programs (education leadership & entrepreneurship, "
+            "education policy, human development, teaching & teacher leadership, or "
+            "learning design & technology) plus a shared Foundations core and "
+            "optional concentrations. Reviewers praise the intensive 10-month "
+            "timeline and Harvard network; the common cautions are that the "
+            "compressed year is fast-paced and the residential cost is significant "
+            "though contained by aid."
+        ),
+        "themes": [
+            {
+                "label": "One-year format",
+                "sentiment": "positive",
+                "detail": (
+                    "A 10-month full-time degree returns graduates to the "
+                    "workforce a year sooner than two-year peers."
+                ),
+            },
+            {
+                "label": "Program structure",
+                "sentiment": "positive",
+                "detail": (
+                    "Five focused programs plus a Foundations core and optional "
+                    "concentrations let students tailor a pathway."
+                ),
+            },
+            {
+                "label": "Reputation & network",
+                "sentiment": "positive",
+                "detail": (
+                    "Consistently ranked a top U.S. school of education with a "
+                    "wide alumni and faculty network."
+                ),
+            },
+            {
+                "label": "Pace",
+                "sentiment": "caution",
+                "detail": (
+                    "The compressed 10-month timeline is demanding and leaves "
+                    "little slack."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Residential master's tuition near $62,000, partly offset by "
+                    "financial aid."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard Graduate School of Education — Residential Ed.M.",
+                "url": "https://www.gse.harvard.edu/degrees/masters/residential",
+            },
+            {
+                "label": "Harvard Magazine — HGSE's redesigned Ed.M. curriculum",
+                "url": "https://www.harvardmagazine.com/harvard-graduate-school-of-education/jhj-new-education-masters-program",
+            },
+            {
+                "label": "U.S. News — Best Education Schools",
+                "url": "https://www.usnews.com/best-graduate-schools/top-education-schools",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-llm": {
+        "summary": (
+            "Harvard Law School's one-year LL.M. is the most prestigious advanced "
+            "law degree for internationally trained lawyers — a class of roughly "
+            "180, about 98% international from some 60-69 countries, drawn from "
+            "around 1,600 applicants. Alumni describe it as life-changing, with "
+            "unmatched faculty, the world's largest academic law library, and a "
+            "global network that has produced judges and heads of state. The common "
+            "cautions are that the nine-month timeline feels rushed, U.S. "
+            "employment prospects for LL.M. graduates are limited (the program is "
+            "designed for graduates to return home), and the cost is high."
+        ),
+        "themes": [
+            {
+                "label": "Prestige & global network",
+                "sentiment": "positive",
+                "detail": (
+                    "A century-old program; more than 25 alumni sit on the highest "
+                    "courts of 18 countries."
+                ),
+            },
+            {
+                "label": "Faculty & library resources",
+                "sentiment": "positive",
+                "detail": (
+                    "Full access to HLS faculty and the largest academic law "
+                    "library in the world."
+                ),
+            },
+            {
+                "label": "International cohort",
+                "sentiment": "positive",
+                "detail": (
+                    "About 98% international students from roughly 60 countries "
+                    "create a uniquely comparative classroom."
+                ),
+            },
+            {
+                "label": "Compressed timeline",
+                "sentiment": "caution",
+                "detail": (
+                    "Nine months can feel rushed; some alumni wish for a two-year "
+                    "option."
+                ),
+            },
+            {
+                "label": "U.S. job prospects",
+                "sentiment": "caution",
+                "detail": (
+                    "The program is built for graduates to return to their home "
+                    "countries; U.S. BigLaw placement is competitive and limited."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Tuition and fees near $78,700 before Cambridge living costs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "The Harvard Crimson — Inside the HLS LL.M. program",
+                "url": "https://www.thecrimson.com/article/2024/10/17/llm-international/",
+            },
+            {
+                "label": "Harvard Law School — LL.M. Admissions",
+                "url": "https://hls.harvard.edu/graduate-program/graduate-program-admissions-and-financial-aid/ll-m-admissions/",
+            },
+            {
+                "label": "LLM GUIDE — The Harvard LL.M. experience (applicant forum)",
+                "url": "https://llm-guide.com/blog/587/the-harvard-llm-experience",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-mla": {
+        "summary": (
+            "Harvard GSD's Master in Landscape Architecture is the oldest and "
+            "most-admired graduate landscape program in the country — "
+            "DesignIntelligence named it the 'most admired' graduate landscape "
+            "architecture program for well over a decade. Reviewers praise the "
+            "studio culture in Gund Hall's terraced 'Trays,' the interdisciplinary "
+            "work across architecture and urban design, and elite faculty and "
+            "placement. The common cautions are that studio work is intense and "
+            "sustained and the multi-year residential professional degree is costly."
+        ),
+        "themes": [
+            {
+                "label": "Top-ranked reputation",
+                "sentiment": "positive",
+                "detail": (
+                    "DesignIntelligence's 'most admired' graduate landscape "
+                    "architecture program for many consecutive years."
+                ),
+            },
+            {
+                "label": "Studio culture",
+                "sentiment": "positive",
+                "detail": (
+                    "Gund Hall's open 'Trays' foster interdisciplinary design "
+                    "collaboration."
+                ),
+            },
+            {
+                "label": "Interdisciplinary breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "Cross-work with architecture, urban design, and planning "
+                    "across the GSD."
+                ),
+            },
+            {
+                "label": "Studio intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "The professional track demands sustained studio hours across "
+                    "multiple semesters."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Multi-year professional tuition near $61,500/year in the "
+                    "Boston area."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "ASLA / DesignIntelligence — landscape architecture program rankings",
+                "url": "https://www.asla.org/news-insights/dirt/designintelligence-2018-landscape-architecture-program-rankings",
+            },
+            {
+                "label": "Harvard GSD — Department of Landscape Architecture",
+                "url": "https://www.gsd.harvard.edu/landscape-architecture/",
+            },
+            {
+                "label": "Wikipedia — Harvard Graduate School of Design",
+                "url": "https://en.wikipedia.org/wiki/Harvard_Graduate_School_of_Design",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-mdiv": {
+        "summary": (
+            "Harvard Divinity School's three-year Master of Divinity is a "
+            "non-confessional, multireligious degree (HDS was the first "
+            "non-denominational U.S. theological school, founded 1816) that pairs "
+            "academic study of religion with field education for ministry, "
+            "chaplaincy, and public service. A large share of students are "
+            "'spiritual but not religious,' atheist, agnostic, or multi-tradition. "
+            "Reviewers value the interfaith community, the language offerings, and "
+            "the pastoral-plus-public preparation; the common cautions are that the "
+            "degree is academic rather than tied to one denomination's ordination "
+            "path, and that the chaplaincy/nonprofit fields it feeds are typically "
+            "lower-paying."
+        ),
+        "themes": [
+            {
+                "label": "Non-denominational & multireligious",
+                "sentiment": "positive",
+                "detail": (
+                    "Welcomes students of all or no faith traditions into an "
+                    "interfaith learning community."
+                ),
+            },
+            {
+                "label": "Field education + scholarship",
+                "sentiment": "positive",
+                "detail": (
+                    "Combines academic study with real-world ministry and "
+                    "chaplaincy placements."
+                ),
+            },
+            {
+                "label": "Languages & cross-registration",
+                "sentiment": "positive",
+                "detail": (
+                    "Extensive language study (including Pali) and access to "
+                    "Harvard-wide courses."
+                ),
+            },
+            {
+                "label": "Academic, not confessional",
+                "sentiment": "caution",
+                "detail": (
+                    "The MDiv is non-confessional and not aligned to a single "
+                    "denomination's ordination requirements."
+                ),
+            },
+            {
+                "label": "Career economics",
+                "sentiment": "caution",
+                "detail": (
+                    "Ministry, chaplaincy, and nonprofit pathways are typically "
+                    "lower-paying than other professional degrees."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard Divinity School — Master of Divinity program",
+                "url": "https://www.hds.harvard.edu/academics/degree-programs/mdiv-program",
+            },
+            {
+                "label": "Harvard Divinity School — MDiv vs MTS (FAQ)",
+                "url": "https://www.hds.harvard.edu/faq/what-difference-between-mdiv-and-mts",
+            },
+            {
+                "label": "The Pluralism Project (Harvard) — Religion & Interfaith Engagement",
+                "url": "https://pluralism.org/religion-and-interfaith-engagement-harvard-2025",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-mts": {
+        "summary": (
+            "Harvard Divinity School's two-year Master of Theological Studies lets "
+            "students study religious traditions broadly and deeply — often as "
+            "preparation for doctoral work or to enrich careers in law, "
+            "journalism, medicine, or public life. Reviewers praise the scholarly "
+            "breadth and flexibility within HDS's multireligious, non-confessional "
+            "setting; the common cautions are that it is a research/academic degree "
+            "rather than a professional ministry credential like the MDiv, and that "
+            "outcomes vary widely by the field students go on to."
+        ),
+        "themes": [
+            {
+                "label": "Academic breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "Deep, broad study across religious traditions, texts, and "
+                    "methods."
+                ),
+            },
+            {
+                "label": "Doctoral & career preparation",
+                "sentiment": "positive",
+                "detail": (
+                    "A common stepping stone to a PhD or to enrich other "
+                    "professions."
+                ),
+            },
+            {
+                "label": "Multireligious setting",
+                "sentiment": "positive",
+                "detail": (
+                    "Non-confessional community open to all or no faith "
+                    "traditions."
+                ),
+            },
+            {
+                "label": "Not a ministry credential",
+                "sentiment": "caution",
+                "detail": (
+                    "Unlike the MDiv, the MTS is not designed for ordination or "
+                    "chaplaincy tracks."
+                ),
+            },
+            {
+                "label": "Variable outcomes",
+                "sentiment": "caution",
+                "detail": (
+                    "As a humanities master's, career return depends heavily on "
+                    "the path students pursue afterward."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard Divinity School — Master of Theological Studies",
+                "url": "https://www.hds.harvard.edu/academics/degree-programs/mts-program",
+            },
+            {
+                "label": "Harvard Divinity School — MDiv vs MTS (FAQ)",
+                "url": "https://www.hds.harvard.edu/faq/what-difference-between-mdiv-and-mts",
+            },
+            {
+                "label": "The Pluralism Project (Harvard) — Religion & Interfaith Engagement",
+                "url": "https://pluralism.org/religion-and-interfaith-engagement-harvard-2025",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-alm": {
+        "summary": (
+            "Harvard Extension School's Master of Liberal Arts (ALM) is a "
+            "legitimate, part-time, lower-cost Harvard degree popular with working "
+            "professionals; admission is performance-based — applicants pass "
+            "designated courses before formal admission. Reviewers praise the "
+            "rigor, faculty quality, and exceptional cost-to-value (a Harvard "
+            "master's in fields like management or finance for roughly $40,000). "
+            "The common cautions are that the diploma reads 'in Extension "
+            "Studies,' the credential carries a persistent reputation debate, there "
+            "is no traditional residential cohort, and several tracks require a "
+            "substantial thesis."
+        ),
+        "themes": [
+            {
+                "label": "Cost-to-value",
+                "sentiment": "positive",
+                "detail": (
+                    "A Harvard master's at a small fraction of typical graduate "
+                    "tuition."
+                ),
+            },
+            {
+                "label": "Rigor & access",
+                "sentiment": "positive",
+                "detail": (
+                    "Demanding coursework taught by Harvard faculty, with an "
+                    "on-campus requirement for matriculated students."
+                ),
+            },
+            {
+                "label": "Flexibility",
+                "sentiment": "positive",
+                "detail": (
+                    "Part-time format fits working professionals, typically over "
+                    "two to five years."
+                ),
+            },
+            {
+                "label": "Branding & reputation",
+                "sentiment": "caution",
+                "detail": (
+                    "The 'in Extension Studies' title and past misrepresentation "
+                    "controversies fuel an ongoing perception debate."
+                ),
+            },
+            {
+                "label": "Thesis & limited cohort",
+                "sentiment": "caution",
+                "detail": (
+                    "Many tracks require a large capstone or thesis, and the "
+                    "experience offers little traditional cohort life."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard Extension School — Management master's (ALM)",
+                "url": "https://extension.harvard.edu/academics/programs/management-graduate-program/",
+            },
+            {
+                "label": "Rob Wiest — An Honest Assessment of the Harvard Extension School",
+                "url": "https://robwiest.medium.com/an-honest-assessment-of-the-harvard-extension-school-731e14fb6cb1",
+            },
+            {
+                "label": "Ipso Facto (Harvard blogs) — HES reputation",
+                "url": "https://archive.blogs.harvard.edu/lamont/2020/04/21/why-the-harvard-extension-school-still-struggles-with-reputation/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-economics-phd": {
+        "summary": (
+            "Harvard's Economics PhD is consistently ranked among the very top "
+            "economics doctoral programs in the world — top-tier by U.S. News and "
+            "by RePEc's graduate-record rankings, alongside MIT, Stanford, "
+            "Princeton, and Chicago. Fully funded, it trains students for academia, "
+            "central banks and government, technology, and finance, with an "
+            "exceptional placement record and Nobel- and Clark-medal-winning "
+            "alumni. The common cautions are that admission is extraordinarily "
+            "selective, the first-year theory and econometrics sequence is famously "
+            "demanding, and time-to-degree is long (5+ years), as at peer programs."
+        ),
+        "themes": [
+            {
+                "label": "Top global ranking",
+                "sentiment": "positive",
+                "detail": (
+                    "Ranked at or near #1 worldwide by U.S. News and by RePEc's "
+                    "record-of-graduates ranking."
+                ),
+            },
+            {
+                "label": "Full funding",
+                "sentiment": "positive",
+                "detail": (
+                    "Admitted students receive tuition plus a multi-year stipend."
+                ),
+            },
+            {
+                "label": "Placement & resources",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong academic, policy, and industry placement backed by a "
+                    "vast faculty, seminars, and library system."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Among the most competitive doctoral admissions in the "
+                    "discipline."
+                ),
+            },
+            {
+                "label": "Rigor & duration",
+                "sentiment": "caution",
+                "detail": (
+                    "A demanding core sequence and a typical 5+ year "
+                    "time-to-degree."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard Department of Economics — PhD Program",
+                "url": "https://www.economics.harvard.edu/phd-program",
+            },
+            {
+                "label": "U.S. News — Best Economics PhD programs",
+                "url": "https://www.usnews.com/best-graduate-schools/top-humanities-schools/economics-rankings",
+            },
+            {
+                "label": "IDEAS/RePEc — Top economics institutions by record of graduates",
+                "url": "https://ideas.repec.org/top/top.inst.students.html",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
 }
 
 # ── Per-school official tuition (2025-26 unless noted) and cost source ──────
