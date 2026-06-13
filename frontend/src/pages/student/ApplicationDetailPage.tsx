@@ -1108,6 +1108,7 @@ function RecommendersTab({ recommenders, programId, onNudge }: {
   programId: string
   onNudge: (id: string) => void
 }) {
+  const navigate = useNavigate()
   const relevant = recommenders.filter(r => !r.target_program_id || r.target_program_id === programId)
   const REC_STATUS: Record<string, 'neutral' | 'info' | 'warning' | 'success' | 'danger'> = {
     draft: 'neutral', requested: 'info', in_progress: 'warning', sent: 'info', submitted: 'success', received: 'success', overdue: 'danger',
@@ -1117,7 +1118,10 @@ function RecommendersTab({ recommenders, programId, onNudge }: {
       <Card pad={false} className="p-6 text-center">
         <Users size={32} className="text-muted-foreground mx-auto mb-3" />
         <p className="text-sm text-foreground">No recommenders yet.</p>
-        <p className="text-xs text-muted-foreground mt-1">Add recommenders from your Profile to request letters for this program.</p>
+        <p className="text-xs text-muted-foreground mt-1">Add recommenders in My Space → Prep to request letters for this program.</p>
+        <Button size="sm" variant="secondary" className="mt-3" onClick={() => navigate('/s/prep?tab=recommenders')}>
+          Go to Recommenders
+        </Button>
       </Card>
     )
   return (

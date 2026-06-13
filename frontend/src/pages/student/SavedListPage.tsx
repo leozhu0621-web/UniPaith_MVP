@@ -9,6 +9,7 @@ import {
   startApplicationFromSaved,
 } from '../../api/saved-lists'
 import { listSavedSearches } from '../../api/savedSearches'
+import { qk } from '../../api/queryKeys'
 import { getMyFollows, unfollowInstitution } from '../../api/events'
 import SavedSearchesPanel from './saved/SavedSearchesPanel'
 import Button from '../../components/ui/Button'
@@ -61,7 +62,7 @@ export default function SavedListPage() {
   const [bulkBusy, setBulkBusy] = useState(false)
 
   const { data: saved, isLoading, isError, refetch } = useQuery({
-    queryKey: ['saved'],
+    queryKey: qk.savedPrograms(),
     queryFn: listSaved,
     retry: 1,
   })
@@ -86,10 +87,12 @@ export default function SavedListPage() {
   const removeMut = useMutation({
     mutationFn: unsaveProgram,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['saved'] })
+      queryClient.invalidateQueries({ queryKey: qk.savedPrograms() })
       queryClient.invalidateQueries({ queryKey: ['saved-tags'] })
       showToast('Removed from your shortlist', 'success')
     },
+    onError: (err: unknown) =>
+      showToast((err as Error).message ?? 'Could not remove this program', 'error'),
   })
 
   const patchMut = useMutation({
@@ -101,7 +104,7 @@ export default function SavedListPage() {
       body: { priority?: SavedPriority; notes?: string; tags?: string[] }
     }) => patchSavedProgram(programId, body),
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['saved'] })
+      queryClient.invalidateQueries({ queryKey: qk.savedPrograms() })
       queryClient.invalidateQueries({ queryKey: ['saved-tags'] })
       if (vars.body.priority) showToast('Priority updated', 'success')
       if (vars.body.notes !== undefined) showToast('Notes saved', 'success')
@@ -122,7 +125,7 @@ export default function SavedListPage() {
   const startAppMut = useMutation({
     mutationFn: startApplicationFromSaved,
     onSuccess: data => {
-      queryClient.invalidateQueries({ queryKey: ['saved'] })
+      queryClient.invalidateQueries({ queryKey: qk.savedPrograms() })
       queryClient.invalidateQueries({ queryKey: ['my-applications'] })
       showToast('Application started', 'success')
       navigate(`/s/applications/${data.app_id}`)

@@ -130,7 +130,7 @@ export default function FirstLookCard({ verdict: verdictProp, variant = 'auto', 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Button variant="secondary" size="sm" onClick={() => navigate('/s/explore')}>
             <Compass size={14} className="mr-1.5" />
-            {ready ? 'Go deeper in Match' : 'See programs that fit me'}
+            {ready ? 'Go deeper in Discover' : 'See programs that fit me'}
             <ArrowRight size={14} className="ml-1" />
           </Button>
           {onKeepTalking && (

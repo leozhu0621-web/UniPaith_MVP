@@ -5,6 +5,7 @@ import { AlertTriangle, Search, Sparkles, X } from 'lucide-react'
 import Button from '../../../../components/ui/Button'
 import Skeleton from '../../../../components/ui/Skeleton'
 import { interpretQuery, searchProgramsTyped } from '../../../../api/search'
+import { qk } from '../../../../api/queryKeys'
 import { listSaved, saveProgram, unsaveProgram } from '../../../../api/saved-lists'
 import { MAX_COMPARE, useCompareStore } from '../../../../stores/compare-store'
 import { showToast } from '../../../../stores/toast-store'
@@ -114,7 +115,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
   })
 
   // ── Saved state ──
-  const { data: savedData } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, retry: false })
+  const { data: savedData } = useQuery({ queryKey: qk.savedPrograms(), queryFn: listSaved, retry: false })
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   useEffect(() => {
     if (savedData) setSavedIds(new Set(savedData.map((s: { program_id: string }) => String(s.program_id))))
@@ -133,7 +134,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
         await saveProgram(id)
         setSavedIds(prev => new Set(prev).add(id))
       }
-      qc.invalidateQueries({ queryKey: ['saved-programs'] })
+      qc.invalidateQueries({ queryKey: qk.savedPrograms() })
     } catch {
       showToast("Couldn't update your list. Try again.", 'error')
     }

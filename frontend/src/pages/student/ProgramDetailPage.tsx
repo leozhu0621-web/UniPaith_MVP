@@ -12,6 +12,8 @@ import { pushRecentProgram } from '../../lib/recentPrograms'
 import { getMatchDetail, logEngagement } from '../../api/matching'
 import { listEvents } from '../../api/events'
 import { saveProgram, unsaveProgram, listSaved } from '../../api/saved-lists'
+import { qk } from '../../api/queryKeys'
+import { showToast } from '../../stores/toast-store'
 import { useCompareStore } from '../../stores/compare-store'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -151,7 +153,7 @@ export default function ProgramDetailPage() {
     enabled: !!(program as any)?.institution_id && !!programId,
   })
   const programPosts = Array.isArray(programPostsData) ? programPostsData : []
-  const { data: saved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
+  const { data: saved } = useQuery({ queryKey: qk.savedPrograms(), queryFn: listSaved })
   const { data: reviewsData } = useQuery({ queryKey: ['program-reviews', programId], queryFn: () => getProgramReviews(programId!), retry: false })
   const { data: employerData } = useQuery({ queryKey: ['employer-feedback', programId], queryFn: () => getEmployerFeedback(programId!), retry: false })
   const { data: sameSchoolData } = useQuery({
@@ -180,12 +182,30 @@ export default function ProgramDetailPage() {
   const isSaved = savedList.some((s: any) => s.program_id === programId)
   const eventsList: EventItem[] = Array.isArray(events) ? events : []
 
+  // Optimistic save/unsave (Ship D §4): flip the cached shortlist instantly so
+  // the button responds; roll back + toast on failure. `wasSaved` is passed as
+  // the mutation variable so the flip direction is pinned at click time.
   const saveMut = useMutation({
-    mutationFn: async (): Promise<void> => {
-      if (isSaved) await unsaveProgram(programId!)
+    mutationFn: async (wasSaved: boolean): Promise<void> => {
+      if (wasSaved) await unsaveProgram(programId!)
       else await saveProgram(programId!)
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved'] }),
+    onMutate: async (wasSaved: boolean) => {
+      await queryClient.cancelQueries({ queryKey: qk.savedPrograms() })
+      const previous = queryClient.getQueryData(qk.savedPrograms())
+      queryClient.setQueryData(qk.savedPrograms(), (old: unknown) => {
+        const list: any[] = Array.isArray(old) ? old : []
+        return wasSaved
+          ? list.filter((s: any) => s.program_id !== programId)
+          : [...list, { program_id: programId }]
+      })
+      return { previous, wasSaved }
+    },
+    onError: (_err, wasSaved, ctx) => {
+      if (ctx) queryClient.setQueryData(qk.savedPrograms(), ctx.previous)
+      showToast(`We couldn't ${wasSaved ? 'remove' : 'save'} this program. Please try again.`, 'error')
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: qk.savedPrograms() }),
   })
 
   if (isLoading) return <ProgramDetailSkeleton />
@@ -439,7 +459,7 @@ export default function ProgramDetailPage() {
             <Button
               size="sm"
               variant={isSaved ? 'secondary' : 'tertiary'}
-              onClick={() => saveMut.mutate()}
+              onClick={() => saveMut.mutate(isSaved)}
               disabled={isArchived || saveMut.isPending}
               aria-pressed={isSaved}
             >

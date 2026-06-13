@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { useCompareStore } from '../../stores/compare-store'
 import { showToast } from '../../stores/toast-store'
+import { confirmDialog } from '../../stores/confirm-store'
 import { comparePrograms } from '../../api/saved-lists'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
@@ -64,6 +65,19 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [compareRunTick])
 
+  // Clearing the whole set is destructive enough to confirm (Ship D §4) —
+  // a stray tap otherwise wipes a carefully built compare list.
+  const handleClear = async () => {
+    const n = items.length
+    const ok = await confirmDialog({
+      title: `Remove all ${n} program${n === 1 ? '' : 's'} from compare?`,
+      body: 'This empties the compare tray. You can re-add programs from any card.',
+      confirmLabel: 'Remove all',
+      destructive: true,
+    })
+    if (ok) clear()
+  }
+
   // Slide the tray up when the first program is added and back down when the
   // set empties (usePresence holds it mounted for the exit beat). No backdrop.
   const { mounted, closing } = usePresence(items.length > 0)
@@ -81,7 +95,7 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
           <div className="max-w-5xl mx-auto p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-h3 text-foreground">Side-by-side comparison</h3>
-              <button onClick={() => setExpanded(false)} aria-label="Collapse" className="text-muted-foreground hover:text-foreground">
+              <button onClick={() => setExpanded(false)} aria-label="Collapse" className="p-3 -m-3 text-muted-foreground hover:text-foreground">
                 <X size={18} />
               </button>
             </div>
@@ -174,7 +188,8 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
                 <GraduationCap size={12} className="text-background/60" />
                 <span className="max-w-[140px] truncate">{item.program_name}</span>
                 {item.degree_type && <Badge variant="info" size="sm">{item.degree_type}</Badge>}
-                <button onClick={() => remove(item.program_id)} aria-label="Remove" className="text-background/50 hover:text-background">
+                {/* ≥40px tap target via padding + negative margin — no visual size jump (Ship D §4). */}
+                <button onClick={() => remove(item.program_id)} aria-label={`Remove ${item.program_name} from compare`} className="p-3.5 -m-3.5 text-background/50 hover:text-background">
                   <X size={12} />
                 </button>
               </span>
@@ -192,11 +207,11 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
               </Button>
             </Coachmark>
             {comparisonResult && (
-              <button onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Collapse' : 'Expand'} className="p-1 text-background/60 hover:text-background">
+              <button onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Collapse' : 'Expand'} className="p-3 -m-2 text-background/60 hover:text-background">
                 {expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
               </button>
             )}
-            <button onClick={clear} className="text-background/60 hover:text-background text-xs">Clear</button>
+            <button onClick={handleClear} className="px-2 py-3 -my-3 text-background/60 hover:text-background text-xs">Clear</button>
           </div>
         </div>
       </div>

@@ -294,7 +294,7 @@ export default function StrategyTab() {
         <div>
           <h2 className="text-lg font-semibold text-foreground">Strategy</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            The broad-strategy artifact that bridges Discovery → Match. Versioned per student;
+            The broad-strategy artifact that bridges Uni → Discover. Versioned per student;
             exactly one can be active at a time.
           </p>
         </div>

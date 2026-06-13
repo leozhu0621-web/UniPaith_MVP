@@ -14,6 +14,7 @@ import { Sparkles, X, RefreshCw } from 'lucide-react'
 import { explainMatch } from '../../../api/matching'
 import { AIBadge } from '../../../components/ui/AIRationalePopover'
 import ConfidenceDots from '../../../components/ui/ConfidenceDots'
+import QueryError from '../../../components/ui/QueryError'
 import { showToast } from '../../../stores/toast-store'
 import type { ExplainMatchResponse } from '../../../types'
 
@@ -47,8 +48,11 @@ export default function RationalePopover({
       setIsStub(r.is_stub)
       setResp(r)
     },
-    onError: (err: unknown) =>
-      showToast((err as Error).message ?? 'Could not load rationale.', 'error'),
+    onError: () => {
+      // Regenerate failed with prose still on screen → toast; a first-load
+      // failure renders the in-modal error state below instead (Ship D §4).
+      if (rationale) showToast("We couldn't regenerate the reasoning. Please try again.", 'error')
+    },
   })
 
   // Prefer the server's redacted breakdowns/citations; fall back to props
@@ -86,6 +90,13 @@ export default function RationalePopover({
         <div className="p-5 space-y-4">
           {explainMut.isPending && !rationale ? (
             <div className="text-sm text-muted-foreground">Analyzing the match…</div>
+          ) : explainMut.isError && !rationale ? (
+            // Real error state, not a near-empty modal (Ship D §4).
+            <QueryError
+              variant="inline"
+              detail="We couldn't load the reasoning."
+              onRetry={() => explainMut.mutate()}
+            />
           ) : (
             rationale && <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{rationale}</p>
           )}
@@ -124,7 +135,8 @@ export default function RationalePopover({
           {isStub && <p className="text-xs text-muted-foreground italic">Showing rule-based result.</p>}
 
           <div className="flex justify-end pt-1">
-            {!explainMut.isPending && (
+            {/* The error state owns the retry control until something loads. */}
+            {!explainMut.isPending && !(explainMut.isError && !rationale) && (
               <button
                 onClick={() => explainMut.mutate()}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-secondary hover:underline"

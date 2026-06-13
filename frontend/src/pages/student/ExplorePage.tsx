@@ -7,6 +7,7 @@ import Coachmark from '../../components/ui/Coachmark'
 import { PageContainer, PageHeader } from '../../components/student/density'
 import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
+import { qk } from '../../api/queryKeys'
 import { getConnectEvents, getFollowing, followInstitution, unfollowInstitution } from '../../api/connect'
 import { showToast } from '../../stores/toast-store'
 import UniversityCard from './explore/cards/UniversityCard'
@@ -143,7 +144,7 @@ export default function ExplorePage() {
   })
 
   // Saved programs — for the MatchesSection cards.
-  const { data: savedData, refetch: refetchSaved } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, retry: false })
+  const { data: savedData, refetch: refetchSaved } = useQuery({ queryKey: qk.savedPrograms(), queryFn: listSaved, retry: false })
 
   const { data: featuredPromos } = useQuery({
     queryKey: ['featured-promotions', 'explore'],
@@ -169,11 +170,11 @@ export default function ExplorePage() {
     try {
       if (wasSaved) await unsaveProgram(programId)
       else await saveProgram(programId)
-      queryClient.invalidateQueries({ queryKey: ['saved-programs'] })
+      queryClient.invalidateQueries({ queryKey: qk.savedPrograms() })
     } catch {
       showToast(`We couldn't ${wasSaved ? 'remove' : 'save'} this program. Please try again.`, 'error')
       // Re-sync from the server so the toggle reflects true state, not the failed flip.
-      queryClient.invalidateQueries({ queryKey: ['saved-programs'] })
+      queryClient.invalidateQueries({ queryKey: qk.savedPrograms() })
       refetchSaved()
     }
   }

@@ -11,6 +11,7 @@
  * Save / Add to compare / Open on every card (§7).
  */
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   ArrowRight,
   Bookmark,
@@ -28,6 +29,7 @@ import type { MatchResultDual } from '../../../types'
 import DualRing from './DualRing'
 import ProbabilityBands from './ProbabilityBands'
 import RationalePopover from './RationalePopover'
+import { cardLinkClick } from '../explore/shared/cardLink'
 
 function toUnit(v: string | number | null | undefined): number {
   const n = typeof v === 'string' ? parseFloat(v) : (v ?? 0)
@@ -60,6 +62,9 @@ export default function MatchCard({
 }: MatchCardProps) {
   const [rationaleOpen, setRationaleOpen] = useState(false)
   const [showBands, setShowBands] = useState(false)
+  // Ship D §4 — the program title + View CTA are real links so keyboard
+  // focus, Enter, and cmd/ctrl-click open-in-new-tab work.
+  const href = `/s/programs/${match.program_id}`
 
   const degree = match.degree_type ? DEGREE_LABELS[match.degree_type] ?? match.degree_type : null
   const fitness = toUnit(match.fitness_score)
@@ -77,14 +82,14 @@ export default function MatchCard({
         <DualRing fitness={fitness} confidence={confidence} size={72} compact onClick={() => setRationaleOpen(true)} />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <button onClick={onView} className="min-w-0 text-left">
+            <Link to={href} onClick={cardLinkClick(onView)} className="min-w-0 text-left">
               <h3 className="text-[15px] font-bold text-foreground leading-tight line-clamp-2 break-words hover:text-secondary transition-colors">
                 {match.program_name ?? 'Program'}
               </h3>
               {match.institution_name && (
                 <p className="text-[12px] text-muted-foreground mt-0.5 truncate">{match.institution_name}</p>
               )}
-            </button>
+            </Link>
             <button
               onClick={onSave}
               className={`shrink-0 p-1.5 rounded-full transition-colors ${
@@ -165,13 +170,14 @@ export default function MatchCard({
           <ArrowRightLeft size={12} />
           <span className="hidden sm:inline">{comparing ? 'In compare' : 'Compare'}</span>
         </button>
-        <button
-          onClick={onView}
+        <Link
+          to={href}
+          onClick={cardLinkClick(onView)}
           className="flex-[1.5] flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold text-secondary-foreground bg-secondary hover:brightness-95 transition-colors group/view"
         >
           View program
           <ArrowRight size={12} className="group-hover/view:translate-x-0.5 transition-transform" />
-        </button>
+        </Link>
       </div>
 
       {rationaleOpen && (

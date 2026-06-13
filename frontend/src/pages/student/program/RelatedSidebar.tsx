@@ -116,7 +116,9 @@ export default function RelatedSidebar({
                   ))}
                 </div>
               )}
-              <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-secondary opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* Always visible at reduced prominence — hover-only reveal is
+                  unreachable on touch (Ship D §4 affordances). */}
+              <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-secondary opacity-70 group-hover:opacity-100 transition-opacity">
                 View program <ChevronRight size={12} />
               </span>
             </div>

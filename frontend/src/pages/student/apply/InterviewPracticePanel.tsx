@@ -7,8 +7,12 @@
  *  - Score a response: paste a question + your answer and get a rubric +
  *    structural issues + missing elements + follow-up questions. No model
  *    answer is ever returned — the response schema forbids it.
+ *
+ * Ship D — input preservation: the drafted question/response (plus type,
+ * focus, and program selection) persists to localStorage keyed per program
+ * and is restored on mount. Cleared on successful submit.
  */
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 
 import { requestInterviewPractice } from '../../../api/workshops-feedback'
@@ -25,6 +29,7 @@ import WorkshopProgramPicker, {
   type ProgramOption,
   type WorkshopMode,
 } from './WorkshopProgramPicker'
+import { clearWorkshopDraft, loadLastWorkshopDraft, saveWorkshopDraft } from './workshopDrafts'
 import {
   IMPORTANCE_LABEL,
   IMPORTANCE_VARIANT,
@@ -41,19 +46,85 @@ const TYPES: { key: InterviewType; label: string }[] = [
   { key: 'technical', label: 'Technical' },
 ]
 
+const DRAFT_PREFIX = 'up-interview-draft'
+
+interface InterviewDraft {
+  interviewType: InterviewType
+  focus: string
+  questionText: string
+  responseText: string
+  mode: WorkshopMode
+  program: ProgramOption | null
+}
+
+/** The text the student actually typed — what's worth preserving. */
+const draftText = (d: InterviewDraft) => `${d.focus}\n${d.questionText}\n${d.responseText}`
+
+/** Save the draft when it holds real text; clear it otherwise (or once submitted). */
+function persistInterviewDraft(d: InterviewDraft, lastSubmitted: string | null): void {
+  const programId = d.mode === 'program_specific' ? d.program?.programId ?? null : null
+  if (draftText(d).trim() && draftText(d) !== lastSubmitted) {
+    saveWorkshopDraft(DRAFT_PREFIX, programId, d)
+  } else {
+    clearWorkshopDraft(DRAFT_PREFIX, programId)
+  }
+}
+
 export default function InterviewPracticePanel() {
-  const [interviewType, setInterviewType] = useState<InterviewType>('general')
-  const [focus, setFocus] = useState('')
-  const [questionText, setQuestionText] = useState('')
-  const [responseText, setResponseText] = useState('')
-  const [mode, setMode] = useState<WorkshopMode>('general')
-  const [program, setProgram] = useState<ProgramOption | null>(null)
+  // Restore the last draft synchronously on mount (program selection included).
+  const [restored] = useState(() => loadLastWorkshopDraft<Partial<InterviewDraft>>(DRAFT_PREFIX))
+  const [interviewType, setInterviewType] = useState<InterviewType>(
+    restored?.interviewType === 'behavioral' || restored?.interviewType === 'technical'
+      ? restored.interviewType
+      : 'general',
+  )
+  const [focus, setFocus] = useState(typeof restored?.focus === 'string' ? restored.focus : '')
+  const [questionText, setQuestionText] = useState(
+    typeof restored?.questionText === 'string' ? restored.questionText : '',
+  )
+  const [responseText, setResponseText] = useState(
+    typeof restored?.responseText === 'string' ? restored.responseText : '',
+  )
+  const [mode, setMode] = useState<WorkshopMode>(
+    restored?.mode === 'program_specific' ? 'program_specific' : 'general',
+  )
+  const [program, setProgram] = useState<ProgramOption | null>(
+    restored?.program && typeof restored.program.programId === 'string' ? restored.program : null,
+  )
+  const [draftRestored, setDraftRestored] = useState(
+    Boolean(
+      (typeof restored?.responseText === 'string' && restored.responseText.trim()) ||
+        (typeof restored?.questionText === 'string' && restored.questionText.trim()),
+    ),
+  )
+  // Initial-render constant: open the collapsed coach section when a draft was
+  // restored into it (constant so the user's own toggling is never fought).
+  const [coachInitiallyOpen] = useState(
+    () =>
+      Boolean(
+        (typeof restored?.responseText === 'string' && restored.responseText.trim()) ||
+          (typeof restored?.questionText === 'string' && restored.questionText.trim()),
+      ),
+  )
   const [run, setRun] = useState<WorkshopFeedbackRun | null>(null)
   // The program the displayed run was generated for — snapshotted at request
   // time so switching the picker afterwards never relabels a stale run.
   const [runProgram, setRunProgram] = useState<ProgramOption | null>(null)
 
   const hasResponse = responseText.trim().length > 0
+
+  // Last successfully submitted text — once submitted, the stored draft is
+  // cleared and not re-saved unless the text changes again.
+  const lastSubmittedRef = useRef<string | null>(null)
+  const draftRef = useRef<InterviewDraft>({ interviewType, focus, questionText, responseText, mode, program })
+  draftRef.current = { interviewType, focus, questionText, responseText, mode, program }
+
+  // Debounced persist while typing + flush on unmount.
+  useEffect(() => {
+    const t = setTimeout(() => persistInterviewDraft(draftRef.current, lastSubmittedRef.current), 600)
+    return () => clearTimeout(t)
+  }, [interviewType, focus, questionText, responseText, mode, program])
+  useEffect(() => () => persistInterviewDraft(draftRef.current, lastSubmittedRef.current), [])
 
   const practiceMut = useMutation({
     mutationFn: (target: ProgramOption | null) =>
@@ -67,6 +138,9 @@ export default function InterviewPracticePanel() {
     onSuccess: (r, target) => {
       setRun(r)
       setRunProgram(target)
+      lastSubmittedRef.current = draftText(draftRef.current)
+      clearWorkshopDraft(DRAFT_PREFIX, target?.programId ?? null)
+      setDraftRestored(false)
       showToast(hasResponse ? 'Coaching ready.' : 'Practice questions ready.', 'success')
     },
     onError: (err: unknown) =>
@@ -122,17 +196,25 @@ export default function InterviewPracticePanel() {
           />
         </div>
 
-        <details className="text-sm">
+        <details className="text-sm" open={coachInitiallyOpen}>
           <summary className="cursor-pointer text-foreground hover:text-foreground">
             Or — coach a response you've drafted
           </summary>
           <div className="mt-3 space-y-3 border-t border-border pt-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground">Question</label>
+              <div className="mb-1 flex items-center justify-between">
+                <label className="block text-xs font-medium text-foreground">Question</label>
+                {draftRestored && (
+                  <span className="text-[11px] text-muted-foreground">Draft restored</span>
+                )}
+              </div>
               <input
                 className="w-full rounded-md border border-border px-3 py-2 text-sm"
                 value={questionText}
-                onChange={e => setQuestionText(e.target.value)}
+                onChange={e => {
+                  setQuestionText(e.target.value)
+                  if (draftRestored) setDraftRestored(false)
+                }}
                 maxLength={4000}
                 placeholder="The question you're answering"
               />
@@ -144,7 +226,10 @@ export default function InterviewPracticePanel() {
                 rows={6}
                 maxLength={20000}
                 value={responseText}
-                onChange={e => setResponseText(e.target.value)}
+                onChange={e => {
+                  setResponseText(e.target.value)
+                  if (draftRestored) setDraftRestored(false)
+                }}
                 placeholder="Paste your answer. We'll coach delivery, structure, and specificity — no rewrite."
               />
             </div>

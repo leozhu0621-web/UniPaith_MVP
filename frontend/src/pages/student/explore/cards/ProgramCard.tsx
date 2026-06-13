@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import { Link } from 'react-router-dom'
 import { formatCurrency } from '../../../../utils/format'
 import type { ProgramSummary, MatchResult } from '../../../../types'
 import {
@@ -10,6 +11,7 @@ import { differenceInDays } from 'date-fns'
 import BandBadge from '../../../../components/ui/BandBadge'
 import type { Band } from '../../../../components/ui/BandBadge'
 import DualRing from '../../match/DualRing'
+import { cardLinkClick, CARD_LINK_OVERLAY } from '../shared/cardLink'
 
 function degreeAbbrev(degree: string): string {
   const map: Record<string, string> = {
@@ -59,6 +61,9 @@ interface Props {
   /** Spec 2026-06-12 §6.4 — next upcoming event from this school. */
   nextEvent?: { event_name: string; start_time: string } | null
   onEventClick?: () => void
+  /** Ship D §4 — real link destination for the card. Defaults to the student
+      program route; public-capable callers pass their auth-aware path. */
+  viewHref?: string
 }
 
 function toUnit(v: number | null | undefined): number {
@@ -67,8 +72,9 @@ function toUnit(v: number | null | undefined): number {
   return Math.max(0, Math.min(1, n))
 }
 
-export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView, following, onToggleFollow, nextEvent, onEventClick }: Props) {
+export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView, following, onToggleFollow, nextEvent, onEventClick, viewHref }: Props) {
   const abbrev = degreeAbbrev(program.degree_type)
+  const href = viewHref ?? `/s/programs/${program.id}`
   // Dual-score migration: prefer fitness_score, fall back to legacy match_score
   // (Phase E keeps match_score dual-written for one release — see CLAUDE.md).
   const extMatch = match as (MatchResult & { fitness_score?: number | null; confidence_score?: number | null; band_label?: string | null }) | undefined
@@ -88,12 +94,15 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
 
   return (
     <div className="h-full bg-card rounded-lg border border-border hover-lift hover:elev-raised overflow-hidden flex flex-col group/card">
-      {/* ── Header — text-driven, white surface, hairline divider ── */}
-      <div onClick={onView} className="relative cursor-pointer px-4 pt-4 pb-3 border-b border-border">
+      {/* ── Header — text-driven, white surface, hairline divider. The title
+          <Link> stretches over the header (Ship D §4) so keyboard focus,
+          Enter, and cmd/ctrl-click work; action buttons stay siblings raised
+          above the overlay (no nested-interactive). ── */}
+      <div className="relative px-4 pt-4 pb-3 border-b border-border">
         {/* Save button */}
         <button
-          onClick={e => { e.stopPropagation(); onSave() }}
-          className={`absolute top-3 right-3 p-2 rounded-full transition-colors ${
+          onClick={e => { e.preventDefault(); e.stopPropagation(); onSave() }}
+          className={`absolute z-10 top-3 right-3 p-2 rounded-full transition-colors ${
             saved ? 'text-secondary bg-secondary/10' : 'text-muted-foreground hover:bg-muted'
           }`}
           aria-label={saved ? 'Remove from list' : 'Save to my list'}
@@ -104,8 +113,8 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
         {/* Follow-school button (Spec 2026-06-12 §6.1) — updates land in Discover. */}
         {onToggleFollow && (
           <button
-            onClick={e => { e.stopPropagation(); onToggleFollow() }}
-            className={`absolute top-3 right-12 p-2 rounded-full transition-colors ${
+            onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleFollow() }}
+            className={`absolute z-10 top-3 right-12 p-2 rounded-full transition-colors ${
               following ? 'text-secondary bg-secondary/10' : 'text-muted-foreground hover:bg-muted'
             }`}
             aria-label={following ? `Unfollow ${program.institution_name}` : `Follow ${program.institution_name} for updates`}
@@ -125,7 +134,9 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
           <div className="min-w-0 flex-1">
             {/* Fixed 2-line height so the header divider lines up across cards. */}
             <h3 className="text-[15px] font-bold text-foreground leading-tight line-clamp-2 min-h-[2.35rem]">
-              {program.program_name}
+              <Link to={href} onClick={cardLinkClick(onView)} className={CARD_LINK_OVERLAY}>
+                {program.program_name}
+              </Link>
             </h3>
             {(program.department || program.institution_name) && (
               <p className="text-[11.5px] text-muted-foreground mt-1 truncate flex items-center gap-1">
@@ -145,8 +156,8 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
             {bandLabel && <BandBadge band={bandLabel} />}
             {nextEvent && (
               <button
-                onClick={e => { e.stopPropagation(); onEventClick?.() }}
-                className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors"
+                onClick={e => { e.preventDefault(); e.stopPropagation(); onEventClick?.() }}
+                className="relative z-10 inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors"
                 title={`Upcoming: ${nextEvent.event_name}`}
               >
                 <CalendarDays size={10} />
@@ -225,13 +236,14 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
             <span className="hidden sm:inline">Ask AI</span>
           </button>
         )}
-        <button
-          onClick={e => { e.stopPropagation(); onView() }}
+        <Link
+          to={href}
+          onClick={cardLinkClick(onView)}
           className="flex-[1.5] flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold text-secondary-foreground bg-secondary hover:brightness-95 transition-colors group/view"
         >
           View program
           <ArrowRight size={12} className="group-hover/view:translate-x-0.5 transition-transform" />
-        </button>
+        </Link>
       </div>
     </div>
   )

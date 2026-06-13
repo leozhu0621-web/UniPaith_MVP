@@ -6,6 +6,7 @@ import {
 } from '../../api/institutions'
 import { listEvents } from '../../api/events'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
+import { qk } from '../../api/queryKeys'
 import { useCompareStore } from '../../stores/compare-store'
 import { showToast } from '../../stores/toast-store'
 import ProgramCard from './explore/cards/ProgramCard'
@@ -80,7 +81,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
   const postList: InstitutionPost[] = Array.isArray(schoolPosts) ? schoolPosts : []
   const eventList: any[] = Array.isArray(schoolEvents) ? schoolEvents : []
 
-  const { data: savedData } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, enabled: isAuthenticated, retry: false })
+  const { data: savedData } = useQuery({ queryKey: qk.savedPrograms(), queryFn: listSaved, enabled: isAuthenticated, retry: false })
   const savedIds = new Set<string>((savedData as any[] ?? []).map((s: any) => String(s.program_id)))
 
   const toggleSave = async (programId: string) => {
@@ -89,7 +90,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
     try {
       if (wasSaved) await unsaveProgram(programId)
       else await saveProgram(programId)
-      queryClient.invalidateQueries({ queryKey: ['saved-programs'] })
+      queryClient.invalidateQueries({ queryKey: qk.savedPrograms() })
     } catch {
       showToast(`We couldn't ${wasSaved ? 'remove' : 'save'} this program. Please try again.`, 'error')
     }
@@ -396,6 +397,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
                 : compareStore.add({ program_id: p.id, program_name: p.program_name, institution_name: p.institution_name, degree_type: p.degree_type })}
               onAskCounselor={isAuthenticated ? () => navigate(`/s?prefill=${encodeURIComponent(`Tell me about ${p.program_name} at ${p.institution_name}. Is it a good fit?`)}`) : undefined}
               onView={() => navigate(programHref(p.id))}
+              viewHref={programHref(p.id)}
             />
           ))}
         </div>

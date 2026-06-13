@@ -856,7 +856,9 @@ class StudentService:
         answers: dict = dict(state.get("answers") or {})
         if data.answers is not None:
             for key, value in data.answers.model_dump(exclude_unset=True).items():
-                if value is not None:
+                if value is None:
+                    answers.pop(key, None)
+                else:
                     answers[key] = value
         state["answers"] = answers
         if data.last_step is not None:
