@@ -50,3 +50,4 @@ tfplan
 *.tfvars
 !*.tfvars.example
 .claude/worktrees/
+*.xlsx
