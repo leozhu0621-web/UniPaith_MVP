@@ -139,6 +139,7 @@ export default function ProfilePage() {
 
       {/* Tab content — finding 8: tabpanel role + labelled-by */}
       <div
+        key={activeTab}
         id={panelId}
         role="tabpanel"
         aria-labelledby={`profile-tab-${activeTab}`}
