@@ -68,7 +68,7 @@ export default function OnboardingPage() {
     const resumeStep = Math.min(Math.max(merged.last_step ?? 0, 0), LAST_STEP)
     // Never resume INTO the celebration screen unless actually completed.
     setStep(merged.completed_at ? resumeStep : Math.min(resumeStep, LAST_STEP - 1))
-    if (!merged.last_step && !merged.completed_at) track('onboarding_started')
+    if (merged.last_step == null && !merged.completed_at) track('onboarding_started')
     setReady(true)
   }, [ready, profileQ.isPending, profileQ.data])
 
@@ -340,7 +340,7 @@ export default function OnboardingPage() {
                         onSelect={() =>
                           setAnswers((p) => ({
                             ...p,
-                            budget_band: p.budget_band === o.value ? undefined : o.value,
+                            budget_band: p.budget_band === o.value ? null : o.value,
                           }))
                         }
                       />

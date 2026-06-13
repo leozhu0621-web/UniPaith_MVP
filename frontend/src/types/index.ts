@@ -28,7 +28,7 @@ export interface OnboardingAnswers {
   degree_level?: OnboardingDegreeLevel
   /** e.g. "Fall 2027" */
   intake_term?: string
-  budget_band?: OnboardingBudgetBand
+  budget_band?: OnboardingBudgetBand | null
   geos?: string[]
 }
 
