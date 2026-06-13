@@ -112,23 +112,30 @@ export default function OnboardingPage() {
     persist({}, next)
   }, [persist, step])
 
+  // Autosave on every answer change ("skippable but never lost"): single-select
+  // steps would otherwise only save when the advance timer fires, and
+  // multi-select steps (interests/geos/budget) never until Continue/Skip — a
+  // refresh in that window dropped in-progress answers from state + draft.
+  const updateAnswers = useCallback((next: OnboardingAnswers) => {
+    setAnswers(next)
+    persist({ answers: next })
+  }, [persist])
+
   /** Single-select: stamp the answer, beat, then slide on (Imprint rhythm). */
   const chooseAndAdvance = useCallback(<K extends keyof OnboardingAnswers>(key: K, value: OnboardingAnswers[K], fromStep: number) => {
-    setAnswers((prev) => ({ ...prev, [key]: value }))
+    updateAnswers({ ...answersRef.current, [key]: value })
     if (advanceTimer.current) clearTimeout(advanceTimer.current)
     const delay = prefersReducedMotion() ? 0 : 350
     advanceTimer.current = setTimeout(() => goTo(fromStep + 1, 'forward'), delay)
-  }, [goTo])
+  }, [goTo, updateAnswers])
 
   const toggleInList = useCallback((key: 'interests' | 'geos', value: string) => {
-    setAnswers((prev) => {
-      const list = prev[key] ?? []
-      return {
-        ...prev,
-        [key]: list.includes(value) ? list.filter((v) => v !== value) : [...list, value],
-      }
+    const list = answersRef.current[key] ?? []
+    updateAnswers({
+      ...answersRef.current,
+      [key]: list.includes(value) ? list.filter((v) => v !== value) : [...list, value],
     })
-  }, [])
+  }, [updateAnswers])
 
   const dismiss = useCallback(() => {
     track('onboarding_skipped', { step: STEP_KEYS[step] })
@@ -152,12 +159,12 @@ export default function OnboardingPage() {
       else if (step === 2 && INTEREST_TRACKS[idx]) toggleInList('interests', INTEREST_TRACKS[idx].value)
       else if (step === 3 && DEGREE_OPTIONS[idx]) chooseAndAdvance('degree_level', DEGREE_OPTIONS[idx].value, 3)
       else if (step === 4 && INTAKE_TERMS[idx]) chooseAndAdvance('intake_term', INTAKE_TERMS[idx], 4)
-      else if (step === 5 && BUDGET_OPTIONS[idx]) setAnswers((p) => ({ ...p, budget_band: BUDGET_OPTIONS[idx].value }))
+      else if (step === 5 && BUDGET_OPTIONS[idx]) updateAnswers({ ...answersRef.current, budget_band: BUDGET_OPTIONS[idx].value })
     } else if (e.key === 'Enter' && e.target === e.currentTarget) {
       if (step === 0) goTo(1, 'forward')
       else if (step === 2 || step === 5) goTo(step + 1, 'forward')
     }
-  }, [step, chooseAndAdvance, toggleInList, goTo])
+  }, [step, chooseAndAdvance, toggleInList, goTo, updateAnswers])
 
   if (!ready) {
     return (
@@ -338,10 +345,10 @@ export default function OnboardingPage() {
                         size="chip"
                         selected={answers.budget_band === o.value}
                         onSelect={() =>
-                          setAnswers((p) => ({
-                            ...p,
-                            budget_band: p.budget_band === o.value ? null : o.value,
-                          }))
+                          updateAnswers({
+                            ...answersRef.current,
+                            budget_band: answersRef.current.budget_band === o.value ? null : o.value,
+                          })
                         }
                       />
                     ))}
