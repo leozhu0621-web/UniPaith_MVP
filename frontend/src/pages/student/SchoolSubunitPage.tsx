@@ -369,7 +369,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
 
       {programsLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => <div key={i} className="h-64 bg-card rounded-xl border border-border animate-pulse" />)}
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-64 rounded-xl" />)}
         </div>
       ) : programsError ? (
         // Distinguish a failed fetch from a school that simply has no programs.

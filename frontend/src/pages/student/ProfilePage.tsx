@@ -143,7 +143,9 @@ export default function ProfilePage() {
         role="tabpanel"
         aria-labelledby={`profile-tab-${activeTab}`}
         tabIndex={0}
-        className="focus-visible:outline-none"
+        // stagger-list: the active tab's root (and the Suspense fallback) is the
+        // single direct child → one fade/rise on tab switch instead of a hard swap.
+        className="stagger-list focus-visible:outline-none"
       >
         <Suspense fallback={<div className="space-y-3"><SkeletonCard /><SkeletonCard /></div>}>
           {activeTab === 'overview' && <OverviewTab onOpenTab={setTab} />}

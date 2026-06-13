@@ -11,6 +11,7 @@ import {
   type PeerCard, type PeerVisibilityProfile,
 } from '../../../api/connect'
 import QueryError from '../../../components/ui/QueryError'
+import Skeleton from '../../../components/ui/Skeleton'
 
 export default function PeersTab() {
   const qc = useQueryClient()
@@ -28,7 +29,7 @@ export default function PeersTab() {
     onError: () => setOptInError("Couldn't save your preference. Please try again."),
   })
 
-  if (isLoading) return <div className="h-40 bg-card rounded-xl border border-border animate-pulse" />
+  if (isLoading) return <Skeleton className="h-40 rounded-xl" />
 
   if (isError) return <QueryError onRetry={() => refetch()} />
 
@@ -115,7 +116,7 @@ function PeersDiscovery() {
 
       {isLoading ? (
         <div className="grid sm:grid-cols-2 gap-3">
-          {[1, 2].map(i => <div key={i} className="h-36 bg-card rounded-xl border border-border animate-pulse" />)}
+          {[1, 2].map(i => <Skeleton key={i} className="h-36 rounded-xl" />)}
         </div>
       ) : isError ? (
         <QueryError onRetry={() => refetch()} />
@@ -125,7 +126,7 @@ function PeersDiscovery() {
           body="We'll notify you as more applicants join the programs you've saved or applied to."
         />
       ) : (
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="stagger-list grid sm:grid-cols-2 gap-3">
           {peers!.map(p => (
             <PeerCardView
               key={p.peer_id}
@@ -216,7 +217,7 @@ function VisibilityEditor({ onClose }: { onClose: () => void }) {
   const set = (k: keyof PeerVisibilityProfile, v: string | boolean | null) =>
     setForm(f => ({ ...f, [k]: v }))
 
-  if (!profile) return <div className="h-40 bg-card rounded-xl border border-border animate-pulse" />
+  if (!profile) return <Skeleton className="h-40 rounded-xl" />
 
   return (
     <div className="bg-card rounded-xl border border-border p-4 space-y-3">

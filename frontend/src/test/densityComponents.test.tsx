@@ -32,8 +32,15 @@ test('ListRow without onClick renders a non-interactive row', () => {
 })
 
 test('StatTile renders value + label + sub', () => {
-  render(<StatTile value={3} label="In progress" sub="2 due soon" />)
-  expect(screen.getByText('3')).toBeInTheDocument()
-  expect(screen.getByText('In progress')).toBeInTheDocument()
-  expect(screen.getByText('2 due soon')).toBeInTheDocument()
+  // Numeric values count up on mount (Ship B); under reduced motion they
+  // render the final value immediately — assert that contract.
+  document.documentElement.setAttribute('data-reduce-motion', '')
+  try {
+    render(<StatTile value={3} label="In progress" sub="2 due soon" />)
+    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.getByText('In progress')).toBeInTheDocument()
+    expect(screen.getByText('2 due soon')).toBeInTheDocument()
+  } finally {
+    document.documentElement.removeAttribute('data-reduce-motion')
+  }
 })

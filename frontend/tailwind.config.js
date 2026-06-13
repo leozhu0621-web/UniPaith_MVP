@@ -125,26 +125,66 @@ export default {
           "0%": { opacity: "0", transform: "translateY(4px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        // ── Exit counterparts (UX overhaul §2) — driven by usePresence so
+        // overlays animate OUT before unmounting. `forwards` fill in the
+        // animation shorthand holds the final (hidden) frame until unmount.
+        "fade-out": {
+          "0%": { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
+        "scale-out": {
+          "0%": { opacity: "1", transform: "scale(1)" },
+          "100%": { opacity: "0", transform: "scale(0.97)" },
+        },
+        "slide-out-right": {
+          "0%": { opacity: "1", transform: "translateX(0)" },
+          "100%": { opacity: "0", transform: "translateX(12px)" },
+        },
+        "slide-down-fade": {
+          "0%": { opacity: "1", transform: "translateY(0)" },
+          "100%": { opacity: "0", transform: "translateY(4px)" },
+        },
+        // Bottom-docked tray (CompareTray) — a fuller rise/drop than the 4px fades.
+        "tray-in": {
+          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "tray-out": {
+          "0%": { opacity: "1", transform: "translateY(0)" },
+          "100%": { opacity: "0", transform: "translateY(12px)" },
+        },
         "page-loader-sweep": {
           "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(400%)" },
         },
       },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        // Motion utilities consume the index.css tokens (UX overhaul §2) so
+        // the easing/duration vocabulary lives in ONE place. Decorative loops
+        // (float/orbit/pulse) keep their own long cycles.
+        "accordion-down": "accordion-down var(--dur-base) var(--ease-out)",
+        "accordion-up": "accordion-up var(--dur-base) var(--ease-in)",
         "float": "float 6s ease-in-out infinite",
         "float-slow": "float-slow 8s ease-in-out infinite",
         "orbit": "orbit 20s linear infinite",
         "pulse-soft": "pulse-soft 3s ease-in-out infinite",
         "bounce-gentle": "bounce-gentle 2s ease-in-out infinite",
-        "page-in": "page-in 0.2s ease-out",
-        "fade-in": "fade-in 0.15s ease-out",
-        "slide-in-right": "slide-in-right 0.2s ease-out",
-        "slide-in-left": "slide-in-left 0.2s ease-out",
-        "scale-in": "scale-in 0.15s ease-out",
-        "slide-up-fade": "slide-up-fade 0.2s ease-out",
-        "page-loader-sweep": "page-loader-sweep 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) infinite",
+        "page-in": "page-in var(--dur-page) var(--ease-out)",
+        "fade-in": "fade-in var(--dur-fast) var(--ease-out)",
+        "slide-in-right": "slide-in-right var(--dur-base) var(--ease-out)",
+        "slide-in-left": "slide-in-left var(--dur-base) var(--ease-out)",
+        "scale-in": "scale-in var(--dur-fast) var(--ease-out)",
+        "slide-up-fade": "slide-up-fade var(--dur-base) var(--ease-out)",
+        "fade-out": "fade-out var(--dur-fast) var(--ease-in) forwards",
+        "scale-out": "scale-out var(--dur-fast) var(--ease-in) forwards",
+        "slide-out-right": "slide-out-right var(--dur-base) var(--ease-in) forwards",
+        "slide-down-fade": "slide-down-fade var(--dur-base) var(--ease-in) forwards",
+        "tray-in": "tray-in var(--dur-base) var(--ease-out)",
+        "tray-out": "tray-out var(--dur-base) var(--ease-in) forwards",
+        // Tab panel swap — 160ms fade/rise, keyed on the active tab (reuses
+        // the slide-up-fade keyframes at a tighter duration).
+        "tab-panel-in": "slide-up-fade 160ms var(--ease-out)",
+        "page-loader-sweep": "page-loader-sweep 1.4s var(--ease-out) infinite",
       },
     },
   },

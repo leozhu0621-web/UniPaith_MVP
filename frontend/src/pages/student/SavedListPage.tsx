@@ -238,7 +238,7 @@ export default function SavedListPage() {
           <BandBadge band={band} size="sm" />
           <span className="text-xs text-muted-foreground">({items.length})</span>
         </div>
-        <div className="space-y-4">{items.map(renderRow)}</div>
+        <div className="stagger-list space-y-4">{items.map(renderRow)}</div>
       </section>
     )
   }
@@ -317,7 +317,7 @@ export default function SavedListPage() {
             action={{ label: 'Open Match →', onClick: () => navigate('/s/explore') }}
           />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="stagger-list grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {follows.map(f => (
               <SavedSchoolCard
                 key={f.institution_id}
@@ -414,7 +414,7 @@ export default function SavedListPage() {
                       ({tierGroups.unmatched.length})
                     </span>
                   </div>
-                  <div className="space-y-4">{tierGroups.unmatched.map(renderRow)}</div>
+                  <div className="stagger-list space-y-4">{tierGroups.unmatched.map(renderRow)}</div>
                 </section>
               )}
             </div>
@@ -431,13 +431,13 @@ export default function SavedListPage() {
                       </span>
                       <span className="text-xs text-muted-foreground">({items.length})</span>
                     </div>
-                    <div className="space-y-4">{items.map(renderRow)}</div>
+                    <div className="stagger-list space-y-4">{items.map(renderRow)}</div>
                   </section>
                 )
               })}
             </div>
           ) : (
-            <div className="space-y-4">{filtered.map(renderRow)}</div>
+            <div className="stagger-list space-y-4">{filtered.map(renderRow)}</div>
           )}
         </>
       )}

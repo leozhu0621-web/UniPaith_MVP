@@ -12,6 +12,7 @@ import { markConnectSeen } from '../../../utils/connectSeen'
 import { exploreUrlFromSavedQuery } from '../explore/discovery/searchUrl'
 import FeedItemCard from './ConnectCards'
 import QueryError from '../../../components/ui/QueryError'
+import Skeleton from '../../../components/ui/Skeleton'
 
 const SEEN_KEY = 'unipaith_connect_last_seen'
 
@@ -120,7 +121,7 @@ export default function UpdatesTab() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {[1, 2, 3].map(i => <div key={i} className="h-32 bg-card rounded-xl border border-border animate-pulse" />)}
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)}
       </div>
     )
   }
@@ -191,7 +192,7 @@ export default function UpdatesTab() {
         </div>
       ) : (
         <>
-          <div className="space-y-3">
+          <div className="stagger-list space-y-3">
             {items.map(item => (
               <FeedItemCard
                 key={item.id}

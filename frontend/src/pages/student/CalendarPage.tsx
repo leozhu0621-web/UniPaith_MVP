@@ -556,7 +556,7 @@ function AgendaView({ items, hasActiveFilter, onClearFilters, onOpen, onDiscover
   }
 
   return (
-    <div className="space-y-7">
+    <div className="stagger-list space-y-7">
       {Object.entries(grouped).map(([day, dayItems]) => (
         <div key={day}>
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">{day}</h2>

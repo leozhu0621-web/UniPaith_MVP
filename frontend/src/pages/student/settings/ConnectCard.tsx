@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Users } from 'lucide-react'
 import Toggle from '../../../components/ui/Toggle'
+import Skeleton from '../../../components/ui/Skeleton'
 import SettingsSection, { SettingRow } from './SettingsSection'
 import { getPreferences, upsertPreferences } from '../../../api/students'
 import { showToast } from '../../../stores/toast-store'
@@ -31,7 +32,7 @@ export default function ConnectCard() {
   return (
     <SettingsSection icon={Users} title="Connect" description="How following works as you explore.">
       {isLoading ? (
-        <div className="h-12 animate-pulse rounded-lg bg-muted" />
+        <Skeleton className="h-12 rounded-lg" />
       ) : (
         <SettingRow
           label="Auto-follow when I save a program"

@@ -296,7 +296,7 @@ export default function ExplorePage() {
             {!searchActive && featuredPromos && featuredPromos.length > 0 && (
               <div className="mb-6">
                 <h2 className="text-eyebrow uppercase text-muted-foreground font-semibold mb-3">Featured programs</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
+                <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
                   {featuredPromos.slice(0, 3).map(promo => (
                     <PromoCard
                       key={promo.id}
@@ -398,7 +398,7 @@ export default function ExplorePage() {
                       </p>
                     )}
                     {/* 3 per row at lg+ — explicit founder direction (#498); do not add a 4th column. */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
+                    <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
                       {displayUniList.map((inst: UniversityRow) => (
                         <UniversityCard
                           key={inst.id}

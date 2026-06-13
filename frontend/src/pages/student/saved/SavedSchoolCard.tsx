@@ -11,7 +11,7 @@ interface Props {
 
 export default function SavedSchoolCard({ school, onOpen, onUnfollow, unfollowing }: Props) {
   return (
-    <div className="bg-card rounded-xl border border-border elev-subtle hover:elev-raised transition-shadow overflow-hidden flex flex-col">
+    <div className="bg-card rounded-xl border border-border elev-subtle hover-lift hover:elev-raised overflow-hidden flex flex-col">
       <button type="button" onClick={onOpen} className="flex-1 text-left p-4 flex gap-3 min-w-0">
         <div className="w-11 h-11 rounded-lg bg-muted border border-border/60 flex items-center justify-center flex-shrink-0">
           <GraduationCap size={18} className="text-secondary" />

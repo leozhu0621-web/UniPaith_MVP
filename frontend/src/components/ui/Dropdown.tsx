@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useId, cloneElement, isValidElement } from 'react'
 import type { ReactNode, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import clsx from 'clsx'
+import { usePresence } from './usePresence'
 
 interface DropdownItem {
   label: string
@@ -24,6 +25,8 @@ export default function Dropdown({ trigger, items, align = 'right' }: DropdownPr
   const menuRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLElement>(null)
   const menuId = useId()
+  // Keep the menu mounted briefly after close so it can animate out.
+  const { mounted, closing } = usePresence(open)
 
   useEffect(() => {
     if (!open) return
@@ -114,14 +117,15 @@ export default function Dropdown({ trigger, items, align = 'right' }: DropdownPr
   return (
     <div ref={ref} className="relative">
       {triggerEl}
-      {open && (
+      {mounted && (
         <div
           ref={menuRef}
           id={menuId}
           role="menu"
           onKeyDown={onMenuKeyDown}
           className={clsx(
-            'absolute top-[calc(100%+4px)] w-48 bg-card border border-border rounded-lg elev-raised py-1 z-50 animate-slide-up-fade',
+            'absolute top-[calc(100%+4px)] w-48 bg-card border border-border rounded-lg elev-raised py-1 z-50',
+            closing ? 'animate-slide-down-fade pointer-events-none' : 'animate-slide-up-fade',
             align === 'right' ? 'right-0' : 'left-0'
           )}
         >

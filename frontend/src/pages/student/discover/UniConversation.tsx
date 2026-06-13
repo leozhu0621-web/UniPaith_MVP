@@ -334,7 +334,10 @@ export default function UniConversation({
       )}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto space-y-3.5 pr-1 pb-3"
+        // stagger-list (Ship B): each bubble fades/rises on mount — newly
+        // appended messages animate once; a history load cascades the first six
+        // then renders the rest together instead of replaying every bubble.
+        className="stagger-list flex-1 overflow-y-auto space-y-3.5 pr-1 pb-3"
         aria-live="polite"
         aria-label="Conversation with Uni"
       >

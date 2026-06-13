@@ -14,6 +14,7 @@
  */
 import { ArrowDownRight, ArrowUpRight, Info } from 'lucide-react'
 
+import Skeleton from '../../../components/ui/Skeleton'
 import type { ProbabilityBands as Bands } from '../../../types'
 
 function pct(n: number): string {
@@ -84,9 +85,9 @@ export default function ProbabilityBands({
     return (
       <div className={className}>
         {!hideHeading && <Heading />}
-        <div className="space-y-2 animate-pulse">
+        <div className="space-y-2">
           {[0, 1, 2].map(i => (
-            <div key={i} className="h-2 rounded-full bg-muted" />
+            <Skeleton key={i} className="h-2 rounded-full" />
           ))}
         </div>
       </div>

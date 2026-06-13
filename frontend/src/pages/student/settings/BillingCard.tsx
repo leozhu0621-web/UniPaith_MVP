@@ -4,6 +4,7 @@ import { CreditCard, Sparkles } from 'lucide-react'
 import { confirmDialog } from '../../../stores/confirm-store'
 import Button from '../../../components/ui/Button'
 import Badge from '../../../components/ui/Badge'
+import Skeleton from '../../../components/ui/Skeleton'
 import Toggle from '../../../components/ui/Toggle'
 import StripeSubscriptionForm from '../../../components/student/StripeSubscriptionForm'
 import SettingsSection from './SettingsSection'
@@ -71,7 +72,7 @@ export default function BillingCard() {
   return (
     <SettingsSection icon={CreditCard} title="Billing & plan" description="Your UniPaith subscription.">
       {isLoading || !billing ? (
-        <div className="h-16 animate-pulse rounded-lg bg-muted" />
+        <Skeleton className="h-16 rounded-lg" />
       ) : (
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-3">

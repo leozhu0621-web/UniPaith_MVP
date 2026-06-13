@@ -70,7 +70,7 @@ export default function DocumentsTab() {
       ) : documentsList.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">No documents uploaded yet.</p>
       ) : (
-        <div className="mt-3 space-y-2">
+        <div className="stagger-list mt-3 space-y-2">
           {documentsList.map((doc: any) => (
             <div key={doc.id} className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2">
               <div className="min-w-0">

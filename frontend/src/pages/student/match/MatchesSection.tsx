@@ -210,18 +210,19 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
           {BAND_ORDER.filter(b => groups[b].length > 0).map(band => (
             <div key={band}>
               <div className="flex items-center gap-2 mb-2.5">
-                <BandBadge band={band} />
+                {/* One earned-gold beat as the band reveals (Ship B §2 milestone moment). */}
+                <BandBadge band={band} className="animate-beat" />
                 <span className="text-xs text-muted-foreground">{BAND_BLURB[band]}</span>
                 <span className="ml-auto text-[11px] text-muted-foreground">{groups[band].length}</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 [&>*]:min-w-0">
+              <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 [&>*]:min-w-0">
                 {groups[band].map(renderCard)}
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 [&>*]:min-w-0">
+        <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 [&>*]:min-w-0">
           {matches.map(renderCard)}
         </div>
       )}
