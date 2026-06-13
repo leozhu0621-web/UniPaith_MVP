@@ -86,7 +86,11 @@ export default function ToastContainer() {
   // Newest first; cap at 4 visible (same window as before — older toasts exit
   // when a fifth arrives, and re-entering the window is handled by the store).
   const visibleIds = new Set(toasts.slice(-4).map(t => t.id))
-  const rendered = [...buffer].reverse()
+  const inStore = new Set(toasts.map(t => t.id))
+  // Render only the capped window plus toasts that have left the store and are
+  // playing their exit beat — store entries beyond the cap stay hidden (as the
+  // old slice(-4) did) until they re-enter the window.
+  const rendered = [...buffer].reverse().filter(t => visibleIds.has(t.id) || !inStore.has(t.id))
 
   return (
     // Below lg the stack clears the fixed 56px mobile bottom tab bar (+ safe
