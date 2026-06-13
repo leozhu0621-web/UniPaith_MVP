@@ -117,6 +117,7 @@ export default function OnboardingPage() {
   // multi-select steps (interests/geos/budget) never until Continue/Skip — a
   // refresh in that window dropped in-progress answers from state + draft.
   const updateAnswers = useCallback((next: OnboardingAnswers) => {
+    answersRef.current = next
     setAnswers(next)
     persist({ answers: next })
   }, [persist])
