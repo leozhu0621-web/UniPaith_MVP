@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -10,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from unipaith.core.exceptions import ForbiddenException, NotFoundException
 from unipaith.models.application import Application
 from unipaith.models.engagement import StudentEngagementSignal
+from unipaith.models.goals import StudentGoal
 from unipaith.models.matching import MatchResult
 from unipaith.models.student import (
     AcademicRecord,
@@ -43,6 +44,7 @@ from unipaith.schemas.student import (
     CreateWorkExperienceRequest,
     NextStepResponse,
     OnboardingStatusResponse,
+    PatchOnboardingStateRequest,
     UpdateAcademicRecordRequest,
     UpdateActivityRequest,
     UpdateCompetitionRequest,
@@ -819,6 +821,108 @@ class StudentService:
             steps_completed=steps,
             next_step=next_step,
         )
+
+    # Ship C — Imprint-style wizard state (student_profiles.onboarding_state).
+
+    # Budget bands from the wizard → rough USD/yr ranges matching can read.
+    # "need_aid" intentionally has no numeric mapping (it expresses an aid
+    # requirement, not a budget) and stays in onboarding_state only.
+    _BUDGET_BAND_RANGES: dict[str, tuple[int | None, int | None]] = {
+        "lt_20k": (None, 20_000),
+        "20k_40k": (20_000, 40_000),
+        "40k_60k": (40_000, 60_000),
+        "60k_plus": (60_000, None),
+    }
+    _DEGREE_LABELS: dict[str, str] = {
+        "bachelors": "bachelor's",
+        "masters": "master's",
+        "mba": "MBA",
+        "phd": "PhD",
+    }
+
+    async def patch_onboarding_state(
+        self, user_id: UUID, data: PatchOnboardingStateRequest
+    ) -> dict:
+        """Key-wise merge into ``student_profiles.onboarding_state``.
+
+        ``completed``/``dismissed`` stamp their timestamps exactly once —
+        replays never overwrite an existing stamp. On first completion the
+        answers fan into existing structures where the mapping is trivially
+        safe (see ``_fan_in_onboarding_answers``); ``onboarding_state``
+        itself stays the source of truth.
+        """
+        profile = await self._get_student_profile(user_id)
+        state: dict = dict(profile.onboarding_state or {})
+        answers: dict = dict(state.get("answers") or {})
+        if data.answers is not None:
+            for key, value in data.answers.model_dump(exclude_unset=True).items():
+                if value is not None:
+                    answers[key] = value
+        state["answers"] = answers
+        if data.last_step is not None:
+            state["last_step"] = data.last_step
+        now_iso = datetime.now(UTC).isoformat()
+        if data.completed and not state.get("completed_at"):
+            state["completed_at"] = now_iso
+            await self._fan_in_onboarding_answers(profile.id, answers)
+        if data.dismissed and not state.get("dismissed_at"):
+            state["dismissed_at"] = now_iso
+        profile.onboarding_state = state
+        await self.db.flush()
+        return state
+
+    async def _fan_in_onboarding_answers(self, student_id: UUID, answers: dict) -> None:
+        """Map completed-wizard answers into existing structures.
+
+        Conservative by design — fill-only-if-empty, single-table writes:
+
+        - degree_level / intake_term / geos / budget_band → StudentPreference
+          (``target_degree_level`` / ``target_start_term`` /
+          ``preferred_regions`` / ``budget_min``+``budget_max``); never
+          overwrites a value the student already set.
+        - degree_level and/or intake_term → one ``student_goals`` row
+          (source='manual'), only on the first completion stamp.
+
+        ``interests`` and ``stage`` stay in onboarding_state only — there is
+        no trivially safe target structure (academic records describe schools
+        attended, not aspirations).
+        """
+        degree = answers.get("degree_level")
+        term = answers.get("intake_term")
+        geos = answers.get("geos") or []
+        band = answers.get("budget_band")
+        if not (degree or term or geos or band):
+            return
+
+        pref = await self.get_preferences(student_id)
+        if pref is None:
+            pref = StudentPreference(student_id=student_id)
+            self.db.add(pref)
+        if degree and not pref.target_degree_level:
+            pref.target_degree_level = degree
+        if term and not pref.target_start_term:
+            pref.target_start_term = term
+        if geos and not pref.preferred_regions:
+            pref.preferred_regions = list(geos)
+        if band in self._BUDGET_BAND_RANGES and pref.budget_min is None and pref.budget_max is None:
+            pref.budget_min, pref.budget_max = self._BUDGET_BAND_RANGES[band]
+
+        if degree or term:
+            label = self._DEGREE_LABELS.get(degree, degree) if degree else "degree"
+            specific = f"Start a {label} program"
+            if term:
+                specific += f" in {term}"
+            self.db.add(
+                StudentGoal(
+                    student_id=student_id,
+                    category="academic",
+                    specific=specific,
+                    source="manual",
+                )
+            )
+
+        await self.db.flush()
+        await self._update_onboarding(student_id)
 
     def _compute_next_step(
         self, steps: list[str], profile: StudentProfile

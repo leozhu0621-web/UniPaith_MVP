@@ -1,6 +1,14 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import clsx from 'clsx'
 import { useCoachmarkStore } from '../../stores/coachmark-store'
+import { track } from '../../lib/analytics'
+
+// Tailwind default breakpoints — used to gate marks whose anchor is CSS-hidden
+// below a breakpoint (a hidden anchor would silently block the one-at-a-time queue).
+const VIEWPORT_MIN: Record<'lg' | 'xl', string> = {
+  lg: '(min-width: 1024px)',
+  xl: '(min-width: 1280px)',
+}
 
 interface CoachmarkProps {
   /** Stable unique id — also the localStorage dismissal key. */
@@ -9,6 +17,10 @@ interface CoachmarkProps {
   body: string
   /** Where the bubble sits relative to the wrapped anchor. */
   placement?: 'top' | 'bottom' | 'left' | 'right'
+  /** Only register when the viewport is at least this wide — for anchors that
+   *  are `hidden lg:block` / `hidden xl:block` (Ship C tour). Checked once on
+   *  mount; a first-visit mark doesn't need live resize tracking. */
+  minViewport?: 'lg' | 'xl'
   children: ReactNode
   className?: string
 }
@@ -31,6 +43,7 @@ export default function Coachmark({
   title,
   body,
   placement = 'bottom',
+  minViewport,
   children,
   className,
 }: CoachmarkProps) {
@@ -40,12 +53,27 @@ export default function Coachmark({
   const activeId = useCoachmarkStore((s) => s.activeId)
   const seen = useCoachmarkStore((s) => s.seen)
 
+  // Checked once on mount — a hidden anchor must never enter the queue.
+  const [enabled] = useState(() => {
+    if (!minViewport) return true
+    if (typeof window === 'undefined') return false
+    return window.matchMedia?.(VIEWPORT_MIN[minViewport]).matches ?? false
+  })
+
   useEffect(() => {
+    if (!enabled) return
     register(id)
     return () => unregister(id)
-  }, [id, register, unregister])
+  }, [id, enabled, register, unregister])
 
-  const show = activeId === id && !seen[id]
+  const show = enabled && activeId === id && !seen[id]
+
+  const onDismiss = () => {
+    // Funnel instrumentation (Ship C §3) — `track` is typed with an open union,
+    // so the literal event name is valid without touching lib/analytics.ts.
+    track('coachmark_dismissed', { coachmark_id: id })
+    dismiss(id)
+  }
 
   return (
     <div className={clsx('relative', className)}>
@@ -62,7 +90,7 @@ export default function Coachmark({
           <p className="text-xs font-semibold text-foreground">{title}</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{body}</p>
           <button
-            onClick={() => dismiss(id)}
+            onClick={onDismiss}
             className="ui-btn mt-2 text-xs font-semibold text-secondary hover:underline"
           >
             Got it

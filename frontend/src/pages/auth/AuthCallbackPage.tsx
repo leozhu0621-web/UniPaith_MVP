@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
+import { getProfile } from '../../api/students'
+import { needsOnboarding } from '../student/onboarding/onboarding-state'
+import { roleDefaultPath } from '../../utils/auth-redirect'
 
 export default function AuthCallbackPage() {
   const navigate = useNavigate()
@@ -37,14 +40,22 @@ export default function AuthCallbackPage() {
     const redirectUri = `${window.location.origin}/auth/callback`
 
     googleCallback(code, redirectUri, role)
-      .then(() => {
+      .then(async () => {
         const user = useAuthStore.getState().user
-        // New students go to onboarding; returning students go to dashboard
-        const isNewStudent = user?.role === 'student' &&
-          new Date(user.created_at).getTime() > Date.now() - 60_000 // created within last minute
-        const dest = isNewStudent ? '/onboarding'
-          : user?.role === 'student' ? '/s'
-          : '/i/dashboard'
+        // Server-flag onboarding routing (UX overhaul Ship C §3 — replaces the
+        // old 60-second account-age heuristic): students with no completed /
+        // dismissed onboarding_state go to the wizard; everyone else lands on
+        // the role default. A failed profile fetch never blocks sign-in.
+        let dest = roleDefaultPath(user?.role)
+        if (user?.role === 'student') {
+          try {
+            const profile = await getProfile()
+            if (needsOnboarding(user.role, profile?.onboarding_state)) dest = '/onboarding'
+          } catch {
+            /* profile unavailable — land on the default; the needs-check
+               re-runs on next login */
+          }
+        }
         navigate(dest, { replace: true })
       })
       .catch((err) => {

@@ -19,6 +19,7 @@ import { listClarifications } from '../../../api/intake'
 import { getProfile } from '../../../api/students'
 import { useAuthStore } from '../../../stores/auth-store'
 import Coachmark from '../../../components/ui/Coachmark'
+import JourneyChecklistCard from './JourneyChecklistCard'
 import type { Application, WorkshopFeedbackRun } from '../../../types'
 
 // My Space · Home — mission control (Spec 2026-06-10 §4). Answers "what do I
@@ -192,28 +193,32 @@ export default function MySpaceHomePage() {
           <Skeleton className="h-40" />
         </div>
       ) : brandNew ? (
-        // Empty state — a brand-new student's space fills as they work.
-        <Card pad={false} className="p-6 mt-2">
-          <p className="text-sm font-medium text-foreground">Your space fills as you work.</p>
-          <p className="text-xs text-muted-foreground mt-1 mb-4">
-            Start with Uni to build your profile, then save programs you like — applications,
-            deadlines and prep will all show up here.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => navigate('/s')}
-              className="ui-btn inline-flex items-center gap-1.5 rounded-md bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground"
-            >
-              <Compass size={13} /> Talk to Uni
-            </button>
-            <button
-              onClick={() => navigate('/s/explore')}
-              className="ui-btn inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
-            >
-              <Target size={13} /> Browse matches
-            </button>
-          </div>
-        </Card>
+        // Empty state — the journey checklist IS the primary content for a
+        // brand-new student (Ship C §3); the CTA card follows as the second beat.
+        <div className="stagger-list mt-2 space-y-4">
+          <JourneyChecklistCard />
+          <Card pad={false} className="p-6">
+            <p className="text-sm font-medium text-foreground">Your space fills as you work.</p>
+            <p className="text-xs text-muted-foreground mt-1 mb-4">
+              Start with Uni to build your profile, then save programs you like — applications,
+              deadlines and prep will all show up here.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => navigate('/s')}
+                className="ui-btn inline-flex items-center gap-1.5 rounded-md bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground"
+              >
+                <Compass size={13} /> Talk to Uni
+              </button>
+              <button
+                onClick={() => navigate('/s/explore')}
+                className="ui-btn inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
+              >
+                <Target size={13} /> Browse matches
+              </button>
+            </div>
+          </Card>
+        </div>
       ) : (
         // Modules cascade in as a sequence (Ship B motion sweep) — pipeline,
         // up-next, the two-column rails, then the footer link.
@@ -233,6 +238,9 @@ export default function MySpaceHomePage() {
               <StatTile label="Offers" value={offers.length} />
             </button>
           </div>
+
+          {/* Journey checklist — the 13-step engine; self-hides at 100%. */}
+          <JourneyChecklistCard className="mt-5" />
 
           {/* Up next */}
           <div className="stagger-list mt-5">

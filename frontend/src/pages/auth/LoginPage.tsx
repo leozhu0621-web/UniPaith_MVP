@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { postLoginDestination } from '../../utils/auth-redirect'
+import { getProfile } from '../../api/students'
+import { needsOnboarding } from '../student/onboarding/onboarding-state'
 import usePageTitle from '../../hooks/usePageTitle'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -35,6 +37,21 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password)
       const user = useAuthStore.getState().user
+      // Onboarding check (UX overhaul Ship C §3): students who never finished
+      // (or dismissed) the wizard resume it on login — fetch-based server flag,
+      // see pages/student/onboarding/onboarding-state.ts. Fetch failures fall
+      // through to the normal destination; sign-in is never blocked.
+      if (user?.role === 'student') {
+        try {
+          const profile = await getProfile()
+          if (needsOnboarding(user.role, profile?.onboarding_state)) {
+            navigate('/onboarding')
+            return
+          }
+        } catch {
+          /* fall through to the normal destination */
+        }
+      }
       navigate(postLoginDestination(user?.role, searchParams))
     } catch (err: any) {
       const raw = String(err?.message || '')

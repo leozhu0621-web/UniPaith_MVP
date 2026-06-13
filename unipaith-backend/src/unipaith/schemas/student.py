@@ -856,6 +856,35 @@ class OnboardingStatusResponse(BaseModel):
     next_step: NextStepResponse | None
 
 
+# Ship C — Imprint-style onboarding wizard state (student_profiles.onboarding_state).
+
+
+class OnboardingAnswers(BaseModel):
+    """Partial wizard answers; merged key-wise into the stored answers."""
+
+    stage: Literal["exploring", "building_list", "ready_to_apply", "deciding_offers"] | None = None
+    interests: list[str] | None = None
+    degree_level: Literal["bachelors", "masters", "mba", "phd"] | None = None
+    intake_term: str | None = None
+    budget_band: Literal["lt_20k", "20k_40k", "40k_60k", "60k_plus", "need_aid"] | None = None
+    geos: list[str] | None = None
+
+
+class PatchOnboardingStateRequest(BaseModel):
+    answers: OnboardingAnswers | None = None
+    last_step: int | None = Field(None, ge=0)
+    completed: bool | None = None
+    dismissed: bool | None = None
+
+
+class OnboardingStateResponse(BaseModel):
+    answers: dict = Field(default_factory=dict)
+    last_step: int | None = None
+    # Stored as ISO-8601 strings inside the JSONB blob.
+    completed_at: str | None = None
+    dismissed_at: str | None = None
+
+
 class StudentProfileResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
@@ -893,6 +922,9 @@ class StudentProfileResponse(BaseModel):
     # (DiscoveryService.update_session, StrategyService.activate/update).
     discovery_completion: dict = Field(default_factory=dict)
     strategy_active_id: UUID | None = None
+    # Ship C — wizard persistence; null until the student first touches the
+    # wizard. Frontend "needs onboarding" rule reads completed_at/dismissed_at.
+    onboarding_state: dict | None = None
     created_at: datetime
     updated_at: datetime
     academic_records: list[AcademicRecordResponse] = []

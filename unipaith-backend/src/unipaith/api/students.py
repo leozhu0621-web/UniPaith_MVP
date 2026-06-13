@@ -43,8 +43,10 @@ from unipaith.schemas.student import (
     LogPlatformEventRequest,
     MajorReadinessResponse,
     NextStepResponse,
+    OnboardingStateResponse,
     OnboardingStatusResponse,
     OnlinePresenceResponse,
+    PatchOnboardingStateRequest,
     PlatformEventResponse,
     PortfolioItemResponse,
     ResearchResponse,
@@ -137,6 +139,17 @@ async def get_next_onboarding_step(
     profile = await svc._get_student_profile(user.id)
     onboarding = await svc.get_onboarding_status(profile.id)
     return onboarding.next_step
+
+
+@router.patch("/me/onboarding/state", response_model=OnboardingStateResponse)
+async def patch_onboarding_state(
+    body: PatchOnboardingStateRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Ship C wizard persistence — key-wise merge; stamps are write-once."""
+    svc = _svc(db)
+    return await svc.patch_onboarding_state(user.id, body)
 
 
 # --- Academic Records ---

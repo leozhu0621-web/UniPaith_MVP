@@ -11,6 +11,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Sparkles } from 'lucide-react'
 
 import Card from '../../components/ui/Card'
+import Coachmark from '../../components/ui/Coachmark'
 import Sheet from '../../components/ui/Sheet'
 import { useAuthStore } from '../../stores/auth-store'
 import JourneyRail from './discover/JourneyRail'
@@ -88,7 +89,10 @@ export default function DiscoverHomePage() {
 
       <div className="flex gap-6 xl:gap-8">
         <aside className="hidden lg:block w-60 shrink-0">
-          <JourneyRail {...railProps} />
+          {/* minViewport: the rail is CSS-hidden below lg — keep the mark out of the queue there. */}
+          <Coachmark id="uni-journey" title="Your journey, stage by stage" body="Uni walks you through Profile, Goals, and Needs — revisit any stage anytime, and watch your living profile fill in." placement="right" minViewport="lg">
+            <JourneyRail {...railProps} />
+          </Coachmark>
         </aside>
 
         <div className="flex min-w-0 flex-1 justify-center">
