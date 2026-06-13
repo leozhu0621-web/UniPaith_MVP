@@ -11,6 +11,7 @@ import { ArrowRight, Pencil } from 'lucide-react'
 
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
+import Coachmark from '../../../components/ui/Coachmark'
 import Modal from '../../../components/ui/Modal'
 import { SkeletonCard } from '../../../components/ui/Skeleton'
 import { getNextStep, getProfile, updateProfile } from '../../../api/students'
@@ -163,7 +164,9 @@ export default function OverviewTab({ onOpenTab }: { onOpenTab: (tab: string) =>
 
       {/* Completion map */}
       <section>
-        <p className="up-eyebrow mb-3">Completion map</p>
+        <Coachmark id="profile-strength" title="Your profile strength" body="Each cluster feeds your match quality — the fuller the map, the sharper your matches, rationales, and readiness checks." placement="bottom">
+          <p className="up-eyebrow mb-3">Completion map</p>
+        </Coachmark>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {stats.map(s => {
             const meta = CATEGORY_META.find(m => m.key === s.key)

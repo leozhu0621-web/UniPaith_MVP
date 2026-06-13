@@ -73,6 +73,13 @@ class StudentProfile(Base):
         UUID(as_uuid=True),
         ForeignKey("student_strategies.id", ondelete="SET NULL"),
     )
+    # Ship C (2026-06-12) — Imprint-style onboarding wizard state. Shape:
+    #   {answers: {stage, interests, degree_level, intake_term, budget_band,
+    #    geos}, last_step, completed_at, dismissed_at}. Server-persisted so an
+    # abandoned wizard resumes on next login; "needs onboarding" =
+    # completed_at IS NULL AND dismissed_at IS NULL. Source of truth for the
+    # wizard; answers fan into preferences/goals on completion.
+    onboarding_state: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -12,13 +12,24 @@ export function resolveNextParam(next: string | null, fallback: string): string 
   return next
 }
 
+/**
+ * The normal (non-onboarding) post-auth destination: honor a safe ?next=,
+ * else the role default.
+ *
+ * Onboarding routing is deliberately NOT a parameter here (the old
+ * `onboardingPending` flag was dead — nothing ever passed it). The ONE
+ * mechanism (UX overhaul Ship C §3) is fetch-based: after any successful auth,
+ * student callers fetch the profile and check
+ * `needsOnboarding(role, profile?.onboarding_state)`
+ * (pages/student/onboarding/onboarding-state.ts) — true → '/onboarding',
+ * false → this function. See LoginPage / AuthCallbackPage; SignupPage routes
+ * straight to /onboarding (new accounts always need it).
+ */
 export function postLoginDestination(
   role: string | undefined,
   searchParams: URLSearchParams,
-  onboardingPending = false,
 ): string {
   const next = resolveNextParam(searchParams.get('next'), '')
   if (next) return next
-  if (role === 'student' && onboardingPending) return '/onboarding'
   return roleDefaultPath(role)
 }

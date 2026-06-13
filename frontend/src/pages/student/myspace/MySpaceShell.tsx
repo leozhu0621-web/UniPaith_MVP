@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { getThreads } from '../../../api/inbox'
 import { listMyApplications } from '../../../api/applications'
+import Coachmark from '../../../components/ui/Coachmark'
 
 // My Space shell (Spec 2026-06-10 §3) — one personal surface, rooms ordered by
 // the journey sequence: Home on top, then Plan → Prepare → Apply & decide →
@@ -72,9 +73,13 @@ export default function MySpaceShell() {
 
   return (
     <div className="flex min-h-0 flex-1">
-      {/* Desktop rail (lg+) — journey-grouped rooms. */}
+      {/* Desktop rail (lg+) — journey-grouped rooms. The sticky wrapper sits outside
+          the first-visit coachmark so the bubble escapes the nav's overflow clip;
+          minViewport keeps the CSS-hidden rail from blocking the mark queue below lg. */}
       <aside className="hidden lg:block w-44 flex-shrink-0 border-r border-border" aria-label="My Space">
-        <nav className="sticky top-0 max-h-[calc(100dvh-4rem)] overflow-y-auto px-3 py-4">
+        <div className="sticky top-0">
+        <Coachmark id="myspace-rooms" title="Rooms, in journey order" body="Plan, prepare, apply and decide — the rail follows your journey top to bottom, and Home pulls it all together." placement="right" minViewport="lg">
+        <nav className="max-h-[calc(100dvh-4rem)] overflow-y-auto px-3 py-4">
           {GROUPS.map((group, gi) => (
             <div key={group.label ?? 'home'} className={gi === 0 ? '' : 'mt-4'}>
               {group.label && (
@@ -101,6 +106,8 @@ export default function MySpaceShell() {
             </div>
           ))}
         </nav>
+        </Coachmark>
+        </div>
       </aside>
 
       {/* Content column — mobile gets the room pills above the page. */}

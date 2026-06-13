@@ -1,9 +1,11 @@
 import { create } from 'zustand'
 
-// First-run coachmarks (Spec 81 §3.3). One-time tooltips that orient the user
-// to the product's non-obvious signature components (DualRing, rationale, compare).
-// Dismissal persists in localStorage. A queue ensures only ONE coachmark shows at
-// a time (activeId = first-registered, still-unseen mark) so the UI never clutters.
+// First-run coachmarks (Spec 81 §3.3, extended by the UX-overhaul Ship C tour).
+// One-time tooltips that orient the user to the product's non-obvious signature
+// surfaces (Discover tabs/rail, My Space rooms, Uni journey, profile strength,
+// DualRing, compare). Dismissal persists in localStorage. A queue ensures only
+// ONE coachmark shows at a time (activeId = first-registered, still-unseen mark)
+// so the UI never clutters.
 
 const KEY = 'unipaith_coachmarks_seen'
 
@@ -51,6 +53,9 @@ export const useCoachmarkStore = create<CoachmarkState>((set) => ({
       } catch {
         /* ignore quota/private-mode */
       }
-      return { seen, activeId: firstUnseen(s.order, seen) }
+      // One mark per surface visit (Ship C): dismissing does NOT advance to the
+      // next unseen mark on the same screen — activeId stays null until the next
+      // register/unregister (i.e., the next surface the user visits).
+      return { seen, activeId: null }
     }),
 }))

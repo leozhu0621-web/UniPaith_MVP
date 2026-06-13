@@ -26,6 +26,15 @@ export type AnalyticsEvent =
   | 'application_submitted'
   | 'decision_viewed'
   | 'search_performed'
+  // Onboarding funnel (UX overhaul Ship C §3) — fired by the wizard. Consent
+  // gating unchanged: no consent, no event.
+  | 'onboarding_started'
+  | 'onboarding_step_completed'
+  | 'onboarding_completed'
+  | 'onboarding_skipped'
+  // Ship C tour + journey checklist (fired by Coachmark / JourneyChecklistCard).
+  | 'coachmark_dismissed'
+  | 'onboarding_checklist_step_clicked'
   | (string & {})
 
 export type AnalyticsProps = Record<string, string | number | boolean | null | undefined>

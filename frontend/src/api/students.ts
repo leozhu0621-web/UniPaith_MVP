@@ -1,10 +1,24 @@
 import apiClient from './client'
+import type { OnboardingAnswers, OnboardingState } from '../types'
 
 export const getProfile = () => apiClient.get('/students/me/profile').then(r => r.data)
 export const updateProfile = (data: any) => apiClient.put('/students/me/profile', data).then(r => r.data)
 
 export const getOnboarding = () => apiClient.get('/students/me/onboarding').then(r => r.data)
 export const getNextStep = () => apiClient.get('/students/me/onboarding/next-step').then(r => r.data)
+
+// Full-scale onboarding wizard state (UX overhaul Ship C §3) — distinct from
+// the 13-step progress engine above. Partial `answers` merge key-wise on the
+// server; `completed`/`dismissed` true stamp completed_at/dismissed_at
+// (idempotent). Returns the full onboarding_state.
+export interface OnboardingStatePatch {
+  answers?: Partial<OnboardingAnswers>
+  last_step?: number
+  completed?: boolean
+  dismissed?: boolean
+}
+export const patchOnboardingState = (data: OnboardingStatePatch): Promise<OnboardingState> =>
+  apiClient.patch('/students/me/onboarding/state', data).then(r => r.data)
 
 export const getStudentFeed = (limit = 30) =>
   apiClient.get('/students/me/feed', { params: { limit } }).then(r => r.data)
