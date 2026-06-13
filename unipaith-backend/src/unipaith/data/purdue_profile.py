@@ -910,11 +910,18 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         if spec["degree_type"] == "bachelors":
             p.tuition = _TUITION_UG_INSTATE
             p.cost_data = {
-                "in_state_tuition_usd": _TUITION_UG_INSTATE,
-                "out_of_state_tuition_usd": _TUITION_UG_OOS,
-                "total_cost_of_attendance_in_state": _UNDERGRAD_COA,
+                "tuition_usd": _TUITION_UG_INSTATE,
+                "total_cost_of_attendance": _UNDERGRAD_COA,
                 "avg_net_price": _AVG_NET_PRICE,
+                "breakdown": {
+                    "tuition_in_state": _TUITION_UG_INSTATE,
+                    "tuition_out_of_state": _TUITION_UG_OOS,
+                },
                 "funded": False,
+                "note": (
+                    "In-state tuition and cost of attendance; nonresidents pay the "
+                    "out-of-state tuition rate shown in the breakdown."
+                ),
                 "source": _COST_SRC[0], "source_url": _COST_SRC[1], "year": "2024-25",
             }
         elif spec["degree_type"] == "phd":
