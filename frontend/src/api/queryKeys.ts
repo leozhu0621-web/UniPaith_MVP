@@ -64,7 +64,10 @@ export const qk = {
   majorSpecific: () => ['major-specific'] as const,
 
   // ── Student · saved + compare ─────────────────────────────────────────────
-  saved: () => ['saved'] as const,
+  // THE canonical shortlist key (Ship D, 2026-06-12). The app previously split
+  // between ['saved'] and ['saved-programs'], so a save on one surface never
+  // refreshed the other. Every consumer — queries AND invalidations — now goes
+  // through this one entry. Do not mint a second saved-list key.
   savedPrograms: () => ['saved-programs'] as const,
   savedTags: () => ['saved-tags'] as const,
 

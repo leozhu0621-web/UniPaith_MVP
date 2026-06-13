@@ -85,7 +85,7 @@ describe('FirstLookCard', () => {
     expect(screen.queryByText(/Should not show/)).not.toBeInTheDocument()
     // Grounded cost/selectivity line from the catalog.
     expect(screen.getByText(/\$18,000\/yr · 70% admit · target fit/)).toBeInTheDocument()
-    fireEvent.click(screen.getByText(/Go deeper in Match/i))
+    fireEvent.click(screen.getByText(/Go deeper in Discover/i))
     expect(await screen.findByText('EXPLORE PAGE')).toBeInTheDocument()
   })
 

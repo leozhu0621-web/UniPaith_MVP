@@ -1,6 +1,9 @@
 /**
  * Profile → Preferences tab (Spec/08 §12).
- * Structured pickers + importance weight sliders. Explicit Save (§10).
+ * Structured pickers + importance weight sliders. Explicit Save (§10) +
+ * debounced autosave (§19, Ship D input preservation) — the upsert always
+ * sends the FULL form, so a background write is identical to pressing Save
+ * and switching tabs mid-edit no longer destroys input.
  */
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -14,7 +17,7 @@ import { SkeletonCard } from '../../../components/ui/Skeleton'
 import { getPreferences, upsertPreferences } from '../../../api/students'
 import { showToast } from '../../../stores/toast-store'
 import { CITY_SIZE_OPTIONS } from '../../../utils/constants'
-import { SectionHeader } from './shared'
+import { SaveStatus, SectionHeader, useAutosave } from './shared'
 
 const PROGRAM_SIZE = [
   { value: 'small', label: 'Small' },
@@ -64,13 +67,37 @@ const splitCsv = (s: string): string[] =>
     .filter(Boolean)
     .slice(0, 25)
 
+const toPayload = (form: any) => ({
+  preferred_countries: splitCsv(form.preferred_countries),
+  preferred_regions: splitCsv(form.preferred_regions),
+  preferred_city_size: form.preferred_city_size || null,
+  preferred_climate: form.preferred_climate || null,
+  program_size_preference: form.program_size_preference || null,
+  target_degree_level: form.target_degree_level || null,
+  target_start_term: form.target_start_term || null,
+  preferred_program_style: form.preferred_program_style || null,
+  risk_tolerance: form.risk_tolerance || null,
+  dealbreakers: splitCsv(form.dealbreakers),
+  weight_cost: form.weight_cost,
+  weight_location: form.weight_location,
+  weight_outcomes: form.weight_outcomes,
+  weight_ranking: form.weight_ranking,
+  weight_flexibility: form.weight_flexibility,
+  weight_support: form.weight_support,
+})
+
 export default function PreferencesTab() {
   const qc = useQueryClient()
   const { data: prefs, isLoading, isError, refetch } = useQuery({ queryKey: ['preferences'], queryFn: getPreferences, retry: false })
   const [form, setForm] = useState<any>(null)
+  // Set on the first user edit — gates autosave so the initial load (and any
+  // background refetch) never triggers a write of untouched data.
+  const [dirty, setDirty] = useState(false)
 
   useEffect(() => {
-    if (prefs !== undefined) {
+    // Initialize ONCE — later refetches (e.g. after an autosave invalidation)
+    // must not clobber whatever the user is currently typing.
+    if (prefs !== undefined && form === null) {
       const p: any = prefs ?? {}
       setForm({
         preferred_countries: (p.preferred_countries ?? []).join(', '),
@@ -91,6 +118,7 @@ export default function PreferencesTab() {
         weight_support: p.weight_support ?? 5,
       })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefs])
 
   const saveMut = useMutation({
@@ -103,35 +131,32 @@ export default function PreferencesTab() {
     onError: () => showToast("Something didn't work. Try again.", 'error'),
   })
 
+  // §19 autosave — debounced full-form upsert once the user has edited
+  // anything; flushes on unmount so a quick tab switch can't destroy input.
+  const autosaveState = useAutosave(
+    form,
+    async (f: any) => {
+      if (!f) return
+      await upsertPreferences(toPayload(f))
+      qc.invalidateQueries({ queryKey: ['preferences'] })
+      qc.invalidateQueries({ queryKey: ['profile'] })
+    },
+    { enabled: dirty && form !== null },
+  )
+
   if (isError) return <QueryError onRetry={() => refetch()} />
   if (isLoading || !form) return <div className="space-y-3">{Array.from({ length: 2 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 
-  const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }))
-  const save = () => {
-    saveMut.mutate({
-      preferred_countries: splitCsv(form.preferred_countries),
-      preferred_regions: splitCsv(form.preferred_regions),
-      preferred_city_size: form.preferred_city_size || null,
-      preferred_climate: form.preferred_climate || null,
-      program_size_preference: form.program_size_preference || null,
-      target_degree_level: form.target_degree_level || null,
-      target_start_term: form.target_start_term || null,
-      preferred_program_style: form.preferred_program_style || null,
-      risk_tolerance: form.risk_tolerance || null,
-      dealbreakers: splitCsv(form.dealbreakers),
-      weight_cost: form.weight_cost,
-      weight_location: form.weight_location,
-      weight_outcomes: form.weight_outcomes,
-      weight_ranking: form.weight_ranking,
-      weight_flexibility: form.weight_flexibility,
-      weight_support: form.weight_support,
-    })
+  const set = (k: string, v: any) => {
+    setDirty(true)
+    setForm((f: any) => ({ ...f, [k]: v }))
   }
+  const save = () => saveMut.mutate(toPayload(form))
 
   return (
     <div className="space-y-8">
       <section>
-        <SectionHeader title="Location & setting" description="Where you'd like to study." />
+        <SectionHeader title="Location & setting" description="Where you'd like to study." saveState={autosaveState} />
         <Card pad={false} className="p-5 grid sm:grid-cols-2 gap-x-4 gap-y-1">
           <Input label="Preferred countries" placeholder="United States, Canada" value={form.preferred_countries} onChange={e => set('preferred_countries', e.target.value)} />
           <Input label="Preferred regions" placeholder="Northeast, West Coast" value={form.preferred_regions} onChange={e => set('preferred_regions', e.target.value)} />
@@ -163,7 +188,8 @@ export default function PreferencesTab() {
         </Card>
       </section>
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-3">
+        <SaveStatus state={autosaveState} />
         <Button onClick={save} loading={saveMut.isPending}>Save preferences</Button>
       </div>
     </div>

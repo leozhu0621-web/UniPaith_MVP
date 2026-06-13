@@ -5,8 +5,13 @@
  * structural issues + missing-element prompts. There is, by design, no
  * "rewrite my essay" path — the response schema mechanically excludes it and
  * a CI test (test_workshop_no_generation_contract.py) enforces it.
+ *
+ * Ship D — input preservation: the draft (essay + prompt + program selection)
+ * persists to localStorage keyed per program and is restored on mount, so
+ * navigating away never destroys a half-written essay. Cleared on successful
+ * submit.
  */
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 
 import { requestEssayFeedback } from '../../../api/workshops-feedback'
@@ -23,6 +28,7 @@ import WorkshopProgramPicker, {
   type ProgramOption,
   type WorkshopMode,
 } from './WorkshopProgramPicker'
+import { clearWorkshopDraft, loadLastWorkshopDraft, saveWorkshopDraft } from './workshopDrafts'
 import {
   IMPORTANCE_LABEL,
   IMPORTANCE_VARIANT,
@@ -31,15 +37,56 @@ import {
   readinessSummary,
 } from './workshopReadiness'
 
+const DRAFT_PREFIX = 'up-essay-draft'
+
+interface EssayDraft {
+  essay: string
+  prompt: string
+  mode: WorkshopMode
+  program: ProgramOption | null
+}
+
+/** Save the draft when it holds real text; clear it otherwise (or once submitted). */
+function persistEssayDraft(d: EssayDraft, lastSubmitted: string | null): void {
+  const programId = d.mode === 'program_specific' ? d.program?.programId ?? null : null
+  if (d.essay.trim() && d.essay !== lastSubmitted) {
+    saveWorkshopDraft(DRAFT_PREFIX, programId, d)
+  } else {
+    clearWorkshopDraft(DRAFT_PREFIX, programId)
+  }
+}
+
 export default function EssayFeedbackPanel() {
-  const [essay, setEssay] = useState('')
-  const [prompt, setPrompt] = useState('')
-  const [mode, setMode] = useState<WorkshopMode>('general')
-  const [program, setProgram] = useState<ProgramOption | null>(null)
+  // Restore the last draft synchronously on mount (program selection included).
+  const [restored] = useState(() => loadLastWorkshopDraft<Partial<EssayDraft>>(DRAFT_PREFIX))
+  const [essay, setEssay] = useState(typeof restored?.essay === 'string' ? restored.essay : '')
+  const [prompt, setPrompt] = useState(typeof restored?.prompt === 'string' ? restored.prompt : '')
+  const [mode, setMode] = useState<WorkshopMode>(
+    restored?.mode === 'program_specific' ? 'program_specific' : 'general',
+  )
+  const [program, setProgram] = useState<ProgramOption | null>(
+    restored?.program && typeof restored.program.programId === 'string' ? restored.program : null,
+  )
+  const [draftRestored, setDraftRestored] = useState(
+    typeof restored?.essay === 'string' && restored.essay.trim().length > 0,
+  )
   const [run, setRun] = useState<WorkshopFeedbackRun | null>(null)
   // The program the displayed run was generated for — snapshotted at request
   // time so switching the picker afterwards never relabels a stale run.
   const [runProgram, setRunProgram] = useState<ProgramOption | null>(null)
+
+  // Last successfully submitted essay — once submitted, the stored draft is
+  // cleared and not re-saved unless the text changes again.
+  const lastSubmittedRef = useRef<string | null>(null)
+  const draftRef = useRef<EssayDraft>({ essay, prompt, mode, program })
+  draftRef.current = { essay, prompt, mode, program }
+
+  // Debounced persist while typing + flush on unmount.
+  useEffect(() => {
+    const t = setTimeout(() => persistEssayDraft(draftRef.current, lastSubmittedRef.current), 600)
+    return () => clearTimeout(t)
+  }, [essay, prompt, mode, program])
+  useEffect(() => () => persistEssayDraft(draftRef.current, lastSubmittedRef.current), [])
 
   const feedbackMut = useMutation({
     mutationFn: (target: ProgramOption | null) =>
@@ -51,6 +98,9 @@ export default function EssayFeedbackPanel() {
     onSuccess: (r, target) => {
       setRun(r)
       setRunProgram(target)
+      lastSubmittedRef.current = essay
+      clearWorkshopDraft(DRAFT_PREFIX, target?.programId ?? null)
+      setDraftRestored(false)
       showToast('Feedback ready.', 'success')
     },
     onError: (err: unknown) =>
@@ -84,15 +134,23 @@ export default function EssayFeedbackPanel() {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-foreground">
-            Your essay <span className="text-error">*</span>
-          </label>
+          <div className="mb-1 flex items-center justify-between">
+            <label className="block text-sm font-medium text-foreground">
+              Your essay <span className="text-error">*</span>
+            </label>
+            {draftRestored && (
+              <span className="text-xs text-muted-foreground">Draft restored</span>
+            )}
+          </div>
           <textarea
             className="w-full rounded-md border border-border px-3 py-2 text-sm"
             rows={14}
             maxLength={20000}
             value={essay}
-            onChange={e => setEssay(e.target.value)}
+            onChange={e => {
+              setEssay(e.target.value)
+              if (draftRestored) setDraftRestored(false)
+            }}
             placeholder="Paste your draft. Minimum 20 characters."
           />
           <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">

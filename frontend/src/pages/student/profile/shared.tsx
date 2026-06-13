@@ -66,9 +66,9 @@ export const CATEGORY_META: { key: CategoryKey; label: string; tab: string; hint
   { key: 'experience', label: 'Experience', tab: 'experience', hint: 'Unlocks activity and research signal in match scoring.' },
   { key: 'goals', label: 'Goals', tab: 'goals', hint: 'Unlocks Strategy generation and goal-aligned match filters.' },
   { key: 'needs', label: 'Needs', tab: 'needs', hint: 'Unlocks need-aware filtering (support services, campus culture).' },
-  { key: 'strategy', label: 'Strategy', tab: 'strategy', hint: 'Unlocks the broad-strategy view on your Match page.' },
+  { key: 'strategy', label: 'Strategy', tab: 'strategy', hint: 'Unlocks the broad-strategy view on your Discover page.' },
   { key: 'preparation', label: 'Preparation', tab: 'preparation', hint: 'Unlocks document-based completeness checks before applying.' },
-  { key: 'preferences', label: 'Preferences', tab: 'preferences', hint: 'Unlocks location, size, and format filters in Match.' },
+  { key: 'preferences', label: 'Preferences', tab: 'preferences', hint: 'Unlocks location, size, and format filters in Discover.' },
   { key: 'financial', label: 'Financial', tab: 'financial', hint: 'Unlocks net-cost comparisons and aid-likelihood signals.' },
 ]
 
@@ -346,6 +346,10 @@ export function SaveStatus({ state }: { state: SaveState }) {
 /**
  * Debounced autosave (§19, §10). Calls `save` 800ms after `value` settles.
  * Skips the initial mount so loading data doesn't trigger a write.
+ *
+ * Ship D (input preservation): a pending debounce is FLUSHED on unmount —
+ * switching tabs inside the 800ms window still writes the edit instead of
+ * silently dropping it.
  */
 export function useAutosave<T>(
   value: T,
@@ -357,6 +361,10 @@ export function useAutosave<T>(
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latest = useRef(value)
   latest.current = value
+  // True while an edit is scheduled but not yet handed to `save`.
+  const pending = useRef(false)
+  const saveRef = useRef(save)
+  saveRef.current = save
 
   useEffect(() => {
     if (!mounted.current) {
@@ -366,7 +374,9 @@ export function useAutosave<T>(
     if (!enabled) return
     if (timer.current) clearTimeout(timer.current)
     setState('saving')
+    pending.current = true
     timer.current = setTimeout(() => {
+      pending.current = false
       save(latest.current)
         .then(() => {
           setState('saved')
@@ -379,6 +389,18 @@ export function useAutosave<T>(
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(value), enabled])
+
+  // Unmount flush — fire-and-forget the last unsaved value (no setState here;
+  // the component is gone, the write is what matters).
+  useEffect(
+    () => () => {
+      if (pending.current) {
+        pending.current = false
+        void saveRef.current(latest.current).catch(() => {})
+      }
+    },
+    [],
+  )
 
   return state
 }

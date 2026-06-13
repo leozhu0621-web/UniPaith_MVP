@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { listSaved } from '../../api/saved-lists'
+import { qk } from '../../api/queryKeys'
 import { listMyApplications } from '../../api/applications'
 import Card from '../../components/ui/Card'
 import EmptyState from '../../components/ui/EmptyState'
@@ -41,7 +42,7 @@ export default function FinancialAidPage() {
   const [expectedAid, setExpectedAid] = useState<Record<string, string>>({})
   const [sortBy, setSortBy] = useState<'net' | 'tuition'>('net')
 
-  const { data: saved, isLoading: savedLoading, isError: savedError, refetch: refetchSaved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
+  const { data: saved, isLoading: savedLoading, isError: savedError, refetch: refetchSaved } = useQuery({ queryKey: qk.savedPrograms(), queryFn: listSaved })
   const { data: applications, isLoading: appsLoading, isError: appsError, refetch: refetchApps } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
 
   const isLoading = savedLoading || appsLoading

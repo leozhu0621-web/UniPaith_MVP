@@ -1,8 +1,10 @@
 import type { ComponentType } from 'react'
+import { Link } from 'react-router-dom'
 import {
   MapPin, Users, Building2, BookOpen, BellPlus, BellRing, ChevronRight, Sprout,
 } from 'lucide-react'
 import { classifyInstitution, sizeBucket, formatSetting, SIZE_OPTIONS } from '../shared/classifyInstitution'
+import { cardLinkClick, CARD_LINK_OVERLAY } from '../shared/cardLink'
 
 interface UniversityData {
   id: string
@@ -57,9 +59,11 @@ export default function UniversityCard({ institution: inst, onClick, following, 
   const photo = inst.image_url && /\.(jpe?g|png|webp|avif)(\?|$)/i.test(inst.image_url) ? inst.image_url : null
 
   return (
+    // Stretched-link card (Ship D §4): the title <Link> overlays the whole
+    // card, so keyboard + cmd/ctrl-click work; the Follow button stays a
+    // sibling <button> raised above the overlay (no nested-interactive).
     <div
-      onClick={onClick}
-      className="bg-card rounded-lg border border-border hover-lift hover:elev-raised overflow-hidden cursor-pointer flex flex-col group/card"
+      className="relative bg-card rounded-lg border border-border hover-lift hover:elev-raised overflow-hidden flex flex-col group/card"
     >
       {/* Header — TALLER campus photo fading into the card at its bottom edge;
           the identity block sits fully BELOW the fade so text never collides
@@ -117,7 +121,13 @@ export default function UniversityCard({ institution: inst, onClick, following, 
               </p>
             )}
             <h3 className="text-lg leading-tight font-bold text-foreground line-clamp-2 break-words">
-              {inst.name}
+              <Link
+                to={`/s/institutions/${inst.id}`}
+                onClick={cardLinkClick(onClick)}
+                className={CARD_LINK_OVERLAY}
+              >
+                {inst.name}
+              </Link>
             </h3>
             <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
               <MapPin size={12} className="flex-shrink-0" />
@@ -148,9 +158,9 @@ export default function UniversityCard({ institution: inst, onClick, following, 
         <span className="text-xs font-semibold text-secondary flex-1">View university</span>
         {onToggleFollow && (
           <button
-            onClick={e => { e.stopPropagation(); onToggleFollow() }}
+            onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleFollow() }}
             aria-pressed={!!following}
-            className={`mr-3 inline-flex items-center gap-1 text-xs font-semibold transition-colors ${
+            className={`relative z-10 mr-3 inline-flex items-center gap-1 px-2 py-3 -my-3 -mx-2 text-xs font-semibold transition-colors ${
               following ? 'text-muted-foreground hover:text-foreground' : 'text-secondary hover:underline'
             }`}
           >

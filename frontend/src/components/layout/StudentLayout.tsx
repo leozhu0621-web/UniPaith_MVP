@@ -96,8 +96,13 @@ export default function StudentLayout() {
                   return (
                     <>
                       {item.label}
+                      {/* Count badge (Ship D §4) — same pill as My Space's unread
+                          count, with accessible text instead of a bare dot. */}
                       {item.to === '/s/explore' && unseenCount > 0 && (
-                        <span className="absolute top-4 right-1 w-1.5 h-1.5 rounded-full bg-secondary" aria-hidden="true" />
+                        <span className="absolute top-2.5 right-0 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-secondary-foreground">
+                          <span aria-hidden="true">{unseenCount > 9 ? '9+' : unseenCount}</span>
+                          <span className="sr-only">{unseenCount} new updates</span>
+                        </span>
                       )}
                       {active && <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-secondary rounded-full" />}
                     </>
@@ -200,7 +205,10 @@ export default function StudentLayout() {
             <span className="relative">
               <item.icon size={20} strokeWidth={1.75} />
               {item.to === '/s/explore' && unseenCount > 0 && (
-                <span className="absolute -top-0.5 -right-1 w-1.5 h-1.5 rounded-full bg-secondary" aria-hidden="true" />
+                <span className="absolute -top-1.5 -right-2.5 rounded-full bg-secondary px-1 py-0.5 text-[9px] font-semibold leading-none text-secondary-foreground">
+                  <span aria-hidden="true">{unseenCount > 9 ? '9+' : unseenCount}</span>
+                  <span className="sr-only">{unseenCount} new updates</span>
+                </span>
               )}
             </span>
             <span className="text-[10px] font-semibold">{item.label}</span>

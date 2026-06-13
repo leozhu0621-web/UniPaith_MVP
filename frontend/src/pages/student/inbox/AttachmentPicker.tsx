@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { FileText, Link2 } from 'lucide-react'
+import { FileText, Link2, Upload } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { listDocuments } from '../../../api/documents'
 import type { InboxAttachment } from '../../../types'
 
@@ -22,7 +23,15 @@ export default function AttachmentPicker({
         Attach from your materials
       </p>
       {docs.length === 0 ? (
-        <p className="px-1 py-1 text-xs text-muted-foreground">No documents uploaded yet.</p>
+        <div className="px-1 py-1 text-xs text-muted-foreground">
+          No documents uploaded yet.{' '}
+          <Link
+            to="/s/prep?tab=documents"
+            className="inline-flex items-center gap-1 font-semibold text-secondary hover:underline"
+          >
+            <Upload size={11} /> Upload in My Space → Prep
+          </Link>
+        </div>
       ) : (
         docs.slice(0, 12).map((doc, i) => {
           const name = doc.file_name || doc.name || 'Document'

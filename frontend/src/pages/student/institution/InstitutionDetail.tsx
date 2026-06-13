@@ -9,6 +9,7 @@ import {
   listEvents, getMyFollows, followInstitution, unfollowInstitution,
 } from '../../../api/events'
 import { listSaved, saveProgram, unsaveProgram } from '../../../api/saved-lists'
+import { qk } from '../../../api/queryKeys'
 import { useCompareStore } from '../../../stores/compare-store'
 import { showToast } from '../../../stores/toast-store'
 import ProgramCard from '../explore/cards/ProgramCard'
@@ -86,7 +87,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   const posts = postsQ.data
 
   // Authenticated-only: saved programs, followed schools.
-  const { data: savedData } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, enabled: isAuthenticated, retry: false })
+  const { data: savedData } = useQuery({ queryKey: qk.savedPrograms(), queryFn: listSaved, enabled: isAuthenticated, retry: false })
   const { data: follows } = useQuery({ queryKey: ['my-follows'], queryFn: getMyFollows, enabled: isAuthenticated, retry: false })
 
   const inst = institution as Institution | undefined
@@ -162,7 +163,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
       if (savedIds.has(programId)) await unsaveProgram(programId)
       else await saveProgram(programId)
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved-programs'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: qk.savedPrograms() }),
     onError: () => showToast('Couldn’t save that program. Try again.', 'error'),
   })
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
@@ -214,7 +215,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
         <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
         <p className="text-sm text-foreground mb-4">Institution not found.</p>
         <Button size="sm" variant="secondary" onClick={() => navigate(isAuthenticated ? '/s/explore' : '/browse')}>
-          {isAuthenticated ? 'Back to Match' : 'Browse programs'}
+          {isAuthenticated ? 'Back to Discover' : 'Browse programs'}
         </Button>
       </div>
     )
@@ -387,6 +388,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
               institutionName={inst.name}
               onOpen={sid => navigate(schoolHref(sid))}
               onShowPrograms={() => setTab('programs')}
+              hrefFor={schoolHref}
             />
           )
         )}
@@ -405,6 +407,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
                 : compareStore.add({ program_id: p.id, program_name: p.program_name, institution_name: p.institution_name ?? inst.name, degree_type: p.degree_type })}
               onView={(id) => navigate(programHref(id))}
               onAsk={isAuthenticated ? (p) => navigate(`/s?prefill=${encodeURIComponent(`Tell me about ${p.program_name} at ${inst.name}. Is it a good fit?`)}`) : undefined}
+              hrefFor={programHref}
             />
           )
         )}
@@ -1123,8 +1126,10 @@ function AboutTab({ inst }: { inst: Institution }) {
 /* ──────────────────────────────────────────────────────────────────────────
    Schools tab (default) — Spec 12 §3.3
    ────────────────────────────────────────────────────────────────────────── */
-function SchoolsTab({ schoolList, institutionName, onOpen, onShowPrograms }: {
+function SchoolsTab({ schoolList, institutionName, onOpen, onShowPrograms, hrefFor }: {
   schoolList: SchoolSummary[]; institutionName: string; onOpen: (sid: string) => void; onShowPrograms: () => void
+  /** Ship D §4 — auth-aware school route so the card is a real link. */
+  hrefFor: (sid: string) => string
 }) {
   if (schoolList.length === 0) {
     return <EmptyBlock icon={GraduationCap} title="No schools listed" body="This institution hasn't organized its programs into schools yet — browse all programs instead." action={{ label: 'View all programs', onClick: onShowPrograms }} />
@@ -1139,7 +1144,7 @@ function SchoolsTab({ schoolList, institutionName, onOpen, onShowPrograms }: {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {schoolList.map(school => (
-          <SchoolCard key={school.id} school={school} institutionName={institutionName} onClick={() => onOpen(school.id)} />
+          <SchoolCard key={school.id} school={school} institutionName={institutionName} onClick={() => onOpen(school.id)} href={hrefFor(school.id)} />
         ))}
       </div>
     </div>
@@ -1152,7 +1157,7 @@ function SchoolsTab({ schoolList, institutionName, onOpen, onShowPrograms }: {
 interface ProgFilter { q: string; degree: string; delivery: string; sort: string }
 const EMPTY_PROG_FILTER: ProgFilter = { q: '', degree: '', delivery: '', sort: 'relevance' }
 
-function ProgramsTab({ programs, institutionName, savedIds, comparing, onSave, onCompare, onView, onAsk }: {
+function ProgramsTab({ programs, institutionName, savedIds, comparing, onSave, onCompare, onView, onAsk, hrefFor }: {
   programs: ProgramSummary[]
   institutionName: string
   savedIds: Set<string>
@@ -1161,6 +1166,8 @@ function ProgramsTab({ programs, institutionName, savedIds, comparing, onSave, o
   onCompare: (p: ProgramSummary) => void
   onView: (id: string) => void
   onAsk?: (p: ProgramSummary) => void
+  /** Ship D §4 — auth-aware program route so the card is a real link. */
+  hrefFor: (id: string) => string
 }) {
   const [f, setF] = useState<ProgFilter>(EMPTY_PROG_FILTER)
 
@@ -1257,6 +1264,7 @@ function ProgramsTab({ programs, institutionName, savedIds, comparing, onSave, o
               onCompare={() => onCompare(p)}
               onAskCounselor={onAsk ? () => onAsk(p) : undefined}
               onView={() => onView(p.id)}
+              viewHref={hrefFor(p.id)}
             />
           ))}
         </div>

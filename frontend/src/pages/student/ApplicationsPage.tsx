@@ -343,7 +343,7 @@ export default function ApplicationsPage() {
         <EmptyState
           icon={<FileText size={48} />}
           title="No applications yet"
-          description="Start one from your Saved list or Match when you're ready."
+          description="Start one from your Saved list or Discover when you're ready."
           action={{ label: 'Explore programs', onClick: () => navigate('/s/explore') }}
         />
       </PageContainer>

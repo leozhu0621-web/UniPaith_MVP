@@ -1,23 +1,37 @@
+import { Link } from 'react-router-dom'
 import { BookOpen, ChevronRight } from 'lucide-react'
 import type { SchoolSummary } from '../../../../types'
+import { cardLinkClick, CARD_LINK_OVERLAY } from '../shared/cardLink'
 
 interface Props {
   school: SchoolSummary
   institutionName: string
   onClick: () => void
+  /** Real destination for the card link (Ship D §4) — enables keyboard focus,
+      Enter, and cmd/ctrl-click open-in-new-tab. Falls back to div-onClick when
+      a caller has no route to offer. */
+  href?: string
 }
 
 // Editorial school-within-institution card — text-driven, duotone. No per-name
 // rainbow palette, no gradient/image header (brand: gold punctuation only).
-export default function SchoolCard({ school, institutionName, onClick }: Props) {
+export default function SchoolCard({ school, institutionName, onClick, href }: Props) {
   const programNames = school.program_names ?? []
   return (
     <div
-      onClick={onClick}
-      className="bg-card rounded-lg border border-border hover:elev-raised transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
+      onClick={href ? undefined : onClick}
+      className={`relative bg-card rounded-lg border border-border hover:elev-raised transition-all duration-200 ease-out overflow-hidden flex flex-col group/card ${href ? '' : 'cursor-pointer'}`}
     >
       <div className="flex-1 px-5 pt-4 pb-3">
-        <h3 className="text-[15px] font-bold text-foreground leading-snug mb-1">{school.name}</h3>
+        <h3 className="text-[15px] font-bold text-foreground leading-snug mb-1">
+          {href ? (
+            <Link to={href} onClick={cardLinkClick(onClick)} className={CARD_LINK_OVERLAY}>
+              {school.name}
+            </Link>
+          ) : (
+            school.name
+          )}
+        </h3>
 
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
           <BookOpen size={12} className="text-secondary flex-shrink-0" />

@@ -7,6 +7,7 @@ import { ArrowRight, Bell, CalendarClock, CalendarDays, GraduationCap, Newspaper
 import { getConnectEvents, getConnectFeed } from '../../../../api/connect'
 import { getMatches } from '../../../../api/matching'
 import { listSaved } from '../../../../api/saved-lists'
+import { qk } from '../../../../api/queryKeys'
 
 function relTime(iso: string): string {
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
@@ -47,7 +48,7 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
     retry: false,
   })
   const { data: matches = [] } = useQuery({ queryKey: ['matches'], queryFn: () => getMatches(), retry: 1, staleTime: 60_000 })
-  const { data: saved } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, retry: false })
+  const { data: saved } = useQuery({ queryKey: qk.savedPrograms(), queryFn: listSaved, retry: false })
 
   const updates = (feed?.items ?? []).filter(it => it.kind === 'post').slice(0, 3)
   const events = (eventsData?.events ?? []).slice(0, 3)

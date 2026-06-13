@@ -11,6 +11,7 @@ import { rsvpEvent, cancelRsvp, addEventToCalendar } from '../../../api/events'
 import Sheet from '../../../components/ui/Sheet'
 import QueryError from '../../../components/ui/QueryError'
 import Skeleton from '../../../components/ui/Skeleton'
+import { showToast } from '../../../stores/toast-store'
 
 type Scope = 'upcoming' | 'past' | 'mine'
 
@@ -47,10 +48,49 @@ export default function EventsTab() {
     retry: false,
   })
 
+  // Optimistic RSVP (Ship D §4): flip the visible card instantly, roll back +
+  // toast if the call fails, then reconcile with the server either way.
   const rsvpMut = useMutation({
     mutationFn: ({ id, going }: { id: string; going: boolean }) =>
       going ? cancelRsvp(id) : rsvpEvent(id),
-    onSuccess: () => {
+    onMutate: async ({ id, going }) => {
+      await qc.cancelQueries({ queryKey: ['connect-events', scope] })
+      const previous = qc.getQueryData<{ events: ConnectEvent[] }>(['connect-events', scope])
+      qc.setQueryData<{ events: ConnectEvent[] }>(['connect-events', scope], old => {
+        if (!old?.events) return old
+        return {
+          ...old,
+          events: old.events.map(ev => {
+            if (ev.id !== id) return ev
+            if (going) {
+              // Cancelling — leave the going count alone unless we held a seat.
+              return {
+                ...ev,
+                rsvp_state: 'none' as const,
+                going_count: ev.rsvp_state === 'rsvp' ? Math.max(0, ev.going_count - 1) : ev.going_count,
+              }
+            }
+            const waitlisted = ev.at_capacity
+            return {
+              ...ev,
+              rsvp_state: waitlisted ? ('waitlist' as const) : ('rsvp' as const),
+              going_count: waitlisted ? ev.going_count : ev.going_count + 1,
+            }
+          }),
+        }
+      })
+      return { previous }
+    },
+    onError: (_err, vars, ctx) => {
+      if (ctx?.previous !== undefined) qc.setQueryData(['connect-events', scope], ctx.previous)
+      showToast(
+        vars.going
+          ? "We couldn't cancel your RSVP. Please try again."
+          : "We couldn't RSVP you for this event. Please try again.",
+        'error',
+      )
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['connect-events'] })
       qc.invalidateQueries({ queryKey: ['my-rsvps'] })
     },

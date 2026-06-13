@@ -12,6 +12,7 @@ import Skeleton from '../../../components/ui/Skeleton'
 import { listMyApplications } from '../../../api/applications'
 import { getCalendar, type CalendarItem } from '../../../api/calendar'
 import { listSaved } from '../../../api/saved-lists'
+import { qk } from '../../../api/queryKeys'
 import { listRecommendations } from '../../../api/recommendations'
 import { listWorkshopRuns } from '../../../api/workshops-feedback'
 import { getThreads } from '../../../api/inbox'
@@ -54,7 +55,7 @@ export default function MySpaceHomePage() {
   // MessagesNavButton, the shell rail) so navigating between rooms reuses cache.
   const apps = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications, staleTime: STALE })
   const profile = useQuery({ queryKey: ['profile'], queryFn: getProfile, staleTime: 300_000 })
-  const saved = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, staleTime: STALE })
+  const saved = useQuery({ queryKey: qk.savedPrograms(), queryFn: listSaved, staleTime: STALE })
   const fortnight = useMemo(() => {
     const from = new Date().toISOString().slice(0, 10)
     const to = new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 10)

@@ -83,8 +83,8 @@ export default function SavedSearchesPanel() {
       <EmptyState
         icon={<Bell size={48} />}
         title="No saved searches yet"
-        description="Run a search in Match, then “Save search” to keep it here — turn on alerts and we’ll tell you when new programs match."
-        action={{ label: 'Open Match →', onClick: () => navigate('/s/explore') }}
+        description="Run a search in Discover, then “Save search” to keep it here — turn on alerts and we’ll tell you when new programs match."
+        action={{ label: 'Open Discover →', onClick: () => navigate('/s/explore') }}
       />
     )
   }
