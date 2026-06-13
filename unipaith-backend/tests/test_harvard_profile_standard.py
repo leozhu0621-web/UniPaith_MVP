@@ -185,6 +185,37 @@ def test_flagship_mba_is_deeply_enriched():
     assert not _section_gaps_unexpected("program", res.missing_sections, omitted)
 
 
+def test_coverable_programs_have_external_reviews():
+    """High-demand programs with abundant third-party coverage must carry reviews."""
+    coverable = [
+        "harvard-mba",
+        "harvard-jd",
+        "harvard-md",
+        "harvard-mph",
+        "harvard-mpp",
+        "harvard-mpa",
+        "harvard-mpa-id",
+        "harvard-llm",
+        "harvard-edm",
+        "harvard-edld",
+        "harvard-data-science-sm",
+        "harvard-mdes",
+        "harvard-march",
+        "harvard-dmd",
+        "harvard-cs-ab",
+        "harvard-economics-ab",
+        "harvard-government-ab",
+        "harvard-statistics-ab",
+        "harvard-mathematics-ab",
+    ]
+    catalog = {p["slug"] for p in h.PROGRAMS}
+    for slug in coverable:
+        assert slug in catalog, f"{slug} missing from catalog"
+        assert slug in h._REVIEWS_BY_SLUG, slug
+        assert h._REVIEWS_BY_SLUG[slug].get("summary"), slug
+        assert len(h._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
+
+
 def test_every_node_has_content_sources():
     assert h._INSTITUTION_CONTENT.get("news_rss")
     for school in h.SCHOOLS:

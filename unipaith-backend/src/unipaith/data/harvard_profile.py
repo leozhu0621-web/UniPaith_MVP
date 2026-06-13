@@ -2139,6 +2139,763 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    "harvard-mpa": {
+        "summary": (
+            "Students and guides describe Harvard Kennedy School's Master in Public "
+            "Administration as one of the most flexible degrees at a perennially top-"
+            "ranked public-affairs school — U.S. News has ranked HKS No. 1 for public "
+            "affairs — praising the 64-credit self-designed curriculum and the access "
+            "to Belfer, Ash, and other research centers. The most common cautions are "
+            "that the MPA assumes prior graduate-level coursework and substantial work "
+            "experience (a five-year-average cohort), so it suits established "
+            "professionals more than career-changers, and the high cost of two "
+            "residential years in Cambridge."
+        ),
+        "themes": [
+            {
+                "label": "Flexible, self-designed curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "A 64-credit study plan students build across economics, policy, "
+                    "and management to match their own goals."
+                ),
+            },
+            {
+                "label": "Public-affairs reputation & network",
+                "sentiment": "positive",
+                "detail": (
+                    "HKS is consistently ranked No. 1 for public affairs by U.S. News, "
+                    "with a deep global public-service alumni network."
+                ),
+            },
+            {
+                "label": "Research centers",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to the Belfer, Ash, Shorenstein, and other HKS centers for "
+                    "applied policy work."
+                ),
+            },
+            {
+                "label": "For experienced professionals",
+                "sentiment": "mixed",
+                "detail": (
+                    "Admission expects prior graduate study or significant experience "
+                    "(roughly five years on average), so it is less suited to direct-"
+                    "from-undergraduate applicants."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Tuition and fees of roughly $72,000/year before living costs for a "
+                    "two-year residential degree."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard Kennedy School — Master in Public Administration",
+                "url": "https://www.hks.harvard.edu/educational-programs/masters-programs/master-public-administration",
+            },
+            {
+                "label": "U.S. News — Best Public Affairs Schools",
+                "url": "https://www.usnews.com/best-graduate-schools/top-public-affairs-schools",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-mpa-id": {
+        "summary": (
+            "The MPA in International Development is widely regarded as one of the most "
+            "technically rigorous policy degrees anywhere — an economics-centered, two-"
+            "year program designed by Dani Rodrik that trains practitioners 'as well-"
+            "trained in economics as most economics PhDs.' Reviewers praise its "
+            "advanced micro/macro and quantitative sequences and its pipeline into the "
+            "World Bank, IMF, and finance ministries, while the recurring cautions are "
+            "that it is intensely mathematical, very selective (about 68 students a "
+            "year, rarely admitted straight from undergrad), and not a substitute for "
+            "a research PhD."
+        ),
+        "themes": [
+            {
+                "label": "Economics rigor",
+                "sentiment": "positive",
+                "detail": (
+                    "Advanced microeconomics, macroeconomics, and quantitative-methods "
+                    "sequences comparable to PhD-level training."
+                ),
+            },
+            {
+                "label": "Development-leadership placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Strong pipeline into international financial institutions, "
+                    "ministries, and development organizations."
+                ),
+            },
+            {
+                "label": "Math-intensive",
+                "sentiment": "caution",
+                "detail": (
+                    "Prerequisites include multivariable calculus plus micro and macro; "
+                    "independent guides single it out as especially math-heavy."
+                ),
+            },
+            {
+                "label": "Selectivity & experience",
+                "sentiment": "caution",
+                "detail": (
+                    "A class of roughly 68; most admits have several years of "
+                    "development work and the program rarely admits directly from "
+                    "undergraduate study."
+                ),
+            },
+            {
+                "label": "Not a research doctorate",
+                "sentiment": "mixed",
+                "detail": (
+                    "Geared to practitioners; commentators note it is not a substitute "
+                    "for an economics PhD for those wanting academic research careers."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard Kennedy School — MPA in International Development",
+                "url": "https://www.hks.harvard.edu/educational-programs/masters-programs/master-public-administration-international-development",
+            },
+            {
+                "label": "Chris Blattman — Which Master's program is for you?",
+                "url": "https://chrisblattman.com/blog/2017/10/04/what-ma-mpa-or-mia-program-is-for-you/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-llm": {
+        "summary": (
+            "Harvard Law School's one-year Master of Laws is described by students and "
+            "guides as among the most prestigious LL.M. degrees in the world — a class "
+            "of about 180 drawn from roughly 60–70 countries, about 98% international, "
+            "selected from some 1,600 applicants. Reviewers highlight the global cohort "
+            "and HLS faculty and library resources, while common cautions are the "
+            "extreme selectivity, the high cost, and that some international students "
+            "wish for a broader, less U.S.-law-centric course selection."
+        ),
+        "themes": [
+            {
+                "label": "Global prestige & cohort",
+                "sentiment": "positive",
+                "detail": (
+                    "About 180 students from 60–70 countries; graduates include "
+                    "justices, ministers, and leading academics worldwide."
+                ),
+            },
+            {
+                "label": "Faculty & resources",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to HLS's renowned faculty and the largest academic law "
+                    "library in the world."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Roughly 1,600 applicants compete for about 180 places each year."
+                ),
+            },
+            {
+                "label": "U.S.-law emphasis",
+                "sentiment": "mixed",
+                "detail": (
+                    "Some international students report wishing for more globally "
+                    "oriented coursework alongside the U.S. legal focus."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Tuition of roughly $77,000 for the year before Boston-area living "
+                    "costs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard Law School — LL.M. Program",
+                "url": "https://hls.harvard.edu/graduate-program/ll-m-program/",
+            },
+            {
+                "label": "The Harvard Crimson — Inside the Century-Old HLS LL.M. Program",
+                "url": "https://www.thecrimson.com/article/2024/10/17/llm-international/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-edm": {
+        "summary": (
+            "The residential Ed.M. at the Harvard Graduate School of Education — a "
+            "perennially top-ranked U.S. school of education — is described as a one-"
+            "year, full-time, immersive degree in which students apply to one of five "
+            "programs of study spanning leadership, policy, human development, "
+            "teaching, and learning design. Reviewers value the Harvard network and "
+            "the breadth of foundations and electives, while the common cautions are "
+            "the intensity of compressing a master's into one year, the cost, and that "
+            "the program was substantially restructured into its current five-program "
+            "form."
+        ),
+        "themes": [
+            {
+                "label": "Education reputation & network",
+                "sentiment": "positive",
+                "detail": (
+                    "HGSE is consistently ranked among the top U.S. graduate schools of "
+                    "education by U.S. News."
+                ),
+            },
+            {
+                "label": "Five programs of study",
+                "sentiment": "positive",
+                "detail": (
+                    "Applicants choose among education leadership and entrepreneurship, "
+                    "education policy, human development, teaching, and learning design "
+                    "and technology."
+                ),
+            },
+            {
+                "label": "Foundations + concentrations",
+                "sentiment": "positive",
+                "detail": (
+                    "A shared Foundations core plus optional concentrations and "
+                    "electives across Harvard."
+                ),
+            },
+            {
+                "label": "One-year intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "The full-time, one-year structure is fast-paced and demanding."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Professional master's tuition for a Cambridge residential year."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "HGSE — Residential Master's in Education (Ed.M.)",
+                "url": "https://www.gse.harvard.edu/degrees/masters/residential",
+            },
+            {
+                "label": "U.S. News — Best Education Schools",
+                "url": "https://www.usnews.com/best-graduate-schools/top-education-schools",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-edld": {
+        "summary": (
+            "The Doctor of Education Leadership (Ed.L.D.) is a three-year, practice-"
+            "based doctorate taught jointly by faculty from HGSE, Harvard Business "
+            "School, and Harvard Kennedy School, built on a cohort model of up to 25 "
+            "students who progress together. Reviewers consistently highlight that the "
+            "program is fully funded — full tuition plus stipends and a paid third-year "
+            "residency — while the cautions are the very small, selective cohort, that "
+            "it is designed for experienced education leaders rather than early-career "
+            "applicants, and that it requires a three-year full-time commitment."
+        ),
+        "themes": [
+            {
+                "label": "Fully funded",
+                "sentiment": "positive",
+                "detail": (
+                    "All students receive a full-tuition funding package plus stipends "
+                    "and a paid third-year residency."
+                ),
+            },
+            {
+                "label": "Cross-school faculty",
+                "sentiment": "positive",
+                "detail": (
+                    "Taught by faculty from HGSE, Harvard Business School, and Harvard "
+                    "Kennedy School, with a leadership and management core."
+                ),
+            },
+            {
+                "label": "Cohort + residency model",
+                "sentiment": "positive",
+                "detail": (
+                    "A cohort of up to 25 progresses together; the third year is a "
+                    "10-month paid residency with a partner organization and a capstone."
+                ),
+            },
+            {
+                "label": "Small, selective cohort",
+                "sentiment": "caution",
+                "detail": (
+                    "Up to 25 seats a year for experienced system-level education "
+                    "leaders makes admission highly competitive."
+                ),
+            },
+            {
+                "label": "Three-year commitment",
+                "sentiment": "caution",
+                "detail": (
+                    "A full-time, three-year program; the degree was undergoing a "
+                    "redesign as of 2026."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "HGSE — Doctor of Education Leadership (Ed.L.D.)",
+                "url": "https://www.gse.harvard.edu/degrees/edld",
+            },
+            {
+                "label": "HGSE — Ed.L.D. alumni outcomes",
+                "url": "https://www.gse.harvard.edu/ideas/news/15/10/where-are-they-now",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-data-science-sm": {
+        "summary": (
+            "Harvard's S.M. in Data Science, jointly led by the Computer Science and "
+            "Statistics faculties and housed in the Institute for Applied Computational "
+            "Science, is described as a rigorous 3-semester, 12-course program covering "
+            "statistical modeling, machine learning, optimization, and large-scale data "
+            "management, capped by an industry-partnered capstone. Reviewers point to "
+            "the strong CS-plus-statistics foundation and placement into tech, finance, "
+            "and health, while cautions are the technical prerequisites (linear algebra "
+            "and programming), that it is a relatively young program (launched 2018), "
+            "and the cost of an unfunded master's."
+        ),
+        "themes": [
+            {
+                "label": "Joint CS + Statistics design",
+                "sentiment": "positive",
+                "detail": (
+                    "Curriculum built jointly by the Computer Science and Statistics "
+                    "faculties around 11 stated learning outcomes."
+                ),
+            },
+            {
+                "label": "Capstone & industry ties",
+                "sentiment": "positive",
+                "detail": (
+                    "A capstone partners students with companies in finance, tech, and "
+                    "health care through IACS."
+                ),
+            },
+            {
+                "label": "Career outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates move into data-science, machine-learning, and "
+                    "research roles across sectors."
+                ),
+            },
+            {
+                "label": "Technical prerequisites",
+                "sentiment": "caution",
+                "detail": (
+                    "Applicants need linear algebra, calculus, and programming "
+                    "preparation to keep pace."
+                ),
+            },
+            {
+                "label": "Young program, master's cost",
+                "sentiment": "mixed",
+                "detail": (
+                    "Launched in 2018; a professional master's without guaranteed "
+                    "funding."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard SEAS — Master's in Data Science",
+                "url": "https://seas.harvard.edu/masters-data-science",
+            },
+            {
+                "label": "Harvard SEAS — Launch of the Data Science master's degree",
+                "url": "https://seas.harvard.edu/news/harvard-launches-data-science-masters-degree-program",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-mdes": {
+        "summary": (
+            "The Master in Design Studies (M.Des.) at the Harvard Graduate School of "
+            "Design is a post-professional, interdisciplinary research degree organized "
+            "around four domains — Ecologies, Mediums, Narratives, and Publics — aimed "
+            "at design careers in research, public service, academia, and ventures. "
+            "Reviewers value the GSD's design prestige and research orientation, but "
+            "the program's 2020 restructuring drew significant, documented backlash "
+            "from students and alumni over transparency, curricular flexibility, and "
+            "employability — a caution alongside its post-professional nature (it is "
+            "not a path to architecture licensure) and cost."
+        ),
+        "themes": [
+            {
+                "label": "GSD research prestige",
+                "sentiment": "positive",
+                "detail": (
+                    "Housed at one of the world's most recognized design schools with "
+                    "influential faculty and a strong interdisciplinary research base."
+                ),
+            },
+            {
+                "label": "Four-domain structure",
+                "sentiment": "positive",
+                "detail": (
+                    "Students select a domain — Ecologies, Mediums, Narratives, or "
+                    "Publics — and build a self-directed research trajectory."
+                ),
+            },
+            {
+                "label": "2020 restructuring backlash",
+                "sentiment": "caution",
+                "detail": (
+                    "A 2020 overhaul prompted a letter from 376 students and alumni "
+                    "citing concerns over transparency, flexibility, and future "
+                    "employability."
+                ),
+            },
+            {
+                "label": "Post-professional degree",
+                "sentiment": "mixed",
+                "detail": (
+                    "A research-oriented degree, not an accredited path to architecture "
+                    "or landscape licensure."
+                ),
+            },
+            {
+                "label": "Cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Professional GSD tuition for a multi-semester residential degree."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard GSD — Master in Design Studies",
+                "url": "https://www.gsd.harvard.edu/offices-and-facilities/advanced-studies-programs/programs/design-studies/",
+            },
+            {
+                "label": "The Architect's Newspaper — GSD backlash over MDes overhaul",
+                "url": "https://www.archpaper.com/2020/11/gsd-faces-internal-backlash-for-major-changes-to-master-in-design-studies-program/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-dmd": {
+        "summary": (
+            "Harvard School of Dental Medicine's D.M.D. is described as one of the very "
+            "top dental programs in the world — QS has ranked HSDM among the top five "
+            "dental schools globally — distinguished by a medical model in which first-"
+            "year students learn alongside Harvard Medical School peers. Reviewers "
+            "highlight the small (~35-student), pass/fail, research-infused class and a "
+            "very high rate of placement into specialty residencies; the cautions are "
+            "the roughly 3% admit rate, the cost, and that the heavy research and "
+            "medical-integration emphasis can mean less early clinical volume than "
+            "traditional dental programs."
+        ),
+        "themes": [
+            {
+                "label": "World-leading reputation",
+                "sentiment": "positive",
+                "detail": (
+                    "QS has ranked HSDM among the top five dental schools worldwide, "
+                    "with a perfect employer-reputation score."
+                ),
+            },
+            {
+                "label": "Medical model",
+                "sentiment": "positive",
+                "detail": (
+                    "First-year D.M.D. students study alongside Harvard Medical School "
+                    "peers, integrating oral and systemic health."
+                ),
+            },
+            {
+                "label": "Specialty placement",
+                "sentiment": "positive",
+                "detail": (
+                    "A research requirement and small cohort feed an unusually high "
+                    "rate of placement into specialty residencies."
+                ),
+            },
+            {
+                "label": "Extreme selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Roughly 4,000 applications for a class of about 35 — an admit rate "
+                    "near 3%."
+                ),
+            },
+            {
+                "label": "Research-heavy emphasis",
+                "sentiment": "mixed",
+                "detail": (
+                    "The medical-model and research focus can mean less early hands-on "
+                    "clinical volume than some traditional dental schools."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard School of Dental Medicine — D.M.D. Program",
+                "url": "https://www.hsdm.harvard.edu/dmd-program",
+            },
+            {
+                "label": "HSDM — Ranked among top five dental schools worldwide (QS)",
+                "url": "https://www.hsdm.harvard.edu/news/hsdm-ranks-top-five-dental-schools-worldwide",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-government-ab": {
+        "summary": (
+            "Government is Harvard College's name for its political-science "
+            "concentration and one of its largest — a broad A.B. spanning American "
+            "politics, comparative government, international relations, political "
+            "theory, and quantitative methods, with five optional curricular programs "
+            "(Data Science, Tech Science, Public Policy, Political Economy, and Law and "
+            "Justice). Third-party rankings place Harvard at or near the top in "
+            "political science (QS No. 1 in politics; U.S. News No. 2), and students "
+            "praise the course breadth and access to the Kennedy School and Institute "
+            "of Politics; the recurring caution is that it is a large department where "
+            "students have reported uneven advising and personal attention."
+        ),
+        "themes": [
+            {
+                "label": "Top-ranked political science",
+                "sentiment": "positive",
+                "detail": (
+                    "Ranked No. 1 in politics by QS and among the top U.S. programs by "
+                    "U.S. News."
+                ),
+            },
+            {
+                "label": "Curricular breadth & tracks",
+                "sentiment": "positive",
+                "detail": (
+                    "Covers American politics, comparative, IR, theory, and methods, "
+                    "with five optional programs including Data Science and Political "
+                    "Economy."
+                ),
+            },
+            {
+                "label": "Kennedy School & IOP access",
+                "sentiment": "positive",
+                "detail": (
+                    "Concentrators can draw on Harvard Kennedy School resources and the "
+                    "Institute of Politics."
+                ),
+            },
+            {
+                "label": "Tutorials & research",
+                "sentiment": "mixed",
+                "detail": (
+                    "Required tutorials build research skills in small seminars, though "
+                    "the sophomore tutorial has drawn mixed student reactions."
+                ),
+            },
+            {
+                "label": "Large-department advising",
+                "sentiment": "caution",
+                "detail": (
+                    "As one of the College's bigger concentrations, students have "
+                    "reported uneven advising and personal attention."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard College — A Government concentrator's experience",
+                "url": "https://www.college.harvard.edu/student-life/student-stories/more-just-arguing-my-experience-harvards-government-concentration",
+            },
+            {
+                "label": "QS World University Rankings by Subject — Politics",
+                "url": "https://www.topuniversities.com/university-subject-rankings/politics",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-statistics-ab": {
+        "summary": (
+            "Statistics has become one of Harvard College's fastest-growing and most "
+            "popular concentrations — rising from 17 concentrators in 2008 to roughly "
+            "200 — riding the rise of data science. The A.B. offers four tracks "
+            "(General, Data Science, Quantitative Finance, and Bioinformatics/"
+            "Computational Biology) and feeds strong placement into tech, finance, and "
+            "statistics PhD programs. Students praise flagship courses such as Stat 110 "
+            "(Probability); the main cautions are that rapid growth has made popular "
+            "courses very large and that the concentration carries real math and "
+            "computing prerequisites."
+        ),
+        "themes": [
+            {
+                "label": "Surging popularity",
+                "sentiment": "positive",
+                "detail": (
+                    "Concentrators grew from 17 in 2008 to about 200, making it one of "
+                    "the College's largest science concentrations."
+                ),
+            },
+            {
+                "label": "Four tracks",
+                "sentiment": "positive",
+                "detail": (
+                    "General, Data Science, Quantitative Finance, and Bioinformatics/"
+                    "Computational Biology tracks tailor the degree."
+                ),
+            },
+            {
+                "label": "Strong placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Alumni move to firms such as Google and Goldman Sachs, hedge funds "
+                    "like D.E. Shaw, medical schools, and statistics PhD programs."
+                ),
+            },
+            {
+                "label": "Large popular courses",
+                "sentiment": "caution",
+                "detail": (
+                    "Flagship courses such as Stat 110 enroll several hundred students "
+                    "as demand has surged."
+                ),
+            },
+            {
+                "label": "Quantitative prerequisites",
+                "sentiment": "mixed",
+                "detail": (
+                    "The concentration requires a foundation in probability, math, and "
+                    "computing."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard Department of Statistics — Undergraduate",
+                "url": "https://statistics.fas.harvard.edu/undergraduate",
+            },
+            {
+                "label": "The Harvard Crimson — Statistics department's rapid growth",
+                "url": "https://www.thecrimson.com/article/2016/9/19/stat-department-grows-rapidly/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-mathematics-ab": {
+        "summary": (
+            "Harvard's Mathematics concentration is consistently ranked among the top "
+            "few in the world (QS places Harvard No. 3 in mathematics) and is known for "
+            "a flexible, proof-based A.B. with multiple entry tracks (Math 22, 25, or "
+            "the legendary Math 55). Reviewers praise the depth of pure and applied "
+            "offerings and the strong path into PhD programs, finance, and tech; the "
+            "best-known caution is the intensity and historically high attrition of "
+            "Math 55 — which the department has actively worked to 'demystify' — and "
+            "the proof-heavy, theory-forward nature of the concentration."
+        ),
+        "themes": [
+            {
+                "label": "World-top mathematics",
+                "sentiment": "positive",
+                "detail": (
+                    "Ranked among the top few mathematics programs globally (QS No. 3)."
+                ),
+            },
+            {
+                "label": "Flexible entry tracks",
+                "sentiment": "positive",
+                "detail": (
+                    "Students enter via Math 22, 25, or the accelerated Math 55, with "
+                    "flexible electives across pure and applied math."
+                ),
+            },
+            {
+                "label": "Strong outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "A common path into mathematics PhD programs, quantitative finance, "
+                    "and technology."
+                ),
+            },
+            {
+                "label": "Math 55 intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "The famed Math 55 is fast-paced with historically high attrition; "
+                    "the department now emphasizes it is optional and 'fine' for "
+                    "prepared, dedicated students."
+                ),
+            },
+            {
+                "label": "Proof-forward",
+                "sentiment": "mixed",
+                "detail": (
+                    "The concentration is theory- and proof-heavy, which suits some "
+                    "students more than others."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard Department of Mathematics — Undergraduate brochure",
+                "url": "https://www.math.harvard.edu/media/Undergraduate-Brochure-Electronic-2025-2026.pdf",
+            },
+            {
+                "label": "The Harvard Crimson — What we talk about when we talk about Math 55",
+                "url": "https://www.thecrimson.com/article/2023/3/26/behind-math-55/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
 }
 
 # ── Per-school official tuition (2025-26 unless noted) and cost source ──────
