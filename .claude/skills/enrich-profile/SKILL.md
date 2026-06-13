@@ -69,6 +69,22 @@ Concrete misses observed in the first runs — each broke a real page:
    Scorecard program list (by CIP for the UNITID)** — if the university offers
    ~100 programs and you've added 18, you are NOT done. The gold reference (MIT)
    carries 65 programs; a peer university with a dozen is incomplete.
+   - **The count is a CHECK, not a TARGET — NEVER pad it (issue: Boston U shipped
+     483 programs of which 83 were named just "BA", 63 "MS", 61 "PhD", dept
+     "Programs", with boilerplate "BA is an undergraduate degree program offered
+     through BU's College of Arts & Sciences").** That is fabrication, not breadth,
+     and it is WORSE than a short catalog. Every program MUST be a single REAL,
+     distinctly-named degree: `program_name` is the field-of-study name —
+     **"Bachelor of Arts in Economics", "PhD in Mechanical Engineering"** — NEVER a
+     bare degree abbreviation ("BA"/"BS"/"MS"/"PhD"/"MA"), NEVER a generic label.
+     **No two programs may share an identical name; `department` must be the real
+     owning school/department (never "Programs"); the description must be
+     program-SPECIFIC (mention the actual field), never a degree-type template with
+     the field swapped out.** If the catalog lists "BA — 47 majors", that is 47
+     distinctly-named programs (BA in Economics, BA in History, …) or, if you
+     cannot resolve the major names, FEWER real entries — never one stub named "BA"
+     per filler row. A duplicate/abbreviation/`"Programs"`-department name is an
+     automatic fabrication failure: drop it or give it its real name.
    - **Breadth-first, then a MANDATORY depth pass — "defer" is not "abandon".**
      Create EVERY program node with verified *basics* first (full name,
      degree_type, `delivery_format`, department, description, website, tuition —
@@ -158,6 +174,27 @@ Concrete misses observed in the first runs — each broke a real page:
      gold. A university with coverable programs missing reviews cannot be "done",
      so run the per-program check before you ship and treat a blank-reviews
      coverable program as a hard failure, not a deferral.
+9. **VERIFY THE RENDERED OUTPUT, not just that a value was written — this is the
+   common root cause of every miss above.** Writing a field is not the same as the
+   field being correct on the page. Boston U's 483 "BA"/"MS" stubs and Stanford's
+   dead Events tab both shipped because the routine set a value and moved on
+   without looking at the result. Before declaring a node done, CHECK the actual
+   output a student would see:
+   - **Programs:** spot-check the program list — are names real and distinct (no
+     `"BA"`-style stubs, no duplicate names, no `"Programs"` department)? A list
+     with repeated generic names = not done.
+   - **Feeds:** a `content_sources` feed counts only if it actually FETCHES ≥1
+     item. **Confirm the feed produces** (the news_rss/events_feed resolves and
+     returns entries) before trusting it — set a feed you proved works, not a URL
+     you assumed works. If every available feed is gated/empty (e.g. Stanford's
+     Cloudflare-gated newsroom), set the best WORKING events/social source and
+     accept an honest empty state — never leave a dead feed that just renders
+     "hasn't posted anything yet" while claiming to be enriched.
+   - **Photos:** each `campus_photos` url must actually load (resolves, not 404).
+   - **Stats/reviews:** the value renders where the manifest path expects it.
+   The rule: **open the live page (or query the API) for the node you just
+   shipped and confirm it looks right. A value that doesn't render correctly is
+   not done — it's a defect waiting for the user to find it.**
 
 ## What "the standard" is (read these first)
 
@@ -200,6 +237,17 @@ STRICT order:
      school**, or **any program**;
    - a **short program catalog** — missing online / professional / continuing-ed /
      extension programs, or a school showing far fewer programs than it really has;
+   - **stub / generic / padded programs** — bare-abbreviation names ("BA"/"MS"/
+     "PhD"), duplicate names, `"Programs"` departments, or boilerplate descriptions
+     (miss #2). **Boston U (483 programs, 83 named "BA", 63 "MS") is the #1 repair
+     target right now** — a bloated junk catalog is WORSE than a short real one and
+     must be cleaned (rename to real field-specific names, or remove the fillers)
+     before any new university;
+   - **`content_sources` set but producing NOTHING** — an Events & Updates tab that
+     renders "hasn't posted anything yet" despite the university being "enriched"
+     (e.g. Stanford: gated newsroom + no working events/social feed, posts=0).
+     Either find a feed that actually fetches, or set the best working events/
+     social source — a dead feed is a miss (miss #9);
    - **schools or programs with no `content_sources`** → their Events & Updates are
      empty (the routine has been setting feeds only on the institution — fix this);
    - news posts with **no cover image** (the feed has images the ingest can now
@@ -224,6 +272,15 @@ then by size of gaps. If every existing university is gold and no new target is
 requested, report and stop. **Adding breadth while existing profiles are broken is
 the one thing this routine must NOT do.**
 
+**RE-AUDIT — do not trust a prior "done" mark or `_standard` stamp.** Boston U and
+Stanford were both shipped as "done" and are both broken (483 stub programs;
+empty Events tab). A `_standard` stamp only means "a past run touched this," not
+"it's actually gold" — and these misses (#2 stubs, #9 verify-output) post-date
+earlier runs. So each run, **actually inspect the live output** of existing
+universities (query the API / open the page) against the miss list before
+concluding any of them is gold. Trusting your own prior completion is how broken
+profiles stay broken.
+
 ### 3. Discover the university's real structure (never invent it)
 - Resolve the official name + **UNITID** (College Scorecard / IPEDS key). No UNITID →
   flag for manual mapping and skip.
@@ -236,9 +293,16 @@ the one thing this routine must NOT do.**
   program count as the target completeness check — getting ~15-20 when the
   university offers ~100 means structure discovery is incomplete; keep going (or
   resume next run) until the set is the real catalog (peer count, cf. MIT's 65).
-- Dedupe; assign stable slugs (`<univ>-<program>-<degree>`); map each program to its
-  owning school by name. If a school/program can't be confirmed officially, **do not
-  add it.**
+  **Each program needs its REAL field-of-study NAME** ("Bachelor of Arts in
+  Economics"), captured from the catalog — never a bare degree abbreviation or a
+  generic stub (miss #2). An IPEDS CIP row gives you the *field* (the program
+  name), not just the credential level; if you can only see "BA — 47 majors" and
+  can't resolve the 47 major names, add the ones you CAN name and resume, rather
+  than minting 47 identical "BA" rows.
+- Dedupe (by real name, not just slug); assign stable slugs
+  (`<univ>-<field>-<degree>`); map each program to its owning school by name. If a
+  school/program — or its real name — can't be confirmed officially, **do not add
+  it.**
 
 ### 4. Enrich the institution FIRST (parent before children)
 Fill every required institution-level field (rankings · report-card · admissions
