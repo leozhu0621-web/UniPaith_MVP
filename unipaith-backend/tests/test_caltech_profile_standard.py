@@ -37,7 +37,7 @@ def _institution_snapshot() -> dict:
     return {
         "description_text": c.DESCRIPTION,
         "student_body_size": c.UNDERGRAD_COUNT,
-        "media_gallery": [c._CAMPUS_PHOTO],
+        "media_gallery": [c.SCHOOL_OUTCOMES["campus_photos"][0]["url"]],
         "ranking_data": c.RANKING_DATA,
         "school_outcomes": school_outcomes,
         "content_sources": c._INSTITUTION_CONTENT,
@@ -124,6 +124,7 @@ def test_caltech_institution_is_gold_except_recorded_omission():
     ok, bad = _gaps_are_all_omitted("institution", res, omitted)
     assert ok, f"Unexpected institution section gaps: {bad}"
     assert c.SCHOOL_OUTCOMES.get("media_credit")
+    assert len(c.SCHOOL_OUTCOMES.get("campus_photos", [])) >= 4
     assert "private research university" in c.DESCRIPTION.lower()
 
 

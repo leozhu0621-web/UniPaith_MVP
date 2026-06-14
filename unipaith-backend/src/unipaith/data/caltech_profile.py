@@ -38,13 +38,18 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.caltech_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.profile_catalog_utils import (
+    disambiguate_program_name,
+    program_description,
+    validate_catalog,
+)
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "California Institute of Technology"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-14"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -193,6 +198,41 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Housing — Undergraduate Houses", "url": "https://housing.caltech.edu/"},
         ],
     },
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/"
+                "Arms_Courtyard_Caltech_2017.jpg/1920px-Arms_Courtyard_Caltech_2017.jpg"
+            ),
+            "credit": "Wikimedia Commons / Antony-22 (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/"
+                "Athenaeum_Caltech_2020c.jpg/1920px-Athenaeum_Caltech_2020c.jpg"
+            ),
+            "credit": "Wikimedia Commons / Antony-22 (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/"
+                "Caltech_Hall_2022b.jpg/1920px-Caltech_Hall_2022b.jpg"
+            ),
+            "credit": "Wikimedia Commons / Antony-22 (CC BY-SA 4.0)",
+        },
+        {
+            "url": "https://upload.wikimedia.org/wikipedia/commons/e/ef/Millikan_Library%2C_Caltech.jpg",
+            "credit": "Wikimedia Commons / Geographer (CC BY 1.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/"
+                "Robert_A._Millikan_Memorial_Library_at_Caltech.jpg/"
+                "1920px-Robert_A._Millikan_Memorial_Library_at_Caltech.jpg"
+            ),
+            "credit": "Wikimedia Commons / Canon.vs.nikon (CC BY-SA 3.0)",
+        },
+    ],
     "media_credit": "Wikimedia Commons / Antony-22 (CC BY-SA 4.0)",
     "flagship": {
         # CDS 2024-25 B1 grand total enrollment: 987 undergraduate + 1,443 graduate.
@@ -1003,36 +1043,131 @@ for _p in PROGRAMS:
         _p.setdefault("cip", _CIP_BY_SLUG[_p["slug"]])
     _p.setdefault("delivery_format", "in_person")
 
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "caltech-cs-bs": "Computing and Mathematical Sciences",
+    "caltech-cs-phd": "Computing and Mathematical Sciences",
+    "caltech-ee-bs": "Electrical Engineering",
+    "caltech-ee-phd": "Electrical Engineering",
+    "caltech-me-bs": "Mechanical Engineering",
+    "caltech-me-phd": "Mechanical Engineering",
+    "caltech-aph-bs": "Applied Physics",
+    "caltech-acm-bs": "Applied and Computational Mathematics",
+    "caltech-ids-bs": "Information and Data Sciences",
+    "caltech-mse-bs": "Materials Science",
+    "caltech-aero-phd": "Aeronautics",
+    "caltech-cms-phd": "Computing and Mathematical Sciences",
+    "caltech-biology-bs": "Biology and Biological Engineering",
+    "caltech-biology-phd": "Biology and Biological Engineering",
+    "caltech-bioengineering-bs": "Bioengineering",
+    "caltech-bioengineering-phd": "Bioengineering",
+    "caltech-cns-phd": "Computation and Neural Systems",
+    "caltech-chemistry-bs": "Chemistry",
+    "caltech-chemistry-phd": "Chemistry",
+    "caltech-cheme-bs": "Chemical Engineering",
+    "caltech-cheme-phd": "Chemical Engineering",
+    "caltech-gps-bs": "Geological and Planetary Sciences",
+    "caltech-planetary-phd": "Planetary Science",
+    "caltech-geophysics-phd": "Geophysics",
+    "caltech-ese-phd": "Environmental Science and Engineering",
+    "caltech-bem-bs": "Business, Economics, and Management",
+    "caltech-economics-bs": "Economics",
+    "caltech-polisci-bs": "Political Science",
+    "caltech-social-science-phd": "Social Science",
+    "caltech-physics-bs": "Physics",
+    "caltech-physics-phd": "Physics",
+    "caltech-math-bs": "Mathematics",
+    "caltech-math-phd": "Mathematics",
+    "caltech-astrophysics-bs": "Astrophysics",
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+# Federal CIP field titles → Caltech's published option / department names.
+_CIP_TO_DEPARTMENT: dict[str, str] = {
+    "Computer Science": "Computing and Mathematical Sciences",
+    "Information Science/Studies": "Information and Data Sciences",
+    "Engineering, General": "Engineering and Applied Science",
+    "Aerospace, Aeronautical, and Astronautical/Space Engineering": "Aeronautics",
+    "Biomedical/Medical Engineering": "Bioengineering",
+    "Chemical Engineering": "Chemical Engineering",
+    "Civil Engineering": "Civil Engineering",
+    "Electrical, Electronics, and Communications Engineering": "Electrical Engineering",
+    "Engineering Mechanics": "Mechanical Engineering",
+    "Engineering Physics": "Applied Physics",
+    "Environmental/Environmental Health Engineering": "Environmental Science and Engineering",
+    "Materials Engineering": "Materials Science",
+    "Mechanical Engineering": "Mechanical Engineering",
+    "Systems Engineering": "Mechanical Engineering",
+    "English Language and Literature, General": "English",
+    "Biology, General": "Biology and Biological Engineering",
+    "Biochemistry, Biophysics and Molecular Biology": "Biochemistry and Molecular Biophysics",
+    "Cell/Cellular Biology and Anatomical Sciences": "Biology and Biological Engineering",
+    "Microbiological Sciences and Immunology": "Biology and Biological Engineering",
+    "Genetics": "Biology and Biological Engineering",
+    "Neurobiology and Neurosciences": "Neuroscience",
+    "Mathematics": "Mathematics",
+    "Applied Mathematics": "Applied and Computational Mathematics",
+    "Mathematics and Computer Science": "Computing and Mathematical Sciences",
+    "Multi/Interdisciplinary Studies, Other": "Applied and Computational Mathematics",
+    "Philosophy": "Philosophy",
+    "Astronomy and Astrophysics": "Astrophysics",
+    "Chemistry": "Chemistry",
+    "Geological and Earth Sciences/Geosciences": "Geological and Planetary Sciences",
+    "Physics": "Physics",
+    "Economics": "Economics",
+    "Political Science and Government": "Political Science",
+    "Business/Managerial Economics": "Business, Economics, and Management",
+    "History": "History",
+}
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — map federal CIP titles to Caltech option names."""
+    mapped = _CIP_TO_DEPARTMENT.get(field_name, field_name)
+    if mapped.lower() in school.lower() or school.lower() in mapped.lower():
+        return school
+    return mapped
 
 
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+    for slug, school, name, dtype, cip, dur, fmt, _desc in _IPEDS_CATALOG:
         if slug in seen:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
         seen.add(slug)
+        dept = _department_for(name, school)
+        pname = disambiguate_program_name(name, dtype)
+        delivery = fmt if fmt in {"online", "hybrid"} else "in_person"
         out.append({
             "slug": slug,
             "school": school,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": dtype,
+            "department": dept,
             "cip": cip,
             "duration_months": dur,
-            "delivery_format": fmt,
-            "description": desc,
+            "delivery_format": delivery,
+            "description": program_description(
+                pname,
+                dtype,
+                school,
+                dept,
+                delivery_format=delivery,
+                university_short="Caltech",
+            ),
         })
     return out
 
 
 PROGRAMS += _build_catalog()
-PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
-_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
 # Full official degree names (program-page title in place of the short label).
 _FULL_NAME_BY_SLUG: dict[str, str] = {
@@ -1071,6 +1206,16 @@ _FULL_NAME_BY_SLUG: dict[str, str] = {
     "caltech-math-phd": "Doctor of Philosophy in Mathematics",
     "caltech-astrophysics-bs": "Bachelor of Science in Astrophysics",
 }
+for _p in PROGRAMS:
+    if _p["slug"] in _FULL_NAME_BY_SLUG:
+        _p["program_name"] = _FULL_NAME_BY_SLUG[_p["slug"]]
+
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise RuntimeError(f"Caltech catalog quality gate failed: {_catalog_errors}")
+
+PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
 # Official program/option home pages. The Computer Science option has its own
 # verified catalog page; the other options use their owning division's official
@@ -2301,13 +2446,9 @@ _REQ_GRAD = {
 }
 
 
-# Real Caltech campus photo (Arms Courtyard / the Caltech campus) — Wikimedia
-# Commons, CC BY-SA 4.0 (User:Antony-22), hotlinkable landscape JPG. Leads the
-# institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/"
-    "Arms_Courtyard_Caltech_2017.jpg/1920px-Arms_Courtyard_Caltech_2017.jpg"
-)
+# Real Caltech campus photo (Arms Courtyard) — leads the institution hero; see
+# ``SCHOOL_OUTCOMES["campus_photos"]`` for the full gallery.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
@@ -2460,8 +2601,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             else _SCHOOL_WEBSITE.get(spec["school"])
         )
         p.school_id = school_by_name[spec["school"]].id
+        p.department = spec.get("department")
         p.is_published = True
         p.catalog_source = "curated"
+        p.cip_code = spec.get("cip")
         p.delivery_format = spec.get("delivery_format", "in_person")
         # Always assign so a stale value on a pre-existing row is cleared.
         p.content_sources = _CS_CONTENT if slug == "caltech-cs-bs" else _program_content(spec)
