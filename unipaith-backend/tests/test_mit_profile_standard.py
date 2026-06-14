@@ -150,6 +150,25 @@ def test_every_node_has_content_sources():
         assert cs.get("news_rss") and cs.get("events_feed") and cs.get("keywords"), spec["slug"]
 
 
+def test_catalog_passes_validation():
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(m.PROGRAMS)
+    assert not errors, errors
+
+
+def test_institution_has_campus_photo_gallery():
+    photos = m.SCHOOL_OUTCOMES.get("campus_photos") or []
+    assert len(photos) >= 4, "MIT needs a 4–5 photo verified campus gallery"
+    for photo in photos:
+        assert photo.get("url") and photo.get("credit"), photo
+
+
+def test_every_program_has_department():
+    for spec in m.PROGRAMS:
+        assert spec.get("department"), f"{spec['slug']} missing department"
+
+
 def test_coverable_programs_have_external_reviews():
     """Coverable programs (MBA, MFin, MBAn, EECS, management, MArch, economics) must carry reviews."""
     coverable = [
