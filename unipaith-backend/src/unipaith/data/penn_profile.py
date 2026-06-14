@@ -53,13 +53,18 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.penn_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.profile_catalog_utils import (
+    disambiguate_program_name,
+    program_description,
+    validate_catalog,
+)
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Pennsylvania"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-14"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -193,6 +198,7 @@ SCHOOL_OUTCOMES: dict = {
                 "https://www.grasp.upenn.edu/"
             ),
             "Annenberg Public Policy Center": "https://www.annenbergpublicpolicycenter.org/",
+            "Penn Center for Innovation": "https://pci.upenn.edu/",
         },
     },
     "campus_life": {
@@ -205,8 +211,50 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Penn College Houses & Academic Services", "url": "https://www.collegehouses.upenn.edu/"},
         ],
     },
-    # Hero photo attribution (Wikimedia Commons file page verified 2026-06-11).
+    # Hero photo attribution (Wikimedia Commons file page verified 2026-06-14).
     "media_credit": "Wikimedia Commons / Detroit Publishing Co. (public domain)",
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/"
+                "College_Hall%2C_University_of_Pennsylvania%2C_Philadelphia%2C_PA.jpg/"
+                "1920px-College_Hall%2C_University_of_Pennsylvania%2C_Philadelphia%2C_PA.jpg"
+            ),
+            "credit": "Wikimedia Commons / Detroit Publishing Co. (public domain)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/"
+                "University_of_Pennsylvania_Campus_20240528.jpg/"
+                "1920px-University_of_Pennsylvania_Campus_20240528.jpg"
+            ),
+            "credit": "Wikimedia Commons / 颐园居 (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/"
+                "Benjamin_Franklin_statue_in_front_of_College_Hall.JPG/"
+                "1920px-Benjamin_Franklin_statue_in_front_of_College_Hall.JPG"
+            ),
+            "credit": "Wikimedia Commons / MatthewMarcucci (public domain)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/"
+                "Gateway_to_Campus-_University_of_Pennsylvania_%289045354258%29.jpg/"
+                "1920px-Gateway_to_Campus-_University_of_Pennsylvania_%289045354258%29.jpg"
+            ),
+            "credit": "Wikimedia Commons / Library Company of Philadelphia (no restrictions)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/"
+                "Architecture_on_University_of_Pennsylvania_Campus_-_Philadelphia_-_Pennsylvania_-_01.jpg/"
+                "1920px-Architecture_on_University_of_Pennsylvania_Campus_-_Philadelphia_-_Pennsylvania_-_01.jpg"
+            ),
+            "credit": "Wikimedia Commons / Adam Jones, Ph.D. (CC BY-SA 3.0)",
+        },
+    ],
     "flagship": {
         # Penn "Facts" (Fall 2025): 29,384 total students (10,325 undergraduate + 14,006
         # graduate/professional full-time, plus part-time).
@@ -1060,34 +1108,100 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+for _ep in PROGRAMS:
+    _ep.setdefault("delivery_format", "in_person")
+
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "penn-wharton-mba": "The Wharton School",
+    "penn-wharton-economics-bs": "The Wharton School",
+    "penn-computer-science-bse": "Department of Computer and Information Science",
+    "penn-bioengineering-bse": "Department of Bioengineering",
+    "penn-mechanical-engineering-bse": (
+        "Department of Mechanical Engineering and Applied Mechanics"
+    ),
+    "penn-nursing-bsn": "School of Nursing",
+    "penn-economics-ba": "Department of Economics",
+    "penn-biology-ba": "Department of Biology",
+    "penn-philosophy-ba": "Department of Philosophy",
+    "penn-political-science-ba": "Department of Political Science",
+    "penn-ppe-ba": "Program in Philosophy, Politics and Economics",
+    "penn-mathematics-ba": "Department of Mathematics",
+    "penn-psychology-ba": "Department of Psychology",
+    "penn-english-ba": "Department of English",
+    "penn-chemistry-ba": "Department of Chemistry",
+    "penn-physics-ba": "Department of Physics and Astronomy",
+    "penn-md": "Perelman School of Medicine",
+    "penn-jd": "University of Pennsylvania Carey Law School",
+    "penn-dmd": "School of Dental Medicine",
+    "penn-vmd": "School of Veterinary Medicine",
+    "penn-march": "Department of Architecture",
+    "penn-msw": "School of Social Policy and Practice",
+    "penn-gse-higher-education-msed": "Graduate School of Education",
+    "penn-communication-phd": "Annenberg School for Communication",
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
 
 
+def _delivery_format(raw: str) -> str:
+    """Normalize IPEDS delivery labels to the platform's canonical values."""
+    if raw == "in_person":
+        return "on_campus"
+    return raw
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — the CIP field title unless it duplicates the school name."""
+    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+        return school
+    return field_name
+
+
 def _build_catalog() -> list[dict]:
-    """Append breadth-first program nodes from the IPEDS completions-cip-6 catalog."""
+    """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+    for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
         if slug in seen:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
         seen.add(slug)
+        dept = _department_for(field_name, school)
+        delivery = _delivery_format(fmt)
+        pname = disambiguate_program_name(field_name, dtype)
         out.append({
             "slug": slug,
             "school": school,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": dtype,
+            "department": dept,
             "cip": cip,
             "duration_months": dur,
-            "delivery_format": fmt,
-            "description": desc,
+            "delivery_format": delivery,
+            "description": program_description(
+                pname,
+                dtype,
+                school,
+                dept,
+                delivery_format=delivery,
+                university_short="Penn",
+            ),
         })
     return out
 
 
 PROGRAMS += _build_catalog()
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise RuntimeError(f"Penn catalog quality gate failed: {_catalog_errors}")
+for _p in PROGRAMS:
+    _p["delivery_format"] = _delivery_format(_p.get("delivery_format", "in_person"))
+
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
@@ -3198,11 +3312,7 @@ _DEADLINE_BY_SLUG: dict[str, date | None] = {
 
 # Real Penn campus photo (College Hall) — Wikimedia Commons, hotlinkable landscape JPG
 # (canonical thumbnail URL verified via the Commons API). Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/"
-    "College_Hall%2C_University_of_Pennsylvania%2C_Philadelphia%2C_PA.jpg/"
-    "1920px-College_Hall%2C_University_of_Pennsylvania%2C_Philadelphia%2C_PA.jpg"
-)
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
@@ -3361,9 +3471,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # Website: verified department page where available, else the owning school's site.
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
+        p.department = spec.get("department")
         p.is_published = True
         p.catalog_source = "curated"
-        p.delivery_format = spec.get("delivery_format", "in_person")
+        p.delivery_format = _delivery_format(spec.get("delivery_format", "in_person"))
         if slug == _FLAGSHIP:
             p.content_sources = _WHARTON_MBA_CONTENT
         else:

@@ -100,7 +100,7 @@ def _program_snapshot(slug: str) -> dict:
         "program_name": p._FULL_NAME_BY_SLUG.get(slug) or spec["program_name"],
         "degree_type": spec["degree_type"],
         "duration_months": spec.get("duration_months"),
-        "delivery_format": spec.get("delivery_format", "in_person"),
+        "delivery_format": spec.get("delivery_format", "on_campus"),
         "description_text": spec["description"],
         "website_url": p._WEBSITE_BY_SLUG.get(slug) or p._SCHOOL_WEBSITE.get(spec["school"]),
         "highlights": p._HL_BY_SLUG.get(slug) or p._HL_BASELINE,
@@ -225,6 +225,13 @@ def test_every_school_owns_at_least_one_program():
         by_school[spec["school"]] += 1
     empty = [name for name, n in by_school.items() if n == 0]
     assert not empty, f"schools with no program: {empty}"
+
+
+def test_catalog_passes_quality_gate():
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(p.PROGRAMS)
+    assert not errors, errors
 
 
 def test_every_program_maps_to_a_real_unit_with_unique_slug():
