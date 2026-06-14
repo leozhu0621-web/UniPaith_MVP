@@ -98,7 +98,9 @@ Concrete misses observed in the first runs — each broke a real page:
      program is REAL only when (a) its name disambiguates the credential
      ("Bachelor of Arts in Anthropology", "PhD in Anthropology" — never two rows
      both named "Anthropology"), (b) `department` names the real owning
-     school/department (never null, never "Programs"), and (c) the description says
+     school/department (never "Programs", never a CIP-taxonomy/credential
+     placeholder — null is acceptable only when the real owning unit is genuinely
+     unverifiable, matching the MIT gold reference), and (c) the description says
      something field-SPECIFIC beyond the degree label. Resolve each CIP row to its
      real per-degree program(s) or omit it — never emit a null-department,
      template-described, name-colliding stub per CIP×level.
@@ -121,9 +123,10 @@ Concrete misses observed in the first runs — each broke a real page:
      "Computer Science") is fine; the defect is the **verbatim CIP taxonomy
      phrase**, a **degree/credential abbreviation** ("MPH"/"MS"/"PhD"), or a
      **mechanically title-cased raw token** standing in for a real unit. If you
-     cannot verify the real owning unit, the existing never-null/verify-output
-     rule still applies — resolve it, don't paper over it with a CIP/credential
-     placeholder, which is the program-name padding wearing a department costume.
+     cannot verify the real owning unit, leave `department` null (matching the MIT
+     gold reference and the `required=False` manifest field) — never paper over it
+     with a CIP/credential placeholder, which is the program-name padding wearing a
+     department costume.
    - **Breadth-first, then a MANDATORY depth pass — "defer" is not "abandon".**
      Create EVERY program node with verified *basics* first (full name,
      degree_type, `delivery_format`, department, description, website, tuition —
@@ -221,17 +224,19 @@ Concrete misses observed in the first runs — each broke a real page:
    output a student would see:
    - **Programs:** spot-check the program list — are names real and distinct (no
      `"BA"`-style stubs, no duplicate names, no `"Programs"` department, **no
-     null/blank `department`, no `department` that is a verbatim federal CIP
-     taxonomy phrase ("Communication Disorders Sciences and Services", "Area
-     Studies") or a degree/credential abbreviation ("MPH"/"MS"), and no
-     `"{field} — a {Univ} {degree_type} program offered through …"` template
-     descriptions**)? A list with repeated generic names, blank departments, a
-     department that is a CIP taxonomy phrase or a credential, or a description
-     that only swaps the field into a degree-type sentence = not done — that is
-     CIP×award-level padding (miss #2), not breadth. Run the catalog through this
-     check programmatically (count duplicate `program_name`s, null `department`s,
-     departments matching a CIP taxonomy phrase or a degree abbreviation, and
-     template descriptions) before shipping — a padded catalog must FAIL the run.
+     `department` that is a verbatim federal CIP taxonomy phrase ("Communication
+     Disorders Sciences and Services", "Area Studies") or a degree/credential
+     abbreviation ("MPH"/"MS"), and no `"{field} — a {Univ} {degree_type} program
+     offered through …"` template descriptions**)? A list with repeated generic
+     names, a department that is a CIP taxonomy phrase or a credential, or a
+     description that only swaps the field into a degree-type sentence = not done —
+     that is CIP×award-level padding (miss #2), not breadth. (Null `department` is
+     acceptable when the real owning unit is unverifiable — matching the MIT gold
+     reference and the `required=False` manifest field — but a CIP/credential
+     placeholder is not.) Run the catalog through this check programmatically (count
+     duplicate `program_name`s, departments matching a CIP taxonomy phrase or a
+     degree abbreviation, and template descriptions) before shipping — a padded
+     catalog must FAIL the run.
    - **Feeds:** a `content_sources` feed counts only if it actually FETCHES ≥1
      item. **Confirm the feed produces** (the news_rss/events_feed resolves and
      returns entries) before trusting it — set a feed you proved works, not a URL
