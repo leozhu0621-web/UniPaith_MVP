@@ -6,8 +6,8 @@ specific schools appear. Severity: **critical** (catalog is mostly fabricated /
 page is broken) · **high** (real but materially incomplete) · **medium** (never
 enriched / shallow). Evidence is from the live API (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-14 (grader run 1). Method: `/programs?institution_id=` full
-paginate + `/institutions/{id}` + `/institutions/{id}/posts` across all 28 insts._
+_Last graded: 2026-06-14 (grader run 1). UCSD catalog repair shipped 2026-06-14
+(ucsdprof2): 194 programs, 0 duplicate names, 0 null departments, 0 template desc._
 
 ---
 
@@ -25,19 +25,19 @@ Ranked by % padded (worst first):
 
 | # | University | Listed progs | % padded | Notes |
 |---|---|---|---|---|
-| 1 | University of California-San Diego | 194 | **97%** | merged #524 (most recent) — 189 template desc, 192 null dept, 159 dup names |
-| 2 | Purdue University-Main Campus | 310 | **95%** | merged #523 — 294 template, 300 null dept, 255 dup; posts=10 |
-| 3 | Johns Hopkins University | 249 | **94%** | merged #521 — 235 template, 239 null dept, 213 dup |
-| 4 | Northwestern University | 308 | **94%** | merged #522 — 291 template, 297 null dept, 260 dup |
-| 5 | Columbia University | 263 | **89%** | 233 template, 263 null dept, 188 dup |
-| 6 | Stanford University | 188 | **84%** | + **posts=0** (dead feed, miss #9) — 158 template, 188 null dept |
-| 7 | University of California-Berkeley | 269 | **84%** | 170 template, 269 null dept, 226 dup |
-| 8 | Princeton University | 119 | **82%** | 97 template, 119 null dept, 98 dup |
-| 9 | University of Chicago | 124 | **81%** | 101 template, 124 null dept, 56 dup |
-| 10 | Harvard University | 353 | **80%** | 281 template, 353 null dept, 249 dup |
-| 11 | Cornell University | 275 | **77%** | 158 template, 275 null dept, 213 dup |
-| 12 | University of Pennsylvania | 251 | **76%** | 167 template, 251 null dept, 191 dup |
-| 13 | California Institute of Technology | 91 | **63%** | 57 template, 91 null dept, 48 dup |
+| ~~1~~ | ~~University of California-San Diego~~ | ~~194~~ | ~~**97%**~~ | **REPAIRED 2026-06-14** (ucsdprof2) — credential-disambiguated names + departments |
+| 1 | Purdue University-Main Campus | 310 | **95%** | merged #523 — 294 template, 300 null dept, 255 dup; posts=10 |
+| 2 | Johns Hopkins University | 249 | **94%** | merged #521 — 235 template, 239 null dept, 213 dup |
+| 3 | Northwestern University | 308 | **94%** | merged #522 — 291 template, 297 null dept, 260 dup |
+| 4 | Columbia University | 263 | **89%** | 233 template, 263 null dept, 188 dup |
+| 5 | Stanford University | 188 | **84%** | + **posts=0** (dead feed, miss #9) — 158 template, 188 null dept |
+| 6 | University of California-Berkeley | 269 | **84%** | 170 template, 269 null dept, 226 dup |
+| 7 | Princeton University | 119 | **82%** | 97 template, 119 null dept, 98 dup |
+| 8 | University of Chicago | 124 | **81%** | 101 template, 124 null dept, 56 dup |
+| 9 | Harvard University | 353 | **80%** | 281 template, 353 null dept, 249 dup |
+| 10 | Cornell University | 275 | **77%** | 158 template, 275 null dept, 213 dup |
+| 11 | University of Pennsylvania | 251 | **76%** | 167 template, 251 null dept, 191 dup |
+| 12 | California Institute of Technology | 91 | **63%** | 57 template, 91 null dept, 48 dup |
 
 _First seen: 2026-06-14._
 
@@ -89,7 +89,7 @@ catalogs themselves are sound.)
 ---
 
 ### Notes for the enricher
-- **Top open entry first.** UC San Diego (CRITICAL #1) before any new university.
+- **Top open entry first.** Purdue (CRITICAL #1) before any new university.
 - A `_standard` stamp does NOT mean a node is gold — every padded catalog above is
   stamped. Re-audit the live output (SKILL.md step 2 re-audit clause).
 - The padding came from reading "full IPEDS/Scorecard catalog" as "one row per
