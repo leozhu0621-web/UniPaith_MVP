@@ -30,6 +30,11 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.profile_catalog_utils import (
+    disambiguate_program_name,
+    program_description,
+    validate_catalog,
+)
 from unipaith.data.stanford_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
@@ -37,7 +42,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Stanford University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-14"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -560,9 +565,12 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
 
 # ── Per-node content feeds (so EVERY school + program has a populated Events &
 # Updates tab, not just the GSB/MBA flagship) ─────────────────────────────────
-# Stanford Report RSS (news.stanford.edu/feed/) carries media:content cover images.
-# Campus events use the official Stanford Events iCal (verified in feedsbackfill1).
-_STANFORD_NEWS_RSS = "https://news.stanford.edu/feed/"
+# Stanford Report RSS (news.stanford.edu/feed/) is Cloudflare-gated to server
+# fetches (HTTP 403, verified 2026-06-14), so every node routes through the
+# verified, server-fetchable Stanford Law School RSS below — filtered by school/
+# program keywords (the Columbia/MIT pattern). Campus events use the official
+# Stanford Events iCal (verified 2026-06-14).
+_LAW_RSS = "https://law.stanford.edu/feed/"
 _STANFORD_EVENTS_ICS = {"url": "https://events.stanford.edu/calendar.ics", "type": "ical"}
 _SOCIAL_STANFORD = {
     "instagram": "https://www.instagram.com/stanford/",
@@ -573,8 +581,8 @@ _SOCIAL_STANFORD = {
 }
 
 _INSTITUTION_CONTENT: dict = {
-    "news_rss": _STANFORD_NEWS_RSS,
-    "news_url": "https://news.stanford.edu/",
+    "news_rss": _LAW_RSS,
+    "news_url": "https://www.stanford.edu/",
     "news_curated": False,
     "events_feed": dict(_STANFORD_EVENTS_ICS),
     "social": dict(_SOCIAL_STANFORD),
@@ -607,9 +615,9 @@ _KW_STOP = {
 
 
 def _school_content(name: str) -> dict:
-    """A school's content_sources: Stanford Report RSS + events calendar filtered by keywords."""
+    """A school's content_sources: verified RSS + events calendar filtered by keywords."""
     return {
-        "news_rss": _STANFORD_NEWS_RSS,
+        "news_rss": _LAW_RSS,
         "news_url": _SCHOOL_WEBSITE.get(name, "https://www.stanford.edu"),
         "news_curated": False,
         "events_feed": dict(_STANFORD_EVENTS_ICS),
@@ -635,7 +643,7 @@ def _program_content(spec: dict) -> dict:
 # Stanford GSB keyword-relevant feeds + official social links (the standard-setting
 # school, mirroring how MIT Sloan carries its own feeds in the reference instance).
 _GSB_CONTENT: dict = {
-    "news_rss": "https://www.gsb.stanford.edu/insights/rss.xml",
+    "news_rss": _LAW_RSS,
     "news_url": "https://www.gsb.stanford.edu/insights",
     "news_curated": False,
     "events_feed": dict(_STANFORD_EVENTS_ICS),
@@ -651,7 +659,7 @@ _GSB_CONTENT: dict = {
 
 # MBA keyword-relevant feeds (the flagship program), inheriting GSB's socials.
 _MBA_CONTENT: dict = {
-    "news_rss": "https://www.gsb.stanford.edu/insights/rss.xml",
+    "news_rss": _LAW_RSS,
     "news_url": "https://www.gsb.stanford.edu/programs/mba",
     "news_curated": False,
     "events_feed": dict(_STANFORD_EVENTS_ICS),
@@ -935,36 +943,91 @@ for _p in PROGRAMS:
         _p["cip"] = _CIP_BY_SLUG[_p["slug"]]
     _p.setdefault("delivery_format", "in_person")
 
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "stanford-cs-ms": "Computer Science",
+    "stanford-cs-bs": "Computer Science",
+    "stanford-cs-phd": "Computer Science",
+    "stanford-ee-ms": "Electrical Engineering",
+    "stanford-me-ms": "Mechanical Engineering",
+    "stanford-me-bs": "Mechanical Engineering",
+    "stanford-cee-ms": "Civil and Environmental Engineering",
+    "stanford-aa-ms": "Aeronautics and Astronautics",
+    "stanford-bioe-bs": "Bioengineering",
+    "stanford-mse-ms": "Management Science and Engineering",
+    "stanford-economics-bs": "Economics",
+    "stanford-economics-phd": "Economics",
+    "stanford-human-biology-bs": "Human Biology",
+    "stanford-symbolic-systems-bs": "Symbolic Systems",
+    "stanford-mathematics-bs": "Mathematics",
+    "stanford-political-science-bs": "Political Science",
+    "stanford-international-relations-bs": "International Relations",
+    "stanford-psychology-bs": "Psychology",
+    "stanford-english-bs": "English",
+    "stanford-earth-systems-bs": "Earth Systems",
+    "stanford-energy-science-engineering-ms": "Energy Science and Engineering",
+    "stanford-mba": _GSB,
+    "stanford-msx": _GSB,
+    "stanford-gsb-phd": _GSB,
+    "stanford-education-ms": _GSE,
+    "stanford-education-phd": _GSE,
+    "stanford-jd": _LAW,
+    "stanford-md": _MED,
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _delivery_format(raw: str) -> str:
+    """Normalize IPEDS delivery labels to the platform's canonical values."""
+    if raw == "in_person":
+        return "on_campus"
+    return raw
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — the CIP field title unless it duplicates the school name."""
+    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+        return school
+    return field_name
 
 
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+    for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
         if slug in seen:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
         seen.add(slug)
+        dept = _department_for(field_name, school)
+        delivery = _delivery_format(fmt)
+        pname = disambiguate_program_name(field_name, dtype)
         out.append({
             "slug": slug,
             "school": school,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": dtype,
+            "department": dept,
             "cip": cip,
             "duration_months": dur,
-            "delivery_format": fmt,
-            "description": desc,
+            "delivery_format": delivery,
+            "description": program_description(
+                pname,
+                dtype,
+                school,
+                dept,
+                delivery_format=delivery,
+                university_short="Stanford",
+            ),
         })
     return out
 
-
-PROGRAMS += _build_catalog()
-PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
-_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
 # Full official degree names (program-page title in place of the short label).
 _FULL_NAME_BY_SLUG: dict[str, str] = {
@@ -997,6 +1060,19 @@ _FULL_NAME_BY_SLUG: dict[str, str] = {
     "stanford-jd": "Juris Doctor",
     "stanford-md": "Doctor of Medicine",
 }
+for _p in PROGRAMS:
+    if _p["slug"] in _FULL_NAME_BY_SLUG:
+        _p["program_name"] = _FULL_NAME_BY_SLUG[_p["slug"]]
+
+PROGRAMS += _build_catalog()
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise RuntimeError(f"Stanford catalog quality gate failed: {_catalog_errors}")
+for _p in PROGRAMS:
+    _p["delivery_format"] = _delivery_format(_p.get("delivery_format", "in_person"))
+PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
+
 for _p in PROGRAMS:
     _FULL_NAME_BY_SLUG.setdefault(_p["slug"], _p["program_name"])
 
@@ -2477,6 +2553,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.degree_type = spec["degree_type"]
         p.duration_months = spec.get("duration_months")
         p.description_text = spec["description"]
+        p.department = spec.get("department")
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
         p.is_published = True
