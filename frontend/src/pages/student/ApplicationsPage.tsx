@@ -9,7 +9,15 @@ import EmptyState from '../../components/ui/EmptyState'
 import QueryError from '../../components/ui/QueryError'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { PageContainer, PageHeader } from '../../components/student/density'
+import { useCountUp } from '../../hooks/useCountUp'
 import { formatDate } from '../../utils/format'
+
+/** Bucket counter numeral — counts up on mount, consistent with the My Space
+ *  home pipeline tiles (reduced-motion → instant via useCountUp). */
+function BucketCount({ value }: { value: number }) {
+  const n = useCountUp(value)
+  return <div className="text-lg font-semibold text-foreground">{n}</div>
+}
 import { STATUS_COLORS } from '../../utils/constants'
 import { FileText, Star, ChevronRight, CalendarClock, PartyPopper, ArrowRight, Mail } from 'lucide-react'
 import DecisionComparison from './apply/offer/DecisionComparison'
@@ -431,7 +439,7 @@ export default function ApplicationsPage() {
                 : 'border-border hover:border-secondary/40'
             }`}
           >
-            <div className="text-lg font-semibold text-foreground">{counts[b]}</div>
+            <BucketCount value={counts[b]} />
             <div className="text-[11px] leading-tight text-foreground">{BUCKET_LABELS[b]}</div>
           </button>
         ))}
