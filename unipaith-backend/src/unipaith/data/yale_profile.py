@@ -210,6 +210,49 @@ SCHOOL_OUTCOMES: dict = {
             },
         ],
     },
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/"
+                "Harkness_Tower_-_Yale_University_%2854106458290%29.jpg/"
+                "1920px-Harkness_Tower_-_Yale_University_%2854106458290%29.jpg"
+            ),
+            "credit": "Wikimedia Commons / Ajay Suresh (CC BY 2.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/"
+                "Yale_University_Library_-_Sterling_Memorial_Library_%2854105136782%29.jpg/"
+                "1920px-Yale_University_Library_-_Sterling_Memorial_Library_%2854105136782%29.jpg"
+            ),
+            "credit": "Wikimedia Commons / Ajay Suresh (CC BY 2.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/"
+                "Beinecke_Rare_Book_%26_Manuscript_Library.jpg/"
+                "1920px-Beinecke_Rare_Book_%26_Manuscript_Library.jpg"
+            ),
+            "credit": "Wikimedia Commons / Karlfonza (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/"
+                "Woolsey_Hall_-_Yale_University_%2854106457850%29.jpg/"
+                "1920px-Woolsey_Hall_-_Yale_University_%2854106457850%29.jpg"
+            ),
+            "credit": "Wikimedia Commons / Ajay Suresh (CC BY 2.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/"
+                "Yale_Campus_Green_%284138541531%29.jpg/"
+                "1920px-Yale_Campus_Green_%284138541531%29.jpg"
+            ),
+            "credit": "Wikimedia Commons / Francisco Anzola (CC BY 2.0)",
+        },
+    ],
+    # Harkness Tower leads the hero; see ``campus_photos[0]``.
     "media_credit": "Wikimedia Commons / Ajay Suresh (CC BY 2.0)",
     "flagship": {
         # "Yale Facts": 15,657 total students — 6,667 undergraduate + 8,990 graduate
@@ -2586,13 +2629,8 @@ def _requirements_for(spec: dict) -> dict:
     return dict(_REQ_GRAD_GENERIC)
 
 
-# Real Yale campus photo (Harkness Tower) — Wikimedia Commons, CC BY 2.0, hotlinkable
-# landscape JPG (verified HTTP 200). Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/"
-    "Harkness_Tower_-_Yale_University_%2854106458290%29.jpg/"
-    "1920px-Harkness_Tower_-_Yale_University_%2854106458290%29.jpg"
-)
+# Harkness Tower leads the institution hero; see ``SCHOOL_OUTCOMES["campus_photos"]``.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
