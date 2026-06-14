@@ -53,13 +53,18 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.profile_catalog_utils import (
+    disambiguate_program_name,
+    program_description,
+    validate_catalog,
+)
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Yale University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-14"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1181,6 +1186,49 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+# Explicit flagship programs — credential-disambiguated names + real departments.
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "yale-economics-bs": "Economics",
+    "yale-computer-science-bs": "Computer Science",
+    "yale-political-science-bs": "Political Science",
+    "yale-history-bs": "History",
+    "yale-mcdb-bs": "Molecular, Cellular, and Developmental Biology",
+    "yale-psychology-bs": "Psychology",
+    "yale-global-affairs-bs": "Global Affairs",
+    "yale-english-bs": "English",
+    "yale-statistics-bs": "Statistics and Data Science",
+    "yale-mathematics-bs": "Mathematics",
+    "yale-mba": "Yale School of Management",
+    "yale-environmental-management-mem": "Yale School of the Environment",
+    "yale-environmental-science-mesc": "Yale School of the Environment",
+    "yale-public-health-mph": "Yale School of Public Health",
+    "yale-physician-associate-mmsc": "Yale School of Medicine",
+    "yale-nursing-msn": "Yale School of Nursing",
+    "yale-divinity-mdiv": "Yale Divinity School",
+    "yale-architecture-march": "Yale School of Architecture",
+    "yale-art-mfa": "Yale School of Art",
+    "yale-music-mm": "Yale School of Music",
+}
+_EXPLICIT_FULL_NAMES: dict[str, str] = {
+    "yale-economics-bs": "Bachelor of Arts in Economics",
+    "yale-computer-science-bs": "Bachelor of Science in Computer Science",
+    "yale-political-science-bs": "Bachelor of Arts in Political Science",
+    "yale-history-bs": "Bachelor of Arts in History",
+    "yale-mcdb-bs": (
+        "Bachelor of Science in Molecular, Cellular, and Developmental Biology"
+    ),
+    "yale-psychology-bs": "Bachelor of Arts in Psychology",
+    "yale-global-affairs-bs": "Bachelor of Arts in Global Affairs",
+    "yale-english-bs": "Bachelor of Arts in English",
+    "yale-statistics-bs": "Bachelor of Arts in Statistics and Data Science",
+    "yale-mathematics-bs": "Bachelor of Arts in Mathematics",
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+    if _p["slug"] in _EXPLICIT_FULL_NAMES:
+        _p["program_name"] = _EXPLICIT_FULL_NAMES[_p["slug"]]
+
 # ── Full catalog (breadth) ─────────────────────────────────────────────────
 # The explicit PROGRAMS above carry rich, individually-sourced detail. The blocks below
 # complete Yale's *published* degree catalog with verified BASICS (full name, degree,
@@ -1210,6 +1258,24 @@ def _slugify(text: str) -> str:
 
 
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
+_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — the field title unless it duplicates the school name."""
+    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+        return school
+    return field_name
+
+
+def _ug_program_name(field_name: str, degree_label: str) -> str:
+    """Disambiguate Yale College majors by credential (B.A. vs B.S.)."""
+    if degree_label.startswith("B.S."):
+        return f"Bachelor of Science in {field_name}"
+    if "B.A. or B.S." in degree_label:
+        return f"Bachelor's in {field_name}"
+    return f"Bachelor of Arts in {field_name}"
+
 
 # Yale College majors NOT already represented above (the existing 10 carry rich detail).
 # (name, degree_label, owning_school). Engineering / applied-physics majors are owned by
@@ -1488,19 +1554,25 @@ def _build_catalog() -> list[dict]:
         if slug in seen:
             continue
         seen.add(slug)
-        via = (
-            " offered through Yale's School of Engineering & Applied Science"
-            if school == _SEAS
-            else ""
-        )
+        dept = _department_for(name, school)
+        pname = _ug_program_name(name, label)
+        fmt = "in_person"
         out.append({
             "slug": slug,
             "school": school,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": "bachelors",
+            "department": dept,
             "duration_months": 48,
-            "delivery_format": "in_person",
-            "description": f"{name} — an undergraduate {label} major in Yale College{via}.",
+            "delivery_format": fmt,
+            "description": program_description(
+                pname,
+                "bachelors",
+                school,
+                dept,
+                delivery_format=fmt,
+                university_short="Yale",
+            ),
         })
     for name, dtype, school, dur, fmt, desc in _GRAD_PROGRAMS:
         suffix = {"phd": "phd", "professional": "prof", "certificate": "cert"}.get(dtype, "ms")
@@ -1513,6 +1585,7 @@ def _build_catalog() -> list[dict]:
             "school": school,
             "program_name": name,
             "degree_type": dtype,
+            "department": school,
             "duration_months": dur,
             "delivery_format": fmt,
             "description": desc,
@@ -1523,37 +1596,48 @@ def _build_catalog() -> list[dict]:
         if slug in seen:
             continue
         seen.add(slug)
+        dept = _department_for(name, _GSAS)
+        pname = disambiguate_program_name(name, dtype)
+        fmt = "in_person"
         if dtype == "phd":
             desc = (
-                f"{name} — a Ph.D. program of the Yale Graduate School of Arts and Sciences, "
-                "with full funding for admitted doctoral students."
+                f"{pname} is a doctoral program at Yale's Graduate School of Arts and "
+                "Sciences, with full funding for admitted doctoral students."
             )
         else:
-            desc = (
-                f"{name} — a terminal master's program of the Yale Graduate School of Arts "
-                "and Sciences."
+            desc = program_description(
+                pname,
+                dtype,
+                _GSAS,
+                dept,
+                delivery_format=fmt,
+                university_short="Yale",
             )
         out.append({
             "slug": slug,
             "school": _GSAS,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": dtype,
+            "department": dept,
             "duration_months": 60 if dtype == "phd" else 24,
-            "delivery_format": "in_person",
+            "delivery_format": fmt,
             "description": desc,
         })
     return out
 
 
 PROGRAMS += _build_catalog()
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise RuntimeError(f"Yale catalog quality gate failed: {_catalog_errors}")
 
-# Ensure every explicit program also carries a delivery_format (all residential).
+# Ensure every program carries a delivery_format (all residential unless noted).
 for _p in PROGRAMS:
     _p.setdefault("delivery_format", "in_person")
 
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
-# Full official program names (program-page title); equal to the program name here.
+# Full official program names (program-page title).
 _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROGRAMS}
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
@@ -2663,6 +2747,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             session.add(p)
         p.program_name = _FULL_NAME_BY_SLUG.get(slug) or spec["program_name"]
         p.degree_type = spec["degree_type"]
+        p.department = spec.get("department")
         p.duration_months = spec.get("duration_months")
         p.description_text = spec["description"]
         # Website: verified program/department page where available, else the owning
