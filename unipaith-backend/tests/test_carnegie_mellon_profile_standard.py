@@ -35,7 +35,7 @@ def _institution_snapshot() -> dict:
     return {
         "description_text": c.DESCRIPTION,
         "student_body_size": c.UNDERGRAD_COUNT,
-        "media_gallery": [c._CAMPUS_PHOTO],
+        "media_gallery": [c.SCHOOL_OUTCOMES["campus_photos"][0]["url"]],
         "ranking_data": c.RANKING_DATA,
         "school_outcomes": so,
         "content_sources": c._INSTITUTION_CONTENT,
@@ -121,6 +121,14 @@ def test_institution_is_gold_except_recorded_omissions():
     assert c.SCHOOL_OUTCOMES.get("media_credit")
     assert "school_outcomes.employed_or_continuing_ed" in omitted
     assert "school_outcomes.top_employer_industries" in omitted
+
+
+def test_institution_has_campus_photo_gallery():
+    photos = c.SCHOOL_OUTCOMES.get("campus_photos") or []
+    assert len(photos) >= 4, "CMU needs a 4–5 photo verified campus gallery"
+    for photo in photos:
+        assert photo.get("url") and photo.get("credit"), photo
+    assert c._CAMPUS_PHOTO == photos[0]["url"]
 
 
 def test_all_seven_schools_done():

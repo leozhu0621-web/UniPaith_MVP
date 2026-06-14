@@ -29,7 +29,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Carnegie Mellon University"
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-14"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -172,6 +172,51 @@ SCHOOL_OUTCOMES: dict = {
     },
     "location": {"lat": 40.4433, "lng": -79.9436},
     "campus_basics": {"location": "Pittsburgh, Pennsylvania"},
+    # Verified outdoor campus scenes — Wikimedia Commons API extmetadata (Artist +
+    # LicenseShortName), landscape ≥1920px thumburl. Hero uses [0]; gallery lightbox
+    # cycles the rest.
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/"
+                "Hamerschlag_Hall_at_Carnegie_Mellon_University.jpg/"
+                "1920px-Hamerschlag_Hall_at_Carnegie_Mellon_University.jpg"
+            ),
+            "credit": "Wikimedia Commons / Jiuguang Wang (CC BY-SA 2.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/"
+                "Carnegie_Mellon_The_Cut_Planet.JPG/"
+                "1920px-Carnegie_Mellon_The_Cut_Planet.JPG"
+            ),
+            "credit": "Wikimedia Commons / 燃灯 (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/"
+                "Carnegie_Mellon_University_East-West_walkway.jpg/"
+                "1920px-Carnegie_Mellon_University_East-West_walkway.jpg"
+            ),
+            "credit": "Wikimedia Commons / Dllu (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/"
+                "Carnegie_Mellon_University_from_Centre_Avenue%2C_2024-03-07.jpg/"
+                "1920px-Carnegie_Mellon_University_from_Centre_Avenue%2C_2024-03-07.jpg"
+            ),
+            "credit": "Wikimedia Commons / Cbaile19 (CC0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/"
+                "Carnegie_Mellon_University_Legacy_Plaza.jpg/"
+                "1920px-Carnegie_Mellon_University_Legacy_Plaza.jpg"
+            ),
+            "credit": "Wikimedia Commons / Dllu (CC BY-SA 4.0)",
+        },
+    ],
     "media_credit": "Wikimedia Commons / Jiuguang Wang (CC BY-SA 2.0)",
     "sources": [
         {
@@ -233,10 +278,8 @@ _INSTITUTION_CONTENT = {
     "social": dict(_SOCIAL_CMU),
 }
 
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/1/19/"
-    "Hamerschlag_Hall_at_Carnegie_Mellon_University.jpg"
-)
+# Hamerschlag Hall leads the institution hero; see ``SCHOOL_OUTCOMES["campus_photos"]``.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 # ── The seven real degree-granting colleges (official "Colleges & Schools") ────
 _SCS = "School of Computer Science"
