@@ -49,13 +49,18 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.princeton_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.profile_catalog_utils import (
+    disambiguate_program_name,
+    program_description,
+    validate_catalog,
+)
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Princeton University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-14"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -776,34 +781,145 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+# Explicit flagship programs — credential-disambiguated names + real departments.
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "princeton-computer-science-bs": "Computer Science",
+    "princeton-operations-research-bs": "Operations Research and Financial Engineering",
+    "princeton-mechanical-engineering-bs": "Mechanical and Aerospace Engineering",
+    "princeton-electrical-engineering-bs": "Electrical and Computer Engineering",
+    "princeton-civil-engineering-bs": "Civil and Environmental Engineering",
+    "princeton-chemical-engineering-bs": "Chemical and Biological Engineering",
+    "princeton-public-affairs-ab": "Public and International Affairs",
+    "princeton-public-affairs-mpa": "Princeton School of Public and International Affairs",
+    "princeton-english-bs": "English",
+    "princeton-philosophy-bs": "Philosophy",
+    "princeton-economics-bs": "Economics",
+    "princeton-politics-bs": "Politics",
+    "princeton-sociology-bs": "Sociology",
+    "princeton-anthropology-bs": "Anthropology",
+    "princeton-history-bs": "History",
+    "princeton-molecular-biology-bs": "Molecular Biology",
+    "princeton-psychology-bs": "Psychology",
+    "princeton-mathematics-bs": "Mathematics",
+    "princeton-eeb-bs": "Ecology and Evolutionary Biology",
+    "princeton-physics-bs": "Physics",
+    "princeton-chemistry-bs": "Chemistry",
+    "princeton-neuroscience-bs": "Neuroscience",
+}
+_EXPLICIT_FULL_NAMES: dict[str, str] = {
+    "princeton-computer-science-bs": "Bachelor of Science in Computer Science",
+    "princeton-operations-research-bs": (
+        "Bachelor of Science in Engineering in Operations Research and Financial Engineering"
+    ),
+    "princeton-mechanical-engineering-bs": (
+        "Bachelor of Science in Engineering in Mechanical and Aerospace Engineering"
+    ),
+    "princeton-electrical-engineering-bs": (
+        "Bachelor of Science in Engineering in Electrical and Computer Engineering"
+    ),
+    "princeton-civil-engineering-bs": (
+        "Bachelor of Science in Engineering in Civil and Environmental Engineering"
+    ),
+    "princeton-chemical-engineering-bs": (
+        "Bachelor of Science in Engineering in Chemical and Biological Engineering"
+    ),
+    "princeton-public-affairs-ab": "Bachelor of Arts in Public and International Affairs",
+    "princeton-english-bs": "Bachelor of Arts in English",
+    "princeton-philosophy-bs": "Bachelor of Arts in Philosophy",
+    "princeton-economics-bs": "Bachelor of Arts in Economics",
+    "princeton-politics-bs": "Bachelor of Arts in Politics",
+    "princeton-sociology-bs": "Bachelor of Arts in Sociology",
+    "princeton-anthropology-bs": "Bachelor of Arts in Anthropology",
+    "princeton-history-bs": "Bachelor of Arts in History",
+    "princeton-molecular-biology-bs": "Bachelor of Arts in Molecular Biology",
+    "princeton-psychology-bs": "Bachelor of Arts in Psychology",
+    "princeton-mathematics-bs": "Bachelor of Arts in Mathematics",
+    "princeton-eeb-bs": "Bachelor of Arts in Ecology and Evolutionary Biology",
+    "princeton-physics-bs": "Bachelor of Science in Physics",
+    "princeton-chemistry-bs": "Bachelor of Arts in Chemistry",
+    "princeton-neuroscience-bs": "Bachelor of Arts in Neuroscience",
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+    if _p["slug"] in _EXPLICIT_FULL_NAMES:
+        _p["program_name"] = _EXPLICIT_FULL_NAMES[_p["slug"]]
+
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — map federal CIP titles to Princeton's published names."""
+    mapped = _CIP_TO_DEPARTMENT.get(field_name, field_name)
+    if mapped.lower() in school.lower() or school.lower() in mapped.lower():
+        return school
+    return mapped
+
+
+# Federal CIP field titles → Princeton's published department / program names.
+_CIP_TO_DEPARTMENT: dict[str, str] = {
+    "Political Science and Government": "Politics",
+    "Research and Experimental Psychology": "Psychology",
+    "Biochemistry, Biophysics and Molecular Biology": "Molecular Biology",
+    "Ecology, Evolution, Systematics, and Population Biology": "Ecology and Evolutionary Biology",
+    "Neurobiology and Neurosciences": "Neuroscience",
+    "Geological and Earth Sciences/Geosciences": "Geosciences",
+    "Public Policy Analysis": "Public and International Affairs",
+    "Electrical, Electronics, and Communications Engineering": (
+        "Electrical and Computer Engineering"
+    ),
+    "Mechanical Engineering": "Mechanical and Aerospace Engineering",
+    "Operations Research": "Operations Research and Financial Engineering",
+    "Computer Engineering": "Electrical and Computer Engineering",
+    "English Language and Literature, General": "English",
+    "Fine and Studio Arts": "Art and Archaeology",
+    "Architectural Sciences and Technology": "Architecture",
+}
 
 
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the IPEDS Field-of-Study catalog."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+    for slug, school, name, dtype, cip, dur, fmt, _desc in _IPEDS_CATALOG:
         if slug in seen:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
         seen.add(slug)
+        dept = _department_for(name, school)
+        pname = disambiguate_program_name(name, dtype)
+        delivery = fmt if fmt in {"online", "hybrid"} else "in_person"
         out.append({
             "slug": slug,
             "school": school,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": dtype,
+            "department": dept,
             "cip": cip,
             "duration_months": dur,
-            "delivery_format": fmt,
-            "description": desc,
+            "delivery_format": delivery,
+            "description": program_description(
+                pname,
+                dtype,
+                school,
+                dept,
+                delivery_format=delivery,
+                university_short="Princeton",
+            ),
         })
     return out
 
 
 PROGRAMS += _build_catalog()
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise RuntimeError(f"Princeton catalog quality gate failed: {_catalog_errors}")
+
+for _p in PROGRAMS:
+    _p.setdefault("delivery_format", "in_person")
+
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
@@ -2385,6 +2501,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.program_name = _FULL_NAME_BY_SLUG.get(slug) or spec["program_name"]
         p.degree_type = spec["degree_type"]
         p.duration_months = spec.get("duration_months")
+        p.department = spec.get("department")
         p.description_text = spec["description"]
         # Website: verified department page where available, else the owning unit's site.
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
