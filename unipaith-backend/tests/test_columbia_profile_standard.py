@@ -21,7 +21,7 @@ def _institution_snapshot() -> dict:
     return {
         "description_text": p.DESCRIPTION,
         "student_body_size": p.UNDERGRAD_COUNT,
-        "media_gallery": [p._CAMPUS_PHOTO],
+        "media_gallery": [p.SCHOOL_OUTCOMES["campus_photos"][0]["url"]],
         "ranking_data": p.RANKING_DATA,
         "school_outcomes": school_outcomes,
         "content_sources": p._INSTITUTION_CONTENT,
@@ -203,6 +203,14 @@ def test_coverable_programs_have_external_reviews():
 
 def test_institution_has_media_credit():
     assert p.SCHOOL_OUTCOMES.get("media_credit"), "campus photo must carry attribution"
+
+
+def test_institution_has_campus_photo_gallery():
+    photos = p.SCHOOL_OUTCOMES.get("campus_photos") or []
+    assert len(photos) >= 4, "Columbia needs a 4–5 photo verified campus gallery"
+    for photo in photos:
+        assert photo.get("url") and photo.get("credit"), photo
+    assert p._CAMPUS_PHOTO == photos[0]["url"]
 
 
 def test_description_leads_with_research_university():
