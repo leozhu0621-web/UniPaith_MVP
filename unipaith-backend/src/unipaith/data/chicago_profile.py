@@ -56,13 +56,18 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.chicago_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.profile_catalog_utils import (
+    disambiguate_program_name,
+    program_description,
+    validate_catalog,
+)
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Chicago"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-14"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -155,6 +160,51 @@ SCHOOL_OUTCOMES: dict = {
     "campus_basics": {"location": "Chicago, Illinois"},
     # Wikimedia Commons file page verified: Michael Barera, CC BY-SA 4.0 (Main Quadrangles).
     "media_credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)",
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/"
+                "University_of_Chicago_July_2013_19_%28Main_Quadrangles%29.jpg/"
+                "1920px-University_of_Chicago_July_2013_19_%28Main_Quadrangles%29.jpg"
+            ),
+            "credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/f/f3/"
+                "A_Quad_at_the_University_of_Chicago.jpg"
+            ),
+            "credit": "Wikimedia Commons / Crimson3981 (Public domain)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/"
+                "58_032179_University_of_Chicago_quad.jpg/"
+                "1920px-58_032179_University_of_Chicago_quad.jpg"
+            ),
+            "credit": "Wikimedia Commons / Downtowngal (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/"
+                "Cobb_Gate%2C_University_of_Chicago%2C_57th_Street%2C_Hyde_Park%2C_Chicago%2C_IL%3B_"
+                "Nov._2023_%2854514978242%29.jpg/"
+                "1920px-Cobb_Gate%2C_University_of_Chicago%2C_57th_Street%2C_Hyde_Park%2C_Chicago%2C_IL%3B_"
+                "Nov._2023_%2854514978242%29.jpg"
+            ),
+            "credit": (
+                "Wikimedia Commons / Warren LeMay from Chicago, IL, United States (CC BY-SA 2.0)"
+            ),
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/"
+                "University_of_Chicago_July_2013_32_%28Gordon_Center_for_Integrative_Science%29.jpg/"
+                "1920px-University_of_Chicago_July_2013_32_%28Gordon_Center_for_Integrative_Science%29.jpg"
+            ),
+            "credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)",
+        },
+    ],
     "scale": {
         # CDS 2024-25 (item I-1): 2,007 total instructional faculty (1,759 full-time +
         # 248 part-time).
@@ -998,34 +1048,201 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "uchicago-economics-bs": "Economics",
+    "uchicago-computer-science-bs": "Computer Science",
+    "uchicago-mathematics-bs": "Mathematics",
+    "uchicago-statistics-bs": "Statistics",
+    "uchicago-political-science-bs": "Political Science",
+    "uchicago-biology-bs": "Biological Sciences",
+    "uchicago-neuroscience-bs": "Neuroscience",
+    "uchicago-english-bs": "English Language and Literature",
+    "uchicago-history-bs": "History",
+    "uchicago-public-policy-bs": "Public Policy Studies",
+    "uchicago-psychology-bs": "Psychology",
+    "uchicago-mba": _BOOTH,
+    "uchicago-mpp": _HARRIS,
+    "uchicago-jd": _LAW,
+    "uchicago-md": _PRITZKER_MED,
+    "uchicago-social-work-am": _CROWN,
+    "uchicago-divinity-mdiv": _DIVINITY,
+    "uchicago-molecular-engineering-bs": _PME,
+    "uchicago-mpcs": "Computer Science",
+    "uchicago-statistics-ms": "Statistics",
+    "uchicago-cir-ma": "Committee on International Relations",
+    "uchicago-mapss-ma": "Master of Arts Program in the Social Sciences",
+    "uchicago-maph-ma": "Master of Arts Program in the Humanities",
+}
+_EXPLICIT_FULL_NAMES: dict[str, str] = {
+    "uchicago-economics-bs": "Bachelor's in Economics",
+    "uchicago-computer-science-bs": "Bachelor's in Computer Science",
+    "uchicago-mathematics-bs": "Bachelor's in Mathematics",
+    "uchicago-statistics-bs": "Bachelor's in Statistics",
+    "uchicago-political-science-bs": "Bachelor's in Political Science",
+    "uchicago-biology-bs": "Bachelor's in Biological Sciences",
+    "uchicago-neuroscience-bs": "Bachelor's in Neuroscience",
+    "uchicago-english-bs": "Bachelor's in English Language and Literature",
+    "uchicago-history-bs": "Bachelor's in History",
+    "uchicago-public-policy-bs": "Bachelor's in Public Policy Studies",
+    "uchicago-psychology-bs": "Bachelor's in Psychology",
+    "uchicago-molecular-engineering-bs": "Bachelor's in Molecular Engineering",
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+    if _p["slug"] in _EXPLICIT_FULL_NAMES:
+        _p["program_name"] = _EXPLICIT_FULL_NAMES[_p["slug"]]
+
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
 
+# Professional schools where the degree is owned by the school itself.
+_PROFESSIONAL_SCHOOLS = frozenset({
+    _BOOTH,
+    _HARRIS,
+    _LAW,
+    _PRITZKER_MED,
+    _CROWN,
+    _DIVINITY,
+    _PME,
+})
+
+# Federal CIP field titles → UChicago's published department / program names.
+_CIP_TO_DEPARTMENT: dict[str, str] = {
+    "Political Science and Government": "Political Science",
+    "Research and Experimental Psychology": "Psychology",
+    "Clinical, Counseling and Applied Psychology": "Psychology",
+    "Biology, General": "Biological Sciences",
+    "English Language and Literature, General": "English Language and Literature",
+    "Neurobiology and Neurosciences": "Neuroscience",
+    "Public Policy Analysis": "Public Policy Studies",
+    "Geological and Earth Sciences/Geosciences": "Geophysical Sciences",
+    "Linguistic, Comparative, and Related Language Studies and Services": "Linguistics",
+    "Social Sciences, General": "Social Sciences",
+    "Fine and Studio Arts": "Visual Arts",
+    "Film/Video and Photographic Arts": "Cinema and Media Studies",
+    "Design and Applied Arts": "Visual Arts",
+    "Drama/Theatre Arts and Stagecraft": "Theater and Performance Studies",
+    "International Relations and National Security Studies": "International Relations",
+    "Business Administration, Management and Operations": "Business Administration",
+    "Business/Commerce, General": "Business",
+    "Management Sciences and Quantitative Methods": "Business Economics",
+    "Finance and Financial Management Services": "Finance",
+    "Marketing": "Marketing",
+    "Social Work": "Social Work",
+    "Law": "Law",
+    "Health Professions (CIP 51.12)": "Medicine",
+    "Medieval and Renaissance Studies": "Medieval Studies",
+    "Science, Technology and Society": "Science, Technology, and Society",
+    "Nutrition Sciences": "Nutritional Science",
+    "Sustainability Studies": "Environment, Geography, and Urbanization",
+    "Area Studies": "Area Studies",
+    "Ethnic, Cultural Minority, Gender, and Group Studies": "Gender and Sexuality Studies",
+    "Natural Resources Conservation and Research": "Environmental and Urban Studies",
+    "Environmental/Natural Resources Management and Policy": "Environmental and Urban Studies",
+    "Legal Research and Advanced Professional Studies": "Legal Studies",
+    "Public Health": "Public Health Sciences",
+    "Liberal Arts and Sciences, General Studies and Humanities": "Humanities",
+    "Rhetoric and Composition/Writing Studies": "Writing",
+    "Visual and Performing Arts, Other": "Visual Arts",
+    "Social Sciences, Other": "Social Sciences",
+    "Radio, Television, and Digital Communication": "Media Arts and Design",
+    "Computer and Information Sciences, General": "Computer Science",
+    "Information Science/Studies": "Information Science",
+    "Teacher Education and Professional Development, Specific Levels and Methods": (
+        "Education"
+    ),
+    "Chemical Engineering": "Molecular Engineering",
+    "Engineering Physics": "Molecular Engineering",
+    "East Asian Languages, Literatures, and Linguistics": "East Asian Languages and Civilizations",
+    "Slavic, Baltic and Albanian Languages, Literatures, and Linguistics": (
+        "Slavic Languages and Literatures"
+    ),
+    "Germanic Languages, Literatures, and Linguistics": "Germanic Studies",
+    "Romance Languages, Literatures, and Linguistics": "Romance Languages and Literatures",
+    "Middle/Near Eastern and Semitic Languages, Literatures, and Linguistics": (
+        "Near Eastern Languages and Civilizations"
+    ),
+    "Classics and Classical Languages, Literatures, and Linguistics": "Classics",
+    "Biochemistry, Biophysics and Molecular Biology": "Biochemistry and Molecular Biology",
+    "Cell/Cellular Biology and Anatomical Sciences": "Cell Biology",
+    "Microbiological Sciences and Immunology": "Microbiology",
+    "Genetics": "Genetics",
+    "Physiology, Pathology and Related Sciences": "Organismal Biology and Anatomy",
+    "Biomathematics, Bioinformatics, and Computational Biology": "Computational Biology",
+    "Ecology, Evolution, Systematics, and Population Biology": "Ecology and Evolution",
+    "Applied Mathematics": "Applied Mathematics",
+    "Physical Sciences, General": "Physical Sciences",
+    "Astronomy and Astrophysics": "Astronomy and Astrophysics",
+    "Geography and Cartography": "Geography",
+    "Anthropology": "Anthropology",
+    "Economics": "Economics",
+    "History": "History",
+    "Mathematics": "Mathematics",
+    "Statistics": "Statistics",
+    "Computer Science": "Computer Science",
+    "Chemistry": "Chemistry",
+    "Physics": "Physics",
+    "Philosophy": "Philosophy",
+    "Music": "Music",
+    "Sociology": "Sociology",
+}
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — map federal CIP titles to UChicago's published names."""
+    if school in _PROFESSIONAL_SCHOOLS:
+        return school
+    mapped = _CIP_TO_DEPARTMENT.get(field_name, field_name)
+    if mapped.lower() in school.lower() or school.lower() in mapped.lower():
+        return school
+    return mapped
+
 
 def _build_catalog() -> list[dict]:
-    """Append breadth-first program nodes from the IPEDS completions-cip-6 catalog."""
+    """Append breadth-first program nodes from the IPEDS Field-of-Study catalog."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+    for slug, school, name, dtype, cip, dur, fmt, _desc in _IPEDS_CATALOG:
         if slug in seen:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
+        if name.startswith("Program (CIP") or name.startswith("Health Professions (CIP"):
+            continue
         seen.add(slug)
+        dept = _department_for(name, school)
+        pname = disambiguate_program_name(name, dtype)
+        delivery = fmt if fmt in {"online", "hybrid"} else "in_person"
         out.append({
             "slug": slug,
             "school": school,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": dtype,
+            "department": dept,
             "cip": cip,
             "duration_months": dur,
-            "delivery_format": fmt,
-            "description": desc,
+            "delivery_format": delivery,
+            "description": program_description(
+                pname,
+                dtype,
+                school,
+                dept,
+                delivery_format=delivery,
+                university_short="UChicago",
+            ),
         })
     return out
 
 
 PROGRAMS += _build_catalog()
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise RuntimeError(f"UChicago catalog quality gate failed: {_catalog_errors}")
+
+for _p in PROGRAMS:
+    _p.setdefault("delivery_format", "in_person")
+
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
@@ -1839,12 +2056,9 @@ def _requirements_for(spec: dict) -> dict:
 
 
 # Real UChicago campus photo (the Main Quadrangles) — Wikimedia Commons, hotlinkable
-# landscape JPG (verified HTTP 200). Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/"
-    "University_of_Chicago_July_2013_19_%28Main_Quadrangles%29.jpg/"
-    "1920px-University_of_Chicago_July_2013_19_%28Main_Quadrangles%29.jpg"
-)
+# landscape JPG (verified HTTP 200). Leads the institution hero; see
+# ``SCHOOL_OUTCOMES["campus_photos"]`` for gallery.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
@@ -2003,6 +2217,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # school's site.
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
+        p.department = spec.get("department")
         p.is_published = True
         p.catalog_source = "curated"
         # Persist the curated CIP so the matching feature path (program_features
