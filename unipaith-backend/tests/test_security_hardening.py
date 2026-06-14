@@ -25,6 +25,7 @@ from unipaith.core import security
 from unipaith.core.pii import PIIClass, classify, mask, registry_summary
 from unipaith.dependencies import get_current_user
 from unipaith.main import app
+from unipaith.transparency.live_routes import expand_routes
 
 # asyncio_mode = "auto" (pyproject) — the sync tests below run as plain functions.
 
@@ -171,8 +172,9 @@ def test_me_scoped_routes_carry_an_auth_guard():
     require_faculty_* all depend on it). No me-scoped route relies on obscurity."""
     unguarded: list[str] = []
     checked = 0
-    for route in app.routes:
-        if not isinstance(route, APIRoute):
+    for route in expand_routes(app):
+        inner = getattr(route, "_route", route)
+        if not isinstance(inner, APIRoute):
             continue
         path = route.path
         if "/students/me/" not in path and "/institutions/me/" not in path:
@@ -180,7 +182,7 @@ def test_me_scoped_routes_carry_an_auth_guard():
             if not (path.endswith("/students/me") or path.endswith("/institutions/me")):
                 continue
         checked += 1
-        if get_current_user not in _dependency_calls(route.dependant):
+        if get_current_user not in _dependency_calls(inner.dependant):
             unguarded.append(f"{sorted(route.methods)} {path}")
     assert checked > 0, "expected to find me-scoped routes to audit"
     assert not unguarded, "me-scoped routes missing an auth guard:\n" + "\n".join(unguarded)

@@ -310,7 +310,9 @@ def _iter_api_routes(routes):
     Same flattening the api-contract surface uses — one row per (path, method),
     so "backed by N live routes" counts the same way the /goal/api page does.
     """
-    for r in routes:
+    from unipaith.transparency.live_routes import expand_routes
+
+    for r in expand_routes(routes):
         path = getattr(r, "path", "")
         methods = getattr(r, "methods", None)
         if not path.startswith(API_PREFIX) or not methods:

@@ -448,8 +448,10 @@ OPEN_QUESTIONS: tuple[dict, ...] = (
 # ── Live introspection helpers ───────────────────────────────────────────────
 def _route_buckets(routes) -> dict[str, list[str]]:
     """The AI-routing surface backing §16's 'auditable via model_registry'."""
+    from unipaith.transparency.live_routes import expand_routes
+
     bucket: set[str] = set()
-    for r in routes:
+    for r in expand_routes(routes):
         path = getattr(r, "path", "")
         methods = getattr(r, "methods", None)
         if not path.startswith(API_PREFIX) or not methods:

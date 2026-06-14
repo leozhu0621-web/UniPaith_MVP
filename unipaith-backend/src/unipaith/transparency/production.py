@@ -290,8 +290,10 @@ OPEN_QUESTIONS: tuple[dict, ...] = (
 
 def _health_routes(routes) -> list[str]:
     """Resolve the live liveness/readiness probe paths from the running routes."""
+    from unipaith.transparency.live_routes import expand_routes
+
     found: set[str] = set()
-    for r in routes:
+    for r in expand_routes(routes):
         path = getattr(r, "path", "")
         methods = getattr(r, "methods", None)
         if not path.startswith(API_PREFIX) or not methods:

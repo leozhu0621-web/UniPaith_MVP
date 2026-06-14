@@ -442,7 +442,9 @@ def _config_knobs() -> list[dict]:
 # ── Backing routes (the AI surfaces the harness governs) ─────────────────────
 def _route_buckets(routes) -> dict[str, list[str]]:
     buckets: dict[str, set[str]] = {"chatbot": set(), "extraction": set()}
-    for r in routes:
+    from unipaith.transparency.live_routes import expand_routes
+
+    for r in expand_routes(routes):
         path = getattr(r, "path", "")
         methods = getattr(r, "methods", None)
         if not path.startswith(API_PREFIX) or not methods:

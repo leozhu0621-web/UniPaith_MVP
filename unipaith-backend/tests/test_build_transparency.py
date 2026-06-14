@@ -16,6 +16,7 @@ import pytest
 from httpx import AsyncClient
 
 from unipaith.main import app
+from unipaith.transparency.live_routes import expand_routes
 from unipaith.models.base import Base
 from unipaith.transparency.acceptance import BLOCKERS, JOURNEYS, build_acceptance
 from unipaith.transparency.api_contract import build_api_contract
@@ -104,7 +105,7 @@ def test_features_summary_internally_consistent():
 def _live_route_count() -> int:
     """Independent recount of the live route table under /api/v1."""
     total = 0
-    for r in app.routes:
+    for r in expand_routes(app):
         path = getattr(r, "path", "")
         methods = getattr(r, "methods", None)
         if path.startswith(_API_PREFIX) and methods:
@@ -271,7 +272,7 @@ def test_ux_benchmark_backing_resolves_live():
     table — so the page can't claim a surface the deployed app doesn't serve."""
     rows = [
         (getattr(r, "path", ""), m)
-        for r in app.routes
+        for r in expand_routes(app)
         for m in (getattr(r, "methods", None) or set())
         if getattr(r, "path", "").startswith(_API_PREFIX) and m not in _SKIP
     ]
@@ -381,7 +382,7 @@ def test_production_health_probes_and_middleware_resolve_live():
     count is the real stack — so the page can't claim probes the app doesn't serve."""
     found = {
         getattr(r, "path", "")
-        for r in app.routes
+        for r in expand_routes(app)
         if getattr(r, "path", "").startswith(_API_PREFIX)
         and getattr(r, "path", "").endswith(("/health", "/ready"))
         and any(m not in _SKIP for m in (getattr(r, "methods", None) or set()))

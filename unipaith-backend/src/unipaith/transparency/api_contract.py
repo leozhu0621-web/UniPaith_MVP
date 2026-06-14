@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 
+from unipaith.transparency.live_routes import expand_routes
+
 # Spec 50 was drafted at 22 routers / ~285 routes (2026-05-30). The live count is
 # higher (specs 39–46 landed after). Surfaced so the page shows the correction.
 DOC_CLAIMED_ROUTERS = 22
@@ -129,7 +131,7 @@ def _route_role(path: str, access: str) -> str:
 def _collect(routes) -> list[dict]:
     """Flatten the live route table to one row per (path, method) under /api/v1."""
     rows: list[dict] = []
-    for r in routes:
+    for r in expand_routes(routes):
         path = getattr(r, "path", "")
         methods = getattr(r, "methods", None)
         if not path.startswith(API_PREFIX) or not methods:
