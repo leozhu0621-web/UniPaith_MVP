@@ -30,6 +30,11 @@ carries a citation, or is honestly omitted (recorded in that node's
     the MPH, the MSW, engineering, journalism, hospitality, international relations,
     and film & television).
 
+Catalog repair (2026-06-14): disambiguated all 483 programs — bare-abbr names
+(BA/MS/PhD stubs), ``department=="Programs"``, and template descriptions replaced
+with credential-specific names, real departments, and field-specific descriptions
+(``validate_catalog`` gate).
+
 Honest caveats stamped into ``_standard.omitted``: BU does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
 schools, so those two institution outcome fields are omitted (the Scorecard ten-year
@@ -45,14 +50,23 @@ programs and the remaining programs record those deep fields in their
 
 from __future__ import annotations
 
+import re
+from collections import Counter
+
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.profile_catalog_utils import (
+    BARE_DEGREE_ABBREVIATIONS,
+    disambiguate_program_name,
+    program_description,
+    validate_catalog,
+)
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Boston University"
-ENRICHED_AT = "2026-06-13"
+ENRICHED_AT = "2026-06-14"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -807,40 +821,129 @@ _CATALOG: list[tuple] = [
     ("bu-academics-wheelock-deaf-studies", "WHEEL", "PhD", "phd", "Programs", "on_campus", 60, "https://www.bu.edu/academics/wheelock/programs/deaf-studies/")
 ]
 
-_DEGREE_ROLE = {
-    "bachelors": "an undergraduate degree program",
-    "masters": "a graduate degree program",
-    "phd": "a doctoral degree program",
-    "professional": "a professional degree program",
-    "certificate": "a certificate program",
-}
-_DELIVERY_PHRASE = {
-    "online": " It is delivered online through Metropolitan College.",
-    "hybrid": " It is delivered in a hybrid online/on-campus format.",
+_DEGREE_TOKENS = frozenset({
+    "ba", "bs", "bfa", "bm", "bachelors", "ms", "ma", "mph", "msw", "meng", "mba", "mm",
+    "msd", "cags", "phd", "dsc", "dscd", "dmd", "jd", "md", "minor", "online",
+})
+_LEGACY_COUNTS = Counter(name for _s, _sk, name, *_ in _CATALOG)
+_PROGRAM_NAME_OVERRIDES: dict[str, str] = {
+    "bu-academics-busm-four-year-program": "Doctor of Medicine",
+    "bu-academics-law-jd": "Juris Doctor",
+    "bu-academics-questrom-mba": "Master of Business Administration",
+    "bu-academics-sdm-doctor-of-dental-medicine": "Doctor of Dental Medicine",
+    "bu-academics-com-ms": "Master's in Communication",
+    "bu-academics-sha-ms": "Master's in Hospitality Administration",
+    "bu-academics-sph-mph": "Master of Public Health",
+    "bu-academics-sph-programs-health-communication-and-promotion": (
+        "Master of Public Health in Health Communication and Promotion"
+    ),
 }
 
 
-def _description(name: str, dtype: str, school_key: str, fmt: str) -> str:
-    role = _DEGREE_ROLE.get(dtype, "a graduate program")
-    school_disp = SCHOOL_NAME[school_key]
-    delivery = _DELIVERY_PHRASE.get(fmt, "")
-    return f"{name} is {role} offered through BU's {school_disp}.{delivery}"
+def _clean_segment(seg: str) -> str:
+    s = seg.replace("-", " ").title()
+    for prefix in (
+        "Ba In ", "Ba ", "Bs In ", "Bs ", "Ms In ", "Ms ", "Ma In ", "Ma ",
+        "Phd In ", "Phd ", "Msd ", "Cags ", "Programs ",
+    ):
+        if s.startswith(prefix):
+            s = s[len(prefix):]
+    return s.strip()
+
+
+def _field_from_url(url: str, *, strip_degree: bool = True) -> str:
+    m = re.search(r"/programs/(.+)", url.rstrip("/"))
+    if not m:
+        return ""
+    parts = [p for p in m.group(1).split("/") if p and p != "programs"]
+    if strip_degree:
+        while parts and parts[-1].lower() in _DEGREE_TOKENS:
+            parts.pop()
+    if not parts:
+        return ""
+    return " — ".join(_clean_segment(p) for p in parts)
+
+
+def _department_for(field: str, school: str) -> str:
+    if not field:
+        return school
+    base = field.split(" — ")[0]
+    if base.lower() in school.lower() or school.lower() in base.lower():
+        return school
+    return base
+
+
+def _use_url_name(legacy: str) -> bool:
+    return legacy in BARE_DEGREE_ABBREVIATIONS or _LEGACY_COUNTS[legacy] > 1
+
+
+def _base_program_name(slug: str, legacy: str, dtype: str, url: str) -> str:
+    if slug in _PROGRAM_NAME_OVERRIDES:
+        return _PROGRAM_NAME_OVERRIDES[slug]
+    if not _use_url_name(legacy):
+        return legacy.replace("&amp;", "&")
+    field = _field_from_url(url)
+    if legacy == "MEng":
+        return f"Master of Engineering in {field.split(' — ')[0]}"
+    return disambiguate_program_name(field, dtype)
 
 
 def _build_catalog() -> list[dict]:
-    out = []
-    for slug, sk, name, dtype, dept, fmt, dur, url in _CATALOG:
+    out: list[dict] = []
+    for slug, sk, legacy, dtype, dept, fmt, dur, url in _CATALOG:
+        school = SCHOOL_NAME[sk]
+        pname = _base_program_name(slug, legacy, dtype, url)
+        field = _field_from_url(url) if _use_url_name(legacy) else legacy
+        department = dept if dept and dept != "Programs" else _department_for(field, school)
         out.append({
-            "slug": slug, "school": SCHOOL_NAME[sk], "school_key": sk,
-            "program_name": name, "degree_type": dtype, "department": dept,
-            "delivery_format": fmt, "duration_months": dur,
-            "description": _description(name, dtype, sk, fmt),
+            "slug": slug,
+            "school": school,
+            "school_key": sk,
+            "program_name": pname,
+            "degree_type": dtype,
+            "department": department,
+            "delivery_format": fmt,
+            "duration_months": dur,
             "catalog_url": url,
+            "legacy_credential": legacy,
         })
+
+    counts = Counter(p["program_name"] for p in out)
+    for p in out:
+        if counts[p["program_name"]] > 1:
+            field = _field_from_url(p["catalog_url"], strip_degree=False)
+            if field and p["legacy_credential"] != "MEng":
+                p["program_name"] = disambiguate_program_name(field, p["degree_type"])
+
+    counts = Counter(p["program_name"] for p in out)
+    for p in out:
+        if counts[p["program_name"]] > 1:
+            suffix = " (Online)" if p["delivery_format"] == "online" else f" ({p['school']})"
+            p["program_name"] += suffix
+
+    counts = Counter(p["program_name"] for p in out)
+    for p in out:
+        legacy = p["legacy_credential"]
+        if counts[p["program_name"]] > 1 and legacy not in BARE_DEGREE_ABBREVIATIONS:
+            p["program_name"] += f" — {legacy}"
+
+    for p in out:
+        p["description"] = program_description(
+            p["program_name"],
+            p["degree_type"],
+            p["school"],
+            p["department"],
+            delivery_format=p["delivery_format"],
+            university_short="Boston University",
+        )
+        p.pop("legacy_credential", None)
     return out
 
 
 PROGRAMS: list[dict] = _build_catalog()
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise RuntimeError(f"Boston University catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
 _WEBSITE_OVERRIDE: dict[str, str] = {}
