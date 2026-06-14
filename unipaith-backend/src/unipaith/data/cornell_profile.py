@@ -59,13 +59,18 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.cornell_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.profile_catalog_utils import (
+    disambiguate_program_name,
+    program_description,
+    validate_catalog,
+)
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Cornell University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-14"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -230,7 +235,45 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Cornell Student & Campus Life", "url": "https://scl.cornell.edu/"},
         ],
     },
-    # Wikimedia Commons file page verified 2026-06-12: author Eustress, CC BY-SA 4.0.
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/"
+                "Cornell_University_arts_quad.JPG/1920px-Cornell_University_arts_quad.JPG"
+            ),
+            "credit": "Wikimedia Commons / Eustress (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/8/8a/"
+                "Cornell_University_-_Campus_Scene%2C_Arts_Quadrangle.jpg"
+            ),
+            "credit": "Wikimedia Commons / Student Supply Store, Ithaca (public domain)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/1/1c/"
+                "Cornell_University_-_Campus_from_Library_Tower.jpg"
+            ),
+            "credit": "Wikimedia Commons / unknown author (public domain)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/"
+                "Cornell_University_-_North_Campus_area.jpg/"
+                "1920px-Cornell_University_-_North_Campus_area.jpg"
+            ),
+            "credit": "Wikimedia Commons / H. K. Barnett (public domain)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/e/e8/"
+                "Cornell_University_West_Campus_entrance.jpg"
+            ),
+            "credit": "Wikimedia Commons / 風紀委員 (CC BY 4.0)",
+        },
+    ],
+    # Wikimedia Commons file page verified 2026-06-14: author Eustress, CC BY-SA 4.0.
     "media_credit": "Wikimedia Commons / Eustress (CC BY-SA 4.0)",
     "flagship": {
         # NCES College Navigator: 26,793 total students (Fall 2024) — 16,128 undergraduate
@@ -1324,30 +1367,107 @@ PROGRAMS: list[dict] = [
 ]
 
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
+_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "cornell-computer-science-bs": "Department of Computer Science",
+    "cornell-computer-science-ms": "Department of Computer Science",
+    "cornell-information-science-bs": "Department of Information Science",
+    "cornell-information-science-ms": "Department of Information Science",
+    "cornell-electrical-computer-eng-bs": "School of Electrical and Computer Engineering",
+    "cornell-electrical-computer-eng-ms": "School of Electrical and Computer Engineering",
+    "cornell-mechanical-eng-bs": "Sibley School of Mechanical and Aerospace Engineering",
+    "cornell-operations-research-ms": (
+        "School of Operations Research and Information Engineering"
+    ),
+    "cornell-systems-eng-ms": "School of Systems Engineering",
+    "cornell-meng-ms": "Cornell Engineering",
+    "cornell-economics-bs": "Department of Economics",
+    "cornell-political-science-bs": "Department of Government",
+    "cornell-mathematics-bs": "Department of Mathematics",
+    "cornell-biology-bs": "Department of Ecology and Evolutionary Biology",
+    "cornell-biomedical-sciences-bs": "Department of Biomedical Sciences",
+    "cornell-applied-economics-bs": (
+        "Charles H. Dyson School of Applied Economics and Management"
+    ),
+    "cornell-mba": "Samuel Curtis Johnson Graduate School of Management",
+    "cornell-business-administration-ms": (
+        "Samuel Curtis Johnson Graduate School of Management"
+    ),
+    "cornell-hotel-administration-bs": (
+        "Peter and Stephanie Nolan School of Hotel Administration"
+    ),
+    "cornell-ilr-bs": "School of Industrial and Labor Relations",
+    "cornell-ilr-ms": "School of Industrial and Labor Relations",
+    "cornell-human-development-bs": "Department of Human Development",
+    "cornell-mpa-ms": "Cornell Jeb E. Brooks School of Public Policy",
+    "cornell-legal-studies-ms-online": "Cornell Law School",
+    "cornell-emba-americas": "Samuel Curtis Johnson Graduate School of Management",
+    "cornell-engineering-management-meng-online": "Cornell Engineering",
+    "cornell-emha-online": "Cornell Jeb E. Brooks School of Public Policy",
+    "cornell-empa-online": "Cornell Jeb E. Brooks School of Public Policy",
+    "cornell-jd": "Cornell Law School",
+    "cornell-dvm": "College of Veterinary Medicine",
+    "cornell-march": "Department of Architecture",
+    "cornell-md": "Weill Cornell Medicine",
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+
+
+def _delivery_format(raw: str) -> str:
+    """Normalize IPEDS delivery labels to the platform's canonical values."""
+    if raw == "in_person":
+        return "on_campus"
+    return raw
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — the CIP field title unless it duplicates the school name."""
+    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+        return school
+    return field_name
 
 
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+    for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
         if slug in seen:
             continue
+        if (cip, dtype) in _EXISTING_CIP_KEYS:
+            continue
         seen.add(slug)
+        dept = _department_for(field_name, school)
+        delivery = _delivery_format(fmt)
+        pname = disambiguate_program_name(field_name, dtype)
         out.append({
             "slug": slug,
             "school": school,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": dtype,
+            "department": dept,
             "cip": cip,
             "duration_months": dur,
-            "delivery_format": fmt,
-            "description": desc,
+            "delivery_format": delivery,
+            "description": program_description(
+                pname,
+                dtype,
+                school,
+                dept,
+                delivery_format=delivery,
+                university_short="Cornell",
+            ),
         })
     return out
 
 
 PROGRAMS += _build_catalog()
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise RuntimeError(f"Cornell catalog quality gate failed: {_catalog_errors}")
 for _p in PROGRAMS:
     _p.setdefault("delivery_format", "in_person")
 
@@ -2662,12 +2782,8 @@ def _requirements_for(spec: dict) -> dict:
     return dict(_REQ_GRAD_GENERIC)
 
 
-# Real Cornell campus photo (Arts Quad with McGraw Tower) — Wikimedia Commons, CC BY-SA,
-# hotlinkable landscape JPG (verified HTTP 200). Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/"
-    "Cornell_University_arts_quad.JPG/1280px-Cornell_University_arts_quad.JPG"
-)
+# Real Cornell campus photo (Arts Quad with McGraw Tower) — leads the institution hero.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
@@ -2863,6 +2979,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.degree_type = spec["degree_type"]
         p.duration_months = spec.get("duration_months")
         p.description_text = spec["description"]
+        p.department = spec.get("department")
         # Website: verified program/department page where available, else the owning
         # school's site.
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
