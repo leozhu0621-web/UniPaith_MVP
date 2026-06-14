@@ -233,6 +233,12 @@ class Settings(BaseSettings):
     uni_agent_id: str = ""
     uni_environment_id: str = ""
 
+    # Single bearer key for the UniPaith MCP data API (`/mcp`). A request that
+    # presents this key may read/write ANY student's data (all-data access, by
+    # explicit product direction) — guard it like a master credential. Empty
+    # disables the MCP endpoint (401 on every call).
+    unipaith_mcp_api_key: str = ""
+
     # ── Spec 63 — Qwen ML backend (the invisible processing transport) ──
     # Qwen is registered as a provider transport (OpenAI-compatible /v1 via vLLM
     # or Bedrock). It is the ML backend for processing agents only; the hard

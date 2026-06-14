@@ -65,6 +65,23 @@ resource "aws_secretsmanager_secret_version" "anthropic_api_key" {
   }
 }
 
+# --- UniPaith MCP data-API key (single bearer for the /mcp endpoint) ---
+# One key that grants the Claude platform agent ALL-DATA access to UniPaith
+# (read/write any student). Real value is set via
+# `aws secretsmanager put-secret-value`; ignore_changes keeps Terraform off it.
+resource "aws_secretsmanager_secret" "mcp_api_key" {
+  name                    = "${var.project}/${var.environment}/mcp-api-key"
+  recovery_window_in_days = 7
+}
+
+resource "aws_secretsmanager_secret_version" "mcp_api_key" {
+  secret_id     = aws_secretsmanager_secret.mcp_api_key.id
+  secret_string = "REPLACE_ME_VIA_AWS_CONSOLE" # pragma: allowlist secret
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
+}
+
 # --- Voyage embeddings API key (paired with Anthropic for the new feature pipeline) ---
 resource "aws_secretsmanager_secret" "voyage_api_key" {
   name                    = "${var.project}/${var.environment}/voyage-api-key"

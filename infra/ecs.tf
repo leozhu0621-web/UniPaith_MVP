@@ -50,6 +50,7 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
         aws_secretsmanager_secret.openai_api_key.arn,
         aws_secretsmanager_secret.anthropic_api_key.arn,
         aws_secretsmanager_secret.voyage_api_key.arn,
+        aws_secretsmanager_secret.mcp_api_key.arn,
       ]
     }]
   })
@@ -350,6 +351,12 @@ resource "aws_ecs_task_definition" "backend" {
       {
         name      = "VOYAGE_API_KEY"
         valueFrom = aws_secretsmanager_secret.voyage_api_key.arn
+      },
+      # Single bearer for the /mcp data API — lets the Claude platform agent
+      # read/write any student's data with one key (all-data access).
+      {
+        name      = "UNIPAITH_MCP_API_KEY"
+        valueFrom = aws_secretsmanager_secret.mcp_api_key.arn
       },
     ]
 
