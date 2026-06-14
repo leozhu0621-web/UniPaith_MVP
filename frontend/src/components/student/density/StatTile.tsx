@@ -11,14 +11,17 @@ interface StatTileProps {
   label: string
   value: React.ReactNode
   sub?: string
+  /** 'gold' tints the value with --primary for an EARNED stat (e.g. an offer
+   *  exists). Default leaves it neutral. Gold is reserved for earned moments. */
+  tone?: 'default' | 'gold'
 }
 
-export default function StatTile({ label, value, sub }: StatTileProps) {
+export default function StatTile({ label, value, sub, tone = 'default' }: StatTileProps) {
   const numeric = typeof value === 'number' && Number.isFinite(value)
   const counted = useCountUp(numeric ? value : 0)
   return (
     <div className="min-w-0">
-      <p className="text-lg font-semibold leading-none text-foreground">
+      <p className={`text-lg font-semibold leading-none ${tone === 'gold' ? 'text-primary' : 'text-foreground'}`}>
         {numeric ? counted : value}
       </p>
       <p className="mt-1 truncate text-eyebrow uppercase text-muted-foreground">{label}</p>
