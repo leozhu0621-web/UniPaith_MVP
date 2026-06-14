@@ -98,6 +98,13 @@ def _program_snapshot(spec: dict) -> dict:
     }
 
 
+def test_catalog_quality_gate():
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(p.PROGRAMS)
+    assert not errors, f"Catalog quality gate failed: {errors}"
+
+
 def test_catalog_breadth_and_shape():
     assert len(p.SCHOOLS) == 15
     assert len(p.PROGRAMS) >= 330
