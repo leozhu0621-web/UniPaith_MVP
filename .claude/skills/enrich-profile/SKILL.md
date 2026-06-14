@@ -102,6 +102,28 @@ Concrete misses observed in the first runs — each broke a real page:
      something field-SPECIFIC beyond the degree label. Resolve each CIP row to its
      real per-degree program(s) or omit it — never emit a null-department,
      template-described, name-colliding stub per CIP×level.
+   - **`department` must be the institution's REAL owning unit, NOT the federal
+     CIP taxonomy title or a credential (issue: department padding that EVADES the
+     null/"Programs"/duplicate-name checks).** A live-fleet repair variant "fixes"
+     the null-department gap by copying the verbatim **CIP category name** into
+     `department` — verbose federal taxonomy strings the institution never uses,
+     e.g. "Communication Disorders Sciences and Services", "Radio, Television, and
+     Digital Communication", "Area Studies", "Air Transportation" — producing a
+     non-functional grouping where nearly every program is its own one-off
+     "department" (live API this run: a repaired 310-program catalog had ~150 such
+     CIP-title "departments"; another stored a bare credential "MPH"/"Mph" 14× and
+     mechanically title-cased tokens like "School Of Music"/"Mathematics
+     Statistics"). `department` must name the real school/college/department the
+     institution itself publishes — "Harvard Business School", "College of Liberal
+     Arts", "Department of Anthropology" (the gold model this run: one catalog
+     correctly grouped 28 programs under "Harvard Business School"). A clean
+     real department name that happens to match the field ("Economics",
+     "Computer Science") is fine; the defect is the **verbatim CIP taxonomy
+     phrase**, a **degree/credential abbreviation** ("MPH"/"MS"/"PhD"), or a
+     **mechanically title-cased raw token** standing in for a real unit. If you
+     cannot verify the real owning unit, the existing never-null/verify-output
+     rule still applies — resolve it, don't paper over it with a CIP/credential
+     placeholder, which is the program-name padding wearing a department costume.
    - **Breadth-first, then a MANDATORY depth pass — "defer" is not "abandon".**
      Create EVERY program node with verified *basics* first (full name,
      degree_type, `delivery_format`, department, description, website, tuition —
@@ -199,13 +221,17 @@ Concrete misses observed in the first runs — each broke a real page:
    output a student would see:
    - **Programs:** spot-check the program list — are names real and distinct (no
      `"BA"`-style stubs, no duplicate names, no `"Programs"` department, **no
-     null/blank `department`, and no `"{field} — a {Univ} {degree_type} program
-     offered through …"` template descriptions**)? A list with repeated generic
-     names, blank departments, or a description that only swaps the field into a
-     degree-type sentence = not done — that is CIP×award-level padding (miss #2),
-     not breadth. Run the catalog through this check programmatically (count
-     duplicate `program_name`s, null `department`s, and template descriptions)
-     before shipping — a padded catalog must FAIL the run.
+     null/blank `department`, no `department` that is a verbatim federal CIP
+     taxonomy phrase ("Communication Disorders Sciences and Services", "Area
+     Studies") or a degree/credential abbreviation ("MPH"/"MS"), and no
+     `"{field} — a {Univ} {degree_type} program offered through …"` template
+     descriptions**)? A list with repeated generic names, blank departments, a
+     department that is a CIP taxonomy phrase or a credential, or a description
+     that only swaps the field into a degree-type sentence = not done — that is
+     CIP×award-level padding (miss #2), not breadth. Run the catalog through this
+     check programmatically (count duplicate `program_name`s, null `department`s,
+     departments matching a CIP taxonomy phrase or a degree abbreviation, and
+     template descriptions) before shipping — a padded catalog must FAIL the run.
    - **Feeds:** a `content_sources` feed counts only if it actually FETCHES ≥1
      item. **Confirm the feed produces** (the news_rss/events_feed resolves and
      returns entries) before trusting it — set a feed you proved works, not a URL
