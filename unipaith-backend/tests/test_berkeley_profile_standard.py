@@ -103,6 +103,24 @@ def _program_snapshot(slug: str) -> dict:
     }
 
 
+def test_catalog_quality_gate():
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(b.PROGRAMS)
+    assert not errors, f"Catalog quality gate failed: {errors}"
+
+
+def test_catalog_breadth_and_shape():
+    assert len(b.PROGRAMS) >= 250, "full Scorecard catalog breadth (UNITID 110635)"
+    assert len(set(b.PROGRAM_SLUGS)) == len(b.PROGRAM_SLUGS)
+    assert b.RANKING_DATA["ownership_type"] == "public"
+    assert (
+        "public" in b.DESCRIPTION.lower()
+        and "research university in berkeley" in b.DESCRIPTION.lower()
+    )
+    assert len(b.SCHOOL_OUTCOMES["campus_photos"]) >= 4
+
+
 def test_berkeley_institution_is_gold_except_recorded_omission():
     res = check_conformance(
         "institution", _institution_snapshot(), profile_version=STANDARD_VERSION
