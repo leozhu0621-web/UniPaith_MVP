@@ -192,7 +192,11 @@ resource "aws_ecs_task_definition" "backend" {
       # reversible flip. agent/env ids are non-secret resource identifiers; the
       # managed-agents API authenticates with the existing ANTHROPIC_API_KEY.
       { name = "AI_UNI_MANAGED_AGENT_V1", value = "true" },
-      { name = "UNI_AGENT_ID", value = "agent_019QbYB93Ykh8Y58RBHquiQ6" },
+      # Points at the platform-canonical agent ("UniPaith College Counselor").
+      # The agent is edited on platform.claude.com (source of truth); the in-app
+      # host (uni_tools.dispatch_tool) ADAPTS to its tool contract. Repointing
+      # here is how we follow a new agent version/id.
+      { name = "UNI_AGENT_ID", value = "agent_01Gcox2cnu9zvUCR5Lfb9ymg" },
       { name = "UNI_ENVIRONMENT_ID", value = "env_01N43sA3tmVhij3YYZgWzAP2" },
       { name = "AI_WORKSHOPS_V2_ENABLED", value = "true" },
       { name = "AI_MATCH_RATIONALE_V2_ENABLED", value = "true" },

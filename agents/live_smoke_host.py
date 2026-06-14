@@ -21,12 +21,15 @@ import json
 import os
 import sys
 
-AGENT_ID = "agent_019QbYB93Ykh8Y58RBHquiQ6"
+# The live, platform-canonical agent ("UniPaith College Counselor"). The host
+# adapts to ITS tool contract (get_profile / create_profile / flat save_signals).
+AGENT_ID = "agent_01Gcox2cnu9zvUCR5Lfb9ymg"
 ENVIRONMENT_ID = "env_01N43sA3tmVhij3YYZgWzAP2"
 
-# Canned tool results — enough for the agent to keep talking.
+# Canned tool results keyed by the live agent's tool names — enough to keep her
+# talking. (The real host answers these against RDS via dispatch_tool.)
 _CANNED = {
-    "get_profile_snapshot": {
+    "get_profile": {
         "profile": {"first_name": "Sam", "last_name": None},
         "goals": [],
         "needs": [],
@@ -34,6 +37,7 @@ _CANNED = {
         "active_strategy": None,
         "completion": {"profile": 0.1, "goals": 0.0, "needs": 0.0},
     },
+    "create_profile": {"ok": True, "profile_id": "stub-id"},
     "search_programs": {"programs": [], "total": 0},
     "save_signals": {"written": {}, "completion": {}, "handoff_ready": False},
     "get_matches": {"ready": False, "completion": {}, "reason": "just getting started"},
@@ -59,7 +63,12 @@ async def main() -> int:
     text_parts: list[str] = []
     tools_called: list[str] = []
     stream = client.stream(sid)
-    await client.send_user_message(sid, "Hi Uni — I'm thinking about grad school but feeling lost.")
+    # Test speak-first: send the opener trigger and confirm she greets + leads.
+    await client.send_user_message(
+        sid,
+        "[SESSION_START] The student just opened Uni and hasn't typed anything "
+        "yet. Greet them warmly and lead with your first question — you speak first.",
+    )
     async for event in stream:
         etype = getattr(event, "type", "")
         if etype == "agent.message":
