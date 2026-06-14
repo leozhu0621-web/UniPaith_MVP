@@ -36,7 +36,7 @@ def _institution_snapshot() -> dict:
     return {
         "description_text": p.DESCRIPTION,
         "student_body_size": p.UNDERGRAD_COUNT,
-        "media_gallery": [p._CAMPUS_PHOTO],
+        "media_gallery": [p.SCHOOL_OUTCOMES["campus_photos"][0]["url"]],
         "ranking_data": p.RANKING_DATA,
         "school_outcomes": school_outcomes,
         "content_sources": p._INSTITUTION_CONTENT,
@@ -108,6 +108,14 @@ def test_princeton_institution_is_gold_except_recorded_omission():
     ok, bad = _gaps_are_all_omitted("institution", res, omitted)
     assert ok, f"Unexpected institution section gaps: {bad}"
     assert p.SCHOOL_OUTCOMES.get("media_credit")
+
+
+def test_institution_has_campus_photo_gallery():
+    photos = p.SCHOOL_OUTCOMES.get("campus_photos") or []
+    assert len(photos) >= 4, "Princeton needs a 4–5 photo verified campus gallery"
+    for photo in photos:
+        assert photo.get("url") and photo.get("credit"), photo
+    assert p._CAMPUS_PHOTO == photos[0]["url"]
 
 
 def test_every_school_is_gold_except_recorded_omissions():
