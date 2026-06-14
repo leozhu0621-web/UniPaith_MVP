@@ -211,8 +211,51 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Columbia University Events Calendar", "url": "https://events.columbia.edu/"},
         ],
     },
-    # Butler Library campus photo — Wikimedia Commons / Bitterteayen (CC BY-SA 4.0),
-    # verified on the file page 2026-06-11.
+    # Verified outdoor campus gallery (Wikimedia Commons API extmetadata, 2026-06-14).
+    # Butler Library leads the institution hero; each file carries a verified author + license.
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/"
+                "Butler_Library_-_Columbia_University.jpg/"
+                "1920px-Butler_Library_-_Columbia_University.jpg"
+            ),
+            "credit": "Wikimedia Commons / Bitterteayen (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/"
+                "2014_Columbia_University_Low_Memorial_Library_from_front.jpg/"
+                "1920px-2014_Columbia_University_Low_Memorial_Library_from_front.jpg"
+            ),
+            "credit": "Wikimedia Commons / Beyond My Ken (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/"
+                "2014_Columbia_University_Morningside_Heights_campus_from_southwest_.jpg/"
+                "1920px-2014_Columbia_University_Morningside_Heights_campus_from_southwest_.jpg"
+            ),
+            "credit": "Wikimedia Commons / Beyond My Ken (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/"
+                "Kent_Hall%2C_Columbia_University.jpg/"
+                "1920px-Kent_Hall%2C_Columbia_University.jpg"
+            ),
+            "credit": "Wikimedia Commons / Bitterteayen (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/"
+                "Columbia_University_-_Low_Memorial_Library_%2848170370506%29.jpg/"
+                "1920px-Columbia_University_-_Low_Memorial_Library_%2848170370506%29.jpg"
+            ),
+            "credit": "Wikimedia Commons / Ajay Suresh (CC BY 2.0)",
+        },
+    ],
+    # Butler Library leads the hero; see ``campus_photos[0]``.
     "media_credit": "Wikimedia Commons / Bitterteayen (CC BY-SA 4.0)",
     "flagship": {
         # "Columbia Facts 2024" (OPIR): 35,769 total students (Fall 2024).
@@ -2325,13 +2368,8 @@ def _requirements_for(spec: dict) -> dict:
     return dict(_REQ_UNDERGRAD)
 
 
-# Real Columbia campus photo (Butler Library) — Wikimedia Commons, CC BY-SA 4.0,
-# hotlinkable landscape JPG (verified HTTP 200). Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/"
-    "Butler_Library_-_Columbia_University.jpg/"
-    "1920px-Butler_Library_-_Columbia_University.jpg"
-)
+# Butler Library leads the institution hero; see ``SCHOOL_OUTCOMES["campus_photos"]``.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
