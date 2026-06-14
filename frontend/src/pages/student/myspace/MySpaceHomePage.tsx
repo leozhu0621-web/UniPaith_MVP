@@ -24,6 +24,8 @@ import { buildUpNext } from './home/upNext'
 import TodaysFocus from './home/TodaysFocus'
 import MomentumBand from './home/MomentumBand'
 import StrategySnapshot from './home/StrategySnapshot'
+import TopMatchesPeek from './home/TopMatchesPeek'
+import ScholarshipsPeek from './home/ScholarshipsPeek'
 import { freshWinIds, markCelebrated } from './home/celebrate'
 import type { Application, WorkshopFeedbackRun, OnboardingStatus } from '../../../types'
 
@@ -169,6 +171,9 @@ export default function MySpaceHomePage() {
             </div>
           )}
 
+          {/* Your top matches — a discovery peek that deep-links to /s/explore. */}
+          <TopMatchesPeek className="mt-5" />
+
           <div className="mt-5 grid gap-6 md:grid-cols-2">
             {/* Deadlines — next 14 days */}
             <div>
@@ -230,9 +235,12 @@ export default function MySpaceHomePage() {
             </div>
           </div>
 
-          {/* Strategy snapshot — its own row. */}
-          <div className="mt-5">
+          {/* Opportunity row — strategy + scholarships you may qualify for.
+              ScholarshipsPeek self-hides when there are no matches, so this
+              collapses to a single full-width strategy card. */}
+          <div className="mt-5 grid gap-6 md:grid-cols-2">
             <StrategySnapshot />
+            <ScholarshipsPeek />
           </div>
 
           {/* Quiet footer link into the portfolio. */}
