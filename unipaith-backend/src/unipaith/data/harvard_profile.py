@@ -21,19 +21,25 @@ figure rather than inventing one.
 
 from __future__ import annotations
 
+from collections import Counter
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.harvard_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.profile_catalog_utils import (
+    disambiguate_program_name,
+    program_description,
+    validate_catalog,
+)
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Harvard University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-14"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -176,6 +182,48 @@ SCHOOL_OUTCOMES: dict = {
         ],
     },
     "media_credit": "Wikimedia Commons / Gunnar Klack (CC BY-SA 4.0)",
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/"
+                "2014-04-03-Harvard-Yard-Cambridge-Massachusetts.jpg/"
+                "1920px-2014-04-03-Harvard-Yard-Cambridge-Massachusetts.jpg"
+            ),
+            "credit": "Wikimedia Commons / Gunnar Klack (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/"
+                "Harvard_Science_Center_from_the_Yard.jpg/"
+                "1920px-Harvard_Science_Center_from_the_Yard.jpg"
+            ),
+            "credit": "Wikimedia Commons / Rizka (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/"
+                "Memorial_Church%2C_Harvard_Campus%2C_Cambridge%2C_Massachusetts.jpg/"
+                "1920px-Memorial_Church%2C_Harvard_Campus%2C_Cambridge%2C_Massachusetts.jpg"
+            ),
+            "credit": "Wikimedia Commons / Rizka (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/"
+                "Johnston_Gate_%28Harvard_Yard%29_-_IMG_8974.JPG/"
+                "1920px-Johnston_Gate_%28Harvard_Yard%29_-_IMG_8974.JPG"
+            ),
+            "credit": "Wikimedia Commons / Daderot (public domain)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/"
+                "Harvard_University_main_campus_aerial.JPG/"
+                "1920px-Harvard_University_main_campus_aerial.JPG"
+            ),
+            "credit": "Wikimedia Commons / Nick Allen (CC BY-SA 4.0)",
+        },
+    ],
     "flagship": {
         "nobel_laureates": 161,
         "us_presidents": 8,
@@ -1288,33 +1336,62 @@ PROGRAMS: list[dict] = [
 
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+_EXISTING_FIELD_KEYS = {
+    (p["school"], p["program_name"].lower().strip(), p["degree_type"]) for p in PROGRAMS
+}
+
+_PRO_SCHOOLS = frozenset({
+    _HBS, _HLS, _HMS, _HSPH, _HKS, _HGSE, _GSD, _HDS, _HSDM, _DCE,
+})
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — school name for professional units, else the field title."""
+    if school in _PRO_SCHOOLS:
+        return school
+    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+        return school
+    return field_name
 
 
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the IPEDS Field-of-Study catalog."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+    field_seen = set(_EXISTING_FIELD_KEYS)
+    for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
         if slug in seen:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
+        fkey = (school, field_name.lower().strip(), dtype)
+        if fkey in field_seen:
+            continue
         seen.add(slug)
+        field_seen.add(fkey)
+        dept = _department_for(field_name, school)
+        pname = disambiguate_program_name(field_name, dtype)
+        delivery = "on_campus" if fmt == "in_person" else fmt
         out.append({
             "slug": slug,
             "school": school,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": dtype,
+            "department": dept,
             "cip": cip,
             "duration_months": dur,
             "delivery_format": fmt,
-            "description": desc,
+            "description": program_description(
+                pname, dtype, school, dept,
+                delivery_format=delivery, university_short="Harvard",
+            ),
         })
     return out
 
 
 PROGRAMS += _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+_FLAGSHIP_SLUGS = _EXISTING_SLUGS  # explicit catalog entries (pre-IPEDS breadth)
 
 # ── Application-requirement baselines ──────────────────────────────────────
 # Official at the degree level. Harvard College is university-wide; the
@@ -2139,6 +2216,240 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    "harvard-data-science-sm": {
+        "summary": (
+            "Students and data-science guides describe Harvard's one-year Master of "
+            "Science in Data Science (SEAS + Statistics) as a rigorous, quantitative "
+            "program bridging statistics, computer science, and domain applications — "
+            "with strengths in faculty research and Harvard's cross-school ecosystem. "
+            "Common cautions are the intensive one-year timeline, limited cohort size "
+            "and selectivity, and that tuition is set at the graduate SEAS rate "
+            "without Harvard College's need-based aid model."
+        ),
+        "themes": [
+            {
+                "label": "Quantitative rigor",
+                "sentiment": "positive",
+                "detail": (
+                    "Joint SEAS/Statistics curriculum covering machine learning, "
+                    "inference, and scalable computing."
+                ),
+            },
+            {
+                "label": "Harvard research access",
+                "sentiment": "positive",
+                "detail": (
+                    "Proximity to AI, biostatistics, and applied-math research "
+                    "groups across Harvard."
+                ),
+            },
+            {
+                "label": "One-year intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "The SM is designed as a single-year program with a heavy "
+                    "course and project load."
+                ),
+            },
+            {
+                "label": "Selectivity & cost",
+                "sentiment": "caution",
+                "detail": (
+                    "Competitive admission; graduate tuition without the "
+                    "undergraduate financial-aid guarantee."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard SEAS — Data Science SM",
+                "url": "https://seas.harvard.edu/computer-science/sm-data-science",
+            },
+            {
+                "label": "Harvard Statistics — Data Science",
+                "url": "https://statistics.fas.harvard.edu/data-science",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-cse-sm": {
+        "summary": (
+            "Students describe Harvard's Computational Science & Engineering SM as a "
+            "technically demanding master's bridging applied math, computing, and "
+            "scientific modeling — valued for SEAS faculty and research ties to the "
+            "Institute for Applied Computational Science. Common cautions are the "
+            "heavy prerequisites in math and programming, a smaller program relative "
+            "to peer CS departments, and graduate tuition without College-level aid."
+        ),
+        "themes": [
+            {
+                "label": "Applied computing depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Coursework in numerical methods, HPC, and scientific "
+                    "machine learning."
+                ),
+            },
+            {
+                "label": "IACS ecosystem",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to the Institute for Applied Computational Science "
+                    "and SEAS research labs."
+                ),
+            },
+            {
+                "label": "Prerequisite bar",
+                "sentiment": "caution",
+                "detail": (
+                    "Expects strong linear algebra, programming, and prior "
+                    "STEM coursework."
+                ),
+            },
+            {
+                "label": "Program scale",
+                "sentiment": "mixed",
+                "detail": (
+                    "Smaller than flagship CS master's programs at MIT or "
+                    "Stanford, with fewer dedicated industry pipelines."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Harvard SEAS — Computational Science & Engineering",
+                "url": "https://seas.harvard.edu/computer-science/sm-computational-science-and-engineering",
+            },
+            {
+                "label": "Harvard IACS",
+                "url": "https://iacs.seas.harvard.edu/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-llm": {
+        "summary": (
+            "International lawyers and guides describe Harvard Law School's LL.M. as "
+            "the most prestigious one-year law master's globally — U.S. News ranks "
+            "HLS No. 4 (2026) — offering unmatched faculty, library resources, and "
+            "a globally networked cohort. Common cautions are the single-year "
+            "timeline's intensity, tuition near the J.D. rate, and that the program "
+            "is designed for lawyers already trained in their home jurisdictions."
+        ),
+        "themes": [
+            {
+                "label": "Global prestige",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News #4 law school; the LL.M. draws senior lawyers "
+                    "and academics worldwide."
+                ),
+            },
+            {
+                "label": "Faculty & library",
+                "sentiment": "positive",
+                "detail": (
+                    "Access to HLS's full curriculum and the largest academic "
+                    "law library in the world."
+                ),
+            },
+            {
+                "label": "One-year pace",
+                "sentiment": "caution",
+                "detail": (
+                    "A compressed schedule of coursework, activities, and "
+                    "networking in Cambridge."
+                ),
+            },
+            {
+                "label": "Tuition",
+                "sentiment": "caution",
+                "detail": (
+                    "Professional-school tuition for a one-year residential "
+                    "degree in the Boston area."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Harvard Law School",
+                "url": "https://www.usnews.com/best-graduate-schools/top-law-schools/harvard-university-03050",
+            },
+            {
+                "label": "Harvard Law School — LL.M. Program",
+                "url": "https://hls.harvard.edu/dept/graduate-program/master-of-laws/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
+    "harvard-edm": {
+        "summary": (
+            "Students and education guides describe Harvard's Ed.M. at the Graduate "
+            "School of Education as a flexible, one-year professional master's — "
+            "U.S. News ranks HGSE No. 1 among education schools (2026) — with "
+            "strengths in leadership, learning design, and policy pathways. Common "
+            "cautions are the high tuition for a one-year professional degree, "
+            "variable outcomes by concentration, and that some pathways are more "
+            "research-oriented than practitioner-focused."
+        ),
+        "themes": [
+            {
+                "label": "Education-school ranking",
+                "sentiment": "positive",
+                "detail": "U.S. News #1 graduate school of education (2026).",
+            },
+            {
+                "label": "Pathway flexibility",
+                "sentiment": "positive",
+                "detail": (
+                    "Multiple Ed.M. strands across leadership, teaching, and "
+                    "learning design."
+                ),
+            },
+            {
+                "label": "One-year format",
+                "sentiment": "caution",
+                "detail": (
+                    "The standard Ed.M. is designed to be completed in one "
+                    "academic year."
+                ),
+            },
+            {
+                "label": "Professional tuition",
+                "sentiment": "caution",
+                "detail": (
+                    "Graduate tuition without Harvard College's need-blind "
+                    "financial-aid model."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "U.S. News — Harvard Graduate School of Education",
+                "url": (
+                    "https://www.usnews.com/best-graduate-schools/top-education-"
+                    "schools/harvard-university-04098"
+                ),
+            },
+            {
+                "label": "Harvard HGSE — Master's Programs",
+                "url": "https://www.gse.harvard.edu/masters",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not "
+            "individual verbatim reviews."
+        ),
+    },
 }
 
 # ── Per-school official tuition (2025-26 unless noted) and cost source ──────
@@ -2492,6 +2803,48 @@ _FULL_NAME_BY_SLUG: dict[str, str] = {
     "harvard-edm": "Master of Education (Ed.M.)",
 }
 
+
+def _finalize_catalog(programs: list[dict]) -> None:
+    """In-place repair for explicit flagship entries: full names, departments, descriptions."""
+    for p in programs:
+        slug = p["slug"]
+        if slug not in _FLAGSHIP_SLUGS:
+            continue
+        school = p["school"]
+        dtype = p["degree_type"]
+        fmt = p.get("delivery_format", "in_person")
+        raw_field = p["program_name"]
+        if slug in _FULL_NAME_BY_SLUG:
+            p["program_name"] = _FULL_NAME_BY_SLUG[slug]
+        else:
+            p["program_name"] = disambiguate_program_name(raw_field, dtype)
+        p["department"] = _department_for(raw_field, school)
+        delivery = "on_campus" if fmt == "in_person" else fmt
+        p["description"] = program_description(
+            p["program_name"], dtype, school, p["department"],
+            delivery_format=delivery, university_short="Harvard",
+        )
+
+    counts = Counter(p["program_name"] for p in programs)
+    for p in programs:
+        if counts[p["program_name"]] > 1:
+            suffix = (
+                " (Online)" if p.get("delivery_format") == "online"
+                else f" ({p['school']})"
+            )
+            p["program_name"] += suffix
+    counts = Counter(p["program_name"] for p in programs)
+    for p in programs:
+        if counts[p["program_name"]] > 1 and p.get("cip"):
+            p["program_name"] += f" — {p['cip']}"
+
+
+_finalize_catalog(PROGRAMS)
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise RuntimeError(f"Harvard catalog quality gate failed: {_catalog_errors}")
+
+
 # Official program-page URLs (every URL verified to resolve at author time;
 # uncertain deep links fall back to the verified school home page).
 _WEBSITE_BY_SLUG: dict[str, str] = {
@@ -2567,11 +2920,7 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
 
 # Real Harvard campus photo (Harvard Yard) — Wikimedia Commons, hotlinkable,
 # landscape JPG. Leads the hero on the institution detail page.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/"
-    "2014-04-03-Harvard-Yard-Cambridge-Massachusetts.jpg/"
-    "1920px-2014-04-03-Harvard-Yard-Cambridge-Massachusetts.jpg"
-)
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
@@ -2809,6 +3158,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # Official program-page URL (read-more link on the program page).
         p.website_url = _WEBSITE_BY_SLUG.get(spec["slug"]) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
+        p.department = spec.get("department")
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
