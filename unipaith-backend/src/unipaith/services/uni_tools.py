@@ -41,6 +41,91 @@ def _signals_from_tool_input(tool_input: dict[str, Any]) -> ExtractedSignals:
     )
 
 
+def _infer_maslow(text: str) -> str:
+    """Best-effort Maslow level for a flat need signal that carries no level."""
+    t = (text or "").lower()
+    if any(
+        k in t
+        for k in (
+            "money",
+            "afford",
+            "cost",
+            "tuition",
+            "financ",
+            "scholarship",
+            "safe",
+            "stable",
+            "debt",
+        )
+    ):
+        return "safety"
+    if any(
+        k in t
+        for k in ("communit", "belong", "friend", "peer", "social", "culture", "family", "connect")
+    ):
+        return "social"
+    if any(
+        k in t
+        for k in (
+            "respect",
+            "recogni",
+            "esteem",
+            "support",
+            "mentor",
+            "confiden",
+            "prestige",
+            "rank",
+        )
+    ):
+        return "self_esteem"
+    if any(k in t for k in ("food", "health", "sleep", "housing", "basic")):
+        return "physiological"
+    return "self_actualization"
+
+
+def _translate_flat_signals(signals: list[Any]) -> dict[str, Any]:
+    """Map the platform agent's flat ``signals: [{type, content, evidence,
+    completeness?}]`` shape onto the structured ExtractedSignals blocks the
+    in-app persist layer expects (type ∈ goal|need|value|belief|fact)."""
+    goals: list[dict[str, Any]] = []
+    needs: list[dict[str, Any]] = []
+    identity: list[dict[str, Any]] = []
+    conf: dict[str, float] = {}
+    for s in signals or []:
+        if not isinstance(s, dict):
+            continue
+        kind = s.get("type")
+        content = (s.get("content") or "").strip()
+        evidence = (s.get("evidence") or content).strip()
+        if not content:
+            continue
+        if kind == "goal":
+            goals.append(
+                {
+                    "category": "academic",
+                    "specific": content,
+                    "completeness": s.get("completeness", 1.0),
+                    "evidence": evidence,
+                }
+            )
+            conf["goals"] = 0.85
+        elif kind == "need":
+            needs.append(
+                {
+                    "maslow_level": _infer_maslow(f"{content} {evidence}"),
+                    "signal": content[:80],
+                    "free_text": evidence,
+                    "evidence": evidence,
+                }
+            )
+            conf["needs"] = 0.85
+        elif kind in ("value", "belief", "fact"):
+            facet = {"value": "value", "belief": "belief", "fact": "self_awareness"}[kind]
+            identity.append({"facet": facet, "claim": content, "evidence": evidence})
+            conf["identity"] = 0.85
+    return {"goals": goals, "needs": needs, "identity": identity, "confidence": conf}
+
+
 async def tool_save_signals(
     db: AsyncSession,
     user_id: UUID,
@@ -49,7 +134,12 @@ async def tool_save_signals(
     session_id: UUID | None = None,
 ) -> dict[str, Any]:
     """Persist goals / needs / identity / basic signals from a turn, then report
-    fresh completion + whether the student is handoff-ready."""
+    fresh completion + whether the student is handoff-ready.
+
+    Accepts BOTH shapes: the structured EXTRACT_SIGNALS_TOOL blocks, and the
+    platform agent's flat ``signals: [...]`` list (translated to the former)."""
+    if isinstance(tool_input.get("signals"), list):
+        tool_input = _translate_flat_signals(tool_input["signals"])
     disc = DiscoveryService(db)
     student_id = await disc._profile_id_for_user(user_id)
     if session_id is None:
@@ -178,6 +268,24 @@ async def tool_get_profile_snapshot(
     return await StudentService(db).get_full_snapshot(user_id)
 
 
+# ── create_profile ────────────────────────────────────────────────────────
+async def tool_create_profile(
+    db: AsyncSession, user_id: UUID, tool_input: dict[str, Any]
+) -> dict[str, Any]:
+    """The platform agent calls this 'at the end of the first session' to commit
+    a new student profile. In UniPaith the StudentProfile already exists (created
+    at signup), so this is an idempotent ack that returns the real profile id —
+    durable signals are written via save_signals, not here."""
+    from unipaith.services.discovery_service import DiscoveryService
+
+    student_id = await DiscoveryService(db)._profile_id_for_user(user_id)
+    return {
+        "ok": True,
+        "profile_id": str(student_id),
+        "note": "profile already exists; signals persist via save_signals",
+    }
+
+
 # ── suggest_replies (UI affordance — no DB) ───────────────────────────────
 def build_suggested_signals(tool_input: dict[str, Any]) -> dict[str, Any]:
     """Translate a ``suggest_replies`` tool call into the ``extracted_signals``
@@ -206,10 +314,17 @@ def build_suggested_signals(tool_input: dict[str, Any]) -> dict[str, Any]:
 # ── dispatcher ────────────────────────────────────────────────────────────
 _TOOLS = {
     "get_profile_snapshot": tool_get_profile_snapshot,
+    "create_profile": tool_create_profile,
     "search_programs": tool_search_programs,
     "save_signals": tool_save_signals,
     "get_matches": tool_get_matches,
     "generate_strategy": tool_generate_strategy,
+}
+
+# The live platform agent's tool names map onto the host implementations above.
+# The agent is the source of truth; the host adapts to whatever it exposes.
+_ALIASES = {
+    "get_profile": "get_profile_snapshot",
 }
 
 
@@ -223,12 +338,20 @@ async def dispatch_tool(
 ) -> dict[str, Any]:
     """Route an ``agent.custom_tool_use`` to its host implementation.
 
-    Unknown names return a structured error rather than raising, so the host
-    can forward it as the tool result and let the agent recover."""
-    fn = _TOOLS.get(name)
+    SECURITY: the platform agent passes a ``student_id`` in its tool input. The
+    host IGNORES it and always operates on the authenticated ``user_id`` — an
+    agent-supplied identity is never trusted.
+
+    ``suggest_replies`` is handled in the host (UI affordance); any other
+    unknown name returns a structured error rather than raising, so the host can
+    forward it and let the agent recover."""
+    canonical = _ALIASES.get(name, name)
+    fn = _TOOLS.get(canonical)
     if fn is None:
+        if name == "suggest_replies":
+            return {"ok": True}
         return {"error": f"unknown_tool:{name}"}
-    if name == "save_signals":
+    if canonical == "save_signals":
         return await fn(db, user_id, tool_input, session_id=session_id)
     return await fn(db, user_id, tool_input)
 

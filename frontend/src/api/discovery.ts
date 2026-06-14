@@ -103,6 +103,34 @@ export async function streamDiscoveryMessage(
     body: JSON.stringify(body),
     signal,
   })
+  return consumeDiscoveryStream(res, handlers)
+}
+
+/**
+ * Uni speaks first. Streams the proactive opener (`POST /opener/stream`) when the
+ * student opens an empty conversation — same SSE contract minus `student_message`
+ * (the student said nothing). Throws if the connection can't be established.
+ */
+export async function streamDiscoveryOpener(
+  handlers: DiscoveryStreamHandlers,
+  signal?: AbortSignal,
+): Promise<{ gotStudentEcho: boolean }> {
+  const token = useAuthStore.getState().accessToken
+  const res = await fetch(`${API_BASE}${BASE}/opener/stream`, {
+    method: 'POST',
+    headers: {
+      Accept: 'text/event-stream',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    signal,
+  })
+  return consumeDiscoveryStream(res, handlers)
+}
+
+async function consumeDiscoveryStream(
+  res: Response,
+  handlers: DiscoveryStreamHandlers,
+): Promise<{ gotStudentEcho: boolean }> {
   if (!res.ok || !res.body) throw new Error(`stream HTTP ${res.status}`)
 
   const reader = res.body.getReader()

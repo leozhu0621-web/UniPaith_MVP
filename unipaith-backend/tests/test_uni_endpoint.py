@@ -40,6 +40,38 @@ async def test_stream_endpoint_uses_host_when_flag_on(
 
 
 @pytest.mark.asyncio
+async def test_opener_serves_static_greeting_when_flag_off(
+    student_client, db_session, mock_student_user, monkeypatch
+):
+    await ensure_profile(db_session, mock_student_user)
+    monkeypatch.setattr(settings, "ai_uni_managed_agent_v1", False)
+    resp = await student_client.post("/api/v1/students/me/discovery/opener/stream")
+    assert resp.status_code == 200
+    assert "assistant_message" in resp.text
+    assert "I'm Uni" in resp.text
+    assert "student_message" not in resp.text  # Uni speaks first — no student turn
+
+
+@pytest.mark.asyncio
+async def test_opener_uses_host_when_flag_on(
+    student_client, db_session, mock_student_user, monkeypatch
+):
+    await ensure_profile(db_session, mock_student_user)
+    monkeypatch.setattr(settings, "ai_uni_managed_agent_v1", True)
+    real_host = disc_api.UniAgentHost
+
+    def _host_with_fake(db, client=None):
+        return real_host(db, client=_FakeAgentClient())
+
+    monkeypatch.setattr(disc_api, "UniAgentHost", _host_with_fake)
+    resp = await student_client.post("/api/v1/students/me/discovery/opener/stream")
+    assert resp.status_code == 200
+    assert "assistant_message" in resp.text
+    assert "Where are you headed" in resp.text  # streamed from the fake agent
+    assert "student_message" not in resp.text
+
+
+@pytest.mark.asyncio
 async def test_stream_endpoint_falls_back_to_orchestrator_on_setup_failure(
     student_client, db_session, mock_student_user, monkeypatch
 ):
