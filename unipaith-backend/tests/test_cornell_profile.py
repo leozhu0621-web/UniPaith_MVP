@@ -107,7 +107,8 @@ def test_catalog_breadth_and_shape():
     assert len(cu.PROGRAMS) >= 260
     assert len(set(cu.PROGRAM_SLUGS)) == len(cu.PROGRAM_SLUGS)
     assert cu.RANKING_DATA["ownership_type"] == "private"
-    assert "private" in cu.DESCRIPTION.lower() and "research university in ithaca" in cu.DESCRIPTION.lower()
+    desc = cu.DESCRIPTION.lower()
+    assert "private" in desc and "research university in ithaca" in desc
     assert len(cu.SCHOOL_OUTCOMES["campus_photos"]) >= 4
 
 
