@@ -7,11 +7,12 @@ import { getThreads } from '../../../api/inbox'
 import { listMyApplications } from '../../../api/applications'
 import Coachmark from '../../../components/ui/Coachmark'
 
-// My Space shell (Spec 2026-06-10 §3) — one personal surface, rooms ordered by
-// the journey sequence: Home on top, then Plan → Prepare → Apply & decide →
-// Anytime → Record. Desktop gets a slim left rail; mobile a scrollable pill
-// row under the top bar. Rooms keep flat URLs — unification comes from this
-// shared layout route, not nested paths.
+// My Space shell (Spec 2026-06-10 §3; restructured 2026-06-14) — one personal
+// surface, rooms grouped by CONTENT TYPE rather than application-journey phase:
+// Home on top, then Record → Collections → Workspace. The taxonomy reads
+// identity → tracked objects → where you act, with no phase words. Desktop gets
+// a slim left rail; mobile a scrollable pill row under the top bar. Rooms keep
+// flat URLs — unification comes from this shared layout route, not nested paths.
 
 type Room = { to: string; label: string; icon: typeof Backpack; end?: boolean }
 
@@ -19,17 +20,25 @@ const HOME: Room = { to: '/s/space', label: 'Home', icon: Backpack, end: true }
 
 const GROUPS: { label: string | null; rooms: Room[] }[] = [
   { label: null, rooms: [HOME] },
-  { label: 'Plan', rooms: [{ to: '/s/saved', label: 'Saved', icon: Bookmark }] },
-  { label: 'Prepare', rooms: [{ to: '/s/prep', label: 'Prep', icon: PenLine }] },
-  { label: 'Apply & decide', rooms: [{ to: '/s/applications', label: 'Applications', icon: FolderKanban }] },
+  // Record — your durable reference data.
+  { label: 'Record', rooms: [{ to: '/s/profile', label: 'Profile', icon: User }] },
+  // Collections — sets of items you're tracking.
   {
-    label: 'Anytime',
+    label: 'Collections',
     rooms: [
+      { to: '/s/saved', label: 'Saved', icon: Bookmark },
+      { to: '/s/applications', label: 'Applications', icon: FolderKanban },
+    ],
+  },
+  // Workspace — where you do the work.
+  {
+    label: 'Workspace',
+    rooms: [
+      { to: '/s/prep', label: 'Prep', icon: PenLine },
       { to: '/s/calendar', label: 'Calendar', icon: Calendar },
       { to: '/s/messages', label: 'Messages', icon: MessageSquare },
     ],
   },
-  { label: 'Record', rooms: [{ to: '/s/profile', label: 'Profile', icon: User }] },
 ]
 
 const ALL_ROOMS = GROUPS.flatMap(g => g.rooms)
@@ -78,7 +87,7 @@ export default function MySpaceShell() {
           minViewport keeps the CSS-hidden rail from blocking the mark queue below lg. */}
       <aside className="hidden lg:block w-44 flex-shrink-0 border-r border-border" aria-label="My Space">
         <div className="sticky top-0">
-        <Coachmark id="myspace-rooms" title="Rooms, in journey order" body="Plan, prepare, apply and decide — the rail follows your journey top to bottom, and Home pulls it all together." placement="right" minViewport="lg">
+        <Coachmark id="myspace-rooms" title="Your rooms, organized" body="Grouped by what's inside — your record, your collections, and your workspace. Home pulls it all together." placement="right" minViewport="lg">
         <nav className="max-h-[calc(100dvh-4rem)] overflow-y-auto px-3 py-4">
           {GROUPS.map((group, gi) => (
             <div key={group.label ?? 'home'} className={gi === 0 ? '' : 'mt-4'}>
