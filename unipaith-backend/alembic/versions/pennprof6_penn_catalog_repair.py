@@ -6,7 +6,7 @@ CIP×award-level padding: every program now carries a credential-disambiguated
 Also adds a verified 5-photo campus gallery and persists ``department`` on every
 program row. Idempotent; no-op when Penn is absent.
 
-Revision ID: pennprof1
+Revision ID: pennprof6
 Revises: columbiaprof6
 Create Date: 2026-06-14
 """
@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from alembic import op
 from unipaith.data import penn_profile
 
-revision = "pennprof1"
+revision = "pennprof6"
 down_revision = "columbiaprof6"
 branch_labels = None
 depends_on = None
