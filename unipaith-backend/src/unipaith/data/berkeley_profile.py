@@ -2216,6 +2216,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.description_text = spec["description"]
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
+        p.department = spec.get("department")
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
