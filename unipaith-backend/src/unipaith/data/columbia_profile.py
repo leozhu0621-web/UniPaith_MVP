@@ -58,13 +58,18 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.columbia_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.profile_catalog_utils import (
+    disambiguate_program_name,
+    program_description,
+    validate_catalog,
+)
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Columbia University in the City of New York"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-14"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1116,34 +1121,102 @@ PROGRAMS: list[dict] = [
 for _ep in PROGRAMS:
     _ep.setdefault("delivery_format", "in_person")
 
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "columbia-economics-ba": "Department of Economics",
+    "columbia-political-science-ba": "Department of Political Science",
+    "columbia-history-ba": "Department of History",
+    "columbia-english-ba": "Department of English and Comparative Literature",
+    "columbia-psychology-ba": "Department of Psychology",
+    "columbia-sociology-ba": "Department of Sociology",
+    "columbia-biology-ba": "Department of Biological Sciences",
+    "columbia-computer-science-bs": "Department of Computer Science",
+    "columbia-operations-research-bs": (
+        "Department of Industrial Engineering and Operations Research"
+    ),
+    "columbia-mechanical-engineering-bs": "Department of Mechanical Engineering",
+    "columbia-electrical-engineering-bs": "Department of Electrical Engineering",
+    "columbia-applied-mathematics-bs": (
+        "Department of Applied Physics and Applied Mathematics"
+    ),
+    "columbia-biomedical-engineering-bs": "Department of Biomedical Engineering",
+    "columbia-computer-science-ms": "Department of Computer Science",
+    "columbia-mba": "Columbia Business School",
+    "columbia-jd": "Columbia Law School",
+    "columbia-md": "Vagelos College of Physicians and Surgeons",
+    "columbia-journalism-ms": "Columbia Journalism School",
+    "columbia-sipa-mia": "School of International and Public Affairs",
+    "columbia-sipa-mpa": "School of International and Public Affairs",
+    "columbia-public-health-mph": "Mailman School of Public Health",
+    "columbia-social-work-msw": "Columbia School of Social Work",
+    "columbia-architecture-march": (
+        "Graduate School of Architecture, Planning and Preservation"
+    ),
+    "columbia-arts-mfa": "Columbia School of the Arts",
+    "columbia-nursing-msn": "Columbia School of Nursing",
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _delivery_format(raw: str) -> str:
+    """Normalize IPEDS delivery labels to the platform's canonical values."""
+    if raw == "in_person":
+        return "on_campus"
+    return raw
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — the CIP field title unless it duplicates the school name."""
+    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+        return school
+    return field_name
 
 
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+    for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
         if slug in seen:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
         seen.add(slug)
+        dept = _department_for(field_name, school)
+        delivery = _delivery_format(fmt)
+        pname = disambiguate_program_name(field_name, dtype)
         out.append({
             "slug": slug,
             "school": school,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": dtype,
+            "department": dept,
             "cip": cip,
             "duration_months": dur,
-            "delivery_format": fmt,
-            "description": desc,
+            "delivery_format": delivery,
+            "description": program_description(
+                pname,
+                dtype,
+                school,
+                dept,
+                delivery_format=delivery,
+                university_short="Columbia",
+            ),
         })
     return out
 
 
 PROGRAMS += _build_catalog()
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise RuntimeError(f"Columbia catalog quality gate failed: {_catalog_errors}")
+for _p in PROGRAMS:
+    _p["delivery_format"] = _delivery_format(_p.get("delivery_format", "in_person"))
+
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
@@ -2408,9 +2481,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # school's site.
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
+        p.department = spec.get("department")
         p.is_published = True
         p.catalog_source = "curated"
-        p.delivery_format = spec.get("delivery_format", "in_person")
+        p.delivery_format = spec.get("delivery_format", "on_campus")
         # Every program gets a working feed: its school's verified RSS filtered by
         # program-naming keywords (CS uses the Data Science Institute feed).
         p.content_sources = _program_content(spec)
