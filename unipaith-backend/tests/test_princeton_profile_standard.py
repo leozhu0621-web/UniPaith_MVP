@@ -132,6 +132,16 @@ def test_flagship_cs_program_is_deeply_enriched():
     )
 
 
+def test_catalog_has_no_padding_stubs():
+    """Every program must have a real department and credential-disambiguated name."""
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(p.PROGRAMS)
+    assert errors == [], errors
+    null_dept = sum(1 for prog in p.PROGRAMS if not prog.get("department"))
+    assert null_dept == 0, f"{null_dept} programs missing department"
+
+
 def test_every_program_is_gold_except_recorded_omissions():
     assert len(p.PROGRAMS) >= 100, "full IPEDS catalog breadth (UNITID 186131)"
     omittable_sections = {"tracks", "insights", "feeds"}
