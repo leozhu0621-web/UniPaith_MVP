@@ -1417,7 +1417,10 @@ for _p in PROGRAMS:
     if _p["program_name"] == "MBA":
         _p["program_name"] = "Master of Business Administration"
 
-_name_counts = {n: sum(1 for p in PROGRAMS if p["program_name"] == n) for n in {p["program_name"] for p in PROGRAMS}}
+_name_counts = {
+    n: sum(1 for p in PROGRAMS if p["program_name"] == n)
+    for n in {p["program_name"] for p in PROGRAMS}
+}
 for _p in PROGRAMS:
     if _name_counts[_p["program_name"]] > 1:
         _p["program_name"] = disambiguate_program_name(_p["program_name"], _p["degree_type"])

@@ -16,7 +16,6 @@ import pytest
 from httpx import AsyncClient
 
 from unipaith.main import app
-from unipaith.transparency.live_routes import expand_routes
 from unipaith.models.base import Base
 from unipaith.transparency.acceptance import BLOCKERS, JOURNEYS, build_acceptance
 from unipaith.transparency.api_contract import build_api_contract
@@ -26,6 +25,7 @@ from unipaith.transparency.frontend_standards import (
     BUILD_TASKS as FE_BUILD_TASKS,
 )
 from unipaith.transparency.frontend_standards import build_frontend_standards
+from unipaith.transparency.live_routes import expand_routes
 from unipaith.transparency.production import (
     BUILD_TASKS as PROD_BUILD_TASKS,
 )
