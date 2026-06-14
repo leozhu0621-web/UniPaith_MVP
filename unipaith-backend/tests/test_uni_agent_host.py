@@ -113,6 +113,27 @@ async def test_suggest_replies_persisted_as_chips(db_session, mock_student_user)
 
 
 @pytest.mark.asyncio
+async def test_stream_opener_speaks_first_without_a_student_message(db_session, mock_student_user):
+    """The proactive opener relays Uni's first message but persists NO student
+    turn (the student hasn't typed anything)."""
+    from sqlalchemy import select
+
+    from unipaith.models.discovery import DiscoveryMessage
+    from unipaith.services.uni_agent_host import UniAgentHost
+
+    await ensure_profile(db_session, mock_student_user)
+    host = UniAgentHost(db_session, client=_FakeAgentClient())
+    events = [ev async for ev in host.stream_opener(mock_student_user.id)]
+    names = [n for n, _ in events]
+    assert "delta" in names and "assistant_message" in names
+
+    rows = (await db_session.execute(select(DiscoveryMessage))).scalars().all()
+    roles = [r.role for r in rows]
+    assert "assistant" in roles
+    assert "student" not in roles  # opener persists no fake student turn
+
+
+@pytest.mark.asyncio
 async def test_stream_turn_raises_on_setup_failure(db_session, mock_student_user):
     """Setup failure must propagate so the API can fall back to the orchestrator."""
     from unipaith.services.uni_agent_host import UniAgentHost

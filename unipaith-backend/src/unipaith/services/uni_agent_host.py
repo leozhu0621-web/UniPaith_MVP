@@ -30,6 +30,15 @@ from unipaith.services.uni_tools import (
 
 _CALM = "Uni is catching her breath for a moment — please try again shortly."
 
+# Sent to the platform session when the student opens the conversation but
+# hasn't typed anything yet, so Uni speaks first. Never mirrored as a student
+# message (the student didn't say it). The agent persona recognizes the marker.
+_OPENER_TRIGGER = (
+    "[SESSION_START] The student just opened Uni and hasn't typed anything yet. "
+    "Greet them warmly (by name if you know it), then lead with your first "
+    "question — you speak first."
+)
+
 
 class UniAgentHost:
     def __init__(self, db: AsyncSession, *, client: Any | None = None) -> None:
@@ -45,7 +54,16 @@ class UniAgentHost:
         also carries the bound managed-agent session id."""
         return await DiscoveryService(self.db).start_unified_session(user_id)
 
-    async def stream_turn(self, user_id: UUID, *, content: str) -> AsyncIterator[tuple[str, dict]]:
+    async def stream_opener(self, user_id: UUID) -> AsyncIterator[tuple[str, dict]]:
+        """Uni speaks first. Kick the platform session with a SESSION_START
+        trigger so the agent greets and leads, persisting only her reply (the
+        student said nothing). Same SSE contract as a normal turn."""
+        async for event in self.stream_turn(user_id, content=_OPENER_TRIGGER, mirror_student=False):
+            yield event
+
+    async def stream_turn(
+        self, user_id: UUID, *, content: str, mirror_student: bool = True
+    ) -> AsyncIterator[tuple[str, dict]]:
         # ── Setup (may raise → API falls back to the orchestrator) ──
         row = await self._get_or_create_session_row(user_id)
         if not row.agent_session_id:
@@ -94,7 +112,7 @@ class UniAgentHost:
                     break
 
             text = "".join(reply_parts).strip() or "…"
-            await self._mirror(row, content, text, suggested_signals)
+            await self._mirror(row, content, text, suggested_signals, mirror_student)
             yield ("assistant_message", {"content": text})
         except Exception as exc:  # mid-stream: close calmly, never 5xx
             yield ("error", {"message": str(exc)[:200]})
@@ -106,6 +124,7 @@ class UniAgentHost:
         student_text: str,
         assistant_text: str,
         suggested_signals: dict | None = None,
+        mirror_student: bool = True,
     ) -> None:
         """Append the turn to discovery_messages for transcript / audit / eval.
 
@@ -114,9 +133,15 @@ class UniAgentHost:
         frontend renders tap-chips / the importance slider — preserving the
         interactive experience on the managed path with no frontend change.
 
+        When ``mirror_student`` is False (the proactive opener), only Uni's reply
+        is persisted — there was no student turn to record.
+
         Best-effort — a mirror failure must not break the conversation."""
         try:
-            self.db.add(DiscoveryMessage(session_id=row.id, role="student", content=student_text))
+            if mirror_student:
+                self.db.add(
+                    DiscoveryMessage(session_id=row.id, role="student", content=student_text)
+                )
             self.db.add(
                 DiscoveryMessage(
                     session_id=row.id,
