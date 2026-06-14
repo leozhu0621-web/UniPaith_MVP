@@ -15,6 +15,7 @@ import Card from '../../../../components/ui/Card'
 import Modal from '../../../../components/ui/Modal'
 import Skeleton from '../../../../components/ui/Skeleton'
 import QueryError from '../../../../components/ui/QueryError'
+import EmptyState from '../../../../components/ui/EmptyState'
 import { getMyInterviews } from '../../../../api/interviews'
 import { getAccommodations, getScheduling, upsertAccommodations, upsertScheduling } from '../../../../api/students'
 import { showToast } from '../../../../stores/toast-store'
@@ -87,9 +88,11 @@ export default function InterviewsTab() {
         ) : isError ? (
           <QueryError variant="inline" detail="We couldn't load your interviews." onRetry={() => refetch()} />
         ) : list.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No interviews yet. When a program proposes one, it shows up here and on your application page.
-          </p>
+          <EmptyState
+            icon={<Video size={40} />}
+            title="No interviews yet"
+            description="Programs invite you to interview across your applications — invitations show up here and on the application itself."
+          />
         ) : (
           <div className="stagger-list space-y-6">
             {needsResponse.length > 0 && (

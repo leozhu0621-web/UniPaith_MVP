@@ -5,13 +5,14 @@
  */
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Trash2 } from 'lucide-react'
+import { FileText, Trash2 } from 'lucide-react'
 
 import Badge from '../../../../components/ui/Badge'
 import Button from '../../../../components/ui/Button'
 import Select from '../../../../components/ui/Select'
 import Skeleton from '../../../../components/ui/Skeleton'
 import QueryError from '../../../../components/ui/QueryError'
+import EmptyState from '../../../../components/ui/EmptyState'
 import { deleteDocument, listDocuments } from '../../../../api/documents'
 import { confirmDialog } from '../../../../stores/confirm-store'
 import { showToast } from '../../../../stores/toast-store'
@@ -68,7 +69,13 @@ export default function DocumentsTab() {
           <QueryError variant="inline" detail="We couldn't load your documents." onRetry={() => refetch()} />
         </div>
       ) : documentsList.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">No documents uploaded yet.</p>
+        <div className="mt-3">
+          <EmptyState
+            icon={<FileText size={40} />}
+            title="No documents yet"
+            description="Upload transcripts, test scores, and portfolios above — they back your applications and strengthen your profile."
+          />
+        </div>
       ) : (
         <div className="stagger-list mt-3 space-y-2">
           {documentsList.map((doc: any) => (
