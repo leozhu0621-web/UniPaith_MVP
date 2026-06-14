@@ -313,15 +313,20 @@ profiles stay broken.
   substantive degree program per school from the official catalog **and** the
   IPEDS / College Scorecard program list (by CIP for that UNITID), including
   online / professional / continuing-ed / extension. Treat the IPEDS/Scorecard
-  program count as the target completeness check — getting ~15-20 when the
-  university offers ~100 means structure discovery is incomplete; keep going (or
-  resume next run) until the set is the real catalog (peer count, cf. MIT's 65).
-  **Each program needs its REAL field-of-study NAME** ("Bachelor of Arts in
-  Economics"), captured from the catalog — never a bare degree abbreviation or a
-  generic stub (miss #2). An IPEDS CIP row gives you the *field* (the program
-  name), not just the credential level; if you can only see "BA — 47 majors" and
-  can't resolve the 47 major names, add the ones you CAN name and resume, rather
-  than minting 47 identical "BA" rows.
+  program count as an UPPER-BOUND completeness HINT, never a target to hit and
+  never a row-minting recipe (miss #2) — getting ~15-20 when the university
+  offers ~100 means structure discovery is incomplete, so keep going (or resume
+  next run) toward the real catalog (peer count, cf. MIT's 65), but NEVER pad to
+  the count. **Each program needs its REAL field-of-study NAME** ("Bachelor of
+  Arts in Economics"), captured from the catalog — never a bare degree
+  abbreviation, a verbatim CIP field title, or a generic stub (miss #2). An IPEDS
+  CIP row only hints at a *field*; it is NOT itself a program name and does NOT
+  authorize one row per (CIP × award-level). Resolve it to the catalog's real
+  per-degree program(s) — disambiguating the credential ("Bachelor of Arts in
+  Anthropology" vs "PhD in Anthropology", never two rows both named
+  "Anthropology") with a real owning department — or omit it; if you can only see
+  "BA — 47 majors" and can't resolve the 47 major names, add the ones you CAN
+  name and resume, rather than minting identical "BA" (or bare-CIP-title) rows.
 - Dedupe (by real name, not just slug); assign stable slugs
   (`<univ>-<field>-<degree>`); map each program to its owning school by name. If a
   school/program — or its real name — can't be confirmed officially, **do not add
