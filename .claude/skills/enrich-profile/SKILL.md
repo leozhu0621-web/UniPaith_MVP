@@ -85,6 +85,23 @@ Concrete misses observed in the first runs — each broke a real page:
      cannot resolve the major names, FEWER real entries — never one stub named "BA"
      per filler row. A duplicate/abbreviation/`"Programs"`-department name is an
      automatic fabrication failure: drop it or give it its real name.
+   - **The IPEDS/Scorecard CIP count is an UPPER-BOUND completeness HINT, never a
+     row-minting recipe — NEVER mint one program per (CIP × award-level).** A
+     second padding variant is now live fleet-wide and EVADES the bare-abbreviation
+     ban above: the CIP field title is used verbatim as `program_name`
+     ("Anthropology", "Applied Mathematics"), so the certificate, bachelor's, and
+     master's in ONE field all carry an IDENTICAL name; `department` is null; and
+     the description is a degree-type template ("{field} — a {Univ} {degree_type}
+     program offered through {school}"). That is the same fabrication as the "BA"
+     stubs wearing a CIP-title costume (live API this run: the four most-recently-
+     enriched universities were 94–97% such stubs; ~13 universities ≥60%). A
+     program is REAL only when (a) its name disambiguates the credential
+     ("Bachelor of Arts in Anthropology", "PhD in Anthropology" — never two rows
+     both named "Anthropology"), (b) `department` names the real owning
+     school/department (never null, never "Programs"), and (c) the description says
+     something field-SPECIFIC beyond the degree label. Resolve each CIP row to its
+     real per-degree program(s) or omit it — never emit a null-department,
+     template-described, name-colliding stub per CIP×level.
    - **Breadth-first, then a MANDATORY depth pass — "defer" is not "abandon".**
      Create EVERY program node with verified *basics* first (full name,
      degree_type, `delivery_format`, department, description, website, tuition —
@@ -181,8 +198,14 @@ Concrete misses observed in the first runs — each broke a real page:
    without looking at the result. Before declaring a node done, CHECK the actual
    output a student would see:
    - **Programs:** spot-check the program list — are names real and distinct (no
-     `"BA"`-style stubs, no duplicate names, no `"Programs"` department)? A list
-     with repeated generic names = not done.
+     `"BA"`-style stubs, no duplicate names, no `"Programs"` department, **no
+     null/blank `department`, and no `"{field} — a {Univ} {degree_type} program
+     offered through …"` template descriptions**)? A list with repeated generic
+     names, blank departments, or a description that only swaps the field into a
+     degree-type sentence = not done — that is CIP×award-level padding (miss #2),
+     not breadth. Run the catalog through this check programmatically (count
+     duplicate `program_name`s, null `department`s, and template descriptions)
+     before shipping — a padded catalog must FAIL the run.
    - **Feeds:** a `content_sources` feed counts only if it actually FETCHES ≥1
      item. **Confirm the feed produces** (the news_rss/events_feed resolves and
      returns entries) before trusting it — set a feed you proved works, not a URL
