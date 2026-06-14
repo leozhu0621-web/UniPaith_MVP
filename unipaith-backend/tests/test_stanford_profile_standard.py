@@ -211,6 +211,23 @@ def test_every_program_is_gold_except_recorded_omissions():
         )
 
 
+def test_catalog_quality_gate():
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(s.PROGRAMS)
+    assert not errors, f"Catalog quality gate failed: {errors}"
+
+
+def test_catalog_breadth_and_shape():
+    assert len(s.PROGRAMS) >= 180, "full Scorecard catalog breadth (UNITID 243744)"
+    assert len(set(s.PROGRAM_SLUGS)) == len(s.PROGRAM_SLUGS)
+    assert s.RANKING_DATA["ownership_type"] == "private_nonprofit"
+    assert (
+        "private" in s.DESCRIPTION.lower()
+        and "research university" in s.DESCRIPTION.lower()
+    )
+
+
 def test_every_node_has_content_sources():
     assert s._INSTITUTION_CONTENT.get("news_rss")
     assert s._INSTITUTION_CONTENT.get("events_feed")
