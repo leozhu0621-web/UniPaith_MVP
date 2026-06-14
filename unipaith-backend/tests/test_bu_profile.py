@@ -116,3 +116,11 @@ def test_every_program_is_conformant_or_omitted():
 def test_flagship_programs_have_reviews():
     reviewed = [s for s in b._REVIEWS_BY_SLUG if s in b.PROGRAM_SLUGS]
     assert len(reviewed) >= 14
+
+
+def test_catalog_has_no_padding_stubs():
+    """Catalog must not carry bare-abbr / CIP×award-level padding stubs."""
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(b.PROGRAMS)
+    assert not errors, f"Catalog padding detected: {errors}"
