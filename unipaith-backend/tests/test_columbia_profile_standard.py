@@ -136,11 +136,19 @@ def test_every_school_and_program_has_content_sources():
         assert cs.get("keywords"), f"{spec['slug']} missing keywords"
 
 
+def test_catalog_quality_gate():
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(p.PROGRAMS)
+    assert not errors, f"Catalog quality gate failed: {errors}"
+
+
 def test_full_catalog_breadth():
     assert len(p.PROGRAMS) >= 250, f"catalog too short: {len(p.PROGRAMS)}"
     assert len(p.PROGRAM_SLUGS) == len(set(p.PROGRAM_SLUGS)), "duplicate program slug"
     for spec in p.PROGRAMS:
-        assert spec.get("delivery_format") in {"in_person", "online", "hybrid"}, spec["slug"]
+        assert spec.get("delivery_format") in {"on_campus", "online", "hybrid"}, spec["slug"]
+        assert spec.get("department"), f"{spec['slug']} missing department"
 
 
 def test_every_program_is_gold_except_recorded_omissions():
