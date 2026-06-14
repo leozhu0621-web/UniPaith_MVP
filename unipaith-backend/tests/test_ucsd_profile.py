@@ -139,6 +139,17 @@ def test_every_program_is_conformant_or_omitted():
         assert snap["content_sources"], f"{spec['slug']} missing content_sources"
 
 
+def test_catalog_has_no_padding_stubs():
+    """Catalog must not carry CIP×award-level padding stubs."""
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(p.PROGRAMS)
+    assert not errors, f"Catalog padding detected: {errors}"
+    assert all(spec.get("department") for spec in p.PROGRAMS), "every program needs a department"
+    names = [spec["program_name"] for spec in p.PROGRAMS]
+    assert len(names) == len(set(names)), "duplicate program_name values"
+
+
 def test_flagship_programs_have_reviews():
     reviewed = [s for s in p._REVIEWS_BY_SLUG if s in p.PROGRAM_SLUGS]
     assert len(reviewed) >= 10
