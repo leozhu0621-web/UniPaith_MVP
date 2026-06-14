@@ -197,6 +197,49 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Princeton Residential Colleges", "url": "https://collegelife.princeton.edu/"},
         ],
     },
+    # Verified outdoor campus scenes — Wikimedia Commons API extmetadata (Artist +
+    # LicenseShortName), landscape ≥1920px thumburl. Hero uses [0]; gallery lightbox
+    # cycles the rest.
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/"
+                "Nassau_Hall_Princeton.JPG/1920px-Nassau_Hall_Princeton.JPG"
+            ),
+            "credit": "Wikimedia Commons / Smallbones (CC0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/"
+                "At_Princeton_University_2024_010.jpg/"
+                "1920px-At_Princeton_University_2024_010.jpg"
+            ),
+            "credit": "Wikimedia Commons / Mike Peel (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/"
+                "Blair_Arch%2C_Princeton%2C_New_Jersey.jpg/"
+                "1920px-Blair_Arch%2C_Princeton%2C_New_Jersey.jpg"
+            ),
+            "credit": "Wikimedia Commons / Julian Lupyan (CC0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/"
+                "Ivy_Covered_Building_in_the_Princeton_University_Campus%2C_New_Jersey.jpg/"
+                "1920px-Ivy_Covered_Building_in_the_Princeton_University_Campus%2C_New_Jersey.jpg"
+            ),
+            "credit": "Wikimedia Commons / Julian Lupyan (CC0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/"
+                "Campus_Club_Princeton_b.JPG/1920px-Campus_Club_Princeton_b.JPG"
+            ),
+            "credit": "Wikimedia Commons / Smallbones (CC0)",
+        },
+    ],
     "flagship": {
         # Princeton "Facts & Figures": 5,826 undergraduate + 3,280 graduate = 9,106 total.
         "enrollment_total": 9106,
@@ -2351,12 +2394,8 @@ def _requirements_for(spec: dict) -> dict:
     return dict(_REQ_UNDERGRAD)
 
 
-# Real Princeton campus photo (Nassau Hall) — Wikimedia Commons, CC0, hotlinkable
-# landscape JPG. Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/"
-    "Nassau_Hall_Princeton.JPG/1920px-Nassau_Hall_Princeton.JPG"
-)
+# Nassau Hall leads the institution hero; see ``SCHOOL_OUTCOMES["campus_photos"]`` for gallery.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
