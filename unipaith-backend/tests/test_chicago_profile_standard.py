@@ -112,6 +112,18 @@ def _program_snapshot(slug: str) -> dict:
     }
 
 
+def test_catalog_passes_validate_catalog():
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(c.PROGRAMS)
+    assert not errors, errors
+
+
+def test_every_program_has_department():
+    for spec in c.PROGRAMS:
+        assert spec.get("department"), spec["slug"]
+
+
 def test_chicago_institution_is_gold_except_recorded_omission():
     res = check_conformance(
         "institution", _institution_snapshot(), profile_version=STANDARD_VERSION
