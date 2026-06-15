@@ -44,6 +44,9 @@ required for the fall-2027 cycle, that the canonical program set is the College
 Scorecard Field-of-Study list for UNITID 130794 (two federal multi/interdisciplinary
 CIP rows that cannot be mapped to a single named Yale degree are omitted, not guessed),
 and that Yale does not publish a single official Nobel-laureate headline count (omitted).
+
+Depth pass (2026-06-15, yaleprof5): merged ``DEPTH_REVIEWS`` for 54 coverable
+programs — completes Yale coverable external_reviews (60/60).
 """
 
 from __future__ import annotations
@@ -58,6 +61,7 @@ from unipaith.data.profile_catalog_utils import (
     program_description,
     validate_catalog,
 )
+from unipaith.data.yale_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
@@ -2457,6 +2461,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 # ── Application requirements ─────────────────────────────────────────────────
