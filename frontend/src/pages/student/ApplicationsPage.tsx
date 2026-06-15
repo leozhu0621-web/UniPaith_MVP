@@ -231,8 +231,10 @@ export default function ApplicationsPage() {
     return sorted
   }, [apps, statusFilter, institution, deadlineWindow, priorityFilter, sort])
 
+  // Hidden on lg+ where the My Space rail's Workspace group lists these views flat
+  // (Spec 2026-06-15 §2.2); kept below lg where the rail collapses to pills.
   const viewSwitcher = (
-    <div role="tablist" aria-label="Applications views" className="mb-4 flex gap-1 border-b border-border">
+    <div role="tablist" aria-label="Applications views" className="lg:hidden mb-4 flex gap-1 border-b border-border">
       {APP_VIEWS.map(v => (
         <button
           key={v.key}

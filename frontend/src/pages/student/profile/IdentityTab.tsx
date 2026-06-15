@@ -315,10 +315,10 @@ export default function IdentityTab() {
             Identity is the deepest layer of your profile. We use this to personalize matches and
             rationales — nothing here goes to institutions until you choose to share it. Manage in{' '}
             <button
-              onClick={() => navigate('/s/profile?tab=data')}
+              onClick={() => navigate('/s/settings')}
               className="font-semibold text-secondary hover:underline"
             >
-              Data Rights →
+              Settings → Data &amp; privacy →
             </button>
             <button
               className="ml-2 font-semibold text-secondary hover:underline"

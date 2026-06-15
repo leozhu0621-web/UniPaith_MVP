@@ -193,10 +193,10 @@ export default function AnalyticsTab() {
             <p className="text-sm text-muted-foreground">
               Peer comparison requires analytics consent. Manage in{' '}
               <button
-                onClick={() => navigate('/s/profile?tab=data')}
+                onClick={() => navigate('/s/settings')}
                 className="font-semibold text-secondary hover:underline"
               >
-                Data Rights →
+                Settings → Data &amp; privacy →
               </button>
             </p>
           </Card>
