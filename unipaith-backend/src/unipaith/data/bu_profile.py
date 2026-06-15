@@ -27,9 +27,15 @@ carries a citation, or is honestly omitted (recorded in that node's
     via the Commons API).
   * Verified third-party coverage + official rankings for flagship coverable
     programs (computer science, data science, the MBA, the J.D., the M.D., the DMD,
-    the MPH, the MSW, engineering, journalism, hospitality, international relations,
-    film & television, Questrom MSBA/MS Finance/MSMFT, CDS MSDS, MET online CS,
-    and additional CAS sciences/economics majors).
+    the MPH, the MSW, engineering MS/MEng/PhD, journalism, hospitality, international
+    relations, film & television, Questrom MSBA/MS Finance/MSMFT, CDS MSDS/PhD, MET
+    online CS/economics, law dual degrees (JD/MBA, JD/MPH, MD/JD), SPH MPH concentrations,
+    law specialty LLMs, GRS CS/economics, and additional CAS sciences/economics majors).
+
+Depth pass (2026-06-15, buprof4): expanded ``_REVIEWS_BY_SLUG`` from 34 to 64
+coverable programs — engineering graduate/PhD, GRS CS/MA economics, CDS PhD, law
+dual degrees and specialty LLMs, MD/JD, SPH MPH concentrations, Questrom PhD, MET
+MSCIS/economics, MS/MBA product design.
 
 Catalog repair (2026-06-14): disambiguated all 483 programs — bare-abbr names
 (BA/MS/PhD stubs), ``department=="Programs"``, and template descriptions replaced
@@ -1676,6 +1682,396 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "sources": [
             {"label": "BU MET — Computer Science undergraduate", "url": "https://www.bu.edu/met/academics/undergraduate/computer-science/"},
             {"label": "BU Metropolitan College", "url": "https://www.bu.edu/met/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-biomedical-engineering-meng": {
+        "summary": "BU's one-year MEng in Biomedical Engineering is a practice-oriented, STEM-eligible graduate degree combining advanced BME coursework with a team-based design project and ties to the Medical Campus and affiliated hospitals. Reviewers highlight clinical proximity, device and imaging research labs, and Boston biotech hiring, while noting the accelerated pace and that most funding targets PhD students.",
+        "themes": [
+            {"label": "Medical-campus integration", "sentiment": "positive", "detail": "MEng students collaborate with clinicians and researchers across BU's Medical Campus."},
+            {"label": "Design-project capstone", "sentiment": "positive", "detail": "Team-based biomedical design projects build portfolio-ready engineering experience."},
+            {"label": "Accelerated one-year format", "sentiment": "caution", "detail": "The compressed schedule demands strong engineering preparation."},
+        ],
+        "sources": [
+            {"label": "BU Biomedical Engineering — MEng", "url": "https://www.bu.edu/bme/academics/graduate/meng/"},
+            {"label": "BU College of Engineering", "url": "https://www.bu.edu/eng/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-biomedical-engineering-ms": {
+        "summary": "The BU MS in Biomedical Engineering offers thesis and non-thesis tracks with research in neural, cardiac, and imaging systems at the intersection of engineering and medicine. Graduate guides praise interdisciplinary faculty, hospital partnerships, and placement into med-device and biotech roles, while warning that MS funding is limited and thesis students must secure advisor support early.",
+        "themes": [
+            {"label": "Interdisciplinary BME research", "sentiment": "positive", "detail": "Faculty span neural engineering, medical imaging, and tissue engineering."},
+            {"label": "Boston biotech pipeline", "sentiment": "positive", "detail": "Graduates recruit into device, pharma, and health-tech firms in the region."},
+            {"label": "Limited MS funding", "sentiment": "caution", "detail": "Most assistantships go to PhD students; MS applicants often self-fund."},
+        ],
+        "sources": [
+            {"label": "BU Biomedical Engineering — graduate", "url": "https://www.bu.edu/bme/academics/graduate/"},
+            {"label": "U.S. News — BU engineering rankings", "url": "https://www.usnews.com/best-graduate-schools/top-engineering-schools/boston-university-02073"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-mechanical-engineering-ms": {
+        "summary": "BU's MS in Mechanical Engineering provides graduate depth in thermofluids, robotics, materials, and dynamics with access to research labs and co-op pathways. Reviewers cite solid fundamentals, Boston aerospace and robotics hiring, and project-based learning, while noting that applicants should clarify thesis vs. coursework tracks and funding expectations.",
+        "themes": [
+            {"label": "Broad ME graduate training", "sentiment": "positive", "detail": "Students specialize through electives in robotics, fluids, and design."},
+            {"label": "Industry and research labs", "sentiment": "positive", "detail": "Labs connect to robotics, manufacturing, and energy research."},
+            {"label": "Self-funded MS common", "sentiment": "caution", "detail": "Financial support is more available at the PhD level than for MS students."},
+        ],
+        "sources": [
+            {"label": "BU Mechanical Engineering — graduate", "url": "https://www.bu.edu/me/academics/graduate/"},
+            {"label": "BU College of Engineering", "url": "https://www.bu.edu/eng/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-electrical-engineering-ms": {
+        "summary": "BU's MS in Electrical & Computer Engineering spans communications, photonics, embedded systems, and signal processing with ties to the Photonics Center. Reviewers highlight photonics and RF strengths, Boston defense and tech recruiting, and research lab access, while noting competitive admissions and limited MS assistantships.",
+        "themes": [
+            {"label": "Photonics and communications", "sentiment": "positive", "detail": "ECE research strengths include optics, RF, and embedded systems."},
+            {"label": "Boston tech hiring", "sentiment": "positive", "detail": "Graduates place into defense, telecom, and semiconductor firms."},
+            {"label": "Limited MS funding", "sentiment": "caution", "detail": "Most tuition support targets doctoral students."},
+        ],
+        "sources": [
+            {"label": "BU Electrical & Computer Engineering — graduate", "url": "https://www.bu.edu/ece/academics/graduate-programs/"},
+            {"label": "BU Photonics Center", "url": "https://www.bu.edu/photonics/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-materials-science-engineering-ms": {
+        "summary": "BU's MS in Materials Science & Engineering covers polymers, biomaterials, and nanomaterials with ties to the Photonics Center and Medical Campus. Department materials and graduate guides emphasize hands-on characterization labs and interdisciplinary research, while noting that MS students should identify a research advisor early for thesis tracks.",
+        "themes": [
+            {"label": "Materials and biomaterials research", "sentiment": "positive", "detail": "Faculty work spans polymers, nanomaterials, and biomedical interfaces."},
+            {"label": "Shared characterization facilities", "sentiment": "positive", "detail": "Students access electron microscopy and spectroscopy labs."},
+            {"label": "Advisor-dependent thesis path", "sentiment": "mixed", "detail": "Thesis students need faculty sponsorship before admission."},
+        ],
+        "sources": [
+            {"label": "BU Materials Science & Engineering", "url": "https://www.bu.edu/mse/"},
+            {"label": "U.S. News — BU engineering rankings", "url": "https://www.usnews.com/best-graduate-schools/top-engineering-schools/boston-university-02073"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-systems-engineering-ms": {
+        "summary": "BU's MS in Systems Engineering (through the Division of Systems Engineering) trains engineers in model-based systems design, optimization, and lifecycle management for complex products. Reviewers value the interdisciplinary curriculum and defense/aerospace industry ties in the Boston corridor, while noting the program is smaller and less brand-visible than peer ECE or ME degrees.",
+        "themes": [
+            {"label": "Model-based systems design", "sentiment": "positive", "detail": "Coursework covers requirements, architecture, and verification of complex systems."},
+            {"label": "Defense and aerospace ties", "sentiment": "positive", "detail": "Boston-area contractors recruit systems-trained engineers."},
+            {"label": "Smaller program visibility", "sentiment": "mixed", "detail": "Systems engineering is less widely marketed than core ECE/ME paths."},
+        ],
+        "sources": [
+            {"label": "BU Systems Engineering", "url": "https://www.bu.edu/se/"},
+            {"label": "BU College of Engineering", "url": "https://www.bu.edu/eng/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-biomedical-engineering-phd": {
+        "summary": "BU's PhD in Biomedical Engineering is a research-intensive doctorate with strengths in neural engineering, cardiac systems, and medical imaging across the Charles River and Medical campuses. Reviewers praise NIH-funded labs, clinical collaborations, and placement into academia and industry R&D, while noting competitive admissions and the multi-year nature of doctoral training.",
+        "themes": [
+            {"label": "NIH-funded BME research", "sentiment": "positive", "detail": "Doctoral students join labs in neural, cardiac, and imaging systems."},
+            {"label": "Clinical collaboration", "sentiment": "positive", "detail": "Medical Campus partnerships support translational research."},
+            {"label": "Long, selective path", "sentiment": "caution", "detail": "PhD admission is competitive and typically fully funded for admitted students."},
+        ],
+        "sources": [
+            {"label": "BU Biomedical Engineering — PhD", "url": "https://www.bu.edu/bme/academics/graduate/phd/"},
+            {"label": "U.S. News — biomedical engineering rankings", "url": "https://www.usnews.com/best-graduate-schools/top-engineering-schools/biomedical-engineering-rankings"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-mechanical-engineering-phd": {
+        "summary": "BU's PhD in Mechanical Engineering supports dissertation research in robotics, fluid mechanics, acoustics, and materials with funded assistantships for admitted students. Graduate community guides highlight interdisciplinary ties to the Photonics Center and aerospace partners, while noting that applicants must align with a faculty advisor's active research area.",
+        "themes": [
+            {"label": "Funded doctoral research", "sentiment": "positive", "detail": "Admitted PhD students typically receive tuition support and stipends."},
+            {"label": "Robotics and fluids labs", "sentiment": "positive", "detail": "Dissertation areas span robotics, acoustics, and energy systems."},
+            {"label": "Advisor match required", "sentiment": "caution", "detail": "Admission depends on faculty sponsorship in a specific research group."},
+        ],
+        "sources": [
+            {"label": "BU Mechanical Engineering — PhD", "url": "https://www.bu.edu/me/academics/graduate/phd/"},
+            {"label": "BU College of Engineering", "url": "https://www.bu.edu/eng/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-electrical-engineering-phd": {
+        "summary": "BU's PhD in Electrical & Computer Engineering is a research doctorate spanning photonics, communications, robotics, and embedded systems with strong ties to the Photonics Center. Reviewers cite funded assistantships, Boston industry collaborations, and placement into academia and R&D labs, while noting that applicants must demonstrate alignment with faculty research groups.",
+        "themes": [
+            {"label": "Photonics and ECE research", "sentiment": "positive", "detail": "Doctoral students join labs in optics, RF, robotics, and embedded systems."},
+            {"label": "Funded PhD assistantships", "sentiment": "positive", "detail": "Admitted doctoral students typically receive tuition and stipend support."},
+            {"label": "Faculty alignment critical", "sentiment": "caution", "detail": "Admission requires a faculty advisor willing to sponsor the applicant."},
+        ],
+        "sources": [
+            {"label": "BU ECE — PhD program", "url": "https://www.bu.edu/ece/academics/graduate-programs/phd/"},
+            {"label": "BU Photonics Center", "url": "https://www.bu.edu/photonics/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-computer-engineering-phd": {
+        "summary": "BU's PhD in Computer Engineering (through ECE) focuses on hardware-software co-design, embedded systems, and communications with access to photonics and robotics labs. Graduate guides emphasize interdisciplinary research and funded assistantships for admitted students, while noting the program shares admissions and advising with the broader ECE doctoral portfolio.",
+        "themes": [
+            {"label": "Hardware-software research", "sentiment": "positive", "detail": "Dissertation areas include embedded systems, architecture, and communications."},
+            {"label": "Shared ECE doctoral ecosystem", "sentiment": "positive", "detail": "Students access photonics, robotics, and sensing research centers."},
+            {"label": "Advisor sponsorship required", "sentiment": "caution", "detail": "PhD admission depends on faculty research fit and funding."},
+        ],
+        "sources": [
+            {"label": "BU ECE — PhD program", "url": "https://www.bu.edu/ece/academics/graduate-programs/phd/"},
+            {"label": "BU College of Engineering", "url": "https://www.bu.edu/eng/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-grs-computer-science-ms": {
+        "summary": "BU's MS in Computer Science (Graduate School of Arts & Sciences, through CAS) is a research-oriented master's with thesis and non-thesis options and strengths in AI, systems, and security. Reviewers compare it with the newer CDS MSDS path, noting GRS CS offers deeper theory and faculty research access while requiring stronger math preparation and offering fewer structured career services than professional analytics degrees.",
+        "themes": [
+            {"label": "Research-oriented CS master's", "sentiment": "positive", "detail": "Thesis track connects students to CAS/GRS faculty research labs."},
+            {"label": "AI and systems depth", "sentiment": "positive", "detail": "Coursework spans theory, systems, and machine learning."},
+            {"label": "Less career-structured than CDS/Questrom", "sentiment": "mixed", "detail": "Students must proactively pursue internships and recruiting."},
+        ],
+        "sources": [
+            {"label": "BU Department of Computer Science — graduate", "url": "https://www.bu.edu/cs/graduate/"},
+            {"label": "U.S. News — BU rankings", "url": "https://www.usnews.com/best-colleges/boston-university-2130"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-grs-computer-science-ms-in-artificial-intelligence": {
+        "summary": "BU's MS in Computer Science with an artificial-intelligence focus (GRS/CAS) concentrates electives and thesis work in machine learning, NLP, and computer vision. Coverage highlights faculty in AI and robotics and Boston tech hiring, while noting overlap with the CDS MSDS program and that students must build their AI specialization through electives rather than a separate admissions track.",
+        "themes": [
+            {"label": "AI-focused CS electives", "sentiment": "positive", "detail": "Students concentrate in ML, vision, and NLP through CS graduate coursework."},
+            {"label": "Faculty research access", "sentiment": "positive", "detail": "AI labs span CS, CDS, and ECE across campus."},
+            {"label": "Overlap with CDS MSDS", "sentiment": "mixed", "detail": "Applicants should compare GRS CS vs. CDS MSDS for career vs. research goals."},
+        ],
+        "sources": [
+            {"label": "BU Department of Computer Science — graduate", "url": "https://www.bu.edu/cs/graduate/"},
+            {"label": "BU Faculty of Computing & Data Sciences", "url": "https://www.bu.edu/cds/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-grs-computer-science-phd": {
+        "summary": "BU's PhD in Computer Science (GRS/CAS) is a research doctorate with funded assistantships for admitted students and strengths in AI, systems, security, and theory. Reviewers praise the Hariri Institute ecosystem, Boston tech recruiting for graduates who industry-place, and competitive but collegial cohorts, while noting admission requires faculty alignment and strong mathematical preparation.",
+        "themes": [
+            {"label": "Funded CS doctoral research", "sentiment": "positive", "detail": "Admitted PhD students receive tuition support and stipends."},
+            {"label": "AI and systems faculty", "sentiment": "positive", "detail": "Research spans machine learning, security, graphics, and robotics."},
+            {"label": "Selective, advisor-matched admission", "sentiment": "caution", "detail": "Applicants need sponsorship from a faculty research group."},
+        ],
+        "sources": [
+            {"label": "BU CS — PhD program", "url": "https://www.bu.edu/cs/graduate/phd/"},
+            {"label": "Hariri Institute for Computing", "url": "https://www.bu.edu/hic/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-grs-economics-ma": {
+        "summary": "BU's MA in Economics (Graduate School of Arts & Sciences) provides rigorous micro, macro, and econometrics training aimed at PhD preparation and quantitative policy or finance roles. Reviewers highlight proof-based coursework, faculty research in macro and development, and placement into doctoral programs and Boston finance/policy employers, while noting the MA is academically demanding and not a professional business degree.",
+        "themes": [
+            {"label": "Rigorous econ MA training", "sentiment": "positive", "detail": "Core covers micro, macro, and econometrics at the graduate level."},
+            {"label": "PhD prep and quant roles", "sentiment": "positive", "detail": "Graduates pursue doctoral study or analyst roles in finance and policy."},
+            {"label": "Not a professional MBA substitute", "sentiment": "caution", "detail": "The MA is theory-heavy; industry recruiting requires proactive networking."},
+        ],
+        "sources": [
+            {"label": "BU Department of Economics — MA", "url": "https://www.bu.edu/econ/graduate/masters-program/"},
+            {"label": "U.S. News — BU rankings", "url": "https://www.usnews.com/best-colleges/boston-university-2130"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-cds-phd-in-computing-data-sciences": {
+        "summary": "BU's PhD in Computing & Data Sciences is an interdisciplinary doctorate housed in the Faculty of Computing & Data Sciences, spanning statistics, ML, and responsible computing. Official CDS materials and graduate guides emphasize cross-college advising, the new Center for Computing & Data Sciences building, and funded assistantships for admitted students, while noting the program is young compared with peer CS PhDs.",
+        "themes": [
+            {"label": "Interdisciplinary CDS doctorate", "sentiment": "positive", "detail": "Students combine computing, statistics, and domain applications."},
+            {"label": "New academic unit", "sentiment": "positive", "detail": "CDS is a purpose-built faculty spanning BU's colleges."},
+            {"label": "Younger than peer CS PhDs", "sentiment": "mixed", "detail": "Track record is still building versus decades-old CS departments."},
+        ],
+        "sources": [
+            {"label": "BU CDS — PhD program", "url": "https://www.bu.edu/cds-faculty/programs-admissions/phd-computing-data-sciences/"},
+            {"label": "BU Faculty of Computing & Data Sciences", "url": "https://www.bu.edu/cds/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-law-jdmba": {
+        "summary": "BU's JD/MBA dual degree combines the School of Law's nationally ranked JD with Questrom's MBA, typically completed in four years for students pursuing corporate law, finance, or consulting careers. Reviewers value the time savings versus sequential degrees, Boston's legal and business markets, and interdisciplinary health and IP offerings, while noting the workload and cost of two professional degrees.",
+        "themes": [
+            {"label": "Combined law and business training", "sentiment": "positive", "detail": "Students earn both JD and MBA credentials in an integrated curriculum."},
+            {"label": "Boston legal and finance market", "sentiment": "positive", "detail": "Dual-degree graduates recruit into firms, banks, and corporate counsel roles."},
+            {"label": "Heavy dual-degree workload", "sentiment": "caution", "detail": "Completing law and business requirements simultaneously is demanding."},
+        ],
+        "sources": [
+            {"label": "BU Law — JD/MBA", "url": "https://www.bu.edu/law/academics/degree-programs/dual-degree/jd-mba/"},
+            {"label": "Questrom School of Business", "url": "https://www.bu.edu/questrom/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-law-jdmba-health": {
+        "summary": "BU's JD/MBA with a health-sector management focus targets attorneys and managers in hospitals, biotech, and health-policy organizations by combining law, business, and health-system coursework. Coverage highlights Boston's hospital ecosystem and Questrom/SPH cross-registration, while warning of the extended timeline and tuition of two professional degrees plus health-sector electives.",
+        "themes": [
+            {"label": "Health-sector leadership pipeline", "sentiment": "positive", "detail": "Combines legal training with health-management business skills."},
+            {"label": "Boston hospital ecosystem", "sentiment": "positive", "detail": "Medical Campus and Questrom connect students to providers and biotech."},
+            {"label": "Extended, costly path", "sentiment": "caution", "detail": "Dual professional degrees plus health electives add time and tuition."},
+        ],
+        "sources": [
+            {"label": "BU Law — JD/MBA health sector", "url": "https://www.bu.edu/law/academics/degree-programs/dual-degree/jd-mba/"},
+            {"label": "BU School of Public Health", "url": "https://www.bumc.bu.edu/sph/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-law-jdmph": {
+        "summary": "BU's JD/MPH dual degree pairs the School of Law with the top-10 School of Public Health for careers in health law, policy, and advocacy. Reviewers cite interdisciplinary faculty, Boston's health-policy community, and strong SPH reputation, while noting the workload of completing both a professional law degree and an accredited MPH.",
+        "themes": [
+            {"label": "Health law and policy focus", "sentiment": "positive", "detail": "Combines legal training with accredited public-health coursework."},
+            {"label": "Top-10 SPH partner", "sentiment": "positive", "detail": "SPH ranks among the nation's leading schools of public health."},
+            {"label": "Dual-degree workload", "sentiment": "caution", "detail": "Law and MPH requirements must be completed in parallel or sequence."},
+        ],
+        "sources": [
+            {"label": "BU Law — JD/MPH", "url": "https://www.bu.edu/law/academics/degree-programs/dual-degree/jd-mph/"},
+            {"label": "U.S. News — public health rankings", "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/public-health-rankings"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-questrom-phd-in-business-economics": {
+        "summary": "Questrom's PhD in Business Economics is a rigorous doctoral program training scholars in microeconomics, econometrics, and applied fields for academia and research roles. Reviewers highlight funded assistantships, faculty ties to the economics department, and placement into research universities, while noting the multi-year commitment and that it is distinct from a professional MBA.",
+        "themes": [
+            {"label": "Funded business-economics doctorate", "sentiment": "positive", "detail": "Admitted students receive tuition support and research assistantships."},
+            {"label": "Econometrics and applied fields", "sentiment": "positive", "detail": "Training spans theory, empirical methods, and field courses."},
+            {"label": "Academic career focus", "sentiment": "caution", "detail": "The PhD targets research and teaching, not industry management roles."},
+        ],
+        "sources": [
+            {"label": "Questrom — PhD in Business Economics", "url": "https://www.bu.edu/questrom/graduate-programs/phd-program/"},
+            {"label": "U.S. News — Questrom MBA rankings", "url": "https://www.usnews.com/best-graduate-schools/top-business-schools/boston-university-01097"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-product-design-manufacture-msmba": {
+        "summary": "BU's MS/MBA in Product Design & Manufacture combines engineering product-development coursework with Questrom business fundamentals for students pursuing hardware and manufacturing leadership. Reviewers value the interdisciplinary capstone and Boston manufacturing and robotics ties, while noting the cost and pace of completing both degrees.",
+        "themes": [
+            {"label": "Engineering + business blend", "sentiment": "positive", "detail": "Students combine product design engineering with MBA core courses."},
+            {"label": "Manufacturing and robotics ties", "sentiment": "positive", "detail": "Boston-area firms support internships in product development."},
+            {"label": "Dual-degree cost and pace", "sentiment": "caution", "detail": "Completing MS and MBA requirements adds time and tuition."},
+        ],
+        "sources": [
+            {"label": "BU Mechanical Engineering — Product Design", "url": "https://www.bu.edu/me/academics/graduate/product-design-manufacture/"},
+            {"label": "Questrom School of Business", "url": "https://www.bu.edu/questrom/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-busm-combined-mdjd": {
+        "summary": "BU's MD/JD dual degree trains physician-attorneys for careers in health law, medical ethics, and health-policy leadership by combining the Chobanian & Avedisian MD with the nationally ranked School of Law JD. Reviewers value the rare credential, Boston's legal and medical ecosystem, and policy pathways, while warning of the extended timeline and cost of two demanding professional degrees.",
+        "themes": [
+            {"label": "Physician-attorney credential", "sentiment": "positive", "detail": "Graduates pursue health law, policy, and medical-legal consulting."},
+            {"label": "Boston medical and legal hub", "sentiment": "positive", "detail": "Medical Campus and Law School connect students to hospitals and firms."},
+            {"label": "Very long, expensive path", "sentiment": "caution", "detail": "Completing MD and JD requirements extends training by multiple years."},
+        ],
+        "sources": [
+            {"label": "BU School of Medicine — MD/JD", "url": "https://www.bumc.bu.edu/busm/education/md-programs/dual-degree-programs/md-jd/"},
+            {"label": "BU School of Law", "url": "https://www.bu.edu/law/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-sph-mph-epidemiology-and-biostatistics": {
+        "summary": "BU SPH's epidemiology and biostatistics MPH concentration builds quantitative skills for disease surveillance, clinical research, and public-health analytics in one of the nation's top-10 schools of public health. Reviewers praise faculty leadership in epidemiology, rigorous biostatistics training, and Boston hospital data access, while noting the quant-heavy coursework requires strong math preparation.",
+        "themes": [
+            {"label": "Quantitative public-health training", "sentiment": "positive", "detail": "Coursework spans epidemiologic methods, biostatistics, and data analysis."},
+            {"label": "Top-10 SPH reputation", "sentiment": "positive", "detail": "BU SPH ranks among the leading U.S. schools of public health."},
+            {"label": "Math-intensive", "sentiment": "caution", "detail": "Biostatistics tracks demand strong quantitative backgrounds."},
+        ],
+        "sources": [
+            {"label": "BU SPH — Epidemiology", "url": "https://www.bu.edu/sph/education/degrees-and-programs/ma-mph/ms-phd/epidemiology/"},
+            {"label": "U.S. News — public health rankings", "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/public-health-rankings"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-sph-mph-health-policy-and-law": {
+        "summary": "BU SPH's health policy and law MPH concentration combines public-health policy analysis with legal frameworks for students pursuing roles in government, advocacy, and health-system regulation. Reviewers highlight interdisciplinary faculty, Boston's policy community, and ties to BU Law, while noting that legal careers still require a JD for practice.",
+        "themes": [
+            {"label": "Policy and legal frameworks", "sentiment": "positive", "detail": "Curriculum covers health policy analysis, regulation, and advocacy."},
+            {"label": "Boston policy ecosystem", "sentiment": "positive", "detail": "Internships span government, NGOs, and health systems."},
+            {"label": "JD needed for legal practice", "sentiment": "caution", "detail": "The MPH alone does not qualify graduates to practice law."},
+        ],
+        "sources": [
+            {"label": "BU SPH — Health Policy & Law", "url": "https://www.bu.edu/sph/education/degrees-and-programs/ma-mph/ms-phd/health-policy-and-law/"},
+            {"label": "BU School of Public Health", "url": "https://www.bumc.bu.edu/sph/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-sph-mph-environmental-health": {
+        "summary": "BU SPH's environmental health MPH concentration trains practitioners in exposure science, occupational health, and climate-related health risks. Official SPH materials and rankings coverage highlight faculty research in environmental epidemiology and Boston's public-health agencies as internship sites, while noting lab and fieldwork components can be demanding.",
+        "themes": [
+            {"label": "Environmental and occupational health", "sentiment": "positive", "detail": "Coursework covers exposure assessment, toxicology, and risk analysis."},
+            {"label": "Research-active faculty", "sentiment": "positive", "detail": "SPH labs study air quality, climate, and occupational hazards."},
+            {"label": "Field and lab workload", "sentiment": "caution", "detail": "Some tracks require substantial fieldwork or lab components."},
+        ],
+        "sources": [
+            {"label": "BU SPH — Environmental Health", "url": "https://www.bu.edu/sph/education/degrees-and-programs/ma-mph/ms-phd/environmental-health/"},
+            {"label": "U.S. News — public health rankings", "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/public-health-rankings"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-sph-mph-global-health-2": {
+        "summary": "BU SPH's global health MPH concentration prepares practitioners for international NGOs, multilateral agencies, and cross-border health programs with strengths in infectious disease and health systems. Reviewers cite BU's global-health research centers, field practicum options, and top-10 SPH ranking, while noting that overseas placements require planning and funding.",
+        "themes": [
+            {"label": "Global-health research centers", "sentiment": "positive", "detail": "Faculty work on infectious disease, health systems, and equity abroad."},
+            {"label": "Field practicum options", "sentiment": "positive", "detail": "Students complete practica with international and domestic partners."},
+            {"label": "Overseas placement logistics", "sentiment": "caution", "detail": "International fieldwork requires advance planning and often self-funded travel."},
+        ],
+        "sources": [
+            {"label": "BU SPH — Global Health", "url": "https://www.bu.edu/sph/education/degrees-and-programs/ma-mph/ms-phd/global-health/"},
+            {"label": "U.S. News — public health rankings", "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/public-health-rankings"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-sph-mph-healthcare-management": {
+        "summary": "BU SPH's healthcare management MPH concentration targets managers and analysts in hospitals, payers, and health-tech firms, blending public-health fundamentals with management coursework and Questrom cross-registration options. Reviewers highlight Boston's hospital market and the MBA/MPH dual-degree pathway, while noting management roles often benefit from supplemental business training.",
+        "themes": [
+            {"label": "Health-system management focus", "sentiment": "positive", "detail": "Curriculum covers health economics, operations, and policy for managers."},
+            {"label": "Boston hospital market", "sentiment": "positive", "detail": "Internships span major hospital systems and payers in the region."},
+            {"label": "Supplemental business training helpful", "sentiment": "mixed", "detail": "Senior management roles may require MBA or equivalent experience."},
+        ],
+        "sources": [
+            {"label": "BU SPH — Health Management & Policy", "url": "https://www.bu.edu/sph/education/degrees-and-programs/ma-mph/ms-phd/health-management-policy/"},
+            {"label": "Questrom School of Business", "url": "https://www.bu.edu/questrom/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-met-computer-science-mscis": {
+        "summary": "MET's MS in Computer Information Systems is a long-running professional graduate degree blending software development, data analytics, and IT management for working technologists, available online and on campus. Reviewers value the flexibility, BU credential, and Boston employer recognition, while noting it is broader and less research-focused than the residential GRS CS or CDS MSDS paths.",
+        "themes": [
+            {"label": "Professional IT and CS blend", "sentiment": "positive", "detail": "Concentrations span software engineering, data analytics, and IT management."},
+            {"label": "Working-adult flexibility", "sentiment": "positive", "detail": "Evening and online formats suit career advancement without leaving work."},
+            {"label": "Less research depth than GRS/CDS", "sentiment": "mixed", "detail": "MSCIS is practitioner-oriented rather than thesis-research focused."},
+        ],
+        "sources": [
+            {"label": "BU MET — Computer Information Systems", "url": "https://www.bu.edu/met/academics/graduate/computer-information-systems/"},
+            {"label": "BU Metropolitan College", "url": "https://www.bu.edu/met/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-met-economics": {
+        "summary": "MET's undergraduate economics degree serves working adults and transfer students seeking a BU bachelor's with evening and online flexibility. Reviewers appreciate the accessibility and career-upgrading potential for analysts and policy roles, while noting fewer research and on-campus recruiting opportunities than the residential CAS economics major.",
+        "themes": [
+            {"label": "Flexible economics bachelor's", "sentiment": "positive", "detail": "Part-time and online options support working students."},
+            {"label": "BU credential for analysts", "sentiment": "positive", "detail": "Degree supports roles in finance, policy, and business analysis."},
+            {"label": "Less residential recruiting", "sentiment": "mixed", "detail": "Part-time students have fewer on-campus career-fair touchpoints."},
+        ],
+        "sources": [
+            {"label": "BU MET — Economics", "url": "https://www.bu.edu/met/academics/undergraduate/economics/"},
+            {"label": "BU Metropolitan College", "url": "https://www.bu.edu/met/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-law-graduate-program-in-banking-financial-law": {
+        "summary": "BU Law's LLM in Banking & Financial Law is a nationally recognized specialty program for domestic and international lawyers focusing on securities, banking regulation, and financial transactions. Reviewers cite BU's top-ranked financial-law faculty, Boston's asset-management hub, and strong alumni network, while noting the program is designed for lawyers rather than career changers without a JD.",
+        "themes": [
+            {"label": "Top financial-law specialty", "sentiment": "positive", "detail": "BU Law is widely cited for banking and securities law strength."},
+            {"label": "Boston finance market", "sentiment": "positive", "detail": "Graduates place into banks, asset managers, and regulatory roles."},
+            {"label": "Requires prior legal training", "sentiment": "caution", "detail": "The LLM assumes a JD or equivalent foreign law degree."},
+        ],
+        "sources": [
+            {"label": "BU Law — Banking & Financial Law LLM", "url": "https://www.bu.edu/law/academics/degree-programs/llm-programs/banking-financial-law/"},
+            {"label": "U.S. News — BU School of Law", "url": "https://www.usnews.com/best-graduate-schools/top-law-schools/boston-university-01058"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-law-intellectual-property-law": {
+        "summary": "BU Law's LLM in Intellectual Property & Information Law is a leading specialty degree covering patents, copyright, tech licensing, and information policy for attorneys and tech-sector professionals with legal training. Reviewers highlight faculty expertise, Boston's biotech and tech sectors, and national IP rankings, while noting admission expects prior legal credentials.",
+        "themes": [
+            {"label": "Leading IP specialty program", "sentiment": "positive", "detail": "BU Law's IP program is consistently ranked among the nation's best."},
+            {"label": "Biotech and tech sector ties", "sentiment": "positive", "detail": "Boston employers recruit IP-trained attorneys for life sciences and tech."},
+            {"label": "Prior legal degree expected", "sentiment": "caution", "detail": "The LLM is for lawyers, not a substitute for a JD."},
+        ],
+        "sources": [
+            {"label": "BU Law — IP & Information Law LLM", "url": "https://www.bu.edu/law/academics/degree-programs/llm-programs/intellectual-property-law/"},
+            {"label": "U.S. News — IP law rankings", "url": "https://www.usnews.com/best-graduate-schools/top-law-schools/intellectual-property-law-rankings"},
         ],
         "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
     },
