@@ -21,6 +21,9 @@ two-independent-source basis is **omitted** (recorded in the relevant
 fully-enriched flagship program (its own employment report, class profile,
 admissions, faculty, and aggregated reviews), mirroring MIT Sloan's MBAn in the
 reference instance.
+
+Depth pass (2026-06-15, stanfordprof6): merged ``DEPTH_REVIEWS`` for 28 coverable
+programs (38/38 total coverable reviews).
 """
 
 from __future__ import annotations
@@ -36,6 +39,7 @@ from unipaith.data.profile_catalog_utils import (
     validate_catalog,
 )
 from unipaith.data.stanford_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.stanford_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
@@ -2291,6 +2295,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 # ── Application requirements (degree-type baselines) ────────────────────────

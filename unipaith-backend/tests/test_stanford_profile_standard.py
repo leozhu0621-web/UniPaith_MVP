@@ -172,24 +172,28 @@ def test_mba_flagship_is_deeply_enriched():
     assert s._program_standard(_FLAGSHIP, s._SPEC_BY_SLUG[_FLAGSHIP], True)["omitted"] == []
 
 
+def _is_coverable(spec: dict) -> bool:
+    keywords = (
+        "mba", "mban", "computer science", "data science", "analytics", "finance",
+        "engineering", "public health", "mph", "mpp", "jd", "law", "medicine", "md",
+        "architecture", "economics", "business", "nursing", "mscs", "mfin", "meng",
+        "social work", "journalism", "hospitality", "film", "biomedical", "march",
+        "mha", "mfa", "msw", "dmd", "dentistry",
+    )
+    pname = (spec.get("program_name") or "").lower()
+    slug = (spec.get("slug") or "").lower()
+    dtype = spec.get("degree_type", "")
+    if dtype not in ("bachelors", "masters", "professional", "doctoral", "phd"):
+        return False
+    return any(k in pname or k in slug for k in keywords)
+
+
 def test_coverable_programs_have_external_reviews():
     """Coverable Stanford programs must carry aggregated external_reviews."""
-    coverable = [
-        _FLAGSHIP,
-        "stanford-cs-ms",
-        "stanford-cs-bs",
-        "stanford-jd",
-        "stanford-md",
-        "stanford-msx",
-        "stanford-mse-ms",
-        "stanford-ee-ms",
-        "stanford-me-bs",
-        "stanford-economics-bs",
-        "stanford-symbolic-systems-bs",
-        "stanford-human-biology-bs",
-        "stanford-bioe-bs",
-    ]
-    for slug in coverable:
+    coverable = [p for p in s.PROGRAMS if _is_coverable(p)]
+    assert len(coverable) >= 35
+    for spec in coverable:
+        slug = spec["slug"]
         assert slug in s._REVIEWS_BY_SLUG, slug
         assert s._REVIEWS_BY_SLUG[slug].get("summary"), slug
         assert len(s._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
