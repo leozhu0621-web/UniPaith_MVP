@@ -273,7 +273,10 @@ export default function SavedListPage() {
         sub="Curate programs you are serious about, then compare and start applications when you are ready."
       />
 
-      <div className="flex gap-1 border-b border-border mb-5">
+      {/* Hidden on lg+ where the My Space rail's Saved group lists these views
+          (Spec 2026-06-15 §A follow-up); kept below lg where the rail collapses
+          to flat pills. */}
+      <div className="lg:hidden flex gap-1 border-b border-border mb-5">
         <button
           type="button"
           onClick={() => selectTab('programs')}
