@@ -6,109 +6,130 @@ specific schools appear. Severity: **critical** (catalog is mostly fabricated /
 page is broken) · **high** (real but materially incomplete) · **medium** (never
 enriched / shallow). Evidence is from the live API (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-14 (grader run 2). Since run 1, the enricher merged 12
-catalog repairs (#528–#539: UCSD, Purdue, JHU, Northwestern, BU, Harvard,
-UW-Madison, Cornell, Berkeley, Columbia, Penn, Stanford). Those fixed the
-duplicate-NAME padding (0 dup names now) but introduced a NEW department defect —
-see the HIGH tier below. Five never-repaired catalogs still carry the original
-duplicate-name padding (CRITICAL)._
+_Last graded: 2026-06-15 (grader run 3). Since run 2 the enricher merged ~33 PRs
+(#542–#574): duplicate-name repairs (Princeton/Duke/Chicago/Caltech/MIT), campus
+galleries (Princeton/CMU/Yale/Columbia/Rice/Stanford), and reviews-depth passes
+(BU/CMU/Cornell/Berkeley/Purdue/Yale/Rice). **The duplicate-name CRITICAL tier is
+cleared (0 duplicate names fleet-wide) and reviews coverage is climbing.** BUT the
+repairs were COSMETIC: catalogs that had duplicate names now carry the SAME federal
+CIP rollup string with a generic credential prefix glued on ("Bachelor's in Biology,
+General"), the rollup echoed into `department`, and a broken template description —
+i.e. the CIP×award-level fabrication survived the rename. This is the new HIGH tier
+below, and it now includes catalogs run 2 wrongly called gold (Harvard 40%)._
 
 ---
 
-## CRITICAL — duplicate-name CIP padding (unrepaired, miss #2)
+## CRITICAL — Boston University (multi-defect, the worst single catalog)
 
-Each lists the certificate / bachelor's / master's / PhD in ONE field as multiple
-rows all sharing an IDENTICAL `program_name` (e.g. "Anthropology" appears 2–3×),
-with null `department`. The rows are indistinguishable on the page. **Repair =
-disambiguate each by credential ("Bachelor of Arts in Anthropology", "PhD in
-Anthropology") and set the real owning unit (or null — never a CIP-taxonomy
-placeholder, see HIGH tier).** Ranked by duplicate-name density (worst first):
+483 programs with FOUR overlapping defects, none yet repaired:
+- **~200 concentration-split padding rows** (miss #2 new bullet) — one degree
+  exploded into per-concentration rows, e.g. one BA in Anthropology becomes
+  "… — Biological Anthropology" / "… — Sociocultural Anthropology" / "… — Religion"
+  / "… — Anthropology Health Medicine". Collapse into ONE program with the
+  concentrations as `tracks`; keep only genuinely separate credentials (PhD, MS,
+  professional master's) as rows.
+- **Credential / title-cased departments** (miss #2 dept bullet) — bare "Mph" ×14,
+  mechanically title-cased tokens "School Of Music", "Mathematics Statistics",
+  "School Of Visual Arts", "Earth Environment". Replace with the real owning unit.
+- **`program_name` ↔ `degree_type` mismatches** — `bachelors` rows whose name embeds
+  "EdM"/"Bs" ("Bachelor's in Applied Human Development — Edm Applied Human
+  Development", "Advertising — Advertising Bs").
+- **Dead feed** — `posts=0` despite active merges through 2026-06-15 (miss #1/#9).
+  Find a feed that actually fetches or set the best working events/social source.
 
-| # | University | Listed progs | Dup names | Extra rows | Density | Notes |
-|---|---|---|---|---|---|---|
-| 1 | Princeton University | 119 | 38 | 60 | **50%** | "Anthropology"/"Architecture"/"Chemistry" each 3×; 119 null dept |
-| 2 | California Institute of Technology | 91 | 23 | 25 | **27%** | "Neurobiology and Neurosciences" 3×; 91 null dept |
-| 3 | University of Chicago | 124 | 27 | 29 | **23%** | "Economics" 3×; 124 null dept |
-| 4 | Yale University | 189 | 36 | 36 | **19%** | "Anthropology"/"Astronomy" each 2×; 189 null dept |
-| 5 | Duke University | 154 | 19 | 19 | **12%** | "Biology"/"Computer Science" each 2×; 154 null dept |
+_First seen: 2026-06-14 (run 1, as bare-stub catalog). Still the worst run 3 — the
+depth passes (#564–#568) added reviews on top of the broken structure without fixing
+it. Clean the STRUCTURE (collapse concentrations, real departments, fix mismatches,
+revive the feed) before any further depth work or any new university._
 
-_First seen: 2026-06-14 (run 1). Still padded run 2 — never touched by a repair PR._
+## HIGH — credential-prefixed CIP-rollup name fabrication (the dominant fleet defect)
 
-## HIGH — CIP-taxonomy / credential departments (NEW this run, miss #2 dept bullet)
+The duplicate-name "repair" prepended a generic credential ("Bachelor's in …",
+"Master's in …", "Doctorate in …") to the verbatim CIP/IPEDS taxonomy rollup and
+copied that rollup into `department` — so ~3 near-identical rows per field
+(cert/bachelor's/master's) survive with distinct names and a non-null department,
+evading every prior check. The tell is the rollup surviving in the name (", General"
+/ ", Other" / federal comma-and lists like "…, Literatures, and Linguistics" /
+embedded slashes), echoed as `department`, with a template description ("… is an
+undergraduate program at {Univ}'s {school}, offered through the {rollup}"). Some are
+outright not offered (Harvard lists a "Bachelor's in Intelligence, Command Control
+and Information Operations"). **Repair = resolve each CIP row to the institution's
+REAL per-field degree(s) with a real degree designation ("Bachelor of Science in
+Biology"), a real owning unit, and a field-specific description — or omit it.**
+Ranked worst-first by CIP-rollup-name density (% of catalog):
 
-The 12 catalogs repaired since run 1 fixed program NAMES (now distinct) but
-"fixed" the null-department gap by stuffing the **verbatim federal CIP taxonomy
-title** into `department` — verbose strings the institution never uses
-("Communication Disorders Sciences and Services", "Radio, Television, and Digital
-Communication", "Area Studies", "Air Transportation") — so nearly every program is
-its own one-off "department" (87–100% of rows). One catalog is worse: it stores a
-bare **credential** ("Mph") and mechanically title-cased tokens ("School Of Music",
-"Mathematics Statistics"). The gold model (Harvard) groups under real schools
-("Harvard Business School" ×28). **Repair = replace each CIP-taxonomy/credential
-department with the real verified owning school/department, or null where the real
-unit is unverifiable.** A clean field-named dept ("Economics", "Computer Science")
-is fine and need not be touched.
+| # | University | Listed progs | Rollup names | Density | Notes |
+|---|---|---|---|---|---|
+| 1 | Northwestern University | 308 | 141 | **46%** | rollup also in dept (139) |
+| 2 | University of California-San Diego | 194 | 86 | **44%** | |
+| 3 | Johns Hopkins University | 249 | 110 | **44%** | |
+| 4 | Purdue University-Main Campus | 310 | 133 | **43%** | feed thin (posts≈10) |
+| 5 | University of California-Berkeley | 269 | 109 | **41%** | feed thin (posts≈15) |
+| 6 | Harvard University | 343 | 136 | **40%** | run 2 wrongly called gold; flagship/HBS rows ARE real, the long tail is rollup |
+| 7 | Columbia University | 263 | 101 | **40%** | |
+| 8 | University of Chicago | 116 | 46 | **40%** | names rollup, depts mostly cleaned (4) — names still need fixing |
+| 9 | Stanford University | 188 | 72 | **38%** | |
+| 10 | University of Wisconsin-Madison | 348 | 127 | **36%** | feed thin (posts≈10) |
+| 11 | Cornell University | 274 | 99 | **36%** | |
+| 12 | University of Pennsylvania | 250 | 79 | **32%** | |
+| 13 | Princeton University | 119 | 36 | **30%** | was the run-2 #1 dup-name catalog; renamed into rollup |
+| 14 | California Institute of Technology | 91 | 21 | **23%** | names rollup, depts mostly cleaned (6) |
 
-| University | Listed progs | CIP-title dept rate | Extra |
-|---|---|---|---|
-| **Boston University** | 483 | 89% + bare credential "Mph" ×14 + title-cased tokens | **posts=0** (dead feed) |
-| Purdue University-Main Campus | 310 | ~96% (e.g. "Air Transportation", "Agricultural Public Services") | |
-| University of California-San Diego | 194 | ~95% | |
-| Johns Hopkins University | 249 | ~95% | |
-| Stanford University | 188 | ~95% | **posts=0** (merged #539 — may be ingest timing; recheck) |
-| Northwestern University | 308 | ~94% | |
-| University of Wisconsin-Madison | 348 | ~93% | |
-| University of California-Berkeley | 269 | ~91% | |
-| University of Pennsylvania | 250 | ~90% | |
-| Cornell University | 274 | ~88% | |
-| Columbia University | 263 | ~87% | |
-| Rice University | 159 | 100% | |
-
-_First seen: 2026-06-14 (run 2). The whole repaired fleet shares this pattern — fix
-opportunistically during each catalog's depth pass; Boston U (credential dept +
-dead feed) is the most egregious and should lead._
+_First seen: 2026-06-14 (run 1, as CIP×award-level padding); the credential-prefix
+disguise surfaced run 3 (2026-06-15) after the rename repairs. Fix the catalog
+STRUCTURE (de-fabricate names + departments) before adding reviews depth — a review
+attached to a fabricated row is wasted work._
 
 ## MEDIUM — never-enriched shallow originals (22-program stubs, 0 campus photos)
 
 Each has exactly 22 programs (first-run shallow stub), **0 `campus_photos`** (breaks
-card header + detail hero, miss #7), and null departments. Full enrichment needed:
-real catalog, 4–5 verified campus photos, feeds, reviews, real departments.
+card header + detail hero, miss #7), **null departments**, and CIP-title names with a
+parenthetical credential ("Biology, General (MS)", "Computer and Information Sciences,
+General (BS)"). Full enrichment needed: real catalog, 4–5 verified campus photos,
+feeds, reviews, real departments + real degree names.
 
 | University | progs | posts | extra |
 |---|---|---|---|
 | New York University | 22 | **0** | dead feed too |
-| Georgia Institute of Technology-Main Campus | 22 | — | |
-| The University of Texas at Austin | 22 | — | |
-| University of California-Los Angeles | 22 | — | |
-| University of Illinois Urbana-Champaign | 22 | — | |
-| University of Michigan-Ann Arbor | 22 | — | |
-| University of Southern California | 22 | — | |
-| University of Washington-Seattle Campus | 22 | — | |
+| Georgia Institute of Technology-Main Campus | 22 | 15 | |
+| The University of Texas at Austin | 22 | 12 | |
+| University of California-Los Angeles | 22 | 29 | |
+| University of Illinois Urbana-Champaign | 22 | 7 | |
+| University of Michigan-Ann Arbor | 22 | 10 | |
+| University of Southern California | 22 | 25 | |
+| University of Washington-Seattle Campus | 22 | 11 | |
 
 _First seen: 2026-06-14._
 
-## SECONDARY — reviews depth thin fleet-wide (miss #8)
+## SECONDARY — reviews depth still partial (miss #8)
 
-Sampled `external_reviews` coverage on repaired catalogs (first 12 programs each):
-Columbia 0/12, Wisconsin 0/12, Rice 0/12, Boston U 0/12, Penn 1/12, Harvard 2/12,
-Stanford 6/12. Reviews are REQUIRED on every coverable program (miss #8) — but this
-is the DEPTH pass; fix the catalog structure (names + departments) first, then
-backfill reviews. Do NOT write reviews for stub/duplicate rows.
+Sampled `external_reviews` coverage (25 programs spread across each catalog) — the
+depth passes are working but incomplete. Lowest first: Harvard 1/25, Stanford 2/25,
+Boston U 3/25, Berkeley 4/25, Purdue 6/25; better: Cornell 9/25, CMU 9/25, Rice
+11/25, Yale 11/25, MIT 3/25. Reviews are REQUIRED on every coverable program (miss
+#8). **But this is the DEPTH pass — fix the catalog STRUCTURE (de-fabricate names +
+departments, collapse concentration splits) first; never attach reviews to a
+fabricated CIP-rollup or concentration-split row.**
 
-## CLEAN this run (catalog structure sound)
+## CLEAN this run (catalog structure sound — CIP-rollup density ≤ 9%)
 
-Carnegie Mellon (180; departments mostly real, 51% bare but clean field-names), MIT
-(65, gold reference — null department by design). Reviews depth still per-program
-verifiable.
+Carnegie Mellon (2%), Duke (3%), Rice (3%), Yale (5%), MIT (9%, gold reference).
+Names are real degree designations with real fields; departments real or honestly
+null. Yale + Duke were repaired since run 2 (out of the old duplicate-name tier).
+These still need per-program reviews depth (SECONDARY) but their structure is sound.
 
 ---
 
 ### Notes for the enricher
-- **Top open entry first.** Princeton (CRITICAL #1, 50% duplicate-name density)
-  before any new university.
-- A `_standard` stamp does NOT mean a node is gold — re-audit the live output every
-  run (SKILL.md step 2 re-audit clause). The 12 "repaired" catalogs are stamped yet
-  carry CIP-taxonomy departments.
-- When backfilling `department`, set the institution's REAL published owning unit or
-  leave it null — NEVER a CIP-taxonomy title or a credential (SKILL.md miss #2
-  department bullet). Fewer REAL departments beat a fully-populated CIP-title field.
+- **Top open entry first.** Boston University (CRITICAL — concentration-split padding
+  + credential departments + degree-type mismatches + dead feed) before any new
+  university or any further depth-only pass.
+- A `_standard` stamp does NOT mean a node is gold, and a duplicate-name REPAIR is
+  not a fabrication fix — re-audit the live output every run (SKILL.md step 2
+  re-audit). Run 2 called Harvard gold; run 3 found 40% of its catalog is still
+  CIP-rollup fabrication. The tell survives in the NAME even after the department is
+  cleaned (Chicago/Caltech) — so check names, not just departments.
+- When de-fabricating, resolve each CIP row to the institution's REAL per-field
+  degree(s) with a real degree designation, real owning unit, and field-specific
+  description, or OMIT it. A credential prefix on a CIP rollup is a costume, not a
+  fix (SKILL.md miss #2). Fewer REAL programs beat a padded count.
