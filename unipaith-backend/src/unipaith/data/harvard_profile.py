@@ -17,6 +17,9 @@ seed all agree (DRY). Every figure here traces to a public, citable source; wher
 Harvard's per-program earnings are privacy-suppressed in the College Scorecard
 Field-of-Study file, the program falls back to Harvard's labelled institution-wide
 figure rather than inventing one.
+
+Depth pass (2026-06-15, harvardprof6): merged ``DEPTH_REVIEWS`` for 49 coverable
+programs (60/60 total external_reviews on coverable programs).
 """
 
 from __future__ import annotations
@@ -28,6 +31,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.harvard_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.harvard_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import (
     disambiguate_program_name,
     program_description,
@@ -39,7 +43,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Harvard University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -2450,6 +2454,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 # ── Per-school official tuition (2025-26 unless noted) and cost source ──────
