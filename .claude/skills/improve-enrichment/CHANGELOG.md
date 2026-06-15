@@ -6,6 +6,89 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-15 — Run 4 (the enricher inverted repair-first: ~16 DEPTH passes, ZERO structure repairs; reviews now landing on fabricated rows)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search`, full program
+pagination per institution; per-program detail spot-checks). Recently-changed focus on
+the ~16 PRs merged since run 3 (#562–#588): all reviews-depth passes + campus
+galleries. Student's-eye pass: Northwestern, Harvard, Boston U (recently changed) +
+Rice, MIT (clean baselines).
+
+**Findings (live API evidence):**
+
+1. **NEW PROBLEM CLASS (process, not data) — DEPTH passes racing ahead of STRUCTURE
+   repair; reviews now attached to fabricated rows.** Every one of the ~16 PRs since
+   run 3 was a reviews-depth or campus-gallery pass; ZERO structural de-fabrication
+   landed. So the CIP-rollup densities are essentially UNCHANGED from run 3
+   (Northwestern 43%, UCSD 39%, JHU 38%, Purdue 37%, Berkeley 37%, Harvard 35%,
+   Stanford 34%, Columbia 34%, Cornell 33%, Chicago 32%, Wisconsin 31%, Princeton 27%,
+   Penn 27%, Caltech 20% — same 14 catalogs). Confirmed at DATA level via
+   `/programs/{id}`: Northwestern "Bachelor's in Architecture and Related Services,
+   Other" (dept = the rollup, desc = "…is an undergraduate program at Northwestern's
+   Weinberg College…, offered through the {rollup}") and "Bachelor's in
+   Business/Commerce, General" (mapped to Kellogg) now carry `external_reviews=YES`
+   while remaining pure CIP-rollup fabrication. This is the EXACT wasted/harmful work
+   the run-3 backlog forbade ("never attach reviews to a fabricated CIP-rollup row") —
+   the review lends false third-party credibility and is discarded the moment the row
+   is de-fabricated. Root cause = a RULEBOOK GAP: miss #8 emphatically frames reviews
+   as "the SINGLE biggest gap / 1 of 60 is the bug" with a conformance gate, and step
+   2 lists the reviews-gap as a co-equal "not gold" signal — so the enricher
+   legitimately selected "reviews depth" as the repair, with nothing making structure
+   de-fabrication a HARD precedence gate over depth on the same catalog.
+2. **Boston University (CRITICAL) still fully unrepaired structurally** — 483 progs,
+   204 concentration-split rows, credential/title-cased departments ("Mph" ×14, "School
+   Of Music"), `program_name`↔`degree_type` mismatches, and `posts=0` (dead feed). The
+   four 2026-06-15 BU depth passes (#564–#568) added reviews on TOP of all of it.
+3. **Galleries essentially DONE fleet-wide** — 20 of 28 institutions now carry 5
+   `campus_photos`; only the 8 shallow 22-program originals have 0. Real progress.
+4. **No sprawl** — still 28 institutions; the enricher correctly did not add a new
+   university (repair-first held for NEW-university creation — it just picked the wrong
+   KIND of repair).
+
+**False alarms caught (diagnosed, not acted on):** (a) program description read as
+empty under key `description` — the real field is `description_text`; rollup rows DO
+carry the template description (verified). (b) `/programs?page_size=100` is capped at
+50 server-side — paginated by 50/100 correctly after catching the 422. (c) BU's 6%
+rollup-name share looked "clean" until the 204 concentration-split rows (em-dash tell)
+were counted — BU's defect is splits + departments, not rollup names.
+
+**Rulebook changes (1 of ≤3; ADDS a precedence gate, weakens no invariant):**
+- **miss #8 (new lead sub-bullet) + step 2 (coordinated precedence clause):**
+  **STRUCTURE-BEFORE-DEPTH gate** — never run a reviews/photo depth pass on a catalog
+  that still has CIP-rollup / concentration-split / stub rows; such a pass is a DEFECT
+  (the review is wasted and discarded when the row is fixed). Strict per-catalog order:
+  (1) de-fabricate the whole catalog's structure, (2) then reviews depth, (3) then next
+  university — reconciled with the existing "reviews before next university" line so it
+  doesn't contradict miss #2's depth bullet. Evidence: live API this run, 14 catalogs
+  unchanged in structure while reviews were layered onto fabricated rows. (Only 1 of 3
+  allotted changes used — no other new class this run; everything else is covered by
+  existing rules and handled via the backlog re-rank, per the no-edit-without-evidence
+  / anti-churn rails.)
+
+**FLAGGED FOR HUMAN REVIEW (carried from runs 2–3, still unreconciled):** miss #9 says
+"FAIL on null/blank `department`", but gold-reference MIT ships null department on all
+programs and `manifest.py` marks `department` `required=False`. Reconciling would
+LOOSEN the verify-output invariant, so left intact per the rails.
+
+**Backlog delta:** re-ranked with this run's densities and reframed around the
+structure-before-depth gate. CRITICAL = Boston University (unchanged top entry).
+HIGH = the same 14 CIP-rollup catalogs (densities refreshed), now annotated that
+reviews were wrongly layered on them. MEDIUM = 8 shallow originals (unchanged).
+SECONDARY reviews note rewritten: reviews on HIGH/CRITICAL catalogs are NOT progress
+(land on fabricated rows); reviews depth is valid only on the CLEAN catalogs.
+CLEAN = CMU (1%), Rice (0%), Duke (2%), Yale (6%), MIT (6%).
+
+**Health check:** the profile pytest could not run in this ephemeral container (no
+backend venv / pytest / Postgres) — same constraint as runs 1–3. Changes are
+markdown-only (no Python, no migrations, no app code), so the enricher code/data state
+is unaffected.
+
+**Invariants:** all intact; the single edit ADDS a precedence gate (tightens
+no-fabrication + verify-output), weakens nothing. The one finding that could argue for
+loosening (null-department FAIL vs gold MIT) remains logged for human review.
+
+---
+
 ## 2026-06-15 — Run 3 (the duplicate-name "repair" was cosmetic — CIP fabrication survives; new concentration-split class; backlog re-ranked)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search`, full
