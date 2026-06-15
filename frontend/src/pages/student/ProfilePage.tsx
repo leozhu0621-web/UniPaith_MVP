@@ -27,7 +27,6 @@ const StrategyTab = lazy(() => import('./profile/StrategyTab'))
 const PreferencesTab = lazy(() => import('./profile/PreferencesTab'))
 const TimelineTab = lazy(() => import('./profile/TimelineTab'))
 const AnalyticsTab = lazy(() => import('./profile/AnalyticsTab'))
-const DataTab = lazy(() => import('./profile/DataTab'))
 
 const TABS: { key: ProfileTabSpec; label: string }[] = [
   { key: 'overview', label: 'Summary' },
@@ -40,7 +39,6 @@ const TABS: { key: ProfileTabSpec; label: string }[] = [
   { key: 'preferences', label: 'Preferences' },
   { key: 'timeline', label: 'Timeline' },
   { key: 'analytics', label: 'Analytics' },
-  { key: 'data', label: 'Data' },
 ]
 
 export default function ProfilePage() {
@@ -162,7 +160,6 @@ export default function ProfilePage() {
           {activeTab === 'preferences' && <PreferencesTab />}
           {activeTab === 'timeline' && <TimelineTab />}
           {activeTab === 'analytics' && <AnalyticsTab />}
-          {activeTab === 'data' && <DataTab />}
         </Suspense>
       </div>
     </PageContainer>

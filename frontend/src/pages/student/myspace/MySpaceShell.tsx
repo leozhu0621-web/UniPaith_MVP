@@ -35,7 +35,8 @@ const PROFILE: Item = {
     { label: 'Preferences', to: '/s/profile?tab=preferences' },
     { label: 'Timeline', to: '/s/profile?tab=timeline' },
     { label: 'Analytics', to: '/s/profile?tab=analytics' },
-    { label: 'Data', to: '/s/profile?tab=data' },
+    // Data rights (consent + export + access log) moved to account Settings
+    // (Spec 2026-06-15 §2.1) — no longer a Profile sub-tab.
   ],
 }
 
@@ -48,11 +49,20 @@ const SAVED: Item = {
   ],
 }
 
+// Flattened (Spec 2026-06-15 §2.2) — every Prep sub-tab and Applications view
+// is a direct Workspace rail item, so the on-page tab strips are redundant on
+// desktop (hidden there; kept on mobile where the rail collapses to pills).
 const WORKSPACE: Item = {
   kind: 'group', label: 'Workspace', to: '/s/prep', icon: Briefcase,
   children: [
-    { label: 'Prep', to: '/s/prep' },
+    { label: 'Workshops', to: '/s/prep' },
+    { label: 'Prompts', to: '/s/prep?tab=prompts' },
+    { label: 'Interviews', to: '/s/prep?tab=interviews' },
+    { label: 'Recommenders', to: '/s/prep?tab=recommenders' },
+    { label: 'Documents', to: '/s/prep?tab=documents' },
     { label: 'Applications', to: '/s/applications' },
+    { label: 'Offers', to: '/s/applications?tab=offers' },
+    { label: 'Costs & aid', to: '/s/applications?tab=costs' },
     { label: 'Calendar', to: '/s/calendar' },
   ],
 }
@@ -87,7 +97,8 @@ function subActive(to: string, pathname: string, search: string): boolean {
   if (pathname !== path) return false
   const toTab = new URLSearchParams(query).get('tab')
   const curTab = new URLSearchParams(search).get('tab')
-  if (!toTab) return !curTab || curTab === 'overview' || curTab === 'programs'
+  // A landing item (no ?tab) matches the bare route or the page's default tab key.
+  if (!toTab) return !curTab || curTab === 'overview' || curTab === 'programs' || curTab === 'workshops'
   return curTab === toTab
 }
 

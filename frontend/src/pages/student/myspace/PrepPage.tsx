@@ -70,7 +70,9 @@ export default function PrepPage() {
           sub="Get application-ready — feedback, practice, and the assets behind every submission"
         />
       </div>
-      <div className="flex-shrink-0 border-b border-border bg-card px-4 sm:px-6">
+      {/* Hidden on lg+ where the My Space rail's Workspace group lists these tabs
+          flat (Spec 2026-06-15 §2.2); kept below lg where the rail collapses to pills. */}
+      <div className="lg:hidden flex-shrink-0 border-b border-border bg-card px-4 sm:px-6">
         {/* 5 tabs must survive 360px — scroll horizontally instead of wrapping. */}
         <div
           ref={tablistRef}
