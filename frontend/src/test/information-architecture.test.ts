@@ -11,12 +11,14 @@ import { postLoginDestination, roleDefaultPath, resolveNextParam } from '../util
 
 /** Spec/04 compliance — route contract tests. */
 describe('Spec/04 information architecture', () => {
-  it('defines 10 profile tabs (Spec 2026-06-15 §2.1 — Data moved to Settings)', () => {
-    expect(PROFILE_TABS_SPEC).toHaveLength(10)
+  it('defines 9 profile tabs (Data → Settings; Strategy → top-level / Timeline)', () => {
+    expect(PROFILE_TABS_SPEC).toHaveLength(9)
     expect(PROFILE_TABS_SPEC[0]).toBe('overview')
     expect(PROFILE_TABS_SPEC).not.toContain('preparation')
     expect(PROFILE_TABS_SPEC).not.toContain('financial')
     expect(PROFILE_TABS_SPEC).not.toContain('data')
+    expect(PROFILE_TABS_SPEC).not.toContain('strategy')
+    expect(PROFILE_TABS_SPEC).toContain('timeline')
     expect(PROFILE_TABS_SPEC).toContain('analytics')
   })
 
