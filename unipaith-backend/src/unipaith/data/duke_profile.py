@@ -23,6 +23,9 @@ split), so those program fields are omitted; graduate/professional programs with
 verified per-program tuition carry a sourced "see the school's tuition page" record rather
 than a guessed number; and notable-faculty rosters are omitted for schools where no
 current named-prize holder could be verified from an official page.
+
+Depth pass (2026-06-15, dukeprof4): merged ``DEPTH_REVIEWS`` for 42 coverable
+programs (49/49 total external_reviews on coverable programs).
 """
 
 from __future__ import annotations
@@ -32,6 +35,7 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.duke_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import (
     disambiguate_program_name,
     program_description,
@@ -43,7 +47,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Duke University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -2513,6 +2517,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 
