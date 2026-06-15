@@ -11,10 +11,13 @@
  * written narrative; this tab's UI doesn't need to change when that happens.
  */
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, CheckCircle2, ChevronRight, Pencil, Sparkles } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, ChevronRight, Pencil, Sparkles, MessageCircle } from 'lucide-react'
 
 import AIBadge from '../../../components/ui/AIBadge'
+import StrategyEditor from './strategy/StrategyEditor'
+import ApplicationGamePlan from './strategy/ApplicationGamePlan'
 import {
   type UpdateStrategyBody,
   activateStrategy,
@@ -35,80 +38,6 @@ const STATUS_VARIANTS: Record<StrategyStatus, 'success' | 'info' | 'neutral'> = 
   active: 'success',
   draft: 'info',
   archived: 'neutral',
-}
-
-interface NarrativeEditorProps {
-  initial: StudentStrategy
-  onCancel: () => void
-  onSubmit: (body: UpdateStrategyBody) => void
-  submitting: boolean
-}
-
-function NarrativeEditor({ initial, onCancel, onSubmit, submitting }: NarrativeEditorProps) {
-  const [career, setCareer] = useState(initial.career_target ?? '')
-  const [degree, setDegree] = useState(initial.target_degree ?? '')
-  const [narrative, setNarrative] = useState(initial.narrative ?? '')
-
-  return (
-    <form
-      onSubmit={e => {
-        e.preventDefault()
-        onSubmit({
-          career_target: career.trim() || null,
-          target_degree: degree.trim() || null,
-          narrative: narrative.trim() || null,
-        })
-      }}
-      className="space-y-4"
-    >
-      <div>
-        <label htmlFor="strategy-career-target" className="block text-sm font-medium text-foreground mb-1">Career target</label>
-        <input
-          id="strategy-career-target"
-          className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
-          maxLength={500}
-          value={career}
-          onChange={e => setCareer(e.target.value)}
-          placeholder="e.g., Family medicine physician practicing in underserved areas."
-        />
-      </div>
-      <div>
-        <label htmlFor="strategy-target-degree" className="block text-sm font-medium text-foreground mb-1">Target degree</label>
-        <input
-          id="strategy-target-degree"
-          className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
-          maxLength={120}
-          value={degree}
-          onChange={e => setDegree(e.target.value)}
-          placeholder="e.g., MD, MBA, PhD"
-        />
-      </div>
-      <div>
-        <label htmlFor="strategy-narrative" className="block text-sm font-medium text-foreground mb-1">Narrative</label>
-        <textarea
-          id="strategy-narrative"
-          className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
-          rows={10}
-          maxLength={20000}
-          value={narrative}
-          onChange={e => setNarrative(e.target.value)}
-          placeholder="The prose explanation of your strategy."
-        />
-        <div className="text-xs text-muted-foreground mt-1">
-          Saving creates a new draft — your current version is archived. Activate the new draft
-          when you're ready.
-        </div>
-      </div>
-      <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="ghost" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit" loading={submitting}>
-          Save as new draft
-        </Button>
-      </div>
-    </form>
-  )
 }
 
 function StrategyCard({
@@ -238,6 +167,7 @@ function PathRow({ children }: { children: React.ReactNode }) {
 
 export default function StrategyTab() {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const { data: active, isLoading: activeLoading } = useQuery<StudentStrategy | null>({
     queryKey: ['strategy', 'active'],
     queryFn: () => getActiveStrategy(),
@@ -298,10 +228,19 @@ export default function StrategyTab() {
             exactly one can be active at a time.
           </p>
         </div>
-        <Button onClick={() => generateMut.mutate()} loading={generateMut.isPending}>
-          <Sparkles size={14} className="mr-1" />
-          Generate new draft
-        </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          {/* Job-3 hook (Spec 2026-06-15) — develop the strategy with Uni. The
+              guided builder is a future Uni skill; for now this opens Uni with a
+              strategy intent so the entry point is discoverable. */}
+          <Button variant="secondary" onClick={() => navigate('/s?intent=strategy')}>
+            <MessageCircle size={14} className="mr-1" />
+            Develop with Uni
+          </Button>
+          <Button onClick={() => generateMut.mutate()} loading={generateMut.isPending}>
+            <Sparkles size={14} className="mr-1" />
+            Generate new draft
+          </Button>
+        </div>
       </div>
 
       {isLoading && <div className="space-y-3"><SkeletonCard /><SkeletonCard /></div>}
@@ -331,10 +270,13 @@ export default function StrategyTab() {
 
       {!isLoading && !active && drafts.length === 0 && versions.length === 0 && (
         <Card pad={false} className="p-5 text-sm text-muted-foreground">
-          You don't have a strategy yet. Generation needs at least one active academic goal — add
-          one in the Goals tab, then come back and select "Generate new draft."
+          You don't have a strategy yet. Generate one with AI, develop it with Uni, or write your
+          own — generation needs at least one active academic goal (add one in the Goals tab).
         </Card>
       )}
+
+      {/* Application game-plan — the tactical half of the strategy (Ship B §2). */}
+      <ApplicationGamePlan />
 
       {active && (
         <div>
@@ -387,7 +329,7 @@ export default function StrategyTab() {
           title={`Edit v${editing.version}`}
           size="lg"
         >
-          <NarrativeEditor
+          <StrategyEditor
             initial={editing}
             onCancel={() => setEditing(null)}
             onSubmit={body => updateMut.mutate({ id: editing.id, body })}
