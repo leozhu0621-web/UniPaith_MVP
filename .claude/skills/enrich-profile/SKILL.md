@@ -235,6 +235,28 @@ Concrete misses observed in the first runs — each broke a real page:
    verbatim quotes. **Never fabricate a quote, rating, or theme**, and never leave
    reviews blank when reputable coverage exists — only record `external_reviews` in
    `_standard.omitted` when a program genuinely has no third-party coverage.
+   - **STRUCTURE-BEFORE-DEPTH gate — NEVER run a reviews (or photo) depth pass on a
+     catalog that still carries fabricated rows. This is the dominant regression this
+     run.** A review is valuable ONLY on a REAL program. A review attached to a
+     CIP-rollup row ("Bachelor's in Business/Commerce, General"), a concentration-split
+     row, or a bare stub is wasted AND harmful: it lends a fabricated program false
+     third-party credibility, and it is THROWN AWAY the moment that row is
+     de-fabricated or dropped (you pay for the same work twice). So within ONE catalog
+     the order is strict and non-negotiable: **(1) de-fabricate the whole catalog's
+     STRUCTURE first** — real per-field degree names, real owning departments,
+     concentration splits collapsed into `tracks` (miss #2), no CIP-rollup names/
+     departments left anywhere; **(2) THEN** run the reviews depth pass over the
+     now-real programs; **(3) THEN** move to the next university. A reviews/photo pass
+     shipped while ANY row in that catalog is still a CIP-rollup / concentration-split /
+     stub is itself a **DEFECT** — it does not count as progress and must not be
+     shipped. (Repair-first, step 2, still forbids moving to a NEW university while
+     this one's real programs lack reviews — structure-then-reviews-then-next is the
+     full order, not reviews-skipping-structure.) Evidence: live API this run — every
+     one of the ~16 PRs since the prior grading was a reviews-depth or gallery pass on
+     catalogs whose CIP-rollup density is UNCHANGED (Northwestern 43%, JHU 38%, UCSD
+     39%, Harvard 35%), and fabricated rows like Northwestern's "Bachelor's in
+     Architecture and Related Services, Other" now carry `external_reviews` while their
+     names/departments/template descriptions remain pure CIP-rollup fabrication.
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
@@ -350,7 +372,11 @@ STRICT order:
      program each (MIT 1/65, Columbia 2/263, Caltech 1/91). A flagship / MBA /
      popular professional or STEM master's with blank reviews is *not gold*
      (miss #8). Repairing this comes before any new university — and MIT itself
-     (1/65) is a valid repair target;
+     (1/65) is a valid repair target. **But reviews depth on a given catalog ranks
+     BELOW de-fabricating that same catalog's STRUCTURE — never pick a reviews/photo
+     pass for a catalog that still has CIP-rollup / concentration-split / stub rows
+     (structure-before-depth gate, miss #8). A reviews pass on a fabricated catalog is
+     a defect, not a repair;**
    - **missing or single-photo `school_outcomes.campus_photos`** — the standard
      is a 4–5 photo verified gallery (miss #7); an institution with no campus
      photo at all (most beyond the original 14) breaks both the card header and
