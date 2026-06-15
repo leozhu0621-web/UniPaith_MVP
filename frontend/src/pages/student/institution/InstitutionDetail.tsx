@@ -1142,7 +1142,7 @@ function SchoolsTab({ schoolList, institutionName, onOpen, onShowPrograms, hrefF
         </p>
         <button onClick={onShowPrograms} className="text-[12px] text-secondary hover:underline">Skip to all programs →</button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {schoolList.map(school => (
           <SchoolCard key={school.id} school={school} institutionName={institutionName} onClick={() => onOpen(school.id)} href={hrefFor(school.id)} />
         ))}
