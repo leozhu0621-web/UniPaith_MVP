@@ -12,6 +12,43 @@ from unipaith.data import bu_profile as b
 from unipaith.profile_standard import STANDARD_VERSION, check_conformance
 from unipaith.profile_standard.manifest import MANIFEST
 
+_COVERABLE_REVIEWS = {
+    "bu-academics-cas-computer-science-ba",
+    "bu-academics-cds-bs-in-data-science",
+    "bu-academics-questrom-mba",
+    "bu-academics-law-jd",
+    "bu-academics-busm-four-year-program",
+    "bu-academics-sdm-doctor-of-dental-medicine",
+    "bu-academics-sph-mph",
+    "bu-academics-ssw-clinical-social-work-practice",
+    "bu-academics-eng-electrical-engineering-bs",
+    "bu-academics-com-journalism-bs",
+    "bu-academics-sha-bachelor-of-science-in-hospitality-administration",
+    "bu-academics-cas-international-relations-ba",
+    "bu-academics-com-film-television-film-televisionbs",
+    "bu-academics-eng-biomedical-engineering-bs",
+    "bu-academics-questrom-ms-in-business-analytics",
+    "bu-academics-questrom-ms-in-finance",
+    "bu-academics-questrom-mathematical-finance-ms",
+    "bu-academics-cds-ms-in-data-science",
+    "bu-academics-met-computer-science-ms",
+    "bu-academics-met-computer-science-master-of-science-in-applied-data-analytics",
+    "bu-academics-eng-computer-engineering-bs",
+    "bu-academics-eng-mechanical-engineering-bs",
+    "bu-academics-cas-economics-ba",
+    "bu-academics-cas-physics-ba",
+    "bu-academics-cas-chemistry-ba",
+    "bu-academics-cas-psychology-ba",
+    "bu-academics-com-journalism-ms",
+    "bu-academics-sha-ms",
+    "bu-academics-ssw-msw",
+    "bu-academics-sph-mba-mph",
+    "bu-academics-busm-combined-md-mba",
+    "bu-academics-eng-computer-engineering-ms",
+    "bu-academics-cas-mathematics-statistics-ba",
+    "bu-academics-met-computer-science-bs",
+}
+
 
 def _required_fields_of_section(level: str, section_id: str) -> set[str]:
     sec = next(s for s in MANIFEST[level] if s.id == section_id)
@@ -114,8 +151,10 @@ def test_every_program_is_conformant_or_omitted():
 
 
 def test_flagship_programs_have_reviews():
-    reviewed = [s for s in b._REVIEWS_BY_SLUG if s in b.PROGRAM_SLUGS]
-    assert len(reviewed) >= 14
+    for slug in _COVERABLE_REVIEWS:
+        assert slug in b._REVIEWS_BY_SLUG, slug
+        assert b._REVIEWS_BY_SLUG[slug].get("summary"), slug
+        assert len(b._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
 
 
 def test_catalog_has_no_padding_stubs():

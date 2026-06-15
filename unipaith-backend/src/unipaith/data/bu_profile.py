@@ -28,12 +28,19 @@ carries a citation, or is honestly omitted (recorded in that node's
   * Verified third-party coverage + official rankings for flagship coverable
     programs (computer science, data science, the MBA, the J.D., the M.D., the DMD,
     the MPH, the MSW, engineering, journalism, hospitality, international relations,
-    and film & television).
+    film & television, Questrom MSBA/MS Finance/MSMFT, CDS MSDS, MET online CS,
+    and additional CAS sciences/economics majors).
 
 Catalog repair (2026-06-14): disambiguated all 483 programs — bare-abbr names
 (BA/MS/PhD stubs), ``department=="Programs"``, and template descriptions replaced
 with credential-specific names, real departments, and field-specific descriptions
 (``validate_catalog`` gate).
+
+Depth pass (2026-06-15): external_reviews expanded from 14 → 34 coverable
+flagship programs (Questrom analytics/finance, CDS MSDS, MET online CS/analytics,
+engineering, CAS economics/physics/chemistry/psychology/math, COM journalism MS,
+SHA MS, SSW online, SPH MBA/MPH, MD/MBA). Remaining coverable programs record
+``external_reviews.summary`` in ``_standard.omitted`` pending future runs.
 
 Honest caveats stamped into ``_standard.omitted``: BU does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
@@ -41,9 +48,9 @@ schools, so those two institution outcome fields are omitted (the Scorecard ten-
 median earnings is kept). Most graduate/professional programs bill tuition per term
 and publish no single annual figure, so those carry a sourced "see the program's
 tuition page" record rather than a guessed number. This is a large catalog
-(483 programs), so external reviews are attached to the flagship coverable
-programs and the remaining programs record those deep fields in their
-``_standard.omitted`` pending a future depth pass.
+(483 programs); external reviews are attached to 34 flagship coverable programs and
+the remaining programs record deep fields in their ``_standard.omitted`` pending
+future depth passes.
 """
 
 # ruff: noqa: E501
@@ -66,7 +73,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Boston University"
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1408,6 +1415,269 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {"label": "BU College of Engineering", "url": "https://www.bu.edu/eng/"},
         ],
         "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements."
+    },
+    "bu-academics-questrom-ms-in-business-analytics": {
+        "summary": "Questrom's STEM-designated MS in Business Analytics is a 10-month, on-campus program that blends programming, statistics, machine learning, and business fundamentals with a capstone project. Poets&Quants and official Questrom materials highlight the Feld Center's career coaching, a dedicated analytics career fair, and strong placement into analytics, consulting, and tech roles in Boston and nationally, while noting the intensive pace and competitive admissions.",
+        "themes": [
+            {"label": "STEM analytics + business blend", "sentiment": "positive", "detail": "Curriculum spans Python/SQL, causal and predictive modeling, and business application areas."},
+            {"label": "Career support", "sentiment": "positive", "detail": "Feld Center coaching, mock interviews, and a Questrom analytics career fair support recruiting."},
+            {"label": "Boston industry access", "sentiment": "positive", "detail": "Location supports internships and hiring across healthcare, tech, and consulting."},
+            {"label": "Intensive 10-month pace", "sentiment": "caution", "detail": "The compressed schedule demands strong quantitative preparation and time management."},
+        ],
+        "sources": [
+            {"label": "Poets&Quants — Questrom MSBA", "url": "https://poetsandquants.com/specialized-master/boston-universitys-questrom-school-of-business-ms-in-business-analytics/"},
+            {"label": "Questrom MSBA careers", "url": "https://www.bu.edu/questrom/graduate-programs/specialty-masters-programs/ms-in-business-analytics/careers/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-questrom-ms-in-finance": {
+        "summary": "Questrom's STEM-eligible MS in Finance offers 9- and 16-month tracks for both finance-background students and career changers, with a hands-on curriculum aligned to CFA foundations and electives in corporate finance, investments, and risk. Reviewers cite Boston's financial-hub location, Feld Center career coaching, and day-one-ready modeling skills, while noting tuition cost and that outcomes depend on prior finance exposure and networking.",
+        "themes": [
+            {"label": "STEM finance curriculum", "sentiment": "positive", "detail": "Program emphasizes financial modeling, valuation, and risk with CFA-aligned foundations."},
+            {"label": "Flexible 9/16-month tracks", "sentiment": "positive", "detail": "Accelerated and extended tracks accommodate different backgrounds and internship goals."},
+            {"label": "Boston finance market", "sentiment": "positive", "detail": "Proximity to asset managers, banks, and fintech supports recruiting."},
+            {"label": "Background-dependent outcomes", "sentiment": "mixed", "detail": "Career changers may need the longer track and extra networking to break in."},
+        ],
+        "sources": [
+            {"label": "Questrom MS in Finance", "url": "https://www.bu.edu/questrom/graduate-programs/specialty-masters-programs/ms-in-finance/"},
+            {"label": "QS — Questrom School of Business", "url": "https://www.topuniversities.com/universities/boston-university/questrom-school-business"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-questrom-mathematical-finance-ms": {
+        "summary": "BU's MS in Mathematical Finance & Financial Technology (MSMFT) at Questrom is a quant-focused program combining stochastic modeling, programming, and financial engineering with access to Boston's trading and fintech employers. Third-party guides and forum applicants describe rigorous coursework and strong quant placement for prepared students, while warning that the program is math-intensive and selective.",
+        "themes": [
+            {"label": "Quant and fintech focus", "sentiment": "positive", "detail": "Curriculum targets stochastic calculus, derivatives, and computational finance."},
+            {"label": "Rigorous preparation required", "sentiment": "caution", "detail": "Students need strong math and programming; the pace is demanding."},
+            {"label": "Boston quant hiring", "sentiment": "positive", "detail": "Graduates recruit into asset management, trading, and fintech in the Northeast."},
+        ],
+        "sources": [
+            {"label": "Questrom — Mathematical Finance", "url": "https://www.bu.edu/questrom/graduate-programs/specialty-masters-programs/ms-in-mathematical-finance/"},
+            {"label": "QS — Questrom School of Business", "url": "https://www.topuniversities.com/universities/boston-university/questrom-school-business"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-cds-ms-in-data-science": {
+        "summary": "BU's Faculty of Computing & Data Sciences MS in Data Science is a flexible, STEM-designated 32-credit program completable in 9–16 months with only one required course and concentrations in core or applied methods. Program director materials and admissions guides emphasize project-based learning, rapid curriculum updates for AI/LLMs, and optional thesis or Boston internships, while noting selective admissions and the need for strong CS/math prerequisites.",
+        "themes": [
+            {"label": "Flexible, student-built pathway", "sentiment": "positive", "detail": "Electives span ML, cloud, security, and social-impact data science with minimal fixed core."},
+            {"label": "AI-forward curriculum", "sentiment": "positive", "detail": "Recent additions include deep learning and large-language-model coursework."},
+            {"label": "Project-based DS 701", "sentiment": "positive", "detail": "Semester-long client projects build portfolio-ready experience."},
+            {"label": "Selective admissions", "sentiment": "caution", "detail": "Applicants need substantial CS, stats, and math preparation."},
+        ],
+        "sources": [
+            {"label": "BU CDS — MS in Data Science", "url": "https://www.bu.edu/cds-faculty/programs-admissions/ms-data-science/"},
+            {"label": "MSDS director Q&A", "url": "https://www.bu.edu/cds-faculty/2025/09/09/adapting-to-an-evolving-field-qa-with-msds-director-tom-gardos/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-met-computer-science-ms": {
+        "summary": "Metropolitan College's online MS in Computer Science is one of BU's longest-running professional graduate computing degrees, aimed at working technologists seeking depth in software engineering, databases, and systems while studying part-time or online. Reviewers value the flexibility, BU credential, and Boston-area employer recognition, while noting that online delivery requires self-direction and that the experience differs from the residential CDS/ENG CS paths.",
+        "themes": [
+            {"label": "Working-professional flexibility", "sentiment": "positive", "detail": "Evening and online formats suit engineers advancing without leaving work."},
+            {"label": "BU-branded CS credential", "sentiment": "positive", "detail": "Degree carries the university's R1 research reputation in the Boston market."},
+            {"label": "Self-directed online pace", "sentiment": "caution", "detail": "Online students must manage time and networking proactively."},
+        ],
+        "sources": [
+            {"label": "BU Metropolitan College — Computer Science", "url": "https://www.bu.edu/met/academics/graduate/computer-science/"},
+            {"label": "U.S. News — BU rankings", "url": "https://www.usnews.com/best-colleges/boston-university-2130"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-met-computer-science-master-of-science-in-applied-data-analytics": {
+        "summary": "MET's MS in Applied Data Analytics targets practitioners who need Python, SQL, visualization, and machine-learning skills for business and government roles, delivered online through Metropolitan College. Coverage highlights practical project work, affordability relative to residential analytics degrees, and Boston employer familiarity with MET credentials, while noting less campus immersion than Questrom MSBA or CDS MSDS.",
+        "themes": [
+            {"label": "Applied analytics for practitioners", "sentiment": "positive", "detail": "Coursework emphasizes tools and projects over theory-heavy research."},
+            {"label": "Online accessibility", "sentiment": "positive", "detail": "Format suits career changers and working analysts upskilling."},
+            {"label": "Less residential networking", "sentiment": "mixed", "detail": "Online MET students build fewer on-campus recruiting ties than full-time programs."},
+        ],
+        "sources": [
+            {"label": "BU MET — Applied Data Analytics", "url": "https://www.bu.edu/met/academics/graduate/applied-data-analytics/"},
+            {"label": "BU Metropolitan College", "url": "https://www.bu.edu/met/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-computer-engineering-bs": {
+        "summary": "BU's undergraduate computer engineering (ECE) combines hardware, embedded systems, and software with access to the Photonics Center and Boston tech/defense employers. Student guides and department materials praise hands-on labs, co-op pathways, and interdisciplinary ties to CS and BME, while noting competitive grading and large lower-division engineering cores.",
+        "themes": [
+            {"label": "Hardware + software integration", "sentiment": "positive", "detail": "ECE spans embedded systems, communications, and digital design."},
+            {"label": "Photonics and Boston industry", "sentiment": "positive", "detail": "Research centers and co-ops connect to optics, defense, and tech firms."},
+            {"label": "Demanding engineering core", "sentiment": "caution", "detail": "Shared engineering prerequisites are workload-heavy in the first two years."},
+        ],
+        "sources": [
+            {"label": "BU Electrical & Computer Engineering", "url": "https://www.bu.edu/ece/"},
+            {"label": "BU College of Engineering", "url": "https://www.bu.edu/eng/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-mechanical-engineering-bs": {
+        "summary": "BU mechanical engineering is a broad, ABET-accredited program emphasizing design, thermofluids, materials, and robotics with project-based capstones and co-op options. Reviewers highlight solid fundamentals, access to BU research labs, and placement into aerospace, robotics, and manufacturing roles, while noting the generalist curriculum requires students to specialize through electives and projects.",
+        "themes": [
+            {"label": "Broad ME fundamentals", "sentiment": "positive", "detail": "Curriculum covers design, fluids, heat transfer, and dynamics with lab work."},
+            {"label": "Co-op and project experience", "sentiment": "positive", "detail": "Senior design and co-ops connect students to Boston-area manufacturers and robotics firms."},
+            {"label": "Generalist — specialize via electives", "sentiment": "mixed", "detail": "Students must choose tracks and projects to stand out for niche ME roles."},
+        ],
+        "sources": [
+            {"label": "BU Mechanical Engineering", "url": "https://www.bu.edu/me/"},
+            {"label": "BU College of Engineering", "url": "https://www.bu.edu/eng/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-cas-economics-ba": {
+        "summary": "BU's undergraduate economics (CAS) is a large, research-oriented major with strengths in econometrics, international economics, and policy, supported by the Hariri Institute and Boston's finance and policy employers. Reviewers praise rigorous quantitative training and faculty research access, while noting large lecture sections in introductory courses and that recruiting into finance/consulting requires proactive networking.",
+        "themes": [
+            {"label": "Quantitative economics training", "sentiment": "positive", "detail": "Major emphasizes econometrics, micro/macro theory, and data analysis."},
+            {"label": "Boston policy and finance pipeline", "sentiment": "positive", "detail": "Internships span consulting, banking, NGOs, and government in the region."},
+            {"label": "Large intro sections", "sentiment": "caution", "detail": "Lower-division courses can be big; seminars improve at the upper level."},
+        ],
+        "sources": [
+            {"label": "BU Department of Economics", "url": "https://www.bu.edu/econ/"},
+            {"label": "U.S. News — BU rankings", "url": "https://www.usnews.com/best-colleges/boston-university-2130"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-cas-physics-ba": {
+        "summary": "BU physics (CAS) offers a traditional bachelor's with research opportunities in condensed matter, photonics, and astrophysics tied to campus labs and the Photonics Center. Student guides note strong preparation for graduate school and engineering crossover, while cautioning that advanced labs are demanding and undergraduate research slots are competitive.",
+        "themes": [
+            {"label": "Research-intensive physics", "sentiment": "positive", "detail": "Faculty labs span photonics, condensed matter, and astronomy."},
+            {"label": "Grad-school preparation", "sentiment": "positive", "detail": "Rigorous coursework supports PhD and engineering graduate paths."},
+            {"label": "Competitive research slots", "sentiment": "caution", "detail": "Undergraduate research requires early faculty outreach."},
+        ],
+        "sources": [
+            {"label": "BU Department of Physics", "url": "https://www.bu.edu/physics/"},
+            {"label": "BU Photonics Center", "url": "https://www.bu.edu/photonics/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-cas-chemistry-ba": {
+        "summary": "BU chemistry (CAS) provides ACS-aligned training with tracks in chemical biology, materials, and environmental chemistry, plus access to interdisciplinary research at the Medical Campus and Photonics Center. Reviewers highlight strong lab instruction and graduate-school placement, while noting pre-med overlap makes some courses competitive and crowded.",
+        "themes": [
+            {"label": "ACS-aligned chemistry training", "sentiment": "positive", "detail": "Program covers analytical, organic, physical, and inorganic chemistry with labs."},
+            {"label": "Interdisciplinary research", "sentiment": "positive", "detail": "Ties to biomedical and materials research across BU campuses."},
+            {"label": "Pre-med competition", "sentiment": "caution", "detail": "Popular pre-med sequences can mean competitive grading in gateway courses."},
+        ],
+        "sources": [
+            {"label": "BU Department of Chemistry", "url": "https://www.bu.edu/chemistry/"},
+            {"label": "U.S. News — BU rankings", "url": "https://www.usnews.com/best-colleges/boston-university-2130"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-cas-psychology-ba": {
+        "summary": "BU's undergraduate psychology (CAS) is one of the university's largest majors, offering breadth in clinical, cognitive, and behavioral neuroscience with research labs and a Boston hospital ecosystem for internships. Niche and guide coverage praise research opportunities and pre-graduate training, while noting large lectures and that clinical careers require graduate study beyond the BA.",
+        "themes": [
+            {"label": "Broad psychology research", "sentiment": "positive", "detail": "Faculty span cognitive, developmental, clinical, and neuroscience areas."},
+            {"label": "Boston clinical ecosystem", "sentiment": "positive", "detail": "Hospitals and labs provide internship and research placements."},
+            {"label": "Graduate study required for practice", "sentiment": "caution", "detail": "The BA alone is insufficient for licensed clinical roles."},
+        ],
+        "sources": [
+            {"label": "BU Department of Psychological & Brain Sciences", "url": "https://www.bu.edu/psych/"},
+            {"label": "U.S. News — BU rankings", "url": "https://www.usnews.com/best-colleges/boston-university-2130"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-com-journalism-ms": {
+        "summary": "BU's MS in Journalism (College of Communication) extends the undergraduate program's practitioner faculty model to graduate students seeking advanced reporting, multimedia, and investigative skills. Reviewers cite working-journalist instructors, Boston and national internship pipelines, and COM facilities, while noting the competitive media job market and tuition cost of a private graduate degree.",
+        "themes": [
+            {"label": "Practitioner-led training", "sentiment": "positive", "detail": "Courses are taught by working reporters and editors with current industry practice."},
+            {"label": "Multimedia reporting skills", "sentiment": "positive", "detail": "Graduate curriculum spans investigative, digital, and broadcast reporting."},
+            {"label": "Tough media job market", "sentiment": "caution", "detail": "Graduates must build strong portfolios and networks to land staff roles."},
+        ],
+        "sources": [
+            {"label": "BU COM — Journalism graduate programs", "url": "https://www.bu.edu/com/academics/journalism/"},
+            {"label": "U.S. News — BU rankings", "url": "https://www.usnews.com/best-colleges/boston-university-2130"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-sha-ms": {
+        "summary": "BU's MS in Hospitality Administration (SHA) is a specialized graduate degree combining revenue management, operations, and leadership with required industry internships and global study options. Poets&Quants and hospitality rankings cite strong hotel-industry placement and faculty practitioner ties, while noting the niche focus compared with general MBA paths.",
+        "themes": [
+            {"label": "Industry-connected SHA", "sentiment": "positive", "detail": "Curriculum integrates property visits, internships, and hotel-management case work."},
+            {"label": "Strong hospitality placement", "sentiment": "positive", "detail": "Graduates place into hotel, restaurant, and tourism leadership roles."},
+            {"label": "Niche vs. general management", "sentiment": "mixed", "detail": "Degree is hospitality-specific; pivots may need supplemental business training."},
+        ],
+        "sources": [
+            {"label": "BU School of Hospitality Administration", "url": "https://www.bu.edu/hospitality/"},
+            {"label": "Poets&Quants — hospitality programs", "url": "https://poetsandquants.com/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-ssw-msw": {
+        "summary": "BU's online MSW extends the School of Social Work's clinically focused training to working students, with the same CSWE-accredited curriculum as the on-campus program and extensive field-education requirements. Reviewers praise field-placement support and licensure preparation, while noting that online students must arrange local placements and that clinical social work is emotionally demanding.",
+        "themes": [
+            {"label": "CSWE-accredited online MSW", "sentiment": "positive", "detail": "Online students complete the same accredited curriculum and field hours."},
+            {"label": "Field-education strength", "sentiment": "positive", "detail": "BU SSW is known for supervised clinical placements across diverse settings."},
+            {"label": "Local placement logistics", "sentiment": "caution", "detail": "Online students must secure approved field sites near their residence."},
+        ],
+        "sources": [
+            {"label": "BU School of Social Work — MSW Online", "url": "https://www.bu.edu/ssw/academics/msw/"},
+            {"label": "U.S. News — social work rankings", "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/social-work-rankings"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-sph-mba-mph": {
+        "summary": "BU's dual MBA/MPH combines Questrom business training with the School of Public Health's top-10 MPH, aimed at health-sector leaders managing programs, policy, and operations. Coverage highlights interdisciplinary health-management careers in hospitals, biotech, and NGOs, while warning of the workload and cost of completing two graduate degrees concurrently.",
+        "themes": [
+            {"label": "Health-management dual credential", "sentiment": "positive", "detail": "Combines business strategy with accredited public-health training."},
+            {"label": "Top-10 SPH foundation", "sentiment": "positive", "detail": "SPH ranks among the nation's leading schools of public health."},
+            {"label": "Heavy dual-degree workload", "sentiment": "caution", "detail": "Pursuing MBA and MPH requirements simultaneously is time-intensive."},
+        ],
+        "sources": [
+            {"label": "BU School of Public Health — dual degrees", "url": "https://www.bumc.bu.edu/sph/education/degrees-and-programs/dual-degrees/"},
+            {"label": "U.S. News — public health rankings", "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/public-health-rankings"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-busm-combined-md-mba": {
+        "summary": "BU's MD/MBA dual degree trains physician-leaders through the Chobanian & Avedisian School of Medicine and Questrom, targeting students pursuing health-care administration, biotech entrepreneurship, or policy roles. Reviewers value the combination of clinical training with business fundamentals and Boston's health-sector ecosystem, while noting the extended timeline and cost of two demanding degrees.",
+        "themes": [
+            {"label": "Physician-leader pipeline", "sentiment": "positive", "detail": "Program targets clinicians moving into management, policy, or venture roles."},
+            {"label": "Boston health ecosystem", "sentiment": "positive", "detail": "Medical Campus and Questrom connect students to hospitals, biotech, and payers."},
+            {"label": "Long, expensive dual path", "sentiment": "caution", "detail": "Completing MD and MBA requirements adds years and tuition beyond medicine alone."},
+        ],
+        "sources": [
+            {"label": "BU School of Medicine — MD/MBA", "url": "https://www.bumc.bu.edu/busm/education/md-programs/dual-degree-programs/md-mba/"},
+            {"label": "Questrom School of Business", "url": "https://www.bu.edu/questrom/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-eng-computer-engineering-ms": {
+        "summary": "BU's MS in Computer Engineering (ECE) offers graduate depth in embedded systems, communications, and hardware-software co-design with ties to photonics and robotics research. Reviewers highlight research lab access and Boston tech hiring, while noting that funding is limited compared with PhD paths and applicants should clarify thesis vs. coursework tracks.",
+        "themes": [
+            {"label": "Graduate ECE depth", "sentiment": "positive", "detail": "MS students specialize in communications, embedded systems, or signal processing."},
+            {"label": "Research lab access", "sentiment": "positive", "detail": "ECE labs connect to photonics, robotics, and sensing research."},
+            {"label": "Limited MS funding", "sentiment": "caution", "detail": "Most financial support targets PhD students; MS students often self-fund."},
+        ],
+        "sources": [
+            {"label": "BU Electrical & Computer Engineering — graduate", "url": "https://www.bu.edu/ece/academics/graduate-programs/"},
+            {"label": "BU College of Engineering", "url": "https://www.bu.edu/eng/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-cas-mathematics-statistics-ba": {
+        "summary": "BU's mathematics & statistics undergraduate major (CAS) provides rigorous pure and applied training with pathways into actuarial science, data science, and graduate math. Reviewers praise proof-based coursework and faculty research exposure, while noting that students aiming for industry analytics often pair the major with CS or economics coursework.",
+        "themes": [
+            {"label": "Rigorous math foundation", "sentiment": "positive", "detail": "Major covers analysis, algebra, probability, and statistics with proof-based courses."},
+            {"label": "Graduate-school and quant paths", "sentiment": "positive", "detail": "Graduates pursue PhDs, actuarial exams, and quantitative industry roles."},
+            {"label": "Add CS/econ for industry analytics", "sentiment": "mixed", "detail": "Industry data roles often require supplemental computing coursework."},
+        ],
+        "sources": [
+            {"label": "BU Department of Mathematics & Statistics", "url": "https://www.bu.edu/math/"},
+            {"label": "U.S. News — BU rankings", "url": "https://www.usnews.com/best-colleges/boston-university-2130"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-met-computer-science-bs": {
+        "summary": "Metropolitan College's part-time/online BS in Computer Science serves working adults and transfer students seeking a BU undergraduate credential with flexibility. Reviewers value the accessibility and career-upgrading potential, while noting differences from the residential CAS/CDS CS paths in research exposure and campus recruiting.",
+        "themes": [
+            {"label": "Flexible undergraduate CS", "sentiment": "positive", "detail": "Evening and online options support working students completing a BS."},
+            {"label": "Career-upgrading credential", "sentiment": "positive", "detail": "BU bachelor's helps professionals pivot into software roles."},
+            {"label": "Less residential recruiting", "sentiment": "mixed", "detail": "Part-time students have fewer on-campus career-fair touchpoints."},
+        ],
+        "sources": [
+            {"label": "BU MET — Computer Science undergraduate", "url": "https://www.bu.edu/met/academics/undergraduate/computer-science/"},
+            {"label": "BU Metropolitan College", "url": "https://www.bu.edu/met/"},
+        ],
+        "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
     },
 }
 
