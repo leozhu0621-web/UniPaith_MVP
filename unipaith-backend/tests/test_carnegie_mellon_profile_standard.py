@@ -14,16 +14,22 @@ from unipaith.profile_standard import STANDARD_VERSION, check_conformance
 from unipaith.profile_standard.manifest import MANIFEST
 
 _FLAGSHIP = "cmu-mba"
-_COVERABLE_REVIEWS = {
-    _FLAGSHIP,
-    "cmu-cs-bs",
-    "cmu-mscs",
-    "cmu-ms-ml",
-    "cmu-mhci",
-    "cmu-msba",
-    "cmu-mscf",
-    "cmu-mism",
-}
+
+
+def _is_coverable(spec: dict) -> bool:
+    keywords = (
+        "mba", "mban", "computer science", "data science", "analytics", "finance",
+        "engineering", "public health", "mph", "mpp", "jd", "law", "medicine", "md",
+        "architecture", "economics", "business", "nursing", "mscs", "mfin", "meng",
+        "social work", "journalism", "hospitality", "film", "biomedical", "march",
+        "mha", "mfa", "msw", "dmd", "dentistry",
+    )
+    pname = (spec.get("program_name") or "").lower()
+    slug = (spec.get("slug") or "").lower()
+    dtype = spec.get("degree_type", "")
+    if dtype not in ("bachelors", "masters", "professional", "doctoral", "phd"):
+        return False
+    return any(k in pname or k in slug for k in keywords)
 
 
 def _institution_snapshot() -> dict:
@@ -157,7 +163,10 @@ def test_tepper_mba_flagship_is_deeply_enriched():
 
 
 def test_coverable_programs_carry_external_reviews():
-    for slug in _COVERABLE_REVIEWS:
+    coverable = [p for p in c.PROGRAMS if _is_coverable(p)]
+    assert len(coverable) >= 70
+    for spec in coverable:
+        slug = spec["slug"]
         assert slug in c._REVIEWS_BY_SLUG, slug
         assert c._REVIEWS_BY_SLUG[slug].get("summary"), slug
         assert len(c._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug

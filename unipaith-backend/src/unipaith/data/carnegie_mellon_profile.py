@@ -13,6 +13,9 @@ delivery format, department, official page); deeper per-program fields (tracks,
 class profile, faculty, reviews, program-specific outcomes) are omitted-pending
 and deepened on resume runs.
 
+Depth pass (2026-06-15, cmuprof4): merged ``DEPTH_REVIEWS`` for 66 coverable
+programs — completes CMU coverable external_reviews (71/71).
+
 Idempotent: ``apply(session)`` enriches the existing CMU institution (no-op when
 absent, e.g. on a fresh CI database), creating/reconciling its schools + programs.
 """
@@ -25,11 +28,12 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.carnegie_mellon_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Carnegie Mellon University"
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1786,6 +1790,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 
