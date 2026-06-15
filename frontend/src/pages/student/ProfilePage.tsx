@@ -106,10 +106,13 @@ export default function ProfilePage() {
         }
       />
 
-      {/* Tab strip — finding 8: proper ARIA tablist attributes */}
+      {/* Tab strip — finding 8: proper ARIA tablist attributes. Hidden on lg+
+          where the My Space rail's Profile group already lists every sub-tab
+          (Spec 2026-06-15 §A follow-up); kept below lg, where the rail collapses
+          to flat pills that don't expose sub-tabs, so navigation still works. */}
       <div
         ref={tablistRef}
-        className="flex gap-1 border-b border-border overflow-x-auto no-scrollbar mb-8 -mx-1 px-1 [mask-image:linear-gradient(to_right,#000_92%,transparent)] [-webkit-mask-image:linear-gradient(to_right,#000_92%,transparent)]"
+        className="lg:hidden flex gap-1 border-b border-border overflow-x-auto no-scrollbar mb-8 -mx-1 px-1 [mask-image:linear-gradient(to_right,#000_92%,transparent)] [-webkit-mask-image:linear-gradient(to_right,#000_92%,transparent)]"
         role="tablist"
         aria-label="Profile sections"
       >
