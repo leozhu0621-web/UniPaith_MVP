@@ -31,10 +31,10 @@ Honest caveats stamped into ``_standard.omitted``: UW-Madison does not publish a
 university-wide placement rate or a uniform top-employer-industries list across all
 schools, so those two institution outcome fields are omitted. Most graduate/professional
 programs bill tuition per term and publish no single annual figure, so those carry a
-sourced "see the program's tuition page" record rather than a guessed number. This is a
-large catalog (~350 programs), so external reviews are attached to the flagship coverable
-programs and the remaining programs record those deep fields in their
-``_standard.omitted`` pending a future depth pass.
+sourced "see the program's tuition page" record rather than a guessed number.
+
+Depth pass (2026-06-15, uwmadisonprof3): merged ``DEPTH_REVIEWS`` for 47 coverable
+programs (57/57 total external_reviews on coverable programs).
 """
 
 # ruff: noqa: E501
@@ -52,11 +52,12 @@ from unipaith.data.profile_catalog_utils import (
     validate_catalog,
 )
 from unipaith.data.uw_madison_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.uw_madison_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Wisconsin-Madison"
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -920,6 +921,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
+    **DEPTH_REVIEWS,
 }
 
 _PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
