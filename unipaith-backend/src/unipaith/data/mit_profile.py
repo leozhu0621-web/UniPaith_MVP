@@ -22,6 +22,7 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.mit_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import disambiguate_program_name, validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
@@ -29,7 +30,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Massachusetts Institute of Technology"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -2811,6 +2812,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 # Full official degree names (MIT awards the SB/Bachelor of Science, the SM/
