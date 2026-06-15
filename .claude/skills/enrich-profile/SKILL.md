@@ -102,6 +102,46 @@ Concrete misses observed in the first runs — each broke a real page:
      something field-SPECIFIC beyond the degree label. Resolve each CIP row to its
      real per-degree program(s) or omit it — never emit a null-department,
      template-described, name-colliding stub per CIP×level.
+   - **A generic credential PREFIX does NOT turn a CIP rollup title into a real
+     program name — the live fleet's DOMINANT evasion this run.** The "repair" that
+     cleared the bare-CIP-title and duplicate-name bans simply glued a generic
+     credential onto the verbatim CIP/IPEDS taxonomy rollup ("Bachelor's in
+     {rollup}", "Master's in {rollup}", "Doctorate in {rollup}") and copied that
+     same rollup into `department` — so one field STILL mints ~3 near-identical
+     rows (certificate/bachelor's/master's), now with distinct names and a non-null
+     department, slipping past every prior check. The tell is the rollup surviving
+     verbatim in the name: a trailing ", General" / ", Other", a federal
+     multi-clause comma-and list ("…, Literatures, and Linguistics"; "Pharmacy,
+     Pharmaceutical Sciences, and Administration"), or an embedded slash
+     ("Engineering/Engineering-Related Technologies/Technicians, Other") — strings
+     no institution prints on a real degree. A real name uses the institution's
+     actual degree designation and field ("Bachelor of Science in Biology", "Master
+     of Engineering in Aerospace Engineering"), never the CIP rollup with a
+     credential glued on; and the description must NOT be the "{name} is a
+     {degree_type} program at {Univ}, offered through the {rollup}" template (a
+     grammatically broken "offered through the Biology, General" is the
+     fingerprint). This is the SAME CIP×award-level fabrication as the "BA" stubs —
+     the credential prefix is a costume, not a fix. Resolve each to the real
+     per-field degree(s) or omit it. Evidence: live API this run — most "repaired"
+     catalogs carry tens–hundreds of "{credential} in {CIP rollup}" rows with the
+     rollup echoed as department and the template description, including one listing
+     a "Bachelor's in Intelligence, Command Control and Information Operations" the
+     institution does not offer.
+   - **Do NOT mint one program row per concentration / track / specialization of a
+     single degree (count-padding by over-decomposition).** A degree's
+     concentrations belong in that program's `tracks` field (step 6), not as
+     separate program nodes. The tell is a base field repeated across rows that
+     differ only by a trailing "— {concentration}" — e.g. one "Bachelor's in
+     Anthropology" exploded into "… — Biological Anthropology", "… — Sociocultural
+     Anthropology", "… — Religion", "… — Health Medicine". These evade the
+     duplicate-name and real-department checks (names differ; department is the real
+     field) yet inflate the catalog with rows that are not distinct degrees. Collapse
+     them into ONE program carrying the concentrations as `tracks`, keeping only
+     genuinely separate credentials (a real PhD, MS, professional master's) as their
+     own rows. Likewise never let `program_name` and `degree_type` disagree (a
+     `bachelors` row whose name embeds "EdM"/"MS"). Evidence: live API this run — one
+     483-row catalog had ~200 such "— {concentration}" split rows plus
+     credential/degree-type mismatches.
    - **`department` must be the institution's REAL owning unit, NOT the federal
      CIP taxonomy title or a credential (issue: department padding that EVADES the
      null/"Programs"/duplicate-name checks).** A live-fleet repair variant "fixes"
@@ -230,8 +270,12 @@ Concrete misses observed in the first runs — each broke a real page:
      that only swaps the field into a degree-type sentence = not done — that is
      CIP×award-level padding (miss #2), not breadth. Run the catalog through this
      check programmatically (count duplicate `program_name`s, null `department`s,
-     departments matching a CIP taxonomy phrase or a degree abbreviation, and
-     template descriptions) before shipping — a padded catalog must FAIL the run.
+     departments matching a CIP taxonomy phrase or a degree abbreviation, template
+     descriptions, **`program_name`s of the form "{generic credential} in {CIP
+     rollup}" — trailing ", General"/", Other", federal multi-clause comma-and
+     lists, or embedded slashes — even when the department is now non-null**, and
+     **a high rate of "— {concentration}" rows that split one base degree**) before
+     shipping — a padded catalog must FAIL the run.
    - **Feeds:** a `content_sources` feed counts only if it actually FETCHES ≥1
      item. **Confirm the feed produces** (the news_rss/events_feed resolves and
      returns entries) before trusting it — set a feed you proved works, not a URL

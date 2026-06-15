@@ -6,6 +6,104 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-15 — Run 3 (the duplicate-name "repair" was cosmetic — CIP fabrication survives; new concentration-split class; backlog re-ranked)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search`, full
+program pagination per institution). Recently-changed focus on the ~33 PRs merged
+since run 2 (#542–#574: Princeton/Duke/Chicago/Caltech/MIT dup-name repairs, 6
+campus galleries, 6 reviews-depth passes). Student's-eye pass: Cornell, Berkeley,
+Rice (recently changed) + Harvard, Boston U (random/deep-dive).
+
+**Findings (live API evidence):**
+
+1. **The duplicate-name CRITICAL tier is genuinely CLEARED** — 0 duplicate
+   `program_name`s fleet-wide (was Princeton 38, Caltech 23, UChicago 27, Yale 36,
+   Duke 19 in run 2). Reviews-depth passes are landing (Yale/Rice 11/25, Cornell/CMU
+   9/25, up from ~0). Real progress.
+2. **NEW PROBLEM CLASS — credential-prefixed CIP-rollup NAME fabrication (the
+   dominant fleet defect).** The dup-name "repair" was COSMETIC: it prepended a
+   generic credential ("Bachelor's in …"/"Master's in …"/"Doctorate in …") to the
+   verbatim federal CIP/IPEDS taxonomy rollup and copied that rollup into
+   `department` — so ~3 near-identical rows per field (cert/bachelor's/master's)
+   survive with distinct names + a non-null department, evading every prior check
+   (bare-abbr, duplicate-name, null/"Programs"/credential-dept). Confirmed at DATA
+   level: Harvard `"Bachelor's in Biology, General"`, dept `"Biology, General"`,
+   description `"…is an undergraduate program at Harvard's Harvard Faculty of Arts &
+   Sciences, offered through the Biology, General."` (broken template), and a
+   `"Bachelor's in Intelligence, Command Control and Information Operations"` Harvard
+   does not offer. Density by CIP-rollup name share: Northwestern 46%, UCSD/JHU 44%,
+   Purdue 43%, Berkeley 41%, **Harvard 40% (run 2 wrongly called it gold)**, Columbia
+   40%, Chicago 40%, Stanford 38%, Wisconsin 36%, Cornell 36%, Penn 32%, Princeton
+   30%, Caltech 23% — 14 catalogs at 23–46%. The tell survives in the NAME even where
+   the department was cleaned (Chicago names 46 / depts 4; Caltech 21/6). Root cause:
+   the rename repair de-collided names without de-fabricating.
+3. **NEW PROBLEM CLASS — concentration/track-splitting padding (Boston U).** 201 of
+   483 BU rows split one degree into per-concentration rows ("Bachelor's in
+   Anthropology — Biological Anthropology / — Sociocultural Anthropology / — Religion
+   / — Anthropology Health Medicine" = 4 rows for one BA). Distinct names + real
+   department = evades every check, yet inflates the count with non-degrees.
+   Concentrations belong in the `tracks` field. BU also still carries credential
+   departments ("Mph" ×14), title-cased dept tokens ("School Of Music", "Mathematics
+   Statistics"), `program_name`↔`degree_type` mismatches ("…— Edm…" on a `bachelors`
+   row), and a dead feed (`posts=0` despite merges through 2026-06-15).
+4. **CIP-taxonomy DEPARTMENT defect (run-2 HIGH tier) persists** on the unrepaired
+   catalogs (Purdue/Berkeley/Cornell/Stanford/Wisconsin still echo the CIP rollup as
+   department). Already covered by miss #2 dept bullet → backlog, no new rule.
+5. **8 shallow originals unchanged** (22 programs, 0 campus_photos, null dept,
+   CIP-title names): NYU (posts=0), GaTech, UT Austin, UCLA, UIUC, Michigan, USC,
+   UW-Seattle. Covered → MEDIUM backlog.
+
+**False alarms caught (diagnosed, not acted on):** (a) a comma-in-department
+heuristic flagged Harvard 72 / Purdue 88 — but Harvard's *flagship* depts
+("Harvard Business School" ×28) are real; only the long tail is CIP rollup, so I
+ranked by the sharper rollup-NAME tell, not raw comma count. (b) em-dash-in-name
+fired on CMU (16) and Rice (6) — those are legit degree formatting, not splits; only
+BU's 201 is real concentration padding. (c) Looking at top-departments-by-frequency
+(run 2's method) hid the defect — the fabrication lives in the long tail, so this run
+scanned the WHOLE catalog.
+
+**Rulebook changes (3 of ≤3; all ADD/TIGHTEN no-fabrication, none loosen an
+invariant):**
+- **miss #2 (new sub-bullet):** a generic credential PREFIX does not turn a CIP
+  rollup title into a real program name — banned the "{credential} in {CIP rollup}"
+  variant (tells: ", General"/", Other", federal comma-and lists, embedded slashes;
+  rollup echoed as department; "offered through the {rollup}" template description).
+  A real name uses the institution's actual degree designation + field. Evidence:
+  live API this run, 14 catalogs 23–46% rollup names.
+- **miss #2 (new sub-bullet):** ban minting one program row per
+  concentration/track/specialization of a single degree; concentrations go in
+  `tracks`; never let `program_name` and `degree_type` disagree. Evidence: live API,
+  one 483-row catalog ~200 "— {concentration}" split rows.
+- **miss #9 (programmatic catalog check extended):** the pre-ship FAIL check now also
+  trips on "{generic credential} in {CIP rollup}" names (even when department is
+  non-null) and a high rate of "— {concentration}" base-degree splits. Evidence:
+  same.
+
+**FLAGGED FOR HUMAN REVIEW (carried from run 2, still unreconciled):** miss #9 says
+"FAIL on null/blank `department`", but gold-reference MIT ships null department on
+all programs and `manifest.py` marks `department` `required=False`. These contradict;
+reconciling would LOOSEN the verify-output invariant, so left intact per the rails.
+
+**Backlog delta:** fully re-ranked. CRITICAL = **Boston University** (multi-defect:
+concentration-split padding + credential departments + degree-type mismatches + dead
+feed) — now the single worst catalog and the top repair entry. HIGH tier replaced
+with the 14 CIP-rollup-name catalogs, density-ranked (Northwestern #1 at 46%; Harvard
+moved OUT of "clean" into HIGH at 40%). MEDIUM = 8 shallow originals (unchanged).
+SECONDARY = reviews depth (lowest: Harvard 1/25, Stanford 2/25). CLEAN = CMU, Duke,
+Rice, Yale, MIT (≤9% rollup; Yale+Duke graduated from the old dup-name tier).
+
+**Health check:** the profile pytest could not run in this ephemeral container (no
+backend venv; no pytest module; no Postgres) — same constraint as runs 1–2. Changes
+are markdown-only (no Python, no migrations, no app code), and the `profile_standard`
+manifest imports cleanly (STANDARD_VERSION 2), so the enricher code/data state is
+unaffected.
+
+**Invariants:** all intact; all 3 edits tighten no-fabrication, none weaken. The one
+finding that could argue for loosening (null-department FAIL vs gold MIT) remains
+logged for human review, not acted on.
+
+---
+
 ## 2026-06-14 — Run 2 (department-realness gap; re-ranked backlog)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search`, full
