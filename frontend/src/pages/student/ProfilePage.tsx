@@ -29,7 +29,7 @@ const TimelineTab = lazy(() => import('./profile/TimelineTab'))
 const AnalyticsTab = lazy(() => import('./profile/AnalyticsTab'))
 
 const TABS: { key: ProfileTabSpec; label: string }[] = [
-  { key: 'overview', label: 'Summary' },
+  { key: 'overview', label: 'Personal' },
   { key: 'identity', label: 'Identity' },
   { key: 'academics', label: 'Academics' },
   { key: 'experience', label: 'Experience' },
@@ -150,7 +150,7 @@ export default function ProfilePage() {
         className="stagger-list focus-visible:outline-none"
       >
         <Suspense fallback={<div className="space-y-3"><SkeletonCard /><SkeletonCard /></div>}>
-          {activeTab === 'overview' && <OverviewTab onOpenTab={setTab} />}
+          {activeTab === 'overview' && <OverviewTab />}
           {activeTab === 'identity' && <IdentityTab />}
           {activeTab === 'academics' && <AcademicsTab />}
           {activeTab === 'experience' && <ExperienceTab />}

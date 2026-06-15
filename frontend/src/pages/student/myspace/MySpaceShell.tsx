@@ -25,7 +25,7 @@ const OVERVIEW: Item = { kind: 'link', label: 'Overview', to: '/s/space', icon: 
 const PROFILE: Item = {
   kind: 'group', label: 'Profile', to: '/s/profile', icon: User,
   children: [
-    { label: 'Summary', to: '/s/profile' },
+    { label: 'Personal', to: '/s/profile' },
     { label: 'Identity', to: '/s/profile?tab=identity' },
     { label: 'Academics', to: '/s/profile?tab=academics' },
     { label: 'Experience', to: '/s/profile?tab=experience' },
