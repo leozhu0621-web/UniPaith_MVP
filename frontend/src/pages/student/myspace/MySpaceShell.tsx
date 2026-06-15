@@ -121,7 +121,7 @@ export default function MySpaceShell() {
 
       {/* Content column — mobile gets the room pills above the page. */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="lg:hidden sticky top-0 z-20 flex-shrink-0 overflow-x-auto border-b border-border bg-background px-3 py-2 scrollbar-none">
+        <div className="lg:hidden sticky top-0 z-20 flex-shrink-0 overflow-x-auto border-b border-border bg-background px-3 py-2 no-scrollbar">
           <div className="flex items-center gap-1.5 w-max">
             {ALL_ROOMS.map(room => (
               <NavLink
