@@ -17,17 +17,14 @@ node's ``_standard.omitted``) — never guessed. Built 2026-06-13 from:
     Field-of-Study catalog (192 CIP rows) mapped to UCSD's twelve academic schools.
   * UCSD leadership pages and school websites for each unit's dean, and a verified
     5-photo Wikimedia Commons campus gallery (author + license confirmed via the Commons API).
-  * Verified third-party coverage + official rankings for flagship coverable programs
-    (computer science, cognitive science, bioengineering, economics, aerospace engineering,
-    biology, psychology, public health, the MBA, the M.D., the Pharm.D., and data science).
+  * Verified third-party coverage + official rankings for all 36 coverable programs
+    (depth pass 2026-06-15, ucsdprof3).
 
 Honest caveats stamped into ``_standard.omitted``: the University of California is test-free
 (no SAT/ACT percentiles to report). UCSD does not publish a single university-wide placement
 rate or uniform top-employer-industries list, so those institution outcome fields are omitted.
 Most graduate/professional programs bill tuition per term; those carry a sourced "see the
-program's tuition page" record rather than a guessed number. External reviews are attached
-to flagship coverable programs; remaining programs record deep fields in
-``_standard.omitted`` pending a future depth pass.
+program's tuition page" record rather than a guessed number.
 """
 
 # ruff: noqa: E501
@@ -45,11 +42,12 @@ from unipaith.data.profile_catalog_utils import (
     validate_catalog,
 )
 from unipaith.data.ucsd_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.ucsd_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of California-San Diego"
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -671,6 +669,7 @@ _REVIEWS_BY_SLUG: dict = {
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
+    **DEPTH_REVIEWS,
 }
 
 _FLAGSHIP = "ucsd-computer-science-bs"
