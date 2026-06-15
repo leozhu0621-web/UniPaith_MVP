@@ -38,6 +38,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.caltech_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.caltech_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import (
     disambiguate_program_name,
     program_description,
@@ -2361,6 +2362,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 # Coverable programs that must carry external_reviews (the MBAn/CMU pattern).
