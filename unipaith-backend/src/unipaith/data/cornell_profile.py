@@ -49,6 +49,9 @@ hybrid professional master's degrees do not publish per-program tuition on a cit
 (omitted), and that Cornell reports first-destination outcomes university-wide rather than
 per-program for most degrees (each catalog program omits the program-level employment rate
 and industry mix except the Johnson MBA, which publishes a first-party employment report).
+
+Depth pass (2026-06-15, cornellprof5): merged ``DEPTH_REVIEWS`` for 62 coverable
+programs — completes Cornell coverable external_reviews (73/73).
 """
 
 from __future__ import annotations
@@ -59,6 +62,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.cornell_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.cornell_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import (
     disambiguate_program_name,
     program_description,
@@ -70,7 +74,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Cornell University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -2671,6 +2675,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 # ── Application requirements ─────────────────────────────────────────────────
