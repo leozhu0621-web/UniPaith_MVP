@@ -220,14 +220,7 @@ export default function StrategyTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Strategy</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            The broad-strategy artifact that bridges Uni → Discover. Versioned per student;
-            exactly one can be active at a time.
-          </p>
-        </div>
+      <div className="flex items-start justify-end">
         <div className="flex shrink-0 items-center gap-2">
           {/* Job-3 hook (Spec 2026-06-15) — develop the strategy with Uni. The
               guided builder is a future Uni skill; for now this opens Uni with a

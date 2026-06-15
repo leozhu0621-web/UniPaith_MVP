@@ -251,14 +251,7 @@ export default function GoalsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Your goals</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Specific, measurable, achievable, relevant, time-bound. Discovery-sourced goals show a
-            confidence badge; you can edit anything.
-          </p>
-        </div>
+      <div className="flex items-center justify-end">
         <Button onClick={() => setCreating(true)}>
           <Plus size={16} className="mr-1" /> Add goal
         </Button>
@@ -284,7 +277,7 @@ export default function GoalsTab() {
                 No {cat.label.toLowerCase()} goals yet — add one above.
               </Card>
             ) : (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {grouped[cat.key].map(g => (
                   <Card pad={false} key={g.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-3">

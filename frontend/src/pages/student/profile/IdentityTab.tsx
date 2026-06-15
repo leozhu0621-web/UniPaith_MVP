@@ -11,9 +11,8 @@
  */
 import { useState } from 'react'
 import { confirmDialog } from '../../../stores/confirm-store'
-import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Plus, ShieldCheck, Sparkles, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
 
 import {
   type UpsertIdentityBody,
@@ -36,8 +35,6 @@ import type {
   StudentIdentity,
   WorldviewItem,
 } from '../../../types'
-
-const PRIVACY_DISCLOSURE_KEY = 'unipaith.identity-privacy-ack'
 
 type ItemKind = 'core_values' | 'worldview' | 'self_awareness'
 
@@ -228,15 +225,11 @@ function ItemFooter({ onCancel, submitting }: { onCancel: () => void; submitting
 
 export default function IdentityTab() {
   const qc = useQueryClient()
-  const navigate = useNavigate()
   const { data: identity, isLoading, isError, refetch } = useQuery<StudentIdentity>({
     queryKey: ['identity'],
     queryFn: () => getIdentity(),
   })
   const [editing, setEditing] = useState<EditingState>(null)
-  const [showPrivacy, setShowPrivacy] = useState(
-    () => typeof window !== 'undefined' && !window.localStorage.getItem(PRIVACY_DISCLOSURE_KEY),
-  )
 
   const onSettled = () => qc.invalidateQueries({ queryKey: ['identity'] })
 
@@ -308,39 +301,6 @@ export default function IdentityTab() {
 
   return (
     <div className="space-y-6">
-      {showPrivacy && (
-        <Card pad={false} className="p-4 flex items-start gap-3 bg-muted">
-          <ShieldCheck size={18} className="text-secondary shrink-0 mt-0.5" />
-          <div className="text-sm text-foreground">
-            Identity is the deepest layer of your profile. We use this to personalize matches and
-            rationales — nothing here goes to institutions until you choose to share it. Manage in{' '}
-            <button
-              onClick={() => navigate('/s/settings')}
-              className="font-semibold text-secondary hover:underline"
-            >
-              Settings → Data &amp; privacy →
-            </button>
-            <button
-              className="ml-2 font-semibold text-secondary hover:underline"
-              onClick={() => {
-                window.localStorage.setItem(PRIVACY_DISCLOSURE_KEY, '1')
-                setShowPrivacy(false)
-              }}
-            >
-              Got it
-            </button>
-          </div>
-        </Card>
-      )}
-
-      <div>
-        <h2 className="text-h3 text-foreground">Identity</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          The deepest layer of who you are — values, worldview, and self-awareness. Discovery surfaces
-          these from your conversations; edit anything.
-        </p>
-      </div>
-
       <Section
         title="Core values"
         hint="What you most consistently care about, with evidence."
@@ -527,7 +487,8 @@ function Section({ title, hint, addLabel, onAdd, children }: SectionProps) {
           <Plus size={14} className="mr-1" /> {addLabel}
         </Button>
       </div>
-      <div className="space-y-2">{children}</div>
+      {/* 2-up card grid (denser than one-per-row); empties span a single cell. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">{children}</div>
     </div>
   )
 }
