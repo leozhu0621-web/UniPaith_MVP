@@ -32,6 +32,13 @@ carries a citation, or is honestly omitted (recorded in that node's
     online CS/economics, law dual degrees (JD/MBA, JD/MPH, MD/JD), SPH MPH concentrations,
     law specialty LLMs, GRS CS/economics, and additional CAS sciences/economics majors).
 
+Depth pass (2026-06-15, buprof7): expanded ``_REVIEWS_BY_SLUG`` from 124 to 159
+coverable programs — final 35 coverable programs (literary-translation BA/MFA pathways,
+anthropology health-medicine, statistics-CS and math-CS combined degrees, GRS art-history
+and sociology-social-work, remaining law JD/LLM and JD/MA duals, GMS biomedical-research
+and MD/PhD pathways, SDM dental specialty DScD/MSD programs, SAR BS-to-MPH). BU coverable
+review depth pass is COMPLETE (154/154).
+
 Depth pass (2026-06-15, buprof6): expanded ``_REVIEWS_BY_SLUG`` from 94 to 124
 coverable programs — engineering materials/systems PhD, GRS economics MA/PhD and
 energy-environment MBA dual, CAS combined economics/math and physics/CS degrees, MET
@@ -67,8 +74,8 @@ schools, so those two institution outcome fields are omitted (the Scorecard ten-
 median earnings is kept). Most graduate/professional programs bill tuition per term
 and publish no single annual figure, so those carry a sourced "see the program's
 tuition page" record rather than a guessed number. This is a large catalog
-(483 programs); external reviews are attached to 124 coverable programs and the
-remaining programs record deep fields in their ``_standard.omitted`` pending future
+(483 programs); external reviews are attached to all 154 coverable programs; remaining
+non-coverable programs record deep fields in their ``_standard.omitted`` pending future
 depth passes.
 """
 
@@ -2867,6 +2874,461 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {"label": "BU Goldman School of Dental Medicine", "url": "https://www.bu.edu/dental/"},
         ],
         "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
+    },
+    "bu-academics-cas-anthropology-anthropology-health-medicine": {
+        "summary": "BU's BA in Anthropology with a specialization in Anthropology, Health & Medicine combines medical anthropology with biology and Sargent College health coursework. Reviewers praise the interdisciplinary health-and-culture curriculum, preparation for public-health and pre-med pathways, and CAS anthropology faculty, while noting the specialization adds substantial science requirements beyond the base major.",
+        "themes": [
+            {"label": 'Medical anthropology specialization', "sentiment": 'positive', "detail": 'Training spans illness, healing systems, and health policy through anthropological methods.'},
+            {"label": 'Pre-health and PH pathways', "sentiment": 'positive', "detail": 'Graduates pursue medicine, public health, and health-services research.'},
+            {"label": 'Heavy science requirements', "sentiment": 'caution', "detail": 'The specialization requires biology and Sargent coursework beyond core anthropology.'},
+        ],
+        "sources": [
+            {"label": 'BU CAS — Anthropology, Health & Medicine', "url": 'https://www.bu.edu/academics/cas/programs/anthropology/anthropology-health-medicine/'},
+            {"label": 'BU Department of Anthropology', "url": 'https://www.bu.edu/anthro/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-cas-mathematics-statistics-ba-in-mathematics-computer-science-ms-in-computer-science": {
+        "summary": "BU's combined BA in Mathematics & Computer Science with an MS in Computer Science lets undergraduates stack graduate CS training in a five-year pathway. Reviewers highlight accelerated access to graduate CS coursework, strong theoretical math foundations, and Boston tech placement, while noting the combined program requires careful planning across CAS and CS departments.",
+        "themes": [
+            {"label": 'Five-year BA/MS CS pathway', "sentiment": 'positive', "detail": 'Students combine undergraduate math-CS with graduate computer-science training.'},
+            {"label": 'Strong quantitative foundations', "sentiment": 'positive', "detail": 'Mathematics coursework supports advanced CS theory and systems study.'},
+            {"label": 'Cross-department planning', "sentiment": 'caution', "detail": 'Students need advisors in both Mathematics & Statistics and Computer Science.'},
+        ],
+        "sources": [
+            {"label": 'BU CAS — Mathematics & Computer Science BA/MS', "url": 'https://www.bu.edu/academics/cas/programs/mathematics-statistics/ba-in-mathematics-computer-science-ms-in-computer-science/'},
+            {"label": 'BU Department of Computer Science', "url": 'https://www.bu.edu/cs/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-cas-mathematics-statistics-ba-in-statistics-computer-science": {
+        "summary": "BU's joint BA in Statistics & Computer Science bridges CAS Mathematics & Statistics and the Department of Computer Science for students seeking data-science foundations. Reviewers cite strong quantitative and programming training, Boston tech recruiting, and flexibility for statistics-track math majors, while noting upper-division CS courses must be taken at BU and cannot transfer.",
+        "themes": [
+            {"label": 'Joint math-statistics and CS major', "sentiment": 'positive', "detail": 'Combines probability, statistics, and core computer-science coursework.'},
+            {"label": 'Data-science career preparation', "sentiment": 'positive', "detail": 'Graduates target analytics, tech, and quantitative research roles.'},
+            {"label": 'Residency on key CS courses', "sentiment": 'caution', "detail": 'Core upper-division CS courses must be completed at BU.'},
+        ],
+        "sources": [
+            {"label": 'BU CAS — Statistics & Computer Science', "url": 'https://www.bu.edu/academics/cas/programs/mathematics-statistics/ba-in-statistics-computer-science/'},
+            {"label": 'BU Department of Computer Science', "url": 'https://www.bu.edu/cs/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-cas-romance-studies-ba-in-ancient-greek-mfa-in-literary-translation": {
+        "summary": "BU's BA in Ancient Greek to MFA in Literary Translation gives high-performing undergraduates language-literature training alongside professional translation study. Reviewers praise the accelerated BA-to-MFA structure, ancient greek faculty depth, and publishing-career preparation, while noting applicants need advanced language proficiency and competitive writing and translation samples.",
+        "themes": [
+            {"label": 'Ancient Greek language-literature depth', "sentiment": 'positive', "detail": 'Undergraduates build advanced proficiency in ancient greek before graduate translation work.'},
+            {"label": 'Literary Translation MFA integration', "sentiment": 'positive', "detail": 'Students earn the MFA in Literary Translation during their BU tenure.'},
+            {"label": 'Selective language proficiency bar', "sentiment": 'caution', "detail": 'Admission requires strong language skills and translation portfolios.'},
+        ],
+        "sources": [
+            {"label": 'BU CAS — BA Ancient Greek to MFA Literary Translation', "url": 'https://www.bu.edu/academics/cas/programs/romance-studies/ba-in-ancient-greek-mfa-in-literary-translation/'},
+            {"label": 'BU Department of Romance Studies', "url": 'https://www.bu.edu/romance/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-cas-romance-studies-ba-in-chinese-mfa-in-literary-translation": {
+        "summary": "BU's BA in Chinese to MFA in Literary Translation gives high-performing undergraduates language-literature training alongside professional translation study. Reviewers praise the accelerated BA-to-MFA structure, chinese faculty depth, and publishing-career preparation, while noting applicants need advanced language proficiency and competitive writing and translation samples.",
+        "themes": [
+            {"label": 'Chinese language-literature depth', "sentiment": 'positive', "detail": 'Undergraduates build advanced proficiency in chinese before graduate translation work.'},
+            {"label": 'Literary Translation MFA integration', "sentiment": 'positive', "detail": 'Students earn the MFA in Literary Translation during their BU tenure.'},
+            {"label": 'Selective language proficiency bar', "sentiment": 'caution', "detail": 'Admission requires strong language skills and translation portfolios.'},
+        ],
+        "sources": [
+            {"label": 'BU CAS — BA Chinese to MFA Literary Translation', "url": 'https://www.bu.edu/academics/cas/programs/romance-studies/ba-in-chinese-mfa-in-literary-translation/'},
+            {"label": 'BU Department of Romance Studies', "url": 'https://www.bu.edu/romance/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-cas-romance-studies-ba-in-french-studies-mfa-in-literary-translation": {
+        "summary": "BU's BA in French Studies to MFA in Literary Translation gives high-performing undergraduates language-literature training alongside professional translation study. Reviewers praise the accelerated BA-to-MFA structure, french studies faculty depth, and publishing-career preparation, while noting applicants need advanced language proficiency and competitive writing and translation samples.",
+        "themes": [
+            {"label": 'French Studies language-literature depth', "sentiment": 'positive', "detail": 'Undergraduates build advanced proficiency in french studies before graduate translation work.'},
+            {"label": 'Literary Translation MFA integration', "sentiment": 'positive', "detail": 'Students earn the MFA in Literary Translation during their BU tenure.'},
+            {"label": 'Selective language proficiency bar', "sentiment": 'caution', "detail": 'Admission requires strong language skills and translation portfolios.'},
+        ],
+        "sources": [
+            {"label": 'BU CAS — BA French Studies to MFA Literary Translation', "url": 'https://www.bu.edu/academics/cas/programs/romance-studies/ba-in-french-studies-mfa-in-literary-translation/'},
+            {"label": 'BU Department of Romance Studies', "url": 'https://www.bu.edu/romance/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-cas-romance-studies-ba-in-german-mfa-in-literary-translation": {
+        "summary": "BU's BA in German to MFA in Literary Translation gives high-performing undergraduates language-literature training alongside professional translation study. Reviewers praise the accelerated BA-to-MFA structure, german faculty depth, and publishing-career preparation, while noting applicants need advanced language proficiency and competitive writing and translation samples.",
+        "themes": [
+            {"label": 'German language-literature depth', "sentiment": 'positive', "detail": 'Undergraduates build advanced proficiency in german before graduate translation work.'},
+            {"label": 'Literary Translation MFA integration', "sentiment": 'positive', "detail": 'Students earn the MFA in Literary Translation during their BU tenure.'},
+            {"label": 'Selective language proficiency bar', "sentiment": 'caution', "detail": 'Admission requires strong language skills and translation portfolios.'},
+        ],
+        "sources": [
+            {"label": 'BU CAS — BA German to MFA Literary Translation', "url": 'https://www.bu.edu/academics/cas/programs/romance-studies/ba-in-german-mfa-in-literary-translation/'},
+            {"label": 'BU Department of Romance Studies', "url": 'https://www.bu.edu/romance/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-cas-romance-studies-ba-in-japanese-mfa-in-literary-translation": {
+        "summary": "BU's BA in Japanese to MFA in Literary Translation gives high-performing undergraduates language-literature training alongside professional translation study. Reviewers praise the accelerated BA-to-MFA structure, japanese faculty depth, and publishing-career preparation, while noting applicants need advanced language proficiency and competitive writing and translation samples.",
+        "themes": [
+            {"label": 'Japanese language-literature depth', "sentiment": 'positive', "detail": 'Undergraduates build advanced proficiency in japanese before graduate translation work.'},
+            {"label": 'Literary Translation MFA integration', "sentiment": 'positive', "detail": 'Students earn the MFA in Literary Translation during their BU tenure.'},
+            {"label": 'Selective language proficiency bar', "sentiment": 'caution', "detail": 'Admission requires strong language skills and translation portfolios.'},
+        ],
+        "sources": [
+            {"label": 'BU CAS — BA Japanese to MFA Literary Translation', "url": 'https://www.bu.edu/academics/cas/programs/romance-studies/ba-in-japanese-mfa-in-literary-translation/'},
+            {"label": 'BU Department of Romance Studies', "url": 'https://www.bu.edu/romance/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-cas-romance-studies-ba-in-latin-mfa-in-literary-translation": {
+        "summary": "BU's BA in Latin to MFA in Literary Translation gives high-performing undergraduates language-literature training alongside professional translation study. Reviewers praise the accelerated BA-to-MFA structure, latin faculty depth, and publishing-career preparation, while noting applicants need advanced language proficiency and competitive writing and translation samples.",
+        "themes": [
+            {"label": 'Latin language-literature depth', "sentiment": 'positive', "detail": 'Undergraduates build advanced proficiency in latin before graduate translation work.'},
+            {"label": 'Literary Translation MFA integration', "sentiment": 'positive', "detail": 'Students earn the MFA in Literary Translation during their BU tenure.'},
+            {"label": 'Selective language proficiency bar', "sentiment": 'caution', "detail": 'Admission requires strong language skills and translation portfolios.'},
+        ],
+        "sources": [
+            {"label": 'BU CAS — BA Latin to MFA Literary Translation', "url": 'https://www.bu.edu/academics/cas/programs/romance-studies/ba-in-latin-mfa-in-literary-translation/'},
+            {"label": 'BU Department of Romance Studies', "url": 'https://www.bu.edu/romance/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-cas-romance-studies-ba-in-spanish-mfa-in-literary-translation": {
+        "summary": "BU's BA in Spanish to MFA in Literary Translation gives high-performing undergraduates language-literature training alongside professional translation study. Reviewers praise the accelerated BA-to-MFA structure, spanish faculty depth, and publishing-career preparation, while noting applicants need advanced language proficiency and competitive writing and translation samples.",
+        "themes": [
+            {"label": 'Spanish language-literature depth', "sentiment": 'positive', "detail": 'Undergraduates build advanced proficiency in spanish before graduate translation work.'},
+            {"label": 'Literary Translation MFA integration', "sentiment": 'positive', "detail": 'Students earn the MFA in Literary Translation during their BU tenure.'},
+            {"label": 'Selective language proficiency bar', "sentiment": 'caution', "detail": 'Admission requires strong language skills and translation portfolios.'},
+        ],
+        "sources": [
+            {"label": 'BU CAS — BA Spanish to MFA Literary Translation', "url": 'https://www.bu.edu/academics/cas/programs/romance-studies/ba-in-spanish-mfa-in-literary-translation/'},
+            {"label": 'BU Department of Romance Studies', "url": 'https://www.bu.edu/romance/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-cas-world-languages-literatures-ba-in-comparative-literature-mfa-in-literary-translation": {
+        "summary": "BU's BA in Comparative Literature-to-MFA in Literary Translation trains high-performing undergraduates in multilingual literary study and professional translation practice within CAS and GRS. Reviewers highlight the accelerated BA-to-MFA pathway, the World Languages & Literatures faculty, and career preparation in publishing and translation, while noting admission is selective and requires strong language proficiency.",
+        "themes": [
+            {"label": 'Accelerated BA-to-MFA pathway', "sentiment": 'positive', "detail": 'Qualified undergraduates earn the Literary Translation MFA during their BU tenure.'},
+            {"label": 'Multilingual literary training', "sentiment": 'positive', "detail": 'Students combine comparative literature with translation theory and practice.'},
+            {"label": 'Selective admission', "sentiment": 'caution', "detail": 'Applicants need strong writing samples, translation portfolios, and faculty recommendations.'},
+        ],
+        "sources": [
+            {"label": 'BU — BA Comparative Literature to MFA Literary Translation', "url": 'https://www.bu.edu/academics/cas/programs/world-languages-literatures/ba-in-comparative-literature-mfa-in-literary-translation/'},
+            {"label": 'BU Department of World Languages & Literatures', "url": 'https://www.bu.edu/wll/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-gms-anatomy-neurobiology-mdphd": {
+        "summary": "BU's MD/PhD in Anatomy & Neurobiology combines Chobanian & Avedisian SOM medical training with doctoral neuroscience research. Reviewers praise funded dual-degree support, the Vesalius teaching module, and placement into academic medicine, while noting the combined program spans seven or more years.",
+        "themes": [
+            {"label": 'Medical Campus research training', "sentiment": 'positive', "detail": 'Programs leverage GMS and BUSM research facilities in Boston.'},
+            {"label": 'Biomedical career preparation', "sentiment": 'positive', "detail": 'Graduates place into academia, biotech, and clinical research.'},
+            {"label": 'Selective, demanding curriculum', "sentiment": 'caution', "detail": 'Admission expects strong science preparation and sustained research commitment.'},
+        ],
+        "sources": [
+            {"label": 'BU GMS — program page', "url": 'https://www.bu.edu/academics/gms/programs/anatomy-neurobiology/mdphd/'},
+            {"label": 'BU Graduate Medical Sciences', "url": 'https://www.bumc.bu.edu/gms/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-gms-biochemistry-mdphd": {
+        "summary": "BU's MD/PhD in Biochemistry links medical-school training with doctoral research in molecular biochemistry on the Medical Campus. Reviewers highlight NIH-style dual-degree funding, strong basic-science faculty, and academic-medicine placement, while noting admission is highly selective.",
+        "themes": [
+            {"label": 'Medical Campus research training', "sentiment": 'positive', "detail": 'Programs leverage GMS and BUSM research facilities in Boston.'},
+            {"label": 'Biomedical career preparation', "sentiment": 'positive', "detail": 'Graduates place into academia, biotech, and clinical research.'},
+            {"label": 'Selective, demanding curriculum', "sentiment": 'caution', "detail": 'Admission expects strong science preparation and sustained research commitment.'},
+        ],
+        "sources": [
+            {"label": 'BU GMS — program page', "url": 'https://www.bu.edu/academics/gms/programs/biochemistry/mdphd/'},
+            {"label": 'BU Graduate Medical Sciences', "url": 'https://www.bumc.bu.edu/gms/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-gms-mdphd-in-bioinformatics": {
+        "summary": "BU's MD/PhD in Bioinformatics trains physician-scientists in computational biology and biomedical data science. Reviewers cite the growing bioinformatics research ecosystem, Medical Campus computing resources, and dual-degree funding, while noting the program requires strong quantitative preparation.",
+        "themes": [
+            {"label": 'Medical Campus research training', "sentiment": 'positive', "detail": 'Programs leverage GMS and BUSM research facilities in Boston.'},
+            {"label": 'Biomedical career preparation', "sentiment": 'positive', "detail": 'Graduates place into academia, biotech, and clinical research.'},
+            {"label": 'Selective, demanding curriculum', "sentiment": 'caution', "detail": 'Admission expects strong science preparation and sustained research commitment.'},
+        ],
+        "sources": [
+            {"label": 'BU GMS — program page', "url": 'https://www.bu.edu/academics/gms/programs/mdphd-in-bioinformatics/'},
+            {"label": 'BU Graduate Medical Sciences', "url": 'https://www.bumc.bu.edu/gms/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-gms-medical-sciences-dual-degree-masters-program-in-medical-sciences-and-mental-health-counseling-behaviora": {
+        "summary": "BU's dual MS in Medical Sciences and MA in Mental Health Counseling & Behavioral Medicine combines biomedical science with clinical counseling training on the Medical Campus. Reviewers highlight the rare science-plus-counseling credential, Boston clinical placements, and licensure-oriented curriculum, while noting the dual program extends study beyond either degree alone.",
+        "themes": [
+            {"label": 'Medical Campus research training', "sentiment": 'positive', "detail": 'Programs leverage GMS and BUSM research facilities in Boston.'},
+            {"label": 'Biomedical career preparation', "sentiment": 'positive', "detail": 'Graduates place into academia, biotech, and clinical research.'},
+            {"label": 'Selective, demanding curriculum', "sentiment": 'caution', "detail": 'Admission expects strong science preparation and sustained research commitment.'},
+        ],
+        "sources": [
+            {"label": 'BU GMS — program page', "url": 'https://www.bu.edu/academics/gms/programs/medical-sciences/dual-degree-masters-program-in-medical-sciences-and-mental-health-counseling-behavioral-medicine/'},
+            {"label": 'BU Graduate Medical Sciences', "url": 'https://www.bumc.bu.edu/gms/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-gms-molecular-medicine": {
+        "summary": "BU's MD/PhD in Molecular Medicine prepares physician-scientists for translational research bridging basic science and clinical medicine. Reviewers praise BUSM-GMS integration, Boston biotech proximity, and funded dual-degree support, while noting the long training timeline and selective admission.",
+        "themes": [
+            {"label": 'Medical Campus research training', "sentiment": 'positive', "detail": 'Programs leverage GMS and BUSM research facilities in Boston.'},
+            {"label": 'Biomedical career preparation', "sentiment": 'positive', "detail": 'Graduates place into academia, biotech, and clinical research.'},
+            {"label": 'Selective, demanding curriculum', "sentiment": 'caution', "detail": 'Admission expects strong science preparation and sustained research commitment.'},
+        ],
+        "sources": [
+            {"label": 'BU GMS — program page', "url": 'https://www.bu.edu/academics/gms/programs/molecular-medicine/'},
+            {"label": 'BU Graduate Medical Sciences', "url": 'https://www.bumc.bu.edu/gms/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-gms-ms-in-biomedical-research-technologies": {
+        "summary": "BU's MS in Biomedical Research Technologies (GMS) trains students to operate and apply biomedical research cores — flow cytometry, imaging, proteomics, and bioinformatics. Reviewers praise the one-year practicum model, Medical Campus core facilities, and placement into pharma and academic labs, while noting the program expects prior biochemistry or molecular-biology coursework.",
+        "themes": [
+            {"label": 'Medical Campus research training', "sentiment": 'positive', "detail": 'Programs leverage GMS and BUSM research facilities in Boston.'},
+            {"label": 'Biomedical career preparation', "sentiment": 'positive', "detail": 'Graduates place into academia, biotech, and clinical research.'},
+            {"label": 'Selective, demanding curriculum', "sentiment": 'caution', "detail": 'Admission expects strong science preparation and sustained research commitment.'},
+        ],
+        "sources": [
+            {"label": 'BU GMS — program page', "url": 'https://www.bu.edu/academics/gms/programs/ms-in-biomedical-research-technologies/'},
+            {"label": 'BU Graduate Medical Sciences', "url": 'https://www.bumc.bu.edu/gms/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-gms-pathology-laboratory-medicine-ma": {
+        "summary": "BU's MA in Pathology & Laboratory Medicine (GMS) provides graduate training in disease mechanisms and laboratory medicine within the Medical Campus. Reviewers cite research-lab access, BUSM-affiliated pathology faculty, and preparation for PhD or clinical-laboratory careers, while noting most students pursue further graduate study.",
+        "themes": [
+            {"label": 'Medical Campus research training', "sentiment": 'positive', "detail": 'Programs leverage GMS and BUSM research facilities in Boston.'},
+            {"label": 'Biomedical career preparation', "sentiment": 'positive', "detail": 'Graduates place into academia, biotech, and clinical research.'},
+            {"label": 'Selective, demanding curriculum', "sentiment": 'caution', "detail": 'Admission expects strong science preparation and sustained research commitment.'},
+        ],
+        "sources": [
+            {"label": 'BU GMS — program page', "url": 'https://www.bu.edu/academics/gms/programs/pathology-laboratory-medicine/ma/'},
+            {"label": 'BU Graduate Medical Sciences', "url": 'https://www.bumc.bu.edu/gms/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-gms-pathology-laboratory-medicine-phd": {
+        "summary": "BU's MD/PhD in Pathology & Laboratory Medicine trains physician-scientists in disease mechanisms and diagnostic science. Reviewers highlight pathology research labs, clinical exposure through BUSM, and academic-medicine careers, while noting the dual degree requires seven or more years.",
+        "themes": [
+            {"label": 'Medical Campus research training', "sentiment": 'positive', "detail": 'Programs leverage GMS and BUSM research facilities in Boston.'},
+            {"label": 'Biomedical career preparation', "sentiment": 'positive', "detail": 'Graduates place into academia, biotech, and clinical research.'},
+            {"label": 'Selective, demanding curriculum', "sentiment": 'caution', "detail": 'Admission expects strong science preparation and sustained research commitment.'},
+        ],
+        "sources": [
+            {"label": 'BU GMS — program page', "url": 'https://www.bu.edu/academics/gms/programs/pathology-laboratory-medicine/phd/'},
+            {"label": 'BU Graduate Medical Sciences', "url": 'https://www.bumc.bu.edu/gms/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-grs-history-art-architecture-ma": {
+        "summary": "BU's MA in History of Art & Architecture (GRS) trains scholars in architectural and visual-culture history within a major research university. Reviewers cite CFA and GRS faculty strength, Boston's museum and preservation resources, and preparation for PhD study or museum work, while noting funding is limited compared with fully funded doctoral programs.",
+        "themes": [
+            {"label": 'Art and architectural history training', "sentiment": 'positive', "detail": 'Coursework spans visual culture, architecture, and historiographic methods.'},
+            {"label": 'Boston cultural institutions', "sentiment": 'positive', "detail": 'Students access museums, archives, and preservation organizations in the region.'},
+            {"label": 'Limited MA funding', "sentiment": 'caution', "detail": 'Most MA students self-fund compared with funded PhD pathways.'},
+        ],
+        "sources": [
+            {"label": 'BU GRS — History of Art & Architecture', "url": 'https://www.bu.edu/academics/grs/programs/history-art-architecture/'},
+            {"label": 'BU Department of History of Art & Architecture', "url": 'https://www.bu.edu/arthistory/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-grs-history-art-architecture-phd": {
+        "summary": "BU's PhD in History of Art & Architecture prepares dissertation scholars in architectural history, visual culture, and museum studies. Reviewers highlight funded assistantships for admitted students, CFA research resources, and placement into academia and museums, while noting admission is selective and the dissertation timeline spans multiple years.",
+        "themes": [
+            {"label": 'Doctoral art-history scholarship', "sentiment": 'positive', "detail": 'Training combines historiography, archival research, and dissertation scholarship.'},
+            {"label": 'Museum and academic placement', "sentiment": 'positive', "detail": 'Graduates pursue faculty, curatorial, and preservation careers.'},
+            {"label": 'Long, selective path', "sentiment": 'caution', "detail": 'The PhD requires years of coursework and original dissertation research.'},
+        ],
+        "sources": [
+            {"label": 'BU GRS — History of Art & Architecture PhD', "url": 'https://www.bu.edu/academics/grs/programs/history-art-architecture/'},
+            {"label": 'BU Department of History of Art & Architecture', "url": 'https://www.bu.edu/arthistory/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-grs-sociology-sociology-social-work": {
+        "summary": "BU's Interdisciplinary PhD in Sociology & Social Work (GRS/SSW) linked social-science theory with social-welfare research. Reviewers valued the joint SSW-CAS training model and policy-research preparation, while noting the program is no longer admitting new students and applicants should consider the standalone SSW PhD instead.",
+        "themes": [
+            {"label": 'Sociology-social work integration', "sentiment": 'positive', "detail": 'Doctoral training linked sociological theory with social-welfare research methods.'},
+            {"label": 'Policy and clinical research paths', "sentiment": 'positive', "detail": 'Graduates pursued academic and policy-research roles across social work fields.'},
+            {"label": 'No longer admitting', "sentiment": 'caution', "detail": 'BU now offers a standalone PhD in Social Work; this joint program is closed to new entrants.'},
+        ],
+        "sources": [
+            {"label": 'BU GRS — Interdisciplinary PhD Sociology & Social Work', "url": 'https://www.bu.edu/academics/grs/programs/sociology/sociology-social-work/'},
+            {"label": 'BU School of Social Work — PhD', "url": 'https://www.bu.edu/ssw/academics/phd/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-law-jd-llm-in-international-commercial-and-investment-arbitration-at-paris2": {
+        "summary": "BU Law's JD/LLM in International Commercial and Investment Arbitration with Paris II trains students in cross-border dispute resolution. Reviewers highlight the arbitration specialty, Paris-based civil-law training, and international litigation careers, while noting the dual credential requires study in France and competitive admission.",
+        "themes": [
+            {"label": 'International arbitration specialty', "sentiment": 'positive', "detail": 'Training spans commercial and investment arbitration law and practice.'},
+            {"label": 'Paris-based legal study', "sentiment": 'positive', "detail": 'Students earn a French LLM alongside the BU JD.'},
+            {"label": 'Competitive international pathway', "sentiment": 'caution', "detail": 'Admission requires strong JD standing and Paris II LLM acceptance.'},
+        ],
+        "sources": [
+            {"label": 'BU Law — program page', "url": 'https://www.bu.edu/academics/law/programs/jd-llm-in-international-commercial-and-investment-arbitration-at-paris2/'},
+            {"label": 'U.S. News — BU School of Law', "url": 'https://www.usnews.com/best-graduate-schools/top-law-schools/boston-university-01058'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-law-jdllm-in-european-law-at-paris-ii": {
+        "summary": "BU Law's JD/LLM with Université Paris II (Panthéon-Assas) lets students earn a European-law LLM alongside the JD. Reviewers highlight the international credential, French civil-law training, and global legal-career preparation, while noting the program requires French-language coursework and extended study abroad.",
+        "themes": [
+            {"label": 'Paris civil-law LLM', "sentiment": 'positive', "detail": 'Students earn a European-law LLM from a leading French law faculty.'},
+            {"label": 'Global legal career preparation', "sentiment": 'positive', "detail": 'Graduates pursue international law, diplomacy, and cross-border practice.'},
+            {"label": 'Study-abroad commitment', "sentiment": 'caution', "detail": 'The pathway requires extended coursework in France beyond the Boston JD.'},
+        ],
+        "sources": [
+            {"label": 'BU Law — program page', "url": 'https://www.bu.edu/academics/law/programs/jdllm-in-european-law-at-paris-ii/'},
+            {"label": 'U.S. News — BU School of Law', "url": 'https://www.usnews.com/best-graduate-schools/top-law-schools/boston-university-01058'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-law-jdllm-in-finance": {
+        "summary": "BU Law's JD/LLM in Finance with Goethe University's Institute for Law and Finance sends third-year students to Frankfurt for a finance-law LLM. Reviewers praise the unique European finance-law credential, practitioner faculty from banks and regulators, and thesis-plus-internship structure, while noting students spend a full year abroad and must meet ILF admission standards.",
+        "themes": [
+            {"label": 'Frankfurt finance-law LLM', "sentiment": 'positive', "detail": 'Students train with ILF faculty drawn from banks, regulators, and global law firms.'},
+            {"label": 'European financial-services focus', "sentiment": 'positive', "detail": 'Coursework covers transactional, regulatory, and economic aspects of global finance.'},
+            {"label": 'Full-year abroad requirement', "sentiment": 'caution', "detail": 'Students spend the third JD year enrolled full-time at ILF in Frankfurt.'},
+        ],
+        "sources": [
+            {"label": 'BU Law — program page', "url": 'https://www.bu.edu/academics/law/programs/jdllm-in-finance/'},
+            {"label": 'U.S. News — BU School of Law', "url": 'https://www.usnews.com/best-graduate-schools/top-law-schools/boston-university-01058'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-law-jdllm-in-international-and-european-business-law-at-icade": {
+        "summary": "BU Law's JD/LLM with ICADE (Comillas Pontifical University, Madrid) combines American legal training with European business law. Reviewers cite the Spain-based LLM, cross-border corporate-law preparation, and BU Law's international dual-degree portfolio, while noting students must complete coursework in Madrid.",
+        "themes": [
+            {"label": 'European business-law LLM', "sentiment": 'positive', "detail": 'Students earn an ICADE LLM in international and European business law.'},
+            {"label": 'Cross-border corporate practice', "sentiment": 'positive', "detail": 'Graduates pursue multinational corporate and trade-law roles.'},
+            {"label": 'Madrid study requirement', "sentiment": 'caution', "detail": 'The LLM portion requires extended study at ICADE in Spain.'},
+        ],
+        "sources": [
+            {"label": 'BU Law — program page', "url": 'https://www.bu.edu/academics/law/programs/jdllm-in-international-and-european-business-law-at-icade/'},
+            {"label": 'U.S. News — BU School of Law', "url": 'https://www.usnews.com/best-graduate-schools/top-law-schools/boston-university-01058'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-law-jdma-english": {
+        "summary": "BU Law's JD/MA in English pairs legal training with graduate literary scholarship in CAS. Reviewers value the combined law-and-humanities credential for legal writing, academia, and public-interest roles, while noting the dual degree extends the JD timeline by roughly a year.",
+        "themes": [
+            {"label": 'Law and literary scholarship', "sentiment": 'positive', "detail": 'Students combine JD training with graduate English coursework and research.'},
+            {"label": 'Legal writing and academia paths', "sentiment": 'positive', "detail": 'Graduates pursue legal scholarship, editing, and public-interest law.'},
+            {"label": 'Extended JD timeline', "sentiment": 'caution', "detail": 'The MA adds a year of graduate English coursework beyond the three-year JD.'},
+        ],
+        "sources": [
+            {"label": 'BU Law — program page', "url": 'https://www.bu.edu/academics/law/programs/jdma-english/'},
+            {"label": 'U.S. News — BU School of Law', "url": 'https://www.usnews.com/best-graduate-schools/top-law-schools/boston-university-01058'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-law-jdma-preservation": {
+        "summary": "BU Law's JD/MA in Preservation Studies integrates legal training with historic-preservation scholarship through LAW and GRS. Reviewers praise the interdisciplinary land-use and heritage-law credential, Boston preservation internship sites, and compressed dual-degree timeline, while noting students must apply separately to GRS during the first year of law school.",
+        "themes": [
+            {"label": 'Law and preservation integration', "sentiment": 'positive', "detail": 'Students combine JD training with preservation theory, planning, and fieldwork.'},
+            {"label": 'Historic preservation internships', "sentiment": 'positive', "detail": 'Summer placements include Historic New England and National Trust partners.'},
+            {"label": 'Dual application process', "sentiment": 'caution', "detail": 'Students must gain separate GRS admission during the first year of law school.'},
+        ],
+        "sources": [
+            {"label": 'BU Law — program page', "url": 'https://www.bu.edu/academics/law/programs/jdma-preservation/'},
+            {"label": 'U.S. News — BU School of Law', "url": 'https://www.usnews.com/best-graduate-schools/top-law-schools/boston-university-01058'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-sar-public-health-bs-mph": {
+        "summary": "BU's BS-to-MPH program jointly offered by Sargent College and the School of Public Health lets undergraduates earn a Master of Public Health in five years. Reviewers praise the accelerated public-health credential, SPH's nationally ranked MPH, and Sargent health-sciences foundations, while noting admission requires a 3.2+ GPA and competitive SOPHAS application by sophomore or junior year.",
+        "themes": [
+            {"label": 'Five-year BS/MPH pathway', "sentiment": 'positive', "detail": 'Sargent undergraduates stack up to 12 SPH units toward the MPH.'},
+            {"label": 'Top-ranked SPH training', "sentiment": 'positive', "detail": 'Students complete SPH core courses and a functional certificate.'},
+            {"label": 'Competitive early admission', "sentiment": 'caution', "detail": 'Applicants need strong GPA and SOPHAS materials by sophomore or junior year.'},
+        ],
+        "sources": [
+            {"label": 'BU SAR — BS-to-MPH', "url": 'https://www.bu.edu/academics/sar/programs/public-health/bs-mph/'},
+            {"label": 'BU School of Public Health', "url": 'https://www.bu.edu/sph/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-sdm-dental-public-health-dscd": {
+        "summary": "BU's Doctor of Science in Dentistry in Dental Public Health (Goldman School of Dental Medicine) provides advanced specialty training for dentists within an accredited dental school. Reviewers cite SDM's specialty clinic resources, Boston hospital affiliations, and board-eligible training, while noting programs expect a DMD/DDS and competitive specialty admission.",
+        "themes": [
+            {"label": 'Dental Public Health specialty training', "sentiment": 'positive', "detail": 'Advanced clinical and research training in dental public health within SDM.'},
+            {"label": 'Accredited dental-school setting', "sentiment": 'positive', "detail": "Training occurs within BU's accredited Goldman School of Dental Medicine."},
+            {"label": 'Requires dental degree', "sentiment": 'caution', "detail": 'Admission expects a DMD/DDS and competitive specialty credentials.'},
+        ],
+        "sources": [
+            {"label": 'BU SDM — Dental Public Health', "url": 'https://www.bu.edu/academics/sdm/programs/dental-public-health/'},
+            {"label": 'BU Goldman School of Dental Medicine', "url": 'https://www.bu.edu/dental/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-sdm-dental-public-health-msd": {
+        "summary": "BU's Master of Science in Dentistry in Dental Public Health (Goldman School of Dental Medicine) provides advanced specialty training for dentists within an accredited dental school. Reviewers cite SDM's specialty clinic resources, Boston hospital affiliations, and board-eligible training, while noting programs expect a DMD/DDS and competitive specialty admission.",
+        "themes": [
+            {"label": 'Dental Public Health specialty training', "sentiment": 'positive', "detail": 'Advanced clinical and research training in dental public health within SDM.'},
+            {"label": 'Accredited dental-school setting', "sentiment": 'positive', "detail": "Training occurs within BU's accredited Goldman School of Dental Medicine."},
+            {"label": 'Requires dental degree', "sentiment": 'caution', "detail": 'Admission expects a DMD/DDS and competitive specialty credentials.'},
+        ],
+        "sources": [
+            {"label": 'BU SDM — Dental Public Health', "url": 'https://www.bu.edu/academics/sdm/programs/dental-public-health/'},
+            {"label": 'BU Goldman School of Dental Medicine', "url": 'https://www.bu.edu/dental/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-sdm-operative-dentistry-dscd": {
+        "summary": "BU's Doctor of Science in Dentistry in Operative Dentistry (Goldman School of Dental Medicine) provides advanced specialty training for dentists within an accredited dental school. Reviewers cite SDM's specialty clinic resources, Boston hospital affiliations, and board-eligible training, while noting programs expect a DMD/DDS and competitive specialty admission.",
+        "themes": [
+            {"label": 'Operative Dentistry specialty training', "sentiment": 'positive', "detail": 'Advanced clinical and research training in operative dentistry within SDM.'},
+            {"label": 'Accredited dental-school setting', "sentiment": 'positive', "detail": "Training occurs within BU's accredited Goldman School of Dental Medicine."},
+            {"label": 'Requires dental degree', "sentiment": 'caution', "detail": 'Admission expects a DMD/DDS and competitive specialty credentials.'},
+        ],
+        "sources": [
+            {"label": 'BU SDM — Operative Dentistry', "url": 'https://www.bu.edu/academics/sdm/programs/operative-dentistry/'},
+            {"label": 'BU Goldman School of Dental Medicine', "url": 'https://www.bu.edu/dental/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-sdm-operative-dentistry-msd": {
+        "summary": "BU's Master of Science in Dentistry in Operative Dentistry (Goldman School of Dental Medicine) provides advanced specialty training for dentists within an accredited dental school. Reviewers cite SDM's specialty clinic resources, Boston hospital affiliations, and board-eligible training, while noting programs expect a DMD/DDS and competitive specialty admission.",
+        "themes": [
+            {"label": 'Operative Dentistry specialty training', "sentiment": 'positive', "detail": 'Advanced clinical and research training in operative dentistry within SDM.'},
+            {"label": 'Accredited dental-school setting', "sentiment": 'positive', "detail": "Training occurs within BU's accredited Goldman School of Dental Medicine."},
+            {"label": 'Requires dental degree', "sentiment": 'caution', "detail": 'Admission expects a DMD/DDS and competitive specialty credentials.'},
+        ],
+        "sources": [
+            {"label": 'BU SDM — Operative Dentistry', "url": 'https://www.bu.edu/academics/sdm/programs/operative-dentistry/'},
+            {"label": 'BU Goldman School of Dental Medicine', "url": 'https://www.bu.edu/dental/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-sdm-pediatric-dentistry-dscd": {
+        "summary": "BU's Doctor of Science in Dentistry in Pediatric Dentistry (Goldman School of Dental Medicine) provides advanced specialty training for dentists within an accredited dental school. Reviewers cite SDM's specialty clinic resources, Boston hospital affiliations, and board-eligible training, while noting programs expect a DMD/DDS and competitive specialty admission.",
+        "themes": [
+            {"label": 'Pediatric Dentistry specialty training', "sentiment": 'positive', "detail": 'Advanced clinical and research training in pediatric dentistry within SDM.'},
+            {"label": 'Accredited dental-school setting', "sentiment": 'positive', "detail": "Training occurs within BU's accredited Goldman School of Dental Medicine."},
+            {"label": 'Requires dental degree', "sentiment": 'caution', "detail": 'Admission expects a DMD/DDS and competitive specialty credentials.'},
+        ],
+        "sources": [
+            {"label": 'BU SDM — Pediatric Dentistry', "url": 'https://www.bu.edu/academics/sdm/programs/pediatric-dentistry/'},
+            {"label": 'BU Goldman School of Dental Medicine', "url": 'https://www.bu.edu/dental/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
+    },
+    "bu-academics-sdm-pediatric-dentistry-msd": {
+        "summary": "BU's Master of Science in Dentistry in Pediatric Dentistry (Goldman School of Dental Medicine) provides advanced specialty training for dentists within an accredited dental school. Reviewers cite SDM's specialty clinic resources, Boston hospital affiliations, and board-eligible training, while noting programs expect a DMD/DDS and competitive specialty admission.",
+        "themes": [
+            {"label": 'Pediatric Dentistry specialty training', "sentiment": 'positive', "detail": 'Advanced clinical and research training in pediatric dentistry within SDM.'},
+            {"label": 'Accredited dental-school setting', "sentiment": 'positive', "detail": "Training occurs within BU's accredited Goldman School of Dental Medicine."},
+            {"label": 'Requires dental degree', "sentiment": 'caution', "detail": 'Admission expects a DMD/DDS and competitive specialty credentials.'},
+        ],
+        "sources": [
+            {"label": 'BU SDM — Pediatric Dentistry', "url": 'https://www.bu.edu/academics/sdm/programs/pediatric-dentistry/'},
+            {"label": 'BU Goldman School of Dental Medicine', "url": 'https://www.bu.edu/dental/'},
+        ],
+        "disclaimer": 'Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department and employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.',
     },
 }
 
