@@ -32,6 +32,9 @@ sourced "see the program's tuition page" record rather than a guessed number. Th
 large catalog, so external reviews are attached to the flagship coverable programs and
 the remaining programs record those deep fields in their ``_standard.omitted`` pending
 a future depth pass.
+
+Depth pass (2026-06-15, purdueprof3): merged ``DEPTH_REVIEWS`` for 56 coverable
+programs — completes Purdue coverable external_reviews (64/64).
 """
 
 # ruff: noqa: E501
@@ -49,6 +52,7 @@ from unipaith.data.profile_catalog_utils import (
     validate_catalog,
 )
 from unipaith.data.purdue_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.purdue_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
@@ -794,6 +798,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
+    **DEPTH_REVIEWS,
 }
 
 _FLAGSHIP = "purdue-aerospace-engineering-bs"
