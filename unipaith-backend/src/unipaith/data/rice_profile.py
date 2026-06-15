@@ -25,6 +25,9 @@ faculty rosters are omitted for schools where no current named distinction could
 verified from an official page; and Rice's news site exposes no editorial RSS feed, so the
 verified LiveWhale events RSS (current, image-carrying) feeds the Updates surface while the
 iCalendar feeds Events (both verified HTTP 200 on 2026-06-11).
+
+Depth pass (2026-06-15, riceprof4): merged ``DEPTH_REVIEWS`` for 51 coverable
+programs — completes Rice coverable external_reviews (57/57).
 """
 
 # ruff: noqa: E501
@@ -37,6 +40,7 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.rice_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
@@ -1758,6 +1762,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 
