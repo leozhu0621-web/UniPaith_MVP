@@ -3,7 +3,7 @@ import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   Backpack, Bookmark, PenLine, FolderKanban, Calendar, User, Briefcase,
-  ChevronRight, ChevronDown,
+  Milestone, SlidersHorizontal, ChevronRight, ChevronDown,
 } from 'lucide-react'
 import { listMyApplications } from '../../../api/applications'
 import Coachmark from '../../../components/ui/Coachmark'
@@ -22,6 +22,11 @@ type Item =
 
 const OVERVIEW: Item = { kind: 'link', label: 'Overview', to: '/s/space', icon: Backpack }
 
+// Strategy promoted to a top-level item (2026-06-15) — the headline of your plan.
+// The living-doc lives in the Timeline tab now ("one page, two entries"), so this
+// shortcut and Planning › Timeline both open /s/profile?tab=timeline.
+const STRATEGY: Item = { kind: 'link', label: 'Strategy', to: '/s/profile?tab=timeline', icon: Milestone }
+
 const PROFILE: Item = {
   kind: 'group', label: 'Profile', to: '/s/profile', icon: User,
   children: [
@@ -30,13 +35,20 @@ const PROFILE: Item = {
     { label: 'Academics', to: '/s/profile?tab=academics' },
     { label: 'Experience', to: '/s/profile?tab=experience' },
     { label: 'Goals', to: '/s/profile?tab=goals' },
-    { label: 'Needs', to: '/s/profile?tab=needs' },
-    { label: 'Strategy', to: '/s/profile?tab=strategy' },
-    { label: 'Preferences', to: '/s/profile?tab=preferences' },
-    { label: 'Timeline', to: '/s/profile?tab=timeline' },
     { label: 'Analytics', to: '/s/profile?tab=analytics' },
-    // Data rights (consent + export + access log) moved to account Settings
-    // (Spec 2026-06-15 §2.1) — no longer a Profile sub-tab.
+    // Data rights moved to account Settings (Spec 2026-06-15 §2.1). Needs ·
+    // Timeline · Preferences moved to the Planning cluster below.
+  ],
+}
+
+// Planning cluster (2026-06-15) — what you want and where you're headed.
+// Timeline shows the strategy living-doc (career → degree → paths + game-plan).
+const PLANNING: Item = {
+  kind: 'group', label: 'Planning', to: '/s/profile?tab=needs', icon: SlidersHorizontal,
+  children: [
+    { label: 'Needs', to: '/s/profile?tab=needs' },
+    { label: 'Timeline', to: '/s/profile?tab=timeline' },
+    { label: 'Preferences', to: '/s/profile?tab=preferences' },
   ],
 }
 
@@ -67,7 +79,7 @@ const WORKSPACE: Item = {
   ],
 }
 
-const ITEMS: Item[] = [OVERVIEW, PROFILE, SAVED, WORKSPACE]
+const ITEMS: Item[] = [OVERVIEW, STRATEGY, PROFILE, PLANNING, SAVED, WORKSPACE]
 
 // Flat list of room landing routes — drives the top-nav My Space active state.
 // Messages is intentionally absent (it is its own nav tab now).
@@ -83,12 +95,11 @@ const MOBILE_PILLS: { label: string; to: string; icon: typeof Backpack; end?: bo
   { label: 'Calendar', to: '/s/calendar', icon: Calendar },
 ]
 
-/** A group "owns" the current route when any child path prefixes the pathname. */
-function groupOwns(group: Extract<Item, { kind: 'group' }>, pathname: string): boolean {
-  return group.children.some(c => {
-    const p = c.to.split('?')[0]
-    return pathname === p || pathname.startsWith(`${p}/`)
-  })
+/** A group "owns" the current route when one of its children is the active
+ *  sub-item. ?tab-aware (via subActive) — required now that Profile and Planning
+ *  share the /s/profile path but split its tabs between them. */
+function groupOwns(group: Extract<Item, { kind: 'group' }>, pathname: string, search: string): boolean {
+  return group.children.some(c => subActive(c.to, pathname, search))
 }
 
 /** Sub-item active = same pathname AND same ?tab (landing item = no/absent tab). */
@@ -116,16 +127,16 @@ export default function MySpaceShell() {
   // active group open as the route changes (others stay as the user left them).
   const [open, setOpen] = useState<Set<string>>(() => {
     const s = new Set<string>()
-    for (const it of ITEMS) if (it.kind === 'group' && groupOwns(it, pathname)) s.add(it.label)
+    for (const it of ITEMS) if (it.kind === 'group' && groupOwns(it, pathname, search)) s.add(it.label)
     return s
   })
   useEffect(() => {
     for (const it of ITEMS) {
-      if (it.kind === 'group' && groupOwns(it, pathname)) {
+      if (it.kind === 'group' && groupOwns(it, pathname, search)) {
         setOpen(prev => (prev.has(it.label) ? prev : new Set(prev).add(it.label)))
       }
     }
-  }, [pathname])
+  }, [pathname, search])
 
   const toggle = (label: string) =>
     setOpen(prev => {
@@ -146,18 +157,18 @@ export default function MySpaceShell() {
         <nav className="max-h-[calc(100dvh-4rem)] overflow-y-auto px-3 py-4">
           {ITEMS.map(item => {
             if (item.kind === 'link') {
+              // ?tab-aware active (Strategy → ?tab=timeline); NavLink alone
+              // would match by pathname and over-highlight on profile routes.
+              const active = subActive(item.to, pathname, search)
               return (
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  end
-                  className={({ isActive }) =>
-                    `flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
-                      isActive
-                        ? 'bg-muted font-medium text-foreground'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                    }`
-                  }
+                  className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
+                    active
+                      ? 'bg-muted font-medium text-foreground'
+                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                  }`}
                 >
                   <item.icon size={15} strokeWidth={1.75} />
                   {item.label}
@@ -165,7 +176,7 @@ export default function MySpaceShell() {
               )
             }
             const isOpen = open.has(item.label)
-            const owns = groupOwns(item, pathname)
+            const owns = groupOwns(item, pathname, search)
             const badge =
               item.label === 'Workspace' && appCount > 0
                 ? <span className="ml-1 text-xs text-muted-foreground">{appCount}</span>

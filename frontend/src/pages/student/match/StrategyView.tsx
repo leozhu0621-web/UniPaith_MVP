@@ -241,14 +241,14 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
               <RefreshCw size={13} className="mr-1.5" />
               Regenerate strategy
             </Button>
-            <Link to="/s/profile?tab=strategy">
+            <Link to="/s/profile?tab=timeline">
               <Button size="sm" variant="ghost">
                 <Pencil size={13} className="mr-1.5" />
                 Edit (creates a draft)
               </Button>
             </Link>
             <Link
-              to="/s/profile?tab=strategy"
+              to="/s/profile?tab=timeline"
               className="inline-flex items-center gap-1 text-xs font-semibold text-secondary hover:underline ml-auto"
             >
               Open full strategy

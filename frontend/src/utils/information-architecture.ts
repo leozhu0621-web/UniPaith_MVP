@@ -61,6 +61,8 @@ export const PROFILE_TAB_ALIASES: Record<string, string> = {
   data: '/s/settings',
 }
 
+// 'strategy' is no longer a distinct tab (2026-06-15) — its living-doc renders
+// under 'timeline'; ProfilePage redirects ?tab=strategy → ?tab=timeline.
 export const PROFILE_TABS_SPEC = [
   'overview',
   'identity',
@@ -68,7 +70,6 @@ export const PROFILE_TABS_SPEC = [
   'experience',
   'goals',
   'needs',
-  'strategy',
   'preferences',
   'timeline',
   'analytics',
