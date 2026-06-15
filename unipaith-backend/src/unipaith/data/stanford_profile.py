@@ -42,7 +42,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Stanford University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -184,8 +184,51 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Arts at Stanford", "url": "https://arts.stanford.edu/"},
         ],
     },
-    # Wikimedia Commons / Steve Jurvetson (CC BY 2.0) — verified on the file page for
-    # Stanford_University_Main_Quad_-_7_June_2009.jpg.
+    # Verified outdoor campus gallery (Wikimedia Commons API extmetadata, 2026-06-15).
+    # Main Quad leads the institution hero; each file carries a verified author + license.
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/"
+                "Stanford_University_Main_Quad_-_7_June_2009.jpg/"
+                "1920px-Stanford_University_Main_Quad_-_7_June_2009.jpg"
+            ),
+            "credit": "Wikimedia Commons / Steve Jurvetson (CC BY 2.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/"
+                "Stanford_University_from_Hoover_Tower_January_2013_panorama.jpg/"
+                "1920px-Stanford_University_from_Hoover_Tower_January_2013_panorama.jpg"
+            ),
+            "credit": "Wikimedia Commons / King of Hearts (CC BY-SA 3.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/"
+                "Stanford_Memorial_Church_May_2011_HDR_1.jpg/"
+                "1920px-Stanford_Memorial_Church_May_2011_HDR_1.jpg"
+            ),
+            "credit": "Wikimedia Commons / King of Hearts (CC BY-SA 3.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/"
+                "Stanford_University_Aerial_View.jpg/"
+                "1920px-Stanford_University_Aerial_View.jpg"
+            ),
+            "credit": "Wikimedia Commons / Mark Leschinsky (CC BY 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/"
+                "Stanford_University_campus_in_2016.jpg/"
+                "1920px-Stanford_University_campus_in_2016.jpg"
+            ),
+            "credit": "Wikimedia Commons / Frank Schulenburg (CC BY-SA 4.0)",
+        },
+    ],
+    # Main Quad leads the hero; see ``campus_photos[0]``.
     "media_credit": "Wikimedia Commons / Steve Jurvetson (CC BY 2.0)",
     "flagship": {
         # Total degree-seeking enrollment, College Scorecard (UNITID 243744):
@@ -2396,13 +2439,8 @@ _REQ_MBA = {
 }
 
 
-# Real Stanford campus photo (the Main Quad, aerial) — Wikimedia Commons, CC BY
-# 2.0 (Steve Jurvetson), hotlinkable landscape JPG. Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/"
-    "Stanford_University_Main_Quad_-_7_June_2009.jpg/"
-    "1920px-Stanford_University_Main_Quad_-_7_June_2009.jpg"
-)
+# Main Quad leads the institution hero; see ``SCHOOL_OUTCOMES["campus_photos"]``.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
