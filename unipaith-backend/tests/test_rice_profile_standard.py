@@ -25,7 +25,7 @@ def _institution_snapshot() -> dict:
     return {
         "description_text": r.DESCRIPTION,
         "student_body_size": r.UNDERGRAD_COUNT,
-        "media_gallery": [r._CAMPUS_PHOTO],
+        "media_gallery": [r.SCHOOL_OUTCOMES["campus_photos"][0]["url"]],
         "ranking_data": r.RANKING_DATA,
         "school_outcomes": so,
         "content_sources": r._INSTITUTION_CONTENT,
@@ -103,6 +103,10 @@ def test_institution_is_gold():
     assert set(res.missing_fields) <= omitted, f"Unexpected institution gaps: {res.missing_fields}"
     assert not _section_gaps_unexpected("institution", res.missing_sections, omitted)
     assert r.SCHOOL_OUTCOMES.get("media_credit")
+    photos = r.SCHOOL_OUTCOMES.get("campus_photos") or []
+    assert len(photos) >= 4
+    for photo in photos:
+        assert photo.get("url") and photo.get("credit")
 
 
 def test_all_eight_schools_done():

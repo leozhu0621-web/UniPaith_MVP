@@ -43,7 +43,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Rice University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -208,6 +208,47 @@ SCHOOL_OUTCOMES: dict = {
             {"name": "Campus Life", "url": "https://www.rice.edu/campus-life"},
         ],
     },
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/"
+                "Rice_University_-_Rice_statue_with_Lovett_Hall.JPG/"
+                "1920px-Rice_University_-_Rice_statue_with_Lovett_Hall.JPG"
+            ),
+            "credit": "Wikimedia Commons / Daderot (public domain)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/"
+                "Rice_University_Main_Entrance.jpg/"
+                "1920px-Rice_University_Main_Entrance.jpg"
+            ),
+            "credit": "Wikimedia Commons / Katie Haugland Bowen (CC BY 2.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/"
+                "Rice_University_Campus.jpg/1920px-Rice_University_Campus.jpg"
+            ),
+            "credit": "Wikimedia Commons / AnnaLellis (CC BY 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/"
+                "Rice_University_Sally_Port.jpg/1920px-Rice_University_Sally_Port.jpg"
+            ),
+            "credit": "Wikimedia Commons / Claudia Paine22 (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/"
+                "View_of_Rice_Stadium_with_Rice_University_campus_in_background.jpg/"
+                "1920px-View_of_Rice_Stadium_with_Rice_University_campus_in_background.jpg"
+            ),
+            "credit": "Wikimedia Commons / Quintin Soloviev (CC BY 4.0)",
+        },
+    ],
+    # Lovett Hall statue leads the hero; see ``campus_photos[0]``.
     "media_credit": "Wikimedia Commons / Daderot (public domain)",
     "flagship": {
         # Rice Common Data Set 2024-25 (CDS-B1): 4,789 undergraduate + 4,172 graduate = 8,961.
@@ -1720,13 +1761,8 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
 }
 
 
-# Real Rice campus photo (the Founder's statue with Lovett Hall) — Wikimedia Commons
-# landscape JPG (verified HTTP 200, image/jpeg). Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/"
-    "Rice_University_-_Rice_statue_with_Lovett_Hall.JPG/"
-    "1920px-Rice_University_-_Rice_statue_with_Lovett_Hall.JPG"
-)
+# Lovett Hall statue leads the institution hero; see ``SCHOOL_OUTCOMES["campus_photos"]``.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
