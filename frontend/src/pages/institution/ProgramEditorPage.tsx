@@ -230,7 +230,7 @@ export default function ProgramEditorPage() {
   const idx = (sid: SectionId) => SECTIONS.findIndex(s => s.id === sid) + 1
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="w-full px-4 py-6 sm:px-6">
       {/* Sticky header */}
       <div className="sticky top-0 z-20 -mx-4 mb-6 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -803,7 +803,7 @@ function DateField({ label, value, onChange }: { label: string; value: string | 
 
 function EditorSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+    <div className="w-full px-4 py-6 sm:px-6">
       <div className="mb-6 flex items-center justify-between">
         <Skeleton className="h-8 w-64" />
         <div className="flex gap-2">
