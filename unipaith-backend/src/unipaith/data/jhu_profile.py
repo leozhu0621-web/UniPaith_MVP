@@ -26,14 +26,14 @@ carries a citation, or is honestly omitted (recorded in that node's ``_standard.
     programs (computer science, biomedical engineering, the MBA, the M.D., the MPH,
     the M.S.N., international relations, data science, and public health).
 
+Depth pass (2026-06-15, jhuprof3): merged ``DEPTH_REVIEWS`` for 34 coverable
+programs (43/43 total coverable reviews).
+
 Honest caveats stamped into ``_standard.omitted``: JHU does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
 schools, so those two institution outcome fields are omitted. Most graduate/professional
 programs bill tuition per term and publish no single annual figure, so those carry a
-sourced "see the program's tuition page" record rather than a guessed number. This is a
-large catalog (~250 programs), so external reviews are attached to the flagship coverable
-programs and the remaining programs record those deep fields in their
-``_standard.omitted`` pending a future depth pass.
+sourced "see the program's tuition page" record rather than a guessed number.
 """
 
 # ruff: noqa: E501
@@ -46,6 +46,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.jhu_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.jhu_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import (
     disambiguate_program_name,
     program_description,
@@ -611,6 +612,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
+    **DEPTH_REVIEWS,
 }
 
 _FLAGSHIP = "jhu-mba-ms"
