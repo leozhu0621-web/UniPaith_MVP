@@ -117,7 +117,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
 
   if (schoolsLoading) {
     return (
-      <div className="p-6 max-w-5xl w-full mx-auto space-y-4">
+      <div className="p-6 w-full space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-32" />
         <Skeleton className="h-96" />
@@ -145,7 +145,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
   }
 
   return (
-    <div className="p-6 max-w-5xl w-full mx-auto animate-page-in">
+    <div className="p-6 w-full animate-page-in">
       {/* Back to the last level (falls back to the institution when opened directly) */}
       <button
         onClick={() => { if (window.history.length > 1) navigate(-1); else navigate(instHref) }}

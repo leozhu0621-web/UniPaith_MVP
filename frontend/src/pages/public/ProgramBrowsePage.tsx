@@ -39,7 +39,7 @@ export default function ProgramBrowsePage() {
   const featuredProgramIds = new Set(featured.filter(f => f.program_id).map(f => f.program_id!))
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
+    <div className="w-full px-4 sm:px-8 py-8">
         <h1 className="text-2xl font-bold mb-6">Browse Programs</h1>
 
         <div className="flex gap-3 mb-6">

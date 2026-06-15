@@ -190,7 +190,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-5xl w-full mx-auto space-y-4">
+      <div className="p-6 w-full space-y-4">
         <Skeleton className="h-5 w-64" />
         <Skeleton className="h-40" />
         <Skeleton className="h-10 w-full" />
@@ -254,7 +254,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   // configured routing keys, with a generic "general" always available.
 
   return (
-    <div className="p-6 max-w-5xl w-full mx-auto animate-page-in">
+    <div className="p-6 w-full animate-page-in">
       {/* Breadcrumb (Spec 12 §2, design system §7) */}
       <nav className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-4 flex-wrap" aria-label="Breadcrumb">
         {isAuthenticated ? (

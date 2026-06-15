@@ -547,7 +547,7 @@ export default function DataUploadPage() {
   const stepIndex = wizardMode === 'create' ? wizardStep : wizardStep - 2
 
   return (
-    <div className="p-6 space-y-4 max-w-6xl mx-auto">
+    <div className="p-6 space-y-4 w-full">
       <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Data</p>
