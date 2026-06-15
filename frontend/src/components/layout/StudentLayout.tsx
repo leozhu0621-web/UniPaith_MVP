@@ -4,10 +4,11 @@ import { Outlet, NavLink, useNavigate, useLocation, useSearchParams } from 'reac
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth-store'
 import {
-  Compass, Target, Backpack,
+  Compass, Target, Backpack, MessageSquare,
   LogOut, Settings, Inbox, WifiOff,
 } from 'lucide-react'
 import { getUnseenCount } from '../../api/connect'
+import { getThreads } from '../../api/inbox'
 import { getConnectSeenAt } from '../../utils/connectSeen'
 import { MY_SPACE_ROUTES } from '../../pages/student/myspace/MySpaceShell'
 import Avatar from '../ui/Avatar'
@@ -20,19 +21,18 @@ import Paywall from '../student/Paywall'
 import { SearchTrigger, CommandPalette } from '../student/GlobalSearch'
 import ScrollReset from './ScrollReset'
 import StudentTitle from './StudentTitle'
-import MessagesNavButton from '../student/MessagesNavButton'
 import LiveAnnouncer from '../a11y/LiveAnnouncer'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { COPY } from '../../lib/copy'
 
-// Journey-ordered navigation (Spec 2026-06-12): Uni · Discover · My Space —
-// Connect merged into the Discover hub (updates/events/peers tabs + live
-// rail), so the nav is two surfaces about the world + one about you, next to
-// the avatar. My Space owns every room route, so its active state is
+// Top navigation (Spec 2026-06-12; Messages promoted 2026-06-15): Uni ·
+// Discover · Messages · My Space. Messages graduated from a My Space room to
+// its own peer tab. My Space owns every room route, so its active state is
 // computed from the location rather than NavLink's single-path match.
 const NAV_ITEMS = [
   { to: '/s', icon: Compass, label: 'Uni', end: true },
   { to: '/s/explore', icon: Target, label: 'Discover', end: false },
+  { to: '/s/messages', icon: MessageSquare, label: 'Messages', end: false },
   { to: '/s/space', icon: Backpack, label: 'My Space', end: false },
 ]
 
@@ -55,6 +55,15 @@ export default function StudentLayout() {
     staleTime: 5 * 60 * 1000,
     retry: false,
   })
+
+  // Unread badge for the Messages nav tab (shares the cache key the rail/home use).
+  const { data: threads } = useQuery({
+    queryKey: ['inbox-threads-unread'],
+    queryFn: () => getThreads(),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  })
+  const unreadMessages = Array.isArray(threads) ? threads.filter((t: { unread?: boolean }) => t.unread).length : 0
 
   // Spec 2026-06-10 §1 — Profile and Saved live in the My Space rail now;
   // the account menu keeps only account-level items.
@@ -104,6 +113,12 @@ export default function StudentLayout() {
                           <span className="sr-only">{unseenCount} new updates</span>
                         </span>
                       )}
+                      {item.to === '/s/messages' && unreadMessages > 0 && (
+                        <span className="absolute top-2.5 right-0 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-secondary-foreground">
+                          <span aria-hidden="true">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
+                          <span className="sr-only">{unreadMessages} unread messages</span>
+                        </span>
+                      )}
                       {active && <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-secondary rounded-full" />}
                     </>
                   )
@@ -115,7 +130,6 @@ export default function StudentLayout() {
         </nav>
 
         <div className="flex flex-1 items-center justify-end gap-2">
-          <MessagesNavButton />
           <NotificationBell />
           <Dropdown
             trigger={
@@ -141,7 +155,6 @@ export default function StudentLayout() {
         </NavLink>
         <div className="flex items-center gap-1">
           <SearchTrigger variant="icon" />
-          <MessagesNavButton />
           <NotificationBell />
         </div>
       </header>
@@ -208,6 +221,12 @@ export default function StudentLayout() {
                 <span className="absolute -top-1.5 -right-2.5 rounded-full bg-secondary px-1 py-0.5 text-[9px] font-semibold leading-none text-secondary-foreground">
                   <span aria-hidden="true">{unseenCount > 9 ? '9+' : unseenCount}</span>
                   <span className="sr-only">{unseenCount} new updates</span>
+                </span>
+              )}
+              {item.to === '/s/messages' && unreadMessages > 0 && (
+                <span className="absolute -top-1.5 -right-2.5 rounded-full bg-secondary px-1 py-0.5 text-[9px] font-semibold leading-none text-secondary-foreground">
+                  <span aria-hidden="true">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
+                  <span className="sr-only">{unreadMessages} unread messages</span>
                 </span>
               )}
             </span>
