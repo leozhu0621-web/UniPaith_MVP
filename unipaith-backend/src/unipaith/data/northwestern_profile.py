@@ -23,18 +23,16 @@ carries a citation, or is honestly omitted (recorded in that node's ``_standard.
   * Northwestern leadership pages and school websites for each unit's dean, and a
     verified 5-photo Wikimedia Commons campus gallery (author + license confirmed
     via the Commons API).
-  * Verified third-party coverage + official rankings for flagship coverable
-    programs (computer science, economics, biomedical engineering, psychology, journalism,
-    RTVF, the MBA, the J.D., the M.D., and management sciences).
+  * Verified third-party coverage + official rankings for coverable programs.
 
 Honest caveats stamped into ``_standard.omitted``: Northwestern does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
 schools, so those two institution outcome fields are omitted. Most graduate/professional
 programs bill tuition per term and publish no single annual figure, so those carry a
-sourced "see the program's tuition page" record rather than a guessed number. This is a
-large catalog (~300 programs), so external reviews are attached to the flagship coverable
-programs and the remaining programs record those deep fields in their
-``_standard.omitted`` pending a future depth pass.
+sourced "see the program's tuition page" record rather than a guessed number.
+
+Depth pass (2026-06-15, northwesternprof2): merged ``DEPTH_REVIEWS`` for 48 coverable
+programs — completes Northwestern coverable external_reviews (55/55).
 """
 
 # ruff: noqa: E501
@@ -47,6 +45,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.northwestern_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.northwestern_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import (
     disambiguate_program_name,
     program_description,
@@ -628,6 +627,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
+    **DEPTH_REVIEWS,
 }
 
 _FLAGSHIP = "northwestern-mba-ms"
