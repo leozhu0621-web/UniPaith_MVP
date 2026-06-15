@@ -37,6 +37,9 @@ Sloan's MBAn in the reference instance — with the honest caveats that the
 University of California is test-free (no SAT/ACT percentiles exist to report) and
 that this run ships Berkeley's complete UNDERGRADUATE tree; its department-level
 graduate programs are the resumption scope for a later run.
+
+Depth pass (2026-06-15, berkeleyprof6): merged ``DEPTH_REVIEWS`` for 59 coverable
+programs — completes Berkeley coverable external_reviews (70/70).
 """
 
 from __future__ import annotations
@@ -47,6 +50,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.berkeley_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.berkeley_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import (
     disambiguate_program_name,
     program_description,
@@ -58,7 +62,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of California-Berkeley"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1968,6 +1972,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 # ── Application requirements (undergraduate baseline) ───────────────────────
