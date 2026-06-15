@@ -252,14 +252,7 @@ export default function NeedsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Needs map</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            What you need from a program and campus — ranked by how much it matters to you.
-            Discovery infers; you can edit anything.
-          </p>
-        </div>
+      <div className="flex items-center justify-end">
         <Button onClick={() => setCreating(true)}>
           <Plus size={16} className="mr-1" /> Add need
         </Button>
@@ -285,7 +278,7 @@ export default function NeedsTab() {
                 No {tier.label.toLowerCase()} signals yet — add one above.
               </Card>
             ) : (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {grouped[tier.key].map(n => (
                   <Card pad={false} key={n.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-3">
