@@ -43,6 +43,9 @@ profiles, and named faculty for those nodes remain honestly omitted where not
 individually verified. Coverable reviews also extend to Perelman (MD), Penn Carey Law
 (JD), and flagship undergraduate options (Wharton B.S.Econ, CIS, Nursing, PPE,
 Bioengineering).
+
+Depth pass (2026-06-15, pennprof7): merged ``DEPTH_REVIEWS`` for 46 coverable
+programs (58/58 total external_reviews on coverable programs).
 """
 
 from __future__ import annotations
@@ -53,6 +56,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.penn_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.penn_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import (
     disambiguate_program_name,
     program_description,
@@ -64,7 +68,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of Pennsylvania"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -2737,6 +2741,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 _COVERABLE_REVIEWS = frozenset(_REVIEWS_BY_SLUG.keys())
