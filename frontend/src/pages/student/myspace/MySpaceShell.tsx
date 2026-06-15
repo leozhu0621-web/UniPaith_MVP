@@ -1,104 +1,145 @@
-import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
-  Backpack, Bookmark, PenLine, FolderKanban, Calendar, MessageSquare, User,
+  Backpack, Bookmark, PenLine, FolderKanban, Calendar, User, Briefcase,
+  ChevronRight, ChevronDown,
 } from 'lucide-react'
-import { getThreads } from '../../../api/inbox'
 import { listMyApplications } from '../../../api/applications'
 import Coachmark from '../../../components/ui/Coachmark'
 
-// My Space shell (Spec 2026-06-10 §3; restructured 2026-06-14) — one personal
-// surface, rooms grouped by CONTENT TYPE rather than application-journey phase:
-// Home on top, then Record → Collections → Workspace. The taxonomy reads
-// identity → tracked objects → where you act, with no phase words. Desktop gets
-// a slim left rail; mobile a scrollable pill row under the top bar. Rooms keep
-// flat URLs — unification comes from this shared layout route, not nested paths.
+// My Space shell (Spec 2026-06-10 §3; rail tree 2026-06-15) — one personal
+// surface. The desktop rail is an EXPANDABLE TREE: a single Overview link plus
+// three groups (Profile · Saved · Workspace) that each expand to a dropdown of
+// their sub-items. Profile/Saved children deep-link via ?tab=; Workspace
+// children are their own rooms. Messages is no longer here — it graduated to a
+// top-level nav tab (a peer of My Space). Mobile keeps a flat pill row.
 
-type Room = { to: string; label: string; icon: typeof Backpack; end?: boolean }
+type Sub = { label: string; to: string }
+type Item =
+  | { kind: 'link'; label: string; to: string; icon: typeof Backpack }
+  | { kind: 'group'; label: string; to: string; icon: typeof Backpack; children: Sub[] }
 
-const HOME: Room = { to: '/s/space', label: 'Home', icon: Backpack, end: true }
+const OVERVIEW: Item = { kind: 'link', label: 'Overview', to: '/s/space', icon: Backpack }
 
-const GROUPS: { label: string | null; rooms: Room[] }[] = [
-  { label: null, rooms: [HOME] },
-  // Record — your durable reference data.
-  { label: 'Record', rooms: [{ to: '/s/profile', label: 'Profile', icon: User }] },
-  // Collections — sets of items you're tracking.
-  {
-    label: 'Collections',
-    rooms: [
-      { to: '/s/saved', label: 'Saved', icon: Bookmark },
-      { to: '/s/applications', label: 'Applications', icon: FolderKanban },
-    ],
-  },
-  // Workspace — where you do the work.
-  {
-    label: 'Workspace',
-    rooms: [
-      { to: '/s/prep', label: 'Prep', icon: PenLine },
-      { to: '/s/calendar', label: 'Calendar', icon: Calendar },
-      { to: '/s/messages', label: 'Messages', icon: MessageSquare },
-    ],
-  },
+const PROFILE: Item = {
+  kind: 'group', label: 'Profile', to: '/s/profile', icon: User,
+  children: [
+    { label: 'Summary', to: '/s/profile' },
+    { label: 'Identity', to: '/s/profile?tab=identity' },
+    { label: 'Academics', to: '/s/profile?tab=academics' },
+    { label: 'Experience', to: '/s/profile?tab=experience' },
+    { label: 'Goals', to: '/s/profile?tab=goals' },
+    { label: 'Needs', to: '/s/profile?tab=needs' },
+    { label: 'Strategy', to: '/s/profile?tab=strategy' },
+    { label: 'Preferences', to: '/s/profile?tab=preferences' },
+    { label: 'Timeline', to: '/s/profile?tab=timeline' },
+    { label: 'Analytics', to: '/s/profile?tab=analytics' },
+    { label: 'Data', to: '/s/profile?tab=data' },
+  ],
+}
+
+const SAVED: Item = {
+  kind: 'group', label: 'Saved', to: '/s/saved', icon: Bookmark,
+  children: [
+    { label: 'Programs', to: '/s/saved' },
+    { label: 'Schools', to: '/s/saved?tab=schools' },
+    { label: 'Searches', to: '/s/saved?tab=searches' },
+  ],
+}
+
+const WORKSPACE: Item = {
+  kind: 'group', label: 'Workspace', to: '/s/prep', icon: Briefcase,
+  children: [
+    { label: 'Prep', to: '/s/prep' },
+    { label: 'Applications', to: '/s/applications' },
+    { label: 'Calendar', to: '/s/calendar' },
+  ],
+}
+
+const ITEMS: Item[] = [OVERVIEW, PROFILE, SAVED, WORKSPACE]
+
+// Flat list of room landing routes — drives the top-nav My Space active state.
+// Messages is intentionally absent (it is its own nav tab now).
+export const MY_SPACE_ROUTES = ['/s/space', '/s/profile', '/s/saved', '/s/prep', '/s/applications', '/s/calendar']
+
+// Mobile pill row — flat top-level rooms (no nesting).
+const MOBILE_PILLS: { label: string; to: string; icon: typeof Backpack; end?: boolean }[] = [
+  { label: 'Overview', to: '/s/space', icon: Backpack, end: true },
+  { label: 'Profile', to: '/s/profile', icon: User },
+  { label: 'Saved', to: '/s/saved', icon: Bookmark },
+  { label: 'Prep', to: '/s/prep', icon: PenLine },
+  { label: 'Applications', to: '/s/applications', icon: FolderKanban },
+  { label: 'Calendar', to: '/s/calendar', icon: Calendar },
 ]
 
-const ALL_ROOMS = GROUPS.flatMap(g => g.rooms)
+/** A group "owns" the current route when any child path prefixes the pathname. */
+function groupOwns(group: Extract<Item, { kind: 'group' }>, pathname: string): boolean {
+  return group.children.some(c => {
+    const p = c.to.split('?')[0]
+    return pathname === p || pathname.startsWith(`${p}/`)
+  })
+}
 
-/** Route prefixes owned by My Space — used by StudentLayout for nav active state. */
-export const MY_SPACE_ROUTES = ALL_ROOMS.map(r => r.to)
+/** Sub-item active = same pathname AND same ?tab (landing item = no/absent tab). */
+function subActive(to: string, pathname: string, search: string): boolean {
+  const [path, query = ''] = to.split('?')
+  if (pathname !== path) return false
+  const toTab = new URLSearchParams(query).get('tab')
+  const curTab = new URLSearchParams(search).get('tab')
+  if (!toTab) return !curTab || curTab === 'overview' || curTab === 'programs'
+  return curTab === toTab
+}
 
 export default function MySpaceShell() {
   const location = useLocation()
-  // Messages is a fixed two-pane surface (Spec 17 §2) — it manages its own
-  // height; every other room scrolls in the layout's <main>.
-  const isMessages = location.pathname.startsWith('/s/messages')
-  // Room path segment (saved / prep / applications / …) — keys the content
-  // column so switching rooms replays the entrance animation while the rail
-  // and pill row persist (UX overhaul Ship A, 2026-06-12 spec §1).
-  const roomSegment = location.pathname.split('/')[2] ?? 'space'
+  const navigate = useNavigate()
+  const { pathname, search } = location
 
-  // Live rail badges — both queries share their keys with existing consumers
-  // (MessagesNavButton / ApplicationsPage), so the cache is reused, not refetched.
-  const { data: threads } = useQuery({
-    queryKey: ['inbox-threads-unread'],
-    queryFn: () => getThreads(),
-    staleTime: 30_000,
-    refetchInterval: 60_000,
-  })
+  // Application count badge on the Workspace group (cache shared with the home
+  // pipeline tiles + ApplicationsPage — reused, not refetched).
   const { data: apps } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications, staleTime: 60_000 })
-  const unread = Array.isArray(threads) ? threads.filter((t: { unread?: boolean }) => t.unread).length : 0
   const appCount = Array.isArray(apps) ? apps.length : 0
 
-  const badgeFor = (to: string) => {
-    if (to === '/s/messages' && unread > 0)
-      return (
-        <span className="ml-auto rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-secondary-foreground">
-          {unread}
-        </span>
-      )
-    if (to === '/s/applications' && appCount > 0)
-      return <span className="ml-auto text-xs text-muted-foreground">{appCount}</span>
-    return null
-  }
+  // Expanded groups — seed with whichever group owns the current route; keep the
+  // active group open as the route changes (others stay as the user left them).
+  const [open, setOpen] = useState<Set<string>>(() => {
+    const s = new Set<string>()
+    for (const it of ITEMS) if (it.kind === 'group' && groupOwns(it, pathname)) s.add(it.label)
+    return s
+  })
+  useEffect(() => {
+    for (const it of ITEMS) {
+      if (it.kind === 'group' && groupOwns(it, pathname)) {
+        setOpen(prev => (prev.has(it.label) ? prev : new Set(prev).add(it.label)))
+      }
+    }
+  }, [pathname])
+
+  const toggle = (label: string) =>
+    setOpen(prev => {
+      const next = new Set(prev)
+      if (next.has(label)) next.delete(label)
+      else next.add(label)
+      return next
+    })
+
+  const roomSegment = pathname.split('/')[2] ?? 'space'
 
   return (
     <div className="flex min-h-0 flex-1">
-      {/* Desktop rail (lg+) — journey-grouped rooms. The sticky wrapper sits outside
-          the first-visit coachmark so the bubble escapes the nav's overflow clip;
-          minViewport keeps the CSS-hidden rail from blocking the mark queue below lg. */}
-      <aside className="hidden lg:block w-44 flex-shrink-0 border-r border-border" aria-label="My Space">
+      {/* Desktop rail (lg+) — expandable tree. */}
+      <aside className="hidden lg:block w-48 flex-shrink-0 border-r border-border" aria-label="My Space">
         <div className="sticky top-0">
-        <Coachmark id="myspace-rooms" title="Your rooms, organized" body="Grouped by what's inside — your record, your collections, and your workspace. Home pulls it all together." placement="right" minViewport="lg">
+        <Coachmark id="myspace-rail-tree" title="Everything, one click away" body="Overview pulls it all together. Profile, Saved, and Workspace each open to reveal what's inside." placement="right" minViewport="lg">
         <nav className="max-h-[calc(100dvh-4rem)] overflow-y-auto px-3 py-4">
-          {GROUPS.map((group, gi) => (
-            <div key={group.label ?? 'home'} className={gi === 0 ? '' : 'mt-4'}>
-              {group.label && (
-                <p className="px-2 mb-1 text-eyebrow uppercase text-muted-foreground">{group.label}</p>
-              )}
-              {group.rooms.map(room => (
+          {ITEMS.map(item => {
+            if (item.kind === 'link') {
+              return (
                 <NavLink
-                  key={room.to}
-                  to={room.to}
-                  end={room.end}
+                  key={item.to}
+                  to={item.to}
+                  end
                   className={({ isActive }) =>
                     `flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
                       isActive
@@ -107,27 +148,77 @@ export default function MySpaceShell() {
                     }`
                   }
                 >
-                  <room.icon size={15} strokeWidth={1.75} />
-                  {room.label}
-                  {badgeFor(room.to)}
+                  <item.icon size={15} strokeWidth={1.75} />
+                  {item.label}
                 </NavLink>
-              ))}
-            </div>
-          ))}
+              )
+            }
+            const isOpen = open.has(item.label)
+            const owns = groupOwns(item, pathname)
+            const badge =
+              item.label === 'Workspace' && appCount > 0
+                ? <span className="ml-1 text-xs text-muted-foreground">{appCount}</span>
+                : null
+            return (
+              <div key={item.label} className="mt-1">
+                {/* Group header: navigates to the landing view AND opens the group. */}
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  onClick={() => { setOpen(prev => new Set(prev).add(item.label)); navigate(item.to) }}
+                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
+                    owns ? 'font-medium text-foreground' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                  }`}
+                >
+                  <item.icon size={15} strokeWidth={1.75} />
+                  {item.label}
+                  {badge}
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    aria-label={isOpen ? `Collapse ${item.label}` : `Expand ${item.label}`}
+                    onClick={e => { e.stopPropagation(); toggle(item.label) }}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggle(item.label) } }}
+                    className="ml-auto -mr-1 inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                  >
+                    {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                  </span>
+                </button>
+                {isOpen && (
+                  <div className="mt-0.5 ml-[18px] border-l border-border pl-2">
+                    {item.children.map(sub => {
+                      const active = subActive(sub.to, pathname, search)
+                      return (
+                        <NavLink
+                          key={sub.to}
+                          to={sub.to}
+                          className={`block rounded-md px-2 py-1 text-[13px] transition-colors ${
+                            active ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                          }`}
+                        >
+                          {sub.label}
+                        </NavLink>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </nav>
         </Coachmark>
         </div>
       </aside>
 
-      {/* Content column — mobile gets the room pills above the page. */}
+      {/* Content column — mobile gets the flat room pills above the page. */}
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="lg:hidden sticky top-0 z-20 flex-shrink-0 overflow-x-auto border-b border-border bg-background px-3 py-2 no-scrollbar">
           <div className="flex items-center gap-1.5 w-max">
-            {ALL_ROOMS.map(room => (
+            {MOBILE_PILLS.map(pill => (
               <NavLink
-                key={room.to}
-                to={room.to}
-                end={room.end}
+                key={pill.to}
+                to={pill.to}
+                end={pill.end}
                 className={({ isActive }) =>
                   `flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                     isActive
@@ -136,18 +227,15 @@ export default function MySpaceShell() {
                   }`
                 }
               >
-                <room.icon size={13} strokeWidth={1.75} />
-                {room.label}
-                {room.to === '/s/messages' && unread > 0 && (
-                  <span className="h-1.5 w-1.5 rounded-full bg-secondary" aria-label={`${unread} unread`} />
-                )}
+                <pill.icon size={13} strokeWidth={1.75} />
+                {pill.label}
               </NavLink>
             ))}
           </div>
         </div>
 
-        {/* Rooms animate via their own PageContainer; Messages (no PageContainer — full-height split pane) animates here. */}
-        <div key={roomSegment} className={`min-h-0 flex-1 ${isMessages ? 'animate-page-in overflow-hidden' : ''}`}>
+        {/* Rooms animate via their own PageContainer. */}
+        <div key={roomSegment} className="min-h-0 flex-1">
           <Outlet />
         </div>
       </div>

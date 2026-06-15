@@ -228,16 +228,18 @@ const router = createBrowserRouter([
       // /s/posts retired (Spec 2026-06-12) — Connect lives in the Discover hub tabs.
       { path: 'posts', element: <PostsRedirect /> },
       { path: 'explore', element: page(<ExplorePage />) },            // Discover hub (match + connect)
-      // === My Space (Spec 2026-06-10) — mission-control home + journey-ordered rooms ===
+      // Messages — own top-level surface (Spec 2026-06-15): a peer of My Space in
+      // the nav, so it renders full-width WITHOUT the My Space rail.
+      { path: 'messages', element: page(<MessagesRoom />) },
+      // === My Space (Spec 2026-06-10; rail tree 2026-06-15) — mission-control home + rooms ===
       {
         element: <MySpaceShell />,
         children: [
-          { path: 'space', element: page(<MySpaceHomePage />) },        // Home — mission control
-          { path: 'saved', element: page(<SavedListPage />) },          // Plan
-          { path: 'prep', element: page(<PrepPage />) },                // Prepare — workshops · prompts
-          { path: 'applications', element: page(<ApplicationsPage />) }, // Apply & decide
-          { path: 'calendar', element: page(<CalendarPage />) },        // Anytime
-          { path: 'messages', element: page(<MessagesRoom />) },        // Anytime
+          { path: 'space', element: page(<MySpaceHomePage />) },        // Overview — mission control
+          { path: 'saved', element: page(<SavedListPage />) },          // Collections
+          { path: 'prep', element: page(<PrepPage />) },                // Workspace
+          { path: 'applications', element: page(<ApplicationsPage />) }, // Workspace
+          { path: 'calendar', element: page(<CalendarPage />) },        // Workspace
           { path: 'profile', element: page(<ProfilePage />) },          // Record
         ],
       },
