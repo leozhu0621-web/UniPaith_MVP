@@ -48,6 +48,9 @@ that several graduate programs publish tuition only on bot-blocked pages and so 
 program-level tuition is omitted rather than guessed, that the Vagelos College deanship is
 in transition (so its leadership is omitted), and that the M.D. one-year earnings figure
 reflects residency stipends.
+
+Depth pass (2026-06-15, columbiaprof8): merged ``DEPTH_REVIEWS`` for 37 coverable
+programs (46/46 total external_reviews on coverable programs).
 """
 
 from __future__ import annotations
@@ -58,6 +61,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.columbia_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.columbia_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import (
     disambiguate_program_name,
     program_description,
@@ -69,7 +73,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Columbia University in the City of New York"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -2255,6 +2259,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 # ── Application requirements ─────────────────────────────────────────────────
