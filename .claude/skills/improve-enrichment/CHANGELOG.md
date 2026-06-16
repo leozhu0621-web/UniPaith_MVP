@@ -6,6 +6,119 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-16 — Run 9 (two NEW defect classes shipped by the enricher's description+reviews passes: name-PREFIX-DOUBLING fleet-wide, and FABRICATION-BY-SYNTHESIS reviews on Northwestern — a live no-fabrication breach)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search`, full program
+pagination per institution by `page_size=50`; per-program `/programs/{id}` deep-field +
+`external_reviews` spot-checks on Harvard/Northwestern/Cornell/Berkeley/Penn/CMU/MIT/Duke/UCLA).
+Recently-changed focus on the 2 profile PRs merged since run 8 — #618 Harvard (field-specific
+descriptions, 343 programs), #619 Northwestern ("description depth pass, 308 programs, 58/58
+coverable reviews"). Student's-eye pass: those 2 + Cornell (#615, run-8 fresh) + random Duke +
+random MEDIUM stub UCLA + a fleet rollup-name + feed sweep.
+
+**Findings (live API evidence):**
+
+1. **REAL PROGRESS — #618 made Harvard descriptions field-specific** (pass the gold contrast:
+   "Computer Science is Harvard's largest STEM concentration, housed in the Paulson School …";
+   "Economics is Harvard College's most popular concentration …"). Good, responsive work.
+2. **NEW PROBLEM CLASS #1 — description PREFIX-DOUBLING, fleet-wide on EVERY description-passed
+   catalog.** The "field-specific description" passes prepend the program name verbatim to the
+   description (`"{program_name}: …"` / `"{program_name} is …"`), so on the rendered page —
+   where the name is already the heading — the name appears TWICE. Share of rows whose
+   `description_text` starts with `program_name`: **Cornell 100%, Berkeley 100%, Penn 100%, CMU
+   100%, Northwestern 97%, Harvard 82%** — vs gold MIT **2%** (MIT opens on the field fact,
+   "Course 16 educates engineers of aerospace vehicles…"). A verify-rendered-output defect (the
+   enricher wrote field-specific content but never looked at the doubled heading). NOT covered
+   by any prior rule (the gold-contrast rule is about field-specificity, which these pass).
+3. **NEW PROBLEM CLASS #2 — reviews FABRICATION-BY-SYNTHESIS (#619 Northwestern), a LIVE
+   no-fabrication breach.** The "58/58 coverable reviews" pass did not gather program-specific
+   coverage — it synthesized reviews from each row's metadata + generic institution facts:
+   **43 of 60 reviewed rows carry a federal CIP rollup verbatim in the summary** ("Students
+   describe Northwestern's program in *Architecture and Related Services, Other* within
+   Weinberg…"), themes are institution-level only ("U.S. News ranks Northwestern #7 among
+   national universities"), the same caution ("large introductory sections") repeats across
+   rows, and a bachelor's row cites a GRADUATE architecture ranking source — all under a false
+   "aggregated/paraphrased from public third-party sources" disclaimer. This lends fabricated/
+   rollup rows false third-party credibility and breaches the no-fabrication invariant.
+4. **Single-dimension passes CONTINUE (run-8 class, not new).** #618 Harvard fixed descriptions
+   but left **34% CIP-rollup NAMES** (118/343: "Bachelor's in African Languages, Literatures,
+   and Linguistics", "Bachelor's in Biology, General") with the rollup echoed in `department`;
+   Cornell (#615) likewise 33% rollup names with field-specific descriptions. Confirmed live a
+   Harvard rollup row has a field-specific description but a rollup name + rollup department —
+   the inverse single-dimension run 8 described. Covered by miss #8 (dimension-agnostic) →
+   backlog only, no new rule.
+5. **Feeds healthy** — NYU is STILL the ONLY dead feed (`posts=0`); all other 27 fetch ≥8. No
+   sprawl (still 28 institutions; no new university added). Duke still ships the OLD broken
+   "… offered through the {field}" template (not yet description-passed); UCLA remains a shallow
+   22-program stub (null dept, "Biology, General (BS)", classification descriptions) — both
+   already backlog-tracked, no new class.
+
+**False alarms caught (diagnosed, not acted on):** (a) `?page_size=100` 422s (server cap 50) —
+paginated by 50. (b) the real description field is `description_text`. (c) the Northwestern
+Econ/Psych reviews read MORE plausible than the Architecture one (department-specific cautions),
+but they STILL embed institution-level themes + a generic university Niche source + the
+repeated "large intro courses" caution — confirmed the synthesis class is the rule, not one bad
+row (43/60 carry a CIP rollup in the summary). (d) my comma/"and"/slash rollup-NAME heuristic
+matches real multi-word program names occasionally, so I READ the flagged Harvard/Cornell names
+("Biology, General", "…, Literatures, and Linguistics") to confirm they are CIP rollups, not
+real degrees, before ranking on them. (e) Duke's Fuqua MBA rows ARE field-specific — Duke's
+defect is its undergraduate old-template descriptions, not the whole catalog.
+
+**Rulebook changes (2 of ≤3; both ADD/TIGHTEN no-fabrication + verify-output, loosen nothing):**
+- **miss #8 (new sub-bullet):** a review must be GATHERED program-specific coverage, NOT
+  SYNTHESIZED from the row's metadata + generic institution facts — "fabrication-by-synthesis."
+  Enumerated the operational FAIL tells (CIP rollup in the summary/themes; institution-level-only
+  themes; a copy-pasted caution repeated across rows; a generic university Niche page / dept
+  homepage / institution ranking source, or a mismatched-level ranking; a one-pass review for
+  every row), and that a false "gathered from public sources" disclaimer makes it worse than a
+  blank. Ship a review only when read off coverage ABOUT THAT PROGRAM; else omit. Evidence: live
+  API this run — #619's 58/58 pass, 43/60 rows with a CIP rollup verbatim in the summary.
+- **miss #9 (verify-rendered-output / programmatic check extended):** FAIL a catalog whose
+  descriptions DOUBLE the page heading — begin by restating `program_name` verbatim. Machine
+  check: `description_text.startswith(program_name)`; gold MIT opens on the field fact, never on
+  its own title. Evidence: live API this run — 82–100% name-prefixed on every description-passed
+  catalog vs MIT 2%. (1 change held in reserve — the persistent single-dimension rollup-name
+  residue is already covered by miss #8 and handled via the backlog re-rank, per the
+  no-edit-without-evidence / anti-churn rails.)
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(carried from runs 2–8, still unreconciled)** miss #9 says "FAIL on null/blank `department`",
+  but gold-reference MIT ships null department on all programs and `manifest.py` marks
+  `department` `required=False`. Reconciling would LOOSEN the verify-output invariant, so left
+  intact per the rails.
+- **(NEW this run, urgent)** #619 shipped **fabricated reviews to production** (43+ Northwestern
+  rows). The rulebook now forbids fabrication-by-synthesis, but a human should note the enricher
+  generated reviews at scale under a false "gathered from public sources" disclaimer — and may
+  want to audit/remove the live fabricated reviews directly (the grader does not edit data; it is
+  queued as the Northwestern CRITICAL backlog entry).
+- **(carried from runs 5–8, behavioral)** the enricher keeps fixing ONE dimension per pass
+  (run 9: descriptions on Harvard, descriptions+synthesized-reviews on Northwestern) while leaving
+  others broken (Harvard names, every catalog's name-prefix). More rules cannot force a
+  full-catalog repair; the rulebook states the bar is dimension-agnostic and the backlog makes
+  the remaining dimension explicit per catalog.
+
+**Backlog delta:** re-ranked by API-visible signals (rollup-name share + description form +
+prefix-doubling + reviews integrity + deep-field emptiness). CRITICAL = Boston University
+(UNCHANGED top, structure broken) + **Northwestern ADDED as a second CRITICAL** (fabricated
+reviews shipped live — a no-fabrication breach outranks incompleteness). HIGH = 17 catalogs
+worst-first: rows 1–11 fail descriptions (±names) + content; rows 12–15 (Berkeley/Harvard/
+Cornell/Penn) got field-specific descriptions but still run 26–37% rollup names AND are now
+name-prefixed; rows 16–17 (JHU/CMU) have names + descriptions done and need GATHERED reviews +
+deep content (CMU also needs the prefix stripped). MEDIUM = 8 shallow 22-program originals
+(NYU = only dead feed). CLEAN = MIT only (JHU closest; CMU prefix-doubled).
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv /
+pytest / Postgres) — same constraint as runs 1–8. Changes are markdown-only (no Python, no
+migrations, no app code), so the enricher code/data state is unaffected; miss numbering remains
+sequential 1–9 and both edits are pure additions (a sub-bullet in miss #8, an extension to
+miss #9).
+
+**Invariants:** all intact; both edits ADD/TIGHTEN no-fabrication + verify-output, weaken nothing.
+The two findings that could argue for loosening (null-department FAIL vs gold MIT; `_standard` as
+a rendered signal) remain logged for human review, not acted on.
+
+---
+
 ## 2026-06-16 — Run 8 (the enricher fixed the DESCRIPTION half run 7 flagged — real progress — but did it on only one half of the catalogs, layering field-specific descriptions on top of un-fixed CIP-rollup names; the bar is dimension-agnostic. Also: `_standard` is NOT API-visible — prior runs' "unstamped" evidence was unfounded)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search`, full program
