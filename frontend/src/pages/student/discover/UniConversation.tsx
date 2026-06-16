@@ -6,7 +6,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { ArrowUp } from 'lucide-react'
+import { ArrowUp, Paperclip } from 'lucide-react'
 
 import {
   appendMessage,
@@ -27,6 +27,7 @@ import type {
   DiscoverySession,
   DiscoverySessionDetail,
 } from '../../../types'
+import MaterialUpload from '../../../components/student/MaterialUpload'
 import AnswerChoices from './AnswerChoices'
 import FirstLookCard from './FirstLookCard'
 import NoticedCard from './NoticedCard'
@@ -84,6 +85,7 @@ export default function UniConversation({
   const firstName = user?.email?.split('@')[0]
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [draft, setDraft] = useState('')
+  const [showUpload, setShowUpload] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   // The student can wave off Uni's handoff offer; it re-surfaces after the next
   // turn (reset in the mutation's onSuccess).
@@ -518,6 +520,22 @@ export default function UniConversation({
           </div>
         ))}
 
+      {showUpload && (
+        <div className="mb-2">
+          <MaterialUpload
+            onApplied={result => {
+              const n = Object.values(result.counts || {}).reduce((a, b) => a + b, 0)
+              void qc.invalidateQueries({ queryKey: ['discovery', 'livingProfile'] })
+              void qc.invalidateQueries({ queryKey: ['goals'] })
+              void qc.invalidateQueries({ queryKey: ['needs'] })
+              void qc.invalidateQueries({ queryKey: ['identity'] })
+              showToast(`Added ${n} items from your file to My Space.`, 'success')
+              setShowUpload(false)
+            }}
+          />
+        </div>
+      )}
+
       <form
         onSubmit={e => {
           e.preventDefault()
@@ -525,6 +543,16 @@ export default function UniConversation({
         }}
         className="flex items-end gap-2 border-t border-border pt-3"
       >
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowUpload(v => !v)}
+          aria-label="Upload a file for Uni to read"
+          aria-pressed={showUpload}
+        >
+          <Paperclip size={16} />
+        </Button>
         <textarea
           rows={2}
           maxLength={20000}
