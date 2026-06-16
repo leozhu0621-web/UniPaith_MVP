@@ -37,8 +37,9 @@ flagship program (its real research areas, faculty, class profile, and aggregate
 reviews), mirroring MIT Sloan's MBAn in the reference instance — with the honest
 caveats that Princeton is test-optional through the fall-2027 entry cycle (returning to
 required testing for the 2027-28 cycle) and that the canonical program set is the
-complete federal College Scorecard Field-of-Study list for UNITID 186131; the School
-of Architecture and the broader Graduate School are the resumption scope for a later run.
+complete federal College Scorecard Field-of-Study list for UNITID 186131; graduate
+School of Architecture M.Arch. and SEAS M.S.E./M.Eng. programs carry verified names,
+descriptions, and coverable external reviews.
 """
 
 from __future__ import annotations
@@ -60,7 +61,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Princeton University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-16"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -848,6 +849,14 @@ _EXPLICIT_DEPARTMENTS: dict[str, str] = {
     "princeton-physics-bs": "Physics",
     "princeton-chemistry-bs": "Chemistry",
     "princeton-neuroscience-bs": "Neuroscience",
+    "princeton-architecture-bs": "School of Architecture",
+    "princeton-architecture-ms": "School of Architecture",
+    "princeton-chemical-engineering-ms": "Chemical and Biological Engineering",
+    "princeton-civil-engineering-ms": "Civil and Environmental Engineering",
+    "princeton-electrical-electronics-and-communications-engineering-ms": (
+        "Electrical and Computer Engineering"
+    ),
+    "princeton-mechanical-engineering-ms": "Mechanical and Aerospace Engineering",
 }
 _EXPLICIT_FULL_NAMES: dict[str, str] = {
     "princeton-computer-science-bs": "Bachelor of Science in Computer Science",
@@ -881,6 +890,20 @@ _EXPLICIT_FULL_NAMES: dict[str, str] = {
     "princeton-physics-bs": "Bachelor of Science in Physics",
     "princeton-chemistry-bs": "Bachelor of Arts in Chemistry",
     "princeton-neuroscience-bs": "Bachelor of Arts in Neuroscience",
+    "princeton-architecture-bs": "Bachelor of Arts in Architecture",
+    "princeton-architecture-ms": "Master of Architecture (M.Arch.)",
+    "princeton-chemical-engineering-ms": (
+        "Master of Science in Engineering in Chemical and Biological Engineering"
+    ),
+    "princeton-civil-engineering-ms": (
+        "Master of Science in Engineering in Civil and Environmental Engineering"
+    ),
+    "princeton-electrical-electronics-and-communications-engineering-ms": (
+        "Master of Engineering in Electrical and Computer Engineering"
+    ),
+    "princeton-mechanical-engineering-ms": (
+        "Master of Science in Engineering in Mechanical and Aerospace Engineering"
+    ),
 }
 for _p in PROGRAMS:
     if _p["slug"] in _EXPLICIT_DEPARTMENTS:
@@ -956,6 +979,50 @@ def _build_catalog() -> list[dict]:
 
 
 PROGRAMS += _build_catalog()
+
+# Field-specific descriptions for IPEDS-supplied rows (never the degree-type template).
+_DESC_RICH_BY_SLUG: dict[str, str] = {
+    "princeton-architecture-bs": (
+        "Princeton's B.A. in Architecture blends design studios with architectural history, "
+        "theory, and urbanism within the humanities division — a liberal-arts path that "
+        "feeds leading M.Arch. and Ph.D. programs rather than conferring NAAB licensure."
+    ),
+    "princeton-architecture-ms": (
+        "Princeton's NAAB-accredited professional Master of Architecture (M.Arch.) is a "
+        "studio-centered degree for students pursuing architectural licensure — typically "
+        "three years for students without a pre-professional background, with a rigorous "
+        "sequence in design, building technology, and history/theory."
+    ),
+    "princeton-chemical-engineering-ms": (
+        "The M.S.E. in Chemical and Biological Engineering is a research-based graduate "
+        "degree — typically 1.5–2 years — grounded in transport, thermodynamics, and "
+        "reaction engineering with thesis research in energy, bioengineering, and materials."
+    ),
+    "princeton-civil-engineering-ms": (
+        "The M.S.E. in Civil and Environmental Engineering is a research-based graduate "
+        "degree spanning structures, environmental systems, hydrology, and sustainable "
+        "infrastructure — typically completed within two years of residence."
+    ),
+    "princeton-electrical-electronics-and-communications-engineering-ms": (
+        "Princeton's M.Eng. in Electrical and Computer Engineering is a one-year, "
+        "coursework-based master's for practicing engineers — ECE does not offer an "
+        "M.S.E.; candidates must demonstrate external financial support."
+    ),
+    "princeton-mechanical-engineering-ms": (
+        "The M.S.E. in Mechanical and Aerospace Engineering is a research-based graduate "
+        "degree in dynamics, fluid mechanics, robotics, and materials — typically "
+        "completed within two years with faculty-supervised thesis research."
+    ),
+}
+
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+    if _p["slug"] in _EXPLICIT_FULL_NAMES:
+        _p["program_name"] = _EXPLICIT_FULL_NAMES[_p["slug"]]
+    if _p["slug"] in _DESC_RICH_BY_SLUG:
+        _p["description"] = _DESC_RICH_BY_SLUG[_p["slug"]]
+
 _catalog_errors = validate_catalog(PROGRAMS)
 if _catalog_errors:
     raise RuntimeError(f"Princeton catalog quality gate failed: {_catalog_errors}")
@@ -994,6 +1061,16 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
     "princeton-physics-bs": "https://phy.princeton.edu/",
     "princeton-chemistry-bs": "https://chemistry.princeton.edu/",
     "princeton-neuroscience-bs": "https://pni.princeton.edu/",
+    "princeton-architecture-bs": "https://soa.princeton.edu/undergraduate",
+    "princeton-architecture-ms": (
+        "https://soa.princeton.edu/school/professional-master-architecture-program"
+    ),
+    "princeton-chemical-engineering-ms": "https://cbe.princeton.edu/graduate",
+    "princeton-civil-engineering-ms": "https://cee.princeton.edu/graduate",
+    "princeton-electrical-electronics-and-communications-engineering-ms": (
+        "https://ece.princeton.edu/academics/graduate"
+    ),
+    "princeton-mechanical-engineering-ms": "https://mae.princeton.edu/graduate",
 }
 
 # ── Who-it's-for + highlights (catalog baselines) ──────────────────────────
@@ -2280,6 +2357,347 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {
                 "label": "Princeton Computer Science — Graduate Program",
                 "url": "https://www.cs.princeton.edu/grad",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-architecture-ms": {
+        "summary": (
+            "Students and architecture guides rank Princeton's professional M.Arch. among "
+            "the nation's elite NAAB-accredited programs — Study Architecture and design "
+            "media consistently place Princeton in the top tier — praising studio rigor, "
+            "building-technology depth, and a design thesis; common cautions are a "
+            "three-year timeline for non-pre-professional entrants, prerequisite math and "
+            "physics requirements, and limited studio space versus dedicated art schools."
+        ),
+        "themes": [
+            {
+                "label": "NAAB professional degree",
+                "sentiment": "positive",
+                "detail": (
+                    "An accredited M.Arch. that qualifies graduates for architectural "
+                    "licensure after internship."
+                ),
+            },
+            {
+                "label": "Studio sequence",
+                "sentiment": "positive",
+                "detail": (
+                    "A rigorous design-studio core paired with history/theory and building "
+                    "technology."
+                ),
+            },
+            {
+                "label": "Design thesis",
+                "sentiment": "positive",
+                "detail": (
+                    "A culminating independent design thesis in the final term."
+                ),
+            },
+            {
+                "label": "Prerequisites",
+                "sentiment": "caution",
+                "detail": (
+                    "College-level math, physics, and architectural history required before "
+                    "matriculation."
+                ),
+            },
+            {
+                "label": "Program length",
+                "sentiment": "mixed",
+                "detail": (
+                    "Typically three years for students without a pre-professional "
+                    "architecture background."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton School of Architecture — Professional M.Arch.",
+                "url": (
+                    "https://soa.princeton.edu/school/"
+                    "professional-master-architecture-program"
+                ),
+            },
+            {
+                "label": "Study Architecture — Princeton University",
+                "url": "https://www.studyarchitecture.com/school/princeton-university/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-chemical-engineering-ms": {
+        "summary": (
+            "Graduate guides describe Princeton's M.S.E. in Chemical and Biological "
+            "Engineering as a research-intensive master's within a top-ranked department "
+            "— praising quantitative transport and reaction-engineering training, "
+            "interdisciplinary ties to energy and bio institutes, and a pipeline to "
+            "leading Ph.D. programs and R&D roles; common cautions are that the degree is "
+            "research-based (not a professional M.Eng.), limited cohort size, and "
+            "Princeton's demanding general-exam culture for students who continue to the "
+            "Ph.D."
+        ),
+        "themes": [
+            {
+                "label": "Research M.S.E.",
+                "sentiment": "positive",
+                "detail": (
+                    "A thesis-based master's typically completed in 1.5–2 years with "
+                    "faculty-supervised research."
+                ),
+            },
+            {
+                "label": "Quantitative core",
+                "sentiment": "positive",
+                "detail": (
+                    "Transport, thermodynamics, and reaction engineering with rigorous "
+                    "mathematical modeling."
+                ),
+            },
+            {
+                "label": "Interdisciplinary labs",
+                "sentiment": "positive",
+                "detail": (
+                    "Links to the Andlinger Center, genomics institutes, and materials "
+                    "research across campus."
+                ),
+            },
+            {
+                "label": "Ph.D. pipeline",
+                "sentiment": "positive",
+                "detail": (
+                    "Many M.S.E. students continue to top chemical-engineering Ph.D. "
+                    "programs."
+                ),
+            },
+            {
+                "label": "Selective cohort",
+                "sentiment": "caution",
+                "detail": (
+                    "A small department with competitive admission and limited funded "
+                    "master's slots."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton CBE — Graduate Program",
+                "url": "https://cbe.princeton.edu/graduate",
+            },
+            {
+                "label": "Princeton Graduate School — Chemical and Biological Engineering",
+                "url": (
+                    "https://gradschool.princeton.edu/academics/degrees-requirements/"
+                    "fields-study/chemical-and-biological-engineering"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-civil-engineering-ms": {
+        "summary": (
+            "Graduate guides describe Princeton's M.S.E. in Civil and Environmental "
+            "Engineering as a research-focused master's spanning structures, "
+            "environmental systems, and sustainable infrastructure — praising "
+            "interdisciplinary tracks in hydrology, materials, and urban resilience, "
+            "faculty mentorship, and placement into Ph.D. programs and engineering "
+            "consulting; common cautions are a small cohort, a thesis requirement, and "
+            "less industry-oriented coursework than one-year M.Eng. programs at larger "
+            "engineering schools."
+        ),
+        "themes": [
+            {
+                "label": "Research breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "Tracks spanning structures, environmental engineering, hydrology, and "
+                    "sustainable cities."
+                ),
+            },
+            {
+                "label": "Faculty mentorship",
+                "sentiment": "positive",
+                "detail": (
+                    "Close advising within a compact department with leading researchers."
+                ),
+            },
+            {
+                "label": "Ph.D. placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates frequently continue to top civil and environmental Ph.D. "
+                    "programs."
+                ),
+            },
+            {
+                "label": "Thesis requirement",
+                "sentiment": "caution",
+                "detail": (
+                    "The M.S.E. is research-based — not a coursework-only professional "
+                    "master's."
+                ),
+            },
+            {
+                "label": "Small cohort",
+                "sentiment": "mixed",
+                "detail": (
+                    "Limited class size versus large civil-engineering programs at public "
+                    "universities."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton CEE — Graduate Studies",
+                "url": "https://cee.princeton.edu/graduate",
+            },
+            {
+                "label": "Princeton Graduate School — Civil and Environmental Engineering",
+                "url": (
+                    "https://gradschool.princeton.edu/academics/degrees-requirements/"
+                    "fields-study/civil-and-environmental-engineering"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-electrical-electronics-and-communications-engineering-ms": {
+        "summary": (
+            "Engineering guides describe Princeton's M.Eng. in Electrical and Computer "
+            "Engineering as a one-year, coursework-based master's for practicing "
+            "engineers — ECE does not offer an M.S.E. — praising access to Princeton's "
+            "communications, robotics, and quantum-systems faculty; common cautions are "
+            "that Princeton provides no institutional funding (employer or fellowship "
+            "support required), no thesis or research component, and a narrow cohort "
+            "focused on professional advancement rather than Ph.D. preparation."
+        ),
+        "themes": [
+            {
+                "label": "One-year M.Eng.",
+                "sentiment": "positive",
+                "detail": (
+                    "A coursework-based master's typically completed in one academic year."
+                ),
+            },
+            {
+                "label": "ECE faculty access",
+                "sentiment": "positive",
+                "detail": (
+                    "Courses spanning communications, computer systems, and quantum "
+                    "engineering."
+                ),
+            },
+            {
+                "label": "Professional focus",
+                "sentiment": "positive",
+                "detail": (
+                    "Designed for practicing engineers advancing technical depth without "
+                    "a research thesis."
+                ),
+            },
+            {
+                "label": "No institutional funding",
+                "sentiment": "caution",
+                "detail": (
+                    "Candidates must demonstrate external financial support — Princeton "
+                    "does not fund M.Eng. students."
+                ),
+            },
+            {
+                "label": "No M.S.E. option",
+                "sentiment": "mixed",
+                "detail": (
+                    "ECE is the only SEAS department that does not offer a research-based "
+                    "M.S.E."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton ECE — Graduate Programs",
+                "url": "https://ece.princeton.edu/academics/graduate",
+            },
+            {
+                "label": "Princeton Engineering — Graduate FAQ (M.Eng. vs M.S.E.)",
+                "url": "https://engineering.princeton.edu/graduate-studies/faq",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-mechanical-engineering-ms": {
+        "summary": (
+            "Graduate guides describe Princeton's M.S.E. in Mechanical and Aerospace "
+            "Engineering as a research-intensive master's in dynamics, fluid mechanics, "
+            "robotics, and propulsion — praising faculty-led thesis research, ties to "
+            "aerospace and robotics labs, and placement into leading Ph.D. programs and "
+            "aerospace R&D; common cautions are a demanding general-exam culture for "
+            "Ph.D. continuers, a small cohort, and less structured career coaching than "
+            "professional M.Eng. programs."
+        ),
+        "themes": [
+            {
+                "label": "Research M.S.E.",
+                "sentiment": "positive",
+                "detail": (
+                    "A thesis-based master's with faculty-supervised research in MAE labs."
+                ),
+            },
+            {
+                "label": "Aerospace & robotics",
+                "sentiment": "positive",
+                "detail": (
+                    "Strengths in fluid mechanics, propulsion, robotics, and materials."
+                ),
+            },
+            {
+                "label": "Ph.D. pipeline",
+                "sentiment": "positive",
+                "detail": (
+                    "Many graduates continue to top mechanical and aerospace Ph.D. programs."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Competitive admission within a small, research-focused department."
+                ),
+            },
+            {
+                "label": "Research intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "The M.S.E. requires substantial thesis work — not a coursework-only "
+                    "professional degree."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton MAE — Graduate Program",
+                "url": "https://mae.princeton.edu/graduate",
+            },
+            {
+                "label": "Princeton Graduate School — Mechanical and Aerospace Engineering",
+                "url": (
+                    "https://gradschool.princeton.edu/academics/degrees-requirements/"
+                    "fields-study/mechanical-and-aerospace-engineering"
+                ),
             },
         ],
         "disclaimer": (
