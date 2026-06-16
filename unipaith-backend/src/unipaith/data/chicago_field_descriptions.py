@@ -592,6 +592,7 @@ FIELD_ALIASES: dict[str, str] = {
         "Crown Family School of Social Work, Policy, and Practice"
     ),
     "Environment Geography and Urbanization": "Environment, Geography and Urbanization",
+    "Environment, Geography, and Urbanization": "Environment, Geography and Urbanization",
     "Social Work": "Crown Family School of Social Work, Policy, and Practice",
     "Business Administration, Management and Operations": (
         "The University of Chicago Booth School of Business"
@@ -603,6 +604,7 @@ FIELD_ALIASES: dict[str, str] = {
     "Non-Professional Legal Studies": "Legal Studies",
     "Health Professions (CIP 51.12)": "Pritzker School of Medicine",
     "Science Technology and Society": "Science, Technology and Society",
+    "Science, Technology, and Society": "Science, Technology and Society",
     "Master of Arts Program in the Social Sciences (MAPSS)": (
         "Master of Arts Program in the Social Sciences"
     ),
