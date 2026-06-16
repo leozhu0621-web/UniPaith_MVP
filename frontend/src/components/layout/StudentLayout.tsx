@@ -30,7 +30,7 @@ import { COPY } from '../../lib/copy'
 // its own peer tab. My Space owns every room route, so its active state is
 // computed from the location rather than NavLink's single-path match.
 const NAV_ITEMS = [
-  { to: '/s', icon: Compass, label: 'Uni', end: true },
+  { to: '/s', icon: Compass, label: 'Chat', end: true },
   { to: '/s/explore', icon: Target, label: 'Discover', end: false },
   { to: '/s/messages', icon: MessageSquare, label: 'Messages', end: false },
   { to: '/s/space', icon: Backpack, label: 'My Space', end: false },
