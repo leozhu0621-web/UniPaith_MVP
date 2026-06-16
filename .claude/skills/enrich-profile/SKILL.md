@@ -85,6 +85,28 @@ Concrete misses observed in the first runs — each broke a real page:
      cannot resolve the major names, FEWER real entries — never one stub named "BA"
      per filler row. A duplicate/abbreviation/`"Programs"`-department name is an
      automatic fabrication failure: drop it or give it its real name.
+   - **A catalog-breadth GATE must assert structural REALNESS, not a raw row COUNT —
+     a `len(PROGRAMS) >= N` assertion frozen to a PADDED count FIGHTS de-fabrication
+     and FAILS the deploy when you correctly drop the padding (the live regression
+     this run).** When you de-pad a catalog (drop federal certificate / incidental-
+     master's / CIP×award-level filler rows), its program count legitimately SHRINKS
+     toward the real published catalog — so any test or conformance gate that hard-
+     asserts a high MINIMUM row count, calibrated to the OLD padded number, will fail
+     on the smaller real catalog and BLOCK the deploy (a correct repair that never
+     ships). Write the catalog's own breadth gate to assert that every row is REAL
+     (no CIP-prefix / rollup names, no classification-stub descriptions, no
+     null/duplicate departments, no concentration-split rows) and that the count
+     matches the VERIFIED real catalog — which may be far below the padded count —
+     NEVER a raw `>= padded_N`; and when a de-fabrication SHRINKS a catalog, update
+     that catalog's breadth test/gate in the SAME PR so the deploy is not blocked.
+     The completeness bar still stands (the real FULL published catalog at peer
+     count, cf. MIT's 65 — do NOT use this to justify a curated subset), but it is
+     enforced by per-row REALNESS, not by a frozen number that mechanically rewards
+     padding and punishes a clean de-fabrication. Evidence: live API this run — a
+     de-fabrication PR that correctly dropped a catalog from 114 padded rows to 41
+     real ones FAILED its Deploy Backend on a stale `assert len(PROGRAMS) >= 100`
+     breadth assertion, and shipped only after a follow-up commit replaced the count
+     assertion with a no-CIP-prefix / no-classification-stub realness gate.
    - **The IPEDS/Scorecard CIP count is an UPPER-BOUND completeness HINT, never a
      row-minting recipe — NEVER mint one program per (CIP × award-level).** A
      second padding variant is now live fleet-wide and EVADES the bare-abbreviation

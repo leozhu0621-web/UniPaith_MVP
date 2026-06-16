@@ -6,6 +6,121 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-16 — Run 15 (REAL PROGRESS — Princeton #641 is the FIRST genuinely clean structural de-fabrication, 114→41 real degrees, but its deploy FAILED on a stale `len(PROGRAMS) >= 100` breadth gate frozen to the padded count. NEW class: a count-target breadth GATE fights de-fabrication and blocks the deploy. Added 1 rulebook sub-bullet; moved Princeton out of HIGH)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28,
+no sprawl). Recently-changed focus on the ONE new enrichment PR since run 14 — **Princeton #641
+"catalog structural repair — field-specific descriptions for 41 programs"** + its follow-up
+test-align commit `1057be7`. Read the #641 SOURCE (it is NOT yet live — see deploy finding) via the
+data module (`princeton_profile.py` PROGRAMS names/departments, `princeton_field_descriptions.py`
+named-unit truth) and the live Princeton catalog (full pagination `page_size=50`, n=114 — the OLD
+PRE-#641 padded state, since the deploy failed). Confirmed the failed/in-progress Deploy Backend
+runs via GitHub Actions. Re-confirmed the two carried CRITICAL review breaches (Northwestern + Duke)
+via `/programs/{id}.external_reviews`; fleet `/institutions/{id}/posts` feed sweep (NYU still dead).
+
+**What merged since run 14:** ONE in-scope profile PR — **Princeton #641** (97978b2) + the test-align
+commit `1057be7` (catalog breadth gate). The run-14 grader PR #640 is the prior `origin/main` work;
+everything else in range is out of scope. So the other 27 catalogs are byte-identical to run 14.
+
+**Findings (live API + Actions + source evidence):**
+
+1. **REAL PROGRESS — Princeton #641 is the FIRST genuinely CLEAN structural de-fabrication (modulo
+   not-yet-live).** It drops 73 federal certificate / incidental-master's padding rows (114→41),
+   replaces every CIP-prefix name with a real degree title ("Bachelor of Arts in Anthropology",
+   "Master of Public Affairs (MPA)"), gives every row a real owning department, and writes
+   field-specific descriptions that name ONLY real Princeton units (PACM, ORFE, SEAS, Frick
+   Chemistry Laboratory, Peyton Hall, High Meadows Environmental Institute, Andlinger Center). Source
+   scan: ZERO rollup names, ZERO CIP-prefix names, ZERO prefix-doubling, ZERO foreign/mismatched
+   units — i.e. it satisfies the dimension-agnostic clear bar on structure AND applies the run-13/14
+   named-unit-truth lesson. The first non-MIT catalog to do so. Responsive, correct work.
+2. **NEW PROBLEM CLASS — a stale catalog-breadth GATE BLOCKED the de-fabrication deploy (a correct
+   repair that never shipped).** Princeton's profile-standard test asserted
+   `assert len(PROGRAMS) >= 100` — a row count frozen to the OLD padded catalog. The correct
+   de-fabrication to 41 real rows tripped it → **Deploy Backend run 27654099686 FAILED** (the test
+   job gates the deploy), so the migration + data NEVER reached production. The LIVE Princeton is
+   therefore STILL the old 114-row padded catalog (rollup names, classification-template
+   descriptions, empty deep fields) — confirmed live this run. The author self-corrected with
+   `1057be7` (drop the `>=100` assertion; assert no-CIP-prefix-names / no-classification-stubs +
+   `>=35` instead), and a re-deploy (run 27655035837) was in_progress at grading time. NOT covered
+   by any prior rule: miss #2's "count is a CHECK, not a TARGET — NEVER pad it" governs the DATA, not
+   a count-target TEST/gate that fights a correct DE-padding and blocks the deploy.
+3. **Both carried CRITICAL review breaches PERSIST (re-confirmed live).** Northwestern still ships
+   the synthesized "Students describe Northwestern's undergraduate program in *Architecture and
+   Related Services, Other* within Weinberg…" CIP-rollup review (now runs 9→15); Duke still ships
+   the copy-paste Pratt B.S.E. boilerplate ("…a rigorous engineering degree at a selective private
+   R1 university…", field swapped across Biomedical/Civil; now runs 10→15).
+4. **Feeds healthy** — NYU still the ONLY dead feed (`posts=[]`); Northwestern + others fetch fine.
+   28 institutions, no sprawl.
+
+**False alarms caught (diagnosed, not acted on):**
+- **The live Princeton 114-row padded catalog is NOT a #641 regression — it is the PRE-#641 state
+  because the deploy FAILED.** First read showed clean "Bachelor of Arts in Anthropology" rows AND
+  31 surviving CIP-rollup padding rows in one catalog, which looked like a half-applied migration;
+  I traced it to the failed Deploy Backend (the upsert never ran). The clean first rows predate
+  #641; the migration's reconcile (delete-unreferenced / else-unpublish padding) never executed.
+  Do NOT grade #641's content off the live API until the re-deploy lands.
+- **`?page_size=100` 422s (server cap 50)** — paginated by 50. The real description field is
+  `description_text`; named-unit truth confirmed by reading the source descriptions (all real
+  Princeton units) rather than trusting the PR label.
+- **The deploy failure is NOT a migration/data defect** — the migration `princetonprof7` is correct
+  (idempotent reconcile, single head `down_revision=stanfordprof8`); the failure was a STALE TEST
+  assertion, which is the addable class. The fix is already applied (`1057be7`), so a re-deploy
+  should land Princeton.
+
+**Rulebook changes: 1 of ≤3 (ADDS/TIGHTENS the completeness/verify gate; loosens nothing):**
+- **miss #2 (new sub-bullet):** a catalog-breadth GATE must assert structural REALNESS, not a raw
+  row COUNT — a `len(PROGRAMS) >= N` assertion frozen to a PADDED count FIGHTS de-fabrication and
+  FAILS the deploy when you correctly drop padding. When de-padding shrinks a catalog toward its
+  real published size, a hard high-minimum count gate (calibrated to the padded number) fails on the
+  smaller real catalog and blocks the deploy. Write the gate to assert every row is REAL (no
+  CIP-prefix / rollup names, no classification stubs, real departments, no concentration splits) and
+  a count matching the VERIFIED real catalog — never `>= padded_N`; and update the catalog's breadth
+  test in the SAME de-fabrication PR. The full-published-catalog completeness bar still stands,
+  enforced by realness not a frozen number. Evidence: live this run — #641's Deploy Backend FAILED on
+  `assert len(PROGRAMS) >= 100` after a correct 114→41 de-fabrication; shipped only after `1057be7`
+  replaced it with a no-CIP-prefix / no-classification-stub realness gate. (The other 2 reserve
+  changes were NOT used — the NW/Duke review breaches and Stanford named-unit fabrications are
+  already named, miss #8/#9, so adding rules would be churn.)
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(NEW this run, process)** a CORRECT de-fabrication (Princeton #641) failed to deploy on a stale
+  breadth test and required a manual follow-up commit. The rulebook now forbids the count-target
+  gate, but a human may want to confirm the re-deploy (run 27655035837) landed and the live Princeton
+  now shows 41 real rows — and that no OTHER catalog's profile-standard test carries a `>= padded_N`
+  assertion waiting to block its de-fabrication.
+- **(carried, urgent — now 7 / 6 intervals)** Northwestern (43+ synthesized reviews, runs 9→15) and
+  Duke (~5 Pratt boilerplate reviews, runs 10→15) remain live and unrepaired; the CRITICAL backlog
+  top is not being cleared. A human may want to confirm the enricher is working the CRITICAL backlog.
+- **(carried, urgent)** Stanford's Sibley-School + Freeman-Spogli fabricated units (run 13/14) remain
+  live; the grader does not edit data.
+- **(carried from runs 2–14, unreconciled)** miss #9 says "FAIL on null/blank `department`" but gold
+  MIT ships null department and `manifest.py` marks `department` `required=False`. Reconciling would
+  LOOSEN verify-output → left intact per the rails.
+- **(carried from runs 8–14, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a
+  stub tell — valid for the ENRICHER but not API-visible to the grader. Left intact.
+
+**Backlog delta:** Princeton MOVED OUT of HIGH (was run-14 row 3) into a dedicated "REPAIRED IN CODE
+(#641), deploy was BLOCKED, verify live once it lands" note — if the re-deploy ALSO failed it returns
+to HIGH as a deploy-blocked repair. HIGH table renumbered to 14 entries (otherwise unchanged).
+NW/Duke persistence lines bumped to 9→15 / 10→15. Added an enricher note: "A BREADTH GATE CHECKS
+REALNESS, NOT A ROW COUNT — when you de-pad a catalog, update its breadth test in the same PR or the
+deploy fails." Ranking unchanged: CRITICAL = Boston University (structure) + Stanford (fabricated
+units) + Northwestern + Duke (fabricated reviews); HIGH = 14 catalogs worst-first; MEDIUM = the 8
+shallow 22-program stubs (NYU = only dead feed); CLEAN = MIT only (Princeton clean-in-code, pending
+deploy verification).
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv /
+pytest / Postgres) — same constraint as runs 1–14. Changes are markdown-only (SKILL.md +1 sub-bullet
+in miss #2, backlog re-write, this changelog; NO Python, no migrations, no app code), so the enricher
+code/data state is unaffected and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; the single edit ADDS/TIGHTENS the completeness + verify-rendered-output
+gate (a breadth gate must check per-row realness, and the full-catalog completeness bar is reaffirmed,
+not loosened). The findings that could argue for loosening (null-department FAIL vs gold MIT;
+`_standard`-as-rendered-signal) remain logged for human review, not acted on.
+
+---
+
 ## 2026-06-16 — Run 14 (the enricher's FIRST repair of a grader-flagged fabrication was a WHACK-A-MOLE: Stanford's fa7163e hotfix cleared only the ONE cited field (College of Chemistry) and left sibling fabrications of the SAME class live (Sibley School, FSI mismatches). Closed the gap — promoted the run-13 named-unit-truth check into miss #9's PRE-SHIP PROGRAMMATIC gate + required a whole-class re-scan. 1 rulebook change)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28,
