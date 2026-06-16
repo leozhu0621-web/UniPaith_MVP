@@ -114,19 +114,36 @@ async def get_followups(
 
     from unipaith.config import settings
     from unipaith.services.follow_up_service import FollowUpService
+    from unipaith.services.student_service import StudentService
 
     if not settings.ai_material_followups_v2_enabled:
         return {"questions": []}
+    # Scope the ingest to the requesting student.
+    student_id = (await StudentService(db)._get_student_profile(user.id)).id
     row = (
         await db.execute(
             _select(MaterialIngest).where(
                 MaterialIngest.id == ingest_id,
+                MaterialIngest.student_id == student_id,
             )
         )
     ).scalar_one_or_none()
     proposed = row.proposed if row else None
     gaps = await FollowUpService(db).detect(user.id, proposed)
-    return {"questions": [{**g, "prompt": g.get("prompt_hint")} for g in gaps]}
+    # Ground each question in the actual content via the LLM phrasing layer;
+    # fall back to the subject-aware deterministic hint on any failure.
+    phrased: list[str] | None = None
+    try:
+        from unipaith.ai.follow_up import phrase_questions
+
+        phrased = await phrase_questions(gaps, proposed, student_id=student_id)
+    except Exception:
+        phrased = None
+    questions = []
+    for i, g in enumerate(gaps):
+        prompt = phrased[i] if phrased and i < len(phrased) and phrased[i] else g.get("prompt_hint")
+        questions.append({**g, "prompt": prompt})
+    return {"questions": questions}
 
 
 @router.post("/followups/answer")

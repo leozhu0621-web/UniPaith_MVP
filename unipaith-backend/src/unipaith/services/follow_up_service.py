@@ -36,6 +36,28 @@ _TEST_TYPE_MAP = {
     "duolingo": "DUOLINGO",
 }
 
+_DEG_ABBR = {
+    "bachelors": "BS",
+    "masters": "MS",
+    "phd": "PhD",
+    "associate": "AA",
+    "high_school": "HS",
+    "diploma": "Diploma",
+}
+
+
+def _degree_label(record: dict[str, Any]) -> str:
+    """A short subject label for an academic record, e.g. "BS, Business Administration"."""
+    parts = [_DEG_ABBR.get(record.get("degree_type"), ""), record.get("field_of_study") or ""]
+    return ", ".join(p for p in parts if p)
+
+
+def _school_label(record: dict[str, Any]) -> str:
+    """How a GPA question names the school it's asking about."""
+    inst = record.get("institution_name") or "your school"
+    deg = _degree_label(record)
+    return f"{inst} ({deg})" if deg else inst
+
 
 class FollowUpService:
     def __init__(self, db: AsyncSession) -> None:
@@ -75,16 +97,26 @@ class FollowUpService:
                     break
 
         # ── missing high-value fields ──
+        # GPA is asked PER SCHOOL (named), so a student with two degrees isn't
+        # asked a subjectless "What's your GPA?". Each gap carries a ref so the
+        # answer lands on the right academic record. Capped at 2.
         records = imp.get("academic_records") or []
-        if records and not any(r.get("gpa") for r in records):
-            missing.append(
-                {
-                    "category": "missing",
-                    "target_field": "gpa",
-                    "prompt_hint": "What's your GPA? (e.g. 3.8/4.0)",
-                    "kind": "text",
-                }
-            )
+        gpa_gaps = [
+            {
+                "category": "missing",
+                "target_field": "gpa",
+                "prompt_hint": f"What was your GPA at {_school_label(r)}? (e.g. 3.8/4.0)",
+                "kind": "text",
+                "ref": {
+                    "institution_name": r.get("institution_name"),
+                    "degree_type": r.get("degree_type"),
+                    "label": _school_label(r),
+                },
+            }
+            for r in records
+            if not r.get("gpa") and r.get("institution_name")
+        ]
+        missing.extend(gpa_gaps[:2])
         if not (imp.get("test_scores")) and not await self._has_test_scores(user_id):
             missing.append(
                 {
@@ -150,7 +182,7 @@ class FollowUpService:
             if target == "goal":
                 await self._apply_goal(user_id, text)
             elif target == "gpa":
-                await self._apply_gpa(user_id, text)
+                await self._apply_gpa(user_id, text, gap.get("ref") or {})
             elif target == "test_scores":
                 await self._apply_test(user_id, text)
             elif target == "target_degree":
@@ -181,7 +213,7 @@ class FollowUpService:
             user_id, UpdateProfileRequest(goals_text=text[:2000])
         )
 
-    async def _apply_gpa(self, user_id: UUID, text: str) -> None:
+    async def _apply_gpa(self, user_id: UUID, text: str, ref: dict | None = None) -> None:
         m = re.search(r"\d+(\.\d+)?", text)
         if not m:
             raise ValueError("no number in gpa answer")
@@ -191,14 +223,30 @@ class FollowUpService:
         from unipaith.services.student_service import StudentService
 
         sid = await self._student_id(user_id)
-        rec = (
-            await self.db.execute(
-                select(AcademicRecord)
-                .where(AcademicRecord.student_id == sid)
-                .order_by(AcademicRecord.start_date.desc())
-                .limit(1)
-            )
-        ).scalar_one_or_none()
+        rec = None
+        # Target the school the question named, so a two-degree student's answer
+        # lands on the right record.
+        inst = (ref or {}).get("institution_name")
+        if inst:
+            rec = (
+                await self.db.execute(
+                    select(AcademicRecord)
+                    .where(
+                        AcademicRecord.student_id == sid,
+                        AcademicRecord.institution_name == inst,
+                    )
+                    .limit(1)
+                )
+            ).scalar_one_or_none()
+        if rec is None:
+            rec = (
+                await self.db.execute(
+                    select(AcademicRecord)
+                    .where(AcademicRecord.student_id == sid)
+                    .order_by(AcademicRecord.start_date.desc())
+                    .limit(1)
+                )
+            ).scalar_one_or_none()
         if rec is None:
             raise ValueError("no academic record to attach gpa")
         await StudentService(self.db).update_academic_record(
