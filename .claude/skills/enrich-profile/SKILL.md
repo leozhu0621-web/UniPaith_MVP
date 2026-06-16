@@ -257,6 +257,31 @@ Concrete misses observed in the first runs — each broke a real page:
      39%, Harvard 35%), and fabricated rows like Northwestern's "Bachelor's in
      Architecture and Related Services, Other" now carry `external_reviews` while their
      names/departments/template descriptions remain pure CIP-rollup fabrication.
+   - **A review must be GATHERED program-specific coverage, NOT SYNTHESIZED from the
+     row's metadata + generic institution facts — "fabrication-by-synthesis" is the
+     live reviews-pass defect this run, and the false "aggregated from public sources"
+     disclaimer makes it WORSE than an honest blank.** A pass that mints a review for
+     EVERY row in one sweep is the tell: the reviews are machine-written from
+     `(program_name, school, institution rank)`, not read off real third-party coverage
+     of that program. Any one of these fingerprints is a FAIL: the SUMMARY or a theme
+     embeds the federal CIP rollup the row was minted from ("Students describe
+     Northwestern's program in *Architecture and Related Services, Other*…") — proof it
+     was generated from the metadata, not gathered; the THEMES are all institution-level
+     ("U.S. News ranks {Univ} #7 among national universities") with nothing
+     program-specific; the SAME caution ("large introductory sections") is copy-pasted
+     across many rows; a SOURCE is the generic university Niche page / the department
+     homepage / an institution ranking rather than program-specific coverage, or is a
+     mismatched-level ranking (a GRADUATE architecture ranking cited on a BACHELOR'S
+     row). Such a review is fabrication wearing the MBAn shape — it lends the row false
+     third-party credibility and is discarded the moment the row is de-fabricated. A
+     review ships ONLY when it is read off coverage ABOUT THAT PROGRAM (a program page
+     on Poets&Quants / U.S. News / GradReports, program-specific outcomes reports or
+     forum threads), is program-specific in summary AND themes AND sources, and carries
+     NO CIP-rollup string. If no program-specific coverage exists, OMIT with reason —
+     never synthesize one. Evidence: live API this run — a "58/58 coverable reviews"
+     one-pass depth had 43 of 60 reviewed rows carrying a CIP rollup verbatim in the
+     summary, institution-level-only themes, and a graduate-ranking source on a
+     bachelor's row.
    - **The TEMPLATE-DESCRIPTION stub is its own fabricated-row class — a real-looking
      `program_name` and a real `department` do NOT redeem it, and it is the BROADEST
      fingerprint of an un-researched catalog. Rank and gate catalogs by
@@ -408,7 +433,17 @@ Concrete misses observed in the first runs — each broke a real page:
      vehicles…"). This SHARE is a PRIMARY independent FAIL: a high share means the
      catalog is mostly un-researched stubs even where the NAMES read real, confirmed
      by every rich field being empty and `_standard` unstamped on those rows**) before
-     shipping — a padded catalog must FAIL the run.
+     shipping — a padded catalog must FAIL the run. **Also FAIL a catalog whose
+     descriptions DOUBLE the page heading — i.e. begin by restating the `program_name`
+     verbatim (a `"{program_name}: …"` or `"{program_name} is …"` prefix).** The program
+     name is already the page heading, so a description that opens with it renders the
+     name twice — a mechanical-generation tell that a "field-specific description" pass
+     prepended the title rather than opening on a fact. Count
+     `description_text.startswith(program_name)`; gold MIT opens on the field fact
+     ("Course 16 educates engineers of aerospace vehicles…"), NEVER on its own title.
+     Evidence: live API this run — the field-specific-description passes prefix the name
+     in 82–100% of rows on every description-passed catalog (Cornell/Berkeley/Penn/CMU
+     100%, Northwestern 97%, Harvard 82%), vs gold MIT 2%.
    - **Feeds:** a `content_sources` feed counts only if it actually FETCHES ≥1
      item. **Confirm the feed produces** (the news_rss/events_feed resolves and
      returns entries) before trusting it — set a feed you proved works, not a URL
