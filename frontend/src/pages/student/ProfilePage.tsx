@@ -30,7 +30,7 @@ const PreferencesTab = lazy(() => import('./profile/PreferencesTab'))
 const AnalyticsTab = lazy(() => import('./profile/AnalyticsTab'))
 
 const TABS: { key: ProfileTabSpec; label: string }[] = [
-  { key: 'overview', label: 'Personal' },
+  { key: 'overview', label: 'Basic info' },
   { key: 'identity', label: 'Identity' },
   { key: 'academics', label: 'Academics' },
   { key: 'experience', label: 'Experience' },
