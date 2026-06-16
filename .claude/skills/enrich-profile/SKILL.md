@@ -533,15 +533,17 @@ STRICT order:
    university. Do not idle on the existing set.** Repair-first ORDERS the work; it
    does not CAP the fleet. The platform's value grows with coverage, so a run with
    nothing left to repair is a run that expands the fleet by one.
-   - **Where the next university comes from (so you never run dry):** the
-     highest-priority US institution NOT yet in the DB. Rank by real student demand
-     first (search / match / view / saved-school signals when available), then
-     follow the business-spec beachhead (product-context §3: regional publics,
-     community colleges, and smaller programs — the high pain-to-budget segments —
-     not only more prestige research universities). The IPEDS / College Scorecard
-     universe (thousands of institutions) is the source list, so there is ALWAYS a
-     next target. Add ONE new university per run, taken fully to gold (the same bar
-     as any existing one), following the steps below.
+   - **Where the next university comes from (so you never run dry):** walk the
+     **U.S. News & World Report "Best Colleges" → National Universities** ranking in
+     rank order (#1, #2, #3, …) and add the highest-ranked university NOT yet in the
+     DB. The seeded fleet is already ≈ the top 30, so you continue down the list
+     (~#30 onward); **skip any already present** and any without a resolvable UNITID.
+     The ranking has hundreds of entries, so there is ALWAYS a next target. Resolve
+     the official name + UNITID for that ranked school, then enrich it fully to gold
+     (same bar as any existing one) per the steps below. Add ONE new university per
+     run. (Optional: a strong real student-demand signal — search / match / view /
+     saved-school — may bump a high-demand school ahead of its US-News rank; absent
+     a signal, just follow the list one by one.)
 
 Within the repair phase, prioritize by student demand (saved-school / match / view
 counts) then by size of gaps. **Adding breadth while existing profiles are broken
