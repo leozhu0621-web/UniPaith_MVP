@@ -26,19 +26,27 @@ current named-prize holder could be verified from an official page.
 
 Depth pass (2026-06-15, dukeprof4): merged ``DEPTH_REVIEWS`` for 42 coverable
 programs (49/49 total external_reviews on coverable programs).
+
+Structural repair (2026-06-16, dukeprof5): replaced classification-only program
+descriptions with field-specific clauses from ``duke_field_descriptions.py``.
 """
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.duke_field_descriptions import (
+    FIELD_ALIASES,
+    FIELD_DESCRIPTIONS,
+    SLUG_DESCRIPTIONS,
+)
 from unipaith.data.duke_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import (
     disambiguate_program_name,
-    program_description,
     validate_catalog,
 )
 from unipaith.models.institution import Institution, Program, School
@@ -47,7 +55,17 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Duke University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-15"
+ENRICHED_AT = "2026-06-16"
+
+_TEMPLATE_STUB_RE = re.compile(
+    r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
+    r"master's|bachelor's|PhD|MBA|JD|MD|bachelors|masters|phd) program offered through ",
+    re.I,
+)
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is (an undergraduate|a graduate|a doctoral|a graduate certificate|"
+    r"a professional|a degree) program at ",
+)
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1666,6 +1684,71 @@ def _slugify(text_value: str) -> str:
     return "-".join(s.split())
 
 
+def _field_from_program_name(program_name: str) -> str | None:
+    """Extract field title from a disambiguated program name."""
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Bachelor of Science in Engineering in ",
+        "Bachelor's in ",
+        "Master's in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+        "Professional program in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):]
+    return None
+
+
+def _needs_normalize(desc: str) -> bool:
+    """True when a description is a classification or template stub."""
+    if not desc:
+        return True
+    if _CLASSIFICATION_STUB_RE.match(desc):
+        return True
+    if _TEMPLATE_STUB_RE.search(desc):
+        return True
+    if "offered through the " in desc:
+        return True
+    return False
+
+
+def _duke_description(spec: dict, field: str | None = None) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    fmt = spec.get("delivery_format", "in_person")
+    delivery = ""
+    if fmt == "online":
+        delivery = " Delivered online."
+    elif fmt == "hybrid":
+        delivery = " Delivered in hybrid format."
+    if slug in SLUG_DESCRIPTIONS:
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+    field_key = (
+        field
+        or spec.get("_field_name")
+        or _field_from_program_name(spec.get("program_name", ""))
+        or spec.get("department")
+        or spec.get("program_name", "")
+    )
+    if field_key in FIELD_ALIASES:
+        field_key = FIELD_ALIASES[field_key]
+    clause = FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        raise ValueError(
+            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
+        )
+    return f"{spec['program_name']}: {clause}{delivery}"
+
+
+def _normalize_program(spec: dict, field_name: str | None = None) -> None:
+    """Stamp a field-specific description on stub program nodes."""
+    if not _needs_normalize(spec.get("description") or ""):
+        return
+    spec["description"] = _duke_description(spec, field=field_name)
+
+
 def _build_catalog() -> list[dict]:
     """Assemble the full Duke program catalog (verified-basics nodes)."""
     out: list[dict] = []
@@ -1680,7 +1763,7 @@ def _build_catalog() -> list[dict]:
     for name in _TRINITY_MAJORS:
         dept = _department_for(name, _TRINITY)
         pname = _ug_program_name(name, _TRINITY)
-        _add({
+        spec = {
             "slug": f"duke-{_slugify(name)}-ab",
             "school": _TRINITY,
             "program_name": pname,
@@ -1688,14 +1771,15 @@ def _build_catalog() -> list[dict]:
             "department": dept,
             "duration_months": 48,
             "delivery_format": "in_person",
-            "description": program_description(
-                pname, "bachelors", _TRINITY, dept, university_short="Duke"
-            ),
-        })
+            "_field_name": name,
+        }
+        _normalize_program(spec, name)
+        spec.pop("_field_name", None)
+        _add(spec)
     for name in _PRATT_MAJORS:
         dept = _department_for(name, _PRATT)
         pname = _ug_program_name(name, _PRATT)
-        _add({
+        spec = {
             "slug": f"duke-{_slugify(name)}-bse",
             "school": _PRATT,
             "program_name": pname,
@@ -1703,10 +1787,11 @@ def _build_catalog() -> list[dict]:
             "department": dept,
             "duration_months": 48,
             "delivery_format": "in_person",
-            "description": program_description(
-                pname, "bachelors", _PRATT, dept, university_short="Duke"
-            ),
-        })
+            "_field_name": name,
+        }
+        _normalize_program(spec, name)
+        spec.pop("_field_name", None)
+        _add(spec)
     for (
         name,
         dtype,
@@ -1736,7 +1821,7 @@ def _build_catalog() -> list[dict]:
     for name in _PHD_PROGRAMS:
         dept = _department_for(name, _GRAD)
         pname = disambiguate_program_name(name, "phd")
-        _add({
+        spec = {
             "slug": f"duke-{_slugify(name)}-grad-phd",
             "school": _GRAD,
             "program_name": pname,
@@ -1744,17 +1829,34 @@ def _build_catalog() -> list[dict]:
             "department": dept,
             "duration_months": 60,
             "delivery_format": "in_person",
-            "description": program_description(
-                pname, "phd", _GRAD, dept, university_short="Duke"
-            ),
-        })
+            "_field_name": name,
+        }
+        _normalize_program(spec, name)
+        spec.pop("_field_name", None)
+        _add(spec)
     return out
 
 
 PROGRAMS: list[dict] = _build_catalog()
+for _p in PROGRAMS:
+    _normalize_program(_p, _field_from_program_name(_p.get("program_name", "")))
+
 _catalog_errors = validate_catalog(PROGRAMS)
+_stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
+_new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
+if _stub_desc:
+    _catalog_errors.append(f"template stub descriptions on {_stub_desc} programs")
+if _new_templ:
+    _catalog_errors.append(f"program_description template on {_new_templ} programs")
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
 if _catalog_errors:
-    raise ValueError(f"Duke catalog validation failed: {_catalog_errors}")
+    raise RuntimeError(f"Duke catalog quality gate failed: {_catalog_errors}")
 # Normalize residential delivery to the fleet-wide "in_person" value (the catalog tuples
 # use "on_campus" for readability); "online"/"hybrid" are preserved.
 for _p in PROGRAMS:
