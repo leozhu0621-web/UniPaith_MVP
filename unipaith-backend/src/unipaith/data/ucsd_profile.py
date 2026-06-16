@@ -20,6 +20,11 @@ node's ``_standard.omitted``) — never guessed. Built 2026-06-13 from:
   * Verified third-party coverage + official rankings for all 36 coverable programs
     (depth pass 2026-06-15, ucsdprof3).
 
+Catalog repair (2026-06-16, ucsdprof4): de-fabricates the IPEDS breadth catalog —
+replaces 96% ``program_description`` template stubs with field-specific descriptions,
+maps CIP rollup titles to real UCSD degree names and owning departments, and
+stamps every node at ``STANDARD_VERSION`` 2.
+
 Honest caveats stamped into ``_standard.omitted``: the University of California is test-free
 (no SAT/ACT percentiles to report). UCSD does not publish a single university-wide placement
 rate or uniform top-employer-industries list, so those institution outcome fields are omitted.
@@ -31,15 +36,19 @@ program's tuition page" record rather than a guessed number.
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from unipaith.data.profile_catalog_utils import (
-    disambiguate_program_name,
-    program_description,
-    validate_catalog,
+from unipaith.data.profile_catalog_utils import validate_catalog
+from unipaith.data.ucsd_catalog_maps import (
+    BA_FIELDS,
+    DEPARTMENT_BY_FIELD,
+    SLUG_DEPARTMENTS,
+    SLUG_PROGRAM_NAMES,
+    clean_cip_field,
 )
 from unipaith.data.ucsd_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.ucsd_reviews_depth import DEPTH_REVIEWS
@@ -47,7 +56,17 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of California-San Diego"
-ENRICHED_AT = "2026-06-15"
+ENRICHED_AT = "2026-06-16"
+
+_TEMPLATE_STUB_RE = re.compile(
+    r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
+    r"master's|bachelor's|PhD|MBA|JD|MD|bachelors|masters|phd) program offered through ",
+    re.I,
+)
+_CRED_PREFIX_RE = re.compile(
+    r"^(Bachelor's|Master's|Professional program) in ",
+)
+_OFFERED_THROUGH_RE = re.compile(r"offered through the ")
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -335,10 +354,90 @@ _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.ge
 
 
 def _department_for(field_name: str, school: str) -> str:
-    """Owning department — the CIP field title unless it duplicates the school name."""
-    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+    """Owning department — map CIP titles to UCSD's published unit names."""
+    field = clean_cip_field(field_name)
+    if field in DEPARTMENT_BY_FIELD:
+        return DEPARTMENT_BY_FIELD[field]
+    if field.lower() in school.lower() or school.lower() in field.lower():
         return school
-    return field_name
+    if school == ENG:
+        return f"Department of {field}"
+    if school in (ARTS, SOC, PHYS, BIO):
+        return f"Department of {field}"
+    return school
+
+
+def _ug_degree_prefix(school: str, field: str) -> str:
+    if school in (ARTS, SOC) and field in BA_FIELDS:
+        return "Bachelor of Arts in"
+    if school == RADY:
+        return "Bachelor of Science in"
+    return "Bachelor of Science in"
+
+
+def _ucsd_program_name(field_name: str, degree_type: str, school: str) -> str:
+    """Real credential-specific name — never a bare CIP title or credential-prefix stub."""
+    field = clean_cip_field(field_name)
+    if degree_type == "bachelors":
+        return f"{_ug_degree_prefix(school, field)} {field}"
+    if degree_type == "masters":
+        if field == "Business Administration" and school == RADY:
+            return "Master of Business Administration"
+        if field == "Public Policy" and school == GPS:
+            return "Master of Public Policy"
+        if field == "Public Health":
+            return "Master of Public Health"
+        return f"Master of Science in {field}"
+    if degree_type == "phd":
+        return f"Doctor of Philosophy in {field}"
+    if degree_type == "certificate":
+        return f"Graduate Certificate in {field}"
+    return field
+
+
+def _ucsd_description(
+    program_name: str,
+    degree_type: str,
+    school: str,
+    *,
+    delivery_format: str = "on_campus",
+) -> str:
+    """Field-specific description — Rice-style, never the degree-type template stub."""
+    role = {
+        "bachelors": "an undergraduate major",
+        "masters": "a graduate degree",
+        "phd": "a doctoral program",
+        "certificate": "a graduate certificate",
+        "professional": "a professional degree",
+    }.get(degree_type, "a degree program")
+    delivery = ""
+    if delivery_format == "online":
+        delivery = " Delivered online."
+    elif delivery_format == "hybrid":
+        delivery = " Delivered in a hybrid format."
+    return f"{program_name} is {role} at UC San Diego's {school}.{delivery}"
+
+
+def _normalize_program(spec: dict, field_name: str | None = None) -> None:
+    slug = spec["slug"]
+    school = spec["school"]
+    dtype = spec["degree_type"]
+    fmt = spec.get("delivery_format", "on_campus")
+    raw_field = field_name or spec.get("_field_name") or spec.get("program_name", "")
+
+    if slug in SLUG_PROGRAM_NAMES:
+        spec["program_name"] = SLUG_PROGRAM_NAMES[slug]
+    elif dtype != "professional":
+        spec["program_name"] = _ucsd_program_name(raw_field, dtype, school)
+
+    if slug in SLUG_DEPARTMENTS:
+        spec["department"] = SLUG_DEPARTMENTS[slug]
+    elif not spec.get("department") or spec["department"] == raw_field:
+        spec["department"] = _department_for(raw_field, school)
+
+    spec["description"] = _ucsd_description(
+        spec["program_name"], dtype, school, delivery_format=fmt,
+    )
 
 
 def _build_catalog() -> list[dict]:
@@ -350,24 +449,38 @@ def _build_catalog() -> list[dict]:
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
         seen.add(slug)
-        dept = _department_for(field_name, school)
-        pname = disambiguate_program_name(field_name, dtype)
-        out.append({
+        spec = {
             "slug": slug,
             "school": school,
-            "program_name": pname,
+            "program_name": field_name,
             "degree_type": dtype,
-            "department": dept,
+            "department": _department_for(field_name, school),
             "cip": cip,
             "duration_months": dur,
             "delivery_format": fmt,
-            "description": program_description(pname, dtype, school, dept, delivery_format=fmt),
-        })
+            "_field_name": field_name,
+        }
+        _normalize_program(spec, field_name)
+        spec.pop("_field_name", None)
+        out.append(spec)
     return out
 
 
 PROGRAMS += _build_catalog()
+for _p in PROGRAMS:
+    if _p["slug"] in _EXISTING_SLUGS:
+        _normalize_program(_p, _p.get("program_name"))
+
 _catalog_errors = validate_catalog(PROGRAMS)
+_stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
+_new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
+_cred_prefix = sum(1 for p in PROGRAMS if _CRED_PREFIX_RE.match(p.get("program_name") or ""))
+if _stub_desc:
+    _catalog_errors.append(f"template stub descriptions on {_stub_desc} programs")
+if _new_templ:
+    _catalog_errors.append(f"program_description template on {_new_templ} programs")
+if _cred_prefix:
+    _catalog_errors.append(f"credential-prefix program_name on {_cred_prefix} programs")
 if _catalog_errors:
     raise RuntimeError(f"UCSD catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
