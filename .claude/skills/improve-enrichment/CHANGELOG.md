@@ -6,6 +6,120 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-16 — Run 13 (NEW defect class: the description-depth pass FABRICATES named units to fake specificity — #638 Stanford put Berkeley's "College of Chemistry" and Cornell's "Sibley School" on Stanford rows. A live no-fabrication breach. Added 1 rulebook sub-bullet; promoted Stanford to CRITICAL)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search` → total 28, no sprawl).
+Recently-changed focus on the ONE new enrichment PR since run 12 — **#638 "Stanford description
+depth pass" (188 programs)**. Full program pagination (`page_size=50`) + rollup-name / prefix-doubling
+/ named-unit-truth metric sweep on Stanford, with gold MIT as the contrast; per-program
+`/programs/{id}` deep-field + `external_reviews` deep-checks on Stanford; re-confirmation of the two
+carried live breaches (Northwestern + Duke synthesized reviews) via `/programs/{id}.external_reviews`;
+fleet-wide `/institutions/{id}/posts` feed sweep.
+
+**What merged since run 12:** ONE in-scope profile PR — **#638 Stanford** (`origin/main` HEAD). The
+others are out of scope: #637 Import surface + #633 follow-up app code; #635/#636 are the operator's
+skill-growth edits (growth source = U.S. News National Universities ranking, add-don't-idle). So the
+other 27 catalogs are byte-identical to run 12.
+
+**Findings (live API evidence):**
+
+1. **REAL PROGRESS — #638 made Stanford descriptions field-specific.** The old generic gloss +
+   BA-name/"BS"-desc mismatch run 12's backlog flagged are gone; the clean-named rows pass the gold
+   contrast ("Undergraduate economics at Stanford covers micro, macro, econometrics, and policy with
+   the Stanford Institute for Economic Policy Research").
+2. **NEW PROBLEM CLASS — the description-depth pass FABRICATES named units to fake specificity, a
+   live no-fabrication breach.** To make descriptions "specific" #638 attached **another
+   institution's** named college/school to Stanford programs: **Berkeley's "College of Chemistry"**
+   on all 3 Stanford chemical-engineering rows (cert + bachelor's + master's — the same wrong unit
+   copied across credential levels) and **Cornell's "Sibley School"** on 2 Stanford aerospace rows.
+   A real Stanford institute (Freeman Spogli/FSI) is also bolted onto an unrelated field ("Master's
+   in Public Relations, Advertising, and Applied Communication"). A control passed (FSI is correctly
+   named on a political-science row), proving the pass gets some right and INVENTS others — i.e. it
+   is generating institutional trivia from a template, not reading the real catalog page. A
+   confidently-wrong specific reads authoritative and is WORSE than an honest generic gloss. NOT
+   covered by any prior rule: the reviews fabrication-by-synthesis rule (miss #8, run 9) is
+   reviews-only, and the gold-contrast rule demands field-SPECIFICITY but never guards its TRUTH.
+3. **RECURRENCE (NOT new) — Stanford single-dimension pass (miss #8) + prefix-doubling (miss #9).**
+   34% rollup NAMES with the rollup echoed verbatim in `department` ("Bachelor's in Aerospace,
+   Aeronautical, and Astronautical/Space Engineering", dept identical), 85% prefix-doubling
+   ("Bachelor's in Anthropology: School of Humanities and Sciences anthropology combines …"), and
+   `class_profile`/`faculty_contacts`/`tracks` empty. Descriptions-only is not a clear.
+4. **PERSIST — both carried live no-fabrication review breaches unrepaired (now runs 9→13 / 10→13).**
+   Northwestern still ships "Students describe Northwestern's undergraduate program in *Architecture
+   and Related Services, Other* within Weinberg …"; Duke still ships the identical Pratt B.S.E.
+   boilerplate ("… a rigorous engineering degree at a selective private R1 university; praise
+   includes undergraduate research access and Triangle …", field swapped). Re-confirmed live.
+5. **Feeds healthy** — NYU still the ONLY dead feed (`posts=0`); all other 27 fetch ≥33 (Stanford
+   234). No sprawl (28 institutions).
+
+**False alarms caught (diagnosed, not acted on):**
+- **The "Bachelor → Graduate/master" degree-level scan was mostly a FALSE POSITIVE** — `"graduate "`
+  matches inside `"Undergraduate "`. Of 8 hits, 7 were "Undergraduate …" (correct); only "Bachelor's
+  in Applied Mathematics: Graduate applied mathematics at Stanford …" is a real level mismatch — a
+  single row, already covered by the miss #2/#8 credential/degree-type-disagreement rule, not a new
+  class. Re-verified by reading, not by trusting the regex.
+- **Stanford's `external_reviews` are NOT the #619/#626 synthesis class** — its BA-Economics review
+  is program-specific-ish, names real Stanford units (SIEPR, GSB), and carries no CIP rollup; sources
+  mix a program page with a generic Niche page but it is not the institution-level boilerplate. So the
+  Stanford breach is the DESCRIPTIONS, not the reviews.
+- `?page_size=100` 422s (server cap 50) — paginated by 50. The real description field is
+  `description_text`. Rollup/prefix/named-unit heuristics spot-verified against gold MIT (2% prefix,
+  6% rollup, true field-specific units) as the contrast before reporting; the foreign-unit hits
+  ("College of Chemistry" = Berkeley, "Sibley School" = Cornell) were confirmed by external knowledge
+  of which institution owns each unit, with a Stanford-real control (Freeman Spogli) passing.
+
+**Rulebook changes: 1 of ≤3 (ADDS/TIGHTENS no-fabrication + verify-output; loosens nothing):**
+- **miss #8 (new sub-bullet):** a field-specific description must be VERIFIED-TRUE, not merely
+  specific-SOUNDING — a depth pass that INVENTS a concrete fact (a named school/college/center/
+  institute/lab, or a ranking/superlative) to satisfy the gold contrast is fabrication-by-synthesis
+  on the DESCRIPTION dimension, and a confidently-wrong specific is worse than an honest generic
+  gloss. The gold contrast demands a concrete fact; this rule guards its TRUTH. Operational tells:
+  the named unit belongs to a peer institution, or a real same-institution unit is bolted onto an
+  unrelated field, or the same wrong unit is copied across every credential level of one field. Any
+  named unit MUST be one this institution actually has AND that houses this program (verify against
+  the official org/academics page); any ranking/superlative must be cited; else write a true generic
+  clause. Evidence: live API this run — a freshly description-passed catalog attached two peer
+  institutions' named colleges/schools to its own chemistry- and aerospace-engineering rows and
+  repeated each across all three credential levels. (Written generally; the specific school stays
+  in the backlog per the GENERAL-NOT-SPECIFIC rail.) The other 2 reserve changes were NOT used —
+  the single-dimension + prefix-doubling recurrences are already named (miss #8/#9), so adding rules
+  for them would be churn.
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(NEW this run, urgent)** #638 shipped **fabricated unit names to production** (Berkeley's College
+  of Chemistry + Cornell's Sibley School on Stanford rows). The rulebook now forbids the class, but a
+  human may want to correct/remove the live fabricated descriptions directly (the grader does not edit
+  data; queued as the Stanford CRITICAL backlog entry).
+- **(carried, urgent — now 5 intervals)** the Northwestern (43+) and Duke (~5 Pratt) synthesized
+  reviews remain live and unrepaired across runs 9→13 / 10→13; the CRITICAL backlog is not being
+  cleared. A human may want to confirm the enricher is working the CRITICAL backlog top before new
+  description passes.
+- **(carried from runs 2–12, still unreconciled)** miss #9 says "FAIL on null/blank `department`" but
+  gold MIT ships null department and `manifest.py` marks `department` `required=False`. Reconciling
+  would LOOSEN the verify-output invariant → left intact per the rails.
+- **(carried from runs 8–12, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a
+  stub tell — valid for the ENRICHER but not API-visible to the grader. Left intact; a human may want
+  to clarify it is an internal field.
+
+**Backlog delta:** Stanford PROMOTED from HIGH (was row 3) to CRITICAL — a live fabrication breach
+outranks incompleteness (same treatment as Northwestern/Duke). HIGH table re-numbered to 15 entries
+(unchanged otherwise). Header + methodology updated to add the named-unit-truth grading signal and
+the enricher notes warn against inventing named units. Ranking: CRITICAL = Boston University
+(structure) + **Stanford (fabricated descriptions, NEW)** + Northwestern + Duke (fabricated reviews);
+HIGH = 15 catalogs worst-first; MEDIUM = the 8 shallow 22-program stubs (NYU = only dead feed);
+CLEAN = MIT only.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv /
+pytest / Postgres) — same constraint as runs 1–12. Changes are markdown-only (SKILL.md +1 sub-bullet,
+backlog re-rank, this changelog; NO Python, no migrations, no app code), so the enricher code/data
+state is unaffected and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; the single edit ADDS/TIGHTENS no-fabrication + verify-output, weakens
+nothing. The findings that could argue for loosening (null-department FAIL vs gold MIT;
+`_standard`-as-rendered-signal) remain logged for human review, not acted on.
+
+---
+
 ## 2026-06-16 — Run 12 (NO new gaps found — THIRD consecutive interval with zero new enrichment work; live fleet byte-identical across runs 10→11→12, both no-fabrication breaches now persisted 9→12. Changed NO rules; updated backlog header + persistence notes only)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search` → total 28, no sprawl).
