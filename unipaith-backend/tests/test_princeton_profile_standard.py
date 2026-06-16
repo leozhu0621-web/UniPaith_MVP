@@ -142,16 +142,31 @@ def test_flagship_cs_program_is_deeply_enriched():
 
 def test_catalog_has_no_padding_stubs():
     """Every program must have a real department and credential-disambiguated name."""
+    import re
+
     from unipaith.data.profile_catalog_utils import validate_catalog
 
     errors = validate_catalog(p.PROGRAMS)
     assert errors == [], errors
     null_dept = sum(1 for prog in p.PROGRAMS if not prog.get("department"))
     assert null_dept == 0, f"{null_dept} programs missing department"
+    prefix = re.compile(
+        r"^(Bachelor's in|Master's in|Doctor of Philosophy in|Graduate Certificate in) "
+    )
+    prefix_count = sum(1 for prog in p.PROGRAMS if prefix.match(prog.get("program_name", "")))
+    assert prefix_count == 0, f"{prefix_count} programs still carry CIP-prefix names"
+    classif = sum(
+        1
+        for prog in p.PROGRAMS
+        if p._CLASSIFICATION_STUB_RE.match(prog.get("description") or "")
+    )
+    assert classif == 0, f"{classif} programs still carry classification-only descriptions"
 
 
 def test_every_program_is_gold_except_recorded_omissions():
-    assert len(p.PROGRAMS) >= 100, "full IPEDS catalog breadth (UNITID 186131)"
+    # Real Princeton catalog: ~36 undergraduate majors + verified graduate degrees (M.Arch.,
+    # MPA, M.S.E./M.Eng.) — not federal certificate/incidental-master's padding rows.
+    assert len(p.PROGRAMS) >= 35, "verified Princeton degree catalog (UNITID 186131)"
     omittable_sections = {"tracks", "insights", "feeds"}
     for spec in p.PROGRAMS:
         slug = spec["slug"]
@@ -210,7 +225,6 @@ def test_coverable_programs_have_external_reviews():
         "princeton-molecular-biology-bs",
         "princeton-neuroscience-bs",
         "princeton-chemistry-bs",
-        "princeton-computer-science-ms",
         "princeton-architecture-ms",
         "princeton-chemical-engineering-ms",
         "princeton-civil-engineering-ms",
