@@ -95,3 +95,46 @@ async def apply_material(
     return await MaterialIngestService(db).apply(
         user.id, ingest_id, body.model_dump(exclude_none=True)
     )
+
+
+class AnswerFollowupRequest(BaseModel):
+    gap: dict[str, Any]
+    answer: str
+
+
+@router.get("/{ingest_id}/followups")
+async def get_followups(
+    ingest_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Uni's follow-up questions for a just-applied import. Empty when the flag
+    is off so the frontend simply shows nothing."""
+    from sqlalchemy import select as _select
+
+    from unipaith.config import settings
+    from unipaith.services.follow_up_service import FollowUpService
+
+    if not settings.ai_material_followups_v2_enabled:
+        return {"questions": []}
+    row = (
+        await db.execute(
+            _select(MaterialIngest).where(
+                MaterialIngest.id == ingest_id,
+            )
+        )
+    ).scalar_one_or_none()
+    proposed = row.proposed if row else None
+    gaps = await FollowUpService(db).detect(user.id, proposed)
+    return {"questions": [{**g, "prompt": g.get("prompt_hint")} for g in gaps]}
+
+
+@router.post("/followups/answer")
+async def answer_followup(
+    body: AnswerFollowupRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.services.follow_up_service import FollowUpService
+
+    return await FollowUpService(db).answer(user.id, body.gap, body.answer)

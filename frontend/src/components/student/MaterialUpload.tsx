@@ -9,12 +9,16 @@ import { Loader2, Sparkles, Upload } from 'lucide-react'
 
 import {
   type ApplyResult,
+  type FollowupQuestion,
   type MaterialIngest,
   type ProposedProfile,
+  answerFollowup,
   applyMaterial,
+  getFollowups,
   uploadMaterial,
 } from '../../api/materials'
 import Button from '../ui/Button'
+import FollowUpCard from './FollowUpCard'
 import MaterialReviewCard from './MaterialReviewCard'
 
 const ACCEPT = '.pdf,.doc,.docx,.png,.jpg,.jpeg,.txt,.md'
@@ -24,6 +28,7 @@ type Phase =
   | { t: 'uploading' }
   | { t: 'review'; ingest: MaterialIngest }
   | { t: 'applying'; ingest: MaterialIngest }
+  | { t: 'followups'; result: ApplyResult; questions: FollowupQuestion[] }
   | { t: 'done'; result: ApplyResult }
   | { t: 'error'; message: string }
 
@@ -62,8 +67,15 @@ export default function MaterialUpload({
     setPhase({ t: 'applying', ingest })
     try {
       const result = await applyMaterial(ingest.id, selection)
-      setPhase({ t: 'done', result })
       onApplied?.(result)
+      // After saving, see if Uni has follow-up questions.
+      let questions: FollowupQuestion[] = []
+      try {
+        questions = await getFollowups(ingest.id)
+      } catch {
+        questions = []
+      }
+      setPhase(questions.length ? { t: 'followups', result, questions } : { t: 'done', result })
     } catch {
       setPhase({ t: 'error', message: 'Could not save — please try again.' })
     }
@@ -109,6 +121,16 @@ export default function MaterialUpload({
           onConfirm={confirm}
           onCancel={reset}
           applying={phase.t === 'applying'}
+        />
+      )}
+
+      {phase.t === 'followups' && (
+        <FollowUpCard
+          questions={phase.questions}
+          onAnswer={(q, answer) => answerFollowup(q, answer).then(() => undefined)}
+          onDone={() =>
+            setPhase(p => (p.t === 'followups' ? { t: 'done', result: p.result } : p))
+          }
         />
       )}
     </div>
