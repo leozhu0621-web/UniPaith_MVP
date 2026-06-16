@@ -280,6 +280,34 @@ Concrete misses observed in the first runs — each broke a real page:
      carried `external_reviews` while every other field was empty and `_standard` was
      unstamped; the only genuinely clean enriched catalogs carry ZERO template
      descriptions.
+   - **The template fingerprint is the FORM, not any fixed string — every "structural
+     repair" so far has merely REWORDED the template past the previous check, and the
+     reworded form even slipped past this grader's own prior "clean" call. NEVER gate on
+     one template string; gate on the GOLD CONTRAST.** A description is a content-free
+     stub whenever it only CLASSIFIES the program — states its credential level and its
+     owning school/college and swaps in the field name — without a single concrete clause
+     about what the program actually studies or does. The exact wording is a moving
+     target and chasing it is futile: `"{field} — a {Univ} {degree} program offered
+     through {school}"`, `"{name} … offered through the {field}"`, `"{name} is an
+     undergraduate major at {Univ}'s {College}"`, `"{name} is an undergraduate major in
+     {field} at {Univ}'s {College}"`, and `"{field} is a undergraduate bachelor's degree
+     in {School} within {Univ}'s {College}"` are ALL the SAME stub. The durable test is
+     the gold contrast: every gold MIT description states something concrete and specific
+     about the field ("Course 16 educates engineers of aerospace vehicles, autonomy, and
+     space systems … close ties to Lincoln Laboratory"; "Course 4 combines design
+     studios, history and theory, and building technology in the oldest architecture
+     program in the U.S."), so a description that could be generated from
+     `(program_name, degree_type, school)` ALONE — carrying no fact you couldn't infer
+     from those three — is a stub regardless of wording. Such a row also has its rich
+     fields empty (`tracks`/`who_its_for`/`class_profile`/`faculty_contacts`/
+     `external_reviews`) and `_standard` usually unstamped; a depth pass on it is the
+     same wasted, harmful work the structure-before-depth gate forbids. Evidence: live
+     API this run — the three post-run-5 "structural repairs" each only reworded the
+     template or layered reviews while leaving the descriptions pure classification
+     (one rewrote 299 old-form rows to a NEW classification form and left every deep
+     field empty); the UNION pure-classification share is 62–100% on EVERY enriched
+     catalog, INCLUDING the two run-5 flagged "clean" (100% and 81%). MIT is the ONLY
+     catalog whose descriptions are field-specific.
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
@@ -320,12 +348,18 @@ Concrete misses observed in the first runs — each broke a real page:
      rollup}" — trailing ", General"/", Other", federal multi-clause comma-and
      lists, or embedded slashes — even when the department is now non-null**, and
      **a high rate of "— {concentration}" rows that split one base degree**, and
-     **the template-description SHARE — count the current live form
-     `"{program_name} is an undergraduate|graduate program at {Univ}'s {school},
-     offered through the {field}"` (broken definite article before a bare field),
-     which is a PRIMARY independent FAIL: a high share means the catalog is mostly
-     un-researched stubs even where the NAMES read real, confirmed by every rich
-     field being empty and `_standard` unstamped on those rows**) before
+     **the template-description SHARE — count pure-CLASSIFICATION descriptions in
+     ANY wording, NOT one fixed string: the live form keeps changing to evade a
+     literal-string check (`… offered through the {field}` → `{name} is an
+     undergraduate major at {Univ}'s {College}` → `{field} is a undergraduate
+     bachelor's degree in {School} within {Univ}'s {College}` are all the same
+     stub), so key the count on the durable test instead — a description FAILS if it
+     could be generated from `(program_name, degree_type, school)` alone (it only
+     states the credential level + owning unit + swapped-in field and adds no
+     field-specific fact, cf. gold MIT's "Course 16 educates engineers of aerospace
+     vehicles…"). This SHARE is a PRIMARY independent FAIL: a high share means the
+     catalog is mostly un-researched stubs even where the NAMES read real, confirmed
+     by every rich field being empty and `_standard` unstamped on those rows**) before
      shipping — a padded catalog must FAIL the run.
    - **Feeds:** a `content_sources` feed counts only if it actually FETCHES ≥1
      item. **Confirm the feed produces** (the news_rss/events_feed resolves and
