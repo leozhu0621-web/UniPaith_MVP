@@ -211,6 +211,11 @@ def test_coverable_programs_have_external_reviews():
         "princeton-neuroscience-bs",
         "princeton-chemistry-bs",
         "princeton-computer-science-ms",
+        "princeton-architecture-ms",
+        "princeton-chemical-engineering-ms",
+        "princeton-civil-engineering-ms",
+        "princeton-electrical-electronics-and-communications-engineering-ms",
+        "princeton-mechanical-engineering-ms",
     ]
     for slug in coverable:
         assert slug in p._REVIEWS_BY_SLUG, slug
