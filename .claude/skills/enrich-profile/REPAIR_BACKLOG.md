@@ -7,16 +7,19 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-16 (grader run 11). **NO new profile-enrichment PR has merged since
-run 10** — the run-10 grader PR (#631) is `origin/main` HEAD; the only commits after run 9
-were the four already-graded description PRs (#620 Yale, #622 UChicago, #626 Duke, #628
-Columbia) plus out-of-scope app-code (#623 profile-UI, #624/#625/#629/#630 materials, #627
-nav rename). So the live fleet is byte-identical to what run 10 graded; every metric below was
-re-confirmed live this run (Columbia 34% rollup / 90% prefix-doubled; UChicago 33% / 88%;
-Northwestern + Duke synthesized reviews STILL live). No NEW defect class; the grader changed
-NO rules (anti-churn). The four description PRs ARE real description progress (the old "…
-offered through the {field}" template is gone: 0% old-template, 0% empty on all four) but each
-still carries defects the rulebook ALREADY forbids:_
+_Last graded: 2026-06-16 (grader run 12). **NO new profile-enrichment PR has merged since
+run 10** — the run-11 grader PR (#632) is `origin/main` HEAD with ZERO commits after it; the
+run-10 grader PR (#631) precedes it; the last profile work was the four description PRs (#620
+Yale, #622 UChicago, #626 Duke, #628 Columbia) graded by run 10. So the live fleet is now
+byte-identical across runs 10→11→12 (THREE consecutive intervals with no new enrichment).
+Every metric below was re-confirmed live this run (Northwestern n=308 rollup=1% / prefix-dbl=97%;
+Columbia n=263 34% / 90%; Duke n=154 3% / 66%; gold MIT n=65 6% / **2%**; both Northwestern +
+Duke synthesized reviews STILL live — Northwestern's "Architecture and Related Services, Other"
+CIP-rollup summary and Duke's 5 identical Pratt B.S.E. "rigorous engineering degree at a
+selective private R1 university" boilerplate). No NEW defect class; the grader changed NO rules
+(anti-churn). The four description PRs ARE real description progress (the old "… offered through
+the {field}" template is gone: 0% old-template, 0% empty on all four) but each still carries
+defects the rulebook ALREADY forbids:_
 
 - **Prefix-doubling (SKILL.md miss #9, added run 9) recurred on ALL FOUR new catalogs.**
   Descriptions still lead with the program name verbatim (`"{program_name}: …"`), doubling the
@@ -86,9 +89,10 @@ live no-fabrication breach outranks mere incompleteness. **Repair: REMOVE the sy
 reviews and either re-gather genuine program-specific coverage or omit-with-reason** — then
 strip the 97% name-prefix-doubling and fill real per-program deep content.
 
-_First seen 2026-06-16 (run 9). Still unrepaired in runs 10–11 (re-confirmed live this run:
-the "Architecture and Related Services, Other" CIP-rollup review is unchanged). Fix the
-fabricated reviews before any new depth pass._
+_First seen 2026-06-16 (run 9). Still unrepaired across runs 10–12 (re-confirmed live this run:
+the "Architecture and Related Services, Other" CIP-rollup review on "Bachelor of Arts in
+Architecture Studies" is unchanged). Now persisted FOUR grading intervals (9→12) with no repair
+PR. Fix the fabricated reviews before any new depth pass._
 
 ## CRITICAL — Duke University (fabricated-by-synthesis reviews shipped LIVE this run)
 
@@ -102,9 +106,10 @@ miss #8). Smaller in scale than Northwestern but the same live no-fabrication br
 **Repair: REMOVE/re-gather those synthesized reviews per-program (or omit-with-reason)**, then
 strip the 66% name-prefix-doubling and fill real per-program deep content.
 
-_First seen 2026-06-16 (run 10). Still unrepaired in run 11 (re-confirmed live: the Pratt B.S.E.
-rows still share the identical "…rigorous engineering degree at a selective private R1
-university" boilerplate). Fix the synthesized reviews before any new depth pass._
+_First seen 2026-06-16 (run 10). Still unrepaired in runs 11–12 (re-confirmed live this run: 5
+Pratt B.S.E. rows still share the identical "…rigorous engineering degree at a selective private
+R1 university" boilerplate, only the field swapped). Fix the synthesized reviews before any new
+depth pass._
 
 ## HIGH — fabricated/incomplete catalogs (worst-first)
 
