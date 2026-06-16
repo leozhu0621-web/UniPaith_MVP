@@ -6,6 +6,100 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-16 — Run 11 (NO new gaps found — the enricher shipped NO new profile work since run 10, so the live fleet is byte-identical to what run 10 graded; every metric re-confirmed, both live fabrication breaches persist. Changed NO rules; re-confirmed backlog)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search`). Full program
+pagination (`page_size=50`) + metric sweep across the 10 worst/representative catalogs
+(Boston U, Columbia, UChicago, Duke, Northwestern, Yale, Harvard, Rice, UCLA, gold MIT);
+per-program `/programs/{id}` `external_reviews` deep-checks on Northwestern + Duke (the two
+live no-fabrication breaches); institution-level `school_outcomes.campus_photos` +
+`ranking_data` sweep across all 28.
+
+**What merged since run 10:** NOTHING profile-related. The run-10 grader PR (#631) is
+`origin/main` HEAD — zero commits after it. Since run 9 the only profile PRs were the four
+description passes run 10 already graded (#620 Yale, #622 UChicago, #626 Duke, #628 Columbia);
+everything else is out-of-scope app code (#623 profile-UI redesign, #624/#625/#629/#630
+"materials" feature, #627 `/s` nav rename). So **no new enrichment output exists to grade** —
+the enricher has not fired the profile routine this interval.
+
+**Findings (live API evidence — all identical to run 10):**
+
+1. **Fleet metrics unchanged** (live this run): Columbia n=263 rollup=34% prefix-dbl=90%;
+   UChicago n=109 33%/88%; Harvard n=343 35%/81%; Yale n=189 4%/69%; Duke n=154 2%/66%;
+   Northwestern n=308 1%/96%; Rice n=159 0%/100%; Boston U n=360 6%/91%; UCLA n=22 31%/0%
+   (null dept ×22); gold MIT n=65 6%/**1%**. Matches run 10 within rounding — confirming no
+   new enrichment landed.
+2. **Both live no-fabrication breaches PERSIST (the two top non-BU CRITICAL entries).**
+   Northwestern still ships the synthesized "Students describe Northwestern's undergraduate
+   program in *Architecture and Related Services, Other* within Weinberg…" CIP-rollup review
+   (28 reviewed rows in the first 120). Duke still ships the copy-paste Pratt boilerplate —
+   ≥3 B.S.E. rows share the identical "…a rigorous engineering degree at a selective private
+   R1 university; praise includes undergraduate research access and Triangle…" only the field
+   swapped (30 reviewed rows in the first 120). Unrepaired since runs 9/10.
+3. **Feeds healthy** — NYU still the ONLY dead feed (`posts=0`); BU 167, Columbia 575, Duke
+   353, Northwestern 53, MIT 186. No sprawl (still 28 institutions; no new university added).
+4. **Photos** — the 20 enriched institutions carry 5 `campus_photos`; the 8 known MEDIUM
+   stubs (GaTech, NYU, UTAustin, UCLA, UIUC, Michigan, USC, UW) carry 0 (breaks card header +
+   hero — already backlog MEDIUM). No new photo class.
+
+**False alarms caught (diagnosed, not acted on):**
+- **`ranking_data.ownership_type` is inconsistent fleet-wide — but it RENDERS correctly, so it
+  is cosmetic, not a defect, and NOT a rulebook gap.** Gold MIT, Caltech, and Stanford carry
+  `"private_nonprofit"` while the other 14 private schools carry plain `"private"`, and
+  SKILL.md miss #4 instructs `private`|`public`. I traced both consumers:
+  `classifyInstitution.ts` keys the explore-card eyebrow on `own.includes('private')` — so
+  `private_nonprofit` matches and renders "Private Research" identically; the detail-page Type
+  fact title-cases it ("Private Nonprofit Research University" vs "Private Research
+  University") — verbose but accurate and rendering fine. The card eyebrow (what miss #4 cares
+  about) is correct for both forms, AND the gold reference itself uses `private_nonprofit`, so
+  mandating one form would be cosmetic churn against gold, not a fix. Logged, not ruled.
+- `?page_size=100` 422s (server cap 50) — paginated by 50. The real description field is
+  `description_text`. My rollup/prefix heuristics were spot-read-verified against MIT (1%
+  prefix) as the gold contrast before ranking.
+
+**Rulebook changes: NONE (0 of ≤3).** No new enrichment output existed to grade, and every
+live defect is a recurrence of a class the rulebook ALREADY names (prefix-doubling miss #9 run
+9; single-dimension passes miss #8 run 8; fabrication-by-synthesis reviews miss #8 run 9).
+Per the SAFETY RAILS (no-edit-without-evidence-of-a-NEW-problem; "Clean fleet → change
+nothing… Never invent a rule to look busy"; anti-churn), restating present rules would be
+churn. The one new signal (ownership_type inconsistency) renders correctly → cosmetic, not a
+defect → no rule. Post-edit self-review: SKILL.md untouched, miss numbering still sequential
+1–9, all invariants intact.
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(carried, urgent)** the two live no-fabrication breaches (Northwestern 43+ synthesized
+  reviews, Duke ~5 Pratt boilerplate reviews) remain in production and the grader CANNOT edit
+  data — only a human or the enricher can remove/re-gather them. They have now persisted across
+  runs 9→11 with no repair PR. The enricher has not run the profile routine since run 10
+  (it shipped only app-code "materials" PRs this interval), so the repair backlog is not being
+  worked — a human may want to either run the enricher against the CRITICAL backlog top or
+  remove the fabricated reviews directly.
+- **(carried from runs 2–10, still unreconciled)** miss #9 says "FAIL on null/blank
+  `department`" but gold MIT ships null department on all programs and `manifest.py` marks
+  `department` `required=False`. Reconciling would LOOSEN the verify-output invariant → left
+  intact per the rails.
+- **(carried from runs 8–10, methodology)** misses #8/#9 cite "`_standard` usually unstamped"
+  as a stub tell — valid for the ENRICHER (which sees `_standard`) but not API-visible to the
+  grader. Left intact; a human may want to clarify it is an internal field.
+
+**Backlog delta:** none material — no new enrichment to re-rank. Updated the "Last graded"
+header to run 11 (recording that nothing merged since run 10) and the Northwestern/Duke
+CRITICAL first-seen lines to note they were re-confirmed live this run. Ranking unchanged:
+CRITICAL = Boston University (structure) + Northwestern + Duke (live synthesized reviews);
+HIGH = the same 16 catalogs worst-first; MEDIUM = the 8 shallow 22-program stubs (NYU = only
+dead feed); CLEAN = MIT only.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend
+venv / pytest / Postgres) — same constraint as runs 1–10. Changes are markdown-only (backlog
+header + this changelog; NO SKILL.md edit, no Python, no migrations, no app code), so the
+enricher code/data state is unaffected and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; no rule changed, so nothing weakened. The findings that could
+argue for loosening (null-department FAIL vs gold MIT; `_standard`-as-rendered-signal;
+ownership_type form) remain logged for human review, not acted on.
+
+---
+
 ## 2026-06-16 — Run 10 (NO new gaps found — every defect this run is a recurrence of a class the rulebook already names; 3 of 4 description passes re-committed prefix-doubling AFTER the run-9 rule landed, and Duke shipped fabrication-by-synthesis reviews live. Changed NO rules per anti-churn; re-ranked backlog; flagged behavioral recurrence)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search`; full program
