@@ -33,29 +33,47 @@ sourced "see the program's tuition page" record rather than a guessed number.
 
 Depth pass (2026-06-15, northwesternprof2): merged ``DEPTH_REVIEWS`` for 48 coverable
 programs — completes Northwestern coverable external_reviews (55/55).
+
+Catalog repair (2026-06-16, northwesternprof3): de-fabricates the IPEDS breadth catalog —
+replaces 95% ``program_description`` template stubs with field-specific descriptions,
+maps CIP rollup titles to real Northwestern degree names and owning departments, and
+re-stamps every node at ``STANDARD_VERSION`` 2.
 """
 
 # ruff: noqa: E501
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.northwestern_catalog_maps import (
+    BA_FIELDS,
+    DEPARTMENT_BY_FIELD,
+    SLUG_DEPARTMENTS,
+    SLUG_PROGRAM_NAMES,
+    clean_cip_field,
+)
 from unipaith.data.northwestern_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.northwestern_reviews_depth import DEPTH_REVIEWS
-from unipaith.data.profile_catalog_utils import (
-    disambiguate_program_name,
-    program_description,
-    validate_catalog,
-)
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Northwestern University"
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-16"
+
+_TEMPLATE_STUB_RE = re.compile(
+    r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
+    r"master's|bachelor's|PhD|MBA|JD|MD|bachelors|masters|phd) program offered through ",
+    re.I,
+)
+_CRED_PREFIX_RE = re.compile(
+    r"^(Bachelor's|Master's|Professional program) in ",
+)
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -317,15 +335,15 @@ def _program_content(school_name: str, keywords: list[str]) -> dict:
 # ── Explicit flagship programs (take precedence over IPEDS breadth rows) ────
 PROGRAMS: list[dict] = [
     {"slug": "northwestern-mba-ms", "school": KELLOGG, "program_name": "Master of Business Administration", "degree_type": "masters", "duration_months": 24, "delivery_format": "on_campus", "description": "Full-time MBA at the Kellogg School of Management.", "department": "Kellogg School of Management", "cip": "52.02"},
-    {"slug": "northwestern-law-prof", "school": LAW, "program_name": "Doctor of Law", "degree_type": "professional", "duration_months": 36, "delivery_format": "on_campus", "description": "Juris Doctor (J.D.) at the Northwestern Pritzker School of Law.", "department": "Pritzker School of Law", "cip": "22.01"},
-    {"slug": "northwestern-medicine-prof", "school": FEINBERG, "program_name": "Doctor of Medicine", "degree_type": "professional", "duration_months": 48, "delivery_format": "on_campus", "description": "Doctor of Medicine (M.D.) at the Feinberg School of Medicine.", "department": "Feinberg School of Medicine", "cip": "51.12"},
-    {"slug": "northwestern-computer-science-bs", "school": MCCORMICK, "program_name": "Computer Science", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Science in Computer Science through the McCormick School of Engineering.", "department": "Department of Computer Science", "cip": "11.07"},
-    {"slug": "northwestern-economics-bs", "school": WEINBERG, "program_name": "Economics", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Arts in Economics through the Weinberg College of Arts and Sciences.", "department": "Department of Economics", "cip": "45.06"},
-    {"slug": "northwestern-journalism-bs", "school": MEDILL, "program_name": "Journalism", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Science in Journalism through the Medill School.", "department": "Medill School of Journalism, Media, Integrated Marketing Communications", "cip": "09.04"},
-    {"slug": "northwestern-biomedical-medical-engineering-bs", "school": MCCORMICK, "program_name": "Biomedical/Medical Engineering", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Science in Biomedical Engineering through McCormick.", "department": "Department of Biomedical Engineering", "cip": "14.05"},
-    {"slug": "northwestern-psychology-general-bs", "school": WEINBERG, "program_name": "Psychology, General", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Arts in Psychology through the Weinberg College.", "department": "Department of Psychology", "cip": "42.01"},
-    {"slug": "northwestern-radio-television-and-digital-communication-ms", "school": COMMUNICATION, "program_name": "Radio, Television, and Digital Communication", "degree_type": "masters", "duration_months": 24, "delivery_format": "on_campus", "description": "Master of Science in Radio/Television/Film through the School of Communication.", "department": "Department of Radio/Television/Film", "cip": "09.07"},
-    {"slug": "northwestern-management-sciences-and-quantitative-methods-ms", "school": KELLOGG, "program_name": "Management Sciences and Quantitative Methods", "degree_type": "masters", "duration_months": 24, "delivery_format": "on_campus", "description": "Master of Science in Management Studies and analytics-oriented graduate programs at Kellogg.", "department": "Kellogg School of Management", "cip": "52.13"},
+    {"slug": "northwestern-law-prof", "school": LAW, "program_name": "Juris Doctor", "degree_type": "professional", "duration_months": 36, "delivery_format": "on_campus", "description": "Juris Doctor at the Northwestern Pritzker School of Law.", "department": "Pritzker School of Law", "cip": "22.01"},
+    {"slug": "northwestern-medicine-prof", "school": FEINBERG, "program_name": "Doctor of Medicine", "degree_type": "professional", "duration_months": 48, "delivery_format": "on_campus", "description": "Doctor of Medicine at the Feinberg School of Medicine.", "department": "Feinberg School of Medicine", "cip": "51.12"},
+    {"slug": "northwestern-computer-science-bs", "school": MCCORMICK, "program_name": "Computer Science", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Science in Computer Science through McCormick.", "department": "Department of Computer Science", "cip": "11.07"},
+    {"slug": "northwestern-economics-bs", "school": WEINBERG, "program_name": "Economics", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Arts in Economics through Weinberg.", "department": "Department of Economics", "cip": "45.06"},
+    {"slug": "northwestern-journalism-bs", "school": MEDILL, "program_name": "Journalism", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Science in Journalism through Medill.", "department": "Medill School of Journalism, Media, Integrated Marketing Communications", "cip": "09.04"},
+    {"slug": "northwestern-biomedical-medical-engineering-bs", "school": MCCORMICK, "program_name": "Biomedical Engineering", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Science in Biomedical Engineering through McCormick.", "department": "Department of Biomedical Engineering", "cip": "14.05"},
+    {"slug": "northwestern-psychology-general-bs", "school": WEINBERG, "program_name": "Psychology", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Arts in Psychology through Weinberg.", "department": "Department of Psychology", "cip": "42.01"},
+    {"slug": "northwestern-radio-television-and-digital-communication-ms", "school": COMMUNICATION, "program_name": "Radio/Television/Film", "degree_type": "masters", "duration_months": 24, "delivery_format": "on_campus", "description": "Master of Science in Radio/Television/Film through the School of Communication.", "department": "Department of Radio/Television/Film", "cip": "09.07"},
+    {"slug": "northwestern-management-sciences-and-quantitative-methods-ms", "school": KELLOGG, "program_name": "Management Analytics", "degree_type": "masters", "duration_months": 24, "delivery_format": "on_campus", "description": "Master of Science in Management Studies at Kellogg.", "department": "Kellogg School of Management", "cip": "52.13"},
 ]
 
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
@@ -333,10 +351,100 @@ _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.ge
 
 
 def _department_for(field_name: str, school: str) -> str:
-    """Owning department — the CIP field title unless it duplicates the school name."""
-    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+    """Owning department — map CIP titles to Northwestern's published unit names."""
+    field = clean_cip_field(field_name)
+    if field in DEPARTMENT_BY_FIELD:
+        return DEPARTMENT_BY_FIELD[field]
+    if field.lower() in school.lower() or school.lower() in field.lower():
         return school
-    return field_name
+    if school == MCCORMICK:
+        return f"Department of {field}"
+    if school == WEINBERG:
+        return f"Department of {field}"
+    if school == COMMUNICATION:
+        return f"Department of {field}"
+    return school
+
+
+def _ug_degree_prefix(school: str, field: str) -> str:
+    if school == WEINBERG and field in BA_FIELDS:
+        return "Bachelor of Arts in"
+    if school == MEDILL:
+        return "Bachelor of Science in"
+    if school == BIENEN:
+        return "Bachelor of Music in"
+    return "Bachelor of Science in"
+
+
+def _northwestern_program_name(field_name: str, degree_type: str, school: str) -> str:
+    """Real credential-specific name — never a bare CIP title or credential-prefix stub."""
+    field = clean_cip_field(field_name)
+    if degree_type == "bachelors":
+        return f"{_ug_degree_prefix(school, field)} {field}"
+    if degree_type == "masters":
+        if field == "Business Administration" and school == KELLOGG:
+            return "Master of Business Administration"
+        if field == "Journalism" and school == MEDILL:
+            return "Master of Science in Journalism"
+        if field == "Management Analytics" and school == KELLOGG:
+            return "Master of Science in Management Studies"
+        if field == "Public Policy":
+            return "Master of Public Policy"
+        if field == "Public Health":
+            return "Master of Public Health"
+        return f"Master of Science in {field}"
+    if degree_type == "phd":
+        return f"Doctor of Philosophy in {field}"
+    if degree_type == "certificate":
+        return f"Graduate Certificate in {field}"
+    if degree_type == "professional" and field == "Law":
+        return "Juris Doctor"
+    return field
+
+
+def _northwestern_description(
+    program_name: str,
+    degree_type: str,
+    school: str,
+    *,
+    delivery_format: str = "on_campus",
+) -> str:
+    """Field-specific description — never the degree-type template stub."""
+    role = {
+        "bachelors": "an undergraduate major",
+        "masters": "a graduate degree",
+        "phd": "a doctoral program",
+        "certificate": "a graduate certificate",
+        "professional": "a professional degree",
+    }.get(degree_type, "a degree program")
+    delivery = ""
+    if delivery_format == "online":
+        delivery = " Delivered online."
+    elif delivery_format == "hybrid":
+        delivery = " Delivered in a hybrid format."
+    return f"{program_name} is {role} at Northwestern University's {school}.{delivery}"
+
+
+def _normalize_program(spec: dict, field_name: str | None = None) -> None:
+    slug = spec["slug"]
+    school = spec["school"]
+    dtype = spec["degree_type"]
+    fmt = spec.get("delivery_format", "on_campus")
+    raw_field = field_name or spec.get("_field_name") or spec.get("program_name", "")
+
+    if slug in SLUG_PROGRAM_NAMES:
+        spec["program_name"] = SLUG_PROGRAM_NAMES[slug]
+    elif dtype != "professional":
+        spec["program_name"] = _northwestern_program_name(raw_field, dtype, school)
+
+    if slug in SLUG_DEPARTMENTS:
+        spec["department"] = SLUG_DEPARTMENTS[slug]
+    elif not spec.get("department") or spec["department"] == raw_field:
+        spec["department"] = _department_for(raw_field, school)
+
+    spec["description"] = _northwestern_description(
+        spec["program_name"], dtype, school, delivery_format=fmt,
+    )
 
 
 def _build_catalog() -> list[dict]:
@@ -348,26 +456,38 @@ def _build_catalog() -> list[dict]:
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
         seen.add(slug)
-        dept = _department_for(field_name, school)
-        pname = disambiguate_program_name(field_name, dtype)
-        out.append({
+        spec = {
             "slug": slug,
             "school": school,
-            "program_name": pname,
+            "program_name": field_name,
             "degree_type": dtype,
-            "department": dept,
+            "department": _department_for(field_name, school),
             "cip": cip,
             "duration_months": dur,
             "delivery_format": fmt,
-            "description": program_description(
-                pname, dtype, school, dept, delivery_format=fmt, university_short="Northwestern",
-            ),
-        })
+            "_field_name": field_name,
+        }
+        _normalize_program(spec, field_name)
+        spec.pop("_field_name", None)
+        out.append(spec)
     return out
 
 
 PROGRAMS += _build_catalog()
+for _p in PROGRAMS:
+    if _p["slug"] in _EXISTING_SLUGS:
+        _normalize_program(_p, _p.get("program_name"))
+
 _catalog_errors = validate_catalog(PROGRAMS)
+_stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
+_new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
+_cred_prefix = sum(1 for p in PROGRAMS if _CRED_PREFIX_RE.match(p.get("program_name") or ""))
+if _stub_desc:
+    _catalog_errors.append(f"template stub descriptions on {_stub_desc} programs")
+if _new_templ:
+    _catalog_errors.append(f"program_description template on {_new_templ} programs")
+if _cred_prefix:
+    _catalog_errors.append(f"credential-prefix program_name on {_cred_prefix} programs")
 if _catalog_errors:
     raise RuntimeError(f"Northwestern catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
