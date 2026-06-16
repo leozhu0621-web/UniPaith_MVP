@@ -257,6 +257,29 @@ Concrete misses observed in the first runs — each broke a real page:
      39%, Harvard 35%), and fabricated rows like Northwestern's "Bachelor's in
      Architecture and Related Services, Other" now carry `external_reviews` while their
      names/departments/template descriptions remain pure CIP-rollup fabrication.
+   - **The TEMPLATE-DESCRIPTION stub is its own fabricated-row class — a real-looking
+     `program_name` and a real `department` do NOT redeem it, and it is the BROADEST
+     fingerprint of an un-researched catalog. Rank and gate catalogs by
+     template-description SHARE, not just rollup-NAME share.** The gate above keys on
+     the CIP-rollup NAME, but the dominant live tell is the DESCRIPTION: a pure
+     degree-type template `"{program_name} is an undergraduate|graduate program at
+     {Univ}'s {school}, offered through the {field}."` — note the grammatically-broken
+     definite article before a bare field ("…offered through the Anthropology") that no
+     real catalog prints. A row carrying that description was minted from an IPEDS/CIP
+     list, not researched: every rich field is empty (curriculum, admissions, costs,
+     outcomes, class_profile, faculty_contacts, external_reviews) and `_standard` is
+     usually unstamped — so it is a STUB even when its name is a real degree
+     designation ("Bachelor of Arts in Anthropology") and its department is the real
+     unit. Rollup-NAME density UNDERCOUNTS this: the two metrics diverge widely, so a
+     catalog can read "clean by name" while most of it is template stubs — classify and
+     repair by template-description share. A reviews/photo depth pass on a
+     template-stub row is the same wasted, harmful work this gate forbids; de-fabricate
+     the row (research real field-specific basics + content, or omit it) BEFORE any
+     depth pass. Evidence: live API this run — two catalogs with near-zero rollup names
+     ran 40% / 66% template stubs yet were graded "clean," and a freshly-"reviewed" row
+     carried `external_reviews` while every other field was empty and `_standard` was
+     unstamped; the only genuinely clean enriched catalogs carry ZERO template
+     descriptions.
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
@@ -296,7 +319,13 @@ Concrete misses observed in the first runs — each broke a real page:
      descriptions, **`program_name`s of the form "{generic credential} in {CIP
      rollup}" — trailing ", General"/", Other", federal multi-clause comma-and
      lists, or embedded slashes — even when the department is now non-null**, and
-     **a high rate of "— {concentration}" rows that split one base degree**) before
+     **a high rate of "— {concentration}" rows that split one base degree**, and
+     **the template-description SHARE — count the current live form
+     `"{program_name} is an undergraduate|graduate program at {Univ}'s {school},
+     offered through the {field}"` (broken definite article before a bare field),
+     which is a PRIMARY independent FAIL: a high share means the catalog is mostly
+     un-researched stubs even where the NAMES read real, confirmed by every rich
+     field being empty and `_standard` unstamped on those rows**) before
      shipping — a padded catalog must FAIL the run.
    - **Feeds:** a `content_sources` feed counts only if it actually FETCHES ≥1
      item. **Confirm the feed produces** (the news_rss/events_feed resolves and
