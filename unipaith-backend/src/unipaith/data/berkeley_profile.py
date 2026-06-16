@@ -40,29 +40,39 @@ graduate programs are the resumption scope for a later run.
 
 Depth pass (2026-06-15, berkeleyprof6): merged ``DEPTH_REVIEWS`` for 59 coverable
 programs — completes Berkeley coverable external_reviews (70/70).
+
+Description depth pass (2026-06-16, berkeleyprof7): replaces all classification-only
+``{name} is a {degree} program at Berkeley's {school}`` stubs with field-specific
+clauses from ``berkeley_field_descriptions.py`` (269/269 programs).
 """
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.berkeley_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
 from unipaith.data.berkeley_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.berkeley_reviews_depth import DEPTH_REVIEWS
-from unipaith.data.profile_catalog_utils import (
-    disambiguate_program_name,
-    program_description,
-    validate_catalog,
-)
+from unipaith.data.profile_catalog_utils import disambiguate_program_name, validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of California-Berkeley"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-15"
+ENRICHED_AT = "2026-06-16"
+
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is (an|a) (undergraduate|graduate|doctoral|professional|degree) program at Berkeley",
+)
+
+_SLUG_TO_FIELD: dict[str, str] = {
+    slug: field_name for slug, _, field_name, _, _, _, _, _ in _IPEDS_CATALOG
+}
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -963,6 +973,37 @@ def _department_for(field_name: str, school: str) -> str:
     return field_name
 
 
+def _berkeley_description(spec: dict, field: str | None = None) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    if slug in SLUG_DESCRIPTIONS:
+        clause = SLUG_DESCRIPTIONS[slug]
+    else:
+        field_key = (
+            field
+            or spec.get("_field_name")
+            or _SLUG_TO_FIELD.get(slug)
+            or spec.get("program_name", "")
+        )
+        clause = FIELD_DESCRIPTIONS.get(field_key)
+        if not clause:
+            raise ValueError(
+                f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
+            )
+    fmt = spec.get("delivery_format", "on_campus")
+    delivery = ""
+    if fmt == "online":
+        delivery = " Delivered online."
+    elif fmt == "hybrid":
+        delivery = " Delivered in a hybrid format."
+    return f"{spec['program_name']}: {clause}{delivery}"
+
+
+def _normalize_program(spec: dict, field_name: str | None = None) -> None:
+    """Stamp a field-specific description on every program node."""
+    spec["description"] = _berkeley_description(spec, field=field_name)
+
+
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
     out: list[dict] = []
@@ -976,7 +1017,7 @@ def _build_catalog() -> list[dict]:
         dept = _department_for(field_name, school)
         delivery = _delivery_format(fmt)
         pname = disambiguate_program_name(field_name, dtype)
-        out.append({
+        spec = {
             "slug": slug,
             "school": school,
             "program_name": pname,
@@ -985,20 +1026,26 @@ def _build_catalog() -> list[dict]:
             "cip": cip,
             "duration_months": dur,
             "delivery_format": delivery,
-            "description": program_description(
-                pname,
-                dtype,
-                school,
-                dept,
-                delivery_format=delivery,
-                university_short="Berkeley",
-            ),
-        })
+            "_field_name": field_name,
+        }
+        _normalize_program(spec, field_name)
+        spec.pop("_field_name", None)
+        out.append(spec)
     return out
 
 
 PROGRAMS += _build_catalog()
+for _p in PROGRAMS:
+    _normalize_program(_p)
+
 _catalog_errors = validate_catalog(PROGRAMS)
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
 if _catalog_errors:
     raise RuntimeError(f"Berkeley catalog quality gate failed: {_catalog_errors}")
 for _p in PROGRAMS:
