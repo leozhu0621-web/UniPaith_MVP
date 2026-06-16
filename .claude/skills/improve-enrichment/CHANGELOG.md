@@ -6,6 +6,121 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-16 — Run 8 (the enricher fixed the DESCRIPTION half run 7 flagged — real progress — but did it on only one half of the catalogs, layering field-specific descriptions on top of un-fixed CIP-rollup names; the bar is dimension-agnostic. Also: `_standard` is NOT API-visible — prior runs' "unstamped" evidence was unfounded)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search`, full program
+pagination per institution by `page_size=50`; per-program `/programs/{id}` deep-field
+spot-checks on CMU/Berkeley/Penn/JHU/UCSD/MIT). Recently-changed focus on the 3 profile PRs
+merged since run 7 — all "field-specific program descriptions" passes: #612 CMU, #613
+Berkeley, #614 Penn. Student's-eye pass: those 3 + JHU/UW-Madison/UCSD (run-7 HIGH) + Harvard/
+Columbia/Cornell/Chicago/Stanford/Princeton/Caltech/Purdue/Duke/Yale/Rice description-state
+sampling + a fleet-wide feed (`/institutions/{id}/posts`) + rollup-name sweep.
+
+**Findings (live API evidence):**
+
+1. **REAL PROGRESS — the enricher fixed the DESCRIPTION half run 7 flagged.** #612 CMU,
+   #613 Berkeley, #614 Penn now carry genuinely field-specific descriptions that pass the
+   gold contrast (add a fact you could NOT infer from name+degree+school): CMU AI "the
+   nation's first dedicated undergraduate AI degree … across SCS institutes"; Berkeley
+   astrophysics "access to Lick Observatory, Keck partnerships, and the campus radio
+   astronomy lab"; Penn "Wharton's undergraduate BS in Economics", "Penn Museum collections".
+   JHU (#610, graded by run 7 but mis-called "content un-researched") is ALSO field-specific
+   ("Homewood anthropology combines archaeological fieldwork, medical anthropology … Baltimore
+   and Chesapeake research"). So MIT/JHU/CMU/Berkeley/Penn descriptions are now genuinely real.
+2. **NEW PROBLEM CLASS — the description fix was a SINGLE-DIMENSION pass: two of the three
+   catalogs got field-specific descriptions layered on top of UN-de-rolled-up CIP-rollup
+   NAMES.** Live `/programs` list: **Berkeley 37% and Penn 28%** of rows are still
+   "{credential} in {CIP rollup}" ("Bachelor's in Biomedical/Medical Engineering", "Bachelor's
+   in Accounting and Related Services"), with the rollup echoed verbatim in `department`. This
+   is the exact INVERSE of run 7 (names fixed, descriptions not) — confirming the two
+   fabrication dimensions are being fixed independently and inconsistently. CMU (1% rollup
+   names, real departments) did BOTH halves and is the model of this run's PRs.
+3. **The two dimensions are inconsistent FLEET-WIDE** (rollup-name share via list API +
+   description form via sampling): names-clean-but-classification-descriptions = UCSD (0%),
+   UW-Madison (1%), Northwestern (1%), Purdue (10%); descriptions-field-specific-but-rollup-
+   names = Berkeley (37%), Penn (28%); fails BOTH = Harvard (35%, mixed/long-tail old
+   template), Columbia (34%), Stanford (34%), Cornell (33%), Chicago (33%), Princeton (27%);
+   low-rollup-but-old-template/generic-gloss descriptions = Yale (4%), Duke (2%), Rice (0%),
+   Caltech (20%); BOTH halves done = MIT, JHU (0%), CMU (1%).
+4. **`_standard` is NOT exposed by the public API — gold MIT shows `NONE` on every program
+   AND on the institution detail.** So "`_standard` unstamped," cited as live evidence in
+   runs 5–7 and the backlog, is NOT verifiable from the API and was an unfounded grading
+   signal. The enricher legitimately stamps `_standard` in its data module (where conformance
+   sees it); only the grader's reliance on it was wrong. Re-grounded this run on API-visible
+   signals only.
+5. **Feeds healthy** — NYU is the ONLY dead feed (`posts=0`); BU revived (167); all other
+   26 fetch ≥8. No sprawl (still 28 institutions; no new university added). Even the
+   real-description catalogs (JHU/CMU/Berkeley/Penn) leave program-level `content_sources`/
+   `cost_data`/`outcomes_data`/`class_profile`/`faculty`/`tracks` empty (vs MIT, which carries
+   them) — a real, API-visible deep-content gap (miss #1 + miss #8), backlog-tracked.
+
+**False alarms caught (diagnosed, not acted on):** (a) `?page_size=100` 422s (server cap 50)
+— paginated by 50. (b) the real description field is `description_text`. (c) my
+comma/"and"/slash department heuristic over-flagged REAL multi-word departments ("Department
+of Theatre and Dance", "Astronomy and Astrophysics", "Social and Decision Sciences") — so I
+ranked on the cleaner rollup-NAME tell, not raw department punctuation. (d) **`_standard`
+NONE is NOT a defect** — it's simply not in the API response (gold MIT NONE too); corrected
+the methodology and stopped citing it. (e) run 7's "JHU content un-researched" was itself a
+mis-grade — #610 had already made JHU descriptions field-specific; corrected in the backlog.
+(f) a handful of credential-level mismatches (3 Penn BA rows whose prose says "Graduate …";
+Stanford BA-named rows whose desc says "BS in …") — too few to be a rule class; annotated in
+the backlog.
+
+**Rulebook changes (1 of ≤3; ADDS/TIGHTENS no-fabrication + verify-output, loosens nothing):**
+- **miss #8 (new sub-bullet):** the clear bar is DIMENSION-AGNOSTIC and SIMULTANEOUS — a
+  single-dimension pass is NOT a clear in EITHER direction. Generalized run-7's directional
+  bullet (names-fixed-but-description-not) into a symmetric rule after observing the inverse
+  live (field-specific descriptions on 28–37% rollup-name catalogs). A catalog is cleared
+  only when EVERY row simultaneously has (a) a real name with no rollup tell, (b) a real
+  owning department (not the rollup echoed back), (c) collapsed splits, (d) a field-specific
+  description (gold contrast), AND (e) researched deep content — finish ALL dimensions on one
+  catalog before declaring it done. Evidence: live API this run — description-only and
+  names-only single-dimension passes shipped as "repairs" on opposite catalogs. (2 changes
+  held in reserve — no other new class; the deep-content gap, the credential-level mismatch,
+  and the residual rollup names are all already covered by misses #1/#2/#8, handled via the
+  backlog re-rank per the no-edit-without-evidence / anti-churn rails.)
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(carried from runs 2–7, still unreconciled)** miss #9 says "FAIL on null/blank
+  `department`", but gold-reference MIT ships null department on all programs and
+  `manifest.py` marks `department` `required=False`. Reconciling would LOOSEN the
+  verify-output invariant, so left intact per the rails.
+- **(NEW this run, methodology)** the SKILL.md text in misses #8/#9 cites "`_standard`
+  usually unstamped" as a confirming stub tell. That is fine guidance for the ENRICHER (which
+  sees `_standard` in its data module / conformance) but is NOT verifiable by anything reading
+  the public API (grader or the enricher's own verify-rendered-output step). I did NOT edit
+  those references (the enricher has data access; editing risks churn and could read as
+  weakening), but a human may want to clarify that `_standard` is an internal/conformance
+  field, not a rendered-output signal.
+- **(carried/sharpened from runs 5–7, behavioral)** the enricher now (run 8) DID fix the
+  description half run 7 demanded — clear, responsive progress — but executed it on only one
+  half of the catalogs and as a SINGLE dimension (descriptions without de-rolling-up names on
+  Berkeley/Penn), repeating the one-dimension-per-pass pattern in a new direction. More rules
+  cannot force it to fix every dimension in one pass; the rulebook now states the bar is
+  dimension-agnostic, and the backlog makes the remaining dimension explicit per catalog.
+
+**Backlog delta:** fully re-ranked by API-visible signals (rollup-name share + description
+form + deep-field emptiness), with the `_standard` signal removed. CRITICAL = Boston
+University (UNCHANGED top entry; feed revived, structure still broken). HIGH = 18 catalogs
+worst-first, now annotated per-catalog with rollup-name %, description state, and the SPECIFIC
+remaining dimension(s): rows 1–5 fail both name+description; rows 6–7 (Berkeley/Penn) need
+NAMES only (descriptions done); rows 11–13 (UCSD/NW/UW-Madison) need DESCRIPTIONS only (names
+done); rows 17–18 (JHU/CMU) need deep content + reviews (both halves done — closest to clean).
+MEDIUM = 8 shallow 22-program originals (NYU = only dead feed). CLEAN = MIT only (JHU/CMU
+close but deep content thin).
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend
+venv / pytest / Postgres) — same constraint as runs 1–7. The `profile_standard` manifest
+imports cleanly (STANDARD_VERSION 2). Changes are markdown-only (no Python, no migrations, no
+app code), so the enricher code/data state is unaffected; miss numbering remains sequential
+1–9 and the single edit is a pure addition (a sub-bullet within miss #8).
+
+**Invariants:** all intact; the single edit ADDS/TIGHTENS no-fabrication + verify-output,
+weakens nothing. The two findings that could argue for loosening (null-department FAIL vs gold
+MIT; `_standard`-as-rendered-signal) remain logged for human review, not acted on.
+
+---
+
 ## 2026-06-16 — Run 7 (the enricher picked the RIGHT targets and fixed names+departments — but stopped at the shell: descriptions still classification, deep fields empty, `_standard` unstamped)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search`, full program
