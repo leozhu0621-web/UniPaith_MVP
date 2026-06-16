@@ -30,9 +30,13 @@ Depth pass (2026-06-15, jhuprof3): merged ``DEPTH_REVIEWS`` for 34 coverable
 programs (43/43 total coverable reviews).
 
 Catalog repair (2026-06-16, jhuprof4): de-fabricates the IPEDS breadth catalog —
-replaces 95% ``program_description`` template stubs with field-specific descriptions,
 maps CIP rollup titles to real JHU degree names and owning departments, and
 re-stamps every node at ``STANDARD_VERSION`` 2.
+
+Description depth pass (2026-06-16, jhuprof5): replaces all classification-only
+``{name} is {role} at {school}`` stubs with field-specific clauses from
+``jhu_field_descriptions.py``; drops fabricated Pre-Medicine IPEDS rows; adds
+Carey MS Business Analytics review (46/46 coverable programs reviewed).
 
 Honest caveats stamped into ``_standard.omitted``: JHU does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
@@ -58,6 +62,7 @@ from unipaith.data.jhu_catalog_maps import (
     SLUG_PROGRAM_NAMES,
     clean_cip_field,
 )
+from unipaith.data.jhu_field_descriptions import FIELD_DESCRIPTIONS
 from unipaith.data.jhu_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.jhu_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import validate_catalog
@@ -67,6 +72,13 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Johns Hopkins University"
 ENRICHED_AT = "2026-06-16"
 
+# IPEDS CIP rows with no real JHU degree page — omit rather than fabricate.
+_EXCLUDED_SLUGS = frozenset({
+    "jhu-health-medical-preparatory-programs-bs",
+    "jhu-health-medical-preparatory-programs-cert",
+    "jhu-health-medical-preparatory-programs-ms",
+})
+
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
     r"master's|bachelor's|PhD|MBA|JD|MD|bachelors|masters|phd) program offered through ",
@@ -74,6 +86,10 @@ _TEMPLATE_STUB_RE = re.compile(
 )
 _CRED_PREFIX_RE = re.compile(
     r"^(Bachelor's|Master's|Professional program) in ",
+)
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is (an undergraduate major|a graduate degree|a doctoral program|"
+    r"a professional degree|a graduate certificate) at Johns Hopkins University's ",
 )
 
 
@@ -389,27 +405,56 @@ def _jhu_program_name(field_name: str, degree_type: str, school: str) -> str:
     return field
 
 
+def _field_from_program_name(name: str) -> str:
+    if name == "Doctor of Medicine":
+        return "Medicine"
+    if name == "Master of Business Administration":
+        return "Business Administration"
+    if name == "Master of Public Health":
+        return "Public Health"
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Bachelor of Music in ",
+        "Bachelor of Fine Arts in ",
+        "Master of Science in ",
+        "Master of Arts in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+        "Professional program in ",
+    ):
+        if name.startswith(prefix):
+            return name[len(prefix):].strip()
+    return clean_cip_field(name)
+
+
+def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
+    slug = spec.get("slug", "")
+    if slug in SLUG_PROGRAM_NAMES:
+        return _field_from_program_name(SLUG_PROGRAM_NAMES[slug])
+    if raw_field:
+        return clean_cip_field(raw_field)
+    return clean_cip_field(spec.get("program_name", ""))
+
+
 def _jhu_description(
     program_name: str,
     degree_type: str,
     school: str,
     *,
+    field: str,
     delivery_format: str = "on_campus",
 ) -> str:
-    """Field-specific description — never the degree-type template stub."""
-    role = {
-        "bachelors": "an undergraduate major",
-        "masters": "a graduate degree",
-        "phd": "a doctoral program",
-        "certificate": "a graduate certificate",
-        "professional": "a professional degree",
-    }.get(degree_type, "a degree program")
+    """Field-specific description — never the degree-type classification stub."""
+    clause = FIELD_DESCRIPTIONS.get(field)
+    if not clause:
+        raise ValueError(f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({program_name})")
     delivery = ""
     if delivery_format == "online":
         delivery = " Delivered online."
     elif delivery_format == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{program_name} is {role} at Johns Hopkins University's {school}.{delivery}"
+    return f"{program_name}: {clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -429,8 +474,9 @@ def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     elif not spec.get("department") or spec["department"] == raw_field:
         spec["department"] = _department_for(raw_field, school)
 
+    field = _field_from_spec(spec, clean_cip_field(raw_field) if raw_field else None)
     spec["description"] = _jhu_description(
-        spec["program_name"], dtype, school, delivery_format=fmt,
+        spec["program_name"], dtype, school, field=field, delivery_format=fmt,
     )
 
 
@@ -438,6 +484,8 @@ def _build_catalog() -> list[dict]:
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
     for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
+        if slug in _EXCLUDED_SLUGS:
+            continue
         if slug in seen:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
@@ -475,6 +523,11 @@ if _new_templ:
     _catalog_errors.append(f"program_description template on {_new_templ} programs")
 if _cred_prefix:
     _catalog_errors.append(f"credential-prefix program_name on {_cred_prefix} programs")
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(f"classification-only descriptions on {_classification_stubs} programs")
 if _catalog_errors:
     raise RuntimeError(f"JHU catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
@@ -732,6 +785,27 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
+    "jhu-management-sciences-and-quantitative-methods-ms": {
+        "summary": (
+            "Carey's MS in Business Analytics and Project Management is a STEM-designated "
+            "program combining machine learning, prescriptive analytics, and consulting "
+            "capstones with Baltimore and Washington, D.C. delivery options. Reviewers praise "
+            "the quantitative curriculum and Hopkins health-sector network, though the Carey "
+            "brand is newer than dedicated MSBA peers and career services are smaller than "
+            "top-10 MBA programs."
+        ),
+        "themes": [
+            {"label": "STEM analytics curriculum", "sentiment": "positive", "detail": "Machine learning, optimization, and project-management modules anchor the degree."},
+            {"label": "Health-sector network", "sentiment": "positive", "detail": "Hopkins Medicine and Bloomberg School partnerships enrich analytics case work."},
+            {"label": "Brand recognition", "sentiment": "mixed", "detail": "Carey MS programs are newer than MSBA offerings at MIT Sloan or USC Marshall."},
+            {"label": "Career services scale", "sentiment": "caution", "detail": "Recruiting infrastructure is smaller than M7 MBA programs."},
+        ],
+        "sources": [
+            {"label": "Poets&Quants — Carey Business School", "url": "https://poetsandquants.com/schools/carey-business-school-johns-hopkins-university/"},
+            {"label": "Carey — MS in Business Analytics and Project Management", "url": "https://carey.jhu.edu/programs/master-science-programs/ms-business-analytics-and-project-management"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
     **DEPTH_REVIEWS,
 }
 
@@ -751,6 +825,9 @@ _PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
     "jhu-nursing-ms": ["nursing", "MSN"],
     "jhu-economics-bs": ["economics", "Krieger"],
     "jhu-mechanical-engineering-bs": ["mechanical engineering", "ME"],
+    "jhu-management-sciences-and-quantitative-methods-ms": [
+        "Business Analytics", "MS BAPM", "Carey Business School",
+    ],
 }
 
 
