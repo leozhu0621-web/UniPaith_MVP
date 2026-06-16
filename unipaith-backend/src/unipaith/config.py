@@ -351,6 +351,13 @@ class Settings(BaseSettings):
     # rule-based _build_structured_brief — the offer flow never 5xxes.
     ai_outcome_brief_v2_enabled: bool = False
 
+    # Material ingest — "upload any file, Uni reads it, turns it into My Space."
+    # When True, MaterialIngestAgent reads an uploaded resume/transcript/document
+    # (PDF + images natively, Word/text extracted) and proposes structured
+    # profile signals for the student to confirm. On any failure it returns an
+    # empty proposal so the student can enter data manually — never a 5xx.
+    ai_material_ingest_v2_enabled: bool = False
+
     # Spec 68 §5 — review theme-summarisation ("what students/employers
     # consistently say" + common tradeoffs, Business Methodology:191). When True,
     # ReviewThemeService routes through the Qwen display-synth seam (63 §2.5); on
