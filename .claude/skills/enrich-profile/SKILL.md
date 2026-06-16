@@ -381,6 +381,30 @@ Concrete misses observed in the first runs — each broke a real page:
      passes were each shipped as "repairs" on opposite catalogs; the catalogs clean on
      names still run classification/old-template descriptions, and the catalogs with
      field-specific descriptions still run 28–37% CIP-rollup names.
+   - **A field-specific description must be VERIFIED-TRUE, not merely specific-SOUNDING — a
+     depth pass that INVENTS a concrete fact (a named school/college/center/institute/lab, or
+     a ranking/superlative) to satisfy the gold contrast is fabrication-by-synthesis on the
+     DESCRIPTION dimension, and a confidently-WRONG specific is WORSE than an honest generic
+     gloss because it reads authoritative. This is the live regression this run.** The
+     gold-contrast rule above demands a concrete field-specific fact; this rule guards its
+     TRUTH — the two are necessary together. The dominant tell: the named unit belongs to a
+     DIFFERENT (peer) institution — a "College of Chemistry"-style college or a named
+     aerospace "school" minted onto a program at a university that has NO such unit — OR a
+     REAL same-institution unit is bolted onto an UNRELATED field (an international-affairs
+     institute cited on a public-relations master's). Both are the SAME defect as the reviews
+     fabrication-by-synthesis above: specificity generated from a template + plausible-sounding
+     institutional trivia, not read off the program's real catalog/department page. So any
+     named school/college/department/center/institute/lab in a description MUST (a) be a unit
+     THIS institution actually has (verify against its official org/academics page) and (b)
+     actually house THIS program; any ranking/superlative ("the nation's first", "top-ranked")
+     MUST be cited. A reliable synthesis tell is the SAME wrong unit copied verbatim across
+     every credential level of one field (certificate + bachelor's + master's all naming the
+     identical fabricated college). Verify the named entity or write a true generic clause —
+     never invent a specific to pass the gold contrast. Evidence: live API this run — a
+     freshly description-passed catalog attached two different peer institutions' named
+     colleges/schools to its own chemistry- and aerospace-engineering rows (the unit names
+     belong to peer universities, not this one) and repeated each across all three credential
+     levels of the field.
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
