@@ -1,21 +1,19 @@
 /**
  * Universal Profile — the student's durable record (Spec/08-universal-profile.md).
  *
- * Brand shell: density PageHeader ("Your record" + gold completion ring) + the
- * 11-tab strip (active tab = the one gold underline). Each tab is a lazy
- * module under `profile/`. Preparation and Financial left for My Space
- * (Spec 2026-06-10 §5) — their legacy tab params redirect out via
- * PROFILE_TAB_ALIASES; the completion ring still counts those clusters.
+ * Tabs only (2026-06-16): the "Your record" header + completion ring were
+ * dropped — the My Space rail names the active section and the top nav shows
+ * "My Space", so the header was redundant. Each tab is a lazy module under
+ * `profile/`. Preparation and Financial left for My Space (Spec 2026-06-10 §5);
+ * their legacy tab params redirect out via PROFILE_TAB_ALIASES.
  */
 import { lazy, Suspense, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { PageContainer, PageHeader } from '../../components/student/density'
+import { PageContainer } from '../../components/student/density'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import usePageTitle from '../../hooks/usePageTitle'
 import { PROFILE_TAB_ALIASES, normalizeProfileTab, type ProfileTabSpec } from '../../utils/information-architecture'
-import { CompletionRing, lastUpdatedLabel } from './profile/shared'
-import { useCompletion } from './profile/useCompletion'
 
 const OverviewTab = lazy(() => import('./profile/OverviewTab'))
 const IdentityTab = lazy(() => import('./profile/IdentityTab'))
@@ -47,7 +45,6 @@ export default function ProfilePage() {
   const rawTab = searchParams.get('tab')
   const activeTab = normalizeProfileTab(rawTab)
   usePageTitle('Profile')
-  const { overall, lastUpdated, isLoading } = useCompletion()
   const tablistRef = useRef<HTMLDivElement>(null)
 
   // Legacy tab aliases — tabs that left the profile (Spec 2026-06-10 §5)
@@ -97,19 +94,6 @@ export default function ProfilePage() {
 
   return (
     <PageContainer>
-      {/* Room header — density PageHeader (eyebrow = surface) + completion ring. */}
-      <PageHeader
-        eyebrow="My Space"
-        title="Your record"
-        sub={lastUpdatedLabel(lastUpdated)}
-        actions={
-          // Finding 3: don't show 0% during load — render the ring dimmed
-          <div className={isLoading ? 'opacity-30' : undefined}>
-            <CompletionRing value={overall} size={48} />
-          </div>
-        }
-      />
-
       {/* Tab strip — finding 8: proper ARIA tablist attributes. Hidden on lg+
           where the My Space rail's Profile group already lists every sub-tab
           (Spec 2026-06-15 §A follow-up); kept below lg, where the rail collapses
