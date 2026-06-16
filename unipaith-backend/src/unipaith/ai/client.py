@@ -358,6 +358,7 @@ class AIClient:
         discovery_message_id: uuid.UUID | None = None,
         surface: str | None = None,
         db: AsyncSession | None = None,
+        timeout_ms: int | None = None,
     ) -> LLMResponse:
         """Send one provider-routed Messages request.
 
@@ -423,7 +424,7 @@ class AIClient:
             tool_choice=tool_choice,
             max_tokens=max_tokens,
             temperature=temperature,
-            timeout_ms=int(settings.ai_provider_failover_timeout_ms),
+            timeout_ms=int(timeout_ms or settings.ai_provider_failover_timeout_ms),
         )
 
         last_err: Exception | None = None

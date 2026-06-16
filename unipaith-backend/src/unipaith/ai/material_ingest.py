@@ -405,10 +405,14 @@ class MaterialIngestAgent:
                 ],
                 tools=[SUBMIT_TOOL],
                 tool_choice={"type": "tool", "name": "submit_extracted_profile"},
-                max_tokens=2400,
+                max_tokens=4000,
                 temperature=0.0,
                 student_id=student_id,
                 surface="material_ingest",
+                # PDF/image vision + a large structured extraction can take well
+                # over the 30s default; give it room so a full resume doesn't
+                # time out into the empty-proposal fallback.
+                timeout_ms=120_000,
             )
         except Exception as exc:
             logger.warning("material ingest agent call failed: %s", exc)
