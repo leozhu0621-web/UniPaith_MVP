@@ -330,6 +330,32 @@ Concrete misses observed in the first runs — each broke a real page:
      catalog … to real names" PRs (UCSD, Northwestern, JHU, UW-Madison) each gave real
      degree names + real `Department of {field}` departments yet left ~99–100%
      classification descriptions, all deep fields null, and `_standard` unstamped.
+   - **The clear bar is DIMENSION-AGNOSTIC and SIMULTANEOUS — a single-dimension pass is
+     NOT a clear in EITHER direction. The recurring root cause across every interval is
+     the enricher fixing ONE fabrication dimension per pass and shipping the catalog as
+     "repaired."** The prior sub-bullet caught the names+departments-fixed-but-description-
+     and-content-NOT direction; the live fleet now shows the INVERSE too — a field-specific-
+     DESCRIPTION pass shipped on top of un-de-rolled-up CIP-rollup NAMES with the rollup
+     echoed verbatim in `department` (live API this run: two catalogs at 37% and 28%
+     "{credential} in {CIP rollup}" rows — names like "Bachelor's in Biomedical/Medical
+     Engineering" / "Bachelor's in Accounting and Related Services", dept = the same rollup
+     — now wearing genuinely field-specific descriptions on top), while two OTHER catalogs
+     are the exact opposite (real de-rolled-up names + real departments, descriptions still
+     pure "{name} is an undergraduate major at {Univ}'s {school}" classification). NEITHER
+     is a clear. A catalog is cleared ONLY when EVERY row SIMULTANEOUSLY satisfies ALL of:
+     (a) a real degree name with NO rollup tell (no ", General"/", Other", no federal
+     comma-and list, no embedded slash), (b) a real owning department (NOT the CIP rollup
+     echoed back), (c) concentration splits collapsed into `tracks`, (d) a field-specific
+     description passing the gold contrast, AND (e) researched per-program deep content
+     (cost / outcomes / class_profile / faculty / tracks / reviews filled, or each honestly
+     omitted). Fixing whichever single dimension is cheapest and shipping is partial work,
+     not a repair — finish ALL dimensions on a catalog before declaring it done. The only
+     genuinely real catalogs (beyond gold MIT) are the ones where real names + real
+     departments + field-specific descriptions hold ALL TOGETHER, not one without the
+     others. Evidence: live API this run — description-only and names-only single-dimension
+     passes were each shipped as "repairs" on opposite catalogs; the catalogs clean on
+     names still run classification/old-template descriptions, and the catalogs with
+     field-specific descriptions still run 28–37% CIP-rollup names.
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
