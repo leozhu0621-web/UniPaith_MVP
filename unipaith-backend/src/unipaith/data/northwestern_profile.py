@@ -35,9 +35,13 @@ Depth pass (2026-06-15, northwesternprof2): merged ``DEPTH_REVIEWS`` for 48 cove
 programs — completes Northwestern coverable external_reviews (55/55).
 
 Catalog repair (2026-06-16, northwesternprof3): de-fabricates the IPEDS breadth catalog —
-replaces 95% ``program_description`` template stubs with field-specific descriptions,
 maps CIP rollup titles to real Northwestern degree names and owning departments, and
 re-stamps every node at ``STANDARD_VERSION`` 2.
+
+Description depth pass (2026-06-16, northwesternprof4): replaces all classification-only
+program descriptions with field-specific clauses from ``northwestern_field_descriptions.py``
+(308/308 programs; 0% classification stubs). Adds coverable external_reviews for RTVF BS
+and Pre-Medicine BS (58/58 coverable total).
 """
 
 # ruff: noqa: E501
@@ -57,6 +61,11 @@ from unipaith.data.northwestern_catalog_maps import (
     SLUG_PROGRAM_NAMES,
     clean_cip_field,
 )
+from unipaith.data.northwestern_field_descriptions import (
+    FIELD_ALIASES,
+    FIELD_DESCRIPTIONS,
+    SLUG_DESCRIPTIONS,
+)
 from unipaith.data.northwestern_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.northwestern_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import validate_catalog
@@ -73,6 +82,10 @@ _TEMPLATE_STUB_RE = re.compile(
 )
 _CRED_PREFIX_RE = re.compile(
     r"^(Bachelor's|Master's|Professional program) in ",
+)
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is (an undergraduate major|a graduate degree|a doctoral program|"
+    r"a graduate certificate|a professional degree|a degree program) at ",
 )
 
 
@@ -402,34 +415,60 @@ def _northwestern_program_name(field_name: str, degree_type: str, school: str) -
     return field
 
 
-def _northwestern_description(
-    program_name: str,
-    degree_type: str,
-    school: str,
-    *,
-    delivery_format: str = "on_campus",
-) -> str:
-    """Field-specific description — never the degree-type template stub."""
-    role = {
-        "bachelors": "an undergraduate major",
-        "masters": "a graduate degree",
-        "phd": "a doctoral program",
-        "certificate": "a graduate certificate",
-        "professional": "a professional degree",
-    }.get(degree_type, "a degree program")
+def _field_from_program_name(program_name: str) -> str | None:
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Bachelor of Music in ",
+        "Master of Science in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):]
+    specials = {
+        "Master of Business Administration": "Business Administration",
+        "Juris Doctor": "Law",
+        "Doctor of Medicine": "Medicine",
+    }
+    if program_name in specials:
+        return specials[program_name]
+    return None
+
+
+def _northwestern_description(spec: dict, field: str | None = None) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
-    if delivery_format == "online":
+    if fmt == "online":
         delivery = " Delivered online."
-    elif delivery_format == "hybrid":
+    elif fmt == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{program_name} is {role} at Northwestern University's {school}.{delivery}"
+    if slug in SLUG_DESCRIPTIONS:
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+    field_key = (
+        field
+        or spec.get("_field_name")
+        or _field_from_program_name(spec.get("program_name", ""))
+        or spec.get("department")
+        or spec.get("program_name", "")
+    )
+    field_key = clean_cip_field(field_key)
+    if field_key in FIELD_ALIASES:
+        field_key = FIELD_ALIASES[field_key]
+    clause = FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        raise ValueError(
+            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
+        )
+    return f"{spec['program_name']}: {clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     slug = spec["slug"]
     school = spec["school"]
     dtype = spec["degree_type"]
-    fmt = spec.get("delivery_format", "on_campus")
     raw_field = field_name or spec.get("_field_name") or spec.get("program_name", "")
 
     if slug in SLUG_PROGRAM_NAMES:
@@ -442,9 +481,7 @@ def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     elif not spec.get("department") or spec["department"] == raw_field:
         spec["department"] = _department_for(raw_field, school)
 
-    spec["description"] = _northwestern_description(
-        spec["program_name"], dtype, school, delivery_format=fmt,
-    )
+    spec["description"] = _northwestern_description(spec, field=field_name or raw_field)
 
 
 def _build_catalog() -> list[dict]:
@@ -488,6 +525,13 @@ if _new_templ:
     _catalog_errors.append(f"program_description template on {_new_templ} programs")
 if _cred_prefix:
     _catalog_errors.append(f"credential-prefix program_name on {_cred_prefix} programs")
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
 if _catalog_errors:
     raise RuntimeError(f"Northwestern catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
@@ -744,6 +788,44 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "sources": [
             {"label": "Poets&Quants — Kellogg School of Management", "url": "https://poetsandquants.com/schools/kellogg-school-of-management-northwestern-university/"},
             {"label": "Kellogg — MS in Management Studies", "url": "https://www.kellogg.northwestern.edu/programs/msms.aspx"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "northwestern-radio-television-and-digital-communication-bs": {
+        "summary": (
+            "Northwestern's undergraduate RTVF program is one of the nation's most respected film and "
+            "television pipelines, with hands-on production training and strong Chicago and Los Angeles "
+            "industry connections. Students praise the creative community and portfolio-building "
+            "opportunities, though equipment access can be competitive and career outcomes vary by concentration."
+        ),
+        "themes": [
+            {"label": "Production training", "sentiment": "positive", "detail": "Hands-on film, TV, and digital media courses anchor the undergraduate curriculum."},
+            {"label": "Industry pipelines", "sentiment": "positive", "detail": "Alumni work across Hollywood, Chicago media, and streaming platforms."},
+            {"label": "Creative community", "sentiment": "positive", "detail": "Collaborative cohort culture supports portfolio development and peer filmmaking."},
+            {"label": "Resource competition", "sentiment": "mixed", "detail": "Studio equipment and editing suites are sought-after among production students."},
+        ],
+        "sources": [
+            {"label": "U.S. News — Best Fine Arts Programs", "url": "https://www.usnews.com/best-graduate-schools/top-fine-arts-schools/northwestern-university-03058"},
+            {"label": "School of Communication — RTVF", "url": "https://communication.northwestern.edu/departments/rtvf/"},
+        ],
+        "disclaimer": _REVIEWS_DISCLAIMER,
+    },
+    "northwestern-health-medical-preparatory-programs-bs": {
+        "summary": (
+            "Northwestern's pre-medical track through Weinberg provides rigorous science preparation "
+            "with Health Professions Advising, Feinberg research access, and strong medical-school "
+            "placement rates. Students value the advising infrastructure and research opportunities, "
+            "though science coursework is demanding and pre-med culture can feel competitive."
+        ),
+        "themes": [
+            {"label": "Science preparation", "sentiment": "positive", "detail": "Rigorous biology, chemistry, and physics foundation for medical school admission."},
+            {"label": "Advising support", "sentiment": "positive", "detail": "Health Professions Advising guides MCAT prep, clinical experiences, and application strategy."},
+            {"label": "Research access", "sentiment": "positive", "detail": "Undergraduates join Feinberg and campus biomedical labs before medical school."},
+            {"label": "Competitive culture", "sentiment": "mixed", "detail": "Pre-med cohort is large and science grading can be intense at Northwestern."},
+        ],
+        "sources": [
+            {"label": "Niche — Northwestern University", "url": "https://www.niche.com/colleges/northwestern-university/"},
+            {"label": "Weinberg — Health Professions Advising", "url": "https://weinberg.northwestern.edu/undergraduate/advising-student-support/health-professions-advising.html"},
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
