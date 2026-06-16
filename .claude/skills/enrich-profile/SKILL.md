@@ -528,14 +528,28 @@ STRICT order:
      photo at all (most beyond the original 14) breaks both the card header and
      the detail hero;
    - **no `_standard` stamp**, or stamped at an older `STANDARD_VERSION`.
-3. **Only when EVERY existing university is fully gold** (institution + all schools
-   + all programs, each conformant or honestly-omitted) may you add a brand-new
-   university.
+3. **When NO existing university has a blocking issue (every one gold or
+   honestly-omitted), the run's job is GROWTH — actively ADD the next new
+   university. Do not idle on the existing set.** Repair-first ORDERS the work; it
+   does not CAP the fleet. The platform's value grows with coverage, so a run with
+   nothing left to repair is a run that expands the fleet by one.
+   - **Where the next university comes from (so you never run dry):** the
+     highest-priority US institution NOT yet in the DB. Rank by real student demand
+     first (search / match / view / saved-school signals when available), then
+     follow the business-spec beachhead (product-context §3: regional publics,
+     community colleges, and smaller programs — the high pain-to-budget segments —
+     not only more prestige research universities). The IPEDS / College Scorecard
+     universe (thousands of institutions) is the source list, so there is ALWAYS a
+     next target. Add ONE new university per run, taken fully to gold (the same bar
+     as any existing one), following the steps below.
 
-Within that order, prioritize by student demand (saved-school / match / view counts)
-then by size of gaps. If every existing university is gold and no new target is
-requested, report and stop. **Adding breadth while existing profiles are broken is
-the one thing this routine must NOT do.**
+Within the repair phase, prioritize by student demand (saved-school / match / view
+counts) then by size of gaps. **Adding breadth while existing profiles are broken
+is the one thing this routine must NOT do — but once they are whole, refusing to
+grow is the second thing it must not do.** Only genuinely stop if every existing
+university is gold AND the growth universe is exhausted (it won't be) or the
+operator has explicitly paused growth — never stop merely because the originally
+seeded set is done.
 
 **RE-AUDIT — do not trust a prior "done" mark or `_standard` stamp.** Boston U and
 Stanford were both shipped as "done" and are both broken (483 stub programs;
