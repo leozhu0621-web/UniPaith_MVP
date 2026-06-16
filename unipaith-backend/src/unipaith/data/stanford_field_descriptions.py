@@ -55,7 +55,8 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Graduate cell biology at School of Humanities and Sciences and Stanford School of Medicine focuses on signaling, developmental biology, and microscopy methods in cancer and immunology research labs."
     ),
     "Chemical Engineering": (
-        "Reaction engineering, transport phenomena, and materials processing in the College of Chemistry's nationally ranked chemical engineering department."
+        "Reaction engineering, transport phenomena, and materials processing in Stanford "
+        "School of Engineering's Department of Chemical Engineering."
     ),
     "Chemistry": (
         "School of Humanities and Sciences chemistry runs organic, inorganic, physical, and chemical-biology groups whose faculty hold joint appointments with Stanford School of Medicine and the Stanford Chemistry Research Institute."
@@ -244,10 +245,12 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Stanford School of Engineering and Freeman Spogli Institute for International Studies systems coursework models complex networks in health care, infrastructure, and policy using computational and operations-research methods."
     ),
     "Teacher Education and Professional Development, Specific Levels and Methods": (
-        "GSE teacher-preparation programs lead to Harvardsylvania certification with Palo Alto partner-school clinical practice."
+        "Stanford GSE teacher-preparation programs lead to California credential pathways "
+        "with Peninsula partner-school clinical practice."
     ),
     "Teacher Education and Professional Development, Specific Subject Areas": (
-        "GSE subject-specific teacher education pairs content expertise with pedagogy and urban classroom placements in Palo Alto districts."
+        "Stanford GSE subject-specific teacher education pairs content expertise with "
+        "pedagogy and classroom placements in Bay Area school districts."
     ),
     "Urban Studies/Affairs": (
         "Urban studies at School of Humanities and Sciences and School of Humanities and Sciences uses GIS, policy analysis, and community engagement for Palo Alto housing, transit, and revitalization projects."

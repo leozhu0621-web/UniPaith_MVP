@@ -33,6 +33,18 @@ STANFORD_MANUAL: dict[str, str] = {
         "Stanford's Department of English and Creative Writing programs span literary history, "
         "critical theory, and workshop-based writing with the Stanford Humanities Center."
     ),
+    "Chemical Engineering": (
+        "Reaction engineering, transport phenomena, and materials processing in Stanford "
+        "School of Engineering's Department of Chemical Engineering."
+    ),
+    "Teacher Education and Professional Development, Specific Levels and Methods": (
+        "Stanford GSE teacher-preparation programs lead to California credential pathways "
+        "with Peninsula partner-school clinical practice."
+    ),
+    "Teacher Education and Professional Development, Specific Subject Areas": (
+        "Stanford GSE subject-specific teacher education pairs content expertise with "
+        "pedagogy and classroom placements in Bay Area school districts."
+    ),
     "Petroleum Engineering": (
         "Stanford's Energy Resources Engineering group trains students in subsurface energy "
         "systems, reservoir engineering, and the geoscience of oil and gas within the School "
