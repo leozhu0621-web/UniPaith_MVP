@@ -44,17 +44,19 @@ descriptions, and coverable external reviews.
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from unipaith.data.princeton_ipeds_catalog import _IPEDS_CATALOG
-from unipaith.data.profile_catalog_utils import (
-    disambiguate_program_name,
-    program_description,
-    validate_catalog,
+from unipaith.data.princeton_field_descriptions import (
+    FIELD_ALIASES,
+    FIELD_DESCRIPTIONS,
+    SLUG_DESCRIPTIONS,
 )
+from unipaith.data.princeton_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
@@ -62,6 +64,33 @@ INSTITUTION_NAME = "Princeton University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
 ENRICHED_AT = "2026-06-16"
+
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is (an undergraduate|a graduate|a doctoral|a graduate certificate|"
+    r"a professional|a degree) program at Princeton",
+)
+_TEMPLATE_STUB_RE = re.compile(
+    r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
+    r"master's|bachelor's|phd|bachelors|masters) program offered through ",
+    re.I,
+)
+_PREFIX_NAME_RE = re.compile(
+    r"^(Bachelor's in|Master's in|Doctor of Philosophy in|Graduate Certificate in|"
+    r"Professional program in) "
+)
+
+_SLUG_TO_FIELD: dict[str, str] = {
+    slug: field_name for slug, _, field_name, _, _, _, _, _ in _IPEDS_CATALOG
+}
+
+# Standalone master's degrees Princeton publishes (not incidental M.A. along the Ph.D. path).
+_IPEDS_MASTERS_ALLOWLIST = frozenset({
+    "princeton-architecture-ms",
+    "princeton-chemical-engineering-ms",
+    "princeton-civil-engineering-ms",
+    "princeton-electrical-electronics-and-communications-engineering-ms",
+    "princeton-mechanical-engineering-ms",
+})
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -915,14 +944,6 @@ _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
 
 
-def _department_for(field_name: str, school: str) -> str:
-    """Owning department — map federal CIP titles to Princeton's published names."""
-    mapped = _CIP_TO_DEPARTMENT.get(field_name, field_name)
-    if mapped.lower() in school.lower() or school.lower() in mapped.lower():
-        return school
-    return mapped
-
-
 # Federal CIP field titles → Princeton's published department / program names.
 _CIP_TO_DEPARTMENT: dict[str, str] = {
     "Political Science and Government": "Politics",
@@ -944,20 +965,123 @@ _CIP_TO_DEPARTMENT: dict[str, str] = {
 }
 
 
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — map federal CIP titles to Princeton's published names."""
+    mapped = _CIP_TO_DEPARTMENT.get(field_name, field_name)
+    if mapped.lower() in school.lower() or school.lower() in mapped.lower():
+        return school
+    return mapped
+
+
+def _delivery_format(raw: str) -> str:
+    if raw == "in_person":
+        return "on_campus"
+    return raw
+
+
+def _field_from_program_name(program_name: str) -> str | None:
+    for prefix in (
+        "Bachelor of Science in Engineering in ",
+        "Bachelor of Arts in ",
+        "Master of Science in Engineering in ",
+        "Master of Engineering in ",
+        "Master of Architecture (M.Arch.)",
+        "Master in Public Affairs (MPA)",
+        "Bachelor's in ",
+        "Master's in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):]
+    return None
+
+
+def _needs_normalize(desc: str) -> bool:
+    if not desc:
+        return True
+    if _CLASSIFICATION_STUB_RE.match(desc):
+        return True
+    if _TEMPLATE_STUB_RE.search(desc):
+        return True
+    return "offered through the " in desc
+
+
+def _princeton_program_name(
+    field_name: str, degree_type: str, school: str, slug: str
+) -> str:
+    """Real Princeton degree designation — never a CIP-rollup credential prefix."""
+    dept = _department_for(field_name, school)
+    if degree_type == "bachelors":
+        if school == _SEAS:
+            return f"Bachelor of Science in Engineering in {dept}"
+        return f"Bachelor of Arts in {dept}"
+    if degree_type == "masters":
+        if slug == "princeton-architecture-ms":
+            return "Master of Architecture (M.Arch.)"
+        if slug == "princeton-public-affairs-mpa":
+            return "Master in Public Affairs (MPA)"
+        if slug == "princeton-electrical-electronics-and-communications-engineering-ms":
+            return f"Master of Engineering in {dept}"
+        if school == _SEAS:
+            return f"Master of Science in Engineering in {dept}"
+    return dept
+
+
+def _princeton_description(spec: dict, field: str | None = None) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    fmt = spec.get("delivery_format", "on_campus")
+    delivery = ""
+    if fmt == "online":
+        delivery = " Delivered online."
+    elif fmt == "hybrid":
+        delivery = " Delivered in a hybrid format."
+    if slug in SLUG_DESCRIPTIONS:
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+    field_key = (
+        field
+        or spec.get("_field_name")
+        or _SLUG_TO_FIELD.get(slug)
+        or _field_from_program_name(spec.get("program_name", ""))
+        or spec.get("department")
+        or spec.get("program_name", "")
+    )
+    if field_key in FIELD_ALIASES:
+        field_key = FIELD_ALIASES[field_key]
+    clause = FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        raise ValueError(
+            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
+        )
+    return f"{spec['program_name']}: {clause}{delivery}"
+
+
+def _normalize_program(spec: dict, field_name: str | None = None) -> None:
+    """Stamp a field-specific description on stub program nodes."""
+    if not _needs_normalize(spec.get("description") or ""):
+        return
+    spec["description"] = _princeton_description(spec, field=field_name)
+
+
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the IPEDS Field-of-Study catalog."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, _desc in _IPEDS_CATALOG:
+    for slug, school, field_name, dtype, cip, dur, fmt, _legacy in _IPEDS_CATALOG:
         if slug in seen:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
+        # Princeton does not publish standalone graduate certificates; incidental M.A.
+        # degrees along the Ph.D. path are not separate application programs.
+        if dtype == "certificate":
+            continue
+        if dtype == "masters" and slug not in _IPEDS_MASTERS_ALLOWLIST:
+            continue
         seen.add(slug)
-        dept = _department_for(name, school)
-        pname = disambiguate_program_name(name, dtype)
-        delivery = fmt if fmt in {"online", "hybrid"} else "in_person"
-        out.append({
+        dept = _department_for(field_name, school)
+        delivery = _delivery_format(fmt)
+        pname = _princeton_program_name(field_name, dtype, school, slug)
+        spec = {
             "slug": slug,
             "school": school,
             "program_name": pname,
@@ -966,66 +1090,39 @@ def _build_catalog() -> list[dict]:
             "cip": cip,
             "duration_months": dur,
             "delivery_format": delivery,
-            "description": program_description(
-                pname,
-                dtype,
-                school,
-                dept,
-                delivery_format=delivery,
-                university_short="Princeton",
-            ),
-        })
+            "_field_name": field_name,
+        }
+        _normalize_program(spec, field_name)
+        spec.pop("_field_name", None)
+        out.append(spec)
     return out
 
 
 PROGRAMS += _build_catalog()
-
-# Field-specific descriptions for IPEDS-supplied rows (never the degree-type template).
-_DESC_RICH_BY_SLUG: dict[str, str] = {
-    "princeton-architecture-bs": (
-        "Princeton's B.A. in Architecture blends design studios with architectural history, "
-        "theory, and urbanism within the humanities division — a liberal-arts path that "
-        "feeds leading M.Arch. and Ph.D. programs rather than conferring NAAB licensure."
-    ),
-    "princeton-architecture-ms": (
-        "Princeton's NAAB-accredited professional Master of Architecture (M.Arch.) is a "
-        "studio-centered degree for students pursuing architectural licensure — typically "
-        "three years for students without a pre-professional background, with a rigorous "
-        "sequence in design, building technology, and history/theory."
-    ),
-    "princeton-chemical-engineering-ms": (
-        "The M.S.E. in Chemical and Biological Engineering is a research-based graduate "
-        "degree — typically 1.5–2 years — grounded in transport, thermodynamics, and "
-        "reaction engineering with thesis research in energy, bioengineering, and materials."
-    ),
-    "princeton-civil-engineering-ms": (
-        "The M.S.E. in Civil and Environmental Engineering is a research-based graduate "
-        "degree spanning structures, environmental systems, hydrology, and sustainable "
-        "infrastructure — typically completed within two years of residence."
-    ),
-    "princeton-electrical-electronics-and-communications-engineering-ms": (
-        "Princeton's M.Eng. in Electrical and Computer Engineering is a one-year, "
-        "coursework-based master's for practicing engineers — ECE does not offer an "
-        "M.S.E.; candidates must demonstrate external financial support."
-    ),
-    "princeton-mechanical-engineering-ms": (
-        "The M.S.E. in Mechanical and Aerospace Engineering is a research-based graduate "
-        "degree in dynamics, fluid mechanics, robotics, and materials — typically "
-        "completed within two years with faculty-supervised thesis research."
-    ),
-}
 
 for _p in PROGRAMS:
     if _p["slug"] in _EXPLICIT_DEPARTMENTS:
         _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
     if _p["slug"] in _EXPLICIT_FULL_NAMES:
         _p["program_name"] = _EXPLICIT_FULL_NAMES[_p["slug"]]
-    if _p["slug"] in _DESC_RICH_BY_SLUG:
-        _p["description"] = _DESC_RICH_BY_SLUG[_p["slug"]]
+    _normalize_program(_p)
 
 _catalog_errors = validate_catalog(PROGRAMS)
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
+_prefix_names = sum(1 for p in PROGRAMS if _PREFIX_NAME_RE.match(p.get("program_name", "")))
+if _prefix_names:
+    _catalog_errors.append(f"CIP-prefix program_name on {_prefix_names} programs")
 if _catalog_errors:
     raise RuntimeError(f"Princeton catalog quality gate failed: {_catalog_errors}")
+
+for _p in PROGRAMS:
+    _p.setdefault("delivery_format", "on_campus")
 
 for _p in PROGRAMS:
     _p.setdefault("delivery_format", "in_person")
