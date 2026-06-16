@@ -5,6 +5,8 @@ import apiClient from './client'
 export interface ProposedProfile {
   summary?: string
   profile?: Record<string, unknown>
+  online_presence?: Record<string, unknown>[]
+  languages?: Record<string, unknown>[]
   academic_records?: Record<string, unknown>[]
   test_scores?: Record<string, unknown>[]
   activities?: Record<string, unknown>[]
