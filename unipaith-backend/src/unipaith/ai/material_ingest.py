@@ -1,13 +1,13 @@
-"""Material ingest agent — Uni reads an uploaded file and extracts profile data.
+"""Material ingest agent — Uni reads an uploaded file and extracts profile data.
 
 Sends the uploaded document to Claude as a NATIVE content block (PDF + images go
 straight to the vision-capable model; Word/text are extracted to text first),
 then forces a single tool call that returns structured, confirm-ready profile
-signals. It NEVER fabricates — it extracts only what the document actually
+signals. It NEVER fabricates — it extracts only what the document actually
 contains and omits the rest. On any failure it returns ``None`` so the service
 falls back to "enter manually" (never a 5xx).
 
-Cost-ledger slot: this runs under the ``workshop_coach`` agent name — like the
+Cost-ledger slot: this runs under the ``workshop_coach`` agent name — like the
 workshop coaches it is user-initiated artifact work (the student uploading their
 own file IS the consent signal, so it sits behind no extra consent lever), which
 keeps it off the analytics/matching gates and out of the ai_turns CHECK churn.
@@ -39,10 +39,17 @@ _SYSTEM = (
     "You are Uni, a college counselor reading a document a student uploaded "
     "(a resume, CV, transcript, or similar). Extract ONLY the information the "
     "document actually contains, into the student's profile. Never invent, "
-    "guess, or infer beyond what is written — if a field isn't present, omit it. "
+    "guess, or infer beyond what is written — if a field isn't present, omit it. "
     "Prefer the student's own wording. Convert dates to YYYY-MM-DD (or YYYY-MM / "
     "YYYY when only that is given). Map every item to the closest allowed "
-    "category. Write a one-sentence, warm `summary` of what you picked up, in "
+    "category. Capture EVERYTHING present: preferred name, email, phone, links "
+    "(LinkedIn / portfolio), every school with its honors/scholarships, "
+    "concentration (as field_of_study) and relevant coursework, every job and "
+    "internship with its quantified achievement bullets and location, languages, "
+    "skills, and interests. For an activity or club, `title` is the club's NAME "
+    "(e.g. 'Electric Formula Club') and `role` is the position (Member, "
+    "President) — never put the role in the title. "
+    "Write a one-sentence, warm `summary` of what you picked up, in "
     "the first person ('I picked up your CS degree and two internships'). "
     "Call submit_extracted_profile exactly once."
 )
@@ -63,11 +70,66 @@ SUBMIT_TOOL: dict[str, Any] = {
                 "properties": {
                     "first_name": {"type": "string"},
                     "last_name": {"type": "string"},
+                    "preferred_name": {
+                        "type": "string",
+                        "description": "Name the student goes by, e.g. 'Leo'.",
+                    },
+                    "email": {"type": "string"},
+                    "phone": {"type": "string"},
                     "bio_text": {
                         "type": "string",
                         "description": "A short professional summary if present.",
                     },
                     "country_of_residence": {"type": "string"},
+                    "skills": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Hard/technical skills, e.g. Python, SQL, Tableau.",
+                    },
+                    "interests": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Personal interests/hobbies.",
+                    },
+                },
+            },
+            "online_presence": {
+                "type": "array",
+                "description": "Profile links (LinkedIn, portfolio, GitHub, personal site).",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "platform_type": {
+                            "type": "string",
+                            "enum": [
+                                "linkedin",
+                                "github",
+                                "personal_site",
+                                "portfolio",
+                                "wechat",
+                                "twitter",
+                                "other",
+                            ],
+                        },
+                        "url": {"type": "string"},
+                        "display_name": {"type": "string"},
+                    },
+                    "required": ["platform_type", "url"],
+                },
+            },
+            "languages": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "language": {"type": "string"},
+                        "proficiency_level": {
+                            "type": "string",
+                            "enum": ["native", "fluent", "advanced", "intermediate", "beginner"],
+                            "description": "Map 'conversational' to 'intermediate'.",
+                        },
+                    },
+                    "required": ["language"],
                 },
             },
             "academic_records": {
@@ -94,6 +156,18 @@ SUBMIT_TOOL: dict[str, Any] = {
                         "start_date": {"type": "string"},
                         "end_date": {"type": "string"},
                         "is_current": {"type": "boolean"},
+                        "courses": {
+                            "type": "array",
+                            "description": "Relevant coursework listed for this school.",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "course_name": {"type": "string"},
+                                    "subject_area": {"type": "string"},
+                                },
+                                "required": ["course_name"],
+                            },
+                        },
                     },
                     "required": ["institution_name", "degree_type"],
                 },
@@ -142,7 +216,14 @@ SUBMIT_TOOL: dict[str, Any] = {
                                 "publications",
                             ],
                         },
-                        "title": {"type": "string"},
+                        "title": {
+                            "type": "string",
+                            "description": "The club/activity NAME, not the role.",
+                        },
+                        "role": {
+                            "type": "string",
+                            "description": "The role, e.g. Member, President.",
+                        },
                         "organization": {"type": "string"},
                         "description": {"type": "string"},
                         "start_date": {"type": "string"},
@@ -164,6 +245,12 @@ SUBMIT_TOOL: dict[str, Any] = {
                         "organization": {"type": "string"},
                         "role_title": {"type": "string"},
                         "description": {"type": "string"},
+                        "key_achievements": {
+                            "type": "string",
+                            "description": "The quantified achievement bullets, joined.",
+                        },
+                        "organization_city": {"type": "string"},
+                        "organization_country": {"type": "string"},
                         "start_date": {"type": "string"},
                         "end_date": {"type": "string"},
                         "is_current": {"type": "boolean"},
@@ -207,6 +294,42 @@ SUBMIT_TOOL: dict[str, Any] = {
                         },
                     },
                     "required": ["maslow_level", "need_type", "signal", "severity"],
+                },
+            },
+            "identity": {
+                "type": "object",
+                "description": "Values/beliefs/insights, only if stated.",
+                "properties": {
+                    "core_values": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "value": {"type": "string"},
+                                "evidence": {"type": "string"},
+                            },
+                            "required": ["value"],
+                        },
+                    },
+                    "worldview": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "belief": {"type": "string"},
+                                "context": {"type": "string"},
+                            },
+                            "required": ["belief"],
+                        },
+                    },
+                    "self_awareness": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {"insight": {"type": "string"}},
+                            "required": ["insight"],
+                        },
+                    },
                 },
             },
         },

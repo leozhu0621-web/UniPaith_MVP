@@ -21,6 +21,18 @@ from unipaith.models.material_ingest import MaterialIngest
 logger = logging.getLogger(__name__)
 
 
+_PROFICIENCY = {
+    "native": "native",
+    "fluent": "fluent",
+    "advanced": "advanced",
+    "conversational": "intermediate",
+    "intermediate": "intermediate",
+    "basic": "beginner",
+    "beginner": "beginner",
+}
+_PLATFORMS = {"linkedin", "github", "personal_site", "portfolio", "wechat", "twitter", "other"}
+
+
 def _parse_date(value: Any) -> date | None:
     """Lenient YYYY-MM-DD / YYYY-MM / YYYY → date (first of month/year)."""
     if not value or not isinstance(value, str):
@@ -107,6 +119,10 @@ class MaterialIngestService:
         skipped: dict[str, int] = {}
 
         await self._apply_profile(user_id, selection.get("profile") or {}, counts, skipped)
+        await self._apply_online_presence(
+            student_id, selection.get("online_presence") or [], counts, skipped
+        )
+        await self._apply_languages(student_id, selection.get("languages") or [], counts, skipped)
         await self._apply_academics(
             student_id, selection.get("academic_records") or [], counts, skipped
         )
@@ -130,8 +146,20 @@ class MaterialIngestService:
         from unipaith.schemas.student import UpdateProfileRequest
         from unipaith.services.student_service import StudentService
 
-        allowed = {"first_name", "last_name", "bio_text", "country_of_residence"}
+        allowed = {"first_name", "last_name", "preferred_name", "bio_text", "country_of_residence"}
         data = {k: v for k, v in profile.items() if k in allowed and v}
+        if profile.get("email"):
+            data["secondary_email"] = str(profile["email"])[:255]
+        if profile.get("phone"):
+            data["secondary_phone"] = str(profile["phone"])[:50]
+        extras = []
+        if profile.get("skills"):
+            extras.append("Skills: " + ", ".join(str(s) for s in profile["skills"]))
+        if profile.get("interests"):
+            extras.append("Interests: " + ", ".join(str(s) for s in profile["interests"]))
+        if extras:
+            base = data.get("bio_text") or profile.get("bio_text") or ""
+            data["bio_text"] = (base + "\n" + "\n".join(extras)).strip()[:5000]
         if not data:
             return
         try:
@@ -141,10 +169,60 @@ class MaterialIngestService:
             logger.info("material apply profile skipped: %s", exc)
             skipped["profile"] = skipped.get("profile", 0) + 1
 
+    async def _apply_online_presence(self, student_id, items, counts, skipped) -> None:
+        if not items:
+            return
+        from unipaith.schemas.student import CreateOnlinePresenceRequest
+        from unipaith.services.student_service import StudentService
+
+        svc = StudentService(self.db)
+        for it in items:
+            url = it.get("url")
+            if not url:
+                continue
+            platform = str(it.get("platform_type") or "other").lower()
+            if platform not in _PLATFORMS:
+                platform = "other"
+            try:
+                await svc.create_online_presence(
+                    student_id,
+                    CreateOnlinePresenceRequest(
+                        platform_type=platform,
+                        url=str(url)[:1000],
+                        display_name=(it.get("display_name") or None),
+                    ),
+                )
+                counts["online_presence"] = counts.get("online_presence", 0) + 1
+            except Exception as exc:
+                logger.info("material apply online_presence skipped: %s", exc)
+                skipped["online_presence"] = skipped.get("online_presence", 0) + 1
+
+    async def _apply_languages(self, student_id, items, counts, skipped) -> None:
+        if not items:
+            return
+        from unipaith.schemas.student import CreateLanguageRequest
+        from unipaith.services.student_service import StudentService
+
+        svc = StudentService(self.db)
+        for it in items:
+            lang = it.get("language")
+            if not lang:
+                continue
+            level = _PROFICIENCY.get(str(it.get("proficiency_level") or "").lower(), "intermediate")
+            try:
+                await svc.create_language(
+                    student_id,
+                    CreateLanguageRequest(language=str(lang)[:100], proficiency_level=level),
+                )
+                counts["languages"] = counts.get("languages", 0) + 1
+            except Exception as exc:
+                logger.info("material apply language skipped: %s", exc)
+                skipped["languages"] = skipped.get("languages", 0) + 1
+
     async def _apply_academics(self, student_id, records, counts, skipped) -> None:
         if not records:
             return
-        from unipaith.schemas.student import CreateAcademicRecordRequest
+        from unipaith.schemas.student import CreateAcademicRecordRequest, CreateCourseRequest
         from unipaith.services.student_service import StudentService
 
         svc = StudentService(self.db)
@@ -165,11 +243,30 @@ class MaterialIngestService:
                     end_date=_parse_date(r.get("end_date")),
                     is_current=bool(r.get("is_current", False)),
                 )
-                await svc.create_academic_record(student_id, req)
+                rec = await svc.create_academic_record(student_id, req)
                 counts["academic_records"] = counts.get("academic_records", 0) + 1
             except Exception as exc:
                 logger.info("material apply academic skipped: %s", exc)
                 skipped["academic_records"] = skipped.get("academic_records", 0) + 1
+                continue
+            for c in r.get("courses") or []:
+                name = c.get("course_name") if isinstance(c, dict) else None
+                if not name:
+                    continue
+                try:
+                    await svc.create_course(
+                        student_id,
+                        rec.id,
+                        CreateCourseRequest(
+                            course_name=str(name)[:255],
+                            subject_area=(c.get("subject_area") or None),
+                            course_level="college",
+                        ),
+                    )
+                    counts["courses"] = counts.get("courses", 0) + 1
+                except Exception as exc:
+                    logger.info("material apply course skipped: %s", exc)
+                    skipped["courses"] = skipped.get("courses", 0) + 1
 
     async def _apply_tests(self, student_id, scores, counts, skipped) -> None:
         if not scores:
@@ -200,11 +297,17 @@ class MaterialIngestService:
         svc = StudentService(self.db)
         for a in activities:
             try:
+                # title is the activity/club NAME; a role (Member/President) is
+                # folded into the description so it isn't lost.
+                role = a.get("role")
+                desc = a.get("description") or ""
+                if role:
+                    desc = (f"{role}. " + desc).strip()
                 req = CreateActivityRequest(
-                    activity_type=a["activity_type"],
+                    activity_type=a.get("activity_type") or "extracurricular",
                     title=str(a["title"])[:255],
                     organization=a.get("organization"),
-                    description=a.get("description"),
+                    description=desc or None,
                     start_date=_parse_date(a.get("start_date")),
                     end_date=_parse_date(a.get("end_date")),
                     hours_per_week=a.get("hours_per_week"),
@@ -229,6 +332,9 @@ class MaterialIngestService:
                     organization=str(w["organization"])[:255],
                     role_title=str(w["role_title"])[:255],
                     description=w.get("description"),
+                    key_achievements=w.get("key_achievements"),
+                    organization_city=w.get("organization_city"),
+                    organization_country=w.get("organization_country"),
                     start_date=_parse_date(w.get("start_date")),
                     end_date=_parse_date(w.get("end_date")),
                     is_current=bool(w.get("is_current", False)),
