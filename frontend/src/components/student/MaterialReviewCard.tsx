@@ -17,7 +17,17 @@ type SectionKey = keyof Omit<ProposedProfile, 'summary'>
 
 const SECTIONS: { key: SectionKey; label: string; preview: (item: Record<string, unknown>) => string }[] = [
   { key: 'profile', label: 'Basic info', preview: () => '' },
-  { key: 'academic_records', label: 'Education', preview: i => String(i.institution_name ?? i.degree_type ?? '') },
+  { key: 'online_presence', label: 'Links', preview: i => String(i.platform_type ?? i.url ?? '') },
+  { key: 'languages', label: 'Languages', preview: i => `${i.language ?? ''} (${i.proficiency_level ?? ''})` },
+  {
+    key: 'academic_records',
+    label: 'Education',
+    preview: i => {
+      const courses = Array.isArray(i.courses) ? i.courses.length : 0
+      const base = String(i.institution_name ?? i.degree_type ?? '')
+      return courses ? `${base} · ${courses} courses` : base
+    },
+  },
   { key: 'test_scores', label: 'Test scores', preview: i => `${i.test_type ?? ''} ${i.total_score ?? ''}`.trim() },
   { key: 'activities', label: 'Activities', preview: i => String(i.title ?? '') },
   { key: 'work_experiences', label: 'Work experience', preview: i => `${i.role_title ?? ''} · ${i.organization ?? ''}` },

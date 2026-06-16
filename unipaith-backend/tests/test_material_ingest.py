@@ -144,3 +144,101 @@ async def test_upload_and_apply_endpoints(
     )
     assert applied.status_code == 200, applied.text
     assert applied.json()["counts"].get("goals") == 1
+
+
+# ── Completeness: widened schema + apply (2026-06-16) ──
+
+
+def test_submit_tool_has_complete_coverage():
+    from unipaith.ai.material_ingest import SUBMIT_TOOL
+
+    props = SUBMIT_TOOL["input_schema"]["properties"]
+    for key in [
+        "profile",
+        "academic_records",
+        "test_scores",
+        "activities",
+        "work_experiences",
+        "languages",
+        "online_presence",
+        "goals",
+        "needs",
+        "identity",
+    ]:
+        assert key in props, key
+    for f in ["preferred_name", "email", "skills", "interests"]:
+        assert f in props["profile"]["properties"], f
+    act = props["activities"]["items"]["properties"]
+    assert "role" in act and "title" in act
+    assert "courses" in props["academic_records"]["items"]["properties"]
+    assert "language" in props["languages"]["items"]["properties"]
+
+
+@pytest.mark.asyncio
+async def test_apply_writes_complete_profile(db_session, mock_student_user):
+    from sqlalchemy import select
+
+    from unipaith.models.student import Activity, StudentLanguage, StudentProfile
+
+    await ensure_profile(db_session, mock_student_user)
+    svc = MaterialIngestService(db_session)
+    row = await svc.ingest(
+        mock_student_user.id, filename="r.pdf", mime_type="application/pdf", data=b"x"
+    )
+    sel = {
+        "profile": {
+            "preferred_name": "Leo",
+            "email": "leo@bu.edu",
+            "phone": "617",
+            "skills": ["Python", "SQL"],
+            "interests": ["Motorsports"],
+        },
+        "online_presence": [{"platform_type": "linkedin", "url": "https://linkedin.com/in/x"}],
+        "languages": [
+            {"language": "Chinese", "proficiency_level": "native"},
+            {"language": "French", "proficiency_level": "conversational"},
+        ],
+        "academic_records": [
+            {
+                "institution_name": "Northeastern",
+                "degree_type": "bachelors",
+                "start_date": "2020-09",
+                "end_date": "2024-12",
+                "courses": [{"course_name": "Data Mining for Business"}],
+            }
+        ],
+        "activities": [
+            {"title": "Electric Formula Club", "role": "Member", "activity_type": "extracurricular"}
+        ],
+    }
+    out = await svc.apply(mock_student_user.id, row.id, sel)
+    c = out["counts"]
+    assert c.get("online_presence") == 1
+    assert c.get("languages") == 2
+    assert c.get("courses") == 1
+    assert c.get("activities") == 1
+    assert c.get("profile_fields", 0) >= 1
+
+    sp = (
+        await db_session.execute(
+            select(StudentProfile).where(StudentProfile.user_id == mock_student_user.id)
+        )
+    ).scalar_one()
+    acts = (
+        (await db_session.execute(select(Activity).where(Activity.student_id == sp.id)))
+        .scalars()
+        .all()
+    )
+    assert any("Formula" in a.title for a in acts)
+    langs = (
+        (
+            await db_session.execute(
+                select(StudentLanguage).where(StudentLanguage.student_id == sp.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert any(
+        lang.language == "French" and lang.proficiency_level == "intermediate" for lang in langs
+    )

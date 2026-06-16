@@ -42,3 +42,20 @@ describe('MaterialReviewCard', () => {
     expect(screen.getByText(/couldn't pull anything structured/i)).toBeInTheDocument()
   })
 })
+
+describe('MaterialReviewCard — widened sections', () => {
+  it('renders languages and links sections', () => {
+    const proposed = {
+      summary: 's',
+      languages: [{ language: 'Chinese', proficiency_level: 'native' }],
+      online_presence: [{ platform_type: 'linkedin', url: 'https://x' }],
+      academic_records: [
+        { institution_name: 'NEU', degree_type: 'bachelors', courses: [{ course_name: 'Data Mining' }] },
+      ],
+    }
+    render(<MaterialReviewCard proposed={proposed} onConfirm={() => {}} onCancel={() => {}} />)
+    expect(screen.getByText('Languages')).toBeInTheDocument()
+    expect(screen.getByText('Links')).toBeInTheDocument()
+    expect(screen.getByText(/1 courses/)).toBeInTheDocument()
+  })
+})
