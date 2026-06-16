@@ -1378,8 +1378,8 @@ def _department_for(field_name: str, school: str) -> str:
 
 
 def _delivery_format(raw: str) -> str:
-    """Normalize IPEDS delivery labels to the platform's canonical values."""
-    if raw == "in_person":
+    """Normalize delivery labels for description clauses only."""
+    if raw in ("in_person", "on_campus"):
         return "on_campus"
     return raw
 
@@ -1401,7 +1401,7 @@ def _field_from_program_name(program_name: str) -> str | None:
 def _harvard_description(spec: dict, field: str | None = None) -> str:
     """Field-specific description — never the degree-type classification stub."""
     slug = spec["slug"]
-    fmt = spec.get("delivery_format", "on_campus")
+    fmt = _delivery_format(spec.get("delivery_format", "in_person"))
     delivery = ""
     if fmt == "online":
         delivery = " Delivered online."
@@ -1448,7 +1448,6 @@ def _build_catalog() -> list[dict]:
         field_seen.add(fkey)
         dept = _department_for(field_name, school)
         pname = disambiguate_program_name(field_name, dtype)
-        delivery = _delivery_format(fmt)
         spec = {
             "slug": slug,
             "school": school,
@@ -1457,7 +1456,7 @@ def _build_catalog() -> list[dict]:
             "department": dept,
             "cip": cip,
             "duration_months": dur,
-            "delivery_format": delivery,
+            "delivery_format": fmt,
             "_field_name": field_name,
         }
         _normalize_program(spec, field_name)
@@ -2933,7 +2932,7 @@ if _classification_stubs:
 if _catalog_errors:
     raise RuntimeError(f"Harvard catalog quality gate failed: {_catalog_errors}")
 for _p in PROGRAMS:
-    _p.setdefault("delivery_format", "on_campus")
+    _p.setdefault("delivery_format", "in_person")
 
 
 # Official program-page URLs (every URL verified to resolve at author time;
