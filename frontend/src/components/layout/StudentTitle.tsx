@@ -10,7 +10,7 @@ import { useLocation, useSearchParams } from 'react-router-dom'
 const APP_SUFFIX = ' · UniPaith'
 
 const ROUTE_TITLES: Record<string, string> = {
-  '/s': 'Uni',
+  '/s': 'Chat',
   '/s/explore': 'Discover',
   // My Space rooms (Spec 2026-06-10) — each room titles itself.
   '/s/space': 'My Space',
