@@ -208,7 +208,6 @@ DEPARTMENT_BY_FIELD: dict[str, str] = {
     "Sustainability": "Program in Environmental Science and Studies",
     "Urban Planning": "Department of Sociology",
     "Historic Preservation": "Department of History",
-    "Homeland Security": "Center for Advanced Governmental Studies",
     "Intelligence Studies": "Center for Advanced Governmental Studies",
     # School of Education
     "Education Studies": "School of Education",
@@ -268,6 +267,9 @@ SLUG_PROGRAM_NAMES: dict[str, str] = {
     "jhu-data-science-ms": "Master of Science in Data Science",
     "jhu-economics-bs": "Bachelor of Arts in Economics",
     "jhu-mechanical-engineering-bs": "Bachelor of Science in Mechanical Engineering",
+    "jhu-management-sciences-and-quantitative-methods-ms": (
+        "Master of Science in Business Analytics"
+    ),
 }
 
 SLUG_DEPARTMENTS: dict[str, str] = {
@@ -281,6 +283,7 @@ SLUG_DEPARTMENTS: dict[str, str] = {
     "jhu-data-science-ms": "Department of Applied Mathematics and Statistics",
     "jhu-economics-bs": "Department of Economics",
     "jhu-mechanical-engineering-bs": "Department of Mechanical Engineering",
+    "jhu-management-sciences-and-quantitative-methods-ms": "Carey Business School",
 }
 
 # Fields that confer a B.A. at JHU Krieger (humanities and social sciences).
