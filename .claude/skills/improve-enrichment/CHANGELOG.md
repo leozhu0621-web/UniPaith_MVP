@@ -6,6 +6,103 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-16 — Run 10 (NO new gaps found — every defect this run is a recurrence of a class the rulebook already names; 3 of 4 description passes re-committed prefix-doubling AFTER the run-9 rule landed, and Duke shipped fabrication-by-synthesis reviews live. Changed NO rules per anti-churn; re-ranked backlog; flagged behavioral recurrence)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search`; full program
+pagination per institution by `page_size=50`; per-program `/programs/{id}` deep-field +
+`external_reviews` spot-checks on Columbia/UChicago/Duke/Yale, plus Northwestern (re-confirm),
+Rice + UCLA random). Recently-changed focus on the 4 profile PRs merged since run 9 — all
+"field-specific descriptions" passes: #620 Yale, #622 UChicago, #626 Duke, #628 Columbia
+(merge times: Yale 16:07, run-9 grader PR #621 16:16, UChicago 17:09, Duke 18:08, Columbia
+19:06 — so UChicago/Duke/Columbia were authored AFTER the run-9 rules naming these exact
+defects landed). Fleet feed sweep + rollup-name/prefix-doubling/description-form metrics.
+
+**Findings (live API evidence):**
+
+1. **REAL PROGRESS — all 4 passes killed the old broken template.** Columbia/UChicago/Duke/
+   Yale now carry 0% "… offered through the {field}" template, 0% empty descriptions, and
+   genuinely field-specific content (UChicago "Archaeological fieldwork, sociocultural
+   ethnography, and linguistic anthropology with the Oriental Institute collections…").
+2. **RECURRENCE (NOT new) — prefix-doubling (miss #9, added run 9) on ALL FOUR new catalogs.**
+   `description_text.startswith(program_name)` share: **Columbia 90%, UChicago 88%, Yale 69%,
+   Duke 66%** — vs gold MIT 2%. Three of the four (UChicago/Duke/Columbia) were authored AFTER
+   the run-9 prefix-doubling rule was in the skill — i.e. the rule exists and is being ignored.
+3. **RECURRENCE (NOT new) — single-dimension passes (miss #8, dimension-agnostic).** Columbia
+   layered field-specific descriptions on **34%** rollup NAMES (rollup echoed in `department`:
+   "Bachelor's in Area Studies" / dept "Area Studies"); UChicago **36%**. Descriptions-only is
+   not a clear.
+4. **RECURRENCE (NOT new) — fabrication-by-synthesis reviews (miss #8, added run 9) NOW LIVE ON
+   DUKE.** 5 Pratt engineering rows carry the IDENTICAL institution-level boilerplate "… within
+   Pratt as a rigorous engineering degree at a selective private R1 university; praise includes
+   undergraduate research access and Triangle … cautions about demanding prerequisites and a
+   smaller engineering community than large public tech schools," only the field swapped — the
+   exact #619 Northwestern tell. Northwestern's 43+ synthesized reviews remain LIVE and
+   unrepaired (re-confirmed: "… undergraduate program in *Architecture and Related Services,
+   Other* within Weinberg …").
+5. **Feeds healthy** — NYU is STILL the ONLY dead feed (`posts=0`); all other 27 fetch ≥8. No
+   sprawl (still 28 institutions; no new university added — repair-first held for NEW creation).
+
+**False alarms caught (diagnosed, not acted on):** (a) `?page_size=100` 422s (server cap 50) —
+paginated by 50. (b) the real description field is `description_text`. (c) Columbia "Bachelor's
+in Anthropology" descriptions read as a grammatically-broken run-on AFTER stripping the prefix
+("…Faculty of Arts and Sciences anthropology combines…") — a sharper render defect — but it is
+COLUMBIA-SPECIFIC (UChicago's after-strip bodies are clean noun-phrases like MIT's), so it is a
+single-catalog quirk → backlog, NOT a fleet-wide class warranting a rule. (d) Columbia
+"Bachelor's in Architecture" is attributed to the graduate-only Graduate School of Architecture,
+Planning and Preservation (GSAPP), and its review claims a "GSAPP undergraduate architecture
+pathway" GSAPP does not offer — a Columbia content error → backlog, one row, not a general
+class (the mismatched-level tell is already inside miss #8). (e) the generic-credential-prefix
+name form "Bachelor's in {real field}" (Columbia 55%, UChicago 78% — vs Yale/Duke using the
+real designation "Bachelor of Arts/Science in …") is imprecise but not fabrication when the
+field is real, and is borderline against miss #2 — noted, not ruled (anti-churn).
+
+**Rulebook changes: NONE (0 of ≤3).** Every defect observed this run is a recurrence of a class
+the rulebook ALREADY names — prefix-doubling (miss #9, run 9), single-dimension passes (miss #8,
+run 8), fabrication-by-synthesis reviews (miss #8, run 9). Per the SAFETY RAILS
+(no-edit-without-evidence-of-a-NEW-problem; bounded + anti-churn: "Before adding a rule, confirm
+it isn't already covered… no cosmetic rewording"; "Clean fleet → change nothing… Never invent a
+rule to look busy"), restating already-present rules would be churn. The recurrence is an
+enricher-BEHAVIOR problem (it is not applying its own rulebook), not a rulebook gap — more rule
+text cannot fix it. Backlog re-ranked instead; behavioral recurrence flagged below.
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(NEW this run, urgent — behavioral, not a rulebook gap)** the enricher re-committed
+  prefix-doubling on 3 catalogs AFTER the run-9 rule naming it landed, and shipped
+  fabrication-by-synthesis reviews to Duke AFTER the run-9 rule naming THAT landed. The rules are
+  correct and in place; the enricher is not reading/applying them. No additional rule can force
+  compliance — a human may want to (a) verify the enricher actually loads the current SKILL.md
+  each run, and (b) audit/remove the live synthesized reviews on Northwestern (43+) and Duke
+  (~5 Pratt rows), which the grader does not edit (queued as the two reviews-CRITICAL entries).
+- **(carried from runs 2–9, still unreconciled)** miss #9 says "FAIL on null/blank `department`",
+  but gold-reference MIT ships null department on all programs and `manifest.py` marks
+  `department` `required=False`. Reconciling would LOOSEN the verify-output invariant, so left
+  intact per the rails.
+- **(carried from run 8, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a
+  confirming stub tell; that is valid guidance for the ENRICHER (which sees `_standard` in its
+  data module / conformance) but is NOT verifiable from the public API. Left intact (editing
+  risks churn / could read as weakening); a human may want to clarify it is an internal field.
+
+**Backlog delta:** re-ranked by API-visible signals (rollup-name share + description form +
+prefix-doubling + reviews integrity + deep-field emptiness). CRITICAL = Boston University
+(UNCHANGED top, structure broken) + Northwestern (43+ fabricated reviews still live) + **Duke
+ADDED as a third CRITICAL** (synthesized Pratt reviews shipped live this run — a no-fabrication
+breach outranks incompleteness). HIGH = 16 catalogs worst-first: Columbia/UChicago promoted UP
+(field-specific descriptions but 34–36% rollup names + 88–90% prefix-doubling — single-dimension);
+Yale advanced (descriptions done, names real, 69% prefix-doubled); the rest unchanged from run 9.
+MEDIUM = 8 shallow 22-program originals (NYU = only dead feed). CLEAN = MIT only (JHU closest;
+CMU prefix-doubled).
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv /
+pytest / Postgres) — same constraint as runs 1–9. Changes are markdown-only (backlog + changelog;
+NO SKILL.md edit, no Python, no migrations, no app code), so the enricher code/data state is
+unaffected and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; no rule was changed, so nothing was weakened. The findings that could
+argue for loosening (null-department FAIL vs gold MIT; `_standard`-as-rendered-signal) remain
+logged for human review, not acted on.
+
+---
+
 ## 2026-06-16 — Run 9 (two NEW defect classes shipped by the enricher's description+reviews passes: name-PREFIX-DOUBLING fleet-wide, and FABRICATION-BY-SYNTHESIS reviews on Northwestern — a live no-fabrication breach)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search`, full program
