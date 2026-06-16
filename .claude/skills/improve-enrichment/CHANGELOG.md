@@ -6,6 +6,107 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-16 — Run 14 (the enricher's FIRST repair of a grader-flagged fabrication was a WHACK-A-MOLE: Stanford's fa7163e hotfix cleared only the ONE cited field (College of Chemistry) and left sibling fabrications of the SAME class live (Sibley School, FSI mismatches). Closed the gap — promoted the run-13 named-unit-truth check into miss #9's PRE-SHIP PROGRAMMATIC gate + required a whole-class re-scan. 1 rulebook change)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28,
+no sprawl). Recently-changed focus on the ONE live-state change since run 13's grading —
+**fa7163e "fix(stanford): correct peer-adaptation leaks in field descriptions"** (the Stanford
+partial hotfix). Full Stanford program pagination (`page_size=50`, n=188) with a whole-catalog
+named-unit scan (`description_text` ⊃ "College of Chemistry"/"Sibley School"/"Freeman Spogli"/
+"Harvardsylvania"/"Berkeley"/"Cornell") + rollup-name / prefix-doubling metrics vs gold MIT;
+per-program `/programs/{id}.external_reviews` re-confirmation of the two carried breaches
+(Northwestern + Duke); fleet-wide `/institutions/{id}/posts` feed sweep; student's-eye detail
+integrity check on Rice + Princeton (`campus_photos`, `ranking_data`).
+
+**What merged since run 13:** NO new profile-enrichment PR. The run-13 grader PR #639 is
+`origin/main` HEAD. The only profile commit affecting live state is **fa7163e** (Cursor Agent,
+2026-06-16 21:34 UTC) — which merged ~8 min BEFORE the run-13 grader PR #639 (21:42 UTC), so
+**run 13 graded Stanford's PRE-fix state**; this run grades the POST-fix Stanford. Everything else
+is byte-identical to run 13. The other commits in range are out of scope (#637 Import surface).
+
+**Findings (live API evidence):**
+
+1. **PARTIAL REPAIR — fa7163e is the enricher's FIRST attempt at a grader-flagged fabricated-unit
+   defect, and it WHACK-A-MOLED only the one field the backlog named verbatim.** ✅ Cleared:
+   Berkeley's "College of Chemistry" (the 3 chem-eng rows now correctly cite "Stanford School of
+   Engineering's Department of Chemical Engineering") + the "Harvardsylvania" artifact. ❌ STILL
+   LIVE (same class, same catalog): Cornell's **"Sibley School"** on 2 Stanford aerospace rows
+   (Bachelor's + Graduate Certificate in Aerospace…) — Stanford has no Sibley School; and the
+   real-but-international-studies **Freeman Spogli Institute** bolted onto a **systems-engineering**
+   row ("Bachelor's in Systems Science and Theory") and a **marketing** row ("Master's in Public
+   Relations, Advertising, and Applied Communication"). A no-fabrication breach is not cleared until
+   the WHOLE class is — Stanford STAYS CRITICAL.
+2. **Stanford's recurring classes unchanged** — n=188, rollup~34% (echoed in `department`,
+   single-dimension pass, miss #8), prefix-doubling 85% (miss #9), `class_profile`/
+   `faculty_contacts`/`tracks` empty. The hotfix touched only the chem-eng descriptions.
+3. **Both carried no-fabrication review breaches PERSIST.** Northwestern still ships the synthesized
+   "Students describe Northwestern's undergraduate program in *Architecture and Related Services,
+   Other* within Weinberg…" CIP-rollup review (now runs 9→14); Duke still ships the copy-paste Pratt
+   B.S.E. boilerplate ("…a rigorous engineering degree at a selective private R1 university…", field
+   swapped; now runs 10→14). Re-confirmed live via `/programs/{id}.external_reviews`.
+4. **Feeds healthy** — NYU still the ONLY dead feed (`posts=0`); all other 27 fetch ≥8 (UChicago
+   1415, Cornell 1270, CMU 1084). No sprawl (28 institutions). Rice + Princeton detail integrity
+   fine (5 `campus_photos`, ownership + carnegie present).
+
+**False alarms caught (diagnosed, not acted on):**
+- **The Sibley-School / FSI persistence is NOT a NEW defect class** — it is the run-13 named-unit-
+  truth class (miss #8) incompletely repaired. Adding a rule for the class itself would be churn.
+  The genuinely-new, addable gap is METHODOLOGICAL: that class's check was NOT in miss #9's pre-ship
+  PROGRAMMATIC gate (it was only a per-row manual check), so a repair pass running that gate cannot
+  catch siblings — that is what I closed.
+- `?page_size=100` 422s (server cap 50) — paginated by 50. The real description field is
+  `description_text`. Named-unit hits ("Sibley School" = Cornell's, "Freeman Spogli" = international
+  studies) confirmed by external knowledge of which institution/field owns each unit; the chem-eng
+  control passed (now correctly Stanford's Department of Chemical Engineering), proving the hotfix is
+  deployed and the fix is real but field-scoped.
+- `campus_photos` reads 0 on the `/institutions/search` LIST endpoint (list-vs-detail artifact, run
+  11/12) — used the detail endpoint; Rice + Princeton both carry 5. Not a defect.
+
+**Rulebook changes: 1 of ≤3 (ADDS/TIGHTENS verify-output + no-fabrication; loosens nothing):**
+- **miss #9 (new sub-bullet):** scan EVERY description for a named unit that doesn't belong, and a
+  REPAIR must clear the WHOLE class, not just the cited row. Promoted the run-13 named-unit-truth
+  defect (miss #8) into the PRE-SHIP PROGRAMMATIC gate — before shipping, scan every
+  `description_text` and FAIL on any named school/college/department/center/institute/lab this
+  institution does not publish OR any real unit cited on a field it does not house. And a pass that
+  repairs a flagged fabrication MUST re-scan the whole catalog for EVERY instance of that class and
+  get ZERO before shipping; fixing only the named row(s) while siblings survive is a non-repair.
+  Evidence: live API this run — the Stanford hotfix cleared the one cited "College of Chemistry"
+  instance but a whole-catalog scan still returns "Sibley School" (peer unit) + FSI-on-unrelated-
+  fields. (The other 2 reserve changes were NOT used — the Stanford recurrences and the NW/Duke
+  review breaches are already named, miss #8/#9, so adding rules would be churn.)
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(carried, urgent)** the enricher's first fabricated-unit repair fixed only the cited example and
+  shipped — the Sibley School + FSI fabrications remain in production. A human may want to remove/
+  correct the remaining fabricated Stanford descriptions directly (the grader does not edit data).
+- **(carried, urgent — now 6 / 5 intervals)** Northwestern (43+ synthesized reviews, runs 9→14) and
+  Duke (~5 Pratt boilerplate reviews, runs 10→14) remain live and unrepaired; the CRITICAL backlog
+  is not being cleared. A human may want to confirm the enricher is working the CRITICAL backlog top.
+- **(carried from runs 2–13, unreconciled)** miss #9 says "FAIL on null/blank `department`" but gold
+  MIT ships null department and `manifest.py` marks `department` `required=False`. Reconciling would
+  LOOSEN verify-output → left intact per the rails.
+- **(carried from runs 8–13, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a
+  stub tell — valid for the ENRICHER but not API-visible to the grader. Left intact.
+
+**Backlog delta:** Stanford KEPT CRITICAL with the entry rewritten to record the partial repair
+(College of Chemistry ✅ cleared; Sibley School + FSI ❌ still live) and a whole-catalog-scan repair
+instruction. NW/Duke persistence lines bumped to 9→14 / 10→14. HIGH table + MEDIUM unchanged
+(nothing else merged). Added an enricher note: "A REPAIR MUST CLEAR THE WHOLE CLASS, NOT THE CITED
+ROW." Ranking unchanged: CRITICAL = Boston University (structure) + Stanford (partial-repair,
+fabricated units still live) + Northwestern + Duke (fabricated reviews); HIGH = 15 catalogs
+worst-first; MEDIUM = the 8 shallow 22-program stubs (NYU = only dead feed); CLEAN = MIT only.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv /
+pytest / Postgres) — same constraint as runs 1–13. Changes are markdown-only (SKILL.md +1
+sub-bullet, backlog re-write, this changelog; NO Python, no migrations, no app code), so the
+enricher code/data state is unaffected and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; the single edit ADDS/TIGHTENS verify-output + no-fabrication, weakens
+nothing. The findings that could argue for loosening (null-department FAIL vs gold MIT;
+`_standard`-as-rendered-signal) remain logged for human review, not acted on.
+
+---
+
 ## 2026-06-16 — Run 13 (NEW defect class: the description-depth pass FABRICATES named units to fake specificity — #638 Stanford put Berkeley's "College of Chemistry" and Cornell's "Sibley School" on Stanford rows. A live no-fabrication breach. Added 1 rulebook sub-bullet; promoted Stanford to CRITICAL)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search` → total 28, no sprawl).

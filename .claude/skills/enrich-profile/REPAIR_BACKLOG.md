@@ -7,28 +7,30 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-16 (grader run 13). **ONE new profile-enrichment PR merged since run 12**:
-#638 "Stanford description depth pass — field-specific descriptions for all 188 programs"
-(`origin/main` HEAD). The intervening PRs are out of scope (#637 Import surface + #633 follow-up
-app code; #635/#636 skill-growth edits by the operator). The other 27 catalogs are byte-identical
-to run 12 (re-confirmed live: Northwestern n=308 rollup=1% / prefix-dbl≈97%; Duke n=154; gold MIT
-n=65 6% / **2%**; NYU still the ONLY dead feed `posts=0`; 28 institutions, no sprawl)._
+_Last graded: 2026-06-16 (grader run 14). **NO new profile-enrichment PR merged since run 13's
+grader** (#639 is `origin/main` HEAD). The only live-state change since run 13's grading is
+**fa7163e "fix(stanford): correct peer-adaptation leaks in field descriptions"** — a Stanford
+hotfix that landed ~8 min BEFORE the run-13 grader PR merged, so run 13 graded Stanford's PRE-fix
+state. This run grades the POST-fix Stanford. The other 27 catalogs are byte-identical to run 13
+(re-confirmed live: Northwestern n=308 rollup~1% / prefix-dbl≈97%; Duke n=154; Stanford n=188
+rollup~34% / prefix-dbl 85%; gold MIT n=65 6% / **2%**; NYU still the ONLY dead feed `posts=0`;
+28 institutions, no sprawl)._
 
-**NEW DEFECT CLASS this run (rulebook gap closed — SKILL.md miss #8, new sub-bullet):** #638 made
-Stanford's descriptions genuinely field-specific (real progress, the old generic gloss is gone) but
-to achieve "specificity" it **FABRICATED named units** — it attached **another institution's named
-college/school** to Stanford programs: Berkeley's **"College of Chemistry"** on all 3 Stanford
-chemical-engineering rows (cert + bachelor's + master's) and Cornell's **"Sibley School"** on 2
-Stanford aerospace rows. A control passed (Stanford's real Freeman Spogli Institute is correctly
-named on a political-science row), proving the pass gets some right and invents others. A
-confidently-WRONG specific in a description is a **no-fabrication breach** and is worse than an
-honest generic gloss because it reads authoritative — so Stanford is promoted to CRITICAL (a live
-fabrication breach outranks incompleteness, same as Northwestern/Duke). #638 also recurred two
-classes the rulebook already names: **34% rollup NAMES** with the rollup echoed in `department`
-("Bachelor's in Aerospace, Aeronautical, and Astronautical/Space Engineering", dept identical) — a
-single-dimension pass (miss #8) — and **85% prefix-doubling** ("Bachelor's in Anthropology: School
-of Humanities and Sciences anthropology combines …", miss #9), with `class_profile`/
-`faculty_contacts`/`tracks` still empty.
+**PARTIAL REPAIR + rulebook gap closed this run (SKILL.md miss #9, new sub-bullet):** the Stanford
+hotfix (fa7163e) is the FIRST attempt to repair a grader-flagged fabricated-named-unit defect — and
+it **whack-a-moled only the one field the backlog named verbatim.** It cleared Berkeley's "College
+of Chemistry" (the 3 chem-eng rows now correctly cite "Stanford School of Engineering's Department
+of Chemical Engineering") and the "Harvardsylvania" artifact, but a whole-catalog scan THIS run
+shows **sibling instances of the SAME class survive**: Cornell's **"Sibley School"** still named on
+2 Stanford aerospace rows (Stanford has no Sibley School), and the real-but-international-studies
+**Freeman Spogli Institute** still bolted onto a **systems-engineering** row and a **marketing
+(Public Relations/Advertising)** row. So Stanford STAYS CRITICAL. The gap: the miss-#8 named-unit-
+truth defect (added run 13) was only a per-row manual check; it was NOT in miss #9's PRE-SHIP
+PROGRAMMATIC gate, so a repair pass running that gate would not catch the sibling fabrications —
+now closed (scan EVERY description for foreign/mismatched units; a repair must re-scan the WHOLE
+class and get ZERO before shipping, not just fix the cited row). Stanford's two recurring classes
+are unchanged: **34% rollup NAMES** echoed in `department` (single-dimension pass, miss #8) and
+**85% prefix-doubling** (miss #9), with `class_profile`/`faculty_contacts`/`tracks` still empty.
 
 **METHODOLOGY (carried + extended): `_standard` is NOT exposed by the public API** — gold MIT shows
 `NONE` on every program and on the institution detail. Do NOT use `_standard` visibility as a live
@@ -70,23 +72,32 @@ _First seen 2026-06-14 (run 1). De-fabricate the STRUCTURE proper (field-specifi
 + researched content, collapse the splits, real departments) before any further depth work or
 any new university._
 
-## CRITICAL — Stanford University (FABRICATED named units in descriptions, shipped LIVE this run)
+## CRITICAL — Stanford University (FABRICATED named units — hotfix cleared only the ONE cited field; siblings still LIVE)
 
 188 programs. #638 made descriptions field-specific (good — the old generic gloss + BA-name/BS-desc
-mismatch are gone) but **fabricated named units to fake specificity** (the new miss-#8 class):
-- Berkeley's **"College of Chemistry"** named on all 3 Stanford chemical-engineering rows
-  (certificate + bachelor's + master's) — Stanford has NO College of Chemistry.
-- Cornell's **"Sibley School"** named on 2 Stanford aerospace rows — that is Cornell's school.
-- A real Stanford institute (Freeman Spogli, FSI) is also bolted onto an unrelated field
-  ("Master's in Public Relations, Advertising, and Applied Communication").
+mismatch are gone) but fabricated named units to fake specificity. The fa7163e hotfix this run
+**cleared only the one field the run-13 backlog named verbatim** and left sibling instances of the
+SAME class live (a non-repair — SKILL.md miss #9, new sub-bullet):
+- ✅ FIXED — Berkeley's "College of Chemistry" (+ the "Harvardsylvania" artifact): the 3
+  chemical-engineering rows now correctly cite "Stanford School of Engineering's Department of
+  Chemical Engineering".
+- ❌ STILL LIVE — Cornell's **"Sibley School"** on 2 Stanford aerospace rows (Bachelor's +
+  Graduate Certificate in Aerospace…) — Stanford has NO Sibley School (it is Cornell's).
+- ❌ STILL LIVE — the real-but-international-studies **Freeman Spogli Institute** bolted onto a
+  **systems-engineering** row ("Bachelor's in Systems Science and Theory") and a **marketing** row
+  ("Master's in Public Relations, Advertising, and Applied Communication") — a real Stanford unit
+  on fields it does not house.
 Plus two recurring classes: **34% rollup NAMES** echoed in `department` (single-dimension pass,
 miss #8) and **85% prefix-doubling** (miss #9); `class_profile`/`faculty_contacts`/`tracks` empty.
-**Repair: REMOVE/correct the fabricated unit names (verify each against Stanford's real org chart,
-or write a true generic clause), THEN de-roll-up the 34% names + their departments, strip the
-85% prefix, and fill real per-program deep content.**
+**Repair: SCAN THE WHOLE CATALOG for every named-unit defect (not just the cited rows) — remove/
+correct the Sibley School + FSI mismatches and any other foreign/mismatched unit, verify each
+against Stanford's real org chart or write a true generic clause; THEN de-roll-up the 34% names +
+their departments, strip the 85% prefix, and fill real per-program deep content.**
 
-_First seen 2026-06-16 (run 13). A live no-fabrication breach — fix the fabricated descriptions
-before any new depth pass or any new university._
+_First seen 2026-06-16 (run 13). Run 14: PARTIALLY repaired by fa7163e (College of Chemistry
+cleared) but the Sibley School + FSI sibling fabrications remain LIVE — a no-fabrication breach is
+not cleared until the WHOLE class is. Fix the remaining fabricated units before any new depth pass
+or any new university._
 
 ## CRITICAL — Northwestern University (fabricated reviews shipped LIVE; unrepaired since run 9)
 
@@ -99,9 +110,9 @@ live no-fabrication breach outranks mere incompleteness. **Repair: REMOVE the sy
 reviews and either re-gather genuine program-specific coverage or omit-with-reason** — then
 strip the ~97% name-prefix-doubling and fill real per-program deep content.
 
-_First seen 2026-06-16 (run 9). Still unrepaired across runs 10–13 (re-confirmed live this run:
+_First seen 2026-06-16 (run 9). Still unrepaired across runs 10–14 (re-confirmed live this run:
 the "Architecture and Related Services, Other" CIP-rollup review on "Bachelor of Arts in
-Architecture Studies" is unchanged). Now persisted FIVE grading intervals (9→13) with no repair
+Architecture Studies" is unchanged). Now persisted SIX grading intervals (9→14) with no repair
 PR. Fix the fabricated reviews before any new depth pass._
 
 ## CRITICAL — Duke University (fabricated-by-synthesis reviews shipped LIVE; unrepaired since run 10)
@@ -116,7 +127,7 @@ Northwestern but the same live no-fabrication breach.
 **Repair: REMOVE/re-gather those synthesized reviews per-program (or omit-with-reason)**, then
 strip the 66% name-prefix-doubling and fill real per-program deep content.
 
-_First seen 2026-06-16 (run 10). Still unrepaired in runs 11–13 (re-confirmed live this run: the
+_First seen 2026-06-16 (run 10). Still unrepaired in runs 11–14 (re-confirmed live this run: the
 Pratt B.S.E. rows still share the identical "…rigorous engineering degree at a selective private
 R1 university" boilerplate, only the field swapped). Fix the synthesized reviews before any new
 depth pass._
@@ -149,7 +160,9 @@ program-specific reviews, AND researched deep content.** Worst-first:
 
 _First seen 2026-06-14 (run 1). Run 13: Stanford moved OUT of HIGH (was row 3) UP to CRITICAL —
 #638 made its descriptions field-specific but shipped fabricated foreign named units (a live
-no-fabrication breach). The remaining HIGH catalogs are unchanged from run 12. Catalogs that got
+no-fabrication breach). Run 14: Stanford STAYS CRITICAL (the fa7163e hotfix cleared only the cited
+College-of-Chemistry field; Sibley School + FSI siblings remain live). The HIGH catalogs are
+unchanged from run 13 (nothing else merged). Catalogs that got
 field-specific descriptions but still run rollup NAMES + name-prefix (Columbia/UChicago/Berkeley/
 Harvard/Cornell/Penn) need the OTHER dimensions finished; CMU/JHU have names + descriptions done
 and need GATHERED (not synthesized) reviews + deep content (CMU also needs the prefix stripped).
@@ -209,6 +222,13 @@ but 100% name-prefixed. Neither is yet clean.
   rows. Every named unit must be one THIS institution actually has AND that houses THIS program;
   verify it against the official org/academics page, or write a true generic clause (SKILL.md
   miss #8). A wrong specific is worse than an honest gloss.
+- **A REPAIR MUST CLEAR THE WHOLE CLASS, NOT THE CITED ROW (run 14).** Stanford's fa7163e hotfix
+  fixed ONLY "College of Chemistry" (the field this backlog named first) and shipped — leaving the
+  sibling Sibley-School + Freeman-Spogli fabrications of the SAME class live. When repairing any
+  flagged defect, **scan the WHOLE catalog programmatically for every instance of that class and
+  re-scan to ZERO before shipping** — fixing the named example while siblings survive is a
+  non-repair (SKILL.md miss #9, new sub-bullet). The named-unit scan is now part of the pre-ship
+  programmatic gate, not just a per-row manual check.
 - **STRIP THE NAME-PREFIX, AND WRITE A SENTENCE.** Every description-passed catalog
   (Stanford/Columbia/UChicago/Yale/Duke/Cornell/Berkeley/Penn/CMU/Harvard) leads descriptions with
   the program name verbatim, doubling the page heading (gold MIT does not). Remove the leading
