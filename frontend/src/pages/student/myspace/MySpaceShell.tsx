@@ -25,14 +25,13 @@ const OVERVIEW: Item = { kind: 'link', label: 'Overview', to: '/s/space', icon: 
 const PROFILE: Item = {
   kind: 'group', label: 'Profile', to: '/s/profile', icon: User,
   children: [
-    { label: 'Personal', to: '/s/profile' },
+    { label: 'Basic info', to: '/s/profile' },
     { label: 'Identity', to: '/s/profile?tab=identity' },
     { label: 'Academics', to: '/s/profile?tab=academics' },
     { label: 'Experience', to: '/s/profile?tab=experience' },
-    { label: 'Goals', to: '/s/profile?tab=goals' },
     { label: 'Analytics', to: '/s/profile?tab=analytics' },
-    // Data rights moved to account Settings (Spec 2026-06-15 §2.1). Needs ·
-    // Timeline · Preferences moved to the Planning cluster below.
+    // Data rights moved to account Settings (Spec 2026-06-15 §2.1). Goals ·
+    // Needs · Preferences live in the Planning cluster below.
   ],
 }
 
@@ -43,6 +42,7 @@ const PLANNING: Item = {
   kind: 'group', label: 'Planning', to: '/s/profile?tab=strategy', icon: SlidersHorizontal,
   children: [
     { label: 'Strategy', to: '/s/profile?tab=strategy' },
+    { label: 'Goals', to: '/s/profile?tab=goals' },
     { label: 'Needs', to: '/s/profile?tab=needs' },
     { label: 'Preferences', to: '/s/profile?tab=preferences' },
   ],
