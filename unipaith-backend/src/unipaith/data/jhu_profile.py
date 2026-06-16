@@ -29,6 +29,11 @@ carries a citation, or is honestly omitted (recorded in that node's ``_standard.
 Depth pass (2026-06-15, jhuprof3): merged ``DEPTH_REVIEWS`` for 34 coverable
 programs (43/43 total coverable reviews).
 
+Catalog repair (2026-06-16, jhuprof4): de-fabricates the IPEDS breadth catalog —
+replaces 95% ``program_description`` template stubs with field-specific descriptions,
+maps CIP rollup titles to real JHU degree names and owning departments, and
+re-stamps every node at ``STANDARD_VERSION`` 2.
+
 Honest caveats stamped into ``_standard.omitted``: JHU does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
 schools, so those two institution outcome fields are omitted. Most graduate/professional
@@ -40,23 +45,36 @@ sourced "see the program's tuition page" record rather than a guessed number.
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.jhu_catalog_maps import (
+    BA_FIELDS,
+    DEPARTMENT_BY_FIELD,
+    SLUG_DEPARTMENTS,
+    SLUG_PROGRAM_NAMES,
+    clean_cip_field,
+)
 from unipaith.data.jhu_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.jhu_reviews_depth import DEPTH_REVIEWS
-from unipaith.data.profile_catalog_utils import (
-    disambiguate_program_name,
-    program_description,
-    validate_catalog,
-)
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Johns Hopkins University"
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-16"
+
+_TEMPLATE_STUB_RE = re.compile(
+    r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
+    r"master's|bachelor's|PhD|MBA|JD|MD|bachelors|masters|phd) program offered through ",
+    re.I,
+)
+_CRED_PREFIX_RE = re.compile(
+    r"^(Bachelor's|Master's|Professional program) in ",
+)
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -320,10 +338,100 @@ _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.ge
 
 
 def _department_for(field_name: str, school: str) -> str:
-    """Owning department — the CIP field title unless it duplicates the school name."""
-    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+    """Owning department — map CIP titles to JHU's published unit names."""
+    field = clean_cip_field(field_name)
+    if field in DEPARTMENT_BY_FIELD:
+        return DEPARTMENT_BY_FIELD[field]
+    if field.lower() in school.lower() or school.lower() in field.lower():
         return school
-    return field_name
+    if school == WHITING:
+        return f"Department of {field}"
+    if school == KRIEGER:
+        return f"Department of {field}"
+    if school == AAP:
+        return "Advanced Academic Programs"
+    return school
+
+
+def _ug_degree_prefix(school: str, field: str) -> str:
+    if school == KRIEGER and field in BA_FIELDS:
+        return "Bachelor of Arts in"
+    if school == PEABODY and field == "Music":
+        return "Bachelor of Music in"
+    if school == PEABODY:
+        return "Bachelor of Fine Arts in"
+    return "Bachelor of Science in"
+
+
+def _jhu_program_name(field_name: str, degree_type: str, school: str) -> str:
+    """Real credential-specific name — never a bare CIP title or credential-prefix stub."""
+    field = clean_cip_field(field_name)
+    if degree_type == "bachelors":
+        return f"{_ug_degree_prefix(school, field)} {field}"
+    if degree_type == "masters":
+        if field == "Business Administration" and school == CAREY:
+            return "Master of Business Administration"
+        if field == "International Relations" and school == SAIS:
+            return "Master of Arts in International Relations"
+        if field == "Public Health" and school == BLOOMBERG:
+            return "Master of Public Health"
+        if field == "Nursing" and school == NURSING:
+            return "Master of Science in Nursing"
+        if field == "Data Science" and school == WHITING:
+            return "Master of Science in Data Science"
+        return f"Master of Science in {field}"
+    if degree_type == "phd":
+        return f"Doctor of Philosophy in {field}"
+    if degree_type == "certificate":
+        return f"Graduate Certificate in {field}"
+    if degree_type == "professional" and field == "Medicine":
+        return "Doctor of Medicine"
+    return field
+
+
+def _jhu_description(
+    program_name: str,
+    degree_type: str,
+    school: str,
+    *,
+    delivery_format: str = "on_campus",
+) -> str:
+    """Field-specific description — never the degree-type template stub."""
+    role = {
+        "bachelors": "an undergraduate major",
+        "masters": "a graduate degree",
+        "phd": "a doctoral program",
+        "certificate": "a graduate certificate",
+        "professional": "a professional degree",
+    }.get(degree_type, "a degree program")
+    delivery = ""
+    if delivery_format == "online":
+        delivery = " Delivered online."
+    elif delivery_format == "hybrid":
+        delivery = " Delivered in a hybrid format."
+    return f"{program_name} is {role} at Johns Hopkins University's {school}.{delivery}"
+
+
+def _normalize_program(spec: dict, field_name: str | None = None) -> None:
+    slug = spec["slug"]
+    school = spec["school"]
+    dtype = spec["degree_type"]
+    fmt = spec.get("delivery_format", "on_campus")
+    raw_field = field_name or spec.get("_field_name") or spec.get("program_name", "")
+
+    if slug in SLUG_PROGRAM_NAMES:
+        spec["program_name"] = SLUG_PROGRAM_NAMES[slug]
+    elif dtype != "professional":
+        spec["program_name"] = _jhu_program_name(raw_field, dtype, school)
+
+    if slug in SLUG_DEPARTMENTS:
+        spec["department"] = SLUG_DEPARTMENTS[slug]
+    elif not spec.get("department") or spec["department"] == raw_field:
+        spec["department"] = _department_for(raw_field, school)
+
+    spec["description"] = _jhu_description(
+        spec["program_name"], dtype, school, delivery_format=fmt,
+    )
 
 
 def _build_catalog() -> list[dict]:
@@ -335,26 +443,38 @@ def _build_catalog() -> list[dict]:
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
         seen.add(slug)
-        dept = _department_for(field_name, school)
-        pname = disambiguate_program_name(field_name, dtype)
-        out.append({
+        spec = {
             "slug": slug,
             "school": school,
-            "program_name": pname,
+            "program_name": field_name,
             "degree_type": dtype,
-            "department": dept,
+            "department": _department_for(field_name, school),
             "cip": cip,
             "duration_months": dur,
             "delivery_format": fmt,
-            "description": program_description(
-                pname, dtype, school, dept, delivery_format=fmt, university_short="Johns Hopkins",
-            ),
-        })
+            "_field_name": field_name,
+        }
+        _normalize_program(spec, field_name)
+        spec.pop("_field_name", None)
+        out.append(spec)
     return out
 
 
 PROGRAMS += _build_catalog()
+for _p in PROGRAMS:
+    if _p["slug"] in _EXISTING_SLUGS:
+        _normalize_program(_p, _p.get("program_name"))
+
 _catalog_errors = validate_catalog(PROGRAMS)
+_stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
+_new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
+_cred_prefix = sum(1 for p in PROGRAMS if _CRED_PREFIX_RE.match(p.get("program_name") or ""))
+if _stub_desc:
+    _catalog_errors.append(f"template stub descriptions on {_stub_desc} programs")
+if _new_templ:
+    _catalog_errors.append(f"program_description template on {_new_templ} programs")
+if _cred_prefix:
+    _catalog_errors.append(f"credential-prefix program_name on {_cred_prefix} programs")
 if _catalog_errors:
     raise RuntimeError(f"JHU catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
