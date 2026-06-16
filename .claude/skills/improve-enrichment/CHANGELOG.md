@@ -6,6 +6,108 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-16 — Run 5 (template-description share is the truer fabrication metric; run 4's "clean-by-name" hid 40–66% template stubs; structure-before-depth gate still ignored)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search`, full program
+pagination per institution; per-program detail spot-checks via `/programs/{id}`).
+Recently-changed focus on the 2 profile PRs merged since run 4 (#593 Caltech reviews,
+#596 MIT reviews). Student's-eye pass: Yale, Duke, Caltech (recently-relevant) + CMU,
+Rice (clean baselines).
+
+**Findings (live API evidence):**
+
+1. **NEW METRIC / refined problem class — TEMPLATE-DESCRIPTION share is a broader,
+   independent fabrication fingerprint than CIP-rollup-NAME density, and run 4's
+   rollup-name ranking UNDERCOUNTED fabrication.** A program can have a real-looking
+   `program_name` ("Bachelor of Arts in Anthropology") and a real `department`
+   ("Anthropology") yet be a pure un-researched STUB: its description is the degree-type
+   template `"{name} is an undergraduate program at {Univ}'s {school}, offered through
+   the {field}"` (note the grammatically-broken definite article before a bare field,
+   "offered through the Anthropology"), and every rich field (curriculum, admissions,
+   costs, outcomes, class_profile, faculty, reviews) is empty with `_standard`
+   unstamped. Confirmed at DATA level via `/programs/{id}`: Yale "Bachelor of Arts in
+   African Studies" — all rich fields empty, `_standard` empty, template description.
+   Fleet template-description share: BU 96%, Purdue 96%, UCSD 95%, Northwestern 94%,
+   JHU 94%, Wisconsin 93%, Berkeley 89%, Penn 89%, Columbia 88%, Cornell 86%, Stanford
+   84%, Princeton 80%, Chicago 70%, **Duke 66%, Harvard 65%, Caltech 45%, Yale 40%** —
+   17 large catalogs 40–96% stubbed. The two metrics DIVERGE: **Duke (2% rollup names)
+   and Yale (4%) were graded CLEAN in run 4 but are 66% / 40% template stubs.** The only
+   genuinely clean enriched catalogs carry ZERO template descriptions: CMU, Rice, MIT.
+   Root cause = a RULEBOOK GAP: the structure-before-depth gate and the CLEAN
+   classification keyed on the rollup NAME / split / "stub" set, letting a real-name +
+   template-description row pass as clean.
+2. **Structure still UNREPAIRED + the structure-before-depth gate (added run 4) was
+   ignored.** CIP-rollup densities essentially flat vs run 4 (Northwestern 42%, UCSD
+   38%, JHU 37%, Harvard 34%). The only 2 profile PRs since run 4 were reviews-depth
+   passes; #593 (Caltech, 20% rollup + 45% template) attached `external_reviews` to a
+   template STUB — confirmed live: Caltech "Bachelor's in Business/Managerial Economics"
+   has `external_reviews` SET while every other field is empty and `_standard` is
+   unstamped. This is exactly the wasted/harmful work the run-4 gate forbids. The
+   repair-first top entry (Boston University) remains fully unrepaired.
+3. **No sprawl** — still 28 institutions; the enricher correctly did not add a new
+   university (repair-first held for NEW-university creation — it just keeps picking the
+   wrong KIND of repair: depth, not structure).
+4. **Dead feeds confirmed** — Boston U `posts=0` and NYU `posts=0` (live this run).
+
+**False alarms caught (diagnosed, not acted on):** (a) `/institutions/search?page_size=100`
+422s (server cap 50) — paginated by 50. (b) `/programs?page_size=100` likewise capped —
+paginated. (c) `description` key reads empty — the real field is `description_text`
+(template descriptions DO live there, verified). (d) CMU/Rice show em-dash names (16/6
+"splits") but ZERO template descriptions and real content — legit degree formatting,
+not fabrication; left in CLEAN.
+
+**Rulebook changes (2 of ≤3; both ADD/TIGHTEN no-fabrication + verify-output, neither
+loosens an invariant):**
+- **miss #8 (new sub-bullet):** the TEMPLATE-DESCRIPTION stub is its own fabricated-row
+  class — a real-looking `program_name` + real `department` do NOT redeem it; it is the
+  BROADEST fingerprint of an un-researched catalog. Rank and gate catalogs by
+  template-description SHARE, not just rollup-NAME share (the two diverge widely).
+  Documented the current live template string + the broken-definite-article tell, and
+  that such rows have all rich fields empty / `_standard` unstamped. A reviews/photo
+  pass on a template stub is the same wasted work the gate already forbids. Evidence:
+  live API this run — Yale/Duke 40%/66% template stubs while graded "clean"; Caltech
+  reviewed-row stub.
+- **miss #9 (programmatic catalog check extended):** template-description SHARE is now a
+  PRIMARY independent FAIL — count the current live form `"{name} is an
+  undergraduate|graduate program at {Univ}'s {school}, offered through the {field}"`
+  (broken definite article before a bare field); a high share = mostly un-researched
+  stubs even where NAMES read real, confirmed by empty rich fields + unstamped
+  `_standard`. Evidence: same. (1 change held in reserve — no other new class this run;
+  everything else is covered by existing rules and handled via the backlog re-rank, per
+  the no-edit-without-evidence / anti-churn rails.)
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(carried from runs 2–4, still unreconciled)** miss #9 says "FAIL on null/blank
+  `department`", but gold-reference MIT ships null department on all programs and
+  `manifest.py` marks `department` `required=False`. Reconciling would LOOSEN the
+  verify-output invariant, so left intact per the rails.
+- **(new, behavioral — not a rulebook gap)** the enricher has now spent TWO consecutive
+  runs (run-4 + run-5 intervals) doing reviews-depth passes and ZERO structural
+  de-fabrication, INCLUDING a depth pass (#593 Caltech) AFTER the run-4
+  structure-before-depth gate landed. The rulebook rules are correct and now tighter,
+  but the enricher is not selecting structure repairs / not clearing the repair-first
+  top entry (Boston University). This is an enricher-behavior issue a human should look
+  at — more rules cannot force selection; logged here, backlog re-ranked to make the
+  template-stub catalogs the unmistakable worst-first targets.
+
+**Backlog delta:** fully re-ranked by TEMPLATE-DESCRIPTION share. CRITICAL = Boston
+University (96% template stubs + 201 concentration splits + credential departments +
+degree-type mismatches + dead feed; unchanged top entry). HIGH = the 16 template-stub
+catalogs, ranked by template share (Purdue 96% #1; **Yale and Duke MOVED IN from
+run-4's "clean"**). MEDIUM = 8 shallow 22-program originals (unchanged). CLEAN trimmed
+to the 3 genuinely real catalogs with ZERO template descriptions (CMU, Rice, MIT).
+
+**Health check:** the profile pytest could not run in this ephemeral container (no
+backend venv / pytest / Postgres) — same constraint as runs 1–4. Changes are
+markdown-only (no Python, no migrations, no app code), so the enricher code/data state
+is unaffected; miss numbering remains sequential 1–9 and both edits are pure additions.
+
+**Invariants:** all intact; both edits ADD/TIGHTEN no-fabrication + verify-output,
+weaken nothing. The finding that could argue for loosening (null-department FAIL vs
+gold MIT) remains logged for human review.
+
+---
+
 ## 2026-06-15 — Run 4 (the enricher inverted repair-first: ~16 DEPTH passes, ZERO structure repairs; reviews now landing on fabricated rows)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search`, full program
