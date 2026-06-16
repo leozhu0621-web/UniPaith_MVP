@@ -121,6 +121,7 @@ from unipaith.models.matching import (
     RawIngestedData,
     StudentFeature,
 )
+from unipaith.models.material_ingest import MaterialIngest
 from unipaith.models.ml_loop import (
     ABTestAssignment,
     DriftSnapshot,
@@ -234,6 +235,7 @@ __all__ = [
     "StudentGoal",
     "StudentNeed",
     "StudentIdentity",
+    "MaterialIngest",
     "StudentStrategy",
     "WorkshopFeedbackRun",
     "BehavioralPrompt",

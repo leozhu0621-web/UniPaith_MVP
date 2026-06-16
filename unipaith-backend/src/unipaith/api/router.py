@@ -32,6 +32,7 @@ from unipaith.api.institutions import router as institutions_router
 from unipaith.api.intake import router as intake_router
 from unipaith.api.interviews import router as interviews_router
 from unipaith.api.major_specific import router as major_specific_router
+from unipaith.api.materials import router as materials_router
 from unipaith.api.needs import router as needs_router
 from unipaith.api.notifications import router as notifications_router
 from unipaith.api.payments import router as payments_router
@@ -112,6 +113,7 @@ api_router.include_router(applications_router)
 # Spec 39 — fees & payments (student checkout/waiver + institution config/refunds).
 api_router.include_router(payments_router)
 api_router.include_router(documents_router)
+api_router.include_router(materials_router)
 api_router.include_router(saved_lists_router)
 api_router.include_router(saved_search_router)
 api_router.include_router(search_router)

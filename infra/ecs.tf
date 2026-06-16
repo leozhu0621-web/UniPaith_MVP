@@ -199,6 +199,11 @@ resource "aws_ecs_task_definition" "backend" {
       # here is how we follow a new agent version/id.
       { name = "UNI_AGENT_ID", value = "agent_01Gcox2cnu9zvUCR5Lfb9ymg" },
       { name = "UNI_ENVIRONMENT_ID", value = "env_01N43sA3tmVhij3YYZgWzAP2" },
+      # Material ingest — "upload any file, Uni reads it, turns it into My Space."
+      # Additive + flag-gated; on any read failure the student enters data
+      # manually (never a 5xx). Uses the existing ANTHROPIC_API_KEY (native
+      # PDF/image input). Verified live against a real resume.
+      { name = "AI_MATERIAL_INGEST_V2_ENABLED", value = "true" },
       { name = "AI_WORKSHOPS_V2_ENABLED", value = "true" },
       { name = "AI_MATCH_RATIONALE_V2_ENABLED", value = "true" },
       { name = "AI_STRATEGY_V2_ENABLED", value = "true" },
