@@ -23,40 +23,30 @@ function renderShell() {
 }
 
 describe('MySpaceShell rail structure', () => {
-  it('labels groups by content type, not journey phase', () => {
+  it('keeps the content groups in the rail', () => {
     renderShell()
     const rail = screen.getByRole('complementary', { name: 'My Space' })
-    for (const label of ['Record', 'Collections', 'Workspace']) {
+    for (const label of ['Profile', 'Planning', 'Saved', 'Workspace']) {
       expect(within(rail).getByText(label)).toBeTruthy()
     }
-    for (const phase of ['Plan', 'Prepare', 'Apply & decide', 'Anytime']) {
-      expect(within(rail).queryByText(phase)).toBeNull()
-    }
   })
 
-  it('keeps all 7 rooms with their existing routes', () => {
+  it('shows Overview and Import as the first two rail links', () => {
     renderShell()
     const rail = screen.getByRole('complementary', { name: 'My Space' })
-    const expected: Record<string, string> = {
-      Home: '/s/space',
-      Profile: '/s/profile',
-      Saved: '/s/saved',
-      Applications: '/s/applications',
-      Prep: '/s/prep',
-      Calendar: '/s/calendar',
-      Messages: '/s/messages',
-    }
-    for (const [label, href] of Object.entries(expected)) {
-      expect(within(rail).getByRole('link', { name: new RegExp(`^${label}`) }).getAttribute('href')).toBe(href)
-    }
-  })
-
-  it('orders the rail Home → Profile → Saved → Applications → Prep → Calendar → Messages', () => {
-    renderShell()
-    const rail = screen.getByRole('complementary', { name: 'My Space' })
-    const order = within(rail)
+    const links = within(rail)
       .getAllByRole('link')
       .map(a => (a.textContent ?? '').trim())
-    expect(order).toEqual(['Home', 'Profile', 'Saved', 'Applications', 'Prep', 'Calendar', 'Messages'])
+    // At /s/space no group is expanded, so the only links are the two top-level
+    // items — Import sits right after Overview (Spec 2026-06-16).
+    expect(links.slice(0, 2)).toEqual(['Overview', 'Import'])
+  })
+
+  it('points Import at /s/import', () => {
+    renderShell()
+    const rail = screen.getByRole('complementary', { name: 'My Space' })
+    expect(
+      within(rail).getByRole('link', { name: /^Import/ }).getAttribute('href'),
+    ).toBe('/s/import')
   })
 })

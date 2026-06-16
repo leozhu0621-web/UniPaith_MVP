@@ -3,7 +3,7 @@ import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   Backpack, Bookmark, PenLine, FolderKanban, Calendar, User, Briefcase,
-  SlidersHorizontal, ChevronRight, ChevronDown,
+  SlidersHorizontal, ChevronRight, ChevronDown, Upload,
 } from 'lucide-react'
 import { listMyApplications } from '../../../api/applications'
 import Coachmark from '../../../components/ui/Coachmark'
@@ -21,6 +21,10 @@ type Item =
   | { kind: 'group'; label: string; to: string; icon: typeof Backpack; children: Sub[] }
 
 const OVERVIEW: Item = { kind: 'link', label: 'Overview', to: '/s/space', icon: Backpack }
+
+// Import — upload a file, Uni reads it, complete the gaps. Sits right after
+// Overview so it's the obvious first step to fill a fresh profile.
+const IMPORT: Item = { kind: 'link', label: 'Import', to: '/s/import', icon: Upload }
 
 const PROFILE: Item = {
   kind: 'group', label: 'Profile', to: '/s/profile', icon: User,
@@ -75,7 +79,7 @@ const WORKSPACE: Item = {
   ],
 }
 
-const ITEMS: Item[] = [OVERVIEW, PROFILE, PLANNING, SAVED, WORKSPACE]
+const ITEMS: Item[] = [OVERVIEW, IMPORT, PROFILE, PLANNING, SAVED, WORKSPACE]
 
 // Flat list of room landing routes — drives the top-nav My Space active state.
 // Messages is intentionally absent (it is its own nav tab now).
@@ -84,6 +88,7 @@ export const MY_SPACE_ROUTES = ['/s/space', '/s/profile', '/s/saved', '/s/prep',
 // Mobile pill row — flat top-level rooms (no nesting).
 const MOBILE_PILLS: { label: string; to: string; icon: typeof Backpack; end?: boolean }[] = [
   { label: 'Overview', to: '/s/space', icon: Backpack, end: true },
+  { label: 'Import', to: '/s/import', icon: Upload },
   { label: 'Profile', to: '/s/profile', icon: User },
   { label: 'Saved', to: '/s/saved', icon: Bookmark },
   { label: 'Prep', to: '/s/prep', icon: PenLine },

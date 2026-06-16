@@ -10,13 +10,9 @@
 import { lazy, Suspense, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { useQueryClient } from '@tanstack/react-query'
 
-import MaterialUpload from '../../components/student/MaterialUpload'
 import { PageContainer } from '../../components/student/density'
-import Card from '../../components/ui/Card'
 import { SkeletonCard } from '../../components/ui/Skeleton'
-import { showToast } from '../../stores/toast-store'
 import usePageTitle from '../../hooks/usePageTitle'
 import { PROFILE_TAB_ALIASES, normalizeProfileTab, type ProfileTabSpec } from '../../utils/information-architecture'
 
@@ -46,7 +42,6 @@ const TABS: { key: ProfileTabSpec; label: string }[] = [
 
 export default function ProfilePage() {
   const navigate = useNavigate()
-  const qc = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const rawTab = searchParams.get('tab')
   const activeTab = normalizeProfileTab(rawTab)
@@ -100,31 +95,22 @@ export default function ProfilePage() {
 
   return (
     <PageContainer>
-      {/* Import-from-a-file — upload a resume/transcript and Uni fills your
-          profile (the My Space half of the material-ingest feature). */}
-      <Card variant="card" pad className="mb-6">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <p className="text-sm font-semibold text-foreground">Import from a file</p>
-            <p className="text-xs text-muted-foreground">
-              Upload a resume, transcript, or CV — Uni reads it and fills your profile. You
-              review everything before it's saved.
-            </p>
-          </div>
-          <MaterialUpload
-            onApplied={result => {
-              const n = Object.values(result.counts || {}).reduce((a, b) => a + b, 0)
-              void qc.invalidateQueries({ queryKey: ['profile'] })
-              void qc.invalidateQueries({ queryKey: ['goals'] })
-              void qc.invalidateQueries({ queryKey: ['needs'] })
-              void qc.invalidateQueries({ queryKey: ['identity'] })
-              void qc.invalidateQueries({ queryKey: ['academic-records'] })
-              void qc.invalidateQueries({ queryKey: ['test-scores'] })
-              showToast(`Added ${n} items from your file to your profile.`, 'success')
-            }}
-          />
+      {/* Import lives on its own My Space surface now (/s/import); a slim
+          pointer keeps it discoverable from the Profile. */}
+      <button
+        type="button"
+        onClick={() => navigate('/s/import')}
+        className="mb-6 flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left transition-colors hover:border-secondary/50 hover:bg-secondary/5"
+      >
+        <div>
+          <p className="text-sm font-semibold text-foreground">Import from a file</p>
+          <p className="text-xs text-muted-foreground">
+            Upload a resume, transcript, or CV — Uni reads it and fills your profile, then asks
+            about anything it couldn't find.
+          </p>
         </div>
-      </Card>
+        <span className="shrink-0 text-sm font-medium text-secondary">Open Import →</span>
+      </button>
 
       {/* Tab strip — finding 8: proper ARIA tablist attributes. Hidden on lg+
           where the My Space rail's Profile group already lists every sub-tab

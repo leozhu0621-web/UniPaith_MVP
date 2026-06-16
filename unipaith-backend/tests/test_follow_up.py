@@ -19,10 +19,10 @@ async def test_detect_categories_and_cap(db_session, mock_student_user):
     cats = {g["category"] for g in gaps}
     assert "ambiguous" in cats
     assert "missing" in cats
-    assert len(gaps) <= 5
+    assert len(gaps) <= 12
     assert sum(1 for g in gaps if g["category"] == "deepen") <= 1
     for g in gaps:
-        assert {"id", "category", "target_field", "prompt_hint", "kind"} <= set(g)
+        assert {"id", "category", "target_field", "prompt_hint", "kind", "section"} <= set(g)
 
 
 @pytest.mark.asyncio
@@ -126,6 +126,115 @@ async def test_apply_gpa_targets_named_school(db_session, mock_student_user):
     by_inst = {r.institution_name: r.gpa for r in recs}
     assert float(by_inst["Northeastern University"]) == 3.7
     assert by_inst["Boston University"] is None  # the other school untouched
+
+
+@pytest.mark.asyncio
+async def test_detect_comprehensive_grouped(db_session, mock_student_user):
+    """Work/skills/contact/courses gaps surface, each tagged with a section."""
+    await ensure_profile(db_session, mock_student_user)
+    imp = {
+        "work_experiences": [{"role_title": "ML Intern", "organization": "Acme"}],  # no hours/comp
+        "academic_records": [{"institution_name": "NEU", "degree_type": "bachelors", "gpa": 3.8}],
+        "online_presence": [],  # no linkedin
+        "profile": {},  # no skills
+    }
+    gaps = await FollowUpService(db_session).detect(mock_student_user.id, imp)
+    targets = {g["target_field"] for g in gaps}
+    sections = {g["section"] for g in gaps}
+    assert {"work_hours", "work_compensation", "courses", "skills", "link"} <= targets
+    assert {"Experience", "Education", "Skills", "Contact"} <= sections
+
+
+@pytest.mark.asyncio
+async def test_answer_work_hours_and_compensation(db_session, mock_student_user):
+    from datetime import date
+
+    from sqlalchemy import select
+
+    from unipaith.models.student import StudentWorkExperience
+    from unipaith.schemas.student import CreateWorkExperienceRequest
+    from unipaith.services.student_service import StudentService
+
+    await ensure_profile(db_session, mock_student_user)
+    svc = StudentService(db_session)
+    sid = (await svc._get_student_profile(mock_student_user.id)).id
+    await svc.create_work_experience(
+        sid,
+        CreateWorkExperienceRequest(
+            experience_type="internship",
+            organization="Acme",
+            role_title="ML Intern",
+            start_date=date(2022, 6, 1),
+        ),
+    )
+    fu = FollowUpService(db_session)
+    ref = {"role_title": "ML Intern", "organization": "Acme"}
+    await fu.answer(mock_student_user.id, {"target_field": "work_hours", "ref": ref}, "about 20")
+    await fu.answer(
+        mock_student_user.id, {"target_field": "work_compensation", "ref": ref}, "Unpaid"
+    )
+    w = (
+        await db_session.execute(
+            select(StudentWorkExperience).where(StudentWorkExperience.student_id == sid)
+        )
+    ).scalar_one()
+    assert w.hours_per_week == 20
+    assert w.compensation_type == "unpaid"
+
+
+@pytest.mark.asyncio
+async def test_answer_courses_skills_link(db_session, mock_student_user):
+    from datetime import date
+
+    from sqlalchemy import select
+
+    from unipaith.models.student import (
+        StudentCourse,
+        StudentOnlinePresence,
+        StudentProfile,
+    )
+    from unipaith.schemas.student import CreateAcademicRecordRequest
+    from unipaith.services.student_service import StudentService
+
+    await ensure_profile(db_session, mock_student_user)
+    svc = StudentService(db_session)
+    sid = (await svc._get_student_profile(mock_student_user.id)).id
+    await svc.create_academic_record(
+        sid,
+        CreateAcademicRecordRequest(
+            institution_name="NEU", degree_type="bachelors", start_date=date(2020, 9, 1)
+        ),
+    )
+    fu = FollowUpService(db_session)
+    await fu.answer(
+        mock_student_user.id,
+        {"target_field": "courses", "ref": {"institution_name": "NEU"}},
+        "Data Mining, Marketing Research, Financial Management",
+    )
+    await fu.answer(mock_student_user.id, {"target_field": "skills"}, "Python, SQL, Tableau")
+    await fu.answer(
+        mock_student_user.id,
+        {"target_field": "link", "ref": {"platform_type": "linkedin"}},
+        "linkedin.com/in/leo",
+    )
+    courses = (await db_session.execute(select(StudentCourse))).scalars().all()
+    assert len(courses) == 3
+    prof = (
+        await db_session.execute(
+            select(StudentProfile).where(StudentProfile.user_id == mock_student_user.id)
+        )
+    ).scalar_one()
+    assert "Python" in (prof.bio_text or "")
+    links = (
+        (
+            await db_session.execute(
+                select(StudentOnlinePresence).where(StudentOnlinePresence.student_id == sid)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert any(lk.platform_type == "linkedin" and lk.url.startswith("https://") for lk in links)
 
 
 @pytest.mark.asyncio
