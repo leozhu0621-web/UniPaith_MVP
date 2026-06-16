@@ -186,15 +186,17 @@ def test_booth_mba_flagship_is_deeply_enriched():
 
 
 def test_coverable_programs_have_external_reviews():
-    """Coverable programs (MBA, JD, MD, MPP, flagship CS) must carry reviews."""
-    coverable = [
-        _FLAGSHIP,
-        "uchicago-computer-science-bs",
-        "uchicago-jd",
-        "uchicago-md",
-        "uchicago-mpp",
-    ]
-    for slug in coverable:
+    """Every fleet-audit coverable program must carry aggregated external_reviews."""
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from scripts.fleet_audit import is_coverable
+
+    for spec in c.PROGRAMS:
+        if not is_coverable(spec):
+            continue
+        slug = spec["slug"]
         assert slug in c._REVIEWS_BY_SLUG, slug
         assert c._REVIEWS_BY_SLUG[slug].get("summary"), slug
         assert len(c._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug

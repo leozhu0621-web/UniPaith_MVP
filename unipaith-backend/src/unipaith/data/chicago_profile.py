@@ -67,7 +67,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of Chicago"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-14"
+ENRICHED_AT = "2026-06-16"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1199,12 +1199,28 @@ def _department_for(field_name: str, school: str) -> str:
     return mapped
 
 
+# IPEDS rows that do not map to distinct UChicago degrees — tracks within Molecular
+# Engineering, Booth graduate-only business degrees mis-tagged as College bachelors, or
+# credentials the institution does not publish (e.g. no B.S. in Social Work at Crown).
+_SKIP_CATALOG_SLUGS = frozenset({
+    "uchicago-business-commerce-general-bs",
+    "uchicago-business-administration-management-and-operations-bs",
+    "uchicago-management-sciences-and-quantitative-methods-bs",
+    "uchicago-social-work-bs",
+    "uchicago-chemical-engineering-bs",
+    "uchicago-chemical-engineering-ms",
+    "uchicago-engineering-physics-bs",
+})
+
+
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the IPEDS Field-of-Study catalog."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
     for slug, school, name, dtype, cip, dur, fmt, _desc in _IPEDS_CATALOG:
         if slug in seen:
+            continue
+        if slug in _SKIP_CATALOG_SLUGS:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
@@ -1342,6 +1358,20 @@ _TRACKS_BY_SLUG: dict[str, dict] = {
         ],
         "source": "Chicago Booth — MBA Curriculum",
         "source_url": "https://www.chicagobooth.edu/mba/academics/curriculum",
+    },
+    "uchicago-molecular-engineering-bs": {
+        "label": "Molecular Engineering tracks",
+        "note": (
+            "Undergraduates choose among bioengineering, chemical engineering, or quantum "
+            "engineering tracks within the single Molecular Engineering major (PME)."
+        ),
+        "items": [
+            {"name": "Bioengineering"},
+            {"name": "Chemical engineering"},
+            {"name": "Quantum engineering"},
+        ],
+        "source": "PME — Undergraduate major FAQs",
+        "source_url": "https://pme.uchicago.edu/undergraduate-program/undergraduate-major-and-minor-faqs",
     },
 }
 
@@ -1872,6 +1902,554 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {
                 "label": "Admit Lab — Best MPP Programs (Harris acceptance & placement data)",
                 "url": "https://admit-lab.com/blog/best-mpp-programs/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-economics-bs": {
+        "summary": (
+            "Students and third-party guides describe UChicago's economics major as one of "
+            "the nation's most rigorous undergraduate programs — Niche ranks it #4 for "
+            "Best Colleges for Economics (2026) and College Factual ranks the bachelor's "
+            "#1 nationally — grounded in the Chicago School's quantitative micro, macro, "
+            "and econometrics tradition with tracks in business economics, data science, and "
+            "politics and policy. Common cautions are heavy calculus and theory prerequisites, "
+            "large intermediate courses, and an intellectually intense Core that adds breadth "
+            "beyond a purely economics track."
+        ),
+        "themes": [
+            {
+                "label": "Elite national standing",
+                "sentiment": "positive",
+                "detail": (
+                    "Niche #4 Best Colleges for Economics (2026); College Factual #1 "
+                    "bachelor's in economics nationally."
+                ),
+            },
+            {
+                "label": "Chicago School rigor",
+                "sentiment": "positive",
+                "detail": (
+                    "Theory-forward curriculum with honors sequences and research pathways "
+                    "through the Griffin Department of Economics."
+                ),
+            },
+            {
+                "label": "Career & Ph.D. placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates enter finance, consulting, policy, and top economics Ph.D. "
+                    "programs; the department publishes research-opportunity guidance."
+                ),
+            },
+            {
+                "label": "Quantitative prerequisites",
+                "sentiment": "caution",
+                "detail": (
+                    "Multivariable calculus and a demanding theory core can overwhelm "
+                    "students without strong math preparation."
+                ),
+            },
+            {
+                "label": "Core + course scale",
+                "sentiment": "mixed",
+                "detail": (
+                    "UChicago's broad Core adds intellectual breadth but can compete with "
+                    "economics electives; some intermediate lectures feel large."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Best Colleges for Economics (2026)",
+                "url": "https://www.niche.com/colleges/search/best-colleges-for-economics/",
+            },
+            {
+                "label": "Kenneth C. Griffin Department of Economics — Undergraduate",
+                "url": "https://economics.uchicago.edu/undergraduate-study",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-mpcs": {
+        "summary": (
+            "Students and guides describe the Master's Program in Computer Science (MPCS) as "
+            "a professionally oriented, career-launching degree — Niche graduate reviewers "
+            "praise its mix of academic rigor and industry-relevant projects, and the program "
+            "publishes annual career-outcomes reports with strong tech placement. Common "
+            "cautions are an intense workload with stacked deadlines, per-course tuition near "
+            "$7,000, limited in-campus housing, and less centralized career-services support "
+            "than some larger CS master's programs."
+        ),
+        "themes": [
+            {
+                "label": "Industry-oriented curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Courses blend theory with hands-on projects taught by faculty and "
+                    "practitioners; cohorts are collaborative."
+                ),
+            },
+            {
+                "label": "Career outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "MPCS publishes alumni career-outcomes reports; graduates enter software, "
+                    "data, and product roles."
+                ),
+            },
+            {
+                "label": "Accessible to career changers",
+                "sentiment": "positive",
+                "detail": (
+                    "The program accommodates students new to CS with immersive and "
+                    "part-time formats."
+                ),
+            },
+            {
+                "label": "Workload intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Fast-paced quarters and project deadlines can feel overwhelming, "
+                    "especially for working students."
+                ),
+            },
+            {
+                "label": "Cost & career services",
+                "sentiment": "mixed",
+                "detail": (
+                    "High per-course tuition and lighter centralized recruiting than some "
+                    "peer CS master's programs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "MPCS — Career Outcomes Reports",
+                "url": "https://masters.cs.uchicago.edu/career-services/career-outcomes-reports/",
+            },
+            {
+                "label": "Niche — University of Chicago Graduate Reviews",
+                "url": "https://www.niche.com/graduate-schools/university-of-chicago/reviews/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-social-work-am": {
+        "summary": (
+            "Students and policy guides describe Crown Family School's A.M. in Social Work, "
+            "Social Policy, and Social Administration as a top-tier, interdisciplinary "
+            "professional degree — U.S. News ranked the school #3 nationally for social work "
+            "(2024) — combining clinical practice with policy, research, and social-science "
+            "theory beyond a traditional MSW. Common cautions are demanding coursework across "
+            "the quarter system, the cost of a private-university graduate degree in Chicago, "
+            "and an administrative pace that some students find intense."
+        ),
+        "themes": [
+            {
+                "label": "Top national rank",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News Best Schools for Social Work #3 (2024); CSWE-accredited since "
+                    "1919."
+                ),
+            },
+            {
+                "label": "Interdisciplinary breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "The A.M. integrates direct practice with policy analysis and social-science "
+                    "theory across five specialization pathways."
+                ),
+            },
+            {
+                "label": "Career flexibility",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates pursue clinical social work, nonprofit leadership, policy, "
+                    "research, and community organizing."
+                ),
+            },
+            {
+                "label": "Program intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Rigorous coursework on UChicago's quarter calendar can feel fast-paced."
+                ),
+            },
+            {
+                "label": "Cost & administration",
+                "sentiment": "mixed",
+                "detail": (
+                    "Private-university tuition in Chicago; some students note administrative "
+                    "complexity."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Crown Family School — Master's in Social Work",
+                "url": "https://crownschool.uchicago.edu/academic-programs/masters-social-work",
+            },
+            {
+                "label": "U.S. News — Best Schools for Social Work",
+                "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/social-work-rankings",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-molecular-engineering-bs": {
+        "summary": (
+            "Students and parents on College Confidential describe UChicago's Molecular "
+            "Engineering major — the nation's first undergraduate program in the field — as "
+            "research-rich and flexible across bioengineering, chemical engineering, and "
+            "quantum tracks, with plentiful lab and internship opportunities through PME. "
+            "Common cautions are that the program is not ABET-accredited (by design), is "
+            "still younger than peer engineering schools, and suits students comfortable "
+            "building a bespoke path within UChicago's liberal-arts Core."
+        ),
+        "themes": [
+            {
+                "label": "Research & lab access",
+                "sentiment": "positive",
+                "detail": (
+                    "Students report early research-lab placement and industry internships; "
+                    "PME emphasizes capstone projects with industry partners."
+                ),
+            },
+            {
+                "label": "Distinctive tracks",
+                "sentiment": "positive",
+                "detail": (
+                    "Bioengineering, chemical engineering, and quantum engineering tracks "
+                    "within one molecular-engineering major."
+                ),
+            },
+            {
+                "label": "Interdisciplinary UChicago setting",
+                "sentiment": "positive",
+                "detail": (
+                    "Engineering training sits inside a rigorous liberal-arts college with "
+                    "cross-registration across the university."
+                ),
+            },
+            {
+                "label": "No ABET accreditation",
+                "sentiment": "caution",
+                "detail": (
+                    "PME deliberately forgoes ABET; students and alumni report this has not "
+                    "blocked industry or graduate-school paths."
+                ),
+            },
+            {
+                "label": "Younger program scale",
+                "sentiment": "mixed",
+                "detail": (
+                    "Smaller than long-established engineering schools; students must be "
+                    "self-directed in building community and recruiting."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "PME — Undergraduate major FAQs",
+                "url": "https://pme.uchicago.edu/undergraduate-program/undergraduate-major-and-minor-faqs",
+            },
+            {
+                "label": "College Confidential — Molecular Engineering at UChicago",
+                "url": (
+                    "https://talk.collegeconfidential.com/t/"
+                    "molecular-engineering-reviews-and-feedback-please/3664775"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-economics-ms": {
+        "summary": (
+            "Students and the department describe the one-year Master of Arts in Economics "
+            "(MAE) as the only M.A. from a top-five U.S. economics department — built on "
+            "Chicago's micro, macro, and econometrics core with electives across economics, "
+            "Harris, and Booth. Common cautions are the program's mathematical intensity, "
+            "the one-year timeline for students aiming at Ph.D. coursework, and the need to "
+            "self-direct recruiting for industry roles beyond the department's placement "
+            "listings."
+        ),
+        "themes": [
+            {
+                "label": "Chicago Economics pedigree",
+                "sentiment": "positive",
+                "detail": (
+                    "Only M.A. from a top U.S. economics department; Nobel-caliber faculty "
+                    "and ECMA core sequences."
+                ),
+            },
+            {
+                "label": "Flexible outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates enter industry, policy, predoctoral research, and Ph.D. "
+                    "programs; the department publishes placement data."
+                ),
+            },
+            {
+                "label": "Research pathway",
+                "sentiment": "positive",
+                "detail": (
+                    "Research Intensive Track (RIT) option for students pursuing doctoral "
+                    "coursework."
+                ),
+            },
+            {
+                "label": "Quantitative rigor",
+                "sentiment": "caution",
+                "detail": (
+                    "Math camp and graduate theory expect strong preparation in calculus and "
+                    "statistics."
+                ),
+            },
+            {
+                "label": "One-year pace",
+                "sentiment": "mixed",
+                "detail": (
+                    "The compressed timeline can limit depth for students pivoting from "
+                    "non-quantitative backgrounds."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Kenneth C. Griffin Department of Economics — MAE",
+                "url": "https://economics.uchicago.edu/masters-programs/master-arts-economics",
+            },
+            {
+                "label": "Economics — Placement and Outcomes",
+                "url": "https://economics.uchicago.edu/masters-programs/placement-and-outcomes",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-film-video-and-photographic-arts-bs": {
+        "summary": (
+            "Students and film-school guides describe UChicago's Cinema and Media Studies "
+            "major as intellectually rigorous and theory-forward — FilmSchool.org reviewers "
+            "rate the department highly for coursework and professors — with optional "
+            "production-thesis tracks and student-led filmmaking through Fire Escape Films. "
+            "Common cautions are that the program emphasizes critical history and theory "
+            "over hands-on production training, the overall UChicago workload is intense, "
+            "and practical filmmaking often requires joining campus organizations."
+        ),
+        "themes": [
+            {
+                "label": "Theory & history depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Core cinema-history sequence and advanced seminars prepare students for "
+                    "graduate study and critical analysis."
+                ),
+            },
+            {
+                "label": "Production pathways",
+                "sentiment": "positive",
+                "detail": (
+                    "Intensive production-thesis track and student organizations (e.g., Fire "
+                    "Escape Films) provide filmmaking experience."
+                ),
+            },
+            {
+                "label": "Interdisciplinary campus",
+                "sentiment": "positive",
+                "detail": (
+                    "CMS sits within UChicago's humanities ecosystem with cross-registration "
+                    "and joint-thesis options."
+                ),
+            },
+            {
+                "label": "Limited formal production",
+                "sentiment": "caution",
+                "detail": (
+                    "Applicants seeking a primarily hands-on film school may find the "
+                    "curriculum analysis-heavy compared with conservatory programs."
+                ),
+            },
+            {
+                "label": "Academic intensity",
+                "sentiment": "mixed",
+                "detail": (
+                    "Reviewers note UChicago's demanding Core and quarter pace alongside CMS "
+                    "coursework."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cinema and Media Studies — Undergraduate major",
+                "url": (
+                    "https://cms.uchicago.edu/undergraduate/"
+                    "why-study-cinema-and-media-studies/major-cinema-and-media-studies"
+                ),
+            },
+            {
+                "label": "FilmSchool.org — UChicago Cinema and Media Studies reviews",
+                "url": (
+                    "https://www.filmschool.org/reviews/"
+                    "university-of-chicago-department-of-cinema-and-media-studies.211/reviews"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-film-video-and-photographic-arts-ms": {
+        "summary": (
+            "Graduate students and departmental materials describe UChicago's cinema and "
+            "media graduate work — centered in the Department of Cinema and Media Studies "
+            "within the Division of the Humanities — as research-intensive and "
+            "interdisciplinary, with strengths in film history, theory, and media "
+            "archaeology rather than vocational production training. Common cautions are "
+            "small cohorts, the academic job market for film studies, and the need to "
+            "self-build production experience if pursuing industry roles."
+        ),
+        "themes": [
+            {
+                "label": "Research reputation",
+                "sentiment": "positive",
+                "detail": (
+                    "Faculty and graduate students are known for rigorous scholarship in "
+                    "film history, theory, and media studies."
+                ),
+            },
+            {
+                "label": "Humanities integration",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduate work connects to art history, literature, and interdisciplinary "
+                    "centers across the Division of the Humanities."
+                ),
+            },
+            {
+                "label": "Academic placement",
+                "sentiment": "positive",
+                "detail": (
+                    "The program prepares students for doctoral study and academic careers "
+                    "in cinema and media fields."
+                ),
+            },
+            {
+                "label": "Industry orientation",
+                "sentiment": "caution",
+                "detail": (
+                    "The curriculum is scholarly rather than a vocational film-production "
+                    "master's."
+                ),
+            },
+            {
+                "label": "Cohort scale",
+                "sentiment": "mixed",
+                "detail": (
+                    "Small graduate community offers close faculty access but fewer peer "
+                    "resources than large film schools."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cinema and Media Studies — Department home",
+                "url": "https://cms.uchicago.edu/",
+            },
+            {
+                "label": "FilmSchool.org — UChicago Cinema and Media Studies",
+                "url": (
+                    "https://www.filmschool.org/reviews/"
+                    "university-of-chicago-department-of-cinema-and-media-studies.211/"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-divinity-mdiv": {
+        "summary": (
+            "Students and accreditors describe the Divinity School's three-year Master of "
+            "Divinity as a cohort-based program combining religious-studies coursework, "
+            "field education, and leadership formation — the school is accredited by the "
+            "Association of Theological Schools (ATS) and publishes MDiv placement outcomes. "
+            "Common cautions are demanding writing and language requirements, limited Niche "
+            "review volume, and some student notes of administrative disorganization "
+            "alongside strong faculty mentorship."
+        ),
+        "themes": [
+            {
+                "label": "ATS accreditation",
+                "sentiment": "positive",
+                "detail": (
+                    "The MDiv is accredited by the Commission on Accrediting of ATS; the "
+                    "school publishes placement summaries."
+                ),
+            },
+            {
+                "label": "Field education",
+                "sentiment": "positive",
+                "detail": (
+                    "Three-year curriculum integrates community engagement and supervised "
+                    "ministry placements."
+                ),
+            },
+            {
+                "label": "Interdisciplinary study",
+                "sentiment": "positive",
+                "detail": (
+                    "MDiv students cross-register across the university's divisions while "
+                    "grounding work in religious leadership."
+                ),
+            },
+            {
+                "label": "Administrative pace",
+                "sentiment": "caution",
+                "detail": (
+                    "Graduate reviewers occasionally note administrative complexity on the "
+                    "quarter calendar."
+                ),
+            },
+            {
+                "label": "Niche visibility",
+                "sentiment": "mixed",
+                "detail": (
+                    "Public third-party review volume is small compared with larger divinity "
+                    "schools."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "UChicago Divinity School — MDiv Program",
+                "url": "https://divinity.uchicago.edu/MDivprogram",
+            },
+            {
+                "label": "Niche — University of Chicago Divinity School",
+                "url": "https://www.niche.com/graduate-schools/university-of-chicago-divinity-school/",
             },
         ],
         "disclaimer": (
