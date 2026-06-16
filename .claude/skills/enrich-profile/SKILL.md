@@ -468,6 +468,24 @@ Concrete misses observed in the first runs — each broke a real page:
      Evidence: live API this run — the field-specific-description passes prefix the name
      in 82–100% of rows on every description-passed catalog (Cornell/Berkeley/Penn/CMU
      100%, Northwestern 97%, Harvard 82%), vs gold MIT 2%.
+   - **Named units — scan EVERY description for a unit that doesn't belong, and a
+     REPAIR must clear the WHOLE class, not just the cited row.** The miss-#8
+     named-unit-truth defect (a description naming a school/college/department/
+     center/institute/lab that is a PEER institution's unit, or a real
+     same-institution unit bolted onto an UNRELATED field) must be part of the
+     PRE-SHIP PROGRAMMATIC gate, not merely a per-row manual check: before shipping,
+     scan every `description_text` and FAIL on any named unit this institution does
+     not publish ("College of Chemistry"/"Sibley School" on a school that has
+     neither) OR any real unit cited on a field it does not house (an
+     international-studies institute on a marketing or systems-engineering row). And
+     when a pass REPAIRS a flagged fabrication, it must **re-scan the whole catalog
+     for EVERY instance of that class and get ZERO before shipping** — fixing only
+     the row(s) the backlog named verbatim while sibling instances of the SAME class
+     survive is a non-repair, not progress. Evidence: live API this run — a hotfix
+     cleared the one cited "College of Chemistry" instance but a whole-catalog scan
+     still returns "Sibley School" (a peer university's unit) on 2 aerospace rows and
+     a real international-studies institute bolted onto a systems-engineering and a
+     marketing row, all in the same just-"repaired" catalog.
    - **Feeds:** a `content_sources` feed counts only if it actually FETCHES ≥1
      item. **Confirm the feed produces** (the news_rss/events_feed resolves and
      returns entries) before trusting it — set a feed you proved works, not a URL
