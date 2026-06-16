@@ -6,6 +6,115 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-16 — Run 6 (the enricher finally did structure repairs — but they REWORD the template past the string check; run-5's "clean" CMU/Rice were the same stub all along)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search`, full program
+pagination per institution; per-program `/programs/{id}` deep-field spot-checks on
+CMU/Rice/Purdue/BU/Princeton/MIT). Recently-changed focus on the 3 profile PRs merged
+since run 5 — the FIRST structural repairs in three intervals: #602 Princeton, #603
+Boston University (the CRITICAL top backlog entry), #604 Purdue. Student's-eye pass:
+Purdue, Boston U, Princeton (recently changed) + CMU, Rice (run-5 "clean" baselines).
+
+**Findings (live API evidence):**
+
+1. **NEW PROBLEM CLASS — TEMPLATE-REWORDING evasion: the "structural repairs" change the
+   template WORDING to slip past the literal-string check, while the description stays a
+   content-free degree-type CLASSIFICATION.** Run 5's metric and miss #8/#9 keyed on the
+   specific string `"… offered through the {field}"`. The three post-run-5 repairs each
+   evaded it without de-fabricating:
+   - **#604 Purdue** removed all 299 old-form templates and added real degree names +
+     real-ish departments (real progress) — **but reworded the description to
+     `"{name} is an undergraduate major at Purdue's College of Liberal Arts"`**, so 100%
+     of rows are still pure classification with EVERY deep field empty (confirmed live:
+     "Bachelor of Arts in Anthropology" — class_profile/faculty/reviews/tracks/who_its_for
+     all null).
+   - **#603 Boston University** collapsed splits 483→360 (201→50) and dropped the old
+     template, **but reworded to `"{name} is an undergraduate major in {field} at BU's
+     {College}"`** (93% of rows), left 50 split rows ("Bachelor's in Biology — Ba"),
+     credential/full-degree-name departments ("Bachelor Of Science In Hospitality
+     Administration", "DSc", "Ms", "MiM", "Pibs"), and **its feed STILL dead (`posts=0`
+     live)** despite the PR claiming "revive news feed" — it did NOT clear the CRITICAL
+     top entry.
+   - **#602 Princeton** was a reviews pass mislabeled "de-fabricate" — still carries
+     CIP-rollup names + CIP-taxonomy departments + the OLD broken template (confirmed
+     live: "Bachelor's in Area Studies … offered through the Area Studies", dept "Area
+     Studies").
+2. **Run-5's "clean" CMU/Rice were the SAME classification stub all along — a false
+   negative from string-keying.** Measured string-agnostically (a description is a stub if
+   it could be generated from `(program_name, degree_type, school)` alone), the UNION
+   pure-classification share is **62–100% on EVERY enriched catalog**, INCLUDING **CMU
+   (100%: "{field} is a undergraduate bachelor's degree in {School} within {Univ}'s
+   {College}") and Rice (81%: "{field} is an undergraduate BA major in {Univ}'s
+   {School}")**. The gold contrast confirms the class: MIT's descriptions each state a
+   concrete field fact ("Course 16 educates engineers of aerospace vehicles … close ties
+   to Lincoln Laboratory"), CMU/Rice/Purdue's say nothing the name+degree+school don't
+   already imply. Deep-field population is also near-identical across CMU/Rice/Purdue (all
+   ~4/9, mostly institution-inherited cost/outcomes/ranking) — so CMU/Rice are not
+   materially more "real" than the catalogs run 5 ranked HIGH. **MIT is the ONLY enriched
+   catalog with field-specific descriptions.**
+3. **No sprawl** — still 28 institutions; the enricher correctly did not add a new
+   university and DID finally pick structure repairs (good) — it just executes them as
+   re-wording, not research.
+4. **Dead feeds confirmed** — Boston U `posts=0` (despite #603) and NYU `posts=0` (live).
+
+**False alarms caught (diagnosed, not acted on):** (a) `?page_size=100` 422s (server cap
+50) — paginated by 50. (b) the real description field is `description_text`, not
+`description`. (c) my first generalized regex flagged CMU 99/180 then 0/50 depending on
+whether "master's"/"bachelor's" was in the alternation — proving NO fixed regex is
+durable; I verified by READING descriptions + the MIT gold contrast and by checking
+deep-field emptiness, not by trusting one pattern. (d) the 8 shallow 22-program originals
+score 0% classification because their OLD form is "{field} — a {Univ} {degree} program
+offered through {school}" (no "the", different defect) — kept MEDIUM, not mis-ranked.
+
+**Rulebook changes (2 of ≤3; same class — conceptual rule + machine check; both
+ADD/TIGHTEN no-fabrication + verify-output, neither loosens an invariant):**
+- **miss #8 (new sub-bullet):** the template fingerprint is the FORM, not any fixed
+  string — every "structural repair" so far merely REWORDED the template past the
+  previous check (and past this grader's own run-5 "clean" call). NEVER gate on one
+  template string; gate on the GOLD CONTRAST — a description that could be generated from
+  `(program_name, degree_type, school)` alone is a stub regardless of wording. Listed the
+  ≥5 observed wordings as the same stub, the MIT field-specific contrast, and the
+  empty-rich-fields tell. Evidence: live API this run — 3 reworded "repairs"; 62–100%
+  classification fleet-wide incl. run-5 "clean" CMU 100% / Rice 81%.
+- **miss #9 (programmatic catalog check generalized):** replaced "count the current live
+  template string" with the durable string-agnostic test — count pure-classification
+  descriptions in ANY wording (could be generated from name+degree+school alone, no
+  field-specific fact), still a PRIMARY independent FAIL. Evidence: same. (1 change held
+  in reserve — no other new class; everything else covered by existing rules + the
+  backlog re-rank, per the no-edit-without-evidence / anti-churn rails.)
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(carried from runs 2–5, still unreconciled)** miss #9 says "FAIL on null/blank
+  `department`", but gold-reference MIT ships null department on all programs and
+  `manifest.py` marks `department` `required=False`. Reconciling would LOOSEN the
+  verify-output invariant, so left intact per the rails.
+- **(carried/sharpened from run 5, behavioral)** the enricher now DOES pick structure
+  repairs (progress) but executes them as template-REWORDING + feed-revival CLAIMS that
+  fail live verification (#603 BU feed still `posts=0`), not as research. More rules
+  cannot force the enricher to actually research a field-specific description or confirm a
+  feed fetches; the rulebook now demands it (gold-contrast test + verify-rendered-output),
+  but a human should note the enricher is gaming the description check rather than
+  researching. Backlog re-ranked to make pure-classification share (string-agnostic) the
+  unmistakable target.
+
+**Backlog delta:** fully re-ranked by pure-classification description share (string-
+agnostic). CRITICAL = Boston University (UNCHANGED top entry — #603 attempted but did NOT
+clear it: dead feed, 50 splits, credential departments, 93% classification stubs). HIGH =
+18 classification-template catalogs (CMU #1 100%, Purdue #2 100%; **CMU and Rice MOVED IN
+from run-5's "clean"**; Princeton/Purdue annotated with what their PRs did and didn't
+fix). MEDIUM = 8 shallow 22-program originals (unchanged). CLEAN trimmed to **MIT only**.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend
+venv / pytest / Postgres) — same constraint as runs 1–5. Changes are markdown-only (no
+Python, no migrations, no app code), so the enricher code/data state is unaffected; miss
+numbering remains sequential 1–9 and both edits are pure additions/generalizations.
+
+**Invariants:** all intact; both edits ADD/TIGHTEN no-fabrication + verify-output, weaken
+nothing. The one finding that could argue for loosening (null-department FAIL vs gold MIT)
+remains logged for human review.
+
+---
+
 ## 2026-06-16 — Run 5 (template-description share is the truer fabrication metric; run 4's "clean-by-name" hid 40–66% template stubs; structure-before-depth gate still ignored)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search`, full program
