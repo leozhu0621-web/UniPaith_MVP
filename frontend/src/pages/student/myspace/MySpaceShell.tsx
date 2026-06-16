@@ -3,7 +3,7 @@ import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   Backpack, Bookmark, PenLine, FolderKanban, Calendar, User, Briefcase,
-  Milestone, SlidersHorizontal, ChevronRight, ChevronDown,
+  SlidersHorizontal, ChevronRight, ChevronDown,
 } from 'lucide-react'
 import { listMyApplications } from '../../../api/applications'
 import Coachmark from '../../../components/ui/Coachmark'
@@ -22,11 +22,6 @@ type Item =
 
 const OVERVIEW: Item = { kind: 'link', label: 'Overview', to: '/s/space', icon: Backpack }
 
-// Strategy promoted to a top-level item (2026-06-15) — the headline of your plan.
-// The living-doc lives in the Timeline tab now ("one page, two entries"), so this
-// shortcut and Planning › Timeline both open /s/profile?tab=timeline.
-const STRATEGY: Item = { kind: 'link', label: 'Strategy', to: '/s/profile?tab=timeline', icon: Milestone }
-
 const PROFILE: Item = {
   kind: 'group', label: 'Profile', to: '/s/profile', icon: User,
   children: [
@@ -41,13 +36,14 @@ const PROFILE: Item = {
   ],
 }
 
-// Planning cluster (2026-06-15) — what you want and where you're headed.
-// Timeline shows the strategy living-doc (career → degree → paths + game-plan).
+// Planning cluster (2026-06-15) — where you're headed and what you want.
+// Strategy (the living-doc: career → degree → paths + game-plan) leads the
+// cluster; Needs and Preferences follow.
 const PLANNING: Item = {
-  kind: 'group', label: 'Planning', to: '/s/profile?tab=needs', icon: SlidersHorizontal,
+  kind: 'group', label: 'Planning', to: '/s/profile?tab=strategy', icon: SlidersHorizontal,
   children: [
+    { label: 'Strategy', to: '/s/profile?tab=strategy' },
     { label: 'Needs', to: '/s/profile?tab=needs' },
-    { label: 'Timeline', to: '/s/profile?tab=timeline' },
     { label: 'Preferences', to: '/s/profile?tab=preferences' },
   ],
 }
@@ -79,7 +75,7 @@ const WORKSPACE: Item = {
   ],
 }
 
-const ITEMS: Item[] = [OVERVIEW, STRATEGY, PROFILE, PLANNING, SAVED, WORKSPACE]
+const ITEMS: Item[] = [OVERVIEW, PROFILE, PLANNING, SAVED, WORKSPACE]
 
 // Flat list of room landing routes — drives the top-nav My Space active state.
 // Messages is intentionally absent (it is its own nav tab now).

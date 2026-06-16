@@ -61,8 +61,9 @@ export const PROFILE_TAB_ALIASES: Record<string, string> = {
   data: '/s/settings',
 }
 
-// 'strategy' is no longer a distinct tab (2026-06-15) — its living-doc renders
-// under 'timeline'; ProfilePage redirects ?tab=strategy → ?tab=timeline.
+// Strategy lives in the Planning rail cluster (2026-06-15); 'timeline' is retired
+// (its chronological view was dropped). ProfilePage redirects ?tab=timeline →
+// ?tab=strategy for old links.
 export const PROFILE_TABS_SPEC = [
   'overview',
   'identity',
@@ -71,7 +72,7 @@ export const PROFILE_TABS_SPEC = [
   'goals',
   'needs',
   'preferences',
-  'timeline',
+  'strategy',
   'analytics',
 ] as const
 

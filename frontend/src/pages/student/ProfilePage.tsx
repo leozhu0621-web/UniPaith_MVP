@@ -23,8 +23,8 @@ const AcademicsTab = lazy(() => import('./profile/AcademicsTab'))
 const ExperienceTab = lazy(() => import('./profile/ExperienceTab'))
 const GoalsTab = lazy(() => import('./profile/GoalsTab'))
 const NeedsTab = lazy(() => import('./profile/NeedsTab'))
-// The Timeline tab now renders the strategy living-doc (2026-06-15) — Strategy
-// was promoted to a top-level rail item; ?tab=strategy redirects to ?tab=timeline.
+// Strategy lives in the Planning rail cluster (2026-06-15); ?tab=timeline (the
+// retired chronological view) redirects to ?tab=strategy.
 const StrategyTab = lazy(() => import('./profile/StrategyTab'))
 const PreferencesTab = lazy(() => import('./profile/PreferencesTab'))
 const AnalyticsTab = lazy(() => import('./profile/AnalyticsTab'))
@@ -37,7 +37,7 @@ const TABS: { key: ProfileTabSpec; label: string }[] = [
   { key: 'goals', label: 'Goals' },
   { key: 'needs', label: 'Needs' },
   { key: 'preferences', label: 'Preferences' },
-  { key: 'timeline', label: 'Timeline' },
+  { key: 'strategy', label: 'Strategy' },
   { key: 'analytics', label: 'Analytics' },
 ]
 
@@ -55,10 +55,10 @@ export default function ProfilePage() {
   // section deep link (recommenders) across the move.
   useEffect(() => {
     if (!rawTab) return
-    // Strategy's living-doc moved into the Timeline tab (2026-06-15) — one page,
-    // two entries. Keep old ?tab=strategy links working.
-    if (rawTab === 'strategy') {
-      navigate('/s/profile?tab=timeline', { replace: true })
+    // Strategy lives in the Planning cluster (2026-06-15). The interim ?tab=timeline
+    // alias redirects to the canonical ?tab=strategy.
+    if (rawTab === 'timeline') {
+      navigate('/s/profile?tab=strategy', { replace: true })
       return
     }
     if (rawTab === 'preparation' && searchParams.get('section') === 'recommenders') {
@@ -163,8 +163,7 @@ export default function ProfilePage() {
           {activeTab === 'goals' && <GoalsTab />}
           {activeTab === 'needs' && <NeedsTab />}
           {activeTab === 'preferences' && <PreferencesTab />}
-          {/* Timeline = the strategy living-doc (2026-06-15). */}
-          {activeTab === 'timeline' && <StrategyTab />}
+          {activeTab === 'strategy' && <StrategyTab />}
           {activeTab === 'analytics' && <AnalyticsTab />}
         </Suspense>
       </div>
