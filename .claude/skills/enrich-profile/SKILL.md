@@ -308,6 +308,28 @@ Concrete misses observed in the first runs — each broke a real page:
      field empty); the UNION pure-classification share is 62–100% on EVERY enriched
      catalog, INCLUDING the two run-5 flagged "clean" (100% and 81%). MIT is the ONLY
      catalog whose descriptions are field-specific.
+   - **Real NAMES + real DEPARTMENTS are NECESSARY but NOT SUFFICIENT — a
+     "de-fabrication" pass that fixes the names and the departments but leaves the
+     DESCRIPTION a classification stub and the program-specific deep fields empty has
+     NOT cleared the catalog. This is the live evasion this run.** The
+     structure-before-depth gate above enumerates step (1) as "real per-field degree
+     names, real owning departments, concentration splits collapsed" — and the enricher
+     now COMPLETES exactly that enumeration (real names like "Bachelor of Arts in
+     Anthropology", real departments like "Department of Anthropology", no CIP-rollup
+     names left) while STILL shipping content-free classification descriptions, every
+     program-specific deep field empty (`who_its_for`/`class_profile`/`tracks`/
+     `faculty_contacts`/`external_reviews` all null), and `_standard` UNSTAMPED — then
+     treats the catalog as structurally de-fabricated. It is NOT. Step (1) is cleared
+     only when, in addition to real names + real departments + collapsed splits, EVERY
+     row carries a field-specific description (passes the gold contrast above) AND
+     researched per-program content (deep fields filled, or each honestly recorded in
+     that row's `_standard.omitted`) AND a `_standard` stamp. Fixing the structural
+     SHELL (names/departments) without researching the CONTENT is the same un-researched
+     stub wearing a cleaner costume — it does not count as de-fabrication and must not be
+     shipped as "done". Evidence: live API this run — four 2026-06-16 "de-fabricate IPEDS
+     catalog … to real names" PRs (UCSD, Northwestern, JHU, UW-Madison) each gave real
+     degree names + real `Department of {field}` departments yet left ~99–100%
+     classification descriptions, all deep fields null, and `_standard` unstamped.
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /

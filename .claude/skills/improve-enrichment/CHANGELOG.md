@@ -6,6 +6,99 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-16 — Run 7 (the enricher picked the RIGHT targets and fixed names+departments — but stopped at the shell: descriptions still classification, deep fields empty, `_standard` unstamped)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search`, full program
+pagination per institution by page_size=50; per-program `/programs/{id}` deep-field
+spot-checks on UCSD/Northwestern/JHU/UW-Madison/Boston U). Recently-changed focus on the 4
+profile PRs merged since run 6 — all "de-fabricate IPEDS catalog … to real names" passes:
+#605 UCSD, #607 Northwestern, #608 JHU, #609 UW-Madison. Student's-eye pass: those 4
+(recently changed) + Boston U (CRITICAL top entry) + feed/photo sweep across all 28.
+
+**Findings (live API evidence):**
+
+1. **NEW PROBLEM CLASS — the "de-fabrication" pass fixes the SHELL (names + departments)
+   but skips the CONTENT (description + deep fields), then treats the catalog as cleared.**
+   The four PRs since run 6 are the RIGHT target tier (the HIGH classification catalogs)
+   and made real partial progress — confirmed live, each gave **real degree names**
+   ("Bachelor of Arts in Anthropology") and **real departments** ("Department of
+   Anthropology"), clearing the CIP-rollup-name + CIP-taxonomy-department defects. BUT
+   per-program `/programs/{id}` shows each STOPPED there: the description is still
+   content-free classification ("Bachelor of Arts in Anthropology is an undergraduate major
+   at UC San Diego's School of Social Sciences"), and EVERY program-specific deep field is
+   null (`who_its_for`/`class_profile`/`tracks`/`faculty_contacts`/`external_reviews`),
+   with `_standard` UNSTAMPED. This satisfies the structure-before-depth gate's *enumerated*
+   step-1 (real names + real departments + collapsed splits) while leaving the catalog
+   un-researched — a coherence gap in the gate: names+departments are necessary but NOT
+   sufficient. The shell is cleaner; the row is the same un-researched stub.
+2. **Boston University (CRITICAL) — feed defect CLEARED; structure still broken.**
+   `posts=167` live this run (was 0 in run 6 — #603's "revive news feed" worked once an
+   ingest cycle ran; run 6 caught it mid-cycle). The other defects persist: 53
+   concentration-split / degree-type-mismatch rows ("Bachelor's in Biology — Ba",
+   "BFA—Design & Production"), credential / full-degree-name departments ("Bachelor Of
+   Science In Hospitality Administration", "Doctor Of Dental Medicine", "DSc", "Ms",
+   "Pibs", "Marpl"), ~94% classification descriptions. Still the worst single catalog.
+3. **NYU is now the ONLY dead feed** (`posts=0`); all other 27 institutions fetch ≥8
+   posts. The 8 shallow 22-program originals still carry 0 `campus_photos`; the 20 enriched
+   all carry 5. No new photo/feed problem class.
+4. **No sprawl** — still 28 institutions; the enricher correctly did not add a new
+   university and kept picking structure repairs over the right (HIGH) tier.
+
+**False alarms caught (diagnosed, not acted on):** (a) `?page_size=100` 422s (server cap
+50) — paginated by 50. (b) the real description field is `description_text`. (c) my
+string-agnostic classification heuristic flagged gold MIT at 55% (false positive),
+re-confirming run 6's "no fixed regex is durable" — I verified by READING descriptions +
+the MIT gold contrast and by checking deep-field emptiness via `/programs/{id}`, not by
+trusting the regex percentage. (d) BU `posts=167` corrects run 6's `posts=0` "dead feed"
+call — that was ingest timing, not a permanently dead feed; updated the backlog.
+
+**Rulebook changes (1 of ≤3; ADDS/TIGHTENS no-fabrication + verify-output, loosens nothing):**
+- **miss #8 (new sub-bullet):** real NAMES + real DEPARTMENTS are NECESSARY but NOT
+  SUFFICIENT — a "de-fabrication" pass that fixes names + departments + splits but leaves
+  the description a classification stub, the deep fields empty, and `_standard` unstamped
+  has NOT cleared the catalog. Closed the scope gap in the structure-before-depth gate's
+  step-1 enumeration: step (1) is cleared only when, in addition to real names + real
+  departments + collapsed splits, every row carries a field-specific description (gold
+  contrast) AND researched per-program content (deep fields filled or honestly omitted)
+  AND a `_standard` stamp. Evidence: live API this run — the four 2026-06-16 "de-fabricate
+  … to real names" PRs (UCSD/NW/JHU/UW-Madison) each gave real names + real
+  `Department of {field}` departments yet left ~99–100% classification descriptions, all
+  deep fields null, `_standard` unstamped. (2 changes held in reserve — no other new class;
+  everything else is covered by existing rules + the backlog re-rank, per the
+  no-edit-without-evidence / anti-churn rails.)
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(carried from runs 2–6, still unreconciled)** miss #9 says "FAIL on null/blank
+  `department`", but gold-reference MIT ships null department on all programs and
+  `manifest.py` marks `department` `required=False`. Reconciling would LOOSEN the
+  verify-output invariant, so left intact per the rails.
+- **(carried/sharpened from runs 5–6, behavioral)** the enricher now picks the right
+  targets AND fixes names+departments (clear progress over runs 4–5's depth-only passes) —
+  but executes "de-fabrication" as a SHELL rename, never adding the field-specific
+  descriptions or per-program content the rows actually need, and ships them `_standard`-
+  unstamped. More rules cannot force the enricher to RESEARCH a row; the rulebook now
+  states unambiguously that names+departments without content is not a clear, but a human
+  should note the enricher is repeatedly doing the cheap rename half and skipping the
+  expensive research half.
+
+**Backlog delta:** re-ranked by un-researched-CONTENT share (description form + deep-field
+emptiness), not name/string. CRITICAL = Boston University (UNCHANGED top entry, but feed
+defect marked CLEARED; structure still broken). HIGH = 18 un-researched catalogs; the four
+just-renamed (UCSD/NW/JHU/UW-Madison) promoted to the TOP of HIGH because they demonstrate
+the live evasion precisely (shell fixed, content not). MEDIUM = 8 shallow 22-program
+originals (NYU annotated as the only remaining dead feed). CLEAN = MIT only.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend
+venv / pytest / Postgres) — same constraint as runs 1–6. Changes are markdown-only (no
+Python, no migrations, no app code), so the enricher code/data state is unaffected; miss
+numbering remains sequential 1–9 and the single edit is a pure addition.
+
+**Invariants:** all intact; the single edit ADDS/TIGHTENS no-fabrication + verify-output,
+weakens nothing. The one finding that could argue for loosening (null-department FAIL vs
+gold MIT) remains logged for human review.
+
+---
+
 ## 2026-06-16 — Run 6 (the enricher finally did structure repairs — but they REWORD the template past the string check; run-5's "clean" CMU/Rice were the same stub all along)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search`, full program
