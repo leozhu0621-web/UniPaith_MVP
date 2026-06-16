@@ -204,6 +204,10 @@ resource "aws_ecs_task_definition" "backend" {
       # manually (never a 5xx). Uses the existing ANTHROPIC_API_KEY (native
       # PDF/image input). Verified live against a real resume.
       { name = "AI_MATERIAL_INGEST_V2_ENABLED", value = "true" },
+      # After an import, Uni asks targeted follow-up questions (deterministic
+      # GapEngine: ambiguous items, missing high-value fields, one reflective
+      # prompt) and writes confirmed answers to My Space. Additive, never 5xx.
+      { name = "AI_MATERIAL_FOLLOWUPS_V2_ENABLED", value = "true" },
       { name = "AI_WORKSHOPS_V2_ENABLED", value = "true" },
       { name = "AI_MATCH_RATIONALE_V2_ENABLED", value = "true" },
       { name = "AI_STRATEGY_V2_ENABLED", value = "true" },

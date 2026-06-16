@@ -48,3 +48,22 @@ export const applyMaterial = (id: string, selection: Partial<ProposedProfile>): 
 
 export const listMaterials = (): Promise<MaterialIngest[]> =>
   apiClient.get('/students/me/materials').then(r => r.data)
+
+export interface FollowupQuestion {
+  id: string
+  category: string
+  target_field: string
+  kind: 'text' | 'choice'
+  prompt: string
+  options?: string[]
+  ref?: Record<string, unknown>
+}
+
+export const getFollowups = (ingestId: string): Promise<FollowupQuestion[]> =>
+  apiClient.get(`/students/me/materials/${ingestId}/followups`).then(r => r.data.questions ?? [])
+
+export const answerFollowup = (
+  gap: FollowupQuestion,
+  answer: string,
+): Promise<{ applied: boolean; target_field: string }> =>
+  apiClient.post('/students/me/materials/followups/answer', { gap, answer }).then(r => r.data)
