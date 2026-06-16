@@ -62,6 +62,7 @@ const EvalHarnessPage = lazy(() => import('./pages/public/EvalHarnessPage'))
 const DiscoverHomePage = lazy(() => import('./pages/student/DiscoverHomePage'))
 const ExplorePage = lazy(() => import('./pages/student/ExplorePage'))
 const MySpaceHomePage = lazy(() => import('./pages/student/myspace/MySpaceHomePage'))
+const ImportPage = lazy(() => import('./pages/student/myspace/ImportPage'))
 const PrepPage = lazy(() => import('./pages/student/myspace/PrepPage'))
 const MessagesRoom = lazy(() => import('./pages/student/myspace/MessagesRoom'))
 const ApplicationsPage = lazy(() => import('./pages/student/ApplicationsPage'))
@@ -236,6 +237,7 @@ const router = createBrowserRouter([
         element: <MySpaceShell />,
         children: [
           { path: 'space', element: page(<MySpaceHomePage />) },        // Overview — mission control
+          { path: 'import', element: page(<ImportPage />) },            // Import — upload → review → gaps
           { path: 'saved', element: page(<SavedListPage />) },          // Collections
           { path: 'prep', element: page(<PrepPage />) },                // Workspace
           { path: 'applications', element: page(<ApplicationsPage />) }, // Workspace

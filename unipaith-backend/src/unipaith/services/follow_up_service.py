@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
-_MAX_QUESTIONS = 5
+_MAX_QUESTIONS = 12
 
 _TEST_TYPE_MAP = {
     "gre": "GRE",
@@ -72,93 +72,180 @@ class FollowUpService:
     async def detect(
         self, user_id: UUID, import_result: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
+        """Every meaningful gap Uni found, grouped by `section` and ranked by
+        priority (lower = asked first). Source-agnostic: `import_result=None`
+        scans the profile alone (Phase 2)."""
         from unipaith.services.student_service import StudentService
 
         snapshot = await StudentService(self.db).get_full_snapshot(user_id)
         imp = import_result or {}
-        ambiguous: list[dict[str, Any]] = []
-        missing: list[dict[str, Any]] = []
+        # (priority, gap) — sorted then capped so the highest-value gaps survive.
+        cand: list[tuple[int, dict[str, Any]]] = []
 
-        # ── ambiguous: imported activities with no stated role ──
-        for a in imp.get("activities") or []:
+        # ── Activities: imported clubs with no stated role (max 2) ──
+        for a in (imp.get("activities") or [])[:2]:
             title = a.get("title")
             if title and not a.get("role"):
-                ambiguous.append(
-                    {
-                        "category": "ambiguous",
-                        "target_field": "activity_role",
-                        "prompt_hint": f"What was your role in {title}?",
-                        "kind": "choice",
-                        "options": ["Member", "President", "Founder", "Captain", "Volunteer"],
-                        "ref": {"title": title},
-                    }
+                cand.append(
+                    (
+                        10,
+                        {
+                            "category": "ambiguous",
+                            "section": "Activities",
+                            "target_field": "activity_role",
+                            "prompt_hint": f"What was your role in {title}?",
+                            "kind": "choice",
+                            "options": ["Member", "President", "Founder", "Captain", "Volunteer"],
+                            "ref": {"title": title},
+                        },
+                    )
                 )
-                if len(ambiguous) >= 2:
-                    break
 
-        # ── missing high-value fields ──
-        # GPA is asked PER SCHOOL (named), so a student with two degrees isn't
-        # asked a subjectless "What's your GPA?". Each gap carries a ref so the
-        # answer lands on the right academic record. Capped at 2.
+        # ── Education: GPA + relevant courses, PER named school ──
         records = imp.get("academic_records") or []
-        gpa_gaps = [
-            {
-                "category": "missing",
-                "target_field": "gpa",
-                "prompt_hint": f"What was your GPA at {_school_label(r)}? (e.g. 3.8/4.0)",
-                "kind": "text",
-                "ref": {
-                    "institution_name": r.get("institution_name"),
-                    "degree_type": r.get("degree_type"),
-                    "label": _school_label(r),
-                },
-            }
-            for r in records
-            if not r.get("gpa") and r.get("institution_name")
-        ]
-        missing.extend(gpa_gaps[:2])
-        if not (imp.get("test_scores")) and not await self._has_test_scores(user_id):
-            missing.append(
-                {
-                    "category": "missing",
-                    "target_field": "test_scores",
-                    "prompt_hint": "Any test scores to add?",
-                    "kind": "choice",
-                    "options": ["GRE", "GMAT", "TOEFL", "IELTS", "SAT", "ACT", "None yet"],
-                }
-            )
-        if not snapshot.get("goals"):
-            missing.append(
-                {
-                    "category": "missing",
-                    "target_field": "target_degree",
-                    "prompt_hint": "What program or degree are you aiming for?",
-                    "kind": "text",
-                }
-            )
-
-        # ── deepen: one reflective prompt seeding a goal ──
-        field = None
         for r in records:
-            if r.get("field_of_study"):
-                field = r["field_of_study"]
-                break
-        deepen = [
-            {
-                "category": "deepen",
-                "target_field": "goal",
-                "prompt_hint": (
-                    f"What's pulling you toward {field}?"
-                    if field
-                    else "What are you hoping to get out of this next step?"
-                ),
-                "kind": "text",
-            }
-        ]
+            inst = r.get("institution_name")
+            if not inst:
+                continue
+            sl = _school_label(r)
+            ref = {"institution_name": inst, "degree_type": r.get("degree_type"), "label": sl}
+            if not r.get("gpa"):
+                cand.append(
+                    (
+                        15,
+                        {
+                            "category": "missing",
+                            "section": "Education",
+                            "target_field": "gpa",
+                            "prompt_hint": f"What was your GPA at {sl}? (e.g. 3.8/4.0)",
+                            "kind": "text",
+                            "ref": ref,
+                        },
+                    )
+                )
+            if not r.get("courses"):
+                cand.append(
+                    (
+                        40,
+                        {
+                            "category": "missing",
+                            "section": "Education",
+                            "target_field": "courses",
+                            "prompt_hint": f"What were some relevant courses at {inst}?",
+                            "kind": "text",
+                            "ref": ref,
+                        },
+                    )
+                )
+        if not (imp.get("test_scores")) and not await self._has_test_scores(user_id):
+            cand.append(
+                (
+                    20,
+                    {
+                        "category": "missing",
+                        "section": "Education",
+                        "target_field": "test_scores",
+                        "prompt_hint": "Any test scores to add?",
+                        "kind": "choice",
+                        "options": ["GRE", "GMAT", "TOEFL", "IELTS", "SAT", "ACT", "None yet"],
+                    },
+                )
+            )
 
-        ranked = ambiguous + missing + deepen
+        # ── Experience: hours + compensation per imported role ──
+        for w in imp.get("work_experiences") or []:
+            role, org = w.get("role_title"), w.get("organization")
+            if not (role and org):
+                continue
+            label = f"{role} at {org}"
+            ref = {"role_title": role, "organization": org}
+            if not w.get("hours_per_week"):
+                cand.append(
+                    (
+                        30,
+                        {
+                            "category": "missing",
+                            "section": "Experience",
+                            "target_field": "work_hours",
+                            "prompt_hint": f"About how many hours a week was {label}?",
+                            "kind": "text",
+                            "ref": ref,
+                        },
+                    )
+                )
+            if not w.get("compensation_type"):
+                cand.append(
+                    (
+                        35,
+                        {
+                            "category": "missing",
+                            "section": "Experience",
+                            "target_field": "work_compensation",
+                            "prompt_hint": f"Was {label} paid, unpaid, or a stipend?",
+                            "kind": "choice",
+                            "options": ["Paid", "Unpaid", "Stipend"],
+                            "ref": ref,
+                        },
+                    )
+                )
+
+        # ── Skills ──
+        if not (imp.get("profile") or {}).get("skills"):
+            cand.append(
+                (
+                    25,
+                    {
+                        "category": "missing",
+                        "section": "Skills",
+                        "target_field": "skills",
+                        "prompt_hint": "What are your strongest skills? (e.g. Python, SQL, Excel)",
+                        "kind": "text",
+                    },
+                )
+            )
+
+        # ── Contact: LinkedIn ──
+        has_linkedin = any(
+            (o.get("platform_type") == "linkedin") for o in (imp.get("online_presence") or [])
+        )
+        if not has_linkedin:
+            cand.append(
+                (
+                    45,
+                    {
+                        "category": "missing",
+                        "section": "Contact",
+                        "target_field": "link",
+                        "prompt_hint": "What's your LinkedIn URL?",
+                        "kind": "text",
+                        "ref": {"platform_type": "linkedin"},
+                    },
+                )
+            )
+
+        # ── About you: one reflective prompt seeding a goal ──
+        if not snapshot.get("goals"):
+            field = next((r["field_of_study"] for r in records if r.get("field_of_study")), None)
+            cand.append(
+                (
+                    50,
+                    {
+                        "category": "deepen",
+                        "section": "About you",
+                        "target_field": "goal",
+                        "prompt_hint": (
+                            f"What's pulling you toward {field}?"
+                            if field
+                            else "What are you hoping to get out of this next step?"
+                        ),
+                        "kind": "text",
+                    },
+                )
+            )
+
+        cand.sort(key=lambda x: x[0])
         out: list[dict[str, Any]] = []
-        for i, g in enumerate(ranked[:_MAX_QUESTIONS]):
+        for i, (_, g) in enumerate(cand[:_MAX_QUESTIONS]):
             g["id"] = f"{g['category']}:{g['target_field']}:{i}"
             out.append(g)
         return out
@@ -189,6 +276,16 @@ class FollowUpService:
                 await self._apply_target_degree(user_id, text)
             elif target == "activity_role":
                 await self._apply_activity_role(user_id, gap.get("ref") or {}, text)
+            elif target == "work_hours":
+                await self._apply_work_field(user_id, gap.get("ref") or {}, hours=text)
+            elif target == "work_compensation":
+                await self._apply_work_field(user_id, gap.get("ref") or {}, compensation=text)
+            elif target == "courses":
+                await self._apply_courses(user_id, gap.get("ref") or {}, text)
+            elif target == "skills":
+                await self._apply_skills(user_id, text)
+            elif target == "link":
+                await self._apply_link(user_id, gap.get("ref") or {}, text)
             else:
                 return {"applied": False, "target_field": target, "reason": "unknown_target"}
         except Exception as exc:
@@ -286,3 +383,99 @@ class FollowUpService:
             raise ValueError("activity not found")
         prefix = f"{text}. "
         act.description = (prefix + (act.description or "")).strip()[:2000]
+
+    async def _find_work(self, sid: UUID, ref: dict):
+        from unipaith.models.student import StudentWorkExperience
+
+        role, org = ref.get("role_title"), ref.get("organization")
+        if not (role and org):
+            raise ValueError("no work ref")
+        return (
+            await self.db.execute(
+                select(StudentWorkExperience)
+                .where(
+                    StudentWorkExperience.student_id == sid,
+                    StudentWorkExperience.role_title == role,
+                    StudentWorkExperience.organization == org,
+                )
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+    async def _apply_work_field(
+        self, user_id: UUID, ref: dict, *, hours: str | None = None, compensation: str | None = None
+    ) -> None:
+        sid = await self._student_id(user_id)
+        work = await self._find_work(sid, ref)
+        if work is None:
+            raise ValueError("work experience not found")
+        if hours is not None:
+            m = re.search(r"\d+", hours)
+            if m:
+                work.hours_per_week = int(m.group())
+        if compensation is not None:
+            low = compensation.lower()
+            comp = (
+                "paid"
+                if "paid" in low and "unpaid" not in low
+                else "unpaid"
+                if "unpaid" in low
+                else "stipend"
+                if "stipend" in low
+                else None
+            )
+            if comp:
+                work.compensation_type = comp
+
+    async def _apply_courses(self, user_id: UUID, ref: dict, text: str) -> None:
+        from unipaith.models.student import AcademicRecord
+        from unipaith.schemas.student import CreateCourseRequest
+        from unipaith.services.student_service import StudentService
+
+        sid = await self._student_id(user_id)
+        inst = ref.get("institution_name")
+        rec = None
+        if inst:
+            rec = (
+                await self.db.execute(
+                    select(AcademicRecord)
+                    .where(
+                        AcademicRecord.student_id == sid,
+                        AcademicRecord.institution_name == inst,
+                    )
+                    .limit(1)
+                )
+            ).scalar_one_or_none()
+        if rec is None:
+            raise ValueError("no academic record for courses")
+        svc = StudentService(self.db)
+        names = [c.strip() for c in re.split(r"[,;\n]", text) if c.strip()][:12]
+        for name in names:
+            await svc.create_course(
+                sid, rec.id, CreateCourseRequest(course_name=name[:255], course_level="college")
+            )
+
+    async def _apply_skills(self, user_id: UUID, text: str) -> None:
+        from unipaith.schemas.student import UpdateProfileRequest
+        from unipaith.services.student_service import StudentService
+
+        svc = StudentService(self.db)
+        profile = await svc.get_profile(user_id)
+        line = f"Skills: {text.strip()}"
+        bio = ((profile.bio_text or "") + "\n" + line).strip() if profile.bio_text else line
+        await svc.update_profile(user_id, UpdateProfileRequest(bio_text=bio[:4000]))
+
+    async def _apply_link(self, user_id: UUID, ref: dict, text: str) -> None:
+        from unipaith.schemas.student import CreateOnlinePresenceRequest
+        from unipaith.services.student_service import StudentService
+
+        url = text.strip()
+        if not url:
+            raise ValueError("empty link")
+        if not url.startswith("http"):
+            url = "https://" + url
+        platform = ref.get("platform_type") or "other"
+        sid = await self._student_id(user_id)
+        await StudentService(self.db).create_online_presence(
+            sid, CreateOnlinePresenceRequest(platform_type=platform, url=url[:1000])
+        )

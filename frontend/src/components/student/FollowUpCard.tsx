@@ -60,7 +60,12 @@ export default function FollowUpCard({
         </span>
       </div>
 
-      <p className="mt-2 text-sm text-foreground">{q.prompt}</p>
+      {q.section && (
+        <p className="mt-2 text-eyebrow uppercase tracking-wide text-muted-foreground">
+          {q.section}
+        </p>
+      )}
+      <p className="mt-1 text-sm text-foreground">{q.prompt}</p>
 
       {q.kind === 'choice' && q.options && q.options.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">

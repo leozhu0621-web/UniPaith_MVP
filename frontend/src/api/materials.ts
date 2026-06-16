@@ -52,6 +52,7 @@ export const listMaterials = (): Promise<MaterialIngest[]> =>
 export interface FollowupQuestion {
   id: string
   category: string
+  section?: string
   target_field: string
   kind: 'text' | 'choice'
   prompt: string
