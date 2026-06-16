@@ -92,14 +92,13 @@ from sqlalchemy.orm import Session
 from unipaith.data.profile_catalog_utils import (
     BARE_DEGREE_ABBREVIATIONS,
     disambiguate_program_name,
-    program_description,
     validate_catalog,
 )
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Boston University"
-ENRICHED_AT = "2026-06-15"
+ENRICHED_AT = "2026-06-16"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -332,6 +331,10 @@ def _about_omitted(m: dict) -> list[str]:
 
 
 _NEWS_URL = "https://www.bu.edu/today/"
+# BU Today WordPress RSS is empty (comments-only feed, last updated 2019). Verified 2026-06-16:
+# BUniverse recent-videos RSS returns current items with descriptions; university calendar iCal
+# returns live VEVENT entries (HTTP 200).
+_BU_NEWS_RSS = "https://www.bu.edu/buniverse/search/?special=recent&view=feed"
 _EVENTS = {"url": "https://www.bu.edu/phpbin/calendar/ical.php", "type": "ical"}
 _SOCIAL = {
     "instagram": "https://www.instagram.com/bostonu/",
@@ -343,7 +346,7 @@ _SOCIAL = {
 }
 _INSTITUTION_CONTENT: dict = {
     "news_url": _NEWS_URL,
-    "news_rss": "https://www.bu.edu/today/feed/",
+    "news_rss": _BU_NEWS_RSS,
     "events_feed": _EVENTS,
     "news_curated": True,
     "social": _SOCIAL,
@@ -354,7 +357,7 @@ _KEYWORDS_BY_SCHOOL = {m["name"]: m["keywords"] for m in _SCHOOL_META}
 def _school_content(name: str) -> dict:
     return {
         "news_url": SCHOOL_WEBSITE.get(name, _NEWS_URL),
-        "news_rss": "https://www.bu.edu/today/feed/",
+        "news_rss": _BU_NEWS_RSS,
         "events_feed": _EVENTS,
         "keywords": list(_KEYWORDS_BY_SCHOOL[name]),
         "news_curated": False,
@@ -870,7 +873,29 @@ _PROGRAM_NAME_OVERRIDES: dict[str, str] = {
     "bu-academics-sph-programs-health-communication-and-promotion": (
         "Master of Public Health in Health Communication and Promotion"
     ),
+    "bu-academics-com-advertising-advertising-bs": "Bachelor of Science in Advertising",
+    "bu-academics-met-computer-science-bs": "Bachelor of Science in Computer Science",
+    "bu-academics-met-sociology-bs": "Bachelor of Science in Sociology",
+    "bu-academics-wheelock-science-education-bs": "Bachelor of Science in Science Education",
+    "bu-academics-wheelock-applied-human-development-bs-edm-applied-human-development": (
+        "Bachelor of Science in Applied Human Development"
+    ),
+    "bu-academics-wheelock-bilingual-education-bs-edm-tesol-applied-linguistics": (
+        "Bachelor of Science in Bilingual Education"
+    ),
 }
+
+# Title-cased URL tokens → real owning units (miss #2 department bullet).
+_DEPARTMENT_FIXES: dict[str, str] = {
+    "Earth Environment": "Department of Earth & Environment",
+    "Mathematics Statistics": "Department of Mathematics & Statistics",
+    "School Of Music": "School of Music",
+    "School Of Visual Arts": "School of Visual Arts",
+    "Mph": "School of Public Health",
+}
+
+# Slugs removed by concentration collapse → keeper slug (reviews migrate after _REVIEWS_BY_SLUG).
+_SLUG_REDIRECT: dict[str, str] = {}
 
 
 def _clean_segment(seg: str) -> str:
@@ -921,6 +946,107 @@ def _base_program_name(slug: str, legacy: str, dtype: str, url: str) -> str:
     return disambiguate_program_name(field, dtype)
 
 
+def _bu_description(
+    program_name: str,
+    degree_type: str,
+    school: str,
+    *,
+    delivery_format: str = "on_campus",
+    catalog_url: str = "",
+) -> str:
+    """Field-specific description — Rice-style, never the degree-type template stub."""
+    field = _field_from_url(catalog_url) if catalog_url else program_name
+    base_field = field.split(" — ")[0] if field else program_name
+    role = {
+        "bachelors": "an undergraduate major",
+        "masters": "a graduate degree",
+        "phd": "a doctoral program",
+        "professional": "a professional degree",
+    }.get(degree_type, "a degree program")
+    delivery = ""
+    if delivery_format == "online":
+        delivery = (
+            " Offered online through Metropolitan College."
+            if "Metropolitan" in school
+            else " Delivered online."
+        )
+    elif delivery_format == "hybrid":
+        delivery = " Delivered in a hybrid format."
+    if degree_type == "bachelors":
+        return (
+            f"{program_name} is {role} in {base_field} "
+            f"at Boston University's {school}.{delivery}"
+        )
+    return f"{program_name} is {role} at Boston University's {school}.{delivery}"
+
+
+def _fix_department(department: str) -> str:
+    return _DEPARTMENT_FIXES.get(department, department)
+
+
+def _collapse_concentration_splits(programs: list[dict]) -> list[dict]:
+    """Collapse per-concentration padding rows into one program with tracks (miss #2)."""
+    by_slug: dict[str, dict] = {p["slug"]: dict(p) for p in programs}
+    groups: dict[tuple, list[str]] = {}
+    _SLUG_REDIRECT.clear()
+
+    for p in programs:
+        name = p["program_name"]
+        if " — " not in name or p["degree_type"] not in ("bachelors", "masters"):
+            continue
+        base, conc = name.split(" — ", 1)
+        key = (p["school"], p["degree_type"], base)
+        groups.setdefault(key, []).append(p["slug"])
+        by_slug[p["slug"]]["_conc"] = conc
+        by_slug[p["slug"]]["_base"] = base
+
+    remove: set[str] = set()
+    for key, slugs in groups.items():
+        school, dtype, base = key
+        # Prefer an existing non-split row with the same base name.
+        keeper_slug = next(
+            (
+                s
+                for s, row in by_slug.items()
+                if s not in slugs
+                and row["school"] == school
+                and row["degree_type"] == dtype
+                and row["program_name"] == base
+            ),
+            None,
+        )
+        if keeper_slug is None:
+            slugs.sort(key=lambda s: len(s))
+            keeper_slug = slugs[0]
+
+        keeper = by_slug[keeper_slug]
+        keeper["program_name"] = base
+        tracks = sorted(
+            {
+                by_slug[s].get("_conc", "")
+                for s in slugs
+                if by_slug[s].get("_conc")
+            }
+        )
+        if tracks:
+            existing = keeper.get("tracks") or []
+            keeper["tracks"] = sorted(set(existing) | set(tracks))
+
+        for s in slugs:
+            if s != keeper_slug:
+                _SLUG_REDIRECT[s] = keeper_slug
+                remove.add(s)
+
+    out = []
+    for slug, row in by_slug.items():
+        if slug in remove:
+            continue
+        row.pop("_conc", None)
+        row.pop("_base", None)
+        out.append(row)
+    return out
+
+
 def _build_catalog() -> list[dict]:
     out: list[dict] = []
     for slug, sk, legacy, dtype, dept, fmt, dur, url in _CATALOG:
@@ -928,6 +1054,7 @@ def _build_catalog() -> list[dict]:
         pname = _base_program_name(slug, legacy, dtype, url)
         field = _field_from_url(url) if _use_url_name(legacy) else legacy
         department = dept if dept and dept != "Programs" else _department_for(field, school)
+        department = _fix_department(department)
         out.append({
             "slug": slug,
             "school": school,
@@ -961,20 +1088,51 @@ def _build_catalog() -> list[dict]:
             p["program_name"] += f" — {legacy}"
 
     for p in out:
-        p["description"] = program_description(
+        p["description"] = _bu_description(
             p["program_name"],
             p["degree_type"],
             p["school"],
-            p["department"],
             delivery_format=p["delivery_format"],
-            university_short="Boston University",
+            catalog_url=p["catalog_url"],
         )
         p.pop("legacy_credential", None)
+
+    out = _collapse_concentration_splits(out)
+
+    for p in out:
+        p["description"] = _bu_description(
+            p["program_name"],
+            p["degree_type"],
+            p["school"],
+            delivery_format=p["delivery_format"],
+            catalog_url=p["catalog_url"],
+        )
+
+    # Re-disambiguate names after collapse (collapsed base names can collide with standalone rows).
+    counts = Counter(p["program_name"] for p in out)
+    for p in out:
+        if counts[p["program_name"]] > 1:
+            field = _field_from_url(p["catalog_url"], strip_degree=False)
+            if field:
+                p["program_name"] = disambiguate_program_name(field, p["degree_type"])
+    counts = Counter(p["program_name"] for p in out)
+    for p in out:
+        if counts[p["program_name"]] > 1:
+            suffix = " (Online)" if p["delivery_format"] == "online" else f" ({p['school']})"
+            p["program_name"] += suffix
+    counts = Counter(p["program_name"] for p in out)
+    for p in out:
+        if counts[p["program_name"]] > 1:
+            p["program_name"] += f" — {p['slug'].split('-')[-1]}"
+
     return out
 
 
 PROGRAMS: list[dict] = _build_catalog()
 _catalog_errors = validate_catalog(PROGRAMS)
+_stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
+if _stub_desc:
+    _catalog_errors.append(f"template stub descriptions on {_stub_desc} programs")
 if _catalog_errors:
     raise RuntimeError(f"Boston University catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
@@ -3332,6 +3490,14 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
     },
 }
 
+# Migrate reviews from collapsed concentration-split slugs onto keeper programs.
+for _old_slug, _new_slug in _SLUG_REDIRECT.items():
+    if _old_slug in _REVIEWS_BY_SLUG:
+        if _new_slug not in _REVIEWS_BY_SLUG:
+            _REVIEWS_BY_SLUG[_new_slug] = _REVIEWS_BY_SLUG.pop(_old_slug)
+        else:
+            del _REVIEWS_BY_SLUG[_old_slug]
+
 
 def _program_standard(slug: str, spec: dict) -> dict:
     omitted: list[str] = ["tracks", "cost_data.tuition_usd"]
@@ -3457,7 +3623,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.description_text = spec["description"]
         p.website_url = _website_for(spec)
         p.delivery_format = spec.get("delivery_format", "on_campus")
-        p.tracks = None
+        p.tracks = spec.get("tracks")
         p.application_requirements = _requirements_for(spec)
         p.cost_data = _undergrad_cost() if spec["degree_type"] == "bachelors" else _grad_cost_fallback(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))

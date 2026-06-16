@@ -101,7 +101,7 @@ def _program_snapshot(spec: dict) -> dict:
         "description_text": spec["description"],
         "website_url": b._website_for(spec),
         "department": spec.get("department"),
-        "tracks": None,
+        "tracks": spec.get("tracks"),
         "application_requirements": b._requirements_for(spec),
         "cost_data": cost,
         "outcomes_data": outcomes,
@@ -114,13 +114,16 @@ def _program_snapshot(spec: dict) -> dict:
 
 def test_catalog_breadth_and_shape():
     assert len(b.SCHOOLS) == 22
-    assert len(b.PROGRAMS) >= 450
+    # After concentration-split collapse (miss #2), the real catalog is ~360 distinct degrees.
+    assert len(b.PROGRAMS) >= 300
     assert len(set(b.PROGRAM_SLUGS)) == len(b.PROGRAM_SLUGS)
     assert sum(1 for p in b.PROGRAMS if p["delivery_format"] == "online") >= 20
     assert sum(1 for p in b.PROGRAMS if p["degree_type"] == "professional") >= 5
+    assert sum(1 for p in b.PROGRAMS if p.get("tracks")) >= 30
     assert b.RANKING_DATA["ownership_type"] == "private"
     assert "private research university in boston" in b.DESCRIPTION.lower()
     assert len(b.SCHOOL_OUTCOMES["campus_photos"]) >= 4
+    assert "bu.edu/buniverse" in b._INSTITUTION_CONTENT["news_rss"]
 
 
 def test_institution_is_gold_except_recorded_omission():
@@ -150,11 +153,16 @@ def test_every_program_is_conformant_or_omitted():
         assert snap["content_sources"], f"{spec['slug']} missing content_sources"
 
 
+def _resolved_slug(slug: str) -> str:
+    return b._SLUG_REDIRECT.get(slug, slug)
+
+
 def test_flagship_programs_have_reviews():
     for slug in _COVERABLE_REVIEWS:
-        assert slug in b._REVIEWS_BY_SLUG, slug
-        assert b._REVIEWS_BY_SLUG[slug].get("summary"), slug
-        assert len(b._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
+        resolved = _resolved_slug(slug)
+        assert resolved in b._REVIEWS_BY_SLUG, f"{slug} -> {resolved}"
+        assert b._REVIEWS_BY_SLUG[resolved].get("summary"), resolved
+        assert len(b._REVIEWS_BY_SLUG[resolved].get("sources", [])) >= 2, resolved
 
 
 def test_catalog_has_no_padding_stubs():
