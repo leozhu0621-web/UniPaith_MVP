@@ -42,6 +42,10 @@ Description depth pass (2026-06-16, northwesternprof4): replaces all classificat
 program descriptions with field-specific clauses from ``northwestern_field_descriptions.py``
 (308/308 programs; 0% classification stubs). Adds coverable external_reviews for RTVF BS
 and Pre-Medicine BS (58/58 coverable total).
+
+Description repair (2026-06-17, northwesternprof5): drops ``{program_name}:`` prefix from
+all descriptions (gold MIT/JHU pattern); fixes peer-institution contamination in field
+clauses (Chesapeake, Writing Seminars, Bloomberg, etc.); 0% name-prefixed descriptions.
 """
 
 # ruff: noqa: E501
@@ -73,7 +77,31 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Northwestern University"
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-17"
+
+_PEER_SIGNATURES: tuple[str, ...] = (
+    "Rausser",
+    "CALS",
+    "Chesapeake",
+    "Weill ",
+    "Wharton",
+    " SAS ",
+    "Sibley School",
+    "Longwood Medical",
+    "Finger Lakes",
+    "Writing Seminars",
+    "Graduate School of Design",
+    "Faculty of Arts & Sciences",
+    "Northwestern Business School",
+    "Northwestern Faculty",
+    "Northwestern Kellogg Law",
+    "Northwesternsylvania",
+    "Kelly Writers House",
+    "Bloomberg health",
+    "Bloomberg mental",
+    "Bloomberg medical",
+    "McCormick and Bloomberg",
+)
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -462,7 +490,7 @@ def _northwestern_description(spec: dict, field: str | None = None) -> str:
         raise ValueError(
             f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
         )
-    return f"{spec['program_name']}: {clause}{delivery}"
+    return f"{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -531,6 +559,24 @@ _classification_stubs = sum(
 if _classification_stubs:
     _catalog_errors.append(
         f"classification-only descriptions on {_classification_stubs} programs"
+    )
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
+_peer_contamination = sum(
+    1
+    for p in PROGRAMS
+    if any(sig in (p.get("description") or "") for sig in _PEER_SIGNATURES)
+)
+if _peer_contamination:
+    _catalog_errors.append(
+        f"peer-contaminated descriptions on {_peer_contamination} programs"
     )
 if _catalog_errors:
     raise RuntimeError(f"Northwestern catalog quality gate failed: {_catalog_errors}")

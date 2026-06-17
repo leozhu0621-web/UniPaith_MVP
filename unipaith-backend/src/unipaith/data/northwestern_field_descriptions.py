@@ -57,7 +57,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "CALS animal science covers livestock production, nutrition, genetics, and welfare with research at the Northwestern University Animal Science teaching barns."
     ),
     "Anthropology": (
-        "Evanston anthropology combines archaeological fieldwork, medical anthropology, and sociocultural theory with Chicago and Chesapeake regional research sites."
+        "Weinberg anthropology combines archaeological fieldwork, medical anthropology, and sociocultural theory with Chicago-area urban ethnography and global field-study sites."
     ),
     "Apparel and Textiles": (
         "Human Ecology fiber science and apparel design combines material testing, sustainable textiles, and industry partnerships through the Northwestern Costume and Textile Collection."
@@ -177,7 +177,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Kellogg's full-time MBA emphasizes design thinking, health-care management, and analytics with Chicago and Washington, D.C. experiential modules."
     ),
     "Business Administration, Management and Operations": (
-        "Northwestern Business School MBA and executive programs combine finance, strategy, and operations with 18+ majors and the school's deep analytics and entrepreneurship ecosystem."
+        "Kellogg MBA and executive programs combine finance, strategy, and operations with 18+ majors and the school's deep analytics and entrepreneurship ecosystem."
     ),
     "Business Analytics": (
         "Kellogg's MS in Business Analytics and Project Management combines machine learning, prescriptive analytics, and a capstone consulting practicum."
@@ -324,7 +324,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Chinese, Japanese, and Korean language and cultural studies at Northwestern Faculty of Arts & Sciences with the Center for East Asian Studies and study-abroad pathways."
     ),
     "Ecology and Evolution": (
-        "Field ecology, evolutionary genomics, and conservation biology at Weinberg use Chesapeake Bay and tropical field-station partnerships."
+        "Field ecology, evolutionary genomics, and conservation biology at Weinberg use Lake Michigan shoreline field sites and partnerships with the Chicago Botanic Garden."
     ),
     "Ecology, Evolution, Systematics, and Population Biology": (
         "Field ecology, evolutionary genomics, and conservation biology at Northwestern Faculty of Arts & Sciences with research at Northwestern's Morris Arboretum and global field-station partnerships."
@@ -408,7 +408,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Interdisciplinary engineering coursework at SEAS bridges design, computing, and applied science for students exploring Northwestern Engineering's research areas."
     ),
     "English": (
-        "Weinberg English combines literary history, creative writing, and rhetoric with the Writing Seminars and Northwestern Review traditions."
+        "Weinberg English combines literary history, creative writing, and rhetoric with the Litowitz Creative Writing Program and undergraduate writing workshops on the Evanston campus."
     ),
     "English Language and Literature (CIP 23.14)": (
         "Graduate English at SAS covers literary history, critical theory, and specialized period studies with the Northwestern Humanities Forum and writing workshops."
@@ -432,7 +432,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Weinberg environmental policy and culture examines climate governance, environmental justice, and sustainability science with the Paula M. Trienens Institute for Sustainability and Energy."
     ),
     "Environmental Sciences": (
-        "Environmental science and studies at Weinberg integrates ecology, chemistry, and policy around Chesapeake Bay and urban sustainability projects."
+        "Environmental science at Weinberg integrates ecology, chemistry, and policy around Lake Michigan watersheds and Chicago–Evanston urban sustainability projects."
     ),
     "Environmental/Environmental Health Engineering": (
         "Air and water quality, exposure science, and environmental health engineering linking CEE and the School of Public Health."
@@ -504,7 +504,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Weinberg global studies integrates international relations, development economics, and area specializations with the Buffett Institute for Global Affairs."
     ),
     "Health Administration": (
-        "Bloomberg health-policy and management training prepares leaders for hospitals,  insurers, and government health agencies."
+        "Feinberg and Kellogg health-administration coursework prepares leaders for hospital systems, insurers, and health-policy roles across the Chicago medical corridor."
     ),
     "Health Professions (CIP 51.04)": (
         "Northwestern Dental Medicine graduate and professional coursework covers oral health sciences, clinical dentistry, and biomedical foundations in the PASS clinic system."
@@ -540,7 +540,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Interdisciplinary health-sciences coursework spans biostatistics, epidemiology, and health-systems research at the Feinberg School of Medicine."
     ),
     "Health and Medical Administrative Services": (
-        "Northwestern Business School and Northwestern Graduate School of Education health-administration coursework prepares leaders for hospitals, insurers, and health-policy agencies with Northwestern Medicine case studies."
+        "Feinberg and Kellogg health-administration coursework prepares leaders for hospitals, insurers, and health-policy agencies with Northwestern Medicine case studies."
     ),
     "Health/Medical Preparatory Programs": (
         "Northwestern College pre-medical advising through the Office of Career Services guides students through MCAT preparation, clinical volunteering at affiliated Boston hospitals, and the medical-school application process."
@@ -744,7 +744,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Northwestern Medical School clinical-research programs train physician-scientists in translational medicine through affiliated Massachusetts General Hospital and Brigham and Women's Hospital rotations."
     ),
     "Medical Humanities": (
-        "Medical-humanities coursework at Bloomberg examines ethics, history, and narrative medicine at the intersection of health and culture."
+        "Medical-humanities coursework at Feinberg examines ethics, history, and narrative medicine at the intersection of clinical practice and humanistic inquiry."
     ),
     "Medical Illustration": (
         "School of Medicine medical and biological illustration is one of few accredited programs blending fine art with anatomy visualization."
@@ -768,7 +768,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Faculty of Arts & Sciences medieval studies combines Latin paleography, art history, and Northwestern's world-renowned library collections in rare books."
     ),
     "Mental Health Counseling": (
-        "Bloomberg mental-health programs train counselors in community, school, and clinical settings with Chicago practicum sites."
+        "SESP counseling programs train mental-health professionals in community, school, and clinical settings with Chicago practicum sites."
     ),
     "Microbiological Sciences and Immunology": (
         "Graduate microbiology and immunology at Northwestern Faculty of Arts & Sciences and Northwestern Medical School studies pathogens, host defense, and vaccine science in Northwestern Medicine research labs."
@@ -1011,7 +1011,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Disability studies, inclusive education, and teacher preparation in the Graduate School of Education."
     ),
     "Statistics": (
-        "McCormick and Bloomberg statistics training covers inference, Bayesian methods, and high-dimensional data for biostatistics careers."
+        "Weinberg and McCormick statistics training covers inference, Bayesian methods, and high-dimensional data for biostatistics, social science, and engineering applications."
     ),
     "Student Counseling and Personnel Services": (
         "School of Education counselor-education programs emphasize urban school settings,  trauma-informed practice, and Maryland certification pathways."
@@ -1089,7 +1089,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Wildlife ecology, conservation, and rangeland management through Rausser field research in California's diverse ecosystems."
     ),
     "Writing Studies": (
-        "Weinberg writing-studies and rhetoric courses support the Writing Seminars and professional communication across disciplines."
+        "Weinberg writing-studies and rhetoric courses support first-year writing seminars and professional communication across disciplines on the Evanston campus."
     ),
     "Zoology/Animal Biology": (
         "CALS and Arts and Sciences zoology examines animal behavior, ecology, and evolutionary biology with Northwestern Lab of Ornithology research access."
