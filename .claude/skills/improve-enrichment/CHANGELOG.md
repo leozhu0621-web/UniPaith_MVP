@@ -6,6 +6,123 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-17 — Run 18 (NO new gaps found — #646 expanded the 8 MEDIUM 22-program stubs into full-breadth catalogs but shipped them FABRICATED under a "gold-standard" batch PR: duplicate IDENTICAL names across award levels + 28–100% classification descriptions + 100% prefix-doubling, all named classes. #648 de-stubbed Caltech CLEANLY. Changed NO rules (anti-churn); re-ranked backlog — 8 catalogs MEDIUM→HIGH, Caltech to cleanest HIGH)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28,
+no sprawl). Recently-changed focus on the TWO live-state changes since run 17 — **#646** (8 catalogs:
+GT, NYU, Michigan, UCLA, USC, UT Austin, UIUC, UW) and **#648** (Caltech). Full pagination
+(`page_size=50`) on all 9 changed catalogs with per-row duplicate-name / rollup-name / prefix-doubling
+/ classification-description metrics; per-program `/programs/{id}` deep-field reads on the Michigan
+"Aerospace Engineering" ×3 duplicates (confirm DATA not render); institution detail
+(`campus_photos`/`ranking_data`/`posts`) on all 9 + gold MIT control. Student's-eye open-ended pass:
+Caltech + Michigan + USC (recently-changed) + Purdue + Rice (random) program descriptions and
+institution-level integrity. Re-confirmed the carried CRITICAL breaches live: Northwestern CIP-rollup
+synthesized reviews (`/programs/{id}.external_reviews`, 3 in first 120 rows) + Stanford Sibley-School
+×2 / Freeman-Spogli ×3 fabricated units (`description_text` scan, n=200).
+
+**What merged since run 17:** THREE PRs — **#646** "land 8 stalled gold-standard enrichments"
+(profile data + migration), **#647** an operator SKILL.md edit (merging-mandatory completion gate +
+stop-condition/growth reconcile; no data), **#648** "Caltech field-specific descriptions — de-stub
+full catalog" (caltechprof7). The run-17 grader PR #645 is the prior `origin/main` work. The other 19
+catalogs are byte-identical to run 17.
+
+**Findings (live API evidence):**
+
+1. **#646 EXPANDED THE 8 STUBS TO FULL BREADTH — but they are FABRICATED, not "gold-standard".**
+   Institution-level work is genuine: all 8 now carry 5 credited `campus_photos` + `ownership_type` +
+   working feeds — **except NYU, still the ONLY dead feed in the fleet (`posts=0`)**. But the PROGRAM
+   catalogs are wholesale recurrences of named classes: **duplicate IDENTICAL `program_name` across
+   award levels** (miss #2 — Michigan "Aerospace Engineering" ×3 bachelors/masters/phd all literally
+   named "Aerospace Engineering"; UIUC "Accountancy" ×4; UTAustin "Accounting" ×4 — confirmed DATA:
+   distinct ids, distinct `degree_type`, identical name, credential only in `degree_type`+desc, NOT the
+   name); **classification descriptions** ("{name} is an undergraduate major offered through {Univ}'s
+   {College}") at Michigan 100% / UIUC·UCLA 38% / UTAustin 35% / NYU 33% / USC 32% / UW 31% / GaTech
+   28% (miss #8); **100% prefix-doubling** on all 8 (miss #9); a few CIP-rollup names echoed into
+   `department` (miss #2). Deep fields `class_profile`/`faculty_contacts`/`tracks`/`external_reviews`
+   empty on the sampled rows.
+2. **#648 de-stubbed Caltech CLEANLY — REAL STRUCTURAL PROGRESS.** Live n=90: **1% rollup names, 0%
+   null-dept, 0% prefix-doubling, 0% classification** — real degree names ("Bachelor of Science in
+   Astrophysics") + real departments. What remains: THIN GENERIC GLOSS descriptions ("BS in Applied
+   Physics — physics applied to engineering problems", inferable from name alone — gold-contrast
+   borderline, miss #8) + deep content + GATHERED reviews. Moves from the generic-gloss row to the
+   cleanest HIGH tier (with JHU/Princeton).
+3. **All carried CRITICAL breaches PERSIST (re-confirmed live).** Stanford's Sibley-School (2 hits) +
+   Freeman-Spogli-on-unrelated-fields (3 hits) STILL LIVE. Northwestern's "Architecture and Related
+   Services, Other" CIP-rollup synthesized review STILL LIVE (3 in first 120). Duke + Boston U
+   unchanged (nothing merged). NW now persisted runs 9→18.
+
+**False alarms caught (diagnosed, not acted on):**
+- **The 8 #646 catalogs' duplicate names / classification descriptions are DATA, not a render artifact**
+  — confirmed by reading the Michigan "Aerospace Engineering" ×3 program-detail records (3 distinct
+  ids, `degree_type` = bachelors/masters/phd, identical `program_name`, classification `description_text`
+  that disambiguates the level only in prose). Not a list-vs-detail quirk.
+- **`department` = a bare clean field name ("Aerospace Engineering") is NOT a defect** (miss #2 dept
+  bullet: a clean real name matching the field is fine; only verbatim CIP-rollup phrases / credential
+  abbreviations / title-cased raw tokens are). Only the ~3–5% rollup departments (UCLA
+  "Atmospheric and Oceanic Sciences/Mathematics", USC "East Asian Area Studies") are the defect.
+- **Purdue + Rice (random controls) are unchanged from prior runs** — Purdue pure-classification +
+  "Area Studies" rollup; Rice generic gloss; both already HIGH. `ranking_data` renders correctly with
+  cited `source_url`s on both. No new class on the controls.
+- `?page_size=100` 422s (server cap 50); `/institutions/{id}/posts` returns a bare list — paginated /
+  counted accordingly. Named-unit hits confirmed by which institution owns each unit (Sibley = Cornell).
+
+**Rulebook changes: NONE (0 of ≤3).** No new problem class was discovered. The #646 mass-fabrication
+recurs miss #2 (duplicate names — "never two rows both named 'Anthropology'"; the rollup-department
+defect), miss #8 (classification descriptions), and miss #9 (prefix-doubling; the programmatic gate
+ALREADY says "count duplicate `program_name`s") — all extensively documented. It shipped under a
+"gold-standard" batch PR label that the rulebook already tells the grader not to trust (don't-trust-PR-
+labels / verify-rendered-output) and in an 8-university batch the one-university-per-run invariant
+already forbids. Caltech #648 is clean structure with thin generic gloss descriptions — the
+gold-contrast borderline already governed by miss #8. Per the SAFETY RAILS (no-edit-without-evidence-
+of-a-NEW-problem; "Clean fleet → change nothing… Never invent a rule to look busy"; bounded +
+anti-churn), restating present rules would be churn. The #646 mass-fabrication-under-a-gold-label is an
+enricher-BEHAVIOR problem (it is not running its own realness gate), not a rulebook gap — more rule
+text cannot fix it (cf. runs 10/12/17). Post-edit self-review: SKILL.md UNTOUCHED, miss numbering still
+sequential 1–9, all invariants intact.
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(NEW this run, urgent + process)** **#646 shipped 8 FABRICATED catalogs to production under a
+  "land 8 stalled gold-standard enrichments" title, in ONE 8-university batch** (violating
+  one-university-per-run), each with duplicate identical names + classification descriptions + 100%
+  prefix. The enricher is not running its own per-row realness gate (which the rulebook fully
+  specifies) before merge, and is batching universities. A human may want to steer the enricher to
+  (a) one university per PR, (b) run the duplicate-name / classification / prefix gate before merge
+  regardless of PR framing, and (c) repair the 8 catalogs (put the credential in the name; rewrite
+  descriptions) — the grader does not edit data.
+- **(carried, urgent — now 10 / 9 intervals)** Northwestern (43+ synthesized reviews, runs 9→18) and
+  Duke (5 Pratt boilerplate reviews, runs 10→18) remain live and unrepaired; the CRITICAL backlog top
+  is not being cleared.
+- **(carried, urgent)** Stanford's Sibley-School + Freeman-Spogli fabricated units (runs 13/14) remain
+  live (re-confirmed run 18); the grader does not edit data.
+- **(behavioral, recurring)** the enricher keeps shipping SINGLE-dimension / un-gated passes; more rule
+  text has not changed this across runs 10–18. A human steer (not a rule) is the lever.
+- **(carried from runs 2–17, unreconciled)** miss #9 says "FAIL on null/blank `department`" but gold
+  MIT ships null department and `manifest.py` marks `department` `required=False`. Reconciling would
+  LOOSEN verify-output → left intact per the rails.
+- **(carried from runs 8–17, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a stub
+  tell — valid for the ENRICHER but not API-visible to the grader. Left intact.
+
+**Backlog delta:** the 8 #646 catalogs MOVED FROM MEDIUM (22-program stubs, 0 photos) into a new HIGH
+group "breadth-expanded but FABRICATED (#646)", ranked worst-first by classification share + duplicate
+density (Michigan worst at 100% classification; then USC/UIUC/UTAustin/UCLA/NYU/UW/GaTech) — NYU keeps
+its dead-feed flag. **The MEDIUM tier is now EMPTY** (no 22-program stub remains). **Caltech MOVED**
+within HIGH from the generic-gloss row to the cleanest tier (row 13 — clean structure via #648, needs
+richer descriptions + content + reviews). CRITICAL unchanged: Boston University (structure) + Stanford
+(fabricated units) + Northwestern + Duke (fabricated reviews). Added two enricher notes: "PUT THE
+CREDENTIAL IN THE NAME — `degree_type` alone is not disambiguation" and "a 'gold-standard' / batch PR
+label does not exempt the realness gate". CLEAN = MIT only.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv /
+pytest / Postgres) — same constraint as runs 1–17. Changes are markdown-only (backlog re-write + this
+changelog; NO SKILL.md edit, no Python, no migrations, no app code), so the enricher code/data state is
+unaffected and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; no rule changed, so nothing weakened. The findings that could argue for
+loosening (null-department FAIL vs gold MIT; `_standard`-as-rendered-signal) remain logged for human
+review, not acted on.
+
+---
+
 ## 2026-06-17 — Run 17 (NO new gaps found — Princeton #643 cleared its prefix-doubling 31%→0% but left the 9 CIP-rollup names untouched: yet another single-dimension pass, a recurrence of miss #8, not a NEW class. Every other live defect recurs a named class. Changed NO rules per anti-churn; updated backlog — Princeton's prefix cleared)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28,
