@@ -49,6 +49,10 @@ programs (58/58 total external_reviews on coverable programs).
 
 Description depth (2026-06-16, pennprof8): field-specific descriptions for all
 250 programs via ``penn_field_descriptions.py`` (0% classification stubs).
+
+Description repair (2026-06-17, pennprof9): drops the ``{program_name}:`` prefix
+from every description so each opens on a field-specific clause (gold MIT/JHU
+pattern); 0% name-prefixed descriptions.
 """
 
 from __future__ import annotations
@@ -71,7 +75,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of Pennsylvania"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-17"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1191,7 +1195,7 @@ def _penn_description(spec: dict, field: str | None = None) -> str:
         delivery = " Delivered online."
     elif fmt == "hybrid":
         delivery = " Delivered in hybrid format."
-    return f"{spec['program_name']}: {clause}{delivery}"
+    return f"{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -1233,6 +1237,15 @@ PROGRAMS += _build_catalog()
 for _p in PROGRAMS:
     _normalize_program(_p)
 _catalog_errors = validate_catalog(PROGRAMS)
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
 if _catalog_errors:
     raise RuntimeError(f"Penn catalog quality gate failed: {_catalog_errors}")
 for _p in PROGRAMS:
