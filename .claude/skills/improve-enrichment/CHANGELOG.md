@@ -6,6 +6,80 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-17 — Run 36 (NO new gaps → 0 rule changes. Graded **#681 Stanford University stanfordprof9** — the one enrichment merged since run 35. #681 is the most thoroughly-engineered prefix-strip yet: it strips the `{program_name}:` prefix from all 188 descriptions, adds a `_LEVEL_SUFFIX` per-credential diversifier, rewrites ~30 FOREIGN-peer clauses (Cornell's "Sibley School" → Stanford's real "Department of Aeronautics and Astronautics … NASA Ames"), and BAKES IN three build gates (`_name_prefix_desc`, `_shared_desc`, `_peer_contaminated`) that FAIL CI on any survivor — and CI passed, so the deployed data is guaranteed 0% name-prefix + 0% identical-across-levels + 0 FOREIGN-peer signatures. Only the 2nd of 9 prefix-strips to avoid the run-32 identical-across-levels trap, and the first to gate it permanently. BUT two defects survive: (1) the international-affairs **Freeman Spogli Institute** stays bolted onto Public Relations + Systems Science (fields it does not house) — #681 only trimmed its name and its peer-gate is keyed ONLY on FOREIGN signatures, so it is structurally blind to a REAL Stanford unit on the wrong field (the half of the miss #9 pre-ship gate it never implemented); (2) the NAMES dimension is untouched — 30% rollup names + 30% rollup depts + 55% generic "Bachelor's in {field}" (single-dimension pass). Both map to classes the rulebook already names (miss #8 named-unit-truth + dimension-agnostic clear; miss #9 whole-class + the real-unit-on-wrong-field gate half; miss #2 rollup names). An already-named class violated, not a new one. Stanford drops from a BROAD multi-unit fabrication to a narrow 2-row FSI mismatch (UCSD-scale). The Deploy Backend was `in_progress` at grading — live confirmation of the prefix/Sibley/identical drops is deferred to next run, but the CI-passed self-gates make them near-certain. Flagged for human review.)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search`; gold MIT n=65 control; NYU the only dead
+feed; no sprawl). Focused grade on the one changed catalog (**Stanford University**, full 188-program live
+pagination + per-program name/department/description reads, PLUS a SOURCE + CI-gate read of `15cd090`'s
+`stanford_profile.py` / `stanford_field_descriptions.py` because its Deploy Backend had not finished). Fleet
+checklist pass (`/institutions/{id}/posts` + `school_outcomes.campus_photos` length across the sample).
+
+**What merged since run 35's grade:** exactly **#681 Stanford University stanfordprof9** (`15cd090` — "Stanford
+description repair: drop name-prefix, fix peer contamination"). `origin/main` HEAD is now #681 (run 35's
+changelog/backlog PR #680 is the only other commit). The other 27 catalogs are byte-identical to run 35
+(`git diff 814ffdb..15cd090` touches ONLY `stanford_field_descriptions.py` + `stanford_profile.py`).
+
+**#681 Stanford — graded at the SOURCE + passing-CI-gate level (Deploy Backend run 591 still `in_progress`):**
+- ⏳ **Deploy `in_progress` at grading** — started 16:04:52Z, `updated_at` frozen at +5s 20+ min later (the
+  Cornell-#654 slow/queued pattern). Per the "MERGED ≠ LIVE" rule the live API still showed the pre-#681 Stanford
+  (n=188: 85% name-prefix, Sibley ×2 + FSI ×3, 30% rollup names, 0% identical) at grading time. So the dimension
+  verdicts below are established from #681's SOURCE + the fact that its own build gates passed CI (a gate that
+  FAILs on any survivor + a green build = 0 survivors in the deployed data); the live drops are confirm-next-run.
+- ✅ **name-prefix 85%→0%** (gate `_name_prefix_desc` FAILs build on any `description.startswith(program_name)`).
+- ✅ **identical-across-levels 0%** (gate `_shared_desc` FAILs on any verbatim-shared `description_text`; a new
+  `_LEVEL_SUFFIX` appends a credential-specific clause so siblings of one field don't collapse). Only the 2nd of
+  9 prefix-strips to avoid the run-32 trap (after #679 Harvard), and the FIRST to bake the avoidance into a gate.
+- ✅ **FOREIGN-peer contamination 0** (gate `_peer_contaminated` over `_PEER_SIGNATURES`). Sibley School →
+  "Department of Aeronautics and Astronautics … NASA Ames"; Perelman/Weill/Fels/Carpenter/Atkinson/Wharton/
+  McCormick/Harvardsylvania all rewritten (~30 clauses). A whole-catalog scan of the #681 source returns 0
+  foreign signatures (the only "Hopkins" left is Stanford's own Hopkins Marine Station — a true positive).
+- ❌ **FSI-on-WRONG-FIELD mismatch NOT cleared (live no-fabrication breach that WILL ship).** "Freeman Spogli
+  Institute" (a REAL Stanford international-affairs institute) stays bolted onto **Public Relations/marketing**
+  (line 215) + **Systems Science** (line 245) — fields FSI does not house. #681 only TRIMMED its name
+  ("…for International Studies" → "…Institute"). Root cause: `_PEER_SIGNATURES` lists only FOREIGN units, so the
+  gate is structurally blind to a same-institution unit on a mismatched field — exactly the half of the miss #9
+  pre-ship gate ("any real unit cited on a field it does not house") that was never implemented. The poli-sci /
+  IR / Public-Policy rows citing FSI are correct (FSI houses them) — only PR + Systems Science are the mismatch.
+- ❌ **NAMES dimension UNTOUCHED (single-dimension pass, miss #2 + miss #8).** 30% rollup NAMES + 30% rollup
+  DEPARTMENTS + 55% generic "Bachelor's in {field}" (e.g. "Bachelor's in Biology, General"; "Bachelor's in
+  Classics and Classical Languages, Literatures, and Linguistics" / dept = the same rollup). `class_profile`/
+  `faculty_contacts`/`tracks` empty.
+- **Net:** #681 cleared three dimensions cleanly + permanently (prefix, identical-across-levels, foreign-peer) and
+  reduced Stanford from a BROAD multi-unit fabrication to a NARROW 2-row FSI mismatch (UCSD-scale) — but a real
+  unit on a field it does not house is still a no-fabrication breach, and the names dimension is untouched. Stays
+  CRITICAL until the 2 FSI rows are fixed.
+
+**Student's-eye + checklist pass (open-ended, hunting new classes):** fleet feed-health (`posts`) — NYU 0
+(documented dead feed), all sampled others ≥10; no NEW dead feed. Photo galleries =5 across the sample (≥4). The
+changed catalog (Stanford) is the focus of the student's-eye read; it surfaced the FSI-mismatch persistence and the
+foreign-only-gate blindness (both already-named classes) — no NEW problem class.
+
+**Diagnosis:** #681 introduces NO bad data of a new kind — it is a strong partial repair (3 of 4 dimensions cleared +
+gated) that leaves an already-flagged 2-row FSI mismatch (BAD DATA, already on Stanford's CRITICAL backlog entry) +
+the untouched rollup names (already-tracked). The mildly-novel mechanism — a peer-contamination GATE keyed only on
+FOREIGN-institution signatures, blind to a same-institution unit on the wrong field — is the foreign half of the
+miss #9 pre-ship gate the rulebook ALREADY mandates both halves of; it is an enricher implementation gap, not a new
+problem class. → backlog updated (Stanford re-graded; foreign-only-gate enricher note added).
+
+**Rulebook changes (0 of ≤3):** NONE. No NEW problem class observed. #681's FSI-on-wrong-field residual is miss #8
+(named-unit-truth: a real same-institution unit on an UNRELATED field) + miss #9 (clear the WHOLE class, not the
+cited row + the pre-ship gate's "real unit on a field it does not house" half); its untouched rollup names are
+miss #2; its single-dimension nature is miss #8 (dimension-agnostic clear). Per the SAFETY RAILS
+(no-edit-without-evidence-of-a-NEW-problem; "Clean fleet → change nothing… Never invent a rule to look busy";
+anti-churn) and post-edit coherence requirement, SKILL.md is unchanged. Health check GREEN:
+`test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** (run with system pytest + minimal deps
+[sqlalchemy/pgvector/pydantic] and `--noconftest` in this ephemeral container, whose shared conftest pulls the full
+app runtime that is absent here; the two target files are pure conformance + verification-gate unit tests).
+
+**Backlog delta:** no rank change at the very top (BU stays #1 CRITICAL). Re-graded **Stanford**'s CRITICAL entry:
+#681 cleared the prefix + Sibley + all foreign-peer + the identical-across-levels trap (gate-enforced), reducing it
+from a broad multi-unit fabrication to a narrow 2-row FSI mismatch (UCSD-scale) + 30% rollup names + empty deep
+content; its repair list now leads with "fix the 2 FSI rows + add same-institution-unit-on-wrong-field to the gate."
+Added an enricher note: a peer-contamination gate keyed only on FOREIGN signatures is blind to a real unit on the
+wrong field — "0 foreign signatures" ≠ "0 fabricated units" (both halves of the miss #9 gate are required).
+
+**Invariants:** all intact; nothing weakened (no edit made). No finding argued for loosening an invariant.
+
 ## 2026-06-17 — Run 35 (NO new gaps → 0 rule changes. Graded **#679 Harvard University harvardprof8** — the one enrichment merged since run 34. #679 is the 8th prefix-strip but the FIRST done RIGHT: it took the name-prefix 81.6%→0%, kept identical-across-levels at 0% (it diversified credential siblings with level-true suffixes — breaking the run-32 streak the run-34 note predicted would recur), AND cleared the cross-institution-COPY class to ZERO across the whole catalog (Berkeley's "Lick Observatory" → Harvard's real CfA; Penn's "Kelly Writers House"/"Perry World House", "Haas/CDSS", "Harvardsylvania" all removed). It introduced NO new defect — it just left the NAMES dimension (35% rollup names + 27% rollup depts echoing the CIP rollup + 54% generic "Bachelor's in {field}" + CIP×award-level phantom rows), a single-dimension gap miss #2 + #8 already name. The only newly-surfaced live fact is a GRADING-ACCURACY correction, not a new class: BU (byte-identical, #675) carries 51% identical-across-levels (184/360 rows) which run 33 graded as "0%" — the class is already in the rulebook (miss #8, mechanism-agnostic), so the fix is a backlog correction, not a rule. No SKILL.md edit; backlog corrected + Harvard re-tiered.)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search`, de-duped across multiple `q=` queries — total
