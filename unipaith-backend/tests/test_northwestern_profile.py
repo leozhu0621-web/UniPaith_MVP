@@ -167,3 +167,13 @@ def test_no_peer_contaminated_descriptions():
         if any(sig in (prog.get("description") or "") for sig in n._PEER_SIGNATURES)
     )
     assert contaminated == 0, f"{contaminated} programs still carry peer-institution signatures"
+
+
+def test_no_identical_across_credential_levels():
+    from collections import Counter
+
+    desc_counts = Counter(prog.get("description") for prog in n.PROGRAMS)
+    shared = sum(c for c in desc_counts.values() if c >= 2)
+    assert shared == 0, (
+        f"{shared} programs share a description verbatim with a credential sibling"
+    )
