@@ -149,3 +149,21 @@ def test_catalog_has_no_padding_stubs():
     assert all(spec.get("department") for spec in n.PROGRAMS), "every program needs a department"
     names = [spec["program_name"] for spec in n.PROGRAMS]
     assert len(names) == len(set(names)), "duplicate program_name values"
+
+
+def test_no_name_prefixed_descriptions():
+    name_prefix = sum(
+        1
+        for prog in n.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
+
+
+def test_no_peer_contaminated_descriptions():
+    contaminated = sum(
+        1
+        for prog in n.PROGRAMS
+        if any(sig in (prog.get("description") or "") for sig in n._PEER_SIGNATURES)
+    )
+    assert contaminated == 0, f"{contaminated} programs still carry peer-institution signatures"
