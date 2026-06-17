@@ -6,6 +6,122 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-17 — Run 30 (ONE NEW CLASS → ONE rule added: a per-FIELD description STAMPED VERBATIM across every credential-level row — generated once per field from a fixed field→text table, so the certificate + BS + MS + PhD of one field carry an IDENTICAL description_text. #669 UW-Madison: 293/348 (84%) shared across levels, gold MIT 0%. It EVADES both the distinct-NAME check (names differ) and the gold contrast (prose is field-specific). #669 is ALSO a LIVE cross-institution-copy fabrication — UCSD's "Skaggs School" + "Scripps/CW3E/Mauna Loa" find-replaced onto UW rows (the run-25 class, already ruled). Added 1 of ≤3 rules; UW-Madison PROMOTED to CRITICAL)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28, no
+sprawl; gold MIT n=65 control). The one live-state CHANGE since run 29: **UW-Madison** (#669, the one in-scope
+PR merged). Full UW-Madison pagination (`page_size=50`, n=348) with per-row duplicate-name / rollup-name
+(strict field-portion, credential-form-agnostic) / CIP-code / generic-credential / prefix-doubling metrics; a
+whole-catalog IDENTICAL-`description_text` scan (verbatim sharing across rows) + a FOREIGN-SIGNATURE / peer-unit
+/ geography scan over all 348 detail descriptions; direct `description_text` reads on the flagged
+Pharmaceutical-Sciences + Atmospheric-Science rows; a WEB verification of UW-Madison's real pharmacy-school name
+(no "Skaggs"). A gold-MIT control identical-description scan (n=65, 0% shared). Re-confirmed the prior CRITICAL
+breaches live via direct reads (Northwestern synthesized review, Stanford Sibley ×2, Boston U 7 credential-name
+departments, Duke 5 Pratt-boilerplate reviews). A fleet institution-level sanity scan (`campus_photos` length,
+`ranking_data.ownership_type`, `/institutions/{id}/posts` count) across all 28. Student's-eye open-ended pass:
+UW-Madison (the changed catalog) program names/descriptions + the fleet institution integrity sweep.
+
+**What merged since run 29:** ONE in-scope profile PR — **#669 UW-Madison** ("UW-Madison uwmadisonprof5: drop
+name-prefixed descriptions, 348 programs", `8a022ef`, `origin/main` HEAD). The run-29 grader PR **#668**
+(`8928b4d`) is the prior work. So the other 27 catalogs' DATA is byte-identical to run 29.
+
+**Findings (live API evidence):**
+
+1. **NEW CLASS — a per-FIELD description STAMPED VERBATIM across every credential-level row (UW-Madison
+   293/348 = 84%; gold MIT 0%).** #669 replaced UW-Madison's 100% name-prefixed classification stubs with
+   descriptions generated from a 153-field `uw_madison_field_descriptions.py` table (good: 0% prefix, 0%
+   classification, clean names — 0 duplicate, ~1% slash-rollup, 0 CIP-code, 0 generic-credential). BUT one
+   description per FIELD was stamped onto every credential-level row of that field, so the Graduate Certificate,
+   BS, MS, and PhD in one field carry an IDENTICAL `description_text` — 110 identical-description groups, 293
+   rows sharing text with ≥1 sibling. A whole-catalog scan of gold MIT returned 0 such groups (every one of its
+   65 programs is uniquely described). This EVADES both the distinct-NAME check (names differ — the credential
+   is in the name, per the run-18 fix) AND the gold contrast (the prose is genuinely field-specific) — yet it is
+   field-LEVEL, not program-LEVEL: a student sees the SAME paragraph on the MS and PhD pages and the row was
+   minted per-FIELD, never researched per-program (deep fields empty). The DESCRIPTION analog of the
+   CIP×award-level / duplicate-name padding (miss #2). No existing rule names it → **ONE rule added** (a
+   sub-bullet under miss #8 + a clause in the miss #9 programmatic count list).
+2. **#669 is ALSO a LIVE cross-institution-COPY fabrication (the run-25 class, already ruled).** The
+   "field-specific" descriptions were built by find-replacing the IMMEDIATELY-PRIOR PR's UCSD catalog (#667),
+   leaving UCSD's units on UW-Madison rows: **"Skaggs School"** (UCSD's pharmacy school — UW-Madison's is the
+   plain School of Pharmacy, web-verified) on all 4 Pharmaceutical-Sciences rows, and **"Scripps … Center for
+   Western Weather and Water Extremes … Mauna Loa"** (UCSD's Scripps Inst. of Oceanography — UW-Madison's is the
+   Dept of Atmospheric & Oceanic Sciences / SSEC / CIMSS) on all 3 Atmospheric-Science rows, each repeated
+   verbatim across the field's credential levels. (CALS ×22 is a TRUE positive — UW really has a College of
+   Agricultural and Life Sciences.) Recurrence of the run-25 cross-institution-copy class (miss #8) — NO new
+   rule. → UW-Madison PROMOTED from HIGH (pure classification) to CRITICAL.
+3. **The prior CRITICAL breaches PERSIST (re-confirmed live via direct reads).** Northwestern synthesized
+   review — "Architecture and Related Services, Other within Weinberg" + a U.S. News #7 institution-ranking
+   source (runs 9→30, TWENTY-TWO intervals). Stanford **Sibley-School ×2** (aerospace BA + Graduate
+   Certificate; runs 13/14→30). Duke **5 copy-paste Pratt-boilerplate reviews** ("rigorous engineering degree
+   at a selective private R1 university…within Pratt", field swapped; runs 10→30). Boston U **7 credential-name
+   departments** ("Bachelor Of Science In Hospitality Administration", "Doctor Of Dental Medicine"; runs 1→30).
+   Purdue + UCSD cross-institution / invented-unit breaches carried (nothing merged for them).
+4. **Fleet institution-level clean except NYU.** All 28 institutions carry ≥4 `campus_photos` (NYU 5) +
+   `ownership_type` + a live feed; NYU is the ONLY dead feed (`posts=0`), unchanged.
+
+**False alarms caught (diagnosed, not acted on):**
+- **CALS on 22 UW-Madison rows is a TRUE positive, NOT a foreign signature** — UW-Madison genuinely has a
+  College of Agricultural and Life Sciences (CALS); the owner-map excludes it. Skaggs (4) + Scripps (3) are the
+  genuine foreign hits (UCSD units), web/structure-confirmed.
+- **The 4 slash-rollup names ("Zoology/Animal Biology" ×3, "Radio/Television/Film") carry REAL departments**
+  (Department of Integrative Biology, School of Journalism and Mass Communication) — a ~1% residual rollup-name
+  tell, the documented miss #2 class, not new.
+- `?page_size=100` 422s (server cap 50); the `/programs` LIST endpoint omits the description (it lives on
+  `/programs/{id}` as `description_text`) — paginated / pulled detail accordingly. `_standard` not in the public
+  API (gold MIT shows NONE) — ranked on API-visible signals only.
+
+**Rulebook changes: ONE (1 of ≤3).** Added a sub-bullet under miss #8 (the description-quality family, after the
+cross-institution-copy bullet) defining the per-FIELD-stamped-across-credential-levels class + the gold-MIT-0%
+contrast + the UW-Madison 84% evidence, and a cross-referencing clause in the miss #9 programmatic-gate count
+list (count `description_text` shared verbatim across ≥2 rows; gold MIT = 0%, so any sharing FAILs). This
+TIGHTENS the gold-contrast + verify-output gates (adds to them), loosens nothing. Confirmed not a duplicate: the
+existing gold-contrast bullet rejects a classification STUB and the duplicate-name check rejects identical
+NAMES, but NEITHER catches a field-specific description SHARED verbatim across distinctly-NAMED credential rows
+— a genuinely new tell with live evidence this run (293 UW-Madison rows; MIT 0% control). The #669
+cross-institution-copy is a recurrence of the run-25 class (no rule). Per the SAFETY RAILS
+(no-edit-without-evidence: 293 live UW-Madison rows THIS run; bounded ≤3; anti-churn). Post-edit self-review:
+re-read the whole SKILL.md — misses still numbered sequentially 1–9, the two new sub-bullets sit under existing
+numbered misses #8/#9 (no renumber), no contradictions, all invariants intact.
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(behavioral, recurring)** #669 UW-Madison is the EIGHTH straight single-dimension pass (FIVE prefix-strips +
+  Purdue + Rice + UCSD/UW-Madison descriptions) — and the THIRD description-pass to ship a fabrication (Purdue
+  cross-institution copy, UCSD invented center, now UW-Madison cross-institution copy + identical-across-levels).
+  The verified-true-description capability exists (Rice #663, most of UCSD #667), but the enricher keeps fixing
+  one dimension per pass AND mixing in fabrication. The lever is steering it to finish ALL dimensions per pass,
+  research-true, and write a UNIQUE per-program description. Not a rule.
+- **(carried, urgent — now 22 / 20 intervals)** Northwestern (synthesized reviews, runs 9→30) and Duke (Pratt
+  boilerplate reviews, runs 10→30) remain live and unrepaired; the CRITICAL backlog top is not being cleared.
+  Fabricated reviews on student-facing pages are a no-fabrication invariant breach the grader cannot fix.
+- **(carried, urgent)** Stanford's Sibley-School + Freeman-Spogli fabricated units (runs 13/14), Purdue's
+  cross-institution-copy descriptions (run 25), and UCSD's invented aerospace center (run 29) remain live; the
+  grader does not edit data.
+- **(carried from runs 2–29, unreconciled)** miss #9 says "FAIL on null/blank `department`" but gold MIT ships
+  null department and `manifest.py` marks `department` `required=False`. Reconciling would LOOSEN verify-output
+  → left intact per the rails.
+- **(carried from runs 8–29, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a stub tell —
+  valid for the ENRICHER but not API-visible to the grader. Left intact.
+
+**Backlog delta:** UW-Madison ADDED as a new CRITICAL entry (cross-institution-copy "Skaggs"/"Scripps" + 84%
+identical-across-levels descriptions, shipped by #669) and REMOVED from the HIGH "fabricated/incomplete
+catalogs" table (HIGH table renumbered, old rows 7–13 → 6–12). Header `_Last graded_` block + intro rewritten
+for run 30 (UW-Madison framed as the NEW class + a recurring cross-institution-copy breach). A new "Notes for
+the enricher" bullet added for the identical-across-levels class; the top-entries note adds UW-Madison.
+Persistence counts bumped: Northwestern 9→30 (TWENTY-TWO intervals), Duke 10→30, Stanford 14→30; Boston U +
+Purdue + UCSD re-confirmed/carried run 30. CRITICAL now: Boston University (structure) + Stanford (fabricated
+units) + Northwestern + Duke (fabricated reviews) + Purdue (cross-institution-copy descriptions) + UCSD (1
+invented aerospace center) + **UW-Madison (cross-institution-copy + identical-across-levels)**. MEDIUM empty.
+CLEAN = MIT only; Rice/UChicago/Caltech/JHU stay the near-clean non-MIT structure tier.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv —
+`.venv/bin/pytest` absent) — same constraint as runs 1–29. Changes are markdown-only (SKILL.md two sub-bullets +
+backlog + this changelog; NO Python, no migrations, no app code), so the enricher code/data state is unaffected
+and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; the one rule added only TIGHTENS the gold-contrast + verify-output gates. The
+findings that could argue for loosening (null-department FAIL vs gold MIT; `_standard`-as-rendered-signal)
+remain logged for human review, not acted on.
+
 ## 2026-06-17 — Run 29 (NO new gaps found — #667 UCSD is a CLEAN, VERIFIED-TRUE description repair (the GOOD pattern, like Rice #663) with ONE invented-unit slip: live n=194, 0% prefix · 0 foreign-sig · real UCSD units throughout, EXCEPT a fabricated "UC San Diego Center for Aerospace Research and Training" on 2 aerospace grad rows (web-verified non-existent — real centers are ACCORD/CaliBaja). A recurrence of the miss #8 verified-true / invented-named-unit class (Stanford Sibley), NOT a new class. Changed NO rules per anti-churn / no-edit-without-evidence; added UCSD as a focused CRITICAL (smallest-scope), moved it out of the HIGH "pure classification" tier)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28, no
