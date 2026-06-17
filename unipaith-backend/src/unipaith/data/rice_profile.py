@@ -28,6 +28,11 @@ iCalendar feeds Events (both verified HTTP 200 on 2026-06-11).
 
 Depth pass (2026-06-15, riceprof4): merged ``DEPTH_REVIEWS`` for 51 coverable
 programs — completes Rice coverable external_reviews (57/57).
+
+Description repair (2026-06-17, riceprof5): replaces all name-prefixed
+classification stubs with field-specific clauses from
+``rice_field_descriptions.py`` (gold MIT/JHU pattern); 0% name-prefixed
+descriptions.
 """
 
 # ruff: noqa: E501
@@ -40,6 +45,8 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.profile_catalog_utils import validate_catalog
+from unipaith.data.rice_field_descriptions import FIELD_DESCRIPTIONS
 from unipaith.data.rice_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
@@ -47,7 +54,13 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Rice University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-15"
+ENRICHED_AT = "2026-06-17"
+
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is an undergraduate .+ major in Rice University's .+\.$"
+    r"|^.+ is (a research doctorate|a master's program|a professional master's program|"
+    r"a graduate certificate) offered through Rice University's ",
+)
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -994,44 +1007,39 @@ def _slugify(name: str) -> str:
     return s
 
 
-_DELIVERY_PHRASE = {
-    "online": " Delivered fully online.",
-    "hybrid": " Delivered in a hybrid format.",
-}
-_DEGREE_ROLE = {
-    "phd": "a research doctorate",
-    "masters": "a master's program",
-    "professional": "a professional master's program",
-    "certificate": "a graduate certificate",
-}
+def _field_from_program_name(name: str) -> str | None:
+    if name.startswith("Doctor of Philosophy in "):
+        return name[len("Doctor of Philosophy in ") :]
+    if name.startswith("Master of Arts in "):
+        return name[len("Master of Arts in ") :]
+    if name.startswith("Master of Science in "):
+        return name[len("Master of Science in ") :]
+    return None
 
 
-def _school_display(school: str) -> str:
-    """The school name as it reads mid-sentence (drop a leading 'The ')."""
-    return school[4:] if school.startswith("The ") else school
+def _field_from_spec(spec: dict) -> str:
+    name = spec.get("program_name", "")
+    extracted = _field_from_program_name(name)
+    if extracted:
+        return extracted
+    return name
 
 
-# Department labels that are really the school itself or a program family, not a single
-# academic department — for these the description omits the "in the … department" clause.
-_NON_DEPARTMENTS = {
-    "Rice Business",
-    "Engineering and Computing",
-    "Engineering and Natural Sciences",
-    "Professional Science Master's",
-    "Continuing Studies",
-}
-
-
-def _grad_description(name: str, dtype: str, school: str, dept: str, fmt: str) -> str:
-    role = _DEGREE_ROLE.get(dtype, "a graduate program")
-    dept_phrase = ""
-    if dept and dept not in _NON_DEPARTMENTS and dept != school:
-        dept_phrase = f", in the {dept} department"
-    delivery = _DELIVERY_PHRASE.get(fmt, "")
-    return (
-        f"{name} is {role} offered through Rice University's "
-        f"{_school_display(school)}{dept_phrase}.{delivery}"
-    )
+def _rice_description(spec: dict) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    field = _field_from_spec(spec)
+    clause = FIELD_DESCRIPTIONS.get(field)
+    if not clause:
+        raise ValueError(
+            f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({spec.get('slug')})"
+        )
+    fmt = spec.get("delivery_format", "in_person")
+    delivery = ""
+    if fmt == "online":
+        delivery = " Delivered online."
+    elif fmt == "hybrid":
+        delivery = " Delivered in a hybrid format."
+    return f"{clause}{delivery}"
 
 
 def _build_catalog() -> list[dict]:
@@ -1046,7 +1054,7 @@ def _build_catalog() -> list[dict]:
 
     for school, majors in _UG_BY_SCHOOL.items():
         for name, codes in majors:
-            _add({
+            spec = {
                 "slug": f"rice-{_slugify(name)}-ug",
                 "school": school,
                 "program_name": name,
@@ -1054,14 +1062,12 @@ def _build_catalog() -> list[dict]:
                 "department": name,
                 "duration_months": 48,
                 "delivery_format": "in_person",
-                "description": (
-                    f"{name} is an undergraduate {codes} major in Rice University's "
-                    f"{_school_display(school)}."
-                ),
-            })
+            }
+            spec["description"] = _rice_description(spec)
+            _add(spec)
     suffix = {"phd": "phd", "professional": "prof", "certificate": "cert", "masters": "ms"}
     for name, dtype, school, dept, dur, fmt, website, tuition, tkind in _GRAD_EXPLICIT:
-        _add({
+        spec = {
             "slug": f"rice-{_slugify(name)}-{suffix.get(dtype, 'ms')}",
             "school": school,
             "program_name": name,
@@ -1072,8 +1078,9 @@ def _build_catalog() -> list[dict]:
             "website": website,
             "tuition": tuition,
             "tuition_kind": tkind,
-            "description": _grad_description(name, dtype, school, dept, fmt),
-        })
+        }
+        spec["description"] = _rice_description(spec)
+        _add(spec)
     return out
 
 
@@ -1083,6 +1090,28 @@ PROGRAMS: list[dict] = _build_catalog()
 for _p in PROGRAMS:
     if _p["delivery_format"] == "on_campus":
         _p["delivery_format"] = "in_person"
+    _p["description"] = _rice_description(_p)
+
+_catalog_errors = validate_catalog(PROGRAMS)
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
+if _catalog_errors:
+    raise RuntimeError(f"Rice catalog quality gate failed: {_catalog_errors}")
+
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 _WEBSITE_BY_SLUG: dict[str, str] = {p["slug"]: p["website"] for p in PROGRAMS if p.get("website")}
