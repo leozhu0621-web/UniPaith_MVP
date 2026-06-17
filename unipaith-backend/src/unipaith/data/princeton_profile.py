@@ -63,7 +63,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Princeton University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-17"
 
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is (an undergraduate|a graduate|a doctoral|a graduate certificate|"
@@ -995,8 +995,10 @@ def _field_from_program_name(program_name: str) -> str | None:
     return None
 
 
-def _needs_normalize(desc: str) -> bool:
+def _needs_normalize(desc: str, program_name: str = "") -> bool:
     if not desc:
+        return True
+    if program_name and desc.startswith(program_name):
         return True
     if _CLASSIFICATION_STUB_RE.match(desc):
         return True
@@ -1052,12 +1054,13 @@ def _princeton_description(spec: dict, field: str | None = None) -> str:
         raise ValueError(
             f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
         )
-    return f"{spec['program_name']}: {clause}{delivery}"
+    # Open on the field fact — never restate program_name (already the page heading).
+    return f"{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     """Stamp a field-specific description on stub program nodes."""
-    if not _needs_normalize(spec.get("description") or ""):
+    if not _needs_normalize(spec.get("description") or "", spec.get("program_name", "")):
         return
     spec["description"] = _princeton_description(spec, field=field_name)
 
@@ -1114,6 +1117,15 @@ _classification_stubs = sum(
 if _classification_stubs:
     _catalog_errors.append(
         f"classification-only descriptions on {_classification_stubs} programs"
+    )
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
     )
 _prefix_names = sum(1 for p in PROGRAMS if _PREFIX_NAME_RE.match(p.get("program_name", "")))
 if _prefix_names:
