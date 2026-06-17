@@ -6,6 +6,82 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-17 — Run 32 (ONE new mechanism → ONE rule added: a PREFIX-STRIP manufactures the run-30 identical-across-levels class. Graded **#671 Northwestern** — the one enrichment that merged since the last data-examining grade, which run 31 MISSED because run 31's grader PR #672 merged as a child of #671 but graded off a pre-#671 main snapshot. #671 fixed name-prefix 97%→0% but left the fabricated reviews (the CRITICAL reason), missed 2 Berkeley-contaminated rows, and ITS prefix-strip produced 83% identical-across-levels descriptions)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search?query=&limit=100` paginated by
+`page` → total 28, no sprawl; gold MIT n=65 control). Focused grade on the one changed catalog
+(**Northwestern**, full 308-program pagination + per-program `/programs/{id}` review reads); student's-eye
+open-ended pass on 2 randoms (Rice, Georgia Tech); fleet institution-level sanity (`ranking_data.ownership_type`,
+`campus_photos` length, `/institutions/{id}/posts`).
+
+**What merged since the last data-examining grade (run 30):** exactly **#671 Northwestern** (`b6fd5b3`,
+northwesternprof5 — "drop name-prefixed descriptions and fix peer contamination"). Run 31's grader PR #672
+(`bcc74f0`, now `origin/main` HEAD) is topologically a CHILD of #671 but its grade was computed off a main
+snapshot taken BEFORE #671 merged, so run 31 reported "nothing merged" and did not examine it. This run does.
+The other 27 catalogs are byte-identical to run 30 (re-verified live, not assumed).
+
+**#671 Northwestern — graded live (API evidence):**
+- ✅ **name-prefix-doubling 97%→0%** (genuine fix; `description_text.startswith(program_name)` now 0/308).
+- ❌ **Fabricated-by-synthesis REVIEWS UNTOUCHED — the CRITICAL reason, live since #619.** BA-in-Architecture
+  review still embeds the CIP rollup "Architecture and Related Services, Other within Weinberg" + a U.S. News
+  *institution*-ranking source; BA-in-Business cites "Business/Commerce, General" + a Kellogg MBA ranking
+  (mismatched level on an undergrad row); Chemical/Civil/Computer Engineering share a copy-paste
+  "quantitatively rigorous engineering degree…NICO interdisciplinary ties" summary (the Duke-Pratt tell).
+- ❌ **Cross-institution COPY still live (run-25 class) — #671's "fixed 11 peer-sig clauses" missed 2 siblings.**
+  Operations Research Grad Cert + MS both read "…in the IEOR department serving engineering, Haas, and CDSS
+  students" — Haas + CDSS + IEOR are BERKELEY units, not Northwestern's (a non-repair, miss #9: clear the whole
+  class). (My initial scan also flagged "McCormick" ×16 and "Writing Seminars" — both FALSE positives:
+  McCormick is NU's own engineering school; "first-year writing seminars" is a generic common-noun phrase, not
+  JHU's program. Diagnosed, not acted on.)
+- ❌ **NEW MECHANISM — the prefix-strip MANUFACTURED 83% identical-across-levels descriptions (run-30 class).**
+  256/308 rows (83%) share `description_text` verbatim with ≥1 sibling (gold MIT 0%). Proof: the Grad Cert + MS
+  in Computer Science carry identical bodies (the MS body even reads "undergraduate research in robotics labs" —
+  a credential-level lie copied onto a master's row). Root cause: on this field-level-generated catalog the
+  leading `"{program_name}: "` was the ONLY per-row differentiator, so deleting it collapsed each field's
+  certificate/BS/MS/PhD bodies to IDENTICAL — trading prefix-doubling for the run-30 class with no per-program
+  research added.
+
+**Student's-eye pass (Rice + Georgia Tech) — no new class.** Rice: clean field-specific descriptions + real
+departments, deep content/reviews pending (documented). GaTech: #646 classification stubs + field-as-department
+(documented). Caught + dismissed two field-path false alarms in my own script — institution `description` is
+`description_text` (populated) and ownership is `ranking_data.ownership_type` ("private"/"public", populated
+fleet-wide), not the top-level `description`/`ownership` I first read. Fleet institution-level otherwise clean
+(28 = 5 campus photos + ownership_type + a live feed; Northwestern `posts=53`); **NYU remains the ONLY dead feed
+(`posts=0`)**.
+
+**Diagnosis:** #671's name-prefix fix is real and complete. The fabricated reviews (BAD DATA, CRITICAL) and the
+Berkeley copy (BAD DATA, miss #9 non-repair) are repair-backlog items — the grader cannot fix data. The 83%
+identical-across-levels is the run-30 CLASS, but arriving via a NEW, more common MECHANISM (a prefix-strip, the
+enricher's dominant pass) → one RULEBOOK tightening (names the mechanism + the procedural re-check; the OUTCOME
+was already a FAIL, so this is not duplication).
+
+**Rulebook change (1 of ≤3; ADDS to / TIGHTENS no-fabrication + verify-rendered-output, loosens nothing):**
+- **miss #8 (new sub-bullet under the run-30 identical-across-levels bullet):** a PREFIX-STRIP pass is a common
+  SOURCE of the identical-across-levels class, not a safe isolated fix — when one field's rows differed ONLY by
+  a leading `"{program_name}: "`/`"{program_name} is "` prefix, deleting it collapses their bodies to identical
+  across credential levels. After ANY prefix-strip, RE-COUNT `description_text` shared verbatim across ≥2 rows
+  and FAIL on any sharing (gold MIT 0%); a clean prefix-strip must leave each credential-level row its OWN
+  distinct researched body. Evidence: live API this run — Northwestern #671's prefix-strip took 97%→0% while
+  SIMULTANEOUSLY producing 83% identical-across-levels.
+
+**Backlog delta:** header rewritten to run 32 (the #671 grade + the run-31-missed-it topology). Northwestern's
+CRITICAL section rewritten — prefix marked ✅ done, the three remaining defects (fabricated reviews + Berkeley
+copy + 83% identical-across-levels) enumerated with live evidence; persistence on the reviews defect now 9→32.
+Added an enricher note ("a prefix-strip manufactures the identical-across-levels class — re-count after it").
+No other entry changed (only #671 merged); all six prior CRITICAL breaches re-confirmed live and carried.
+
+**Health check:** the enricher health-check pytest (`test_profile_standard` + `test_profile_enrichment`) could
+not run in this ephemeral grader container (no backend venv / Postgres) — same constraint noted runs 1–31.
+Changes are markdown-only (no Python, no migrations, no app/data code touched — SCOPE FENCE held: only the three
+routine files edited).
+
+**Invariants:** all intact; the single edit tightens (re-count shared descriptions after a prefix-strip), none
+weaken. No finding argued for loosening an invariant. The standing concern — enricher BEHAVIOR (single-dimension
+passes; the CRITICAL fabricated-data top unrepaired 8–23 intervals) — remains flagged for human review, not a
+rulebook gap.
+
+---
+
 ## 2026-06-17 — Run 31 (NO new gaps found — the enricher shipped NOTHING in scope since run 30: `origin/main` HEAD is the run-30 grader PR #670, so the whole fleet is byte-identical to run 30. Pure re-verification via direct API reads (not trusting the prior grade): all SIX CRITICAL breaches persist live, fleet institution-level clean except NYU's dead feed, no new problem class possible from an enricher that did not run. Changed NO rules per anti-churn / no-edit-without-evidence; refreshed backlog dates + persistence counts only)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28, no
