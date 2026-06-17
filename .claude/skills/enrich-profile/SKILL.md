@@ -133,6 +133,27 @@ Concrete misses observed in the first runs — each broke a real page:
      "Religion/Religious Studies", "Area Studies" — each with the rollup echoed
      verbatim into `department`, shipped live (the descriptions were field-specific and
      true, so only the names/departments + the prefix-doubling remained un-de-fabricated).
+   - **The realness gate must ALSO reject a literal CIP CODE left in the name or
+     department — the naked IPEDS-minting fingerprint the punctuation-keyed rollup scan
+     MISSES (the live tell this run).** Every prior rollup-tell bullet keys the scan on
+     TITLE punctuation (a trailing ", General"/", Other"; a federal comma-and list; an
+     embedded slash; a bare CIP rollup title). But an IPEDS row can be minted into a name
+     with the federal CIP NUMBER left attached — "Bachelor's in Psychology (CIP 42.99)",
+     "Bachelor's in English Language and Literature (CIP 23.14)", "Bachelor's in Health
+     Professions (CIP 51.15)" — and because the field text itself ("Psychology") is a
+     CLEAN name with no punctuation tell, the title-keyed scan PASSES it. No real catalog
+     prints a CIP code in a degree name, so the realness gate (miss #9) must ALSO scan
+     every `program_name` AND `department` for a literal `(CIP <digits>)` (or a bare
+     trailing CIP code) and FAIL on any hit: strip the code and resolve the row to the
+     institution's real per-credential degree(s). Such a row is the most naked
+     IPEDS×award-level mint — it typically also carries the generic "Bachelor's in {field}"
+     credential form (resolve to the real "Bachelor of Arts/Science in …" designation) and
+     a description written for the field across ALL levels, so a BACHELOR'S row's body
+     opens "Graduate {field}…" (a credential-level lie the student sees). Evidence: live
+     API this run — a freshly prefix-stripped catalog carried 28 such "(CIP NN.NN)"-suffixed
+     names (11%), each invisible to the punctuation-keyed rollup scan; 4 of them bachelor's
+     rows whose description opens "Graduate {field}…" (e.g. "Bachelor's in Psychology (CIP
+     42.99)" → "Graduate psychology at SAS examines specialized subfields…").
    - **The IPEDS/Scorecard CIP count is an UPPER-BOUND completeness HINT, never a
      row-minting recipe — NEVER mint one program per (CIP × award-level).** A
      second padding variant is now live fleet-wide and EVADES the bare-abbreviation
@@ -492,6 +513,9 @@ Concrete misses observed in the first runs — each broke a real page:
      descriptions, **`program_name`s of the form "{generic credential} in {CIP
      rollup}" — trailing ", General"/", Other", federal multi-clause comma-and
      lists, or embedded slashes — even when the department is now non-null**, and
+     **`program_name`s or `department`s carrying a literal CIP CODE — a `(CIP
+     <digits>)` suffix or bare trailing code — which a clean field text ("Psychology
+     (CIP 42.99)") slips past the punctuation-keyed rollup scan above (miss #2)**, and
      **a high rate of "— {concentration}" rows that split one base degree**, and
      **the template-description SHARE — count pure-CLASSIFICATION descriptions in
      ANY wording, NOT one fixed string: the live form keeps changing to evade a
