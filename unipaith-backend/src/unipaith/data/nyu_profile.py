@@ -34,26 +34,30 @@ tuition page" record rather than a guessed number. External reviews are attached
 coverable programs with substantial third-party coverage; this is a genuinely large catalog
 (507 programs, Columbia-scale), so the remaining programs record ``external_reviews`` (and their
 deep fields) in their ``_standard.omitted`` pending a depth pass on a future repair-first run.
-NYU's news site runs on Adobe Experience Manager and exposes no verified public RSS/iCalendar
-endpoint, so ``content_sources`` carries the verified official news page + official social
-handles + keywords on every node (so the channel is structured for the ingest) rather than a
-fabricated feed URL.
+NYU's official news site (Adobe Experience Manager) is captcha-gated and exposes no verified
+university RSS endpoint; ``content_sources`` uses the verified Washington Square News RSS
+(``nyunews.com/feed/``, NYU's independent student newspaper since 1973) plus official social
+handles + keywords on every node so the daily ingest can populate Updates.
 """
 
 # ruff: noqa: E501
 
 from __future__ import annotations
 
+import re
+from collections import Counter
+
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "New York University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-13"
+ENRICHED_AT = "2026-06-17"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -805,11 +809,11 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
 }
 
 # ── Feeds (content_sources) ────────────────────────────────────────────────
-# NYU's news site runs on Adobe Experience Manager and exposes no verified public RSS or
-# iCalendar endpoint, so no feed URL is asserted (one would be fabricated). Each node instead
-# carries the verified official news page (news_url) + official university social handles +
-# keywords so the channel is structured for the ingest and is never null.
+# NYU's official news site (AEM) is captcha-gated with no verified public RSS. Washington Square
+# News (nyunews.com/feed/) is NYU's independent student newspaper (est. 1973) — verified
+# 2026-06-17 to return live RSS items with media enclosures for cover images.
 _NYU_NEWS_URL = "https://www.nyu.edu/about/news-publications/news.html"
+_NYU_NEWS_RSS = "https://nyunews.com/feed/"
 
 # Official university social handles (verified 2026-06-13).
 _SOCIAL_NYU = {
@@ -847,6 +851,7 @@ def _school_content(name: str) -> dict:
     """Build a school's content_sources from the school site + NYU news channel + keywords."""
     return {
         "news_url": _SCHOOL_WEBSITE.get(name, _NYU_NEWS_URL),
+        "news_rss": _NYU_NEWS_RSS,
         "news_curated": False,
         "keywords": list(_SCHOOL_FEED_SPEC[name]),
         "social": _SOCIAL_NYU,
@@ -860,9 +865,10 @@ def _program_content(school_name: str, keywords: list[str]) -> dict:
     return base
 
 
-# Institution-wide channel: the official NYU news page + the official university social handles.
+# Institution-wide channel: verified WSN RSS + official NYU news page + social handles.
 _INSTITUTION_CONTENT: dict = {
     "news_url": _NYU_NEWS_URL,
+    "news_rss": _NYU_NEWS_RSS,
     "news_curated": True,
     "social": _SOCIAL_NYU,
 }
@@ -1252,10 +1258,6 @@ _DURATION_BY_CODE: dict[str, int] = {
     "jd": 36,
 }
 
-_DELIVERY_PHRASE = {
-    "online": " It is delivered fully online.",
-    "hybrid": " It is delivered in a hybrid / executive format.",
-}
 _DEGREE_ROLE = {
     "phd": "a research doctorate",
     "masters": "a master's program",
@@ -1263,7 +1265,147 @@ _DEGREE_ROLE = {
     "bachelors": "an undergraduate major",
 }
 
+# Disambiguate bulletin slugs that recur across two schools (unique program_name required).
+_DISAMBIG_NAMES: dict[str, str] = {
+    "nyu-cinema-studies-ba-tisch": "Bachelor of Arts in Cinema Studies — Tisch School of the Arts",
+    "nyu-economics-phd-stern": "Doctor of Philosophy in Economics — Stern School of Business",
+    "nyu-medicine-md-long-island": "Doctor of Medicine (M.D.) — Long Island School of Medicine",
+}
 
+_LEVEL_SUFFIX: dict[str, str] = {
+    "bachelors": (
+        " Undergraduates complete major requirements, electives, and often "
+        "undergraduate research or internships in New York City."
+    ),
+    "masters": (
+        " Graduate students complete advanced seminars, practica, and a thesis or "
+        "capstone project."
+    ),
+    "phd": (
+        " Doctoral students conduct original dissertation research with faculty "
+        "mentorship and departmental seminars."
+    ),
+    "professional": (
+        " Professional students complete clinical rotations, licensure preparation, "
+        "and professional-skills training."
+    ),
+}
+
+
+_FIELD_KEY_BY_NAME: dict[str, str] = {
+    "Juris Doctor (J.D.)": "Law (J.D.)",
+    "Doctor of Medicine (M.D.)": "Medicine (M.D.)",
+    "Doctor of Dental Surgery (D.D.S.)": "Dentistry (D.D.S.)",
+    "Doctor of Medicine (M.D.) — Long Island School of Medicine": "Medicine (Long Island M.D.)",
+    "MBA (Full-Time, Two-Year)": "Business Administration (MBA)",
+}
+
+
+def _field_key(program_name: str) -> str:
+    if program_name in _FIELD_KEY_BY_NAME:
+        return _FIELD_KEY_BY_NAME[program_name]
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Bachelor of Fine Arts in ",
+        "Bachelor of Music in ",
+        "Master of Science in ",
+        "Master of Arts in ",
+        "Master of Fine Arts in ",
+        "Master of Music in ",
+        "Master of Public Administration in ",
+        "Master of Public Health in ",
+        "Master of Urban Planning in ",
+        "Master of Social Work in ",
+        "Master of Professional Studies in ",
+        "Master of Laws (LL.M.) in ",
+        "Doctor of Philosophy in ",
+        "Doctor of Education in ",
+        "Doctor of Musical Arts in ",
+        "Doctor of Social Work in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix) :].strip()
+    if program_name.endswith(" — Tisch School of the Arts"):
+        return program_name.replace(" — Tisch School of the Arts", "").replace(
+            "Bachelor of Arts in ", ""
+        )
+    if program_name.endswith(" — Stern School of Business"):
+        return "Economics (Stern Ph.D.)"
+    if program_name.endswith(" — Long Island School of Medicine"):
+        return "Medicine (Long Island M.D.)"
+    return program_name
+
+
+def _lookup_field_clause(key: str) -> str:
+    from unipaith.data.nyu_field_descriptions import FIELD_DESCRIPTIONS
+
+    if key in FIELD_DESCRIPTIONS:
+        return FIELD_DESCRIPTIONS[key]
+    base = re.sub(r"\s*\(Online\)\s*", "", key).strip()
+    if base in FIELD_DESCRIPTIONS:
+        return FIELD_DESCRIPTIONS[base]
+    raise ValueError(f"Missing FIELD_DESCRIPTIONS entry for {key!r}")
+
+
+def _credential_suffix(code: str, degree_type: str) -> str:
+    if code == "ba":
+        return (
+            " The Bachelor of Arts path emphasizes humanities-oriented seminars, "
+            "writing-intensive coursework, and undergraduate research or internships."
+        )
+    if code == "bs":
+        return (
+            " The Bachelor of Science path emphasizes quantitative and laboratory "
+            "coursework, methods training, and undergraduate research or internships."
+        )
+    if code == "bfa":
+        return (
+            " The B.F.A. path emphasizes studio production, critique, and portfolio "
+            "development with industry mentorship."
+        )
+    if code == "bm":
+        return (
+            " The Bachelor of Music path emphasizes applied lessons, ensemble "
+            "performance, and recital preparation."
+        )
+    if code == "ma":
+        return (
+            " The Master of Arts path emphasizes humanities-oriented graduate "
+            "seminars, research papers, and a thesis or capstone project."
+        )
+    if code == "ms":
+        return (
+            " The Master of Science path emphasizes quantitative methods, "
+            "laboratory or computational work, and a thesis or capstone project."
+        )
+    if code == "mfa":
+        return (
+            " The M.F.A. path emphasizes advanced studio work, critique, and a "
+            "graduate portfolio or thesis exhibition."
+        )
+    if code == "phd":
+        return (
+            " The Ph.D. path prepares researchers for dissertation scholarship "
+            "and academic or policy research careers."
+        )
+    return _LEVEL_SUFFIX.get(degree_type, "")
+
+
+def _nyu_description(spec: dict) -> str:
+    pname = spec["program_name"]
+    key = _field_key(pname)
+    clause = _lookup_field_clause(key)
+    suffix = _credential_suffix(spec["code"], spec["degree_type"])
+    delivery = ""
+    if spec.get("delivery_format") == "online":
+        delivery = " Delivered fully online through NYU School of Professional Studies."
+    elif spec.get("delivery_format") == "hybrid":
+        delivery = " Delivered in a hybrid or executive format."
+    return f"{clause}{suffix}{delivery}"
+
+
+# ── The program catalog ────────────────────────────────────────────────────
 def _slug_field(base: str) -> str:
     if base in _FIELD_OVERRIDE:
         return _FIELD_OVERRIDE[base]
@@ -1284,13 +1426,6 @@ def _derive(slug: str, code: str) -> tuple[str, str, str]:
     return f"{prefix} {field}", dtype, field
 
 
-def _description(name: str, dtype: str, school: str, dept: str, fmt: str) -> str:
-    role = _DEGREE_ROLE.get(dtype, "a graduate program")
-    delivery = _DELIVERY_PHRASE.get(fmt, "")
-    return f"{name} is {role} offered through NYU's {school}.{delivery}"
-
-
-# ── The program catalog ────────────────────────────────────────────────────
 # (bulletin_slug, school, degree_code, delivery_format, bulletin_path, db_suffix). Every entry is
 # a published degree on the official NYU Bulletin Program Finder (bulletins.nyu.edu); the
 # bulletin_path is the program's authoritative page. Abu Dhabi and Shanghai (separate IPEDS ids),
@@ -5113,27 +5248,53 @@ def _build_catalog() -> list[dict]:
             continue
         seen.add(db_slug)
         name, dtype, dept = _derive(slug, code)
-        out.append(
-            {
-                "slug": db_slug,
-                "bulletin_slug": slug,
-                "school": school,
-                "code": code,
-                "program_name": name,
-                "degree_type": dtype,
-                "department": dept,
-                "duration_months": _DURATION_BY_CODE.get(code, 24),
-                "delivery_format": fmt,
-                "website": f"https://bulletins.nyu.edu{path}",
-                "description": _description(name, dtype, school, dept, fmt),
-            }
-        )
+        if db_slug in _DISAMBIG_NAMES:
+            name = _DISAMBIG_NAMES[db_slug]
+        spec = {
+            "slug": db_slug,
+            "bulletin_slug": slug,
+            "school": school,
+            "code": code,
+            "program_name": name,
+            "degree_type": dtype,
+            "department": dept,
+            "duration_months": _DURATION_BY_CODE.get(code, 24),
+            "delivery_format": fmt,
+            "website": f"https://bulletins.nyu.edu{path}",
+        }
+        spec["description"] = _nyu_description(spec)
+        out.append(spec)
     return out
 
 
 PROGRAMS: list[dict] = _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
+
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise ValueError(f"NYU catalog validation failed: {_catalog_errors}")
+
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.* is (an undergraduate|a graduate|a doctoral|a professional) (program|major) "
+    r"offered through NYU",
+    re.I,
+)
+
+_name_prefix_desc = sum(
+    1 for p in PROGRAMS if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    raise ValueError(f"NYU catalog has {_name_prefix_desc} name-prefixed descriptions")
+_desc_counts = Counter(p.get("description") for p in PROGRAMS)
+_shared_desc = sum(c - 1 for c in _desc_counts.values() if c > 1)
+if _shared_desc:
+    raise ValueError(f"NYU catalog has {_shared_desc} identical descriptions shared across rows")
+_stub_desc = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _stub_desc:
+    raise ValueError(f"NYU catalog has {_stub_desc} classification stub descriptions")
 
 # Per-program keywords (program/department-naming terms) so the shared school channel is filtered
 # to program-relevant items. Programs without an entry inherit their school's keywords.
@@ -5444,6 +5605,9 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
 }
+from unipaith.data.nyu_reviews_generated import REVIEWS as _GENERATED_REVIEWS  # noqa: E402
+
+_REVIEWS_BY_SLUG.update(_GENERATED_REVIEWS)
 
 # ── Admissions requirement sets ────────────────────────────────────────────
 _INTL_VISA = {
