@@ -6,6 +6,122 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-17 — Run 16 (Princeton's re-deploy LANDED — but it is NOT clean: run 15 over-graded the #641 SOURCE as "ZERO rollup names / ZERO prefix-doubling", and the now-LIVE catalog carries 8 CIP-rollup names echoed into `department` + 31% prefix-doubling. NEW class: a realness GATE keyed on the generic-credential-PREFIX form passes "Bachelor of Arts in {CIP rollup}" rows. Added 1 rulebook sub-bullet; moved Princeton back into HIGH)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28,
+no sprawl). Recently-changed focus on the ONE catalog whose live state changed since run 15 —
+**Princeton**, whose #641 re-deploy LANDED this interval (run 15 could only read its source because
+the first Deploy Backend had failed on the stale breadth gate). Full Princeton pagination
+(`page_size=50`, n=41), rollup-tell + prefix-doubling metrics on every row, and per-program
+`description_text` reads. Re-confirmed the carried CRITICAL breaches live: Northwestern + Duke
+fabricated reviews (`/programs/{id}.external_reviews`), Stanford Sibley-School + FSI named-unit
+fabrications (whole-catalog `description_text` scan, n=188), and the fleet `/institutions/{id}/posts`
+feed sweep (NYU still dead).
+
+**What merged since run 15:** NO new profile-enrichment PR — the run-15 grader PR #642 is
+`origin/main` HEAD. The only live-state change is Princeton #641's re-deploy succeeding (its data +
+migration, merged before run 15, reached production this interval after `1057be7` fixed the gate).
+So the other 27 catalogs are byte-identical to run 15.
+
+**Findings (live API evidence):**
+
+1. **Princeton re-deploy LANDED — run 15's pending item resolved.** The catalog is now LIVE at 41
+   rows (was the 114-row padded state run 15 graded). Feed healthy (`posts=199`). The de-fabrication
+   migration applied; the count gate fix (`1057be7`) let it deploy.
+2. **BUT PRINCETON IS NOT CLEAN — run 15 over-graded the #641 SOURCE.** Run 15 (reading the data
+   module, not live, because the deploy had failed) called it "ZERO rollup names, ZERO CIP-prefix
+   names, ZERO prefix-doubling" — the first genuinely clean non-MIT catalog. The now-LIVE catalog
+   contradicts that: **8 of 41 rows are CIP-rollup NAMES echoed verbatim into `department`** —
+   "Bachelor of Arts in Area Studies" (dept "Area Studies"), "…in Religion/Religious Studies",
+   "…in Multi/Interdisciplinary Studies, Other", "…in Ethnic, Cultural Minority, Gender, and Group
+   Studies", and three "…Languages, Literatures, and Linguistics" (Classics/Germanic/Romance/Slavic)
+   — federal CIP titles, not Princeton's real degree names; and **31% (13/41) prefix-doubling**
+   (gold MIT 2%). The DESCRIPTIONS themselves are genuinely field-specific and TRUE (real Princeton
+   units — Center for the Study of Religion, Program in Russian/East European/Eurasian Studies, ORFE,
+   SEAS), so the description dimension is real work; the NAMES/departments + prefix were not
+   de-fabricated. Princeton is a HIGH catalog (cleaner tier), not clean.
+3. **NEW PROBLEM CLASS — a realness GATE keyed on the generic-credential-PREFIX form PASSES a real
+   designation glued to a CIP-rollup FIELD.** Run 15's own new rule told the enricher to replace a
+   count gate with a per-row realness gate; the enricher did, in `1057be7` ("assert no CIP-prefix
+   names / no classification stubs"). That gate checks the generic "Bachelor's in {rollup}" PREFIX
+   form — and so passed the 8 "Bachelor of **Arts** in {CIP rollup}" rows (real designation + rollup
+   field), which shipped live. The rollup-tell scan must run on the FIELD portion of the name (and
+   `department`) CREDENTIAL-FORM-AGNOSTICALLY: "Bachelor of Arts in {rollup}" is exactly as
+   fabricated as "Bachelor's in {rollup}". NOT covered by any prior rule — miss #2's rollup bullets
+   and the miss #9 programmatic check all key on the **generic** credential prefix ("{generic
+   credential} in {CIP rollup}"); none say the scan must be credential-form-agnostic on the field.
+   This is a concrete live evasion of run-15's own realness-gate rule.
+4. **All CRITICAL breaches PERSIST (re-confirmed live).** Stanford's Sibley-School (Cornell's unit,
+   2 aerospace rows) + Freeman-Spogli-on-unrelated-fields (systems-engineering + a marketing master's)
+   fabrications STILL LIVE (5 hits; the FSI political-science control is correct). Northwestern's
+   "Architecture and Related Services, Other" CIP-rollup review STILL LIVE (now runs 9→16). Duke's 5
+   Pratt B.S.E. boilerplate reviews STILL LIVE (now runs 10→16).
+5. **Feeds healthy** — NYU still the ONLY dead feed (`posts=0`); BU 167, Princeton 199, Duke 353,
+   Stanford 234, MIT 188, Northwestern 53. 28 institutions, no sprawl.
+
+**False alarms caught (diagnosed, not acted on):**
+- **A naive rollup regex (` and `/`/`/`,`) flagged 21/41 Princeton names — mostly FALSE positives**
+  ("Astronomy and Astrophysics", "Art and Archaeology", "Ecology and Evolutionary Biology" are real
+  Princeton departments). Re-ran with the durable tell (trailing ", General"/", Other"; a federal
+  multi-clause comma-and list; an embedded slash; or a bare CIP rollup) and READ each flagged name →
+  8 genuine rollups, not 21. Ranked on the verified 8.
+- **The thin generic-gloss descriptions on the clean rows** ("Mathematics — analysis, algebra,
+  geometry and number theory") are borderline but field-mentioning and not stubs → backlog texture,
+  not a new class (the gold-contrast rule already governs them).
+- `?page_size=100` 422s (server cap 50) — paginated by 50. `description_text` is the real field.
+  Named-unit hits on Stanford confirmed by which institution owns each unit (Sibley = Cornell), with
+  the Stanford-real FSI political-science control passing.
+
+**Rulebook changes: 1 of ≤3 (ADDS/TIGHTENS the completeness + verify-output gate; loosens nothing):**
+- **miss #2 (new sub-bullet, after the run-15 breadth-gate bullet):** the realness gate that replaces
+  a count gate must scan the rollup tell on the FIELD portion of the name (and `department`)
+  CREDENTIAL-FORM-AGNOSTICALLY — a gate keyed only on the generic "Bachelor's in {rollup}" prefix
+  PASSES a real designation glued to a CIP-rollup field ("Bachelor of Arts in {rollup}"). Switching
+  to the institution's real credential designation does NOT exempt the field; the fix is unchanged
+  (resolve to the real degree + owning department). Evidence: live API this run — a freshly-deployed
+  de-fabrication's realness gate passed 8 of 41 "Bachelor of Arts in {CIP rollup}" rows, each with
+  the rollup echoed into `department`, shipped live. (The other 2 reserve changes were NOT used — the
+  Princeton prefix-doubling and thin descriptions are already named, miss #9/#8, and the
+  Stanford/NW/Duke breaches are already named, miss #8/#9, so adding rules would be churn.)
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(NEW this run, process)** run 15 declared Princeton "the FIRST genuinely clean de-fabrication" by
+  grading the #641 SOURCE (the deploy had failed, so it couldn't grade live), and MISSED 8 CIP-rollup
+  names + 31% prefix-doubling that were plainly in the source. A human may want to note the grader
+  should not certify a catalog "clean" off the source data module — only off the LIVE API after the
+  deploy lands. (The new rule covers the enricher's gate; this is the grader-side lesson.)
+- **(carried, urgent — now 8 / 7 intervals)** Northwestern (43+ synthesized reviews, runs 9→16) and
+  Duke (5 Pratt boilerplate reviews, runs 10→16) remain live and unrepaired; the CRITICAL backlog
+  top is not being cleared.
+- **(carried, urgent)** Stanford's Sibley-School + Freeman-Spogli fabricated units (run 13/14) remain
+  live; the grader does not edit data.
+- **(carried from runs 2–15, unreconciled)** miss #9 says "FAIL on null/blank `department`" but gold
+  MIT ships null department and `manifest.py` marks `department` `required=False`. Reconciling would
+  LOOSEN verify-output → left intact per the rails.
+- **(carried from runs 8–15, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a
+  stub tell — valid for the ENRICHER but not API-visible to the grader. Left intact.
+
+**Backlog delta:** Princeton MOVED BACK into HIGH (new row 15) — re-deploy landed but the catalog is
+NOT clean (8 rollup names + 31% prefix, despite true descriptions); the run-15 "CLEAN/pending-verify"
+note is replaced with a HIGH entry + the over-grade correction. NW/Duke persistence lines bumped to
+9→16 / 10→16. Added an enricher note: "THE REALNESS GATE MUST SCAN THE ROLLUP TELL ON THE FIELD,
+CREDENTIAL-FORM-AGNOSTICALLY." Ranking unchanged: CRITICAL = Boston University (structure) + Stanford
+(fabricated units) + Northwestern + Duke (fabricated reviews); HIGH = 15 catalogs worst-first
+(Princeton added as row 15); MEDIUM = the 8 shallow 22-program stubs (NYU = only dead feed); CLEAN =
+MIT only.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv /
+pytest / Postgres) — same constraint as runs 1–15. Changes are markdown-only (SKILL.md +1 sub-bullet
+in miss #2, backlog re-write, this changelog; NO Python, no migrations, no app code), so the enricher
+code/data state is unaffected and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; the single edit ADDS/TIGHTENS the completeness + verify-rendered-output
+gate (the realness gate must scan the rollup tell credential-form-agnostically), weakens nothing. The
+findings that could argue for loosening (null-department FAIL vs gold MIT; `_standard`-as-rendered-
+signal) remain logged for human review, not acted on.
+
+---
+
 ## 2026-06-16 — Run 15 (REAL PROGRESS — Princeton #641 is the FIRST genuinely clean structural de-fabrication, 114→41 real degrees, but its deploy FAILED on a stale `len(PROGRAMS) >= 100` breadth gate frozen to the padded count. NEW class: a count-target breadth GATE fights de-fabrication and blocks the deploy. Added 1 rulebook sub-bullet; moved Princeton out of HIGH)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28,
