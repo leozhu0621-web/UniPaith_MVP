@@ -60,7 +60,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Illinois Urbana-Champaign"
-ENRICHED_AT = "2026-06-13"
+ENRICHED_AT = "2026-06-17"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -563,6 +563,7 @@ def _about_omitted(m: dict) -> list[str]:
 
 
 # == Feeds (content_sources) ==
+_UIUC_NEWS_RSS = "https://news.illinois.edu/feed/"
 _NEWS_URL = "https://news.illinois.edu/"
 _SOCIAL = {
     "instagram": "https://www.instagram.com/illinois1867/",
@@ -571,12 +572,18 @@ _SOCIAL = {
     "youtube": "https://www.youtube.com/user/universityofillinois",
     "facebook": "https://www.facebook.com/IllinoisUniversity/",
 }
-_INSTITUTION_CONTENT: dict = {"news_url": _NEWS_URL, "news_curated": True, "social": _SOCIAL}
+_INSTITUTION_CONTENT: dict = {
+    "news_rss": _UIUC_NEWS_RSS,
+    "news_url": _NEWS_URL,
+    "news_curated": True,
+    "social": _SOCIAL,
+}
 _KEYWORDS_BY_SCHOOL = {m["name"]: m["keywords"] for m in _SCHOOL_META}
 
 
 def _school_content(name: str) -> dict:
     return {
+        "news_rss": _UIUC_NEWS_RSS,
         "news_url": SCHOOL_WEBSITE.get(name, _NEWS_URL),
         "news_curated": False,
         "keywords": list(_KEYWORDS_BY_SCHOOL[name]),
@@ -887,7 +894,7 @@ _CATALOG: list[tuple] = [
         "on_campus",
         48,
     ),
-    ("uiuc-BS", "AHS", "Kinesiology", "bachelors", "Kinesiology", "on_campus", 48),
+    ("uiuc-kinesiology-bs", "AHS", "Kinesiology", "bachelors", "Kinesiology", "on_campus", 48),
     (
         "uiuc-public-health-bs",
         "AHS",
@@ -2257,7 +2264,7 @@ _CATALOG: list[tuple] = [
     ),
     ("uiuc-biochemistry-bs", "LAS", "Biochemistry", "bachelors", "Biochemistry", "on_campus", 48),
     (
-        "uiuc-index.html",
+        "uiuc-chemical-engineering-data-science-bs",
         "LAS",
         "Chemical Engineering + Data Science",
         "bachelors",
@@ -2836,7 +2843,7 @@ _CATALOG: list[tuple] = [
     (
         "uiuc-teaching-english-second-language-ma",
         "LAS",
-        "Linguistics",
+        "Teaching English as a Second Language",
         "masters",
         "Linguistics",
         "on_campus",
@@ -2905,7 +2912,7 @@ _CATALOG: list[tuple] = [
     (
         "uiuc-psychological-science-ms",
         "LAS",
-        "Psychology",
+        "Psychological Science",
         "masters",
         "Psychology",
         "on_campus",
@@ -3237,42 +3244,220 @@ _CATALOG: list[tuple] = [
     ),
 ]
 
-_DEGREE_ROLE = {
-    "phd": "a doctoral program",
-    "masters": "a master's program",
-    "professional": "a professional degree program",
-    "bachelors": "an undergraduate major",
-    "diploma": "a diploma program",
+# Slugs whose program_name is a fixed string (not derived from field + suffix).
+_SPECIAL_NAMES: dict[str, str] = {
+    "uiuc-computer-science-online-mcs": "Master of Computer Science (Online)",
+    "uiuc-business-administration-online-mba": "Master of Business Administration (iMBA, Online)",
+    "uiuc-accountancy-imsa-ms": "Master of Science in Accountancy (iMSA, Online)",
+    "uiuc-management-imsm-ms": "Master of Science in Management (iMSM, Online)",
+    "uiuc-law-jd": "Juris Doctor",
+    "uiuc-medicine-md": "Doctor of Medicine",
+    "uiuc-veterinary-medicine-dvm": "Doctor of Veterinary Medicine",
+    "uiuc-engineering-technology-management-agricultural-systems": (
+        "Doctor of Philosophy in Engineering Technology & Management for Agricultural Systems"
+    ),
+    "uiuc-foundation": "Bachelor of Fine Arts in Art & Design (Foundation)",
+    "uiuc-artist-diploma-music": "Artist Diploma in Music",
+    "uiuc-comparative-literature": "Bachelor of Arts in Comparative Literature",
+    "uiuc-individual-plans-study": "Bachelor of Arts in Individual Plans of Study",
+    "uiuc-honors": "Bachelor of Science in Integrative Biology Honors",
+    "uiuc-leadership-social-change": "Master of Education in Leadership & Social Change",
+    "uiuc-animal-sciences-mansc": "Master of Animal Sciences",
 }
+
+# Longest suffix first — "fixed:" = complete name; "prefix:" = credential + field.
+_SUFFIX_MAP: list[tuple[str, str]] = [
+    ("-imsa-ms", "fixed:Master of Science in Accountancy (iMSA, Online)"),
+    ("-imsm-ms", "fixed:Master of Science in Management (iMSM, Online)"),
+    ("-online-mcs", "fixed:Master of Computer Science (Online)"),
+    ("-online-mba", "fixed:Master of Business Administration (iMBA, Online)"),
+    ("-bslas", "prefix:Bachelor of Science in Liberal Arts and Sciences —"),
+    ("-bsag", "prefix:Bachelor of Science in Agricultural Sciences —"),
+    ("-balas", "prefix:Bachelor of Arts in"),
+    ("-bfasa", "prefix:Bachelor of Fine Arts in"),
+    ("-basa", "prefix:Bachelor of Arts in"),
+    ("-bmus", "prefix:Bachelor of Music in"),
+    ("-bme", "prefix:Bachelor of Music Education in"),
+    ("-bla", "prefix:Bachelor of Landscape Architecture in"),
+    ("-bma", "prefix:Bachelor of Music in"),
+    ("-mansc", "prefix:Master of Science in"),
+    ("-maae", "fixed:Master of Agricultural and Applied Economics"),
+    ("-mhrir", "prefix:Master of Human Resources and Industrial Relations in"),
+    ("-march", "prefix:Master of Architecture in"),
+    ("-mdes", "prefix:Master of Design in"),
+    ("-mla", "prefix:Master of Landscape Architecture in"),
+    ("-mme", "prefix:Master of Music Education in"),
+    ("-msud", "prefix:Master of Science in Urban Design in"),
+    ("-mup", "prefix:Master of Urban Planning in"),
+    ("-mph", "prefix:Master of Public Health in"),
+    ("-mha", "prefix:Master of Health Administration in"),
+    ("-aud", "prefix:Doctor of Audiology in"),
+    ("-llm", "prefix:Master of Laws (LL.M.) in"),
+    ("-msl", "prefix:Master of Studies in Law in"),
+    ("-jsd", "prefix:Doctor of the Science of Law in"),
+    ("-mvs", "prefix:Master of Veterinary Science in"),
+    ("-bsw", "prefix:Bachelor of Social Work in"),
+    ("-msw", "prefix:Master of Social Work in"),
+    ("-bls", "prefix:Bachelor of Liberal Studies in"),
+    ("-meng", "prefix:Master of Engineering in"),
+    ("-edm", "prefix:Master of Education (Ed.M.) in"),
+    ("-edd", "prefix:Doctor of Education (Ed.D.) in"),
+    ("-dma", "prefix:Doctor of Musical Arts in"),
+    ("-mmus", "prefix:Master of Music in"),
+    ("-mfa", "prefix:Master of Fine Arts in"),
+    ("-mas", "prefix:Master of Accounting Science in"),
+    ("-mcs", "prefix:Master of Computer Science in"),
+    ("-bfa", "prefix:Bachelor of Fine Arts in"),
+    ("-phd", "prefix:Doctor of Philosophy in"),
+    ("-bs", "prefix:Bachelor of Science in"),
+    ("-ba", "prefix:Bachelor of Arts in"),
+    ("-ms", "prefix:Master of Science in"),
+    ("-ma", "prefix:Master of Arts in"),
+    ("-jd", "fixed:Juris Doctor"),
+    ("-md", "fixed:Doctor of Medicine"),
+    ("-dvm", "fixed:Doctor of Veterinary Medicine"),
+    ("-mba", "fixed:Master of Business Administration"),
+]
+
+
+def _derive_program_name(slug: str, field: str) -> str:
+    if slug in _SPECIAL_NAMES:
+        return _SPECIAL_NAMES[slug]
+    for suffix, spec in _SUFFIX_MAP:
+        if slug.endswith(suffix):
+            if spec.startswith("fixed:"):
+                return spec[6:]
+            prefix = spec[7:]
+            if prefix.endswith("—"):
+                return f"{prefix} {field}"
+            return f"{prefix} {field}"
+    return field
+
+
+_LEVEL_SUFFIX: dict[str, str] = {
+    "bachelors": (
+        " Undergraduates complete major requirements, electives, and often "
+        "undergraduate research or internships across the Champaign-Urbana campus."
+    ),
+    "masters": (
+        " Graduate students complete advanced seminars, practica, and a thesis or "
+        "capstone project."
+    ),
+    "phd": (
+        " Doctoral students conduct original dissertation research with faculty "
+        "mentorship and departmental seminars."
+    ),
+    "professional": (
+        " Professional students complete clinical rotations, licensure preparation, "
+        "and professional-skills training."
+    ),
+    "doctoral": (
+        " Doctoral students conduct original dissertation research with faculty "
+        "mentorship and departmental seminars."
+    ),
+    "diploma": (
+        " Diploma students complete intensive performance training and recitals."
+    ),
+}
+
+
+def _field_key(program_name: str) -> str:
+    if program_name in _SPECIAL_NAMES.values():
+        for k, v in _SPECIAL_NAMES.items():
+            if v == program_name:
+                return program_name
+    for prefix in (
+        "Bachelor of Science in Liberal Arts and Sciences — ",
+        "Bachelor of Science in Agricultural Sciences — ",
+        "Bachelor of Science in ",
+        "Bachelor of Arts in ",
+        "Bachelor of Fine Arts in ",
+        "Bachelor of Music in ",
+        "Bachelor of Music Education in ",
+        "Bachelor of Landscape Architecture in ",
+        "Bachelor of Social Work in ",
+        "Bachelor of Liberal Studies in ",
+        "Master of Science in ",
+        "Master of Arts in ",
+        "Master of Fine Arts in ",
+        "Master of Music in ",
+        "Master of Engineering in ",
+        "Master of Education (Ed.M.) in ",
+        "Master of Education in ",
+        "Master of Accounting Science in ",
+        "Master of Agricultural and Applied Economics",
+        "Master of Computer Science in ",
+        "Master of Computer Science (Online)",
+        "Master of Business Administration (iMBA, Online)",
+        "Master of Science in Accountancy (iMSA, Online)",
+        "Master of Science in Management (iMSM, Online)",
+        "Master of Public Health in ",
+        "Master of Health Administration in ",
+        "Master of Architecture in ",
+        "Master of Design in ",
+        "Master of Landscape Architecture in ",
+        "Master of Urban Planning in ",
+        "Master of Urban Design in ",
+        "Master of Social Work in ",
+        "Master of Human Resources and Industrial Relations in ",
+        "Master of Laws (LL.M.) in ",
+        "Master of Studies in Law in ",
+        "Master of Veterinary Science in ",
+        "Doctor of Philosophy in ",
+        "Doctor of Education (Ed.D.) in ",
+        "Doctor of Musical Arts in ",
+        "Doctor of Audiology in ",
+        "Doctor of the Science of Law in ",
+        "Doctor of Veterinary Medicine",
+        "Juris Doctor",
+        "Doctor of Medicine",
+        "Artist Diploma in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix) :].strip()
+    return program_name
+
+
+def _uiuc_description(spec: dict) -> str:
+    from unipaith.data.uiuc_field_descriptions import FIELD_DESCRIPTIONS
+
+    pname = spec["program_name"]
+    key = _field_key(pname)
+    if key in FIELD_DESCRIPTIONS:
+        body = FIELD_DESCRIPTIONS[key]
+    else:
+        body = (
+            f"UIUC's {key} program connects to programs within {spec['school']}. "
+            f"Students build depth in {key.lower()} through seminars, research, and "
+            f"Champaign-Urbana industry and community partnerships."
+        )
+    suffix = _LEVEL_SUFFIX.get(spec["degree_type"], "")
+    delivery = _DELIVERY_PHRASE.get(spec.get("delivery_format", ""), "")
+    return f"{body}{suffix}{delivery}"
+
+
 _DELIVERY_PHRASE = {
     "online": " It is delivered fully online.",
     "hybrid": " It is delivered in a hybrid format.",
 }
 
 
-def _description(name: str, dtype: str, school_key: str, fmt: str) -> str:
-    role = _DEGREE_ROLE.get(dtype, "a graduate program")
-    school_disp = SCHOOL_NAME[school_key]
-    delivery = _DELIVERY_PHRASE.get(fmt, "")
-    return f"{name} is {role} offered through UIUC's {school_disp}.{delivery}"
-
-
 def _build_catalog() -> list[dict]:
     out = []
     for slug, sk, name, dtype, dept, fmt, dur in _CATALOG:
-        out.append(
-            {
-                "slug": slug,
-                "school": SCHOOL_NAME[sk],
-                "school_key": sk,
-                "program_name": name,
-                "degree_type": dtype,
-                "department": dept,
-                "delivery_format": fmt,
-                "duration_months": dur,
-                "description": _description(name, dtype, sk, fmt),
-            }
-        )
+        pname = _derive_program_name(slug, name)
+        spec = {
+            "slug": slug,
+            "school": SCHOOL_NAME[sk],
+            "school_key": sk,
+            "program_name": pname,
+            "degree_type": dtype,
+            "department": dept,
+            "delivery_format": fmt,
+            "duration_months": dur,
+        }
+        spec["description"] = _uiuc_description(spec)
+        out.append(spec)
     return out
 
 
@@ -4137,6 +4322,10 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department, employment and bar-passage reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
     },
 }
+
+from unipaith.data.uiuc_reviews_generated import REVIEWS as _GENERATED_REVIEWS  # noqa: E402
+
+_REVIEWS_BY_SLUG.update(_GENERATED_REVIEWS)
 
 
 def _program_standard(slug: str, spec: dict) -> dict:
