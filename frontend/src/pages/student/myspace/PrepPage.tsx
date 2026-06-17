@@ -67,7 +67,6 @@ export default function PrepPage() {
         <PageHeader
           eyebrow="My Space"
           title="Prep"
-          sub="Get application-ready — feedback, practice, and the assets behind every submission"
         />
       </div>
       <div className="flex-shrink-0 border-b border-border bg-card px-4 sm:px-6">

@@ -14,7 +14,7 @@ import { PageContainer, PageHeader } from '../../components/student/density'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import usePageTitle from '../../hooks/usePageTitle'
 import { PROFILE_TAB_ALIASES, normalizeProfileTab, type ProfileTabSpec } from '../../utils/information-architecture'
-import { CompletionRing, lastUpdatedLabel } from './profile/shared'
+import { CompletionRing } from './profile/shared'
 import { useCompletion } from './profile/useCompletion'
 
 const OverviewTab = lazy(() => import('./profile/OverviewTab'))
@@ -49,7 +49,7 @@ export default function ProfilePage() {
   const rawTab = searchParams.get('tab')
   const activeTab = normalizeProfileTab(rawTab)
   usePageTitle('Profile')
-  const { overall, lastUpdated, isLoading } = useCompletion()
+  const { overall, isLoading } = useCompletion()
   const tablistRef = useRef<HTMLDivElement>(null)
 
   // Legacy tab aliases — tabs that left the profile (Spec 2026-06-10 §5)
@@ -97,7 +97,6 @@ export default function ProfilePage() {
       <PageHeader
         eyebrow="My Space"
         title="Your record"
-        sub={lastUpdatedLabel(lastUpdated)}
         actions={
           // Finding 3: don't show 0% during load — render the ring dimmed
           <div className={isLoading ? 'opacity-30' : undefined}>

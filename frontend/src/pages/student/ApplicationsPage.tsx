@@ -252,7 +252,7 @@ export default function ApplicationsPage() {
   if (view === 'costs')
     return (
       <PageContainer>
-        <PageHeader eyebrow="My Space" title="Costs & aid" sub="Budget, scholarships, and net-cost comparison" />
+        <PageHeader eyebrow="My Space" title="Costs & aid" />
         {viewSwitcher}
         <Suspense fallback={<SkeletonCard />}>
           <CostsAidTab />
@@ -267,7 +267,7 @@ export default function ApplicationsPage() {
   if (isError)
     return (
       <PageContainer>
-        <PageHeader eyebrow="My Space" title="Your portfolio" sub="Turn saved targets into application projects" />
+        <PageHeader eyebrow="My Space" title="Your portfolio" />
         {viewSwitcher}
         <QueryError detail="We couldn't load your applications." onRetry={() => refetch()} />
       </PageContainer>
@@ -280,7 +280,6 @@ export default function ApplicationsPage() {
           eyebrow="My Space"
           title="Your offers"
           count={offerApps.length}
-          sub="Every admission offer across your portfolio"
         />
         {viewSwitcher}
         {offerApps.length === 0 ? (
@@ -338,7 +337,7 @@ export default function ApplicationsPage() {
   if (apps.length === 0)
     return (
       <PageContainer>
-        <PageHeader eyebrow="My Space" title="Your portfolio" sub="Turn saved targets into application projects" />
+        <PageHeader eyebrow="My Space" title="Your portfolio" />
         {viewSwitcher}
         <EmptyState
           icon={<FileText size={48} />}
@@ -354,7 +353,7 @@ export default function ApplicationsPage() {
       <PageHeader
         eyebrow="My Space"
         title="Your portfolio"
-        sub={`${apps.length} application${apps.length !== 1 ? 's' : ''} across your journey`}
+        count={apps.length}
       />
       {viewSwitcher}
 

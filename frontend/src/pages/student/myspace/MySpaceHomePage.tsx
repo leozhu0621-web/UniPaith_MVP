@@ -184,7 +184,6 @@ export default function MySpaceHomePage() {
         <PageHeader
           eyebrow="My Space"
           title={`${greeting}${firstName ? `, ${firstName}` : ''}`}
-          sub="Everything about your applications, in one place"
         />
       </Coachmark>
 
