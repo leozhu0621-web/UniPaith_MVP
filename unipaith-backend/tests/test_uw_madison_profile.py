@@ -105,6 +105,15 @@ def test_catalog_quality_gate():
     assert not errors, f"Catalog quality gate failed: {errors}"
 
 
+def test_no_name_prefixed_descriptions():
+    name_prefix = sum(
+        1
+        for prog in p.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
+
+
 def test_catalog_breadth_and_shape():
     assert len(p.SCHOOLS) == 15
     assert len(p.PROGRAMS) >= 330

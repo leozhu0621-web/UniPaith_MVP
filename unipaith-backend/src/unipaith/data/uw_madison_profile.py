@@ -32,6 +32,11 @@ replaces 96% ``program_description`` template stubs with field-specific descript
 maps CIP rollup titles to real UW-Madison degree names and owning departments, and
 re-stamps every node at ``STANDARD_VERSION`` 2.
 
+Description repair (2026-06-17, uwmadisonprof5): replaces all name-prefixed
+classification stubs with field-specific clauses from
+``uw_madison_field_descriptions.py`` (gold MIT/JHU pattern); 0% name-prefixed
+descriptions.
+
 Honest caveats stamped into ``_standard.omitted``: UW-Madison does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
 schools, so those two institution outcome fields are omitted. Most graduate/professional
@@ -60,13 +65,20 @@ from unipaith.data.uw_madison_catalog_maps import (
     SLUG_PROGRAM_NAMES,
     clean_cip_field,
 )
+from unipaith.data.uw_madison_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
 from unipaith.data.uw_madison_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.uw_madison_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Wisconsin-Madison"
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-17"
+
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is an undergraduate .+ at the University of Wisconsin-Madison's .+\.$"
+    r"|^.+ is (a graduate degree|a doctoral program|a graduate certificate|"
+    r"a professional degree) at the University of Wisconsin-Madison's ",
+)
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -646,27 +658,68 @@ def _uw_madison_program_name(field_name: str, degree_type: str, school: str) -> 
     return field
 
 
-def _uw_madison_description(
-    program_name: str,
-    degree_type: str,
-    school: str,
-    *,
-    delivery_format: str = "on_campus",
-) -> str:
-    """Field-specific description — never the degree-type template stub."""
-    role = {
-        "bachelors": "an undergraduate major",
-        "masters": "a graduate degree",
-        "phd": "a doctoral program",
-        "certificate": "a graduate certificate",
-        "professional": "a professional degree",
-    }.get(degree_type, "a degree program")
+def _field_from_program_name(name: str) -> str:
+    if name in (
+        "Doctor of Medicine",
+        "Doctor of Pharmacy",
+        "Doctor of Veterinary Medicine",
+        "Juris Doctor",
+        "Master of Business Administration",
+        "Master of Public Health",
+        "Master of Social Work",
+    ):
+        return name
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Master of Science in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+    ):
+        if name.startswith(prefix):
+            return name[len(prefix) :].strip()
+    return clean_cip_field(name)
+
+
+def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
+    slug = spec.get("slug", "")
+    if slug in SLUG_DESCRIPTIONS:
+        return ""  # slug override handles description
+    if slug in SLUG_PROGRAM_NAMES:
+        return _field_from_program_name(SLUG_PROGRAM_NAMES[slug])
+    if raw_field:
+        return clean_cip_field(raw_field)
+    fn = spec.get("program_name", "")
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Master of Science in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+    ):
+        if fn.startswith(prefix):
+            return fn[len(prefix) :].strip()
+    return clean_cip_field(fn)
+
+
+def _uw_madison_description(spec: dict, *, field: str) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    if slug in SLUG_DESCRIPTIONS:
+        clause = SLUG_DESCRIPTIONS[slug]
+    else:
+        clause = FIELD_DESCRIPTIONS.get(field)
+        if not clause:
+            raise ValueError(
+                f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
+            )
+    fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
-    if delivery_format == "online":
+    if fmt == "online":
         delivery = " Delivered online."
-    elif delivery_format == "hybrid":
+    elif fmt == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{program_name} is {role} at the University of Wisconsin-Madison's {school}.{delivery}"
+    return f"{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -687,7 +740,7 @@ def _normalize_program(spec: dict, field_name: str | None = None) -> None:
         spec["department"] = _department_for(raw_field, school)
 
     spec["description"] = _uw_madison_description(
-        spec["program_name"], dtype, school, delivery_format=fmt,
+        spec, field=_field_from_spec(spec, clean_cip_field(raw_field) if raw_field else None),
     )
 
 
@@ -723,6 +776,22 @@ for _p in PROGRAMS:
         _normalize_program(_p, _p.get("program_name"))
 
 _catalog_errors = validate_catalog(PROGRAMS)
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
 _new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
 _cred_prefix = sum(1 for p in PROGRAMS if _CRED_PREFIX_RE.match(p.get("program_name") or ""))
