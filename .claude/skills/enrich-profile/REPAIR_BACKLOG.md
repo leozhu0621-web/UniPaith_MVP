@@ -7,46 +7,60 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-17 (grader run 24). **ONE in-scope profile PR merged since run 23: #659 Penn
-prefix-strip (`pennprof9`, `18d2681`, `origin/main` HEAD) — the FIFTH straight single-dimension
-prefix-strip pass** (after #657 JHU, #654 Cornell, #652 Berkeley, #643 Princeton). Penn prefix is now LIVE
-(Deploy Backend `completed success` on `18d2681`; verified on `api.unipaith.co`): **prefix 100%→0%**
-(n=250: 0% dup, 0% prefix, 0% classification — descriptions field-specific via #614). BUT names UNTOUCHED —
-**27% rollup names + 55% generic "Bachelor's in {field}"**, the rollup echoed verbatim into `department`
-("Bachelor's in Business/Commerce, General" / dept "Business/Commerce, General"). Re-confirmed live this
-run: the four CRITICAL breaches ALL PERSIST — Northwestern CIP-rollup synthesized reviews ("Architecture
-and Related Services, Other" in-summary STILL LIVE on the BA-in-Architecture-Studies row); Stanford
-"Sibley School" ×2 (aerospace) + "Freeman Spogli" on Systems-Science + Public-Relations (2 mismatched; the
-Political-Science FSI is the passing control) STILL LIVE; Duke copy-paste Pratt-boilerplate synthesized
-reviews STILL LIVE (Biomedical-Eng & Civil-Eng rows share the identical "rigorous engineering degree at a
-selective private R1 university…Triangle tech recruiting" summary, field swapped); Boston U credential-name
-departments + double-credential names ("Bachelor's in Bachelor Of Science In Hospitality Administration",
-"Doctor Of Dental Medicine", "Dscd Dental Biomaterials") STILL LIVE. NYU still the ONLY dead feed
-(`posts=0`). 28 institutions, no sprawl; gold MIT n=65. **ONE NEW PROBLEM CLASS this run → ONE rule added
-(literal CIP CODE left in `program_name`/`department` — see below); every OTHER live defect recurs a class
-the rulebook already names.**_
+_Last graded: 2026-06-17 (grader run 25). **ONE in-scope profile PR merged since run 24: #661 Purdue
+description repair (`purdueprof5`, `23c6d7f`, `origin/main` HEAD).** Purdue is now field-first with **0%
+prefix-doubling, 0% generic-credential, 0% duplicate** (n=310) — BUT the "field-first" descriptions were
+built by COPYING peer (earlier-enriched) catalogs and find-replacing only the campus name, so **~11% of
+Purdue rows (36/310) carry ANOTHER university's signatures** — JHU's "Chesapeake" geography + "Writing
+Seminars", Penn's "SAS" / "Wharton" / "Perelman", Cornell's "CALS" / "Weill", Northwestern's "McCormick" —
+plus re-labeled peer landmarks ("Purdue Lab of Ornithology" ← Cornell's, "Purdue Review" ← JHU's "Hopkins
+Review"). That is a LIVE no-fabrication breach (false specifics that read authoritative), so **Purdue jumps
+from HIGH to CRITICAL.** The same cross-institution-copy tell is also live (smaller) on Cornell #615 (~2%:
+Berkeley's "Lick Observatory" / "Haas", JHU's "Hopkins" on Cornell rows) — confirming it is a CLASS, not
+one catalog. Purdue's 11% rollup NAMES are also untouched. Re-confirmed live this run: the four PRIOR
+CRITICAL breaches ALL PERSIST — Northwestern CIP-rollup synthesized reviews ("Architecture and Related
+Services, Other within Weinberg" in-summary STILL LIVE); Stanford "Sibley School" ×2 (aerospace) +
+"Freeman Spogli" on Systems-Science + Public-Relations (2 mismatched; the Political-Science FSI is the
+passing control) STILL LIVE; Duke copy-paste Pratt-boilerplate synthesized reviews STILL LIVE; Boston U
+credential-name departments + double-credential names STILL LIVE. NYU still the ONLY dead feed (`posts=0`).
+28 institutions, no sprawl; gold MIT n=65 (1% foreign-sig = its own Lincoln Laboratory, a true positive).
+**ONE NEW PROBLEM CLASS this run → ONE rule added (cross-institution description COPY — peer geography /
+signature unit / re-labeled peer landmark imported by find-replace — see below); every OTHER live defect
+recurs a class the rulebook already names.**_
 
-**NEW THIS RUN — LITERAL CIP CODE IN THE PROGRAM NAME (28 Penn rows, 11%): the naked IPEDS-minting
-fingerprint the punctuation-keyed rollup scan MISSES → ONE rule added (SKILL.md miss #2/#9).** Penn ships
-28 names of the form "Bachelor's in Psychology (CIP 42.99)", "Bachelor's in English Language and Literature
-(CIP 23.14)", "Bachelor's in Health Professions (CIP 51.15)" — a literal federal CIP CODE left attached.
-Because the field text ("Psychology") is a CLEAN name with no `", General"`/slash/comma-and punctuation
-tell, the existing rollup-tell scan PASSES these — so they were never caught until now. No real catalog
-prints a CIP code in a degree name. 4 of these are bachelor's rows whose description opens "Graduate
-{field}…" (a credential-level lie: "Bachelor's in Psychology (CIP 42.99)" → "Graduate psychology at SAS…").
-No other fleet catalog (Columbia/Harvard/Berkeley/Cornell/Yale/MIT/Stanford sampled) carries this — it is
-Penn-specific today. **Repair: strip the CIP code, resolve each to Penn's real per-credential degree(s),
-and fix the credential-level-mismatched descriptions.**
+**NEW THIS RUN — CROSS-INSTITUTION DESCRIPTION COPY (Purdue 11% / 36 rows, Cornell 2% / 7 rows): a
+"field-specific description" pass that REUSES a peer catalog by find-replace, leaving the SOURCE
+institution's marks → ONE rule added (SKILL.md miss #8 verified-true bullet + the miss #9 named-units
+gate).** When the enricher templates a description off an earlier-enriched university and swaps only the
+campus token, the body reads field-specific and confident yet is FALSE here, and three tells slip past the
+existing named-unit scan: (a) a peer's **GEOGRAPHY / place-name** ("…and Chesapeake regional research
+sites" on landlocked West-Lafayette Purdue — a region is not an academic unit, so the unit scan ignores
+it); (b) a peer's **signature UNIT** ("at SAS", "Wharton accounting", "CALS animal science", "the Writing
+Seminars" on a school that has none) — a CONSTELLATION of one peer's marks across many rows is the proof
+the whole description was copied; (c) most deceptively, a real peer **LANDMARK re-labeled** with this
+institution's name ("Cornell Lab of Ornithology" → "Purdue Lab of Ornithology"; "Hopkins Review" → "Purdue
+Review"; "Weill Cornell" → "Weill Purdue…academic medical center" on a school with no medical center) —
+this PASSES a naive "is this institution named?" check yet the entity belongs to a peer. **Repair: RESEARCH
+each Purdue program's description from Purdue's OWN catalog/department page — never adapt a peer's
+description by find-replace; scan every description for a location-mismatched place-name, a peer signature
+string, and a re-labeled peer landmark and FAIL on any hit.** The verified-true gate (miss #8) + named-unit
+programmatic gate (miss #9) now require this.
 
-**#659 Penn IS THE FIFTH STRAIGHT SINGLE-DIMENSION PREFIX-STRIP PASS (after #657 JHU, #654 Cornell, #652
-Berkeley, #643 Princeton) — UNLIKE JHU it leaves Penn's NAMES fabricated.** Live n=250: **prefix
-100%→0%** (verified — "Bachelor of Science in Economics (Wharton)" || "Wharton's undergraduate Bachelor of
-Science in Economics — a business degree…" no longer doubling the heading), 0% duplicate, 0% classification
-(field-specific via #614). Penn now joins Cornell + Berkeley in the "prefix done, NAMES still fabricated"
-tier — leaving 27% rollup names + 55% generic "Bachelor's in {field}" credential form + the 28 CIP-code
-names + 4 credential-mismatch descriptions for a follow-up. NOT a clear.
+**#661 IS A SINGLE-DIMENSION DESCRIPTION PASS (the inverse of the prefix-strip passes) — it fixed Purdue's
+prefix/classification but FABRICATED the descriptions and left the NAMES.** Live n=310: 0% prefix, 0%
+classification, 0% generic-credential, 0% duplicate, BUT **11% genuinely-foreign descriptions + 11% rollup
+names** ("Bachelor of Science in Family and Consumer Sciences/Human Sciences", "…Speech, Language, and
+Hearing Sciences", "Bachelor of Arts in Area Studies" / dept "Department of Area Studies") + 13% rollup
+departments + empty deep content. A description pass that INVENTS false specifics is worse than the
+classification gloss it replaced. NOT progress — a regression to CRITICAL.
 
-**Carried (unchanged — only #659 merged): JHU #657 stripped JHU's prefix 100%→0% (the prefix was JHU's LAST
+**Carried (unchanged — only #661 merged): #659 Penn stripped the prefix 100%→0% but left 27% rollup names +
+55% generic "Bachelor's in {field}" + 28 "(CIP NN.NN)"-suffixed names** (the run-24 NEW class — "Bachelor's
+in Psychology (CIP 42.99)", a literal federal CIP code left in the name, which the punctuation-keyed rollup
+scan misses; 4 of these are bachelor's rows whose description opens "Graduate {field}…"). **Repair: strip
+the CIP code + de-roll-up the names + switch generic "Bachelor's in" to Penn's real designation.**
+
+**Carried (unchanged): JHU #657 stripped JHU's prefix 100%→0% (the prefix was JHU's LAST
 structural defect, so JHU is now NEAR-CLEAN).** Live n=246: 0% prefix, 0% duplicate, 0% generic-credential,
 descriptions field-specific + TRUE (Homewood/Krieger units, via #610). Only residual: **3 "Area Studies"
 rollup rows** (BA + Graduate Certificate + MS of one CIP field) + deep content (`class_profile`/`faculty`/
@@ -75,17 +89,21 @@ duplicate identical names across award levels + classification + 100% prefix).**
 breaches PERSIST live (Boston U structure; Stanford fabricated units; Northwestern + Duke synthesized
 reviews).
 
-**ONE new rulebook gap this run (1 of ≤3): literal CIP code in the name.** Penn's 28 "(CIP NN.NN)"-suffixed
-names are a genuinely NEW fingerprint — the existing rollup-tell scan keys on TITLE punctuation, so a clean
-field text with a CIP CODE suffix ("Psychology (CIP 42.99)") slips past it; no prior bullet enumerated the
-literal-code form. Added ONE rule (SKILL.md miss #2, cross-referenced in the miss #9 programmatic gate) so
-the realness gate scans `program_name`/`department` for `(CIP <digits>)` and FAILs. Otherwise #659 Penn is
-a single-dimension prefix-strip pass on a known HIGH catalog (miss #8 — the FIFTH straight prefix-only pass
-after #657 JHU, #654 Cornell, #652 Berkeley, #643 Princeton), not a new class. Every OTHER live defect
-(Northwestern/Stanford/Duke fabrications, the #646 catalogs, Yale 69% prefix, Rice 100% prefix + 81%
-classification, Purdue "Area Studies" rollup + classification, Cornell's + Berkeley's + Penn's surviving
-rollup names) recurs a class the rulebook already names (miss #2/#8/#9). The standing concern is enricher
-BEHAVIOR — it keeps shipping single-dimension passes (now FIVE prefix-only in a row) and works HIGH
+**ONE new rulebook gap this run (1 of ≤3): cross-institution description COPY.** #661's "field-first"
+Purdue descriptions were built by reusing peer catalogs (JHU, Penn, Cornell, Northwestern) and
+find-replacing only the campus name, so 11% of Purdue rows carry a SOURCE institution's geography
+("Chesapeake"), signature unit ("SAS"/"Wharton"/"CALS"), or a re-labeled peer landmark ("Purdue Lab of
+Ornithology"). The existing named-unit-truth rule (miss #8) catches a mis-cited UNIT, but it does NOT catch
+imported GEOGRAPHY, a re-labeled peer landmark wearing this institution's name, or the cross-institution-copy
+MECHANISM — and the same tell is live on Cornell (~2%), so it is a CLASS. Added ONE rule (SKILL.md miss #8
+verified-true bullet, cross-referenced in the miss #9 named-units gate) so the verified-true gate scans every
+description for a location-mismatched place-name, a peer signature string (even when this institution is also
+named), and a re-labeled peer landmark, and FAILs. Otherwise #661 is a single-dimension description pass on a
+known HIGH catalog (miss #8), not a new class. Every OTHER live defect (Northwestern/Stanford/Duke
+fabrications, the #646 catalogs, Yale 69% prefix, Rice 100% prefix + 81% classification, Penn's CIP codes +
+surviving rollup names, Cornell's + Berkeley's surviving rollup names) recurs a class the rulebook already
+names (miss #2/#8/#9). The standing concern is enricher BEHAVIOR — it keeps shipping single-dimension passes
+(now FIVE prefix-strips + this description-pass, each fixing one dimension) and works HIGH
 catalogs while the CRITICAL top (Boston U, Stanford, Northwestern, Duke) stays unrepaired — repair-first
 ordering + finish-all-dimensions, flagged for human review, not a rulebook gap. More rule text cannot fix
 ordering.
@@ -98,7 +116,9 @@ comma-and list; an embedded slash; bare CIP titles) on `program_name` AND `depar
 credential-form-agnostically, (c) description form (`description_text`: field-specific-and-TRUE vs
 classification vs generic gloss; PLUS prefix-doubling `description_text.startswith(program_name)`; PLUS
 named-unit TRUTH — any school/college/center named must be a unit THIS institution has AND that houses
-THIS program), (d) reviews integrity (`/programs/{id}.external_reviews`: GATHERED program-specific vs
+THIS program; PLUS cross-institution-COPY tells — a location-mismatched place-name, a PEER signature
+string even when this institution is also named, or a real peer landmark RE-LABELED with this
+institution's name), (d) reviews integrity (`/programs/{id}.external_reviews`: GATHERED program-specific vs
 synthesized institution-level boilerplate / CIP-rollup-in-summary / a caution copy-pasted across rows),
 and (e) deep-field emptiness (`/programs/{id}`).
 
@@ -136,9 +156,9 @@ specificity. The fa7163e hotfix (run 14) **cleared only the one field the run-13
 verbatim** and left sibling instances of the SAME class live (a non-repair — SKILL.md miss #9):
 - ✅ FIXED — Berkeley's "College of Chemistry" (+ "Harvardsylvania"): the 3 chemical-engineering rows
   now correctly cite Stanford's Department of Chemical Engineering.
-- ❌ STILL LIVE (re-confirmed run 21: 2 hits) — Cornell's **"Sibley School"** on 2 Stanford aerospace
+- ❌ STILL LIVE (re-confirmed run 25: 2 hits) — Cornell's **"Sibley School"** on 2 Stanford aerospace
   rows — Stanford has NO Sibley School.
-- ❌ STILL LIVE (re-confirmed run 21: 2 mismatched hits — Systems Science + Public Relations) — the
+- ❌ STILL LIVE (re-confirmed run 25: 2 mismatched hits — Systems Science + Public Relations) — the
   international-studies **Freeman Spogli Institute** bolted onto fields it does not house (the
   political-science row that correctly cites FSI is the passing control, not a defect).
 Plus **34% rollup NAMES** echoed in `department` (single-dimension pass, miss #8) and **85%
@@ -149,7 +169,7 @@ true generic clause; THEN de-roll-up the names + their departments, strip the pr
 
 _First seen 2026-06-16 (run 13). Run 14: PARTIALLY repaired (College of Chemistry cleared) but the
 Sibley School + FSI sibling fabrications remain LIVE — a no-fabrication breach is not cleared until the
-WHOLE class is. Re-confirmed live runs 14→24 (run 24: Sibley ×2 + Freeman-Spogli on Systems-Science +
+WHOLE class is. Re-confirmed live runs 14→25 (run 25: Sibley ×2 + Freeman-Spogli on Systems-Science +
 Public-Relations; Political-Science FSI control passes). Fix the remaining fabricated units before any new depth
 pass or any new university._
 
@@ -164,10 +184,10 @@ sources" disclaimer). A live no-fabrication breach outranks mere incompleteness.
 synthesized reviews and either re-gather genuine program-specific coverage or omit-with-reason** — then
 strip the ~97% name-prefix-doubling and fill real per-program deep content.
 
-_First seen 2026-06-16 (run 9). Still unrepaired across runs 10–24 (re-confirmed live run 24: the
-BA-in-Architecture-Studies row's review summary still embeds "Architecture and Related Services, Other"
-+ a U.S. News institution-ranking source). Now persisted SIXTEEN grading intervals (9→24) with
-no repair PR. Fix the fabricated reviews before any new depth pass._
+_First seen 2026-06-16 (run 9). Still unrepaired across runs 10–25 (re-confirmed live run 25: the
+BA-in-Architecture-Studies row's review summary still embeds "Architecture and Related Services, Other
+within Weinberg" + a U.S. News institution-ranking source). Now persisted SEVENTEEN grading intervals
+(9→25) with no repair PR. Fix the fabricated reviews before any new depth pass._
 
 ## CRITICAL — Duke University (fabricated-by-synthesis reviews shipped LIVE; unrepaired since run 10)
 
@@ -179,10 +199,35 @@ run-9 fabrication-by-synthesis tell (SKILL.md miss #8).
 **Repair: REMOVE/re-gather those synthesized reviews per-program (or omit-with-reason)**, then strip
 the 66% name-prefix-doubling and fill real per-program deep content.
 
-_First seen 2026-06-16 (run 10). Unchanged since (nothing merged; byte-identical to run 23, now
-persisted 10→24 — re-confirmed live run 24: Biomedical-Eng & Civil-Eng rows share the identical
+_First seen 2026-06-16 (run 10). Unchanged since (nothing merged; byte-identical to run 24, now
+persisted 10→25 — re-confirmed live run 25: Biomedical-Eng & Civil-Eng rows share the identical
 "rigorous engineering degree at a selective private R1 university…Triangle tech recruiting" summary,
 field swapped). Fix the synthesized reviews before any new depth pass._
+
+## CRITICAL — Purdue University-Main Campus (cross-institution-COPY descriptions shipped LIVE by #661; freshest breach)
+
+310 programs. #661 made the descriptions field-first (0% prefix-doubling, 0% classification, 0%
+generic-credential, 0% duplicate — good on those dimensions) — BUT the "field-first" text was built by
+COPYING peer catalogs and find-replacing only the campus name, so **~11% of rows (36/310) carry another
+university's marks** (SKILL.md miss #8 cross-institution-copy — the NEW class this run):
+- **Imported peer geography** — "…and Chesapeake regional research sites" (JHU/Maryland) on landlocked
+  West-Lafayette Purdue (Anthropology BA/Cert/MS).
+- **Imported peer signature units** — "at SAS" (Penn), "Wharton accounting…world's first collegiate
+  business school" (Penn), "CALS animal science" (Cornell), "the Writing Seminars" (JHU), "Perelman"
+  (Penn), "McCormick engineering" (Northwestern) on a school that has none.
+- **Re-labeled peer landmarks** — "Purdue Lab of Ornithology" (← Cornell's), "Purdue Review" (← JHU's
+  "Hopkins Review"), "Weill Purdue…academic medical center" (← Weill Cornell; Purdue has no medical
+  center) — these read as Purdue's own unit but are renamed peer landmarks.
+Plus **11% rollup NAMES + 13% rollup departments** untouched ("Bachelor of Science in Family and Consumer
+Sciences/Human Sciences", "…Speech, Language, and Hearing Sciences", "Bachelor of Arts in Area Studies" /
+dept "Department of Area Studies") and empty deep content.
+**Repair: RESEARCH each Purdue program's description from Purdue's OWN catalog/department page (drop every
+imported geography / peer unit / re-labeled landmark), de-roll-up the 11% rollup names + their depts, then
+fill deep content. A description pass that INVENTS false specifics is worse than the gloss it replaced.**
+
+_First seen 2026-06-17 (run 25) — a LIVE no-fabrication breach freshly shipped by #661. The same
+cross-institution-copy tell is live (smaller, ~2%) on Cornell #615 (Berkeley's Lick Observatory + Haas,
+JHU's Hopkins on Cornell rows). Fix the fabricated descriptions before any new depth pass or new university._
 
 ## HIGH — #646 catalogs: breadth-expanded but FABRICATED (duplicate names + classification + 100% prefix), worst-first
 
@@ -221,31 +266,29 @@ researched deep content.** Worst-first:
 |---|---|---|---|---|---|
 | 1 | Columbia University | 263 | **34%** | field-specific (good, #628) but **90% name-prefixed**, rollup names echoed in dept | **de-roll-up NAMES + depts**, strip prefix, fix run-on bodies, content |
 | 2 | Harvard University | 343 | **34%** | field-specific (good, #618) but 82% name-prefixed | **de-roll-up tail NAMES + depts**, strip prefix, content |
-| 3 | Cornell University | 274 | **33%** | field-specific + TRUE (good, #615 — Dyson AACSB, CALS land-grant) + **0% prefix (good — #654's hung deploy RECOVERED, strip now LIVE)**; names UNTOUCHED: **33% rollup names + 33% rollup depts + 56% generic "Bachelor's in {field}"** | **de-roll-up the rollup NAMES + their depts AND switch the generic "Bachelor's in" to Cornell's real "Bachelor of Science/Arts in" designation**, then deep content — descriptions + prefix done (#615/#654) |
+| 3 | Cornell University | 274 | **33%** | field-specific + mostly TRUE (#615) + **0% prefix** (#654); names UNTOUCHED: **33% rollup names + 33% rollup depts + 56% generic "Bachelor's in {field}"**; **+ ~2% foreign-sig descriptions** (Berkeley's Lick Observatory/Haas, JHU's Hopkins — cross-institution-copy, miss #8) | **drop the ~2% imported peer marks; de-roll-up the rollup NAMES + their depts AND switch generic "Bachelor's in" to Cornell's real "Bachelor of Science/Arts in" designation**, then deep content |
 | 4 | University of Pennsylvania | 250 | **27%** | field-specific + **0% prefix** (good, #614/#659) — but names UNTOUCHED: **27% rollup names + 55% generic "Bachelor's in {field}"** + **28 "(CIP NN.NN)"-suffixed names (NEW, 11%)** | **de-roll-up the rollup NAMES + their depts, switch generic "Bachelor's in" to Penn's real "Bachelor of Arts/Science in" designation, STRIP the literal CIP codes**, then deep content; 4 BA rows' descriptions say "Graduate …" (credential-level lie) — descriptions + prefix done (#614/#659) |
 | 5 | University of California-Berkeley | 269 | **38%** | field-specific + grammatical + **0% prefix** (good, #652) — but names UNTOUCHED: **38% rollup names + 39% rollup depts + 54% generic "Bachelor's in {field}"** (only 28% real designation) | **de-roll-up the rollup NAMES + their depts AND switch the generic "Bachelor's in" to Berkeley's real "Bachelor of Science/Arts in" designation**, then deep content — descriptions + prefix done (#613/#652) |
-| 6 | Purdue University-Main Campus | 310 | 11% | pure classification ("…is an undergraduate major at Purdue's College…") | descriptions + content — names mostly real |
-| 7 | University of California-San Diego | 194 | 0% | pure classification | descriptions + content — names + depts done (#605) |
-| 8 | University of Wisconsin-Madison | 348 | 1% | pure classification | descriptions + content — names + depts done (#609) |
-| 9 | Yale University | 189 | 5% | field-specific (good, #620) but **69% name-prefixed** | strip prefix + content + GATHERED reviews — names mostly real |
-| 10 | Rice University | 159 | 1% | generic gloss "{field} is an undergraduate BA major…" | real descriptions + content — names real |
-| 11 | Carnegie Mellon University | 180 | 1% | field-specific (good, #612) but **100% name-prefixed** | strip prefix + **deep content + GATHERED reviews** — names + depts + descriptions done |
-| 12 | California Institute of Technology | 90 | 1% | de-stubbed (good, #648) — clean structure, 0% prefix, 0% classification, but **thin generic gloss** ("BS in {field} — {one-line restatement}") | richer field-specific descriptions + **deep content + GATHERED reviews** — names + depts done |
-| 13 | University of Chicago | 103 | ~3% (Area Studies ×2) | field-specific + TRUE + **0% prefix** (good, #650) — clean designations + depts, real units | **de-roll-up the 2 "Area Studies" names** → real fields, then **deep content + GATHERED reviews** (1 row already has gathered Cinema reviews) |
-| 14 | Johns Hopkins University | 246 | 1% (3 "Area Studies") | field-specific + TRUE (good, #610 — Homewood/Krieger units) + **0% prefix (good — #657 stripped it 100%→0%)** | **de-roll-up the 3 "Area Studies" names** (BA + Cert + MS of one CIP field, a name-collision across levels) + **deep content + GATHERED reviews** — names + depts + descriptions + prefix done; now cleanest non-MIT tier with UChicago/Caltech |
-| 15 | Princeton University | 41 | **22%** (9/41) | field-specific + TRUE + **0% prefix** (good, #641+#643) — only **9 rollup names echoed in dept** left | **de-roll-up the 9 CIP-rollup NAMES + their depts** ("…Languages, Literatures, and Linguistics", "Area Studies", "Religion/Religious Studies", "Multi/Interdisciplinary Studies, Other" → "Classics"/"German"/"Religion"/etc.), then GATHERED reviews + deep content |
+| 6 | University of California-San Diego | 194 | 0% | pure classification | descriptions + content — names + depts done (#605) |
+| 7 | University of Wisconsin-Madison | 348 | 1% | pure classification | descriptions + content — names + depts done (#609) |
+| 8 | Yale University | 189 | 5% | field-specific (good, #620) but **69% name-prefixed** | strip prefix + content + GATHERED reviews — names mostly real |
+| 9 | Rice University | 159 | 1% | generic gloss "{field} is an undergraduate BA major…" | real descriptions + content — names real |
+| 10 | Carnegie Mellon University | 180 | 1% | field-specific (good, #612) but **100% name-prefixed** | strip prefix + **deep content + GATHERED reviews** — names + depts + descriptions done |
+| 11 | California Institute of Technology | 90 | 1% | de-stubbed (good, #648) — clean structure, 0% prefix, 0% classification, but **thin generic gloss** ("BS in {field} — {one-line restatement}") | richer field-specific descriptions + **deep content + GATHERED reviews** — names + depts done |
+| 12 | University of Chicago | 103 | ~3% (Area Studies ×2) | field-specific + TRUE + **0% prefix** (good, #650) — clean designations + depts, real units | **de-roll-up the 2 "Area Studies" names** → real fields, then **deep content + GATHERED reviews** (1 row already has gathered Cinema reviews) |
+| 13 | Johns Hopkins University | 246 | 1% (3 "Area Studies") | field-specific + TRUE (good, #610 — Homewood/Krieger units) + **0% prefix (good — #657 stripped it 100%→0%)** | **de-roll-up the 3 "Area Studies" names** (BA + Cert + MS of one CIP field, a name-collision across levels) + **deep content + GATHERED reviews** — names + depts + descriptions + prefix done; now cleanest non-MIT tier with UChicago/Caltech |
+| 14 | Princeton University | 41 | **22%** (9/41) | field-specific + TRUE + **0% prefix** (good, #641+#643) — only **9 rollup names echoed in dept** left | **de-roll-up the 9 CIP-rollup NAMES + their depts** ("…Languages, Literatures, and Linguistics", "Area Studies", "Religion/Religious Studies", "Multi/Interdisciplinary Studies, Other" → "Classics"/"German"/"Religion"/etc.), then GATHERED reviews + deep content |
 
-_First seen 2026-06-14 (run 1). Run 24: **Penn #659 stripped Penn's prefix 100%→0%** (the FIFTH straight
-single-dimension prefix-strip pass after #657 JHU, #654 Cornell, #652 Berkeley, #643 Princeton) — but
-unlike JHU it leaves Penn's NAMES fabricated (27% rollup + 55% generic + 28 NEW "(CIP NN.NN)" names + 4
-credential-mismatch descriptions). No other row changed (only #659 merged). The remaining dual-defect
-rollup-AND-prefix catalogs are now **Columbia + Harvard** only; **Penn now joins Berkeley + Cornell** in
-the "prefix done, NAMES still fabricated" tier (each needs the names de-rolled-up + the generic
-"Bachelor's in" switched to the real designation); the pure-classification catalogs (Purdue/UCSD/
-UW-Madison/Rice) need field-specific descriptions; CMU is clean structure + true descriptions but STILL
-100% name-prefixed (needs the prefix stripped + deep content + GATHERED reviews — it is now the LAST
-clean-structure catalog still fully prefixed); Caltech/UChicago/JHU/Princeton need deep content + GATHERED
-(not synthesized) reviews._
+_First seen 2026-06-14 (run 1). Run 25: **Purdue #661 moved OUT of this table to CRITICAL** — its
+description pass fabricated 11% of rows with cross-institution-copy marks (see the Purdue CRITICAL section).
+No other row changed (only #661 merged). The remaining dual-defect rollup-AND-prefix catalogs are
+**Columbia + Harvard**; **Penn + Berkeley + Cornell** are in the "prefix done, NAMES still fabricated" tier
+(each needs the names de-rolled-up + the generic "Bachelor's in" switched to the real designation; Penn also
+needs its 28 literal CIP codes stripped, Cornell also needs its ~2% imported peer marks dropped); the
+pure-classification catalogs (UCSD/UW-Madison/Rice) need field-specific descriptions; CMU is clean structure
++ true descriptions but STILL 100% name-prefixed (needs the prefix stripped + deep content + GATHERED
+reviews — the LAST clean-structure catalog still fully prefixed); Caltech/UChicago/JHU/Princeton need deep
+content + GATHERED (not synthesized) reviews._
 
 ## MEDIUM — (none)
 
@@ -282,9 +325,9 @@ fully clean.
 
 ### Notes for the enricher
 - **Top open entries first.** Boston University (structure broken), Stanford (fabricated foreign named
-  units still live), Northwestern (43+ fabricated reviews still live), Duke (synthesized Pratt reviews)
-  — all CRITICAL — then the 8 #646 catalogs (duplicate names + classification + 100% prefix) — before
-  any new university or further depth pass.
+  units still live), Northwestern (43+ fabricated reviews still live), Duke (synthesized Pratt reviews),
+  Purdue (cross-institution-copy descriptions freshly shipped by #661) — all CRITICAL — then the 8 #646
+  catalogs (duplicate names + classification + 100% prefix) — before any new university or further depth pass.
 - **PUT THE CREDENTIAL IN THE NAME — `degree_type` alone is NOT disambiguation (run 18).** #646 minted
   bachelor/master/PhD of one field as three rows all named identically ("Aerospace Engineering" ×3),
   the credential only in `degree_type` + the description. A student sees the same heading 2–4×. The
@@ -306,6 +349,13 @@ fully clean.
 - **A FIELD-SPECIFIC DESCRIPTION MUST BE TRUE, NOT JUST SPECIFIC.** Never invent a named
   school/college/center to make a description "specific" (Stanford's Sibley School / FSI). Verify the
   unit belongs to this institution AND houses this program, or write a true generic clause (miss #8).
+- **NEVER BUILD DESCRIPTIONS BY COPYING A PEER CATALOG AND FIND-REPLACING THE CAMPUS NAME (NEW, run 25).**
+  #661 templated Purdue descriptions off JHU/Penn/Cornell/NU and swapped only the campus token, leaving
+  the SOURCE's geography ("Chesapeake" on inland Purdue), signature units ("SAS"/"Wharton"/"CALS"/"Writing
+  Seminars"), and re-labeled peer landmarks ("Purdue Lab of Ornithology" ← Cornell's). RESEARCH each
+  description from THIS institution's own catalog/department page; scan every description for a
+  location-mismatched place-name, a peer signature string, and a re-labeled peer landmark and FAIL on any
+  hit (SKILL.md miss #8 + the miss #9 named-units gate).
 - **A REPAIR MUST CLEAR THE WHOLE CLASS, NOT THE CITED ROW (run 14).** Scan the WHOLE catalog for every
   instance of a flagged defect and re-scan to ZERO before shipping (SKILL.md miss #9).
 - **STRIP THE NAME-PREFIX, AND WRITE A SENTENCE.** Remove the leading `"{program_name}: "` /
@@ -320,16 +370,17 @@ fully clean.
   resolve to the real per-credential degree(s) and fix any description that opens "Graduate {field}…" on a
   bachelor's row (SKILL.md miss #2/#9).
 - **A SINGLE-DIMENSION PASS IS NOT A CLEAR — but the MULTI-dimension clear IS achievable: #650
-  (UChicago) and #648 (Caltech) are the model. The enricher KEEPS shipping single-dimension prefix-strip
-  passes anyway — #659 (Penn) is the FIFTH straight one, after #657 (JHU, run 23), #654 (Cornell, run
-  21/22), #652 (Berkeley, run 20) and #643 (Princeton, run 17).** A catalog is cleared only when real names
-  + real departments + collapsed splits + field-specific verified-true descriptions (no prefix, grammatical)
-  + gathered reviews + researched deep content ALL hold together (miss #8). #659 strips ONLY Penn's prefix
-  while leaving 27% CIP-rollup names + 55% generic "Bachelor's in {field}" + 28 CIP-code names UNTOUCHED;
-  #657 stripped ONLY JHU's prefix (the LAST defect JHU had, so JHU lands near-clean — a lucky case). #650
+  (UChicago) and #648 (Caltech) are the model. The enricher KEEPS shipping single-dimension passes —
+  #661 (Purdue, run 25) is a DESCRIPTION-only pass (the inverse of the FIVE straight prefix-strips: #659
+  Penn run 24, #657 JHU run 23, #654 Cornell run 21/22, #652 Berkeley run 20, #643 Princeton run 17), and
+  it WORSE: it fixed Purdue's prefix/classification but FABRICATED the descriptions (cross-institution
+  copy, 11% foreign-sig) and left the 11% rollup names.** A catalog is cleared only when real names
+  + real departments + collapsed splits + field-specific verified-TRUE descriptions (no prefix, grammatical,
+  NO imported peer marks) + gathered reviews + researched deep content ALL hold together (miss #8). #650
   fixed UChicago's names + departments + descriptions + prefix in ONE pass (rollup 36%→~3%, prefix 88%→0%,
   real "Bachelor of Arts/Science" designations, TRUE units) — do THIS on the still-rollup catalogs
-  (Columbia/Berkeley/Cornell/Harvard/Penn), not one dimension at a time.
+  (Columbia/Berkeley/Cornell/Harvard/Penn), not one dimension at a time, and research each description
+  TRUE rather than copying a peer's.
 - **MERGED ≠ LIVE — confirm the Deploy Backend went GREEN and re-query the live API after a pass (SKILL.md
   step 9).** A pass is not done until Deploy Backend is green AND the change is visible on
   `api.unipaith.co`; if a deploy hangs, re-run / unstick it before treating the pass as shipped. (Run 22:

@@ -6,6 +6,120 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-17 — Run 25 (ONE NEW CLASS → ONE rule added: cross-institution description COPY — a "field-specific" pass that REUSES a peer catalog by find-replace, leaving the SOURCE institution's geography / signature units / re-labeled landmarks. #661 Purdue shipped 11% of rows with JHU/Penn/Cornell/NU marks ("Chesapeake" on inland Purdue, "at SAS", "Wharton accounting", "Purdue Lab of Ornithology"); the same tell is live ~2% on Cornell #615 → it is a CLASS. Purdue PROMOTED to CRITICAL. Added 1 of ≤3 rules; updated backlog)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28, no
+sprawl, same program counts as run 24). The one live-state CHANGE since run 24: **Purdue** (#661, the one
+in-scope PR merged). Full Purdue pagination (`page_size=50`, n=310) + gold MIT control (n=65) with per-row
+duplicate-name / rollup-name (strict field-portion, credential-form-agnostic) / rollup-dept / CIP-code /
+generic-credential / prefix-doubling metrics; direct `description_text` reads on sampled Purdue rows; a
+FOREIGN-SIGNATURE scan (owner≠self) over Purdue + Cornell + Berkeley + JHU + MIT to confirm scope. Confirmed
+#661 LIVE via `description_text` ("West Lafayette campus anthropology…" no longer prefixed; 0% prefix) AND
+via GitHub Actions Deploy Backend (`23c6d7f` is `origin/main` HEAD). Re-confirmed all four PRIOR CRITICAL
+breaches live via direct reads: Northwestern CIP-rollup synthesized review (the BA-in-Architecture-Studies
+row's `external_reviews.summary` still embeds "Architecture and Related Services, Other within Weinberg" +
+a U.S. News institution-ranking source), Stanford **Sibley-School ×2** (aerospace BA + Graduate Certificate)
+**+ Freeman-Spogli on Systems-Science + Public-Relations** (`description_text` scan; the Political-Science
+FSI control passes), Duke **copy-paste Pratt boilerplate reviews**, Boston U broken structure. Student's-eye
+open-ended pass: Purdue (the changed catalog) program names/descriptions + institution integrity; fleet feed
+sweep (NYU still `posts=0`).
+
+**What merged since run 24:** ONE in-scope profile PR — **#661 Purdue** ("Purdue description repair:
+field-first clauses, 0% name-prefix", purdueprof5, `23c6d7f`, `origin/main` HEAD). The run-24 grader PR #660
+(`2b33683`) is the prior work. So the other 26 catalogs' DATA is byte-identical to run 24.
+
+**Findings (live API evidence):**
+
+1. **NEW CLASS — cross-institution description COPY (Purdue 11% / 36 rows, Cornell ~2% / 7 rows).** #661's
+   "field-first" Purdue descriptions were built by REUSING peer (earlier-enriched) catalogs and
+   find-replacing only the campus name, leaving the SOURCE institution's marks: (a) GEOGRAPHY — "…and
+   Chesapeake regional research sites" (JHU/Maryland) on landlocked West-Lafayette Purdue; (b) signature
+   UNITS — "at SAS" (Penn), "Wharton accounting…world's first collegiate business school" (Penn), "CALS
+   animal science" (Cornell), "the Writing Seminars" (JHU), "Perelman" (Penn), "McCormick engineering"
+   (Northwestern); (c) re-labeled peer LANDMARKS — "Purdue Lab of Ornithology" (← Cornell's), "Purdue
+   Review" (← JHU's "Hopkins Review"), "Weill Purdue…academic medical center" (← Weill Cornell; Purdue has
+   none). The refined owner≠self scan returned 36/310 (11%) on Purdue, 7/274 (~2%) on Cornell (Berkeley's
+   Lick Observatory/Haas, JHU's Hopkins), and **0%** on Berkeley + JHU (their hits were their OWN units —
+   true positives) — so the cross-institution-copy mechanism is a CLASS, not one catalog. The existing
+   named-unit-truth rule (miss #8) catches a mis-cited UNIT but NOT imported GEOGRAPHY, a re-labeled peer
+   landmark wearing this institution's name, or the copy MECHANISM. → **ONE rule added** (SKILL.md miss #8
+   verified-true bullet, cross-referenced in the miss #9 named-units gate): scan every description for a
+   location-mismatched place-name, a peer signature string (even when this institution is also named), and
+   a re-labeled peer landmark, and FAIL; RESEARCH each description from this institution's OWN catalog.
+2. **#661 is a single-dimension DESCRIPTION pass (the inverse of the FIVE prefix-strips) — and a
+   REGRESSION.** Live n=310: 0% prefix, 0% classification, 0% generic-credential, 0% duplicate (good on
+   those) BUT 11% genuinely-foreign descriptions + 11% rollup names + 13% rollup depts + empty deep content.
+   A description pass that INVENTS false specifics is worse than the classification gloss it replaced —
+   Purdue moves from HIGH row 6 to CRITICAL (a LIVE no-fabrication breach).
+3. **All four PRIOR CRITICAL breaches PERSIST (re-confirmed live).** Northwestern synthesized reviews
+   (runs 9→25), Stanford Sibley ×2 + FSI-on-unrelated ×2 (runs 13/14→25), Duke copy-paste Pratt boilerplate
+   reviews (runs 10→25), Boston U credential-name departments + broken structure (runs 1→25). NYU still the
+   ONLY dead feed (`posts=0`).
+
+**False alarms caught (diagnosed, not acted on):**
+- **The RAW foreign-signature scan over-counts — Cornell/JHU/Berkeley each score high on a naive scan
+  because their OWN units (Cornell's CALS/Dyson/Sibley/Weill, JHU's Homewood/Krieger, Berkeley's Haas/Lick)
+  match the signature list.** Re-ran with an owner-map counting a hit ONLY when the signature's owning
+  institution ≠ the one being scanned: Purdue 11% (ALL foreign — Purdue owns none of these), Cornell ~2%
+  (genuinely foreign — Berkeley/JHU marks), Berkeley + JHU 0%. Gold MIT's 1% is "Lincoln Laboratory" — a
+  REAL MIT unit, a true positive. Confirmed each Purdue hit by reading the description.
+- **Purdue's 11% rollup names + the four prior CRITICAL fabrications** are unchanged recurrences of named
+  classes (miss #2/#8/#9), not new.
+- `?page_size=100` 422s (server cap 50); `/institutions/{id}/posts` returns a bare list — paginated /
+  counted accordingly. `_standard` not in the public API (gold MIT shows NONE) — ranked on API-visible
+  signals only.
+
+**Rulebook changes: ONE (1 of ≤3).** Added a sub-bullet under miss #8 (the verified-true bullet) defining
+the cross-institution-COPY class + its three tells (imported geography, peer signature unit, re-labeled peer
+landmark) with the Purdue/Cornell evidence, and extended the miss #9 named-units programmatic-gate bullet to
+require scanning for those tells. This TIGHTENS the verified-true + named-unit gates (adds to them), loosens
+nothing. Confirmed not a duplicate: the existing miss #8 verified-true bullet covers an INVENTED named unit
+and a peer unit on an unrelated field, but NOT imported geography/place-names, a re-labeled peer landmark
+that names THIS institution, or the find-replace copy mechanism — all genuinely new tells with live evidence
+this run. Per the SAFETY RAILS (no-edit-without-evidence: 36 live Purdue rows + 7 Cornell rows THIS run;
+bounded ≤3; anti-churn). Post-edit self-review: re-read the whole SKILL.md — misses still numbered
+sequentially 1–9, the new sub-bullets sit under existing numbered misses (no renumber), no contradictions,
+all invariants intact.
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(behavioral, recurring)** the enricher keeps shipping SINGLE-dimension passes — now FIVE prefix-strips
+  (#659 Penn, #657 JHU, #654 Cornell, #652 Berkeley, #643 Princeton) PLUS #661 Purdue, a description-only
+  pass that fixed the prefix/classification but FABRICATED the descriptions. The multi-dimension-clear
+  capability is PROVEN (#650 UChicago, #648 Caltech); the lever is steering the enricher to finish ALL
+  dimensions per pass AND verify-true (not copy a peer). Not a rule.
+- **(carried, urgent — now 17 / 16 intervals)** Northwestern (synthesized reviews, runs 9→25) and Duke
+  (Pratt boilerplate reviews, runs 10→25) remain live and unrepaired; the CRITICAL backlog top is not being
+  cleared.
+- **(carried, urgent)** Stanford's Sibley-School + Freeman-Spogli fabricated units (runs 13/14) remain live
+  (re-confirmed run 25); the grader does not edit data.
+- **(carried from runs 2–24, unreconciled)** miss #9 says "FAIL on null/blank `department`" but gold MIT
+  ships null department and `manifest.py` marks `department` `required=False`. Reconciling would LOOSEN
+  verify-output → left intact per the rails.
+- **(carried from runs 8–24, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a stub
+  tell — valid for the ENRICHER but not API-visible to the grader. Left intact.
+
+**Backlog delta:** Purdue PROMOTED from HIGH row 6 to a new CRITICAL section (cross-institution-copy
+descriptions shipped live by #661 — 11% foreign-sig + 11% rollup names + empty deep content). Cornell HIGH
+row 3 updated to flag its ~2% imported peer marks. HIGH table renumbered (rows 7–15 → 6–14; Purdue removed).
+Header rewritten for run 25 (the NEW cross-institution-copy class called out up top; #661 framed as a
+description-only single-dimension regression). Added a Notes bullet "NEVER BUILD DESCRIPTIONS BY COPYING A
+PEER CATALOG…"; the single-dimension note updated (#661 is a description-only pass, the inverse of the five
+prefix-strips). Methodology (c) extended with the cross-institution-copy tells. NW persistence bumped to
+9→25, Duke to 10→25, Stanford to 14→25, Boston U re-confirmed run 25. CRITICAL now: Boston University
+(structure) + Stanford (fabricated units) + Northwestern + Duke (fabricated reviews) + **Purdue
+(cross-institution-copy descriptions)**. MEDIUM empty. CLEAN = MIT only.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv / `httpx` /
+Postgres — `.venv/bin/pytest` absent) — same constraint as runs 1–24. Changes are markdown-only (SKILL.md +
+backlog + this changelog; NO Python, no migrations, no app code), so the enricher code/data state is
+unaffected and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; the one rule added only TIGHTENS the verified-true + named-unit gates. The
+findings that could argue for loosening (null-department FAIL vs gold MIT; `_standard`-as-rendered-signal)
+remain logged for human review, not acted on.
+
+---
+
 ## 2026-06-17 — Run 24 (ONE NEW CLASS → ONE rule added: a literal CIP CODE left in `program_name`/`department` ("Psychology (CIP 42.99)") is the naked IPEDS-minting fingerprint the punctuation-keyed rollup scan MISSES — 28 Penn rows, 11%, fleet-unique. #659 Penn stripped the prefix 100%→0% — the FIFTH straight single-dimension prefix-strip pass (after JHU #657, Cornell #654, Berkeley #652, Princeton #643) — but left Penn's NAMES fabricated. Added 1 of ≤3 rules; updated backlog — Penn prefix live, names + CIP-codes remain)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28, no
