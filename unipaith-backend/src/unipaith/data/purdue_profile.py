@@ -37,9 +37,13 @@ Depth pass (2026-06-15, purdueprof3): merged ``DEPTH_REVIEWS`` for 56 coverable
 programs — completes Purdue coverable external_reviews (64/64).
 
 Catalog repair (2026-06-16, purdueprof4): de-fabricates the IPEDS breadth catalog —
-replaces 96% ``program_description`` template stubs with field-specific descriptions,
 maps CIP rollup titles to real Purdue degree names and owning departments, and
 stamps every node at ``STANDARD_VERSION`` 2.
+
+Description repair (2026-06-17, purdueprof5): replaces all name-prefixed
+``{program_name} is {role} at Purdue University's {school}`` classification stubs
+with field-specific clauses from ``purdue_field_descriptions.py`` (gold MIT/JHU
+pattern); 0% name-prefixed descriptions.
 """
 
 # ruff: noqa: E501
@@ -60,13 +64,14 @@ from unipaith.data.purdue_catalog_maps import (
     SLUG_PROGRAM_NAMES,
     clean_cip_field,
 )
+from unipaith.data.purdue_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
 from unipaith.data.purdue_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.purdue_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Purdue University-Main Campus"
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-17"
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -75,6 +80,10 @@ _TEMPLATE_STUB_RE = re.compile(
 )
 _CRED_PREFIX_RE = re.compile(
     r"^(Bachelor's|Master's|Professional program) in ",
+)
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is (an undergraduate major|a graduate degree|a doctoral program|"
+    r"a professional degree|a graduate certificate) at Purdue University's ",
 )
 
 
@@ -537,34 +546,56 @@ def _purdue_program_name(field_name: str, degree_type: str, school: str) -> str:
     return field
 
 
-def _purdue_description(
-    program_name: str,
-    degree_type: str,
-    school: str,
-    *,
-    delivery_format: str = "on_campus",
-) -> str:
-    """Field-specific description — Rice-style, never the degree-type template stub."""
-    role = {
-        "bachelors": "an undergraduate major",
-        "masters": "a graduate degree",
-        "phd": "a doctoral program",
-        "certificate": "a graduate certificate",
-        "professional": "a professional degree",
-    }.get(degree_type, "a degree program")
+def _field_from_program_name(name: str) -> str:
+    if name in ("Doctor of Pharmacy", "Doctor of Veterinary Medicine"):
+        return name
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Master of Science in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+    ):
+        if name.startswith(prefix):
+            return name[len(prefix) :].strip()
+    return clean_cip_field(name)
+
+
+def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
+    slug = spec.get("slug", "")
+    if slug in SLUG_DESCRIPTIONS:
+        return ""  # slug override handles description
+    if slug in SLUG_PROGRAM_NAMES:
+        return _field_from_program_name(SLUG_PROGRAM_NAMES[slug])
+    if raw_field:
+        return clean_cip_field(raw_field)
+    return clean_cip_field(spec.get("program_name", ""))
+
+
+def _purdue_description(spec: dict, *, field: str) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    if slug in SLUG_DESCRIPTIONS:
+        clause = SLUG_DESCRIPTIONS[slug]
+    else:
+        clause = FIELD_DESCRIPTIONS.get(field)
+        if not clause:
+            raise ValueError(
+                f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
+            )
+    fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
-    if delivery_format == "online":
+    if fmt == "online":
         delivery = " Delivered online."
-    elif delivery_format == "hybrid":
+    elif fmt == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{program_name} is {role} at Purdue University's {school}.{delivery}"
+    return f"{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     slug = spec["slug"]
     school = spec["school"]
     dtype = spec["degree_type"]
-    fmt = spec.get("delivery_format", "on_campus")
     raw_field = field_name or spec.get("_field_name") or spec.get("program_name", "")
 
     if slug in SLUG_PROGRAM_NAMES:
@@ -577,9 +608,8 @@ def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     elif not spec.get("department") or spec["department"] == raw_field:
         spec["department"] = _department_for(raw_field, school)
 
-    spec["description"] = _purdue_description(
-        spec["program_name"], dtype, school, delivery_format=fmt,
-    )
+    field = _field_from_spec(spec, clean_cip_field(raw_field) if raw_field else None)
+    spec["description"] = _purdue_description(spec, field=field)
 
 
 def _build_catalog() -> list[dict]:
@@ -623,6 +653,20 @@ if _new_templ:
     _catalog_errors.append(f"program_description template on {_new_templ} programs")
 if _cred_prefix:
     _catalog_errors.append(f"credential-prefix program_name on {_cred_prefix} programs")
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(f"classification-only descriptions on {_classification_stubs} programs")
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
 if _catalog_errors:
     raise RuntimeError(f"Purdue catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
