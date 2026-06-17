@@ -94,7 +94,7 @@ describe('Spec 18 · OfferPanel', () => {
 
   it('shows the waiting copy when no offer exists', () => {
     wrap(<OfferPanel application={baseApp({ status: 'submitted', decision: null })} />)
-    expect(screen.getByText(/Decisions usually arrive within 4–8 weeks/i)).toBeTruthy()
+    expect(screen.getByText(/Decisions usually arrive 4–8 weeks after submission/i)).toBeTruthy()
     expect(screen.getByRole('button', { name: /Record an offer/i })).toBeTruthy()
   })
 

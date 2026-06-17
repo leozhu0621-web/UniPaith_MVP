@@ -290,8 +290,8 @@ export default function CalendarPage() {
             title={hasActiveFilter ? 'Nothing matches these filters' : 'Your calendar is clear'}
             description={
               hasActiveFilter
-                ? 'No items match the current filters. Clear them to see your full timeline.'
-                : 'Deadlines and interviews land here as you save and apply to programs. Add a reminder or block off study time to get a head start.'
+                ? 'Clear them to see your full timeline.'
+                : 'Deadlines and interviews land here as you save and apply to programs.'
             }
             action={
               hasActiveFilter

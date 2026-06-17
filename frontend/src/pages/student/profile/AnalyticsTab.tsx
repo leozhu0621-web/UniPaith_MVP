@@ -118,7 +118,7 @@ export default function AnalyticsTab() {
           <p className="up-eyebrow mb-3">Progress over time</p>
           {progressData.length < 2 ? (
             <p className="text-sm text-muted-foreground py-8 text-center">
-              Not enough data to plot yet. Keep building your profile and this fills in.
+              Add a few records and this chart fills in.
             </p>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
@@ -203,7 +203,7 @@ export default function AnalyticsTab() {
         ) : peerMetrics.length === 0 ? (
           <Card pad={false} className="p-5">
             <p className="text-sm text-muted-foreground">
-              Not enough data to plot yet. Add a GPA or test score and we'll benchmark you against similar students.
+              Add a GPA or test score and we'll benchmark you against similar students.
             </p>
           </Card>
         ) : (

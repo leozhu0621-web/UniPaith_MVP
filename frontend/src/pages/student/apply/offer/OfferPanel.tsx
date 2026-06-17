@@ -171,7 +171,7 @@ export default function OfferPanel({ application }: { application: Application }
           </div>
           <p className="text-sm text-foreground font-medium mb-1">No offer yet</p>
           <p className="text-sm text-foreground max-w-sm mx-auto">
-            Decisions usually arrive within 4–8 weeks of submission. You'll be notified here.
+            Decisions usually arrive 4–8 weeks after submission.
           </p>
           <Button
             variant="tertiary"

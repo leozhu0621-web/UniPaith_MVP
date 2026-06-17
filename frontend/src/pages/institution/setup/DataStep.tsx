@@ -24,7 +24,7 @@ export default function DataStep({
     <Card pad={false} className="p-5 sm:p-6">
       <h2 className="text-lg font-semibold text-foreground">Upload data</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Upload admissions history or a prospect list to power analytics + matching. Optional — you can always do this later.
+        Upload admissions history or a prospect list to power analytics + matching. Optional — you can do this later.
       </p>
 
       {hasData ? (
@@ -34,7 +34,7 @@ export default function DataStep({
             <p className="font-medium text-foreground">
               {datasetCount} dataset{datasetCount === 1 ? '' : 's'} uploaded
             </p>
-            <p className="text-muted-foreground">Your analytics + matching will use this data.</p>
+            <p className="text-muted-foreground">Powering your analytics + matching.</p>
           </div>
         </div>
       ) : (
@@ -43,7 +43,7 @@ export default function DataStep({
             <Database size={22} />
           </span>
           <p className="max-w-sm text-sm text-muted-foreground">
-            Bring admissions history or a prospect list. We&apos;ll map the columns and keep it private to your institution.
+            Bring admissions history or a prospect list — we&apos;ll map the columns and keep it private to your institution.
           </p>
           <Button variant="secondary" onClick={onOpenUpload} className="inline-flex items-center gap-2">
             <Upload size={15} /> Upload data

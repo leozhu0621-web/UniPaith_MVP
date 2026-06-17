@@ -60,7 +60,7 @@ describe('Spec 40 · Recruitment CRM', () => {
     renderPage()
     await waitFor(() =>
       expect(
-        screen.getByText('Import a prospect list or capture leads at a fair to start.'),
+        screen.getByText('Import a prospect list or capture leads at a fair.'),
       ).toBeInTheDocument(),
     )
   })

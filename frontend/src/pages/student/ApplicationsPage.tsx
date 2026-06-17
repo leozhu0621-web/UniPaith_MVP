@@ -414,7 +414,7 @@ export default function ApplicationsPage() {
       {!acceptedApp && offerApps.length === 0 && awaitingDecisionApps.length > 0 && (
         <Card pad={false} className="p-4 mb-6 bg-muted border-0 flex items-center justify-between gap-4">
           <p className="text-sm text-foreground">
-            Decisions usually arrive within 4–8 weeks of submission. You'll be notified here.
+            Decisions usually arrive 4–8 weeks after submission.
           </p>
           <div className="shrink-0">
             <StatTile label="Awaiting a decision" value={awaitingDecisionApps.length} />

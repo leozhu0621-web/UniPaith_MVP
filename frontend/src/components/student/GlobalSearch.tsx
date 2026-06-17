@@ -41,12 +41,12 @@ const QUICK_NAV = [
   { label: 'Chat', sub: 'Build your profile with Uni', to: '/s', icon: Compass },
   { label: 'Discover', sub: 'Programs & schools for you', to: '/s/explore', icon: Target },
   { label: 'Updates', sub: 'Posts, events, and peers — in Discover', to: '/s/explore?tab=updates', icon: Newspaper },
-  { label: 'My Space', sub: 'Home — what to do next', to: '/s/space', icon: Backpack },
+  { label: 'My Space', sub: 'Your home — what to do next', to: '/s/space', icon: Backpack },
   { label: 'Applications', sub: 'Portfolio & deadlines', to: '/s/applications', icon: FolderKanban },
   { label: 'Prep', sub: 'Workshops & prompt library', to: '/s/prep', icon: PenLine },
-  { label: 'Calendar', sub: 'Deadlines & interviews timeline', to: '/s/calendar', icon: CalendarDays },
+  { label: 'Calendar', sub: 'Deadlines & interviews', to: '/s/calendar', icon: CalendarDays },
   { label: 'Messages', sub: 'Threads with institutions', to: '/s/messages', icon: MessageSquare },
-  { label: 'Profile', sub: 'Your durable record', to: '/s/profile', icon: User },
+  { label: 'Profile', sub: 'Your record across every stage', to: '/s/profile', icon: User },
   { label: 'Saved', sub: 'Programs you bookmarked', to: '/s/saved', icon: Bookmark },
   { label: 'Settings', sub: 'Account & preferences', to: '/s/settings', icon: Settings },
 ]
@@ -323,13 +323,13 @@ export function CommandPalette() {
           })}
           {searching && isError && (
             <li className="px-3 py-6 text-center text-sm">
-              <span className="text-muted-foreground">Couldn&apos;t search right now. </span>
+              <span className="text-muted-foreground">We couldn&apos;t search. Please </span>
               <button
                 type="button"
                 onClick={() => { refetchProg(); refetchInst() }}
                 className="font-medium text-secondary hover:underline"
               >
-                Try again
+                try again
               </button>
             </li>
           )}

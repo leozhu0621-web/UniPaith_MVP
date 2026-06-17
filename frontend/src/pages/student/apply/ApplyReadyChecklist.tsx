@@ -79,8 +79,8 @@ export default function ApplyReadyChecklist({ programId }: { programId?: string 
 
       <p className="text-xs text-muted-foreground">
         {ready
-          ? "Your profile signals satisfy this program’s requirements."
-          : "Complete the open items above to clear the engine’s apply-ready gate."}
+          ? "Your profile meets this program’s requirements."
+          : "Complete the open items above to be ready to submit."}
       </p>
     </Card>
   );

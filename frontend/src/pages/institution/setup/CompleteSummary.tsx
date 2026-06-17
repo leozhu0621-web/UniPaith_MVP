@@ -41,7 +41,7 @@ export default function CompleteSummary({
           {institution?.name ? `${institution.name} is set up` : 'Your institution is set up'}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Everything below is editable any time — this page is no longer required.
+          Everything below is editable any time.
         </p>
       </div>
 

@@ -40,7 +40,7 @@ export default function TodaysFocus({ action, onboardingComplete }: Props) {
         <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
           <Sparkles size={15} className="text-secondary" aria-hidden /> You're all caught up
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">Nothing urgent right now. A good moment to get ahead.</p>
+        <p className="mt-1 text-xs text-muted-foreground">Nothing urgent right now.</p>
         <button
           onClick={() => navigate(cta.to)}
           className="ui-btn mt-3 inline-flex items-center gap-1.5 rounded-md bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground"

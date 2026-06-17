@@ -72,7 +72,7 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
     const n = items.length
     const ok = await confirmDialog({
       title: `Remove all ${n} program${n === 1 ? '' : 's'} from compare?`,
-      body: 'This empties the compare tray. You can re-add programs from any card.',
+      body: 'You can re-add programs from any card.',
       confirmLabel: 'Remove all',
       destructive: true,
     })
@@ -209,7 +209,7 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
             <Coachmark
               id="compare"
               title="Compare side by side"
-              body="Add 2+ programs, then compare structure, cost, access, and outcomes in one view."
+              body="Add 2+ programs to compare structure, cost, access, and outcomes side by side."
               placement="top"
             >
               <Button size="sm" variant="secondary" onClick={() => compareMut.mutate()} disabled={items.length < 2 || compareMut.isPending} loading={compareMut.isPending}>

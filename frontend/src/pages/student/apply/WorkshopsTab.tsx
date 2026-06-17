@@ -68,9 +68,8 @@ export default function WorkshopsTab() {
       <header className="mb-4">
         <h2 className="text-h3 text-foreground">Workshops</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Coaching on essays, interviews, and test prep — <strong>feedback-only</strong>. We score
-          your draft, flag structural issues, and surface what&apos;s missing — we never write your
-          essay for you.
+          Feedback on essays, interviews, and test prep. We score your draft and flag what&apos;s
+          missing — we never write it for you.
         </p>
       </header>
 

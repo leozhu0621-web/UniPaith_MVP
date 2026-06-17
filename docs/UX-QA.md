@@ -12,7 +12,10 @@
 
 1. **Name the thing, don't address the user.** Titles and labels are plain nouns — *Profile, Applications, Saved, Offers, Settings* — never *Your record / Your portfolio / Your shortlist*. (Possessive is fine *inside a sentence*: "personalize **your** matches" — just not as a standalone label.)
 2. **Celebrate real milestones plainly.** Earned warmth stays — a greeting by name, *"You're in!"*, *"You're enrolled!"*. No emoji, no manufactured cheer on mundane chrome. The gold beat is the celebration; the words stay grounded.
-3. **Say it once — or not at all.** A self-explanatory title stands alone (*Saved*, *Messages*). Add one supporting line only when it carries information the title can't. Never a paragraph. Cut whole redundant lines, not just words.
+3. **Say it once — or not at all (news standard).** A self-explanatory title stands alone (*Saved*, *Messages*). Add one supporting line only when it carries information the title can't. Hold every line to a news standard: lead with the point, one tight sentence, active voice, cut anything that doesn't add information. **No motivational filler, no second sentence that restates the first, no passive explanation where an action belongs.**
+   - *"Nothing urgent right now. A good moment to get ahead."* → **"Nothing urgent right now."** (the second sentence is filler)
+   - *"Match scores improve once we know your grades"* → **"Add your grades to sharpen your matches."** (lead with the action, not the passive explanation)
+   - Cut needless words *without losing information* — tighten, don't gut.
 4. **Talk like a counselor, not a chatbot.** No AI-speak: *dive in, delve, unlock your potential, empower, seamless, supercharge, "I'd be happy to", "Great question."* Direct and honest — "fit, not fame."
 5. **Never blame; be courteous.** Keep the gesture words — *"Please try again,"* not a clipped *"Try again."* Every error and empty state ends with a way forward. (See `lib/copy.ts`.)
 6. **Clarity beats brevity when an action is involved.** An action item names the real action, spells out the object, and shows the deadline when that's the urgency — *"Respond to Carthage's offer · Due Jun 24,"* never *"Respond to your offer — HCI MS."*

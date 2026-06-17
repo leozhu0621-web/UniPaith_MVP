@@ -14,7 +14,7 @@ export default function WeekRibbon(inputs: WeekInputs) {
     <div className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2">
       <Sparkles size={13} className="shrink-0 text-secondary" aria-hidden />
       {c.total === 0 ? (
-        <p className="text-xs text-muted-foreground">A quiet week so far — pick one thing below to move forward.</p>
+        <p className="text-xs text-muted-foreground">A quiet week so far — pick one thing below.</p>
       ) : (
         <p className="text-xs text-foreground">
           <span className="font-semibold">This week</span>

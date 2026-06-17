@@ -54,7 +54,7 @@ export default function TeamStep({
     <Card pad={false} className="p-5 sm:p-6">
       <h2 className="text-lg font-semibold text-foreground">Invite your team</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Add colleagues and assign roles. Optional — you can invite anyone later from Settings.
+        Add colleagues and assign roles. Optional — invite anyone later from Settings.
       </p>
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end">

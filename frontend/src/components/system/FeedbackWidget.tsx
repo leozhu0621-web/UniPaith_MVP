@@ -34,7 +34,7 @@ export default function FeedbackWidget() {
       setMessage('')
       setOpen(false)
     } catch {
-      showToast("Couldn't send your feedback. Try again.", 'error')
+      showToast("We couldn't send your feedback. Please try again.", 'error')
     } finally {
       setSubmitting(false)
     }

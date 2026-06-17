@@ -241,7 +241,7 @@ export default function OnboardingPage() {
           {step === 0 && (
             <StepShell
               title={firstName ? `Let's set up your space, ${firstName}` : "Let's set up your space"}
-              subtitle="A few taps and your matches, deadlines, and Uni are personalized."
+              subtitle="A few taps to personalize your matches and deadlines."
               center
             >
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary/10 text-secondary mb-2 animate-scale-in">
@@ -271,7 +271,7 @@ export default function OnboardingPage() {
           )}
 
           {step === 2 && (
-            <StepShell title="Which fields interest you?" subtitle="Pick as many as you like — you can refine later.">
+            <StepShell title="Which fields interest you?" subtitle="Pick as many as you like.">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 stagger-list" role="group" aria-label="Fields of interest">
                 {INTEREST_TRACKS.map((o) => (
                   <OptionCard
@@ -299,7 +299,7 @@ export default function OnboardingPage() {
           )}
 
           {step === 3 && (
-            <StepShell title="What degree level?" subtitle="We'll match you to the right tier of programs.">
+            <StepShell title="What degree level?">
               <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Degree level">
                 {DEGREE_OPTIONS.map((o) => (
                   <OptionCard
@@ -331,7 +331,7 @@ export default function OnboardingPage() {
           )}
 
           {step === 5 && (
-            <StepShell title="Any constraints to respect?" subtitle="Both optional — budget and where you'd consider going.">
+            <StepShell title="Any constraints to respect?" subtitle="Both optional.">
               <div className="space-y-6">
                 <fieldset>
                   <legend className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2.5">
@@ -484,15 +484,15 @@ function BuildMoment({
   const degreeLabel = DEGREE_OPTIONS.find((o) => o.value === answers.degree_level)?.label
   const interestCount = (answers.interests ?? []).length
   const personalized: string[] = [
-    stageLabel ? `Journey staged: ${stageLabel.toLowerCase()}` : 'Journey staged with Uni',
+    stageLabel ? `Stage: ${stageLabel.toLowerCase()}` : 'Stage set with Uni',
     interestCount > 0
-      ? `${interestCount} field${interestCount === 1 ? '' : 's'} of interest wired into matching`
-      : 'Interest discovery queued for Uni',
-    degreeLabel ? `Scouting ${degreeLabel} programs` : 'Degree level open — Uni will help you pick',
-    answers.intake_term ? `Deadline clock set for ${answers.intake_term}` : 'Timeline flexible for now',
+      ? `${interestCount} field${interestCount === 1 ? '' : 's'} added to matching`
+      : 'Interests open — Uni will help you find them',
+    degreeLabel ? `Matching ${degreeLabel} programs` : 'Degree level open — Uni will help you pick',
+    answers.intake_term ? `Deadlines tracked for ${answers.intake_term}` : 'Timeline flexible for now',
     answers.budget_band || (answers.geos ?? []).length > 0
-      ? 'Budget & location preferences saved'
-      : 'No constraints — the whole map is open',
+      ? 'Budget and location saved'
+      : 'No constraints set',
   ]
 
   const SIZE = 120

@@ -59,7 +59,7 @@ export default function AIConfigCard({ config, onChanged }: AIConfigCardProps) {
       <SettingsSection
         icon={Sparkles}
         title="AI-assistive features"
-        description="Turn each AI surface on or off for your institution. Humans always keep the final action — AI only drafts and suggests (Spec 37)."
+        description="Turn each AI surface on or off. Humans always keep the final action — AI only drafts and suggests (Spec 37)."
         action={<AIBadge label="AI assist" />}
       >
         {SURFACE_META.map(s => {

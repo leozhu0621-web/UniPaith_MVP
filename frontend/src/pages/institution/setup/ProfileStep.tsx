@@ -111,7 +111,7 @@ export default function ProfileStep({
     <Card pad={false} className="p-5 sm:p-6">
       <h2 className="text-lg font-semibold text-foreground">Institution profile</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        The basics students see first. You can add more in Settings later.
+        The basics students see first — add more in Settings later.
       </p>
 
       <form onSubmit={onSubmit} className="mt-5 space-y-4">

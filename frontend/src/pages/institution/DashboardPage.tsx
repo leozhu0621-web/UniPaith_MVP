@@ -230,7 +230,7 @@ export default function DashboardPage() {
         </p>
         <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Admissions intake for the active cycle — queues, integrity, inquiries, and yield at a glance.
+          Active-cycle intake — queues, integrity, inquiries, and yield.
         </p>
       </div>
 

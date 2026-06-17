@@ -37,8 +37,7 @@ export default function RecruitmentPage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Recruitment</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage prospects before they apply — travel, fairs, and territories. The top of your
-          funnel.
+          Manage prospects before they apply — travel, fairs, and territories.
         </p>
         {summary && !summary.is_empty && (
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">

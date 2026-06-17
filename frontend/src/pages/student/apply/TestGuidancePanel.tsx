@@ -128,8 +128,7 @@ export default function TestGuidancePanel() {
         </div>
 
         <div className="text-xs text-muted-foreground">
-          You'll get a structured prep plan (small / medium / large gap). We don't generate practice
-          questions — that's your prep service's job.
+          You'll get a structured prep plan by gap size — no practice questions.
         </div>
 
         <div className="flex justify-end">

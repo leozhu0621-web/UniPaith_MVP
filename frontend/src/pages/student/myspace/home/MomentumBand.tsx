@@ -17,7 +17,7 @@ import type { WeekInputs } from './weekActivity'
 // (moved verbatim from the retired JourneyChecklistCard).
 const STEP_SPECS: { key: string; label: string; sub: string; to: string }[] = [
   { key: 'basic_profile', label: 'Add your basic info', sub: 'Name and nationality unlock everything else', to: '/s/profile' },
-  { key: 'academics', label: 'Add an academic record', sub: 'Match scores improve once we know your grades', to: '/s/profile?tab=academics' },
+  { key: 'academics', label: 'Add an academic record', sub: 'Add your grades to sharpen your matches', to: '/s/profile?tab=academics' },
   { key: 'test_scores', label: 'Add a test score', sub: 'SAT, GRE, IELTS — whatever you have', to: '/s/profile?tab=academics' },
   { key: 'activities', label: 'Add an activity', sub: 'Clubs, projects, anything you give time to', to: '/s/profile?tab=experience' },
   { key: 'online_presence', label: 'Link your LinkedIn or portfolio', sub: 'Links strengthen your other entries', to: '/s/profile?tab=experience' },
@@ -76,7 +76,7 @@ export default function MomentumBand({ stage, week, className }: Props) {
               <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
                 <ListChecks size={15} className="text-secondary" aria-hidden /> Set up your space
               </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Each step sharpens your matches — pick up wherever you like.</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Each step sharpens your matches.</p>
             </div>
             {done.size > 0 && (
               <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">

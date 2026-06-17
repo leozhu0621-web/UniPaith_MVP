@@ -230,7 +230,7 @@ export default function InterviewPracticePanel() {
                   setResponseText(e.target.value)
                   if (draftRestored) setDraftRestored(false)
                 }}
-                placeholder="Paste your answer. We'll coach delivery, structure, and specificity — no rewrite."
+                placeholder="Paste your answer — we'll coach it, never rewrite it."
               />
             </div>
           </div>
@@ -262,7 +262,7 @@ export default function InterviewPracticePanel() {
 
       {!run && !practiceMut.isPending && !practiceMut.isError && (
         <EmptyHint>
-          Pick a type for questions to rehearse — or paste a response below for coaching.
+          Pick a type for practice questions, or paste a response for coaching.
         </EmptyHint>
       )}
 

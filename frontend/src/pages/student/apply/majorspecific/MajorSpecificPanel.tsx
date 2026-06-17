@@ -82,8 +82,8 @@ export default function MajorSpecificPanel() {
           <Compass size={18} /> Major-specific readiness
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Rate your readiness in the field you&apos;re targeting. We score your fit, map your
-          coverage, and suggest what evidence to add — we never fill it in for you.
+          Rate your readiness in your target field. We score your fit and suggest evidence to add —
+          we never fill it in for you.
         </p>
       </header>
 

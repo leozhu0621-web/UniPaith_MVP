@@ -64,8 +64,8 @@ export default function GraduateIntentCard({ applicationId }: { applicationId: s
         <h3 className="text-sm font-semibold text-foreground">Research &amp; advisors</h3>
       </div>
       <p className="mb-4 text-xs text-muted-foreground">
-        Graduate admissions is faculty-driven. Share your research interests and the advisors whose
-        work fits yours — the department uses this to surface advisors who fit you.
+        Share your research interests and target advisors — the department uses this to match you
+        with faculty who fit.
       </p>
       <div className="space-y-4">
         <TagInput

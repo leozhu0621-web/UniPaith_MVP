@@ -212,7 +212,7 @@ export default function CohortComparisonPage({ embedded = false }: { embedded?: 
 
       {/* Comparison Table */}
       {selectedIds.length < 2 ? (
-        <EmptyState icon={<Users size={40} />} title="Select applicants" description="Pick 2 or more applicants from the same program to see their side-by-side comparison." />
+        <EmptyState icon={<Users size={40} />} title="Select applicants" description="Pick 2 or more applicants from the same program to compare." />
       ) : cohortQ.isLoading ? (
         <Skeleton className="h-80" />
       ) : cohortQ.isError ? (
