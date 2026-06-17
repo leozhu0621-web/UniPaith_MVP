@@ -150,3 +150,15 @@ def test_catalog_has_no_padding_stubs():
     assert all(spec.get("department") for spec in j.PROGRAMS), "every program needs a department"
     names = [spec["program_name"] for spec in j.PROGRAMS]
     assert len(names) == len(set(names)), "duplicate program_name values"
+    classif = sum(
+        1
+        for prog in j.PROGRAMS
+        if j._CLASSIFICATION_STUB_RE.match(prog.get("description") or "")
+    )
+    assert classif == 0, f"{classif} programs still carry classification-only descriptions"
+    name_prefix = sum(
+        1
+        for prog in j.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"

@@ -38,6 +38,10 @@ Description depth pass (2026-06-16, jhuprof5): replaces all classification-only
 ``jhu_field_descriptions.py``; drops fabricated Pre-Medicine IPEDS rows; adds
 Carey MS Business Analytics review (46/46 coverable programs reviewed).
 
+Description repair (2026-06-17, jhuprof6): drops the ``{program_name}:`` prefix
+from every description so clauses open on field-specific facts (gold MIT/Chicago
+pattern); 0% name-prefixed descriptions.
+
 Honest caveats stamped into ``_standard.omitted``: JHU does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
 schools, so those two institution outcome fields are omitted. Most graduate/professional
@@ -454,7 +458,7 @@ def _jhu_description(
         delivery = " Delivered online."
     elif delivery_format == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{program_name}: {clause}{delivery}"
+    return f"{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -528,6 +532,15 @@ _classification_stubs = sum(
 )
 if _classification_stubs:
     _catalog_errors.append(f"classification-only descriptions on {_classification_stubs} programs")
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
 if _catalog_errors:
     raise RuntimeError(f"JHU catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
