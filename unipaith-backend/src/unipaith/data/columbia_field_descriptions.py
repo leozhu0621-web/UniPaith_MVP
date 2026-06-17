@@ -140,7 +140,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Chinese, Japanese, and Korean language and cultural studies at Columbia College and the Faculty of Arts and Sciences with the Center for East Asian Studies and study-abroad pathways."
     ),
     "Ecology, Evolution, Systematics, and Population Biology": (
-        "Field ecology, evolutionary genomics, and conservation biology at Columbia College and the Faculty of Arts and Sciences with research at Columbia's Morris Arboretum and global field-station partnerships."
+        "Field ecology, evolutionary genomics, and conservation biology at Columbia College and the Faculty of Arts and Sciences with research at Black Rock Forest and Lamont-Doherty field partnerships."
     ),
     "Economics": (
         "Columbia College and the Faculty of Arts and Sciences and Columbia Business School economics is empirically rigorous — faculty research spans health, trade, development, and behavioral economics with the Columbia Institute for Economic Research."
@@ -167,7 +167,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Specialized engineering topics and interdisciplinary design projects across Columbia's college of engineering research ecosystem."
     ),
     "English Language and Literature, General": (
-        "Columbia College and the Faculty of Arts and Sciences English combines literary history, creative writing, and rhetoric with Kelly Writers House programming and New York City literary community ties."
+        "Columbia College and the Faculty of Arts and Sciences English combines literary history, creative writing, and rhetoric with the Undergraduate Writing Program and New York City literary community ties."
     ),
     "Environmental/Environmental Health Engineering": (
         "Air and water quality, exposure science, and environmental health engineering linking CEE and the School of Public Health."
@@ -182,7 +182,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Columbia Business School finance is among the deepest anywhere — coursework spans corporate finance, asset management, and quantitative investing with Wall Street recruiting pipelines."
     ),
     "Fine and Studio Arts": (
-        "Columbia College and the Faculty of Arts and Sciences fine arts combines drawing, painting, printmaking, and new media with Institute of Contemporary Art partnerships and New York City gallery culture."
+        "Columbia College and the Faculty of Arts and Sciences fine arts combines drawing, painting, printmaking, and new media with Wallach Art Gallery exhibitions and New York City gallery culture."
     ),
     "Genetics": (
         "Genomics and genetic-analysis training at Faculty of Arts & Sciences connects to Columbia Gene Therapy and precision-medicine institutes."
@@ -224,7 +224,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Columbia actuarial and risk-management coursework spans property-casualty modeling, enterprise risk, and regulatory finance through Columbia Business School and IEOR."
     ),
     "International Relations and National Security Studies": (
-        "Columbia College and the Faculty of Arts and Sciences political science and Perry World House programming examine diplomacy, security studies, and global governance with Washington, D.C. internship access."
+        "Columbia College and the Faculty of Arts and Sciences political science and the Saltzman Institute of War and Peace Studies examine diplomacy, security studies, and global governance with Washington, D.C. internship access."
     ),
     "Journalism": (
         "Columbia's Nieman Foundation for Journalism hosts mid-career fellows, while FAS expository writing and history coursework supports narrative nonfiction and investigative reporting skills."
@@ -284,7 +284,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Columbia College and the Faculty of Arts and Sciences music combines musicology, theory, and performance with New York City orchestra partnerships and campus ensemble opportunities."
     ),
     "Natural Resources Conservation and Research": (
-        "Environmental science and resource-management coursework at Columbia College and the Faculty of Arts and Sciences addresses conservation biology, sustainability, and policy with Morris Arboretum field work."
+        "Environmental science and resource-management coursework at Columbia College and the Faculty of Arts and Sciences addresses conservation biology, sustainability, and policy with Lamont-Doherty and Black Rock Forest field work."
     ),
     "Neurobiology and Neurosciences": (
         "Columbia neuroscience spans cellular, cognitive, and systems levels across Columbia College and the Faculty of Arts and Sciences, Vagelos College of Physicians and Surgeons, and the Mahoney Institute of Neurological Sciences."
@@ -293,7 +293,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Human nutrition, metabolic biology, and public-health dietetics through Columbia Public Health and metabolic biology research."
     ),
     "Operations Research": (
-        "Optimization, stochastic modeling, and analytics in the IEOR department serving engineering, Haas, and CDSS students."
+        "Optimization, stochastic modeling, and analytics in Columbia's Industrial Engineering and Operations Research (IEOR) department, spanning Columbia Engineering, Columbia Business School, and the Data Science Institute."
     ),
     "Pharmacology and Toxicology": (
         "Drug mechanisms, toxicology, and pharmaceutical sciences linking chemistry, MCB, and public-health research."
@@ -314,7 +314,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Human physiology, disease mechanisms, and pathobiology in MCB and integrative biology research labs."
     ),
     "Political Science and Government": (
-        "Columbia College and the Faculty of Arts and Sciences political science combines American politics, comparative methods, and international relations with Perry World House and D.C. internship access."
+        "Columbia College and the Faculty of Arts and Sciences political science combines American politics, comparative methods, and international relations with the Saltzman Institute and D.C. internship access."
     ),
     "Psychology, General": (
         "Columbia College and the Faculty of Arts and Sciences psychology is among the largest majors, with research tracks in cognitive, developmental, social, and clinical science in campus psychology labs."
@@ -353,7 +353,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Laboratory-based psychology at Columbia College and the Faculty of Arts and Sciences uses behavioral, cognitive, and neuroscience methods in Columbia's psychology department research institutes."
     ),
     "Rhetoric and Composition/Writing Studies": (
-        "Columbia College and the Faculty of Arts and Sciences writing and rhetoric courses support Kelly Writers House programming and professional communication across disciplines."
+        "Columbia College and the Faculty of Arts and Sciences writing and rhetoric courses support the University Writing requirement and professional communication across disciplines."
     ),
     "Romance Languages, Literatures, and Linguistics": (
         "French, Spanish, and Italian language and literature at Columbia College and the Faculty of Arts and Sciences include study-abroad and translation workshops through Columbia's language departments."
