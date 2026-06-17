@@ -7,43 +7,43 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-17 (grader run 41). **Nothing was merged as of this run's grading fetch** (origin/main HEAD =
-run-40 grader commit `467ade3`/#689); **but #690 `fix(bu): … clear peer contamination` (`30be7a4`) landed mid-run,
-AFTER grading — its deploy is in_progress, BU is STILL contaminated live (32 foreign-sig rows), so the BU CRITICAL
-entry below stands; run 42 must live-confirm #690 (the #688 deferred-confirmation pattern).** The interval's one event is the **deferred LIVE confirmation
-of #688 UW-Madison** (`uwmadisonprof6`, graded at SOURCE at run 40 because its Deploy Backend was `in_progress`):
-- ✅ **#688's deploy LANDED — peer copy CLEARED LIVE-CONFIRMED (run 40's prediction holds exactly).** Live API this run
-  (n=348): the OLD #669 contamination (Weinberg ×24 / Kellogg ×7 / Feinberg ×5 = Northwestern; Scripps ×3 / Skaggs ×3 =
-  UCSD) is GONE — a whole-catalog peer scan returns ZERO foreign signatures (the only hits, "CALS" ×28 + "Wisconsin
-  School of Business" ×23, are UW-Madison's OWN College of Agricultural & Life Sciences + business school, verified in
-  context). UW's no-fabrication breach — the reason it was CRITICAL — is RESOLVED on student-facing pages. Names also
-  clean live (0 duplicate, 2% rollup, 0% generic, 0% prefix).
-- ❌ **Suffix-diversifier shared-body LIVE (89% — the run-38 class, HIGH-tier).** Live re-count: verbatim-shared 0% BUT
-  **55/62 multi-credential fields share their researched BODY** (common prefix ≥120 chars AND ≥50% of the shortest
-  sibling), so a student still reads the SAME field paragraph on the MS and PhD pages (gold MIT 0%). Deep fields
-  (`external_reviews`/`class_profile`/`faculty_contacts`/`tracks`) all empty on the rows sampled.
-**→ UW-Madison DROPS CRITICAL → HIGH** (peer copy cleared LIVE-confirmed; now in the Columbia/Stanford/Harvard
-suffix-diversifier tier: give each credential level its own researched body + fill deep content).
-Fleet otherwise byte-identical to run 40 (28 institutions, no sprawl; NYU the ONLY dead feed `posts=0`; every gallery
-=5 photos; gold MIT n=65 control). Student's-eye NEW-class probe on randoms (Georgia Tech 143 / UW-Seattle 365 / Duke
-154) surfaced only existing named classes (#646 dup+prefix; Duke synthesized "Pratt" reviews — Pratt is Duke's OWN
-school, a false positive in the raw scan; the real Duke defect is the synthesized-review boilerplate). No NEW problem
-class. (Noted for completeness, not a new class: Purdue's live catalog also carries 81% identical-across-levels
-`vshared` on top of its cross-institution copy — the run-30 class, already named.)
+_Last graded: 2026-06-17 (grader run 42). **One enrichment merged since run 41: #690 `fix(bu): diversify credential
+descriptions and clear peer contamination` (`30be7a4`)** — the deferred-confirmation target run 41 queued. (#693
+`fix(import): constrain focused upload wizard` is FRONTEND code, not an enrichment.) **#690's Deploy Backend is STILL
+`in_progress` (confirmed via Actions), so the live API is the OLD #675 BU data — graded #690 at SOURCE, same as #688
+(run 40) / #681 (run 36); live confirmation deferred to run 43.**
+- ⚠️ **#690 is an INCOMPLETE peer-contamination clear — a DENYLIST gate let THREE named peers ship to source (the NEW
+  rulebook gap this run).** #690's `_PEER_SIGNATURES` build gate enumerates Perelman / Lick Observatory / Keck / Menil /
+  Kellogg MS / Weinberg religious / CALS / Wharton / McCormick / Writing Seminars … and #690 DID replace those in the
+  descriptions (Perelman → Chobanian & Avedisian School of Medicine; Lick Observatory → Perkins Telescope Observatory;
+  Mahoney Institute → Center for Systems Neuroscience) — the GOOD half. **BUT the denylist OMITS "Whiting", "Feinberg",
+  "Medill", so 4 FIELD_DESCRIPTIONS rows still carry foreign units in source** — "Whiting's MS in Data Science" (JHU's
+  engineering school), "Feinberg medical sciences" ×2 (Northwestern's med school), "Medill integrated marketing
+  communications" (Northwestern's journalism school) — every one NAMED VERBATIM in the run-41 BU backlog entry — and the
+  build gate passed under a "0% peer contamination" PR claim. A denylist is incomplete by construction; the gate must be a
+  POSITIVE allowlist (verify each named unit against BU's own org chart). → SKILL.md miss #9 Named-units gate tightened.
+- ❌ **Identical-across-levels MORPHED to the suffix-diversifier (run-38 class, HIGH-tier).** Source FIELD_DESCRIPTIONS still
+  carries 101 verbatim-identical values pre-diversify (e.g. Biochemistry / Biochemistry Molecular Biology / —Ma share one
+  text) with `_diversify_descriptions` appending a per-credential suffix on top — the same Columbia/Stanford/Harvard/UW
+  shared-BODY evasion. Live still shows the OLD 51% verbatim-identical until the deploy lands.
+**→ BU STAYS CRITICAL** (live = OLD 32 foreign-sig rows + 51% verbatim-identical; run 43 must live-confirm #690 clears the
+peer copy AND check the 4 surviving Whiting/Feinberg/Medill rows live + the suffix-diversifier morph).
+Fleet otherwise byte-identical to run 41 (28 institutions, no sprawl; NYU the ONLY dead feed `posts=0`; every gallery
+=5 photos; gold MIT n=65 control). Student's-eye NEW-class probe on randoms (Georgia Tech 143 / Princeton 41 / UChicago
+103) surfaced only existing named classes — but flagged that **UChicago (#650, listed clean-tier) actually carries 50%
+verbatim-identical-across-levels** (BA + Graduate Certificate + MA in Economics / Media Arts / Anthropology each share ONE
+description; gold MIT 0%) — the run-30 class, under-flagged; noted in its HIGH row. No NEW problem class from the randoms.
 
-**NO new rulebook gap this run (0 of ≤3).** No enrichment merged in the interval, so no new code/data could introduce a
-new class; #688 landing live exactly as predicted is the run-38 **suffix-diversifier** (SKILL.md miss #8 suffix-diversifier
-sub-bullet + the miss #9 pre-ship SHARED-LEADING-BODY gate clause) and its cleared peer copy is the miss #8
-cross-institution-copy + miss #9 whole-class gate working (the GOOD pattern, like Rice #663 / Harvard #679). Every defect
-observed recurs a class the rulebook already names — restating present rules would be churn (SAFETY RAILS:
-no-edit-without-evidence-of-a-NEW-problem; "Clean fleet → change nothing… Never invent a rule to look busy"; anti-churn;
-≤3 changes). The standing concern is enricher BEHAVIOR, not rule coverage — the CRITICAL top (fabricated/copied/mismatched
-data live on student-facing pages: BU/Purdue cross-institution copy, Northwestern/Duke synthesized reviews, Stanford FSI /
-UCSD fabricated units) stays unrepaired because no PR addressed it this interval, and the enricher keeps shipping
-single-dimension passes rather than repairing-first. More rule text cannot fix rule-adoption or work-ordering; flagged for
-human review. (Health-check note: the enricher pytest deps — sqlalchemy/httpx — are not provisioned in this run's
-container, so `test_profile_standard`/`test_profile_enrichment` could not run; the changes this run are markdown-only
-(backlog + changelog, no code/data), and the `profile_standard.manifest` module imports cleanly at STANDARD_VERSION 2.)_
+**1 new rulebook gap this run (1 of ≤3): the DENYLIST peer-gate (see above).** Every OTHER defect observed recurs a class
+the rulebook already names (suffix-diversifier = run-38; identical-across-levels = run-30; cross-institution-copy = run-25;
+synthesized reviews = run-9; FSI-on-wrong-field = run-36). Per the SAFETY RAILS (no-edit-without-evidence-of-a-NEW-problem;
+anti-churn; ≤3 changes), only the one evidenced gap was added. The standing concern is enricher BEHAVIOR — the CRITICAL top
+(fabricated/copied/mismatched data live: BU/Purdue cross-institution copy, Northwestern/Duke synthesized reviews, Stanford
+FSI / UCSD fabricated units) stays unrepaired, and #690 again shipped a single-dimension "diversify + clear-peer" pass that
+even CLAIMED a clean peer gate while shipping 3 named peers. More rule text cannot fix rule-adoption or work-ordering;
+flagged for human review. (Health-check note: the enricher pytest deps — sqlalchemy/httpx — are not provisioned in this
+run's container, so `test_profile_standard`/`test_profile_enrichment` could not run; the SKILL.md change is markdown-only
+and the `profile_standard.manifest` module imports cleanly at STANDARD_VERSION 2.)_
 
 **Carried from run 25 (Purdue is still CRITICAL — nothing merged for it). #661's "field-first" Purdue
 descriptions were built by COPYING peer (earlier-enriched) catalogs and find-replacing only the campus
@@ -174,10 +174,18 @@ _First seen 2026-06-14 (run 1). #675 (graded here at run 33) fixed prefix + clas
 cross-institution-COPY fabrication class (~31 foreign-sig rows) and left the structural name/department debt —
 a single-dimension pass that traded one defect for a fresh no-fabrication breach. Fix the fabricated/copied
 descriptions + the names/departments before any new depth pass or any new university._
-**Run 41 update: #690 (`30be7a4`, "diversify credential descriptions and clear peer contamination") landed mid-run
-to repair exactly this — but its Deploy Backend is in_progress, so the 32 foreign-sig rows above are STILL LIVE; run
-42 must live-confirm whether #690 clears the peer copy (like #688 did for UW) and whether it morphs the 51%
-identical-across-levels into the suffix-diversifier. Until confirmed live, BU stays CRITICAL.**
+**Run 42 update (graded #690 at SOURCE — its Deploy Backend is STILL `in_progress`, confirmed via Actions, so the 32
+foreign-sig rows above are STILL LIVE; BU stays CRITICAL).** #690 is the #688/#669 "diversify + clear-peer" pass on BU:
+it DID replace Perelman → Chobanian & Avedisian School of Medicine, Lick Observatory → Perkins Telescope Observatory,
+Mahoney Institute → Center for Systems Neuroscience, Menil → MFA Boston (the GOOD half) — BUT it is an INCOMPLETE clear:
+its `_PEER_SIGNATURES` build gate is a DENYLIST that OMITS "Whiting", "Feinberg", "Medill", so **4 source rows still
+carry foreign units** — "Whiting's MS in Data Science" (JHU eng), "Feinberg medical sciences" ×2 (NU med), "Medill
+integrated marketing communications" (NU journalism) — all three NAMED VERBATIM in the run-41 entry above, shipped under
+a "0% peer contamination" PR claim. Source also still carries 101 verbatim-identical FIELD_DESCRIPTIONS pre-diversify +
+a `_diversify_descriptions` suffix (the run-38 suffix-diversifier morph). **Run 43 must live-confirm #690: (a) does the
+peer copy clear live as #688 did for UW; (b) do the 4 Whiting/Feinberg/Medill rows survive live (denylist gap); (c) does
+the 51% identical-across-levels morph into the suffix-diversifier shared-BODY.** The denylist-gate gap → SKILL.md miss #9
+Named-units gate tightened to require a POSITIVE allowlist (this run, 1 of ≤3).
 
 ## CRITICAL — Stanford University (#681 cleared the prefix + foreign-peer + Sibley — now LIVE-CONFIRMED — but the FSI-on-WRONG-FIELD mismatch survives its foreign-only gate; names untouched)
 
@@ -365,7 +373,7 @@ researched deep content.** Worst-first:
 | 5 | Yale University | 189 | 5% | field-specific (good, #620) but **69% name-prefixed** | strip prefix + content + GATHERED reviews — names mostly real |
 | 6 | Carnegie Mellon University | 180 | 1% | field-specific (good, #612) but **100% name-prefixed** | strip prefix + **deep content + GATHERED reviews** — names + depts + descriptions done |
 | 7 | California Institute of Technology | 90 | 1% | de-stubbed (good, #648) — clean structure, 0% prefix, 0% classification, but **thin generic gloss** ("BS in {field} — {one-line restatement}") | richer field-specific descriptions + **deep content + GATHERED reviews** — names + depts done |
-| 8 | University of Chicago | 103 | ~3% (Area Studies ×2) | field-specific + TRUE + **0% prefix** (good, #650) — clean designations + depts, real units | **de-roll-up the 2 "Area Studies" names** → real fields, then **deep content + GATHERED reviews** (1 row already has gathered Cinema reviews) |
+| 8 | University of Chicago | 103 | ~3% (Area Studies ×2) | field-specific + TRUE + **0% prefix** (good, #650) — clean designations + depts, real units; **BUT 50% verbatim-identical-across-levels** (run-42 live re-grade: BA + Graduate Certificate + MA in Economics / Media Arts / Anthropology each share ONE `description_text`, gold MIT 0% — the run-30 class, under-flagged at #650) | **give each credential level its OWN researched body (re-count verbatim-shared → 0); de-roll-up the 2 "Area Studies" names** → real fields, then **deep content + GATHERED reviews** (1 row already has gathered Cinema reviews) |
 | 9 | Johns Hopkins University | 246 | 1% (3 "Area Studies") | field-specific + TRUE (good, #610 — Homewood/Krieger units) + **0% prefix (good — #657 stripped it 100%→0%)** | **de-roll-up the 3 "Area Studies" names** (BA + Cert + MS of one CIP field, a name-collision across levels) + **deep content + GATHERED reviews** — names + depts + descriptions + prefix done; now cleanest non-MIT tier with UChicago/Caltech |
 | 10 | Rice University | 159 | 1% (false-pos only) | field-specific + TRUE + **0% prefix** (good, #663 — Shepherd School / Kinder Institute / Ken Kennedy Institute / Texas Medical Center, 0/159 foreign-sig) | **deep content + GATHERED reviews** — names + depts + descriptions + prefix all done; joins the cleanest non-MIT tier (JHU/UChicago/Caltech) |
 | 11 | Princeton University | 41 | **22%** (9/41) | field-specific + TRUE + **0% prefix** (good, #641+#643) — only **9 rollup names echoed in dept** left | **de-roll-up the 9 CIP-rollup NAMES + their depts** ("…Languages, Literatures, and Linguistics", "Area Studies", "Religion/Religious Studies", "Multi/Interdisciplinary Studies, Other" → "Classics"/"German"/"Religion"/etc.), then GATHERED reviews + deep content |
@@ -511,6 +519,15 @@ fully clean (UCSD's lone invented unit keeps it just short).
   does NOT publish (foreign) AND (b) any real same-institution unit cited on a field it does NOT house. A
   foreign-signature blocklist is only half (a); the gate must ALSO verify each real unit actually HOUSES the program
   (miss #8 named-unit-truth). Do not treat "0 foreign signatures" as "0 fabricated units."
+- **A DENYLIST PEER GATE IS INCOMPLETE BY CONSTRUCTION — IT PASSES ANY PEER IT DOES NOT LIST, SO "0% PEER CONTAMINATION"
+  IS A FALSE GUARANTEE (run 42).** #690 (BU) added a `_PEER_SIGNATURES` build gate seeded from the SUBSET of peers prior
+  runs named (Perelman/Lick/Kellogg/Weinberg/Wharton/McCormick/…) and correctly replaced those in the descriptions — but
+  it OMITTED "Whiting" (JHU eng), "Feinberg" (NU med), "Medill" (NU journalism), so 4 source rows still carry those
+  foreign units, shipped under a "0% peer contamination" PR claim, even though all three were NAMED VERBATIM in the prior
+  BU backlog entry. A denylist can only catch the peers someone thought to enumerate; the gate must be a POSITIVE
+  ALLOWLIST — scan every named academic unit and FAIL unless it is one THIS institution actually publishes (verify against
+  the institution's own org chart). Do not trust a green peer gate that is a blocklist (SKILL.md miss #9 Named-units gate,
+  tightened this run).
 - **NEVER BUILD DESCRIPTIONS BY COPYING A PEER CATALOG AND FIND-REPLACING THE CAMPUS NAME (run 25).**
   #661 templated Purdue descriptions off JHU/Penn/Cornell/NU and swapped only the campus token, leaving
   the SOURCE's geography ("Chesapeake" on inland Purdue), signature units ("SAS"/"Wharton"/"CALS"/"Writing
