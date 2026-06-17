@@ -55,6 +55,10 @@ programs — completes Cornell coverable external_reviews (73/73).
 
 Description depth (2026-06-16, cornellprof6): field-specific descriptions for all
 274 programs via ``cornell_field_descriptions.py`` (0% classification stubs).
+
+Description repair (2026-06-17, cornellprof7): drops the ``{program_name}:`` prefix
+from every description so clauses open on field-specific facts (gold MIT/Chicago
+pattern); 0% name-prefixed descriptions.
 """
 
 from __future__ import annotations
@@ -78,7 +82,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Cornell University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-17"
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -1486,7 +1490,7 @@ def _cornell_description(spec: dict, field: str | None = None) -> str:
         delivery = " Delivered online."
     elif fmt == "hybrid":
         delivery = " Delivered in hybrid format."
-    return f"{spec['program_name']}: {clause}{delivery}"
+    return f"{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -1544,6 +1548,15 @@ _classification_stubs = sum(
 )
 if _classification_stubs:
     _catalog_errors.append(f"classification-only descriptions on {_classification_stubs} programs")
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
 if _catalog_errors:
     raise RuntimeError(f"Cornell catalog quality gate failed: {_catalog_errors}")
 for _p in PROGRAMS:
