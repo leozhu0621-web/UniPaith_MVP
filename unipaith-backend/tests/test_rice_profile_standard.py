@@ -168,3 +168,12 @@ def test_every_node_has_content_sources():
     for school in r.SCHOOLS:
         cs = r._school_content(school["name"])
         assert cs.get("news_rss") and cs.get("events_feed"), school["name"]
+
+
+def test_no_name_prefixed_descriptions():
+    name_prefix = sum(
+        1
+        for prog in r.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
