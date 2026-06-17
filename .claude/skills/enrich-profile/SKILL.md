@@ -504,6 +504,27 @@ Concrete misses observed in the first runs — each broke a real page:
      description-passed catalog carried ~2% (a peer's observatory + business school + another
      peer's name on unrelated rows), confirming the cross-institution-copy mechanism is a CLASS,
      not one catalog.
+   - **ONE field's description STAMPED VERBATIM across every credential-level row of that field is
+     field-LEVEL, not program-LEVEL — a per-FIELD generation tell that EVADES both the
+     duplicate-NAME check (the names differ — the credential is in the name) AND the gold contrast
+     (the prose is genuinely field-specific). This is the live regression this run.** When a
+     description is generated once per FIELD (e.g. from a fixed field→description table) and applied
+     to every row of that field, the Graduate Certificate, BS, MS, and PhD in ONE field all carry an
+     IDENTICAL `description_text` — so a student sees the SAME paragraph on the MS page and the PhD
+     page, and the row was minted per-FIELD, never researched per-PROGRAM (the depth pass the
+     standard demands). It slips past every prior check because the names are now distinct (the
+     credential is IN the name, miss #2) and the prose is field-specific (it passes the gold
+     contrast) — yet it is the DESCRIPTION analog of the CIP×award-level / duplicate-name padding:
+     one artifact reused across credentials. The gold contrast is decisive — gold MIT gives EVERY
+     one of its 65 programs a UNIQUE description (0% shared), because a real BS, MS, and PhD in one
+     field study different things (an undergraduate survey vs doctoral research) and a researched
+     description says so. So a `description_text` shared verbatim by ≥2 rows is a FAIL: write each
+     credential-level row its OWN researched description (what THAT degree studies, at THAT level),
+     or recognise the rows as the same minting defect wearing distinct names. Count `description_text`
+     shared across rows (gold MIT = 0%); a high share means field-level, not per-program, descriptions.
+     Evidence: live API this run — a 348-row catalog had 293 rows (84%) sharing a description verbatim
+     across the credential levels of one field (one field's text on its certificate + BS + MS + PhD),
+     vs gold MIT 0%.
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
@@ -558,7 +579,12 @@ Concrete misses observed in the first runs — each broke a real page:
      field-specific fact, cf. gold MIT's "Course 16 educates engineers of aerospace
      vehicles…"). This SHARE is a PRIMARY independent FAIL: a high share means the
      catalog is mostly un-researched stubs even where the NAMES read real, confirmed
-     by every rich field being empty and `_standard` unstamped on those rows**) before
+     by every rich field being empty and `_standard` unstamped on those rows**, and
+     **identical `description_text` shared VERBATIM across ≥2 rows — one field's
+     description stamped on every credential level (certificate/BS/MS/PhD), a per-FIELD
+     generation tell that EVADES the distinct-NAME and gold-contrast checks (miss #8);
+     gold MIT = 0% (every program uniquely described), so any verbatim-shared
+     description is a FAIL**) before
      shipping — a padded catalog must FAIL the run. **Also FAIL a catalog whose
      descriptions DOUBLE the page heading — i.e. begin by restating the `program_name`
      verbatim (a `"{program_name}: …"` or `"{program_name} is …"` prefix).** The program
