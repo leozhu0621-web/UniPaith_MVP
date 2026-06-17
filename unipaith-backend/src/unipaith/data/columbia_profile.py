@@ -53,6 +53,11 @@ Description depth pass (2026-06-16, columbiaprof9): replaces all classification-
 program descriptions with field-specific clauses from ``columbia_field_descriptions.py``
 (280/280 programs; 0% classification stubs).
 
+Description repair (2026-06-17, columbiaprof10): drops ``{program_name}:`` prefixes so
+every description opens on a field fact (gold MIT/BU pattern); fixes peer-contamination
+clauses in ``columbia_field_descriptions.py`` (Lick Observatory, College of Chemistry,
+Harvardsylvania); 0% name-prefixed descriptions.
+
 Depth pass (2026-06-15, columbiaprof8): merged ``DEPTH_REVIEWS`` for 37 coverable
 programs (46/46 total external_reviews on coverable programs).
 """
@@ -79,7 +84,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Columbia University in the City of New York"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-17"
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -1256,9 +1261,11 @@ def _field_from_program_name(program_name: str) -> str | None:
     return None
 
 
-def _needs_normalize(desc: str) -> bool:
-    """True when a description is a classification or template stub."""
+def _needs_normalize(desc: str, program_name: str = "") -> bool:
+    """True when a description is a classification, template, or name-prefixed stub."""
     if not desc:
+        return True
+    if program_name and desc.startswith(program_name):
         return True
     if _CLASSIFICATION_STUB_RE.match(desc):
         return True
@@ -1296,12 +1303,13 @@ def _columbia_description(spec: dict, field: str | None = None) -> str:
         raise ValueError(
             f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
         )
-    return f"{spec['program_name']}: {clause}{delivery}"
+    return f"{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     """Stamp a field-specific description on stub program nodes."""
-    if not _needs_normalize(spec.get("description") or ""):
+    pname = spec.get("program_name", "")
+    if not _needs_normalize(spec.get("description") or "", pname):
         return
     spec["description"] = _columbia_description(spec, field=field_name)
 

@@ -38,7 +38,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Regional specializations — East Asia, Latin America, Middle East, and South Asia — combine language immersion with political and cultural scholarship in Columbia College and the Faculty of Arts and Sciences."
     ),
     "Astronomy and Astrophysics": (
-        "Observational and theoretical astrophysics with access to Lick Observatory, Keck partnerships, and the campus radio astronomy lab."
+        "Observational and theoretical astrophysics at Columbia spans high-energy phenomena, cosmology, and instrumentation through the Columbia Astrophysics Laboratory, MDM Observatory partnership, and the Rutherford Observatory atop Pupin Hall."
     ),
     "Behavioral Sciences": (
         "Interdisciplinary behavioral science at Columbia College and the Faculty of Arts and Sciences and Teachers College examines cognition, decision making, and policy-relevant experiments linking psychology and social research."
@@ -65,7 +65,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Graduate cell biology at Columbia College and the Faculty of Arts and Sciences and Vagelos College of Physicians and Surgeons focuses on signaling, developmental biology, and microscopy methods in cancer and immunology research labs."
     ),
     "Chemical Engineering": (
-        "Reaction engineering, transport phenomena, and materials processing in the College of Chemistry's nationally ranked chemical engineering department."
+        "Reaction engineering, transport phenomena, and soft materials in Columbia Engineering's Department of Chemical Engineering — one of the nation's oldest programs, with electrochemical energy and biotechnology research labs in Morningside Heights."
     ),
     "Chemistry": (
         "Columbia College and the Faculty of Arts and Sciences chemistry runs organic, inorganic, physical, and chemical-biology groups whose faculty hold joint appointments with Vagelos College of Physicians and Surgeons and the Columbia Chemistry Research Institute."
@@ -152,7 +152,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Interdisciplinary GSE graduate pathways combine education research with policy, counseling, or organizational leadership for non-traditional educator roles."
     ),
     "Educational Administration and Supervision": (
-        "GSE principal and superintendent preparation integrates equity audits, data-driven school improvement, and Harvardsylvania certification pathways."
+        "Teachers College principal and superintendent preparation integrates equity audits, data-driven school improvement, and New York State certification pathways."
     ),
     "Electrical, Electronics, and Communications Engineering": (
         "Columbia Engineering electrical and systems engineering spans signal processing, photonics, and communications with Columbia's medical-device and robotics research groups."
@@ -392,7 +392,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Interdisciplinary sustainability coursework spans Faculty of Arts & Sciences, Graduate School of Design design studios, and Columbia's Atkinson Center for Sustainability research initiatives."
     ),
     "Teacher Education and Professional Development, Specific Levels and Methods": (
-        "GSE teacher-preparation programs lead to Harvardsylvania certification with New York City partner-school clinical practice."
+        "Teachers College teacher-preparation programs lead to New York State certification with New York City partner-school clinical practice."
     ),
     "Teacher Education and Professional Development, Specific Subject Areas": (
         "GSE subject-specific teacher education pairs content expertise with pedagogy and urban classroom placements in New York City districts."
