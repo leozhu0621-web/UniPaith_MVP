@@ -9,7 +9,15 @@ import EmptyState from '../../components/ui/EmptyState'
 import QueryError from '../../components/ui/QueryError'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { PageContainer, PageHeader } from '../../components/student/density'
+import { useCountUp } from '../../hooks/useCountUp'
 import { formatDate } from '../../utils/format'
+
+/** Bucket counter numeral — counts up on mount, consistent with the My Space
+ *  home pipeline tiles (reduced-motion → instant via useCountUp). */
+function BucketCount({ value }: { value: number }) {
+  const n = useCountUp(value)
+  return <div className="text-lg font-semibold text-foreground">{n}</div>
+}
 import { STATUS_COLORS } from '../../utils/constants'
 import { FileText, Star, ChevronRight, CalendarClock, PartyPopper, ArrowRight, Mail } from 'lucide-react'
 import DecisionComparison from './apply/offer/DecisionComparison'
@@ -223,8 +231,10 @@ export default function ApplicationsPage() {
     return sorted
   }, [apps, statusFilter, institution, deadlineWindow, priorityFilter, sort])
 
+  // Hidden on lg+ where the My Space rail's Workspace group lists these views flat
+  // (Spec 2026-06-15 §2.2); kept below lg where the rail collapses to pills.
   const viewSwitcher = (
-    <div role="tablist" aria-label="Applications views" className="mb-4 flex gap-1 border-b border-border">
+    <div role="tablist" aria-label="Applications views" className="lg:hidden mb-4 flex gap-1 border-b border-border">
       {APP_VIEWS.map(v => (
         <button
           key={v.key}
@@ -430,7 +440,7 @@ export default function ApplicationsPage() {
                 : 'border-border hover:border-secondary/40'
             }`}
           >
-            <div className="text-lg font-semibold text-foreground">{counts[b]}</div>
+            <BucketCount value={counts[b]} />
             <div className="text-[11px] leading-tight text-foreground">{BUCKET_LABELS[b]}</div>
           </button>
         ))}

@@ -48,23 +48,78 @@ that several graduate programs publish tuition only on bot-blocked pages and so 
 program-level tuition is omitted rather than guessed, that the Vagelos College deanship is
 in transition (so its leadership is omitted), and that the M.D. one-year earnings figure
 reflects residency stipends.
+
+Description depth pass (2026-06-16, columbiaprof9): replaces all classification-only
+program descriptions with field-specific clauses from ``columbia_field_descriptions.py``
+(280/280 programs; 0% classification stubs).
+
+Description repair (2026-06-17, columbiaprof10): drops ``{program_name}:`` prefixes so
+every description opens on a field fact (gold MIT/BU pattern); fixes peer-contamination
+clauses in ``columbia_field_descriptions.py`` (Lick Observatory, College of Chemistry,
+Harvardsylvania); 0% name-prefixed descriptions.
+
+Description repair (2026-06-17, columbiaprof11): diversifies credential-sibling
+descriptions with Columbia-specific level suffixes (0% identical-across-levels); fixes
+remaining peer-contamination (Kelly Writers House, Perry World House, Morris Arboretum,
+Haas/CDSS, ICA); gates shared descriptions and peer signatures at build time.
+
+Depth pass (2026-06-15, columbiaprof8): merged ``DEPTH_REVIEWS`` for 37 coverable
+programs (46/46 total external_reviews on coverable programs).
 """
 
 from __future__ import annotations
 
+import re
+from collections import Counter
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.columbia_field_descriptions import (
+    FIELD_ALIASES,
+    FIELD_DESCRIPTIONS,
+    SLUG_DESCRIPTIONS,
+)
 from unipaith.data.columbia_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.columbia_reviews_depth import DEPTH_REVIEWS
+from unipaith.data.profile_catalog_utils import disambiguate_program_name, validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Columbia University in the City of New York"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-17"
+
+_TEMPLATE_STUB_RE = re.compile(
+    r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
+    r"master's|bachelor's|PhD|MBA|JD|MD|bachelors|masters|phd) program offered through ",
+    re.I,
+)
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is (an undergraduate|a graduate|a doctoral|a graduate certificate|"
+    r"a professional|a degree) program at Columbia",
+    re.I,
+)
+
+_PEER_SIGNATURES: tuple[str, ...] = (
+    "Kelly Writers House",
+    "Morris Arboretum",
+    "Perry World House",
+    "Haas",
+    " CDSS",
+    "Sibley School",
+    "Lick Observatory",
+    "College of Chemistry",
+    "Harvardsylvania",
+    "Wharton",
+    "McCormick",
+    "Weill Cornell",
+    "Institute of Contemporary Art",
+    "Writing Seminars",
+    "Chesapeake",
+)
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -206,8 +261,51 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Columbia University Events Calendar", "url": "https://events.columbia.edu/"},
         ],
     },
-    # Butler Library campus photo — Wikimedia Commons / Bitterteayen (CC BY-SA 4.0),
-    # verified on the file page 2026-06-11.
+    # Verified outdoor campus gallery (Wikimedia Commons API extmetadata, 2026-06-14).
+    # Butler Library leads the institution hero; each file carries a verified author + license.
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/"
+                "Butler_Library_-_Columbia_University.jpg/"
+                "1920px-Butler_Library_-_Columbia_University.jpg"
+            ),
+            "credit": "Wikimedia Commons / Bitterteayen (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/"
+                "2014_Columbia_University_Low_Memorial_Library_from_front.jpg/"
+                "1920px-2014_Columbia_University_Low_Memorial_Library_from_front.jpg"
+            ),
+            "credit": "Wikimedia Commons / Beyond My Ken (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/"
+                "2014_Columbia_University_Morningside_Heights_campus_from_southwest_.jpg/"
+                "1920px-2014_Columbia_University_Morningside_Heights_campus_from_southwest_.jpg"
+            ),
+            "credit": "Wikimedia Commons / Beyond My Ken (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/"
+                "Kent_Hall%2C_Columbia_University.jpg/"
+                "1920px-Kent_Hall%2C_Columbia_University.jpg"
+            ),
+            "credit": "Wikimedia Commons / Bitterteayen (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/"
+                "Columbia_University_-_Low_Memorial_Library_%2848170370506%29.jpg/"
+                "1920px-Columbia_University_-_Low_Memorial_Library_%2848170370506%29.jpg"
+            ),
+            "credit": "Wikimedia Commons / Ajay Suresh (CC BY 2.0)",
+        },
+    ],
+    # Butler Library leads the hero; see ``campus_photos[0]``.
     "media_credit": "Wikimedia Commons / Bitterteayen (CC BY-SA 4.0)",
     "flagship": {
         # "Columbia Facts 2024" (OPIR): 35,769 total students (Fall 2024).
@@ -1116,34 +1214,254 @@ PROGRAMS: list[dict] = [
 for _ep in PROGRAMS:
     _ep.setdefault("delivery_format", "in_person")
 
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "columbia-economics-ba": "Department of Economics",
+    "columbia-political-science-ba": "Department of Political Science",
+    "columbia-history-ba": "Department of History",
+    "columbia-english-ba": "Department of English and Comparative Literature",
+    "columbia-psychology-ba": "Department of Psychology",
+    "columbia-sociology-ba": "Department of Sociology",
+    "columbia-biology-ba": "Department of Biological Sciences",
+    "columbia-computer-science-bs": "Department of Computer Science",
+    "columbia-operations-research-bs": (
+        "Department of Industrial Engineering and Operations Research"
+    ),
+    "columbia-mechanical-engineering-bs": "Department of Mechanical Engineering",
+    "columbia-electrical-engineering-bs": "Department of Electrical Engineering",
+    "columbia-applied-mathematics-bs": (
+        "Department of Applied Physics and Applied Mathematics"
+    ),
+    "columbia-biomedical-engineering-bs": "Department of Biomedical Engineering",
+    "columbia-computer-science-ms": "Department of Computer Science",
+    "columbia-mba": "Columbia Business School",
+    "columbia-jd": "Columbia Law School",
+    "columbia-md": "Vagelos College of Physicians and Surgeons",
+    "columbia-journalism-ms": "Columbia Journalism School",
+    "columbia-sipa-mia": "School of International and Public Affairs",
+    "columbia-sipa-mpa": "School of International and Public Affairs",
+    "columbia-public-health-mph": "Mailman School of Public Health",
+    "columbia-social-work-msw": "Columbia School of Social Work",
+    "columbia-architecture-march": (
+        "Graduate School of Architecture, Planning and Preservation"
+    ),
+    "columbia-arts-mfa": "Columbia School of the Arts",
+    "columbia-nursing-msn": "Columbia School of Nursing",
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _delivery_format(raw: str) -> str:
+    """Normalize IPEDS delivery labels to the platform's canonical values."""
+    if raw == "in_person":
+        return "on_campus"
+    return raw
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — the CIP field title unless it duplicates the school name."""
+    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+        return school
+    return field_name
+
+
+def _field_from_program_name(program_name: str) -> str | None:
+    """Extract the CIP field title from a credential-disambiguated program name."""
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Bachelor's in ",
+        "Master's in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+        "Professional program in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):]
+    return None
+
+
+_LEVEL_SUFFIX: dict[str, str] = {
+    "bachelors": (
+        " Columbia College and Columbia Engineering undergraduates pursue Core "
+        "Curriculum requirements, departmental majors, and optional senior thesis "
+        "research on Morningside Heights."
+    ),
+    "masters": (
+        " Master's students complete advanced seminars, practica, and professional "
+        "development through Columbia's graduate and professional schools in New York City."
+    ),
+    "phd": (
+        " Ph.D. candidates conduct original dissertation research with faculty "
+        "advisement across Columbia's research institutes and laboratories."
+    ),
+    "certificate": (
+        " The graduate certificate offers focused graduate coursework for working "
+        "professionals without requiring a full degree program."
+    ),
+    "professional": "",
+}
+
+
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
+    """Fix credential-level lies (e.g. 'Graduate …' on a bachelor's row)."""
+    if degree_type == "bachelors":
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate "):]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level "):]
+    return clause
+
+
+def _diversify_descriptions(programs: list[dict]) -> None:
+    """Ensure credential-sibling rows do not share identical description text."""
+    by_desc: dict[str, list[dict]] = {}
+    for p in programs:
+        desc = p.get("description") or ""
+        by_desc.setdefault(desc, []).append(p)
+    for desc, group in by_desc.items():
+        if len(group) < 2:
+            continue
+        for p in group:
+            suffix = _LEVEL_SUFFIX.get(p["degree_type"], "")
+            if suffix:
+                p["description"] = f"{desc}{suffix}"
+
+
+def _needs_normalize(desc: str, program_name: str = "") -> bool:
+    """True when a description is a classification, template, or name-prefixed stub."""
+    if not desc:
+        return True
+    if program_name and desc.startswith(program_name):
+        return True
+    if _CLASSIFICATION_STUB_RE.match(desc):
+        return True
+    if _TEMPLATE_STUB_RE.search(desc):
+        return True
+    if "offered through the " in desc:
+        return True
+    if " — " in desc and len(desc) < 160 and not desc.startswith("The "):
+        return True
+    return False
+
+
+def _columbia_description(spec: dict, field: str | None = None) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    fmt = spec.get("delivery_format", "in_person")
+    delivery = ""
+    if fmt == "online":
+        delivery = " Delivered online."
+    elif fmt == "hybrid":
+        delivery = " Delivered in hybrid format."
+    if slug in SLUG_DESCRIPTIONS:
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+    field_key = (
+        field
+        or spec.get("_field_name")
+        or _field_from_program_name(spec.get("program_name", ""))
+        or spec.get("department")
+        or spec.get("program_name", "")
+    )
+    if field_key in FIELD_ALIASES:
+        field_key = FIELD_ALIASES[field_key]
+    clause = FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        raise ValueError(
+            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
+        )
+    clause = _adapt_clause_for_degree_type(clause, spec["degree_type"])
+    return f"{clause}{delivery}"
+
+
+def _normalize_program(spec: dict, field_name: str | None = None) -> None:
+    """Stamp a field-specific description on stub program nodes."""
+    pname = spec.get("program_name", "")
+    if not _needs_normalize(spec.get("description") or "", pname):
+        return
+    spec["description"] = _columbia_description(spec, field=field_name)
 
 
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+    for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
         if slug in seen:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
         seen.add(slug)
-        out.append({
+        dept = _department_for(field_name, school)
+        delivery = _delivery_format(fmt)
+        pname = disambiguate_program_name(field_name, dtype)
+        spec = {
             "slug": slug,
             "school": school,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": dtype,
+            "department": dept,
             "cip": cip,
             "duration_months": dur,
-            "delivery_format": fmt,
-            "description": desc,
-        })
+            "delivery_format": delivery,
+            "_field_name": field_name,
+        }
+        _normalize_program(spec, field_name)
+        spec.pop("_field_name", None)
+        out.append(spec)
     return out
 
 
 PROGRAMS += _build_catalog()
+for _p in PROGRAMS:
+    _normalize_program(_p, _field_from_program_name(_p.get("program_name", "")))
+_diversify_descriptions(PROGRAMS)
+
+_catalog_errors = validate_catalog(PROGRAMS)
+_stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
+_new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _stub_desc:
+    _catalog_errors.append(f"template stub descriptions on {_stub_desc} programs")
+if _new_templ:
+    _catalog_errors.append(f"program_description template on {_new_templ} programs")
+if _name_prefix_desc:
+    _catalog_errors.append(f"name-prefixed descriptions on {_name_prefix_desc} programs")
+_desc_counts = Counter(p.get("description") for p in PROGRAMS)
+_shared_desc = sum(c for c in _desc_counts.values() if c >= 2)
+if _shared_desc:
+    _catalog_errors.append(
+        f"identical descriptions shared across {_shared_desc} credential-sibling programs"
+    )
+_peer_contaminated = sum(
+    1
+    for p in PROGRAMS
+    if any(sig in (p.get("description") or "") for sig in _PEER_SIGNATURES)
+)
+if _peer_contaminated:
+    _catalog_errors.append(
+        f"peer-contaminated descriptions on {_peer_contaminated} programs"
+    )
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
+if _catalog_errors:
+    raise RuntimeError(f"Columbia catalog quality gate failed: {_catalog_errors}")
+for _p in PROGRAMS:
+    _p["delivery_format"] = _delivery_format(_p.get("delivery_format", "in_person"))
+
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
@@ -2139,6 +2457,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 # ── Application requirements ─────────────────────────────────────────────────
@@ -2252,13 +2571,8 @@ def _requirements_for(spec: dict) -> dict:
     return dict(_REQ_UNDERGRAD)
 
 
-# Real Columbia campus photo (Butler Library) — Wikimedia Commons, CC BY-SA 4.0,
-# hotlinkable landscape JPG (verified HTTP 200). Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/"
-    "Butler_Library_-_Columbia_University.jpg/"
-    "1920px-Butler_Library_-_Columbia_University.jpg"
-)
+# Butler Library leads the institution hero; see ``SCHOOL_OUTCOMES["campus_photos"]``.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
@@ -2408,9 +2722,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # school's site.
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
+        p.department = spec.get("department")
         p.is_published = True
         p.catalog_source = "curated"
-        p.delivery_format = spec.get("delivery_format", "in_person")
+        p.delivery_format = spec.get("delivery_format", "on_campus")
         # Every program gets a working feed: its school's verified RSS filtered by
         # program-naming keywords (CS uses the Data Science Institute feed).
         p.content_sources = _program_content(spec)

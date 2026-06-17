@@ -37,25 +37,60 @@ flagship program (its real research areas, faculty, class profile, and aggregate
 reviews), mirroring MIT Sloan's MBAn in the reference instance — with the honest
 caveats that Princeton is test-optional through the fall-2027 entry cycle (returning to
 required testing for the 2027-28 cycle) and that the canonical program set is the
-complete federal College Scorecard Field-of-Study list for UNITID 186131; the School
-of Architecture and the broader Graduate School are the resumption scope for a later run.
+complete federal College Scorecard Field-of-Study list for UNITID 186131; graduate
+School of Architecture M.Arch. and SEAS M.S.E./M.Eng. programs carry verified names,
+descriptions, and coverable external reviews.
 """
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.princeton_field_descriptions import (
+    FIELD_ALIASES,
+    FIELD_DESCRIPTIONS,
+    SLUG_DESCRIPTIONS,
+)
 from unipaith.data.princeton_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Princeton University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-17"
+
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is (an undergraduate|a graduate|a doctoral|a graduate certificate|"
+    r"a professional|a degree) program at Princeton",
+)
+_TEMPLATE_STUB_RE = re.compile(
+    r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
+    r"master's|bachelor's|phd|bachelors|masters) program offered through ",
+    re.I,
+)
+_PREFIX_NAME_RE = re.compile(
+    r"^(Bachelor's in|Master's in|Doctor of Philosophy in|Graduate Certificate in|"
+    r"Professional program in) "
+)
+
+_SLUG_TO_FIELD: dict[str, str] = {
+    slug: field_name for slug, _, field_name, _, _, _, _, _ in _IPEDS_CATALOG
+}
+
+# Standalone master's degrees Princeton publishes (not incidental M.A. along the Ph.D. path).
+_IPEDS_MASTERS_ALLOWLIST = frozenset({
+    "princeton-architecture-ms",
+    "princeton-chemical-engineering-ms",
+    "princeton-civil-engineering-ms",
+    "princeton-electrical-electronics-and-communications-engineering-ms",
+    "princeton-mechanical-engineering-ms",
+})
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -192,6 +227,49 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Princeton Residential Colleges", "url": "https://collegelife.princeton.edu/"},
         ],
     },
+    # Verified outdoor campus scenes — Wikimedia Commons API extmetadata (Artist +
+    # LicenseShortName), landscape ≥1920px thumburl. Hero uses [0]; gallery lightbox
+    # cycles the rest.
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/"
+                "Nassau_Hall_Princeton.JPG/1920px-Nassau_Hall_Princeton.JPG"
+            ),
+            "credit": "Wikimedia Commons / Smallbones (CC0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/"
+                "At_Princeton_University_2024_010.jpg/"
+                "1920px-At_Princeton_University_2024_010.jpg"
+            ),
+            "credit": "Wikimedia Commons / Mike Peel (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/"
+                "Blair_Arch%2C_Princeton%2C_New_Jersey.jpg/"
+                "1920px-Blair_Arch%2C_Princeton%2C_New_Jersey.jpg"
+            ),
+            "credit": "Wikimedia Commons / Julian Lupyan (CC0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/"
+                "Ivy_Covered_Building_in_the_Princeton_University_Campus%2C_New_Jersey.jpg/"
+                "1920px-Ivy_Covered_Building_in_the_Princeton_University_Campus%2C_New_Jersey.jpg"
+            ),
+            "credit": "Wikimedia Commons / Julian Lupyan (CC0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/"
+                "Campus_Club_Princeton_b.JPG/1920px-Campus_Club_Princeton_b.JPG"
+            ),
+            "credit": "Wikimedia Commons / Smallbones (CC0)",
+        },
+    ],
     "flagship": {
         # Princeton "Facts & Figures": 5,826 undergraduate + 3,280 graduate = 9,106 total.
         "enrollment_total": 9106,
@@ -776,34 +854,291 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+# Explicit flagship programs — credential-disambiguated names + real departments.
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "princeton-computer-science-bs": "Computer Science",
+    "princeton-operations-research-bs": "Operations Research and Financial Engineering",
+    "princeton-mechanical-engineering-bs": "Mechanical and Aerospace Engineering",
+    "princeton-electrical-engineering-bs": "Electrical and Computer Engineering",
+    "princeton-civil-engineering-bs": "Civil and Environmental Engineering",
+    "princeton-chemical-engineering-bs": "Chemical and Biological Engineering",
+    "princeton-public-affairs-ab": "Public and International Affairs",
+    "princeton-public-affairs-mpa": "Princeton School of Public and International Affairs",
+    "princeton-english-bs": "English",
+    "princeton-philosophy-bs": "Philosophy",
+    "princeton-economics-bs": "Economics",
+    "princeton-politics-bs": "Politics",
+    "princeton-sociology-bs": "Sociology",
+    "princeton-anthropology-bs": "Anthropology",
+    "princeton-history-bs": "History",
+    "princeton-molecular-biology-bs": "Molecular Biology",
+    "princeton-psychology-bs": "Psychology",
+    "princeton-mathematics-bs": "Mathematics",
+    "princeton-eeb-bs": "Ecology and Evolutionary Biology",
+    "princeton-physics-bs": "Physics",
+    "princeton-chemistry-bs": "Chemistry",
+    "princeton-neuroscience-bs": "Neuroscience",
+    "princeton-architecture-bs": "School of Architecture",
+    "princeton-architecture-ms": "School of Architecture",
+    "princeton-chemical-engineering-ms": "Chemical and Biological Engineering",
+    "princeton-civil-engineering-ms": "Civil and Environmental Engineering",
+    "princeton-electrical-electronics-and-communications-engineering-ms": (
+        "Electrical and Computer Engineering"
+    ),
+    "princeton-mechanical-engineering-ms": "Mechanical and Aerospace Engineering",
+}
+_EXPLICIT_FULL_NAMES: dict[str, str] = {
+    "princeton-computer-science-bs": "Bachelor of Science in Computer Science",
+    "princeton-operations-research-bs": (
+        "Bachelor of Science in Engineering in Operations Research and Financial Engineering"
+    ),
+    "princeton-mechanical-engineering-bs": (
+        "Bachelor of Science in Engineering in Mechanical and Aerospace Engineering"
+    ),
+    "princeton-electrical-engineering-bs": (
+        "Bachelor of Science in Engineering in Electrical and Computer Engineering"
+    ),
+    "princeton-civil-engineering-bs": (
+        "Bachelor of Science in Engineering in Civil and Environmental Engineering"
+    ),
+    "princeton-chemical-engineering-bs": (
+        "Bachelor of Science in Engineering in Chemical and Biological Engineering"
+    ),
+    "princeton-public-affairs-ab": "Bachelor of Arts in Public and International Affairs",
+    "princeton-english-bs": "Bachelor of Arts in English",
+    "princeton-philosophy-bs": "Bachelor of Arts in Philosophy",
+    "princeton-economics-bs": "Bachelor of Arts in Economics",
+    "princeton-politics-bs": "Bachelor of Arts in Politics",
+    "princeton-sociology-bs": "Bachelor of Arts in Sociology",
+    "princeton-anthropology-bs": "Bachelor of Arts in Anthropology",
+    "princeton-history-bs": "Bachelor of Arts in History",
+    "princeton-molecular-biology-bs": "Bachelor of Arts in Molecular Biology",
+    "princeton-psychology-bs": "Bachelor of Arts in Psychology",
+    "princeton-mathematics-bs": "Bachelor of Arts in Mathematics",
+    "princeton-eeb-bs": "Bachelor of Arts in Ecology and Evolutionary Biology",
+    "princeton-physics-bs": "Bachelor of Science in Physics",
+    "princeton-chemistry-bs": "Bachelor of Arts in Chemistry",
+    "princeton-neuroscience-bs": "Bachelor of Arts in Neuroscience",
+    "princeton-architecture-bs": "Bachelor of Arts in Architecture",
+    "princeton-architecture-ms": "Master of Architecture (M.Arch.)",
+    "princeton-chemical-engineering-ms": (
+        "Master of Science in Engineering in Chemical and Biological Engineering"
+    ),
+    "princeton-civil-engineering-ms": (
+        "Master of Science in Engineering in Civil and Environmental Engineering"
+    ),
+    "princeton-electrical-electronics-and-communications-engineering-ms": (
+        "Master of Engineering in Electrical and Computer Engineering"
+    ),
+    "princeton-mechanical-engineering-ms": (
+        "Master of Science in Engineering in Mechanical and Aerospace Engineering"
+    ),
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+    if _p["slug"] in _EXPLICIT_FULL_NAMES:
+        _p["program_name"] = _EXPLICIT_FULL_NAMES[_p["slug"]]
+
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+# Federal CIP field titles → Princeton's published department / program names.
+_CIP_TO_DEPARTMENT: dict[str, str] = {
+    "Political Science and Government": "Politics",
+    "Research and Experimental Psychology": "Psychology",
+    "Biochemistry, Biophysics and Molecular Biology": "Molecular Biology",
+    "Ecology, Evolution, Systematics, and Population Biology": "Ecology and Evolutionary Biology",
+    "Neurobiology and Neurosciences": "Neuroscience",
+    "Geological and Earth Sciences/Geosciences": "Geosciences",
+    "Public Policy Analysis": "Public and International Affairs",
+    "Electrical, Electronics, and Communications Engineering": (
+        "Electrical and Computer Engineering"
+    ),
+    "Mechanical Engineering": "Mechanical and Aerospace Engineering",
+    "Operations Research": "Operations Research and Financial Engineering",
+    "Computer Engineering": "Electrical and Computer Engineering",
+    "English Language and Literature, General": "English",
+    "Fine and Studio Arts": "Art and Archaeology",
+    "Architectural Sciences and Technology": "Architecture",
+}
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — map federal CIP titles to Princeton's published names."""
+    mapped = _CIP_TO_DEPARTMENT.get(field_name, field_name)
+    if mapped.lower() in school.lower() or school.lower() in mapped.lower():
+        return school
+    return mapped
+
+
+def _delivery_format(raw: str) -> str:
+    if raw == "in_person":
+        return "on_campus"
+    return raw
+
+
+def _field_from_program_name(program_name: str) -> str | None:
+    for prefix in (
+        "Bachelor of Science in Engineering in ",
+        "Bachelor of Arts in ",
+        "Master of Science in Engineering in ",
+        "Master of Engineering in ",
+        "Master of Architecture (M.Arch.)",
+        "Master in Public Affairs (MPA)",
+        "Bachelor's in ",
+        "Master's in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):]
+    return None
+
+
+def _needs_normalize(desc: str, program_name: str = "") -> bool:
+    if not desc:
+        return True
+    if program_name and desc.startswith(program_name):
+        return True
+    if _CLASSIFICATION_STUB_RE.match(desc):
+        return True
+    if _TEMPLATE_STUB_RE.search(desc):
+        return True
+    return "offered through the " in desc
+
+
+def _princeton_program_name(
+    field_name: str, degree_type: str, school: str, slug: str
+) -> str:
+    """Real Princeton degree designation — never a CIP-rollup credential prefix."""
+    dept = _department_for(field_name, school)
+    if degree_type == "bachelors":
+        if school == _SEAS:
+            return f"Bachelor of Science in Engineering in {dept}"
+        return f"Bachelor of Arts in {dept}"
+    if degree_type == "masters":
+        if slug == "princeton-architecture-ms":
+            return "Master of Architecture (M.Arch.)"
+        if slug == "princeton-public-affairs-mpa":
+            return "Master in Public Affairs (MPA)"
+        if slug == "princeton-electrical-electronics-and-communications-engineering-ms":
+            return f"Master of Engineering in {dept}"
+        if school == _SEAS:
+            return f"Master of Science in Engineering in {dept}"
+    return dept
+
+
+def _princeton_description(spec: dict, field: str | None = None) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    fmt = spec.get("delivery_format", "on_campus")
+    delivery = ""
+    if fmt == "online":
+        delivery = " Delivered online."
+    elif fmt == "hybrid":
+        delivery = " Delivered in a hybrid format."
+    if slug in SLUG_DESCRIPTIONS:
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+    field_key = (
+        field
+        or spec.get("_field_name")
+        or _SLUG_TO_FIELD.get(slug)
+        or _field_from_program_name(spec.get("program_name", ""))
+        or spec.get("department")
+        or spec.get("program_name", "")
+    )
+    if field_key in FIELD_ALIASES:
+        field_key = FIELD_ALIASES[field_key]
+    clause = FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        raise ValueError(
+            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
+        )
+    # Open on the field fact — never restate program_name (already the page heading).
+    return f"{clause}{delivery}"
+
+
+def _normalize_program(spec: dict, field_name: str | None = None) -> None:
+    """Stamp a field-specific description on stub program nodes."""
+    if not _needs_normalize(spec.get("description") or "", spec.get("program_name", "")):
+        return
+    spec["description"] = _princeton_description(spec, field=field_name)
 
 
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the IPEDS Field-of-Study catalog."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+    for slug, school, field_name, dtype, cip, dur, fmt, _legacy in _IPEDS_CATALOG:
         if slug in seen:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
+        # Princeton does not publish standalone graduate certificates; incidental M.A.
+        # degrees along the Ph.D. path are not separate application programs.
+        if dtype == "certificate":
+            continue
+        if dtype == "masters" and slug not in _IPEDS_MASTERS_ALLOWLIST:
+            continue
         seen.add(slug)
-        out.append({
+        dept = _department_for(field_name, school)
+        delivery = _delivery_format(fmt)
+        pname = _princeton_program_name(field_name, dtype, school, slug)
+        spec = {
             "slug": slug,
             "school": school,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": dtype,
+            "department": dept,
             "cip": cip,
             "duration_months": dur,
-            "delivery_format": fmt,
-            "description": desc,
-        })
+            "delivery_format": delivery,
+            "_field_name": field_name,
+        }
+        _normalize_program(spec, field_name)
+        spec.pop("_field_name", None)
+        out.append(spec)
     return out
 
 
 PROGRAMS += _build_catalog()
+
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+    if _p["slug"] in _EXPLICIT_FULL_NAMES:
+        _p["program_name"] = _EXPLICIT_FULL_NAMES[_p["slug"]]
+    _normalize_program(_p)
+
+_catalog_errors = validate_catalog(PROGRAMS)
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
+_prefix_names = sum(1 for p in PROGRAMS if _PREFIX_NAME_RE.match(p.get("program_name", "")))
+if _prefix_names:
+    _catalog_errors.append(f"CIP-prefix program_name on {_prefix_names} programs")
+if _catalog_errors:
+    raise RuntimeError(f"Princeton catalog quality gate failed: {_catalog_errors}")
+
+for _p in PROGRAMS:
+    _p.setdefault("delivery_format", "on_campus")
+
+for _p in PROGRAMS:
+    _p.setdefault("delivery_format", "in_person")
+
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
@@ -835,6 +1170,16 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
     "princeton-physics-bs": "https://phy.princeton.edu/",
     "princeton-chemistry-bs": "https://chemistry.princeton.edu/",
     "princeton-neuroscience-bs": "https://pni.princeton.edu/",
+    "princeton-architecture-bs": "https://soa.princeton.edu/undergraduate",
+    "princeton-architecture-ms": (
+        "https://soa.princeton.edu/school/professional-master-architecture-program"
+    ),
+    "princeton-chemical-engineering-ms": "https://cbe.princeton.edu/graduate",
+    "princeton-civil-engineering-ms": "https://cee.princeton.edu/graduate",
+    "princeton-electrical-electronics-and-communications-engineering-ms": (
+        "https://ece.princeton.edu/academics/graduate"
+    ),
+    "princeton-mechanical-engineering-ms": "https://mae.princeton.edu/graduate",
 }
 
 # ── Who-it's-for + highlights (catalog baselines) ──────────────────────────
@@ -2128,6 +2473,347 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "verbatim reviews."
         ),
     },
+    "princeton-architecture-ms": {
+        "summary": (
+            "Students and architecture guides rank Princeton's professional M.Arch. among "
+            "the nation's elite NAAB-accredited programs — Study Architecture and design "
+            "media consistently place Princeton in the top tier — praising studio rigor, "
+            "building-technology depth, and a design thesis; common cautions are a "
+            "three-year timeline for non-pre-professional entrants, prerequisite math and "
+            "physics requirements, and limited studio space versus dedicated art schools."
+        ),
+        "themes": [
+            {
+                "label": "NAAB professional degree",
+                "sentiment": "positive",
+                "detail": (
+                    "An accredited M.Arch. that qualifies graduates for architectural "
+                    "licensure after internship."
+                ),
+            },
+            {
+                "label": "Studio sequence",
+                "sentiment": "positive",
+                "detail": (
+                    "A rigorous design-studio core paired with history/theory and building "
+                    "technology."
+                ),
+            },
+            {
+                "label": "Design thesis",
+                "sentiment": "positive",
+                "detail": (
+                    "A culminating independent design thesis in the final term."
+                ),
+            },
+            {
+                "label": "Prerequisites",
+                "sentiment": "caution",
+                "detail": (
+                    "College-level math, physics, and architectural history required before "
+                    "matriculation."
+                ),
+            },
+            {
+                "label": "Program length",
+                "sentiment": "mixed",
+                "detail": (
+                    "Typically three years for students without a pre-professional "
+                    "architecture background."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton School of Architecture — Professional M.Arch.",
+                "url": (
+                    "https://soa.princeton.edu/school/"
+                    "professional-master-architecture-program"
+                ),
+            },
+            {
+                "label": "Study Architecture — Princeton University",
+                "url": "https://www.studyarchitecture.com/school/princeton-university/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-chemical-engineering-ms": {
+        "summary": (
+            "Graduate guides describe Princeton's M.S.E. in Chemical and Biological "
+            "Engineering as a research-intensive master's within a top-ranked department "
+            "— praising quantitative transport and reaction-engineering training, "
+            "interdisciplinary ties to energy and bio institutes, and a pipeline to "
+            "leading Ph.D. programs and R&D roles; common cautions are that the degree is "
+            "research-based (not a professional M.Eng.), limited cohort size, and "
+            "Princeton's demanding general-exam culture for students who continue to the "
+            "Ph.D."
+        ),
+        "themes": [
+            {
+                "label": "Research M.S.E.",
+                "sentiment": "positive",
+                "detail": (
+                    "A thesis-based master's typically completed in 1.5–2 years with "
+                    "faculty-supervised research."
+                ),
+            },
+            {
+                "label": "Quantitative core",
+                "sentiment": "positive",
+                "detail": (
+                    "Transport, thermodynamics, and reaction engineering with rigorous "
+                    "mathematical modeling."
+                ),
+            },
+            {
+                "label": "Interdisciplinary labs",
+                "sentiment": "positive",
+                "detail": (
+                    "Links to the Andlinger Center, genomics institutes, and materials "
+                    "research across campus."
+                ),
+            },
+            {
+                "label": "Ph.D. pipeline",
+                "sentiment": "positive",
+                "detail": (
+                    "Many M.S.E. students continue to top chemical-engineering Ph.D. "
+                    "programs."
+                ),
+            },
+            {
+                "label": "Selective cohort",
+                "sentiment": "caution",
+                "detail": (
+                    "A small department with competitive admission and limited funded "
+                    "master's slots."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton CBE — Graduate Program",
+                "url": "https://cbe.princeton.edu/graduate",
+            },
+            {
+                "label": "Princeton Graduate School — Chemical and Biological Engineering",
+                "url": (
+                    "https://gradschool.princeton.edu/academics/degrees-requirements/"
+                    "fields-study/chemical-and-biological-engineering"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-civil-engineering-ms": {
+        "summary": (
+            "Graduate guides describe Princeton's M.S.E. in Civil and Environmental "
+            "Engineering as a research-focused master's spanning structures, "
+            "environmental systems, and sustainable infrastructure — praising "
+            "interdisciplinary tracks in hydrology, materials, and urban resilience, "
+            "faculty mentorship, and placement into Ph.D. programs and engineering "
+            "consulting; common cautions are a small cohort, a thesis requirement, and "
+            "less industry-oriented coursework than one-year M.Eng. programs at larger "
+            "engineering schools."
+        ),
+        "themes": [
+            {
+                "label": "Research breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "Tracks spanning structures, environmental engineering, hydrology, and "
+                    "sustainable cities."
+                ),
+            },
+            {
+                "label": "Faculty mentorship",
+                "sentiment": "positive",
+                "detail": (
+                    "Close advising within a compact department with leading researchers."
+                ),
+            },
+            {
+                "label": "Ph.D. placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates frequently continue to top civil and environmental Ph.D. "
+                    "programs."
+                ),
+            },
+            {
+                "label": "Thesis requirement",
+                "sentiment": "caution",
+                "detail": (
+                    "The M.S.E. is research-based — not a coursework-only professional "
+                    "master's."
+                ),
+            },
+            {
+                "label": "Small cohort",
+                "sentiment": "mixed",
+                "detail": (
+                    "Limited class size versus large civil-engineering programs at public "
+                    "universities."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton CEE — Graduate Studies",
+                "url": "https://cee.princeton.edu/graduate",
+            },
+            {
+                "label": "Princeton Graduate School — Civil and Environmental Engineering",
+                "url": (
+                    "https://gradschool.princeton.edu/academics/degrees-requirements/"
+                    "fields-study/civil-and-environmental-engineering"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-electrical-electronics-and-communications-engineering-ms": {
+        "summary": (
+            "Engineering guides describe Princeton's M.Eng. in Electrical and Computer "
+            "Engineering as a one-year, coursework-based master's for practicing "
+            "engineers — ECE does not offer an M.S.E. — praising access to Princeton's "
+            "communications, robotics, and quantum-systems faculty; common cautions are "
+            "that Princeton provides no institutional funding (employer or fellowship "
+            "support required), no thesis or research component, and a narrow cohort "
+            "focused on professional advancement rather than Ph.D. preparation."
+        ),
+        "themes": [
+            {
+                "label": "One-year M.Eng.",
+                "sentiment": "positive",
+                "detail": (
+                    "A coursework-based master's typically completed in one academic year."
+                ),
+            },
+            {
+                "label": "ECE faculty access",
+                "sentiment": "positive",
+                "detail": (
+                    "Courses spanning communications, computer systems, and quantum "
+                    "engineering."
+                ),
+            },
+            {
+                "label": "Professional focus",
+                "sentiment": "positive",
+                "detail": (
+                    "Designed for practicing engineers advancing technical depth without "
+                    "a research thesis."
+                ),
+            },
+            {
+                "label": "No institutional funding",
+                "sentiment": "caution",
+                "detail": (
+                    "Candidates must demonstrate external financial support — Princeton "
+                    "does not fund M.Eng. students."
+                ),
+            },
+            {
+                "label": "No M.S.E. option",
+                "sentiment": "mixed",
+                "detail": (
+                    "ECE is the only SEAS department that does not offer a research-based "
+                    "M.S.E."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton ECE — Graduate Programs",
+                "url": "https://ece.princeton.edu/academics/graduate",
+            },
+            {
+                "label": "Princeton Engineering — Graduate FAQ (M.Eng. vs M.S.E.)",
+                "url": "https://engineering.princeton.edu/graduate-studies/faq",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "princeton-mechanical-engineering-ms": {
+        "summary": (
+            "Graduate guides describe Princeton's M.S.E. in Mechanical and Aerospace "
+            "Engineering as a research-intensive master's in dynamics, fluid mechanics, "
+            "robotics, and propulsion — praising faculty-led thesis research, ties to "
+            "aerospace and robotics labs, and placement into leading Ph.D. programs and "
+            "aerospace R&D; common cautions are a demanding general-exam culture for "
+            "Ph.D. continuers, a small cohort, and less structured career coaching than "
+            "professional M.Eng. programs."
+        ),
+        "themes": [
+            {
+                "label": "Research M.S.E.",
+                "sentiment": "positive",
+                "detail": (
+                    "A thesis-based master's with faculty-supervised research in MAE labs."
+                ),
+            },
+            {
+                "label": "Aerospace & robotics",
+                "sentiment": "positive",
+                "detail": (
+                    "Strengths in fluid mechanics, propulsion, robotics, and materials."
+                ),
+            },
+            {
+                "label": "Ph.D. pipeline",
+                "sentiment": "positive",
+                "detail": (
+                    "Many graduates continue to top mechanical and aerospace Ph.D. programs."
+                ),
+            },
+            {
+                "label": "Selectivity",
+                "sentiment": "caution",
+                "detail": (
+                    "Competitive admission within a small, research-focused department."
+                ),
+            },
+            {
+                "label": "Research intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "The M.S.E. requires substantial thesis work — not a coursework-only "
+                    "professional degree."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Princeton MAE — Graduate Program",
+                "url": "https://mae.princeton.edu/graduate",
+            },
+            {
+                "label": "Princeton Graduate School — Mechanical and Aerospace Engineering",
+                "url": (
+                    "https://gradschool.princeton.edu/academics/degrees-requirements/"
+                    "fields-study/mechanical-and-aerospace-engineering"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
 }
 
 _COVERABLE_REVIEWS = frozenset(_REVIEWS_BY_SLUG.keys())
@@ -2235,12 +2921,8 @@ def _requirements_for(spec: dict) -> dict:
     return dict(_REQ_UNDERGRAD)
 
 
-# Real Princeton campus photo (Nassau Hall) — Wikimedia Commons, CC0, hotlinkable
-# landscape JPG. Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/"
-    "Nassau_Hall_Princeton.JPG/1920px-Nassau_Hall_Princeton.JPG"
-)
+# Nassau Hall leads the institution hero; see ``SCHOOL_OUTCOMES["campus_photos"]`` for gallery.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
@@ -2385,6 +3067,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.program_name = _FULL_NAME_BY_SLUG.get(slug) or spec["program_name"]
         p.degree_type = spec["degree_type"]
         p.duration_months = spec.get("duration_months")
+        p.department = spec.get("department")
         p.description_text = spec["description"]
         # Website: verified department page where available, else the owning unit's site.
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])

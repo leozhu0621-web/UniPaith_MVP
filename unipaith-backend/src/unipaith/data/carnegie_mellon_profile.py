@@ -13,6 +13,13 @@ delivery format, department, official page); deeper per-program fields (tracks,
 class profile, faculty, reviews, program-specific outcomes) are omitted-pending
 and deepened on resume runs.
 
+Depth pass (2026-06-15, cmuprof4): merged ``DEPTH_REVIEWS`` for 66 coverable
+programs — completes CMU coverable external_reviews (71/71).
+
+Description depth pass (2026-06-16, cmuprof5): replaces all classification-only
+``{name} is a {degree} in the {dept} within CMU's {school}`` stubs with
+field-specific clauses from ``cmu_field_descriptions.py`` (180/180 programs).
+
 Idempotent: ``apply(session)`` enriches the existing CMU institution (no-op when
 absent, e.g. on a fresh CI database), creating/reconciling its schools + programs.
 """
@@ -20,16 +27,24 @@ absent, e.g. on a fresh CI database), creating/reconciling its schools + program
 from __future__ import annotations
 
 # ruff: noqa: E501
+import re
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.carnegie_mellon_reviews_depth import DEPTH_REVIEWS
+from unipaith.data.cmu_field_descriptions import SLUG_DESCRIPTIONS
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Carnegie Mellon University"
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-16"
+
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is a .+ in the .+ within Carnegie Mellon University's .+",
+)
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -172,6 +187,51 @@ SCHOOL_OUTCOMES: dict = {
     },
     "location": {"lat": 40.4433, "lng": -79.9436},
     "campus_basics": {"location": "Pittsburgh, Pennsylvania"},
+    # Verified outdoor campus scenes — Wikimedia Commons API extmetadata (Artist +
+    # LicenseShortName), landscape ≥1920px thumburl. Hero uses [0]; gallery lightbox
+    # cycles the rest.
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/"
+                "Hamerschlag_Hall_at_Carnegie_Mellon_University.jpg/"
+                "1920px-Hamerschlag_Hall_at_Carnegie_Mellon_University.jpg"
+            ),
+            "credit": "Wikimedia Commons / Jiuguang Wang (CC BY-SA 2.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/"
+                "Carnegie_Mellon_The_Cut_Planet.JPG/"
+                "1920px-Carnegie_Mellon_The_Cut_Planet.JPG"
+            ),
+            "credit": "Wikimedia Commons / 燃灯 (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/"
+                "Carnegie_Mellon_University_East-West_walkway.jpg/"
+                "1920px-Carnegie_Mellon_University_East-West_walkway.jpg"
+            ),
+            "credit": "Wikimedia Commons / Dllu (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/"
+                "Carnegie_Mellon_University_from_Centre_Avenue%2C_2024-03-07.jpg/"
+                "1920px-Carnegie_Mellon_University_from_Centre_Avenue%2C_2024-03-07.jpg"
+            ),
+            "credit": "Wikimedia Commons / Cbaile19 (CC0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/"
+                "Carnegie_Mellon_University_Legacy_Plaza.jpg/"
+                "1920px-Carnegie_Mellon_University_Legacy_Plaza.jpg"
+            ),
+            "credit": "Wikimedia Commons / Dllu (CC BY-SA 4.0)",
+        },
+    ],
     "media_credit": "Wikimedia Commons / Jiuguang Wang (CC BY-SA 2.0)",
     "sources": [
         {
@@ -233,10 +293,8 @@ _INSTITUTION_CONTENT = {
     "social": dict(_SOCIAL_CMU),
 }
 
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/1/19/"
-    "Hamerschlag_Hall_at_Carnegie_Mellon_University.jpg"
-)
+# Hamerschlag Hall leads the institution hero; see ``SCHOOL_OUTCOMES["campus_photos"]``.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 # ── The seven real degree-granting colleges (official "Colleges & Schools") ────
 _SCS = "School of Computer Science"
@@ -1743,10 +1801,25 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 
 # Built at import (after Tepper/Heinz specs are appended): the canonical program list.
+def _description_for(spec: dict) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    clause = SLUG_DESCRIPTIONS.get(spec["slug"])
+    if not clause:
+        raise ValueError(f"Missing SLUG_DESCRIPTIONS entry for {spec['slug']!r}")
+    fmt = spec["delivery_format"]
+    delivery = ""
+    if fmt == "online":
+        delivery = " Delivered online."
+    elif fmt == "hybrid":
+        delivery = " Delivered in a hybrid format."
+    return f"{spec['program_name']}: {clause}{delivery}"
+
+
 def _build_programs() -> list[dict]:
     out: list[dict] = []
     for slug, name, dtype, school, dept, fmt, dur, url in _PROGRAM_SPECS:
@@ -1766,21 +1839,23 @@ def _build_programs() -> list[dict]:
 
 
 PROGRAMS: list[dict] = _build_programs()
+for _p in PROGRAMS:
+    _p["description"] = _description_for(_p)
+
+_catalog_errors = validate_catalog(PROGRAMS)
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+_missing_desc = [p["slug"] for p in PROGRAMS if p["slug"] not in SLUG_DESCRIPTIONS]
+if _missing_desc:
+    _catalog_errors.append(f"missing SLUG_DESCRIPTIONS for {len(_missing_desc)} programs")
+if _classification_stubs:
+    _catalog_errors.append(f"classification-only descriptions on {_classification_stubs} programs")
+if _catalog_errors:
+    raise RuntimeError(f"CMU catalog quality gate failed: {_catalog_errors}")
+
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG = {p["slug"]: p for p in PROGRAMS}
-
-
-def _description_for(spec: dict) -> str:
-    label = _DEGREE_LABEL.get(spec["degree_type"], "degree program")
-    fmt = spec["delivery_format"]
-    fmt_clause = {
-        "online": " It is delivered fully online.",
-        "hybrid": " It is delivered in a hybrid / multi-campus format.",
-    }.get(fmt, "")
-    return (
-        f"{spec['program_name']} is a {label} in the {spec['department']} within "
-        f"Carnegie Mellon University's {spec['school']}.{fmt_clause}"
-    )
 
 
 def _requirements_for(spec: dict) -> dict:

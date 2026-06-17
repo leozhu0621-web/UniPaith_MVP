@@ -20,7 +20,7 @@ interface Props {
 
 export default function InterestPills({ active, onChange }: Props) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+    <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
       {PILLS.map(p => (
         <button
           key={p.key}

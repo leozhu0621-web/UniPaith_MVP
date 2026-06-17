@@ -131,6 +131,14 @@ def test_every_program_has_delivery_format():
     assert any(p["delivery_format"] == "hybrid" for p in d.PROGRAMS)
 
 
+def test_catalog_passes_validate_catalog():
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(d.PROGRAMS)
+    assert errors == [], f"catalog padding violations: {errors}"
+    assert all(p.get("department") for p in d.PROGRAMS)
+
+
 def test_every_node_has_content_sources():
     assert d._INSTITUTION_CONTENT.get("news_rss")
     for school in d.SCHOOLS:

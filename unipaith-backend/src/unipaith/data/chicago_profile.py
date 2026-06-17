@@ -46,23 +46,53 @@ that the undergraduate housing system wording could not be confirmed first-party
 (omitted), and that the federal one-year Field-of-Study earnings for the M.D. reflect
 residency stipends rather than attending-physician pay (captured in that program's
 conditions).
+
+Structural repair (2026-06-17, chicagoprof7): real UChicago degree names (Bachelor of
+Arts/Science, Master of Arts/Science — never CIP-rollup credential prefixes), field-
+specific descriptions that open on the field fact (never restating program_name), and
+deduplicated IPEDS rows that mapped to the same published degree (103 programs; 0%
+name-prefix descriptions; 0% CIP-prefix names).
 """
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.chicago_field_descriptions import (
+    FIELD_ALIASES,
+    FIELD_DESCRIPTIONS,
+    SLUG_DESCRIPTIONS,
+)
 from unipaith.data.chicago_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Chicago"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-17"
+
+_TEMPLATE_STUB_RE = re.compile(
+    r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
+    r"master's|bachelor's|PhD|MBA|JD|MD|bachelors|masters|phd) program offered through ",
+    re.I,
+)
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is (an undergraduate|a graduate|a doctoral|a graduate certificate|"
+    r"a professional|a degree) program at ",
+)
+_PREFIX_NAME_RE = re.compile(
+    r"^(Bachelor's in|Master's in|Professional program in) "
+)
+
+_SLUG_TO_FIELD: dict[str, str] = {
+    slug: field_name for slug, _, field_name, _, _, _, _, _ in _IPEDS_CATALOG
+}
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -155,6 +185,51 @@ SCHOOL_OUTCOMES: dict = {
     "campus_basics": {"location": "Chicago, Illinois"},
     # Wikimedia Commons file page verified: Michael Barera, CC BY-SA 4.0 (Main Quadrangles).
     "media_credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)",
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/"
+                "University_of_Chicago_July_2013_19_%28Main_Quadrangles%29.jpg/"
+                "1920px-University_of_Chicago_July_2013_19_%28Main_Quadrangles%29.jpg"
+            ),
+            "credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/f/f3/"
+                "A_Quad_at_the_University_of_Chicago.jpg"
+            ),
+            "credit": "Wikimedia Commons / Crimson3981 (Public domain)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/"
+                "58_032179_University_of_Chicago_quad.jpg/"
+                "1920px-58_032179_University_of_Chicago_quad.jpg"
+            ),
+            "credit": "Wikimedia Commons / Downtowngal (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/"
+                "Cobb_Gate%2C_University_of_Chicago%2C_57th_Street%2C_Hyde_Park%2C_Chicago%2C_IL%3B_"
+                "Nov._2023_%2854514978242%29.jpg/"
+                "1920px-Cobb_Gate%2C_University_of_Chicago%2C_57th_Street%2C_Hyde_Park%2C_Chicago%2C_IL%3B_"
+                "Nov._2023_%2854514978242%29.jpg"
+            ),
+            "credit": (
+                "Wikimedia Commons / Warren LeMay from Chicago, IL, United States (CC BY-SA 2.0)"
+            ),
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/"
+                "University_of_Chicago_July_2013_32_%28Gordon_Center_for_Integrative_Science%29.jpg/"
+                "1920px-University_of_Chicago_July_2013_32_%28Gordon_Center_for_Integrative_Science%29.jpg"
+            ),
+            "credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)",
+        },
+    ],
     "scale": {
         # CDS 2024-25 (item I-1): 2,007 total instructional faculty (1,759 full-time +
         # 248 part-time).
@@ -998,34 +1073,378 @@ PROGRAMS: list[dict] = [
     },
 ]
 
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "uchicago-economics-bs": "Economics",
+    "uchicago-computer-science-bs": "Computer Science",
+    "uchicago-mathematics-bs": "Mathematics",
+    "uchicago-statistics-bs": "Statistics",
+    "uchicago-political-science-bs": "Political Science",
+    "uchicago-biology-bs": "Biological Sciences",
+    "uchicago-neuroscience-bs": "Neuroscience",
+    "uchicago-english-bs": "English Language and Literature",
+    "uchicago-history-bs": "History",
+    "uchicago-public-policy-bs": "Public Policy Studies",
+    "uchicago-psychology-bs": "Psychology",
+    "uchicago-mba": _BOOTH,
+    "uchicago-mpp": _HARRIS,
+    "uchicago-jd": _LAW,
+    "uchicago-md": _PRITZKER_MED,
+    "uchicago-social-work-am": _CROWN,
+    "uchicago-divinity-mdiv": _DIVINITY,
+    "uchicago-molecular-engineering-bs": _PME,
+    "uchicago-mpcs": "Computer Science",
+    "uchicago-statistics-ms": "Statistics",
+    "uchicago-cir-ma": "Committee on International Relations",
+    "uchicago-mapss-ma": "Master of Arts Program in the Social Sciences",
+    "uchicago-maph-ma": "Master of Arts Program in the Humanities",
+}
+_EXPLICIT_FULL_NAMES: dict[str, str] = {
+    "uchicago-economics-bs": "Bachelor of Arts in Economics",
+    "uchicago-computer-science-bs": "Bachelor of Science in Computer Science",
+    "uchicago-mathematics-bs": "Bachelor of Science in Mathematics",
+    "uchicago-statistics-bs": "Bachelor of Science in Statistics",
+    "uchicago-political-science-bs": "Bachelor of Arts in Political Science",
+    "uchicago-biology-bs": "Bachelor of Science in Biological Sciences",
+    "uchicago-neuroscience-bs": "Bachelor of Science in Neuroscience",
+    "uchicago-english-bs": "Bachelor of Arts in English Language and Literature",
+    "uchicago-history-bs": "Bachelor of Arts in History",
+    "uchicago-public-policy-bs": "Bachelor of Arts in Public Policy Studies",
+    "uchicago-psychology-bs": "Bachelor of Arts in Psychology",
+    "uchicago-molecular-engineering-bs": "Bachelor of Science in Molecular Engineering",
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+    if _p["slug"] in _EXPLICIT_FULL_NAMES:
+        _p["program_name"] = _EXPLICIT_FULL_NAMES[_p["slug"]]
+
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
 
+# Professional schools where the degree is owned by the school itself.
+_PROFESSIONAL_SCHOOLS = frozenset({
+    _BOOTH,
+    _HARRIS,
+    _LAW,
+    _PRITZKER_MED,
+    _CROWN,
+    _DIVINITY,
+    _PME,
+})
+
+# Federal CIP field titles → UChicago's published department / program names.
+_CIP_TO_DEPARTMENT: dict[str, str] = {
+    "Political Science and Government": "Political Science",
+    "Research and Experimental Psychology": "Psychology",
+    "Clinical, Counseling and Applied Psychology": "Psychology",
+    "Biology, General": "Biological Sciences",
+    "English Language and Literature, General": "English Language and Literature",
+    "Neurobiology and Neurosciences": "Neuroscience",
+    "Public Policy Analysis": "Public Policy Studies",
+    "Geological and Earth Sciences/Geosciences": "Geophysical Sciences",
+    "Linguistic, Comparative, and Related Language Studies and Services": "Linguistics",
+    "Social Sciences, General": "Social Sciences",
+    "Fine and Studio Arts": "Visual Arts",
+    "Film/Video and Photographic Arts": "Cinema and Media Studies",
+    "Design and Applied Arts": "Media Arts, Data and Design",
+    "Drama/Theatre Arts and Stagecraft": "Theater and Performance Studies",
+    "International Relations and National Security Studies": "International Relations",
+    "Business Administration, Management and Operations": "Business Administration",
+    "Business/Commerce, General": "Business",
+    "Management Sciences and Quantitative Methods": "Business Economics",
+    "Finance and Financial Management Services": "Finance",
+    "Marketing": "Marketing",
+    "Social Work": "Social Work",
+    "Law": "Law",
+    "Health Professions (CIP 51.12)": "Medicine",
+    "Medieval and Renaissance Studies": "Medieval Studies",
+    "Science, Technology and Society": "Science, Technology, and Society",
+    "Nutrition Sciences": "Nutritional Science",
+    "Sustainability Studies": "Environment, Geography, and Urbanization",
+    "Area Studies": "Area Studies",
+    "Ethnic, Cultural Minority, Gender, and Group Studies": "Gender and Sexuality Studies",
+    "Natural Resources Conservation and Research": "Environmental and Urban Studies",
+    "Environmental/Natural Resources Management and Policy": "Environmental and Urban Studies",
+    "Legal Research and Advanced Professional Studies": "Legal Studies",
+    "Public Health": "Public Health Sciences",
+    "Liberal Arts and Sciences, General Studies and Humanities": "Humanities",
+    "Rhetoric and Composition/Writing Studies": "Writing",
+    "Visual and Performing Arts, Other": "Visual Arts",
+    "Social Sciences, Other": "Social Sciences",
+    "Radio, Television, and Digital Communication": "Media Arts and Design",
+    "Computer and Information Sciences, General": "Computer Science",
+    "Information Science/Studies": "Information Science",
+    "Teacher Education and Professional Development, Specific Levels and Methods": (
+        "Education"
+    ),
+    "Chemical Engineering": "Molecular Engineering",
+    "Engineering Physics": "Molecular Engineering",
+    "East Asian Languages, Literatures, and Linguistics": "East Asian Languages and Civilizations",
+    "Slavic, Baltic and Albanian Languages, Literatures, and Linguistics": (
+        "Slavic Languages and Literatures"
+    ),
+    "Germanic Languages, Literatures, and Linguistics": "Germanic Studies",
+    "Romance Languages, Literatures, and Linguistics": "Romance Languages and Literatures",
+    "Middle/Near Eastern and Semitic Languages, Literatures, and Linguistics": (
+        "Near Eastern Languages and Civilizations"
+    ),
+    "Classics and Classical Languages, Literatures, and Linguistics": "Classics",
+    "Biochemistry, Biophysics and Molecular Biology": "Biochemistry and Molecular Biology",
+    "Cell/Cellular Biology and Anatomical Sciences": "Cell Biology",
+    "Microbiological Sciences and Immunology": "Microbiology",
+    "Genetics": "Genetics",
+    "Physiology, Pathology and Related Sciences": "Organismal Biology and Anatomy",
+    "Biomathematics, Bioinformatics, and Computational Biology": "Computational Biology",
+    "Ecology, Evolution, Systematics, and Population Biology": "Ecology and Evolution",
+    "Applied Mathematics": "Applied Mathematics",
+    "Physical Sciences, General": "Physical Sciences",
+    "Astronomy and Astrophysics": "Astronomy and Astrophysics",
+    "Geography and Cartography": "Geography",
+    "Anthropology": "Anthropology",
+    "Economics": "Economics",
+    "History": "History",
+    "Mathematics": "Mathematics",
+    "Statistics": "Statistics",
+    "Computer Science": "Computer Science",
+    "Chemistry": "Chemistry",
+    "Physics": "Physics",
+    "Philosophy": "Philosophy",
+    "Music": "Music",
+    "Sociology": "Sociology",
+}
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — map federal CIP titles to UChicago's published names."""
+    mapped = _CIP_TO_DEPARTMENT.get(field_name, field_name)
+    if school in _PROFESSIONAL_SCHOOLS:
+        if mapped != field_name:
+            return mapped
+        return school
+    if mapped.lower() in school.lower() or school.lower() in mapped.lower():
+        return school
+    return mapped
+
+
+# IPEDS rows that do not map to distinct UChicago degrees — tracks within Molecular
+# Engineering, Booth graduate-only business degrees mis-tagged as College bachelors, or
+# credentials the institution does not publish (e.g. no B.S. in Social Work at Crown).
+_SKIP_CATALOG_SLUGS = frozenset({
+    "uchicago-business-commerce-general-bs",
+    "uchicago-business-administration-management-and-operations-bs",
+    "uchicago-management-sciences-and-quantitative-methods-bs",
+    "uchicago-social-work-bs",
+    "uchicago-chemical-engineering-bs",
+    "uchicago-chemical-engineering-ms",
+    "uchicago-engineering-physics-bs",
+    # Redundant CIP rows that map to the same published degree as an explicit catalog entry.
+    "uchicago-computer-and-information-sciences-general-bs",
+    "uchicago-research-and-experimental-psychology-bs",
+    "uchicago-research-and-experimental-psychology-ms",
+    "uchicago-clinical-counseling-and-applied-psychology-bs",
+    "uchicago-clinical-counseling-and-applied-psychology-ms",
+    "uchicago-design-and-applied-arts-bs",
+    "uchicago-visual-and-performing-arts-other-ms",
+    # Professional degrees already modeled as explicit flagship programs.
+    "uchicago-law-prof",
+    "uchicago-health-professions-cip-51-12-prof",
+})
+
+
+# College majors that award the B.S. (STEM and quantitative fields); others default to B.A.
+_BS_MAJORS = frozenset({
+    "Computer Science",
+    "Mathematics",
+    "Statistics",
+    "Applied Mathematics",
+    "Physics",
+    "Chemistry",
+    "Astronomy and Astrophysics",
+    "Molecular Engineering",
+    "Biological Sciences",
+    "Neuroscience",
+    "Geophysical Sciences",
+    "Computational Biology",
+    "Information Science",
+    "Biochemistry and Molecular Biology",
+    "Cell Biology",
+    "Microbiology",
+    "Genetics",
+    "Organismal Biology and Anatomy",
+    "Ecology and Evolution",
+    "Nutritional Science",
+    "Physical Sciences",
+    "Environmental and Urban Studies",
+})
+
+_MS_SCHOOLS = frozenset({
+    _PHYS_SCI,
+    _PME,
+})
+
+
+def _chicago_program_name(
+    field_name: str, degree_type: str, school: str, slug: str
+) -> str:
+    """Real UChicago degree designation — never a CIP-rollup credential prefix."""
+    dept = _department_for(field_name, school)
+    if degree_type == "bachelors":
+        if school == _PME or dept in _BS_MAJORS:
+            return f"Bachelor of Science in {dept}"
+        return f"Bachelor of Arts in {dept}"
+    if degree_type == "masters":
+        if school in _MS_SCHOOLS or dept in _BS_MAJORS:
+            return f"Master of Science in {dept}"
+        return f"Master of Arts in {dept}"
+    if degree_type == "certificate":
+        return f"Graduate Certificate in {dept}"
+    if degree_type == "phd":
+        return f"Doctor of Philosophy in {dept}"
+    return dept
+
+
+def _field_from_program_name(program_name: str) -> str | None:
+    """Extract field title from a disambiguated program name."""
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Bachelor's in ",
+        "Master's in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+        "Professional program in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):]
+    return None
+
+
+def _needs_normalize(desc: str, program_name: str = "") -> bool:
+    """True when a description is a classification or template stub."""
+    if not desc:
+        return True
+    if program_name and desc.startswith(program_name):
+        return True
+    if _CLASSIFICATION_STUB_RE.match(desc):
+        return True
+    if _TEMPLATE_STUB_RE.search(desc):
+        return True
+    if "offered through the " in desc:
+        return True
+    # Short "Field — topic" stubs from the first breadth pass.
+    if " — " in desc and len(desc) < 160 and not desc.startswith("The "):
+        return True
+    return False
+
+
+def _chicago_description(spec: dict, field: str | None = None) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    fmt = spec.get("delivery_format", "in_person")
+    delivery = ""
+    if fmt == "online":
+        delivery = " Delivered online."
+    elif fmt == "hybrid":
+        delivery = " Delivered in hybrid format."
+    if slug in SLUG_DESCRIPTIONS:
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+    field_key = (
+        field
+        or spec.get("_field_name")
+        or _SLUG_TO_FIELD.get(slug)
+        or _field_from_program_name(spec.get("program_name", ""))
+        or spec.get("department")
+        or spec.get("program_name", "")
+    )
+    if field_key in FIELD_ALIASES:
+        field_key = FIELD_ALIASES[field_key]
+    clause = FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        raise ValueError(
+            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
+        )
+    return f"{clause}{delivery}"
+
+
+def _normalize_program(spec: dict, field_name: str | None = None) -> None:
+    """Stamp a field-specific description on stub program nodes."""
+    if not _needs_normalize(spec.get("description") or "", spec.get("program_name", "")):
+        return
+    spec["description"] = _chicago_description(spec, field=field_name)
+
 
 def _build_catalog() -> list[dict]:
-    """Append breadth-first program nodes from the IPEDS completions-cip-6 catalog."""
+    """Append breadth-first program nodes from the IPEDS Field-of-Study catalog."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+    for slug, school, name, dtype, cip, dur, fmt, _desc in _IPEDS_CATALOG:
         if slug in seen:
+            continue
+        if slug in _SKIP_CATALOG_SLUGS:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
+        if name.startswith("Program (CIP") or name.startswith("Health Professions (CIP"):
+            continue
         seen.add(slug)
-        out.append({
+        dept = _department_for(name, school)
+        pname = _chicago_program_name(name, dtype, school, slug)
+        delivery = fmt if fmt in {"online", "hybrid"} else "in_person"
+        spec = {
             "slug": slug,
             "school": school,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": dtype,
+            "department": dept,
             "cip": cip,
             "duration_months": dur,
-            "delivery_format": fmt,
-            "description": desc,
-        })
+            "delivery_format": delivery,
+            "_field_name": name,
+        }
+        _normalize_program(spec, name)
+        spec.pop("_field_name", None)
+        out.append(spec)
     return out
 
 
 PROGRAMS += _build_catalog()
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_FULL_NAMES:
+        _p["program_name"] = _EXPLICIT_FULL_NAMES[_p["slug"]]
+    _normalize_program(_p, _field_from_program_name(_p.get("program_name", "")))
+
+_catalog_errors = validate_catalog(PROGRAMS)
+_stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
+_new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
+if _stub_desc:
+    _catalog_errors.append(f"template stub descriptions on {_stub_desc} programs")
+if _new_templ:
+    _catalog_errors.append(f"program_description template on {_new_templ} programs")
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
+_prefix_names = sum(1 for p in PROGRAMS if _PREFIX_NAME_RE.match(p.get("program_name", "")))
+if _prefix_names:
+    _catalog_errors.append(f"CIP-prefix program_name on {_prefix_names} programs")
+if _catalog_errors:
+    raise RuntimeError(f"UChicago catalog quality gate failed: {_catalog_errors}")
+
+for _p in PROGRAMS:
+    _p.setdefault("delivery_format", "in_person")
+
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
@@ -1125,6 +1544,20 @@ _TRACKS_BY_SLUG: dict[str, dict] = {
         ],
         "source": "Chicago Booth — MBA Curriculum",
         "source_url": "https://www.chicagobooth.edu/mba/academics/curriculum",
+    },
+    "uchicago-molecular-engineering-bs": {
+        "label": "Molecular Engineering tracks",
+        "note": (
+            "Undergraduates choose among bioengineering, chemical engineering, or quantum "
+            "engineering tracks within the single Molecular Engineering major (PME)."
+        ),
+        "items": [
+            {"name": "Bioengineering"},
+            {"name": "Chemical engineering"},
+            {"name": "Quantum engineering"},
+        ],
+        "source": "PME — Undergraduate major FAQs",
+        "source_url": "https://pme.uchicago.edu/undergraduate-program/undergraduate-major-and-minor-faqs",
     },
 }
 
@@ -1662,6 +2095,554 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "verbatim reviews."
         ),
     },
+    "uchicago-economics-bs": {
+        "summary": (
+            "Students and third-party guides describe UChicago's economics major as one of "
+            "the nation's most rigorous undergraduate programs — Niche ranks it #4 for "
+            "Best Colleges for Economics (2026) and College Factual ranks the bachelor's "
+            "#1 nationally — grounded in the Chicago School's quantitative micro, macro, "
+            "and econometrics tradition with tracks in business economics, data science, and "
+            "politics and policy. Common cautions are heavy calculus and theory prerequisites, "
+            "large intermediate courses, and an intellectually intense Core that adds breadth "
+            "beyond a purely economics track."
+        ),
+        "themes": [
+            {
+                "label": "Elite national standing",
+                "sentiment": "positive",
+                "detail": (
+                    "Niche #4 Best Colleges for Economics (2026); College Factual #1 "
+                    "bachelor's in economics nationally."
+                ),
+            },
+            {
+                "label": "Chicago School rigor",
+                "sentiment": "positive",
+                "detail": (
+                    "Theory-forward curriculum with honors sequences and research pathways "
+                    "through the Griffin Department of Economics."
+                ),
+            },
+            {
+                "label": "Career & Ph.D. placement",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates enter finance, consulting, policy, and top economics Ph.D. "
+                    "programs; the department publishes research-opportunity guidance."
+                ),
+            },
+            {
+                "label": "Quantitative prerequisites",
+                "sentiment": "caution",
+                "detail": (
+                    "Multivariable calculus and a demanding theory core can overwhelm "
+                    "students without strong math preparation."
+                ),
+            },
+            {
+                "label": "Core + course scale",
+                "sentiment": "mixed",
+                "detail": (
+                    "UChicago's broad Core adds intellectual breadth but can compete with "
+                    "economics electives; some intermediate lectures feel large."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Niche — Best Colleges for Economics (2026)",
+                "url": "https://www.niche.com/colleges/search/best-colleges-for-economics/",
+            },
+            {
+                "label": "Kenneth C. Griffin Department of Economics — Undergraduate",
+                "url": "https://economics.uchicago.edu/undergraduate-study",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-mpcs": {
+        "summary": (
+            "Students and guides describe the Master's Program in Computer Science (MPCS) as "
+            "a professionally oriented, career-launching degree — Niche graduate reviewers "
+            "praise its mix of academic rigor and industry-relevant projects, and the program "
+            "publishes annual career-outcomes reports with strong tech placement. Common "
+            "cautions are an intense workload with stacked deadlines, per-course tuition near "
+            "$7,000, limited in-campus housing, and less centralized career-services support "
+            "than some larger CS master's programs."
+        ),
+        "themes": [
+            {
+                "label": "Industry-oriented curriculum",
+                "sentiment": "positive",
+                "detail": (
+                    "Courses blend theory with hands-on projects taught by faculty and "
+                    "practitioners; cohorts are collaborative."
+                ),
+            },
+            {
+                "label": "Career outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "MPCS publishes alumni career-outcomes reports; graduates enter software, "
+                    "data, and product roles."
+                ),
+            },
+            {
+                "label": "Accessible to career changers",
+                "sentiment": "positive",
+                "detail": (
+                    "The program accommodates students new to CS with immersive and "
+                    "part-time formats."
+                ),
+            },
+            {
+                "label": "Workload intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Fast-paced quarters and project deadlines can feel overwhelming, "
+                    "especially for working students."
+                ),
+            },
+            {
+                "label": "Cost & career services",
+                "sentiment": "mixed",
+                "detail": (
+                    "High per-course tuition and lighter centralized recruiting than some "
+                    "peer CS master's programs."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "MPCS — Career Outcomes Reports",
+                "url": "https://masters.cs.uchicago.edu/career-services/career-outcomes-reports/",
+            },
+            {
+                "label": "Niche — University of Chicago Graduate Reviews",
+                "url": "https://www.niche.com/graduate-schools/university-of-chicago/reviews/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-social-work-am": {
+        "summary": (
+            "Students and policy guides describe Crown Family School's A.M. in Social Work, "
+            "Social Policy, and Social Administration as a top-tier, interdisciplinary "
+            "professional degree — U.S. News ranked the school #3 nationally for social work "
+            "(2024) — combining clinical practice with policy, research, and social-science "
+            "theory beyond a traditional MSW. Common cautions are demanding coursework across "
+            "the quarter system, the cost of a private-university graduate degree in Chicago, "
+            "and an administrative pace that some students find intense."
+        ),
+        "themes": [
+            {
+                "label": "Top national rank",
+                "sentiment": "positive",
+                "detail": (
+                    "U.S. News Best Schools for Social Work #3 (2024); CSWE-accredited since "
+                    "1919."
+                ),
+            },
+            {
+                "label": "Interdisciplinary breadth",
+                "sentiment": "positive",
+                "detail": (
+                    "The A.M. integrates direct practice with policy analysis and social-science "
+                    "theory across five specialization pathways."
+                ),
+            },
+            {
+                "label": "Career flexibility",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates pursue clinical social work, nonprofit leadership, policy, "
+                    "research, and community organizing."
+                ),
+            },
+            {
+                "label": "Program intensity",
+                "sentiment": "caution",
+                "detail": (
+                    "Rigorous coursework on UChicago's quarter calendar can feel fast-paced."
+                ),
+            },
+            {
+                "label": "Cost & administration",
+                "sentiment": "mixed",
+                "detail": (
+                    "Private-university tuition in Chicago; some students note administrative "
+                    "complexity."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Crown Family School — Master's in Social Work",
+                "url": "https://crownschool.uchicago.edu/academic-programs/masters-social-work",
+            },
+            {
+                "label": "U.S. News — Best Schools for Social Work",
+                "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/social-work-rankings",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-molecular-engineering-bs": {
+        "summary": (
+            "Students and parents on College Confidential describe UChicago's Molecular "
+            "Engineering major — the nation's first undergraduate program in the field — as "
+            "research-rich and flexible across bioengineering, chemical engineering, and "
+            "quantum tracks, with plentiful lab and internship opportunities through PME. "
+            "Common cautions are that the program is not ABET-accredited (by design), is "
+            "still younger than peer engineering schools, and suits students comfortable "
+            "building a bespoke path within UChicago's liberal-arts Core."
+        ),
+        "themes": [
+            {
+                "label": "Research & lab access",
+                "sentiment": "positive",
+                "detail": (
+                    "Students report early research-lab placement and industry internships; "
+                    "PME emphasizes capstone projects with industry partners."
+                ),
+            },
+            {
+                "label": "Distinctive tracks",
+                "sentiment": "positive",
+                "detail": (
+                    "Bioengineering, chemical engineering, and quantum engineering tracks "
+                    "within one molecular-engineering major."
+                ),
+            },
+            {
+                "label": "Interdisciplinary UChicago setting",
+                "sentiment": "positive",
+                "detail": (
+                    "Engineering training sits inside a rigorous liberal-arts college with "
+                    "cross-registration across the university."
+                ),
+            },
+            {
+                "label": "No ABET accreditation",
+                "sentiment": "caution",
+                "detail": (
+                    "PME deliberately forgoes ABET; students and alumni report this has not "
+                    "blocked industry or graduate-school paths."
+                ),
+            },
+            {
+                "label": "Younger program scale",
+                "sentiment": "mixed",
+                "detail": (
+                    "Smaller than long-established engineering schools; students must be "
+                    "self-directed in building community and recruiting."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "PME — Undergraduate major FAQs",
+                "url": "https://pme.uchicago.edu/undergraduate-program/undergraduate-major-and-minor-faqs",
+            },
+            {
+                "label": "College Confidential — Molecular Engineering at UChicago",
+                "url": (
+                    "https://talk.collegeconfidential.com/t/"
+                    "molecular-engineering-reviews-and-feedback-please/3664775"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-economics-ms": {
+        "summary": (
+            "Students and the department describe the one-year Master of Arts in Economics "
+            "(MAE) as the only M.A. from a top-five U.S. economics department — built on "
+            "Chicago's micro, macro, and econometrics core with electives across economics, "
+            "Harris, and Booth. Common cautions are the program's mathematical intensity, "
+            "the one-year timeline for students aiming at Ph.D. coursework, and the need to "
+            "self-direct recruiting for industry roles beyond the department's placement "
+            "listings."
+        ),
+        "themes": [
+            {
+                "label": "Chicago Economics pedigree",
+                "sentiment": "positive",
+                "detail": (
+                    "Only M.A. from a top U.S. economics department; Nobel-caliber faculty "
+                    "and ECMA core sequences."
+                ),
+            },
+            {
+                "label": "Flexible outcomes",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduates enter industry, policy, predoctoral research, and Ph.D. "
+                    "programs; the department publishes placement data."
+                ),
+            },
+            {
+                "label": "Research pathway",
+                "sentiment": "positive",
+                "detail": (
+                    "Research Intensive Track (RIT) option for students pursuing doctoral "
+                    "coursework."
+                ),
+            },
+            {
+                "label": "Quantitative rigor",
+                "sentiment": "caution",
+                "detail": (
+                    "Math camp and graduate theory expect strong preparation in calculus and "
+                    "statistics."
+                ),
+            },
+            {
+                "label": "One-year pace",
+                "sentiment": "mixed",
+                "detail": (
+                    "The compressed timeline can limit depth for students pivoting from "
+                    "non-quantitative backgrounds."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Kenneth C. Griffin Department of Economics — MAE",
+                "url": "https://economics.uchicago.edu/masters-programs/master-arts-economics",
+            },
+            {
+                "label": "Economics — Placement and Outcomes",
+                "url": "https://economics.uchicago.edu/masters-programs/placement-and-outcomes",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-film-video-and-photographic-arts-bs": {
+        "summary": (
+            "Students and film-school guides describe UChicago's Cinema and Media Studies "
+            "major as intellectually rigorous and theory-forward — FilmSchool.org reviewers "
+            "rate the department highly for coursework and professors — with optional "
+            "production-thesis tracks and student-led filmmaking through Fire Escape Films. "
+            "Common cautions are that the program emphasizes critical history and theory "
+            "over hands-on production training, the overall UChicago workload is intense, "
+            "and practical filmmaking often requires joining campus organizations."
+        ),
+        "themes": [
+            {
+                "label": "Theory & history depth",
+                "sentiment": "positive",
+                "detail": (
+                    "Core cinema-history sequence and advanced seminars prepare students for "
+                    "graduate study and critical analysis."
+                ),
+            },
+            {
+                "label": "Production pathways",
+                "sentiment": "positive",
+                "detail": (
+                    "Intensive production-thesis track and student organizations (e.g., Fire "
+                    "Escape Films) provide filmmaking experience."
+                ),
+            },
+            {
+                "label": "Interdisciplinary campus",
+                "sentiment": "positive",
+                "detail": (
+                    "CMS sits within UChicago's humanities ecosystem with cross-registration "
+                    "and joint-thesis options."
+                ),
+            },
+            {
+                "label": "Limited formal production",
+                "sentiment": "caution",
+                "detail": (
+                    "Applicants seeking a primarily hands-on film school may find the "
+                    "curriculum analysis-heavy compared with conservatory programs."
+                ),
+            },
+            {
+                "label": "Academic intensity",
+                "sentiment": "mixed",
+                "detail": (
+                    "Reviewers note UChicago's demanding Core and quarter pace alongside CMS "
+                    "coursework."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cinema and Media Studies — Undergraduate major",
+                "url": (
+                    "https://cms.uchicago.edu/undergraduate/"
+                    "why-study-cinema-and-media-studies/major-cinema-and-media-studies"
+                ),
+            },
+            {
+                "label": "FilmSchool.org — UChicago Cinema and Media Studies reviews",
+                "url": (
+                    "https://www.filmschool.org/reviews/"
+                    "university-of-chicago-department-of-cinema-and-media-studies.211/reviews"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-film-video-and-photographic-arts-ms": {
+        "summary": (
+            "Graduate students and departmental materials describe UChicago's cinema and "
+            "media graduate work — centered in the Department of Cinema and Media Studies "
+            "within the Division of the Humanities — as research-intensive and "
+            "interdisciplinary, with strengths in film history, theory, and media "
+            "archaeology rather than vocational production training. Common cautions are "
+            "small cohorts, the academic job market for film studies, and the need to "
+            "self-build production experience if pursuing industry roles."
+        ),
+        "themes": [
+            {
+                "label": "Research reputation",
+                "sentiment": "positive",
+                "detail": (
+                    "Faculty and graduate students are known for rigorous scholarship in "
+                    "film history, theory, and media studies."
+                ),
+            },
+            {
+                "label": "Humanities integration",
+                "sentiment": "positive",
+                "detail": (
+                    "Graduate work connects to art history, literature, and interdisciplinary "
+                    "centers across the Division of the Humanities."
+                ),
+            },
+            {
+                "label": "Academic placement",
+                "sentiment": "positive",
+                "detail": (
+                    "The program prepares students for doctoral study and academic careers "
+                    "in cinema and media fields."
+                ),
+            },
+            {
+                "label": "Industry orientation",
+                "sentiment": "caution",
+                "detail": (
+                    "The curriculum is scholarly rather than a vocational film-production "
+                    "master's."
+                ),
+            },
+            {
+                "label": "Cohort scale",
+                "sentiment": "mixed",
+                "detail": (
+                    "Small graduate community offers close faculty access but fewer peer "
+                    "resources than large film schools."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "Cinema and Media Studies — Department home",
+                "url": "https://cms.uchicago.edu/",
+            },
+            {
+                "label": "FilmSchool.org — UChicago Cinema and Media Studies",
+                "url": (
+                    "https://www.filmschool.org/reviews/"
+                    "university-of-chicago-department-of-cinema-and-media-studies.211/"
+                ),
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
+    "uchicago-divinity-mdiv": {
+        "summary": (
+            "Students and accreditors describe the Divinity School's three-year Master of "
+            "Divinity as a cohort-based program combining religious-studies coursework, "
+            "field education, and leadership formation — the school is accredited by the "
+            "Association of Theological Schools (ATS) and publishes MDiv placement outcomes. "
+            "Common cautions are demanding writing and language requirements, limited Niche "
+            "review volume, and some student notes of administrative disorganization "
+            "alongside strong faculty mentorship."
+        ),
+        "themes": [
+            {
+                "label": "ATS accreditation",
+                "sentiment": "positive",
+                "detail": (
+                    "The MDiv is accredited by the Commission on Accrediting of ATS; the "
+                    "school publishes placement summaries."
+                ),
+            },
+            {
+                "label": "Field education",
+                "sentiment": "positive",
+                "detail": (
+                    "Three-year curriculum integrates community engagement and supervised "
+                    "ministry placements."
+                ),
+            },
+            {
+                "label": "Interdisciplinary study",
+                "sentiment": "positive",
+                "detail": (
+                    "MDiv students cross-register across the university's divisions while "
+                    "grounding work in religious leadership."
+                ),
+            },
+            {
+                "label": "Administrative pace",
+                "sentiment": "caution",
+                "detail": (
+                    "Graduate reviewers occasionally note administrative complexity on the "
+                    "quarter calendar."
+                ),
+            },
+            {
+                "label": "Niche visibility",
+                "sentiment": "mixed",
+                "detail": (
+                    "Public third-party review volume is small compared with larger divinity "
+                    "schools."
+                ),
+            },
+        ],
+        "sources": [
+            {
+                "label": "UChicago Divinity School — MDiv Program",
+                "url": "https://divinity.uchicago.edu/MDivprogram",
+            },
+            {
+                "label": "Niche — University of Chicago Divinity School",
+                "url": "https://www.niche.com/graduate-schools/university-of-chicago-divinity-school/",
+            },
+        ],
+        "disclaimer": (
+            "Aggregated and paraphrased from public third-party sources — not individual "
+            "verbatim reviews."
+        ),
+    },
 }
 
 # ── Application requirements ─────────────────────────────────────────────────
@@ -1839,12 +2820,9 @@ def _requirements_for(spec: dict) -> dict:
 
 
 # Real UChicago campus photo (the Main Quadrangles) — Wikimedia Commons, hotlinkable
-# landscape JPG (verified HTTP 200). Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/"
-    "University_of_Chicago_July_2013_19_%28Main_Quadrangles%29.jpg/"
-    "1920px-University_of_Chicago_July_2013_19_%28Main_Quadrangles%29.jpg"
-)
+# landscape JPG (verified HTTP 200). Leads the institution hero; see
+# ``SCHOOL_OUTCOMES["campus_photos"]`` for gallery.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
@@ -2003,6 +2981,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # school's site.
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
+        p.department = spec.get("department")
         p.is_published = True
         p.catalog_source = "curated"
         # Persist the curated CIP so the matching feature path (program_features

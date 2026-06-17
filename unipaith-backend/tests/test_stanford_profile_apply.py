@@ -180,8 +180,9 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     # were replaced with the profile's keyword-filtered program feed (not left null).
     cs_bs = next(p for p in progs if p.slug == "stanford-cs-bs")
     assert cs_bs.tracks is None
+    assert cs_bs.department == "Computer Science"
     assert cs_bs.content_sources is not None
-    assert cs_bs.content_sources["news_rss"] == stanford_profile._STANFORD_NEWS_RSS
+    assert cs_bs.content_sources["news_rss"] == stanford_profile._LAW_RSS
     events_url = stanford_profile._STANFORD_EVENTS_ICS["url"]
     assert cs_bs.content_sources["events_feed"]["url"] == events_url
     assert cs_bs.content_sources["keywords"]

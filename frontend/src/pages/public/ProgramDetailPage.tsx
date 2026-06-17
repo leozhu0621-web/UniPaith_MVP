@@ -113,7 +113,7 @@ export default function ProgramDetailPage() {
 
   if (programQ.isLoading) {
     return (
-      <div className="max-w-5xl w-full mx-auto px-6 py-10 space-y-6">
+      <div className="w-full px-6 py-10 space-y-6">
         <Skeleton className="h-10 w-96" />
         <Skeleton className="h-6 w-64" />
         <div className="grid grid-cols-3 gap-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
@@ -125,7 +125,7 @@ export default function ProgramDetailPage() {
   // instead of telling the visitor the program doesn't exist.
   if (programQ.isError) {
     return (
-      <div className="max-w-5xl w-full mx-auto px-6 py-16">
+      <div className="w-full px-6 py-16">
         <QueryError detail="We couldn't load this program." onRetry={() => programQ.refetch()} />
         <div className="text-center mt-4">
           <Link to="/browse" className="text-secondary hover:underline">Browse programs</Link>
@@ -136,7 +136,7 @@ export default function ProgramDetailPage() {
 
   if (!p) {
     return (
-      <div className="max-w-5xl w-full mx-auto px-6 py-16 text-center">
+      <div className="w-full px-6 py-16 text-center">
         <GraduationCap size={48} className="mx-auto text-foreground/30 mb-4" />
         <h2 className="text-xl font-semibold text-foreground mb-2">Program not found</h2>
         <p className="text-foreground/70 mb-6">This program may not be published or the link is incorrect.</p>
@@ -207,7 +207,7 @@ export default function ProgramDetailPage() {
 
   return (
     <>
-      <div className="max-w-5xl w-full mx-auto px-6 py-8">
+      <div className="w-full px-6 py-8">
         {/* Breadcrumb — text-driven, no back-arrow (mirrors the school pages). */}
         <nav className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-4 flex-wrap" aria-label="Breadcrumb">
           <Link to="/" className="hover:text-secondary transition-colors">Home</Link>

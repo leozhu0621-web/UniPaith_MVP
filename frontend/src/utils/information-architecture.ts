@@ -56,8 +56,14 @@ export const PROFILE_TAB_ALIASES: Record<string, string> = {
   // The Preparation cluster is the documents repo — land there directly.
   preparation: '/s/prep?tab=documents',
   financial: '/s/applications?tab=costs',
+  // Data rights (consent + export + access log) moved to account Settings
+  // (Spec 2026-06-15 §2.1) — the Profile Data tab is retired.
+  data: '/s/settings',
 }
 
+// Strategy lives in the Planning rail cluster (2026-06-15); 'timeline' is retired
+// (its chronological view was dropped). ProfilePage redirects ?tab=timeline →
+// ?tab=strategy for old links.
 export const PROFILE_TABS_SPEC = [
   'overview',
   'identity',
@@ -65,11 +71,9 @@ export const PROFILE_TABS_SPEC = [
   'experience',
   'goals',
   'needs',
-  'strategy',
   'preferences',
-  'timeline',
+  'strategy',
   'analytics',
-  'data',
 ] as const
 
 export type ProfileTabSpec = (typeof PROFILE_TABS_SPEC)[number]

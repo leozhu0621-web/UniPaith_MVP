@@ -112,6 +112,18 @@ def _program_snapshot(slug: str) -> dict:
     }
 
 
+def test_catalog_passes_validate_catalog():
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(c.PROGRAMS)
+    assert not errors, errors
+
+
+def test_every_program_has_department():
+    for spec in c.PROGRAMS:
+        assert spec.get("department"), spec["slug"]
+
+
 def test_chicago_institution_is_gold_except_recorded_omission():
     res = check_conformance(
         "institution", _institution_snapshot(), profile_version=STANDARD_VERSION
@@ -174,15 +186,17 @@ def test_booth_mba_flagship_is_deeply_enriched():
 
 
 def test_coverable_programs_have_external_reviews():
-    """Coverable programs (MBA, JD, MD, MPP, flagship CS) must carry reviews."""
-    coverable = [
-        _FLAGSHIP,
-        "uchicago-computer-science-bs",
-        "uchicago-jd",
-        "uchicago-md",
-        "uchicago-mpp",
-    ]
-    for slug in coverable:
+    """Every fleet-audit coverable program must carry aggregated external_reviews."""
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from scripts.fleet_audit import is_coverable
+
+    for spec in c.PROGRAMS:
+        if not is_coverable(spec):
+            continue
+        slug = spec["slug"]
         assert slug in c._REVIEWS_BY_SLUG, slug
         assert c._REVIEWS_BY_SLUG[slug].get("summary"), slug
         assert len(c._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
@@ -203,3 +217,15 @@ def test_every_program_maps_to_a_real_school():
     for spec in c.PROGRAMS:
         assert spec["school"] in names, f"{spec['slug']} -> unknown school {spec['school']}"
     assert len(c.PROGRAM_SLUGS) == len(set(c.PROGRAM_SLUGS)), "duplicate program slug"
+
+
+def test_no_name_prefixed_descriptions():
+    for spec in c.PROGRAMS:
+        desc = spec.get("description") or ""
+        pname = spec["program_name"]
+        assert not desc.startswith(pname), spec["slug"]
+
+
+def test_no_cip_prefix_program_names():
+    for spec in c.PROGRAMS:
+        assert not c._PREFIX_NAME_RE.match(spec["program_name"]), spec["slug"]

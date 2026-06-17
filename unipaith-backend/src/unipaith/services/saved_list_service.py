@@ -96,12 +96,18 @@ class SavedListService:
         self.db = db
 
     async def _get_or_create_default_list(self, student_id: UUID) -> SavedList:
+        # A student may end up with more than one list (legacy data, a create
+        # race). Treat the oldest as the canonical default and take it
+        # deterministically — scalar_one_or_none() would 500 on duplicates and
+        # take the whole Saved page down with it.
         result = await self.db.execute(
             select(SavedList)
             .where(SavedList.student_id == student_id)
             .options(selectinload(SavedList.items))
+            .order_by(SavedList.created_at.asc())
+            .limit(1)
         )
-        saved_list = result.scalar_one_or_none()
+        saved_list = result.scalars().first()
         if saved_list is None:
             saved_list = SavedList(student_id=student_id, list_name="My List")
             self.db.add(saved_list)

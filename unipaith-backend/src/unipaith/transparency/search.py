@@ -305,13 +305,15 @@ def _route_buckets(routes) -> dict[str, list[str]]:
     so the page can't claim a surface the deployed app doesn't serve. Note
     ``/saved-searches`` contains the substring ``search``; it's bucketed first
     and excluded from the keyword-search bucket."""
+    from unipaith.transparency.live_routes import expand_routes
+
     buckets: dict[str, set[str]] = {
         "saved_search": set(),
         "search": set(),
         "feed": set(),
         "events": set(),
     }
-    for r in routes:
+    for r in expand_routes(routes):
         path = getattr(r, "path", "")
         methods = getattr(r, "methods", None)
         if not path.startswith(API_PREFIX) or not methods:

@@ -11,9 +11,8 @@
  */
 import { useState } from 'react'
 import { confirmDialog } from '../../../stores/confirm-store'
-import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Plus, ShieldCheck, Sparkles, Trash2 } from 'lucide-react'
+import { Globe, Heart, Lightbulb, type LucideIcon, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
 
 import {
   type UpsertIdentityBody,
@@ -24,7 +23,6 @@ import {
 import AIBadge from '../../../components/ui/AIBadge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
-import EmptyState from '../../../components/ui/EmptyState'
 import Modal from '../../../components/ui/Modal'
 import QueryError from '../../../components/ui/QueryError'
 import { SkeletonCard } from '../../../components/ui/Skeleton'
@@ -36,8 +34,6 @@ import type {
   StudentIdentity,
   WorldviewItem,
 } from '../../../types'
-
-const PRIVACY_DISCLOSURE_KEY = 'unipaith.identity-privacy-ack'
 
 type ItemKind = 'core_values' | 'worldview' | 'self_awareness'
 
@@ -228,15 +224,11 @@ function ItemFooter({ onCancel, submitting }: { onCancel: () => void; submitting
 
 export default function IdentityTab() {
   const qc = useQueryClient()
-  const navigate = useNavigate()
   const { data: identity, isLoading, isError, refetch } = useQuery<StudentIdentity>({
     queryKey: ['identity'],
     queryFn: () => getIdentity(),
   })
   const [editing, setEditing] = useState<EditingState>(null)
-  const [showPrivacy, setShowPrivacy] = useState(
-    () => typeof window !== 'undefined' && !window.localStorage.getItem(PRIVACY_DISCLOSURE_KEY),
-  )
 
   const onSettled = () => qc.invalidateQueries({ queryKey: ['identity'] })
 
@@ -307,186 +299,83 @@ export default function IdentityTab() {
   }
 
   return (
-    <div className="space-y-6">
-      {showPrivacy && (
-        <Card pad={false} className="p-4 flex items-start gap-3 bg-muted">
-          <ShieldCheck size={18} className="text-secondary shrink-0 mt-0.5" />
-          <div className="text-sm text-foreground">
-            Identity is the deepest layer of your profile. We use this to personalize matches and
-            rationales — nothing here goes to institutions until you choose to share it. Manage in{' '}
-            <button
-              onClick={() => navigate('/s/profile?tab=data')}
-              className="font-semibold text-secondary hover:underline"
-            >
-              Data Rights →
-            </button>
-            <button
-              className="ml-2 font-semibold text-secondary hover:underline"
-              onClick={() => {
-                window.localStorage.setItem(PRIVACY_DISCLOSURE_KEY, '1')
-                setShowPrivacy(false)
-              }}
-            >
-              Got it
-            </button>
-          </div>
-        </Card>
-      )}
-
-      <div>
-        <h2 className="text-h3 text-foreground">Identity</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          The deepest layer of who you are — values, worldview, and self-awareness. Discovery surfaces
-          these from your conversations; edit anything.
-        </p>
-      </div>
-
-      <Section
-        title="Core values"
-        hint="What you most consistently care about, with evidence."
-        addLabel="Add value"
-        onAdd={() =>
-          setEditing({
-            kind: 'core_values',
-            index: null,
-            draft: { ...(EMPTY.core_values as CoreValue) },
-          })
-        }
-      >
-        {identity.core_values.length === 0 ? (
-          <Empty kind="value" addLabel="Add value" onAdd={() => setEditing({ kind: 'core_values', index: null, draft: { ...(EMPTY.core_values as CoreValue) } })} />
-        ) : (
-          identity.core_values.map((v, i) => (
-            <Card pad={false} key={i} className="p-4 space-y-1">
-              <div className="flex items-start justify-between gap-2">
-                <div className="text-sm font-medium text-foreground">{v.value}</div>
-                <ItemActions
-                  onEdit={() =>
-                    setEditing({
-                      kind: 'core_values',
-                      index: i,
-                      draft: { ...v },
-                    })
-                  }
-                  onRemove={() => removeItem('core_values', i)}
-                />
-              </div>
-              <div className="text-xs text-muted-foreground">{v.evidence}</div>
-              {v.source_quote && (
-                <div className="text-xs italic text-muted-foreground border-l-2 border-border pl-2">
-                  "{v.source_quote}"
-                </div>
-              )}
-            </Card>
-          ))
-        )}
-      </Section>
-
-      <Section
-        title="Worldview"
-        hint="Beliefs about how the world works, with the context that shaped them."
-        addLabel="Add belief"
-        onAdd={() =>
-          setEditing({
-            kind: 'worldview',
-            index: null,
-            draft: { ...(EMPTY.worldview as WorldviewItem) },
-          })
-        }
-      >
-        {identity.worldview.length === 0 ? (
-          <Empty kind="belief" addLabel="Add belief" onAdd={() => setEditing({ kind: 'worldview', index: null, draft: { ...(EMPTY.worldview as WorldviewItem) } })} />
-        ) : (
-          identity.worldview.map((w, i) => (
-            <Card pad={false} key={i} className="p-4 space-y-1">
-              <div className="flex items-start justify-between gap-2">
-                <div className="text-sm font-medium text-foreground">{w.belief}</div>
-                <ItemActions
-                  onEdit={() =>
-                    setEditing({
-                      kind: 'worldview',
-                      index: i,
-                      draft: { ...w },
-                    })
-                  }
-                  onRemove={() => removeItem('worldview', i)}
-                />
-              </div>
-              <div className="text-xs text-muted-foreground">{w.context}</div>
-            </Card>
-          ))
-        )}
-      </Section>
-
-      <Section
-        title="Self-awareness"
-        hint="Patterns about yourself you've noticed and the moments that revealed them."
-        addLabel="Add insight"
-        onAdd={() =>
-          setEditing({
-            kind: 'self_awareness',
-            index: null,
-            draft: { ...(EMPTY.self_awareness as SelfAwarenessItem) },
-          })
-        }
-      >
-        {identity.self_awareness.length === 0 ? (
-          <Empty kind="insight" addLabel="Add insight" onAdd={() => setEditing({ kind: 'self_awareness', index: null, draft: { ...(EMPTY.self_awareness as SelfAwarenessItem) } })} />
-        ) : (
-          identity.self_awareness.map((s, i) => (
-            <Card pad={false} key={i} className="p-4 space-y-1">
-              <div className="flex items-start justify-between gap-2">
-                <div className="text-sm font-medium text-foreground">{s.insight}</div>
-                <ItemActions
-                  onEdit={() =>
-                    setEditing({
-                      kind: 'self_awareness',
-                      index: i,
-                      draft: { ...s },
-                    })
-                  }
-                  onRemove={() => removeItem('self_awareness', i)}
-                />
-              </div>
-              {s.trigger_event && <div className="text-xs text-muted-foreground">{s.trigger_event}</div>}
-            </Card>
-          ))
-        )}
-      </Section>
-
-      {/* AI summary (§5) — generated by IdentitySummaryAgent. */}
-      <Card pad={false} className="p-5">
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="flex items-center gap-2">
-            <h3 className="text-h3 text-foreground">AI summary</h3>
-            <AIBadge />
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
+    <div className="space-y-4">
+      {/* Who you are — the synthesized portrait leads (§5, IdentitySummaryAgent). */}
+      <Card pad={false} className="bg-muted/40 p-5">
+        <div className="mb-2 flex items-center gap-2">
+          <span className="text-eyebrow uppercase text-muted-foreground">Who you are</span>
+          <AIBadge />
+          <button
+            type="button"
             onClick={() => regenMut.mutate()}
-            loading={regenMut.isPending}
+            disabled={regenMut.isPending}
             aria-label="Regenerate summary"
+            className="ml-auto inline-flex items-center gap-1 text-xs text-secondary hover:underline disabled:opacity-50"
           >
-            <Sparkles size={14} /> Regenerate
-          </Button>
+            <Sparkles size={13} /> Regenerate
+          </button>
         </div>
         {identity.identity_summary ? (
-          <p className="text-sm text-foreground whitespace-pre-line">{identity.identity_summary}</p>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{identity.identity_summary}</p>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Once you've added a few values and beliefs, we'll synthesize a short summary of who you are.
+            Add a few values and beliefs below — or talk it through with Uni — and we'll synthesize a short portrait of who you are.
           </p>
         )}
         {regenMut.isError && (
-          <p className="text-xs text-warning mt-2">
-            We couldn't reach the AI service. Showing your last summary.
-          </p>
+          <p className="mt-2 text-xs text-warning">We couldn't reach the AI service. Showing your last summary.</p>
         )}
-        {identity.updated_at && (
-          <p className="text-xs text-muted-foreground mt-3">Updated {relativeShort(identity.updated_at) ?? 'recently'}</p>
+        {identity.identity_summary && identity.updated_at && (
+          <p className="mt-3 text-xs text-muted-foreground">Updated {relativeShort(identity.updated_at) ?? 'recently'}</p>
         )}
       </Card>
+
+      {/* The three layers — compact cards (Self-awareness spans the row). */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <Section title="Core values" icon={Heart}
+          onAdd={() => setEditing({ kind: 'core_values', index: null, draft: { ...(EMPTY.core_values as CoreValue) } })}
+        >
+          {identity.core_values.length === 0 ? (
+            <EmptyHint label="a value" onAdd={() => setEditing({ kind: 'core_values', index: null, draft: { ...(EMPTY.core_values as CoreValue) } })} />
+          ) : (
+            identity.core_values.map((v, i) => (
+              <Row key={i} title={v.value} sub={v.evidence} quote={v.source_quote}
+                onEdit={() => setEditing({ kind: 'core_values', index: i, draft: { ...v } })}
+                onRemove={() => removeItem('core_values', i)} />
+            ))
+          )}
+        </Section>
+
+        <Section title="Worldview" icon={Globe}
+          onAdd={() => setEditing({ kind: 'worldview', index: null, draft: { ...(EMPTY.worldview as WorldviewItem) } })}
+        >
+          {identity.worldview.length === 0 ? (
+            <EmptyHint label="a belief" onAdd={() => setEditing({ kind: 'worldview', index: null, draft: { ...(EMPTY.worldview as WorldviewItem) } })} />
+          ) : (
+            identity.worldview.map((w, i) => (
+              <Row key={i} title={w.belief} sub={w.context}
+                onEdit={() => setEditing({ kind: 'worldview', index: i, draft: { ...w } })}
+                onRemove={() => removeItem('worldview', i)} />
+            ))
+          )}
+        </Section>
+
+        <Section title="Self-awareness" icon={Lightbulb} className="lg:col-span-2"
+          onAdd={() => setEditing({ kind: 'self_awareness', index: null, draft: { ...(EMPTY.self_awareness as SelfAwarenessItem) } })}
+        >
+          {identity.self_awareness.length === 0 ? (
+            <EmptyHint label="an insight" onAdd={() => setEditing({ kind: 'self_awareness', index: null, draft: { ...(EMPTY.self_awareness as SelfAwarenessItem) } })} />
+          ) : (
+            <div className="grid grid-cols-1 gap-x-5 gap-y-2.5 sm:grid-cols-2">
+              {identity.self_awareness.map((s, i) => (
+                <Row key={i} title={s.insight} sub={s.trigger_event}
+                  onEdit={() => setEditing({ kind: 'self_awareness', index: i, draft: { ...s } })}
+                  onRemove={() => removeItem('self_awareness', i)} />
+              ))}
+            </div>
+          )}
+        </Section>
+      </div>
 
       {editing && (
         <Modal
@@ -509,36 +398,68 @@ export default function IdentityTab() {
 
 interface SectionProps {
   title: string
-  hint: string
-  addLabel: string
+  icon: LucideIcon
   onAdd: () => void
+  className?: string
   children: React.ReactNode
 }
 
-function Section({ title, hint, addLabel, onAdd, children }: SectionProps) {
+/** A bordered layer card: icon + title + a small "+ Add", items stacked below. */
+function Section({ title, icon: Icon, onAdd, className = '', children }: SectionProps) {
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-          <span className="text-xs text-muted-foreground">{hint}</span>
-        </div>
-        <Button size="sm" variant="ghost" onClick={onAdd}>
-          <Plus size={14} className="mr-1" /> {addLabel}
-        </Button>
+    <div className={`rounded-lg border border-border p-4 ${className}`}>
+      <div className="mb-3 flex items-center gap-2">
+        <Icon size={15} strokeWidth={1.75} className="text-muted-foreground" />
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <button
+          type="button"
+          onClick={onAdd}
+          className="ml-auto inline-flex items-center gap-1 text-xs text-secondary hover:underline"
+        >
+          <Plus size={13} /> Add
+        </button>
       </div>
-      <div className="space-y-2">{children}</div>
+      <div className="space-y-2.5">{children}</div>
     </div>
   )
 }
 
-function Empty({ kind, addLabel, onAdd }: { kind: string; addLabel: string; onAdd: () => void }) {
+/** One item — a light border-left row: title + muted sub + optional quote. */
+function Row({
+  title,
+  sub,
+  quote,
+  onEdit,
+  onRemove,
+}: {
+  title: string
+  sub?: string | null
+  quote?: string | null
+  onEdit: () => void
+  onRemove: () => void
+}) {
   return (
-    <EmptyState
-      title={`No ${kind}s added yet`}
-      description={`Add your first ${kind} to start building this layer of your profile.`}
-      action={{ label: addLabel, onClick: onAdd }}
-    />
+    <div className="border-l-2 border-border pl-3">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm font-medium text-foreground">{title}</p>
+        <ItemActions onEdit={onEdit} onRemove={onRemove} />
+      </div>
+      {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+      {quote && <p className="mt-1 text-xs italic text-muted-foreground">"{quote}"</p>}
+    </div>
+  )
+}
+
+/** Empty layer — a single clickable line instead of a big centered state. */
+function EmptyHint({ label, onAdd }: { label: string; onAdd: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onAdd}
+      className="w-full rounded-md border border-dashed border-border px-3 py-2.5 text-left text-xs text-muted-foreground transition-colors hover:border-secondary/50 hover:text-foreground"
+    >
+      Nothing yet — add {label}, or let Uni surface it from your chats.
+    </button>
   )
 }
 

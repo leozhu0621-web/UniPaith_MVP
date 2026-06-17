@@ -50,6 +50,7 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
         aws_secretsmanager_secret.openai_api_key.arn,
         aws_secretsmanager_secret.anthropic_api_key.arn,
         aws_secretsmanager_secret.voyage_api_key.arn,
+        aws_secretsmanager_secret.mcp_api_key.arn,
       ]
     }]
   })
@@ -192,8 +193,21 @@ resource "aws_ecs_task_definition" "backend" {
       # reversible flip. agent/env ids are non-secret resource identifiers; the
       # managed-agents API authenticates with the existing ANTHROPIC_API_KEY.
       { name = "AI_UNI_MANAGED_AGENT_V1", value = "true" },
-      { name = "UNI_AGENT_ID", value = "agent_019QbYB93Ykh8Y58RBHquiQ6" },
+      # Points at the platform-canonical agent ("UniPaith College Counselor").
+      # The agent is edited on platform.claude.com (source of truth); the in-app
+      # host (uni_tools.dispatch_tool) ADAPTS to its tool contract. Repointing
+      # here is how we follow a new agent version/id.
+      { name = "UNI_AGENT_ID", value = "agent_01Gcox2cnu9zvUCR5Lfb9ymg" },
       { name = "UNI_ENVIRONMENT_ID", value = "env_01N43sA3tmVhij3YYZgWzAP2" },
+      # Material ingest — "upload any file, Uni reads it, turns it into My Space."
+      # Additive + flag-gated; on any read failure the student enters data
+      # manually (never a 5xx). Uses the existing ANTHROPIC_API_KEY (native
+      # PDF/image input). Verified live against a real resume.
+      { name = "AI_MATERIAL_INGEST_V2_ENABLED", value = "true" },
+      # After an import, Uni asks targeted follow-up questions (deterministic
+      # GapEngine: ambiguous items, missing high-value fields, one reflective
+      # prompt) and writes confirmed answers to My Space. Additive, never 5xx.
+      { name = "AI_MATERIAL_FOLLOWUPS_V2_ENABLED", value = "true" },
       { name = "AI_WORKSHOPS_V2_ENABLED", value = "true" },
       { name = "AI_MATCH_RATIONALE_V2_ENABLED", value = "true" },
       { name = "AI_STRATEGY_V2_ENABLED", value = "true" },
@@ -346,6 +360,12 @@ resource "aws_ecs_task_definition" "backend" {
       {
         name      = "VOYAGE_API_KEY"
         valueFrom = aws_secretsmanager_secret.voyage_api_key.arn
+      },
+      # Single bearer for the /mcp data API — lets the Claude platform agent
+      # read/write any student's data with one key (all-data access).
+      {
+        name      = "UNIPAITH_MCP_API_KEY"
+        valueFrom = aws_secretsmanager_secret.mcp_api_key.arn
       },
     ]
 

@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.api.mcp_server import router as mcp_router
 from unipaith.api.router import api_router
 from unipaith.config import settings
 from unipaith.core.data_safety import assert_core_role_coverage
@@ -265,3 +266,6 @@ app = FastAPI(
 setup_middleware(app)
 
 app.include_router(api_router, prefix="/api/v1")
+# UniPaith MCP data API — top-level `/mcp` (its own bearer auth, not Cognito),
+# so the Claude platform agent can reach it directly at api.unipaith.co/mcp.
+app.include_router(mcp_router)

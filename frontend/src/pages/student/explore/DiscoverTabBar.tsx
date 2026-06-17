@@ -60,7 +60,7 @@ export default function DiscoverTabBar({ tab, onChange, onManageFollowing }: Pro
 
   return (
     <div className="flex items-end justify-between border-b border-border mb-5">
-      <div ref={tablistRef} role="tablist" aria-label="Discover sections" className="flex gap-1 overflow-x-auto">
+      <div ref={tablistRef} role="tablist" aria-label="Discover sections" className="flex gap-1 overflow-x-auto no-scrollbar">
         {TABS.map((t, idx) => {
           const badge = badges[t.key] ?? 0
           return (

@@ -159,6 +159,21 @@ def test_full_catalog_breadth():
         assert fmt in {"in_person", "online", "hybrid"}, spec["slug"]
 
 
+def test_catalog_has_no_padding_stubs():
+    """Catalog must not carry bare-abbr / CIP×award-level padding stubs."""
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(h.PROGRAMS)
+    assert not errors, f"Catalog padding detected: {errors}"
+
+
+def test_institution_has_campus_photo_gallery():
+    photos = h.SCHOOL_OUTCOMES.get("campus_photos") or []
+    assert len(photos) >= 4, "institution needs a verified 4–5 photo gallery"
+    for photo in photos:
+        assert photo.get("url") and photo.get("credit"), photo
+
+
 def test_every_program_is_done():
     for spec in h.PROGRAMS:
         res = check_conformance(
@@ -171,6 +186,27 @@ def test_every_program_is_done():
         assert not _section_gaps_unexpected("program", res.missing_sections, omitted), (
             spec["slug"]
         )
+
+
+def test_no_name_prefixed_descriptions():
+    name_prefix = sum(
+        1
+        for prog in h.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, (
+        f"{name_prefix} programs still prefix description with program_name"
+    )
+
+
+def test_no_identical_across_credential_levels():
+    from collections import Counter
+
+    desc_counts = Counter(prog.get("description") for prog in h.PROGRAMS)
+    shared = sum(c for c in desc_counts.values() if c >= 2)
+    assert shared == 0, (
+        f"{shared} programs share a description verbatim with a credential sibling"
+    )
 
 
 def test_flagship_mba_is_deeply_enriched():

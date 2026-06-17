@@ -1,21 +1,20 @@
 /**
  * Universal Profile — the student's durable record (Spec/08-universal-profile.md).
  *
- * Brand shell: density PageHeader ("Your record" + gold completion ring) + the
- * 11-tab strip (active tab = the one gold underline). Each tab is a lazy
- * module under `profile/`. Preparation and Financial left for My Space
- * (Spec 2026-06-10 §5) — their legacy tab params redirect out via
- * PROFILE_TAB_ALIASES; the completion ring still counts those clusters.
+ * Tabs only (2026-06-16): the "Your record" header + completion ring were
+ * dropped — the My Space rail names the active section and the top nav shows
+ * "My Space", so the header was redundant. Each tab is a lazy module under
+ * `profile/`. Preparation and Financial left for My Space (Spec 2026-06-10 §5);
+ * their legacy tab params redirect out via PROFILE_TAB_ALIASES.
  */
 import { lazy, Suspense, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { PageContainer, PageHeader } from '../../components/student/density'
+
+import { PageContainer } from '../../components/student/density'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import usePageTitle from '../../hooks/usePageTitle'
 import { PROFILE_TAB_ALIASES, normalizeProfileTab, type ProfileTabSpec } from '../../utils/information-architecture'
-import { CompletionRing } from './profile/shared'
-import { useCompletion } from './profile/useCompletion'
 
 const OverviewTab = lazy(() => import('./profile/OverviewTab'))
 const IdentityTab = lazy(() => import('./profile/IdentityTab'))
@@ -23,24 +22,22 @@ const AcademicsTab = lazy(() => import('./profile/AcademicsTab'))
 const ExperienceTab = lazy(() => import('./profile/ExperienceTab'))
 const GoalsTab = lazy(() => import('./profile/GoalsTab'))
 const NeedsTab = lazy(() => import('./profile/NeedsTab'))
+// Strategy lives in the Planning rail cluster (2026-06-15); ?tab=timeline (the
+// retired chronological view) redirects to ?tab=strategy.
 const StrategyTab = lazy(() => import('./profile/StrategyTab'))
 const PreferencesTab = lazy(() => import('./profile/PreferencesTab'))
-const TimelineTab = lazy(() => import('./profile/TimelineTab'))
 const AnalyticsTab = lazy(() => import('./profile/AnalyticsTab'))
-const DataTab = lazy(() => import('./profile/DataTab'))
 
 const TABS: { key: ProfileTabSpec; label: string }[] = [
-  { key: 'overview', label: 'Overview' },
+  { key: 'overview', label: 'Basic info' },
   { key: 'identity', label: 'Identity' },
   { key: 'academics', label: 'Academics' },
   { key: 'experience', label: 'Experience' },
   { key: 'goals', label: 'Goals' },
   { key: 'needs', label: 'Needs' },
-  { key: 'strategy', label: 'Strategy' },
   { key: 'preferences', label: 'Preferences' },
-  { key: 'timeline', label: 'Timeline' },
+  { key: 'strategy', label: 'Strategy' },
   { key: 'analytics', label: 'Analytics' },
-  { key: 'data', label: 'Data' },
 ]
 
 export default function ProfilePage() {
@@ -49,7 +46,6 @@ export default function ProfilePage() {
   const rawTab = searchParams.get('tab')
   const activeTab = normalizeProfileTab(rawTab)
   usePageTitle('Profile')
-  const { overall, isLoading } = useCompletion()
   const tablistRef = useRef<HTMLDivElement>(null)
 
   // Legacy tab aliases — tabs that left the profile (Spec 2026-06-10 §5)
@@ -57,6 +53,12 @@ export default function ProfilePage() {
   // section deep link (recommenders) across the move.
   useEffect(() => {
     if (!rawTab) return
+    // Strategy lives in the Planning cluster (2026-06-15). The interim ?tab=timeline
+    // alias redirects to the canonical ?tab=strategy.
+    if (rawTab === 'timeline') {
+      navigate('/s/profile?tab=strategy', { replace: true })
+      return
+    }
     if (rawTab === 'preparation' && searchParams.get('section') === 'recommenders') {
       navigate('/s/prep?tab=recommenders', { replace: true })
       return
@@ -93,22 +95,30 @@ export default function ProfilePage() {
 
   return (
     <PageContainer>
-      {/* Room header — density PageHeader (eyebrow = surface) + completion ring. */}
-      <PageHeader
-        eyebrow="My Space"
-        title="Your record"
-        actions={
-          // Finding 3: don't show 0% during load — render the ring dimmed
-          <div className={isLoading ? 'opacity-30' : undefined}>
-            <CompletionRing value={overall} size={48} />
-          </div>
-        }
-      />
+      {/* Import lives on its own My Space surface now (/s/import); a slim
+          pointer keeps it discoverable from the Profile. */}
+      <button
+        type="button"
+        onClick={() => navigate('/s/import')}
+        className="mb-6 flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left transition-colors hover:border-secondary/50 hover:bg-secondary/5"
+      >
+        <div>
+          <p className="text-sm font-semibold text-foreground">Import from a file</p>
+          <p className="text-xs text-muted-foreground">
+            Upload a resume, transcript, or CV — Uni reads it and fills your profile, then asks
+            about anything it couldn't find.
+          </p>
+        </div>
+        <span className="shrink-0 text-sm font-medium text-secondary">Open Import →</span>
+      </button>
 
-      {/* Tab strip — finding 8: proper ARIA tablist attributes */}
+      {/* Tab strip — finding 8: proper ARIA tablist attributes. Hidden on lg+
+          where the My Space rail's Profile group already lists every sub-tab
+          (Spec 2026-06-15 §A follow-up); kept below lg, where the rail collapses
+          to flat pills that don't expose sub-tabs, so navigation still works. */}
       <div
         ref={tablistRef}
-        className="flex gap-1 border-b border-border overflow-x-auto no-scrollbar mb-8 -mx-1 px-1 [mask-image:linear-gradient(to_right,#000_92%,transparent)] [-webkit-mask-image:linear-gradient(to_right,#000_92%,transparent)]"
+        className="lg:hidden flex gap-1 border-b border-border overflow-x-auto no-scrollbar mb-8 -mx-1 px-1 [mask-image:linear-gradient(to_right,#000_92%,transparent)] [-webkit-mask-image:linear-gradient(to_right,#000_92%,transparent)]"
         role="tablist"
         aria-label="Profile sections"
       >
@@ -148,17 +158,15 @@ export default function ProfilePage() {
         className="stagger-list focus-visible:outline-none"
       >
         <Suspense fallback={<div className="space-y-3"><SkeletonCard /><SkeletonCard /></div>}>
-          {activeTab === 'overview' && <OverviewTab onOpenTab={setTab} />}
+          {activeTab === 'overview' && <OverviewTab />}
           {activeTab === 'identity' && <IdentityTab />}
           {activeTab === 'academics' && <AcademicsTab />}
           {activeTab === 'experience' && <ExperienceTab />}
           {activeTab === 'goals' && <GoalsTab />}
           {activeTab === 'needs' && <NeedsTab />}
-          {activeTab === 'strategy' && <StrategyTab />}
           {activeTab === 'preferences' && <PreferencesTab />}
-          {activeTab === 'timeline' && <TimelineTab />}
+          {activeTab === 'strategy' && <StrategyTab />}
           {activeTab === 'analytics' && <AnalyticsTab />}
-          {activeTab === 'data' && <DataTab />}
         </Suspense>
       </div>
     </PageContainer>

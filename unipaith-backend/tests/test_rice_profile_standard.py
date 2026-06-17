@@ -25,7 +25,7 @@ def _institution_snapshot() -> dict:
     return {
         "description_text": r.DESCRIPTION,
         "student_body_size": r.UNDERGRAD_COUNT,
-        "media_gallery": [r._CAMPUS_PHOTO],
+        "media_gallery": [r.SCHOOL_OUTCOMES["campus_photos"][0]["url"]],
         "ranking_data": r.RANKING_DATA,
         "school_outcomes": so,
         "content_sources": r._INSTITUTION_CONTENT,
@@ -103,6 +103,10 @@ def test_institution_is_gold():
     assert set(res.missing_fields) <= omitted, f"Unexpected institution gaps: {res.missing_fields}"
     assert not _section_gaps_unexpected("institution", res.missing_sections, omitted)
     assert r.SCHOOL_OUTCOMES.get("media_credit")
+    photos = r.SCHOOL_OUTCOMES.get("campus_photos") or []
+    assert len(photos) >= 4
+    for photo in photos:
+        assert photo.get("url") and photo.get("credit")
 
 
 def test_all_eight_schools_done():
@@ -164,3 +168,12 @@ def test_every_node_has_content_sources():
     for school in r.SCHOOLS:
         cs = r._school_content(school["name"])
         assert cs.get("news_rss") and cs.get("events_feed"), school["name"]
+
+
+def test_no_name_prefixed_descriptions():
+    name_prefix = sum(
+        1
+        for prog in r.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"

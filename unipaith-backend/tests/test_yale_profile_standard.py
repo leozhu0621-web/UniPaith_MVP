@@ -181,6 +181,16 @@ def test_full_catalog_breadth():
         assert spec.get("delivery_format") in {"in_person", "online", "hybrid"}, spec["slug"]
 
 
+def test_catalog_has_no_padding_stubs():
+    """Every program must have a real department and credential-disambiguated name."""
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(y.PROGRAMS)
+    assert errors == [], errors
+    null_dept = sum(1 for p in y.PROGRAMS if not p.get("department"))
+    assert null_dept == 0, f"{null_dept} programs missing department"
+
+
 def test_every_program_is_gold_except_recorded_omissions():
     unit_names = {s["name"] for s in y.SCHOOLS}
     for spec in y.PROGRAMS:

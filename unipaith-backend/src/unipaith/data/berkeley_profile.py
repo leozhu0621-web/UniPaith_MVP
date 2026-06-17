@@ -37,23 +37,46 @@ Sloan's MBAn in the reference instance — with the honest caveats that the
 University of California is test-free (no SAT/ACT percentiles exist to report) and
 that this run ships Berkeley's complete UNDERGRADUATE tree; its department-level
 graduate programs are the resumption scope for a later run.
+
+Depth pass (2026-06-15, berkeleyprof6): merged ``DEPTH_REVIEWS`` for 59 coverable
+programs — completes Berkeley coverable external_reviews (70/70).
+
+Description depth pass (2026-06-16, berkeleyprof7): replaces all classification-only
+``{name} is a {degree} program at Berkeley's {school}`` stubs with field-specific
+clauses from ``berkeley_field_descriptions.py`` (269/269 programs).
+
+Description repair (2026-06-17, berkeleyprof8): drops the ``{program_name}:`` prefix
+from every description so clauses open on field-specific facts (gold MIT/Chicago
+pattern); 0% name-prefixed descriptions.
 """
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.berkeley_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
 from unipaith.data.berkeley_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.berkeley_reviews_depth import DEPTH_REVIEWS
+from unipaith.data.profile_catalog_utils import disambiguate_program_name, validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of California-Berkeley"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-17"
+
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is (an|a) (undergraduate|graduate|doctoral|professional|degree) program at Berkeley",
+)
+
+_SLUG_TO_FIELD: dict[str, str] = {
+    slug: field_name for slug, _, field_name, _, _, _, _, _ in _IPEDS_CATALOG
+}
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -236,6 +259,49 @@ SCHOOL_OUTCOMES: dict = {
             ),
         },
     ],
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/"
+                "Redwood_trees_and_Sather_Tower_during_the_Sunset_in_Berkeley_California.jpg/"
+                "1920px-Redwood_trees_and_Sather_Tower_during_the_Sunset_in_Berkeley_California.jpg"
+            ),
+            "credit": "Wikimedia Commons / Wil540 art (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/"
+                "UCBerkeleyCampus.jpg/1920px-UCBerkeleyCampus.jpg"
+            ),
+            "credit": "Wikimedia Commons / brainchildvn (CC BY 2.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/"
+                "UC_Berkeley_campus_and_surroundings_from_Berkeley_Hills_January_2026.jpg/"
+                "1920px-UC_Berkeley_campus_and_surroundings_from_Berkeley_Hills_January_2026.jpg"
+            ),
+            "credit": "Wikimedia Commons / 4300streetcar (CC BY 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/7/75/"
+                "View_of_Sather_Tower%2C_Doe_Library%2C_and_Memorial_Glade_through_trees_"
+                "-_U.C._Berkeley_-_The_Daily_Californian.jpg"
+            ),
+            "credit": (
+                "Wikimedia Commons / Samuel Albillo / The Daily Californian (0BSD)"
+            ),
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/"
+                "UC-Berkeley-022-memorial-glade.jpg/1920px-UC-Berkeley-022-memorial-glade.jpg"
+            ),
+            "credit": "Wikimedia Commons / Firstcultural (CC0)",
+        },
+    ],
+    # Wikimedia Commons file page verified 2026-06-14: author Wil540 art, CC BY-SA 4.0.
     "media_credit": "Wikimedia Commons / Wil540 art (CC BY-SA 4.0)",
 }
 
@@ -830,6 +896,173 @@ for _p in PROGRAMS:
     _p.setdefault("degree_type", "bachelors")
     _p.setdefault("delivery_format", "in_person")
 
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "berkeley-eecs-bs": "Department of Electrical Engineering and Computer Sciences",
+    "berkeley-mechanical-engineering-bs": "Department of Mechanical Engineering",
+    "berkeley-chemistry-bs": "Department of Chemistry",
+    "berkeley-chemical-engineering-bs": (
+        "Department of Chemical and Biomolecular Engineering"
+    ),
+    "berkeley-computer-science-bs": (
+        "Department of Electrical Engineering and Computer Sciences"
+    ),
+    "berkeley-data-science-bs": "Division of Data Science",
+    "berkeley-economics-bs": "Department of Economics",
+    "berkeley-molecular-cell-biology-bs": "Department of Molecular and Cell Biology",
+    "berkeley-integrative-biology-bs": "Department of Integrative Biology",
+    "berkeley-political-science-bs": "Department of Political Science",
+    "berkeley-psychology-bs": "Department of Psychology",
+    "berkeley-sociology-bs": "Department of Sociology",
+    "berkeley-media-studies-bs": "Department of Film and Media",
+    "berkeley-applied-mathematics-bs": "Department of Mathematics",
+    "berkeley-cognitive-science-bs": "Department of Psychology",
+    "berkeley-english-bs": "Department of English",
+    "berkeley-legal-studies-bs": "Legal Studies Program",
+    "berkeley-public-health-bs": "School of Public Health",
+    "berkeley-environmental-sciences-bs": (
+        "Department of Environmental Science, Policy, and Management"
+    ),
+    "berkeley-conservation-resource-studies-bs": (
+        "Department of Environmental Science, Policy, and Management"
+    ),
+    "berkeley-business-administration-bs": "Haas School of Business",
+    "berkeley-architecture-bs": "Department of Architecture",
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+
+# CIP codes for explicit undergraduate programs — applied before catalog build so
+# (cip, degree_type) dedup blocks duplicate Scorecard rows.
+_EXPLICIT_CIP_BY_SLUG: dict[str, str] = {
+    "berkeley-eecs-bs": "14.10",
+    "berkeley-mechanical-engineering-bs": "14.19",
+    "berkeley-chemistry-bs": "40.05",
+    "berkeley-chemical-engineering-bs": "14.07",
+    "berkeley-computer-science-bs": "11.07",
+    "berkeley-economics-bs": "45.06",
+    "berkeley-molecular-cell-biology-bs": "26.04",
+    "berkeley-integrative-biology-bs": "26.01",
+    "berkeley-political-science-bs": "45.10",
+    "berkeley-psychology-bs": "42.27",
+    "berkeley-sociology-bs": "45.11",
+    "berkeley-media-studies-bs": "09.01",
+    "berkeley-applied-mathematics-bs": "27.03",
+    "berkeley-cognitive-science-bs": "30.25",
+    "berkeley-english-bs": "23.01",
+    "berkeley-environmental-sciences-bs": "03.01",
+    "berkeley-conservation-resource-studies-bs": "03.01",
+    "berkeley-business-administration-bs": "52.02",
+    "berkeley-architecture-bs": "04.02",
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_CIP_BY_SLUG:
+        _p.setdefault("cip", _EXPLICIT_CIP_BY_SLUG[_p["slug"]])
+
+_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
+_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _delivery_format(raw: str) -> str:
+    """Normalize IPEDS delivery labels to the platform's canonical values."""
+    if raw == "in_person":
+        return "on_campus"
+    return raw
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — the CIP field title unless it duplicates the school name."""
+    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+        return school
+    return field_name
+
+
+def _berkeley_description(spec: dict, field: str | None = None) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    fmt = spec.get("delivery_format", "on_campus")
+    delivery = ""
+    if fmt == "online":
+        delivery = " Delivered online."
+    elif fmt == "hybrid":
+        delivery = " Delivered in a hybrid format."
+    if slug in SLUG_DESCRIPTIONS:
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+    field_key = (
+        field
+        or spec.get("_field_name")
+        or _SLUG_TO_FIELD.get(slug)
+        or spec.get("program_name", "")
+    )
+    clause = FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        raise ValueError(
+            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
+        )
+    return f"{clause}{delivery}"
+
+
+def _normalize_program(spec: dict, field_name: str | None = None) -> None:
+    """Stamp a field-specific description on every program node."""
+    spec["description"] = _berkeley_description(spec, field=field_name)
+
+
+def _build_catalog() -> list[dict]:
+    """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
+    out: list[dict] = []
+    seen = set(_EXISTING_SLUGS)
+    for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
+        if slug in seen:
+            continue
+        if (cip, dtype) in _EXISTING_CIP_KEYS:
+            continue
+        seen.add(slug)
+        dept = _department_for(field_name, school)
+        delivery = _delivery_format(fmt)
+        pname = disambiguate_program_name(field_name, dtype)
+        spec = {
+            "slug": slug,
+            "school": school,
+            "program_name": pname,
+            "degree_type": dtype,
+            "department": dept,
+            "cip": cip,
+            "duration_months": dur,
+            "delivery_format": delivery,
+            "_field_name": field_name,
+        }
+        _normalize_program(spec, field_name)
+        spec.pop("_field_name", None)
+        out.append(spec)
+    return out
+
+
+PROGRAMS += _build_catalog()
+for _p in PROGRAMS:
+    _normalize_program(_p)
+
+_catalog_errors = validate_catalog(PROGRAMS)
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
+if _catalog_errors:
+    raise RuntimeError(f"Berkeley catalog quality gate failed: {_catalog_errors}")
+for _p in PROGRAMS:
+    _p.setdefault("delivery_format", "in_person")
+
 # Full official major names (program-page title); for Berkeley these equal the
 # major name (the B.A./B.S. designation varies per major and is not asserted).
 _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROGRAMS}
@@ -943,38 +1176,7 @@ _FOS_OUTCOMES: dict[str, tuple[int, str]] = {
 }
 
 _CIP_BY_SLUG: dict[str, str] = {slug: cip for slug, (_, cip) in _FOS_OUTCOMES.items()}
-for _p in PROGRAMS:
-    if _p["slug"] in _CIP_BY_SLUG:
-        _p.setdefault("cip", _CIP_BY_SLUG[_p["slug"]])
 
-_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
-_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
-
-
-def _build_catalog() -> list[dict]:
-    """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
-    out: list[dict] = []
-    seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
-        if slug in seen:
-            continue
-        if (cip, dtype) in _EXISTING_CIP_KEYS:
-            continue
-        seen.add(slug)
-        out.append({
-            "slug": slug,
-            "school": school,
-            "program_name": name,
-            "degree_type": dtype,
-            "cip": cip,
-            "duration_months": dur,
-            "delivery_format": fmt,
-            "description": desc,
-        })
-    return out
-
-
-PROGRAMS += _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
@@ -1829,6 +2031,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 # ── Application requirements (undergraduate baseline) ───────────────────────
@@ -1927,13 +2130,9 @@ def _requirements_for(spec: dict) -> dict:
     return dict(_REQ_GRAD_GENERIC)
 
 
-# Real UC Berkeley campus photo (Sather Tower / the Campanile at sunset) — Wikimedia
-# Commons, CC BY-SA 4.0, hotlinkable landscape JPG. Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/"
-    "Redwood_trees_and_Sather_Tower_during_the_Sunset_in_Berkeley_California.jpg/"
-    "1920px-Redwood_trees_and_Sather_Tower_during_the_Sunset_in_Berkeley_California.jpg"
-)
+# Real UC Berkeley campus photo (Sather Tower / the Campanile at sunset) — leads the
+# institution hero; see ``SCHOOL_OUTCOMES["campus_photos"]`` for the full gallery.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
@@ -2081,6 +2280,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.description_text = spec["description"]
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
+        p.department = spec.get("department")
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")

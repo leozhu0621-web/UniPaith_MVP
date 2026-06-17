@@ -233,6 +233,12 @@ class Settings(BaseSettings):
     uni_agent_id: str = ""
     uni_environment_id: str = ""
 
+    # Single bearer key for the UniPaith MCP data API (`/mcp`). A request that
+    # presents this key may read/write ANY student's data (all-data access, by
+    # explicit product direction) — guard it like a master credential. Empty
+    # disables the MCP endpoint (401 on every call).
+    unipaith_mcp_api_key: str = ""
+
     # ── Spec 63 — Qwen ML backend (the invisible processing transport) ──
     # Qwen is registered as a provider transport (OpenAI-compatible /v1 via vLLM
     # or Bedrock). It is the ML backend for processing agents only; the hard
@@ -344,6 +350,18 @@ class Settings(BaseSettings):
     # On any failure (parse / API error / mock mode) it falls back to the
     # rule-based _build_structured_brief — the offer flow never 5xxes.
     ai_outcome_brief_v2_enabled: bool = False
+
+    # Material ingest — "upload any file, Uni reads it, turns it into My Space."
+    # When True, MaterialIngestAgent reads an uploaded resume/transcript/document
+    # (PDF + images natively, Word/text extracted) and proposes structured
+    # profile signals for the student to confirm. On any failure it returns an
+    # empty proposal so the student can enter data manually — never a 5xx.
+    ai_material_ingest_v2_enabled: bool = False
+    # Material ingest follow-ups — after an import, Uni asks targeted questions
+    # (ambiguous items, missing high-value fields, one reflective prompt) and
+    # writes confirmed answers to My Space. Gates whether the follow-up card
+    # appears; the engine is deterministic (warm templated questions).
+    ai_material_followups_v2_enabled: bool = False
 
     # Spec 68 §5 — review theme-summarisation ("what students/employers
     # consistently say" + common tradeoffs, Business Methodology:191). When True,

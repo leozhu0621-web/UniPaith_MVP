@@ -1,9 +1,9 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
-  PenLine, Calendar as CalendarIcon, Mail, FolderKanban, Compass, Target,
-  AlertTriangle, Award, MessageSquare, GraduationCap, ArrowRight,
+  Mail, FolderKanban, Compass, Target,
+  MessageSquare, GraduationCap, ArrowRight,
 } from 'lucide-react'
 import { PageContainer, PageHeader, SectionHeader, ListRow, StatTile } from '../../../components/student/density'
 import Card from '../../../components/ui/Card'
@@ -17,71 +17,55 @@ import { listRecommendations } from '../../../api/recommendations'
 import { listWorkshopRuns } from '../../../api/workshops-feedback'
 import { getThreads } from '../../../api/inbox'
 import { listClarifications } from '../../../api/intake'
-import { getProfile } from '../../../api/students'
+import { getProfile, getOnboarding } from '../../../api/students'
 import { useAuthStore } from '../../../stores/auth-store'
 import Coachmark from '../../../components/ui/Coachmark'
-import JourneyChecklistCard from './JourneyChecklistCard'
-import type { Application, WorkshopFeedbackRun } from '../../../types'
+import { buildUpNext } from './home/upNext'
+import TodaysFocus from './home/TodaysFocus'
+import MomentumBand from './home/MomentumBand'
+import StrategySnapshot from './home/StrategySnapshot'
+import TopMatchesPeek from './home/TopMatchesPeek'
+import ScholarshipsPeek from './home/ScholarshipsPeek'
+import { freshWinIds, markCelebrated } from './home/celebrate'
+import type { Application, WorkshopFeedbackRun, OnboardingStatus } from '../../../types'
 
-// My Space · Home — mission control (Spec 2026-06-10 §4). Answers "what do I
-// do next?" by composing endpoints that already exist; no aggregate backend.
-// Panes: Up next · Pipeline · Deadlines · Waiting on others · Latest feedback.
+// My Space · Home — mission control (Spec 2026-06-10 §4, redesigned 2026-06-14).
+// Focus → momentum → density: a Today's-focus hero, a momentum band (journey
+// map + this-week ribbon + onboarding ring), then the dense dashboard. Pure
+// client-side composition of endpoints that already exist; no aggregate backend.
 
 const STALE = 60_000
 
-type NextAction = {
-  key: string
-  icon: typeof PenLine
-  title: string
-  sub: string
-  urgency: 'danger' | 'warning' | 'neutral'
-  chip: string
-  to: string
-}
-
 function daysUntil(iso: string): number {
   return Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000)
-}
-
-function programLabel(app: Application): string {
-  return app.program?.program_name ?? 'your program'
 }
 
 export default function MySpaceHomePage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
 
-  // Query keys are shared with their primary consumers (ApplicationsPage,
-  // MessagesNavButton, the shell rail) so navigating between rooms reuses cache.
+  // Query keys are shared with their primary consumers so navigating between
+  // rooms reuses cache.
   const apps = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications, staleTime: STALE })
   const profile = useQuery({ queryKey: ['profile'], queryFn: getProfile, staleTime: 300_000 })
+  const onboarding = useQuery<OnboardingStatus>({ queryKey: ['onboarding'], queryFn: getOnboarding, staleTime: STALE })
   const saved = useQuery({ queryKey: qk.savedPrograms(), queryFn: listSaved, staleTime: STALE })
   const fortnight = useMemo(() => {
     const from = new Date().toISOString().slice(0, 10)
     const to = new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 10)
     return { from, to }
   }, [])
-  const calendar = useQuery({
-    queryKey: ['calendar', 'home', fortnight],
-    queryFn: () => getCalendar(fortnight),
-    staleTime: STALE,
-  })
+  const calendar = useQuery({ queryKey: ['calendar', 'home', fortnight], queryFn: () => getCalendar(fortnight), staleTime: STALE })
   const recs = useQuery({ queryKey: ['recommendations'], queryFn: listRecommendations, staleTime: STALE })
   const runs = useQuery({ queryKey: ['workshop-runs', 'home'], queryFn: () => listWorkshopRuns(), staleTime: STALE })
   const threads = useQuery({ queryKey: ['inbox-threads-unread'], queryFn: () => getThreads(), staleTime: 30_000 })
-  const clarifications = useQuery({
-    queryKey: ['intake-clarifications'],
-    queryFn: listClarifications,
-    staleTime: STALE,
-  })
+  const clarifications = useQuery({ queryKey: ['intake-clarifications'], queryFn: listClarifications, staleTime: STALE })
 
   const appList: Application[] = Array.isArray(apps.data) ? apps.data : []
-  const savedList: unknown[] = Array.isArray(saved.data) ? saved.data : []
+  const savedList: any[] = Array.isArray(saved.data) ? saved.data : []
   const calItems: CalendarItem[] = Array.isArray(calendar.data) ? calendar.data : []
   const recList: any[] = Array.isArray(recs.data) ? recs.data : []
-  const runList: WorkshopFeedbackRun[] = (Array.isArray(runs.data) ? runs.data : [])
-    .slice()
-    .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+  const runList: WorkshopFeedbackRun[] = (Array.isArray(runs.data) ? runs.data : []).slice().sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
   const threadList: any[] = Array.isArray(threads.data) ? threads.data : []
   const pendingClarifications = clarifications.data?.clarifications?.length ?? 0
   const unreadThreads = threadList.filter(t => t.unread || (t.unread_count ?? 0) > 0).length
@@ -89,88 +73,33 @@ export default function MySpaceHomePage() {
   // ── Pipeline counts ───────────────────────────────────────────────────────
   const drafts = appList.filter(a => a.status === 'draft')
   const inFlight = appList.filter(a => ['submitted', 'under_review', 'interview'].includes(a.status))
-  const offers = appList.filter(
-    a => a.status === 'decision_made'
-      && ['admitted', 'accepted', 'conditional_admission'].includes(a.decision ?? ''),
-  )
+  const offers = appList.filter(a => a.status === 'decision_made' && ['admitted', 'accepted', 'conditional_admission'].includes(a.decision ?? ''))
 
-  // ── Up next — most important actions across the cycle, max 5.
-  // Plain computation (cheap, derived) — no memo, so no stale-deps risk.
-  const upNext: NextAction[] = (() => {
-    const actions: NextAction[] = []
-    for (const item of calItems.filter(i => i.status === 'overdue').slice(0, 2)) {
-      actions.push({
-        key: `overdue-${item.id}`,
-        icon: AlertTriangle,
-        title: item.title,
-        sub: item.subtitle ?? item.institution_name ?? 'Overdue',
-        urgency: 'danger',
-        chip: 'overdue',
-        to: '/s/calendar',
-      })
-    }
-    for (const app of offers.filter(a => !a.student_decision)) {
-      actions.push({
-        key: `offer-${app.id}`,
-        icon: Award,
-        title: `Respond to your offer — ${programLabel(app)}`,
-        sub: app.program?.institution_name ?? 'Decision needed',
-        urgency: 'warning',
-        chip: 'offer in',
-        to: `/s/applications/${app.id}?tab=offer`,
-      })
-    }
-    for (const item of calItems.filter(i => i.can_confirm)) {
-      actions.push({
-        key: `interview-${item.id}`,
-        icon: CalendarIcon,
-        title: item.title,
-        sub: 'Pick a time that works for you',
-        urgency: 'warning',
-        chip: 'slots held',
-        to: '/s/prep?tab=interviews',
-      })
-    }
-    for (const app of drafts
-      .slice()
-      .sort((a, b) => (b.readiness_pct ?? 0) - (a.readiness_pct ?? 0))) {
-      actions.push({
-        key: `draft-${app.id}`,
-        icon: PenLine,
-        title: `Continue ${programLabel(app)}`,
-        sub: app.readiness_pct != null ? `${Math.round(app.readiness_pct)}% ready to submit` : 'In progress',
-        urgency: 'neutral',
-        chip: 'draft',
-        to: `/s/applications/${app.id}`,
-      })
-    }
-    if (pendingClarifications > 0) {
-      actions.push({
-        key: 'clarifications',
-        icon: Compass,
-        title: `Answer ${pendingClarifications} quick question${pendingClarifications === 1 ? '' : 's'} from Uni`,
-        sub: 'Sharpens your matches and readiness',
-        urgency: 'neutral',
-        chip: 'quick win',
-        to: '/s',
-      })
-    }
-    return actions.slice(0, 5)
-  })()
+  // ── Up next → Today's focus (the top action) + the rest ───────────────────
+  const upNext = buildUpNext({ calItems, offers, drafts, pendingClarifications })
+  const focus = upNext[0] ?? null
+  const restUpNext = upNext.slice(1)
 
   const waitingRecs = recList.filter(r => r.status === 'requested')
-  const deadlines = calItems
-    .filter(i => i.status !== 'cancelled' && i.status !== 'completed')
-    .slice()
-    .sort((a, b) => a.start_at.localeCompare(b.start_at))
-    .slice(0, 5)
+  const deadlines = calItems.filter(i => i.status !== 'cancelled' && i.status !== 'completed').slice().sort((a, b) => a.start_at.localeCompare(b.start_at)).slice(0, 5)
+
+  // ── Momentum inputs (real data only) ──────────────────────────────────────
+  const stage = { savedCount: savedList.length, appCount: appList.length, hasOffer: offers.length > 0, hasDecision: appList.some(a => a.status === 'decision_made') }
+  const week = { saved: savedList, runs: runList, apps: appList }
+
+  // Earned-gold win beat: a fresh offer fires one gold pulse on the Offers tile.
+  const offersEarned = offers.length > 0
+  const freshOffer = useMemo(() => freshWinIds(offers.map(o => `offer-${o.id}`)).length > 0, [offers])
+  useEffect(() => {
+    if (offers.length) markCelebrated(offers.map(o => `offer-${o.id}`))
+  }, [offers])
 
   const anyLoading = apps.isLoading || calendar.isLoading
   const brandNew = !anyLoading && appList.length === 0 && savedList.length === 0
+  const onboardingComplete = (onboarding.data?.completion_percentage ?? 0) >= 100
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
-  // Real first name from the profile; the email prefix is the cold-start fallback.
   const firstName = profile.data?.first_name || user?.email?.split('@')[0] || ''
 
   return (
@@ -181,109 +110,78 @@ export default function MySpaceHomePage() {
         body="Everything personal lives here — applications, prep, calendar, messages, saved programs, and your profile. The rail on the left follows your journey, top to bottom."
         placement="bottom"
       >
-        <PageHeader
-          eyebrow="My Space"
-          title={`${greeting}${firstName ? `, ${firstName}` : ''}`}
-        />
+        <PageHeader eyebrow="My Space" title={`${greeting}${firstName ? `, ${firstName}` : ''}`} />
       </Coachmark>
 
       {anyLoading ? (
-        <div className="space-y-3 mt-4">
+        <div className="mt-4 space-y-3">
           <Skeleton className="h-16" />
           <Skeleton className="h-40" />
         </div>
       ) : brandNew ? (
-        // Empty state — the journey checklist IS the primary content for a
-        // brand-new student (Ship C §3); the CTA card follows as the second beat.
+        // Empty state — the momentum band (with its setup ring) is the primary
+        // content for a brand-new student; the CTA card follows as a second beat.
         <div className="stagger-list mt-2 space-y-4">
-          <JourneyChecklistCard />
+          <MomentumBand stage={stage} week={week} />
           <Card pad={false} className="p-6">
             <p className="text-sm font-medium text-foreground">Your space fills as you work.</p>
-            <p className="text-xs text-muted-foreground mt-1 mb-4">
-              Start with Uni to build your profile, then save programs you like — applications,
-              deadlines and prep will all show up here.
-            </p>
+            <p className="mt-1 mb-4 text-xs text-muted-foreground">Start with Uni to build your profile, then save programs you like — applications, deadlines and prep will all show up here.</p>
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => navigate('/s')}
-                className="ui-btn inline-flex items-center gap-1.5 rounded-md bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground"
-              >
-                <Compass size={13} /> Talk to Uni
-              </button>
-              <button
-                onClick={() => navigate('/s/explore')}
-                className="ui-btn inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
-              >
-                <Target size={13} /> Browse matches
-              </button>
+              <button onClick={() => navigate('/s')} className="ui-btn inline-flex items-center gap-1.5 rounded-md bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground"><Compass size={13} /> Talk to Uni</button>
+              <button onClick={() => navigate('/s/explore')} className="ui-btn inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"><Target size={13} /> Browse matches</button>
             </div>
           </Card>
         </div>
       ) : (
-        // Modules cascade in as a sequence (Ship B motion sweep) — pipeline,
-        // up-next, the two-column rails, then the footer link.
         <div className="stagger-list">
-          {/* Pipeline — counts linking into the rooms. */}
-          <div className="grid grid-cols-4 gap-3 rounded-lg border border-border bg-card px-4 py-3">
-            <button onClick={() => navigate('/s/saved')} className="text-left" aria-label="Saved programs">
-              <StatTile label="Saved" value={savedList.length} />
-            </button>
-            <button onClick={() => navigate('/s/applications?status=in_progress')} className="text-left" aria-label="Applications in progress">
-              <StatTile label="In progress" value={drafts.length} />
-            </button>
-            <button onClick={() => navigate('/s/applications?status=submitted')} className="text-left" aria-label="Submitted applications">
-              <StatTile label="Submitted" value={inFlight.length} />
-            </button>
-            <button onClick={() => navigate('/s/applications?tab=offers')} className="text-left" aria-label="Offers">
-              <StatTile label="Offers" value={offers.length} />
+          {/* C — one focal point. */}
+          <TodaysFocus action={focus} onboardingComplete={onboardingComplete} />
+
+          {/* A — momentum band. */}
+          <MomentumBand stage={stage} week={week} className="mt-5" />
+
+          {/* B — dense dashboard. Pipeline with an earned-gold Offers tile. */}
+          <div className="mt-5 grid grid-cols-4 gap-3 rounded-lg border border-border bg-card px-4 py-3">
+            <button onClick={() => navigate('/s/saved')} className="text-left" aria-label="Saved programs"><StatTile label="Saved" value={savedList.length} /></button>
+            <button onClick={() => navigate('/s/applications?status=in_progress')} className="text-left" aria-label="Applications in progress"><StatTile label="In progress" value={drafts.length} /></button>
+            <button onClick={() => navigate('/s/applications?status=submitted')} className="text-left" aria-label="Submitted applications"><StatTile label="Submitted" value={inFlight.length} /></button>
+            <button
+              onClick={() => navigate('/s/applications?tab=offers')}
+              aria-label="Offers"
+              className={`text-left transition-shadow ${offersEarned ? '-mx-2 rounded-md px-2 ring-1 ring-primary/40' : ''} ${offersEarned && freshOffer ? 'motion-safe:animate-beat' : ''}`}
+            >
+              <StatTile label="Offers" value={offers.length} tone={offersEarned ? 'gold' : 'default'} />
             </button>
           </div>
 
-          {/* Journey checklist — the 13-step engine; self-hides at 100%. */}
-          <JourneyChecklistCard className="mt-5" />
-
-          {/* Up next */}
-          <div className="stagger-list mt-5">
-            <SectionHeader>Up next</SectionHeader>
-            {upNext.length === 0 ? (
-              <p className="py-2 text-sm text-muted-foreground">
-                Nothing urgent. Check your <button className="text-secondary hover:underline" onClick={() => navigate('/s/calendar')}>calendar</button> or
-                keep prepping in <button className="text-secondary hover:underline" onClick={() => navigate('/s/prep')}>Prep</button>.
-              </p>
-            ) : (
-              upNext.map(a => (
+          {/* Up next — everything after the promoted focus. */}
+          {restUpNext.length > 0 && (
+            <div className="stagger-list mt-5">
+              <SectionHeader>Up next</SectionHeader>
+              {restUpNext.map(a => (
                 <ListRow
                   key={a.key}
                   media={<a.icon size={15} className={a.urgency === 'danger' ? 'text-error' : a.urgency === 'warning' ? 'text-warning' : 'text-muted-foreground'} />}
                   title={a.title}
                   sub={a.sub}
-                  trailing={
-                    <Badge variant={a.urgency === 'danger' ? 'error' : a.urgency === 'warning' ? 'warning' : 'neutral'}>
-                      {a.chip}
-                    </Badge>
-                  }
+                  trailing={<Badge variant={a.urgency === 'danger' ? 'error' : a.urgency === 'warning' ? 'warning' : 'neutral'}>{a.chip}</Badge>}
                   onClick={() => navigate(a.to)}
                 />
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {/* Your top matches — a discovery peek that deep-links to /s/explore. */}
+          <TopMatchesPeek className="mt-5" />
 
           <div className="mt-5 grid gap-6 md:grid-cols-2">
             {/* Deadlines — next 14 days */}
             <div>
-              <SectionHeader
-                action={
-                  <button onClick={() => navigate('/s/calendar')} className="inline-flex items-center gap-1 text-xs text-secondary hover:underline">
-                    Calendar <ArrowRight size={12} />
-                  </button>
-                }
-              >
-                Deadlines · next 14 days
-              </SectionHeader>
+              <SectionHeader action={<button onClick={() => navigate('/s/calendar')} className="inline-flex items-center gap-1 text-xs text-secondary hover:underline">Calendar <ArrowRight size={12} /></button>}>Deadlines · next 14 days</SectionHeader>
               {calendar.isError ? (
                 <p className="py-2 text-sm text-muted-foreground">Couldn't load your calendar.</p>
               ) : deadlines.length === 0 ? (
-                <p className="py-2 text-sm text-muted-foreground">Nothing due in the next two weeks.</p>
+                <p className="py-2 text-sm text-muted-foreground">Nothing due in the next two weeks — a good time to get ahead in <button className="text-secondary hover:underline" onClick={() => navigate('/s/prep')}>Prep</button>.</p>
               ) : (
                 deadlines.map(item => {
                   const d = daysUntil(item.start_at)
@@ -292,11 +190,7 @@ export default function MySpaceHomePage() {
                       key={item.id}
                       title={item.title}
                       sub={item.subtitle ?? item.institution_name ?? undefined}
-                      trailing={
-                        <span className={`text-xs ${d <= 3 ? 'text-error font-medium' : 'text-muted-foreground'}`}>
-                          {new Date(item.start_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                        </span>
-                      }
+                      trailing={<span className={`text-xs ${d <= 3 ? 'text-error font-medium' : 'text-muted-foreground'}`}>{new Date(item.start_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>}
                       onClick={() => navigate('/s/calendar')}
                     />
                   )
@@ -308,7 +202,7 @@ export default function MySpaceHomePage() {
             <div>
               <SectionHeader>Waiting on others</SectionHeader>
               {waitingRecs.length === 0 ? (
-                <p className="py-2 text-sm text-muted-foreground">No outstanding requests.</p>
+                <p className="py-2 text-sm text-muted-foreground">No pending requests. When you ask for a recommendation it'll show here — <button className="text-secondary hover:underline" onClick={() => navigate('/s/prep?tab=recommenders')}>request a letter</button>.</p>
               ) : (
                 waitingRecs.slice(0, 3).map(r => (
                   <ListRow
@@ -323,22 +217,9 @@ export default function MySpaceHomePage() {
               )}
 
               <div className="mt-4">
-                <SectionHeader
-                  action={
-                    unreadThreads > 0 ? (
-                      <button onClick={() => navigate('/s/messages')} className="inline-flex items-center gap-1 text-xs text-secondary hover:underline">
-                        <MessageSquare size={12} /> {unreadThreads} unread
-                      </button>
-                    ) : undefined
-                  }
-                >
-                  Latest feedback
-                </SectionHeader>
+                <SectionHeader action={unreadThreads > 0 ? <button onClick={() => navigate('/s/messages')} className="inline-flex items-center gap-1 text-xs text-secondary hover:underline"><MessageSquare size={12} /> {unreadThreads} unread</button> : undefined}>Latest feedback</SectionHeader>
                 {runList.length === 0 ? (
-                  <p className="py-2 text-sm text-muted-foreground">
-                    No workshop runs yet — get feedback on an essay draft in{' '}
-                    <button className="text-secondary hover:underline" onClick={() => navigate('/s/prep?tab=workshops')}>Prep</button>.
-                  </p>
+                  <p className="py-2 text-sm text-muted-foreground">No workshop runs yet — get feedback on an essay draft in <button className="text-secondary hover:underline" onClick={() => navigate('/s/prep?tab=workshops')}>Prep</button>.</p>
                 ) : (
                   runList.slice(0, 3).map(run => (
                     <ListRow
@@ -354,14 +235,17 @@ export default function MySpaceHomePage() {
             </div>
           </div>
 
+          {/* Opportunity row — strategy + scholarships you may qualify for.
+              ScholarshipsPeek self-hides when there are no matches, so this
+              collapses to a single full-width strategy card. */}
+          <div className="mt-5 grid gap-6 md:grid-cols-2">
+            <StrategySnapshot />
+            <ScholarshipsPeek />
+          </div>
+
           {/* Quiet footer link into the portfolio. */}
           <div className="mt-6 flex justify-end">
-            <button
-              onClick={() => navigate('/s/applications')}
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-            >
-              <FolderKanban size={12} /> All applications <ArrowRight size={12} />
-            </button>
+            <button onClick={() => navigate('/s/applications')} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"><FolderKanban size={12} /> All applications <ArrowRight size={12} /></button>
           </div>
         </div>
       )}

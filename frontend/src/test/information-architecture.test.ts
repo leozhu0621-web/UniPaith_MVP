@@ -11,20 +11,23 @@ import { postLoginDestination, roleDefaultPath, resolveNextParam } from '../util
 
 /** Spec/04 compliance — route contract tests. */
 describe('Spec/04 information architecture', () => {
-  it('defines 11 profile tabs (Spec 2026-06-10 §5 — Preparation/Financial moved to My Space)', () => {
-    expect(PROFILE_TABS_SPEC).toHaveLength(11)
+  it('defines 9 profile tabs (Data → Settings; Strategy in Planning; Timeline retired)', () => {
+    expect(PROFILE_TABS_SPEC).toHaveLength(9)
     expect(PROFILE_TABS_SPEC[0]).toBe('overview')
     expect(PROFILE_TABS_SPEC).not.toContain('preparation')
     expect(PROFILE_TABS_SPEC).not.toContain('financial')
+    expect(PROFILE_TABS_SPEC).not.toContain('data')
+    expect(PROFILE_TABS_SPEC).not.toContain('timeline')
+    expect(PROFILE_TABS_SPEC).toContain('strategy')
     expect(PROFILE_TABS_SPEC).toContain('analytics')
-    expect(PROFILE_TABS_SPEC).toContain('data')
   })
 
-  it('maps legacy profile tab aliases out to My Space', () => {
+  it('maps legacy profile tab aliases out of the profile', () => {
     expect(PROFILE_TAB_ALIASES.essays).toBe('/s/prep?tab=workshops')
     expect(PROFILE_TAB_ALIASES.recommenders).toBe('/s/prep?tab=recommenders')
     expect(PROFILE_TAB_ALIASES.preparation).toBe('/s/prep?tab=documents')
     expect(PROFILE_TAB_ALIASES.financial).toBe('/s/applications?tab=costs')
+    expect(PROFILE_TAB_ALIASES.data).toBe('/s/settings')
   })
 
   it('normalizes deprecated tab keys', () => {

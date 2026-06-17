@@ -8,6 +8,7 @@ honestly records in its ``_standard.omitted`` lists.
 """
 
 from unipaith.data import caltech_profile as c
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.profile_standard import STANDARD_VERSION, check_conformance
 from unipaith.profile_standard.manifest import MANIFEST
 
@@ -37,7 +38,7 @@ def _institution_snapshot() -> dict:
     return {
         "description_text": c.DESCRIPTION,
         "student_body_size": c.UNDERGRAD_COUNT,
-        "media_gallery": [c._CAMPUS_PHOTO],
+        "media_gallery": [c.SCHOOL_OUTCOMES["campus_photos"][0]["url"]],
         "ranking_data": c.RANKING_DATA,
         "school_outcomes": school_outcomes,
         "content_sources": c._INSTITUTION_CONTENT,
@@ -124,6 +125,7 @@ def test_caltech_institution_is_gold_except_recorded_omission():
     ok, bad = _gaps_are_all_omitted("institution", res, omitted)
     assert ok, f"Unexpected institution section gaps: {bad}"
     assert c.SCHOOL_OUTCOMES.get("media_credit")
+    assert len(c.SCHOOL_OUTCOMES.get("campus_photos", [])) >= 4
     assert "private research university" in c.DESCRIPTION.lower()
 
 
@@ -138,6 +140,31 @@ def test_every_division_is_gold_except_recorded_omissions():
         )
         ok, bad = _gaps_are_all_omitted("school", res, allowed)
         assert ok, f"{name} unexpected section gaps: {bad}"
+
+
+def test_catalog_has_no_padding_stubs():
+    """Every program must have a real department and field-specific description."""
+    import re
+
+    errors = validate_catalog(c.PROGRAMS)
+    assert errors == [], errors
+    null_dept = sum(1 for prog in c.PROGRAMS if not prog.get("department"))
+    assert null_dept == 0, f"{null_dept} programs missing department"
+    prefix = re.compile(r"^(Bachelor's in|Master's in|Professional program in) ")
+    prefix_count = sum(1 for prog in c.PROGRAMS if prefix.match(prog.get("program_name", "")))
+    assert prefix_count == 0, f"{prefix_count} programs still carry CIP-prefix names"
+    classif = sum(
+        1
+        for prog in c.PROGRAMS
+        if c._CLASSIFICATION_STUB_RE.match(prog.get("description") or "")
+    )
+    assert classif == 0, f"{classif} programs still carry classification-only descriptions"
+    name_prefix = sum(
+        1
+        for prog in c.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
 
 
 def test_every_program_is_gold_except_recorded_omissions():

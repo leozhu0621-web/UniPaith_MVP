@@ -44,12 +44,13 @@ export default function SavedListPage() {
   const compareStore = useCompareStore()
   const [searchParams, setSearchParams] = useSearchParams()
 
+  // Derive the active tab straight from the URL so the My Space rail's
+  // ?tab= links actually switch the content (the on-page strip is hidden on
+  // desktop, so the rail is the only switcher). Local state here would go
+  // stale on external navigation — the bug where all three tabs looked alike.
   const tabParam = searchParams.get('tab')
-  const [tab, setTab] = useState<Tab>(
-    tabParam === 'schools' || tabParam === 'searches' ? tabParam : 'programs',
-  )
+  const tab: Tab = tabParam === 'schools' || tabParam === 'searches' ? tabParam : 'programs'
   const selectTab = (t: Tab) => {
-    setTab(t)
     const p = new URLSearchParams(searchParams)
     if (t === 'programs') p.delete('tab')
     else p.set('tab', t)
@@ -246,7 +247,10 @@ export default function SavedListPage() {
     )
   }
 
-  if (isLoading) {
+  // These gates key off the saved-PROGRAMS query, so only block the Programs
+  // tab — Schools and Searches have their own queries and must render even when
+  // the programs list is loading or errored (else all three tabs look alike).
+  if (tab === 'programs' && isLoading) {
     return (
       <PageContainer className="space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -256,7 +260,7 @@ export default function SavedListPage() {
     )
   }
 
-  if (isError && programs.length === 0) {
+  if (tab === 'programs' && isError && programs.length === 0) {
     return (
       <PageContainer>
         <QueryError detail="We couldn't load your saved list." onRetry={() => refetch()} />
@@ -272,7 +276,10 @@ export default function SavedListPage() {
         title="Your shortlist"
       />
 
-      <div className="flex gap-1 border-b border-border mb-5">
+      {/* Hidden on lg+ where the My Space rail's Saved group lists these views
+          (Spec 2026-06-15 §A follow-up); kept below lg where the rail collapses
+          to flat pills. */}
+      <div className="lg:hidden flex gap-1 border-b border-border mb-5">
         <button
           type="button"
           onClick={() => selectTab('programs')}

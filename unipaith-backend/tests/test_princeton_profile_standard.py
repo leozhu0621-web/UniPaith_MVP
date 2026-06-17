@@ -36,7 +36,7 @@ def _institution_snapshot() -> dict:
     return {
         "description_text": p.DESCRIPTION,
         "student_body_size": p.UNDERGRAD_COUNT,
-        "media_gallery": [p._CAMPUS_PHOTO],
+        "media_gallery": [p.SCHOOL_OUTCOMES["campus_photos"][0]["url"]],
         "ranking_data": p.RANKING_DATA,
         "school_outcomes": school_outcomes,
         "content_sources": p._INSTITUTION_CONTENT,
@@ -110,6 +110,14 @@ def test_princeton_institution_is_gold_except_recorded_omission():
     assert p.SCHOOL_OUTCOMES.get("media_credit")
 
 
+def test_institution_has_campus_photo_gallery():
+    photos = p.SCHOOL_OUTCOMES.get("campus_photos") or []
+    assert len(photos) >= 4, "Princeton needs a 4–5 photo verified campus gallery"
+    for photo in photos:
+        assert photo.get("url") and photo.get("credit"), photo
+    assert p._CAMPUS_PHOTO == photos[0]["url"]
+
+
 def test_every_school_is_gold_except_recorded_omissions():
     for school in p.SCHOOLS:
         name = school["name"]
@@ -132,8 +140,39 @@ def test_flagship_cs_program_is_deeply_enriched():
     )
 
 
+def test_catalog_has_no_padding_stubs():
+    """Every program must have a real department and credential-disambiguated name."""
+    import re
+
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(p.PROGRAMS)
+    assert errors == [], errors
+    null_dept = sum(1 for prog in p.PROGRAMS if not prog.get("department"))
+    assert null_dept == 0, f"{null_dept} programs missing department"
+    prefix = re.compile(
+        r"^(Bachelor's in|Master's in|Doctor of Philosophy in|Graduate Certificate in) "
+    )
+    prefix_count = sum(1 for prog in p.PROGRAMS if prefix.match(prog.get("program_name", "")))
+    assert prefix_count == 0, f"{prefix_count} programs still carry CIP-prefix names"
+    classif = sum(
+        1
+        for prog in p.PROGRAMS
+        if p._CLASSIFICATION_STUB_RE.match(prog.get("description") or "")
+    )
+    assert classif == 0, f"{classif} programs still carry classification-only descriptions"
+    name_prefix = sum(
+        1
+        for prog in p.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
+
+
 def test_every_program_is_gold_except_recorded_omissions():
-    assert len(p.PROGRAMS) >= 100, "full IPEDS catalog breadth (UNITID 186131)"
+    # Real Princeton catalog: ~36 undergraduate majors + verified graduate degrees (M.Arch.,
+    # MPA, M.S.E./M.Eng.) — not federal certificate/incidental-master's padding rows.
+    assert len(p.PROGRAMS) >= 35, "verified Princeton degree catalog (UNITID 186131)"
     omittable_sections = {"tracks", "insights", "feeds"}
     for spec in p.PROGRAMS:
         slug = spec["slug"]
@@ -192,7 +231,11 @@ def test_coverable_programs_have_external_reviews():
         "princeton-molecular-biology-bs",
         "princeton-neuroscience-bs",
         "princeton-chemistry-bs",
-        "princeton-computer-science-ms",
+        "princeton-architecture-ms",
+        "princeton-chemical-engineering-ms",
+        "princeton-civil-engineering-ms",
+        "princeton-electrical-electronics-and-communications-engineering-ms",
+        "princeton-mechanical-engineering-ms",
     ]
     for slug in coverable:
         assert slug in p._REVIEWS_BY_SLUG, slug

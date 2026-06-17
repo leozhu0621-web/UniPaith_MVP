@@ -95,6 +95,35 @@ def _institution_snapshot() -> dict:
     }
 
 
+def test_catalog_quality_gate():
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(cu.PROGRAMS)
+    assert not errors, f"Catalog quality gate failed: {errors}"
+    classif = sum(
+        1
+        for prog in cu.PROGRAMS
+        if cu._CLASSIFICATION_STUB_RE.match(prog.get("description") or "")
+    )
+    assert classif == 0, f"{classif} programs still carry classification-only descriptions"
+    name_prefix = sum(
+        1
+        for prog in cu.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
+
+
+def test_catalog_breadth_and_shape():
+    assert len(cu.SCHOOLS) == 14
+    assert len(cu.PROGRAMS) >= 260
+    assert len(set(cu.PROGRAM_SLUGS)) == len(cu.PROGRAM_SLUGS)
+    assert cu.RANKING_DATA["ownership_type"] == "private"
+    desc = cu.DESCRIPTION.lower()
+    assert "private" in desc and "research university in ithaca" in desc
+    assert len(cu.SCHOOL_OUTCOMES["campus_photos"]) >= 4
+
+
 def test_cornell_institution_is_gold_except_recorded_omission():
     res = check_conformance(
         "institution", _institution_snapshot(), profile_version=STANDARD_VERSION

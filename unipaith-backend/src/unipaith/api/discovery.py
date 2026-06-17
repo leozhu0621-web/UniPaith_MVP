@@ -216,6 +216,82 @@ async def append_message_stream(
     )
 
 
+@router.post("/opener/stream")
+async def discovery_opener_stream(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Uni speaks first. Streamed when the student opens the conversation with no
+    messages yet, so Uni greets and leads instead of waiting. Same SSE contract
+    as `messages/stream` minus the `student_message` event (the student said
+    nothing). When the managed agent is off or its setup fails, a warm
+    interactive fallback greeting is served so the conversation always opens."""
+
+    async def _static_opener():
+        from unipaith.models.discovery import DiscoveryMessage
+
+        text = (
+            "Hi — I'm Uni, your admissions counselor. No forms here, just a "
+            "conversation to figure out your path together. To start: what's "
+            "drawing you toward your next step?"
+        )
+        signals = {
+            "suggested_options": [
+                "A field I love",
+                "A career goal",
+                "A change of direction",
+                "I'm not sure yet",
+            ]
+        }
+        try:
+            session = await _svc(db).start_unified_session(user.id)
+            db.add(
+                DiscoveryMessage(
+                    session_id=session.id,
+                    role="assistant",
+                    content=text,
+                    extracted_signals=signals,
+                )
+            )
+            await db.commit()
+        except Exception:
+            await db.rollback()
+        yield f"event: delta\ndata: {json.dumps({'text': text})}\n\n"
+        yield f"event: assistant_message\ndata: {json.dumps({'content': text})}\n\n"
+        yield "event: done\ndata: {}\n\n"
+
+    async def _event_stream():
+        if settings.ai_uni_managed_agent_v1:
+            host = UniAgentHost(db)
+            opener = host.stream_opener(user.id)
+            try:
+                first = await opener.__anext__()
+            except StopAsyncIteration:
+                first = None
+            except Exception:
+                async for frame in _static_opener():
+                    yield frame
+                return
+            if first is not None:
+                name, payload = first
+                yield f"event: {name}\ndata: {json.dumps(payload, default=str)}\n\n"
+            async for event_name, payload in opener:
+                yield f"event: {event_name}\ndata: {json.dumps(payload, default=str)}\n\n"
+            yield "event: done\ndata: {}\n\n"
+            return
+        async for frame in _static_opener():
+            yield frame
+
+    return StreamingResponse(
+        _event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 @router.get("/completion", response_model=CompletionMapResponse)
 async def get_completion_map(
     user: User = Depends(require_student),

@@ -281,6 +281,27 @@ export default function CalendarPage() {
         </div>
       )}
 
+      {/* Smart empty state — replaces the blank month/week/agenda grids when
+          there's nothing to show, so the room never reads as abandoned. */}
+      {filtered.length === 0 ? (
+        <div className="animate-fade-in">
+          <EmptyState
+            icon={<CalendarClock size={40} />}
+            title={hasActiveFilter ? 'Nothing matches these filters' : 'Your calendar is clear'}
+            description={
+              hasActiveFilter
+                ? 'No items match the current filters. Clear them to see your full timeline.'
+                : 'Deadlines and interviews land here as you save and apply to programs. Add a reminder or block off study time to get a head start.'
+            }
+            action={
+              hasActiveFilter
+                ? { label: 'Clear filters', onClick: clearFilters }
+                : { label: 'Add a reminder', onClick: () => setShowReminder(true) }
+            }
+          />
+        </div>
+      ) : (
+      <>
       {/* ── MONTH ── */}
       {view === 'month' && (
         <>
@@ -351,6 +372,8 @@ export default function CalendarPage() {
       {/* ── AGENDA ── */}
       {view === 'agenda' && (
         <AgendaView items={filtered} hasActiveFilter={hasActiveFilter} onClearFilters={clearFilters} onOpen={setDetailItem} onDiscover={() => navigate('/s/explore')} />
+      )}
+      </>
       )}
 
       {/* Item detail + actions */}

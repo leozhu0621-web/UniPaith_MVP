@@ -6,7 +6,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { ArrowUp } from 'lucide-react'
+import { ArrowUp, Paperclip } from 'lucide-react'
 
 import {
   appendMessage,
@@ -14,6 +14,7 @@ import {
   listSessions,
   startUnifiedSession,
   streamDiscoveryMessage,
+  streamDiscoveryOpener,
 } from '../../../api/discovery'
 import { getLivingProfile } from '../../../api/livingProfile'
 import type { LivingProfile } from '../../../api/livingProfile'
@@ -26,6 +27,7 @@ import type {
   DiscoverySession,
   DiscoverySessionDetail,
 } from '../../../types'
+import MaterialUpload from '../../../components/student/MaterialUpload'
 import AnswerChoices from './AnswerChoices'
 import FirstLookCard from './FirstLookCard'
 import NoticedCard from './NoticedCard'
@@ -83,6 +85,7 @@ export default function UniConversation({
   const firstName = user?.email?.split('@')[0]
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [draft, setDraft] = useState('')
+  const [showUpload, setShowUpload] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   // The student can wave off Uni's handoff offer; it re-surfaces after the next
   // turn (reset in the mutation's onSuccess).
@@ -95,6 +98,10 @@ export default function UniConversation({
   const [streaming, setStreaming] = useState(false)
   const [streamStudent, setStreamStudent] = useState<DiscoveryMessage | null>(null)
   const [streamText, setStreamText] = useState('')
+  // Proactive opener (Uni speaks first): fired once when the conversation loads
+  // empty. `openerFailed` falls back to the static greeting if it can't stream.
+  const openerFired = useRef(false)
+  const [openerFailed, setOpenerFailed] = useState(false)
   const canStream =
     typeof window !== 'undefined' &&
     typeof ReadableStream !== 'undefined' &&
@@ -314,6 +321,66 @@ export default function UniConversation({
     onReady?.({ ask: (t: string) => sendRef.current(t) })
   }, [onReady])
 
+  // Uni speaks first — stream the proactive opener (no student bubble). On
+  // failure, fall back to the static greeting.
+  const sendOpener = async () => {
+    let sid = sessionId ?? resolvedSessionId
+    let finished = false
+    setStreaming(true)
+    setStreamText('')
+    const ctrl = new AbortController()
+    streamAbort.current = ctrl
+    const finish = async () => {
+      if (finished) return
+      finished = true
+      setHandoffDismissed(false)
+      if (sid) await refreshAfterTurn(sid)
+      setStreaming(false)
+      setStreamText('')
+    }
+    try {
+      if (!sid) {
+        const created = await startUnifiedSession()
+        sid = created.id
+        qc.invalidateQueries({ queryKey: ['discovery', 'sessions', 'unified'] })
+      }
+      if (sid !== sessionId) setSessionId(sid)
+      await streamDiscoveryOpener(
+        {
+          onDelta: t => setStreamText(prev => prev + t),
+          onAssistantMessage: msg => {
+            if (msg?.content) setStreamText(msg.content)
+          },
+          onError: () => setOpenerFailed(true),
+          onDone: () => {
+            void finish()
+          },
+        },
+        ctrl.signal,
+      )
+      await finish()
+    } catch {
+      if (ctrl.signal.aborted) return
+      setStreaming(false)
+      setStreamText('')
+      setOpenerFailed(true) // show the static greeting instead
+      if (sid) await refreshAfterTurn(sid)
+    }
+  }
+  const sendOpenerRef = useRef(sendOpener)
+  sendOpenerRef.current = sendOpener
+  // Fire once, when the conversation is confirmed empty and streaming is
+  // available. A returning student with messages never triggers it.
+  useEffect(() => {
+    if (openerFired.current) return
+    if (sessionsLoading) return // wait for the active session to resolve
+    if (resolvedSessionId && !detail) return // wait for its messages to load
+    if (!isEmpty || streaming || turnMut.isPending) return
+    if (!canStream) return // reduced-motion / no-stream → static greeting stands
+    openerFired.current = true
+    void sendOpenerRef.current()
+  }, [sessionsLoading, resolvedSessionId, detail, isEmpty, streaming, canStream])
+
   return (
     <div className="flex flex-col h-full min-h-[520px] max-w-[640px] mx-auto w-full">
       {guided && !isEmpty && journey.currentStage && (
@@ -341,7 +408,10 @@ export default function UniConversation({
         aria-live="polite"
         aria-label="Conversation with Uni"
       >
-        {isEmpty ? (
+        {isEmpty && (!canStream || openerFailed) ? (
+          // Fallback greeting — shown only when the proactive opener can't stream
+          // (reduced motion / no ReadableStream) or it failed. Normally Uni's
+          // dynamic opener streams in instead (she speaks first).
           <div className="flex gap-2.5 py-6">
             <div className="h-7 w-7 rounded-full bg-secondary text-white flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold">
               U
@@ -386,7 +456,9 @@ export default function UniConversation({
           </div>
         )}
 
-        {(turnMut.isPending || (streaming && !streamText)) && (
+        {(turnMut.isPending ||
+          (streaming && !streamText) ||
+          (isEmpty && canStream && !openerFailed && !streamText)) && (
           <div className="flex justify-start gap-2.5">
             <div className="h-7 w-7 rounded-full bg-secondary text-white flex items-center justify-center shrink-0 text-xs font-semibold">
               U
@@ -448,6 +520,22 @@ export default function UniConversation({
           </div>
         ))}
 
+      {showUpload && (
+        <div className="mb-2">
+          <MaterialUpload
+            onApplied={result => {
+              const n = Object.values(result.counts || {}).reduce((a, b) => a + b, 0)
+              void qc.invalidateQueries({ queryKey: ['discovery', 'livingProfile'] })
+              void qc.invalidateQueries({ queryKey: ['goals'] })
+              void qc.invalidateQueries({ queryKey: ['needs'] })
+              void qc.invalidateQueries({ queryKey: ['identity'] })
+              showToast(`Added ${n} items from your file to My Space.`, 'success')
+              setShowUpload(false)
+            }}
+          />
+        </div>
+      )}
+
       <form
         onSubmit={e => {
           e.preventDefault()
@@ -455,6 +543,16 @@ export default function UniConversation({
         }}
         className="flex items-end gap-2 border-t border-border pt-3"
       >
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowUpload(v => !v)}
+          aria-label="Upload a file for Uni to read"
+          aria-pressed={showUpload}
+        >
+          <Paperclip size={16} />
+        </Button>
         <textarea
           rows={2}
           maxLength={20000}

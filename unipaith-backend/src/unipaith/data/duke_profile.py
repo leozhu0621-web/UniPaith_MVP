@@ -23,22 +23,49 @@ split), so those program fields are omitted; graduate/professional programs with
 verified per-program tuition carry a sourced "see the school's tuition page" record rather
 than a guessed number; and notable-faculty rosters are omitted for schools where no
 current named-prize holder could be verified from an official page.
+
+Depth pass (2026-06-15, dukeprof4): merged ``DEPTH_REVIEWS`` for 42 coverable
+programs (49/49 total external_reviews on coverable programs).
+
+Structural repair (2026-06-16, dukeprof5): replaced classification-only program
+descriptions with field-specific clauses from ``duke_field_descriptions.py``.
 """
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.duke_field_descriptions import (
+    FIELD_ALIASES,
+    FIELD_DESCRIPTIONS,
+    SLUG_DESCRIPTIONS,
+)
+from unipaith.data.duke_reviews_depth import DEPTH_REVIEWS
+from unipaith.data.profile_catalog_utils import (
+    disambiguate_program_name,
+    validate_catalog,
+)
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Duke University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-16"
+
+_TEMPLATE_STUB_RE = re.compile(
+    r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
+    r"master's|bachelor's|PhD|MBA|JD|MD|bachelors|masters|phd) program offered through ",
+    re.I,
+)
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is (an undergraduate|a graduate|a doctoral|a graduate certificate|"
+    r"a professional|a degree) program at ",
+)
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -202,8 +229,49 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Duke Arts", "url": "https://arts.duke.edu/"},
         ],
     },
-    # Wikimedia Commons file page verified 2026-06-12: author Sdkb, CC BY-SA 4.0.
+    # Wikimedia Commons file page verified 2026-06-14: author Sdkb, CC BY-SA 4.0.
     "media_credit": "Wikimedia Commons / Sdkb (CC BY-SA 4.0)",
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/"
+                "Duke_University_Chapel_side_in_July_2025.jpg/"
+                "1920px-Duke_University_Chapel_side_in_July_2025.jpg"
+            ),
+            "credit": "Wikimedia Commons / Sdkb (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/"
+                "West_Campus_path_at_Duke_University_in_July_2025.jpg/"
+                "1920px-West_Campus_path_at_Duke_University_in_July_2025.jpg"
+            ),
+            "credit": "Wikimedia Commons / Sdkb (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/"
+                "Davidson_Building%2C_Duke_University_in_July_2025.jpg/"
+                "1920px-Davidson_Building%2C_Duke_University_in_July_2025.jpg"
+            ),
+            "credit": "Wikimedia Commons / Sdkb (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/"
+                "Sarah_P._Duke_Gardens_gate.jpg/"
+                "1920px-Sarah_P._Duke_Gardens_gate.jpg"
+            ),
+            "credit": "Wikimedia Commons / Sdkb (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/a/af/"
+                "Duke_University_West_Campus_%2824070516%29.jpg"
+            ),
+            "credit": "Wikimedia Commons / Matt Phillips from Brooklyn, NY, USA (CC BY 2.0)",
+        },
+    ],
     "flagship": {
         # Duke Facts / NCES College Navigator (Fall 2024): 17,499 total students —
         # 6,523 undergraduate + 10,976 graduate and professional.
@@ -1551,12 +1619,134 @@ _SLUG_REPL = {
     ":": "",
 }
 
+# Professional schools where the owning unit for a degree is the school itself.
+_PROFESSIONAL_SCHOOLS = frozenset({
+    _FUQUA,
+    _LAW,
+    _NURSING,
+    _NICHOLAS,
+    _SANFORD,
+    _DIVINITY,
+})
+
+# Pratt professional master's → real engineering department (masters.pratt.duke.edu).
+_PRATT_GRAD_DEPARTMENT: dict[str, str] = {
+    "Master of Engineering in AI for Product Innovation": "Electrical & Computer Engineering",
+    "Master's in Biomedical Engineering": "Biomedical Engineering",
+    "Master of Engineering in Civil Engineering": "Civil Engineering",
+    "Master's in Electrical & Computer Engineering": "Electrical & Computer Engineering",
+    "Master of Engineering Management": "Engineering Management",
+    "Master of Engineering in Cybersecurity": "Electrical & Computer Engineering",
+    "Master of Engineering in Financial Technology": "Electrical & Computer Engineering",
+    "Master's in Mechanical Engineering & Materials Science": "Mechanical Engineering",
+}
+
+# Duke School of Medicine sub-departments (medschool.duke.edu program pages).
+_MED_DEPARTMENT: dict[str, str] = {
+    "Master of Biostatistics": "Biostatistics",
+    "Master of Health Sciences in Clinical Research (online)": "Biostatistics",
+    "Master of Science in Medical Physics": "Medical Physics",
+    "Master of Science in Population Health Sciences": "Population Health Sciences",
+    "Master of Management in Clinical Informatics (MMCi)": (
+        "Department of Family Medicine and Community Health"
+    ),
+    "Physician Assistant Program (MHS)": "Physician Assistant Program",
+}
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — field title unless it duplicates the school name."""
+    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+        return school
+    return field_name
+
+
+def _ug_program_name(field_name: str, school: str) -> str:
+    if school == _PRATT:
+        return f"Bachelor of Science in Engineering in {field_name}"
+    return disambiguate_program_name(field_name, "bachelors")
+
+
+def _grad_explicit_department(name: str, school: str) -> str:
+    if school == _PRATT:
+        return _PRATT_GRAD_DEPARTMENT.get(name, _PRATT)
+    if school == _MED:
+        return _MED_DEPARTMENT.get(name, _MED)
+    if school in _PROFESSIONAL_SCHOOLS:
+        return school
+    return _department_for(name, school)
+
 
 def _slugify(text_value: str) -> str:
     s = text_value.lower()
     for k, v in _SLUG_REPL.items():
         s = s.replace(k, v)
     return "-".join(s.split())
+
+
+def _field_from_program_name(program_name: str) -> str | None:
+    """Extract field title from a disambiguated program name."""
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Bachelor of Science in Engineering in ",
+        "Bachelor's in ",
+        "Master's in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+        "Professional program in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):]
+    return None
+
+
+def _needs_normalize(desc: str) -> bool:
+    """True when a description is a classification or template stub."""
+    if not desc:
+        return True
+    if _CLASSIFICATION_STUB_RE.match(desc):
+        return True
+    if _TEMPLATE_STUB_RE.search(desc):
+        return True
+    if "offered through the " in desc:
+        return True
+    return False
+
+
+def _duke_description(spec: dict, field: str | None = None) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    fmt = spec.get("delivery_format", "in_person")
+    delivery = ""
+    if fmt == "online":
+        delivery = " Delivered online."
+    elif fmt == "hybrid":
+        delivery = " Delivered in hybrid format."
+    if slug in SLUG_DESCRIPTIONS:
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+    field_key = (
+        field
+        or spec.get("_field_name")
+        or _field_from_program_name(spec.get("program_name", ""))
+        or spec.get("department")
+        or spec.get("program_name", "")
+    )
+    if field_key in FIELD_ALIASES:
+        field_key = FIELD_ALIASES[field_key]
+    clause = FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        raise ValueError(
+            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
+        )
+    return f"{spec['program_name']}: {clause}{delivery}"
+
+
+def _normalize_program(spec: dict, field_name: str | None = None) -> None:
+    """Stamp a field-specific description on stub program nodes."""
+    if not _needs_normalize(spec.get("description") or ""):
+        return
+    spec["description"] = _duke_description(spec, field=field_name)
 
 
 def _build_catalog() -> list[dict]:
@@ -1571,31 +1761,37 @@ def _build_catalog() -> list[dict]:
         out.append(spec)
 
     for name in _TRINITY_MAJORS:
-        _add({
+        dept = _department_for(name, _TRINITY)
+        pname = _ug_program_name(name, _TRINITY)
+        spec = {
             "slug": f"duke-{_slugify(name)}-ab",
             "school": _TRINITY,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": "bachelors",
+            "department": dept,
             "duration_months": 48,
             "delivery_format": "in_person",
-            "description": (
-                f"{name} — an undergraduate major in Duke's Trinity College of Arts & "
-                "Sciences, awarding the A.B. or B.S."
-            ),
-        })
+            "_field_name": name,
+        }
+        _normalize_program(spec, name)
+        spec.pop("_field_name", None)
+        _add(spec)
     for name in _PRATT_MAJORS:
-        _add({
+        dept = _department_for(name, _PRATT)
+        pname = _ug_program_name(name, _PRATT)
+        spec = {
             "slug": f"duke-{_slugify(name)}-bse",
             "school": _PRATT,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": "bachelors",
+            "department": dept,
             "duration_months": 48,
             "delivery_format": "in_person",
-            "description": (
-                f"{name} — an undergraduate B.S.E. major in Duke's Pratt School of "
-                "Engineering."
-            ),
-        })
+            "_field_name": name,
+        }
+        _normalize_program(spec, name)
+        spec.pop("_field_name", None)
+        _add(spec)
     for (
         name,
         dtype,
@@ -1608,11 +1804,13 @@ def _build_catalog() -> list[dict]:
         desc,
     ) in _GRAD_EXPLICIT:
         suffix = {"phd": "phd", "professional": "prof"}.get(dtype, "ms")
+        dept = _grad_explicit_department(name, school)
         _add({
             "slug": f"duke-{_slugify(name)}-{suffix}",
             "school": school,
             "program_name": name,
             "degree_type": dtype,
+            "department": dept,
             "duration_months": dur,
             "delivery_format": fmt,
             "website": website,
@@ -1621,22 +1819,44 @@ def _build_catalog() -> list[dict]:
             "description": desc,
         })
     for name in _PHD_PROGRAMS:
-        _add({
+        dept = _department_for(name, _GRAD)
+        pname = disambiguate_program_name(name, "phd")
+        spec = {
             "slug": f"duke-{_slugify(name)}-grad-phd",
             "school": _GRAD,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": "phd",
+            "department": dept,
             "duration_months": 60,
             "delivery_format": "in_person",
-            "description": (
-                f"{name} — a Ph.D. program conferred through Duke's Graduate School, with "
-                "full funding for admitted doctoral students."
-            ),
-        })
+            "_field_name": name,
+        }
+        _normalize_program(spec, name)
+        spec.pop("_field_name", None)
+        _add(spec)
     return out
 
 
 PROGRAMS: list[dict] = _build_catalog()
+for _p in PROGRAMS:
+    _normalize_program(_p, _field_from_program_name(_p.get("program_name", "")))
+
+_catalog_errors = validate_catalog(PROGRAMS)
+_stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
+_new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
+if _stub_desc:
+    _catalog_errors.append(f"template stub descriptions on {_stub_desc} programs")
+if _new_templ:
+    _catalog_errors.append(f"program_description template on {_new_templ} programs")
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
+if _catalog_errors:
+    raise RuntimeError(f"Duke catalog quality gate failed: {_catalog_errors}")
 # Normalize residential delivery to the fleet-wide "in_person" value (the catalog tuples
 # use "on_campus" for readability); "online"/"hybrid" are preserved.
 for _p in PROGRAMS:
@@ -2399,16 +2619,13 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 
 # Real Duke campus photo (Duke Chapel) — Wikimedia Commons landscape JPG (verified HTTP
-# 200). Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/"
-    "Duke_University_Chapel_side_in_July_2025.jpg/"
-    "1920px-Duke_University_Chapel_side_in_July_2025.jpg"
-)
+# 200). Leads the institution hero; see ``SCHOOL_OUTCOMES["campus_photos"]`` for gallery.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
@@ -2560,6 +2777,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             session.add(p)
         p.program_name = spec["program_name"]
         p.degree_type = spec["degree_type"]
+        p.department = spec.get("department")
         p.duration_months = spec.get("duration_months")
         p.description_text = spec["description"]
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])

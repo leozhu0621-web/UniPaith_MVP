@@ -43,3 +43,14 @@ test('StatTile renders value + label + sub', () => {
     document.documentElement.removeAttribute('data-reduce-motion')
   }
 })
+
+test('StatTile tints its value gold when tone="gold" (earned stat)', () => {
+  document.documentElement.setAttribute('data-reduce-motion', '')
+  try {
+    render(<StatTile value={2} label="Offers" tone="gold" />)
+    const val = screen.getByText('2')
+    expect(val.className).toContain('text-primary')
+  } finally {
+    document.documentElement.removeAttribute('data-reduce-motion')
+  }
+})

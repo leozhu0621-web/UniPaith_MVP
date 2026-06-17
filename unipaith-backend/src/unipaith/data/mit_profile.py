@@ -22,13 +22,15 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.mit_reviews_depth import DEPTH_REVIEWS
+from unipaith.data.profile_catalog_utils import disambiguate_program_name, validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Massachusetts Institute of Technology"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-15"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -154,6 +156,45 @@ SCHOOL_OUTCOMES: dict = {
         "location": "Cambridge, Massachusetts",
         "academic_calendar": "4-1-4 — fall, January IAP, spring",
     },
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/"
+                "Great_dome_of_MIT%2C_Feb_2021_%282%29_%28cropped%29.jpg/"
+                "1920px-Great_dome_of_MIT%2C_Feb_2021_%282%29_%28cropped%29.jpg"
+            ),
+            "credit": "Wikimedia Commons / Peacearth (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/"
+                "MIT_Main_Campus_aerial.jpg/1920px-MIT_Main_Campus_aerial.jpg"
+            ),
+            "credit": "Wikimedia Commons / Nick Allen (CC BY-SA 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/"
+                "MIT_Lobby_7.jpg/1920px-MIT_Lobby_7.jpg"
+            ),
+            "credit": "Wikimedia Commons / Madcoverboy (CC BY-SA 3.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/"
+                "MIT_Kresge_Auditorium.jpg/1920px-MIT_Kresge_Auditorium.jpg"
+            ),
+            "credit": "Wikimedia Commons / Madcoverboy (CC BY-SA 3.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/"
+                "Ray_and_Maria_Stata_Center_%28MIT%29.JPG/"
+                "1920px-Ray_and_Maria_Stata_Center_%28MIT%29.JPG"
+            ),
+            "credit": "Wikimedia Commons / Luxisufeili (CC BY-SA 3.0)",
+        },
+    ],
     "media_credit": "Wikimedia Commons / Peacearth (CC BY-SA 4.0)",
     "flagship": {
         "nobel_laureates": 106,
@@ -1302,6 +1343,92 @@ PROGRAMS: list[dict] = [
         "description": "Non-degree professional certificate in innovation and technology.",
     },
 ]
+
+# Real MIT owning unit per program (official department / program names from mit.edu).
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "mit-eecs-bs": "Department of Electrical Engineering and Computer Science",
+    "mit-eecs-phd": "Department of Electrical Engineering and Computer Science",
+    "mit-meche-bs": "Department of Mechanical Engineering",
+    "mit-meche-phd": "Department of Mechanical Engineering",
+    "mit-aeroastro-bs": "Department of Aeronautics and Astronautics",
+    "mit-aeroastro-phd": "Department of Aeronautics and Astronautics",
+    "mit-cheme-bs": "Department of Chemical Engineering",
+    "mit-dmse-bs": "Department of Materials Science and Engineering",
+    "mit-be-bs": "Department of Biological Engineering",
+    "mit-cee-bs": "Department of Civil and Environmental Engineering",
+    "mit-nse-bs": "Department of Nuclear Science and Engineering",
+    "mit-statistics-phd": "Institute for Data, Systems, and Society",
+    "mit-tpp-sm": "Institute for Data, Systems, and Society",
+    "mit-physics-bs": "Department of Physics",
+    "mit-physics-phd": "Department of Physics",
+    "mit-math-bs": "Department of Mathematics",
+    "mit-math-phd": "Department of Mathematics",
+    "mit-math-cs-bs": "Department of Mathematics",
+    "mit-biology-bs": "Department of Biology",
+    "mit-chemistry-bs": "Department of Chemistry",
+    "mit-chemistry-phd": "Department of Chemistry",
+    "mit-bcs-bs": "Department of Brain and Cognitive Sciences",
+    "mit-eaps-bs": "Department of Earth, Atmospheric and Planetary Sciences",
+    "mit-economics-bs": "Department of Economics",
+    "mit-economics-phd": "Department of Economics",
+    "mit-linguistics-philosophy-bs": "Department of Linguistics and Philosophy",
+    "mit-political-science-bs": "Department of Political Science",
+    "mit-cms-writing-bs": "Comparative Media Studies / Writing",
+    "mit-anthropology-bs": "Anthropology Program",
+    "mit-history-bs": "History Section",
+    "mit-literature-bs": "Literature Section",
+    "mit-music-bs": "Music and Theater Arts Section",
+    "mit-sts-bs": "Program in Science, Technology, and Society",
+    "mit-global-languages-bs": "Global Languages",
+    "mit-science-writing-sm": "Graduate Program in Science Writing",
+    "mit-management-bs": "MIT Sloan School of Management",
+    "mit-sloan-mba": "MIT Sloan School of Management",
+    "mit-sloan-mfin": "MIT Sloan School of Management",
+    "mit-sloan-mban": "MIT Sloan School of Management",
+    "mit-sloan-phd": "MIT Sloan School of Management",
+    "mit-business-analytics-bs": "MIT Sloan School of Management",
+    "mit-finance-bs": "MIT Sloan School of Management",
+    "mit-sloan-fellows-mba": "MIT Sloan School of Management",
+    "mit-sdm-sm": "System Design and Management Program",
+    "mit-mm-finance": "MIT Sloan School of Management",
+    "mit-pe-cto": "MIT Sloan Executive Education",
+    "mit-architecture-bs": "Department of Architecture",
+    "mit-architecture-march": "Department of Architecture",
+    "mit-dusp-bs": "Department of Urban Studies and Planning",
+    "mit-city-planning-sm": "Department of Urban Studies and Planning",
+    "mit-mediaarts-sm": "Media Arts and Sciences Program",
+    "mit-red-sm": "Center for Real Estate",
+    "mit-cs-6-3-bs": "Department of Electrical Engineering and Computer Science",
+    "mit-ai-6-4-bs": "Department of Electrical Engineering and Computer Science",
+    "mit-cse-phd": "Center for Computational Science and Engineering",
+    "mit-comp-cognition-bs": "Department of Brain and Cognitive Sciences",
+    "mit-cs-econ-data-bs": "Department of Electrical Engineering and Computer Science",
+    "mit-mm-supply-chain": "Center for Transportation & Logistics",
+    "mit-mm-statistics-data-science": "Institute for Data, Systems, and Society",
+    "mit-mm-manufacturing": "Laboratory for Manufacturing and Productivity",
+    "mit-mm-data-econ-policy": "Department of Economics",
+    "mit-pe-ml-ai": "MIT Professional Education",
+    "mit-pe-design-manufacturing": "MIT Professional Education",
+    "mit-pe-sustainability": "MIT Professional Education",
+    "mit-pe-innovation-tech": "MIT Professional Education",
+}
+
+for _p in PROGRAMS:
+    _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+    if _p["program_name"] == "MBA":
+        _p["program_name"] = "Master of Business Administration"
+
+_name_counts = {
+    n: sum(1 for p in PROGRAMS if p["program_name"] == n)
+    for n in {p["program_name"] for p in PROGRAMS}
+}
+for _p in PROGRAMS:
+    if _name_counts[_p["program_name"]] > 1:
+        _p["program_name"] = disambiguate_program_name(_p["program_name"], _p["degree_type"])
+
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise ValueError(f"MIT catalog validation failed: {_catalog_errors}")
 
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
@@ -2685,6 +2812,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 # Full official degree names (MIT awards the SB/Bachelor of Science, the SM/
@@ -2840,13 +2968,8 @@ _WEBSITE_BY_SLUG: dict[str, str] = {
 }
 
 
-# Real MIT campus photo (the Great Dome over Killian Court) — Wikimedia Commons,
-# hotlinkable, landscape JPG. Leads the hero on the institution detail page.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/"
-    "Great_dome_of_MIT%2C_Feb_2021_%282%29_%28cropped%29.jpg/"
-    "1920px-Great_dome_of_MIT%2C_Feb_2021_%282%29_%28cropped%29.jpg"
-)
+# Hero + explore-card header — first verified outdoor campus photo in the gallery.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Per-program _standard (honest omitted list) ────────────────────────────────
@@ -3050,6 +3173,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         # Official program-page URL (read-more link on the program page).
         p.website_url = _WEBSITE_BY_SLUG.get(spec["slug"])
         p.school_id = school_by_name[spec["school"]].id
+        p.department = spec.get("department")
         p.is_published = True
         p.catalog_source = "curated"
         # Every program carries a populated Events & Updates feed: MBAn keeps its

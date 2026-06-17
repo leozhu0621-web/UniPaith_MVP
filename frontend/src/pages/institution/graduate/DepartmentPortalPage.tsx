@@ -118,7 +118,7 @@ export default function DepartmentPortalPage() {
   const deptOptions = [{ id: dept.id, name: dept.name }]
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 p-6">
+    <div className="w-full space-y-5 p-6">
       <button
         type="button"
         onClick={() => navigate('/i/admissions?tab=graduate')}

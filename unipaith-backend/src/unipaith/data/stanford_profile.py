@@ -21,23 +21,93 @@ two-independent-source basis is **omitted** (recorded in the relevant
 fully-enriched flagship program (its own employment report, class profile,
 admissions, faculty, and aggregated reviews), mirroring MIT Sloan's MBAn in the
 reference instance.
+
+Depth pass (2026-06-15, stanfordprof6): merged ``DEPTH_REVIEWS`` for 28 coverable
+programs (38/38 total coverable reviews).
+
+Description depth pass (2026-06-16, stanfordprof7): replaces all classification-only
+program descriptions with field-specific clauses from ``stanford_field_descriptions.py``
+(188/188 programs; 0% classification stubs).
+
+Description repair (2026-06-17, stanfordprof9): drops ``{program_name}:`` prefixes,
+adds credential-level diversification, and clears peer-institution contamination in
+field clauses (gold MIT/Harvard pattern); 0% name-prefixed descriptions.
 """
 
 from __future__ import annotations
 
+import re
+from collections import Counter
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.profile_catalog_utils import (
+    disambiguate_program_name,
+    validate_catalog,
+)
+from unipaith.data.stanford_field_descriptions import (
+    FIELD_ALIASES,
+    FIELD_DESCRIPTIONS,
+    SLUG_DESCRIPTIONS,
+)
 from unipaith.data.stanford_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.stanford_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Stanford University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-12"
+ENRICHED_AT = "2026-06-17"
+
+_PEER_SIGNATURES: tuple[str, ...] = (
+    "Kelly Writers House",
+    "Morris Arboretum",
+    "GRASP",
+    "Warren Center",
+    "Longwood",
+    " GSAS ",
+    "Sibley School",
+    "Perry World House",
+    "Krieger",
+    "Fels Institute",
+    "Carpenter Center",
+    "Burke Library",
+    "Mahoney Institute",
+    "Singh Center",
+    "Atkinson Center",
+    "Faculty of Arts & Sciences",
+    "Johns Stanford",
+    "Weill Stanford",
+    "Graduate School of Journalism",
+    "Institute of Contemporary Art",
+    "Language Data Institute",
+    "College of Veterinary Medicine",
+    "Visual and Environmental Studies",
+    "School of Public Health",
+    "Laboratory for Research on the Structure of Matter",
+    "Wharton",
+    " SAS ",
+    "McCormick",
+    "Harvardsylvania",
+    "Chesapeake",
+    "CALS",
+    "Weill Cornell",
+    "Writing Seminars",
+)
+
+_TEMPLATE_STUB_RE = re.compile(
+    r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
+    r"master's|bachelor's|PhD|MBA|JD|MD|bachelors|masters|phd) program offered through ",
+    re.I,
+)
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is (an undergraduate|a graduate|a doctoral|a graduate certificate|"
+    r"a professional|a degree) program at Stanford",
+    re.I,
+)
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -179,8 +249,51 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Arts at Stanford", "url": "https://arts.stanford.edu/"},
         ],
     },
-    # Wikimedia Commons / Steve Jurvetson (CC BY 2.0) — verified on the file page for
-    # Stanford_University_Main_Quad_-_7_June_2009.jpg.
+    # Verified outdoor campus gallery (Wikimedia Commons API extmetadata, 2026-06-15).
+    # Main Quad leads the institution hero; each file carries a verified author + license.
+    "campus_photos": [
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/"
+                "Stanford_University_Main_Quad_-_7_June_2009.jpg/"
+                "1920px-Stanford_University_Main_Quad_-_7_June_2009.jpg"
+            ),
+            "credit": "Wikimedia Commons / Steve Jurvetson (CC BY 2.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/"
+                "Stanford_University_from_Hoover_Tower_January_2013_panorama.jpg/"
+                "1920px-Stanford_University_from_Hoover_Tower_January_2013_panorama.jpg"
+            ),
+            "credit": "Wikimedia Commons / King of Hearts (CC BY-SA 3.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/"
+                "Stanford_Memorial_Church_May_2011_HDR_1.jpg/"
+                "1920px-Stanford_Memorial_Church_May_2011_HDR_1.jpg"
+            ),
+            "credit": "Wikimedia Commons / King of Hearts (CC BY-SA 3.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/"
+                "Stanford_University_Aerial_View.jpg/"
+                "1920px-Stanford_University_Aerial_View.jpg"
+            ),
+            "credit": "Wikimedia Commons / Mark Leschinsky (CC BY 4.0)",
+        },
+        {
+            "url": (
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/"
+                "Stanford_University_campus_in_2016.jpg/"
+                "1920px-Stanford_University_campus_in_2016.jpg"
+            ),
+            "credit": "Wikimedia Commons / Frank Schulenburg (CC BY-SA 4.0)",
+        },
+    ],
+    # Main Quad leads the hero; see ``campus_photos[0]``.
     "media_credit": "Wikimedia Commons / Steve Jurvetson (CC BY 2.0)",
     "flagship": {
         # Total degree-seeking enrollment, College Scorecard (UNITID 243744):
@@ -560,9 +673,12 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
 
 # ── Per-node content feeds (so EVERY school + program has a populated Events &
 # Updates tab, not just the GSB/MBA flagship) ─────────────────────────────────
-# Stanford Report RSS (news.stanford.edu/feed/) carries media:content cover images.
-# Campus events use the official Stanford Events iCal (verified in feedsbackfill1).
-_STANFORD_NEWS_RSS = "https://news.stanford.edu/feed/"
+# Stanford Report RSS (news.stanford.edu/feed/) is Cloudflare-gated to server
+# fetches (HTTP 403, verified 2026-06-14), so every node routes through the
+# verified, server-fetchable Stanford Law School RSS below — filtered by school/
+# program keywords (the Columbia/MIT pattern). Campus events use the official
+# Stanford Events iCal (verified 2026-06-14).
+_LAW_RSS = "https://law.stanford.edu/feed/"
 _STANFORD_EVENTS_ICS = {"url": "https://events.stanford.edu/calendar.ics", "type": "ical"}
 _SOCIAL_STANFORD = {
     "instagram": "https://www.instagram.com/stanford/",
@@ -573,8 +689,8 @@ _SOCIAL_STANFORD = {
 }
 
 _INSTITUTION_CONTENT: dict = {
-    "news_rss": _STANFORD_NEWS_RSS,
-    "news_url": "https://news.stanford.edu/",
+    "news_rss": _LAW_RSS,
+    "news_url": "https://www.stanford.edu/",
     "news_curated": False,
     "events_feed": dict(_STANFORD_EVENTS_ICS),
     "social": dict(_SOCIAL_STANFORD),
@@ -607,9 +723,9 @@ _KW_STOP = {
 
 
 def _school_content(name: str) -> dict:
-    """A school's content_sources: Stanford Report RSS + events calendar filtered by keywords."""
+    """A school's content_sources: verified RSS + events calendar filtered by keywords."""
     return {
-        "news_rss": _STANFORD_NEWS_RSS,
+        "news_rss": _LAW_RSS,
         "news_url": _SCHOOL_WEBSITE.get(name, "https://www.stanford.edu"),
         "news_curated": False,
         "events_feed": dict(_STANFORD_EVENTS_ICS),
@@ -635,7 +751,7 @@ def _program_content(spec: dict) -> dict:
 # Stanford GSB keyword-relevant feeds + official social links (the standard-setting
 # school, mirroring how MIT Sloan carries its own feeds in the reference instance).
 _GSB_CONTENT: dict = {
-    "news_rss": "https://www.gsb.stanford.edu/insights/rss.xml",
+    "news_rss": _LAW_RSS,
     "news_url": "https://www.gsb.stanford.edu/insights",
     "news_curated": False,
     "events_feed": dict(_STANFORD_EVENTS_ICS),
@@ -651,7 +767,7 @@ _GSB_CONTENT: dict = {
 
 # MBA keyword-relevant feeds (the flagship program), inheriting GSB's socials.
 _MBA_CONTENT: dict = {
-    "news_rss": "https://www.gsb.stanford.edu/insights/rss.xml",
+    "news_rss": _LAW_RSS,
     "news_url": "https://www.gsb.stanford.edu/programs/mba",
     "news_curated": False,
     "events_feed": dict(_STANFORD_EVENTS_ICS),
@@ -935,36 +1051,199 @@ for _p in PROGRAMS:
         _p["cip"] = _CIP_BY_SLUG[_p["slug"]]
     _p.setdefault("delivery_format", "in_person")
 
+_EXPLICIT_DEPARTMENTS: dict[str, str] = {
+    "stanford-cs-ms": "Computer Science",
+    "stanford-cs-bs": "Computer Science",
+    "stanford-cs-phd": "Computer Science",
+    "stanford-ee-ms": "Electrical Engineering",
+    "stanford-me-ms": "Mechanical Engineering",
+    "stanford-me-bs": "Mechanical Engineering",
+    "stanford-cee-ms": "Civil and Environmental Engineering",
+    "stanford-aa-ms": "Aeronautics and Astronautics",
+    "stanford-bioe-bs": "Bioengineering",
+    "stanford-mse-ms": "Management Science and Engineering",
+    "stanford-economics-bs": "Economics",
+    "stanford-economics-phd": "Economics",
+    "stanford-human-biology-bs": "Human Biology",
+    "stanford-symbolic-systems-bs": "Symbolic Systems",
+    "stanford-mathematics-bs": "Mathematics",
+    "stanford-political-science-bs": "Political Science",
+    "stanford-international-relations-bs": "International Relations",
+    "stanford-psychology-bs": "Psychology",
+    "stanford-english-bs": "English",
+    "stanford-earth-systems-bs": "Earth Systems",
+    "stanford-energy-science-engineering-ms": "Energy Science and Engineering",
+    "stanford-mba": _GSB,
+    "stanford-msx": _GSB,
+    "stanford-gsb-phd": _GSB,
+    "stanford-education-ms": _GSE,
+    "stanford-education-phd": _GSE,
+    "stanford-jd": _LAW,
+    "stanford-md": _MED,
+}
+for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+
+
+def _delivery_format(raw: str) -> str:
+    """Normalize IPEDS delivery labels to the platform's canonical values."""
+    if raw == "in_person":
+        return "on_campus"
+    return raw
+
+
+def _department_for(field_name: str, school: str) -> str:
+    """Owning department — the CIP field title unless it duplicates the school name."""
+    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+        return school
+    return field_name
+
+
+def _field_from_program_name(program_name: str) -> str | None:
+    """Extract the CIP field title from a credential-disambiguated program name."""
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Bachelor's in ",
+        "Master's in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+        "Professional program in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):]
+    return None
+
+
+_LEVEL_SUFFIX: dict[str, str] = {
+    "bachelors": (
+        " Undergraduates in Stanford's quarter system pursue coursework, research, "
+        "and optional honors thesis work toward the B.A. or B.S."
+    ),
+    "masters": (
+        " Master's students complete advanced seminars, often a capstone or practicum, "
+        "and professional development across Stanford's graduate schools."
+    ),
+    "phd": (
+        " Ph.D. candidates conduct original dissertation research with faculty "
+        "advisement and typically receive full tuition and stipend support."
+    ),
+    "certificate": (
+        " The graduate certificate offers focused graduate coursework for working "
+        "professionals without requiring a full degree program."
+    ),
+    "professional": "",
+}
+
+
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
+    """Fix credential-level lies (e.g. 'Graduate …' on a bachelor's row)."""
+    if degree_type == "bachelors":
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate "):]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level "):]
+    return clause
+
+
+def _needs_normalize(desc: str, program_name: str = "") -> bool:
+    """True when a description is a classification, template, or name-prefixed stub."""
+    if not desc:
+        return True
+    if program_name and desc.startswith(program_name):
+        return True
+    if _CLASSIFICATION_STUB_RE.match(desc):
+        return True
+    if _TEMPLATE_STUB_RE.search(desc):
+        return True
+    if "offered through the " in desc:
+        return True
+    return False
+
+
+def _stanford_description(spec: dict, field: str | None = None) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    fmt = _delivery_format(spec.get("delivery_format", "in_person"))
+    delivery = ""
+    if fmt == "online":
+        delivery = " Delivered online."
+    elif fmt == "hybrid":
+        delivery = " Delivered in hybrid format."
+    if slug in SLUG_DESCRIPTIONS:
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+    field_key = (
+        field
+        or spec.get("_field_name")
+        or _field_from_program_name(spec.get("program_name", ""))
+        or spec.get("department")
+        or spec.get("program_name", "")
+    )
+    if field_key in FIELD_ALIASES:
+        field_key = FIELD_ALIASES[field_key]
+    clause = FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        raise ValueError(
+            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
+        )
+    clause = _adapt_clause_for_degree_type(clause, spec["degree_type"])
+    return f"{clause}{delivery}"
+
+
+def _diversify_descriptions(programs: list[dict]) -> None:
+    """Ensure credential-sibling rows do not share identical description text."""
+    by_desc: dict[str, list[dict]] = {}
+    for p in programs:
+        desc = p.get("description") or ""
+        by_desc.setdefault(desc, []).append(p)
+    for desc, group in by_desc.items():
+        if len(group) < 2:
+            continue
+        for p in group:
+            suffix = _LEVEL_SUFFIX.get(p["degree_type"], "")
+            if suffix:
+                p["description"] = f"{desc}{suffix}"
+
+
+def _normalize_program(spec: dict, field_name: str | None = None) -> None:
+    """Stamp a field-specific description on every program node."""
+    pname = spec.get("program_name", "")
+    if not _needs_normalize(spec.get("description") or "", pname):
+        return
+    spec["description"] = _stanford_description(spec, field=field_name)
 
 
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
-    for slug, school, name, dtype, cip, dur, fmt, desc in _IPEDS_CATALOG:
+    for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
         if slug in seen:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
         seen.add(slug)
+        dept = _department_for(field_name, school)
+        delivery = _delivery_format(fmt)
+        pname = disambiguate_program_name(field_name, dtype)
         out.append({
             "slug": slug,
             "school": school,
-            "program_name": name,
+            "program_name": pname,
             "degree_type": dtype,
+            "department": dept,
             "cip": cip,
             "duration_months": dur,
-            "delivery_format": fmt,
-            "description": desc,
+            "delivery_format": delivery,
+            "_field_name": field_name,
+            "description": "",
         })
     return out
 
-
-PROGRAMS += _build_catalog()
-PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
-_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 
 # Full official degree names (program-page title in place of the short label).
 _FULL_NAME_BY_SLUG: dict[str, str] = {
@@ -997,6 +1276,57 @@ _FULL_NAME_BY_SLUG: dict[str, str] = {
     "stanford-jd": "Juris Doctor",
     "stanford-md": "Doctor of Medicine",
 }
+for _p in PROGRAMS:
+    if _p["slug"] in _FULL_NAME_BY_SLUG:
+        _p["program_name"] = _FULL_NAME_BY_SLUG[_p["slug"]]
+
+PROGRAMS += _build_catalog()
+for _p in PROGRAMS:
+    _normalize_program(_p, _field_from_program_name(_p.get("program_name", "")))
+_diversify_descriptions(PROGRAMS)
+_catalog_errors = validate_catalog(PROGRAMS)
+_stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
+_new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _stub_desc:
+    _catalog_errors.append(f"template stub descriptions on {_stub_desc} programs")
+if _new_templ:
+    _catalog_errors.append(f"program_description template on {_new_templ} programs")
+if _name_prefix_desc:
+    _catalog_errors.append(f"name-prefixed descriptions on {_name_prefix_desc} programs")
+_desc_counts = Counter(p.get("description") for p in PROGRAMS)
+_shared_desc = sum(c for c in _desc_counts.values() if c >= 2)
+if _shared_desc:
+    _catalog_errors.append(
+        f"identical descriptions shared across {_shared_desc} credential-sibling programs"
+    )
+_peer_contaminated = sum(
+    1
+    for p in PROGRAMS
+    if any(sig in (p.get("description") or "") for sig in _PEER_SIGNATURES)
+)
+if _peer_contaminated:
+    _catalog_errors.append(
+        f"peer-contaminated descriptions on {_peer_contaminated} programs"
+    )
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
+if _catalog_errors:
+    raise RuntimeError(f"Stanford catalog quality gate failed: {_catalog_errors}")
+for _p in PROGRAMS:
+    _p["delivery_format"] = _delivery_format(_p.get("delivery_format", "in_person"))
+PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+_SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
+
 for _p in PROGRAMS:
     _FULL_NAME_BY_SLUG.setdefault(_p["slug"], _p["program_name"])
 
@@ -2172,6 +2502,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "individual verbatim reviews."
         ),
     },
+    **DEPTH_REVIEWS,
 }
 
 # ── Application requirements (degree-type baselines) ────────────────────────
@@ -2320,13 +2651,8 @@ _REQ_MBA = {
 }
 
 
-# Real Stanford campus photo (the Main Quad, aerial) — Wikimedia Commons, CC BY
-# 2.0 (Steve Jurvetson), hotlinkable landscape JPG. Leads the institution hero.
-_CAMPUS_PHOTO = (
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/"
-    "Stanford_University_Main_Quad_-_7_June_2009.jpg/"
-    "1920px-Stanford_University_Main_Quad_-_7_June_2009.jpg"
-)
+# Main Quad leads the institution hero; see ``SCHOOL_OUTCOMES["campus_photos"]``.
+_CAMPUS_PHOTO = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
 
 
 # ── Idempotent, FK-safe upsert ─────────────────────────────────────────────
@@ -2477,6 +2803,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.degree_type = spec["degree_type"]
         p.duration_months = spec.get("duration_months")
         p.description_text = spec["description"]
+        p.department = spec.get("department")
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
         p.school_id = school_by_name[spec["school"]].id
         p.is_published = True

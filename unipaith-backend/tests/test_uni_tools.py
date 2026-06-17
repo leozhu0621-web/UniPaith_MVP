@@ -71,3 +71,61 @@ async def test_dispatch_get_profile_snapshot(db_session, mock_student_user):
         db_session, mock_student_user.id, "get_profile_snapshot", {}, session_id=None
     )
     assert "completion" in out  # snapshot shape
+
+
+# ── Platform-agent contract adaptation (agent_01Gcox… "UniPaith College Counselor") ──
+
+
+@pytest.mark.asyncio
+async def test_save_signals_accepts_flat_agent_shape(db_session, mock_student_user):
+    """The live agent sends {student_id, signals:[{type,content,evidence,...}]};
+    the host translates it to the structured persist shape."""
+    await ensure_profile(db_session, mock_student_user)
+    tool_input = {
+        "student_id": "agent-made-up-id-ignored",
+        "signals": [
+            {
+                "type": "goal",
+                "content": "Earn a funded CS PhD by 2027",
+                "evidence": "I want a funded CS PhD.",
+                "completeness": 1.0,
+            },
+            {
+                "type": "need",
+                "content": "Tuition I can actually afford",
+                "evidence": "Cost is my real worry.",
+            },
+            {
+                "type": "value",
+                "content": "Doing work with real social impact",
+                "evidence": "I want my work to matter.",
+            },
+        ],
+    }
+    out = await tool_save_signals(db_session, mock_student_user.id, tool_input)
+    assert set(out["completion"]) >= {"profile", "goals", "needs"}
+    assert out["written"]["goals_written"] >= 1
+    assert out["written"]["needs_written"] >= 1
+    assert out["written"]["identity_added"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_dispatch_get_profile_alias(db_session, mock_student_user):
+    await ensure_profile(db_session, mock_student_user)
+    out = await dispatch_tool(
+        db_session, mock_student_user.id, "get_profile", {"student_id": "x"}, session_id=None
+    )
+    assert "completion" in out  # mapped to get_profile_snapshot
+
+
+@pytest.mark.asyncio
+async def test_dispatch_create_profile_acks_existing(db_session, mock_student_user):
+    await ensure_profile(db_session, mock_student_user)
+    out = await dispatch_tool(
+        db_session,
+        mock_student_user.id,
+        "create_profile",
+        {"student_id": "x", "initial_data": {"name": "Sam"}},
+        session_id=None,
+    )
+    assert out["ok"] is True and out["profile_id"]

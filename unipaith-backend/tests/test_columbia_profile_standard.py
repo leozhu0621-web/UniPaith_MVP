@@ -21,7 +21,7 @@ def _institution_snapshot() -> dict:
     return {
         "description_text": p.DESCRIPTION,
         "student_body_size": p.UNDERGRAD_COUNT,
-        "media_gallery": [p._CAMPUS_PHOTO],
+        "media_gallery": [p.SCHOOL_OUTCOMES["campus_photos"][0]["url"]],
         "ranking_data": p.RANKING_DATA,
         "school_outcomes": school_outcomes,
         "content_sources": p._INSTITUTION_CONTENT,
@@ -136,11 +136,19 @@ def test_every_school_and_program_has_content_sources():
         assert cs.get("keywords"), f"{spec['slug']} missing keywords"
 
 
+def test_catalog_quality_gate():
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(p.PROGRAMS)
+    assert not errors, f"Catalog quality gate failed: {errors}"
+
+
 def test_full_catalog_breadth():
     assert len(p.PROGRAMS) >= 250, f"catalog too short: {len(p.PROGRAMS)}"
     assert len(p.PROGRAM_SLUGS) == len(set(p.PROGRAM_SLUGS)), "duplicate program slug"
     for spec in p.PROGRAMS:
-        assert spec.get("delivery_format") in {"in_person", "online", "hybrid"}, spec["slug"]
+        assert spec.get("delivery_format") in {"on_campus", "online", "hybrid"}, spec["slug"]
+        assert spec.get("department"), f"{spec['slug']} missing department"
 
 
 def test_every_program_is_gold_except_recorded_omissions():
@@ -197,7 +205,45 @@ def test_institution_has_media_credit():
     assert p.SCHOOL_OUTCOMES.get("media_credit"), "campus photo must carry attribution"
 
 
+def test_institution_has_campus_photo_gallery():
+    photos = p.SCHOOL_OUTCOMES.get("campus_photos") or []
+    assert len(photos) >= 4, "Columbia needs a 4–5 photo verified campus gallery"
+    for photo in photos:
+        assert photo.get("url") and photo.get("credit"), photo
+    assert p._CAMPUS_PHOTO == photos[0]["url"]
+
+
 def test_description_leads_with_research_university():
     assert p.DESCRIPTION.startswith(
         "Columbia University is a private research university in New York, NY"
     )
+
+
+def test_no_name_prefixed_descriptions():
+    name_prefix = sum(
+        1
+        for prog in p.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, (
+        f"{name_prefix} programs still prefix description with program_name"
+    )
+
+
+def test_no_identical_across_credential_levels():
+    from collections import Counter
+
+    desc_counts = Counter(prog.get("description") for prog in p.PROGRAMS)
+    shared = sum(c for c in desc_counts.values() if c >= 2)
+    assert shared == 0, (
+        f"{shared} programs share a description verbatim with a credential sibling"
+    )
+
+
+def test_no_peer_contaminated_descriptions():
+    peer = sum(
+        1
+        for prog in p.PROGRAMS
+        if any(sig in (prog.get("description") or "") for sig in p._PEER_SIGNATURES)
+    )
+    assert peer == 0, f"{peer} programs still carry peer-institution contamination"

@@ -226,7 +226,7 @@ export default function PostsPage() {
   ]
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-6 w-full space-y-6">
       <InstitutionPageHeader
         title="Posts & Updates"
         description="Publish announcements, updates, and content to your public profile."

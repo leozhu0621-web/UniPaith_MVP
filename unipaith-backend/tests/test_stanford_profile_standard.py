@@ -37,7 +37,7 @@ def _institution_snapshot() -> dict:
     return {
         "description_text": s.DESCRIPTION,
         "student_body_size": s.UNDERGRAD_COUNT,
-        "media_gallery": [s._CAMPUS_PHOTO],
+        "media_gallery": [s.SCHOOL_OUTCOMES["campus_photos"][0]["url"]],
         "ranking_data": s.RANKING_DATA,
         "school_outcomes": school_outcomes,
         "content_sources": s._INSTITUTION_CONTENT,
@@ -144,6 +144,10 @@ def test_stanford_institution_is_gold_except_recorded_omission():
     ok, bad = _gaps_are_all_omitted("institution", res, omitted)
     assert ok, f"Unexpected institution section gaps: {bad}"
     assert s.SCHOOL_OUTCOMES.get("media_credit")
+    photos = s.SCHOOL_OUTCOMES.get("campus_photos") or []
+    assert len(photos) >= 4
+    for photo in photos:
+        assert photo.get("url") and photo.get("credit")
     assert "private research university" in s.DESCRIPTION.lower()
 
 
@@ -168,24 +172,28 @@ def test_mba_flagship_is_deeply_enriched():
     assert s._program_standard(_FLAGSHIP, s._SPEC_BY_SLUG[_FLAGSHIP], True)["omitted"] == []
 
 
+def _is_coverable(spec: dict) -> bool:
+    keywords = (
+        "mba", "mban", "computer science", "data science", "analytics", "finance",
+        "engineering", "public health", "mph", "mpp", "jd", "law", "medicine", "md",
+        "architecture", "economics", "business", "nursing", "mscs", "mfin", "meng",
+        "social work", "journalism", "hospitality", "film", "biomedical", "march",
+        "mha", "mfa", "msw", "dmd", "dentistry",
+    )
+    pname = (spec.get("program_name") or "").lower()
+    slug = (spec.get("slug") or "").lower()
+    dtype = spec.get("degree_type", "")
+    if dtype not in ("bachelors", "masters", "professional", "doctoral", "phd"):
+        return False
+    return any(k in pname or k in slug for k in keywords)
+
+
 def test_coverable_programs_have_external_reviews():
     """Coverable Stanford programs must carry aggregated external_reviews."""
-    coverable = [
-        _FLAGSHIP,
-        "stanford-cs-ms",
-        "stanford-cs-bs",
-        "stanford-jd",
-        "stanford-md",
-        "stanford-msx",
-        "stanford-mse-ms",
-        "stanford-ee-ms",
-        "stanford-me-bs",
-        "stanford-economics-bs",
-        "stanford-symbolic-systems-bs",
-        "stanford-human-biology-bs",
-        "stanford-bioe-bs",
-    ]
-    for slug in coverable:
+    coverable = [p for p in s.PROGRAMS if _is_coverable(p)]
+    assert len(coverable) >= 35
+    for spec in coverable:
+        slug = spec["slug"]
         assert slug in s._REVIEWS_BY_SLUG, slug
         assert s._REVIEWS_BY_SLUG[slug].get("summary"), slug
         assert len(s._REVIEWS_BY_SLUG[slug].get("sources", [])) >= 2, slug
@@ -209,6 +217,55 @@ def test_every_program_is_gold_except_recorded_omissions():
         assert set(res.missing_sections) <= _OMITTABLE_SECTIONS, (
             f"{slug} unexpected section gaps: {res.missing_sections}"
         )
+
+
+def test_catalog_quality_gate():
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    errors = validate_catalog(s.PROGRAMS)
+    assert not errors, f"Catalog quality gate failed: {errors}"
+
+
+def test_catalog_breadth_and_shape():
+    assert len(s.PROGRAMS) >= 180, "full Scorecard catalog breadth (UNITID 243744)"
+    assert len(set(s.PROGRAM_SLUGS)) == len(s.PROGRAM_SLUGS)
+    assert s.RANKING_DATA["ownership_type"] == "private_nonprofit"
+    assert (
+        "private" in s.DESCRIPTION.lower()
+        and "research university" in s.DESCRIPTION.lower()
+    )
+
+
+def test_no_name_prefixed_descriptions():
+    name_prefix = sum(
+        1
+        for prog in s.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, (
+        f"{name_prefix} programs still prefix description with program_name"
+    )
+
+
+def test_no_identical_across_credential_levels():
+    from collections import Counter
+
+    desc_counts = Counter(prog.get("description") for prog in s.PROGRAMS)
+    shared = sum(c for c in desc_counts.values() if c >= 2)
+    assert shared == 0, (
+        f"{shared} programs share a description verbatim with a credential sibling"
+    )
+
+
+def test_no_peer_contaminated_descriptions():
+    contaminated = sum(
+        1
+        for prog in s.PROGRAMS
+        if any(sig in (prog.get("description") or "") for sig in s._PEER_SIGNATURES)
+    )
+    assert contaminated == 0, (
+        f"{contaminated} programs still carry peer-institution signatures"
+    )
 
 
 def test_every_node_has_content_sources():

@@ -329,8 +329,10 @@ OPEN_QUESTIONS: tuple[dict, ...] = (
 def _route_buckets(routes) -> dict[str, list[str]]:
     """Resolve the live API paths backing each surface from the running routes —
     so the page can't claim a transport the deployed app doesn't serve."""
+    from unipaith.transparency.live_routes import expand_routes
+
     buckets: dict[str, set[str]] = {"sse": set(), "ws": set(), "notifications": set()}
-    for r in routes:
+    for r in expand_routes(routes):
         path = getattr(r, "path", "")
         if not path.startswith(API_PREFIX):
             continue
