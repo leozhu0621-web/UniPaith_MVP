@@ -73,7 +73,7 @@ export default function DocumentsTab() {
           <EmptyState
             icon={<FileText size={40} />}
             title="No documents yet"
-            description="Upload transcripts, test scores, and portfolios above — they back your applications and strengthen your profile."
+            description="Upload transcripts, test scores, and portfolios above to back your applications."
           />
         </div>
       ) : (

@@ -24,11 +24,11 @@ describe('StrategySnapshot', () => {
   it('shows the smart-empty CTA when there is no strategy', async () => {
     strat.mockResolvedValue(null)
     renderSnap()
-    expect(await screen.findByText(/Shape your path with Uni/i)).toBeTruthy()
+    expect(await screen.findByText(/Build your strategy/i)).toBeTruthy()
   })
   it('treats a stub as empty', async () => {
     strat.mockResolvedValue({ id: '1', career_target: 'x', is_stub: true } as any)
     renderSnap()
-    expect(await screen.findByText(/Shape your path with Uni/i)).toBeTruthy()
+    expect(await screen.findByText(/Build your strategy/i)).toBeTruthy()
   })
 })

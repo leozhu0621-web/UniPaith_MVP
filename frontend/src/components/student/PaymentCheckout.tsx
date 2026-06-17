@@ -51,7 +51,7 @@ export default function PaymentCheckout({ session, label, onClose, onPaid }: Pay
 
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Lock size={13} className="shrink-0" />
-          Secure checkout in {session.currency}. We never store your card details.
+          Secure checkout in {session.currency}. We never store your card.
         </p>
 
         {session.inline ? (
@@ -59,7 +59,7 @@ export default function PaymentCheckout({ session, label, onClose, onPaid }: Pay
             <div className="rounded-lg bg-warning-soft px-3 py-2 text-xs text-warning flex items-start gap-1.5">
               <ShieldCheck size={14} className="mt-0.5 shrink-0" />
               <span>
-                Test mode — no real charge is made. This records your{' '}
+                Test mode — no real charge. This records your{' '}
                 {isFee ? 'application fee' : 'enrollment deposit'} for the demo.
               </span>
             </div>

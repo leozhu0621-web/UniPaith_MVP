@@ -91,7 +91,7 @@ export default function InterviewsTab() {
           <EmptyState
             icon={<Video size={40} />}
             title="No interviews yet"
-            description="Programs invite you to interview across your applications — invitations show up here and on the application itself."
+            description="Interview invitations from your programs show up here."
           />
         ) : (
           <div className="stagger-list space-y-6">

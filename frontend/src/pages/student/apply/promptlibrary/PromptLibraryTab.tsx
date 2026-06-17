@@ -128,8 +128,8 @@ export default function PromptLibraryTab() {
           <MessagesSquare size={20} /> Prompt Library
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Practice the questions admissions and interviewers actually ask, and assess your readiness
-          in your target field. We coach structure and flag gaps; we never write your answer.
+          Practice the questions admissions and interviewers actually ask. We coach structure and
+          flag gaps — we never write your answer.
         </p>
       </header>
 

@@ -78,7 +78,7 @@ export const BUDGET_OPTIONS: { value: OnboardingBudgetBand; label: string; hint?
   { value: '20k_40k', label: '$20k – $40k / year' },
   { value: '40k_60k', label: '$40k – $60k / year' },
   { value: '60k_plus', label: '$60k+ / year' },
-  { value: 'need_aid', label: "I'll need financial aid", hint: 'We’ll surface aid-friendly programs' },
+  { value: 'need_aid', label: "I'll need financial aid", hint: 'Surfaces aid-friendly programs' },
 ]
 
 export const GEO_OPTIONS: string[] = [

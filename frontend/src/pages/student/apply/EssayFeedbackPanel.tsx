@@ -155,7 +155,7 @@ export default function EssayFeedbackPanel() {
           />
           <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
             <span>{wordCount} words</span>
-            <span>We score structure and flag missing elements — we never rewrite your essay.</span>
+            <span>Feedback only — never a rewrite.</span>
           </div>
         </div>
 

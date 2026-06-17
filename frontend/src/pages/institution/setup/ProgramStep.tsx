@@ -94,7 +94,7 @@ export default function ProgramStep({
     <Card pad={false} className="p-5 sm:p-6">
       <h2 className="text-lg font-semibold text-foreground">Your first program</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Just the essentials so students can find and match with it. Add more details later.
+        The essentials so students can find and match with it — add details later.
       </p>
 
       <form onSubmit={onSubmit} className="mt-5 space-y-4">

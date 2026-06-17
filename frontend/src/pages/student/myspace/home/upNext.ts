@@ -55,7 +55,7 @@ export function buildUpNext({ calItems, offers, drafts, pendingClarifications }:
       key: `interview-${item.id}`,
       icon: CalendarIcon,
       title: item.title,
-      sub: 'Pick a time that works for you',
+      sub: 'Pick a time',
       urgency: 'warning',
       chip: 'slots held',
       to: '/s/prep?tab=interviews',

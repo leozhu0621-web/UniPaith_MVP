@@ -409,7 +409,7 @@ export default function SettingsPage() {
           {rubricsQ.isLoading ? (
             <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
           ) : rubrics.length === 0 ? (
-            <Card pad={false} className="p-6 text-center text-sm text-muted-foreground">No rubrics yet. Create one to start scoring applications.</Card>
+            <Card pad={false} className="p-6 text-center text-sm text-muted-foreground">No rubrics yet. Create one to score applications.</Card>
           ) : (
             rubrics.map(r => (
               <Card pad={false} key={r.id} className="p-4">
@@ -493,7 +493,7 @@ export default function SettingsPage() {
                   <p className="text-sm text-foreground">{billingQ.data.payment_method_brand} •••• {billingQ.data.payment_method_last4}</p>
                 ) : (
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm text-muted-foreground">No payment method on file. Add one to enable automatic billing at cycle close.</p>
+                    <p className="text-sm text-muted-foreground">No payment method on file — add one to bill automatically at cycle close.</p>
                     <a href="mailto:billing@unipaith.co?subject=Set%20up%20institution%20billing" className="inline-flex items-center px-3 h-9 text-sm font-medium rounded-lg border border-secondary text-secondary hover:bg-secondary/5 transition-colors whitespace-nowrap">Set up billing</a>
                   </div>
                 )}

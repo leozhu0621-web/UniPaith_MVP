@@ -202,7 +202,7 @@ export default function PromotionsPage() {
         <EmptyState
           icon={<Star size={40} />}
           title="No promotions"
-          description="Create spotlight or featured placements to boost program visibility."
+          description="Create spotlight or featured placements for your programs."
           action={{ label: 'New Promotion', onClick: openCreate }}
         />
       ) : (

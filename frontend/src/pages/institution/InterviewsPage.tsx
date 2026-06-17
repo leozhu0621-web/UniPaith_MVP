@@ -260,7 +260,7 @@ export default function InterviewsPage({ embedded = false }: { embedded?: boolea
             title={interviews.length === 0 ? 'No interviews scheduled.' : 'No interviews match these filters.'}
             description={
               interviews.length === 0
-                ? 'Propose an interview to an applicant to get started.'
+                ? 'Propose an interview to an applicant.'
                 : 'Try a different tab, program, or type.'
             }
             action={interviews.length === 0 ? { label: 'Propose interview', onClick: () => setShowPropose(true) } : undefined}

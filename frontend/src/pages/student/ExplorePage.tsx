@@ -381,7 +381,7 @@ export default function ExplorePage() {
                   <div className="text-center py-16 bg-card rounded-xl border border-border">
                     <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
                     <p className="text-sm text-foreground font-semibold mb-1">No universities yet</p>
-                    <p className="text-xs text-muted-foreground">Universities will appear here as they join the platform.</p>
+                    <p className="text-xs text-muted-foreground">They'll appear here as they join.</p>
                   </div>
                 ) : filteredUniList.length === 0 ? (
                   <div className="text-center py-16 bg-card rounded-xl border border-border">
@@ -427,7 +427,7 @@ export default function ExplorePage() {
             {/* minViewport: the aside is CSS-hidden below xl — an invisible mark must not
                 block the one-at-a-time queue. The scroll cap lives on the inner div so the
                 coachmark bubble isn't clipped by overflow. */}
-            <Coachmark id="discover-rail" title="Live rail" body="Updates, upcoming events, deadline radar, and schools worth following — refreshed as your world moves." placement="left" minViewport="xl">
+            <Coachmark id="discover-rail" title="Live rail" body="Updates, upcoming events, deadline radar, and schools worth following." placement="left" minViewport="xl">
               <div className="xl:max-h-[calc(100dvh-6rem)] overflow-y-auto">
                 <DiscoverRail
                   followedIds={followedIds}

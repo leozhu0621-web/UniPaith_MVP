@@ -297,7 +297,7 @@ export default function ProgramEditorPage() {
 
           {/* 02 · Overview & structure */}
           <SectionCard id="overview" index={idx('overview')} title="Overview & structure" open={isOpen('overview')} onToggle={() => toggleSection('overview')} invalid={invalidSections.has('overview')}>
-            <Textarea label="Description (markdown)" value={draft.description_text} onChange={e => set('description_text', e.target.value)} rows={6} placeholder="Describe the program, its academic focus, and what makes it distinctive…" helperText="Plain markdown. This is the lead of the student Overview tab." />
+            <Textarea label="Description (markdown)" value={draft.description_text} onChange={e => set('description_text', e.target.value)} rows={6} placeholder="Describe the program, its academic focus, and what makes it distinctive…" helperText="Plain markdown — the lead of the student Overview tab." />
             <div>
               <MiniLabel>Tracks / concentrations</MiniLabel>
               <ChipsInput values={draft.tracks_concentrations} onChange={v => set('tracks_concentrations', v)} placeholder="Type a track and press Enter" />
@@ -685,7 +685,7 @@ export default function ProgramEditorPage() {
               <Repeatable
                 items={draft.media_urls}
                 addLabel="Add URL"
-                emptyHint="No media. This is optional and rarely needed."
+                emptyHint="No media — optional, rarely needed."
                 onAdd={() => set('media_urls', [...draft.media_urls, ''])}
                 onRemove={i => set('media_urls', draft.media_urls.filter((_, x) => x !== i))}
                 renderRow={(u, i) => (

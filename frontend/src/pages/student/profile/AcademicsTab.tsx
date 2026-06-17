@@ -309,7 +309,7 @@ export default function AcademicsTab() {
         {records.length === 0 ? (
           <EmptyState
             title="No academic records yet"
-            description="Add a record to surface programs that fit your background — match scores improve with grades."
+            description="Add a record to surface programs that fit your background."
             action={{ label: 'Add a record', onClick: () => open('academic') }}
           />
         ) : (
@@ -407,7 +407,7 @@ export default function AcademicsTab() {
       <section>
         <SectionHeader
           title="Test scores"
-          description="Superscore is computed automatically across attempts of the same test."
+          description="Superscored automatically across attempts of the same test."
           action={
             <Button size="sm" onClick={() => open('test')}>
               <Plus size={14} /> Add score

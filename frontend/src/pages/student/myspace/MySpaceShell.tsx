@@ -154,7 +154,7 @@ export default function MySpaceShell() {
       {/* Desktop rail (lg+) — expandable tree. */}
       <aside className="hidden lg:block w-48 flex-shrink-0 border-r border-border" aria-label="My Space">
         <div className="sticky top-0">
-        <Coachmark id="myspace-rail-tree" title="My Space rooms" body="Overview pulls it together; Profile, Saved, and Workspace open to what's inside." placement="right" minViewport="lg">
+        <Coachmark id="myspace-rail-tree" title="My Space rooms" body="Overview pulls it together; Profile, Saved, and Workspace hold the rest." placement="right" minViewport="lg">
         <nav className="max-h-[calc(100dvh-4rem)] overflow-y-auto px-3 py-4">
           {ITEMS.map(item => {
             if (item.kind === 'link') {

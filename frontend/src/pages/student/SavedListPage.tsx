@@ -408,7 +408,7 @@ export default function SavedListPage() {
 
           {filtered.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              No programs match this filter. Try showing dropped items or clearing the filter.
+              No programs match this filter. Try clearing it or showing dropped items.
             </p>
           ) : viewMode === 'tier' ? (
             <div className="space-y-8">

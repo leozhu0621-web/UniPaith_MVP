@@ -65,7 +65,7 @@ export default function StoryBankPanel({ stories }: { stories: Story[] }) {
       {stories.length === 0 ? (
         <Card pad={false} variant="card-flush" className="px-4 py-10 text-center">
           <p className="text-sm text-muted-foreground">
-            No stories yet. Capture a few defining experiences once — then map them to any prompt.
+            No stories yet. Capture a defining experience once, then map it to any prompt.
           </p>
           <div className="mt-3">
             <Button variant="secondary" size="sm" onClick={openNew}>

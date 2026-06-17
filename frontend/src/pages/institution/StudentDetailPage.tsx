@@ -757,7 +757,7 @@ function AISummaryTab({ packet, regen, regenPending, matchRationale, matchLoadin
         {regenPending && !p ? (
           <p className="text-sm text-muted-foreground">Generating summary…</p>
         ) : !p ? (
-          <p className="text-sm text-muted-foreground">No AI summary yet. Click Generate AI summary to create one.</p>
+          <p className="text-sm text-muted-foreground">No AI summary yet.</p>
         ) : (
           <div className="space-y-4">
             <div className="rounded-lg bg-muted/60 p-4"><p className="text-sm text-foreground whitespace-pre-wrap">{p.overall_summary}</p></div>
@@ -841,7 +841,7 @@ function IntegrityTab({ packet, onScan, scanning, onAction, actionPending, locke
         <Button variant="secondary" size="sm" onClick={onScan} disabled={scanning} className="flex items-center gap-1"><RefreshCw size={14} className={scanning ? 'animate-spin' : ''} />{scanning ? 'Scanning…' : 'Run scan'}</Button>
       </div>
       {signals.length === 0 ? (
-        <div className="text-center py-8"><CheckCircle2 size={32} className="mx-auto mb-2 text-success" /><p className="text-sm text-muted-foreground">No integrity signals detected. Run a scan to check.</p></div>
+        <div className="text-center py-8"><CheckCircle2 size={32} className="mx-auto mb-2 text-success" /><p className="text-sm text-muted-foreground">No integrity signals detected.</p></div>
       ) : (
         <div className="space-y-2">
           {signals.map(sig => (
