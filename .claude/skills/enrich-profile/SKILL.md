@@ -474,6 +474,36 @@ Concrete misses observed in the first runs — each broke a real page:
      colleges/schools to its own chemistry- and aerospace-engineering rows (the unit names
      belong to peer universities, not this one) and repeated each across all three credential
      levels of the field.
+   - **A "field-specific description" pass that COPIES a PEER (earlier-enriched) institution's
+     description and find-replaces only the institution/campus token is
+     fabrication-by-cross-institution-templating — and it leaves three tells the named-unit-truth
+     scan above MISSES. This is the live regression this run.** When the enricher reuses another
+     university's verified description as a template and swaps the campus name but not the body,
+     the result reads field-specific and confident yet is FALSE for THIS institution in ways a
+     single-unit truth check does not catch: (a) a peer's GEOGRAPHY / place-name survives ("…and
+     Chesapeake regional research sites" on a landlocked inland university), which the named-unit
+     scan ignores because a region is not an academic unit; (b) a peer's signature UNIT survives
+     ("at SAS", "Wharton accounting", "CALS animal science", "the Writing Seminars" on a school
+     that has none) — already forbidden by the named-unit-truth rule above, but a CONSTELLATION of
+     ONE peer's marks repeated across many rows is the diagnostic that the whole description was
+     copied, not merely that one unit was mis-cited; and (c) most deceptively, a real peer
+     LANDMARK is mechanically RE-LABELED with this institution's name ("Cornell Lab of
+     Ornithology" → "{This} Lab of Ornithology", "Hopkins Review" → "{This} Review", "Weill
+     Cornell" → "Weill {This}…academic medical center" on a school with no medical center) — this
+     PASSES a naive "is this institution named?" check because the institution IS named, yet the
+     entity it is glued to belongs to a peer and does not exist here. So the verified-true gate
+     must ALSO (i) scan every description for a GEOGRAPHY / place-name that contradicts the
+     institution's real location, (ii) scan for known peer-institution signature strings
+     REGARDLESS of whether this institution is also named, and (iii) reject a real peer landmark
+     wearing this institution's name. The repair is to RESEARCH each program's description from
+     THIS institution's own catalog/department page — never adapt a peer's description by
+     find-replace. Evidence: live API this run — a freshly description-passed catalog carried ~11%
+     of rows importing another university's signatures (a JHU region + JHU's Writing Seminars,
+     Penn's SAS / Wharton / Perelman, Cornell's CALS / Weill, Northwestern's McCormick) plus
+     re-labeled peer landmarks ("{This} Lab of Ornithology", "{This} Review"); a second
+     description-passed catalog carried ~2% (a peer's observatory + business school + another
+     peer's name on unrelated rows), confirming the cross-institution-copy mechanism is a CLASS,
+     not one catalog.
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
@@ -557,7 +587,13 @@ Concrete misses observed in the first runs — each broke a real page:
      cleared the one cited "College of Chemistry" instance but a whole-catalog scan
      still returns "Sibley School" (a peer university's unit) on 2 aerospace rows and
      a real international-studies institute bolted onto a systems-engineering and a
-     marketing row, all in the same just-"repaired" catalog.
+     marketing row, all in the same just-"repaired" catalog. **This gate must ALSO
+     catch the cross-institution-COPY tells (miss #8): a GEOGRAPHY / place-name that
+     contradicts the institution's real location ("Chesapeake" on an inland campus), a
+     known PEER signature string even when this institution is also named, and a real
+     peer LANDMARK re-labeled with this institution's name ("{This} Lab of
+     Ornithology") — a description copied from a peer catalog by find-replace reads
+     "field-specific" and slips past the prefix/rollup/classification counts.**
    - **Feeds:** a `content_sources` feed counts only if it actually FETCHES ≥1
      item. **Confirm the feed produces** (the news_rss/events_feed resolves and
      returns entries) before trusting it — set a feed you proved works, not a URL
