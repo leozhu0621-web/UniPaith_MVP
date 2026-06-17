@@ -10,7 +10,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { FileText, ListChecks, Sparkles, Upload } from 'lucide-react'
 
 import MaterialUpload from '../../../components/student/MaterialUpload'
-import { PageHeader } from '../../../components/student/density'
+import { PageContainer, PageHeader } from '../../../components/student/density'
 import Card from '../../../components/ui/Card'
 
 const STEPS = [
@@ -43,7 +43,10 @@ export default function ImportPage() {
   }
 
   return (
-    <div className="w-full">
+    // Focused upload wizard — width-constrained (CLAUDE.md: focused forms/wizards
+    // stay narrow, not full-bleed) and wrapped in PageContainer for the standard
+    // gutters + page-entrance motion every My Space room uses.
+    <PageContainer className="mx-auto max-w-3xl">
       <PageHeader
         eyebrow="My Space"
         title="Import"
@@ -51,7 +54,7 @@ export default function ImportPage() {
       />
 
       <Card variant="card" pad>
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid gap-x-5 gap-y-3 sm:grid-cols-2">
           {STEPS.map((s, i) => (
             <div key={s.label} className="flex items-start gap-2">
               <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary/10 text-secondary">
@@ -71,6 +74,6 @@ export default function ImportPage() {
           <MaterialUpload onApplied={refreshProfile} />
         </div>
       </Card>
-    </div>
+    </PageContainer>
   )
 }
