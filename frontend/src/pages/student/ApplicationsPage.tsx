@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { listMyApplications } from '../../api/applications'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
+import Button from '../../components/ui/Button'
 import Select from '../../components/ui/Select'
 import EmptyState from '../../components/ui/EmptyState'
 import QueryError from '../../components/ui/QueryError'
@@ -110,6 +111,29 @@ function nextAction(app: Application): string {
 function appHref(app: Application): string {
   if (hasPendingOfferResponse(app) || app.offer) return `/s/applications/${app.id}?tab=offer`
   return `/s/applications/${app.id}`
+}
+
+/** The one inline action a row offers — derived from the same bucket/offer
+ *  logic as nextAction, mapped to a real owned destination. Every target is an
+ *  action UniPaith owns: Resume + Submit + Pay fee open the checklist tab where
+ *  those gated flows live (submit blockers, the fee-clear gate, and the Spec 39
+ *  checkout); View offer is inform-only — the school owns accept/decline, so the
+ *  row only routes you to read the terms. Returns null when the next move isn't
+ *  ours (under review, a final decision with no offer to read). */
+function rowAction(app: Application): { label: string; href: string } | null {
+  if (hasPendingOfferResponse(app) || (bucketOf(app) === 'decided' && app.offer))
+    return { label: 'View offer', href: `/s/applications/${app.id}?tab=offer` }
+  switch (bucketOf(app)) {
+    case 'ready':
+      // Submit + any outstanding fee both resolve on the checklist tab.
+      return { label: 'Submit', href: `/s/applications/${app.id}?tab=checklist` }
+    case 'in_progress':
+      return { label: 'Resume', href: `/s/applications/${app.id}?tab=checklist` }
+    case 'not_started':
+      return { label: 'Start', href: `/s/applications/${app.id}?tab=checklist` }
+    default:
+      return null
+  }
 }
 
 /** Priority score for the ★ Next actions rail — higher = more urgent. */
@@ -551,6 +575,7 @@ export default function ApplicationsPage() {
             const offerTone = deadlineTone(offerDays)
             const isDraft = app.status === 'draft'
             const pendingOffer = hasPendingOfferResponse(app)
+            const action = rowAction(app)
             return (
               <Card pad={false}
                 key={app.id}
@@ -598,14 +623,30 @@ export default function ApplicationsPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">Next: {nextAction(app)}</p>
+                    {/* The next step is the button now; keep the prose line only
+                        where the next move isn't ours to act on (under review, a
+                        final decision with no offer to read). */}
+                    {!action && (
+                      <p className="text-xs text-muted-foreground mt-2">Next: {nextAction(app)}</p>
+                    )}
                     {app.submitted_at && (
                       <p className="text-[11px] text-muted-foreground mt-1">Submitted {formatDate(app.submitted_at)}</p>
                     )}
                   </div>
-                  <span className="text-xs text-secondary font-medium flex-shrink-0 inline-flex items-center gap-0.5">
-                    Open <ChevronRight size={13} />
-                  </span>
+                  {action ? (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="flex-shrink-0"
+                      onClick={e => { e.stopPropagation(); navigate(action.href) }}
+                    >
+                      {action.label}
+                    </Button>
+                  ) : (
+                    <span className="text-xs text-secondary font-medium flex-shrink-0 inline-flex items-center gap-0.5">
+                      Open <ChevronRight size={13} />
+                    </span>
+                  )}
                 </div>
                 {isDraft && (
                   <div className="mt-3 h-1.5 rounded-full bg-muted overflow-hidden">
