@@ -153,3 +153,12 @@ def test_catalog_has_no_padding_stubs():
 def test_flagship_programs_have_reviews():
     reviewed = [s for s in p._REVIEWS_BY_SLUG if s in p.PROGRAM_SLUGS]
     assert len(reviewed) >= 10
+
+
+def test_no_name_prefixed_descriptions():
+    name_prefix = sum(
+        1
+        for prog in p.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
