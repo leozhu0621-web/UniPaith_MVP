@@ -11,6 +11,20 @@ Two-sided AI matching platform for higher education admissions. Students find pr
 
 Every change goes online — never leave finished work sitting local. The moment a change is verified (tsc 0 · build 0 · tests green), it must be **committed → merged to `main` → auto-deployed → verified live** in the same turn. "Done" means deployed and confirmed in production (app.unipaith.co / api.unipaith.co), not merely written on disk. End each unit of work by confirming the working tree is clean, `main` is at the new commit, and the deploy succeeded. (Set 2026-06-05 by explicit user direction: "make sure u push it online everytime.")
 
+## Deployment Workflow
+
+After building a feature: run the full test suite, check for dual Alembic migration heads before deploy (`alembic heads`), merge the PR only after CI is green, then verify the feature live in production and report the live URL.
+
+**Database / migrations:** Always check for and resolve concurrent migration heads before pushing backend changes — run `alembic heads`, and if more than one head exists, create a fixup merge migration to unify them (use a session-unique revision id) and re-run the suite before deploying.
+
+## Git / Worktrees
+
+When editing code, always confirm you are operating in the correct git worktree (not the root checkout) — concurrent branch switches can revert work done in the wrong location. Prefer branching fresh off `origin/main` for each unit of work to avoid squash-skew conflicts.
+
+## Sub-agents / Exploration
+
+When verifying with sub-agents, treat their findings as unverified — re-check cited files and migration heads directly before acting, since Explore agents have confabulated nonexistent files and stale state. For verification-critical reads, go direct with Read/Grep rather than relying on a sub-agent's report.
+
 ## Pre-Work Checklist
 
 Before starting new feature work, always verify the environment is healthy first: DB connections active, Docker/Postgres running, zero build errors, all existing tests passing. Do NOT proceed to feature building until confirmed.
@@ -24,6 +38,10 @@ Before starting new feature work, always verify the environment is healthy first
 - Aesthetic is editorial + content-rich (Niche-modeled), program-specific, never generic marketing
 - **Across the broader student app (non-detail surfaces — Discover, Match, Apply, Profile, Connect, Saved, Settings): dense, utilitarian, app-like (LinkedIn-leaning) WITHIN each surface's existing layout** — surfaced metadata + counts, compact list rows, tight vertical rhythm, small utilitarian section headers. Use the shared density layer `frontend/src/components/student/density/` (`PageHeader · SectionHeader · ListRow · StatTile`). This COMPLEMENTS (does not replace) the content-rich Niche-modeled detail pages above. See `docs/superpowers/specs/2026-06-04-student-ux-densification-design.md`. (Set 2026-06-04 by user direction.)
 - Always confirm WHICH component is being changed (explore card vs detail page) before editing
+
+## UI / Styling
+
+After any UI redesign, render the page and visually verify in both light and dark mode; never rely on non-adaptive tokens like `bg-surface` without checking contrast. Use semantic tokens (`bg-card`, `text-foreground`, `text-muted-foreground`) so both modes stay legible.
 
 ## Writing voice & interaction (UX QA — standing rule)
 
