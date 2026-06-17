@@ -217,3 +217,15 @@ def test_every_program_maps_to_a_real_school():
     for spec in c.PROGRAMS:
         assert spec["school"] in names, f"{spec['slug']} -> unknown school {spec['school']}"
     assert len(c.PROGRAM_SLUGS) == len(set(c.PROGRAM_SLUGS)), "duplicate program slug"
+
+
+def test_no_name_prefixed_descriptions():
+    for spec in c.PROGRAMS:
+        desc = spec.get("description") or ""
+        pname = spec["program_name"]
+        assert not desc.startswith(pname), spec["slug"]
+
+
+def test_no_cip_prefix_program_names():
+    for spec in c.PROGRAMS:
+        assert not c._PREFIX_NAME_RE.match(spec["program_name"]), spec["slug"]
