@@ -37,6 +37,11 @@ classification stubs with field-specific clauses from
 ``uw_madison_field_descriptions.py`` (gold MIT/JHU pattern); 0% name-prefixed
 descriptions.
 
+Description repair (2026-06-17, uwmadisonprof6): fixes peer-institution
+contamination in field clauses (Kellogg, Weinberg, Feinberg, Skaggs, etc.);
+diversifies credential-sibling descriptions with UW-Madison-specific level
+suffixes (0% identical-across-levels); gates shared descriptions at build time.
+
 Honest caveats stamped into ``_standard.omitted``: UW-Madison does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
 schools, so those two institution outcome fields are omitted. Most graduate/professional
@@ -52,6 +57,7 @@ programs (57/57 total external_reviews on coverable programs).
 from __future__ import annotations
 
 import re
+from collections import Counter
 from datetime import date
 
 from sqlalchemy import select, text
@@ -73,6 +79,65 @@ from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Wisconsin-Madison"
 ENRICHED_AT = "2026-06-17"
+
+_LEVEL_SUFFIX: dict[str, str] = {
+    "bachelors": (
+        " Undergraduates meet L&S breadth requirements, Badger Advising, and optional"
+        " honors thesis research across the Madison campus."
+    ),
+    "masters": (
+        " Master's students complete advanced seminars, practica, and professional"
+        " development through the Graduate School and their degree-granting school."
+    ),
+    "phd": (
+        " Ph.D. candidates conduct original dissertation research with faculty"
+        " advisement and typically receive tuition coverage and stipend support"
+        " through the Graduate School."
+    ),
+    "certificate": (
+        " The graduate certificate offers focused coursework for working"
+        " professionals through UW-Madison Continuing Studies and school certificate"
+        " programs."
+    ),
+    "professional": "",
+}
+
+_PEER_SIGNATURES: tuple[str, ...] = (
+    "Kellogg",
+    "Pritzker",
+    "Feinberg",
+    "Bienen",
+    "Skaggs",
+    "Scripps",
+    "Bloomberg School",
+    "Weinberg",
+    "McCormick",
+    "Medill",
+    "Wirtz Center",
+    "Block Museum",
+    "Rausser",
+    "SAIS",
+    "NUCATS",
+    "Segal Design",
+    "Alice Kaplan",
+    "Buffett Institute",
+    "Peabody",
+    "Nieman Foundation",
+    " SEsp ",
+    "Zell Fellows",
+    "Berman Institute",
+    " STScI",
+    " and APL",
+    "Chicago Public Schools",
+    "Steppenwolf",
+    "Chicago Symphony",
+    "Mauna Loa",
+    "Center for Western Weather",
+    "Chicago Botanic Garden",
+    "Indiana's research",
+    "Maryland certification",
+    "Mount Vernon campus",
+)
 
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is an undergraduate .+ at the University of Wisconsin-Madison's .+\.$"
@@ -681,6 +746,31 @@ def _field_from_program_name(name: str) -> str:
     return clean_cip_field(name)
 
 
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
+    """Fix credential-level lies (e.g. 'Graduate …' on a bachelor's row)."""
+    if degree_type == "bachelors":
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate "):]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level "):]
+    return clause
+
+
+def _diversify_descriptions(programs: list[dict]) -> None:
+    """Ensure credential-sibling rows do not share identical description text."""
+    by_desc: dict[str, list[dict]] = {}
+    for p in programs:
+        desc = p.get("description") or ""
+        by_desc.setdefault(desc, []).append(p)
+    for desc, group in by_desc.items():
+        if len(group) < 2:
+            continue
+        for p in group:
+            suffix = _LEVEL_SUFFIX.get(p["degree_type"], "")
+            if suffix:
+                p["description"] = f"{desc}{suffix}"
+
+
 def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
     slug = spec.get("slug", "")
     if slug in SLUG_DESCRIPTIONS:
@@ -713,6 +803,7 @@ def _uw_madison_description(spec: dict, *, field: str) -> str:
             raise ValueError(
                 f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
             )
+        clause = _adapt_clause_for_degree_type(clause, spec["degree_type"])
     fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
     if fmt == "online":
@@ -726,7 +817,6 @@ def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     slug = spec["slug"]
     school = spec["school"]
     dtype = spec["degree_type"]
-    fmt = spec.get("delivery_format", "on_campus")
     raw_field = field_name or spec.get("_field_name") or spec.get("program_name", "")
 
     if slug in SLUG_PROGRAM_NAMES:
@@ -775,6 +865,8 @@ for _p in PROGRAMS:
     if _p["slug"] in _EXISTING_SLUGS:
         _normalize_program(_p, _p.get("program_name"))
 
+_diversify_descriptions(PROGRAMS)
+
 _catalog_errors = validate_catalog(PROGRAMS)
 _classification_stubs = sum(
     1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
@@ -791,6 +883,21 @@ _name_prefix_desc = sum(
 if _name_prefix_desc:
     _catalog_errors.append(
         f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
+_peer_contamination = sum(
+    1
+    for p in PROGRAMS
+    if any(sig in (p.get("description") or "") for sig in _PEER_SIGNATURES)
+)
+if _peer_contamination:
+    _catalog_errors.append(
+        f"peer-contaminated descriptions on {_peer_contamination} programs"
+    )
+_desc_counts = Counter(p.get("description") for p in PROGRAMS)
+_shared_desc = sum(c for c in _desc_counts.values() if c >= 2)
+if _shared_desc:
+    _catalog_errors.append(
+        f"identical descriptions shared across {_shared_desc} credential-sibling programs"
     )
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
 _new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))

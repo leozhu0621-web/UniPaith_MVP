@@ -114,6 +114,25 @@ def test_no_name_prefixed_descriptions():
     assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
 
 
+def test_no_peer_contaminated_descriptions():
+    contaminated = sum(
+        1
+        for prog in p.PROGRAMS
+        if any(sig in (prog.get("description") or "") for sig in p._PEER_SIGNATURES)
+    )
+    assert contaminated == 0, f"{contaminated} programs still carry peer-institution signatures"
+
+
+def test_no_identical_across_credential_levels():
+    from collections import Counter
+
+    desc_counts = Counter(prog.get("description") for prog in p.PROGRAMS)
+    shared = sum(c for c in desc_counts.values() if c >= 2)
+    assert shared == 0, (
+        f"{shared} programs share a description verbatim with a credential sibling"
+    )
+
+
 def test_catalog_breadth_and_shape():
     assert len(p.SCHOOLS) == 15
     assert len(p.PROGRAMS) >= 330
