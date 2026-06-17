@@ -7,46 +7,40 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-17 (grader run 36). **ONE enrichment merged since run 35: #681 Stanford University stanfordprof9**
-(`15cd090` — "Stanford description repair: drop name-prefix, fix peer contamination"). `origin/main` HEAD is now #681
-(run 35's own changelog/backlog PR #680 is the only other commit). The other 27 catalogs' DATA is byte-identical to
-run 35 (only Stanford data changed in `git diff 814ffdb..15cd090`) — re-confirmed live (NYU still the ONLY dead feed
-`posts=0`; all sampled photo galleries =5; 28 institutions, no sprawl; gold MIT n=65 control). **#681 graded at the
-SOURCE + passing-CI-gate level — its Deploy Backend (run 591) was still `in_progress` at grading time (started
-16:04:52Z, `updated_at` frozen at +5s 20+ min later — the Cornell-#654 slow/queued-deploy pattern), so the LIVE API
-still showed the pre-#681 Stanford (85% prefix, Sibley ×2 + FSI ×3, 30% rollup); per the "merged ≠ live" rule the
-live numbers below are confirmed-next-run. But #681 BAKED IN three self-gates (`_name_prefix_desc`, `_shared_desc`,
-`_peer_contaminated` over a foreign-signature list) that FAIL the build on any survivor, and CI PASSED — so the
-deployed data is GUARANTEED 0% name-prefix + 0% identical-across-levels (via a new `_LEVEL_SUFFIX` per-credential
-diversifier) + 0 FOREIGN-peer signatures (Sibley School → real "Department of Aeronautics and Astronautics … NASA
-Ames"; Perelman/Weill/Fels/Carpenter/Atkinson/Wharton/McCormick all rewritten — ~30 clauses). On the
-prefix + identical + foreign-peer dimensions this is a prefix-strip done RIGHT — only the 2nd of 9 to avoid the
-run-32 identical-across-levels trap (and the first to bake the avoidance into a permanent build gate).** BUT two
-defects survive: (1) **the FSI-on-WRONG-FIELD mismatch is NOT cleared** — "Freeman Spogli Institute" (a REAL Stanford
-international-affairs institute) stays bolted onto Public Relations/marketing + Systems Science (fields it does not
-house); #681 only TRIMMED its name ("…for International Studies" → "…Institute") and its own peer-gate is keyed ONLY
-on FOREIGN signatures, so it is structurally BLIND to a same-institution unit on a mismatched field (miss #9's
-"real unit on a field it does not house" half, which the gate never implemented) → a live no-fabrication breach that
-WILL ship; (2) **the NAMES dimension is UNTOUCHED** (single-dimension pass): 30% rollup NAMES + 30% rollup
-DEPARTMENTS + 55% generic "Bachelor's in {field}". So Stanford drops from a BROAD multi-unit fabrication to a
-narrow 2-row FSI mismatch (UCSD-scale) + the rollup names + deep content — it stays CRITICAL until the 2 FSI rows are
-fixed. **The standing concern is unchanged: the CRITICAL top — fabricated/copied data live on student-facing pages —
-stays unrepaired for 1–25 grading intervals (BU/Purdue/UW-Madison/Columbia cross-institution copy, Northwestern/Duke
-synthesized reviews, Stanford FSI / UCSD fabricated units); the enricher keeps shipping single-dimension passes on
-HIGH catalogs instead. The grader cannot fix data; flagged for human review._
+_Last graded: 2026-06-17 (grader run 37). **NOTHING new from the enricher merged since run 36** — `origin/main`
+HEAD is run 36's own changelog/backlog PR #682 (`48d3b28`); the only enrichment commit in the prior interval was
+#681 Stanford (`15cd090`), already graded at run 36. So the fleet DATA is byte-identical to run 36, with ONE
+change confirmed this run: **#681's Stanford Deploy Backend (which was still `in_progress` at run-36 grading) has
+now GONE LIVE, and the live API matches run 36's source-level prediction EXACTLY** — re-confirmed live this run
+(28 institutions, no sprawl; NYU still the ONLY dead feed `posts=0`; all 28 photo galleries =5; gold MIT n=65
+control). **Stanford live-confirmed (n=188): name-prefix 0%, identical-across-levels 0%, FOREIGN-peer signatures
+0** (Sibley/Perelman/Weill/Wharton/McCormick/Haas/CDSS/Lick all absent) — #681's three self-gates
+(`_name_prefix_desc`, `_shared_desc` via the `_LEVEL_SUFFIX` diversifier, `_peer_contaminated`) held in the
+deployed data, a prefix-strip done RIGHT (only the 2nd of 9 to avoid the run-32 identical trap, first to gate it
+permanently). **The two run-36 residuals also confirmed LIVE:** (1) the **FSI-on-WRONG-FIELD mismatch persists** —
+"Freeman Spogli Institute" (a REAL Stanford international-affairs institute) is still bolted onto **Systems Science
+and Theory** ("Stanford School of Engineering and Freeman Spogli Institute systems coursework…") + **Public
+Relations, Advertising, and Applied Communication** ("Stanford Graduate School of Business marketing and Freeman
+Spogli Institute strategic-communication coursework…"), fields FSI does not house — a live no-fabrication breach
+#681's FOREIGN-only gate is structurally blind to (miss #9's "real unit on a field it does not house" half, never
+implemented); (2) the **NAMES dimension is UNTOUCHED** — 30% rollup NAMES + 30% rollup DEPARTMENTS + 54% generic
+"Bachelor's in {field}". Stanford stays CRITICAL (now UCSD-scale: a narrow 2-row FSI mismatch + the rollup names +
+empty deep content) until the 2 FSI rows are fixed. **The standing concern is unchanged: the CRITICAL top —
+fabricated/copied/mismatched data live on student-facing pages — stays unrepaired (BU/Purdue/UW-Madison/Columbia
+cross-institution copy, Northwestern/Duke synthesized reviews, Stanford FSI / UCSD fabricated units), and the
+enricher shipped NOTHING this interval. The grader cannot fix data; flagged for human review._
 
-**NO NEW RULEBOOK GAP THIS RUN (0 of ≤3).** #681 introduced NO new defect class. Its residual maps entirely onto
-rules the rulebook already names: the FSI-on-wrong-field mismatch is miss #8 named-unit-truth ("a real
-same-institution unit bolted onto an UNRELATED field") + miss #9 ("a repair must clear the WHOLE class, not the
-cited row" — the canonical Stanford example) + the miss #9 PRE-SHIP gate that ALREADY requires scanning for "any
-real unit cited on a field it does not house" (the half #681's foreign-signature gate omits); the untouched rollup
-NAMES are miss #2; and the single-dimension nature is miss #8 (dimension-agnostic clear). The one mildly-novel
-mechanism — a peer-contamination GATE keyed only on FOREIGN-institution signatures, which catches cross-institution
-copy but is blind to a same-institution unit on the wrong field — is just the foreign half of the miss #9 gate the
-rulebook already mandates both halves of, so adding a rule would restate it (anti-churn). Per the SAFETY RAILS
-(no-edit-without-evidence-of-a-NEW-problem; "Clean fleet → change nothing… Never invent a rule to look busy";
-anti-churn), SKILL.md is unchanged. The gravest defect class remains unrepaired: fabricated/copied/mismatched data
-live on student-facing pages. The grader cannot fix data; flagged for human review.
+**NO NEW RULEBOOK GAP THIS RUN (0 of ≤3).** Nothing new merged from the enricher since run 36, so there is no new
+output to grade and no NEW defect class. The one event this interval — #681's Stanford deploy going live — only
+CONFIRMS run 36's source-level grade (prefix/identical/foreign-peer cleared; FSI mismatch + rollup names persist),
+and every Stanford residual maps onto rules the rulebook already names: the FSI-on-wrong-field mismatch is miss #8
+named-unit-truth ("a real same-institution unit bolted onto an UNRELATED field") + miss #9 (whole-class clear + the
+PRE-SHIP gate's "any real unit cited on a field it does not house" half) + the run-36 enricher note that a
+peer-contamination gate keyed only on FOREIGN signatures is blind to a same-institution unit on the wrong field;
+the untouched rollup NAMES are miss #2; the single-dimension nature is miss #8 (dimension-agnostic clear). Per the
+SAFETY RAILS (no-edit-without-evidence-of-a-NEW-problem; "Clean fleet → change nothing… Never invent a rule to look
+busy"; anti-churn), SKILL.md is unchanged. The gravest defect class remains unrepaired: fabricated/copied/mismatched
+data live on student-facing pages. The grader cannot fix data; flagged for human review.
 
 **Carried from run 25 (Purdue is still CRITICAL — nothing merged for it). #661's "field-first" Purdue
 descriptions were built by COPYING peer (earlier-enriched) catalogs and find-replacing only the campus
@@ -178,39 +172,43 @@ cross-institution-COPY fabrication class (~31 foreign-sig rows) and left the str
 a single-dimension pass that traded one defect for a fresh no-fabrication breach. Fix the fabricated/copied
 descriptions + the names/departments before any new depth pass or any new university._
 
-## CRITICAL — Stanford University (#681 cleared the prefix + foreign-peer + Sibley, but the FSI-on-WRONG-FIELD mismatch survives its foreign-only gate; names untouched)
+## CRITICAL — Stanford University (#681 cleared the prefix + foreign-peer + Sibley — now LIVE-CONFIRMED — but the FSI-on-WRONG-FIELD mismatch survives its foreign-only gate; names untouched)
 
-188 programs. **#681 (run 36 interval; Deploy Backend `in_progress` at grading — live confirm next run, but its
-self-gates passed CI so the deployed data is guaranteed on the dimensions below) is the most thoroughly-engineered
-prefix-strip yet** — it strips the `{program_name}:` prefix from all 188, adds a `_LEVEL_SUFFIX` per-credential
-diversifier so siblings don't collapse to identical, rewrites ~30 FOREIGN-peer clauses, and BAKES IN three build
-gates (`_name_prefix_desc`, `_shared_desc`, `_peer_contaminated`) that FAIL the build on any survivor:
-- ✅ FIXED — **name-prefix doubling 85%→0%** (gate-enforced) and **identical-across-levels 0%** (gate-enforced via
-  `_LEVEL_SUFFIX`) — only the 2nd of 9 prefix-strips to avoid the run-32 trap, and the first to gate it permanently.
-- ✅ FIXED — **Cornell's "Sibley School"** on the 2 aerospace rows → now "Department of Aeronautics and Astronautics
-  … NASA Ames Research Center" (Stanford's real unit). All ~30 foreign signatures (Sibley/Perelman/Weill/Fels/
-  Carpenter/Atkinson/Wharton/McCormick/Harvardsylvania) cleared — `_peer_contaminated` gate = 0.
-- ❌ STILL LIVE — the international-affairs **Freeman Spogli Institute** bolted onto **Public Relations/marketing +
-  Systems Science** (2 rows, fields FSI does NOT house). #681 only TRIMMED its name ("…for International Studies" →
-  "…Institute") and left the false affiliation. Root cause: `_PEER_SIGNATURES` lists only FOREIGN units, so the gate
-  is structurally BLIND to a REAL Stanford unit on the wrong field — exactly the half of the miss #9 pre-ship gate
-  ("any real unit cited on a field it does not house") that was never implemented. The poli-sci / IR / Public-Policy
-  rows that cite FSI are correct (FSI houses them) — only PR + Systems Science are the mismatch.
-- ❌ NAMES dimension UNTOUCHED (single-dimension pass, miss #8): **30% rollup NAMES + 30% rollup DEPARTMENTS + 55%
-  generic "Bachelor's in {field}"**; `class_profile`/`faculty_contacts`/`tracks` empty.
+188 programs. **#681 (graded at source at run 36; its Deploy Backend has now GONE LIVE and the live API matches the
+run-36 prediction exactly — re-graded live this run, n=188).** It is the most thoroughly-engineered prefix-strip yet
+— it strips the `{program_name}:` prefix from all 188, adds a `_LEVEL_SUFFIX` per-credential diversifier so siblings
+don't collapse to identical, rewrites ~30 FOREIGN-peer clauses, and BAKES IN three build gates (`_name_prefix_desc`,
+`_shared_desc`, `_peer_contaminated`) that FAIL the build on any survivor:
+- ✅ FIXED (LIVE-CONFIRMED) — **name-prefix doubling 85%→0%** and **identical-across-levels 0%** (live re-count: 0/188
+  on both) — only the 2nd of 9 prefix-strips to avoid the run-32 trap, and the first to gate it permanently.
+- ✅ FIXED (LIVE-CONFIRMED) — **Cornell's "Sibley School"** on the 2 aerospace rows → now "Department of Aeronautics
+  and Astronautics … NASA Ames Research Center" (Stanford's real unit). All ~30 foreign signatures (Sibley/Perelman/
+  Weill/Fels/Carpenter/Atkinson/Wharton/McCormick/Harvardsylvania/Haas/CDSS/Lick) absent from the live catalog —
+  whole-catalog scan = 0.
+- ❌ STILL LIVE (re-confirmed verbatim this run) — the international-affairs **Freeman Spogli Institute** bolted onto
+  **Systems Science and Theory** ("Stanford School of Engineering and Freeman Spogli Institute systems coursework…")
+  + **Public Relations, Advertising, and Applied Communication** ("Stanford Graduate School of Business marketing
+  and Freeman Spogli Institute strategic-communication coursework…") — 2 rows, fields FSI does NOT house. #681 only
+  TRIMMED its name and left the false affiliation. Root cause: `_PEER_SIGNATURES` lists only FOREIGN units, so the
+  gate is structurally BLIND to a REAL Stanford unit on the wrong field — exactly the half of the miss #9 pre-ship
+  gate ("any real unit cited on a field it does not house") that was never implemented. The poli-sci / IR /
+  Public-Policy rows that cite FSI are correct (FSI houses them) — only PR + Systems Science are the mismatch.
+- ❌ NAMES dimension UNTOUCHED (single-dimension pass, miss #8): live **30% rollup NAMES (57/188) + 30% rollup
+  DEPARTMENTS (57/188) + 54% generic "Bachelor's in {field}" (103/188)**; `class_profile`/`faculty_contacts`/`tracks`
+  empty.
 
 **Repair: (1) drop/correct FSI on the 2 mismatched rows (Public Relations, Systems Science) — cite the real
 owning unit (GSB / Department of Communication for PR; School of Engineering / MS&E for systems) or a true generic
 clause; ADD same-institution-unit-on-wrong-field to the catalog gate, not just foreign signatures; (2) de-roll-up
 the 30% rollup NAMES + their departments and switch generic "Bachelor's in" to Stanford's real "Bachelor of
-Arts/Science in" designation; (3) fill deep content.** ✅ prefix + identical + foreign-peer done (#681).
+Arts/Science in" designation; (3) fill deep content.** ✅ prefix + identical + foreign-peer done (#681), now LIVE.
 
 _First seen 2026-06-16 (run 13). Run 14 cleared "College of Chemistry"; run 36 (#681) cleared the prefix + Sibley +
-all foreign-peer signatures + the identical-across-levels trap (gate-enforced) — a major reduction from the broad
-multi-unit fabrication to a NARROW 2-row FSI mismatch (UCSD-scale). But a real unit on a field it does not house is
-still a no-fabrication breach, and #681's foreign-only gate cannot catch it. Fix the 2 FSI rows + de-roll-up the
-names before any new depth pass or any new university. (Deploy Backend was `in_progress` at grading — re-confirm the
-prefix/Sibley/identical drops live next run; the CI-passed self-gates make them near-certain.)_
+all foreign-peer signatures + the identical-across-levels trap (gate-enforced); run 37 LIVE-CONFIRMED those drops
+(Deploy Backend now green; live API = run-36 prediction) — a major reduction from the broad multi-unit fabrication
+to a NARROW 2-row FSI mismatch (UCSD-scale). But a real unit on a field it does not house is still a no-fabrication
+breach, and #681's foreign-only gate cannot catch it. Fix the 2 FSI rows + de-roll-up the names before any new depth
+pass or any new university._
 
 ## CRITICAL — Northwestern University (fabricated reviews STILL LIVE after #671; #671 fixed only the prefix)
 
