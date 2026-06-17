@@ -6,6 +6,73 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-17 — Run 34 (NO new gaps → 0 rule changes. Graded **#677 Columbia University columbiaprof10** — the one enrichment merged since run 33. #677 genuinely stripped Columbia's name-prefix 90%→0% (0 duplicate names, 0 CIP codes), but it is the 7th single-dimension PREFIX-STRIP and reproduced the run-32 pattern: it MANUFACTURED 68% identical-across-credential-levels descriptions (180/263 rows share a sibling's text verbatim; gold MIT 0%), surfacing a credential-level lie ("Graduate biochemistry…" on a BACHELOR'S row); left a 2-row Berkeley cross-institution copy ("Haas, and CDSS" on the Operations Research rows) its PR claimed to clear; and left 32% rollup names/depts + 55% generic "Bachelor's in {field}" untouched. Both defects map to classes the rulebook already names (run-30 identical-across-levels + the run-32 prefix-strip note that PREDICTED this; run-25 cross-institution-copy; miss #2). An already-named class violated, not a new one. Flagged for human review.)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search` paginated — total 28, no sprawl; gold
+MIT n=65 control). Focused data grade on the one changed catalog (**Columbia University**, full 263-program
+pagination + per-program description/department reads); student's-eye open-ended pass on the Columbia pages +
+1 random (UT Austin, full 338-program pagination); fleet institution-level sanity (`/institutions/{id}/posts`
+on NYU/BU/Northwestern/Stanford; spot CRITICAL re-confirm on Stanford Sibley/FSI).
+
+**What merged since run 33's grade:** exactly **#677 Columbia University columbiaprof10** (`a1ef850` — "drop
+program_name description prefixes and peer-contamination clauses"). `origin/main` HEAD is now #677. The other 27
+catalogs are byte-identical to run 33 (re-verified — only #677 in `git log b7d9d35..a1ef850`).
+
+**#677 Columbia — graded live (API evidence, n=263):**
+- ✅ **name-prefix doubling 90%→0%** — 0 rows now open with their own `program_name`. GENUINE fix. 0 duplicate
+  `program_name`s, 0 literal `(CIP NN.NN)` codes.
+- ❌ **68% identical-across-credential-levels descriptions, MANUFACTURED by the prefix-strip (run-30 class via the
+  run-32 mechanism).** 180/263 rows share a `description_text` verbatim with ≥1 sibling — e.g. all 3 Anthropology
+  rows (Bachelor's + Graduate Certificate + Master's), all 3 Area-Studies rows, all 3 Astronomy rows carry the
+  IDENTICAL paragraph (gold MIT 0%). The name-prefix was the only per-row differentiator, so stripping it
+  collapsed each field's credential levels — surfacing credential-level LIES: the **Bachelor's**-in-Biochemistry
+  row reads "**Graduate** biochemistry … studies protein structure". This is EXACTLY what the run-32 enricher
+  note predicted ("A PREFIX-STRIP MANUFACTURES THE IDENTICAL-ACROSS-LEVELS CLASS — RE-COUNT SHARED DESCRIPTIONS
+  AFTER IT"); Columbia is the 7th prefix-strip (after Northwestern #671, Penn #659, JHU #657, Cornell #654,
+  Berkeley #652, Princeton #643).
+- ❌ **Cross-institution-COPY breach on 2 Operations Research rows — LIVE no-fabrication breach (run-25 class).**
+  The OR Graduate Certificate + Master's both read "in the IEOR department serving engineering, **Haas, and
+  CDSS** students" — Haas + CDSS are BERKELEY units (the same Berkeley clause that survives on Northwestern's OR
+  rows). Columbia genuinely has an IEOR department (true positive), but "Haas, and CDSS" is Berkeley. #677's PR
+  claimed to "fix cross-institution copy … Lick Observatory, College of Chemistry" — it cleared those cited rows
+  but NOT this sibling Berkeley clause (a repair must clear the WHOLE class, miss #9).
+- ❌ **32% rollup NAMES + 32% rollup DEPARTMENTS + 55% generic "Bachelor's in {field}" UNTOUCHED** (miss #2) —
+  "Bachelor's in Classics and Classical Languages, Literatures, and Linguistics" / dept = the same rollup echoed
+  back; "Bachelor's in Engineering, Other"; "Bachelor's in Ethnic, Cultural Minority, Gender, and Group Studies".
+
+**Fleet sanity (byte-identical to run 33 — only #677 merged):** NYU still the ONLY dead feed (`posts=0`); BU feed
+healthy (`posts=167`); Northwestern (`posts=53`), Stanford (`posts=234`) live. Spot CRITICAL re-confirm: Stanford
+"Sibley School" still on 2 aerospace rows + FSI bolted onto Systems Science + Public Relations. Student's-eye
+random (UT Austin, a #646 catalog): 338 programs, 216 duplicate-name rows (Accounting ×4, Advertising ×3,
+Aerospace Engineering ×2), 100% prefix — exactly the documented #646 fabrication, no new class.
+
+**Diagnosis:** every defect #677 shipped is BAD/COPIED DATA → repair backlog (Columbia promoted HIGH → CRITICAL).
+NONE is a rulebook gap: the 68% identical-across-levels is the run-30 class reproduced by the run-32 prefix-strip
+mechanism (both already in SKILL.md miss #8 + the enricher note that PREDICTED it); the 2-row Berkeley copy is the
+run-25 cross-institution-copy class (miss #8 verified-true + "REPAIR MUST CLEAR THE WHOLE CLASS"); the rollup
+names are miss #2. The clean fix exists (Rice #663 / UChicago #650 multi-dimensional clears) — the standing
+failure is enricher BEHAVIOR (single-dimension prefix-strips that manufacture identical-across-levels; CRITICAL
+top unrepaired 4–24 intervals), not a missing rule.
+
+**Rulebook changes (0 of ≤3):** NONE. Per the SAFETY RAILS (no-edit-without-evidence-of-a-NEW-problem; "Clean
+fleet → change nothing… Never invent a rule to look busy"; anti-churn), restating present rules would be churn.
+The gravest defect class — fabricated/copied data live on student-facing pages (BU, Purdue, UW-Madison, now
+Columbia cross-institution-copy descriptions; Northwestern + Duke synthesized reviews; Stanford + UCSD fabricated
+units) — remains unrepaired; the grader cannot fix data → flagged for human review.
+
+**Backlog delta:** Columbia moved from HIGH #1 (rollup+prefix) to its own **CRITICAL** section (live 2-row Berkeley
+copy + 68% manufactured identical-across-levels + 32% rollup names; prefix now done). HIGH "fabricated/incomplete"
+table renumbered 12→11 rows (Harvard now #1). All 7 prior CRITICALs (BU, Stanford, Northwestern, Duke, Purdue,
+UCSD, UW-Madison) re-confirmed live byte-identical. Top open entry stays **Boston University**.
+
+**Health check:** the DB-backed `test_profile_standard.py` / `test_profile_enrichment.py` could not run in this
+grader container (no backend deps — `httpx` missing — and no Postgres). Since this run made NO SKILL.md/code
+change (only the backlog + changelog markdown), there is no enricher-rule regression to guard.
+
+**Invariants:** all intact; nothing edited, nothing weakened. No finding argued for loosening an invariant.
+
+---
+
 ## 2026-06-17 — Run 33 (NO new gaps → 0 rule changes. Graded **#675 Boston University buprof9** — the one enrichment merged since run 32. #675 genuinely fixed BU's name-prefix 92%→0% + classification→field-specific, but it's a single-dimension DESCRIPTION pass that INTRODUCED the run-25 cross-institution-COPY fabrication class — ~31 rows carry FOREIGN peer signatures (Penn "Perelman" ×22, Berkeley "Lick Observatory" ×4, Northwestern "Medill"/"Weinberg"/"Kellogg" ×4, JHU "Whiting" ×1) — and left BU's 53 concentration-split / 23 degree-type-suffix names + 33 credential-name departments untouched. An already-named class violated, not a new one. Flagged for human review.)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search` paginated — total 28, no sprawl; gold
