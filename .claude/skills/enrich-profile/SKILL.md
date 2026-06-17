@@ -525,6 +525,22 @@ Concrete misses observed in the first runs — each broke a real page:
      Evidence: live API this run — a 348-row catalog had 293 rows (84%) sharing a description verbatim
      across the credential levels of one field (one field's text on its certificate + BS + MS + PhD),
      vs gold MIT 0%.
+     - **A PREFIX-STRIP pass is a common SOURCE of this class, NOT a safe isolated fix — when the rows
+       of one field differed ONLY by a leading `"{program_name}: "` / `"{program_name} is "` prefix,
+       DELETING that prefix collapses their bodies to IDENTICAL across credential levels, trading
+       prefix-doubling (miss #9) for identical-across-levels — the enricher's DOMINANT pass keeps
+       manufacturing this. This is the live regression this run.** The prefix is often the ONLY per-row
+       differentiator on a field-level-generated catalog, so a pass that "fixes" prefix-doubling by
+       stripping the name and nothing else converts a prefix-doubled catalog straight into an
+       identical-across-levels one — defect-for-defect, no per-program research added. So a prefix-strip
+       is NOT done when the prefix is gone: after ANY prefix-strip, RE-COUNT `description_text` shared
+       verbatim across ≥2 rows and FAIL on any sharing (gold MIT 0%); a clean prefix-strip must leave
+       each credential-level row its OWN distinct researched body (what THAT degree studies at THAT
+       level), never one field's text stamped on all its levels. Evidence: live API this run — a 308-row
+       catalog whose prefix-strip took name-prefix 97%→0% SIMULTANEOUSLY produced 83% identical-across-
+       levels descriptions (one field's Graduate Certificate + MS sharing verbatim text, the MS body even
+       reading "undergraduate research in robotics labs" — a credential-level lie copied onto a master's
+       row).
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
