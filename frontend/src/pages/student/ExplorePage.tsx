@@ -44,11 +44,11 @@ import type {
  */
 
 // Per-tab header copy (Spec 2026-06-12 §4).
-const TAB_HEADERS: Record<DiscoverTab, { title: string; sub: string }> = {
-  foryou: { title: 'Your strategy and your matches', sub: 'Ranked for fit, not fame — and every score explains itself.' },
-  updates: { title: 'Updates from your schools', sub: 'Posts, deadlines, and changes from the institutions you follow.' },
-  events: { title: 'Events from your schools', sub: 'Info sessions, fairs, and open days — RSVP from here.' },
-  peers: { title: 'Peers on your path', sub: 'Opt-in: find students applying to the same programs.' },
+const TAB_HEADERS: Record<DiscoverTab, { title: string }> = {
+  foryou: { title: 'Your strategy and your matches' },
+  updates: { title: 'Updates from your schools' },
+  events: { title: 'Events from your schools' },
+  peers: { title: 'Peers on your path' },
 }
 
 /** Parse filter state from URL search params. List filters are comma-
@@ -277,7 +277,7 @@ export default function ExplorePage() {
   return (
     <PageContainer>
       {/* Spec 09 §13 H1 + brand framing ("Fit, not fame", Spec 07 §2/§6). */}
-      <PageHeader eyebrow="Discover" title={TAB_HEADERS[tab].title} sub={TAB_HEADERS[tab].sub} />
+      <PageHeader eyebrow="Discover" title={TAB_HEADERS[tab].title} />
 
       {/* First-visit tour (Ship C) — orients the hub's four worlds. */}
       <Coachmark id="discover-tabs" title="Four views of your world" body="For you ranks your matches; Updates, Events, and Peers bring in the schools you follow. Everything Discover lives in these tabs." placement="bottom">

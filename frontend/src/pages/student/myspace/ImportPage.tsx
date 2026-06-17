@@ -50,7 +50,6 @@ export default function ImportPage() {
       <PageHeader
         eyebrow="My Space"
         title="Import"
-        sub="Upload a resume, transcript, or CV — Uni reads it and fills your profile, then asks about anything it couldn't find. You review everything before it's saved."
       />
 
       <Card variant="card" pad>

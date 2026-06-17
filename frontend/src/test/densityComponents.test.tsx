@@ -8,12 +8,11 @@ test('SectionHeader renders label + count', () => {
   expect(screen.getByText('5')).toBeInTheDocument()
 })
 
-test('PageHeader renders eyebrow, title, count, sub', () => {
-  render(<PageHeader eyebrow="Match" title="Your matches" count={12} sub="Ranked for fit" />)
+test('PageHeader renders eyebrow, title, count', () => {
+  render(<PageHeader eyebrow="Match" title="Your matches" count={12} />)
   expect(screen.getByText('Match')).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: /Your matches/ })).toBeInTheDocument()
   expect(screen.getByText('12')).toBeInTheDocument()
-  expect(screen.getByText('Ranked for fit')).toBeInTheDocument()
 })
 
 test('ListRow renders title + sub + trailing and fires onClick', () => {

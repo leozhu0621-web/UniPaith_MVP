@@ -110,7 +110,7 @@ export default function MySpaceHomePage() {
         body="Everything personal lives here — applications, prep, calendar, messages, saved programs, and your profile. The rail on the left follows your journey, top to bottom."
         placement="bottom"
       >
-        <PageHeader eyebrow="My Space" title={`${greeting}${firstName ? `, ${firstName}` : ''}`} sub="Everything about your applications, in one place" />
+        <PageHeader eyebrow="My Space" title={`${greeting}${firstName ? `, ${firstName}` : ''}`} />
       </Coachmark>
 
       {anyLoading ? (

@@ -67,7 +67,6 @@ export default function PrepPage() {
         <PageHeader
           eyebrow="My Space"
           title="Prep"
-          sub="Get application-ready — feedback, practice, and the assets behind every submission"
         />
       </div>
       {/* Hidden on lg+ where the My Space rail's Workspace group lists these tabs

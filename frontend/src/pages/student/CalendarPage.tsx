@@ -234,7 +234,6 @@ export default function CalendarPage() {
         eyebrow="My Space"
         title="Calendar"
         count={filtered.length}
-        sub="Your admissions timeline — deadlines, interviews, reminders, and work blocks"
         actions={
           <>
             <Button size="sm" variant="secondary" onClick={() => setShowReminder(true)}>

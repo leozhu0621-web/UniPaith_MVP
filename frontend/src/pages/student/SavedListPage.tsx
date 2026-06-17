@@ -274,7 +274,6 @@ export default function SavedListPage() {
       <PageHeader
         eyebrow="My Space"
         title="Your shortlist"
-        sub="Curate programs you are serious about, then compare and start applications when you are ready."
       />
 
       {/* Hidden on lg+ where the My Space rail's Saved group lists these views

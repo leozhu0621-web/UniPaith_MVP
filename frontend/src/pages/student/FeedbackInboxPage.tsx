@@ -55,7 +55,6 @@ export default function FeedbackInboxPage() {
       <PageHeader
         eyebrow="Owner"
         title="Feedback inbox"
-        sub="Everything submitted through the in-app Feedback button, newest first."
         actions={
           items.length > 0 && (
             <Button size="sm" variant="secondary" onClick={() => downloadCsv(items)}>
