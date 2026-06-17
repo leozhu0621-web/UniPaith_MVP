@@ -46,6 +46,10 @@ and Pre-Medicine BS (58/58 coverable total).
 Description repair (2026-06-17, northwesternprof5): drops ``{program_name}:`` prefix from
 all descriptions (gold MIT/JHU pattern); fixes peer-institution contamination in field
 clauses (Chesapeake, Writing Seminars, Bloomberg, etc.); 0% name-prefixed descriptions.
+
+Description repair (2026-06-17, northwesternprof6): diversifies credential-sibling
+descriptions with Northwestern-specific level suffixes (0% identical-across-levels);
+gates shared descriptions at build time.
 """
 
 # ruff: noqa: E501
@@ -53,6 +57,7 @@ clauses (Chesapeake, Writing Seminars, Bloomberg, etc.); 0% name-prefixed descri
 from __future__ import annotations
 
 import re
+from collections import Counter
 from datetime import date
 
 from sqlalchemy import select, text
@@ -78,6 +83,28 @@ from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Northwestern University"
 ENRICHED_AT = "2026-06-17"
+
+_LEVEL_SUFFIX: dict[str, str] = {
+    "bachelors": (
+        " Undergraduates in Northwestern's quarter calendar pursue distribution "
+        "requirements, Weinberg and McCormick advising, and optional honors thesis "
+        "research on the Evanston campus."
+    ),
+    "masters": (
+        " Master's students complete advanced seminars, practica, and professional "
+        "development through Northwestern's graduate schools and The Graduate School."
+    ),
+    "phd": (
+        " Ph.D. candidates conduct original dissertation research with faculty "
+        "advisement and typically receive tuition coverage and stipend support "
+        "through The Graduate School."
+    ),
+    "certificate": (
+        " The graduate certificate offers focused coursework for working "
+        "professionals, often delivered through the School of Professional Studies."
+    ),
+    "professional": "",
+}
 
 _PEER_SIGNATURES: tuple[str, ...] = (
     "Rausser",
@@ -443,6 +470,31 @@ def _northwestern_program_name(field_name: str, degree_type: str, school: str) -
     return field
 
 
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
+    """Fix credential-level lies (e.g. 'Graduate …' on a bachelor's row)."""
+    if degree_type == "bachelors":
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate "):]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level "):]
+    return clause
+
+
+def _diversify_descriptions(programs: list[dict]) -> None:
+    """Ensure credential-sibling rows do not share identical description text."""
+    by_desc: dict[str, list[dict]] = {}
+    for p in programs:
+        desc = p.get("description") or ""
+        by_desc.setdefault(desc, []).append(p)
+    for desc, group in by_desc.items():
+        if len(group) < 2:
+            continue
+        for p in group:
+            suffix = _LEVEL_SUFFIX.get(p["degree_type"], "")
+            if suffix:
+                p["description"] = f"{desc}{suffix}"
+
+
 def _field_from_program_name(program_name: str) -> str | None:
     for prefix in (
         "Bachelor of Arts in ",
@@ -490,6 +542,7 @@ def _northwestern_description(spec: dict, field: str | None = None) -> str:
         raise ValueError(
             f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
         )
+    clause = _adapt_clause_for_degree_type(clause, spec["degree_type"])
     return f"{clause}{delivery}"
 
 
@@ -542,6 +595,7 @@ PROGRAMS += _build_catalog()
 for _p in PROGRAMS:
     if _p["slug"] in _EXISTING_SLUGS:
         _normalize_program(_p, _p.get("program_name"))
+_diversify_descriptions(PROGRAMS)
 
 _catalog_errors = validate_catalog(PROGRAMS)
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
@@ -577,6 +631,12 @@ _peer_contamination = sum(
 if _peer_contamination:
     _catalog_errors.append(
         f"peer-contaminated descriptions on {_peer_contamination} programs"
+    )
+_desc_counts = Counter(p.get("description") for p in PROGRAMS)
+_shared_desc = sum(c for c in _desc_counts.values() if c >= 2)
+if _shared_desc:
+    _catalog_errors.append(
+        f"identical descriptions shared across {_shared_desc} credential-sibling programs"
     )
 if _catalog_errors:
     raise RuntimeError(f"Northwestern catalog quality gate failed: {_catalog_errors}")
