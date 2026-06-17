@@ -100,6 +100,18 @@ def test_catalog_quality_gate():
 
     errors = validate_catalog(cu.PROGRAMS)
     assert not errors, f"Catalog quality gate failed: {errors}"
+    classif = sum(
+        1
+        for prog in cu.PROGRAMS
+        if cu._CLASSIFICATION_STUB_RE.match(prog.get("description") or "")
+    )
+    assert classif == 0, f"{classif} programs still carry classification-only descriptions"
+    name_prefix = sum(
+        1
+        for prog in cu.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
 
 
 def test_catalog_breadth_and_shape():
