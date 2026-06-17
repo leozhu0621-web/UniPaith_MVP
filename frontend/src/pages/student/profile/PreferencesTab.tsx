@@ -7,14 +7,17 @@
  */
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import clsx from 'clsx'
+import { Check, Plus } from 'lucide-react'
 
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
-import Input from '../../../components/ui/Input'
+import Input, { FieldLabel } from '../../../components/ui/Input'
 import QueryError from '../../../components/ui/QueryError'
 import Select from '../../../components/ui/Select'
 import { SkeletonCard } from '../../../components/ui/Skeleton'
 import { getPreferences, upsertPreferences } from '../../../api/students'
+import { DEGREE_OPTIONS, GEO_OPTIONS, nextIntakeTerms } from '../onboarding/catalog'
 import { showToast } from '../../../stores/toast-store'
 import { CITY_SIZE_OPTIONS } from '../../../utils/constants'
 import { SaveStatus, SectionHeader, useAutosave } from './shared'
@@ -29,6 +32,70 @@ const RISK_LEVELS = [
   { value: 'balanced', label: 'Balanced' },
   { value: 'ambitious', label: 'Ambitious' },
 ]
+// Canonical pickers replacing free text — values mirror the onboarding catalog
+// so what the student saves here maps to the same vocabulary Discover filters
+// and the matcher already understand.
+const DEGREE_LEVEL_OPTIONS = DEGREE_OPTIONS.map(d => ({ value: d.value, label: d.label }))
+const START_TERM_OPTIONS = nextIntakeTerms().map(t => ({ value: t, label: t }))
+const CLIMATE_OPTIONS = [
+  { value: 'warm', label: 'Warm' },
+  { value: 'four_seasons', label: 'Four seasons' },
+  { value: 'cold', label: 'Cold' },
+  { value: 'no_preference', label: 'No preference' },
+]
+const PROGRAM_STYLE_OPTIONS = [
+  { value: 'research', label: 'Research-heavy' },
+  { value: 'applied', label: 'Applied' },
+  { value: 'balanced', label: 'Balanced' },
+  { value: 'no_preference', label: 'No preference' },
+]
+// Region chips seed from the onboarding geo catalog; "Anywhere" is a guided
+// answer there, not a storable place, so it's dropped from the picker.
+const GEO_CHIPS = GEO_OPTIONS.filter(g => g !== 'Anywhere')
+
+/** Chip-toggle multi-select — stores a string[] the API takes verbatim. */
+function ChipMultiSelect({
+  label,
+  options,
+  selected,
+  onToggle,
+}: {
+  label: string
+  options: string[]
+  selected: string[]
+  onToggle: (value: string) => void
+}) {
+  return (
+    <div>
+      <FieldLabel>{label}</FieldLabel>
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label={label}>
+        {options.map(opt => {
+          const on = selected.includes(opt)
+          return (
+            <button
+              key={opt}
+              type="button"
+              aria-pressed={on}
+              onClick={() => onToggle(opt)}
+              className={clsx(
+                'inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-[13px] transition-colors duration-150',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40',
+                on
+                  ? 'border-secondary bg-secondary/10 text-foreground'
+                  : 'border-border bg-card text-muted-foreground hover:border-secondary/50 hover:text-foreground',
+              )}
+            >
+              <span className={clsx('shrink-0', on ? 'text-secondary' : 'text-secondary/60')}>
+                {on ? <Check size={13} /> : <Plus size={13} />}
+              </span>
+              {opt}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 const WEIGHTS: { key: string; label: string }[] = [
   { key: 'weight_cost', label: 'Cost' },
   { key: 'weight_location', label: 'Location' },
@@ -58,6 +125,18 @@ function WeightSlider({ label, value, onChange }: { label: string; value: number
   )
 }
 
+// Keep a previously-saved value visible even when it's outside the canonical
+// list (a legacy free-text entry, or a start term that has since aged past the
+// next-six window). Without this the native select would silently fall back to
+// the placeholder and the round-trip would look like it lost the value.
+const withCurrent = (
+  options: { value: string; label: string }[],
+  current: string | null | undefined,
+): { value: string; label: string }[] =>
+  current && !options.some(o => o.value === current)
+    ? [...options, { value: current, label: current }]
+    : options
+
 // Cap parsed CSV lists so a pasted blob can't balloon the payload: at most
 // 25 entries, each trimmed to 80 chars.
 const splitCsv = (s: string): string[] =>
@@ -68,8 +147,9 @@ const splitCsv = (s: string): string[] =>
     .slice(0, 25)
 
 const toPayload = (form: any) => ({
-  preferred_countries: splitCsv(form.preferred_countries),
-  preferred_regions: splitCsv(form.preferred_regions),
+  // Countries/regions are already canonical string[] from the chip pickers.
+  preferred_countries: form.preferred_countries ?? [],
+  preferred_regions: form.preferred_regions ?? [],
   preferred_city_size: form.preferred_city_size || null,
   preferred_climate: form.preferred_climate || null,
   program_size_preference: form.program_size_preference || null,
@@ -100,8 +180,8 @@ export default function PreferencesTab() {
     if (prefs !== undefined && form === null) {
       const p: any = prefs ?? {}
       setForm({
-        preferred_countries: (p.preferred_countries ?? []).join(', '),
-        preferred_regions: (p.preferred_regions ?? []).join(', '),
+        preferred_countries: p.preferred_countries ?? [],
+        preferred_regions: p.preferred_regions ?? [],
         preferred_city_size: p.preferred_city_size ?? '',
         preferred_climate: p.preferred_climate ?? '',
         program_size_preference: p.program_size_preference ?? '',
@@ -151,17 +231,28 @@ export default function PreferencesTab() {
     setDirty(true)
     setForm((f: any) => ({ ...f, [k]: v }))
   }
+  const toggleInList = (k: string, value: string) => {
+    setDirty(true)
+    setForm((f: any) => {
+      const cur: string[] = f[k] ?? []
+      return { ...f, [k]: cur.includes(value) ? cur.filter(x => x !== value) : [...cur, value] }
+    })
+  }
   const save = () => saveMut.mutate(toPayload(form))
 
   return (
     <div className="space-y-8">
       <section>
         <SectionHeader title="Location & setting" description="Where you'd like to study." saveState={autosaveState} />
-        <Card pad={false} className="p-5 grid sm:grid-cols-2 gap-x-4 gap-y-1">
-          <Input label="Preferred countries" placeholder="United States, Canada" value={form.preferred_countries} onChange={e => set('preferred_countries', e.target.value)} />
-          <Input label="Preferred regions" placeholder="Northeast, West Coast" value={form.preferred_regions} onChange={e => set('preferred_regions', e.target.value)} />
-          <Select label="City size" placeholder="No preference" options={CITY_SIZE_OPTIONS} value={form.preferred_city_size} onChange={e => set('preferred_city_size', e.target.value)} />
-          <Input label="Climate" placeholder="Mild, four seasons…" value={form.preferred_climate} onChange={e => set('preferred_climate', e.target.value)} />
+        <Card pad={false} className="p-5 space-y-5">
+          <div className="grid sm:grid-cols-2 gap-x-4 gap-y-5">
+            <ChipMultiSelect label="Preferred countries" options={GEO_CHIPS} selected={form.preferred_countries} onToggle={v => toggleInList('preferred_countries', v)} />
+            <ChipMultiSelect label="Preferred regions" options={GEO_CHIPS} selected={form.preferred_regions} onToggle={v => toggleInList('preferred_regions', v)} />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1">
+            <Select label="City size" placeholder="No preference" options={CITY_SIZE_OPTIONS} value={form.preferred_city_size} onChange={e => set('preferred_city_size', e.target.value)} />
+            <Select label="Climate" placeholder="No preference" options={withCurrent(CLIMATE_OPTIONS, form.preferred_climate)} value={form.preferred_climate} onChange={e => set('preferred_climate', e.target.value)} />
+          </div>
         </Card>
       </section>
 
@@ -169,10 +260,10 @@ export default function PreferencesTab() {
         <SectionHeader title="Program" description="The shape of the program you're after." />
         <Card pad={false} className="p-5 grid sm:grid-cols-2 gap-x-4 gap-y-1">
           <Select label="Program size" placeholder="No preference" options={PROGRAM_SIZE} value={form.program_size_preference} onChange={e => set('program_size_preference', e.target.value)} />
-          <Input label="Target degree level" placeholder="Master's, PhD…" value={form.target_degree_level} onChange={e => set('target_degree_level', e.target.value)} />
-          <Input label="Target start term" placeholder="Fall 2027" value={form.target_start_term} onChange={e => set('target_start_term', e.target.value)} />
-          <Input label="Program style" placeholder="Research-heavy, applied…" value={form.preferred_program_style} onChange={e => set('preferred_program_style', e.target.value)} />
-          <Select label="Risk tolerance" placeholder="Select…" options={RISK_LEVELS} value={form.risk_tolerance} onChange={e => set('risk_tolerance', e.target.value)} />
+          <Select label="Target degree level" placeholder="No preference" options={withCurrent(DEGREE_LEVEL_OPTIONS, form.target_degree_level)} value={form.target_degree_level} onChange={e => set('target_degree_level', e.target.value)} />
+          <Select label="Target start term" placeholder="No preference" options={withCurrent(START_TERM_OPTIONS, form.target_start_term)} value={form.target_start_term} onChange={e => set('target_start_term', e.target.value)} />
+          <Select label="Program style" placeholder="No preference" options={withCurrent(PROGRAM_STYLE_OPTIONS, form.preferred_program_style)} value={form.preferred_program_style} onChange={e => set('preferred_program_style', e.target.value)} />
+          <Select label="Risk tolerance" placeholder="No preference" options={RISK_LEVELS} value={form.risk_tolerance} onChange={e => set('risk_tolerance', e.target.value)} />
           <Input label="Dealbreakers" placeholder="No online-only, …" value={form.dealbreakers} onChange={e => set('dealbreakers', e.target.value)} />
         </Card>
       </section>

@@ -1124,24 +1124,47 @@ function RecommendersTab({ recommenders, programId, onNudge }: {
         </Button>
       </Card>
     )
+  // A letter counts as in-hand once the recommender has submitted/received it.
+  const isReceived = (status?: string) => status === 'submitted' || status === 'received'
+  // Past due, and not yet in hand → client-side overdue (the backend also sets
+  // status 'overdue', so either signal lights the red badge).
+  const todayIso = new Date().toISOString().slice(0, 10)
+  const isOverdue = (r: any) => r.status === 'overdue' || (!!r.due_date && r.due_date < todayIso && !isReceived(r.status))
+  const received = relevant.filter(r => isReceived(r.status)).length
+  const total = relevant.length
+  const fmtDue = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
   return (
     <div className="space-y-3">
-      {relevant.map(r => (
-        <Card pad={false} key={r.id} className="p-4 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground">{r.recommender_name}</p>
-            <p className="text-xs text-muted-foreground">{r.recommender_title || r.relationship || r.recommender_institution || 'Recommender'}</p>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Badge variant={REC_STATUS[r.status] || 'neutral'}>{(r.status || 'draft').replace(/_/g, ' ')}</Badge>
-            {['draft', 'requested', 'in_progress', 'sent', 'overdue'].includes(r.status) && (
-              <Button size="sm" variant="tertiary" onClick={() => onNudge(r.id)}>
-                <Send size={12} className="mr-1" /> Nudge
-              </Button>
-            )}
-          </div>
-        </Card>
-      ))}
+      <Card pad={false} className="p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-sm font-medium text-foreground">{received} of {total} received</span>
+          {received === total && <Badge variant="success">All in</Badge>}
+        </div>
+        <ProgressBar value={total > 0 ? (received / total) * 100 : 0} />
+      </Card>
+      {relevant.map(r => {
+        const overdue = isOverdue(r)
+        return (
+          <Card pad={false} key={r.id} className="p-4 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">{r.recommender_name}</p>
+              <p className="text-xs text-muted-foreground">{r.recommender_title || r.relationship || r.recommender_institution || 'Recommender'}</p>
+              {r.due_date && (
+                <p className={`text-xs mt-0.5 ${overdue ? 'text-error font-medium' : 'text-muted-foreground'}`}>Due {fmtDue(r.due_date)}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {overdue && <Badge variant="danger">Overdue</Badge>}
+              <Badge variant={REC_STATUS[r.status] || 'neutral'}>{(r.status || 'draft').replace(/_/g, ' ')}</Badge>
+              {['draft', 'requested', 'in_progress', 'sent', 'overdue'].includes(r.status) && (
+                <Button size="sm" variant="tertiary" onClick={() => onNudge(r.id)}>
+                  <Send size={12} className="mr-1" /> Nudge
+                </Button>
+              )}
+            </div>
+          </Card>
+        )
+      })}
     </div>
   )
 }

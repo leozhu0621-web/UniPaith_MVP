@@ -1,19 +1,21 @@
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Mail, FolderKanban, Compass, Target,
-  MessageSquare, GraduationCap, ArrowRight,
+  MessageSquare, GraduationCap, ArrowRight, Send,
 } from 'lucide-react'
 import { PageContainer, PageHeader, SectionHeader, ListRow, StatTile } from '../../../components/student/density'
 import Card from '../../../components/ui/Card'
 import Badge from '../../../components/ui/Badge'
+import Button from '../../../components/ui/Button'
 import Skeleton from '../../../components/ui/Skeleton'
+import { showToast } from '../../../stores/toast-store'
 import { listMyApplications } from '../../../api/applications'
 import { getCalendar, type CalendarItem } from '../../../api/calendar'
 import { listSaved } from '../../../api/saved-lists'
 import { qk } from '../../../api/queryKeys'
-import { listRecommendations } from '../../../api/recommendations'
+import { listRecommendations, sendRecommendationRequest } from '../../../api/recommendations'
 import { listWorkshopRuns } from '../../../api/workshops-feedback'
 import { getThreads } from '../../../api/inbox'
 import { listClarifications } from '../../../api/intake'
@@ -42,7 +44,16 @@ function daysUntil(iso: string): number {
 
 export default function MySpaceHomePage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { user } = useAuthStore()
+
+  // Nudge a recommender from the home dashboard — same action as the
+  // Applications → Recommenders tab (POST /students/me/recommendations/:id/send).
+  const nudge = useMutation({
+    mutationFn: (id: string) => sendRecommendationRequest(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['recommendations'] }); showToast('Reminder sent', 'success') },
+    onError: () => showToast("We couldn't send the reminder. Please try again.", 'error'),
+  })
 
   // Query keys are shared with their primary consumers so navigating between
   // rooms reuses cache.
@@ -210,8 +221,16 @@ export default function MySpaceHomePage() {
                     media={<Mail size={15} className="text-muted-foreground" />}
                     title={`Rec letter — ${r.recommender_name}`}
                     sub={r.requested_at ? `Requested ${new Date(r.requested_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'Requested'}
-                    trailing={<Badge variant="neutral">waiting</Badge>}
-                    onClick={() => navigate('/s/prep?tab=recommenders')}
+                    trailing={
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        onClick={() => nudge.mutate(r.id)}
+                        disabled={nudge.isPending && nudge.variables === r.id}
+                      >
+                        <Send size={12} className="mr-1" /> Nudge
+                      </Button>
+                    }
                   />
                 ))
               )}

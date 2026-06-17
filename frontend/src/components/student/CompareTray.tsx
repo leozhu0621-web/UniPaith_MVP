@@ -8,6 +8,7 @@ import { confirmDialog } from '../../stores/confirm-store'
 import { comparePrograms } from '../../api/saved-lists'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
+import StatBar from '../ui/StatBar'
 import Coachmark from '../ui/Coachmark'
 import { usePresence } from '../ui/usePresence'
 import { X, ArrowRightLeft, ChevronUp, ChevronDown, GraduationCap } from 'lucide-react'
@@ -141,30 +142,39 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
                           </td>
                         </tr>
                         {dim.rows.map(row => {
-                          // Compute best-value column index for numeric score rows.
-                          const isBestValueRow = row.label === 'Fit' || row.label === 'Confidence'
+                          const programs = comparisonResult.programs as CompareProgram[]
+                          // Numeric rows get a magnitude bar (relative to the row
+                          // max). The winning column is crowned only where "more is
+                          // plainly better" (higherIsBetter); lower-better rows show
+                          // bars but no winner.
+                          const nums = row.num ? programs.map(p => row.num!(p)) : null
+                          const rowMax = nums
+                            ? Math.max(0, ...nums.filter((v): v is number => v != null))
+                            : 0
                           let bestIdx = -1
-                          if (isBestValueRow) {
-                            const programs = comparisonResult.programs as CompareProgram[]
-                            const vals = programs.map(p =>
-                              row.label === 'Fit' ? (p.fitness_score ?? -1) : (p.confidence_score ?? -1)
-                            )
-                            const max = Math.max(...vals)
-                            if (max >= 0) bestIdx = vals.findIndex(v => v === max)
+                          if (nums && row.higherIsBetter && rowMax > 0) {
+                            bestIdx = nums.findIndex(v => v === rowMax)
                           }
                           return (
                             <tr key={row.label} className="border-t border-border">
                               <td className="sticky left-0 z-10 bg-card py-2 px-3 text-xs text-muted-foreground font-medium">
                                 {row.label}
                               </td>
-                              {(comparisonResult.programs as CompareProgram[]).map((p, idx) => (
-                                <td
-                                  key={p.id}
-                                  className={`py-2 px-3 text-xs ${isBestValueRow && idx === bestIdx ? 'text-secondary font-semibold' : 'text-foreground'}`}
-                                >
-                                  {row.get(p)}
-                                </td>
-                              ))}
+                              {programs.map((p, idx) => {
+                                const isBest = idx === bestIdx
+                                const v = nums ? nums[idx] : null
+                                return (
+                                  <td
+                                    key={p.id}
+                                    className={`py-2 px-3 text-xs ${isBest ? 'text-secondary font-semibold' : 'text-foreground'}`}
+                                  >
+                                    <span className="tabular-nums">{row.get(p)}</span>
+                                    {nums && v != null && (
+                                      <StatBar value={v} max={rowMax} best={isBest} className="mt-1" />
+                                    )}
+                                  </td>
+                                )
+                              })}
                             </tr>
                           )
                         })}
