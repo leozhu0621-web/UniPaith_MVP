@@ -55,14 +55,20 @@ keywords rather than a fabricated feed URL.
 
 from __future__ import annotations
 
+import re
+from collections import Counter
+
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.profile_catalog_utils import validate_catalog
+from unipaith.data.usc_field_descriptions import FIELD_DESCRIPTIONS
+from unipaith.data.usc_reviews_generated import REVIEWS as _GENERATED_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Southern California"
-ENRICHED_AT = "2026-06-13"
+ENRICHED_AT = "2026-06-17"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -693,7 +699,11 @@ def _about_omitted(m: dict) -> list[str]:
 
 
 # ── Feeds (content_sources) ────────────────────────────────────────────────
-_NEWS_URL = "https://news.usc.edu/"
+# USC Today WordPress RSS verified 2026-06-17 (today.usc.edu/feed/ returns live items).
+# University calendar iCal verified at calendar.usc.edu/calendar/1.ics (HTTP 200).
+_NEWS_URL = "https://today.usc.edu/"
+_USC_NEWS_RSS = "https://today.usc.edu/feed/"
+_EVENTS = {"url": "https://calendar.usc.edu/calendar/1.ics", "type": "ical"}
 _SOCIAL = {
     "instagram": "https://www.instagram.com/usc/",
     "linkedin": "https://www.linkedin.com/school/university-of-southern-california/",
@@ -701,15 +711,23 @@ _SOCIAL = {
     "youtube": "https://www.youtube.com/USC",
     "facebook": "https://www.facebook.com/USC",
 }
-_INSTITUTION_CONTENT: dict = {"news_url": _NEWS_URL, "news_curated": True, "social": _SOCIAL}
+_INSTITUTION_CONTENT: dict = {
+    "news_url": _NEWS_URL,
+    "news_rss": _USC_NEWS_RSS,
+    "events_feed": _EVENTS,
+    "news_curated": True,
+    "social": _SOCIAL,
+}
 _KEYWORDS_BY_SCHOOL = {m["name"]: m["keywords"] for m in _SCHOOL_META}
 
 
 def _school_content(name: str) -> dict:
     return {
         "news_url": SCHOOL_WEBSITE.get(name, _NEWS_URL),
-        "news_curated": False,
+        "news_rss": _USC_NEWS_RSS,
+        "events_feed": _EVENTS,
         "keywords": list(_KEYWORDS_BY_SCHOOL[name]),
+        "news_curated": False,
         "social": _SOCIAL,
     }
 
@@ -5449,47 +5467,285 @@ _CATALOG: list[tuple] = [
     ),
 ]
 
-_DEGREE_ROLE = {
-    "phd": "a doctoral program",
-    "masters": "a master's program",
-    "professional": "a professional degree program",
-    "bachelors": "an undergraduate major",
-    "diploma": "a diploma program",
+_CODE_PREFIX: dict[str, tuple[str, str | None]] = {
+    "ba": ("Bachelor of Arts in", "bachelors"),
+    "bs": ("Bachelor of Science in", "bachelors"),
+    "bfa": ("Bachelor of Fine Arts in", "bachelors"),
+    "bm": ("Bachelor of Music in", "bachelors"),
+    "barch": ("Bachelor of Architecture in", "bachelors"),
+    "bsw": ("Bachelor of Social Work in", "bachelors"),
+    "ms": ("Master of Science in", "masters"),
+    "ma": ("Master of Arts in", "masters"),
+    "mfa": ("Master of Fine Arts in", "masters"),
+    "mm": ("Master of Music in", "masters"),
+    "mat": ("Master of Arts in Teaching in", "masters"),
+    "mcg": ("Master of Communication Management in", "masters"),
+    "macc": ("Master of Accounting in", "masters"),
+    "macm": ("Master of Arts in Curatorial Practices and the Public Sphere in", "masters"),
+    "march": ("Master of Architecture in", "masters"),
+    "mba": ("Master of Business Administration in", "masters"),
+    "mbs": ("Master of Business for Veterans in", "masters"),
+    "mbt": ("Master of Business Taxation in", "masters"),
+    "mbv": ("Master of Business for Veterans in", "masters"),
+    "mcl": ("Master of Communication Law Studies in", "masters"),
+    "mcm": ("Master of Communication Management in", "masters"),
+    "mha": ("Master of Health Administration in", "masters"),
+    "mhc": ("Master of Heritage Conservation in", "masters"),
+    "mlarch": ("Master of Landscape Architecture in", "masters"),
+    "mms": ("Master of Management Studies in", "masters"),
+    "mnlm": ("Master of Nonprofit Leadership and Management in", "masters"),
+    "mpa": ("Master of Public Administration in", "masters"),
+    "mpap": ("Master of Public Art Studies in", "masters"),
+    "mpd": ("Master of Public Diplomacy in", "masters"),
+    "mpds": ("Master of Public Diplomacy in", "masters"),
+    "mph": ("Master of Public Health in", "masters"),
+    "mpp": ("Master of Public Policy in", "masters"),
+    "mred": ("Master of Real Estate Development in", "masters"),
+    "msab": ("Master of Science in Applied Biostatistics and Epidemiology in", "masters"),
+    "msl": ("Master of Studies in Law in", "masters"),
+    "msm": ("Master of Science in Management in", "masters"),
+    "msnfnp": ("Master of Science in Nursing — Family Nurse Practitioner in", "masters"),
+    "msw": ("Master of Social Work in", "masters"),
+    "mup": ("Master of Urban Planning in", "masters"),
+    "mva": ("Master of Visual Anthropology in", "masters"),
+    "mmlis": ("Master of Management in Library and Information Science in", "masters"),
+    "mitle": ("Master of International Trade Law and Economics in", "masters"),
+    "maas": ("Master of Arts in American Studies and Ethnicity in", "masters"),
+    "maars": ("Master of Arts in Art and Curatorial Practices in", "masters"),
+    "phd": ("Doctor of Philosophy in", "phd"),
+    "edd": ("Doctor of Education in", "phd"),
+    "dma": ("Doctor of Musical Arts in", "phd"),
+    "dsw": ("Doctor of Social Work in", "phd"),
+    "dpt": ("Doctor of Physical Therapy in", "phd"),
+    "otd": ("Doctor of Occupational Therapy in", "phd"),
+    "dnap": ("Doctor of Nurse Anesthesia Practice in", "phd"),
+    "drsc": ("Doctor of Regulatory Science in", "phd"),
+    "dppd": ("Doctor of Policy, Planning, and Development in", "phd"),
+    "jd": ("Juris Doctor (J.D.)", "professional"),
+    "md": ("Doctor of Medicine (M.D.)", "professional"),
+    "dds": ("Doctor of Dental Surgery (D.D.S.)", "professional"),
+    "pharmd": ("Doctor of Pharmacy (Pharm.D.)", "professional"),
+    "llm": ("Master of Laws (LL.M.) in", "masters"),
+    "med": ("Master of Education in", "masters"),
+    "ippm": ("Master of International Public Policy and Management in", "masters"),
+    "diploma": ("Graduate Diploma in", "masters"),
+    "dlas": ("Doctor of Liberal Arts in", "phd"),
+    "mdr": ("Master of Dispute Resolution in", "masters"),
+    "2": ("Dual Degree in", "masters"),
 }
-_DELIVERY_PHRASE = {
-    "online": " It is delivered fully online.",
-    "hybrid": " It is delivered in a hybrid format.",
+
+_PROGRAM_NAME_OVERRIDES: dict[str, str] = {
+    "usc-full-time-mba-program-mba": "Full-Time MBA",
+    "usc-part-time-mba-program-mba": "Part-Time MBA",
+    "usc-one-year-international-mba-program-mba": "One-Year International MBA",
+    "usc-online-mba-program-mba": "Online MBA",
+    "usc-executive-mba-program-mba": "Executive MBA",
+    "usc-professional-entry-level-doctor-of-physical-therapy-program-dpt": (
+        "Doctor of Physical Therapy (D.P.T.)"
+    ),
+    "usc-entry-level-occupational-therapy-otd": "Entry-Level Doctor of Occupational Therapy (O.T.D.)",
+    "usc-occupational-therapy-otd": "Doctor of Occupational Therapy (O.T.D.)",
+    "usc-doctor-of-nurse-anesthesia-practice-dnap": "Doctor of Nurse Anesthesia Practice",
+}
+
+_LEVEL_SUFFIX: dict[str, str] = {
+    "bachelors": (
+        " Undergraduates complete major requirements, electives, and often "
+        "undergraduate research or internships."
+    ),
+    "masters": (
+        " Graduate students complete advanced seminars, practica, and a thesis or "
+        "capstone project."
+    ),
+    "phd": (
+        " Doctoral students conduct original dissertation research with faculty "
+        "mentorship and departmental seminars."
+    ),
+    "professional": (
+        " Professional students complete clinical rotations, licensure preparation, "
+        "and professional-skills training."
+    ),
+    "doctoral": (
+        " Doctoral students conduct original dissertation research with faculty "
+        "mentorship and departmental seminars."
+    ),
 }
 
 
-def _description(name: str, dtype: str, school_key: str, fmt: str) -> str:
-    role = _DEGREE_ROLE.get(dtype, "a graduate program")
-    school_disp = SCHOOL_NAME[school_key]
-    delivery = _DELIVERY_PHRASE.get(fmt, "")
-    return f"{name} is {role} offered through USC's {school_disp}.{delivery}"
+def _slug_code(slug: str) -> str:
+    return slug.split("-")[-1]
+
+
+def _full_program_name(slug: str, field_name: str, degree_type: str) -> str:
+    if slug in _PROGRAM_NAME_OVERRIDES:
+        return _PROGRAM_NAME_OVERRIDES[slug]
+    if field_name.startswith(("Bachelor", "Master", "Doctor", "Juris", "Full-Time", "Part-Time")):
+        return field_name
+    code = _slug_code(slug)
+    if code in _CODE_PREFIX:
+        prefix, _ = _CODE_PREFIX[code]
+        if prefix.endswith(" in"):
+            return f"{prefix} {field_name}"
+        return prefix
+    return field_name
+
+
+def _field_key(program_name: str) -> str:
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Bachelor of Fine Arts in ",
+        "Bachelor of Music in ",
+        "Bachelor of Architecture in ",
+        "Bachelor of Social Work in ",
+        "Master of Science in ",
+        "Master of Arts in ",
+        "Master of Fine Arts in ",
+        "Master of Music in ",
+        "Master of Public Administration in ",
+        "Master of Public Health in ",
+        "Master of Public Policy in ",
+        "Master of Social Work in ",
+        "Master of Architecture in ",
+        "Master of Business Administration in ",
+        "Master of Laws (LL.M.) in ",
+        "Doctor of Philosophy in ",
+        "Doctor of Education in ",
+        "Doctor of Musical Arts in ",
+        "Doctor of Social Work in ",
+        "Graduate Diploma in ",
+        "Dual Degree in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix) :].strip()
+    return program_name
+
+
+def _lookup_field_clause(key: str) -> str:
+    if key in FIELD_DESCRIPTIONS:
+        return FIELD_DESCRIPTIONS[key]
+    base = re.sub(r"\s*\(Online\)\s*", "", key).strip()
+    if base in FIELD_DESCRIPTIONS:
+        return FIELD_DESCRIPTIONS[base]
+    raise ValueError(f"Missing FIELD_DESCRIPTIONS entry for {key!r}")
+
+
+def _credential_suffix(slug: str, degree_type: str) -> str:
+    code = _slug_code(slug)
+    if code == "ba":
+        return (
+            " The Bachelor of Arts path emphasizes humanities-oriented seminars, "
+            "writing-intensive coursework, and undergraduate research or internships."
+        )
+    if code == "bs":
+        return (
+            " The Bachelor of Science path emphasizes quantitative and laboratory "
+            "coursework, methods training, and undergraduate research or internships."
+        )
+    if code == "bfa":
+        return (
+            " The B.F.A. path emphasizes studio production, critique, and portfolio "
+            "development with industry mentorship."
+        )
+    if code == "bm":
+        return (
+            " The Bachelor of Music path emphasizes applied lessons, ensemble "
+            "performance, and recital preparation."
+        )
+    if code == "ma":
+        return (
+            " The Master of Arts path emphasizes humanities-oriented graduate "
+            "seminars, research papers, and a thesis or capstone project."
+        )
+    if code == "ms":
+        return (
+            " The Master of Science path emphasizes quantitative methods, "
+            "laboratory or computational work, and a thesis or capstone project."
+        )
+    if code == "mfa":
+        return (
+            " The M.F.A. path emphasizes advanced studio work, critique, and a "
+            "graduate portfolio or thesis exhibition."
+        )
+    if code == "dsw":
+        return (
+            " The D.S.W. path prepares scholar-practitioners for advanced clinical "
+            "leadership and applied research in social-work practice."
+        )
+    if code == "phd":
+        return (
+            " The Ph.D. path prepares researchers for dissertation scholarship "
+            "and academic or policy research careers."
+        )
+    if code == "barch":
+        return (
+            " The B.Arch. path follows a NAAB-accredited studio sequence toward "
+            "architectural licensure preparation."
+        )
+    if code == "bsw":
+        return (
+            " The B.S.W. path combines social-work coursework with supervised "
+            "field practica toward licensure preparation."
+        )
+    return _LEVEL_SUFFIX.get(degree_type, "")
+
+
+def _usc_description(spec: dict) -> str:
+    pname = spec["program_name"]
+    key = _field_key(pname)
+    clause = _lookup_field_clause(key)
+    suffix = _credential_suffix(spec["slug"], spec["degree_type"])
+    delivery = ""
+    if spec.get("delivery_format") == "online":
+        delivery = " Delivered fully online through USC Bovard College."
+    elif spec.get("delivery_format") == "hybrid":
+        delivery = " Delivered in a hybrid format."
+    return f"{clause}{suffix}{delivery}"
 
 
 def _build_catalog() -> list[dict]:
     out = []
     for slug, sk, name, dtype, dept, fmt, dur in _CATALOG:
-        out.append(
-            {
-                "slug": slug,
-                "school": SCHOOL_NAME[sk],
-                "school_key": sk,
-                "program_name": name,
-                "degree_type": dtype,
-                "department": dept,
-                "delivery_format": fmt,
-                "duration_months": dur,
-                "description": _description(name, dtype, sk, fmt),
-            }
-        )
+        pname = _full_program_name(slug, name, dtype)
+        spec = {
+            "slug": slug,
+            "school": SCHOOL_NAME[sk],
+            "school_key": sk,
+            "program_name": pname,
+            "degree_type": dtype,
+            "department": dept,
+            "delivery_format": fmt,
+            "duration_months": dur,
+        }
+        spec["description"] = _usc_description(spec)
+        out.append(spec)
     return out
 
 
 PROGRAMS: list[dict] = _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise ValueError(f"USC catalog validation failed: {_catalog_errors}")
+
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.* is (an undergraduate|a graduate|a doctoral|a professional) (program|major) "
+    r"(offered through|at) USC",
+    re.I,
+)
+
+_name_prefix_desc = sum(
+    1 for p in PROGRAMS if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    raise ValueError(f"USC catalog has {_name_prefix_desc} name-prefixed descriptions")
+_desc_counts = Counter(p.get("description") for p in PROGRAMS)
+_shared_desc = sum(c - 1 for c in _desc_counts.values() if c > 1)
+if _shared_desc:
+    raise ValueError(
+        f"USC catalog has {_shared_desc} identical descriptions shared across rows"
+    )
 
 _WEBSITE_OVERRIDE: dict[str, str] = {
     "usc-full-time-mba-program-mba": "https://www.marshall.usc.edu/programs/graduate-programs/mba-programs/full-time-mba",
@@ -5980,6 +6236,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
     },
 }
+_REVIEWS_BY_SLUG.update(_GENERATED_REVIEWS)
 
 
 # ── Admissions requirement sets ────────────────────────────────────────────
