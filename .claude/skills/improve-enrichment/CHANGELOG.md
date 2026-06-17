@@ -6,6 +6,95 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-17 — Run 31 (NO new gaps found — the enricher shipped NOTHING in scope since run 30: `origin/main` HEAD is the run-30 grader PR #670, so the whole fleet is byte-identical to run 30. Pure re-verification via direct API reads (not trusting the prior grade): all SIX CRITICAL breaches persist live, fleet institution-level clean except NYU's dead feed, no new problem class possible from an enricher that did not run. Changed NO rules per anti-churn / no-edit-without-evidence; refreshed backlog dates + persistence counts only)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28, no
+sprawl; gold MIT n=65 control). A full fleet institution-level sanity scan (`campus_photos` length,
+`ranking_data.ownership_type`, `/institutions/{id}/posts` count) across all 28 — all carry 5 campus photos +
+`ownership_type` + a live feed except NYU (`posts=0`). Direct re-verification of every CRITICAL breach via
+full pagination + `description_text` / `external_reviews` reads: UW-Madison's whole-catalog identical-
+`description_text` scan (n=348) + a Skaggs/Scripps foreign-signature scan; Stanford's aerospace rows; the
+Northwestern Architecture-Studies review summary; the Duke Pratt engineering review summaries; the Boston U
+department scan. Student's-eye open-ended random sample: USC + Yale program names/descriptions.
+
+**What merged since run 30:** NOTHING in scope. `origin/main` HEAD is the run-30 grader PR **#670**
+(`ceedffe`); the last profile enrichment PR remains **#669 UW-Madison** (`8a022ef`, uwmadisonprof5), already
+graded at run 30. No new enrichment PR landed this interval — the enricher did not ship (the same state as
+runs 27–28). So all 28 catalogs' DATA is byte-identical to run 30.
+
+**Findings (live API evidence):**
+
+1. **NO new enrichment merged this interval (the enricher did not run / did not ship).** The fleet is
+   byte-identical to run 30; re-verified live, not assumed. No new problem class is possible.
+2. **All SIX CRITICAL breaches PERSIST (re-confirmed live via direct reads).** UW-Madison **84%
+   identical-across-credential-levels descriptions** (293/348 rows share `description_text` with ≥1 sibling,
+   110 groups; gold MIT 0%) **+ cross-institution-copy** ("Skaggs School" on all 4 Pharmaceutical-Sciences
+   rows; "Scripps … Western Weather … Mauna Loa" on all 3 Atmospheric-Science rows; runs 30→31). Stanford
+   **Sibley-School ×2** (aerospace BA + Graduate Certificate; runs 13/14→31). Northwestern **synthesized
+   review** — the BA-in-Architecture-Studies row's summary still embeds "Northwestern's undergraduate program
+   in Architecture and Related Service…" (runs 9→31, TWENTY-THREE intervals). Duke **11 copy-paste
+   Pratt-boilerplate engineering reviews** ("rigorous engineering degree at a selective private R1
+   university…within Pratt", field swapped, across the BSE + M.Eng + Master's engineering rows; runs 10→31).
+   Boston U **credential-name departments** ("Bachelor Of Science In Hospitality Administration", "Doctor Of
+   Dental Medicine", "DSc"/"Ms"; runs 1→31). Purdue cross-institution-copy descriptions carried (nothing
+   merged for it). UCSD's 1 invented aerospace center carried.
+3. **Fleet institution-level clean except NYU.** All 28 institutions carry 5 `campus_photos` +
+   `ownership_type` + a live feed; NYU is the ONLY dead feed (`posts=0`), unchanged.
+
+**False alarms caught (diagnosed, not acted on):**
+- **UW-Madison CALS on ~22 rows is a TRUE positive, NOT a foreign signature** — UW-Madison genuinely has a
+  College of Agricultural and Life Sciences; only Skaggs (4) + Scripps/CW3E/Mauna Loa (3) are the genuine
+  UCSD-copied hits.
+- **Student's-eye sample = only documented classes.** USC = the #646 catalog (classification descriptions
+  "X is an undergraduate major offered through USC's …" + field-as-department). Yale = the documented 69%
+  name-prefix ("Bachelor of Arts in X: …", though some rows like Global Affairs / Political Science already
+  open on a fact). No new class.
+- `?page_size=100` 422s (server cap 50); the `/programs` LIST endpoint omits the description (it lives on
+  `/programs/{id}` as `description_text`) — paginated / pulled detail accordingly. `_standard` not in the
+  public API (gold MIT shows NONE) — ranked on API-visible signals only.
+
+**Rulebook changes: NONE (0 of ≤3).** No new problem class was discovered — the enricher shipped nothing this
+interval, so the fleet is byte-identical to run 30 and every live defect recurs a class the rulebook already
+names (miss #2/#8/#9). Per the SAFETY RAILS (no-edit-without-evidence-of-a-NEW-problem; "Clean fleet → change
+nothing… Never invent a rule to look busy"; bounded + anti-churn), restating present rules would be churn. The
+standing concern is enricher BEHAVIOR (no enrichment shipped this interval; the CRITICAL top of live fabricated
+data unrepaired for 17–23 intervals) — flagged for human review, not a rulebook gap (more rule text cannot make
+the enricher run or reorder its priorities; cf. runs 10/12/17–30). Post-edit self-review: SKILL.md UNTOUCHED,
+miss numbering still sequential 1–9, all invariants intact.
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(behavioral, recurring)** NO enrichment PR merged this interval — the enricher did not ship at all (the
+  same as runs 27–28). Combined with the live fabricated data below, the repair backlog is making no forward
+  progress.
+- **(carried, urgent — now 23 / 21 intervals)** Northwestern (synthesized reviews, runs 9→31) and Duke (Pratt
+  boilerplate reviews, runs 10→31) remain live and unrepaired; the CRITICAL backlog top is not being cleared.
+  Fabricated reviews on student-facing pages are a no-fabrication invariant breach the grader cannot fix.
+- **(carried, urgent)** Stanford's Sibley-School fabricated units (runs 13/14), Purdue's cross-institution-copy
+  descriptions (run 25), UCSD's invented aerospace center (run 29), and UW-Madison's cross-institution-copy +
+  84% identical-across-levels descriptions (run 30) all remain live; the grader does not edit data.
+- **(carried from runs 2–30, unreconciled)** miss #9 says "FAIL on null/blank `department`" but gold MIT ships
+  null department and `manifest.py` marks `department` `required=False`. Reconciling would LOOSEN verify-output
+  → left intact per the rails.
+- **(carried from runs 8–30, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a stub tell —
+  valid for the ENRICHER but not API-visible to the grader. Left intact.
+
+**Backlog delta:** NO ranking change (nothing repaired). Header `_Last graded_` block rewritten for run 31
+(nothing merged this interval; fleet byte-identical to run 30; the SIX CRITICAL breaches re-confirmed live;
+student's-eye USC/Yale sample = documented classes only). Persistence counts bumped: Northwestern 9→31
+(TWENTY-THREE intervals), Duke 10→31, Stanford 14→31; Purdue + UCSD + UW-Madison re-confirmed/carried run 31.
+CRITICAL unchanged: Boston University (structure) + Stanford (fabricated units) + Northwestern + Duke
+(fabricated reviews) + Purdue (cross-institution-copy descriptions) + UCSD (1 invented aerospace center) +
+UW-Madison (cross-institution-copy + identical-across-levels). MEDIUM empty. CLEAN = MIT only;
+Rice/UChicago/Caltech/JHU stay the near-clean non-MIT structure tier.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv —
+`.venv/bin/pytest` absent) — same constraint as runs 1–30. Changes are markdown-only (backlog + this changelog;
+NO SKILL.md edit, no Python, no migrations, no app code), so the enricher code/data state is unaffected and miss
+numbering remains sequential 1–9.
+
+**Invariants:** all intact; no rule changed, so nothing weakened. The findings that could argue for loosening
+(null-department FAIL vs gold MIT; `_standard`-as-rendered-signal) remain logged for human review, not acted on.
+
 ## 2026-06-17 — Run 30 (ONE NEW CLASS → ONE rule added: a per-FIELD description STAMPED VERBATIM across every credential-level row — generated once per field from a fixed field→text table, so the certificate + BS + MS + PhD of one field carry an IDENTICAL description_text. #669 UW-Madison: 293/348 (84%) shared across levels, gold MIT 0%. It EVADES both the distinct-NAME check (names differ) and the gold contrast (prose is field-specific). #669 is ALSO a LIVE cross-institution-copy fabrication — UCSD's "Skaggs School" + "Scripps/CW3E/Mauna Loa" find-replaced onto UW rows (the run-25 class, already ruled). Added 1 of ≤3 rules; UW-Madison PROMOTED to CRITICAL)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28, no

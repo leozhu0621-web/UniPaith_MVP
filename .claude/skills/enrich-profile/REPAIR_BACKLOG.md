@@ -7,31 +7,26 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-17 (grader run 30). **ONE in-scope PR merged since run 29 — #669 UW-Madison description
-repair** (`8a022ef`, uwmadisonprof5, `origin/main` HEAD; "drop name-prefixed descriptions, 348 programs"). It
-is the EIGHTH straight single-dimension description/prefix pass — and a DOUBLE defect: (1) **NEW CLASS** — the
-descriptions were generated once per FIELD (from a 153-field `uw_madison_field_descriptions.py` table) and
-stamped VERBATIM across every credential level, so **293 of 348 rows (84%) share a description with ≥1 sibling
-row** (one field's text on its certificate + BS + MS + PhD), vs gold MIT 0% (every program uniquely described)
-— field-LEVEL, not program-LEVEL, descriptions that evade BOTH the distinct-NAME check (names differ, the
-credential is in the name) AND the gold contrast (the prose is genuinely field-specific); and (2) **LIVE
-cross-institution-copy fabrication** (recurrence of the run-25 class) — UW-Madison reused the IMMEDIATELY-PRIOR
-PR's UCSD catalog (#667) by find-replace, leaving UCSD's units on UW rows: **"Skaggs School"** (UCSD's pharmacy
-school — UW-Madison's is just the School of Pharmacy; web-verified) on all 4 Pharmaceutical-Sciences rows, and
-**"Scripps … Center for Western Weather and Water Extremes … Mauna Loa"** (UCSD's Scripps Institution of
-Oceanography — UW-Madison's is the Dept of Atmospheric & Oceanic Sciences / SSEC / CIMSS) on all 3
-Atmospheric-Science rows. (CALS ×22 is a TRUE positive — UW-Madison really has a College of Agricultural and
-Life Sciences.) Names are otherwise clean (0 duplicate, 4 minor slash-rollups ~1%, 0 CIP-code, 0
-generic-credential). → **ONE rule added** (the identical-description class; miss #8 + a miss #9 gate clause);
-UW-Madison ADDED as CRITICAL. The cross-institution-copy is covered by the existing run-25 rule (no new rule).
-Re-confirmed live via direct reads this run: the prior CRITICAL breaches ALL PERSIST — Northwestern CIP-rollup
-synthesized review ("Architecture and Related Services, Other within Weinberg" + a U.S. News #7
-institution-ranking source); Stanford "Sibley School" ×2 (aerospace BA + Graduate Certificate); Duke 5
-copy-paste Pratt-boilerplate reviews; Boston U 7 credential-name departments. NYU still the ONLY dead feed
-(`posts=0`); fleet institution-level scan otherwise clean (all 28 institutions = ≥4 campus photos +
-ownership_type + a live feed). 28 institutions, no sprawl; gold MIT n=65 control (0% shared descriptions). **The
-standing concern is enricher BEHAVIOR — single-dimension passes + the CRITICAL top (fabricated data on
-student-facing pages) unrepaired for 16–22 grading intervals — flagged for human review.**_
+_Last graded: 2026-06-17 (grader run 31). **NOTHING merged in scope since run 30** — `origin/main` HEAD is the
+run-30 grader PR **#670** (`ceedffe`); the last enrichment PR remains **#669 UW-Madison** (`8a022ef`,
+uwmadisonprof5), already graded at run 30. So all 28 catalogs' DATA is byte-identical to run 30 — re-verified
+live, not assumed, via direct API reads. No enrichment shipped this interval (the same "enricher didn't ship"
+state as runs 27–28). **No new problem class is possible from an enricher that did not run → ZERO rule changes
+(SKILL.md UNTOUCHED), per the SAFETY RAILS (no-edit-without-evidence-of-a-NEW-problem; clean fleet → change
+nothing).** Re-confirmed live via direct reads this run, ALL PERSIST: UW-Madison **84% identical-across-levels
+descriptions** (293/348 rows share text with ≥1 sibling; gold MIT 0%) + **cross-institution-copy** ("Skaggs
+School" on all 4 Pharmaceutical-Sciences rows, "Scripps … Western Weather … Mauna Loa" on all 3
+Atmospheric-Science rows); Northwestern CIP-rollup synthesized review ("Architecture and Related Services, Other
+within Weinberg" + a U.S. News institution-ranking source); Stanford "Sibley School" ×2 (aerospace BA + Graduate
+Certificate); Duke 11 copy-paste Pratt-boilerplate engineering reviews ("rigorous engineering degree at a
+selective private R1 university…within Pratt", field swapped); Boston U credential-name departments ("Bachelor
+Of Science In Hospitality Administration", "Doctor Of Dental Medicine"). NYU still the ONLY dead feed
+(`posts=0`); fleet institution-level scan otherwise clean (all 28 institutions = 5 campus photos + ownership_type
++ a live feed). 28 institutions, no sprawl; gold MIT n=65 control. Student's-eye random sample (USC + Yale)
+showed only documented classes (USC #646 classification + field-as-department; Yale 69% name-prefix) — no new
+class. **The standing concern is enricher BEHAVIOR — single-dimension passes + the CRITICAL top (fabricated data
+on student-facing pages) unrepaired for 17–23 grading intervals, and NO enrichment shipped this interval —
+flagged for human review.**_
 
 **ONE NEW CLASS THIS RUN → ONE rule added: a per-FIELD description STAMPED VERBATIM across every
 credential-level row.** #669 UW-Madison generated descriptions from a fixed field→text table, so the
@@ -168,9 +163,8 @@ true generic clause; THEN de-roll-up the names + their departments, strip the pr
 
 _First seen 2026-06-16 (run 13). Run 14: PARTIALLY repaired (College of Chemistry cleared) but the
 Sibley School + FSI sibling fabrications remain LIVE — a no-fabrication breach is not cleared until the
-WHOLE class is. Re-confirmed live runs 14→28 (run 28: Sibley ×2 + Freeman-Spogli on Systems-Science +
-Public-Relations; Political-Science FSI control passes). Fix the remaining fabricated units before any new depth
-pass or any new university._
+WHOLE class is. Re-confirmed live runs 14→31 (run 31: Sibley ×2 on the aerospace BA + Graduate Certificate).
+Fix the remaining fabricated units before any new depth pass or any new university._
 
 ## CRITICAL — Northwestern University (fabricated reviews shipped LIVE; unrepaired since run 9)
 
@@ -183,10 +177,10 @@ sources" disclaimer). A live no-fabrication breach outranks mere incompleteness.
 synthesized reviews and either re-gather genuine program-specific coverage or omit-with-reason** — then
 strip the ~97% name-prefix-doubling and fill real per-program deep content.
 
-_First seen 2026-06-16 (run 9). Still unrepaired across runs 10–28 (re-confirmed live run 28: the
+_First seen 2026-06-16 (run 9). Still unrepaired across runs 10–31 (re-confirmed live run 31: the
 BA-in-Architecture-Studies row's review summary still embeds "Architecture and Related Services, Other
-within Weinberg" + a U.S. News institution-ranking source). Now persisted TWENTY grading intervals
-(9→28) with no repair PR. Fix the fabricated reviews before any new depth pass._
+within Weinberg" + a U.S. News institution-ranking source). Now persisted TWENTY-THREE grading intervals
+(9→31) with no repair PR. Fix the fabricated reviews before any new depth pass._
 
 ## CRITICAL — Duke University (fabricated-by-synthesis reviews shipped LIVE; unrepaired since run 10)
 
@@ -198,10 +192,11 @@ run-9 fabrication-by-synthesis tell (SKILL.md miss #8).
 **Repair: REMOVE/re-gather those synthesized reviews per-program (or omit-with-reason)**, then strip
 the 66% name-prefix-doubling and fill real per-program deep content.
 
-_First seen 2026-06-16 (run 10). Unchanged since (nothing merged; byte-identical to runs 26–27, now
-persisted 10→28 — re-confirmed live run 28: Biomedical-Eng + Civil-Eng + Environmental-Eng + Mechanical +
-IDEAS rows share the identical "rigorous engineering degree at a selective private R1 university…within Pratt"
-summary, field swapped). Fix the synthesized reviews before any new depth pass._
+_First seen 2026-06-16 (run 10). Unchanged since (nothing merged; byte-identical to run 30, now
+persisted 10→31 — re-confirmed live run 31: 11 engineering rows (Biomedical / Civil / Electrical&Computer /
+Environmental / Mechanical / IDEAS BSEs + the matching M.Eng / Master's) share the identical "rigorous
+engineering degree at a selective private R1 university…within Pratt" summary, field swapped). Fix the
+synthesized reviews before any new depth pass._
 
 ## CRITICAL — Purdue University-Main Campus (cross-institution-COPY descriptions shipped LIVE by #661; freshest breach)
 
@@ -224,8 +219,8 @@ dept "Department of Area Studies") and empty deep content.
 imported geography / peer unit / re-labeled landmark), de-roll-up the 11% rollup names + their depts, then
 fill deep content. A description pass that INVENTS false specifics is worse than the gloss it replaced.**
 
-_First seen 2026-06-17 (run 25) — a LIVE no-fabrication breach shipped by #661; re-confirmed live run 28
-(owner-map scan: 52/310 foreign-sig rows — nothing merged for Purdue since). The same
+_First seen 2026-06-17 (run 25) — a LIVE no-fabrication breach shipped by #661; carried unchanged through run 31
+(nothing merged for Purdue since; owner-map scan was 52/310 foreign-sig rows). The same
 cross-institution-copy tell is live (smaller, ~2%) on Cornell #615 (Berkeley's Lick Observatory + Haas,
 JHU's Hopkins on Cornell rows). Contrast Rice #663 (run 26), which did the SAME description pass the RIGHT
 way — researched from Rice's own pages, 0/159 foreign-sig — proving this is fixable. Fix the fabricated
