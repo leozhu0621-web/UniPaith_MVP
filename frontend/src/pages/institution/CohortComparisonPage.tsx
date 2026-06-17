@@ -107,7 +107,6 @@ export default function CohortComparisonPage({ embedded = false }: { embedded?: 
       {!embedded && (
         <InstitutionPageHeader
           title="Cohort Comparison"
-          description="Side-by-side comparison of applicants on rubric scores and key fields for calibration."
         />
       )}
 

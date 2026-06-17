@@ -564,7 +564,7 @@ function ProspectDrawer({
   const convertMut = useMutation({
     mutationFn: () => convertProspect(prospect!.id),
     onSuccess: p => {
-      showToast('Converted to applicant ✓', 'success')
+      showToast('Converted to applicant', 'success')
       qc.invalidateQueries({ queryKey: ['recruitment-prospects'] })
       onDone()
       onClose()
@@ -583,7 +583,7 @@ function ProspectDrawer({
           <Badge variant={STAGE_META[prospect.stage].tone}>{STAGE_META[prospect.stage].label}</Badge>
           <Badge variant="neutral">{SOURCE_META[prospect.source]}</Badge>
           <ConsentBadge on={prospect.consent_outreach} />
-          {converted && <Badge variant="success">Converted to applicant ✓</Badge>}
+          {converted && <Badge variant="success">Converted to applicant</Badge>}
         </div>
 
         <dl className="space-y-2 text-sm">

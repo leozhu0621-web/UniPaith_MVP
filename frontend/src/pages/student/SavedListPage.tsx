@@ -273,7 +273,7 @@ export default function SavedListPage() {
       {/* Room header — consistent with the other My Space rooms (eyebrow = surface). */}
       <PageHeader
         eyebrow="My Space"
-        title="Your shortlist"
+        title="Saved"
       />
 
       {/* Hidden on lg+ where the My Space rail's Saved group lists these views

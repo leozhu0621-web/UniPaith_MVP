@@ -113,7 +113,6 @@ export default function InquiriesPage({ embedded = false }: { embedded?: boolean
       {!embedded && (
         <InstitutionPageHeader
           title="Inquiry Queue"
-          description="Manage information requests from prospective students."
         />
       )}
 

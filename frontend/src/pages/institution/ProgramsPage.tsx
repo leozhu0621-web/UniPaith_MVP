@@ -109,7 +109,6 @@ export default function ProgramsPage() {
     <div className="p-6 space-y-4">
       <InstitutionPageHeader
         title="Programs"
-        description="Manage catalog readiness, publication status, and admissions deadlines."
         actions={(
           <Button onClick={() => navigate('/i/programs/new')} className="flex items-center gap-2">
             <Plus size={16} /> New Program

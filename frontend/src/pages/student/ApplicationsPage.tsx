@@ -19,7 +19,7 @@ function BucketCount({ value }: { value: number }) {
   return <div className="text-lg font-semibold text-foreground">{n}</div>
 }
 import { STATUS_COLORS } from '../../utils/constants'
-import { FileText, Star, ChevronRight, CalendarClock, PartyPopper, ArrowRight, Mail } from 'lucide-react'
+import { FileText, Star, ChevronRight, CalendarClock, CheckCircle2, ArrowRight, Mail } from 'lucide-react'
 import DecisionComparison from './apply/offer/DecisionComparison'
 import { deadlineTone, DEADLINE_TONE_CLASS, hasPendingOfferResponse } from './apply/offer/offerFormat'
 import type { Application } from '../../types'
@@ -99,7 +99,10 @@ function nextAction(app: Application): string {
     case 'under_review':
       return app.status === 'interview' ? 'Prepare for your interview' : 'Under review'
     case 'decided':
-      if (hasPendingOfferResponse(app)) return 'Respond to your offer'
+      if (hasPendingOfferResponse(app)) {
+        const school = app.program?.institution_name
+        return school ? `Respond to ${school}'s offer` : 'Respond to the offer'
+      }
       return `Decision: ${app.decision ?? app.decision_state ?? 'received'}`
   }
 }
@@ -277,7 +280,7 @@ export default function ApplicationsPage() {
   if (isError)
     return (
       <PageContainer>
-        <PageHeader eyebrow="My Space" title="Your portfolio" />
+        <PageHeader eyebrow="My Space" title="Applications" />
         {viewSwitcher}
         <QueryError detail="We couldn't load your applications." onRetry={() => refetch()} />
       </PageContainer>
@@ -288,7 +291,7 @@ export default function ApplicationsPage() {
       <PageContainer>
         <PageHeader
           eyebrow="My Space"
-          title="Your offers"
+          title="Offers"
           count={offerApps.length}
         />
         {viewSwitcher}
@@ -347,7 +350,7 @@ export default function ApplicationsPage() {
   if (apps.length === 0)
     return (
       <PageContainer>
-        <PageHeader eyebrow="My Space" title="Your portfolio" />
+        <PageHeader eyebrow="My Space" title="Applications" />
         {viewSwitcher}
         <EmptyState
           icon={<FileText size={48} />}
@@ -362,7 +365,7 @@ export default function ApplicationsPage() {
     <PageContainer>
       <PageHeader
         eyebrow="My Space"
-        title="Your portfolio"
+        title="Applications"
         count={apps.length}
       />
       {viewSwitcher}
@@ -371,10 +374,10 @@ export default function ApplicationsPage() {
       {acceptedApp && (
         <Card pad={false} className="animate-beat p-4 mb-6 bg-success-soft border-0 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-success/15 flex items-center justify-center shrink-0">
-            <PartyPopper size={20} className="text-success" />
+            <CheckCircle2 size={20} className="text-success" />
           </div>
           <div className="min-w-0">
-            <p className="text-base font-bold text-foreground">You're in. Congrats.</p>
+            <p className="text-lg font-semibold text-foreground">You're in!</p>
             <p className="text-sm text-foreground truncate">
               You accepted {acceptedApp.program?.program_name || 'your offer'}
               {acceptedApp.program?.institution_name ? ` at ${acceptedApp.program.institution_name}` : ''}.

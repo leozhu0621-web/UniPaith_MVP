@@ -45,10 +45,10 @@ import type {
 
 // Per-tab header copy (Spec 2026-06-12 §4).
 const TAB_HEADERS: Record<DiscoverTab, { title: string }> = {
-  foryou: { title: 'Your strategy and your matches' },
-  updates: { title: 'Updates from your schools' },
-  events: { title: 'Events from your schools' },
-  peers: { title: 'Peers on your path' },
+  foryou: { title: 'Strategy & matches' },
+  updates: { title: 'Updates' },
+  events: { title: 'Events' },
+  peers: { title: 'Peers' },
 }
 
 /** Parse filter state from URL search params. List filters are comma-
@@ -279,8 +279,8 @@ export default function ExplorePage() {
       {/* Spec 09 §13 H1 + brand framing ("Fit, not fame", Spec 07 §2/§6). */}
       <PageHeader eyebrow="Discover" title={TAB_HEADERS[tab].title} />
 
-      {/* First-visit tour (Ship C) — orients the hub's four worlds. */}
-      <Coachmark id="discover-tabs" title="Four views of your world" body="For you ranks your matches; Updates, Events, and Peers bring in the schools you follow. Everything Discover lives in these tabs." placement="bottom">
+      {/* First-visit tour (Ship C) — orients the hub's tabs. */}
+      <Coachmark id="discover-tabs" title="Discover tabs" body="For you ranks your matches; Updates, Events, and Peers bring in the schools you follow." placement="bottom">
         <DiscoverTabBar tab={tab} onChange={setTab} onManageFollowing={() => setManaging(true)} />
       </Coachmark>
 
@@ -427,7 +427,7 @@ export default function ExplorePage() {
             {/* minViewport: the aside is CSS-hidden below xl — an invisible mark must not
                 block the one-at-a-time queue. The scroll cap lives on the inner div so the
                 coachmark bubble isn't clipped by overflow. */}
-            <Coachmark id="discover-rail" title="Your live rail" body="Updates, upcoming events, deadline radar, and schools worth following — refreshed as your world moves." placement="left" minViewport="xl">
+            <Coachmark id="discover-rail" title="Live rail" body="Updates, upcoming events, deadline radar, and schools worth following — refreshed as your world moves." placement="left" minViewport="xl">
               <div className="xl:max-h-[calc(100dvh-6rem)] overflow-y-auto">
                 <DiscoverRail
                   followedIds={followedIds}

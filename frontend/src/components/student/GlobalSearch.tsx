@@ -40,13 +40,13 @@ const DEGREE_LABEL: Record<string, string> = {
 const QUICK_NAV = [
   { label: 'Chat', sub: 'Build your profile with Uni', to: '/s', icon: Compass },
   { label: 'Discover', sub: 'Programs & schools for you', to: '/s/explore', icon: Target },
-  { label: 'Updates from your schools', sub: 'Posts, events, and peers — in Discover', to: '/s/explore?tab=updates', icon: Newspaper },
-  { label: 'My Space', sub: 'Your home — what to do next', to: '/s/space', icon: Backpack },
-  { label: 'Applications', sub: 'Your portfolio & deadlines', to: '/s/applications', icon: FolderKanban },
+  { label: 'Updates', sub: 'Posts, events, and peers — in Discover', to: '/s/explore?tab=updates', icon: Newspaper },
+  { label: 'My Space', sub: 'Home — what to do next', to: '/s/space', icon: Backpack },
+  { label: 'Applications', sub: 'Portfolio & deadlines', to: '/s/applications', icon: FolderKanban },
   { label: 'Prep', sub: 'Workshops & prompt library', to: '/s/prep', icon: PenLine },
   { label: 'Calendar', sub: 'Deadlines & interviews timeline', to: '/s/calendar', icon: CalendarDays },
   { label: 'Messages', sub: 'Threads with institutions', to: '/s/messages', icon: MessageSquare },
-  { label: 'My Profile', sub: 'Your durable record', to: '/s/profile', icon: User },
+  { label: 'Profile', sub: 'Your durable record', to: '/s/profile', icon: User },
   { label: 'Saved', sub: 'Programs you bookmarked', to: '/s/saved', icon: Bookmark },
   { label: 'Settings', sub: 'Account & preferences', to: '/s/settings', icon: Settings },
 ]

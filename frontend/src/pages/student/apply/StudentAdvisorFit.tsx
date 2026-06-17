@@ -32,7 +32,7 @@ function AdvisorRow({ a }: { a: StudentAdvisorFit }) {
             {a.title && <span className="text-xs text-muted-foreground">{a.title}</span>}
             {a.mutual && (
               <Badge variant="info">
-                <Heart size={11} /> Mutual interest ✓
+                <Heart size={11} /> Mutual interest
               </Badge>
             )}
             {a.accepting_students && (

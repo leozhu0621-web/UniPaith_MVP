@@ -32,7 +32,7 @@ import type {
   ChecklistItemStatus,
 } from '../../../../types'
 import {
-  PartyPopper,
+  CheckCircle2,
   Check,
   Circle,
   Clock,
@@ -171,7 +171,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
     mutationFn: () => confirmEnrollment(appId),
     onSuccess: () => {
       invalidate()
-      showToast("You're in! Let's get you ready. 🎓", 'success')
+      showToast("You're in!", 'success')
     },
     onError: (err: { response?: { data?: { detail?: string } } }) =>
       showToast(err.response?.data?.detail || 'Could not confirm enrollment', 'error'),
@@ -259,15 +259,15 @@ export default function EnrollmentPanel({ application }: { application: Applicat
             {enrolled ? (
               <GraduationCap size={28} className="text-foreground" />
             ) : (
-              <PartyPopper size={28} className="text-foreground" />
+              <CheckCircle2 size={28} className="text-foreground" />
             )}
           </div>
-          <h2 className="text-2xl font-bold text-foreground mb-1">
-            {enrolled ? "You're enrolled!" : "You're in! Let's get you ready."}
+          <h2 className="text-lg font-bold text-foreground mb-1">
+            {enrolled ? "You're enrolled!" : "You're in!"}
           </h2>
           <p className="text-sm text-foreground max-w-md mx-auto">
             {enrolled
-              ? `${institutionName} has finalized your enrollment. Welcome to your next chapter.`
+              ? `${institutionName} has finalized your enrollment.`
               : `You've confirmed your intent to enroll at ${institutionName}. Work through your pre-arrival checklist below.`}
           </p>
           <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
@@ -537,7 +537,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
         onPaid={() => {
           setDepositCheckout(null)
           invalidate()
-          showToast('Deposit received — your spot is confirmed. 🎓', 'success')
+          showToast('Deposit received — your spot is confirmed.', 'success')
         }}
       />
     </div>

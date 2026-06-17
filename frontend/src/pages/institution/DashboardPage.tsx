@@ -122,7 +122,7 @@ export default function DashboardPage() {
       <div className="p-6">
         <Card pad={false} className="p-8 text-center border-dashed border-2 border-border bg-muted/30">
           <LayoutDashboard size={48} className="mx-auto text-muted-foreground mb-4" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">Welcome to UniPaith</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-2">No institution set up yet</h2>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             Create your first program so students can discover and apply to it.
           </p>

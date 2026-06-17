@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  CalendarPlus, Clock, ExternalLink, MapPin, Sparkles, Users, Video,
+  CalendarPlus, Check, Clock, ExternalLink, MapPin, Sparkles, Users, Video,
 } from 'lucide-react'
 import { getConnectEvents, type ConnectEvent } from '../../../api/connect'
 import { rsvpEvent, cancelRsvp, addEventToCalendar } from '../../../api/events'
@@ -192,8 +192,8 @@ function RsvpButton({ event, onRsvp, busy }: { event: ConnectEvent; onRsvp: () =
   if (st === 'rsvp') {
     // Gold = the earned RSVP-confirmed state (Spec 20 §10).
     return (
-      <button onClick={onRsvp} disabled={busy} className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground border border-primary hover:brightness-95 transition-colors disabled:opacity-60">
-        RSVP'd ✓
+      <button onClick={onRsvp} disabled={busy} className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground border border-primary hover:brightness-95 transition-colors disabled:opacity-60 inline-flex items-center gap-1">
+        <Check size={13} /> RSVP'd
       </button>
     )
   }

@@ -158,7 +158,6 @@ export default function CampaignsPage() {
     <div className="p-6 space-y-4">
       <InstitutionPageHeader
         title="Campaigns"
-        description="Plan, launch, and measure outreach across internal messaging and email."
         actions={
           <div className="flex items-center gap-2">
             <Button variant="tertiary" onClick={() => setShowAudienceMgr(true)} className="gap-2">

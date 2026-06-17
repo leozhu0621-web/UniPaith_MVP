@@ -73,7 +73,7 @@ function AdvisorRow({
             {match.title && <span className="text-xs text-muted-foreground">{match.title}</span>}
             {match.mutual && (
               <Badge variant="info">
-                <Heart size={11} className="-mt-px" /> Mutual interest ✓
+                <Heart size={11} className="-mt-px" /> Mutual interest
               </Badge>
             )}
             {match.applicant_named_advisor && !match.mutual && (

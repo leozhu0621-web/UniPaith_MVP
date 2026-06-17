@@ -109,13 +109,13 @@ describe('OnboardingPage wizard', () => {
     renderWizard()
 
     expect(await screen.findByText(/let's set up your space/i)).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /let's go/i }))
+    fireEvent.click(screen.getByRole('button', { name: /get started/i }))
 
-    expect(await screen.findByText('Where are you in your journey?')).toBeInTheDocument()
+    expect(await screen.findByText('What stage are you at?')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('radio', { name: /just exploring/i }))
 
     // Single-select auto-advances (reduced-motion → instant) and PATCHes.
-    expect(await screen.findByText('What fields pull you in?')).toBeInTheDocument()
+    expect(await screen.findByText('Which fields interest you?')).toBeInTheDocument()
     await waitFor(() => {
       expect(patchMock).toHaveBeenCalledWith(
         expect.objectContaining({ answers: expect.objectContaining({ stage: 'exploring' }) })
@@ -136,9 +136,9 @@ describe('OnboardingPage wizard', () => {
     patchMock.mockRejectedValue(Object.assign(new Error('404'), { response: { status: 404 } }))
     renderWizard()
 
-    fireEvent.click(await screen.findByRole('button', { name: /let's go/i }))
+    fireEvent.click(await screen.findByRole('button', { name: /get started/i }))
     fireEvent.click(await screen.findByRole('radio', { name: /just exploring/i }))
-    await screen.findByText('What fields pull you in?')
+    await screen.findByText('Which fields interest you?')
 
     const draft = mergeWithLocalDraft(null)
     expect(draft.answers?.stage).toBe('exploring')

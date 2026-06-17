@@ -195,7 +195,6 @@ export default function SegmentsPage() {
       <div className="space-y-4 p-6">
         <InstitutionPageHeader
           title="Audience Segments"
-          description="Build reusable audiences for campaigns, events, and follow-ups — no SQL required."
           actions={
             <Button variant="secondary" onClick={openCreate} className="flex items-center gap-2">
               <Plus size={16} /> New segment
