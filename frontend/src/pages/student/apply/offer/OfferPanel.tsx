@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Card from '../../../../components/ui/Card'
 import Button from '../../../../components/ui/Button'
 import Badge from '../../../../components/ui/Badge'
+import StatTile from '../../../../components/student/density/StatTile'
 import Textarea from '../../../../components/ui/Textarea'
 import { showToast } from '../../../../stores/toast-store'
 import { respondToOfferV2 } from '../../../../api/offers'
@@ -25,6 +26,13 @@ import RecordExternalOfferModal from './RecordExternalOfferModal'
 import AcceptOfferModal from './AcceptOfferModal'
 import DecisionComparison from './DecisionComparison'
 import { Star, ArrowRight, Inbox, Clock, FileText, AlertTriangle } from 'lucide-react'
+
+/** A key term whose value leads with a currency figure ($48,000, USD 40,000,
+ *  $20,000/yr) is a money figure → render it as a StatTile. Everything else
+ *  (Start term, Conditions, free text) stays a label:value row. */
+function isMoneyTerm(t: OfferKeyTerm): boolean {
+  return /^\s*(?:\$|[A-Z]{3}\s)\s*[\d,]/.test(t.value)
+}
 
 /** Derive key terms / next steps from the offer when the structured brief is
  * absent (flag off + uncached), so the panel always has content. */
@@ -264,27 +272,47 @@ export default function OfferPanel({ application }: { application: Application }
           </a>
         )}
 
-        {/* Key terms */}
-        {keyTerms.length > 0 && (
-          <div className="mb-5">
-            <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-foreground mb-2">
-              Key terms
-            </p>
-            <dl className="space-y-1.5">
-              {keyTerms.map((t, i) => (
-                <div key={i} className="flex gap-2 text-sm">
-                  <dt className="text-foreground min-w-[7.5rem] shrink-0">{t.label}</dt>
-                  <dd className="text-foreground">
-                    <span className="font-semibold">{t.value}</span>
-                    {t.explanation && (
-                      <span className="text-foreground"> — {t.explanation}</span>
-                    )}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        )}
+        {/* Key terms — money figures as a stat grid (display-only, inform-only:
+            never an accept/decline control), the rest as label:value rows */}
+        {keyTerms.length > 0 &&
+          (() => {
+            const moneyTerms = keyTerms.filter(isMoneyTerm)
+            const otherTerms = keyTerms.filter(t => !isMoneyTerm(t))
+            return (
+              <div className="mb-5">
+                <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-foreground mb-2">
+                  Key terms
+                </p>
+                {moneyTerms.length > 0 && (
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+                    {moneyTerms.map((t, i) => (
+                      <StatTile
+                        key={i}
+                        label={t.label}
+                        value={<span className="tabular-nums">{t.value}</span>}
+                        sub={t.explanation}
+                      />
+                    ))}
+                  </div>
+                )}
+                {otherTerms.length > 0 && (
+                  <dl className={`space-y-1.5 ${moneyTerms.length > 0 ? 'mt-3' : ''}`}>
+                    {otherTerms.map((t, i) => (
+                      <div key={i} className="flex gap-2 text-sm">
+                        <dt className="text-foreground min-w-[7.5rem] shrink-0">{t.label}</dt>
+                        <dd className="text-foreground">
+                          <span className="font-semibold">{t.value}</span>
+                          {t.explanation && (
+                            <span className="text-foreground"> — {t.explanation}</span>
+                          )}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+              </div>
+            )
+          })()}
 
         {/* Graduate funding package (spec 41 §2.3 / §7) */}
         {funding && (
@@ -301,17 +329,36 @@ export default function OfferPanel({ application }: { application: Application }
               Next steps
             </p>
             <ul className="space-y-1.5">
-              {nextSteps.map((s, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                  <Star size={13} className="text-primary mt-0.5 shrink-0" fill="currentColor" />
-                  <span>
-                    {s.action}
+              {nextSteps.map((s, i) => {
+                const stepTone = s.by_date ? deadlineTone(daysUntil(s.by_date)) : 'normal'
+                return (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-sm text-foreground flex-wrap"
+                  >
+                    <Star
+                      size={13}
+                      className="text-primary mt-0.5 shrink-0"
+                      fill="currentColor"
+                    />
+                    <span>{s.action}</span>
                     {s.by_date && (
-                      <span className="text-foreground"> by {formatTermDate(s.by_date)}</span>
+                      <Badge
+                        variant={
+                          stepTone === 'error'
+                            ? 'error'
+                            : stepTone === 'warning'
+                              ? 'warning'
+                              : 'neutral'
+                        }
+                      >
+                        <Clock size={11} />
+                        Due {formatTermDate(s.by_date)}
+                      </Badge>
                     )}
-                  </span>
-                </li>
-              ))}
+                  </li>
+                )
+              })}
             </ul>
           </div>
         )}

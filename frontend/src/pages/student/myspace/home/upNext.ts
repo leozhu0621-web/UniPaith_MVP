@@ -10,6 +10,8 @@ export type NextAction = {
   urgency: 'danger' | 'warning' | 'neutral'
   chip: string
   to: string
+  /** 0-100 readiness, shown as a bar instead of prose (drafts only). */
+  readinessPct?: number
 }
 
 export interface UpNextInputs {
@@ -64,10 +66,11 @@ export function buildUpNext({ calItems, offers, drafts, pendingClarifications }:
       key: `draft-${app.id}`,
       icon: PenLine,
       title: `Continue ${programLabel(app)}`,
-      sub: app.readiness_pct != null ? `${Math.round(app.readiness_pct)}% ready to submit` : 'In progress',
+      sub: app.readiness_pct != null ? 'Ready to submit' : 'In progress',
       urgency: 'neutral',
       chip: 'draft',
       to: `/s/applications/${app.id}`,
+      readinessPct: app.readiness_pct != null ? Math.round(app.readiness_pct) : undefined,
     })
   }
   if (pendingClarifications > 0) {

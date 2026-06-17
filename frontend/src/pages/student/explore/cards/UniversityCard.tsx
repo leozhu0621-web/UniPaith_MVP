@@ -2,9 +2,11 @@ import type { ComponentType } from 'react'
 import { Link } from 'react-router-dom'
 import {
   MapPin, Users, Building2, BookOpen, BellPlus, BellRing, ChevronRight, Sprout,
+  Trophy, DollarSign,
 } from 'lucide-react'
 import { classifyInstitution, sizeBucket, formatSetting, SIZE_OPTIONS } from '../shared/classifyInstitution'
 import { cardLinkClick, CARD_LINK_OVERLAY } from '../shared/cardLink'
+import Badge from '../../../../components/ui/Badge'
 
 interface UniversityData {
   id: string
@@ -57,6 +59,18 @@ export default function UniversityCard({ institution: inst, onClick, following, 
   const locationStr = `${inst.city ? inst.city + ', ' : ''}${inst.region ? inst.region + ' · ' : ''}${inst.country}`
   // Campus photo for the header banner — raster only (logos are SVG → skipped).
   const photo = inst.image_url && /\.(jpe?g|png|webp|avif)(\?|$)/i.test(inst.image_url) ? inst.image_url : null
+
+  // Stat strip (UX-QA Part 2) — pure data rendered as compact visuals, display
+  // only. Each field guards null so the strip shows only what's known.
+  const rank = inst.us_news_rank != null && inst.us_news_rank > 0 ? inst.us_news_rank : null
+  const acceptancePct =
+    inst.acceptance_rate != null && inst.acceptance_rate > 0
+      ? Math.round(inst.acceptance_rate * (inst.acceptance_rate <= 1 ? 100 : 1))
+      : null
+  const earnings =
+    inst.median_earnings != null && inst.median_earnings > 0 ? Math.round(inst.median_earnings) : null
+  const earningsLabel = earnings != null ? `$${(earnings / 1000).toFixed(0)}K median earnings` : null
+  const hasStats = rank != null || acceptancePct != null || earningsLabel != null
 
   return (
     // Stretched-link card (Ship D §4): the title <Link> overlays the whole
@@ -145,6 +159,32 @@ export default function UniversityCard({ institution: inst, onClick, following, 
           {(inst.school_count ?? 0) > 0 && <FactPill icon={Building2}>{inst.school_count} schools</FactPill>}
           {(inst.program_count ?? 0) > 0 && <FactPill icon={BookOpen}>{inst.program_count} programs</FactPill>}
         </div>
+
+        {/* Stat strip — rank · acceptance · earnings, all display-only (UX-QA
+            Part 2). The rank pill takes the earned-gold tint only at #1. */}
+        {hasStats && (
+          <div className="flex flex-wrap items-center gap-1.5 mb-3">
+            {rank != null && (
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-md border ${
+                  rank === 1
+                    ? 'bg-primary/15 text-foreground border-primary/40'
+                    : 'bg-muted text-foreground border-border/60'
+                }`}
+                title="US News rank"
+              >
+                <Trophy size={11} className={rank === 1 ? 'text-primary' : 'text-muted-foreground'} />
+                #{rank}
+              </span>
+            )}
+            {acceptancePct != null && (
+              <span title="Acceptance rate" className="inline-flex">
+                <Badge variant="info">{acceptancePct}% accepted</Badge>
+              </span>
+            )}
+            {earningsLabel && <FactPill icon={DollarSign}>{earningsLabel}</FactPill>}
+          </div>
+        )}
 
         {inst.description_text && (
           <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-2">

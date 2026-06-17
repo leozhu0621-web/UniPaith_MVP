@@ -22,6 +22,17 @@ describe('buildUpNext', () => {
     const out = buildUpNext(inputs)
     expect(out.map(a => a.chip)).toEqual(['overdue', 'offer in', 'slots held', 'draft', 'quick win'])
     expect(out.length).toBeLessThanOrEqual(5)
+    // Draft readiness rides as a number (rendered as a bar), not baked into prose.
+    const draft = out.find(a => a.chip === 'draft')!
+    expect(draft.readinessPct).toBe(80)
+    expect(draft.sub).toBe('Ready to submit')
+  })
+
+  it('leaves readinessPct undefined when a draft has no readiness number', () => {
+    const out = buildUpNext({ ...base, drafts: [{ id: 'd', status: 'draft', program: {} }] as any })
+    const draft = out.find(a => a.chip === 'draft')!
+    expect(draft.readinessPct).toBeUndefined()
+    expect(draft.sub).toBe('In progress')
   })
 
   it('returns [] when nothing is pending', () => {
