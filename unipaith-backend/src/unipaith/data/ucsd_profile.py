@@ -25,6 +25,11 @@ replaces 96% ``program_description`` template stubs with field-specific descript
 maps CIP rollup titles to real UCSD degree names and owning departments, and
 stamps every node at ``STANDARD_VERSION`` 2.
 
+Description repair (2026-06-17, ucsdprof5): replaces all name-prefixed
+classification stubs with field-specific clauses from
+``ucsd_field_descriptions.py`` (gold MIT/JHU pattern); 0% name-prefixed
+descriptions.
+
 Honest caveats stamped into ``_standard.omitted``: the University of California is test-free
 (no SAT/ACT percentiles to report). UCSD does not publish a single university-wide placement
 rate or uniform top-employer-industries list, so those institution outcome fields are omitted.
@@ -50,14 +55,20 @@ from unipaith.data.ucsd_catalog_maps import (
     SLUG_PROGRAM_NAMES,
     clean_cip_field,
 )
+from unipaith.data.ucsd_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
 from unipaith.data.ucsd_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.ucsd_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of California-San Diego"
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-17"
 
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is an undergraduate .+ at UC San Diego's .+\.$"
+    r"|^.+ is (a graduate degree|a doctoral program|a graduate certificate|"
+    r"a professional degree) at UC San Diego's ",
+)
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
     r"master's|bachelor's|PhD|MBA|JD|MD|bachelors|masters|phd) program offered through ",
@@ -395,34 +406,72 @@ def _ucsd_program_name(field_name: str, degree_type: str, school: str) -> str:
     return field
 
 
-def _ucsd_description(
-    program_name: str,
-    degree_type: str,
-    school: str,
-    *,
-    delivery_format: str = "on_campus",
-) -> str:
-    """Field-specific description — Rice-style, never the degree-type template stub."""
-    role = {
-        "bachelors": "an undergraduate major",
-        "masters": "a graduate degree",
-        "phd": "a doctoral program",
-        "certificate": "a graduate certificate",
-        "professional": "a professional degree",
-    }.get(degree_type, "a degree program")
+def _field_from_program_name(name: str) -> str:
+    if name in (
+        "Doctor of Medicine",
+        "Doctor of Pharmacy",
+        "Master of Business Administration",
+        "Master of Public Policy",
+        "Master of Public Health",
+    ):
+        return name
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Master of Science in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+    ):
+        if name.startswith(prefix):
+            return name[len(prefix) :].strip()
+    return clean_cip_field(name)
+
+
+def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
+    slug = spec.get("slug", "")
+    if slug in SLUG_DESCRIPTIONS:
+        return ""  # slug override handles description
+    if slug in SLUG_PROGRAM_NAMES:
+        return _field_from_program_name(SLUG_PROGRAM_NAMES[slug])
+    if raw_field:
+        return clean_cip_field(raw_field)
+    fn = spec.get("program_name", "")
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Master of Science in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+    ):
+        if fn.startswith(prefix):
+            return fn[len(prefix) :].strip()
+    return clean_cip_field(fn)
+
+
+def _ucsd_description(spec: dict, *, field: str) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    if slug in SLUG_DESCRIPTIONS:
+        clause = SLUG_DESCRIPTIONS[slug]
+    else:
+        clause = FIELD_DESCRIPTIONS.get(field)
+        if not clause:
+            raise ValueError(
+                f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
+            )
+    fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
-    if delivery_format == "online":
+    if fmt == "online":
         delivery = " Delivered online."
-    elif delivery_format == "hybrid":
+    elif fmt == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{program_name} is {role} at UC San Diego's {school}.{delivery}"
+    return f"{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     slug = spec["slug"]
     school = spec["school"]
     dtype = spec["degree_type"]
-    fmt = spec.get("delivery_format", "on_campus")
     raw_field = field_name or spec.get("_field_name") or spec.get("program_name", "")
 
     if slug in SLUG_PROGRAM_NAMES:
@@ -435,9 +484,8 @@ def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     elif not spec.get("department") or spec["department"] == raw_field:
         spec["department"] = _department_for(raw_field, school)
 
-    spec["description"] = _ucsd_description(
-        spec["program_name"], dtype, school, delivery_format=fmt,
-    )
+    field = _field_from_spec(spec, clean_cip_field(raw_field) if raw_field else None)
+    spec["description"] = _ucsd_description(spec, field=field)
 
 
 def _build_catalog() -> list[dict]:
@@ -472,6 +520,22 @@ for _p in PROGRAMS:
         _normalize_program(_p, _p.get("program_name"))
 
 _catalog_errors = validate_catalog(PROGRAMS)
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
 _new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
 _cred_prefix = sum(1 for p in PROGRAMS if _CRED_PREFIX_RE.match(p.get("program_name") or ""))
