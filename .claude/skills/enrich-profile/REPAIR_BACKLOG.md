@@ -7,36 +7,37 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-17 (grader run 27). **NOTHING in-scope merged since run 26 — the enricher shipped NO
-new enrichment PR this interval.** `origin/main` HEAD is the run-26 grader PR #664 (`a59ce2e`); the last
-profile PR remains Rice #663 (`4ef56f7`), already graded at run 26. So the WHOLE fleet's data is
-byte-identical to run 26 — re-verified live this run, not assumed. **No new problem class is possible from
-an enricher that did not run.** Re-confirmed live via direct reads this run: the FIVE CRITICAL breaches ALL
-PERSIST unchanged — Northwestern CIP-rollup synthesized review ("Architecture and Related Services, Other
-within Weinberg" + a U.S. News #7 institution-ranking source STILL LIVE); Stanford "Sibley School" ×2
-(aerospace BA + Graduate Certificate) + "Freeman Spogli" on Systems-Science + Public-Relations (2
-mismatched; the Political-Science FSI is the passing control) STILL LIVE; Duke copy-paste Pratt-boilerplate
-synthesized reviews (Biomedical-Eng + Civil-Eng share the identical "rigorous engineering degree at a
-selective private R1 university…within Pratt" summary) STILL LIVE; Boston U credential-name departments
-("Bachelor Of Science In Hospitality Administration", "Mph In Health Equity", "Two Year Master Of Laws Llm
-In American Law") STILL LIVE; Purdue cross-institution-copy descriptions STILL LIVE (owner-map scan this
-run: 36/310 foreign-sig rows). NYU still the ONLY dead feed (`posts=0`); fleet institution-level scan
-otherwise clean (all 28 institutions = 5 campus photos + ownership_type + a live feed). 28 institutions, no
-sprawl; gold MIT n=65 control. **NO NEW PROBLEM CLASS this run → NO rule added (anti-churn / no-edit-
-without-evidence). Every live defect recurs a class the rulebook already names (miss #2/#8/#9). The
-standing concern is enricher BEHAVIOR — no enrichment shipped this interval, and the CRITICAL top
-(fabricated data on student-facing pages) has gone unrepaired for 13–19 grading intervals — flagged for
-human review, not a rulebook gap.**_
+_Last graded: 2026-06-17 (grader run 28). **NOTHING in-scope merged since run 27 — the enricher shipped NO
+new enrichment PR for the SECOND consecutive interval.** `origin/main` HEAD is the run-27 grader PR #665
+(`9207da5`); the last profile PR remains Rice #663 (`4ef56f7`), already graded at run 26. So the WHOLE
+fleet's data is byte-identical to runs 26–27 — re-verified live this run, not assumed. **No new problem
+class is possible from an enricher that did not run.** Re-confirmed live via direct reads this run: the FIVE
+CRITICAL breaches ALL PERSIST unchanged — Northwestern CIP-rollup synthesized review ("Architecture and
+Related Services, Other within Weinberg" + a U.S. News institution-ranking source STILL LIVE); Stanford
+"Sibley School" ×2 (aerospace BA + Graduate Certificate) + "Freeman Spogli" on Systems-Science +
+Public-Relations (2 mismatched; the Political-Science FSI is the passing control) STILL LIVE; Duke
+copy-paste Pratt-boilerplate synthesized reviews (Biomedical-Eng + Civil-Eng + Environmental-Eng + Mechanical
++ IDEAS share the identical "rigorous engineering degree at a selective private R1 university…within Pratt"
+summary, field swapped) STILL LIVE; Boston U credential-name departments ("Bachelor Of Science In
+Hospitality Administration", "Doctor Of Dental Medicine", "Mph In Health Equity", "Two Year Master Of Laws
+Llm In American Law") STILL LIVE; Purdue cross-institution-copy descriptions STILL LIVE (owner-map scan this
+run: 52/310 foreign-sig rows). NYU still the ONLY dead feed (`posts=0`); fleet institution-level scan
+otherwise clean (all 28 institutions = ≥4 campus photos + ownership_type + a live feed). 28 institutions, no
+sprawl; gold MIT n=65 control. The 18 open PRs are all stale pre-restructure drafts (newest #617 dated
+2026-06-16), superseded by later merged work — none is a fresh enrichment. **NO NEW PROBLEM CLASS this run →
+NO rule added (anti-churn / no-edit-without-evidence). Every live defect recurs a class the rulebook already
+names (miss #2/#8/#9). The standing concern is enricher BEHAVIOR — no enrichment shipped for TWO straight
+intervals, and the CRITICAL top (fabricated data on student-facing pages) has gone unrepaired for 14–20
+grading intervals — flagged for human review, not a rulebook gap.**_
 
-**NO NEW CLASS THIS RUN — the enricher merged nothing, so the fleet is byte-identical to run 26.** This run
-is a pure re-verification: every live defect was confirmed by direct API reads (no trusting the prior
-grade), every one recurs a documented class, and the institution-level fleet remains clean (5 photos +
-ownership + live feed everywhere except NYU). The single newest concern is behavioral, not a rulebook gap:
-**no enrichment PR landed this interval at all**, and the gravest defect class — fabricated data live on
-student-facing pages (Northwestern + Duke synthesized reviews, Stanford fabricated units, Purdue
-cross-institution-copy descriptions) — keeps persisting while the enricher, when it does run, ships
-single-dimension cosmetic passes on easier HIGH catalogs. The grader cannot fix data; flagged for human
-review.
+**NO NEW CLASS THIS RUN — the enricher merged nothing for the SECOND interval running, so the fleet is
+byte-identical to runs 26–27.** This run is a pure re-verification: every live defect was confirmed by
+direct API reads (no trusting the prior grade), every one recurs a documented class, and the
+institution-level fleet remains clean (≥4 photos + ownership + live feed everywhere except NYU). The single
+newest concern is behavioral, not a rulebook gap: **no enrichment PR has landed for two intervals**, and the
+gravest defect class — fabricated data live on student-facing pages (Northwestern + Duke synthesized
+reviews, Stanford fabricated units, Purdue cross-institution-copy descriptions) — keeps persisting while the
+repair backlog makes no forward progress. The grader cannot fix data; flagged for human review.
 
 **Carried from run 25 (Purdue is still CRITICAL — nothing merged for it). #661's "field-first" Purdue
 descriptions were built by COPYING peer (earlier-enriched) catalogs and find-replacing only the campus
@@ -162,7 +163,7 @@ true generic clause; THEN de-roll-up the names + their departments, strip the pr
 
 _First seen 2026-06-16 (run 13). Run 14: PARTIALLY repaired (College of Chemistry cleared) but the
 Sibley School + FSI sibling fabrications remain LIVE — a no-fabrication breach is not cleared until the
-WHOLE class is. Re-confirmed live runs 14→27 (run 27: Sibley ×2 + Freeman-Spogli on Systems-Science +
+WHOLE class is. Re-confirmed live runs 14→28 (run 28: Sibley ×2 + Freeman-Spogli on Systems-Science +
 Public-Relations; Political-Science FSI control passes). Fix the remaining fabricated units before any new depth
 pass or any new university._
 
@@ -177,10 +178,10 @@ sources" disclaimer). A live no-fabrication breach outranks mere incompleteness.
 synthesized reviews and either re-gather genuine program-specific coverage or omit-with-reason** — then
 strip the ~97% name-prefix-doubling and fill real per-program deep content.
 
-_First seen 2026-06-16 (run 9). Still unrepaired across runs 10–27 (re-confirmed live run 27: the
+_First seen 2026-06-16 (run 9). Still unrepaired across runs 10–28 (re-confirmed live run 28: the
 BA-in-Architecture-Studies row's review summary still embeds "Architecture and Related Services, Other
-within Weinberg" + a U.S. News #7 institution-ranking source). Now persisted NINETEEN grading intervals
-(9→27) with no repair PR. Fix the fabricated reviews before any new depth pass._
+within Weinberg" + a U.S. News institution-ranking source). Now persisted TWENTY grading intervals
+(9→28) with no repair PR. Fix the fabricated reviews before any new depth pass._
 
 ## CRITICAL — Duke University (fabricated-by-synthesis reviews shipped LIVE; unrepaired since run 10)
 
@@ -192,10 +193,10 @@ run-9 fabrication-by-synthesis tell (SKILL.md miss #8).
 **Repair: REMOVE/re-gather those synthesized reviews per-program (or omit-with-reason)**, then strip
 the 66% name-prefix-doubling and fill real per-program deep content.
 
-_First seen 2026-06-16 (run 10). Unchanged since (nothing merged; byte-identical to run 26, now
-persisted 10→27 — re-confirmed live run 27: Biomedical-Eng & Civil-Eng rows share the identical
-"rigorous engineering degree at a selective private R1 university…within Pratt" summary, field swapped).
-Fix the synthesized reviews before any new depth pass._
+_First seen 2026-06-16 (run 10). Unchanged since (nothing merged; byte-identical to runs 26–27, now
+persisted 10→28 — re-confirmed live run 28: Biomedical-Eng + Civil-Eng + Environmental-Eng + Mechanical +
+IDEAS rows share the identical "rigorous engineering degree at a selective private R1 university…within Pratt"
+summary, field swapped). Fix the synthesized reviews before any new depth pass._
 
 ## CRITICAL — Purdue University-Main Campus (cross-institution-COPY descriptions shipped LIVE by #661; freshest breach)
 
@@ -218,8 +219,8 @@ dept "Department of Area Studies") and empty deep content.
 imported geography / peer unit / re-labeled landmark), de-roll-up the 11% rollup names + their depts, then
 fill deep content. A description pass that INVENTS false specifics is worse than the gloss it replaced.**
 
-_First seen 2026-06-17 (run 25) — a LIVE no-fabrication breach shipped by #661; re-confirmed live run 27
-(owner-map scan: 36/310 foreign-sig rows — nothing merged for Purdue since). The same
+_First seen 2026-06-17 (run 25) — a LIVE no-fabrication breach shipped by #661; re-confirmed live run 28
+(owner-map scan: 52/310 foreign-sig rows — nothing merged for Purdue since). The same
 cross-institution-copy tell is live (smaller, ~2%) on Cornell #615 (Berkeley's Lick Observatory + Haas,
 JHU's Hopkins on Cornell rows). Contrast Rice #663 (run 26), which did the SAME description pass the RIGHT
 way — researched from Rice's own pages, 0/159 foreign-sig — proving this is fixable. Fix the fabricated
