@@ -7,67 +7,63 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-17 (grader run 22). **NO new profile PR merged since run 21's grader** (PR #655 is
-`origin/main` HEAD; the open PRs #515/#503/#499/#489/#420/#403 are all stale pre-restructure Harvard/CMU/
-Penn drafts, superseded). The one live-state CHECK this run: **Cornell #654's prefix-strip STILL has NOT
-landed live** — its Deploy Backend has been stuck `in_progress` for >1 day (Berkeley #652 + others
-deployed fine, so the pipeline is NOT globally blocked — an isolated HUNG deploy on commit `65b4d698`).
-Cornell is byte-identical to run 21: **100% prefix-doubling, 34% rollup names** (the strip is NOT live;
-do NOT certify it off the merge). Re-confirmed live this run: Northwestern CIP-rollup synthesized reviews
-STILL LIVE (6 rollup-in-summary in first 160 rows — "Architecture and Related Services, Other",
-"Business/Commerce, General", "Engineering, Other"); Stanford "Sibley School" ×2 + "Freeman Spogli" on
-Systems-Science + Public-Relations (2 mismatched; Political-Science FSI is the passing control) STILL
-LIVE; Duke synthesized Pratt/boilerplate reviews STILL LIVE; Boston U structure unchanged (63%
-classification + credential-name depts). NYU still the ONLY dead feed (`posts=0`). 28 institutions, no
-sprawl; gold MIT n=65. **NO NEW PROBLEM CLASS this run — every live defect recurs a class the rulebook
-already names; no rule changed (anti-churn).**_
+_Last graded: 2026-06-17 (grader run 23). **ONE in-scope profile PR merged since run 22: #657 JHU
+prefix-strip — and Cornell #654's run-22 HUNG deploy RECOVERED** (now `completed success` on `65b4d69`).
+Both prefix-strips are now LIVE (verified on `api.unipaith.co`): **JHU prefix 100%→0%** (n=246: 0% dup, 0%
+prefix, 0% generic-credential, descriptions field-specific + TRUE), **Cornell prefix 100%→0%** (n=274: 0%
+dup, 0% prefix; names UNTOUCHED — 33% rollup + 56% generic-credential). Re-confirmed live this run: the
+four CRITICAL breaches ALL PERSIST — Northwestern CIP-rollup synthesized reviews ("Architecture and
+Related Services, Other" in-summary STILL LIVE); Stanford "Sibley School" ×2 (aerospace) + "Freeman
+Spogli" on Systems-Science + Public-Relations (2 mismatched; the Political-Science FSI is the passing
+control) STILL LIVE; Duke 6 Pratt-boilerplate synthesized reviews STILL LIVE; Boston U credential-name
+departments ("Bachelor Of Science In Hospitality Administration"/"Doctor of Dental Medicine"/"DSc"/"Ms"/
+"Pibs") STILL LIVE. NYU still the ONLY dead feed (`posts=0`). 28 institutions, no sprawl; gold MIT n=65.
+**NO NEW PROBLEM CLASS this run — every live defect recurs a class the rulebook already names; no rule
+changed (anti-churn).**_
 
-**BACKLOG CORRECTION (run 22): JHU is at 100% prefix-doubling, NOT "closest to clean" as the prior row 14
-claimed.** JHU was never measured for prefix before (it got #610's field-specific descriptions but never
-a prefix-strip pass). Live n=246: **100% prefix-doubling** ("Bachelor of Arts in Anthropology: Homewood
-anthropology combines archaeological fieldwork…"), 1% rollup names (3 "Area Studies"), 0% duplicate,
-0% generic-credential form. Same shape as CMU (clean structure + true descriptions, but 100% prefix). JHU
-moves alongside CMU — it needs the prefix stripped, NOT just deep content. (Prefix-doubling is miss #9, an
-already-named class — this is a re-rank, not a new rule; cf. the run-16 Princeton over-grade lesson: do
-not call a catalog "clean" without measuring every API-visible dimension.)
+**#657 JHU IS THE FOURTH STRAIGHT SINGLE-DIMENSION PREFIX-STRIP PASS (after #654 Cornell, #652 Berkeley,
+#643 Princeton) — BUT for JHU the prefix was the LAST structural defect, so JHU is now NEAR-CLEAN.** Live
+n=246: **prefix 100%→0%** (verified — "Bachelor of Arts in Anthropology" || "Homewood anthropology
+combines archaeological fieldwork…" no longer prefixed), 0% duplicate, 0% generic-credential, descriptions
+field-specific + TRUE (Homewood/Krieger units, via #610). Only residual: **3 "Area Studies" rollup rows**
+(BA + Graduate Certificate + MS of one CIP field — a name-collision across award levels on that one
+field) + deep content (`class_profile`/`faculty`/`tracks` empty) + GATHERED reviews. JHU now joins
+UChicago + Caltech as the cleanest non-MIT structure tier.
 
-**#654 IS THE THIRD STRAIGHT SINGLE-DIMENSION PREFIX-STRIP PASS (after #652 Berkeley, #643 Princeton) —
-and its deploy is STUCK, so even the ONE dimension it targeted is NOT live. Cornell stays HIGH.** Live
-n=274 (#654's Deploy Backend hung `in_progress`, prefix NOT stripped): **0% duplicate names, 0%
-classification descriptions** (descriptions are field-specific AND TRUE — Dyson School AACSB, CALS
-land-grant extension, real Cornell units, via #615), still **100% prefix-doubling** (#654 has NOT cleared
-this — its deploy is hung), and the names are UNTOUCHED: **34% genuine CIP-rollup names + 34% rollup
-departments + 56% generic "Bachelor's in {field}" credential form** (only ~44% carry a real
-designation). Examples STILL LIVE: "Bachelor's in Agriculture, General" (", General"),
-"Bachelor's in Biomedical/Medical Engineering" (slash), "Bachelor's in Area Studies",
-"Bachelor's in Architectural History, Criticism, and Conservation" (federal multi-clause), each with the
-rollup echoed into `department`. So #654 (like #652 Berkeley) targets ONE dimension (prefix) and leaves
-the rollup-NAME + generic-credential-form + rollup-department dimensions untouched — AND its deploy never
-landed, so Cornell is wholly unchanged. NOT a clear.
+**Cornell #654's run-22 HUNG deploy RECOVERED — its prefix-strip is now LIVE (the run-22 infra flag is
+RESOLVED), but it stays HIGH on its untouched NAMES.** Cornell `65b4d69` Deploy Backend now reads
+`completed success`; live n=274: **prefix 100%→0%** (verified — "Applied Economics and Management" ||
+"Applied economics and management — the Dyson School's AACSB-accredited…" no longer prefixed), 0%
+duplicate, 0% classification (descriptions field-specific + TRUE via #615). BUT names UNTOUCHED:
+**33% genuine CIP-rollup names + 33% rollup departments + 56% generic "Bachelor's in {field}" credential
+form** ("Bachelor's in Agriculture, General"; "…Biomedical/Medical Engineering" slash; "…Area Studies";
+"…Architectural History, Criticism, and Conservation" federal multi-clause). So #654 (like JHU #657,
+Berkeley #652) cleared ONE dimension — descriptions + prefix done — and leaves the rollup-NAME +
+generic-credential-form + rollup-department dimensions for a follow-up. NOT a clear.
 
-**Carried from run 20 (unchanged — nothing else merged): #652 STRIPPED BERKELEY'S DESCRIPTION PREFIX
-(100%→0%) — also a SINGLE-DIMENSION PASS.** Berkeley live n=269: 0% prefix, 0% classification (real
-units — CED, Lick Observatory, Keck), BUT **38% rollup names + 39% rollup departments + 54% generic
-"Bachelor's in {field}"** remain. Both Berkeley (#652) and Cornell (#654) need only the NAMES
-de-rolled-up now (descriptions + prefix done).
+**Carried (unchanged — only #657 merged): #652 STRIPPED BERKELEY'S PREFIX (100%→0%).** Berkeley live
+n=269: 0% prefix, 0% classification (real units — CED, Lick Observatory, Keck), BUT **38% rollup names +
+39% rollup departments + 54% generic "Bachelor's in {field}"** remain. Berkeley + Cornell now need only
+the NAMES de-rolled-up (descriptions + prefix done).
 
-**Carried (unchanged — nothing else merged): #650 cleanly de-fabricated UChicago (the SECOND
-multi-dimensional clear after Caltech #648 — clean designations + real depts + TRUE field-specific
-descriptions + 0% prefix; remaining: 2 "Area Studies" names + deep content + GATHERED reviews); the
-#646 8 catalogs stay HIGH (fabricated: duplicate identical names across award levels + classification +
-100% prefix).** All four CRITICAL breaches PERSIST live (Boston U structure; Stanford fabricated units;
-Northwestern + Duke synthesized reviews).
+**Carried (unchanged): #650 cleanly de-fabricated UChicago (multi-dimensional clear: clean designations +
+real depts + TRUE field-specific descriptions + 0% prefix; remaining: 2 "Area Studies" names + deep
+content + GATHERED reviews); #648 de-stubbed Caltech cleanly; the #646 8 catalogs stay HIGH (fabricated:
+duplicate identical names across award levels + classification + 100% prefix).** All four CRITICAL
+breaches PERSIST live (Boston U structure; Stanford fabricated units; Northwestern + Duke synthesized
+reviews).
 
-**NO new rulebook gap this run.** #654 is a partial repair of a known HIGH catalog (a recurrence of the
-single-dimension-pass class, miss #8 — already extensively documented; the THIRD straight prefix-only
-pass after #652 Berkeley and #643 Princeton), not a NEW problem class. Every live defect
-(Northwestern/Stanford/Duke fabrications, the #646 catalogs, Yale 69% prefix, Rice 100% prefix + 81%
-classification, Purdue "Area Studies" rollup + classification, Cornell's + Berkeley's surviving rollup
-names) recurs a class the rulebook already names (miss #2/#8/#9). The standing concern is enricher
-BEHAVIOR — it keeps shipping single-dimension passes (#654 prefix-only, after #652 + #643 prefix-only)
-and works HIGH catalogs while the CRITICAL top (Boston U, Stanford, Northwestern, Duke) stays
-unrepaired — which is repair-first ordering + finish-all-dimensions, flagged for human review, not a
-rulebook gap. More rule text cannot fix ordering.
+**NO new rulebook gap this run.** #657 JHU is a single-dimension prefix-strip pass on a known HIGH
+catalog (miss #8 — already extensively documented; the FOURTH straight prefix-only pass after #654
+Cornell, #652 Berkeley, #643 Princeton), not a NEW problem class — though for JHU the prefix was the last
+structural defect, so it lands JHU near-clean. Cornell's deploy recovery resolves the run-22 hung-deploy
+infra flag (an INFRA matter, not a rulebook matter). Every live defect (Northwestern/Stanford/Duke
+fabrications, the #646 catalogs, Yale 69% prefix, Rice 100% prefix + 81% classification, Purdue "Area
+Studies" rollup + classification, Cornell's + Berkeley's surviving rollup names) recurs a class the
+rulebook already names (miss #2/#8/#9). The standing concern is enricher BEHAVIOR — it keeps shipping
+single-dimension passes (now four prefix-only in a row) and works HIGH catalogs while the CRITICAL top
+(Boston U, Stanford, Northwestern, Duke) stays unrepaired — repair-first ordering + finish-all-dimensions,
+flagged for human review, not a rulebook gap. More rule text cannot fix ordering.
 
 **METHODOLOGY (carried): `_standard` is NOT exposed by the public API** — gold MIT shows `NONE` on
 every program. Do NOT use `_standard` visibility as a live grading signal. Rank by API-visible signals:
@@ -85,8 +81,10 @@ and (e) deep-field emptiness (`/programs/{id}`).
 A catalog is REAL only when real names (no rollup tell, no duplicate-across-levels) + real departments
 (not the rollup echoed back) + collapsed splits + field-specific AND VERIFIED-TRUE descriptions (no
 name-prefix, grammatical, no invented/foreign units) + GATHERED program-specific reviews + researched
-deep content ALL hold together. Beyond gold MIT, Caltech (#648) and JHU are closest on structure;
-Princeton has true descriptions + 0% prefix but 9 rollup names; CMU is close but 100% prefix-doubled.
+deep content ALL hold together. Beyond gold MIT, Caltech (#648), UChicago (#650) and **JHU (#657 — prefix
+now stripped)** are closest on structure (clean names + depts + true descriptions + 0% prefix; each needs
+only deep content + GATHERED reviews); Princeton has true descriptions + 0% prefix but 9 rollup names;
+CMU is close but STILL 100% prefix-doubled (never got a prefix-strip pass).
 
 ---
 
@@ -195,7 +193,7 @@ researched deep content.** Worst-first:
 |---|---|---|---|---|---|
 | 1 | Columbia University | 263 | **34%** | field-specific (good, #628) but **90% name-prefixed**, rollup names echoed in dept | **de-roll-up NAMES + depts**, strip prefix, fix run-on bodies, content |
 | 2 | Harvard University | 343 | **34%** | field-specific (good, #618) but 82% name-prefixed | **de-roll-up tail NAMES + depts**, strip prefix, content |
-| 3 | Cornell University | 274 | **34%** | field-specific + TRUE (good, #615 — Dyson AACSB, CALS land-grant) but **STILL 100% name-prefixed** (#654 merged to strip this but its Deploy Backend is HUNG `in_progress` >1 day — the strip never landed live); names UNTOUCHED: **34% rollup names + 34% rollup depts + 56% generic "Bachelor's in {field}"** | **re-run / unstick #654's deploy so the prefix-strip lands; then de-roll-up the rollup NAMES + their depts AND switch the generic "Bachelor's in" to Cornell's real "Bachelor of Science/Arts in" designation**, then deep content — descriptions done (#615) |
+| 3 | Cornell University | 274 | **33%** | field-specific + TRUE (good, #615 — Dyson AACSB, CALS land-grant) + **0% prefix (good — #654's hung deploy RECOVERED, strip now LIVE)**; names UNTOUCHED: **33% rollup names + 33% rollup depts + 56% generic "Bachelor's in {field}"** | **de-roll-up the rollup NAMES + their depts AND switch the generic "Bachelor's in" to Cornell's real "Bachelor of Science/Arts in" designation**, then deep content — descriptions + prefix done (#615/#654) |
 | 4 | University of Pennsylvania | 250 | **26%** | field-specific (good, #614) but **100% name-prefixed** | **NAMES + depts**, strip prefix, content; 3 BA rows say "Graduate …" |
 | 5 | University of California-Berkeley | 269 | **38%** | field-specific + grammatical + **0% prefix** (good, #652) — but names UNTOUCHED: **38% rollup names + 39% rollup depts + 54% generic "Bachelor's in {field}"** (only 28% real designation) | **de-roll-up the rollup NAMES + their depts AND switch the generic "Bachelor's in" to Berkeley's real "Bachelor of Science/Arts in" designation**, then deep content — descriptions + prefix done (#613/#652) |
 | 6 | Purdue University-Main Campus | 310 | 11% | pure classification ("…is an undergraduate major at Purdue's College…") | descriptions + content — names mostly real |
@@ -206,20 +204,20 @@ researched deep content.** Worst-first:
 | 11 | Carnegie Mellon University | 180 | 1% | field-specific (good, #612) but **100% name-prefixed** | strip prefix + **deep content + GATHERED reviews** — names + depts + descriptions done |
 | 12 | California Institute of Technology | 90 | 1% | de-stubbed (good, #648) — clean structure, 0% prefix, 0% classification, but **thin generic gloss** ("BS in {field} — {one-line restatement}") | richer field-specific descriptions + **deep content + GATHERED reviews** — names + depts done |
 | 13 | University of Chicago | 103 | ~3% (Area Studies ×2) | field-specific + TRUE + **0% prefix** (good, #650) — clean designations + depts, real units | **de-roll-up the 2 "Area Studies" names** → real fields, then **deep content + GATHERED reviews** (1 row already has gathered Cinema reviews) |
-| 14 | Johns Hopkins University | 246 | 1% (3 "Area Studies") | field-specific + TRUE (good, #610 — Homewood/Krieger units) but **100% name-prefixed** (re-measured run 22 — never had a prefix-strip pass; same shape as CMU) | **strip the 100% name-prefix** + de-roll-up the 3 "Area Studies" names + **deep content + GATHERED reviews** — descriptions + depts done |
+| 14 | Johns Hopkins University | 246 | 1% (3 "Area Studies") | field-specific + TRUE (good, #610 — Homewood/Krieger units) + **0% prefix (good — #657 stripped it 100%→0%)** | **de-roll-up the 3 "Area Studies" names** (BA + Cert + MS of one CIP field, a name-collision across levels) + **deep content + GATHERED reviews** — names + depts + descriptions + prefix done; now cleanest non-MIT tier with UChicago/Caltech |
 | 15 | Princeton University | 41 | **22%** (9/41) | field-specific + TRUE + **0% prefix** (good, #641+#643) — only **9 rollup names echoed in dept** left | **de-roll-up the 9 CIP-rollup NAMES + their depts** ("…Languages, Literatures, and Linguistics", "Area Studies", "Religion/Religious Studies", "Multi/Interdisciplinary Studies, Other" → "Classics"/"German"/"Religion"/etc.), then GATHERED reviews + deep content |
 
-_First seen 2026-06-14 (run 1). Run 22: **Cornell #654 (the THIRD straight SINGLE-DIMENSION prefix-strip
-pass, after #652 Berkeley + #643 Princeton) STILL has NOT landed** — its Deploy Backend has been hung
-`in_progress` >1 day, so Cornell is byte-identical to run 21 (100% prefix, 34% rollup names). **JHU
-re-measured at 100% prefix** (was wrongly listed "closest to clean" — it never had a prefix-strip pass)
-and moved to the prefix-needed tier with CMU. No other row changed (nothing else merged). The remaining
-dual-defect rollup catalogs (Columbia/Harvard/Penn) need the names de-rolled-up + prefix stripped;
-Berkeley + Cornell need their names de-rolled-up (Cornell's prefix-strip also still needs to actually
-deploy); the pure-classification catalogs (Purdue/UCSD/UW-Madison/Rice) need field-specific descriptions;
-CMU + JHU are clean structure + true descriptions but 100% name-prefixed (need the prefix stripped +
-deep content + GATHERED reviews); Caltech/UChicago/Princeton need deep content + GATHERED (not
-synthesized) reviews._
+_First seen 2026-06-14 (run 1). Run 23: **JHU #657 stripped JHU's prefix 100%→0%** (the FOURTH straight
+single-dimension prefix-strip pass after #654 Cornell, #652 Berkeley, #643 Princeton — but for JHU the
+prefix was the last structural defect, so JHU is now near-clean: only the 3 "Area Studies" names + deep
+content + GATHERED reviews remain). **Cornell #654's run-22 hung deploy RECOVERED** (now
+`completed success`), so Cornell's prefix is now 0% live too — leaving Cornell on its untouched 33% rollup
+names. No other row changed (only #657 merged). The remaining dual-defect rollup catalogs
+(Columbia/Harvard/Penn) need the names de-rolled-up + prefix stripped; Berkeley + Cornell need their
+names de-rolled-up (descriptions + prefix done); the pure-classification catalogs (Purdue/UCSD/UW-Madison/
+Rice) need field-specific descriptions; CMU is clean structure + true descriptions but STILL 100%
+name-prefixed (needs the prefix stripped + deep content + GATHERED reviews); Caltech/UChicago/JHU/
+Princeton need deep content + GATHERED (not synthesized) reviews._
 
 ## MEDIUM — (none)
 
@@ -244,12 +242,13 @@ enriched catalog is ready for reviews depth yet.
 
 **MIT only** (65 progs, gold reference) — field-specific descriptions with NO name-prefix (2%), real
 structure, researched deep content, and the ONLY catalog whose reviews shape/sourcing is the standard
-(its own coverage is a known gap, not the standard). **UChicago (#650) and Caltech (#648) are now closest
-on structure** (real names + depts, no rollup, no prefix) — but their program-level deep content is thin
-(UChicago's structure + TRUE descriptions are clean, but `class_profile`/`faculty`/`tracks` are empty;
-Caltech's descriptions are generic gloss); Princeton has true descriptions + 0% prefix but 9 rollup
-names; **CMU and JHU are 100% name-prefixed** (re-measured run 22 — JHU is NOT "closest to clean" as a
-prior run called it; it has the same 100% prefix as CMU). None is yet fully clean.
+(its own coverage is a known gap, not the standard). **UChicago (#650), Caltech (#648) and now JHU (#657 —
+prefix stripped this run) are closest on structure** (real names + depts, no rollup, no prefix) — but
+their program-level deep content is thin (UChicago's + JHU's structure + TRUE descriptions are clean, but
+`class_profile`/`faculty`/`tracks` are empty; Caltech's descriptions are generic gloss); Princeton has
+true descriptions + 0% prefix but 9 rollup names; **CMU is STILL 100% name-prefixed** (it never got a
+prefix-strip pass — the last of the clean-structure catalogs still carrying the prefix). None is yet
+fully clean.
 
 ---
 
@@ -287,22 +286,23 @@ prior run called it; it has the same 100% prefix as CMU). None is yet fully clea
 - **REVIEWS MUST BE GATHERED, NOT SYNTHESIZED.** Institution-level-only / CIP-rollup-in-summary /
   copy-pasted-caution reviews are fabrication-by-synthesis — remove or re-gather per-program (miss #8).
 - **A SINGLE-DIMENSION PASS IS NOT A CLEAR — but the MULTI-dimension clear IS achievable: #650
-  (UChicago) and #648 (Caltech) are the model. The enricher KEEPS shipping single-dimension passes
-  anyway — #654 (Cornell, prefix-only) is the THIRD straight one, after #652 (Berkeley, prefix-only,
-  run 20) and #643 (Princeton, prefix-only, run 17).** A catalog is cleared only when real names + real
-  departments + collapsed splits + field-specific verified-true descriptions (no prefix, grammatical) +
-  gathered reviews + researched deep content ALL hold together (miss #8). #654 targets ONLY Cornell's
-  description prefix and leaves 34% CIP-rollup names + 34% rollup depts + 56% generic "Bachelor's in
-  {field}" UNTOUCHED — and worse, its prefix-strip is NOT even live (its Deploy Backend is hung
-  `in_progress`), so Cornell reads 100% prefix, byte-identical to before the pass. #650 fixed UChicago's
-  names + departments + descriptions + prefix in ONE pass (rollup 36%→~3%, prefix 88%→0%, real "Bachelor
-  of Arts/Science" designations, TRUE units) — do THIS on the rollup catalogs
+  (UChicago) and #648 (Caltech) are the model. The enricher KEEPS shipping single-dimension prefix-strip
+  passes anyway — #657 (JHU) is the FOURTH straight one, after #654 (Cornell, run 21/22), #652 (Berkeley,
+  run 20) and #643 (Princeton, run 17).** A catalog is cleared only when real names + real departments +
+  collapsed splits + field-specific verified-true descriptions (no prefix, grammatical) + gathered reviews
+  + researched deep content ALL hold together (miss #8). #657 strips ONLY JHU's prefix (the LAST defect
+  JHU had, so JHU lands near-clean — a lucky case), and #654 strips ONLY Cornell's prefix while leaving
+  33% CIP-rollup names + 33% rollup depts + 56% generic "Bachelor's in {field}" UNTOUCHED. #650 fixed
+  UChicago's names + departments + descriptions + prefix in ONE pass (rollup 36%→~3%, prefix 88%→0%, real
+  "Bachelor of Arts/Science" designations, TRUE units) — do THIS on the still-rollup catalogs
   (Columbia/Berkeley/Cornell/Harvard/Penn), not one dimension at a time.
-- **MERGED ≠ LIVE — confirm the Deploy Backend went GREEN and re-query the live API after a pass (run 22;
-  SKILL.md step 9).** #654 merged to `main` but its Deploy Backend hung `in_progress` for >1 day, so the
-  prefix-strip never reached production — Cornell is unchanged live. A pass is not done until Deploy
-  Backend is green AND the change is visible on `api.unipaith.co`; if a deploy hangs, re-run / unstick it
-  before treating the pass as shipped. (Cornell #654's stuck deploy is flagged for human review.)
+- **MERGED ≠ LIVE — confirm the Deploy Backend went GREEN and re-query the live API after a pass (SKILL.md
+  step 9).** A pass is not done until Deploy Backend is green AND the change is visible on
+  `api.unipaith.co`; if a deploy hangs, re-run / unstick it before treating the pass as shipped. (Run 22:
+  Cornell #654's Deploy Backend hung `in_progress` >1 day, so its prefix-strip was NOT live — Cornell read
+  100% prefix despite the merge. Run 23: that deploy RECOVERED to `completed success` and the strip is now
+  live at 0% prefix — the infra flag is resolved, but the lesson stands: judge by the live API, not the
+  merge.)
 - **DO NOT use `_standard` visibility as a live signal** — it is not in the public API (gold MIT shows
   NONE). Judge a row by API-visible facts: name (duplicate? rollup tell?), department (rollup echoed?),
   description (field-specific? TRUE units? name-prefixed? grammatical?), reviews (gathered vs
