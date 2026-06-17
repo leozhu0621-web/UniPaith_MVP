@@ -666,6 +666,24 @@ Concrete misses observed in the first runs — each broke a real page:
      peer LANDMARK re-labeled with this institution's name ("{This} Lab of
      Ornithology") — a description copied from a peer catalog by find-replace reads
      "field-specific" and slips past the prefix/rollup/classification counts.**
+     - **That gate must be a POSITIVE ALLOWLIST — verify each named academic unit
+       against the institution's OWN published org chart — NOT a hardcoded DENYLIST of
+       enumerated peer-unit strings, which is incomplete BY CONSTRUCTION and PASSES any
+       foreign unit it does not list. A green peer-contamination gate / a "0% peer
+       contamination" claim is therefore NOT evidence of zero foreign units when the
+       gate is a denylist. This is the live evasion this run.** A repair that builds its
+       peer gate from the SUBSET of peers a prior backlog happened to name will pass
+       every un-enumerated peer unit straight through — including OTHER peer units the
+       SAME backlog named elsewhere — so "the build gate is green" certifies only "none
+       of the peers I thought to list survived," never "no foreign unit survived." Scan
+       every named unit and FAIL unless it is one THIS institution actually publishes
+       (the allowlist direction); do not trust a denylist that can only catch the peers
+       someone thought to enumerate. Evidence: live API this run — a "clear peer
+       contamination" pass whose denylist listed only the peer units earlier runs cited
+       shipped THREE OTHER named peer units (a peer's engineering school on a data-science
+       row, a peer's medical school on two medical-sciences rows, a peer's journalism
+       school on a marketing/PR row — each named verbatim in the PRIOR backlog) into
+       source under a "0% peer contamination" PR claim, because its denylist omitted them.
    - **Feeds:** a `content_sources` feed counts only if it actually FETCHES ≥1
      item. **Confirm the feed produces** (the news_rss/events_feed resolves and
      returns entries) before trusting it — set a feed you proved works, not a URL
