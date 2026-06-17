@@ -6,6 +6,100 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-17 — Run 28 (NO new gaps found — the enricher shipped NOTHING for the SECOND consecutive interval: `origin/main` HEAD is the run-27 grader PR #665, so the whole fleet is byte-identical to runs 26–27. Pure re-verification via direct API reads (not trusting the prior grade): all FIVE CRITICAL breaches persist live, fleet institution-level clean except NYU's dead feed, no new problem class possible from an enricher that did not run. Changed NO rules per anti-churn / no-edit-without-evidence; refreshed backlog dates + persistence counts only)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28, no
+sprawl; program counts re-counted by full pagination and match run 27 exactly — Boston U 360, Northwestern
+308, Stanford 188, Duke 154, Purdue 310, gold MIT 65). Direct `description_text` / `external_reviews` reads
+to re-confirm each of the five CRITICAL breaches; a Purdue whole-catalog foreign-signature (owner≠self) scan;
+a Boston U department scan; a full fleet institution-level sanity scan (`campus_photos` length,
+`ranking_data.ownership_type`, `/institutions/{id}/posts` count) across all 28. Open-PR check (18 open, all
+stale pre-restructure drafts). Student's-eye open-ended pass: Rice (the run-26 change) + Yale program
+names/descriptions + the institution-level integrity sweep.
+
+**What merged since run 27:** NOTHING in scope. `origin/main` HEAD is the run-27 grader PR **#665**
+(`9207da5`); the last profile enrichment PR remains **Rice #663** (`4ef56f7`), already graded at run 26. No
+new enrichment PR landed this interval — the enricher did not ship, for the SECOND interval running. So all
+28 catalogs' DATA is byte-identical to runs 26–27. The 18 open PRs (newest #617, 2026-06-16; #515/#503/#499/
+#489 Harvard/CMU review drafts; #439/#420/#403 pre-restructure) are all superseded by later merged work —
+none is a fresh enrichment.
+
+**Findings (live API evidence):**
+
+1. **NO new enrichment merged this interval (the enricher did not run / did not ship) — SECOND interval
+   running.** The fleet is byte-identical to runs 26–27; re-verified live, not assumed. No new problem class
+   is possible.
+2. **All FIVE CRITICAL breaches PERSIST (re-confirmed live via direct reads).** Northwestern synthesized
+   review — the BA-in-Architecture-Studies row's `external_reviews.summary` still embeds "Architecture and
+   Related Services, Other within Weinberg" + a U.S. News institution-ranking source (runs 9→28, TWENTY
+   intervals). Stanford **Sibley-School ×2** (aerospace BA + Graduate Certificate) **+ Freeman-Spogli on
+   Systems-Science + Public-Relations** (2 mismatched; Political-Science FSI is the passing control; runs
+   13/14→28). Duke **copy-paste Pratt boilerplate reviews** (Biomedical-Eng + Civil-Eng + Environmental-Eng +
+   Mechanical + IDEAS share the identical "rigorous engineering degree at a selective private R1
+   university…within Pratt" summary, field swapped; runs 10→28). Boston U **credential-name departments**
+   ("Bachelor Of Science In Hospitality Administration", "Doctor Of Dental Medicine", "Mph In Health Equity",
+   "Two Year Master Of Laws Llm In American Law"; runs 1→28). Purdue **cross-institution-copy descriptions**
+   (owner-map scan: 52/310 foreign-sig rows — "Chesapeake"/JHU, "SAS"/Penn, "Writing Seminars"/JHU; runs
+   25→28).
+3. **Fleet institution-level clean except NYU.** All 28 institutions carry ≥4 `campus_photos` +
+   `ownership_type` + a live feed; NYU is the ONLY dead feed (`posts=0`), unchanged. Student's-eye sample:
+   Rice = clean #663 (field-specific TRUE descriptions, real Rice units, 0% prefix on the detail endpoint);
+   Yale = the documented 69%-prefix + mostly-real-name catalog. No new class.
+
+**False alarms caught (diagnosed, not acted on):**
+- **The `/programs` LIST endpoint omits `description`** (it lives on `/programs/{id}` as `description_text`),
+  so a prefix metric computed off the list reads a spurious 0% — the CRITICAL scans correctly pulled the
+  detail/description fields. Not a data change.
+- **The Purdue owner-map scan reads 52/310 this run** (vs run-27's narrower 36/310) — a wider signature set,
+  not a new defect; it re-confirms (does not newly discover) the cross-institution-copy class ruled in run 25.
+- `?page_size=100` 422s (server cap 50); `/institutions/{id}/posts` returns a bare list — paginated /
+  counted accordingly. `_standard` not in the public API (gold MIT shows NONE) — ranked on API-visible
+  signals only.
+
+**Rulebook changes: NONE (0 of ≤3).** No new problem class was discovered — the enricher shipped nothing
+this interval, so the fleet is byte-identical to runs 26–27 and every live defect recurs a class the
+rulebook already names (miss #2/#8/#9). Per the SAFETY RAILS (no-edit-without-evidence-of-a-NEW-problem;
+"Clean fleet → change nothing… Never invent a rule to look busy"; bounded + anti-churn), restating present
+rules would be churn. The standing concern is enricher BEHAVIOR (no enrichment shipped for two straight
+intervals; the CRITICAL top of live fabricated data unrepaired for 14–20 intervals) — flagged for human
+review, not a rulebook gap (more rule text cannot make the enricher run or reorder its priorities; cf. runs
+10/12/17–27). Post-edit self-review: SKILL.md UNTOUCHED, miss numbering still sequential 1–9, all invariants
+intact.
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(behavioral, NEW emphasis — now TWO intervals)** NO enrichment PR has merged for two consecutive
+  intervals (runs 27 + 28) — the enricher is not shipping at all. Combined with the live fabricated data
+  below, the repair backlog is making no forward progress.
+- **(carried, urgent — now 20 / 18 intervals)** Northwestern (synthesized reviews, runs 9→28) and Duke
+  (Pratt boilerplate reviews, runs 10→28) remain live and unrepaired; the CRITICAL backlog top is not being
+  cleared. Fabricated reviews on student-facing pages are a no-fabrication invariant breach the grader cannot
+  fix — only steering the enricher can.
+- **(carried, urgent)** Stanford's Sibley-School + Freeman-Spogli fabricated units (runs 13/14) and Purdue's
+  cross-institution-copy descriptions (run 25) remain live (re-confirmed run 28); the grader does not edit
+  data.
+- **(carried from runs 2–27, unreconciled)** miss #9 says "FAIL on null/blank `department`" but gold MIT
+  ships null department and `manifest.py` marks `department` `required=False`. Reconciling would LOOSEN
+  verify-output → left intact per the rails.
+- **(carried from runs 8–27, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a stub
+  tell — valid for the ENRICHER but not API-visible to the grader. Left intact.
+
+**Backlog delta:** NO ranking change (nothing repaired). Header `_Last graded_` block rewritten for run 28
+(nothing merged this interval — the SECOND in a row; fleet byte-identical to runs 26–27; the FIVE CRITICAL
+breaches re-confirmed live; open PRs noted as stale). Persistence counts bumped: Northwestern 9→28 (TWENTY
+intervals), Duke 10→28, Stanford 14→28, Purdue foreign-sig re-stated at 52/310 (this run's scan), Boston U
+re-confirmed run 28. CRITICAL unchanged: Boston University (structure) + Stanford (fabricated units) +
+Northwestern + Duke (fabricated reviews) + Purdue (cross-institution-copy descriptions). MEDIUM empty.
+CLEAN = MIT only; Rice/UChicago/Caltech/JHU stay the near-clean non-MIT structure tier.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv —
+`.venv/bin/pytest` absent) — same constraint as runs 1–27. Changes are markdown-only (backlog + this
+changelog; NO SKILL.md edit, no Python, no migrations, no app code), so the enricher code/data state is
+unaffected and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; no rule changed, so nothing weakened. The findings that could argue for
+loosening (null-department FAIL vs gold MIT; `_standard`-as-rendered-signal) remain logged for human review,
+not acted on.
+
 ## 2026-06-17 — Run 27 (NO new gaps found — the enricher shipped NOTHING this interval: `origin/main` HEAD is the run-26 grader PR #664, so the whole fleet is byte-identical to run 26. Pure re-verification via direct API reads (not trusting the prior grade): all FIVE CRITICAL breaches persist live, fleet institution-level clean except NYU's dead feed, no new problem class possible from an enricher that did not run. Changed NO rules per anti-churn / no-edit-without-evidence; refreshed backlog dates + persistence counts only)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28, no
