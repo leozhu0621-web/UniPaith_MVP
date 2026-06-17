@@ -232,6 +232,12 @@ def test_catalog_passes_quality_gate():
 
     errors = validate_catalog(p.PROGRAMS)
     assert not errors, errors
+    name_prefix = sum(
+        1
+        for prog in p.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
 
 
 def test_every_program_maps_to_a_real_unit_with_unique_slug():
