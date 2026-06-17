@@ -172,7 +172,7 @@ export default function DataRightsCard() {
         </p>
       </SettingsSection>
 
-      <SettingsSection icon={Download} title="Export your data" description="Take your work anywhere — your record is yours.">
+      <SettingsSection icon={Download} title="Export your data" description="Download a copy of your data in a portable format.">
         <div className="grid sm:grid-cols-2 gap-3">
           <Card pad={false} className="p-5 flex items-start justify-between gap-3">
             <div>
