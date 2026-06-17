@@ -16,6 +16,7 @@ import Modal from '../../components/ui/Modal'
 import Textarea from '../../components/ui/Textarea'
 import Select from '../../components/ui/Select'
 import ProgressBar from '../../components/ui/ProgressBar'
+import StatBar from '../../components/ui/StatBar'
 import Skeleton, { SkeletonCard } from '../../components/ui/Skeleton'
 import QueryError from '../../components/ui/QueryError'
 import AIBadge from '../../components/ui/AIBadge'
@@ -748,11 +749,22 @@ export default function ApplicationDetailPage() {
                 {isLowFit && (
                   <div className="bg-warning-soft border border-warning/30 rounded-lg p-4 flex items-start gap-3">
                     <AlertTriangle size={18} className="text-warning flex-shrink-0 mt-0.5" />
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-foreground">Low-fit warning</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {fitnessPct != null ? `This program's fitness is ${fitnessPct}%.` : 'This program may be a low-fit option.'} Review your Match analysis before committing effort here.
-                      </p>
+                      {fitnessPct != null ? (
+                        <div className="mt-2 flex items-center gap-2">
+                          <StatBar value={fitnessPct} max={100} className="max-w-[10rem]" />
+                          <span className="text-xs font-medium text-foreground tabular-nums">{fitnessPct}% fit</span>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground mt-0.5">This program may be a low-fit option.</p>
+                      )}
+                      <button
+                        onClick={() => navigate(`/s/programs/${application.program_id}`)}
+                        className="mt-2 text-xs font-medium text-secondary hover:underline"
+                      >
+                        Review match
+                      </button>
                     </div>
                   </div>
                 )}

@@ -2,12 +2,14 @@
 // browsing matches: latest updates, next events, deadline radar, following +
 // follow suggestions. Rail rows fire NO engagement tracking by design (§2).
 import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, Bell, CalendarClock, CalendarDays, GraduationCap, Newspaper, UserPlus } from 'lucide-react'
-import { getConnectEvents, getConnectFeed } from '../../../../api/connect'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ArrowRight, Bell, BellPlus, CalendarClock, CalendarDays, GraduationCap, Newspaper, UserPlus } from 'lucide-react'
+import { getConnectEvents, getConnectFeed, type ConnectFeedItem } from '../../../../api/connect'
 import { getMatches } from '../../../../api/matching'
 import { listSaved } from '../../../../api/saved-lists'
 import { qk } from '../../../../api/queryKeys'
+import { createReminder } from '../../../../api/calendar'
+import { showToast } from '../../../../stores/toast-store'
 
 function relTime(iso: string): string {
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
@@ -29,6 +31,7 @@ interface Props {
 }
 
 export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, onManageFollowing }: Props) {
+  const qc = useQueryClient()
   const { data: feed } = useQuery({
     queryKey: ['connect-feed-rail'],
     queryFn: () => getConnectFeed('recent', undefined, { limit: 8 }),
@@ -73,6 +76,21 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
   }, [matches, saved, followedIds])
 
   const followCount = followedIds.size
+
+  // "Remind me" on a deadline row (owned action — POST /me/calendar/reminders).
+  const remindMut = useMutation({
+    mutationFn: (it: ConnectFeedItem) =>
+      createReminder({
+        title: `${it.program_name || 'Program'} — application deadline`,
+        start_at: new Date(it.deadline as string).toISOString(),
+        notes: it.institution_name ? `From ${it.institution_name}` : null,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['calendar'] })
+      showToast('Reminder set', 'success')
+    },
+    onError: () => showToast("We couldn't set the reminder. Please try again.", 'error'),
+  })
 
   return (
     <div className="space-y-4">
@@ -133,25 +151,36 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
           <p className="text-xs text-muted-foreground px-1">Save a program to track its deadline here.</p>
         ) : (
           radar.map(it => (
-            <button
+            <div
               key={it.id}
-              onClick={() => onOpenTab('updates')}
-              className="w-full text-left px-1 py-1.5 rounded-md hover:bg-muted transition-colors"
+              className="flex items-center gap-2 px-1 py-1.5 rounded-md hover:bg-muted transition-colors"
             >
-              <p className="text-xs font-semibold text-foreground line-clamp-1">{it.program_name}</p>
-              <p
-                className={`text-[10px] truncate ${
-                  (it.days_until ?? 99) <= 7
-                    ? 'text-error font-semibold'
-                    : (it.days_until ?? 99) <= 30
-                      ? 'text-warning'
-                      : 'text-muted-foreground'
-                }`}
-              >
-                {it.days_until === 0 ? 'Due today' : `${it.days_until} day${it.days_until !== 1 ? 's' : ''} left`} ·{' '}
-                {it.institution_name}
-              </p>
-            </button>
+              <button onClick={() => onOpenTab('updates')} className="min-w-0 flex-1 text-left">
+                <p className="text-xs font-semibold text-foreground line-clamp-1">{it.program_name}</p>
+                <p
+                  className={`text-[10px] truncate ${
+                    (it.days_until ?? 99) <= 7
+                      ? 'text-error font-semibold'
+                      : (it.days_until ?? 99) <= 30
+                        ? 'text-warning'
+                        : 'text-muted-foreground'
+                  }`}
+                >
+                  {it.days_until === 0 ? 'Due today' : `${it.days_until} day${it.days_until !== 1 ? 's' : ''} left`} ·{' '}
+                  {it.institution_name}
+                </p>
+              </button>
+              {it.deadline && (
+                <button
+                  onClick={() => remindMut.mutate(it)}
+                  disabled={remindMut.isPending}
+                  title="Set a calendar reminder"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary hover:underline flex-shrink-0 disabled:opacity-50"
+                >
+                  <BellPlus size={11} /> Remind me
+                </button>
+              )}
+            </div>
           ))
         )}
       </RailCard>

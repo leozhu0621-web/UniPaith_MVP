@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Compass, Sparkles } from 'lucide-react'
 import Card from '../../../../components/ui/Card'
 import Badge from '../../../../components/ui/Badge'
+import ProgressBar from '../../../../components/ui/ProgressBar'
 import type { NextAction } from './upNext'
 
 const ACCENT: Record<NextAction['urgency'], string> = {
@@ -67,6 +68,9 @@ export default function TodaysFocus({ action, onboardingComplete }: Props) {
             {action.title}
           </button>
           <p className="mt-0.5 text-xs text-muted-foreground">{action.sub}</p>
+          {action.readinessPct != null && (
+            <ProgressBar value={action.readinessPct} label="Ready to submit" className="mt-2 max-w-xs" />
+          )}
         </div>
         <button
           onClick={() => navigate(action.to)}

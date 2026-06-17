@@ -6,6 +6,7 @@ import Button from '../../../../components/ui/Button'
 import Badge from '../../../../components/ui/Badge'
 import Textarea from '../../../../components/ui/Textarea'
 import Select from '../../../../components/ui/Select'
+import Stepper from '../../../../components/ui/Stepper'
 import Skeleton from '../../../../components/ui/Skeleton'
 import QueryError from '../../../../components/ui/QueryError'
 import { showToast } from '../../../../stores/toast-store'
@@ -55,6 +56,23 @@ const STATE_LABEL: Record<string, string> = {
   enrolled: 'Enrolled',
   withdrew: 'Withdrew',
   deferred: 'Deferred',
+}
+
+// §5 state machine (enrollment_service._STATE_ORDER) → a visual journey.
+// Off-path branches (withdrew/deferred) aren't on the line; withdrew has its
+// own terminal card, deferred maps onto the step it was confirmed at.
+const ENROLLMENT_STEPS = [
+  { key: 'accepted', label: 'Accepted' },
+  { key: 'intent_confirmed', label: 'Confirmed' },
+  { key: 'deposit_recorded', label: 'Deposit' },
+  { key: 'enrollment_confirmed', label: 'Verified' },
+  { key: 'enrolled', label: 'Enrolled' },
+] as const
+
+// Map the live state onto a step key the stepper understands.
+function stepKeyForState(state: string): string {
+  if (state === 'deferred') return 'intent_confirmed'
+  return ENROLLMENT_STEPS.some(s => s.key === state) ? state : 'accepted'
 }
 
 const DEPOSIT_LABEL: Record<string, string> = {
@@ -252,6 +270,11 @@ export default function EnrollmentPanel({ application }: { application: Applicat
 
   return (
     <div className="space-y-4">
+      {/* ── The journey, as a line you can follow (§5 state machine). ── */}
+      <Card pad={false} className="p-4 sm:p-5">
+        <Stepper steps={ENROLLMENT_STEPS as unknown as { key: string; label: string }[]} currentKey={stepKeyForState(state)} />
+      </Card>
+
       {/* ── The celebratory beat (§2.2 / brand §15): gold glow, earned. ── */}
       {confirmed ? (
         <Card pad={false} variant="card-accent" className="p-6 text-center animate-beat">

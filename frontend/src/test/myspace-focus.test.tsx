@@ -20,6 +20,16 @@ describe('TodaysFocus', () => {
     expect(nav).toHaveBeenCalledWith('/s/applications/1?tab=offer')
   })
 
+  it('renders a readiness bar (not prose) when a draft action carries readinessPct', () => {
+    render(
+      <MemoryRouter>
+        <TodaysFocus action={{ key: 'd', icon: AlertTriangle, title: 'Continue EE', sub: 'Ready to submit', urgency: 'neutral', chip: 'draft', to: '/s/applications/2', readinessPct: 80 }} onboardingComplete={false} />
+      </MemoryRouter>,
+    )
+    const bar = screen.getByRole('progressbar')
+    expect(bar.getAttribute('aria-valuenow')).toBe('80')
+  })
+
   it('shows the caught-up state with a setup CTA when no action and onboarding incomplete', () => {
     render(<MemoryRouter><TodaysFocus action={null} onboardingComplete={false} /></MemoryRouter>)
     expect(screen.getByText(/caught up/i)).toBeTruthy()
