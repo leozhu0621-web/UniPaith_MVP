@@ -233,6 +233,20 @@ Concrete misses observed in the first runs — each broke a real page:
      cannot verify the real owning unit, the existing never-null/verify-output
      rule still applies — resolve it, don't paper over it with a CIP/credential
      placeholder, which is the program-name padding wearing a department costume.
+     **The field-name blessing above holds ONLY for a genuinely SHARED real
+     department — when `department` is set to the row's OWN `program_name`
+     VERBATIM on (near-)every row (one-off per program catalog-wide, so no two
+     programs share a department) WHILE a real owning school IS known (a
+     `school_key`, or the school named in that row's own description), that is NOT
+     a real unit: it is the field name standing in for the school, and it EVADES
+     every dept check above precisely because it "matches the field." The tell is
+     mechanical: `department == program_name` on ~all rows / no two programs share
+     a department / a real school is available but unused. Put the institution's
+     real published owning school/college/department in `department`, never the
+     field echoed from the name. Evidence: live API this run — a freshly-"repaired"
+     613-program catalog set `department == program_name` on 98% (601/613), the
+     real owning school named ONLY in the description (its build kept the real
+     `school_key` but copied the field into `department`).**
    - **Breadth-first, then a MANDATORY depth pass — "defer" is not "abandon".**
      Create EVERY program node with verified *basics* first (full name,
      degree_type, `delivery_format`, department, description, website, tuition —
@@ -566,6 +580,31 @@ Concrete misses observed in the first runs — each broke a real page:
        "diversify + gate" passes graded "0% identical-across-levels" by the verbatim count (Columbia #684,
        Stanford #681, Harvard #679) actually share their full researched opening across 81% / 89% / 82%
        of their multi-credential fields, vs gold MIT 0%.
+   - **ONE SCHOOL's blurb STAMPED across MANY DIFFERENT FIELDS is the SCHOOL-LEVEL analog of the
+     per-field stamping above — and it EVADES the field-keyed shared-body count (which compares only a
+     field's credential siblings, NEVER two DIFFERENT fields). This is the live regression this run.**
+     When a catalog's descriptions are assembled from a small set of SCHOOL-level blurbs — one paragraph
+     per college dropped into a fixed frame, `"{Univ}'s {field} program connects to {SCHOOL blurb}.
+     Students build depth in {field} through …"`, whose ONLY per-row token is the field name — every
+     program of one school carries the IDENTICAL substantive sentence across DIFFERENT fields (the
+     engineering blurb on aerospace AND civil AND computer science; the arts-and-sciences blurb on
+     economics AND history AND biology). It passes the classification regex (no "offered through"), the
+     prefix-doubling check (it opens on the institution, not the `program_name`), AND the run-38
+     field-keyed shared-body count (those rows are different FIELDS, so the field-keyed grouping never
+     compares them) — yet it is the SAME not-researched-per-program defect at a COARSER grain: the
+     substance is school-level, only the field name is per-row, so it is a gold-contrast STUB (generated
+     from `(field, school)` alone). Two tells confirm the machine frame: a UNIVERSAL field-agnostic
+     CLOSING sentence appended to every row ("Students build depth in {field} through seminars, research,
+     and {city} industry and community partnerships") and GRAMMATICAL breakage from splicing a
+     full-sentence blurb into the frame (a double period "..", a "connects to {a complete sentence}"
+     splice). So the shared-body count must run CATALOG-WIDE across ALL programs — extract each
+     description's substantive clause and FAIL when one clause is shared verbatim across rows of ≥2
+     DIFFERENT fields, NOT only within a field's credential siblings (gold MIT = every program uniquely
+     described, 0 cross-field sharing). Write each program what THAT program actually studies, never a
+     per-school blurb with the field name swapped in. Evidence: live API this run — a 481-field
+     description pass used only 18 distinct school-blurbs to cover 461 fields (95%) — one blurb on 124
+     different fields, another on 80, another on 38 — with the universal "Students build depth in
+     {field}…" closing on 100% of rows and the double-period ".." breakage on 95%.
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
@@ -630,7 +669,12 @@ Concrete misses observed in the first runs — each broke a real page:
      per-credential SUFFIX appended onto a shared body evades it (verbatim-shared reads 0%
      while the researched opening is still stamped identically across the levels): for each
      field with ≥2 rows, compute the common description prefix and FAIL when it is ≥120 chars
-     AND ≥50% of the shortest sibling (miss #8 suffix-diversifier sub-bullet)**) before
+     AND ≥50% of the shortest sibling (miss #8 suffix-diversifier sub-bullet); **AND run that
+     shared-body count CATALOG-WIDE across ALL programs, not only within a field — extract each
+     description's substantive clause and FAIL when one clause is shared verbatim across rows of
+     ≥2 DIFFERENT fields, the SCHOOL-level-blurb stamp that the field-keyed count misses (miss #8
+     school-blurb sub-bullet); a universal field-agnostic closing sentence or a double-period ".."
+     splice on most rows is the corroborating tell**) before
      shipping — a padded catalog must FAIL the run. **Also FAIL a catalog whose
      descriptions DOUBLE the page heading — i.e. begin by restating the `program_name`
      verbatim (a `"{program_name}: …"` or `"{program_name} is …"` prefix).** The program

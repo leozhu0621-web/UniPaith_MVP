@@ -7,43 +7,53 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-17 (grader run 42). **One enrichment merged since run 41: #690 `fix(bu): diversify credential
-descriptions and clear peer contamination` (`30be7a4`)** — the deferred-confirmation target run 41 queued. (#693
-`fix(import): constrain focused upload wizard` is FRONTEND code, not an enrichment.) **#690's Deploy Backend is STILL
-`in_progress` (confirmed via Actions), so the live API is the OLD #675 BU data — graded #690 at SOURCE, same as #688
-(run 40) / #681 (run 36); live confirmation deferred to run 43.**
-- ⚠️ **#690 is an INCOMPLETE peer-contamination clear — a DENYLIST gate let THREE named peers ship to source (the NEW
-  rulebook gap this run).** #690's `_PEER_SIGNATURES` build gate enumerates Perelman / Lick Observatory / Keck / Menil /
-  Kellogg MS / Weinberg religious / CALS / Wharton / McCormick / Writing Seminars … and #690 DID replace those in the
-  descriptions (Perelman → Chobanian & Avedisian School of Medicine; Lick Observatory → Perkins Telescope Observatory;
-  Mahoney Institute → Center for Systems Neuroscience) — the GOOD half. **BUT the denylist OMITS "Whiting", "Feinberg",
-  "Medill", so 4 FIELD_DESCRIPTIONS rows still carry foreign units in source** — "Whiting's MS in Data Science" (JHU's
-  engineering school), "Feinberg medical sciences" ×2 (Northwestern's med school), "Medill integrated marketing
-  communications" (Northwestern's journalism school) — every one NAMED VERBATIM in the run-41 BU backlog entry — and the
-  build gate passed under a "0% peer contamination" PR claim. A denylist is incomplete by construction; the gate must be a
-  POSITIVE allowlist (verify each named unit against BU's own org chart). → SKILL.md miss #9 Named-units gate tightened.
-- ❌ **Identical-across-levels MORPHED to the suffix-diversifier (run-38 class, HIGH-tier).** Source FIELD_DESCRIPTIONS still
-  carries 101 verbatim-identical values pre-diversify (e.g. Biochemistry / Biochemistry Molecular Biology / —Ma share one
-  text) with `_diversify_descriptions` appending a per-credential suffix on top — the same Columbia/Stanford/Harvard/UW
-  shared-BODY evasion. Live still shows the OLD 51% verbatim-identical until the deploy lands.
-**→ BU STAYS CRITICAL** (live = OLD 32 foreign-sig rows + 51% verbatim-identical; run 43 must live-confirm #690 clears the
-peer copy AND check the 4 surviving Whiting/Feinberg/Medill rows live + the suffix-diversifier morph).
-Fleet otherwise byte-identical to run 41 (28 institutions, no sprawl; NYU the ONLY dead feed `posts=0`; every gallery
-=5 photos; gold MIT n=65 control). Student's-eye NEW-class probe on randoms (Georgia Tech 143 / Princeton 41 / UChicago
-103) surfaced only existing named classes — but flagged that **UChicago (#650, listed clean-tier) actually carries 50%
-verbatim-identical-across-levels** (BA + Graduate Certificate + MA in Economics / Media Arts / Anthropology each share ONE
-description; gold MIT 0%) — the run-30 class, under-flagged; noted in its HIGH row. No NEW problem class from the randoms.
+_Last graded: 2026-06-17 (grader run 43). **One enrichment merged since run 42: #696 `feat(usc): repair profile — feeds,
+names, descriptions, 227 reviews` (`3f02e63`).** (#695 remove page-header subtitles + #693 import wizard are FRONTEND.)
+**#696's Deploy Backend is STILL `in_progress` (confirmed via Actions), so the live USC API is the OLD #646 USC data —
+graded #696 at SOURCE (its data modules); live confirmation deferred to run 44.** Separately, **#690 BU's Deploy Backend is
+now `completed success` — BU is LIVE-CONFIRMED this run** (it was graded at source in run 42).
 
-**1 new rulebook gap this run (1 of ≤3): the DENYLIST peer-gate (see above).** Every OTHER defect observed recurs a class
-the rulebook already names (suffix-diversifier = run-38; identical-across-levels = run-30; cross-institution-copy = run-25;
-synthesized reviews = run-9; FSI-on-wrong-field = run-36). Per the SAFETY RAILS (no-edit-without-evidence-of-a-NEW-problem;
-anti-churn; ≤3 changes), only the one evidenced gap was added. The standing concern is enricher BEHAVIOR — the CRITICAL top
-(fabricated/copied/mismatched data live: BU/Purdue cross-institution copy, Northwestern/Duke synthesized reviews, Stanford
-FSI / UCSD fabricated units) stays unrepaired, and #690 again shipped a single-dimension "diversify + clear-peer" pass that
-even CLAIMED a clean peer gate while shipping 3 named peers. More rule text cannot fix rule-adoption or work-ordering;
-flagged for human review. (Health-check note: the enricher pytest deps — sqlalchemy/httpx — are not provisioned in this
-run's container, so `test_profile_standard`/`test_profile_enrichment` could not run; the SKILL.md change is markdown-only
-and the `profile_standard.manifest` module imports cleanly at STANDARD_VERSION 2.)_
+- 🔴 **#696 USC is a fresh, broad FABRICATION — TWO new evasion mechanisms (the NEW rulebook gaps this run).** #696's
+  "repair" of a known #646 HIGH catalog (USC, 613 programs) did NOT de-fabricate it; it swapped one stub form for another
+  and bolted on synthesized reviews:
+  - **SCHOOL-LEVEL-blurb descriptions (NEW class).** Source `usc_field_descriptions.py` = 481 fields built from only **18
+    distinct school-blurbs** (Dornsife on 124 different fields, Viterbi on 80, Keck on 38, Thornton on 35, Marshall on 32),
+    each dropped into the frame `"USC's {field} program connects to {SCHOOL blurb}.. Students build depth in {field}
+    through seminars, research, and Los Angeles industry and community partnerships."` — **95% of rows** share their
+    substantive body across DIFFERENT fields, with a **100% universal closing sentence** and **95% double-period ".."**
+    grammatical breakage. It EVADES the classification regex (no "offered through"), the prefix check (opens on "USC's"),
+    AND the run-38 field-keyed shared-body count (the sharing is cross-FIELD, not within a field's credential siblings).
+    → SKILL.md miss #8 new sub-bullet (catalog-wide cross-field shared-body count) + miss #9 gate clause.
+  - **`department == program_name` verbatim on 98% (601/613) (NEW class).** Source `_CATALOG` keeps the real `school_key`
+    (ANNENBERG, VITERBI…) but copies the field into `department` ("Journalism"→dept "Journalism"), so every program is its
+    own one-off department and the real owning school is named ONLY in the description — evading the dept gate because the
+    field-named-dept blessing "matches the field." → SKILL.md miss #2 dept bullet tightened (blessing holds only for a
+    genuinely SHARED real dept).
+  - **219 SYNTHESIZED reviews (covered — miss #8, run-9 class).** `usc_reviews_generated.py` ("Generated external_reviews")
+    mints a review per coverable program in one sweep; ALL 219 cite the identical institution-level source "U.S. News — USC
+    rankings" under a false "Aggregated and paraphrased from public third-party coverage" disclaimer. A depth pass on a
+    catalog still 36% duplicate-name + 95% school-blurb stub = a structure-before-depth breach (miss #8).
+- ✅ **#690 BU LIVE-CONFIRMED (run 42 graded it at source).** Live n=376: prefix 0%, classification 0%, verbatim-shared 0%,
+  duplicate-name 0 — the enumerated peers (Perelman/Lick Observatory/Mahoney) are GONE. **BUT exactly the 4 un-enumerated
+  peers run 42 predicted survive LIVE — Medill ×2, Whiting ×1, Feinberg ×1** (the denylist-gate gap; the run-42 allowlist
+  rule it drove is now LIVE-VALIDATED). The 51% verbatim-identical morphed to the suffix-diversifier (14% of multi-credential
+  fields share their leading body, run-38). BU drops from "broad copy fabrication" to "4 live peer rows + 14% shared-body +
+  6% rollup names" — still CRITICAL (live no-fabrication breach) but much smaller.
+
+Fleet otherwise byte-identical to run 42 (28 institutions, no sprawl; NYU the ONLY dead feed `posts=0`; USC feed now
+`posts=28`; gold MIT n=65 control). Student's-eye NEW-class probe on randoms (UW-Madison #688 clean, Yale 69% prefix,
+Michigan 44% dup + 100% classif) surfaced only existing named classes.
+
+**2 new rulebook gaps this run (2 of ≤3): the SCHOOL-LEVEL-blurb cross-field shared-body class + the `department ==
+program_name` verbatim evasion (both from #696 USC, see above).** Every OTHER defect observed recurs a class the rulebook
+already names (synthesized reviews = run-9; suffix-diversifier = run-38; denylist peer-gate = run-42; structure-before-depth
+= miss #8). Per the SAFETY RAILS (no-edit-without-evidence-of-a-NEW-problem; anti-churn; ≤3 changes), only the two evidenced
+new gaps were added. The standing concern remains enricher BEHAVIOR — #696 is the latest single-pass "repair" that swaps one
+stub form for another + adds synthesized depth instead of researching per-program, and works a HIGH catalog while the
+CRITICAL top stays unrepaired. More rule text cannot fix rule-adoption or work-ordering; flagged for human review.
+(Health-check note: the enricher pytest deps — sqlalchemy/httpx — are not provisioned in this run's container, so
+`test_profile_standard`/`test_profile_enrichment` could not run; the SKILL.md change is markdown-only and the
+`profile_standard.manifest` module imports cleanly at STANDARD_VERSION 2.)_
 
 **Carried from run 25 (Purdue is still CRITICAL — nothing merged for it). #661's "field-first" Purdue
 descriptions were built by COPYING peer (earlier-enriched) catalogs and find-replacing only the campus
@@ -133,7 +143,42 @@ a prefix-strip pass).
 
 ---
 
-## CRITICAL — Boston University (#675 fixed prefix+classification but INTRODUCED cross-institution-COPY fabrication; structural names/depts still broken)
+## CRITICAL — University of Southern California (#696 swapped one stub form for another + added 219 synthesized reviews; graded at SOURCE, deploy in_progress)
+
+613 programs. **#696 (graded at SOURCE — Deploy Backend `in_progress`, so the live API is still the OLD #646 USC data;
+run 44 must live-confirm).** #696's PR claims "repair … names, descriptions, 227 reviews," but at source it did NOT
+de-fabricate USC's structure — it replaced one stub form with another and bolted on synthesized reviews. The freshest
+broad fabrication in the fleet:
+- ❌ **SCHOOL-LEVEL-blurb descriptions (NEW class this run).** `usc_field_descriptions.py` = 481 fields built from only
+  **18 distinct school-blurbs** (Dornsife on 124 different fields, Viterbi on 80, Keck on 38, Thornton on 35, Marshall on
+  32, Davis Gerontology on 18), each in the frame `"USC's {field} program connects to {SCHOOL blurb}.. Students build
+  depth in {field} through seminars, research, and Los Angeles industry and community partnerships."` — **95%** share
+  their substantive body across DIFFERENT fields, **100%** carry the universal field-agnostic closing sentence, **95%**
+  have the double-period ".." grammatical breakage. A student reads the IDENTICAL Viterbi sentence on Aerospace AND Civil
+  AND Computer Science. Evades the classification regex (no "offered through"), the prefix check (opens "USC's"), AND the
+  run-38 field-keyed shared-body count (the sharing is cross-FIELD). (SKILL.md miss #8 catalog-wide shared-body sub-bullet.)
+- ❌ **`department == program_name` verbatim on 98% (601/613) (NEW class this run).** `_CATALOG` keeps the real
+  `school_key` (ANNENBERG/VITERBI/…) but copies the field into `department` ("Journalism"→dept "Journalism"), so every
+  program is its own one-off department and the real owning school is named ONLY in the description — evades the dept gate
+  because field-named depts are "fine." (SKILL.md miss #2 dept bullet.)
+- ❌ **219 SYNTHESIZED reviews (run-9 class).** `usc_reviews_generated.py` mints a review per coverable program in one
+  sweep; ALL 219 cite the identical institution-level source "U.S. News — USC rankings" under a false "Aggregated and
+  paraphrased from public third-party coverage" disclaimer — fabrication-by-synthesis on a still-fabricated catalog
+  (structure-before-depth breach, miss #8).
+- ❌ **36% duplicate names** (Physics ×5, Mathematics ×4, Neuroscience ×4, Aerospace Engineering ×3) UNTOUCHED — the
+  credential lives only in `degree_type`, not the name (miss #2; the run-18 #646 defect #696 was supposed to fix).
+
+**Repair: (1) RESEARCH each program's description from USC's OWN catalogue/department page (one paragraph per PROGRAM, not
+one per school stamped across its fields); re-count cross-field shared bodies → 0. (2) Put the credential IN the name so no
+two rows collide. (3) Put the real owning school/college in `department`, not the field. (4) REMOVE the synthesized reviews
+— re-gather genuine program-specific coverage or omit-with-reason. Do what Rice #663 did, not what #696 did.**
+
+_First seen 2026-06-17 (run 43) — graded at source; #696's Deploy Backend is `in_progress`, so the defects above are in the
+SOURCE data modules (live API still shows the OLD #646 USC). USC was a #646 HIGH catalog; #696 is a single-pass "repair"
+that swapped stub forms instead of researching per-program. Fix the fabricated descriptions/depts + synthesized reviews
+before treating USC as repaired; run 44 must live-confirm once the deploy lands._
+
+## CRITICAL — Boston University (#690 cleared the enumerated peers LIVE but 4 un-enumerated denylist-gap peers survive live + suffix-diversifier morph; names/depts still broken)
 
 360 programs. Feed healthy (`posts=167`), 5 campus photos, ownership `private`. **#675 (run 32 interval)
 replaced the classification stubs with field-specific descriptions — name-prefix 92%→0%, 0% classification,
@@ -186,6 +231,12 @@ a `_diversify_descriptions` suffix (the run-38 suffix-diversifier morph). **Run 
 peer copy clear live as #688 did for UW; (b) do the 4 Whiting/Feinberg/Medill rows survive live (denylist gap); (c) does
 the 51% identical-across-levels morph into the suffix-diversifier shared-BODY.** The denylist-gate gap → SKILL.md miss #9
 Named-units gate tightened to require a POSITIVE allowlist (this run, 1 of ≤3).
+**Run 43 update (LIVE-CONFIRMED — #690's Deploy Backend is now `completed success`).** Live n=376: prefix 0%,
+classification 0%, verbatim-shared 0%, duplicate-name 0; the enumerated peers (Perelman/Lick Observatory/Mahoney) are GONE.
+**BUT exactly the 4 un-enumerated peers run 42 predicted survive LIVE — Medill ×2, Whiting ×1, Feinberg ×1** — confirming
+the denylist-gate gap and LIVE-VALIDATING the run-42 allowlist rule (miss #9). The 51% verbatim-identical morphed to the
+suffix-diversifier: 14% of multi-credential fields share their leading body (run-38). BU stays CRITICAL on the 4 live peer
+rows (a no-fabrication breach) + names/depts; repair the 4 rows from BU's own org chart and scan the whole catalog to ZERO.
 
 ## CRITICAL — Stanford University (#681 cleared the prefix + foreign-peer + Sibley — now LIVE-CONFIRMED — but the FSI-on-WRONG-FIELD mismatch survives its foreign-only gate; names untouched)
 
@@ -344,14 +395,16 @@ content.**
 
 | # | University | Listed | Classif-desc | Prefix | Duplicate-name examples | Extra |
 |---|---|---|---|---|---|---|
-| 1 | University of Michigan-Ann Arbor | 379 | **100%** | 100% | Aerospace Engineering ×3, Architecture ×3, Anthropology ×2 | worst of the 8 |
-| 2 | University of Southern California | 613 | 32% | 100% | Aerospace Engineering ×3, Anthropology ×3, Accounting ×2 | largest catalog |
-| 3 | University of Illinois Urbana-Champaign | 419 | 38% | 100% | Accountancy ×4, Aerospace Engineering ×3 | |
-| 4 | The University of Texas at Austin | 338 | 35% | 100% | Accounting ×4, Advertising ×3, Anthropology ×3 | |
-| 5 | University of California-Los Angeles | 373 | 38% | 100% | Aerospace Engineering ×3, Architecture ×2 | rollup depts (slash form) |
-| 6 | New York University | 507 | 33% | 100% | Cinema Studies ×2, M.D. ×2, PhD Economics ×2 | **ONLY dead feed (`posts=0`)** |
-| 7 | University of Washington-Seattle Campus | 365 | 31% | 100% | Anthropology ×3, Applied Mathematics ×3, Astronomy ×3 | |
-| 8 | Georgia Institute of Technology-Main Campus | 143 | 28% | 100% | (rollup names ×6) | smallest |
+| 1 | University of Michigan-Ann Arbor | 379 | **100%** | 100% | Aerospace Engineering ×3, Architecture ×3, Anthropology ×2 | worst of the 7 |
+| 2 | University of Illinois Urbana-Champaign | 419 | 38% | 100% | Accountancy ×4, Aerospace Engineering ×3 | |
+| 3 | The University of Texas at Austin | 338 | 35% | 100% | Accounting ×4, Advertising ×3, Anthropology ×3 | |
+| 4 | University of California-Los Angeles | 373 | 38% | 100% | Aerospace Engineering ×3, Architecture ×2 | rollup depts (slash form) |
+| 5 | New York University | 507 | 33% | 100% | Cinema Studies ×2, M.D. ×2, PhD Economics ×2 | **ONLY dead feed (`posts=0`)** |
+| 6 | University of Washington-Seattle Campus | 365 | 31% | 100% | Anthropology ×3, Applied Mathematics ×3, Astronomy ×3 | |
+| 7 | Georgia Institute of Technology-Main Campus | 143 | 28% | 100% | (rollup names ×6) | smallest |
+
+_(USC left this table at run 43 — #696 "repaired" it into a DIFFERENT fabrication form (school-blurb descriptions +
+dept==program_name + 219 synthesized reviews), so it is now tracked in its own CRITICAL section above.)_
 
 _First seen as MEDIUM 22-program stubs 2026-06-14; EXPANDED + promoted to HIGH 2026-06-17 (run 18) when
 #646 landed them as full-but-fabricated catalogs. NYU keeps its dead-feed flag (miss #1/#9)._
@@ -432,9 +485,10 @@ fully clean (UCSD's lone invented unit keeps it just short).
 ---
 
 ### Notes for the enricher
-- **Top open entries first.** Boston University (#675 fixed prefix+classification but INTRODUCED ~31
-  cross-institution-COPY fabrications — Perelman ×22 etc. — and left 53 split/degree-type names + 33
-  credential-name departments; freshest breach), Stanford (#681 cleared the prefix + Sibley + all foreign-peer +
+- **Top open entries first.** USC (#696 — freshest breach: swapped the #646 stubs for SCHOOL-blurb descriptions
+  (95% cross-field shared body) + dept==program_name (98%) + 219 synthesized reviews; graded at source, deploy
+  in_progress), Boston University (#690 cleared the enumerated peers LIVE but 4 un-enumerated denylist-gap peers
+  survive live — Medill ×2 / Whiting / Feinberg — + 14% suffix-diversifier + 6% rollup names), Stanford (#681 cleared the prefix + Sibley + all foreign-peer +
   the identical-across-levels trap — gate-enforced — but LEFT the FSI-on-Public-Relations/Systems-Science mismatch,
   a real Stanford unit on the wrong field its FOREIGN-only gate is blind to, + 30% rollup names; now UCSD-scale),
   Northwestern (#686 diversified the descriptions — verbatim-shared 83%→0% — but LEFT both CRITICAL reasons:
