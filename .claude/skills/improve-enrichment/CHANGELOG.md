@@ -6,6 +6,128 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-17 — Run 29 (NO new gaps found — #667 UCSD is a CLEAN, VERIFIED-TRUE description repair (the GOOD pattern, like Rice #663) with ONE invented-unit slip: live n=194, 0% prefix · 0 foreign-sig · real UCSD units throughout, EXCEPT a fabricated "UC San Diego Center for Aerospace Research and Training" on 2 aerospace grad rows (web-verified non-existent — real centers are ACCORD/CaliBaja). A recurrence of the miss #8 verified-true / invented-named-unit class (Stanford Sibley), NOT a new class. Changed NO rules per anti-churn / no-edit-without-evidence; added UCSD as a focused CRITICAL (smallest-scope), moved it out of the HIGH "pure classification" tier)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28, no
+sprawl, same program counts as runs 26–28; gold MIT n=65 control). The one live-state CHANGE since run 28:
+**UCSD** (#667, the one in-scope PR merged). Full UCSD pagination (`page_size=50`, n=194) with per-row
+duplicate-name / rollup-name (strict field-portion, credential-form-agnostic) / prefix-doubling metrics +
+a whole-catalog FOREIGN-SIGNATURE (owner≠self) scan (peer units, peer geography, re-labeled landmarks) over
+all 194 detail descriptions; direct `description_text` reads on ~35 sampled UCSD rows (every STEM/named-unit
+row); a WEB verification of the one suspicious named unit. Re-confirmed all FIVE prior CRITICAL breaches live
+via direct reads (Northwestern synthesized review, Stanford Sibley ×2 + FSI-on-unrelated ×2, Duke 5
+Pratt-boilerplate reviews, Boston U 7 credential-name departments, Purdue cross-institution-copy). A fleet
+institution-level sanity scan (`campus_photos` length, `ranking_data.ownership_type`,
+`/institutions/{id}/posts` count) across all 28. Student's-eye open-ended pass: UCSD (the changed catalog)
+program names/descriptions + the fleet institution integrity sweep.
+
+**What merged since run 28:** ONE in-scope profile PR — **#667 UCSD** ("UCSD description repair:
+field-specific clauses, 0% name-prefix", ucsdprof5, `ad71ce6`, `origin/main` HEAD). The run-28 grader PR
+**#666** (`5dd4e39`) is the prior work. So the other 27 catalogs' DATA is byte-identical to run 28.
+
+**Findings (live API evidence):**
+
+1. **#667 UCSD is a CLEAN, VERIFIED-TRUE description repair — the GOOD pattern (like Rice #663), with ONE
+   invented-unit slip.** Live n=194: **0% prefix-doubling** (was 100% classification at the prior grade), 0%
+   duplicate, real degree names + real departments (names + depts were done at #605), and a whole-catalog
+   cross-institution-copy scan returned **0 foreign-signature** rows. The ~35 sampled descriptions cite REAL
+   UCSD units — Jacobs School of Engineering, Scripps Institution of Oceanography + Birch Aquarium, Kavli
+   Institute for Brain and Mind, San Diego Supercomputer Center, Halıcıoğlu Data Science Institute, Herbert
+   Wertheim School of Public Health, Powell Structural Research Laboratories, Rady, Skaggs, Arthur C. Clarke
+   Center for Human Imagination, Mandell Weiss Theatre — all genuine UCSD units, San Diego/Pacific-Rim
+   geography (no foreign place-names). **The ONE defect: a fabricated "UC San Diego Center for Aerospace
+   Research and Training"** on 2 aerospace grad rows (Graduate Certificate + MS in Aerospace Engineering),
+   repeated verbatim across both — the Stanford-Sibley tell (same invented unit across credential levels of
+   one field). The undergrad aerospace BS row of the SAME field correctly used the safe generic "facilities
+   at UC San Diego". A WebSearch confirmed UCSD has NO such center — its real aerospace centers are ACCORD
+   (the AFRL collaborative center) and the CaliBaja Center. A LIVE no-fabrication breach (miss #8
+   verified-true), but far smaller scope than the other CRITICALs (2 rows on an otherwise model catalog). It
+   is still a SINGLE-dimension pass (descriptions + prefix done; deep content `class_profile`/`faculty`/
+   `tracks` + GATHERED reviews still pending). → UCSD gets a focused CRITICAL entry; once the invented center
+   is fixed it joins the cleanest non-MIT structure tier (Rice/UChicago/Caltech/JHU).
+2. **All FIVE prior CRITICAL breaches PERSIST (re-confirmed live via direct reads).** Northwestern
+   synthesized review — the BA-in-Architecture-Studies row's `external_reviews.summary` still embeds
+   "Architecture and Related Services, Other within Weinberg" + a U.S. News #7 institution-ranking source
+   (runs 9→29, TWENTY-ONE intervals). Stanford **Sibley-School ×2** (aerospace BA + Graduate Certificate) **+
+   Freeman-Spogli on Systems-Science + Public-Relations** (2 mismatched; Political-Science FSI is the passing
+   control; runs 13/14→29). Duke **5 copy-paste Pratt-boilerplate reviews** (Biomedical/Civil/Environmental/
+   Mechanical Eng + IDEAS share the identical "rigorous engineering degree at a selective private R1
+   university…within Pratt" summary, field swapped; runs 10→29). Boston U **7 credential-name departments**
+   ("Bachelor Of Science In Hospitality Administration", "Doctor Of Dental Medicine", "Mph In Health Equity",
+   "Two Year Master Of Laws Llm In American Law"; runs 1→29). Purdue **cross-institution-copy descriptions**
+   (runs 25→29).
+3. **Fleet institution-level clean except NYU.** All 28 institutions carry ≥4 `campus_photos` (NYU 5) +
+   `ownership_type` + a live feed; NYU is the ONLY dead feed (`posts=0`), unchanged.
+
+**False alarms caught (diagnosed, not acted on):**
+- **UCSD's descriptions are verified-TRUE, not specific-sounding-but-copied** — the named units (Jacobs
+  School, Scripps, Kavli, SDSC, Halıcıoğlu DSI, Wertheim School, Powell Labs) are all genuine UCSD units and
+  the geography is San Diego/Pacific Rim; the cross-institution-copy scan that flagged Purdue returned 0/194
+  on UCSD. The ONE genuine fabrication is the aerospace center, web-confirmed non-existent — not a
+  false positive.
+- **The undergrad aerospace BS row is NOT a defect** — it uses the honest generic "facilities at UC San
+  Diego"; only the 2 grad rows of the field carry the invented center (the across-credential-levels tell).
+- `?page_size=100` 422s (server cap 50); `/institutions/{id}/posts` returns a bare list; the `/programs`
+  LIST endpoint omits the description (it lives on `/programs/{id}` as `description_text`) — paginated /
+  pulled detail accordingly. `_standard` not in the public API (gold MIT shows NONE) — ranked on API-visible
+  signals only.
+
+**Rulebook changes: NONE (0 of ≤3).** No new problem class was discovered. UCSD #667's invented aerospace
+center is a recurrence of the documented miss #8 verified-true / invented-named-unit class (Stanford Sibley;
+the rulebook already says "Never invent a named school/college/center… a confidently-WRONG specific is WORSE
+than an honest generic gloss… the SAME wrong unit copied verbatim across every credential level of one field"
+is the tell). The only nuance — that an OTHERWISE-clean verified-true pass can still smuggle ONE invented unit
+— is density, not a new class; the existing whole-catalog named-unit scan (miss #9 gate) already requires
+verifying EVERY named unit even on a clean-looking pass. Per the SAFETY RAILS
+(no-edit-without-evidence-of-a-NEW-problem; "Clean fleet → change nothing… Never invent a rule to look busy";
+bounded + anti-churn), restating present rules would be churn — and UCSD is largely positive evidence the
+verified-true-description capability works. The standing concerns are enricher BEHAVIOR (single-dimension
+passes; CRITICAL top unrepaired) — flagged for human review, not rulebook gaps (more rule text cannot fix
+ordering; cf. runs 10/12/17–28). Post-edit self-review: SKILL.md UNTOUCHED, miss numbering still sequential
+1–9, all invariants intact.
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(behavioral, recurring — MOSTLY POSITIVE this run)** #667 UCSD is the EIGHTH straight single-dimension
+  pass (FIVE prefix-strips + Purdue + Rice + UCSD descriptions) — the SECOND description-pass done
+  verified-true (after Rice #663), confirming the verified-true-description capability is reliable; the lone
+  invented aerospace center is a residual slip, not a wholesale fabrication like Purdue. The lever is steering
+  the enricher to finish ALL dimensions per pass AND verify EVERY named unit. Not a rule.
+- **(carried, urgent — now 21 / 19 intervals)** Northwestern (synthesized reviews, runs 9→29) and Duke
+  (Pratt boilerplate reviews, runs 10→29) remain live and unrepaired; the CRITICAL backlog top is not being
+  cleared. Fabricated reviews on student-facing pages are a no-fabrication invariant breach the grader cannot
+  fix — only steering the enricher can.
+- **(carried, urgent)** Stanford's Sibley-School + Freeman-Spogli fabricated units (runs 13/14), Purdue's
+  cross-institution-copy descriptions (run 25), and now UCSD's invented aerospace center (run 29) remain live;
+  the grader does not edit data.
+- **(carried from runs 2–28, unreconciled)** miss #9 says "FAIL on null/blank `department`" but gold MIT
+  ships null department and `manifest.py` marks `department` `required=False`. Reconciling would LOOSEN
+  verify-output → left intact per the rails.
+- **(carried from runs 8–28, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a stub
+  tell — valid for the ENRICHER but not API-visible to the grader. Left intact.
+
+**Backlog delta:** UCSD ADDED as a new CRITICAL entry (the invented "UC San Diego Center for Aerospace
+Research and Training" on 2 aerospace grad rows — smallest-scope of the CRITICALs, fastest fix) and REMOVED
+from the HIGH "fabricated/incomplete catalogs" table (its descriptions are now verified-true; HIGH table
+renumbered, old rows 7–14 → 6–13, with a note explaining UCSD moved to CRITICAL + the near-clean tier).
+Header `_Last graded_` block + intro rewritten for run 29 (UCSD framed as the GOOD pattern with one
+invented-unit slip; NO new class). CLEAN + SECONDARY tiers add UCSD to the closest-on-structure /
+legitimate-reviews-target list (once its invented center is fixed). The "A FIELD-SPECIFIC DESCRIPTION MUST BE
+TRUE" note + the single-dimension note gain the UCSD example (8th pass, 2nd verified-true description-pass).
+Persistence counts bumped: Northwestern 9→29 (TWENTY-ONE intervals), Duke 10→29, Stanford 14→29; Boston U +
+Purdue re-confirmed run 29. CRITICAL now: Boston University (structure) + Stanford (fabricated units) +
+Northwestern + Duke (fabricated reviews) + Purdue (cross-institution-copy descriptions) + **UCSD (1 invented
+aerospace center)**. MEDIUM empty. CLEAN = MIT only; Rice/UChicago/Caltech/JHU/UCSD stay the near-clean
+non-MIT structure tier.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv —
+`.venv/bin/pytest` absent) — same constraint as runs 1–28. Changes are markdown-only (backlog + this
+changelog; NO SKILL.md edit, no Python, no migrations, no app code), so the enricher code/data state is
+unaffected and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; no rule changed, so nothing weakened. The findings that could argue for
+loosening (null-department FAIL vs gold MIT; `_standard`-as-rendered-signal) remain logged for human review,
+not acted on.
+
 ## 2026-06-17 — Run 28 (NO new gaps found — the enricher shipped NOTHING for the SECOND consecutive interval: `origin/main` HEAD is the run-27 grader PR #665, so the whole fleet is byte-identical to runs 26–27. Pure re-verification via direct API reads (not trusting the prior grade): all FIVE CRITICAL breaches persist live, fleet institution-level clean except NYU's dead feed, no new problem class possible from an enricher that did not run. Changed NO rules per anti-churn / no-edit-without-evidence; refreshed backlog dates + persistence counts only)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28, no
