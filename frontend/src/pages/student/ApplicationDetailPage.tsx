@@ -64,6 +64,28 @@ const INTENT_OPTIONS: { value: string; label: string }[] = [
 ]
 const RATIONALE_REQUIRED = ['back_up', 'other']
 
+// Spec 39 — fee status as a colored badge (success = settled, warning = action
+// pending, error = it didn't go through). Pure-visual; the pay/waiver controls
+// own the action.
+const FEE_STATUS_VARIANT: Record<string, 'success' | 'warning' | 'error' | 'neutral' | 'info'> = {
+  paid: 'success',
+  waived: 'neutral',
+  refunded: 'neutral',
+  partially_refunded: 'neutral',
+  due: 'warning',
+  processing: 'info',
+  waiver_pending: 'warning',
+  waiver_denied: 'warning',
+  failed: 'error',
+}
+const FEE_STATUS_LABEL: Record<string, string> = {
+  due: 'Unpaid',
+  processing: 'Processing',
+  waiver_pending: 'Waiver under review',
+  waiver_denied: 'Waiver not approved',
+  failed: 'Payment failed',
+}
+
 // The checklist GET 404s when one hasn't been generated yet — that's the only
 // case we silently fall back to POST /checklist. A transient 5xx/network error
 // must surface (so the tab shows QueryError), not masquerade as "generate".
@@ -1045,7 +1067,12 @@ function FeeCard({ fee, isDraft, payPending, onPay, onRequestWaiver, programName
         </div>
       )}
       {!isDraft && !paid && !waived && !refunded && (
-        <p className="text-xs text-foreground mt-1">Fee status: {fee.status.replace(/_/g, ' ')}.</p>
+        <div className="mt-1 flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground">Fee status</span>
+          <Badge variant={FEE_STATUS_VARIANT[fee.status] ?? 'warning'}>
+            {FEE_STATUS_LABEL[fee.status] ?? fee.status.replace(/_/g, ' ')}
+          </Badge>
+        </div>
       )}
     </Card>
   )

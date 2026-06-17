@@ -9,7 +9,7 @@ import Select from '../../components/ui/Select'
 import EmptyState from '../../components/ui/EmptyState'
 import QueryError from '../../components/ui/QueryError'
 import { SkeletonCard } from '../../components/ui/Skeleton'
-import { PageContainer, PageHeader } from '../../components/student/density'
+import { PageContainer, PageHeader, StatTile } from '../../components/student/density'
 import { useCountUp } from '../../hooks/useCountUp'
 import { formatDate } from '../../utils/format'
 
@@ -412,14 +412,13 @@ export default function ApplicationsPage() {
 
       {/* Spec 18 — no offers yet, decisions pending (§8) */}
       {!acceptedApp && offerApps.length === 0 && awaitingDecisionApps.length > 0 && (
-        <Card pad={false} className="p-4 mb-6 bg-muted border-0">
+        <Card pad={false} className="p-4 mb-6 bg-muted border-0 flex items-center justify-between gap-4">
           <p className="text-sm text-foreground">
             Decisions usually arrive within 4–8 weeks of submission. You'll be notified here.
           </p>
-          <p className="text-xs text-foreground mt-1">
-            {awaitingDecisionApps.length} application
-            {awaitingDecisionApps.length !== 1 ? 's' : ''} awaiting a decision.
-          </p>
+          <div className="shrink-0">
+            <StatTile label="Awaiting a decision" value={awaitingDecisionApps.length} />
+          </div>
         </Card>
       )}
 

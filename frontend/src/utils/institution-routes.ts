@@ -3,9 +3,15 @@
 export type AdmissionsTab = 'pipeline' | 'integrity' | 'interviews' | 'inquiries' | 'cohort'
 export type PipelineView = 'board' | 'list' | 'review' | 'priority'
 
-export function admissionsUrl(tab: AdmissionsTab = 'pipeline', view?: PipelineView): string {
+export function admissionsUrl(
+  tab: AdmissionsTab = 'pipeline',
+  view?: PipelineView,
+  /** Pre-filters the integrity queue to one signal type (e.g. duplicate_submission). */
+  signalType?: string,
+): string {
   const params = new URLSearchParams({ tab })
   if (view) params.set('view', view)
+  if (signalType) params.set('type', signalType)
   return `/i/admissions?${params.toString()}`
 }
 

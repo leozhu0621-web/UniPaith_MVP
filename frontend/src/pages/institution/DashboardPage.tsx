@@ -46,6 +46,15 @@ function integrityLine(type: string, count: number): string {
   return (INTEGRITY_LINE[type] ?? ((n) => `${n} ${type.replace(/_/g, ' ')} flag${n === 1 ? '' : 's'} pending review`))(count)
 }
 
+// Short noun labels for the per-type breakdown chips — the full sentence above
+// is kept as each chip's title for the count-in-context reading.
+const INTEGRITY_CHIP_LABEL: Record<string, string> = {
+  essay_authenticity: 'Essay authenticity',
+  duplicate_submission: 'Duplicate',
+  credential_mismatch: 'Credential mismatch',
+  incomplete_profile: 'Incomplete profile',
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate()
 
@@ -354,14 +363,20 @@ export default function DashboardPage() {
           {integrityQ.isError ? (
             <QueryError variant="inline" detail="We couldn't load integrity signals — this is not an all-clear." onRetry={() => integrityQ.refetch()} />
           ) : integrityBreakdown.length > 0 ? (
-            <ul className="space-y-1.5 mb-3">
+            <div className="flex flex-wrap gap-1.5 mb-3">
               {integrityBreakdown.map(row => (
-                <li key={row.type} className="flex items-center gap-2 text-sm text-foreground">
+                <button
+                  key={row.type}
+                  onClick={() => navigate(admissionsUrl('integrity', undefined, row.type))}
+                  title={row.label}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning-soft/40 px-2.5 py-1 text-sm font-medium text-foreground hover:bg-warning-soft/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary"
+                >
                   <span className="text-warning" aria-hidden>⚠</span>
-                  {row.label}
-                </li>
+                  {INTEGRITY_CHIP_LABEL[row.type] ?? row.type.replace(/_/g, ' ')}
+                  <span className="tabular-nums font-semibold text-warning">{row.count}</span>
+                </button>
               ))}
-            </ul>
+            </div>
           ) : (
             <p className="text-sm text-success mb-2">All clear — no integrity issues</p>
           )}

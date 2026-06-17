@@ -12,10 +12,11 @@ import { Check, Plus } from 'lucide-react'
 
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
-import Input, { FieldLabel } from '../../../components/ui/Input'
+import { FieldLabel } from '../../../components/ui/Input'
 import QueryError from '../../../components/ui/QueryError'
 import Select from '../../../components/ui/Select'
 import { SkeletonCard } from '../../../components/ui/Skeleton'
+import TokenInput from '../../../components/ui/TokenInput'
 import { getPreferences, upsertPreferences } from '../../../api/students'
 import { DEGREE_OPTIONS, GEO_OPTIONS, nextIntakeTerms } from '../onboarding/catalog'
 import { showToast } from '../../../stores/toast-store'
@@ -137,15 +138,6 @@ const withCurrent = (
     ? [...options, { value: current, label: current }]
     : options
 
-// Cap parsed CSV lists so a pasted blob can't balloon the payload: at most
-// 25 entries, each trimmed to 80 chars.
-const splitCsv = (s: string): string[] =>
-  s
-    .split(',')
-    .map(x => x.trim().slice(0, 80))
-    .filter(Boolean)
-    .slice(0, 25)
-
 const toPayload = (form: any) => ({
   // Countries/regions are already canonical string[] from the chip pickers.
   preferred_countries: form.preferred_countries ?? [],
@@ -157,7 +149,7 @@ const toPayload = (form: any) => ({
   target_start_term: form.target_start_term || null,
   preferred_program_style: form.preferred_program_style || null,
   risk_tolerance: form.risk_tolerance || null,
-  dealbreakers: splitCsv(form.dealbreakers),
+  dealbreakers: form.dealbreakers ?? [],
   weight_cost: form.weight_cost,
   weight_location: form.weight_location,
   weight_outcomes: form.weight_outcomes,
@@ -189,7 +181,7 @@ export default function PreferencesTab() {
         target_start_term: p.target_start_term ?? '',
         preferred_program_style: p.preferred_program_style ?? '',
         risk_tolerance: p.risk_tolerance ?? '',
-        dealbreakers: (p.dealbreakers ?? []).join(', '),
+        dealbreakers: p.dealbreakers ?? [],
         weight_cost: p.weight_cost ?? 5,
         weight_location: p.weight_location ?? 5,
         weight_outcomes: p.weight_outcomes ?? 5,
@@ -264,7 +256,10 @@ export default function PreferencesTab() {
           <Select label="Target start term" placeholder="No preference" options={withCurrent(START_TERM_OPTIONS, form.target_start_term)} value={form.target_start_term} onChange={e => set('target_start_term', e.target.value)} />
           <Select label="Program style" placeholder="No preference" options={withCurrent(PROGRAM_STYLE_OPTIONS, form.preferred_program_style)} value={form.preferred_program_style} onChange={e => set('preferred_program_style', e.target.value)} />
           <Select label="Risk tolerance" placeholder="No preference" options={RISK_LEVELS} value={form.risk_tolerance} onChange={e => set('risk_tolerance', e.target.value)} />
-          <Input label="Dealbreakers" placeholder="No online-only, …" value={form.dealbreakers} onChange={e => set('dealbreakers', e.target.value)} />
+          <div>
+            <FieldLabel>Dealbreakers</FieldLabel>
+            <TokenInput value={form.dealbreakers} onChange={v => set('dealbreakers', v)} placeholder="No online-only — press Enter" />
+          </div>
         </Card>
       </section>
 

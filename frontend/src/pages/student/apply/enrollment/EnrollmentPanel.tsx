@@ -82,6 +82,16 @@ const DEPOSIT_LABEL: Record<string, string> = {
   waived: 'Waived',
 }
 
+// Spec 39 — deposit status as a colored badge (success = settled, warning =
+// pending, neutral = not yet recorded). Pure-visual; the deposit control owns
+// the action.
+const DEPOSIT_STATUS_VARIANT: Record<string, 'success' | 'warning' | 'neutral'> = {
+  none: 'neutral',
+  pending: 'warning',
+  paid: 'success',
+  waived: 'neutral',
+}
+
 function ChecklistRow({ item, appId }: { item: EnrollmentChecklistItem; appId: string }) {
   const queryClient = useQueryClient()
   // confirm_intent + deposit are state-driven; the rest are self-serve toggles.
@@ -506,13 +516,17 @@ export default function EnrollmentPanel({ application }: { application: Applicat
                 onRetry={() => refetchCost()}
               />
             ) : (
-              <p className="text-sm text-foreground">
-                Status:{' '}
-                <span className="font-semibold text-foreground">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">Status</span>
+                <Badge variant={DEPOSIT_STATUS_VARIANT[e.deposit_status || 'none']}>
                   {DEPOSIT_LABEL[e.deposit_status || 'none']}
-                </span>
-                {e.deposit_amount ? ` · ${e.deposit_amount.toLocaleString()}` : ''}
-              </p>
+                </Badge>
+                {e.deposit_amount ? (
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {e.deposit_amount.toLocaleString()}
+                  </span>
+                ) : null}
+              </div>
             )}
           </Card>
         )
