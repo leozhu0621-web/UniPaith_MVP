@@ -541,6 +541,31 @@ Concrete misses observed in the first runs — each broke a real page:
        levels descriptions (one field's Graduate Certificate + MS sharing verbatim text, the MS body even
        reading "undergraduate research in robotics labs" — a credential-level lie copied onto a master's
        row).
+     - **The shared-BODY count must catch the SUFFIX-DIVERSIFIER evasion — appending a generic
+       per-credential SUFFIX onto a SHARED field body defeats the verbatim-FULL-STRING count above
+       (it reads 0%) while the researched body is STILL stamped identically across the credential
+       levels. This is the live regression this run, and it evaded BOTH the enricher's build gate AND
+       this grader's own verbatim check.** The "diversify + gate" repair (the dominant pass now) keeps
+       one field's researched opening identical across its certificate/bachelor's/master's/PhD rows and
+       appends a reusable boilerplate sentence keyed only on the CREDENTIAL ("The graduate certificate
+       offers focused graduate coursework for working professionals…" / "Master's students complete
+       advanced seminars, practica, and professional development…") — so the FULL `description_text`
+       strings differ (verbatim-shared = 0%) yet a student reads the SAME field paragraph on the MS and
+       the PhD page, with only a generic per-level tag swapped. That generic suffix is NOT per-program
+       research: it is field-agnostic (the identical certificate sentence fits every field's certificate),
+       so the row was minted per-FIELD, never researched per-PROGRAM — the run-30 defect wearing a
+       suffix costume. So the identical-across-levels count must measure the SHARED LEADING BODY across
+       a field's credential siblings, NOT just full-string equality: for each field (program_name minus
+       its credential designation) with ≥2 rows, compute the common description prefix; FAIL the field
+       when that shared prefix is a large fraction of the shortest sibling (e.g. ≥120 chars AND ≥50% of
+       the shortest) — gold MIT = 0% of multi-credential fields (its BS-Chemistry "covers organic,
+       inorganic, physical, and biological chemistry, with extensive undergraduate research" vs its
+       PhD-Chemistry "doctoral research across the chemical sciences. Funded." share NO body). A clean
+       diversification gives each credential level its OWN researched body (what THAT degree studies at
+       THAT level), not a shared body + a generic credential tag. Evidence: live API this run — the three
+       "diversify + gate" passes graded "0% identical-across-levels" by the verbatim count (Columbia #684,
+       Stanford #681, Harvard #679) actually share their full researched opening across 81% / 89% / 82%
+       of their multi-credential fields, vs gold MIT 0%.
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
@@ -600,7 +625,12 @@ Concrete misses observed in the first runs — each broke a real page:
      description stamped on every credential level (certificate/BS/MS/PhD), a per-FIELD
      generation tell that EVADES the distinct-NAME and gold-contrast checks (miss #8);
      gold MIT = 0% (every program uniquely described), so any verbatim-shared
-     description is a FAIL**) before
+     description is a FAIL — AND the count must measure the SHARED LEADING BODY across a
+     field's credential siblings, not just full-string equality, or a generic
+     per-credential SUFFIX appended onto a shared body evades it (verbatim-shared reads 0%
+     while the researched opening is still stamped identically across the levels): for each
+     field with ≥2 rows, compute the common description prefix and FAIL when it is ≥120 chars
+     AND ≥50% of the shortest sibling (miss #8 suffix-diversifier sub-bullet)**) before
      shipping — a padded catalog must FAIL the run. **Also FAIL a catalog whose
      descriptions DOUBLE the page heading — i.e. begin by restating the `program_name`
      verbatim (a `"{program_name}: …"` or `"{program_name} is …"` prefix).** The program
