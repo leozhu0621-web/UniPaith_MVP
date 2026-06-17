@@ -765,12 +765,28 @@ Events & Updates aren't empty), `research`/`campus_life` (with links), the FULL
 program catalog (cross-checked against the IPEDS/Scorecard count), and program
 `delivery_format` are all populated. Stamp `_standard` on every node.
 
-### 9. Ship
+### 9. Ship — and MERGING IS MANDATORY (a run is not done until the work is on `main`)
 `ruff check src/<changed> tests/<changed>` (NOT `ruff check .`) + the profile tests +
-`npm run build`; branch off `origin/main` → commit → PR → squash-merge → watch Deploy
-Backend → **verify live** (query the public API for the institution + a sample school
-+ a sample program; confirm new fields + citations + that the explore-card eyebrow,
-updates feed, online programs, and resource links all render).
+`npm run build`; branch off `origin/main` → commit → PR → **`gh pr merge --squash`** →
+watch Deploy Backend → **verify live** (query the public API for the institution + a
+sample school + a sample program; confirm new fields + citations + that the explore-card
+eyebrow, updates feed, online programs, and resource links all render).
+
+**An opened-but-unmerged PR is a FAILED run, not a finished one.** Opening a PR and
+stopping leaves the whole university invisible to students (the seeded thin profile
+still shows) and lets work rot — a batch of fully-enriched universities once sat in
+open PRs for days, unmerged, while the live site kept showing their 22-program seed.
+So:
+- The run is complete only when **`git log origin/main` contains your squash-merge
+  commit AND Deploy Backend is green.** Before you write the report, fetch
+  `origin/main` and confirm your commit is there. If it isn't, you are not done.
+- If you genuinely **cannot** merge (no permission, a REQUIRED check is red), that is a
+  **blocking error** — say so loudly at the top of the report with the PR link and the
+  exact blocker, and DO NOT start a new university. Never silently end with the work
+  stranded in an open PR.
+- If older runs left their enrichments in unmerged PRs, treat landing them as repair
+  work (step 2): head-sync each migration onto the current head, consolidate if
+  several, and merge — before doing anything new.
 
 ### 10. Report
 University name · #schools · #programs · per-level fields filled (with sources) vs
@@ -794,10 +810,15 @@ Idempotent migrations make resumption and overlap safe.
 - **Editorial standard:** content-rich, program-specific, sentence case, numbers with
   units + reporting window — never generic marketing.
 - **Never expose secrets / API keys.**
-- **Ship every verified unit** (commit → merge → deploy → verify live); never block the
-  tree on one unverifiable field — omit and continue.
-- **Stop condition:** all universities gold at the current `STANDARD_VERSION` → report
-  and end.
+- **Ship every verified unit** (commit → **merge** → deploy → verify live); a run that
+  ends with its PR unmerged has FAILED — never block the tree on one unverifiable field
+  (omit and continue), and never leave the finished tree stranded in an open PR.
+- **Stop condition (rarely reached):** end a run only when every existing university is
+  gold at the current `STANDARD_VERSION` AND there is no next university to add. Because
+  growth walks the U.S. News National Universities ranking (step 2 item 3), there is
+  almost always a next target — so "no repairs left" means **add the next-ranked new
+  university**, not stop. Only truly idle if the ranking universe is exhausted or the
+  operator has paused growth.
 
 ## Using this as a scheduled routine
 
