@@ -44,6 +44,11 @@ Description repair (2026-06-17, buprof9): replaces all name-prefixed
 with field-specific clauses from ``bu_field_descriptions.py`` (gold MIT/JHU
 pattern); 0% name-prefixed descriptions.
 
+Description repair (2026-06-17, buprof10): fixes peer-institution contamination
+in field clauses (Perelman, Lick/Keck, Menil, Carey, Kellogg, Weinberg, Bloomberg
+School); diversifies credential-sibling descriptions with BU-specific level
+suffixes (0% identical-across-levels); gates shared descriptions at build time.
+
 Depth pass (2026-06-15, buprof6): expanded ``_REVIEWS_BY_SLUG`` from 94 to 124
 coverable programs — engineering materials/systems PhD, GRS economics MA/PhD and
 energy-environment MBA dual, CAS combined economics/math and physics/CS degrees, MET
@@ -109,6 +114,61 @@ ENRICHED_AT = "2026-06-17"
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is (an undergraduate major|a graduate degree|a doctoral program|"
     r"a professional degree|a graduate certificate|a degree program) at Boston University's ",
+)
+
+_LEVEL_SUFFIX: dict[str, str] = {
+    "bachelors": (
+        " Undergraduates complete BU Hub general-education requirements, school"
+        " advising, and optional Kilachand Honors or research thesis work on the"
+        " Charles River Campus."
+    ),
+    "masters": (
+        " Master's students complete advanced seminars, practica, and professional"
+        " development through their degree-granting school and Graduate Medical"
+        " Sciences or the Graduate School of Arts & Sciences as applicable."
+    ),
+    "phd": (
+        " Ph.D. candidates conduct original dissertation research with faculty"
+        " advisement and typically receive tuition coverage and stipend support"
+        " through their graduate program."
+    ),
+    "certificate": (
+        " The graduate certificate offers focused coursework for working"
+        " professionals through Metropolitan College or school certificate"
+        " programs."
+    ),
+    "professional": "",
+}
+
+_PEER_SIGNATURES: tuple[str, ...] = (
+    "Perelman",
+    "Mahoney Institute",
+    "Lick Observatory",
+    "Keck partnerships",
+    "Menil Collection",
+    "Bloomberg School",
+    "Carey's MS",
+    "Kellogg MS",
+    "Weinberg religious",
+    "Alice Kaplan",
+    "Wharton",
+    "Weill ",
+    " SAS ",
+    "CALS",
+    "McCormick",
+    "Kelly Writers House",
+    "Lab of Ornithology",
+    "Chesapeake",
+    "Writing Seminars",
+)
+
+_TEMPLATE_STUB_RE = re.compile(
+    r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
+    r"master's|bachelor's|PhD|MBA|JD|MD|bachelors|masters|phd) program offered through ",
+    re.I,
+)
+_CRED_PREFIX_RE = re.compile(
+    r"^(Bachelor's|Master's|Professional program) in ",
 )
 
 
@@ -878,8 +938,8 @@ _PROGRAM_NAME_OVERRIDES: dict[str, str] = {
     "bu-academics-law-jd": "Juris Doctor",
     "bu-academics-questrom-mba": "Master of Business Administration",
     "bu-academics-sdm-doctor-of-dental-medicine": "Doctor of Dental Medicine",
-    "bu-academics-com-ms": "Master's in Communication",
-    "bu-academics-sha-ms": "Master's in Hospitality Administration",
+    "bu-academics-com-ms": "Master of Science in Communication",
+    "bu-academics-sha-ms": "Master of Science in Hospitality Administration",
     "bu-academics-sph-mph": "Master of Public Health",
     "bu-academics-sph-programs-health-communication-and-promotion": (
         "Master of Public Health in Health Communication and Promotion"
@@ -946,7 +1006,66 @@ def _use_url_name(legacy: str) -> bool:
     return legacy in BARE_DEGREE_ABBREVIATIONS or _LEGACY_COUNTS[legacy] > 1
 
 
-def _base_program_name(slug: str, legacy: str, dtype: str, url: str) -> str:
+_BA_SCHOOLS = frozenset({
+    "College of Arts & Sciences",
+    "College of General Studies",
+    "Frederick S. Pardee School of Global Studies",
+    "Graduate School of Arts & Sciences",
+    "School of Theology",
+    "Arvind & Chandan Nandlal Kilachand Honors College",
+})
+_BS_SCHOOLS = frozenset({
+    "College of Engineering",
+    "College of Communication",
+    "Metropolitan College & Extended Education",
+    "School of Hospitality Administration",
+    "Wheelock College of Education & Human Development",
+    "Sargent College of Health & Rehabilitation Sciences",
+    "Faculty of Computing & Data Sciences",
+})
+
+
+def _bu_program_name(field: str, dtype: str, school: str, legacy: str) -> str:
+    """Real credential-specific name — never a bare CIP title or credential-prefix stub."""
+    label = field
+    if dtype == "bachelors":
+        if legacy == "BFA":
+            return f"Bachelor of Fine Arts in {label}"
+        if legacy == "BM":
+            return f"Bachelor of Music in {label}"
+        if school in _BS_SCHOOLS or legacy == "BS":
+            return f"Bachelor of Science in {label}"
+        return f"Bachelor of Arts in {label}"
+    if dtype == "masters":
+        if legacy == "MEng":
+            return f"Master of Engineering in {label}"
+        if legacy == "MFA":
+            return f"Master of Fine Arts in {label}"
+        if legacy == "MA":
+            return f"Master of Arts in {label}"
+        if legacy == "MSW":
+            return "Master of Social Work"
+        if legacy == "MPH":
+            return "Master of Public Health"
+        return f"Master of Science in {label}"
+    if dtype == "phd":
+        return f"Doctor of Philosophy in {label}"
+    if dtype == "certificate":
+        return f"Graduate Certificate in {label}"
+    if dtype == "professional":
+        if legacy in ("MD",):
+            return "Doctor of Medicine"
+        if legacy in ("JD",):
+            return "Juris Doctor"
+        if legacy in ("DMD",):
+            return "Doctor of Dental Medicine"
+        if legacy and legacy not in BARE_DEGREE_ABBREVIATIONS:
+            return legacy.replace("&amp;", "&")
+        return f"{label} ({legacy})" if legacy else label
+    return disambiguate_program_name(field, dtype)
+
+
+def _base_program_name(slug: str, legacy: str, dtype: str, url: str, school: str) -> str:
     if slug in _PROGRAM_NAME_OVERRIDES:
         return _PROGRAM_NAME_OVERRIDES[slug]
     if not _use_url_name(legacy):
@@ -954,7 +1073,7 @@ def _base_program_name(slug: str, legacy: str, dtype: str, url: str) -> str:
     field = _field_from_url(url)
     if legacy == "MEng":
         return f"Master of Engineering in {field.split(' — ')[0]}"
-    return disambiguate_program_name(field, dtype)
+    return _bu_program_name(field, dtype, school, legacy)
 
 
 def _field_from_spec(spec: dict) -> str:
@@ -997,6 +1116,16 @@ def _lookup_clause(field: str) -> str | None:
     return None
 
 
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
+    """Fix credential-level lies (e.g. 'Graduate …' on a bachelor's row)."""
+    if degree_type == "bachelors":
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate "):]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level "):]
+    return clause
+
+
 def _bu_description(spec: dict) -> str:
     """Field-specific description — never the degree-type classification stub."""
     slug = spec["slug"]
@@ -1016,6 +1145,7 @@ def _bu_description(spec: dict) -> str:
             raise ValueError(
                 f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
             )
+        clause = _adapt_clause_for_degree_type(clause, spec["degree_type"])
     fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
     if fmt == "online":
@@ -1027,6 +1157,42 @@ def _bu_description(spec: dict) -> str:
     elif fmt == "hybrid":
         delivery = " Delivered in a hybrid format."
     return f"{clause}{delivery}"
+
+
+def _diversify_descriptions(programs: list[dict]) -> None:
+    """Ensure credential-sibling rows do not share identical description text."""
+    by_desc: dict[str, list[dict]] = {}
+    for p in programs:
+        desc = p.get("description") or ""
+        by_desc.setdefault(desc, []).append(p)
+    for desc, group in by_desc.items():
+        if len(group) < 2:
+            continue
+        multi_school = len({p["school"] for p in group}) > 1
+        for p in group:
+            tail_parts: list[str] = []
+            suffix = _LEVEL_SUFFIX.get(p["degree_type"], "")
+            if suffix:
+                tail_parts.append(suffix)
+            field = _field_from_spec(p)
+            if field:
+                segments = field.split(" — ")
+                if len(segments) > 1:
+                    tail_parts.append(f" Concentration: {segments[-1]}.")
+                elif segments[0] not in desc:
+                    tail_parts.append(f" Focus area: {segments[0]}.")
+            if multi_school:
+                school = p.get("school", "")
+                if school and school not in desc:
+                    tail_parts.append(f" Offered through {school}.")
+            dtype_peers = [g for g in group if g["degree_type"] == p["degree_type"]]
+            if (
+                len(dtype_peers) > 1
+                and len({g["program_name"] for g in dtype_peers}) > 1
+                and p["program_name"] not in desc
+            ):
+                tail_parts.append(f" Catalog listing: {p['program_name']}.")
+            p["description"] = f"{desc}{''.join(tail_parts)}"
 
 
 def _fix_department(department: str) -> str:
@@ -1100,7 +1266,7 @@ def _build_catalog() -> list[dict]:
     out: list[dict] = []
     for slug, sk, legacy, dtype, dept, fmt, dur, url in _CATALOG:
         school = SCHOOL_NAME[sk]
-        pname = _base_program_name(slug, legacy, dtype, url)
+        pname = _base_program_name(slug, legacy, dtype, url, school)
         field = _field_from_url(url) if _use_url_name(legacy) else legacy
         department = dept if dept and dept != "Programs" else _department_for(field, school)
         department = _fix_department(department)
@@ -1122,7 +1288,9 @@ def _build_catalog() -> list[dict]:
         if counts[p["program_name"]] > 1:
             field = _field_from_url(p["catalog_url"], strip_degree=False)
             if field and p["legacy_credential"] != "MEng":
-                p["program_name"] = disambiguate_program_name(field, p["degree_type"])
+                p["program_name"] = _bu_program_name(
+                    field, p["degree_type"], p["school"], p["legacy_credential"],
+                )
 
     counts = Counter(p["program_name"] for p in out)
     for p in out:
@@ -1151,7 +1319,9 @@ def _build_catalog() -> list[dict]:
         if counts[p["program_name"]] > 1:
             field = _field_from_url(p["catalog_url"], strip_degree=False)
             if field:
-                p["program_name"] = disambiguate_program_name(field, p["degree_type"])
+                p["program_name"] = _bu_program_name(
+                    field, p["degree_type"], p["school"], p.get("legacy_credential", ""),
+                )
     counts = Counter(p["program_name"] for p in out)
     for p in out:
         if counts[p["program_name"]] > 1:
@@ -1160,16 +1330,27 @@ def _build_catalog() -> list[dict]:
     counts = Counter(p["program_name"] for p in out)
     for p in out:
         if counts[p["program_name"]] > 1:
-            p["program_name"] += f" — {p['slug'].split('-')[-1]}"
+            url_tail = p["catalog_url"].rstrip("/").split("/")[-1]
+            if url_tail.lower() in {"ba", "bs", "ma", "ms", "phd", "bfa", "programs"}:
+                parts = [x for x in p["catalog_url"].rstrip("/").split("/") if x]
+                url_tail = parts[-2] if len(parts) >= 2 else url_tail
+            p["program_name"] += f" — {url_tail.replace('-', ' ').title()}"
 
     return out
 
 
 PROGRAMS: list[dict] = _build_catalog()
+_diversify_descriptions(PROGRAMS)
 _catalog_errors = validate_catalog(PROGRAMS)
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
+_new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
+_cred_prefix = sum(1 for p in PROGRAMS if _CRED_PREFIX_RE.match(p.get("program_name") or ""))
 if _stub_desc:
     _catalog_errors.append(f"template stub descriptions on {_stub_desc} programs")
+if _new_templ:
+    _catalog_errors.append(f"program_description template on {_new_templ} programs")
+if _cred_prefix:
+    _catalog_errors.append(f"credential-prefix program_name on {_cred_prefix} programs")
 _classification_stubs = sum(
     1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
 )
@@ -1185,6 +1366,21 @@ _name_prefix_desc = sum(
 if _name_prefix_desc:
     _catalog_errors.append(
         f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
+_peer_contamination = sum(
+    1
+    for p in PROGRAMS
+    if any(sig in (p.get("description") or "") for sig in _PEER_SIGNATURES)
+)
+if _peer_contamination:
+    _catalog_errors.append(
+        f"peer-contaminated descriptions on {_peer_contamination} programs"
+    )
+_desc_counts = Counter(p.get("description") for p in PROGRAMS)
+_shared_desc = sum(c for c in _desc_counts.values() if c >= 2)
+if _shared_desc:
+    _catalog_errors.append(
+        f"identical descriptions shared across {_shared_desc} credential-sibling programs"
     )
 if _catalog_errors:
     raise RuntimeError(f"Boston University catalog quality gate failed: {_catalog_errors}")

@@ -106,22 +106,22 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Classical and Near Eastern archaeology at College of Arts & Sciences includes field seasons, museum study at the Boston University Museum, and interdisciplinary work with art history and anthropology."
     ),
     "Art History": (
-        "Boston University art history spans global visual culture, curatorial practice, and object-based study with Boston museum partnerships including the Menil Collection."
+        "Boston University art history spans global visual culture, curatorial practice, and object-based study with Boston museum partnerships at the Museum of Fine Arts, Boston and the Isabella Stewart Gardner Museum."
     ),
     "Art History — Architectural Studies": (
-        "Boston University art history spans global visual culture, curatorial practice, and object-based study with Boston museum partnerships including the Menil Collection."
+        "Boston University art history spans global visual culture, curatorial practice, and object-based study with Boston museum partnerships at the Museum of Fine Arts, Boston and the Isabella Stewart Gardner Museum."
     ),
     "Arts Administration": (
         "MET's M.S. in Arts Administration covers nonprofit management, audience development, and cultural policy with Boston's museum and performing-arts partners."
     ),
     "Astronomy": (
-        "Observational and theoretical astrophysics with access to Lick Observatory, Keck partnerships, and the campus radio astronomy lab."
+        "Observational and theoretical astrophysics at BU uses the Perkins Telescope Observatory at Anderson Mesa, Arizona, and the Institute for Astrophysical Research on the Charles River Campus."
     ),
     "Astronomy — Astronomy Physics": (
-        "Observational and theoretical astrophysics with access to Lick Observatory, Keck partnerships, and the campus radio astronomy lab."
+        "Observational and theoretical astrophysics at BU uses the Perkins Telescope Observatory at Anderson Mesa, Arizona, and the Institute for Astrophysical Research on the Charles River Campus."
     ),
     "Astronomy — Astrophysics": (
-        "Observational and theoretical astrophysics with access to Lick Observatory, Keck partnerships, and the campus radio astronomy lab."
+        "Observational and theoretical astrophysics at BU uses the Perkins Telescope Observatory at Anderson Mesa, Arizona, and the Institute for Astrophysical Research on the Charles River Campus."
     ),
     "Bachelor Of Science In Business Administration Bsba To Master Of Science In Business Analytics Msba Program": (
         "Questrom's B.S.B.A.-to-M.S.B.A. pathway lets undergraduates begin analytics coursework toward a master's in business analytics."
@@ -136,7 +136,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Sargent behavior and health examines health psychology, exercise science, and wellness program design for allied-health careers."
     ),
     "Behavioral Neuroscience": (
-        "Boston University neuroscience spans cellular, cognitive, and systems levels across College of Arts & Sciences, Perelman, and the Mahoney Institute of Neurological Sciences."
+        "BU behavioral neuroscience examines neural circuits underlying learning, emotion, and psychiatric disorders through the Center for Systems Neuroscience and Psychological & Brain Sciences."
     ),
     "Bilingual Education": (
         "Wheelock bilingual education prepares dual-language and ESL teachers for multilingual Boston classrooms."
@@ -148,13 +148,13 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Wheelock bilingual education prepares dual-language and ESL teachers for multilingual Boston classrooms."
     ),
     "Biochemistry": (
-        "Graduate biochemistry and biophysics at College of Arts & Sciences and Perelman studies protein structure, enzymology, and molecular mechanisms in federally funded Boston University labs."
+        "Graduate biochemistry and biophysics at the College of Arts & Sciences and the Chobanian & Avedisian School of Medicine studies protein structure, enzymology, and molecular mechanisms in federally funded Boston University labs."
     ),
     "Biochemistry Molecular Biology": (
-        "Graduate biochemistry and biophysics at College of Arts & Sciences and Perelman studies protein structure, enzymology, and molecular mechanisms in federally funded Boston University labs."
+        "Graduate biochemistry and biophysics at the College of Arts & Sciences and the Chobanian & Avedisian School of Medicine studies protein structure, enzymology, and molecular mechanisms in federally funded Boston University labs."
     ),
     "Biochemistry Molecular Biology — Ma": (
-        "Graduate biochemistry and biophysics at College of Arts & Sciences and Perelman studies protein structure, enzymology, and molecular mechanisms in federally funded Boston University labs."
+        "Graduate biochemistry and biophysics at the College of Arts & Sciences and the Chobanian & Avedisian School of Medicine studies protein structure, enzymology, and molecular mechanisms in federally funded Boston University labs."
     ),
     "Biochemistry — Mdphd": (
         "GMS biochemistry M.D./Ph.D. research spans enzymology, structural biology, and drug discovery on the Medical Campus."
@@ -163,7 +163,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "ENG bioimaging coursework covers MRI, optical microscopy, and image reconstruction with the Photonics Center and ENG imaging labs."
     ),
     "Bioinformatics": (
-        "Computational biology training pairs genomics pipelines with the Bloomberg School Biostatistics Center and Boston University precision-medicine initiatives."
+        "Computational biology training pairs genomics pipelines with the Faculty of Computing & Data Sciences and School of Public Health biostatistics at Boston University."
     ),
     "Biology": (
         "College of Arts & Sciences biology spans genetics, cell biology, ecology, and neurobiology with undergraduate research in campus life-sciences institutes and the Boston University Medicine research network."
@@ -184,7 +184,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "College of Arts & Sciences biology spans genetics, cell biology, ecology, and neurobiology with undergraduate research in campus life-sciences institutes and the Boston University Medicine research network."
     ),
     "Biomedical Engineering": (
-        "Boston University Bioengineering integrates device design, imaging, and tissue engineering with Perelman Hospital clinical immersion — routinely ranked among the top undergraduate BME programs nationally."
+        "Boston University bioengineering integrates device design, imaging, and tissue engineering with Chobanian & Avedisian School of Medicine clinical immersion — routinely ranked among the top undergraduate BME programs nationally."
     ),
     "Biomedical Forensic Sciences": (
         "GMS forensic-sciences coursework covers DNA analysis, toxicology, and crime-scene investigation with Boston-area lab practica."
@@ -196,25 +196,25 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "SPH and GRS biostatistics training covers regression, survival analysis, and clinical trial design with Medical Campus data collaborations."
     ),
     "Business Analytics": (
-        "Carey's MS in Business Analytics and Project Management combines machine learning, prescriptive analytics, and a capstone consulting practicum."
+        "Questrom's MS in Business Analytics combines machine learning, prescriptive analytics, and a capstone consulting practicum with Boston's finance and tech employers."
     ),
     "Business Economics": (
         "Questrom business economics Ph.D. research spans industrial organization, econometrics, and applied microeconomics."
     ),
     "Chemistry": (
-        "College of Arts & Sciences chemistry runs organic, inorganic, physical, and chemical-biology groups whose faculty hold joint appointments with Perelman and the Boston University Chemistry Research Institute."
+        "College of Arts & Sciences chemistry runs organic, inorganic, physical, and chemical-biology groups whose faculty hold joint appointments with the Chobanian & Avedisian School of Medicine and the Boston University Center for Molecular Discovery."
     ),
     "Chemistry — Chemistry Chemical Biology": (
-        "College of Arts & Sciences chemistry runs organic, inorganic, physical, and chemical-biology groups whose faculty hold joint appointments with Perelman and the Boston University Chemistry Research Institute."
+        "College of Arts & Sciences chemistry runs organic, inorganic, physical, and chemical-biology groups whose faculty hold joint appointments with the Chobanian & Avedisian School of Medicine and the Boston University Center for Molecular Discovery."
     ),
     "Chemistry — Chemistry Materials And Nanoscience": (
-        "College of Arts & Sciences chemistry runs organic, inorganic, physical, and chemical-biology groups whose faculty hold joint appointments with Perelman and the Boston University Chemistry Research Institute."
+        "College of Arts & Sciences chemistry runs organic, inorganic, physical, and chemical-biology groups whose faculty hold joint appointments with the Chobanian & Avedisian School of Medicine and the Boston University Center for Molecular Discovery."
     ),
     "Chemistry — Ma": (
-        "College of Arts & Sciences chemistry runs organic, inorganic, physical, and chemical-biology groups whose faculty hold joint appointments with Perelman and the Boston University Chemistry Research Institute."
+        "College of Arts & Sciences chemistry runs organic, inorganic, physical, and chemical-biology groups whose faculty hold joint appointments with the Chobanian & Avedisian School of Medicine and the Boston University Center for Molecular Discovery."
     ),
     "Chemistry — Teaching": (
-        "College of Arts & Sciences chemistry runs organic, inorganic, physical, and chemical-biology groups whose faculty hold joint appointments with Perelman and the Boston University Chemistry Research Institute."
+        "College of Arts & Sciences chemistry runs organic, inorganic, physical, and chemical-biology groups whose faculty hold joint appointments with the Chobanian & Avedisian School of Medicine and the Boston University Center for Molecular Discovery."
     ),
     "Child Life Family Centered Care": (
         "Wheelock's child-life M.S. prepares certified child-life specialists for pediatric hospital and family-support settings."
@@ -259,7 +259,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "SSW clinical practice emphasizes evidence-based psychotherapy, trauma-informed care, and licensure preparation."
     ),
     "Cognitive Neural Systems": (
-        "Boston University neuroscience spans cellular, cognitive, and systems levels across College of Arts & Sciences, Perelman, and the Mahoney Institute of Neurological Sciences."
+        "BU cognitive and neural systems research integrates computational modeling, neuroimaging, and systems physiology across the Center for Systems Neuroscience and ENG neuroengineering labs."
     ),
     "Combined Md Mba": (
         "BU's combined M.D./M.B.A. pathway pairs Chobanian & Avedisian medical training with Questrom's health-sector management coursework for physician-leaders."
@@ -421,7 +421,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "SDM endodontics specialty programs train dentists in root-canal therapy, microsurgery, and pulp biology."
     ),
     "English": (
-        "College of Arts & Sciences English combines literary history, creative writing, and rhetoric with Kelly Writers House programming and Boston literary community ties."
+        "College of Arts & Sciences English combines literary history, creative writing, and rhetoric with the Howard Gotlieb Archival Research Center and Boston's literary community."
     ),
     "English Education": (
         "Wheelock English education prepares licensed secondary English teachers with CAS literature coursework and classroom practica."
@@ -601,7 +601,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Questrom management coursework covers strategy, organizational behavior, and operations for business leadership roles."
     ),
     "Management Studies": (
-        "Kellogg MS in Management Studies provides quantitative business foundations — analytics, finance, and strategy — for students without prior business coursework."
+        "Questrom's Master in Management Studies provides quantitative business foundations — analytics, finance, and strategy — for students without prior business coursework."
     ),
     "Marine Science": (
         "CAS marine science at BU's Marine Program (Woods Hole partnership) covers oceanography, marine biology, and coastal fieldwork."
@@ -703,7 +703,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Wheelock modern language education prepares licensed Spanish, French, and Mandarin teachers with CAS language departments."
     ),
     "Molecular Biology Cell Biology Biochemistry": (
-        "Graduate cell biology at College of Arts & Sciences and Perelman focuses on signaling, developmental biology, and microscopy methods in cancer and immunology research labs."
+        "Graduate cell biology at the College of Arts & Sciences and the Chobanian & Avedisian School of Medicine focuses on signaling, developmental biology, and microscopy methods in cancer and immunology research labs."
     ),
     "Molecular Medicine": (
         "GMS molecular medicine research spans translational genomics, immunotherapy, and clinical trial science on the Medical Campus."
@@ -763,7 +763,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Naval ROTC coursework covers seamanship, naval history, and Marine Corps or Navy commissioning pathways for BU undergraduates."
     ),
     "Neuroscience": (
-        "Boston University neuroscience spans cellular, cognitive, and systems levels across College of Arts & Sciences, Perelman, and the Mahoney Institute of Neurological Sciences."
+        "Boston University neuroscience spans cellular, cognitive, and systems levels across the College of Arts & Sciences, the Chobanian & Avedisian School of Medicine, and the Center for Systems Neuroscience."
     ),
     "Nutrition Dietetics": (
         "Sargent nutrition and dietetics coursework covers clinical dietetics, community nutrition, and ACEND-accredited supervised practice."
@@ -802,7 +802,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "SDM periodontology specialty training covers implant surgery, gum disease management, and periodontal research."
     ),
     "Pharmacology Experimental Therapeutics": (
-        "Graduate pharmacology at Perelman and College of Arts & Sciences studies drug mechanisms, chemical biology, and toxicology adjacent to Boston University drug-discovery pipelines."
+        "Graduate pharmacology at the Chobanian & Avedisian School of Medicine and College of Arts & Sciences studies drug mechanisms, chemical biology, and toxicology adjacent to Boston University drug-discovery pipelines."
     ),
     "Philosophy": (
         "College of Arts & Sciences philosophy emphasizes logic, ethics, metaphysics, and philosophy of science — strengths that anchor Boston University's PPE interdisciplinary major."
@@ -880,7 +880,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "College of Arts & Sciences psychology is among the largest majors, with research tracks in cognitive, developmental, social, and clinical science in campus psychology labs."
     ),
     "Public Health — Mph": (
-        "Perelman and Nursing public-health coursework spans epidemiology, biostatistics, and health policy with Boston University Medicine population-health research."
+        "School of Public Health coursework spans epidemiology, biostatistics, and health policy with Boston University Medicine population-health research on the Medical Campus."
     ),
     "Public Relations — Public Relations": (
         "Medill integrated marketing communications and public relations trains brand strategy, crisis communication, and digital campaigns with Boston agency partnerships."
@@ -892,7 +892,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "College of Arts & Sciences religious studies examines world religions, theology, and religion-and-culture with the Boston University Department of Religious Studies' global faculty."
     ),
     "Religious Studies — Religious Studies": (
-        "Weinberg religious studies examines theology, ritual practice, and comparative religion with the Alice Kaplan Institute for the Humanities and interdisciplinary humanities faculty."
+        "BU's Department of Religion examines theology, ritual practice, and comparative religion with the Kilachand Honors College and interdisciplinary humanities faculty."
     ),
     "Romance Studies — Ancient Greek Mfa In Literary Translation": (
         "GRS ancient Greek literary translation combines philology workshops with M.F.A. critique in comparative literature."
