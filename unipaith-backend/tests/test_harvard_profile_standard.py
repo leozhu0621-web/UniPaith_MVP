@@ -188,6 +188,27 @@ def test_every_program_is_done():
         )
 
 
+def test_no_name_prefixed_descriptions():
+    name_prefix = sum(
+        1
+        for prog in h.PROGRAMS
+        if (prog.get("description") or "").startswith(prog.get("program_name", ""))
+    )
+    assert name_prefix == 0, (
+        f"{name_prefix} programs still prefix description with program_name"
+    )
+
+
+def test_no_identical_across_credential_levels():
+    from collections import Counter
+
+    desc_counts = Counter(prog.get("description") for prog in h.PROGRAMS)
+    shared = sum(c for c in desc_counts.values() if c >= 2)
+    assert shared == 0, (
+        f"{shared} programs share a description verbatim with a credential sibling"
+    )
+
+
 def test_flagship_mba_is_deeply_enriched():
     spec = next(p for p in h.PROGRAMS if p["slug"] == _FLAGSHIP)
     res = check_conformance(
