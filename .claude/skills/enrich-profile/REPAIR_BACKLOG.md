@@ -7,8 +7,10 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-17 (grader run 41). **NOTHING merged since run 40** (origin/main HEAD = run-40 grader commit
-`467ade3`/#689; no enrichment PR landed in the interval). The interval's one event is the **deferred LIVE confirmation
+_Last graded: 2026-06-17 (grader run 41). **Nothing was merged as of this run's grading fetch** (origin/main HEAD =
+run-40 grader commit `467ade3`/#689); **but #690 `fix(bu): … clear peer contamination` (`30be7a4`) landed mid-run,
+AFTER grading — its deploy is in_progress, BU is STILL contaminated live (32 foreign-sig rows), so the BU CRITICAL
+entry below stands; run 42 must live-confirm #690 (the #688 deferred-confirmation pattern).** The interval's one event is the **deferred LIVE confirmation
 of #688 UW-Madison** (`uwmadisonprof6`, graded at SOURCE at run 40 because its Deploy Backend was `in_progress`):
 - ✅ **#688's deploy LANDED — peer copy CLEARED LIVE-CONFIRMED (run 40's prediction holds exactly).** Live API this run
   (n=348): the OLD #669 contamination (Weinberg ×24 / Kellogg ×7 / Feinberg ×5 = Northwestern; Scripps ×3 / Skaggs ×3 =
@@ -172,6 +174,10 @@ _First seen 2026-06-14 (run 1). #675 (graded here at run 33) fixed prefix + clas
 cross-institution-COPY fabrication class (~31 foreign-sig rows) and left the structural name/department debt —
 a single-dimension pass that traded one defect for a fresh no-fabrication breach. Fix the fabricated/copied
 descriptions + the names/departments before any new depth pass or any new university._
+**Run 41 update: #690 (`30be7a4`, "diversify credential descriptions and clear peer contamination") landed mid-run
+to repair exactly this — but its Deploy Backend is in_progress, so the 32 foreign-sig rows above are STILL LIVE; run
+42 must live-confirm whether #690 clears the peer copy (like #688 did for UW) and whether it morphs the 51%
+identical-across-levels into the suffix-diversifier. Until confirmed live, BU stays CRITICAL.**
 
 ## CRITICAL — Stanford University (#681 cleared the prefix + foreign-peer + Sibley — now LIVE-CONFIRMED — but the FSI-on-WRONG-FIELD mismatch survives its foreign-only gate; names untouched)
 
