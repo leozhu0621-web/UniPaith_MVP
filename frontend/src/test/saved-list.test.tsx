@@ -63,10 +63,12 @@ describe('SavedListPage', () => {
     expect(screen.getByRole('button', { name: /Schools \(0\)/i })).toBeTruthy()
   })
 
-  it('shows shortlist helper copy', async () => {
+  it('shows the shortlist header', async () => {
+    // The descriptive sub-tagline was removed app-wide (maturity pass); the
+    // header is title-only now.
     renderPage()
     expect(
-      await screen.findByText(/Curate programs you are serious about/i),
-    ).toBeTruthy()
+      (await screen.findAllByRole('heading', { name: /your shortlist/i })).length,
+    ).toBeGreaterThan(0)
   })
 })

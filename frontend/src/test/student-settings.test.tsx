@@ -98,11 +98,13 @@ describe('Student SettingsPage (Spec 21)', () => {
     }
   })
 
-  it('links data rights to Profile → Data tab (no duplicate consent UI)', async () => {
+  it('shows data-rights controls inline (Profile → Data retired)', async () => {
     renderSettings()
     await screen.findByRole('heading', { name: 'Account', level: 2 })
-    const link = screen.getByRole('link', { name: /manage data rights →/i })
-    expect(link).toHaveAttribute('href', '/s/profile?tab=data')
+    // Data rights were relocated from Profile → Data (now retired) into Settings,
+    // so the consent/export controls render inline rather than behind a link.
+    expect(await screen.findByRole('heading', { name: /data & privacy/i })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /manage data rights/i })).toBeNull()
   })
 
   it('shows account read-only fields and editable display name', async () => {
