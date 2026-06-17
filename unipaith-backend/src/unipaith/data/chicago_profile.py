@@ -46,6 +46,12 @@ that the undergraduate housing system wording could not be confirmed first-party
 (omitted), and that the federal one-year Field-of-Study earnings for the M.D. reflect
 residency stipends rather than attending-physician pay (captured in that program's
 conditions).
+
+Structural repair (2026-06-17, chicagoprof7): real UChicago degree names (Bachelor of
+Arts/Science, Master of Arts/Science — never CIP-rollup credential prefixes), field-
+specific descriptions that open on the field fact (never restating program_name), and
+deduplicated IPEDS rows that mapped to the same published degree (103 programs; 0%
+name-prefix descriptions; 0% CIP-prefix names).
 """
 
 from __future__ import annotations
@@ -62,14 +68,14 @@ from unipaith.data.chicago_field_descriptions import (
     SLUG_DESCRIPTIONS,
 )
 from unipaith.data.chicago_ipeds_catalog import _IPEDS_CATALOG
-from unipaith.data.profile_catalog_utils import disambiguate_program_name, validate_catalog
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Chicago"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-17"
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -80,6 +86,13 @@ _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is (an undergraduate|a graduate|a doctoral|a graduate certificate|"
     r"a professional|a degree) program at ",
 )
+_PREFIX_NAME_RE = re.compile(
+    r"^(Bachelor's in|Master's in|Professional program in) "
+)
+
+_SLUG_TO_FIELD: dict[str, str] = {
+    slug: field_name for slug, _, field_name, _, _, _, _, _ in _IPEDS_CATALOG
+}
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1086,18 +1099,18 @@ _EXPLICIT_DEPARTMENTS: dict[str, str] = {
     "uchicago-maph-ma": "Master of Arts Program in the Humanities",
 }
 _EXPLICIT_FULL_NAMES: dict[str, str] = {
-    "uchicago-economics-bs": "Bachelor's in Economics",
-    "uchicago-computer-science-bs": "Bachelor's in Computer Science",
-    "uchicago-mathematics-bs": "Bachelor's in Mathematics",
-    "uchicago-statistics-bs": "Bachelor's in Statistics",
-    "uchicago-political-science-bs": "Bachelor's in Political Science",
-    "uchicago-biology-bs": "Bachelor's in Biological Sciences",
-    "uchicago-neuroscience-bs": "Bachelor's in Neuroscience",
-    "uchicago-english-bs": "Bachelor's in English Language and Literature",
-    "uchicago-history-bs": "Bachelor's in History",
-    "uchicago-public-policy-bs": "Bachelor's in Public Policy Studies",
-    "uchicago-psychology-bs": "Bachelor's in Psychology",
-    "uchicago-molecular-engineering-bs": "Bachelor's in Molecular Engineering",
+    "uchicago-economics-bs": "Bachelor of Arts in Economics",
+    "uchicago-computer-science-bs": "Bachelor of Science in Computer Science",
+    "uchicago-mathematics-bs": "Bachelor of Science in Mathematics",
+    "uchicago-statistics-bs": "Bachelor of Science in Statistics",
+    "uchicago-political-science-bs": "Bachelor of Arts in Political Science",
+    "uchicago-biology-bs": "Bachelor of Science in Biological Sciences",
+    "uchicago-neuroscience-bs": "Bachelor of Science in Neuroscience",
+    "uchicago-english-bs": "Bachelor of Arts in English Language and Literature",
+    "uchicago-history-bs": "Bachelor of Arts in History",
+    "uchicago-public-policy-bs": "Bachelor of Arts in Public Policy Studies",
+    "uchicago-psychology-bs": "Bachelor of Arts in Psychology",
+    "uchicago-molecular-engineering-bs": "Bachelor of Science in Molecular Engineering",
 }
 for _p in PROGRAMS:
     if _p["slug"] in _EXPLICIT_DEPARTMENTS:
@@ -1133,7 +1146,7 @@ _CIP_TO_DEPARTMENT: dict[str, str] = {
     "Social Sciences, General": "Social Sciences",
     "Fine and Studio Arts": "Visual Arts",
     "Film/Video and Photographic Arts": "Cinema and Media Studies",
-    "Design and Applied Arts": "Visual Arts",
+    "Design and Applied Arts": "Media Arts, Data and Design",
     "Drama/Theatre Arts and Stagecraft": "Theater and Performance Studies",
     "International Relations and National Security Studies": "International Relations",
     "Business Administration, Management and Operations": "Business Administration",
@@ -1203,9 +1216,11 @@ _CIP_TO_DEPARTMENT: dict[str, str] = {
 
 def _department_for(field_name: str, school: str) -> str:
     """Owning department — map federal CIP titles to UChicago's published names."""
-    if school in _PROFESSIONAL_SCHOOLS:
-        return school
     mapped = _CIP_TO_DEPARTMENT.get(field_name, field_name)
+    if school in _PROFESSIONAL_SCHOOLS:
+        if mapped != field_name:
+            return mapped
+        return school
     if mapped.lower() in school.lower() or school.lower() in mapped.lower():
         return school
     return mapped
@@ -1222,7 +1237,70 @@ _SKIP_CATALOG_SLUGS = frozenset({
     "uchicago-chemical-engineering-bs",
     "uchicago-chemical-engineering-ms",
     "uchicago-engineering-physics-bs",
+    # Redundant CIP rows that map to the same published degree as an explicit catalog entry.
+    "uchicago-computer-and-information-sciences-general-bs",
+    "uchicago-research-and-experimental-psychology-bs",
+    "uchicago-research-and-experimental-psychology-ms",
+    "uchicago-clinical-counseling-and-applied-psychology-bs",
+    "uchicago-clinical-counseling-and-applied-psychology-ms",
+    "uchicago-design-and-applied-arts-bs",
+    "uchicago-visual-and-performing-arts-other-ms",
+    # Professional degrees already modeled as explicit flagship programs.
+    "uchicago-law-prof",
+    "uchicago-health-professions-cip-51-12-prof",
 })
+
+
+# College majors that award the B.S. (STEM and quantitative fields); others default to B.A.
+_BS_MAJORS = frozenset({
+    "Computer Science",
+    "Mathematics",
+    "Statistics",
+    "Applied Mathematics",
+    "Physics",
+    "Chemistry",
+    "Astronomy and Astrophysics",
+    "Molecular Engineering",
+    "Biological Sciences",
+    "Neuroscience",
+    "Geophysical Sciences",
+    "Computational Biology",
+    "Information Science",
+    "Biochemistry and Molecular Biology",
+    "Cell Biology",
+    "Microbiology",
+    "Genetics",
+    "Organismal Biology and Anatomy",
+    "Ecology and Evolution",
+    "Nutritional Science",
+    "Physical Sciences",
+    "Environmental and Urban Studies",
+})
+
+_MS_SCHOOLS = frozenset({
+    _PHYS_SCI,
+    _PME,
+})
+
+
+def _chicago_program_name(
+    field_name: str, degree_type: str, school: str, slug: str
+) -> str:
+    """Real UChicago degree designation — never a CIP-rollup credential prefix."""
+    dept = _department_for(field_name, school)
+    if degree_type == "bachelors":
+        if school == _PME or dept in _BS_MAJORS:
+            return f"Bachelor of Science in {dept}"
+        return f"Bachelor of Arts in {dept}"
+    if degree_type == "masters":
+        if school in _MS_SCHOOLS or dept in _BS_MAJORS:
+            return f"Master of Science in {dept}"
+        return f"Master of Arts in {dept}"
+    if degree_type == "certificate":
+        return f"Graduate Certificate in {dept}"
+    if degree_type == "phd":
+        return f"Doctor of Philosophy in {dept}"
+    return dept
 
 
 def _field_from_program_name(program_name: str) -> str | None:
@@ -1241,9 +1319,11 @@ def _field_from_program_name(program_name: str) -> str | None:
     return None
 
 
-def _needs_normalize(desc: str) -> bool:
+def _needs_normalize(desc: str, program_name: str = "") -> bool:
     """True when a description is a classification or template stub."""
     if not desc:
+        return True
+    if program_name and desc.startswith(program_name):
         return True
     if _CLASSIFICATION_STUB_RE.match(desc):
         return True
@@ -1271,6 +1351,7 @@ def _chicago_description(spec: dict, field: str | None = None) -> str:
     field_key = (
         field
         or spec.get("_field_name")
+        or _SLUG_TO_FIELD.get(slug)
         or _field_from_program_name(spec.get("program_name", ""))
         or spec.get("department")
         or spec.get("program_name", "")
@@ -1282,12 +1363,12 @@ def _chicago_description(spec: dict, field: str | None = None) -> str:
         raise ValueError(
             f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
         )
-    return f"{spec['program_name']}: {clause}{delivery}"
+    return f"{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     """Stamp a field-specific description on stub program nodes."""
-    if not _needs_normalize(spec.get("description") or ""):
+    if not _needs_normalize(spec.get("description") or "", spec.get("program_name", "")):
         return
     spec["description"] = _chicago_description(spec, field=field_name)
 
@@ -1307,7 +1388,7 @@ def _build_catalog() -> list[dict]:
             continue
         seen.add(slug)
         dept = _department_for(name, school)
-        pname = disambiguate_program_name(name, dtype)
+        pname = _chicago_program_name(name, dtype, school, slug)
         delivery = fmt if fmt in {"online", "hybrid"} else "in_person"
         spec = {
             "slug": slug,
@@ -1328,6 +1409,8 @@ def _build_catalog() -> list[dict]:
 
 PROGRAMS += _build_catalog()
 for _p in PROGRAMS:
+    if _p["slug"] in _EXPLICIT_FULL_NAMES:
+        _p["program_name"] = _EXPLICIT_FULL_NAMES[_p["slug"]]
     _normalize_program(_p, _field_from_program_name(_p.get("program_name", "")))
 
 _catalog_errors = validate_catalog(PROGRAMS)
@@ -1344,6 +1427,18 @@ if _classification_stubs:
     _catalog_errors.append(
         f"classification-only descriptions on {_classification_stubs} programs"
     )
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
+_prefix_names = sum(1 for p in PROGRAMS if _PREFIX_NAME_RE.match(p.get("program_name", "")))
+if _prefix_names:
+    _catalog_errors.append(f"CIP-prefix program_name on {_prefix_names} programs")
 if _catalog_errors:
     raise RuntimeError(f"UChicago catalog quality gate failed: {_catalog_errors}")
 

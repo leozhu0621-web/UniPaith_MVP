@@ -111,6 +111,10 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Visual communication, interaction design, and creative practice in the Media "
         "Arts, Data and Design (MADD) program and Logan Center studios."
     ),
+    "Media Arts, Data and Design": (
+        "Creative coding, data visualization, and digital media in the Media Arts, Data "
+        "and Design (MADD) program and Logan Center studios."
+    ),
     "Division of the Humanities": (
         "Graduate humanities study — literature, philosophy, history, and the arts — "
         "anchored by the Franke Institute for the Humanities and Regenstein Library "
