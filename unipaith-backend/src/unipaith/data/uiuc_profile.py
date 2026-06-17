@@ -3419,15 +3419,12 @@ def _field_key(program_name: str) -> str:
 
 
 def _uiuc_description(spec: dict) -> str:
-    try:
-        from unipaith.data.uiuc_field_descriptions import FIELD_DESCRIPTIONS as field_descs
-    except ImportError:
-        field_descs = {}
+    from unipaith.data.uiuc_field_descriptions import FIELD_DESCRIPTIONS
 
     pname = spec["program_name"]
     key = _field_key(pname)
-    if key in field_descs:
-        body = field_descs[key]
+    if key in FIELD_DESCRIPTIONS:
+        body = FIELD_DESCRIPTIONS[key]
     else:
         body = (
             f"UIUC's {key} program connects to programs within {spec['school']}. "
