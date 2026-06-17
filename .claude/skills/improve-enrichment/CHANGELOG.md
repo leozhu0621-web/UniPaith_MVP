@@ -6,6 +6,124 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-17 — Run 26 (NO new gaps found — #663 Rice is a CLEAN, VERIFIED-TRUE description repair: the GOOD inverse of Purdue #661. Live n=159: 0% prefix · 0% classification · 0% duplicate · 0% rollup (lone flag a false positive) · and a whole-catalog cross-institution-copy scan = 0/159 (real Rice units: Shepherd School / Kinder Institute / Ken Kennedy Institute / Texas Medical Center). A clean recurrence of the documented single-dimension-pass behavior (miss #8) shipped the RIGHT way — proof the run-25 cross-institution-copy rule targets the correct fix. Changed NO rules per anti-churn; updated backlog — Rice moved from HIGH to the near-clean tier)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28, no
+sprawl, same program counts as run 25). The one live-state CHANGE since run 25: **Rice** (#663, the one
+in-scope PR merged). Full Rice pagination (`page_size=50`, n=159) + gold MIT control (n=65) with per-row
+duplicate-name / rollup-name (strict field-portion, credential-form-agnostic) / generic-credential /
+prefix-doubling / classification metrics; a whole-catalog FOREIGN-SIGNATURE scan over Rice (owner-map: a
+hit only when the signature's owning institution ≠ Rice — peer units, foreign geography, re-labeled
+landmarks) + an OTHER-UNIVERSITY-NAME scan; direct `description_text` reads on 12 sampled Rice rows. A
+fleet institution-level sanity scan (campus_photos length, ownership_type, feed `posts`) across all 28.
+Re-confirmed all FIVE prior CRITICAL breaches live via direct reads: Northwestern CIP-rollup synthesized
+review (the BA-in-Architecture-Studies row's `external_reviews.summary` still embeds "Architecture and
+Related Services, Other within Weinberg" + a U.S. News institution-ranking source), Stanford **Sibley-School
+×2** (aerospace BA + Graduate Certificate) **+ Freeman-Spogli on Systems-Science + Public-Relations** (2
+mismatched; the Political-Science FSI control passes), Duke **copy-paste Pratt boilerplate reviews**
+(Biomedical-Eng + Civil-Eng share the identical "rigorous engineering degree at a selective private R1
+university…within Pratt" summary, field swapped), Boston U credential-name departments, Purdue
+cross-institution-copy descriptions (a broader owner-map scan found 52/310 foreign-sig rows). Student's-eye
+open-ended pass: Rice (the changed catalog) program names/descriptions + institution integrity; fleet feed
+sweep (NYU still `posts=0`).
+
+**What merged since run 25:** ONE in-scope profile PR — **#663 Rice** ("Rice description repair:
+field-first clauses, 0% name-prefix", riceprof5, `4ef56f7`, `origin/main` HEAD). The run-25 grader PR #662
+(`6b1f8fe`) is the prior work. So the other 26 catalogs' DATA is byte-identical to run 25.
+
+**Findings (live API evidence):**
+
+1. **#663 Rice is a CLEAN, VERIFIED-TRUE description repair — the GOOD inverse of Purdue #661 (run 25).**
+   Live n=159: **0% prefix-doubling** (was 100%), **0% classification** (was the "generic gloss"), 0%
+   duplicate, 0% generic-credential, and the ONLY rollup-tell flag — "Doctor of Philosophy in Systems,
+   Synthetic, and Physical Biology" — is a REAL Rice PhD (a comma-and false positive, confirmed by reading
+   the name). Crucially, a whole-catalog cross-institution-copy scan (peer signature strings + foreign
+   geography + re-labeled landmarks) returned **0/159**, and an other-university-name scan returned **0**.
+   The 12 sampled descriptions cite REAL Rice units — Shepherd School of Music, Kinder Institute, Ken
+   Kennedy Institute, the Texas Medical Center (Houston-adjacent), the Rice Building Workshop, Rice Business
+   — verified-true, researched from Rice's own pages, not copied. Where Purdue's "field-first" pass
+   find-replaced peer catalogs (the run-25 class), Rice did the SAME description pass the RIGHT way. It is
+   still a SINGLE-dimension pass (descriptions + prefix done; deep content `class_profile`/`faculty`/
+   `tracks` + GATHERED reviews still pending) — the documented miss-#8 behavior, NOT a new gap. → Rice
+   moves from HIGH (generic gloss + 100% prefix) to the near-clean structure tier (JHU/UChicago/Caltech).
+2. **All FIVE prior CRITICAL breaches PERSIST (re-confirmed live).** Northwestern synthesized reviews (runs
+   9→26), Stanford Sibley ×2 + FSI-on-unrelated ×2 (runs 13/14→26), Duke copy-paste Pratt boilerplate
+   reviews (runs 10→26), Boston U credential-name departments + broken structure (runs 1→26), Purdue
+   cross-institution-copy descriptions (runs 25→26; 52/310 on a broader scan). NYU still the ONLY dead feed
+   (`posts=0`); the fleet institution-level scan is otherwise clean (every institution ≥4 campus photos +
+   ownership_type + a live feed).
+
+**False alarms caught (diagnosed, not acted on):**
+- **Rice's lone comma-and "rollup" flag is a FALSE POSITIVE** — "Doctor of Philosophy in Systems,
+  Synthetic, and Physical Biology" is a REAL Rice PhD (the SSPB graduate program), not a CIP rollup.
+  Confirmed by reading the name; Rice is effectively 0% real rollup.
+- **Rice's descriptions read field-specific AND TRUE, not specific-SOUNDING-but-copied** — the named units
+  (Shepherd School, Kinder/Ken Kennedy Institute, Texas Medical Center, Rice Building Workshop, Rice
+  Business) are all genuine Rice units, and the geography is Houston/Texas (no foreign place-name). The
+  cross-institution-copy scan that flagged Purdue 11% returned 0/159 on Rice — a true clean, not a missed
+  copy.
+- **The broader Purdue owner-map scan reads 52/310 (vs run-25's 36/310)** — a wider pattern set, not a new
+  defect; it confirms (does not newly discover) the cross-institution-copy class already ruled in run 25.
+- `?page_size=100` 422s (server cap 50); `/institutions/{id}/posts` returns a bare list — paginated /
+  counted accordingly. `_standard` not in the public API (gold MIT shows NONE) — ranked on API-visible
+  signals only.
+
+**Rulebook changes: NONE (0 of ≤3).** No new problem class was discovered. #663 Rice is a single-dimension
+description pass — a recurrence of the documented single-dimension-pass behavior (miss #8) — shipped the
+RIGHT way (verified-true, researched from Rice's own pages), the positive inverse of Purdue #661's
+cross-institution copy (which the run-25 rule already covers). Every other live defect
+(Northwestern/Stanford/Duke/Purdue fabrications, the #646 catalogs, Yale/CMU prefix, Penn's CIP codes +
+surviving rollup names, Cornell's/Berkeley's/Columbia's/Harvard's surviving rollup names) recurs a class
+the rulebook already names (miss #2/#8/#9). Per the SAFETY RAILS (no-edit-without-evidence-of-a-NEW-problem;
+"Clean fleet → change nothing… Never invent a rule to look busy"; bounded + anti-churn), restating present
+rules would be churn — and Rice is positive evidence the run-25 rule is correctly aimed, not evidence of a
+gap. The standing concerns are enricher BEHAVIOR (single-dimension passes; CRITICAL top unrepaired) —
+flagged for human review, not rulebook gaps (more rule text cannot fix ordering; cf. runs
+10/12/17/18/19/20/21/22/23). Post-edit self-review: SKILL.md UNTOUCHED, miss numbering still sequential
+1–9, all invariants intact.
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(behavioral, recurring — POSITIVE this run)** #663 Rice is the SEVENTH straight single-dimension pass
+  (after FIVE prefix-strips + Purdue's description-pass) — BUT it is the first description-pass done
+  verified-true (researched from Rice's own pages, 0/159 foreign-sig), proving the multi-dimension-clear
+  capability AND the verified-true-description capability both EXIST (cf. #650 UChicago, #648 Caltech). The
+  lever is steering the enricher to finish ALL dimensions per pass AND research-true (as Rice did, not copy
+  as Purdue did). Not a rule.
+- **(carried, urgent — now 18 / 17 intervals)** Northwestern (synthesized reviews, runs 9→26) and Duke
+  (Pratt boilerplate reviews, runs 10→26) remain live and unrepaired; the CRITICAL backlog top is not being
+  cleared.
+- **(carried, urgent)** Stanford's Sibley-School + Freeman-Spogli fabricated units (runs 13/14) and Purdue's
+  cross-institution-copy descriptions (run 25) remain live (re-confirmed run 26); the grader does not edit
+  data.
+- **(carried from runs 2–25, unreconciled)** miss #9 says "FAIL on null/blank `department`" but gold MIT
+  ships null department and `manifest.py` marks `department` `required=False`. Reconciling would LOOSEN
+  verify-output → left intact per the rails.
+- **(carried from runs 8–25, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a stub
+  tell — valid for the ENRICHER but not API-visible to the grader. Left intact.
+
+**Backlog delta:** Rice MOVED from HIGH row 9 ("generic gloss + 100% prefix") to HIGH row 13 (near-clean
+structure tier with JHU/UChicago/Caltech — needs only deep content + GATHERED reviews); HIGH table
+renumbered (old rows 10–14 → 9–13, Princeton stays 14). Header rewritten for run 26 (Rice framed as the
+CLEAN verified-true inverse of Purdue; NO new class; Purdue carried as CRITICAL). The "ONE new rulebook
+gap" paragraph replaced with "NO new rulebook gap (0 of ≤3)". CLEAN + dimension-agnostic + SECONDARY
+sections add Rice to the closest-on-structure / legitimate-reviews-target tier. The "NEVER BUILD
+DESCRIPTIONS BY COPYING A PEER" note gains a Rice-as-the-RIGHT-way contrast; the single-dimension note
+updated (Rice = the 7th pass, the first verified-true description-pass). NW persistence bumped to 9→26,
+Duke to 10→26, Stanford to 14→26, Boston U + Purdue re-confirmed run 26. CRITICAL unchanged: Boston
+University (structure) + Stanford (fabricated units) + Northwestern + Duke (fabricated reviews) + Purdue
+(cross-institution-copy descriptions). MEDIUM empty. CLEAN = MIT only.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv / `httpx` /
+Postgres — `.venv/bin/pytest` absent) — same constraint as runs 1–25. Changes are markdown-only (backlog +
+this changelog; NO SKILL.md edit, no Python, no migrations, no app code), so the enricher code/data state
+is unaffected and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; no rule changed, so nothing weakened. The findings that could argue for
+loosening (null-department FAIL vs gold MIT; `_standard`-as-rendered-signal) remain logged for human
+review, not acted on.
+
+---
+
 ## 2026-06-17 — Run 25 (ONE NEW CLASS → ONE rule added: cross-institution description COPY — a "field-specific" pass that REUSES a peer catalog by find-replace, leaving the SOURCE institution's geography / signature units / re-labeled landmarks. #661 Purdue shipped 11% of rows with JHU/Penn/Cornell/NU marks ("Chesapeake" on inland Purdue, "at SAS", "Wharton accounting", "Purdue Lab of Ornithology"); the same tell is live ~2% on Cornell #615 → it is a CLASS. Purdue PROMOTED to CRITICAL. Added 1 of ≤3 rules; updated backlog)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28, no
