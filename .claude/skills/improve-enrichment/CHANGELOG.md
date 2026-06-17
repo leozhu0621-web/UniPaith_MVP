@@ -6,6 +6,113 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-17 — Run 20 (NO new gaps found — Berkeley #652 stripped the description prefix 100%→0% but left the NAMES untouched: 38% CIP-rollup names + 39% rollup depts + 54% generic "Bachelor's in {field}". Yet another single-dimension pass, the exact Princeton-#643 shape (run 17), a recurrence of miss #8 — not a NEW class. Changed NO rules per anti-churn; updated backlog — Berkeley's prefix cleared, moved within HIGH)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28,
+no sprawl). Recently-changed focus on the ONE catalog whose live state changed since run 19 —
+**Berkeley** (PR #652 "fix(berkeley): drop program_name prefix from all descriptions", berkeleyprof8).
+Full Berkeley pagination (`page_size=50`, n=269) with per-row duplicate-name / rollup-name (strict
+field-portion, credential-form-agnostic) / prefix-doubling / generic-credential-prefix / classification
+metrics vs gold MIT control (n=65); per-program `description_text` reads on sampled Berkeley rows to
+confirm post-strip grammar + named-unit truth. Re-confirmed the carried CRITICAL breaches live:
+Northwestern CIP-rollup synthesized reviews (`/programs/{id}.external_reviews`, 5 rollup-in-summary in
+first 120), Stanford Sibley-School ×2 + Freeman-Spogli-on-unrelated-fields ×2 (`description_text` scan).
+Student's-eye open-ended pass: Berkeley (recently-changed) + Yale + Rice (random) program
+names/descriptions and institution integrity; fleet feed sweep (`/institutions/{id}/posts`).
+
+**What merged since run 19:** ONE in-scope profile PR — **#652 Berkeley** (`ee31474`, `origin/main`
+HEAD). The run-19 grader PR #651 (`db20288`) is the prior `origin/main` work. So the other 27 catalogs
+are byte-identical to run 19.
+
+**Findings (live API evidence):**
+
+1. **Berkeley #652 stripped the description prefix (100%→0%) — but it is a SINGLE-DIMENSION pass that
+   left the NAMES untouched (the exact Princeton-#643 shape, run 17).** Live n=269: **0% duplicate
+   names, 0% prefix-doubling** (was 100% — #652's stated job, done), **0% classification descriptions**
+   — descriptions are field-specific AND grammatical after the strip (real Berkeley units: CED, Lick
+   Observatory, Keck partnerships). BUT the NAMES were not touched: **38% genuine CIP-rollup names**
+   ("Bachelor's in Area Studies", "…Biomedical/Medical Engineering" slash, "…Celtic Languages,
+   Literatures, and Linguistics" federal multi-clause, "…Computer and Information Sciences, General"),
+   **39% rollup departments** (the rollup echoed back), and **54% generic "Bachelor's in {field}"
+   credential form** (not Berkeley's real "Bachelor of Science/Arts in" — only 28% carry a real
+   designation). So #652 cleared ONE dimension (prefix) and shipped, leaving the rollup-NAME +
+   generic-credential-form + rollup-department dimensions the run-19 backlog explicitly named. Good
+   partial progress, NOT a clear (miss #8, dimension-agnostic clear).
+2. **All carried CRITICAL breaches PERSIST (re-confirmed live).** Northwestern still ships ≥5
+   CIP-rollup-in-summary synthesized reviews in the first 120 rows ("Architecture and Related Services,
+   Other", "Business/Commerce, General", "Engineering, Other"; runs 9→20). Stanford's Sibley-School (2
+   hits) + Freeman-Spogli-on-unrelated-fields (systems-engineering + marketing, 2 mismatched hits; the
+   political-science FSI control passes) STILL LIVE (runs 13/14→20). Duke + Boston U unchanged (nothing
+   merged; Duke 10→20). NYU still the ONLY dead feed (`posts=0`).
+
+**False alarms caught (diagnosed, not acted on):**
+- **A naive rollup regex over-counts — gold MIT scored 6% (4 rows) on the SAME heuristic, all FALSE
+  positives** ("Bachelor of Science in Computer Science, Economics, and Data Science", "Earth,
+  Atmospheric, and Planetary Sciences", "Science, Technology, and Society" are REAL MIT degrees). So
+  ~6% is the heuristic's false-positive floor; Berkeley's 38% is well above it AND confirmed genuine by
+  reading the flagged names (federal CIP titles with the generic "Bachelor's in" prefix MIT never uses).
+- **Berkeley's post-strip descriptions are GRAMMATICAL, not run-ons** — "Design studios, history and
+  theory, and building technology in CED's undergraduate architecture program"; "Observational and
+  theoretical astrophysics with access to Lick Observatory, Keck partnerships…". The prefix-strip was
+  done cleanly (the run-19 backlog's "strip prefix AND write a sentence" concern is satisfied here).
+- **Yale (69% prefix) + Rice (generic gloss) controls are unchanged** recurrences of named HIGH classes
+  (rows 9/10), not new. Feeds healthy (Berkeley 17, Yale 290, Rice 298; NYU still 0).
+- `?page_size=100` 422s (server cap 50); `/institutions/{id}/posts` returns a bare list — paginated /
+  counted accordingly. `_standard` not in the public API (gold MIT shows NONE) — ranked on API-visible
+  signals only.
+
+**Rulebook changes: NONE (0 of ≤3).** No new problem class was discovered. Berkeley #652 is a partial
+repair of a known HIGH catalog — the single-dimension-pass class (miss #8, the dimension-agnostic-clear
+bullet), the same shape as Princeton #643 (run 17, prefix-only). Every other live defect
+(Northwestern/Stanford/Duke fabrications, the #646 catalogs, Yale/Rice) recurs a class the rulebook
+already names (miss #2/#8/#9). Per the SAFETY RAILS (no-edit-without-evidence-of-a-NEW-problem; "Clean
+fleet → change nothing… Never invent a rule to look busy"; bounded + anti-churn), restating present
+rules would be churn. The standing concern is enricher BEHAVIOR — it keeps shipping single-dimension
+passes (#652 prefix-only after #643 prefix-only) and works HIGH catalogs while the CRITICAL top (Boston
+U, Stanford, Northwestern, Duke) stays unrepaired — which is repair-first ORDERING + finish-all-
+dimensions, flagged for human review, not a rulebook gap (more rule text cannot fix ordering; cf. runs
+10/12/17/18/19). Post-edit self-review: SKILL.md UNTOUCHED, miss numbering still sequential 1–9, all
+invariants intact.
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(behavioral, recurring — now the dominant pattern)** the enricher keeps shipping SINGLE-dimension
+  passes. #652 fixed only Berkeley's prefix and left the 38% rollup names + 54% generic credential form
+  the run-19 backlog named — exactly as #643 fixed only Princeton's prefix (run 17). The
+  dimension-agnostic-clear capability is PROVEN (#650 UChicago, #648 Caltech cleared multiple dimensions
+  at once), so the lever is steering the enricher to finish ALL dimensions on a catalog per pass, not
+  a rule.
+- **(carried, urgent — now 12 / 11 intervals)** Northwestern (43+ synthesized reviews, runs 9→20) and
+  Duke (5 Pratt boilerplate reviews, runs 10→20) remain live and unrepaired; the CRITICAL backlog top
+  is not being cleared. The enricher continues to work HIGH catalogs (Berkeley #652, UChicago #650)
+  while the four CRITICAL breaches sit.
+- **(carried, urgent)** Stanford's Sibley-School + Freeman-Spogli fabricated units (runs 13/14) remain
+  live (re-confirmed run 20); the grader does not edit data.
+- **(carried from runs 2–19, unreconciled)** miss #9 says "FAIL on null/blank `department`" but gold
+  MIT ships null department and `manifest.py` marks `department` `required=False`. Reconciling would
+  LOOSEN verify-output → left intact per the rails.
+- **(carried from runs 8–19, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a stub
+  tell — valid for the ENRICHER but not API-visible to the grader. Left intact.
+
+**Backlog delta:** Berkeley MOVED from HIGH row 2 (dual-defect: 37% rollup + 100% prefix) to HIGH row 5
+(rollup names only — prefix now 0% via #652), the cleanest of the rollup-NAME catalogs; its row + the
+"what it needs" now read "de-roll-up the names + switch generic 'Bachelor's in' to the real designation,
+descriptions + prefix done". HIGH table renumbered (Harvard/Cornell/Penn shift up one; Berkeley inserted
+at 5; the rest unchanged). NW/Duke persistence lines bumped to 9→20 / 10→20; Stanford re-confirmed run
+20. The single-dimension-pass enricher note updated to cite #652 as the latest instance. CRITICAL
+unchanged: Boston University (structure) + Stanford (fabricated units) + Northwestern + Duke (fabricated
+reviews). MEDIUM empty. CLEAN = MIT only.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv /
+`httpx` / Postgres — `conftest.py` import fails) — same constraint as runs 1–19. Changes are
+markdown-only (backlog re-write + this changelog; NO SKILL.md edit, no Python, no migrations, no app
+code), so the enricher code/data state is unaffected and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; no rule changed, so nothing weakened. The findings that could argue for
+loosening (null-department FAIL vs gold MIT; `_standard`-as-rendered-signal) remain logged for human
+review, not acted on.
+
+---
+
 ## 2026-06-17 — Run 19 (REAL PROGRESS — #650 cleanly de-fabricated UChicago in ONE multi-dimensional pass: rollup names 36%→~3%, prefix-doubling 88%→0%, real "Bachelor of Arts/Science" designations + real depts + TRUE field-specific descriptions; the second genuine clear after Caltech #648. NO new problem class — changed NO rules per anti-churn; moved UChicago to the cleanest HIGH tier)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28,
