@@ -6,6 +6,109 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-17 — Run 17 (NO new gaps found — Princeton #643 cleared its prefix-doubling 31%→0% but left the 9 CIP-rollup names untouched: yet another single-dimension pass, a recurrence of miss #8, not a NEW class. Every other live defect recurs a named class. Changed NO rules per anti-churn; updated backlog — Princeton's prefix cleared)
+
+**Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28,
+no sprawl). Recently-changed focus on the ONE catalog whose live state changed since run 16 —
+**Princeton** (PR #643 "remove name-prefixed program descriptions", `2fdc1dc`). Full Princeton
+pagination (`page_size=50`, n=41) with rollup-tell + prefix-doubling metrics on every row and
+per-program `description_text` reads. Re-confirmed the carried CRITICAL breaches live: Stanford
+Sibley-School + FSI named-unit fabrications (whole-catalog `description_text` scan, n=188), Northwestern
++ Duke fabricated reviews (`/programs/{id}.external_reviews`), and the fleet `/institutions/{id}/posts`
+feed sweep. Student's-eye pass: Princeton (recently-changed) + Caltech, Purdue (random HIGH) program
+descriptions; Princeton, Rice, Duke institution-level detail (`campus_photos`, `ranking_data`, schools).
+
+**What merged since run 16:** NO new profile-enrichment PR — the run-16 grader PR #644 is `origin/main`
+HEAD. The only live-state change is **Princeton #643** (`2fdc1dc`, merged just before #644), which
+stripped the name-prefix from Princeton's descriptions. So the other 27 catalogs are byte-identical to
+run 16.
+
+**Findings (live API evidence):**
+
+1. **Princeton #643 cleared the prefix-doubling — real progress, but a SINGLE-DIMENSION pass.** Live
+   Princeton now reads **0% prefix-doubling** (was run-16's 31% — `description_text.startswith(program_name)`
+   = 0/41), and the after-strip bodies are clean grammatical sentences/noun-phrases ("Anthropology — the
+   comparative study of human societies and cultures"; "Princeton Geosciences covers geology, geophysics,
+   and paleoclimate with field camps…"), on top of #641's field-specific TRUE descriptions. So the prefix
+   dimension is fixed.
+2. **BUT the 9 CIP-rollup NAMES + their departments are STILL LIVE — #643 never touched them.** 9 of 41
+   rows still carry a federal CIP title as both `program_name` and `department`: "Bachelor of Arts in Area
+   Studies" (dept "Area Studies"), "…in Religion/Religious Studies", "…in Multi/Interdisciplinary Studies,
+   Other", "…in Ethnic, Cultural Minority, Gender, and Group Studies", "…in Linguistic, Comparative, and
+   Related Language Studies and Services", and FOUR "…Languages, Literatures, and Linguistics" (Classics,
+   Germanic, Romance, Slavic). This is exactly the single-dimension-pass class (miss #8): the enricher
+   fixed ONE dimension (prefix) in isolation and shipped, leaving the rollup-name dimension the run-16
+   backlog explicitly called out. NOT a new class.
+3. **All CRITICAL breaches PERSIST (re-confirmed live).** Stanford's Sibley-School (Cornell's unit, 2
+   aerospace rows) + Freeman-Spogli-on-unrelated-fields (systems-engineering + a marketing master's)
+   STILL LIVE (5 hits; the FSI political-science control is correct). Northwestern's "Architecture and
+   Related Services, Other" CIP-rollup review STILL LIVE (now runs 9→17; ≥5 rollup-in-summary reviews in
+   the first 200 rows). Duke's 5 Pratt B.S.E. boilerplate reviews STILL LIVE ("rigorous engineering degree
+   at a selective private R1" ×5; "undergraduate research access and Triangle" ×5; now runs 10→17).
+4. **Feeds healthy** — NYU still the ONLY dead feed (`posts=0`). 28 institutions, no sprawl. Institution-
+   level detail healthy on the sampled catalogs (Princeton/Rice/Duke: 5 credited `campus_photos`,
+   ownership + carnegie + accreditor + all three rankings present).
+
+**False alarms caught (diagnosed, not acted on):**
+- **`ranking_data.rankings` reads `None` on Princeton/Rice/Duke — a WRONG-KEY artifact, NOT a gap.**
+  Rankings are stored as TOP-LEVEL `ranking_data` keys (`us_news_national`, `times_higher_education`,
+  `qs_world_university_rankings`), not a nested `rankings` dict — gold MIT uses the same shape and
+  Princeton carries all three (US-News #1/2026, THE #3, QS #25). My first probe used the wrong key.
+- **Princeton's thin generic-gloss descriptions on the clean rows** ("Economics — micro, macro and
+  econometrics") are borderline but field-mentioning, not stubs → backlog texture, already governed by
+  the gold-contrast rule (miss #8). Not a new class.
+- **Caltech's "BS in {field} — …" generic gloss and Purdue's "{name} is an undergraduate major at
+  Purdue's College…" classification template** are recurrences of miss #8 already in the HIGH backlog
+  (Caltech row 3, Purdue row 4). Not new.
+- `?page_size=100` 422s (server cap 50) — paginated by 50. `description_text` is the real field;
+  named-unit hits confirmed by which institution owns each unit (Sibley = Cornell).
+
+**Rulebook changes: NONE (0 of ≤3).** No new problem class was discovered, and every live defect is a
+recurrence of a class the rulebook ALREADY names — single-dimension passes (miss #8, run 8 + the
+dimension-agnostic clear bullet), prefix-doubling (miss #9, run 9), fabrication-by-synthesis reviews
+(miss #8, run 9), fabricated named units (miss #8/#9, runs 13/14), the credential-form-agnostic rollup
+scan (miss #2, run 16). Per the SAFETY RAILS (no-edit-without-evidence-of-a-NEW-problem; "Clean fleet →
+change nothing… Never invent a rule to look busy"; bounded + anti-churn), restating present rules would
+be churn. The Princeton single-dimension recurrence is an enricher-BEHAVIOR problem (it is not applying
+its own dimension-agnostic-clear rule), not a rulebook gap — more rule text cannot fix it (cf. runs
+10/12). Post-edit self-review: SKILL.md UNTOUCHED, miss numbering still sequential 1–9, all invariants
+intact.
+
+**FLAGGED FOR HUMAN REVIEW:**
+- **(carried, urgent — now 9 / 8 intervals)** Northwestern (43+ synthesized reviews, runs 9→17) and
+  Duke (5 Pratt boilerplate reviews, runs 10→17) remain live and unrepaired; the CRITICAL backlog top is
+  not being cleared. A human may want to confirm the enricher is working the CRITICAL backlog.
+- **(carried, urgent)** Stanford's Sibley-School + Freeman-Spogli fabricated units (runs 13/14) remain
+  live; the grader does not edit data.
+- **(behavioral, recurring)** the enricher keeps shipping SINGLE-dimension passes — #643 fixed only
+  Princeton's prefix and left the 9 rollup names the backlog named, despite miss #8's extensively
+  documented dimension-agnostic-clear rule. This is behavior, not a rulebook gap; a human may want to
+  steer the enricher to finish ALL dimensions on a catalog before the next pass.
+- **(carried from runs 2–16, unreconciled)** miss #9 says "FAIL on null/blank `department`" but gold MIT
+  ships null department and `manifest.py` marks `department` `required=False`. Reconciling would LOOSEN
+  verify-output → left intact per the rails.
+- **(carried from runs 8–16, methodology)** misses #8/#9 cite "`_standard` usually unstamped" as a stub
+  tell — valid for the ENRICHER but not API-visible to the grader. Left intact.
+
+**Backlog delta:** Princeton's HIGH row updated — prefix now 0% (was 31%), only the 9 rollup names +
+their departments remain; moved to the CLEANEST end of HIGH (true field-specific descriptions, 0%
+prefix). NW/Duke persistence lines bumped to 9→17 / 10→17. The run-16 "over-grade correction / realness
+gate" note is superseded by the #643 prefix-cleared note. Ranking otherwise unchanged: CRITICAL = Boston
+University (structure) + Stanford (fabricated units) + Northwestern + Duke (fabricated reviews); HIGH =
+15 catalogs worst-first (Princeton row 15, cleanest tier); MEDIUM = the 8 shallow 22-program stubs
+(NYU = only dead feed); CLEAN = MIT only.
+
+**Health check:** the profile pytest could not run in this ephemeral container (no backend venv /
+pytest / Postgres) — same constraint as runs 1–16. Changes are markdown-only (backlog re-write + this
+changelog; NO SKILL.md edit, no Python, no migrations, no app code), so the enricher code/data state is
+unaffected and miss numbering remains sequential 1–9.
+
+**Invariants:** all intact; no rule changed, so nothing weakened. The findings that could argue for
+loosening (null-department FAIL vs gold MIT; `_standard`-as-rendered-signal) remain logged for human
+review, not acted on.
+
+---
+
 ## 2026-06-17 — Run 16 (Princeton's re-deploy LANDED — but it is NOT clean: run 15 over-graded the #641 SOURCE as "ZERO rollup names / ZERO prefix-doubling", and the now-LIVE catalog carries 8 CIP-rollup names echoed into `department` + 31% prefix-doubling. NEW class: a realness GATE keyed on the generic-credential-PREFIX form passes "Bachelor of Arts in {CIP rollup}" rows. Added 1 rulebook sub-bullet; moved Princeton back into HIGH)
 
 **Institutions audited:** all 28 in the live DB (`/institutions/search?q=&page_size=50` → total 28,
