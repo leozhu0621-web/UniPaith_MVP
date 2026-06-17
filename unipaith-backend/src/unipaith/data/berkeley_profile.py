@@ -44,6 +44,10 @@ programs — completes Berkeley coverable external_reviews (70/70).
 Description depth pass (2026-06-16, berkeleyprof7): replaces all classification-only
 ``{name} is a {degree} program at Berkeley's {school}`` stubs with field-specific
 clauses from ``berkeley_field_descriptions.py`` (269/269 programs).
+
+Description repair (2026-06-17, berkeleyprof8): drops the ``{program_name}:`` prefix
+from every description so clauses open on field-specific facts (gold MIT/Chicago
+pattern); 0% name-prefixed descriptions.
 """
 
 from __future__ import annotations
@@ -64,7 +68,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of California-Berkeley"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-17"
 
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is (an|a) (undergraduate|graduate|doctoral|professional|degree) program at Berkeley",
@@ -976,27 +980,26 @@ def _department_for(field_name: str, school: str) -> str:
 def _berkeley_description(spec: dict, field: str | None = None) -> str:
     """Field-specific description — never the degree-type classification stub."""
     slug = spec["slug"]
-    if slug in SLUG_DESCRIPTIONS:
-        clause = SLUG_DESCRIPTIONS[slug]
-    else:
-        field_key = (
-            field
-            or spec.get("_field_name")
-            or _SLUG_TO_FIELD.get(slug)
-            or spec.get("program_name", "")
-        )
-        clause = FIELD_DESCRIPTIONS.get(field_key)
-        if not clause:
-            raise ValueError(
-                f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
-            )
     fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
     if fmt == "online":
         delivery = " Delivered online."
     elif fmt == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{spec['program_name']}: {clause}{delivery}"
+    if slug in SLUG_DESCRIPTIONS:
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+    field_key = (
+        field
+        or spec.get("_field_name")
+        or _SLUG_TO_FIELD.get(slug)
+        or spec.get("program_name", "")
+    )
+    clause = FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        raise ValueError(
+            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
+        )
+    return f"{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -1045,6 +1048,15 @@ _classification_stubs = sum(
 if _classification_stubs:
     _catalog_errors.append(
         f"classification-only descriptions on {_classification_stubs} programs"
+    )
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
     )
 if _catalog_errors:
     raise RuntimeError(f"Berkeley catalog quality gate failed: {_catalog_errors}")
