@@ -39,6 +39,11 @@ and sociology-social-work, remaining law JD/LLM and JD/MA duals, GMS biomedical-
 and MD/PhD pathways, SDM dental specialty DScD/MSD programs, SAR BS-to-MPH). BU coverable
 review depth pass is COMPLETE (154/154).
 
+Description repair (2026-06-17, buprof9): replaces all name-prefixed
+``{program_name} is {role} at Boston University's {school}`` classification stubs
+with field-specific clauses from ``bu_field_descriptions.py`` (gold MIT/JHU
+pattern); 0% name-prefixed descriptions.
+
 Depth pass (2026-06-15, buprof6): expanded ``_REVIEWS_BY_SLUG`` from 94 to 124
 coverable programs — engineering materials/systems PhD, GRS economics MA/PhD and
 energy-environment MBA dual, CAS combined economics/math and physics/CS degrees, MET
@@ -89,6 +94,7 @@ from collections import Counter
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.bu_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
 from unipaith.data.profile_catalog_utils import (
     BARE_DEGREE_ABBREVIATIONS,
     disambiguate_program_name,
@@ -98,7 +104,12 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Boston University"
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-17"
+
+_CLASSIFICATION_STUB_RE = re.compile(
+    r"^.+ is (an undergraduate major|a graduate degree|a doctoral program|"
+    r"a professional degree|a graduate certificate|a degree program) at Boston University's ",
+)
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -946,38 +957,76 @@ def _base_program_name(slug: str, legacy: str, dtype: str, url: str) -> str:
     return disambiguate_program_name(field, dtype)
 
 
-def _bu_description(
-    program_name: str,
-    degree_type: str,
-    school: str,
-    *,
-    delivery_format: str = "on_campus",
-    catalog_url: str = "",
-) -> str:
-    """Field-specific description — Rice-style, never the degree-type template stub."""
-    field = _field_from_url(catalog_url) if catalog_url else program_name
-    base_field = field.split(" — ")[0] if field else program_name
-    role = {
-        "bachelors": "an undergraduate major",
-        "masters": "a graduate degree",
-        "phd": "a doctoral program",
-        "professional": "a professional degree",
-    }.get(degree_type, "a degree program")
+def _field_from_spec(spec: dict) -> str:
+    """Resolve the catalog field key for FIELD_DESCRIPTIONS lookup."""
+    slug = spec.get("slug", "")
+    if slug in SLUG_DESCRIPTIONS:
+        return ""
+    url = spec.get("catalog_url", "")
+    field = _field_from_url(url) if url else ""
+    if field:
+        return field
+    name = spec.get("program_name", "")
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Master of Arts in ",
+        "Master of Science in ",
+        "Doctor of Philosophy in ",
+        "Bachelor's in ",
+        "Master's in ",
+        "Professional program in ",
+        "Doctorate in ",
+    ):
+        if name.startswith(prefix):
+            rest = name[len(prefix) :].strip()
+            if rest:
+                return rest
+    return name
+
+
+def _lookup_clause(field: str) -> str | None:
+    if not field:
+        return None
+    parts = field.split(" — ")
+    for end in range(len(parts), 0, -1):
+        key = " — ".join(parts[:end])
+        clause = FIELD_DESCRIPTIONS.get(key)
+        if clause:
+            return clause
+    return None
+
+
+def _bu_description(spec: dict) -> str:
+    """Field-specific description — never the degree-type classification stub."""
+    slug = spec["slug"]
+    if slug in SLUG_DESCRIPTIONS:
+        clause = SLUG_DESCRIPTIONS[slug]
+    else:
+        field = _field_from_spec(spec)
+        clause = _lookup_clause(field)
+        if not clause:
+            # Try prefix match on keys sharing the same leading segments
+            prefix = field + " — "
+            for key, val in FIELD_DESCRIPTIONS.items():
+                if key.startswith(prefix) or field.startswith(key + " — "):
+                    clause = val
+                    break
+        if not clause:
+            raise ValueError(
+                f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
+            )
+    fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
-    if delivery_format == "online":
+    if fmt == "online":
         delivery = (
             " Offered online through Metropolitan College."
-            if "Metropolitan" in school
+            if "Metropolitan" in spec.get("school", "")
             else " Delivered online."
         )
-    elif delivery_format == "hybrid":
+    elif fmt == "hybrid":
         delivery = " Delivered in a hybrid format."
-    if degree_type == "bachelors":
-        return (
-            f"{program_name} is {role} in {base_field} "
-            f"at Boston University's {school}.{delivery}"
-        )
-    return f"{program_name} is {role} at Boston University's {school}.{delivery}"
+    return f"{clause}{delivery}"
 
 
 def _fix_department(department: str) -> str:
@@ -1088,25 +1137,13 @@ def _build_catalog() -> list[dict]:
             p["program_name"] += f" — {legacy}"
 
     for p in out:
-        p["description"] = _bu_description(
-            p["program_name"],
-            p["degree_type"],
-            p["school"],
-            delivery_format=p["delivery_format"],
-            catalog_url=p["catalog_url"],
-        )
+        p["description"] = _bu_description(p)
         p.pop("legacy_credential", None)
 
     out = _collapse_concentration_splits(out)
 
     for p in out:
-        p["description"] = _bu_description(
-            p["program_name"],
-            p["degree_type"],
-            p["school"],
-            delivery_format=p["delivery_format"],
-            catalog_url=p["catalog_url"],
-        )
+        p["description"] = _bu_description(p)
 
     # Re-disambiguate names after collapse (collapsed base names can collide with standalone rows).
     counts = Counter(p["program_name"] for p in out)
@@ -1133,6 +1170,22 @@ _catalog_errors = validate_catalog(PROGRAMS)
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
 if _stub_desc:
     _catalog_errors.append(f"template stub descriptions on {_stub_desc} programs")
+_classification_stubs = sum(
+    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
+)
+if _classification_stubs:
+    _catalog_errors.append(
+        f"classification-only descriptions on {_classification_stubs} programs"
+    )
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    _catalog_errors.append(
+        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
 if _catalog_errors:
     raise RuntimeError(f"Boston University catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
