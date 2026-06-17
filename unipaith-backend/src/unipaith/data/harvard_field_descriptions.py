@@ -45,13 +45,13 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Regional specializations — East Asia, Latin America, Middle East, and South Asia — combine language immersion with political and cultural scholarship in Harvard Faculty of Arts & Sciences."
     ),
     'Astronomy and Astrophysics': (
-        "Observational and theoretical astrophysics with access to Lick Observatory, Keck partnerships, and the campus radio astronomy lab."
+        "Observational and theoretical astrophysics at the Harvard-Smithsonian Center for Astrophysics (CfA), with Fred Lawrence Whipple Observatory field sites and the Harvard College Observatory plate stacks."
     ),
     'Behavioral Sciences': (
         "Interdisciplinary behavioral science at Harvard Faculty of Arts & Sciences and Harvard Graduate School of Education examines cognition, decision making, and policy-relevant experiments linking psychology and social research."
     ),
     'Bilingual, Multilingual, and Multicultural Education': (
-        "School of Education graduate work targets urban reform, special education, and  evidence-based practice in Boston partner districts."
+        "Harvard Graduate School of Education bilingual and multicultural education programs prepare teachers and researchers in dual-language instruction, heritage-language pedagogy, and immigrant-student support."
     ),
     'Biochemistry, Biophysics and Molecular Biology': (
         "Graduate biochemistry and biophysics at Harvard Faculty of Arts & Sciences and Harvard Medical School studies protein structure, enzymology, and molecular mechanisms in NIH-funded Harvard labs."
@@ -78,10 +78,10 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Harvard Business School undergraduate and graduate foundations in accounting, finance, marketing, and management grounded in Harvard's liberal-arts core and Cambridge industry partnerships."
     ),
     'Business/Corporate Communications': (
-        "Harvard Business School foundations in accounting, analytics, and strategy with health-sector and real-estate case studies distinctive to the Harvard network."
+        "Harvard Business School corporate-communications coursework covers investor relations, organizational messaging, and strategic communications with case studies from global firms headquartered in Greater Boston."
     ),
     'Business/Managerial Economics': (
-        "Harvard Business School foundations in accounting, analytics, and strategy with health-sector and real-estate case studies distinctive to the Harvard network."
+        "Harvard Business School managerial-economics coursework emphasizes pricing, market design, and quantitative decision analysis for consulting, finance, and technology leadership roles."
     ),
     'Cell/Cellular Biology and Anatomical Sciences': (
         "Graduate cell biology at Harvard Faculty of Arts & Sciences and Harvard Medical School focuses on signaling, developmental biology, and microscopy methods in cancer and immunology research labs."
@@ -117,7 +117,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Broad computing foundations — programming, data structures, and information systems — within Harvard's Department of Computer and Information Science."
     ),
     'Computer/Information Technology Administration and Management': (
-        "Bowers College IT management spans enterprise systems, cybersecurity policy, and data governance for Harvard's computing and information-science students."
+        "Harvard Extension School and SEAS information-technology management coursework spans enterprise systems, cybersecurity policy, and data governance for computing and information-science students."
     ),
     'Cultural Studies/Critical Theory and Analysis': (
         "Harvard's Literature and History of Art departments examine critical theory, visual culture, and postcolonial scholarship with the Carpenter Center for the Visual Arts."
@@ -153,10 +153,10 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Interdisciplinary GSE graduate pathways combine education research with policy, counseling, or organizational leadership for non-traditional educator roles."
     ),
     'Educational Administration and Supervision': (
-        "GSE principal and superintendent preparation integrates equity audits, data-driven school improvement, and Harvardsylvania certification pathways."
+        "Harvard Graduate School of Education principal and superintendent preparation integrates equity audits, data-driven school improvement, and Massachusetts educator-certification pathways."
     ),
     'Educational Assessment, Evaluation, and Research': (
-        "School of Education graduate work targets urban reform, special education, and  evidence-based practice in Boston partner districts."
+        "Harvard Graduate School of Education assessment and evaluation programs train researchers in psychometrics, program evaluation, and evidence-based policy for schools and nonprofits."
     ),
     'Educational/Instructional Media Design': (
         "GSE instructional-media design programs build digital learning environments, multimedia curricula, and educational technology for schools and universities."
@@ -174,7 +174,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Interdisciplinary engineering coursework at SEAS bridges design, computing, and applied science for students exploring Harvard Engineering's research areas."
     ),
     'English Language and Literature, General': (
-        "Harvard Faculty of Arts & Sciences English combines literary history, creative writing, and rhetoric with Kelly Writers House programming and Cambridge literary community ties."
+        "Harvard Faculty of Arts & Sciences English combines literary history, creative writing, and rhetoric with the Woodberry Poetry Room and Cambridge literary community ties."
     ),
     'Entrepreneurial and Small Business Operations': (
         "Harvard Business School entrepreneurship coursework covers venture creation, small-business finance, and startup strategy through Harvard's Venture Lab and Cambridge innovation ecosystem."
@@ -210,7 +210,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "German language, literature, and culture at Harvard Faculty of Arts & Sciences includes Berlin study-abroad and European intellectual-history coursework."
     ),
     'Health Professions Education, Ethics, and Humanities': (
-        "School of Education graduate work targets urban reform, special education, and  evidence-based practice in Boston partner districts."
+        "Harvard Graduate School of Education health-professions education programs prepare clinician-educators in medical ethics, humanities, and bedside teaching at affiliated Boston teaching hospitals."
     ),
     'Health and Medical Administrative Services': (
         "Harvard Business School and Harvard Graduate School of Education health-administration coursework prepares leaders for hospitals, insurers, and health-policy agencies with Harvard Medicine case studies."
@@ -240,22 +240,22 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Faculty of Arts & Sciences international agriculture examines global food systems, development economics, and field research through Harvard's land-grant mission abroad."
     ),
     'International Relations and National Security Studies': (
-        "Harvard Faculty of Arts & Sciences political science and Perry World House programming examine diplomacy, security studies, and global governance with Washington, D.C. internship access."
+        "Harvard Faculty of Arts & Sciences political science and Harvard Kennedy School programming examine diplomacy, security studies, and global governance with Washington, D.C. internship access."
     ),
     'International and Comparative Education': (
-        "School of Education graduate work targets urban reform, special education, and  evidence-based practice in Boston partner districts."
+        "Harvard Graduate School of Education international and comparative education programs examine school systems, policy diffusion, and cross-national reform with field research abroad."
     ),
     'Journalism': (
         "Harvard's Nieman Foundation for Journalism hosts mid-career fellows, while FAS expository writing and history coursework supports narrative nonfiction and investigative reporting skills."
     ),
     'Landscape Architecture': (
-        "Site design, ecological planning, and urban landscapes in CED's landscape architecture studios and Blake Garden."
+        "Site design, ecological planning, and urban landscapes in Harvard Graduate School of Design landscape-architecture studios and Arnold Arboretum field sites."
     ),
     'Law': (
-        "Harvard Harvard Business School Law's JD and advanced legal-degree programs emphasize cross-disciplinary study with Harvard Business School, Med, and Harvard Graduate School of Education plus nationally ranked clinical offerings."
+        "Harvard Law School's J.D. and advanced legal-degree programs emphasize cross-disciplinary study with Harvard Business School, Harvard Medical School, and Harvard Graduate School of Education plus nationally ranked clinical offerings."
     ),
     'Legal Research and Advanced Professional Studies': (
-        "Harvard Harvard Business School Law LLM and advanced legal-study programs combine doctrinal coursework with cross-registration at Harvard Business School, Med, and Harvard Graduate School of Education."
+        "Harvard Law School LL.M. and advanced legal-study programs combine doctrinal coursework with cross-registration at Harvard Business School, Harvard Medical School, and Harvard Graduate School of Education."
     ),
     'Leisure and Recreational Activities': (
         "Harvard Recreation offers club sports, intramural leagues, and outdoor programs alongside DCE professional certificates in sports management and hospitality."
@@ -267,7 +267,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Harvard Faculty of Arts & Sciences linguistics covers phonetics, syntax, sociolinguistics, and computational language science with ties to Harvard CIS and the Language Data Institute."
     ),
     'Literature': (
-        "Greek and Latin language, ancient history, and philology at Harvard Faculty of Arts & Sciences with manuscript resources and Mediterranean archaeology ties through the Harvard Museum."
+        "Harvard Faculty of Arts & Sciences comparative literature examines literary theory, translation, and world literatures with resources at Houghton Library and the Barker Center."
     ),
     'Management Sciences and Quantitative Methods': (
         "Harvard Business School operations and decision-science coursework emphasizes optimization, stochastic modeling, and analytics for finance and consulting careers."
@@ -288,7 +288,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "School of Medicine medical and biological illustration is one of few accredited programs blending fine art with anatomy visualization."
     ),
     'Medicine': (
-        "Harvard Medicine's Genes to Society curriculum and Johns Harvard Hospital clerkships anchor U.S. News's perennial #1–3 medical-school ranking."
+        "Harvard Medical School's Pathways curriculum and Massachusetts General Hospital and Brigham and Women's Hospital clerkships anchor U.S. News's perennial top-ranked medical-school outcomes."
     ),
     'Medieval and Renaissance Studies': (
         "Faculty of Arts & Sciences medieval studies combines Latin paleography, art history, and Harvard's world-renowned library collections in rare books."
@@ -324,13 +324,13 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Undergraduate legal studies and history at Harvard Faculty of Arts & Sciences and Harvard Business School Law examine constitutional theory, law-and-society, and policy without a JD."
     ),
     'Operations Research': (
-        "Optimization, stochastic modeling, and analytics in the IEOR department serving engineering, Haas, and CDSS students."
+        "Optimization, stochastic modeling, and analytics in SEAS and Harvard Business School coursework serving engineering, business analytics, and public-policy students."
     ),
     'Philosophy': (
         "Harvard Faculty of Arts & Sciences philosophy emphasizes logic, ethics, metaphysics, and philosophy of science — strengths that anchor Harvard's PPE interdisciplinary major."
     ),
     'Philosophy and Religious Studies, General': (
-        "Harvard Faculty of Arts & Sciences philosophy emphasizes logic, ethics, metaphysics, and philosophy of science — strengths that anchor Harvard's PPE interdisciplinary major."
+        "Harvard Faculty of Arts & Sciences philosophy and religious studies combines logic and ethics with comparative religion, theology, and the study of sacred texts across traditions."
     ),
     'Physics': (
         "Harvard Faculty of Arts & Sciences physics covers condensed matter, particle physics, and biophysics with faculty affiliated to Harvard's Laboratory for Research on the Structure of Matter."
@@ -339,7 +339,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Human physiology, disease mechanisms, and pathobiology in MCB and integrative biology research labs."
     ),
     'Political Science and Government': (
-        "Harvard Faculty of Arts & Sciences political science combines American politics, comparative methods, and international relations with Perry World House and D.C. internship access."
+        "Harvard Faculty of Arts & Sciences political science combines American politics, comparative methods, and international relations with the Weatherhead Center for International Affairs and D.C. internship access."
     ),
     'Psychology, General': (
         "Harvard Faculty of Arts & Sciences psychology is among the largest majors, with research tracks in cognitive, developmental, social, and clinical science in campus psychology labs."
@@ -369,7 +369,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Laboratory-based psychology at Harvard Faculty of Arts & Sciences uses behavioral, cognitive, and neuroscience methods in Harvard's psychology department research institutes."
     ),
     'Rhetoric and Composition/Writing Studies': (
-        "Harvard Faculty of Arts & Sciences writing and rhetoric courses support Kelly Writers House programming and professional communication across disciplines."
+        "Harvard Faculty of Arts & Sciences writing and rhetoric courses support the Harvard College Writing Program and professional communication across disciplines."
     ),
     'Romance Languages, Literatures, and Linguistics': (
         "French, Spanish, and Italian language and literature at Harvard Faculty of Arts & Sciences include study-abroad and translation workshops through Harvard's language departments."
@@ -402,7 +402,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "SEAS and Harvard Kennedy School systems coursework models complex networks in health care, infrastructure, and policy using computational and operations-research methods."
     ),
     'Teacher Education and Professional Development, Specific Levels and Methods': (
-        "GSE teacher-preparation programs lead to Harvardsylvania certification with Cambridge partner-school clinical practice."
+        "Harvard Graduate School of Education teacher-preparation programs lead to Massachusetts educator certification with Cambridge partner-school clinical practice."
     ),
     'Teacher Education and Professional Development, Specific Subject Areas': (
         "GSE subject-specific teacher education pairs content expertise with pedagogy and urban classroom placements in Cambridge districts."

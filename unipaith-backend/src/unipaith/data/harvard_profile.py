@@ -24,6 +24,11 @@ programs (60/60 total external_reviews on coverable programs).
 Description depth pass (2026-06-16, harvardprof7): replaces all classification-only
 program descriptions with field-specific clauses from ``harvard_field_descriptions.py``
 (343/343 programs; 0% classification stubs).
+
+Description prefix repair (2026-06-17, harvardprof8): drops ``{program_name}:`` prefixes
+(gold MIT/Columbia pattern), diversifies credential-sibling descriptions so BS/MS/PhD
+rows do not share identical text, and fixes peer-contamination in field clauses
+(Lick Observatory → CfA).
 """
 
 from __future__ import annotations
@@ -52,7 +57,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Harvard University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-17"
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -1387,6 +1392,8 @@ def _delivery_format(raw: str) -> str:
 def _field_from_program_name(program_name: str) -> str | None:
     """Extract CIP field title from a disambiguated program name."""
     for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
         "Bachelor's in ",
         "Master's in ",
         "Doctor of Philosophy in ",
@@ -1396,6 +1403,52 @@ def _field_from_program_name(program_name: str) -> str | None:
         if program_name.startswith(prefix):
             return program_name[len(prefix):]
     return None
+
+
+_LEVEL_SUFFIX: dict[str, str] = {
+    "bachelors": (
+        " Harvard College undergraduates pursue coursework, advising, and optional "
+        "honors thesis research toward the A.B. or S.B."
+    ),
+    "masters": (
+        " Master's students complete advanced seminars, often a capstone or practicum, "
+        "and professional development through Harvard's graduate schools."
+    ),
+    "phd": (
+        " Ph.D. candidates conduct original dissertation research with faculty "
+        "advisement and typically receive full tuition and stipend support."
+    ),
+    "certificate": (
+        " The graduate certificate offers focused graduate coursework for working "
+        "professionals without requiring a full degree program."
+    ),
+    "professional": "",
+}
+
+
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
+    """Fix credential-level lies (e.g. 'Graduate …' on a bachelor's row)."""
+    if degree_type == "bachelors":
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate "):]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level "):]
+    return clause
+
+
+def _needs_normalize(desc: str, program_name: str = "") -> bool:
+    """True when a description is a classification, template, or name-prefixed stub."""
+    if not desc:
+        return True
+    if program_name and desc.startswith(program_name):
+        return True
+    if _CLASSIFICATION_STUB_RE.match(desc):
+        return True
+    if _TEMPLATE_STUB_RE.search(desc):
+        return True
+    if "offered through the " in desc:
+        return True
+    return False
 
 
 def _harvard_description(spec: dict, field: str | None = None) -> str:
@@ -1423,11 +1476,30 @@ def _harvard_description(spec: dict, field: str | None = None) -> str:
         raise ValueError(
             f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
         )
-    return f"{spec['program_name']}: {clause}{delivery}"
+    clause = _adapt_clause_for_degree_type(clause, spec["degree_type"])
+    return f"{clause}{delivery}"
+
+
+def _diversify_descriptions(programs: list[dict]) -> None:
+    """Ensure credential-sibling rows do not share identical description text."""
+    by_desc: dict[str, list[dict]] = {}
+    for p in programs:
+        desc = p.get("description") or ""
+        by_desc.setdefault(desc, []).append(p)
+    for desc, group in by_desc.items():
+        if len(group) < 2:
+            continue
+        for p in group:
+            suffix = _LEVEL_SUFFIX.get(p["degree_type"], "")
+            if suffix:
+                p["description"] = f"{desc}{suffix}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     """Stamp a field-specific description on every program node."""
+    pname = spec.get("program_name", "")
+    if not _needs_normalize(spec.get("description") or "", pname):
+        return
     spec["description"] = _harvard_description(spec, field=field_name)
 
 
@@ -2914,14 +2986,28 @@ def _finalize_catalog(programs: list[dict]) -> None:
 
 _finalize_catalog(PROGRAMS)
 for _p in PROGRAMS:
-    _normalize_program(_p)
+    _normalize_program(_p, _field_from_program_name(_p.get("program_name", "")))
+_diversify_descriptions(PROGRAMS)
 _catalog_errors = validate_catalog(PROGRAMS)
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
 _new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
+_name_prefix_desc = sum(
+    1
+    for p in PROGRAMS
+    if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
 if _stub_desc:
     _catalog_errors.append(f"template stub descriptions on {_stub_desc} programs")
 if _new_templ:
     _catalog_errors.append(f"program_description template on {_new_templ} programs")
+if _name_prefix_desc:
+    _catalog_errors.append(f"name-prefixed descriptions on {_name_prefix_desc} programs")
+_desc_counts = Counter(p.get("description") for p in PROGRAMS)
+_shared_desc = sum(c for c in _desc_counts.values() if c >= 2)
+if _shared_desc:
+    _catalog_errors.append(
+        f"identical descriptions shared across {_shared_desc} credential-sibling programs"
+    )
 _classification_stubs = sum(
     1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
 )
