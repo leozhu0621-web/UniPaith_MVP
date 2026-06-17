@@ -80,4 +80,23 @@ describe('PreferencesTab — canonical controls', () => {
     expect(payload.preferred_countries).toEqual(['United States'])
     expect(payload.target_degree_level).toBe('masters')
   })
+
+  it('loads a saved dealbreaker as a chip and adds a new one via the token field', async () => {
+    vi.spyOn(studentsApi, 'getPreferences').mockResolvedValue({ dealbreakers: ['No online-only'] })
+    const upsert = vi.spyOn(studentsApi, 'upsertPreferences').mockResolvedValue({} as never)
+    renderTab()
+
+    // The saved value renders as a removable chip, not free text.
+    expect(await screen.findByRole('button', { name: 'Remove No online-only' })).toBeInTheDocument()
+
+    const tokenInput = screen.getByPlaceholderText('')
+    fireEvent.change(tokenInput, { target: { value: 'No GRE' } })
+    fireEvent.keyDown(tokenInput, { key: 'Enter' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save preferences' }))
+
+    await waitFor(() => expect(upsert).toHaveBeenCalled())
+    const payload = upsert.mock.calls[0][0] as Record<string, unknown>
+    expect(payload.dealbreakers).toEqual(['No online-only', 'No GRE'])
+  })
 })

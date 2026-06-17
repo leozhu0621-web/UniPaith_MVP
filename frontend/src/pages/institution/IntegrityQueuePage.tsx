@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Shield, ShieldAlert, AlertTriangle, ExternalLink, ClipboardCheck } from 'lucide-react'
+import { Shield, ShieldAlert, AlertTriangle, ExternalLink, ClipboardCheck, X } from 'lucide-react'
 import { getIntegritySignals, resolveIntegritySignal } from '../../api/reviews'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -61,8 +61,16 @@ function EvidenceChips({ signal }: { signal: IntegritySignal }) {
 
 export default function IntegrityQueuePage({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('open')
+  // Type pre-filter — set by the dashboard breakdown chips (?type=duplicate_submission).
+  const typeFilter = searchParams.get('type')
+  const clearTypeFilter = () => {
+    const next = new URLSearchParams(searchParams)
+    next.delete('type')
+    setSearchParams(next, { replace: true })
+  }
   const [selected, setSelected] = useState<IntegritySignal | null>(null)
   const [resolution, setResolution] = useState<IntegrityResolution>('acceptable')
   const [notes, setNotes] = useState('')
@@ -78,7 +86,10 @@ export default function IntegrityQueuePage({ embedded = false }: { embedded?: bo
     queryKey: ['integrity-signals', statusFilter],
     queryFn: () => getIntegritySignals(undefined, statusFilter),
   })
-  const signals: IntegritySignal[] = Array.isArray(signalsQ.data) ? signalsQ.data : []
+  const allSignals: IntegritySignal[] = Array.isArray(signalsQ.data) ? signalsQ.data : []
+  const signals: IntegritySignal[] = typeFilter
+    ? allSignals.filter(s => s.signal_type === typeFilter)
+    : allSignals
 
   const resolveMut = useMutation({
     mutationFn: (p: { id: string; resolution: IntegrityResolution; notes?: string }) =>
@@ -127,6 +138,19 @@ export default function IntegrityQueuePage({ embedded = false }: { embedded?: bo
 
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
+      {typeFilter && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Showing</span>
+          <button
+            onClick={clearTypeFilter}
+            className="inline-flex items-center gap-1 rounded-full border border-secondary/40 bg-secondary/5 px-2.5 py-1 text-xs font-medium text-secondary hover:bg-secondary/10"
+          >
+            {SIGNAL_LABELS[typeFilter] ?? typeFilter.replace(/_/g, ' ')}
+            <X size={12} aria-label="Clear filter" />
+          </button>
+        </div>
+      )}
+
       {signalsQ.isLoading ? (
         <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28" />)}</div>
       ) : signalsQ.isError ? (
@@ -135,11 +159,19 @@ export default function IntegrityQueuePage({ embedded = false }: { embedded?: bo
           onRetry={() => signalsQ.refetch()}
         />
       ) : signals.length === 0 ? (
-        <EmptyState
-          icon={<Shield size={40} />}
-          title={activeTab === 'open' ? 'No open integrity signals' : 'No signals'}
-          description="Integrity flags surface here as applications are scanned. All clear for now."
-        />
+        typeFilter ? (
+          <EmptyState
+            icon={<Shield size={40} />}
+            title="No signals of this type"
+            description={`Nothing flagged as ${(SIGNAL_LABELS[typeFilter] ?? typeFilter.replace(/_/g, ' ')).toLowerCase()} here. Clear the filter to see all signals.`}
+          />
+        ) : (
+          <EmptyState
+            icon={<Shield size={40} />}
+            title={activeTab === 'open' ? 'No open integrity signals' : 'No signals'}
+            description="Integrity flags surface here as applications are scanned. All clear for now."
+          />
+        )
       ) : (
         <div className="space-y-2">
           {signals.map(sig => (

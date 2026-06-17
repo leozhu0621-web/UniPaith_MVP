@@ -15,6 +15,7 @@ import Card from '../../../components/ui/Card'
 import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Select from '../../../components/ui/Select'
+import Stepper from '../../../components/ui/Stepper'
 import Textarea from '../../../components/ui/Textarea'
 import Skeleton from '../../../components/ui/Skeleton'
 import AIBadge from '../../../components/ui/AIBadge'
@@ -23,6 +24,21 @@ import { showToast } from '../../../stores/toast-store'
 import { CENTRAL_STATUS_LABEL, DECISION_LABELS, DECISION_OPTIONS, alignmentBand } from './constants'
 import { TagInput } from './GradWidgets'
 import FundingBuilder from './FundingBuilder'
+
+// Two-stage review (§2.4): department recommends, then central confirms.
+const REVIEW_STAGES: { key: string; label: string }[] = [
+  { key: 'department', label: 'Department review' },
+  { key: 'committee', label: 'Committee' },
+]
+
+/** Map the live central-status onto the stepper's current node. A recommendation
+ *  awaiting central confirmation, or one already released, has cleared the
+ *  department node — the committee stage is where it now sits. */
+function reviewStageKey(
+  central: 'pending' | 'confirmed' | 'overridden' | null | undefined,
+): string {
+  return central ? 'committee' : 'department'
+}
 
 function apiError(e: unknown, fallback: string): string {
   const detail = (e as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
@@ -293,6 +309,9 @@ export default function AdvisorMatchTab({ applicationId }: { applicationId: stri
               {CENTRAL_STATUS_LABEL[central] ?? central}
             </Badge>
           )}
+        </div>
+        <div className="mb-5 px-2">
+          <Stepper steps={REVIEW_STAGES} currentKey={reviewStageKey(central)} />
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Select
