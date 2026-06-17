@@ -7,41 +7,41 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-17 (grader run 40). **ONE enrichment merged since run 39: #688 UW-Madison
-(`uwmadisonprof6`, `8221f66`) — "diversify credential descriptions and clear peer contamination".** Its **Deploy
-Backend was still `in_progress` at grading**, so the LIVE API is still the OLD pre-#688 catalog (verbatim-shared 67% +
-43 peer signatures showing: Weinberg ×24 / Kellogg ×7 / Feinberg ×5 = Northwestern units, Scripps ×3 / Skaggs ×3 =
-UCSD). Graded #688 at SOURCE (`8221f66`), live confirmation deferred to next run (same as Stanford #681 at runs 36→37):
-- ✅ **Peer contamination CLEARED in source** — the new 153-field `FIELD_DESCRIPTIONS` table carries **ZERO peer
-  signatures** (Kellogg/Weinberg/Feinberg/Skaggs/Scripps all gone), replaced with verified UW units. This is the
-  GOOD half — it addresses UW-Madison's cross-institution-copy CRITICAL reason (the no-fabrication breach). Predicted
-  to clear live next run; the names dimension is already mostly clean on UW (~1% rollup, 0% generic "X in {field}", 0
-  duplicate).
-- ❌ **Re-introduces the run-38 SUFFIX-DIVERSIFIER (NOT a new class).** #688 took #669's 84% identical-across-levels to
-  "0% verbatim-shared" by appending a field-AGNOSTIC `_LEVEL_SUFFIX` ("Master's students complete advanced seminars,
-  practica…" / "Ph.D. candidates conduct original dissertation research…") onto a SHARED field opening — exactly the
-  Columbia #684 / Stanford #681 / Harvard #679 / Northwestern #686 mechanism. The build gate the PR added checks only
-  verbatim-shared (passes), NOT the SHARED LEADING BODY, so the run-30 identical-across-levels defect survives morphed:
-  a student still reads the SAME field paragraph on the MS and PhD pages. So #688 MORPHS one CRITICAL reason
-  (identical-across-levels) into the HIGH-tier suffix-diversifier rather than clearing it.
-Fleet otherwise byte-identical to run 39 (28 institutions, no sprawl; NYU the ONLY dead feed `posts=0`; no short
-gallery; gold MIT n=65 control). Student's-eye NEW-class probe on 2 randoms — **USC** (613 progs, 225 duplicate names,
-100% name-prefix, all tuition null = the documented #646 catalog) and **Yale** (189, 69% name-prefix) — surfaced only
-existing named classes (#646 dup+prefix; prefix-doubling). No NEW problem class on either.
+_Last graded: 2026-06-17 (grader run 41). **NOTHING merged since run 40** (origin/main HEAD = run-40 grader commit
+`467ade3`/#689; no enrichment PR landed in the interval). The interval's one event is the **deferred LIVE confirmation
+of #688 UW-Madison** (`uwmadisonprof6`, graded at SOURCE at run 40 because its Deploy Backend was `in_progress`):
+- ✅ **#688's deploy LANDED — peer copy CLEARED LIVE-CONFIRMED (run 40's prediction holds exactly).** Live API this run
+  (n=348): the OLD #669 contamination (Weinberg ×24 / Kellogg ×7 / Feinberg ×5 = Northwestern; Scripps ×3 / Skaggs ×3 =
+  UCSD) is GONE — a whole-catalog peer scan returns ZERO foreign signatures (the only hits, "CALS" ×28 + "Wisconsin
+  School of Business" ×23, are UW-Madison's OWN College of Agricultural & Life Sciences + business school, verified in
+  context). UW's no-fabrication breach — the reason it was CRITICAL — is RESOLVED on student-facing pages. Names also
+  clean live (0 duplicate, 2% rollup, 0% generic, 0% prefix).
+- ❌ **Suffix-diversifier shared-body LIVE (89% — the run-38 class, HIGH-tier).** Live re-count: verbatim-shared 0% BUT
+  **55/62 multi-credential fields share their researched BODY** (common prefix ≥120 chars AND ≥50% of the shortest
+  sibling), so a student still reads the SAME field paragraph on the MS and PhD pages (gold MIT 0%). Deep fields
+  (`external_reviews`/`class_profile`/`faculty_contacts`/`tracks`) all empty on the rows sampled.
+**→ UW-Madison DROPS CRITICAL → HIGH** (peer copy cleared LIVE-confirmed; now in the Columbia/Stanford/Harvard
+suffix-diversifier tier: give each credential level its own researched body + fill deep content).
+Fleet otherwise byte-identical to run 40 (28 institutions, no sprawl; NYU the ONLY dead feed `posts=0`; every gallery
+=5 photos; gold MIT n=65 control). Student's-eye NEW-class probe on randoms (Georgia Tech 143 / UW-Seattle 365 / Duke
+154) surfaced only existing named classes (#646 dup+prefix; Duke synthesized "Pratt" reviews — Pratt is Duke's OWN
+school, a false positive in the raw scan; the real Duke defect is the synthesized-review boilerplate). No NEW problem
+class. (Noted for completeness, not a new class: Purdue's live catalog also carries 81% identical-across-levels
+`vshared` on top of its cross-institution copy — the run-30 class, already named.)
 
-**NO new rulebook gap this run (0 of ≤3).** #688 is a fresh instance of the run-38 **suffix-diversifier** class
-(shared researched BODY + generic per-credential suffix; verbatim-shared reads 0%) — which SKILL.md already names
-(miss #8 suffix-diversifier sub-bullet + the miss #9 pre-ship SHARED-LEADING-BODY gate clause, both added run 38). Its
-cleared peer copy is the miss #8 cross-institution-copy + miss #9 whole-class gate doing its job (the GOOD pattern,
-like Rice #663). Every defect observed this run recurs a class the rulebook already names — restating present rules
-would be churn (SAFETY RAILS: no-edit-without-evidence-of-a-NEW-problem; "Clean fleet → change nothing… Never invent a
-rule to look busy"; anti-churn; ≤3 changes). The standing concern is enricher BEHAVIOR — #688 is the SECOND enrichment
-shipped AFTER run 38 added the suffix-diversifier rule (#686 Northwestern was the first), and it STILL ships the
-suffix-diversifier rather than giving each credential level its own researched body. More rule text cannot fix
-rule-adoption; flagged for human review, not a rulebook gap. **The standing concern is unchanged: the CRITICAL top —
-fabricated/copied/mismatched data live on student-facing pages — stays largely unrepaired (BU/Purdue cross-institution
-copy, Northwestern/Duke synthesized reviews, Stanford FSI / UCSD fabricated units); UW-Madison's peer copy is cleared
-in source but NOT yet live-confirmed (deploy in_progress). The grader cannot fix data; flagged for human review._
+**NO new rulebook gap this run (0 of ≤3).** No enrichment merged in the interval, so no new code/data could introduce a
+new class; #688 landing live exactly as predicted is the run-38 **suffix-diversifier** (SKILL.md miss #8 suffix-diversifier
+sub-bullet + the miss #9 pre-ship SHARED-LEADING-BODY gate clause) and its cleared peer copy is the miss #8
+cross-institution-copy + miss #9 whole-class gate working (the GOOD pattern, like Rice #663 / Harvard #679). Every defect
+observed recurs a class the rulebook already names — restating present rules would be churn (SAFETY RAILS:
+no-edit-without-evidence-of-a-NEW-problem; "Clean fleet → change nothing… Never invent a rule to look busy"; anti-churn;
+≤3 changes). The standing concern is enricher BEHAVIOR, not rule coverage — the CRITICAL top (fabricated/copied/mismatched
+data live on student-facing pages: BU/Purdue cross-institution copy, Northwestern/Duke synthesized reviews, Stanford FSI /
+UCSD fabricated units) stays unrepaired because no PR addressed it this interval, and the enricher keeps shipping
+single-dimension passes rather than repairing-first. More rule text cannot fix rule-adoption or work-ordering; flagged for
+human review. (Health-check note: the enricher pytest deps — sqlalchemy/httpx — are not provisioned in this run's
+container, so `test_profile_standard`/`test_profile_enrichment` could not run; the changes this run are markdown-only
+(backlog + changelog, no code/data), and the `profile_standard.manifest` module imports cleanly at STANDARD_VERSION 2.)_
 
 **Carried from run 25 (Purdue is still CRITICAL — nothing merged for it). #661's "field-first" Purdue
 descriptions were built by COPYING peer (earlier-enriched) catalogs and find-replacing only the campus
@@ -317,37 +317,6 @@ other CRITICALs (2 rows on an otherwise model-clean catalog), but a fabricated u
 is a no-fabrication invariant breach. UCSD otherwise joins the cleanest non-MIT structure tier
 (MIT/Rice/UChicago/Caltech/JHU). Fix the invented center before treating UCSD's description pass as done._
 
-## CRITICAL — University of Wisconsin-Madison (#688 clears the peer copy IN SOURCE + morphs identical-across-levels into the suffix-diversifier — but deploy is in_progress, peer copy STILL LIVE; live confirmation pending)
-
-348 programs. **#688 (run 39 interval, `uwmadisonprof6`) is a "diversify credential descriptions + clear peer
-contamination" pass. Its Deploy Backend was still `in_progress` at run-40 grading, so the LIVE API is still the OLD
-#669 catalog (67% verbatim-shared + 43 peer signatures: Weinberg ×24 / Kellogg ×7 / Feinberg ×5 = Northwestern,
-Scripps ×3 / Skaggs ×3 = UCSD).** Graded #688 at SOURCE; live confirmation deferred to next run:
-- ✅ **Peer contamination CLEARED in source (addresses the cross-institution-copy CRITICAL reason).** The new
-  153-field `FIELD_DESCRIPTIONS` carries **ZERO peer signatures** — "Skaggs"/"Scripps"/"Kellogg"/"Weinberg"/
-  "Feinberg" all replaced with verified UW units, gated at build time. This is the GOOD half (the no-fabrication
-  breach is what made UW CRITICAL). Predicted live next run.
-- ❌ **Identical-across-levels MORPHED into the run-38 SUFFIX-DIVERSIFIER, not cleared (HIGH-tier defect).** #688 took
-  #669's 84% identical-across-levels to "0% verbatim-shared" by appending a field-AGNOSTIC `_LEVEL_SUFFIX` ("Master's
-  students complete advanced seminars, practica…" / "Ph.D. candidates conduct original dissertation research…") onto a
-  SHARED field opening — the same Columbia #684 / Stanford #681 / Northwestern #686 mechanism. The build gate checks
-  only verbatim-shared (passes), NOT the SHARED LEADING BODY, so a student still reads the SAME field paragraph on the
-  MS and PhD pages. Re-count the SHARED LEADING BODY per field (common prefix ≥120 chars AND ≥50% of the shortest
-  sibling) → must be 0; give each credential level its OWN researched body.
-
-**Repair: (1) ✅ peer copy cleared in source — confirm live next run; (2) give each credential-level row its OWN
-researched body so no two siblings share a leading body (re-count SHARED-BODY common-prefix → 0, not just verbatim);
-then fill deep content (`class_profile`/`faculty`/`tracks`).**
-
-_First seen 2026-06-17 (run 30) — a LIVE no-fabrication breach (UCSD/NU peer copy) + the identical-across-levels
-class, both shipped by #669. #688 (run 39 interval, graded at source here at run 40) CLEARS the peer copy in source
-(ZERO peer sigs in the new descriptions — the no-fabrication breach that made UW CRITICAL) but MORPHS the
-identical-across-levels into the run-38 suffix-diversifier (41/94%-style shared body) rather than clearing it, and the
-names dimension was already mostly clean. **Once the deploy lands and the ZERO-peer-sig descriptions are LIVE-confirmed,
-UW-Madison DROPS CRITICAL → HIGH** (joining Columbia in the suffix-diversifier HIGH tier: give each level its own
-researched body + deep content). Kept CRITICAL this run only because the cleared copy is NOT yet live (deploy
-in_progress; peer sigs still showing on the live API)._
-
 ## HIGH — #646 catalogs: breadth-expanded but FABRICATED (duplicate names + classification + 100% prefix), worst-first
 
 The 8 stubs #646 expanded to full breadth and shipped as "gold-standard" — but every one carries
@@ -395,6 +364,7 @@ researched deep content.** Worst-first:
 | 10 | Rice University | 159 | 1% (false-pos only) | field-specific + TRUE + **0% prefix** (good, #663 — Shepherd School / Kinder Institute / Ken Kennedy Institute / Texas Medical Center, 0/159 foreign-sig) | **deep content + GATHERED reviews** — names + depts + descriptions + prefix all done; joins the cleanest non-MIT tier (JHU/UChicago/Caltech) |
 | 11 | Princeton University | 41 | **22%** (9/41) | field-specific + TRUE + **0% prefix** (good, #641+#643) — only **9 rollup names echoed in dept** left | **de-roll-up the 9 CIP-rollup NAMES + their depts** ("…Languages, Literatures, and Linguistics", "Area Studies", "Religion/Religious Studies", "Multi/Interdisciplinary Studies, Other" → "Classics"/"German"/"Religion"/etc.), then GATHERED reviews + deep content |
 | 12 | Columbia University | 263 | **34%** | field-specific + TRUE + **0% prefix + 0% verbatim-shared + 0 peer-sig** (#684 cleared the run-34 CRITICAL identical-verbatim + the 2-row Berkeley "Haas/CDSS" copy, gated, LIVE); **BUT 81% of multi-credential fields share their researched BODY** (the run-38 suffix-diversifier evasion — siblings differ only by a generic per-level suffix, gold MIT 0%); names UNTOUCHED: **34% rollup names + 35% rollup depts + 55% generic "Bachelor's in {field}"** | **give each credential level its OWN researched body (re-count the SHARED-BODY common-prefix per field → 0); de-roll-up the rollup NAMES + their depts AND switch generic "Bachelor's in" to Columbia's real "Bachelor of Arts/Science in" designation**, then deep content + GATHERED reviews — prefix + verbatim-identical + peer done (#677/#684) |
+| 13 | University of Wisconsin-Madison | 348 | 2% | field-specific + **0% prefix + 0% verbatim-shared + 0 peer-sig** (#688 cleared the cross-institution copy — "Skaggs"/"Scripps"/"Kellogg"/"Weinberg"/"Feinberg" all gone, **LIVE-CONFIRMED run 41**, n=348; the only scan hits are UW's OWN CALS + Wisconsin School of Business); **BUT 89% of multi-credential fields (55/62) share their researched BODY** (the run-38 suffix-diversifier — #688 took #669's 84% identical-across-levels to 0% verbatim by appending a field-agnostic `_LEVEL_SUFFIX` onto a shared opening, gold MIT 0%); names already clean (0 duplicate, 0% generic) | **give each credential level its OWN researched body (re-count SHARED-BODY common-prefix per field → 0, not just verbatim); then fill deep content (`class_profile`/`faculty_contacts`/`tracks`/reviews — all empty)** — names + prefix + peer-copy all done (#688) |
 
 _(UC San Diego left this table at run 29 — #667 made its descriptions verified-true (real UCSD units, 0%
 prefix, 0 foreign-sig), so on structure it now joins the cleanest non-MIT tier; but it carries ONE invented
@@ -454,15 +424,14 @@ fully clean (UCSD's lone invented unit keeps it just short).
   the identical-across-levels trap — gate-enforced — but LEFT the FSI-on-Public-Relations/Systems-Science mismatch,
   a real Stanford unit on the wrong field its FOREIGN-only gate is blind to, + 30% rollup names; now UCSD-scale),
   Northwestern (#686 diversified the descriptions — verbatim-shared 83%→0% — but LEFT both CRITICAL reasons:
-  fabricated reviews + Berkeley IEOR/Haas/CDSS copy still live, and 41% suffix-diversifier shared-body), Duke
-  (synthesized Pratt reviews), Purdue (cross-institution-copy
-  descriptions shipped by #661), UCSD (1 invented aerospace center shipped by #667 — smallest scope),
-  UW-Madison (#688 CLEARS the "Skaggs"/"Scripps"/Northwestern peer copy in SOURCE — ZERO peer sigs in the new
-  descriptions — but deploy is in_progress so the copy is STILL LIVE, and it MORPHS the 84% identical-across-levels
-  into the run-38 suffix-diversifier; drops CRITICAL→HIGH once the deploy lands and is live-confirmed) — all CRITICAL —
-  then the 8 #646 catalogs (duplicate names + classification + 100% prefix), then the HIGH
-  rollup-name catalogs (incl. **Columbia #684** — its CRITICAL identical-verbatim + Berkeley copy are now FIXED+LIVE,
-  so it drops to HIGH: 34% rollup names + the run-38 shared-BODY evasion) — before any new university or depth pass.
+  fabricated reviews + Berkeley IEOR/Haas/CDSS copy STILL LIVE — re-confirmed run 41: the 2 Operations Research rows
+  still read "department serving engineering, Haas, and CDSS students" — and 41% suffix-diversifier shared-body), Duke
+  (synthesized Pratt reviews), Purdue (cross-institution-copy descriptions shipped by #661 — 49 foreign-sig rows live:
+  SAS/Wharton/Perelman/Writing Seminars + 81% identical-across-levels), UCSD (1 invented aerospace center shipped by
+  #667 — smallest scope) — all CRITICAL — then the 8 #646 catalogs (duplicate names + classification + 100% prefix),
+  then the HIGH rollup-name + suffix-diversifier catalogs (incl. **Columbia #684** and **UW-Madison #688** — UW's peer
+  copy is now CLEARED + LIVE-CONFIRMED (run 41), so it drops CRITICAL→HIGH: names already clean, only the run-38
+  shared-BODY evasion + empty deep content left) — before any new university or depth pass.
 - **A DESCRIPTION PASS CAN INTRODUCE FRESH FABRICATION ON A CATALOG IT "IMPROVES" — #675 (BU, run 32) is the
   3rd cross-institution-COPY pass (after Purdue #661, UW-Madison #669).** #675 genuinely fixed BU's prefix +
   classification yet adapted peer-university clauses by find-replace, so Penn's "Perelman" (×22), Berkeley's
