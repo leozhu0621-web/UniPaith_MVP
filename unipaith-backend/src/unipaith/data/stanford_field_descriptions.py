@@ -13,37 +13,37 @@ School of Humanities and Sciences (humsci.stanford.edu).
 
 FIELD_DESCRIPTIONS: dict[str, str] = {
     "Aerospace, Aeronautical, and Astronautical/Space Engineering": (
-        "Stanford Sibley School aerospace coursework covers orbital mechanics, propulsion, and autonomous flight with ties to Stanford's nanosatellite labs."
+        "Department of Aeronautics and Astronautics coursework covers orbital mechanics, propulsion, and autonomous flight with research ties to nearby NASA Ames Research Center."
     ),
     "Allied Health Diagnostic, Intervention, and Treatment Professions": (
-        "Weill Stanford allied-health pathways prepare clinical technologists and diagnostic specialists within Silicon Valley's academic medical center."
+        "Stanford Medicine pathways in diagnostic imaging and intervention train technologists within Stanford Health Care's academic medical centers."
     ),
     "Allied Health and Medical Assisting Services": (
         "Stanford Medicine allied-health pathways cover clinical assisting, patient-care coordination, and health-system operations within Stanford Health Care partner sites."
     ),
     "Anthropology": (
-        "School of Humanities and Sciences anthropology combines archaeological field schools, biological anthropology, and sociocultural ethnography with the Stanford Museum collections and global research sites."
+        "School of Humanities and Sciences anthropology combines archaeological field schools, biological anthropology, and sociocultural ethnography with the Cantor Arts Center collections and global research sites."
     ),
     "Applied Mathematics": (
-        "Graduate applied mathematics at Stanford spans modeling, numerical analysis, and scientific computing applied to engineering, finance, and biology across School of Humanities and Sciences and Stanford School of Engineering."
+        "Graduate applied mathematics at Stanford spans modeling, numerical analysis, and scientific computing applied to engineering, finance, and biology across the School of Humanities and Sciences and Stanford School of Engineering."
     ),
     "Archeology": (
-        "Classical and Near Eastern archaeology at School of Humanities and Sciences includes field seasons, museum study at the Stanford Museum, and interdisciplinary work with art history and anthropology."
+        "Classical and Near Eastern archaeology at the School of Humanities and Sciences includes field seasons, museum study at the Cantor Arts Center, and interdisciplinary work with art history and anthropology."
     ),
     "Area Studies": (
-        "Regional specializations — East Asia, Latin America, Middle East, and South Asia — combine language immersion with political and cultural scholarship in School of Humanities and Sciences."
+        "Regional specializations — East Asia, Latin America, Middle East, and South Asia — combine language immersion with political and cultural scholarship in the School of Humanities and Sciences."
     ),
     "Biochemistry, Biophysics and Molecular Biology": (
-        "Graduate biochemistry and biophysics at School of Humanities and Sciences and Stanford School of Medicine studies protein structure, enzymology, and molecular mechanisms in NIH-funded Stanford labs."
+        "Graduate biochemistry and biophysics at the School of Humanities and Sciences and Stanford School of Medicine studies protein structure, enzymology, and molecular mechanisms in NIH-funded Stanford labs."
     ),
     "Biological and Biomedical Sciences, Other": (
-        "Stanford's Division of Medical Sciences and GSAS biological-sciences Ph.D. programs span systems biology, immunology, and translational research across Longwood and Palo Alto labs."
+        "Stanford Biosciences doctoral programs span departments across the School of Humanities and Sciences and Stanford Medicine, linking basic discovery to clinical translation on campus and at Stanford Hospital."
     ),
     "Biology, General": (
         "School of Humanities and Sciences biology spans genetics, cell biology, ecology, and neurobiology with undergraduate research in campus life-sciences institutes and the Stanford Medicine research network."
     ),
     "Biomedical/Medical Engineering": (
-        "Stanford Bioengineering integrates device design, imaging, and tissue engineering with Stanford School of Medicine Hospital clinical immersion — routinely ranked among the top undergraduate BME programs nationally."
+        "Stanford Bioengineering integrates device design, imaging, and tissue engineering with Stanford Hospital clinical immersion — routinely ranked among the top undergraduate BME programs nationally."
     ),
     "Business Administration, Management and Operations": (
         "Stanford Graduate School of Business MBA and executive programs combine finance, strategy, and operations with 18+ majors and the school's deep analytics and entrepreneurship ecosystem."
@@ -52,7 +52,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Stanford Graduate School of Business and the School of Humanities and Sciences offer interdisciplinary management studies spanning entrepreneurship, product marketing, and technology commercialization in Silicon Valley ventures."
     ),
     "Cell/Cellular Biology and Anatomical Sciences": (
-        "Graduate cell biology at School of Humanities and Sciences and Stanford School of Medicine focuses on signaling, developmental biology, and microscopy methods in cancer and immunology research labs."
+        "Graduate cell biology at the School of Humanities and Sciences and Stanford School of Medicine focuses on signaling, developmental biology, and microscopy methods in cancer and immunology research labs."
     ),
     "Chemical Engineering": (
         "Reaction engineering, transport phenomena, and materials processing in Stanford "
@@ -65,37 +65,37 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Structural, geotechnical, and environmental civil systems with Stanford's earthquake-engineering and resilient-infrastructure research."
     ),
     "Classics and Classical Languages, Literatures, and Linguistics": (
-        "Greek and Latin language, ancient history, and philology at School of Humanities and Sciences with manuscript resources and Mediterranean archaeology ties through the Stanford Museum."
+        "Greek and Latin language, ancient history, and philology at the School of Humanities and Sciences with manuscript resources and Mediterranean archaeology ties through the Cantor Arts Center."
     ),
     "Cognitive Science": (
-        "Mind, brain, language, and computation integrating psychology, linguistics, philosophy, and neuroscience across L&S."
+        "Mind, brain, language, and computation integrating psychology, linguistics, philosophy, and neuroscience across the School of Humanities and Sciences."
     ),
     "Communication and Media Studies": (
-        "Media theory, journalism practice, and digital culture through Stanford's Graduate School of Journalism and Film & Media department."
+        "Stanford Department of Communication covers media theory, journalism, and digital culture with the Stanford Journalism Program and Brown Institute for Media Innovation."
     ),
     "Computer Science": (
-        "Stanford CIS covers algorithms, systems, AI, and theory in a top-ranked department with research groups spanning Stanford School of Engineering, the Warren Center, and GRASP robotics."
+        "Stanford Computer Science spans algorithms, systems, AI, and theory with research groups in the Stanford AI Lab, HAI, and the School of Engineering."
     ),
     "Design and Applied Arts": (
-        "School of Humanities and Sciences and School of Humanities and Sciences design coursework spans visual communication, interaction design, and creative practice in Stanford's studio and fabrication facilities."
+        "School of Humanities and Sciences design coursework spans visual communication, interaction design, and creative practice in Stanford's studio and fabrication facilities."
     ),
     "Drama/Theatre Arts and Stagecraft": (
         "School of Humanities and Sciences theatre arts combines acting, directing, dramaturgy, and technical production with performances in campus theaters and Palo Alto stage partnerships."
     ),
     "East Asian Languages, Literatures, and Linguistics": (
-        "Chinese, Japanese, and Korean language and cultural studies at School of Humanities and Sciences with the Center for East Asian Studies and study-abroad pathways."
+        "Chinese, Japanese, and Korean language and cultural studies at the School of Humanities and Sciences with the Center for East Asian Studies and study-abroad pathways."
     ),
     "Ecology, Evolution, Systematics, and Population Biology": (
-        "Field ecology, evolutionary genomics, and conservation biology at School of Humanities and Sciences with research at Stanford's Morris Arboretum and global field-station partnerships."
+        "Field ecology, evolutionary genomics, and conservation biology at the School of Humanities and Sciences with research at Jasper Ridge Biological Preserve and Hopkins Marine Station."
     ),
     "Economics": (
-        "School of Humanities and Sciences and Stanford Graduate School of Business economics is empirically rigorous — faculty research spans health, trade, development, and behavioral economics with the Stanford Institute for Economic Research."
+        "School of Humanities and Sciences and Stanford Graduate School of Business economics is empirically rigorous — faculty research spans health, trade, development, and behavioral economics with the Stanford Institute for Economic Policy Research."
     ),
     "Education, General": (
         "Graduate School of Education programs target urban reform, special education, and evidence-based teaching in Palo Alto partner districts."
     ),
     "Educational Assessment, Evaluation, and Research": (
-        "School of Education graduate work targets urban reform, special education, and  evidence-based practice in Palo Alto partner districts."
+        "Graduate School of Education graduate work targets urban reform, special education, and evidence-based practice in Palo Alto partner districts."
     ),
     "Electrical, Electronics, and Communications Engineering": (
         "Stanford School of Engineering electrical and systems engineering spans signal processing, photonics, and communications with Stanford's medical-device and robotics research groups."
@@ -107,13 +107,13 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Interdisciplinary engineering coursework at Stanford School of Engineering bridges design, computing, and applied science for students exploring Stanford Engineering's research areas."
     ),
     "English Language and Literature, General": (
-        "School of Humanities and Sciences English combines literary history, creative writing, and rhetoric with Kelly Writers House programming and Palo Alto literary community ties."
+        "School of Humanities and Sciences English combines literary history, creative writing, and rhetoric through the Creative Writing Program and events at the McMurtry Building."
     ),
     "English Language and Literature/Letters, Other": (
         "Stanford's Department of English and Creative Writing programs span literary history, critical theory, and workshop-based writing with the Stanford Humanities Center."
     ),
     "Environmental/Environmental Health Engineering": (
-        "Air and water quality, exposure science, and environmental health engineering linking CEE and the School of Public Health."
+        "Air and water quality, exposure science, and environmental health engineering linking civil and environmental engineering with Stanford Medicine population-health research."
     ),
     "Ethnic, Cultural Minority, Gender, and Group Studies": (
         "School of Humanities and Sciences programs in Africana studies, gender and sexuality, and ethnic studies examine race, diaspora, and social justice with Palo Alto community research."
@@ -122,127 +122,127 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "School of Humanities and Sciences cinema and media studies covers production, documentary, and media theory with access to Stanford's media labs and Palo Alto film internships."
     ),
     "Fine and Studio Arts": (
-        "School of Humanities and Sciences fine arts combines drawing, painting, printmaking, and new media with Institute of Contemporary Art partnerships and Palo Alto gallery culture."
+        "School of Humanities and Sciences art practice combines drawing, painting, and new media with the Anderson Collection and campus gallery programming."
     ),
     "Genetics": (
-        "Genomics and genetic-analysis training at Faculty of Arts & Sciences connects to Stanford Gene Therapy and precision-medicine institutes."
+        "Genomics and genetic-analysis training at Stanford connects to the Center for Human Genetic and Genomic Medicine and precision-medicine institutes across campus."
     ),
     "Geological and Earth Sciences/Geosciences": (
-        "Earth and environmental science at School of Humanities and Sciences studies climate, geophysics, and planetary surfaces with Stanford's paleontology and geochemistry research groups."
+        "Earth and environmental science at the School of Humanities and Sciences studies climate, geophysics, and planetary surfaces with Stanford's paleontology and geochemistry research groups."
     ),
     "Germanic Languages, Literatures, and Linguistics": (
-        "German language, literature, and culture at School of Humanities and Sciences includes Berlin study-abroad and European intellectual-history coursework."
+        "German language, literature, and culture at the School of Humanities and Sciences includes Berlin study-abroad and European intellectual-history coursework."
     ),
     "History": (
         "School of Humanities and Sciences history spans American, European, global, and science-and-medicine specialties with the Stanford History Department's archival and museum partnerships."
     ),
     "Human Biology": (
-        "Human biology at Krieger integrates physiology, anthropology, and public-health perspectives for pre-health and research-oriented students."
+        "Stanford Human Biology integrates physiology, anthropology, and public-health perspectives for pre-health and research-oriented undergraduates."
     ),
     "International Relations and National Security Studies": (
-        "School of Humanities and Sciences political science and Perry World House programming examine diplomacy, security studies, and global governance with Washington, D.C. internship access."
+        "School of Humanities and Sciences international relations examines diplomacy, security studies, and global governance through the Freeman Spogli Institute and Center for International Security and Cooperation."
     ),
     "Law": (
-        "Stanford Stanford Graduate School of Business Law's JD and advanced legal-degree programs emphasize cross-disciplinary study with Stanford Graduate School of Business, Med, and Graduate School of Education plus nationally ranked clinical offerings."
+        "Stanford Law School's J.D. and advanced legal-degree programs emphasize cross-disciplinary study with the GSB, Medicine, and Graduate School of Education plus nationally ranked clinical offerings."
     ),
     "Legal Research and Advanced Professional Studies": (
-        "Stanford Stanford Graduate School of Business Law LLM and advanced legal-study programs combine doctrinal coursework with cross-registration at Stanford Graduate School of Business, Med, and Graduate School of Education."
+        "Stanford Law LL.M. and advanced legal-study programs combine doctrinal coursework with cross-registration at the GSB, Medicine, and Graduate School of Education."
     ),
     "Liberal Arts and Sciences, General Studies and Humanities": (
         "School of Humanities and Sciences general studies pathways satisfy College distribution requirements across humanities, social sciences, and natural sciences for flexible degree plans."
     ),
     "Linguistic, Comparative, and Related Language Studies and Services": (
-        "School of Humanities and Sciences linguistics covers phonetics, syntax, sociolinguistics, and computational language science with ties to Stanford CIS and the Language Data Institute."
+        "School of Humanities and Sciences linguistics covers phonetics, syntax, sociolinguistics, and computational language science with ties to the Center for the Study of Language and Information."
     ),
     "Management Sciences and Quantitative Methods": (
         "Stanford Graduate School of Business operations and decision-science coursework emphasizes optimization, stochastic modeling, and analytics for finance and consulting careers."
     ),
     "Materials Engineering": (
-        "Stanford Engineering materials science studies biomaterials, nanomaterials, and characterization with Stanford's Singh Center for Nanotechnology."
+        "Stanford materials science studies biomaterials, nanomaterials, and characterization with the Stanford Nano Shared Facilities and Geballe Laboratory for Advanced Materials."
     ),
     "Mathematics": (
-        "Pure and applied mathematics at School of Humanities and Sciences spans analysis, algebra, probability, and mathematical biology with small upper-level seminars."
+        "Pure and applied mathematics at the School of Humanities and Sciences spans analysis, algebra, probability, and mathematical biology with small upper-level seminars."
     ),
     "Mechanical Engineering": (
-        "Stanford School of Engineering mechanical engineering and applied mechanics emphasizes design, robotics, fluid mechanics, and energy systems through Stanford's GRASP and robotics labs."
+        "Stanford mechanical engineering emphasizes design, robotics, fluid mechanics, and energy systems through the Product Realization Lab and autonomous-systems research groups."
     ),
     "Medical Illustration and Informatics": (
-        "School of Medicine medical and biological illustration is one of few accredited programs blending fine art with anatomy visualization."
+        "Stanford Medicine medical and biological illustration is one of few accredited programs blending fine art with anatomy visualization."
     ),
     "Medicine": (
-        "Stanford Medicine's Genes to Society curriculum and Johns Stanford Hospital clerkships anchor U.S. News's perennial #1–3 medical-school ranking."
+        "Stanford Medicine's Discovery Curriculum and Stanford Hospital clerkships anchor a perennial top-ranked U.S. medical school on the Palo Alto campus."
     ),
     "Microbiological Sciences and Immunology": (
-        "Graduate microbiology and immunology at School of Humanities and Sciences and Stanford School of Medicine studies pathogens, host defense, and vaccine science in Stanford Medicine research labs."
+        "Graduate microbiology and immunology at the School of Humanities and Sciences and Stanford School of Medicine studies pathogens, host defense, and vaccine science in Stanford Medicine research labs."
     ),
     "Music": (
         "School of Humanities and Sciences music combines musicology, theory, and performance with Palo Alto orchestra partnerships and campus ensemble opportunities."
     ),
     "Natural Resources Conservation and Research": (
-        "Environmental science and resource-management coursework at School of Humanities and Sciences addresses conservation biology, sustainability, and policy with Morris Arboretum field work."
+        "Environmental science and resource-management coursework addresses conservation biology, sustainability, and policy with field work at Jasper Ridge and the Doerr School of Sustainability."
     ),
     "Neurobiology and Neurosciences": (
-        "Stanford neuroscience spans cellular, cognitive, and systems levels across School of Humanities and Sciences, Stanford School of Medicine, and the Mahoney Institute of Neurological Sciences."
+        "Stanford neuroscience spans cellular, cognitive, and systems levels across the School of Humanities and Sciences, Stanford Medicine, and the Wu Tsai Neurosciences Institute."
     ),
     "Petroleum Engineering": (
         "Stanford's Energy Resources Engineering group trains students in subsurface energy systems, reservoir engineering, and the geoscience of oil and gas within the School of Engineering's sustainability-focused energy curriculum."
     ),
     "Philosophy": (
-        "School of Humanities and Sciences philosophy emphasizes logic, ethics, metaphysics, and philosophy of science — strengths that anchor Stanford's PPE interdisciplinary major."
+        "School of Humanities and Sciences philosophy emphasizes logic, ethics, metaphysics, and philosophy of science — strengths feeding Stanford's ethics-in-society and political-theory programs."
     ),
     "Philosophy and Religious Studies, Other": (
-        "Stanford's Religion department and Philosophy faculty examine comparative religion, ethics, and metaphysics with the Burke Library's theological collections."
+        "Stanford Religious Studies and Philosophy faculty examine comparative religion, ethics, and metaphysics with Green Library's special collections."
     ),
     "Physics": (
-        "School of Humanities and Sciences physics covers condensed matter, particle physics, and biophysics with faculty affiliated to Stanford's Laboratory for Research on the Structure of Matter."
+        "School of Humanities and Sciences physics covers condensed matter, particle physics, and biophysics with faculty affiliated to SLAC National Accelerator Laboratory and the Ginzton Laboratory."
     ),
     "Physiology, Pathology and Related Sciences": (
-        "Human physiology, disease mechanisms, and pathobiology in MCB and integrative biology research labs."
+        "Human physiology, disease mechanisms, and pathobiology in Stanford Biosciences research labs across the School of Humanities and Sciences and Medicine."
     ),
     "Political Science and Government": (
-        "School of Humanities and Sciences political science combines American politics, comparative methods, and international relations with Perry World House and D.C. internship access."
+        "School of Humanities and Sciences political science combines American politics, comparative methods, and international relations with the Freeman Spogli Institute and Washington, D.C. internship access."
     ),
     "Psychology, General": (
         "School of Humanities and Sciences psychology is among the largest majors, with research tracks in cognitive, developmental, social, and clinical science in campus psychology labs."
     ),
     "Public Health": (
-        "Stanford School of Medicine and Nursing public-health coursework spans epidemiology, biostatistics, and health policy with Stanford Medicine population-health research."
+        "Stanford Medicine and Nursing public-health coursework spans epidemiology, biostatistics, and health policy with Stanford Medicine population-health research."
     ),
     "Public Policy Analysis": (
-        "Fels Institute and Graduate School of Education policy programs analyze housing, education, and health policy with Palo Alto practitioner faculty and capstone projects."
+        "Stanford Public Policy programs at the Freeman Spogli Institute analyze housing, education, and health policy with Bay Area practitioner faculty and capstone projects."
     ),
     "Public Relations, Advertising, and Applied Communication": (
-        "Stanford Graduate School of Business marketing and Freeman Spogli Institute for International Studies strategic-communication coursework covers brand management, media relations, and public-affairs messaging."
+        "Stanford Graduate School of Business marketing and Freeman Spogli Institute strategic-communication coursework covers brand management, media relations, and public-affairs messaging."
     ),
     "Radio, Television, and Digital Communication": (
-        "Stanford's Visual and Environmental Studies program covers film production, digital media, and documentary filmmaking with the Carpenter Center screening rooms."
+        "Stanford's documentary film M.F.A. and Department of Art & Art History media practice cover production, digital media, and screening programs on campus."
     ),
     "Religion/Religious Studies": (
         "School of Humanities and Sciences religious studies examines world religions, theology, and religion-and-culture with the Stanford Department of Religious Studies' global faculty."
     ),
     "Research and Experimental Psychology": (
-        "Laboratory-based psychology at School of Humanities and Sciences uses behavioral, cognitive, and neuroscience methods in Stanford's psychology department research institutes."
+        "Laboratory-based psychology at the School of Humanities and Sciences uses behavioral, cognitive, and neuroscience methods in Stanford's psychology department research institutes."
     ),
     "Romance Languages, Literatures, and Linguistics": (
-        "French, Spanish, and Italian language and literature at School of Humanities and Sciences include study-abroad and translation workshops through Stanford's language departments."
+        "French, Spanish, and Italian language and literature at the School of Humanities and Sciences include study-abroad and translation workshops through Stanford's language departments."
     ),
     "Science, Technology and Society": (
-        "Arts and Sciences STS examines science policy, ethics, and the social dimensions of technology with Stanford's science-and-technology studies faculty."
+        "Stanford Science, Technology, and Society examines science policy, ethics, and the social dimensions of technology with dedicated STS faculty in the School of Humanities and Sciences."
     ),
     "Slavic, Baltic and Albanian Languages, Literatures, and Linguistics": (
-        "Russian and East European language and literature at School of Humanities and Sciences includes study-abroad and cultural-history coursework."
+        "Russian and East European language and literature at the School of Humanities and Sciences includes study-abroad and cultural-history coursework."
     ),
     "Sociology": (
-        "School of Humanities and Sciences sociology examines urban inequality, health disparities, and social networks with Palo Alto community-based research and the Stanford Population Studies Center."
+        "School of Humanities and Sciences sociology examines urban inequality, health disparities, and social networks with Palo Alto community-based research and the Stanford Center on Poverty and Inequality."
     ),
     "Statistics": (
         "School of Humanities and Sciences and Stanford Graduate School of Business statistics training covers inference, Bayesian methods, and high-dimensional data for finance, biostatistics, and data-science careers."
     ),
     "Sustainability Studies": (
-        "Interdisciplinary sustainability coursework spans Faculty of Arts & Sciences, Graduate School of Design design studios, and Stanford's Atkinson Center for Sustainability research initiatives."
+        "Interdisciplinary sustainability coursework spans the Doerr School of Sustainability, design studios, and Woods Institute research initiatives across campus."
     ),
     "Systems Science and Theory": (
-        "Stanford School of Engineering and Freeman Spogli Institute for International Studies systems coursework models complex networks in health care, infrastructure, and policy using computational and operations-research methods."
+        "Stanford School of Engineering and Freeman Spogli Institute systems coursework models complex networks in health care, infrastructure, and policy using computational and operations-research methods."
     ),
     "Teacher Education and Professional Development, Specific Levels and Methods": (
         "Stanford GSE teacher-preparation programs lead to California credential pathways "
@@ -253,10 +253,10 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "pedagogy and classroom placements in Bay Area school districts."
     ),
     "Urban Studies/Affairs": (
-        "Urban studies at School of Humanities and Sciences and School of Humanities and Sciences uses GIS, policy analysis, and community engagement for Palo Alto housing, transit, and revitalization projects."
+        "Urban studies at the School of Humanities and Sciences uses GIS, policy analysis, and community engagement for Palo Alto housing, transit, and revitalization projects."
     ),
     "Veterinary Biomedical and Clinical Sciences": (
-        "Stanford Vet biomedical sciences covers comparative pathology, infectious disease, and translational research at the College of Veterinary Medicine."
+        "Stanford does not operate a standalone veterinary school; comparative-medicine and pathology research at Stanford Medicine supports translational science without a D.V.M. program."
     ),
 }
 
@@ -388,4 +388,3 @@ FIELD_ALIASES: dict[str, str] = {
     "Social Sciences Other": "Social Sciences, Other",
     "Symbolic Systems": "Cognitive Science",
 }
-
