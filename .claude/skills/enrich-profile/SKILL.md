@@ -107,6 +107,32 @@ Concrete misses observed in the first runs — each broke a real page:
      real ones FAILED its Deploy Backend on a stale `assert len(PROGRAMS) >= 100`
      breadth assertion, and shipped only after a follow-up commit replaced the count
      assertion with a no-CIP-prefix / no-classification-stub realness gate.
+   - **That realness GATE must scan the rollup tell on the FIELD portion of the name
+     CREDENTIAL-FORM-AGNOSTICALLY — a gate keyed only on the generic-credential-PREFIX
+     form ("Bachelor's in {rollup}") PASSES a real degree DESIGNATION glued to a
+     CIP-rollup FIELD ("Bachelor of Arts in {rollup}"), the live evasion of the prior
+     bullet's own realness gate this run.** When you replace a count gate with the
+     realness gate above, the rollup-tell scan (trailing ", General"/", Other"; a
+     federal multi-clause comma-and list "…, Literatures, and Linguistics"; an embedded
+     slash "Religion/Religious Studies"; or a bare CIP rollup like "Area Studies" /
+     "Multi/Interdisciplinary Studies, Other") must run on the FIELD part of every
+     `program_name` AND its `department` REGARDLESS of the credential designation —
+     "Bachelor of Arts in {CIP rollup}" is exactly as fabricated as the generic
+     "Bachelor's in {CIP rollup}"; switching to the institution's real credential
+     designation does NOT exempt the field. A gate that only rejects the generic
+     "Bachelor's in" prefix will pass the real-designation rows and ship the rollup
+     live (rollup echoed verbatim into `department`). The fix is unchanged: resolve
+     each rollup field to the institution's REAL degree name + owning department
+     ("Bachelor of Arts in Classics" / Department of Classics; "Bachelor of Arts in
+     Religion" / Department of Religion; "Bachelor of Arts in German" / Department of
+     German), never the federal taxonomy title. Evidence: live API this run — a
+     freshly-deployed de-fabrication whose realness gate (written to replace a count
+     gate per the prior bullet) still passed 8 of 41 "Bachelor of Arts in {CIP rollup}"
+     rows — "…Languages, Literatures, and Linguistics" ×3, "Ethnic, Cultural Minority,
+     Gender, and Group Studies", "Multi/Interdisciplinary Studies, Other",
+     "Religion/Religious Studies", "Area Studies" — each with the rollup echoed
+     verbatim into `department`, shipped live (the descriptions were field-specific and
+     true, so only the names/departments + the prefix-doubling remained un-de-fabricated).
    - **The IPEDS/Scorecard CIP count is an UPPER-BOUND completeness HINT, never a
      row-minting recipe — NEVER mint one program per (CIP × award-level).** A
      second padding variant is now live fleet-wide and EVADES the bare-abbreviation
