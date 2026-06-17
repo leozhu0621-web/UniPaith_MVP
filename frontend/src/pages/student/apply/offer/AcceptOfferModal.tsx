@@ -5,7 +5,7 @@ import Button from '../../../../components/ui/Button'
 import { showToast } from '../../../../stores/toast-store'
 import { respondToOfferV2, bulkWithdraw } from '../../../../api/offers'
 import type { WithdrawableApp } from '../../../../types'
-import { PartyPopper, Check } from 'lucide-react'
+import { CheckCircle2, Check } from 'lucide-react'
 
 type Step = 'confirm' | 'withdraw' | 'done'
 
@@ -148,10 +148,10 @@ export default function AcceptOfferModal({
       {step === 'done' && (
         <div className="text-center py-4">
           <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-success-soft flex items-center justify-center">
-            <PartyPopper size={30} className="text-success" />
+            <CheckCircle2 size={30} className="text-success" />
           </div>
           {/* The one soft moment in the app (spec 18 §13). */}
-          <h2 className="text-2xl font-bold text-foreground mb-1">You're in. Congrats.</h2>
+          <h2 className="text-lg font-bold text-foreground mb-1">Offer accepted</h2>
           <p className="text-sm text-foreground mb-5">
             Your enrollment steps are on your calendar — deposit, orientation, and housing.
           </p>

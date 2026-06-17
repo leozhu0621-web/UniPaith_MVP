@@ -155,7 +155,6 @@ export default function EventsPage() {
     <div className="p-6 space-y-4">
       <InstitutionPageHeader
         title="Recruitment Events"
-        description="Manage event logistics and track RSVP engagement by program."
         actions={(
           <Button variant="secondary" onClick={() => { resetForm(); setShowCreateModal(true) }} className="flex items-center gap-2">
             <Plus size={16} /> New Event

@@ -52,7 +52,7 @@ describe('SavedListPage', () => {
 
   it('shows spec empty state copy and Open Match CTA', async () => {
     renderPage()
-    expect(await screen.findByText('Your shortlist')).toBeTruthy()
+    expect(await screen.findByText('Saved')).toBeTruthy()
     expect(screen.getByText(/Save programs from Match or Discovery/)).toBeTruthy()
     expect(screen.getByRole('button', { name: /Open Match/i })).toBeTruthy()
   })
@@ -63,12 +63,12 @@ describe('SavedListPage', () => {
     expect(screen.getByRole('button', { name: /Schools \(0\)/i })).toBeTruthy()
   })
 
-  it('shows the shortlist header', async () => {
+  it('shows the saved header', async () => {
     // The descriptive sub-tagline was removed app-wide (maturity pass); the
-    // header is title-only now.
+    // header is title-only now. Title is a plain noun (UX-QA voice rule 1).
     renderPage()
     expect(
-      (await screen.findAllByRole('heading', { name: /your shortlist/i })).length,
+      (await screen.findAllByRole('heading', { name: /^saved$/i })).length,
     ).toBeGreaterThan(0)
   })
 })

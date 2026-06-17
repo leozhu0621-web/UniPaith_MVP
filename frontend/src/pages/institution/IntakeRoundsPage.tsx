@@ -118,7 +118,6 @@ export default function IntakeRoundsPage() {
     <div className="p-6 space-y-4">
       <InstitutionPageHeader
         title="Intake Rounds"
-        description="Configure multiple intake windows per program with separate deadlines, capacity, and requirements."
         actions={selectedProgram ? <Button onClick={openCreate} className="flex items-center gap-2"><Plus size={16} /> New Round</Button> : undefined}
       />
 

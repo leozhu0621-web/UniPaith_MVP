@@ -80,7 +80,6 @@ export default function AnalyticsPage() {
     <div className="p-6 space-y-6">
       <InstitutionPageHeader
         title="Analytics"
-        description="Attribution and funnel performance — from exposure to application progress."
         badge={<BarChart3 size={20} className="text-secondary" />}
         actions={
           <Button variant="secondary" size="sm" loading={exporting} onClick={onExport}>

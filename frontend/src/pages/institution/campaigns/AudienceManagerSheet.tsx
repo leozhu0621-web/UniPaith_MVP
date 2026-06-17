@@ -186,7 +186,7 @@ export default function AudienceManagerSheet({ isOpen, onClose }: { isOpen: bool
                       {l.contact_count} contacts
                       {l.source_consent_confirmed && (
                         <Badge variant="success" className="ml-2">
-                          consent ✓
+                          consent
                         </Badge>
                       )}
                     </p>

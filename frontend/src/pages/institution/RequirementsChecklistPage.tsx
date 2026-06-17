@@ -251,7 +251,6 @@ export default function RequirementsChecklistPage() {
     <div className="p-6 space-y-4">
       <InstitutionPageHeader
         title="Requirements Checklist"
-        description="Configure per-program requirements: what's required, optional, conditional, or N/A. Drag to reorder."
         actions={selectedProgram ? <Button onClick={openCreate} className="flex items-center gap-2"><Plus size={16} /> Add Item</Button> : undefined}
       />
 

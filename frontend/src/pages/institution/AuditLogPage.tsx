@@ -285,7 +285,6 @@ export default function AuditLogPage() {
     <div className="space-y-4 p-6">
       <InstitutionPageHeader
         title="Audit log"
-        description="Who did what, when — the complete, append-only trail for compliance, fairness audits, and incident review."
       />
 
       {/* Filters (Spec 36 §4) */}

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { ArrowLeft, ArrowRight, Check, GraduationCap, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, GraduationCap } from 'lucide-react'
 import { getProfile, patchOnboardingState, type OnboardingStatePatch } from '../../api/students'
 import type { OnboardingAnswers } from '../../types'
 import usePageTitle from '../../hooks/usePageTitle'
@@ -240,21 +240,21 @@ export default function OnboardingPage() {
         >
           {step === 0 && (
             <StepShell
-              title={firstName ? `Hi ${firstName} — let's set up your space` : "Let's set up your space"}
-              subtitle="Two minutes, a handful of taps — and everything you see is personalized: matches, deadlines, and what Uni focuses on first."
+              title={firstName ? `Let's set up your space, ${firstName}` : "Let's set up your space"}
+              subtitle="A few taps and your matches, deadlines, and Uni are personalized."
               center
             >
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary/10 text-secondary mb-2 animate-scale-in">
-                <Sparkles size={30} />
+                <GraduationCap size={30} />
               </div>
               <Button size="lg" className="w-full" onClick={() => goTo(1, 'forward')} autoFocus>
-                Let&apos;s go <ArrowRight size={18} />
+                Get started <ArrowRight size={18} />
               </Button>
             </StepShell>
           )}
 
           {step === 1 && (
-            <StepShell title="Where are you in your journey?" subtitle="This shapes what we show you first.">
+            <StepShell title="What stage are you at?" subtitle="This shapes what we show you first.">
               <div className="grid gap-3" role="radiogroup" aria-label="Journey stage">
                 {STAGE_OPTIONS.map((o) => (
                   <OptionCard
@@ -271,7 +271,7 @@ export default function OnboardingPage() {
           )}
 
           {step === 2 && (
-            <StepShell title="What fields pull you in?" subtitle="Pick as many as you like — you can refine later.">
+            <StepShell title="Which fields interest you?" subtitle="Pick as many as you like — you can refine later.">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 stagger-list" role="group" aria-label="Fields of interest">
                 {INTEREST_TRACKS.map((o) => (
                   <OptionCard
@@ -525,7 +525,7 @@ function BuildMoment({
       </div>
 
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-foreground">Your space is ready</h1>
+        <h1 className="text-lg font-bold text-foreground">Your space is ready</h1>
         <p className="text-[15px] text-muted-foreground">Here&apos;s what we personalized:</p>
       </div>
 

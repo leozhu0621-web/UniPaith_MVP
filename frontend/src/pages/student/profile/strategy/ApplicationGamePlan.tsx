@@ -76,7 +76,7 @@ export default function ApplicationGamePlan() {
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold text-foreground">Application game-plan</h3>
         <button onClick={() => navigate('/s/applications')} className="inline-flex items-center gap-1 text-xs text-secondary hover:underline">
-          Your portfolio <ArrowRight size={12} />
+          Applications <ArrowRight size={12} />
         </button>
       </div>
       <Card pad={false} className="p-5 space-y-4">

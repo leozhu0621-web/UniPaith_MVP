@@ -134,7 +134,6 @@ export default function TemplatesPage() {
     <div className="p-6 space-y-4">
       <InstitutionPageHeader
         title="Communication Templates"
-        description="Reusable templates for applicant communications with {{variable}} personalization."
         actions={<Button onClick={openCreate} className="flex items-center gap-2"><Plus size={16} /> New Template</Button>}
       />
 

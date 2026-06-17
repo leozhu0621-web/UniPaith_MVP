@@ -113,7 +113,6 @@ export default function InternationalPage({ embedded = false }: { embedded?: boo
       {!embedded && (
         <InstitutionPageHeader
           title="International admissions"
-          description="Credential evaluation, English proficiency, country requirements, and immigration documents."
         />
       )}
 

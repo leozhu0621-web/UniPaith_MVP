@@ -164,7 +164,6 @@ export default function PromotionsPage() {
     <div className="p-6 space-y-4">
       <InstitutionPageHeader
         title="Promotions"
-        description="Spotlight programs with featured placements, targeting scopes, and time-boxed visibility."
         actions={(
           <Button variant="secondary" onClick={openCreate} className="flex items-center gap-2">
             <Plus size={16} /> New Promotion

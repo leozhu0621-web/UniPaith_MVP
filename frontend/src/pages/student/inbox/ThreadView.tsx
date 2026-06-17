@@ -222,7 +222,7 @@ export default function ThreadView({
         {/* Action banner */}
         {thread.action_label && !isCompleted && (
           <div className="rounded-lg border border-warning/30 bg-warning-soft/50 px-3 py-2 text-sm text-foreground">
-            <span className="font-semibold text-warning">★ Action: </span>
+            <span className="font-semibold text-warning">Action: </span>
             {ACTION_COPY[thread.action_label]}
             {due && <span className="text-muted-foreground"> · Due {due}</span>}
             <div className="mt-2 flex flex-wrap items-center gap-2">

@@ -109,7 +109,6 @@ export default function IntegrityQueuePage({ embedded = false }: { embedded?: bo
       {!embedded && (
         <InstitutionPageHeader
           title="Integrity Signals"
-          description="Review document-authenticity, duplicate-identity, and anomaly flags. Resolve each as acceptable, needing clarification, or recommending rejection."
         />
       )}
 

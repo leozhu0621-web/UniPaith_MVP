@@ -55,7 +55,7 @@ export default function SetupPage() {
     onSuccess: (state) => {
       queryClient.setQueryData(['institution-setup'], state)
       queryClient.invalidateQueries({ queryKey: ['institution'] })
-      showToast('Setup complete — welcome aboard.', 'success')
+      showToast('Setup complete.', 'success')
       navigate('/i/dashboard')
     },
     onError: () =>

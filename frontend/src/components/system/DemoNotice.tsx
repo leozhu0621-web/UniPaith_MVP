@@ -58,12 +58,8 @@ export default function DemoNotice() {
       }
     >
       <div className="space-y-2 text-sm text-muted-foreground">
-        <p>You're exploring a live demo of UniPaith — feel free to try everything.</p>
-        <p>
-          Your data resets every time you sign in, so each session starts fresh. Nothing you enter
-          here is kept.
-        </p>
-        <p>Spot something to improve? Use the Feedback button to tell us — we read every note.</p>
+        <p>This is a live demo — try everything. Your data resets each time you sign in.</p>
+        <p>Spot something to improve? Use the Feedback button — we read every note.</p>
       </div>
     </Modal>
   )

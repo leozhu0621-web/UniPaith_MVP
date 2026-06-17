@@ -229,7 +229,6 @@ export default function PostsPage() {
     <div className="p-6 w-full space-y-6">
       <InstitutionPageHeader
         title="Posts & Updates"
-        description="Publish announcements, updates, and content to your public profile."
         actions={
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={() => setShowTemplatesModal(true)}>

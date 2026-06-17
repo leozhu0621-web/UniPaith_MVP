@@ -194,7 +194,6 @@ export default function InterviewsPage({ embedded = false }: { embedded?: boolea
       {!embedded && (
         <InstitutionPageHeader
           title="Interviews"
-          description="Propose, schedule, score, and complete admissions interviews."
           actions={
             <Button variant="secondary" onClick={() => setShowPropose(true)} className="flex items-center gap-2">
               <Plus size={16} /> Propose interview

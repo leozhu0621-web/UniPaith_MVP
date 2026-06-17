@@ -77,7 +77,7 @@ export default function ProgramStep({
       queryClient.invalidateQueries({ queryKey: ['institution-programs'] })
       queryClient.invalidateQueries({ queryKey: ['institution-setup'] })
       showToast(
-        published ? 'Program published 🎉' : 'Program saved as a draft — publish it later from Programs',
+        published ? 'Program published' : 'Program saved as a draft — publish it later from Programs',
         published ? 'success' : 'info',
       )
       onSaved(id)
