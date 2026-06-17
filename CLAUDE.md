@@ -25,6 +25,16 @@ Before starting new feature work, always verify the environment is healthy first
 - **Across the broader student app (non-detail surfaces — Discover, Match, Apply, Profile, Connect, Saved, Settings): dense, utilitarian, app-like (LinkedIn-leaning) WITHIN each surface's existing layout** — surfaced metadata + counts, compact list rows, tight vertical rhythm, small utilitarian section headers. Use the shared density layer `frontend/src/components/student/density/` (`PageHeader · SectionHeader · ListRow · StatTile`). This COMPLEMENTS (does not replace) the content-rich Niche-modeled detail pages above. See `docs/superpowers/specs/2026-06-04-student-ux-densification-design.md`. (Set 2026-06-04 by user direction.)
 - Always confirm WHICH component is being changed (explore card vs detail page) before editing
 
+## Writing voice & interaction (UX QA — standing rule)
+
+Every user-facing string and every interactive surface follows **`docs/UX-QA.md`** (reference: Handshake — warm, professional, action-oriented). Two halves:
+
+- **Voice:** name the thing (noun labels, not "Your record"); celebrate real milestones plainly (earned warmth stays — a greeting, "You're in!" — but no emoji or manufactured cheer); say it once or not at all (self-explanatory titles stand alone; never a paragraph); talk like a counselor, not a chatbot (no AI-speak); never blame, be courteous ("Please try again"); clarity beats brevity for actions (name the action + object + deadline). Centralize reusable strings in `frontend/src/lib/copy.ts`.
+- **Show, don't tell:** if it's an action, decision, status, number, or comparison, make it a control or a visual — not a sentence. A control only for actions UniPaith owns (verified endpoint); inform + view for school-owned outcomes (offers — never a fake Accept/Decline); a visual for pure data. Don't widgetize dense professional tables.
+- **Enforcement:** `cd frontend && npm run voice-lint` (wired into `pr-checks.yml`) hard-fails on AI-speak / wordy clichés. Run it before shipping copy.
+
+(Set 2026-06-14 by founder direction — "this session is UX QA"; childish/AI/wordy copy must not be created again.)
+
 ## Project Overview
 
 This is a TypeScript + Python monorepo (UniPaith MVP). Frontend is TypeScript/React, backend has both TypeScript and Python services. Infrastructure is Terraform/AWS (ECS, RDS, Cognito, SES). Domain: unipaith.co.
