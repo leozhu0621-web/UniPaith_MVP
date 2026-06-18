@@ -12,6 +12,10 @@ export default function AuthLayout({ children }: Props) {
       {/* stagger-list: the logo+tagline lockup settles first, then the card rises behind it (reduce-motion safe). */}
       <div className="w-full max-w-md stagger-list">
         <div className="flex flex-col items-center mb-7">
+          {/* UP monogram tile — brand-forward; the self-contained yellow tile reads on
+              both cream and navy, so it isn't theme-switched. Decorative: the wordmark
+              + sr-only h1 already announce the name. */}
+          <img src="/favicon.svg" alt="" aria-hidden="true" className="h-14 w-14 mb-3 drop-shadow-sm" />
           <Wordmark className="h-14 w-auto" variant={dark ? 'dark' : 'light'} />
           <h1 className="sr-only">UniPaith — Everyone&rsquo;s Private College Counselor</h1>
           <p className="mt-3 text-center text-sm tracking-tight text-balance text-foreground/80">
