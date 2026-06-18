@@ -281,6 +281,10 @@ class Settings(BaseSettings):
     matching_weight_institution_pref: float = 0.20
     matching_weight_student_pref: float = 0.15
     matching_reasoning_top_k: int = 10
+    # CPEF (AI Structure, Spec 3): one fused fit+confidence score with an
+    # in-formula deal-breaker veto. Rollout gate — when False the legacy
+    # cosine/soft/needs convex sum + hard-filter path is used (the fallback).
+    cpef_matching_enabled: bool = False
 
     # AI dev mode
     ai_mock_mode: bool = False
