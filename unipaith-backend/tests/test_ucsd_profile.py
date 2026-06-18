@@ -105,7 +105,15 @@ def _program_snapshot(spec: dict) -> dict:
 
 def test_catalog_breadth_and_shape():
     assert len(p.SCHOOLS) == 12
-    assert len(p.PROGRAMS) >= 180
+    # Breadth is gated on REALNESS, not a frozen row count (enrich miss #2). The catalog
+    # was de-padded to drop fabricated per-field graduate certificates — UC San Diego's
+    # academic departments award none (catalog.ucsd.edu/graduate/degrees-offered) — so the
+    # real count is well below the old padded floor. Assert a real-catalog floor plus zero
+    # certificate rows, never a >= padded_N that would reward re-padding.
+    assert len(p.PROGRAMS) >= 130
+    assert not [s for s in p.PROGRAMS if s["degree_type"] == "certificate"], (
+        "UCSD awards no departmental graduate certificates — none may be in the catalog"
+    )
     assert len(set(p.PROGRAM_SLUGS)) == len(p.PROGRAM_SLUGS)
     assert p.RANKING_DATA["ownership_type"] == "public"
     assert "public research university in la jolla" in p.DESCRIPTION.lower()

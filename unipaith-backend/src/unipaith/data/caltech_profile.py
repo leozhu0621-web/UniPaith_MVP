@@ -1155,6 +1155,23 @@ _IPEDS_SKIP_SLUGS = frozenset({
     "caltech-business-managerial-economics-bs",  # same as caltech-bem-bs
 })
 
+# Caltech is a PhD institution: it awards NO standalone graduate certificates, and a
+# student may apply for a terminal Master of Science in only three options — Aeronautics,
+# Electrical Engineering, and Space Engineering. Every other "certificate"/"masters" row
+# the federal IPEDS Field-of-Study list reports is a CIP×award-level artifact (the M.S. is
+# conferred only as a milestone on the way to the PhD), not a program an applicant can
+# enrol in — so it is dropped rather than shipped as a fabricated standalone degree.
+# Source: Caltech Graduate Studies Office — "Very few departments admit directly for the
+# Master of Science degree. Currently, only applicants to Aeronautics, Electrical
+# Engineering, and Space Engineering may apply for a terminal Master's degree."
+# (https://gradoffice.caltech.edu/admissions/faq-applicants)
+_TERMINAL_MS_SLUGS = frozenset({
+    # Aeronautics / Space Engineering MS (GALCIT):
+    "caltech-aerospace-aeronautical-and-astronautical-space-engineering-ms",
+    # Electrical Engineering MS:
+    "caltech-electrical-electronics-and-communications-engineering-ms",
+})
+
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
 
@@ -1287,6 +1304,12 @@ def _build_catalog() -> list[dict]:
     seen = set(_EXISTING_SLUGS)
     for slug, school, name, dtype, cip, dur, fmt, _desc in _IPEDS_CATALOG:
         if slug in seen or slug in _IPEDS_SKIP_SLUGS:
+            continue
+        # Drop fabricated CIP×award-level rows: Caltech awards no graduate certificates
+        # and a terminal MS only in the three verified options (see _TERMINAL_MS_SLUGS).
+        if dtype == "certificate":
+            continue
+        if dtype == "masters" and slug not in _TERMINAL_MS_SLUGS:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
@@ -2493,6 +2516,12 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
     },
     **DEPTH_REVIEWS,
 }
+
+# A review on a program that does not exist is itself fabrication: drop any review keyed
+# to a slug no longer in the canonical catalog (the fabricated certificate/terminal-MS
+# rows removed above — e.g. there is no terminal MS in CS, Physics, or Mechanical
+# Engineering at Caltech, so the reviews previously attached to those rows are removed).
+_REVIEWS_BY_SLUG = {k: v for k, v in _REVIEWS_BY_SLUG.items() if k in set(PROGRAM_SLUGS)}
 
 # Coverable programs that must carry external_reviews (the MBAn/CMU pattern).
 _COVERABLE_REVIEWS = frozenset(_REVIEWS_BY_SLUG.keys())
