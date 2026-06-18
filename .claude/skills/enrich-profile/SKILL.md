@@ -818,6 +818,26 @@ when every node in its tree is gold.
 
 ## Per-run algorithm (one whole university)
 
+### Effort per run — finish a WHOLE university, not a token gesture
+The unit of work is **one university taken ALL the way**, not one cosmetic edit.
+Past runs under-delivered by swapping a single dimension (one batch of school
+blurbs, one review pass) and stopping — so the same university needed a dozen
+shallow runs and the grader kept flagging "Nth consecutive stub-swap." That is a
+**failed run**. Each run MUST:
+- Take its target through **every dimension to gold in the same run** — full real
+  catalog · feeds that actually fetch · `campus_photos` · `external_reviews` on
+  every coverable program · field-specific descriptions · conformance — not one
+  slice. A repair run clears **every acute defect on that university**, not the one
+  the grader happened to cite.
+- **Use your full budget.** Keep working until the target is genuinely gold (or
+  every remaining field is honestly omitted-with-reason) and the work is MERGED and
+  deployed. Do not stop at "made some progress."
+- Only a catalog too large to finish in one run (e.g. 300+ programs) may span runs
+  (§"Scope & resumption") — and even then, finish a complete *slice* (e.g. a whole
+  school's programs to gold), never a one-line edit. If you have budget left after
+  the target is gold, clear the next acute defect or add the next new university
+  (§2) rather than ending early.
+
 ### 1. Health check
 ```bash
 cd unipaith-backend && PYTHONPATH=src AI_MOCK_MODE=true .venv/bin/pytest tests/test_profile_standard.py tests/test_profile_enrichment.py -q

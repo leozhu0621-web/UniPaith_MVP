@@ -44,6 +44,17 @@ rule bloats the skill and changes nothing. Distinguish:
 
 ## Per-run algorithm
 
+### Effort per run — audit the WHOLE fleet, fix every real gap
+A run that samples 5 schools, changes one rule, and stops is under-delivering. Each
+run: **audit EVERY institution in the fleet** (not a sample) across every dimension
+in the checklist; write the COMPLETE ranked repair backlog (every broken university,
+not just the worst); and make **every warranted, evidence-backed rule change** —
+the "≤3 rule changes" rail is an anti-churn ceiling for *cosmetic* edits, NOT a
+reason to stop at one when several genuine new gap-classes exist (fix the top ones
+and queue the rest loudly in the changelog). Use your full budget; finish a complete
+audit + a merged improvement, not a token pass. "No new gaps" is only valid after a
+**full-fleet** sweep, never after a sample.
+
 ### 1. Orient
 Read the current `enrich-profile/SKILL.md`, the latest `CHANGELOG.md` entry, the
 current `REPAIR_BACKLOG.md`, and list the profile PRs/commits merged to `main`

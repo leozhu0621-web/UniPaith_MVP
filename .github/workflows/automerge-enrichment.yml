@@ -1,0 +1,79 @@
+name: Auto-merge enrichment work
+
+# Make the profile-enrichment + grader routines' work LAND without a human.
+# When "PR Checks" passes on an enrichment-routine PR, this squash-merges it and
+# dispatches the right deploy. (Background: main is unprotected and self-merge
+# rights are flaky for the Cursor agent, so green enrichment PRs kept stranding
+# open for days. This closes that gap — and only after CI is green, so merged
+# work also WORKS.)
+#
+# Scope is deliberately narrow: only PRs whose title is enrichment work, or that
+# come from the Cursor bot. Human feature PRs are never auto-merged.
+#
+# Why dispatch deploys explicitly: a merge performed with GITHUB_TOKEN does not
+# trigger the push-driven Deploy workflows, so we kick them off by hand for the
+# paths the PR actually touched (skill/docs-only PRs need no deploy).
+
+on:
+  workflow_run:
+    workflows: ["PR Checks"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  automerge:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge eligible enrichment PR, then dispatch its deploy
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          set -euo pipefail
+
+          pr=$(gh pr list --repo "$REPO" --head "$HEAD" --state open \
+                 --json number,title,author -q '.[0]')
+          if [ -z "$pr" ] || [ "$pr" = "null" ]; then
+            echo "No open PR for branch '$HEAD' — nothing to do."; exit 0
+          fi
+          num=$(echo "$pr"   | jq -r '.number')
+          title=$(echo "$pr" | jq -r '.title')
+          author=$(echo "$pr" | jq -r '.author.login')
+
+          # Eligibility: enrichment-routine work only (title pattern OR the Cursor
+          # bot). Anything else is left for human review.
+          if ! echo "$title" | grep -qiE '^(feat|fix)\(profiles\)|enrich|improve-enrichment|repair .*profile|gold|field-specific|de-stub|catalog|campus' \
+             && ! echo "$author" | grep -qi 'cursor'; then
+            echo "PR #$num ('$title' by $author) is not enrichment work — skipping."
+            exit 0
+          fi
+
+          # Capture changed paths BEFORE merging (PR closes after merge).
+          files=$(gh pr diff "$num" --repo "$REPO" --name-only || true)
+
+          echo "Auto-merging enrichment PR #$num — '$title'"
+          gh pr merge "$num" --repo "$REPO" --squash --delete-branch
+
+          # Dispatch the deploy(s) for the paths this PR touched. Skill/docs-only
+          # PRs (.claude/**, docs/**) touch nothing deployable and are skipped.
+          if echo "$files" | grep -q '^unipaith-backend/'; then
+            echo "→ dispatching Deploy Backend"
+            gh workflow run "Deploy Backend"  --repo "$REPO" --ref main || true
+          fi
+          if echo "$files" | grep -q '^frontend/'; then
+            echo "→ dispatching Deploy Frontend"
+            gh workflow run "Deploy Frontend" --repo "$REPO" --ref main || true
+          fi
+          if echo "$files" | grep -q '^infra/'; then
+            echo "→ dispatching Terraform Apply"
+            gh workflow run "Terraform Apply" --repo "$REPO" --ref main || true
+          fi
+          echo "Done."
