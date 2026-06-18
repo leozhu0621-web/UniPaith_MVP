@@ -6,7 +6,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import Coachmark from '../../components/ui/Coachmark'
 import { PageContainer, PageHeader } from '../../components/student/density'
 import usePageTitle from '../../hooks/usePageTitle'
-import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
+import { searchAllInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { qk } from '../../api/queryKeys'
 import { getConnectEvents, getFollowing, followInstitution, unfollowInstitution, getPeersStatus, getPeerCohortCounts } from '../../api/connect'
@@ -186,7 +186,7 @@ export default function ExplorePage() {
 
   const { data: universities, isLoading: uniLoading, isError: uniError, refetch: refetchUni } = useQuery({
     queryKey: ['explore-universities'],
-    queryFn: () => searchInstitutions({ page_size: 50 }),
+    queryFn: () => searchAllInstitutions(),
     staleTime: 5 * 60 * 1000,
     enabled: !searchActive && tab === 'resources',
   })
@@ -358,6 +358,12 @@ export default function ExplorePage() {
       .sort((a, b) => a.dist - b.dist)
       .map(x => ({ ...x.u, _distance_km: Number.isFinite(x.dist) ? Math.round(x.dist) : null }))
   }, [filteredUniList, nearMe])
+
+  // The browse grid renders a window (Show more reveals the rest) so the full
+  // ~300-university fleet doesn't mount all at once; reset to the top whenever the
+  // filtered/sorted set changes.
+  const [visibleCount, setVisibleCount] = useState(36)
+  useEffect(() => { setVisibleCount(36) }, [filteredUniList, nearMe])
 
   return (
     <PageContainer>
@@ -557,14 +563,12 @@ export default function ExplorePage() {
                 </div>
               ) : (
                 <>
-                  {hasActiveFilters && (
-                    <p className="text-[11px] text-muted-foreground mb-3">
-                      Showing <span className="font-semibold text-foreground">{filteredUniList.length}</span> of {uniList.length} universities
-                    </p>
-                  )}
+                  <p className="text-[11px] text-muted-foreground mb-3">
+                    Showing <span className="font-semibold text-foreground">{Math.min(visibleCount, displayUniList.length)}</span> of {hasActiveFilters ? `${filteredUniList.length} filtered` : displayUniList.length} universities
+                  </p>
                   {/* 3 per row at lg+ — explicit founder direction (#498); do not add a 4th column. */}
                   <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
-                    {displayUniList.map((inst: UniversityRow) => (
+                    {displayUniList.slice(0, visibleCount).map((inst: UniversityRow) => (
                       <UniversityCard
                         key={inst.id}
                         institution={inst}
@@ -574,6 +578,16 @@ export default function ExplorePage() {
                       />
                     ))}
                   </div>
+                  {displayUniList.length > visibleCount && (
+                    <div className="mt-5 flex justify-center">
+                      <button
+                        onClick={() => setVisibleCount(c => c + 36)}
+                        className="text-sm font-semibold text-secondary border border-border rounded-md px-4 py-2 hover:bg-muted transition-colors"
+                      >
+                        Show more universities ({displayUniList.length - visibleCount} more)
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </div>
