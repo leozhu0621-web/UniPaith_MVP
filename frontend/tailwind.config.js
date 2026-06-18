@@ -49,9 +49,12 @@ export default {
         heading: ['europa', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
       },
       fontWeight: {
-        // Typekit kit ships 300/400/700 only — no 600 cut. Semibold aliases to 700.
+        // Europa kit spe3ioy: enable "Medium" (500) in the Adobe Fonts kit so
+        // font-medium renders a REAL cut instead of a synthesized one. Semibold
+        // still aliases to 700 (no 600 cut, by brand intent).
         light: '300',
         normal: '400',
+        medium: '500',
         semibold: '700',
         bold: '700',
       },
