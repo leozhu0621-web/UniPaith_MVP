@@ -6,6 +6,64 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-18 — Run 51 (NO new gaps → 0 rule changes)
+
+**Institutions audited:** No enrichment PR merged since run 50, so there was no new enrichment output to grade. Instead,
+a live grading pass: UT-Austin (#718 — LIVE-confirmed now that its deploy propagated), Georgia Tech (last live #646 stub),
+gold MIT control, plus a fleet-wide photo + feed checklist sweep across all 28 institutions (no sprawl, counts unchanged).
+
+**Result: NO new rulebook gaps → 0 rule changes** (0 of ≤3). SKILL.md unchanged.
+
+**What merged since run 50:** exactly one PR to `main` — **#721 `feat(match): AI Structure Slice A — CPEF matching core
+(flag-gated)`** (commit `aa723a2`). This is matching APP CODE, not a profile-enrichment PR → out of scope for this grader.
+No `enrich-profile` PR merged this interval.
+
+**Methodology — LIVE confirmation of the run-50 source grade:** run 50 graded UT-Austin #718 from its MERGED SOURCE because
+its Deploy Backend (`3ad1026`) was `in_progress`. This run the deploy has propagated, so #718 was graded LIVE and the API
+matches the run-50 source prediction exactly — validating the "graded-from-source-when-deploy-in-progress" methodology for
+the SEVENTH time (USC/NYU/UIUC/Michigan/UCLA/UW all flipped the same way).
+
+**Findings (live API evidence):**
+
+1. **UT-Austin #718 is LIVE in the school-blurb form (run-43 miss #8 school-blurb class).** Live n=338: **100% "connects to"
+   frame · 95% double-period ".." · 95% dept-echo · 64% shared-head120 · 0% prefix · 0% classification · 0 dup** — the
+   school-blurb form, no longer the PRE-#718 #646 classification stubs. Identical "College of Liberal Arts — UT Austin's
+   largest college…" blurb stamped across dozens of different fields; byte-for-byte the USC/NYU/UIUC/Michigan/UCLA/UW frame.
+2. **UT-Austin's 87 reviews are LIVE-confirmed SYNTHESIZED (run-9 / miss #8 structure-before-depth class).** Sampled: every
+   review cites the institution-level "U.S. News — UT Austin rankings" + school-homepage sources, machine-written summaries
+   ("Students and guides describe UT Austin's Bachelor of Arts in Economics within College of Liberal Arts as a undergraduate
+   program…"), under the false "Aggregated and paraphrased from publicly available third-party coverage" disclaimer.
+3. **Fleet checklist sweep is GREEN on photos + feeds.** All 28 institutions carry **5 campus photos** (no short galleries)
+   and a **non-zero posts feed** (lowest Purdue 10, UT-Austin 14 — no dead feeds). No new checklist regression.
+4. **Student's-eye pass — no NEW class:** Georgia Tech remains a live #646 classification stub (n=143: 100% classification +
+   100% prefix + 98% dept-echo); Yale unchanged #646 stubs; gold MIT control clean (n=65: field-specific descriptions, real
+   "Department of…" units, 0 dup / 0% blurb / 0% dept-echo / 1% prefix). 28 institutions, no sprawl, counts unchanged.
+
+**Diagnosis:** every live defect is BAD DATA recurring a class the rulebook already names — school-blurb descriptions
+(run-43 miss #8 school-blurb), synthesized reviews (run-9 / miss #8 structure-before-depth), dept=field-echo (run-43 miss
+#2), classification stubs (miss #8 gold-contrast), prefix (miss #9). No display bug. No finding argued for loosening an
+invariant.
+
+**Rulebook changes: NONE (0 of ≤3).** No new enrichment output and no new problem class → per the SAFETY RAILS
+(no-edit-without-NEW-evidence; "Clean fleet → change nothing… Never invent a rule to look busy"; anti-churn) SKILL.md is
+unchanged. The school-blurb stub-swap is now the enricher's DEFAULT "repair to gold" mechanism on SEVEN consecutive PRs
+(USC #696, NYU #698, UIUC #706, Michigan #710, UCLA #714, UW #716, UT-Austin #718 = **2,872 programs**), and ALL SEVEN are
+now LIVE. This is an enricher BEHAVIOR + work-ORDERING problem — the rulebook already forbids the form clearly and points to
+Rice #663 as the right pattern — so more rule text cannot fix rule-adoption. **Flagged for human review** (carried from runs
+46–50, now strengthened by the 7th instance being live-confirmed).
+
+**Backlog delta:** "_Last graded_" header advanced to run 51; UT-Austin annotated LIVE-confirmed (was "graded from source,
+deploy in_progress") in both its header summary and its own CRITICAL section footer; CRITICAL-top "nothing merged" bullet
+updated to add UT-Austin #718 and note all seven school-blurb catalogs are now LIVE; added the fleet photo+feed GREEN line.
+No rank change (no repair merged); no new entry.
+
+**Invariants:** all intact; no SKILL.md edit (markdown-only: backlog + changelog). Health check GREEN —
+`test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** (pip-installed pytest + minimal deps —
+sqlalchemy/pydantic/pydantic-settings/pgvector — `--noconftest` in this ephemeral container; no backend venv;
+`profile_standard.manifest` imports cleanly at STANDARD_VERSION 2).
+
+---
+
 ## 2026-06-18 — Run 49 (NO new gaps → 0 rule changes)
 
 **Institutions audited:** University of Washington-Seattle (#716, the only enrichment PR merged since run 48 — graded from
