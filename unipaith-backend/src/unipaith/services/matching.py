@@ -442,6 +442,67 @@ def cpef(
     return value, breakdown
 
 
+def cpef_program_to_student(
+    student: StudentFeatures, program: ProgramFeatures, *, params: dict[str, float] | None = None
+) -> tuple[float, dict[str, Any]]:
+    """Reverse direction: how well the student fits the *program's* preferences
+    (its target applicant). Returns ``(1.0, {...})`` when the program has no
+    preferences yet — an unclaimed program with no derived target applicant has
+    no opinion, so it must not pull the blend down."""
+    p = params or DEFAULT_PARAMS
+    s, pr = student.sparse, program.sparse
+
+    fits_present: list[float] = []
+    # academic strength: program's preferred minimum GPA vs the student's GPA
+    pref_gpa = pr.get("pref_min_gpa")
+    s_gpa = s.get("gpa")
+    if pref_gpa is not None and s_gpa is not None:
+        fits_present.append(_fits.fit_numeric_higher(float(s_gpa), float(pref_gpa), 0.3))
+    # field background: program's preferred fields vs the student's field
+    pref_fields = set(pr.get("pref_fields") or [])
+    s_field = s.get("field_of_study")
+    if pref_fields and s_field is not None:
+        fits_present.append(1.0 if s_field in pref_fields else 0.0)
+    # applicant level: program's preferred levels vs the student's current level
+    pref_levels = set(pr.get("pref_levels") or [])
+    s_lvl = s.get("education_level")
+    if pref_levels and s_lvl:
+        fits_present.append(1.0 if s_lvl in pref_levels else 0.0)
+
+    if not fits_present:
+        return 1.0, {"no_prefs": True}
+
+    # A *satisfaction* multiplier, not a fresh fit: perfect match → 1.0 (a
+    # well-matched program is never penalized for having preferences), worst
+    # match → ``ps_floor`` (pulled down but not buried — burying is the s→p
+    # veto's job). No coverage damp / 0.5-shrink here: those belong to the
+    # student's own ranking sharpness (s→p), not the program's interest gate.
+    sat = sum(fits_present) / len(fits_present)
+    floor = p.get("ps_floor", 0.2)
+    value = clamp01(floor + (1.0 - floor) * sat)
+    return value, {
+        "value": round(value, 4),
+        "satisfaction": round(sat, 4),
+        "n_signals": len(fits_present),
+        "floor": floor,
+    }
+
+
+def mutual_match(
+    student: StudentFeatures, program: ProgramFeatures, *, params: dict[str, float] | None = None
+) -> tuple[float, dict[str, Any]]:
+    """The rank key ``M`` — a weighted geometric mean of both directions,
+    student side leading: ``M = CPEF_{s→p}^alpha * CPEF_{p→s}^(1-alpha)``.
+    """
+    p = params or DEFAULT_PARAMS
+    sp, sp_bd = cpef(student, program, params=p)
+    ps, ps_bd = cpef_program_to_student(student, program, params=p)
+    a = p["alpha"]
+    m = clamp01((sp**a) * (ps ** (1.0 - a)))
+    bd = {**sp_bd, "m": round(m, 4), "s2p_value": sp_bd.get("value"), "p2s": ps_bd, "alpha": a}
+    return m, bd
+
+
 def _cpef_flag() -> bool:
     try:
         from unipaith.config import settings
@@ -454,14 +515,16 @@ def _cpef_flag() -> bool:
 def _score_cpef(
     student: StudentFeatures, program: ProgramFeatures, *, params: dict[str, float] | None = None
 ) -> Score:
-    value, bd = cpef(student, program, params=params)
-    conf = bd["mean_rho"]
+    # The persisted fitness IS the rank key M (the two-direction blend). The
+    # breakdown keeps the full s→p detail plus the p→s direction and M.
+    m, bd = mutual_match(student, program, params=params)
+    conf = bd.get("mean_rho", 0.0)
     return Score(
-        fitness=Decimal(str(round(value, 4))),
+        fitness=Decimal(str(round(m, 4))),
         confidence=Decimal(str(round(conf, 4))),
         eliminated=False,  # nothing is hard-dropped; vetoed programs sink instead
         fitness_breakdown=bd,
-        confidence_breakdown={"mean_rho": conf, "model": "cpef"},
+        confidence_breakdown={"mean_rho": conf, "model": "cpef", "m": round(m, 4)},
     )
 
 
