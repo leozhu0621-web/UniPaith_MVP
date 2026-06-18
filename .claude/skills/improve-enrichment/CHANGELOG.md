@@ -6,6 +6,76 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-18 — Run 55 (FULL-FLEET sweep · 1 rule change — the first in runs 46–55)
+
+**Institutions audited: ALL 28 (full-fleet, programmatic — not a sample).** No profile-data PR merged since run 53
+(#730), so there was no new enrichment OUTPUT to grade; instead a complete live re-measurement of every institution across
+every checklist dimension (names, descriptions, departments, reviews, feeds, photos) via `api.unipaith.co/api/v1`.
+
+**Method.** For every one of the 28 institutions: paginated the full program catalog and computed, in one pass —
+duplicate/bare-abbreviation/"Programs"-rollup names; classification-description share; school-blurb tells (double-period
+".." + universal field-agnostic closing); the miss #9 **verbatim-shared** AND **shared-leading-body** per-field gates
+(common-prefix ≥120 chars AND ≥50% of shortest sibling, the suffix-diversifier-proof measure); dept=field-echo; posts-feed
+length; and `school_outcomes.campus_photos` length. Reviews sampled per institution (coverage + the "Aggregated and
+paraphrased" synthesis disclaimer). gold MIT held as the 0% control.
+
+**Findings (live evidence).**
+1. **CLEAN fleet-wide (real progress):** program NAMES (0 duplicate / 0 bare-abbreviation / 0 rollup across all 28 — the
+   name defects that dominated early runs are GONE), campus PHOTOS (all 28 = 5, no short galleries), feeds (all 28 non-zero
+   `posts`; lowest Purdue 10, UT-Austin 15, Berkeley 19, Wisconsin 21, UCSD 24 — no dead feed). Reviews: where present 4/
+   program; the synthesis disclaimer does NOT fire on LIVE rows (live reviews are genuine flagships; GT #730's synthesized
+   batch not yet propagated).
+2. **The miss #9 shared-leading-body gate FAILS on 22 of 28 catalogs** — far more than the ~4-school "cleanest non-MIT
+   tier" prior runs spot-checked. 100%: NYU, Rice, UT-Austin, UCLA. 95–98%: UCSD, UW-Seattle, USC, UIUC, Michigan. 87–93%:
+   Cornell, UPenn, Purdue, Stanford, JHU. 58–85%: Wisconsin, Harvard, Columbia, UChicago, Berkeley, Northwestern. 14–25%:
+   Caltech, Boston U. **0% (gold-equal): CMU, Duke, Georgia Tech, MIT, Princeton, Yale.** The high-shared catalogs are
+   per-FIELD stamping — one field's description applied byte-identical to its Bachelor's/Master's/PhD/Certificate rows
+   (e.g. Cornell "Bachelor's in Music" = "PhD in Music" = "Master's in Music" verbatim), the documented run-30 defect.
+3. **7 LIVE school-blurb catalogs** (95–100% double-period frame + 100% universal closing): NYU, UT-Austin, UCLA, UIUC,
+   USC, UW-Seattle, Michigan. **Georgia Tech** = 100% classification descriptions + 91% dept-echo + 58 synthesized reviews
+   (#730, graded from source run 53). **dept = field-echo fleet-wide** (46–97% on non-gold catalogs; gold MIT 0%, which
+   carries real academic units). Body-clean Yale/Duke/CMU instead carry the `"{program_name}: "` prefix (miss #9).
+4. **No NEW defect CLASS surfaced** — every finding maps to a documented miss (#2 dept-echo, #8 school-blurb / structure-
+   before-depth / fabrication-by-synthesis / gold-contrast, #9 prefix + the per-field/suffix-diversifier sub-bullets).
+
+**Diagnosis + the ROOT-CAUSE LEVER (this is what differs from runs 46–53).** Prior runs (incl. #744's run 54) correctly found "every defect is
+a violation of an existing rule" and logged "more rule text cannot fix adoption" — true, but they stopped there. The
+full-fleet sweep isolated WHY 8 consecutive stub-swap PRs auto-merged despite the rulebook forbidding the form: **the
+automated gate that CI actually enforces is presence-only.** `check_conformance` (`conformance.py:66`) returns
+`conformant = not missing_fields and not missing_sections and not stale` — a fully-stubbed catalog whose every required
+field is non-empty is "conformant." The miss #9 quantitative anti-stub checks existed ONLY as a MANUAL "run before
+shipping" pledge with no enforcement, so all 8 stub-swap PRs skipped them and sailed through §8.5, the step-9 profile
+tests (also presence-only), and green CI → auto-merge. That enforcement hole is a genuine, NEW, GENERAL rulebook gap — not
+a duplicate of the descriptive defect rules.
+
+**Rule change (1 of ≤3) — §8.5 conformance gate tightened to require an ENFORCED anti-stub gate.** Added a paragraph to
+`enrich-profile/SKILL.md` §8.5: conformance is PRESENCE-only and must be PAIRED with the miss #9 anti-stub gates computed
+programmatically over the FULL catalog, gold-MIT-0% baselined (verbatim-shared, shared-leading-body, cross-field clause,
+classification-share, double-period/closing, prefix-double, dept-echo — ANY non-zero is a conformance FAIL); AND the
+shipping change MUST add/extend a CI-run profile test asserting them, so a stub-swap PR FAILS CI and CANNOT auto-merge —
+with an explicit "do NOT weaken the thresholds; a non-zero means un-researched rows (no-fabrication / structure-before-
+depth invariant), not a tunable knob." This TIGHTENS, never loosens, the invariants; it is the precise lever missing for 8
+runs (it makes the advisory checks merge-blocking rather than restating them). **Self-review:** re-read §8.5 and the miss
+list — misses still numbered 1–9 sequentially, no contradictions, all IMMUTABLE INVARIANTS intact. Within the ≤3 ceiling;
+the other findings are documented-class violations → backlog + this log, not new rules (adding more would be the churn the
+rails forbid).
+
+**Backlog delta.** Rewrote the REPAIR_BACKLOG preamble with the run-54 full-fleet measurement: a complete shared-leading-
+body ranking table (every one of the 28 with its measured %), the clean-fleet-wide dimensions, the 7 school-blurb catalogs
++ GT, and the §8.5 rule change. The detailed CRITICAL/HIGH ranked entries (NYU, USC, UIUC, Michigan, UCLA, UW, UT-Austin,
+GT, Boston U, Stanford, Northwestern, Duke, Purdue, UCSD + Penn/Cornell/JHU/Caltech/UChicago/Yale carried notes) are
+retained and confirmed by the sweep; the table makes every broken university appear with a number, worst-first.
+
+**Standing concern (carried + strengthened, runs 46–55):** the run-55 rule attacks the streak at the CI gate (a stub can no longer
+auto-merge); whether the enricher ADOPTS repair-first ORDERING is still an enricher-behavior matter **flagged for human
+review**.
+
+**Health check GREEN** — `test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** (system pytest +
+sqlalchemy/pydantic/pgvector + `--noconftest` in this ephemeral container; `profile_standard.manifest` imports cleanly at
+STANDARD_VERSION 2). Changes are rulebook + markdown only — no code/data/migration edit.
+
+---
+
 ## 2026-06-18 — Run 53 (NO new gaps → 0 rule changes)
 
 **Institutions audited:** ONE profile-data PR merged since run 52 — **#730 `enrich(gatech): external_reviews depth pass for
