@@ -114,3 +114,24 @@ def test_every_program_maps_to_a_real_school():
     for spec in sf.PROGRAMS:
         assert spec["school"] in school_names, f"{spec['slug']} maps to unknown school"
     assert len(sf.PROGRAM_SLUGS) == len(set(sf.PROGRAM_SLUGS)), "duplicate program slug"
+
+
+def test_depth_reviews_not_merged():
+    """Synthesized DEPTH_REVIEWS must not ship on CIP-rollup catalog rows (miss #8)."""
+    assert (
+        "stanford-aerospace-aeronautical-and-astronautical-space-engineering-bs"
+        not in sf._REVIEWS_BY_SLUG
+    )
+    assert len(sf._REVIEWS_BY_SLUG) <= 15
+
+
+def test_no_synthesized_review_theme_reuse():
+    from collections import Counter
+
+    reviewed = {s: r for s, r in sf._REVIEWS_BY_SLUG.items() if s in sf.PROGRAM_SLUGS}
+    theme_ct: Counter = Counter()
+    for r in reviewed.values():
+        for detail in {t["detail"] for t in r.get("themes", [])}:
+            theme_ct[detail] += 1
+    reused = {d: c for d, c in theme_ct.items() if c >= 3}
+    assert not reused, f"theme detail reused across >=3 programs: {list(reused)[:3]}"

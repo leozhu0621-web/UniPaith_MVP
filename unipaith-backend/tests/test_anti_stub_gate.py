@@ -35,6 +35,7 @@ CERTIFIED_CLEAN = [
     "ut_austin",  # catalog.utexas.edu descriptions; school-blurb + synth reviews removed (utaprof2)
     "ucla",       # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
     "uw",         # catalogue-sourced descriptions; school-blurb + synth reviews removed (uwprof2)
+    "stanford",   # catalogue descriptions; rollup names + synth DEPTH_REVIEWS removed (stanfordprof10)
 ]
 
 
