@@ -1817,7 +1817,7 @@ def _description_for(spec: dict) -> str:
         delivery = " Delivered online."
     elif fmt == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{spec['program_name']}: {clause}{delivery}"
+    return f"{clause}{delivery}"
 
 
 def _build_programs() -> list[dict]:

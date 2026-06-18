@@ -25,7 +25,8 @@ CERTIFIED_CLEAN = [
     "ucsd",       # cert padding dropped; per-credential descriptions (#745 + this run)
     "caltech",    # cert + non-terminal-MS padding dropped; field-specific descriptions (this run)
     "nyu",        # bulletin-sourced descriptions; school-blurb + synthesized reviews removed (#753)
-    "princeton",  # CIP rollups → real majors; textbook-def stubs → researched descriptions
+    "princeton",  # CIP rollups → real majors; textbook-def stubs → researched descriptions (#754)
+    "carnegie_mellon",  # researched per-program clauses; "{program_name}: " prefix-double removed
 ]
 
 
