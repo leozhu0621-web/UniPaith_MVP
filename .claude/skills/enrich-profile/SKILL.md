@@ -1034,6 +1034,24 @@ other sessions ship migrations concurrently, so never trust a stale checkout.
    dual pair anyway, ship a merge-of-merges (`down_revision = (mergeA, mergeB)`).
 4. Use READABLE revision ids (e.g. `nyuprof1`, `feedspennmerge1`) — auto-generated
    hex ids trip the repo's detect-secrets pre-commit hook as false positives.
+5. **Auto-merge changed the timing — step 3 alone is now TOO LATE; PREVENT the dual
+   head, don't just react to it.** This routine auto-merges enrichment PRs on green CI
+   and auto-dispatches the deploy on merge, so a PR's `test_alembic_has_single_head`
+   runs against its OWN base, never the post-merge `main`: two enrichment PRs each
+   branched off the SAME base each read as single-head, pass CI, auto-merge, and leave
+   `main` with a DUAL head — and the deploy fires on that dual head BEFORE any reactive
+   merge-only migration (step 3) can land, so the production deploy FAILS and the work
+   never reaches students. (Live this run: #745 `ucsdprof7` + #746 `seed12univ1` both
+   branched off the same base and both auto-merged; #745's Deploy Backend FAILED on the
+   resulting dual head and neither reached production until a fixup merge migration's
+   deploy ran — then #748 + #749 both sat OPEN, each adding a migration off the same
+   merged head: the identical collision about to recur.) So: (a) NEVER leave two
+   migration-bearing enrichment PRs open against the same base — fold them into one PR,
+   or hold the second until the first has merged AND you have re-pointed its
+   `down_revision` onto the new head; (b) the durable fix is to make the single-head
+   assertion evaluate the MERGE RESULT (rebased onto current `main`) and BLOCK the
+   auto-merge, which lives in the automerge / CI workflow (app/infra) — FLAG it for a
+   human; the grader does not edit it.
 
 ### 8.5 Conformance gate (do NOT skip — this is what the first runs missed)
 For the institution and **every** school and program in the tree, build its
