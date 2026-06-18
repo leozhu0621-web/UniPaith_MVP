@@ -34,6 +34,50 @@ that node's `_standard.omitted`). An honestly-empty field is correct; a guessed 
 is a defect. Extra research tokens are acceptable; a wrong fact on a student-facing
 page is not.
 
+## Also enrich for the MATCH — Prompt Library + ProgramPreference (AI Structure)
+
+The profile you build is the **program side of the shared Prompt Library** — the
+same typed catalog the student side fills (Spec 1) and the deterministic **CPEF
+matcher** (Spec 3) sorts students against. Enrichment is therefore not only for the
+editorial detail page: the **matcher-relevant attributes below must be populated**
+(typed, verified, cited) or the match runs blind on them. Specs:
+`docs/superpowers/specs/2026-06-17-ai-structure-2-school-program-profile-design.md`
+(see the data map at `docs/superpowers/specs/assets/ai-structure/crawler_data_map.png`)
+and `...-3-match-engine-design.md`. (We use **this Claude routine** for program
+enrichment — there is no separate crawler service.)
+
+**Authority precedence — never overwrite first-party.** A **claimed** school/program
+(a verified institution user owns it) is authoritative. The routine must **not**
+overwrite any first-party field — enrich only **unclaimed** profiles, and on a
+claimed one fill **only** the gaps the school left empty. First-party always wins.
+
+**Matcher-relevant attributes to fill (each feeds a CPEF fit; omit-never-guess):**
+- **outcomes** — salary (median/start) · employment & underemployment · payback ·
+  top employers · placement geography (College Scorecard / IPEDS / institution).
+- **selectivity & admissions funnel** — applicants→admits→enrolled · admit rate ·
+  yield · class profile (GPA & test bands, academic-only) · selectivity band (CDS/IPEDS).
+- **full cost** — tuition + fees · total cost of attendance · net price · local living cost.
+- **funding** — program-linked scholarships · assistantships · % aid · avg award.
+- **format & schedule** — online/hybrid/in-person · campus setting · time-to-degree ·
+  start terms · intake rounds · deadlines.
+- **requirements** — test policy (test-optional?) · prerequisites · English policy.
+- **academic substance** — tracks/specializations · curriculum · faculty/research.
+- School **ranking** stays **editorial-only** — shown on cards, **never** a scored value.
+
+**NEW per-program step — derive the target applicant (`ProgramPreference`).** For
+every program, also write a **`program_preferences`** row (model `ProgramPreference`,
+table `program_preferences`, added in the AI-Structure build) so the **program →
+student** match direction works even before a school claims:
+- Set `source = "derived"` and a `confidence`.
+- From the public **class profile** infer the baseline target applicant —
+  `pref_min_gpa` (typical admitted GPA floor), `pref_test_bands` (e.g. `{"GRE": 320}`),
+  `pref_fields` (common feeder fields), `pref_levels` (eligible current levels),
+  `pref_countries` (recruiting geography).
+- **Omit any field you cannot ground** (never guess a cutoff). When a school later
+  claims, it overwrites these with `source = "claimed"` — **do not touch a claimed row**.
+A program with no `program_preferences` row simply has "no opinion" (the matcher
+treats it neutrally), so deriving it from real admit data is a genuine quality win.
+
 ## Completeness is non-negotiable — verify before you ship
 
 The first routine runs shipped **shallow** universities (only the cheap federal
