@@ -27,6 +27,7 @@ CERTIFIED_CLEAN = [
     "nyu",        # bulletin-sourced descriptions; school-blurb + synthesized reviews removed (#753)
     "princeton",  # CIP rollups → real majors; textbook-def stubs → researched descriptions (#754)
     "carnegie_mellon",  # researched per-program clauses; "{program_name}: " prefix-double removed
+    "usc",        # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
 ]
 
 

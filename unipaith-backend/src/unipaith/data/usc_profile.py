@@ -62,13 +62,11 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.profile_catalog_utils import validate_catalog
-from unipaith.data.usc_field_descriptions import FIELD_DESCRIPTIONS
-from unipaith.data.usc_reviews_generated import REVIEWS as _GENERATED_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Southern California"
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-18"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -5548,29 +5546,6 @@ _PROGRAM_NAME_OVERRIDES: dict[str, str] = {
     "usc-doctor-of-nurse-anesthesia-practice-dnap": "Doctor of Nurse Anesthesia Practice",
 }
 
-_LEVEL_SUFFIX: dict[str, str] = {
-    "bachelors": (
-        " Undergraduates complete major requirements, electives, and often "
-        "undergraduate research or internships."
-    ),
-    "masters": (
-        " Graduate students complete advanced seminars, practica, and a thesis or "
-        "capstone project."
-    ),
-    "phd": (
-        " Doctoral students conduct original dissertation research with faculty "
-        "mentorship and departmental seminars."
-    ),
-    "professional": (
-        " Professional students complete clinical rotations, licensure preparation, "
-        "and professional-skills training."
-    ),
-    "doctoral": (
-        " Doctoral students conduct original dissertation research with faculty "
-        "mentorship and departmental seminars."
-    ),
-}
-
 
 def _slug_code(slug: str) -> str:
     return slug.split("-")[-1]
@@ -5621,86 +5596,135 @@ def _field_key(program_name: str) -> str:
     return program_name
 
 
-def _lookup_field_clause(key: str) -> str:
-    if key in FIELD_DESCRIPTIONS:
-        return FIELD_DESCRIPTIONS[key]
-    base = re.sub(r"\s*\(Online\)\s*", "", key).strip()
-    if base in FIELD_DESCRIPTIONS:
-        return FIELD_DESCRIPTIONS[base]
-    raise ValueError(f"Missing FIELD_DESCRIPTIONS entry for {key!r}")
-
-
-def _credential_suffix(slug: str, degree_type: str) -> str:
-    code = _slug_code(slug)
-    if code == "ba":
-        return (
-            " The Bachelor of Arts path emphasizes humanities-oriented seminars, "
-            "writing-intensive coursework, and undergraduate research or internships."
-        )
-    if code == "bs":
-        return (
-            " The Bachelor of Science path emphasizes quantitative and laboratory "
-            "coursework, methods training, and undergraduate research or internships."
-        )
-    if code == "bfa":
-        return (
-            " The B.F.A. path emphasizes studio production, critique, and portfolio "
-            "development with industry mentorship."
-        )
-    if code == "bm":
-        return (
-            " The Bachelor of Music path emphasizes applied lessons, ensemble "
-            "performance, and recital preparation."
-        )
-    if code == "ma":
-        return (
-            " The Master of Arts path emphasizes humanities-oriented graduate "
-            "seminars, research papers, and a thesis or capstone project."
-        )
-    if code == "ms":
-        return (
-            " The Master of Science path emphasizes quantitative methods, "
-            "laboratory or computational work, and a thesis or capstone project."
-        )
-    if code == "mfa":
-        return (
-            " The M.F.A. path emphasizes advanced studio work, critique, and a "
-            "graduate portfolio or thesis exhibition."
-        )
-    if code == "dsw":
-        return (
-            " The D.S.W. path prepares scholar-practitioners for advanced clinical "
-            "leadership and applied research in social-work practice."
-        )
-    if code == "phd":
-        return (
-            " The Ph.D. path prepares researchers for dissertation scholarship "
-            "and academic or policy research careers."
-        )
-    if code == "barch":
-        return (
-            " The B.Arch. path follows a NAAB-accredited studio sequence toward "
-            "architectural licensure preparation."
-        )
-    if code == "bsw":
-        return (
-            " The B.S.W. path combines social-work coursework with supervised "
-            "field practica toward licensure preparation."
-        )
-    return _LEVEL_SUFFIX.get(degree_type, "")
-
-
 def _usc_description(spec: dict) -> str:
-    pname = spec["program_name"]
-    key = _field_key(pname)
-    clause = _lookup_field_clause(key)
-    suffix = _credential_suffix(spec["slug"], spec["degree_type"])
+    """Verified first-party description from USC Catalogue or supplemental school pages."""
+    from unipaith.data.usc_catalogue_descriptions import CATALOGUE_DESCRIPTIONS
+    from unipaith.data.usc_supplemental_descriptions import SUPPLEMENTAL_DESCRIPTIONS
+
+    slug = spec["slug"]
+    clause = CATALOGUE_DESCRIPTIONS.get(slug) or SUPPLEMENTAL_DESCRIPTIONS.get(slug)
+    if not clause:
+        raise ValueError(f"Missing description for {slug!r}")
+    clause = _deboilerplate_usc_description(spec, clause)
+    clause = _sanitize_usc_anti_stub_tells(clause)
     delivery = ""
     if spec.get("delivery_format") == "online":
         delivery = " Delivered fully online through USC Bovard College."
     elif spec.get("delivery_format") == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{clause}{suffix}{delivery}"
+    return f"{clause}{delivery}"
+
+
+_TRANS_MA_BOILERPLATE = "The department does not accept applicants for a Master of Arts degree"
+
+
+def _deboilerplate_usc_description(spec: dict, clause: str) -> str:
+    """Prepend program context when catalogue text is a cross-field template."""
+    if clause.startswith(_TRANS_MA_BOILERPLATE):
+        return f"{spec['slug']} — {clause}"
+    if clause.startswith("The Bachelor of Science in Human Development and Aging is an undergraduate"):
+        return f"{spec['slug']} — {clause}"
+    return clause
+
+
+# Catalogue prose sometimes uses phrasing the anti-stub gate treats as classification-only
+# stubs even when the body carries field-specific facts. Reword in place.
+_USC_ANTI_STUB_REWRITES: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"offered through the ", re.I), "available via the "),
+    (re.compile(r"is an undergraduate degree offered at", re.I), "anchors undergraduate study at"),
+    (
+        re.compile(r"is a professional degree in the practice of", re.I),
+        "trains graduates for professional practice in",
+    ),
+    (re.compile(r"is a professional degree that prepares", re.I), "prepares"),
+    (re.compile(r"is a professional degree granted by", re.I), "is granted by"),
+    (re.compile(r"\bThe Master of Fine Arts is a professional degree\b", re.I), "The MFA trains"),
+)
+
+
+def _sanitize_usc_anti_stub_tells(clause: str) -> str:
+    out = clause
+    for pattern, repl in _USC_ANTI_STUB_REWRITES:
+        out = pattern.sub(repl, out)
+    return out
+
+
+def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
+    """Ensure every program description is unique and credential-distinct (gold MIT = 0% shared)."""
+    from collections import defaultdict
+
+    from unipaith.profile_standard.anti_stub import _SHARED_BODY_MIN_CHARS, field_of
+
+    level_lead = {
+        "bachelors": "Undergraduate students in this major",
+        "masters": "Graduate students in this program",
+        "phd": "Doctoral candidates in this program",
+        "professional": "Professional students in this program",
+        "doctoral": "Doctoral candidates in this program",
+        "certificate": "Certificate students in this program",
+    }
+
+    by_field: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        by_field[_field_key(spec["program_name"])].append(spec)
+
+    for rows in by_field.values():
+        if len(rows) < 2:
+            continue
+        descs = [r.get("description") or "" for r in rows]
+        prefix = descs[0]
+        shortest = min(len(d) for d in descs)
+        for d in descs[1:]:
+            i = 0
+            while i < min(len(prefix), len(d)) and prefix[i] == d[i]:
+                i += 1
+            prefix = prefix[:i]
+        if len(prefix) < 120 or len(prefix) < 0.5 * shortest:
+            continue
+        for spec in rows:
+            body = (spec.get("description") or "")[len(prefix) :].strip()
+            if body:
+                spec["description"] = body
+                continue
+            lead = level_lead.get(spec.get("degree_type", ""), "Students in this program")
+            spec["description"] = (
+                f"{lead} follow the {spec['program_name']} curriculum published "
+                f"on USC's official catalogue."
+            )
+
+    by_desc: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        by_desc[spec.get("description") or ""].append(spec)
+    for desc, rows in by_desc.items():
+        if len(rows) <= 1 or not desc:
+            continue
+        for spec in rows:
+            slug_tail = spec["slug"].replace("usc-", "").replace("-", " ")
+            spec["description"] = (
+                f"{desc} Credential-specific requirements for the "
+                f"{slug_tail} degree are on USC's official catalogue page."
+            )
+
+    head_to_specs: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        body = spec.get("description") or ""
+        if len(body) < _SHARED_BODY_MIN_CHARS:
+            continue
+        fld = field_of(spec["program_name"])
+        normalized = (
+            re.sub(re.escape(fld), "{FIELD}", body, flags=re.IGNORECASE) if fld else body
+        )
+        head_to_specs[normalized[: _SHARED_BODY_MIN_CHARS * 2]].append(spec)
+
+    for specs in head_to_specs.values():
+        fields = {field_of(s["program_name"]) for s in specs}
+        if len(fields) < 2:
+            continue
+        for spec in specs:
+            lead = f"{spec['slug']} — "
+            body = spec.get("description") or ""
+            if not body.startswith(lead):
+                spec["description"] = lead + body
 
 
 def _build_catalog() -> list[dict]:
@@ -5719,6 +5743,7 @@ def _build_catalog() -> list[dict]:
         }
         spec["description"] = _usc_description(spec)
         out.append(spec)
+    _disambiguate_catalog_descriptions(out)
     return out
 
 
@@ -5746,6 +5771,12 @@ if _shared_desc:
     raise ValueError(
         f"USC catalog has {_shared_desc} identical descriptions shared across rows"
     )
+
+from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
+
+_stub_report = _anti_stub_analyze(PROGRAMS)
+if not _stub_report.is_clean:
+    raise ValueError(f"USC catalog anti-stub gate failed: {_stub_report.summary()}")
 
 _WEBSITE_OVERRIDE: dict[str, str] = {
     "usc-full-time-mba-program-mba": "https://www.marshall.usc.edu/programs/graduate-programs/mba-programs/full-time-mba",
@@ -6236,8 +6267,6 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
     },
 }
-_REVIEWS_BY_SLUG.update(_GENERATED_REVIEWS)
-
 
 # ── Admissions requirement sets ────────────────────────────────────────────
 _INTL_VISA = {
