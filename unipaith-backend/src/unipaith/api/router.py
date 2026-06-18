@@ -15,6 +15,7 @@ from unipaith.api.billing import router as billing_router
 from unipaith.api.build import router as build_router
 from unipaith.api.calendar import router as calendar_router
 from unipaith.api.checklists import router as checklists_router
+from unipaith.api.claims import router as claims_router
 from unipaith.api.connect import router as connect_router
 from unipaith.api.content_ingest import router as content_ingest_router
 from unipaith.api.discovery import router as discovery_router
@@ -111,6 +112,9 @@ api_router.include_router(graduate_router)
 # `/institutions/me/data/*`; before institutions_router so the literal paths win
 # over `/institutions/{id}`. (§6 fairness endpoints live in institutions.py.)
 api_router.include_router(governance_router)
+# AI Structure (Spec 2) — claim hinge under `/institutions/me/claims`; before
+# institutions_router so the literal path wins over `/institutions/{id}`.
+api_router.include_router(claims_router)
 api_router.include_router(institutions_router)
 api_router.include_router(programs_router)
 api_router.include_router(applications_router)
