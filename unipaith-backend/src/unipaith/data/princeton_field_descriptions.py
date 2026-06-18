@@ -2,11 +2,14 @@
 
 Each entry states something concrete about what Princeton's program in that field
 covers — never a credential/school classification stub. Sources: Princeton University
-Undergraduate Admission (admission.princeton.edu/academics/areas-of-study), the Office
-of the Dean of the Faculty academic divisions page (dof.princeton.edu), individual
-department program pages (e.g. cs.princeton.edu, orfe.princeton.edu, spia.princeton.edu,
-architecture.princeton.edu, molbio.princeton.edu, astrophysics.princeton.edu), and
-Graduate School degree requirements (gradschool.princeton.edu).
+Undergraduate Admission (admission.princeton.edu/academics/degrees-departments), the
+Office of the Dean of the Faculty academic divisions page (dof.princeton.edu),
+individual department program pages (e.g. cs.princeton.edu, orfe.princeton.edu,
+spia.princeton.edu, architecture.princeton.edu, molbio.princeton.edu,
+astrophysics.princeton.edu, aas.princeton.edu, nes.princeton.edu, eas.princeton.edu,
+fit.princeton.edu, spo.princeton.edu), the Undergraduate Announcement field-of-study
+pages (ua.princeton.edu/fields-study), and Graduate School degree requirements
+(gradschool.princeton.edu).
 """
 
 # ruff: noqa: E501
@@ -100,8 +103,30 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "small seminars and the Firestone Library's special collections."
     ),
     "Ethnic, Cultural Minority, Gender, and Group Studies": (
-        "African American studies, gender and sexuality studies, and Latino studies at Princeton "
-        "examine race, identity, and culture through humanities and social-science scholarship."
+        "Princeton's Department of African American Studies examines the historic achievements "
+        "and struggles of African-descended people in the United States and their relationship "
+        "to African and African-descended people worldwide, through history, literature, and the "
+        "social sciences."
+    ),
+    "East Asian Studies": (
+        "Princeton East Asian Studies trains students in the literature, history, anthropology, "
+        "and media and cultural studies of China, Korea, and Japan across premodern and "
+        "contemporary contexts, paired with intensive study of an East Asian language."
+    ),
+    "Near Eastern Studies": (
+        "Princeton's Department of Near Eastern Studies pairs competence in a Near Eastern "
+        "language — Arabic, Hebrew, Persian, or Turkish — with study of the history, literature, "
+        "religion, law, and politics of the ancient, medieval, and modern Near East."
+    ),
+    "French and Italian": (
+        "Princeton's Department of French and Italian offers four tracks spanning French and "
+        "Italian language, literature, and culture, with the option to combine the language with "
+        "another discipline or a creative art and study abroad."
+    ),
+    "Spanish and Portuguese": (
+        "Princeton's Department of Spanish and Portuguese studies the literatures, cultures, "
+        "societies, and politics of the Spanish- and Portuguese-speaking worlds across four "
+        "tracks, from single-language study to interdisciplinary and creative-arts paths."
     ),
     "Fine and Studio Arts": (
         "Art and Archaeology at Princeton pairs studio practice in painting, photography, and "

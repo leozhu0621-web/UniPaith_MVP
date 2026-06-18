@@ -9,7 +9,7 @@ unchanged (6 clauses that themselves opened on the field name were reworded to
 open on a fact, same verified content).
 
 Revision ID: cmuprof6
-Revises: nyumrg1
+Revises: princetonprof9
 Create Date: 2026-06-18
 """
 
@@ -21,7 +21,7 @@ from alembic import op
 from unipaith.data import carnegie_mellon_profile
 
 revision = "cmuprof6"
-down_revision = "nyumrg1"
+down_revision = "princetonprof9"
 branch_labels = None
 depends_on = None
 
