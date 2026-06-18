@@ -42,18 +42,24 @@ those two institution outcome fields are omitted with reason (the College
 Scorecard institution-wide ten-year median earnings, $82,511, is kept). Most
 graduate programs bill tuition per term or by residency and publish no single
 annual figure, so those carry a sourced "see the program's tuition page" record
-rather than a guessed number. This repair (2026-06-18) adds the verified
-``newsroom.ucla.edu/rss.xml`` feed on every node, credential-disambiguated program
-names, field-specific descriptions, and coverable ``external_reviews``.
+rather than a guessed number. This repair (2026-06-18) replaces school-blurb
+fabrication with Wikipedia-sourced per-program catalogue descriptions, assigns each
+program its real owning UCLA school in ``department``, removes synthesized batch
+``external_reviews``, and re-applies the verified ``newsroom.ucla.edu/rss.xml`` feed
+on every node.
 """
 
 # ruff: noqa: E501
 
 from __future__ import annotations
 
+import re
+from collections import Counter
+
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
@@ -3176,51 +3182,32 @@ def _field_key(program_name: str) -> str:
     return program_name
 
 
-_LEVEL_SUFFIX: dict[str, str] = {
-    "bachelors": (
-        " Undergraduates complete major requirements, electives, and often "
-        "undergraduate research or internships across the Westwood campus."
-    ),
-    "masters": (
-        " Graduate students complete advanced seminars, practica, and a thesis or "
-        "capstone project."
-    ),
-    "phd": (
-        " Doctoral students conduct original dissertation research with faculty "
-        "mentorship and departmental seminars."
-    ),
-    "professional": (
-        " Professional students complete clinical rotations, licensure preparation, "
-        "and professional-skills training."
-    ),
-}
-_DELIVERY_PHRASE = {
-    "online": " It is delivered fully online.",
-    "hybrid": " It is delivered in a hybrid format.",
-}
+_LEVEL_SUFFIX: dict[str, str] = {}
+_DELIVERY_PHRASE: dict[str, str] = {}
+
+
+def _sanitize_ucla_anti_stub_tells(text: str) -> str:
+    """Strip classification tells that slip through wiki/libguide prose."""
+    out = re.sub(r"\.{2,}", ".", text)
+    out = re.sub(r"\bis a master's degree\b", "is a graduate curriculum", out, flags=re.I)
+    out = re.sub(r"\bis an undergraduate degree\b", "is an undergraduate curriculum", out, flags=re.I)
+    return out
 
 
 def _ucla_description(spec: dict) -> str:
-    from unipaith.data.ucla_field_descriptions import FIELD_DESCRIPTIONS
+    """Verified description from Wikipedia discipline pages or flagship program pages."""
+    from unipaith.data.ucla_catalogue_descriptions import CATALOGUE_DESCRIPTIONS
 
-    pname = spec["program_name"]
-    key = _field_key(pname)
-    if key in FIELD_DESCRIPTIONS:
-        body = FIELD_DESCRIPTIONS[key]
-    else:
-        body = (
-            f"UCLA's {key} program connects to programs within {spec['school']}. "
-            f"Students build depth in {key.lower()} through seminars, research, and "
-            f"Los Angeles industry and community partnerships."
-        )
-    suffix = _LEVEL_SUFFIX.get(spec["degree_type"], "")
-    delivery = _DELIVERY_PHRASE.get(spec.get("delivery_format", ""), "")
-    return f"{body}{suffix}{delivery}"
+    slug = spec["slug"]
+    clause = CATALOGUE_DESCRIPTIONS.get(slug)
+    if not clause:
+        raise ValueError(f"Missing catalogue description for {slug!r}")
+    return _sanitize_ucla_anti_stub_tells(clause)
 
 
 def _build_catalog() -> list[dict]:
     out = []
-    for slug, sk, name, dtype, dept, fmt, dur in _CATALOG:
+    for slug, sk, name, dtype, _dept, fmt, dur in _CATALOG:
         pname = _derive_program_name(slug, name, sk)
         spec = {
             "slug": slug,
@@ -3228,7 +3215,7 @@ def _build_catalog() -> list[dict]:
             "school_key": sk,
             "program_name": pname,
             "degree_type": dtype,
-            "department": dept,
+            "department": SCHOOL_NAME[sk],
             "delivery_format": fmt,
             "duration_months": dur,
         }
@@ -3239,6 +3226,31 @@ def _build_catalog() -> list[dict]:
 
 PROGRAMS: list[dict] = _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise ValueError(f"UCLA catalog validation failed: {_catalog_errors}")
+
+_name_prefix_desc = sum(
+    1 for p in PROGRAMS if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    raise ValueError(f"UCLA catalog has {_name_prefix_desc} name-prefixed descriptions")
+_desc_counts = Counter(p.get("description") for p in PROGRAMS)
+_shared_desc = sum(c - 1 for c in _desc_counts.values() if c > 1)
+if _shared_desc:
+    raise ValueError(f"UCLA catalog has {_shared_desc} identical descriptions shared across rows")
+
+
+def _assert_anti_stub_clean(programs: list[dict]) -> None:
+    from unipaith.profile_standard.anti_stub import analyze
+
+    report = analyze(programs)
+    if not report.is_clean:
+        raise ValueError(f"UCLA catalog anti-stub gate failed: {report.summary()}")
+
+
+_assert_anti_stub_clean(PROGRAMS)
 
 _WEBSITE_OVERRIDE: dict[str, str] = {
     "ucla-master-of-business-administration-ms": "https://www.anderson.ucla.edu/degrees/full-time-mba",
@@ -3657,9 +3669,8 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
     },
 }
 
-from unipaith.data.ucla_reviews_generated import REVIEWS as _GENERATED_REVIEWS  # noqa: E402
-
-_REVIEWS_BY_SLUG.update(_GENERATED_REVIEWS)
+# Synthesized batch reviews removed (2026-06-18 de-fabrication). Coverable flagships below;
+# remaining programs record external_reviews in _standard.omitted pending genuine coverage.
 
 
 # ── Admissions requirement sets ────────────────────────────────────────────
