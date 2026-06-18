@@ -169,6 +169,46 @@ def test_catalog_has_no_padding_stubs():
     assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
 
 
+def test_no_cip_rollup_names_or_departments():
+    """No program_name or department may carry a federal CIP-rollup tell (miss #2).
+
+    The realness gate runs credential-form-agnostically on the FIELD part of every
+    name AND its department: a trailing ", General"/", Other", a federal multi-clause
+    comma-and list ("…, Literatures, and Linguistics"), an embedded slash, a literal
+    "(CIP NN.NN)", or a bare CIP rollup title ("Area Studies",
+    "Multi/Interdisciplinary Studies"). Each Princeton degree must use the real
+    published major + owning department.
+    """
+    import re
+
+    rollup = re.compile(
+        r", General\b|, Other\b|Languages, Literatures|, and Linguistics\b"
+        r"|Multi/Interdisciplinary|Area Studies|Ethnic, Cultural"
+        r"|\(CIP \d|/Religious Studies",
+        re.I,
+    )
+    for spec in p.PROGRAMS:
+        name = spec["program_name"]
+        dept = spec.get("department", "")
+        assert not rollup.search(name), f"rollup tell in program_name: {name!r}"
+        assert not rollup.search(dept), f"rollup tell in department: {dept!r} ({name})"
+    # The aggregates were resolved to real Princeton majors (split where needed).
+    names = {spec["program_name"] for spec in p.PROGRAMS}
+    for real in (
+        "Bachelor of Arts in Classics",
+        "Bachelor of Arts in Religion",
+        "Bachelor of Arts in German",
+        "Bachelor of Arts in Slavic Languages and Literatures",
+        "Bachelor of Arts in African American Studies",
+        "Bachelor of Arts in Linguistics",
+        "Bachelor of Arts in Near Eastern Studies",
+        "Bachelor of Arts in East Asian Studies",
+        "Bachelor of Arts in French and Italian",
+        "Bachelor of Arts in Spanish and Portuguese",
+    ):
+        assert real in names, f"missing resolved real major: {real}"
+
+
 def test_every_program_is_gold_except_recorded_omissions():
     # Real Princeton catalog: ~36 undergraduate majors + verified graduate degrees (M.Arch.,
     # MPA, M.S.E./M.Eng.) — not federal certificate/incidental-master's padding rows.

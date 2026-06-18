@@ -21,10 +21,11 @@ from unipaith.profile_standard.anti_stub import analyze
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
 # Grow this list as catalogs are genuinely de-fabricated — never weaken the assertions.
 CERTIFIED_CLEAN = [
-    "mit",      # gold reference
-    "ucsd",     # cert padding dropped; per-credential descriptions (#745 + this run)
-    "caltech",  # cert + non-terminal-MS padding dropped; field-specific descriptions (this run)
-    "nyu",      # bulletin-sourced descriptions; school-blurb + synthesized reviews removed (#753)
+    "mit",        # gold reference
+    "ucsd",       # cert padding dropped; per-credential descriptions (#745 + this run)
+    "caltech",    # cert + non-terminal-MS padding dropped; field-specific descriptions (this run)
+    "nyu",        # bulletin-sourced descriptions; school-blurb + synthesized reviews removed (#753)
+    "princeton",  # CIP rollups → real majors; textbook-def stubs → researched descriptions
 ]
 
 

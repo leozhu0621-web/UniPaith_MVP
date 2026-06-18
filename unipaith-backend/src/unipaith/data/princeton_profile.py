@@ -653,10 +653,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "14.37",
         "duration_months": 48,
-        "description": (
-            "Operations research and financial engineering — optimization, probability, "
-            "statistics and financial mathematics."
-        ),
+        "description": FIELD_DESCRIPTIONS["Operations Research"],
     },
     {
         "slug": "princeton-mechanical-engineering-bs",
@@ -665,7 +662,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "14.19",
         "duration_months": 48,
-        "description": "Mechanical and aerospace engineering — mechanics, design and propulsion.",
+        "description": FIELD_DESCRIPTIONS["Mechanical Engineering"],
     },
     {
         "slug": "princeton-electrical-engineering-bs",
@@ -674,7 +671,9 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "14.10",
         "duration_months": 48,
-        "description": "Electrical and computer engineering — circuits, devices and systems.",
+        "description": FIELD_DESCRIPTIONS[
+            "Electrical, Electronics, and Communications Engineering"
+        ],
     },
     {
         "slug": "princeton-civil-engineering-bs",
@@ -683,9 +682,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "14.08",
         "duration_months": 48,
-        "description": (
-            "Civil and environmental engineering — structures, mechanics and environment."
-        ),
+        "description": FIELD_DESCRIPTIONS["Civil Engineering"],
     },
     {
         "slug": "princeton-chemical-engineering-bs",
@@ -694,7 +691,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "14.07",
         "duration_months": 48,
-        "description": "Chemical and biological engineering — reaction engineering and design.",
+        "description": FIELD_DESCRIPTIONS["Chemical Engineering"],
     },
     # ── Princeton School of Public and International Affairs ──
     {
@@ -729,7 +726,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "23.01",
         "duration_months": 48,
-        "description": "English — literature in English, criticism and creative writing.",
+        "description": FIELD_DESCRIPTIONS["English Language and Literature, General"],
     },
     {
         "slug": "princeton-philosophy-bs",
@@ -738,7 +735,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "38.01",
         "duration_months": 48,
-        "description": "Philosophy — logic, ethics, metaphysics and the history of philosophy.",
+        "description": FIELD_DESCRIPTIONS["Philosophy"],
     },
     # ── The Social Sciences (Division II) ──
     {
@@ -748,7 +745,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "45.06",
         "duration_months": 48,
-        "description": "Economics — micro, macro and econometrics.",
+        "description": FIELD_DESCRIPTIONS["Economics"],
     },
     {
         "slug": "princeton-politics-bs",
@@ -757,9 +754,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "45.10",
         "duration_months": 48,
-        "description": (
-            "Politics — American, comparative and international politics and political theory."
-        ),
+        "description": FIELD_DESCRIPTIONS["Political Science and Government"],
     },
     {
         "slug": "princeton-sociology-bs",
@@ -768,7 +763,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "45.11",
         "duration_months": 48,
-        "description": "Sociology — social structure, inequality and institutions.",
+        "description": FIELD_DESCRIPTIONS["Sociology"],
     },
     {
         "slug": "princeton-anthropology-bs",
@@ -777,7 +772,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "45.02",
         "duration_months": 48,
-        "description": "Anthropology — the comparative study of human societies and cultures.",
+        "description": FIELD_DESCRIPTIONS["Anthropology"],
     },
     {
         "slug": "princeton-history-bs",
@@ -786,7 +781,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "54.01",
         "duration_months": 48,
-        "description": "History — the study of the human past across periods and regions.",
+        "description": FIELD_DESCRIPTIONS["History"],
     },
     # ── The Natural Sciences (Division III) ──
     {
@@ -796,7 +791,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "26.02",
         "duration_months": 48,
-        "description": "Molecular biology — biochemistry, biophysics, genetics and cell biology.",
+        "description": FIELD_DESCRIPTIONS["Biochemistry, Biophysics and Molecular Biology"],
     },
     {
         "slug": "princeton-psychology-bs",
@@ -805,7 +800,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "42.27",
         "duration_months": 48,
-        "description": "Psychology — cognitive, developmental, social and systems neuroscience.",
+        "description": FIELD_DESCRIPTIONS["Research and Experimental Psychology"],
     },
     {
         "slug": "princeton-mathematics-bs",
@@ -814,7 +809,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "27.01",
         "duration_months": 48,
-        "description": "Mathematics — analysis, algebra, geometry and number theory.",
+        "description": FIELD_DESCRIPTIONS["Mathematics"],
     },
     {
         "slug": "princeton-eeb-bs",
@@ -823,7 +818,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "26.13",
         "duration_months": 48,
-        "description": "Ecology and evolutionary biology — organisms, populations and ecosystems.",
+        "description": FIELD_DESCRIPTIONS["Ecology and Evolutionary Biology"],
     },
     {
         "slug": "princeton-physics-bs",
@@ -832,7 +827,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "40.08",
         "duration_months": 48,
-        "description": "Physics — from particles and fields to condensed matter and biophysics.",
+        "description": FIELD_DESCRIPTIONS["Physics"],
     },
     {
         "slug": "princeton-chemistry-bs",
@@ -841,7 +836,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "40.05",
         "duration_months": 48,
-        "description": "Chemistry — organic, inorganic, physical and chemical biology.",
+        "description": FIELD_DESCRIPTIONS["Chemistry"],
     },
     {
         "slug": "princeton-neuroscience-bs",
@@ -850,7 +845,7 @@ PROGRAMS: list[dict] = [
         "degree_type": "bachelors",
         "cip": "26.15",
         "duration_months": 48,
-        "description": "Neuroscience — the molecular, cellular and systems study of the brain.",
+        "description": FIELD_DESCRIPTIONS["Neurobiology and Neurosciences"],
     },
 ]
 
@@ -962,6 +957,16 @@ _CIP_TO_DEPARTMENT: dict[str, str] = {
     "English Language and Literature, General": "English",
     "Fine and Studio Arts": "Art and Archaeology",
     "Architectural Sciences and Technology": "Architecture",
+    # Federal CIP rollup titles → Princeton's real published department / major names.
+    "Classics and Classical Languages, Literatures, and Linguistics": "Classics",
+    "Religion/Religious Studies": "Religion",
+    "Germanic Languages, Literatures, and Linguistics": "German",
+    "Slavic, Baltic and Albanian Languages, Literatures, and Linguistics": (
+        "Slavic Languages and Literatures"
+    ),
+    "Ethnic, Cultural Minority, Gender, and Group Studies": "African American Studies",
+    "Linguistic, Comparative, and Related Language Studies and Services": "Linguistics",
+    "Multi/Interdisciplinary Studies, Other": "Independent Concentration",
 }
 
 
