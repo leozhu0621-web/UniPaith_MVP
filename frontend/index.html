@@ -39,7 +39,7 @@
             t === 'dark' ||
             (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
           if (dark) root.classList.add('dark')
-          root.setAttribute('data-font-size', localStorage.getItem('unipaith_font_size') || 'md')
+          root.setAttribute('data-font-size', localStorage.getItem('unipaith_font_size') || 'sm')
           if (localStorage.getItem('unipaith_dyslexia') === '1')
             root.setAttribute('data-dyslexia', '')
           if (localStorage.getItem('unipaith_reduce_motion') === '1')
