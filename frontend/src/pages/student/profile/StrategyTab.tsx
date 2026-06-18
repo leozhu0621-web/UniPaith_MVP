@@ -18,6 +18,7 @@ import { AlertTriangle, CheckCircle2, ChevronRight, Pencil, Sparkles, MessageCir
 import AIBadge from '../../../components/ui/AIBadge'
 import StrategyEditor from './strategy/StrategyEditor'
 import ApplicationGamePlan from './strategy/ApplicationGamePlan'
+import PlanOverview from './strategy/PlanOverview'
 import {
   type UpdateStrategyBody,
   activateStrategy,
@@ -220,6 +221,10 @@ export default function StrategyTab() {
 
   return (
     <div className="space-y-6">
+      {/* "Your plan" — connected Planning overview (Spec 2026-06-18). The
+          existing strategy detail below is unchanged. */}
+      <PlanOverview />
+
       <div className="flex items-start justify-end">
         <div className="flex shrink-0 items-center gap-2">
           {/* Job-3 hook (Spec 2026-06-15) — develop the strategy with Uni. The
