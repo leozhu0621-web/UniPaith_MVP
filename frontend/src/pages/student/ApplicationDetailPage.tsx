@@ -783,17 +783,34 @@ export default function ApplicationDetailPage() {
                       </button>
                     ))}
                   </div>
-                  {RATIONALE_REQUIRED.includes(intentReason || application.intent_picker || '') && (
-                    <div className="mb-3">
-                      <Textarea
-                        label="Your rationale (required, at least 80 characters)"
-                        value={rationale || application.intent_rationale || ''}
-                        onChange={e => setRationale(e.target.value)}
-                        placeholder="Explain why this application is worth your effort…"
-                      />
-                      <p className="text-[11px] text-foreground mt-1 text-right">{(rationale || application.intent_rationale || '').length}/80</p>
-                    </div>
-                  )}
+                  {RATIONALE_REQUIRED.includes(intentReason || application.intent_picker || '') && (() => {
+                    const len = (rationale || application.intent_rationale || '').trim().length
+                    const met = len >= 80
+                    const remaining = Math.max(0, 80 - len)
+                    return (
+                      <div className="mb-3">
+                        <Textarea
+                          label="Your rationale (required, at least 80 characters)"
+                          value={rationale || application.intent_rationale || ''}
+                          onChange={e => setRationale(e.target.value)}
+                          placeholder="Explain why this application is worth your effort…"
+                        />
+                        {/* A floor, not a cap — fill toward 80 and say what's left to save. */}
+                        <div className="mt-2 flex items-center gap-2">
+                          <StatBar value={len} max={80} best={met} className="flex-1" />
+                          {met ? (
+                            <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-success">
+                              <Check size={11} /> Ready to save
+                            </span>
+                          ) : (
+                            <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
+                              {remaining} more character{remaining !== 1 ? 's' : ''} to save
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })()}
                   <Button
                     size="sm"
                     variant="tertiary"

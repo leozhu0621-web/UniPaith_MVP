@@ -283,10 +283,13 @@ export default function SavedListPage() {
 
   return (
     <PageContainer className="pb-28">
-      {/* Room header — consistent with the other My Space rooms (eyebrow = surface). */}
+      {/* Room header — consistent with the other My Space rooms (eyebrow = surface).
+          Count mirrors the active sub-view so desktop (where the rail owns
+          switching and the on-page strip is hidden) still shows a live count. */}
       <PageHeader
         eyebrow="My Space"
         title="Saved"
+        count={tab === 'schools' ? follows.length : tab === 'searches' ? savedSearches.length : programs.length}
       />
 
       {/* Hidden on lg+ where the My Space rail's Saved group lists these views
