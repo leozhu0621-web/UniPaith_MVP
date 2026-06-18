@@ -6,6 +6,66 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-18 — Run 52 (NO new gaps → 0 rule changes)
+
+**Institutions audited:** No profile-enrichment PR merged since run 51, so there was no new enrichment output to grade.
+Instead, a full live grading pass over the fleet: the photo+feed checklist across ALL 28 institutions, and a program-metrics
+student's-eye pass over gold MIT (control), Georgia Tech (the last live #646 stub), UT-Austin (a live school-blurb catalog),
+Duke, and UW-Madison. Fleet still 28 institutions, no sprawl.
+
+**Merged since run 51:** THREE PRs, all OUT OF SCOPE for profile-data grading:
+- **#723 `feat(match): AI Structure Slice B — two-sided CPEF (M blend) + ProgramPreference`** (`b4b1472`) — matching APP
+  CODE: models/matching service + a `program_preferences` migration + `test_cpef_mutual.py`. No profile data.
+- **#724 `feat(enrich): deterministic enrichment planner (Slice C.1)`** (`ae2e0da`) — a `enrichment_planner.py` SERVICE +
+  test (target-selection logic), not profile data. This is infrastructure that may shape WHICH university a future run picks.
+- **#725 `docs(enrich): update profile-enrichment skill for AI Structure (Slice E)`** (`91783dc`) — a 44-line OWNER addition
+  to `enrich-profile/SKILL.md` (the Prompt-Library / CPEF matcher data map + authority-precedence + the new per-program
+  `ProgramPreference` derive step). Reviewed: it ADDS to the rulebook, weakens NO invariant (no-fabrication / repair-first /
+  verify-rendered-output / workshop-feedback-only / required fields all intact), and reads coherently in place.
+
+**Findings (live API evidence, `api.unipaith.co/api/v1`):**
+1. **Checklist GREEN fleet-wide.** All 28 institutions carry exactly 5 campus photos (no short galleries) and a non-zero
+   posts feed; lowest feeds Purdue 10, UT-Austin 14, UW-Madison 21, UCSD 24 — NO dead feeds. (NYU 1376, Cornell 1462,
+   UChicago 1423 healthiest.)
+2. **gold MIT control (n=65) clean:** 0 dup-name · 0% classification · 1% prefix · 0% double-period · 0% "connects to" ·
+   0% dept-echo · 0% verbatim-shared. Reference instance unchanged.
+3. **Georgia Tech (n=143) is STILL the last live #646 classification stub:** 100% classification descriptions ("Bachelor of
+   Science in Aerospace Engineering is an undergraduate major offered through Georgia Tech's College of Engineering.") +
+   100% prefix + 89% dept-echo. Unchanged — miss #8 gold-contrast + miss #9 prefix + miss #2 dept.
+4. **UT-Austin (n=338) school-blurb form HOLDS live:** 100% "connects to" · 95% double-period ".." · 86% dept-echo · 0%
+   prefix · 0% classification · 0 dup, with the documented "connects to {complete sentence}" splice ("UT Austin's
+   Architecture program connects to the School of Architecture offers NAAB-accredited architecture degrees…"). Run-43
+   miss #8 school-blurb, unchanged.
+5. **Duke (n=154):** 66% prefix + 65% dept-echo (existing miss #9 / miss #2); descriptions field-specific. **UW-Madison
+   (n=348):** field-specific descriptions, structurally clean on the surface metrics (0% classif/prefix/blurb/dept-echo,
+   0% full-string verbatim) — consistent with a de-fabricated catalog (the backlog-carried run-30 shared-LEADING-body
+   caveat is not re-measured this run, an existing-class accuracy note, not a new gap).
+
+**Diagnosis:** every live finding is BAD DATA recurring a class the rulebook ALREADY names — school-blurb descriptions
+(run-43 miss #8 school-blurb), synthesized reviews (run-9 / miss #8 structure-before-depth), dept=field-echo (run-43 miss
+#2), classification stubs (miss #8 gold-contrast), prefix-doubling (miss #9). No display bug. No finding argued for
+loosening an invariant.
+
+**Rulebook changes: NONE (0 of ≤3).** Per the SAFETY RAILS (no-edit-without-NEW-evidence; "Clean fleet → change nothing…
+Never invent a rule to look busy"; anti-churn; confirm-not-already-covered), and because the fleet is UNCHANGED from run 51
+(no new enrichment output), restating documented classes would be churn. The standing concern is unchanged: enricher
+BEHAVIOR + work-ORDERING — the school-blurb stub-swap remains the default repair mechanism on SEVEN consecutive LIVE PRs
+while the CRITICAL backlog top stays unrepaired. New this interval: #724's deterministic planner + #725's matcher data map
+are tooling that may change which target the enricher selects next — worth watching whether they nudge it toward
+repair-first ordering, but neither is a profile-output gap. **Flagged for human review** (carried from runs 46–51).
+
+**Backlog delta:** none substantive (no enrichment merged). Refreshed the preamble header run 51 → 52 with this run's live
+re-grade numbers, the three out-of-scope PRs, and the planner/data-map tooling note. All ranked CRITICAL/HIGH entries
+unchanged (USC, NYU, UIUC, Michigan, UCLA, UW, UT-Austin school-blurb catalogs; Boston U, Stanford, Northwestern, Duke,
+Purdue, UCSD; Georgia Tech the last live #646 stub).
+
+**Invariants:** all intact; no SKILL.md edit (markdown-only: backlog header + this changelog). Health check GREEN —
+`test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** (system pytest + minimal deps —
+sqlalchemy/pydantic/pgvector — with `--noconftest` in this ephemeral container; `profile_standard.manifest` imports cleanly
+at STANDARD_VERSION 2).
+
+---
+
 ## 2026-06-18 — Run 51 (NO new gaps → 0 rule changes)
 
 **Institutions audited:** No enrichment PR merged since run 50, so there was no new enrichment output to grade. Instead,
