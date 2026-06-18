@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import QueryError from '../../components/ui/QueryError'
 import Skeleton from '../../components/ui/Skeleton'
@@ -10,10 +10,12 @@ import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from 
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { qk } from '../../api/queryKeys'
 import { getConnectEvents, getFollowing, followInstitution, unfollowInstitution, getPeersStatus } from '../../api/connect'
+import { getActiveStrategy } from '../../api/strategy'
 import { showToast } from '../../stores/toast-store'
+import { getRecentPrograms, type RecentProgram } from '../../lib/recentPrograms'
 import UniversityCard from './explore/cards/UniversityCard'
 import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type FilterState } from './explore/shared/ExploreFilters'
-import { Building2, MapPin } from 'lucide-react'
+import { Building2, GraduationCap, MapPin } from 'lucide-react'
 import StrategyView from './match/StrategyView'
 import MatchesSection from './match/MatchesSection'
 import PromoCard from './explore/cards/PromoCard'
@@ -161,6 +163,19 @@ export default function ExplorePage() {
 
   // Saved programs — for the MatchesSection cards.
   const { data: savedData, refetch: refetchSaved } = useQuery({ queryKey: qk.savedPrograms(), queryFn: listSaved, retry: false })
+
+  // Active strategy presence — drives the strategy→matches bridge line in
+  // MatchesSection. Same query key as StrategyView, so this shares its cache
+  // (no extra fetch). Only matters on the For-you tab.
+  const { data: activeStrategy } = useQuery({
+    queryKey: ['strategy', 'active'],
+    queryFn: () => getActiveStrategy(),
+    enabled: tab === 'foryou',
+  })
+
+  // Recently-viewed programs (localStorage, written by ProgramDetailPage). Read
+  // once on mount — re-entry shortcut surfaced at the top of the For-you tab.
+  const [recentPrograms] = useState<RecentProgram[]>(() => getRecentPrograms())
 
   const { data: featuredPromos } = useQuery({
     queryKey: ['featured-promotions', 'explore'],
@@ -313,6 +328,34 @@ export default function ExplorePage() {
               <StrategyView forceExpanded={searchParams.get('showStrategy') === 'open'} />
             </div>
 
+            {/* Recently-viewed re-entry rail — idle-only, so it never competes
+                with live program-search results. localStorage-sourced; each chip
+                is a real link back into the program detail page. */}
+            {!searchActive && recentPrograms.length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-eyebrow uppercase text-muted-foreground font-semibold mb-3">Pick up where you left off</h2>
+                <div className="flex flex-wrap gap-2">
+                  {recentPrograms.slice(0, 5).map(p => (
+                    <Link
+                      key={p.id}
+                      to={`/s/programs/${p.id}`}
+                      className="group flex min-w-0 max-w-[15rem] items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 transition-colors hover:bg-muted"
+                    >
+                      <GraduationCap size={14} className="shrink-0 text-muted-foreground" />
+                      <span className="min-w-0">
+                        <span className="block truncate text-xs font-semibold text-foreground group-hover:text-secondary">
+                          {p.program_name}
+                        </span>
+                        {p.institution_name && (
+                          <span className="block truncate text-[11px] text-muted-foreground">{p.institution_name}</span>
+                        )}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Spec 27 §6 — featured promotions from followed / matched institutions. */}
             {!searchActive && featuredPromos && featuredPromos.length > 0 && (
               <div className="mb-6">
@@ -341,6 +384,7 @@ export default function ExplorePage() {
                   onToggleSave={toggleSave}
                   nextEventByInstitution={nextEventByInst}
                   onEventClick={() => setTab('events')}
+                  strategyActive={!!activeStrategy}
                 />
               </div>
             )}
