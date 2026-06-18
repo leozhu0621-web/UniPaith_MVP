@@ -835,8 +835,9 @@ shallow runs and the grader kept flagging "Nth consecutive stub-swap." That is a
 - Only a catalog too large to finish in one run (e.g. 300+ programs) may span runs
   (§"Scope & resumption") — and even then, finish a complete *slice* (e.g. a whole
   school's programs to gold), never a one-line edit. If you have budget left after
-  the target is gold, clear the next acute defect or add the next new university
-  (§2) rather than ending early.
+  the target is gold, move on to the next-priority not-yet-gold university and
+  deepen it (§2) rather than ending early. (This routine never adds new
+  universities — seeding is external; §2.)
 
 ### 1. Health check
 ```bash
@@ -888,56 +889,25 @@ STRICT order:
      photo at all (most beyond the original 14) breaks both the card header and
      the detail hero;
    - **no `_standard` stamp**, or stamped at an older `STANDARD_VERSION`.
-3. **Growth runs IN PARALLEL with repair — it is NOT gated on "all existing gold."**
-   Repair-first means repairs take PRIORITY within a run; it does NOT mean growth
-   waits for a flawless fleet (which never arrives — there is always one more
-   dimension to deepen). Gating growth on perfection froze the fleet at the seeded
-   set for dozens of runs. So distinguish two kinds of "not gold":
-   - **ACUTE / visible brokenness** — stub / duplicate / rollup / abbreviation
-     program names, fabricated or name-prefixed descriptions, a `content_sources`
-     feed that renders empty, missing `campus_photos`, a short/non-conformant
-     catalog. **These block growth: fix every acute defect in the fleet before
-     adding anything new** (this is the "fix the embarrassing stuff first" rule).
-   - **DEPTH-in-progress** — a university whose acute defects are clear but that is
-     still being deepened (some coverable programs lack reviews, some fields
-     honestly-omitted-pending). **This does NOT block growth** — deepening proceeds
-     in parallel with adding new universities.
-   So each run: (a) clear the top ACUTE defect if any exist anywhere in the fleet;
-   then (b) **add the next new university.** **Hard floor: never go more than 2 runs
-   without adding a new university while the US-News list has unseeded entries** — a
-   string of repair-only runs with the fleet never growing is the exact failure this
-   rule prevents.
-   - **Where the next university comes from (so you never run dry):** walk the
-     **U.S. News & World Report "Best Colleges" → National Universities** ranking in
-     rank order and add the highest-ranked university NOT yet in the DB (skip any
-     already present / without a resolvable UNITID). A NEW university enters at
-     **institution level** — but "institution level" is NOT a license to ship a
-     broken surface: even the minimum seed must clear the same non-negotiable
-     **SEED FLOOR** as any live institution, IN THE SAME PR that adds it —
-     (a) verified basics + `ranking_data`; (b) a **≥4-photo verified-and-credited
-     `campus_photos` gallery** (a 1–3 photo gallery breaks the hero lightbox — never
-     ship one); (c) a **working, actually-fetching feed** (never a dead `posts=0`
-     feed); and (d) **a few GENUINELY-REAL flagship programs, each carrying a
-     researched `description_text` AND a real `department`** — NOT name-only rows
-     with empty `description_text` / null `department`, and NOT mis-credentialed
-     rows (e.g. a professional field typed as the wrong `degree_type`). A seed is
-     then deepened to gold on later runs **like any other — it does NOT have to
-     reach full gold in the run it is added** — but a seed that cannot yet meet the
-     floor is NOT ready: **meet the floor or do not add it this run** (a half-built
-     seed is itself an ACUTE defect that blocks the next growth, per §2 above).
-     (Optional: a strong real student-demand signal may bump a school ahead of its
-     US-News rank; absent a signal, follow the list one by one.)
-     _Live evidence (this run): a batch of institution-level seeds shipped with
-     5/5 empty-`description_text` null-`department` flagship rows each, ~⅔ with a
-     <4-photo gallery (as low as 1), and every one with a dead `posts=0` feed — the
-     exact half-built seed this floor forbids._
+3. **This routine does NOT add new universities — seeding is done manually/externally.**
+   The fleet is bulk-seeded from the U.S. News National Universities ranking by a
+   separate operator process (institution-level stubs: verified basics + ranking +
+   campus photos). **Your job is ENRICHMENT + REPAIR ONLY** — take those seeded
+   stubs to gold. Do NOT walk a ranking, resolve new UNITIDs, or create new
+   institutions/admin users. Deepen what is already in the DB.
 
-The two failure modes are symmetric and BOTH forbidden: (1) adding breadth while
-existing profiles are **acutely broken** (stubs / dead feeds / fabrication) — fix
-those first; and (2) **refusing to grow** because the fleet isn't yet flawless —
-grow in parallel per the hard floor above. Only genuinely stop if the US-News
-growth universe is exhausted (it won't be) or the operator has explicitly paused
-growth — never stop merely because the originally seeded set is done.
+   Each run, pick the highest-priority NOT-yet-gold existing university (repair-first
+   ordering from §2 — clear ACUTE defects before depth) and take it as far toward
+   gold as the run allows: full REAL-named catalog (no CIP-rollup/stub rows) · feeds
+   that actually fetch · a ≥4-photo verified `campus_photos` gallery · reviews on
+   coverable programs · field-specific descriptions · conformance. Use the full
+   budget (Effort-per-run rule above) — a freshly-seeded institution is "short
+   catalog" + (often) photo-light, so it is an acute target: deepen it fully.
+
+When every existing profile is gold (or honestly-omitted), **report and stop** — do
+NOT add new universities; seeding is external. (When the operator adds a new batch of
+institution-level seeds, they become the highest-priority enrichment targets on the
+next runs.)
 
 **RE-AUDIT — do not trust a prior "done" mark or `_standard` stamp.** Boston U and
 Stanford were both shipped as "done" and are both broken (483 stub programs;
@@ -1185,17 +1155,18 @@ Idempotent migrations make resumption and overlap safe.
 - **Ship every verified unit** (commit → **merge** → deploy → verify live); a run that
   ends with its PR unmerged has FAILED — never block the tree on one unverifiable field
   (omit and continue), and never leave the finished tree stranded in an open PR.
-- **Stop condition (rarely reached):** end a run only when every existing university is
-  gold at the current `STANDARD_VERSION` AND there is no next university to add. Because
-  growth walks the U.S. News National Universities ranking (step 2 item 3), there is
-  almost always a next target — so "no repairs left" means **add the next-ranked new
-  university**, not stop. Only truly idle if the ranking universe is exhausted or the
-  operator has paused growth.
+- **Stop condition:** this routine is enrichment-only (it never adds universities —
+  seeding is external; step 2 item 3). End a run only when every existing university is
+  gold at the current `STANDARD_VERSION`. Until then there is always a next enrichment
+  target — the worst-off not-yet-gold university (freshly-seeded institution-level stubs
+  rank highest, being "short catalog" acute defects). "No repairs left AND all gold"
+  is the only idle state.
 
 ## Using this as a scheduled routine
 
-The human schedules this skill at any cadence they choose; each firing enriches one
-whole university (or advances an in-flight one) and ships it. See §11 of the spec for
-the exact prompt to schedule. Because every run is whole-tree, idempotent, and verified,
-the database grows one complete university at a time, safely, without ever shipping a
-fabricated fact.
+The human schedules this skill at any cadence they choose; each firing takes one
+seeded university (or advances an in-flight one) toward gold and ships it. The fleet
+is seeded externally (US-News bulk seed); this routine only ENRICHES — it never adds
+new universities. Because every run is whole-tree, idempotent, and verified, the
+database gains one fully-enriched university at a time, safely, without ever shipping
+a fabricated fact.
