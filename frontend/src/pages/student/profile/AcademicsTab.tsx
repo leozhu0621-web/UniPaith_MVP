@@ -323,8 +323,9 @@ export default function AcademicsTab() {
                     <p className="text-sm text-muted-foreground mt-0.5">
                       GPA {rec.gpa ?? '—'}/{rec.gpa_scale ?? '4.0'}
                       {rec.rigor_indicator_count ? ` · ${rec.rigor_indicator_count} AP/IB/Honors` : ''}
-                      {' · '}
-                      {rec.start_date?.slice(0, 4)}–{rec.is_current ? 'Present' : rec.end_date?.slice(0, 4) ?? '—'}
+                      {rec.start_date || rec.end_date || rec.is_current
+                        ? ` · ${rec.start_date?.slice(0, 4) ?? '—'}–${rec.is_current ? 'Present' : rec.end_date?.slice(0, 4) ?? '—'}`
+                        : ''}
                     </p>
                   </div>
                   <div className="flex gap-0.5 shrink-0">
