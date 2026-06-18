@@ -18,6 +18,7 @@ import {
 } from '../../api/calendar'
 import { declineInterview, getMyInterviews } from '../../api/interviews'
 import InterviewRespondPanel from './interviews/InterviewRespondPanel'
+import { deadlineTone } from '../../utils/deadline'
 import type { Interview } from '../../types'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -57,7 +58,9 @@ const DOT_BG: Record<DotColor, string> = {
   cobalt: 'bg-secondary', warning: 'bg-warning', error: 'bg-error', slate: 'bg-muted-foreground',
 }
 const ICON_TEXT: Record<DotColor, string> = {
-  cobalt: 'text-secondary', warning: 'text-warning', error: 'text-error', slate: 'text-muted-foreground',
+  // Deadline / overdue text uses text-destructive to match every other room's
+  // deadline color (same value as --error; this aligns the token name).
+  cobalt: 'text-secondary', warning: 'text-warning', error: 'text-destructive', slate: 'text-muted-foreground',
 }
 const ICON_SOFT_BG: Record<DotColor, string> = {
   cobalt: 'bg-secondary/10', warning: 'bg-warning-soft', error: 'bg-error-soft', slate: 'bg-muted',
@@ -92,17 +95,22 @@ const DEADLINE_TYPES: CalendarItemType[] = [
 const isOverdue = (i: CalendarItem) => i.status === 'overdue'
 const isDone = (i: CalendarItem) => i.status === 'completed' || i.status === 'cancelled'
 
+// Shared deadline tone → CalendarPage dot color. Far-off deadlines ('normal')
+// fall to the muted slate dot; near ones escalate amber → red.
+const TONE_DOT: Record<ReturnType<typeof deadlineTone>, DotColor> = {
+  error: 'error', warning: 'warning', normal: 'slate',
+}
+
 /** Compute the effective dot color for an item, applying urgency to deadlines. */
 function itemColor(item: CalendarItem): DotColor {
   if (isOverdue(item)) return 'error'
   const base = TYPE_META[item.type].color
   if (base !== 'error') return base
-  // deadline items: compute urgency from days until start_at
+  // deadline items: escalate by the canonical shared 7/21 table (utils/deadline)
+  // so the calendar matches every other room. Past-due → red.
   const daysLeft = differenceInDays(parseISO(item.start_at), new Date())
   if (daysLeft < 0) return 'error'
-  if (daysLeft <= 7) return 'error'
-  if (daysLeft <= 30) return 'warning'
-  return 'slate'
+  return TONE_DOT[deadlineTone(daysLeft)]
 }
 // A deadline-like item the student can mark complete (Spec 16 §5).
 const completable = (i: CalendarItem) =>

@@ -1,31 +1,15 @@
 // Spec 18 · Decisions & Offers — shared formatting + state helpers.
 import { formatDate } from '../../../../utils/format'
 
+// Canonical deadline-tone helpers now live in utils/deadline. Re-exported here
+// for back-compat so existing offer/applications imports keep working.
+export { daysUntil, deadlineTone, DEADLINE_TONE_CLASS } from '../../../../utils/deadline'
+export type { DeadlineTone } from '../../../../utils/deadline'
+
 export function money(n?: number | null, currency = 'USD'): string | null {
   if (n == null) return null
   const prefix = currency === 'USD' || !currency ? '$' : `${currency} `
   return `${prefix}${n.toLocaleString()}`
-}
-
-/** Days from today to an ISO date (UTC-safe enough for deadline display). */
-export function daysUntil(iso?: string | null): number | null {
-  if (!iso) return null
-  return Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000)
-}
-
-/** Deadline color escalation, spec 18 §8: normal → warning → error. */
-export type DeadlineTone = 'normal' | 'warning' | 'error'
-export function deadlineTone(days?: number | null): DeadlineTone {
-  if (days == null) return 'normal'
-  if (days <= 7) return 'error'
-  if (days <= 21) return 'warning'
-  return 'normal'
-}
-
-export const DEADLINE_TONE_CLASS: Record<DeadlineTone, string> = {
-  normal: 'text-foreground',
-  warning: 'text-warning',
-  error: 'text-destructive',
 }
 
 /** §2 decision-state → human label. */
