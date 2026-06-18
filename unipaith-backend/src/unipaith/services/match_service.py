@@ -734,7 +734,15 @@ class MatchService:
         if academic.normalized_gpa is not None and "gpa" not in sparse:
             sparse["gpa"] = float(academic.normalized_gpa)
         if academic.field_of_study and "field_of_study" not in sparse:
-            sparse["field_of_study"] = academic.field_of_study
+            # Canonicalize to the FIELD_SIM_TABLE vocab so the s→p field signal
+            # matches the (canonicalized) program-side fields_offered on live
+            # free-text data ("Computer Science" → "computer_science"). Gated:
+            # an unrecognizable field yields no field signal (no phantom 0.0).
+            from unipaith.services.match.field_canon import canonical_field
+
+            canon = canonical_field(academic.field_of_study)
+            if canon:
+                sparse["field_of_study"] = canon
 
     async def _overlay_program_prefs(self, program_features: list[ProgramFeatures]) -> None:
         """Overlay each program's ProgramPreference (target applicant) onto its
@@ -765,7 +773,15 @@ class MatchService:
             if pref.pref_min_gpa is not None:
                 pf.sparse["pref_min_gpa"] = float(pref.pref_min_gpa)
             if pref.pref_fields:
-                pf.sparse["pref_fields"] = list(pref.pref_fields)
+                # Canonicalize the program's target-applicant fields to the same
+                # vocab as the (canonicalized) student field_of_study, so the p→s
+                # field comparison matches on live free-text. Gated: unrecognizable
+                # entries drop; if none survive, no pref_fields signal.
+                from unipaith.services.match.field_canon import canonical_field
+
+                canon_fields = [c for c in (canonical_field(f) for f in pref.pref_fields) if c]
+                if canon_fields:
+                    pf.sparse["pref_fields"] = canon_fields
             if pref.pref_levels:
                 pf.sparse["pref_levels"] = list(pref.pref_levels)
             # AI Structure (Spec 2/3, GAP — claim → c_program): the program-side
@@ -777,7 +793,11 @@ class MatchService:
             # school set one) and lift `data_completeness` (= c_program) to match.
             authority = _program_authority(pref.source, pref.confidence)
             if authority is not None:
-                pf.data_completeness = authority
+                # Authority can only RAISE c_program — never knock a claimed
+                # program (record floor 0.9 from is_claimed) down because it
+                # carries a lower-source preference row. A claimed-source pref
+                # still outscores a derived-source one on otherwise-equal records.
+                pf.data_completeness = max(pf.data_completeness, authority)
 
     async def _student_feature_record(self, student_id: UUID) -> StudentFeatureVector | None:
         return await self.db.scalar(

@@ -22,7 +22,11 @@ async def test_student_gpa_and_field_overlaid(db_session, mock_student_user):
             student_id=profile.id,
             is_current=True,
             normalized_gpa=Decimal("3.70"),
-            field_of_study="data_science",
+            # RAW free-text, as real applicants enter it — the overlay must
+            # CANONICALIZE it to the FIELD_SIM_TABLE vocab so the s→p field
+            # signal matches the (canonicalized) program-side fields_offered.
+            # Seeding an already-canonical value here previously hid this gap.
+            field_of_study="Computer Science",
             institution_name="Prior University",
             degree_type="bachelors",
         )
@@ -37,7 +41,8 @@ async def test_student_gpa_and_field_overlaid(db_session, mock_student_user):
     feats = await MatchService(db_session)._student_features(profile.id)
     assert feats is not None
     assert feats.sparse["gpa"] == 3.7
-    assert feats.sparse["field_of_study"] == "data_science"
+    # canonicalized from the raw "Computer Science" — NOT the raw string
+    assert feats.sparse["field_of_study"] == "computer_science"
     # existing keys preserved
     assert feats.sparse["education_level"] == "bachelors"
 
