@@ -243,7 +243,10 @@ async def test_explain_v2_flag_off_returns_stub(
     resp = await student_client.post(f"{MATCHES}/{program.id}/explain")
     assert resp.status_code == 200
     assert resp.json()["is_stub"] is True
-    assert "Stub rationale" in resp.json()["rationale_text"]
+    text = resp.json()["rationale_text"]
+    assert text, "stub must still return a rationale string"
+    # AI-Structure-3 §14: the stub rationale is qualitative — never a raw number.
+    assert not any(ch.isdigit() for ch in text), f"stub leaked a number: {text!r}"
 
 
 @pytest.mark.asyncio

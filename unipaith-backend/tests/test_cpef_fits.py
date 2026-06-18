@@ -10,6 +10,19 @@ def test_categorical_exact_similar_miss_and_unknown():
     assert fits.fit_categorical(None, "ds") == 0.5  # unknown → neutral
 
 
+def test_categorical_best_over_a_list():
+    table = {("ds", "stats"): 0.8, ("ds", "cs"): 0.7}
+    # exact match anywhere in the list wins
+    assert fits.fit_categorical_best("ds", ["art", "ds"], table) == 1.0
+    # best related grade when no exact
+    assert fits.fit_categorical_best("ds", ["art", "stats"], table) == 0.8
+    # unrelated → 0
+    assert fits.fit_categorical_best("ds", ["art", "music"], table) == 0.0
+    # empty / unknown list → neutral 0.5
+    assert fits.fit_categorical_best("ds", [], table) == 0.5
+    assert fits.fit_categorical_best(None, ["ds"], table) == 0.5
+
+
 def test_numeric_higher_midpoint_and_tails():
     assert abs(fits.fit_numeric_higher(3.5, 3.5, 0.3) - 0.5) < 1e-6
     assert fits.fit_numeric_higher(4.5, 3.5, 0.3) > 0.95
