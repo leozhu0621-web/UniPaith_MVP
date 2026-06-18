@@ -64,6 +64,18 @@ claimed one fill **only** the gaps the school left empty. First-party always win
 - **academic substance** — tracks/specializations · curriculum · faculty/research.
 - School **ranking** stays **editorial-only** — shown on cards, **never** a scored value.
 
+**Base match inputs + per-field provenance — the floor the matcher scores on.**
+Beyond the enrichment extras above, the matcher reads these *core* fields directly,
+so every program MUST carry them: `tuition` (budget fit), location / country (geo
+fit), `degree_type` → target level (eligibility veto), `cip_code` + a real,
+field-specific `description_text` (these drive the interest/field signals AND the
+dense embedding), and support-service signals (needs fit). On **every** field you
+write, stamp `field_provenance[field] = {source, source_url, confidence, fetched_at}`
+with the authority tier — **claimed › verified-feed › crawler › inferred** — because
+that becomes the program-side confidence the matcher trusts (a crawler fact is
+believed less than a school-confirmed one). A program missing these core fields is
+scored on thin data and will rank poorly for everyone.
+
 **NEW per-program step — derive the target applicant (`ProgramPreference`).** For
 every program, also write a **`program_preferences`** row (model `ProgramPreference`,
 table `program_preferences`, added in the AI-Structure build) so the **program →
