@@ -196,6 +196,218 @@ async def test_student_match_response_contains_no_raw_score_field(
         assert not _has_number(item.get("confidence_breakdown") or {})
 
 
+@pytest.mark.asyncio
+async def test_real_cpef_breakdown_carries_no_number_to_student(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    """AI-Structure-3 §14 — the strongest form of the backend-only contract.
+
+    The sibling test above hand-seeds a breakdown that *looks like* CPEF output;
+    this one runs the REAL ``mutual_match()`` (cpef) function and feeds its live
+    breakdown through the student projection. That guards against drift: if
+    ``cpef()`` grows a new numeric key (or renames one), a hand-seeded look-alike
+    could silently miss the leak, but this test consumes whatever shape the
+    matcher actually writes under ``cpef_matching_enabled=true``.
+
+    Asserts that NONE of the raw rank-key / confidence numbers (value, m,
+    s2p_value, inner, mean_rho, coverage, veto, alpha) survive into the student's
+    ``fitness_breakdown`` / ``confidence_breakdown`` — neither as a scalar (so
+    ``RationalePopover.BreakdownBlock`` renders no numeric chip) nor as a residual
+    key — while the qualitative shell (model tag + per-signal driver names) does
+    survive so the popover still has something to show.
+    """
+    from unipaith.api.students import _redact_match_for_student
+    from unipaith.services.matching import ProgramFeatures, StudentFeatures, mutual_match
+
+    student_features = StudentFeatures(
+        sparse={
+            "education_level": "bachelors",
+            "geo_must": ["USA"],
+            "budget_max_usd_per_year": 35000,
+            "interest_themes": ["data_science"],
+            "gpa": 3.0,
+            "field_of_study": "data_science",
+        },
+        profile_completeness=0.8,
+    )
+    program_features = ProgramFeatures(
+        program_id="good",
+        sparse={
+            "target_education_level": "masters",
+            "locations": ["USA"],
+            "tuition_usd_per_year": 30000,
+            "interest_themes": ["data_science"],
+            # Program preferences so the nested p2s sub-dict also carries numbers,
+            # exercising _strip_numbers at depth.
+            "pref_min_gpa": 3.0,
+            "pref_fields": ["data_science"],
+            "pref_levels": ["bachelors"],
+        },
+    )
+    m, fitness_bd = mutual_match(student_features, program_features)
+    # Mirror services.matching._score_cpef's confidence breakdown shape exactly.
+    confidence_bd = {"mean_rho": fitness_bd["mean_rho"], "model": "cpef", "m": fitness_bd["m"]}
+
+    # Sanity — the RAW breakdown DOES carry the rank-key numbers, so the redaction
+    # below is actually doing work (the test can't pass vacuously).
+    assert isinstance(fitness_bd["value"], (int, float))
+    assert isinstance(fitness_bd["m"], (int, float))
+    for k in ("s2p_value", "inner", "mean_rho", "coverage", "veto", "alpha"):
+        assert k in fitness_bd, f"expected real cpef breakdown to carry '{k}'"
+    assert fitness_bd["signals"], "expected real cpef breakdown to carry signal drivers"
+
+    profile = await _ensure_profile(db_session, mock_student_user)
+    program = await _seed_institution_and_program(db_session)
+    match = await _seed_match(
+        db_session,
+        profile,
+        program,
+        fitness=str(round(float(m), 4)),
+        confidence=str(round(float(fitness_bd["mean_rho"]), 4)),
+        fitness_breakdown=fitness_bd,
+        confidence_breakdown=confidence_bd,
+    )
+
+    raw_numeric_keys = {"value", "m", "s2p_value", "inner", "mean_rho", "coverage", "veto", "alpha"}
+
+    def _has_number(obj) -> bool:
+        if isinstance(obj, bool):
+            return False
+        if isinstance(obj, (int, float)):
+            return True
+        if isinstance(obj, dict):
+            return any(_has_number(v) for v in obj.values())
+        if isinstance(obj, list):
+            return any(_has_number(v) for v in obj)
+        return False
+
+    def _all_keys(obj) -> set[str]:
+        keys: set[str] = set()
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                keys.add(str(k))
+                keys |= _all_keys(v)
+        elif isinstance(obj, list):
+            for v in obj:
+                keys |= _all_keys(v)
+        return keys
+
+    # 1) The exact function the API serializes through:
+    #    StudentMatchResponse.model_validate(match) + the §5.5/§14 redaction.
+    proj = _redact_match_for_student(match)
+    fb = proj.fitness_breakdown or {}
+    cb = proj.confidence_breakdown or {}
+    assert not _has_number(fb), f"raw number leaked via student fitness_breakdown: {fb}"
+    assert not _has_number(cb), f"raw number leaked via student confidence_breakdown: {cb}"
+    leaked = (_all_keys(fb) | _all_keys(cb)) & raw_numeric_keys
+    assert not leaked, f"raw rank-key/confidence numbers survived projection: {leaked}"
+    # The qualitative shell survives so the popover still renders the drivers.
+    assert fb.get("model") == "cpef"
+    driver_names = [s.get("key") for s in (fb.get("signals") or []) if isinstance(s, dict)]
+    assert driver_names and all(isinstance(k, str) for k in driver_names), (
+        "qualitative per-signal driver names should survive the projection"
+    )
+
+    # 2) End-to-end through the live student endpoint (full serialization path).
+    detail = (await student_client.get(f"{MATCHES}/{program.id}")).json()
+    assert raw_fields_disjoint(detail)
+    assert not _has_number(detail.get("fitness_breakdown") or {})
+    assert not _has_number(detail.get("confidence_breakdown") or {})
+    leaked_e2e = (
+        _all_keys(detail.get("fitness_breakdown") or {})
+        | _all_keys(detail.get("confidence_breakdown") or {})
+    ) & raw_numeric_keys
+    assert not leaked_e2e, f"raw numbers survived to the endpoint response: {leaked_e2e}"
+
+
+def raw_fields_disjoint(payload: dict) -> bool:
+    """No raw matching-number field on a student payload (AI-Structure-3 §14)."""
+    return {"fitness_score", "confidence_score", "match_score", "score_breakdown"}.isdisjoint(
+        payload.keys()
+    )
+
+
+@pytest.mark.asyncio
+async def test_explain_popover_breakdown_carries_no_rank_key_number(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    """AI-Structure-3 §14 on the channel the popover ACTUALLY renders.
+
+    RationalePopover prefers the /explain response's breakdowns over the match-list
+    props, so the contract has to hold on POST /me/matches/{id}/explain too — not
+    just on GET /me/matches/{id}. Seed a REAL ``mutual_match()`` (cpef) breakdown,
+    hit /explain, and assert no raw rank-key scalar (value/m/inner/mean_rho/…)
+    survives and the popover would render no numeric chip from it.
+    """
+    from unipaith.ai.rationale_redaction import RAW_SCORE_KEYS
+    from unipaith.services.matching import ProgramFeatures, StudentFeatures, mutual_match
+
+    student_features = StudentFeatures(
+        sparse={
+            "education_level": "bachelors",
+            "geo_must": ["USA"],
+            "budget_max_usd_per_year": 35000,
+            "interest_themes": ["data_science"],
+            "gpa": 3.0,
+            "field_of_study": "data_science",
+        },
+        profile_completeness=0.8,
+    )
+    program_features = ProgramFeatures(
+        program_id="good",
+        sparse={
+            "target_education_level": "masters",
+            "locations": ["USA"],
+            "tuition_usd_per_year": 30000,
+            "interest_themes": ["data_science"],
+        },
+    )
+    m, fitness_bd = mutual_match(student_features, program_features)
+    confidence_bd = {"mean_rho": fitness_bd["mean_rho"], "model": "cpef", "m": fitness_bd["m"]}
+
+    profile = await _ensure_profile(db_session, mock_student_user)
+    program = await _seed_institution_and_program(db_session)
+    await _seed_match(
+        db_session,
+        profile,
+        program,
+        fitness=str(round(float(m), 4)),
+        confidence=str(round(float(fitness_bd["mean_rho"]), 4)),
+        fitness_breakdown=fitness_bd,
+        confidence_breakdown=confidence_bd,
+    )
+
+    def _all_keys(obj) -> set[str]:
+        keys: set[str] = set()
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                keys.add(str(k))
+                keys |= _all_keys(v)
+        elif isinstance(obj, list):
+            for v in obj:
+                keys |= _all_keys(v)
+        return keys
+
+    def _renders_numeric_chip(bd: dict) -> bool:
+        # Mirrors RationalePopover.formatBreakdownValue — only top-level scalars
+        # render; a number renders as a numeric chip (bool renders as yes/no).
+        return any(
+            isinstance(v, (int, float)) and not isinstance(v, bool) for v in (bd or {}).values()
+        )
+
+    resp = await student_client.post(f"{MATCHES}/{program.id}/explain")
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    fb = data.get("fitness_breakdown") or {}
+    cb = data.get("confidence_breakdown") or {}
+    leaked = (_all_keys(fb) | _all_keys(cb)) & RAW_SCORE_KEYS
+    assert not leaked, f"/explain leaked raw rank-key scalars to the student: {leaked}"
+    assert not _renders_numeric_chip(fb), f"popover would render a numeric fitness chip: {fb}"
+    assert not _renders_numeric_chip(cb), f"popover would render a numeric confidence chip: {cb}"
+    # The qualitative shell still reaches the popover so it has drivers to show.
+    assert fb.get("model") == "cpef"
+
+
 # ── CHECK constraints ────────────────────────────────────────────────────
 
 
