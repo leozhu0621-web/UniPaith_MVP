@@ -12,6 +12,14 @@ import math
 
 from .params import clamp01
 
+# Upper bound on any exponent argument fed to ``math.exp``. ``exp(±700)`` is the
+# largest finite double; the logistic/Gaussian fits are saturated to their 0/1
+# bounds long before this, so clamping never changes an in-range result — it only
+# turns a corrupt out-of-domain input (which would raise OverflowError and crash
+# the whole ranking) into the correct saturated fit.
+_EXP_CLAMP = 700.0
+_EXP_SQRT = _EXP_CLAMP**0.5  # bound on a ratio that gets squared into an exp argument
+
 
 def fit_categorical(
     student_val: object, program_val: object, sim_table: dict | None = None
@@ -36,20 +44,38 @@ def fit_numeric_higher(
 
     At the cohort mean → 0.5; well above → ~1; well below → ~0. Being far
     above never penalizes.
+
+    The logistic argument is clamped to ±_EXP_CLAMP before ``math.exp`` so a
+    corrupt out-of-domain value (e.g. gpa far below the cohort mean) saturates
+    to 0/1 instead of raising ``OverflowError`` and crashing the whole ranking.
+    The logistic is already numerically saturated long before that bound, so
+    every in-range fit is byte-identical to the un-clamped form.
     """
     if x is None or mu is None:
         return 0.5
     s = sigma if sigma and sigma > 0 else 1.0
     z = (x - mu) / s
-    return clamp01(1.0 / (1.0 + math.exp(-slope * z)))
+    arg = max(-_EXP_CLAMP, min(_EXP_CLAMP, -slope * z))
+    return clamp01(1.0 / (1.0 + math.exp(arg)))
 
 
 def fit_numeric_target(x: float | None, target: float | None, h: float = 0.5) -> float:
-    """Closer-is-better around a target: a Gaussian kernel. Exact → 1."""
+    """Closer-is-better around a target: a Gaussian kernel. Exact → 1.
+
+    The squared distance is clamped to ``_EXP_CLAMP`` before negation so an
+    extreme out-of-domain value (|x|~1e200) saturates the kernel to 0 instead
+    of raising ``OverflowError``. The kernel is already 0 to machine precision
+    far before that bound, so every in-range fit is unchanged.
+    """
     if x is None or target is None:
         return 0.5
     hh = h if h and h > 0 else 0.5
-    return clamp01(math.exp(-(((x - target) / hh) ** 2)))
+    # Clamp the ratio magnitude BEFORE squaring: a huge |x| makes ``ratio**2``
+    # itself overflow a double (4e400) before any ``min`` could fire. _EXP_SQRT
+    # is sqrt(_EXP_CLAMP), so ``ratio**2`` lands at the exp-argument bound.
+    ratio = abs((x - target) / hh)
+    ratio = min(_EXP_SQRT, ratio)
+    return clamp01(math.exp(-(ratio**2)))
 
 
 def fit_range(value: float | None, hi: float | None, delta: float = 0.25) -> float:
