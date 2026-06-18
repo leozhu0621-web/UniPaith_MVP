@@ -1,0 +1,339 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-18T21:49:29Z",
+  "source_root": "Data/sources/",
+  "note": "Machine-readable catalog of local reference data. Raw files are git-ignored; this catalog + dictionaries are committed. status=downloaded means the file is present in the local archive; status=available means catalog-only (fetch via download_url).",
+  "datasets": [
+    {
+      "id": "college-scorecard-institution-latest",
+      "title": "College Scorecard — Most Recent Cohorts, Institution",
+      "publisher": "U.S. Department of Education",
+      "source_url": "https://collegescorecard.ed.gov/data/",
+      "download_url": "https://collegescorecard.ed.gov/data/  (bulk: College_Scorecard_Raw_Data_*.zip)",
+      "api_url": "https://api.data.gov/ed/collegescorecard/v1/schools",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "institution",
+      "entity": "institution",
+      "join_keys": [
+        "UNITID",
+        "OPEID",
+        "OPEID6"
+      ],
+      "coverage": {
+        "latest_cohort": "most-recent",
+        "panel_years": "1996-2025"
+      },
+      "path": "sources/college-scorecard/institution/Most-Recent-Cohorts-Institution.csv",
+      "format": "csv",
+      "dictionary": "dictionaries/college-scorecard.fields.json",
+      "key_fields": [
+        "INSTNM",
+        "CITY",
+        "STABBR",
+        "ZIP",
+        "INSTURL",
+        "CONTROL",
+        "PREDDEG",
+        "HIGHDEG",
+        "CCBASIC",
+        "ADM_RATE",
+        "SAT_AVG",
+        "ACTCMMID",
+        "UGDS",
+        "COSTT4_A",
+        "TUITIONFEE_IN",
+        "TUITIONFEE_OUT",
+        "AVGFACSAL",
+        "PCTPELL",
+        "C150_4",
+        "RET_FT4",
+        "MD_EARN_WNE_P10",
+        "GRAD_DEBT_MDN",
+        "FTFTPCTPELL"
+      ],
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "report-card key stats",
+          "admissions funnel",
+          "outcomes/cost",
+          "quick facts"
+        ]
+      },
+      "size_bytes": 100817953,
+      "rows": 6322,
+      "columns": 3308,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "college-scorecard-field-of-study-latest",
+      "title": "College Scorecard — Most Recent Cohorts, Field of Study",
+      "publisher": "U.S. Department of Education",
+      "source_url": "https://collegescorecard.ed.gov/data/",
+      "download_url": "https://collegescorecard.ed.gov/data/  (bulk: College_Scorecard_Raw_Data_*.zip)",
+      "api_url": "https://api.data.gov/ed/collegescorecard/v1/fos",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "program",
+      "entity": "program",
+      "join_keys": [
+        "UNITID",
+        "CIPCODE",
+        "CREDLEV"
+      ],
+      "coverage": {
+        "latest_cohort": "most-recent",
+        "panel_years": "2015-2023"
+      },
+      "path": "sources/college-scorecard/field-of-study/Most-Recent-Cohorts-Field-of-Study.csv",
+      "format": "csv",
+      "dictionary": "dictionaries/college-scorecard-field-of-study.fields.json",
+      "key_fields": [
+        "UNITID",
+        "INSTNM",
+        "CIPCODE",
+        "CIPDESC",
+        "CREDLEV",
+        "CREDDESC",
+        "IPEDSCOUNT1",
+        "IPEDSCOUNT2",
+        "DEBT_ALL_STGP_EVAL_MDN",
+        "EARN_MDN_HI_1YR",
+        "EARN_MDN_HI_2YR",
+        "EARN_COUNT_WNE_HI_1YR"
+      ],
+      "maps_to": {
+        "unipaith_entity": "program",
+        "sections": [
+          "program outcomes: earnings/debt/completion by CIP + credential level"
+        ]
+      },
+      "size_bytes": 153476644,
+      "rows": 227980,
+      "columns": 178,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "college-scorecard-panels",
+      "title": "College Scorecard — Yearly Panels (institution + field-of-study)",
+      "publisher": "U.S. Department of Education",
+      "source_url": "https://collegescorecard.ed.gov/data/",
+      "download_url": "https://collegescorecard.ed.gov/data/  (bulk archive)",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "institution+program time series",
+      "entity": "institution",
+      "join_keys": [
+        "UNITID",
+        "OPEID6",
+        "CIPCODE",
+        "CREDLEV"
+      ],
+      "coverage": {
+        "panel_years": "1996-2025"
+      },
+      "path": "sources/college-scorecard/panels/",
+      "format": "csv (directory)",
+      "dictionary": "dictionaries/college-scorecard.fields.json",
+      "key_fields": [],
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "historical trends (future)"
+        ]
+      },
+      "size_bytes": 3541883851,
+      "files": 37,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "college-scorecard-crosswalks",
+      "title": "College Scorecard — CIP/UNITID/OPEID Crosswalks",
+      "publisher": "U.S. Department of Education",
+      "source_url": "https://collegescorecard.ed.gov/data/",
+      "download_url": "https://collegescorecard.ed.gov/data/  (bulk archive)",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "crosswalk",
+      "entity": "institution",
+      "join_keys": [
+        "UNITID",
+        "OPEID",
+        "CIPCODE"
+      ],
+      "coverage": {
+        "panel_years": "2000-2023"
+      },
+      "path": "sources/college-scorecard/crosswalks/",
+      "format": "xlsx (directory)",
+      "dictionary": null,
+      "key_fields": [],
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "id reconciliation across sources"
+        ]
+      },
+      "size_bytes": 60900151,
+      "files": 24,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "fafsa-application-demographics",
+      "title": "FAFSA — Application Data by Demographic Characteristics (2023-24)",
+      "publisher": "U.S. Department of Education — Federal Student Aid",
+      "source_url": "https://studentaid.gov/data-center/student/application-volume/fafsa-school-state",
+      "download_url": "https://studentaid.gov/data-center/student/application-volume",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "national demographic",
+      "entity": "aid",
+      "join_keys": [],
+      "coverage": {
+        "latest_cohort": "2023-2024"
+      },
+      "path": "sources/fafsa/2023-2024-application-demographics.xls",
+      "format": "xls",
+      "dictionary": "dictionaries/fafsa.fields.json",
+      "key_fields": [
+        "Gender",
+        "Age",
+        "Grade Level",
+        "Dependency Status",
+        "Pell Eligibility"
+      ],
+      "maps_to": {
+        "unipaith_entity": "aid",
+        "sections": [
+          "financial-need context"
+        ]
+      },
+      "size_bytes": 57344,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "fafsa-apps-by-state",
+      "title": "FAFSA — Application Data by State (2026-27, quarterly)",
+      "publisher": "U.S. Department of Education — Federal Student Aid",
+      "source_url": "https://studentaid.gov/data-center/student/application-volume/fafsa-school-state",
+      "download_url": "https://studentaid.gov/data-center/student/application-volume",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "state",
+      "entity": "aid",
+      "join_keys": [
+        "STATE"
+      ],
+      "coverage": {
+        "latest_cohort": "2026-2027"
+      },
+      "path": "sources/fafsa/2026-2027-app-data-by-state-q1.xlsx",
+      "format": "xlsx",
+      "dictionary": "dictionaries/fafsa.fields.json",
+      "key_fields": [
+        "State",
+        "Applications Submitted",
+        "Applications Completed"
+      ],
+      "maps_to": {
+        "unipaith_entity": "aid",
+        "sections": [
+          "application-volume context by state"
+        ]
+      },
+      "size_bytes": 116489,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "fafsa-federal-school-codes",
+      "title": "FAFSA — Federal School Code List (2026-27, Q3)",
+      "publisher": "U.S. Department of Education — Federal Student Aid",
+      "source_url": "https://fsapartners.ed.gov/knowledge-center/library/federal-school-code-lists",
+      "download_url": "https://fsapartners.ed.gov/knowledge-center/library/federal-school-code-lists",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "institution",
+      "entity": "institution",
+      "join_keys": [
+        "FederalSchoolCode",
+        "OPEID"
+      ],
+      "coverage": {
+        "latest_cohort": "2026-2027"
+      },
+      "path": "sources/fafsa/2627FederalSchoolCodeList3rdQuarter.xlsx",
+      "format": "xlsx",
+      "dictionary": "dictionaries/fafsa.fields.json",
+      "key_fields": [
+        "FederalSchoolCode",
+        "SchoolName",
+        "State"
+      ],
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "aid-eligible school reference / id crosswalk"
+        ]
+      },
+      "size_bytes": 534796,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "fafsa-portfolio-summary",
+      "title": "Federal Student Aid — Portfolio Summary",
+      "publisher": "U.S. Department of Education — Federal Student Aid",
+      "source_url": "https://studentaid.gov/data-center/student/portfolio",
+      "download_url": "https://studentaid.gov/data-center/student/portfolio",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "national",
+      "entity": "aid",
+      "join_keys": [],
+      "coverage": {},
+      "path": "sources/fafsa/PortfolioSummary.xls",
+      "format": "xls",
+      "dictionary": "dictionaries/fafsa.fields.json",
+      "key_fields": [
+        "Outstanding Balance",
+        "Recipients"
+      ],
+      "maps_to": {
+        "unipaith_entity": "aid",
+        "sections": [
+          "national debt context"
+        ]
+      },
+      "size_bytes": 64000,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "fafsa-portfolio-by-loan-type",
+      "title": "Federal Student Aid — Portfolio by Loan Type",
+      "publisher": "U.S. Department of Education — Federal Student Aid",
+      "source_url": "https://studentaid.gov/data-center/student/portfolio",
+      "download_url": "https://studentaid.gov/data-center/student/portfolio",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "national",
+      "entity": "aid",
+      "join_keys": [],
+      "coverage": {},
+      "path": "sources/fafsa/PortfoliobyLoanType.xls",
+      "format": "xls",
+      "dictionary": "dictionaries/fafsa.fields.json",
+      "key_fields": [
+        "Loan Type",
+        "Outstanding Balance"
+      ],
+      "maps_to": {
+        "unipaith_entity": "aid",
+        "sections": [
+          "national debt context"
+        ]
+      },
+      "size_bytes": 58880,
+      "status": "downloaded",
+      "committed": false
+    }
+  ]
+}
