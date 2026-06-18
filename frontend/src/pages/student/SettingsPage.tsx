@@ -4,6 +4,7 @@ import { getSettings, updateSettings, type UpdateSettingsPayload } from '../../a
 import { useThemeStore, type FontSize, type Theme } from '../../stores/theme-store'
 import { showToast } from '../../stores/toast-store'
 import { PageContainer, PageHeader } from '../../components/student/density'
+import usePageTitle from '../../hooks/usePageTitle'
 import QueryError from '../../components/ui/QueryError'
 import AccountCard from './settings/AccountCard'
 import SecurityCard from './settings/SecurityCard'
@@ -16,6 +17,7 @@ import SignOutCard from './settings/SignOutCard'
 import DangerZone from './settings/DangerZone'
 
 export default function SettingsPage() {
+  usePageTitle('Settings')
   const queryClient = useQueryClient()
   const hydrate = useThemeStore(s => s.hydrate)
 

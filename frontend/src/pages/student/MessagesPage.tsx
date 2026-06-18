@@ -12,6 +12,7 @@ import {
 import Skeleton from '../../components/ui/Skeleton'
 import type { InboxAttachment, InboxThreadSummary } from '../../types'
 import { useMessageStream } from '../../hooks/useMessageStream'
+import usePageTitle from '../../hooks/usePageTitle'
 import InboxList, { type InboxFilters } from './inbox/InboxList'
 import ThreadView from './inbox/ThreadView'
 import { AI_REPLY_LABELS } from './inbox/actionLabels'
@@ -43,6 +44,7 @@ function ThreadSkeleton() {
 }
 
 export default function MessagesPage({ initialThreadId }: { initialThreadId?: string | null }) {
+  usePageTitle('Messages')
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [selectedId, setSelectedId] = useState<string | null>(initialThreadId || null)

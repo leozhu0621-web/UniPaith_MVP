@@ -136,7 +136,7 @@ export default function MySpaceHomePage() {
             <p className="mb-4 text-sm font-medium text-foreground">Your space fills as you work.</p>
             <div className="flex flex-wrap gap-2">
               <button onClick={() => navigate('/s')} className="ui-btn inline-flex items-center gap-1.5 rounded-md bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground"><Compass size={13} /> Talk to Uni</button>
-              <button onClick={() => navigate('/s/explore')} className="ui-btn inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"><Target size={13} /> Browse matches</button>
+              <button onClick={() => navigate('/s/explore')} className="ui-btn inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"><Target size={13} /> Browse programs</button>
             </div>
           </Card>
         </div>
@@ -149,7 +149,7 @@ export default function MySpaceHomePage() {
           <MomentumBand stage={stage} week={week} className="mt-5" />
 
           {/* B — dense dashboard. Pipeline with an earned-gold Offers tile. */}
-          <div className="mt-5 grid grid-cols-4 gap-3 rounded-lg border border-border bg-card px-4 py-3">
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-lg border border-border bg-card px-4 py-3">
             <button onClick={() => navigate('/s/saved')} className="text-left" aria-label="Saved programs"><StatTile label="Saved" value={savedList.length} /></button>
             <button onClick={() => navigate('/s/applications?status=in_progress')} className="text-left" aria-label="Applications in progress"><StatTile label="In progress" value={drafts.length} /></button>
             <button onClick={() => navigate('/s/applications?status=submitted')} className="text-left" aria-label="Submitted applications"><StatTile label="Submitted" value={inFlight.length} /></button>

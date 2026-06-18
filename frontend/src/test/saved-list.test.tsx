@@ -50,11 +50,11 @@ describe('SavedListPage', () => {
     vi.clearAllMocks()
   })
 
-  it('shows spec empty state copy and Open Match CTA', async () => {
+  it('shows spec empty state copy and Open Discover CTA', async () => {
     renderPage()
     expect(await screen.findByText('Saved')).toBeTruthy()
     expect(screen.getByText(/Your shortlist is empty/)).toBeTruthy()
-    expect(screen.getByRole('button', { name: /Open Match/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Open Discover/i })).toBeTruthy()
   })
 
   it('renders Programs and Schools tabs', async () => {

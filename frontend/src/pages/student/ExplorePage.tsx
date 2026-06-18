@@ -5,6 +5,7 @@ import QueryError from '../../components/ui/QueryError'
 import Skeleton from '../../components/ui/Skeleton'
 import Coachmark from '../../components/ui/Coachmark'
 import { PageContainer, PageHeader } from '../../components/student/density'
+import usePageTitle from '../../hooks/usePageTitle'
 import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { qk } from '../../api/queryKeys'
@@ -107,6 +108,7 @@ function filtersToURL(base: URLSearchParams, f: FilterState): URLSearchParams {
 }
 
 export default function ExplorePage() {
+  usePageTitle('Discover')
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()

@@ -9,6 +9,7 @@ import {
 import { getPublicInstitution, getPublicPosts } from '../../api/institutions'
 import SocialLinks from '../../components/SocialLinks'
 import { pushRecentProgram } from '../../lib/recentPrograms'
+import usePageTitle from '../../hooks/usePageTitle'
 import { getMatchDetail, logEngagement } from '../../api/matching'
 import { listEvents } from '../../api/events'
 import { saveProgram, unsaveProgram, listSaved } from '../../api/saved-lists'
@@ -133,6 +134,7 @@ export default function ProgramDetailPage() {
 
   // Data
   const { data: program, isLoading, isError, refetch } = useQuery({ queryKey: ['program', programId], queryFn: () => getProgram(programId!) })
+  usePageTitle((program as any)?.program_name || 'Program')
   // Track the visit for the global command palette's "Recently viewed".
   useEffect(() => { if (program) pushRecentProgram(program) }, [program])
   const { data: matchResult } = useQuery({ queryKey: ['match', programId], queryFn: () => getMatchDetail(programId!), retry: false })
