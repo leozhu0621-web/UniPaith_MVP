@@ -29,6 +29,7 @@ import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
 import EmptyState from '../../components/ui/EmptyState'
 import QueryError from '../../components/ui/QueryError'
+import ApplicationSeason from './calendar/ApplicationSeason'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 
 type ViewMode = 'month' | 'week' | 'agenda'
@@ -255,6 +256,10 @@ export default function CalendarPage() {
           </>
         }
       />
+
+      {/* Application season (Discover review 2026-06-14 #4) — upcoming program
+          deadlines by month; self-hides when there are none. */}
+      <ApplicationSeason />
 
       {/* Controls: view switcher + filters */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
