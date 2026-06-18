@@ -33,7 +33,7 @@ CERTIFIED_CLEAN = [
     "georgia_tech",  # catalog.gatech.edu descriptions; stubs + synth reviews removed (gatechprof3)
     "ut_austin",  # catalog.utexas.edu descriptions; school-blurb + synth reviews removed (utaprof2)
     "uw",         # Wikipedia-sourced per-credential descriptions; junk/Westwood removed (uwdefab1)
-    "ucla",       # Wikipedia-sourced per-credential descriptions; Catalog entry junk removed (uclaprof4)
+    "ucla",       # Wikipedia per-credential descriptions; Catalog entry junk removed (uclaprof4)
     "jhu",        # per-credential field clauses (verbatim-across-levels removed); real reviews kept
     # NOTE: "michigan" and "stanford" were REMOVED from this registry (2026-06-18,
     # uwdefab1). Both still ship the same build-script junk UW carried — Stanford's

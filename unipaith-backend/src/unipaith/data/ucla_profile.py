@@ -53,6 +53,7 @@ on every node.
 
 from __future__ import annotations
 
+import os
 import re
 from collections import Counter
 
@@ -3258,8 +3259,6 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
 
 
 # Module-level gate runs after catalogue descriptions are regenerated (build_ucla_catalogue_descriptions.py).
-import os
-
 if os.environ.get("UNIPAITH_SKIP_UCLA_ASSERT") != "1":
     _assert_anti_stub_clean(PROGRAMS)
 
