@@ -33,6 +33,7 @@ CERTIFIED_CLEAN = [
     "michigan",   # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
     "georgia_tech",  # catalog.gatech.edu descriptions; stubs + synth reviews removed (gatechprof3)
     "ut_austin",  # catalog.utexas.edu descriptions; school-blurb + synth reviews removed (utaprof2)
+    "ucla",       # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
 ]
 
 
