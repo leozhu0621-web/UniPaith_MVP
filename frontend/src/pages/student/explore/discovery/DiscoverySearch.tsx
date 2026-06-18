@@ -33,9 +33,12 @@ interface DiscoverySearchProps {
   onToggleFollow?: (institutionId: string) => void
   nextEventByInstitution?: Map<string, { event_name: string; start_time: string }>
   onEventClick?: () => void
+  /** Discover review 2026-06-14 #5 — k-anon peer-cohort count per program_id. */
+  peerCohortByProgram?: Record<string, number>
+  onPeersClick?: () => void
 }
 
-export default function DiscoverySearch({ followedIds, onToggleFollow, nextEventByInstitution, onEventClick }: DiscoverySearchProps = {}) {
+export default function DiscoverySearch({ followedIds, onToggleFollow, nextEventByInstitution, onEventClick, peerCohortByProgram, onPeersClick }: DiscoverySearchProps = {}) {
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -334,6 +337,8 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
                     onToggleFollow={onToggleFollow ? () => onToggleFollow(p.institution_id) : undefined}
                     nextEvent={nextEventByInstitution?.get(p.institution_id) ?? null}
                     onEventClick={onEventClick}
+                    peerCount={peerCohortByProgram?.[p.id]}
+                    onPeersClick={onPeersClick}
                   />
                 ))}
               </div>

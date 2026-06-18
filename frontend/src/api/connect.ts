@@ -177,6 +177,17 @@ export const updateMyPeerProfile = (data: Partial<PeerVisibilityProfile>) =>
 export const discoverPeers = (programId?: string) =>
   apiClient.get('/connect/peers', { params: programId ? { program_id: programId } : {} }).then(r => toArrayData<PeerCard>(r.data))
 
+/** k-anonymized "N peers open to connect" counts per program (Discover review
+ *  2026-06-14 #5). Batch — one request per card grid. Returns {} on any failure
+ *  or for a non-opted-in viewer (cards just render no chip). */
+export const getPeerCohortCounts = (programIds: string[]): Promise<Record<string, number>> =>
+  programIds.length === 0
+    ? Promise.resolve({})
+    : apiClient
+        .post('/connect/peers/cohort-counts', { program_ids: programIds })
+        .then(r => (r.data as { counts: Record<string, number> }).counts ?? {})
+        .catch(() => ({}))
+
 export const requestPeer = (peerId: string) =>
   apiClient.post(`/connect/peers/${peerId}/request`).then(r => r.data)
 

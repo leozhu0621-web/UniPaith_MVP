@@ -128,6 +128,69 @@ async def test_opt_in_then_discover_shared_program_peer(
 
 
 @pytest.mark.asyncio
+async def test_cohort_counts_k_anonymity_floor(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """The per-program count surfaces only at/above the k-floor (3), and is
+    suppressed (omitted) below it. Counts only visible+opted-in peers."""
+    profile, _, program = await _seed_program(db_session, mock_student_user, mock_institution_user)
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program.id)})
+    await student_client.post("/api/v1/connect/peers/opt-in", json={"opted_in": True})
+
+    svc = PeerService(db_session)
+
+    # 2 peers share the program → below the k-floor of 3 → suppressed.
+    await _make_peer(db_session, program.id, name="Grace Peer")
+    await _make_peer(db_session, program.id, name="Alan Peer")
+    assert await svc.cohort_counts(profile.id, [program.id]) == {}
+
+    # A 3rd eligible peer crosses the floor → the count surfaces.
+    await _make_peer(db_session, program.id, name="Edsger Peer")
+    counts = await svc.cohort_counts(profile.id, [program.id])
+    assert counts == {program.id: 3}
+
+
+@pytest.mark.asyncio
+async def test_cohort_counts_empty_when_viewer_not_opted_in(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """An aggregate over peer profiles is peer data — a non-opted-in viewer gets
+    nothing, even with plenty of eligible peers."""
+    profile, _, program = await _seed_program(db_session, mock_student_user, mock_institution_user)
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program.id)})
+    for n in ("A Peer", "B Peer", "C Peer", "D Peer"):
+        await _make_peer(db_session, program.id, name=n)
+    # Viewer never opted in.
+    assert await PeerService(db_session).cohort_counts(profile.id, [program.id]) == {}
+
+
+@pytest.mark.asyncio
+async def test_cohort_counts_endpoint_shape(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    _, _, program = await _seed_program(db_session, mock_student_user, mock_institution_user)
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program.id)})
+    await student_client.post("/api/v1/connect/peers/opt-in", json={"opted_in": True})
+    for n in ("A Peer", "B Peer", "C Peer"):
+        await _make_peer(db_session, program.id, name=n)
+
+    resp = await student_client.post(
+        "/api/v1/connect/peers/cohort-counts", json={"program_ids": [str(program.id)]}
+    )
+    assert resp.status_code == 200
+    assert resp.json() == {"counts": {str(program.id): 3}}
+
+
+@pytest.mark.asyncio
 async def test_request_and_accept_opens_peer_thread(
     student_client: AsyncClient,
     db_session: AsyncSession,

@@ -9,7 +9,8 @@ import usePageTitle from '../../hooks/usePageTitle'
 import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { qk } from '../../api/queryKeys'
-import { getConnectEvents, getFollowing, followInstitution, unfollowInstitution, getPeersStatus } from '../../api/connect'
+import { getConnectEvents, getFollowing, followInstitution, unfollowInstitution, getPeersStatus, getPeerCohortCounts } from '../../api/connect'
+import { getMatches } from '../../api/matching'
 import { getActiveStrategy } from '../../api/strategy'
 import { showToast } from '../../stores/toast-store'
 import { getRecentPrograms, type RecentProgram } from '../../lib/recentPrograms'
@@ -259,6 +260,29 @@ export default function ExplorePage() {
     return m
   }, [upcomingEvents])
 
+  // Peer-cohort chips (Discover review 2026-06-14 #5) — k-anonymized "N open to
+  // connect" per program, only for an opted-in viewer. Program ids come from the
+  // shared ['matches'] cache (no extra fetch); the backend suppresses < k.
+  const peersOptedIn = !!peersStatus?.opted_in
+  const { data: matchesForCohort = [] } = useQuery({
+    queryKey: ['matches'],
+    queryFn: () => getMatches(),
+    retry: 1,
+    staleTime: 60_000,
+    enabled: tab === 'foryou' && peersEnabled && peersOptedIn,
+  })
+  const cohortProgramIds = useMemo(
+    () => matchesForCohort.map(m => m.program_id).filter(Boolean) as string[],
+    [matchesForCohort],
+  )
+  const { data: peerCohortByProgram = {} } = useQuery({
+    queryKey: ['peer-cohort', cohortProgramIds],
+    queryFn: () => getPeerCohortCounts(cohortProgramIds),
+    enabled: cohortProgramIds.length > 0 && peersEnabled && peersOptedIn,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  })
+
   const uniList: UniversityRow[] = universities?.items ?? []
   const filteredUniList = useMemo(() => applyFilters(uniList, filters), [uniList, filters])
   const hasActiveFilters = countActiveFilters(filters) > 0
@@ -384,6 +408,8 @@ export default function ExplorePage() {
                   onToggleSave={toggleSave}
                   nextEventByInstitution={nextEventByInst}
                   onEventClick={() => setTab('events')}
+                  peerCohortByProgram={peerCohortByProgram}
+                  onPeersClick={() => setTab('peers')}
                   strategyActive={!!activeStrategy}
                 />
               </div>
@@ -396,6 +422,8 @@ export default function ExplorePage() {
                 onToggleFollow={toggleFollow}
                 nextEventByInstitution={nextEventByInst}
                 onEventClick={() => setTab('events')}
+                peerCohortByProgram={peerCohortByProgram}
+                onPeersClick={() => setTab('peers')}
               />
             </div>
 
