@@ -15,7 +15,11 @@ on:
 # PRs merge in quick succession.
 concurrency:
   group: deploy-backend
-  cancel-in-progress: true
+  # Serialize, never cancel: a backend deploy runs DB migrations, so cancelling an
+  # in-progress deploy means its migration never applies. Under rapid auto-merges
+  # this starved every deploy (migrations never landed). Queue them instead — each
+  # merged migration deploys; redundant queued runs are cheap (idempotent).
+  cancel-in-progress: false
 
 env:
   AWS_REGION: us-east-1
