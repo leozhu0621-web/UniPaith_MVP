@@ -417,7 +417,12 @@ def cpef(
     for db in dealbreakers:
         v_eff = 1.0 - db["rho"] * (1.0 - db["v"])
         v_total *= v_eff
-        if db["rho"] >= p["confirmed_gain"] and db["v"] <= p["epsilon"]:
+        # Tolerant comparison: at the analytic boundary ``v == epsilon`` the float
+        # computation of a budget veto can land a hair ABOVE epsilon (e.g.
+        # 0.010000000000000009), so a strict ``<=`` would let a confirmed
+        # ~1.5x-over-budget program escape the hard floor on float noise. The
+        # 1e-9 slack snaps that boundary case to the floor without widening it.
+        if db["rho"] >= p["confirmed_gain"] and db["v"] <= p["epsilon"] + 1e-9:
             hard = True
         db_bd.append({"key": db["key"], "v": round(db["v"], 4), "v_eff": round(v_eff, 4)})
 

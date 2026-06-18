@@ -11,8 +11,17 @@ Stress-tests the three charts of the live AI Structure at scale:
     bite today. A 'ranking'/'weight_ranking' key on a program is EXCLUDED from the math.
   Chart 3 (MATCH) — ONE backend number M = CPEF_{s→p}^alpha · CPEF_{p→s}^(1-alpha),
     alpha≈0.7; M is the rank key; deal-breakers are an in-formula VETO with a hardened
-    floor (a CONFIRMED deal-breaker ranks below every non-vetoed program; an INFERRED
-    one only dents); coverage damp; everything bounded [0,1]; no NaN; no phantom-zero.
+    floor; coverage damp; everything bounded [0,1]; no NaN; no phantom-zero.
+
+    HONEST COVERAGE NOTES (Slice A):
+      • A CONFIRMED deal-breaker is capped at ``epsilon·inner`` and ranks below every
+        clean program of comparable-or-better inner fit (and below every truly
+        un-vetoed program); it is NOT guaranteed below every *soft*-vetoed program —
+        see test_honest_note_confirmed_dealbreaker_not_below_every_clean.
+      • The 'an INFERRED deal-breaker only dents' branch is UNREACHABLE today: every
+        veto rho is the uniform Slice-A constant, so all deal-breakers are confirmed.
+        The graded-dent math is correct but cannot vary at runtime until real
+        per-signal confidence is wired (pinned by the Slice-A confidence tests below).
 
 This builds 1000 diverse students × ~50 schools / ~230 programs, ranks every student
 against every program under CPEF, dumps aggregate stats + a JSON to
@@ -41,12 +50,14 @@ from unipaith.services.enrichment_planner import (
     essentials_present,
     plan_next,
 )
-from unipaith.services.match.params import DEFAULT_PARAMS
+from unipaith.services.match import fits as _fits
+from unipaith.services.match.params import DEFAULT_PARAMS, confidence_to_gain
 from unipaith.services.matching import (
     ProgramFeatures,
     StudentFeatures,
     cpef,
     cpef_program_to_student,
+    mutual_match,
     rank_programs,
 )
 
@@ -813,3 +824,276 @@ def test_two_sided_confidence_is_capped_at_slice_a_placeholder():
             rhos.add(sc.fitness_breakdown.get("mean_rho"))
     # all mean_rho values collapse to the single Slice-A constant
     assert len(rhos) == 1, f"expected a single Slice-A mean_rho, got {sorted(rhos)}"
+
+
+# ── Per-type fit functions: boundary values + exception-safety (Spec 3 §3/§9) ──
+
+
+def test_all_fit_functions_boundary_values():
+    """Spec 3 §9 'each f_k type: boundary values (exact, far, disjoint, over-budget
+    ramp)'. Exercises ALL eight per-type fit functions at their boundaries, including
+    the five (categorical/numeric_target/boolean/degree_level/date) that the CPEF
+    assembly does not yet route data through — so the graded behavior they will need
+    when wired is pinned now."""
+    # categorical: exact / curated-similar / disjoint / unknown→neutral
+    assert _fits.fit_categorical("ds", "ds") == 1.0
+    assert _fits.fit_categorical("ds", "stats", {("ds", "stats"): 0.8}) == 0.8
+    assert _fits.fit_categorical("ds", "art_history") == 0.0
+    assert _fits.fit_categorical(None, "ds") == 0.5
+    # numeric_higher: at-mean=0.5, well-above→~1, well-below→~0
+    assert abs(_fits.fit_numeric_higher(3.0, 3.0, 0.3) - 0.5) < 1e-9
+    assert _fits.fit_numeric_higher(4.0, 3.0, 0.3) > 0.95
+    assert _fits.fit_numeric_higher(2.0, 3.0, 0.3) < 0.05
+    # numeric_target: exact=1, far→0
+    assert abs(_fits.fit_numeric_target(24, 24, 6) - 1.0) < 1e-9
+    assert _fits.fit_numeric_target(60, 24, 6) < 0.02
+    # range (over-budget ramp): affordable=1, mid-overage in (0,1), far→0
+    assert _fits.fit_range(30000, 35000) == 1.0
+    assert 0.0 < _fits.fit_range(40000, 35000, 0.25) < 1.0
+    assert _fits.fit_range(60000, 35000, 0.25) == 0.0
+    # boolean: has=1, hard-want-miss=0, soft-want-miss=0.3
+    assert _fits.fit_boolean(True) == 1.0
+    assert _fits.fit_boolean(False, want_hard=True) == 0.0
+    assert _fits.fit_boolean(False, want_hard=False) == 0.3
+    # geo: overlap=1, disjoint=0, unknown→0.5
+    assert _fits.fit_geo(["USA"], ["USA", "UK"]) == 1.0
+    assert _fits.fit_geo(["UK"], ["USA"]) == 0.0
+    assert _fits.fit_geo([], ["USA"]) == 0.5
+    # degree_level: exact=1, adjacent-acceptable=0.6, wrong-family=0
+    assert _fits.fit_degree_level("masters", "masters") == 1.0
+    assert _fits.fit_degree_level("masters", "doctoral") == 0.6
+    assert _fits.fit_degree_level("masters", "bachelors") == 0.0
+    # date: comfortable=1, infeasible=0, shrinking→linear
+    assert _fits.fit_date(120, 90) == 1.0
+    assert _fits.fit_date(0, 90) == 0.0
+    assert abs(_fits.fit_date(45, 90) - 0.5) < 1e-9
+
+
+def test_fit_functions_never_raise_on_out_of_domain_numbers():
+    """Robustness regression (group invariant 'no exception over all pairs'): a
+    corrupt out-of-domain numeric signal from an upstream extractor must NOT raise
+    OverflowError out of a fit function — it must saturate to a bounded fit. This
+    pins the fits.py exponent-clamp fix; before it, fit_numeric_higher(gpa<-122) and
+    fit_numeric_target(|x|~1e200) raised OverflowError that propagated out of cpef →
+    rank_programs and crashed the whole ranking."""
+    extremes = [-1e308, -1e200, -1e6, -122.0, 1e6, 1e200, 1e308, float("inf"), float("-inf")]
+    for x in extremes:
+        h = _fits.fit_numeric_higher(x, 3.0, 0.3)
+        assert 0.0 <= h <= 1.0 and not math.isnan(h), f"fit_numeric_higher({x}) = {h}"
+        t = _fits.fit_numeric_target(x, 0.0, 0.5)
+        assert 0.0 <= t <= 1.0 and not math.isnan(t), f"fit_numeric_target({x}) = {t}"
+    # the saturated direction is still correct: far-below the mean → ~0, far-above → ~1
+    assert _fits.fit_numeric_higher(-1e6, 3.0, 0.3) < 1e-6
+    assert _fits.fit_numeric_higher(1e6, 3.0, 0.3) > 1.0 - 1e-6
+
+
+def test_no_exception_under_adversarial_numeric_signals_end_to_end():
+    """End-to-end: feed extreme/corrupt numeric values (gpa, budget, tuition,
+    pref_min_gpa) through the full CPEF rank and assert ZERO exceptions and every M
+    bounded. This is the scale form of the 'no exception over all pairs' invariant
+    against unvalidated upstream data (the overflow class the validator hit 12,816×)."""
+    rng = random.Random(99)
+    bad_numbers = [-1e308, -1e200, -1e6, -150.0, 0.0, 1e6, 1e200, 1e308, float("inf"), float("nan")]
+    students: list[StudentFeatures] = []
+    for _ in range(200):
+        students.append(
+            StudentFeatures(
+                sparse={
+                    "education_level": "bachelors",
+                    "budget_max_usd_per_year": rng.choice(bad_numbers),
+                    "needs_aid": False,
+                    "interest_themes": ["ai"],
+                    "gpa": rng.choice(bad_numbers),
+                    "field_of_study": "data_science",
+                }
+            )
+        )
+    progs: list[ProgramFeatures] = []
+    for k in range(20):
+        progs.append(
+            ProgramFeatures(
+                program_id=f"adv_{k}",
+                sparse={
+                    "target_education_level": "masters",
+                    "locations": ["USA"],
+                    "tuition_usd_per_year": rng.choice(bad_numbers),
+                    "interest_themes": ["ai"],
+                    "pref_min_gpa": rng.choice(bad_numbers),
+                    "pref_fields": ["data_science"],
+                    "pref_levels": ["bachelors"],
+                },
+            )
+        )
+    for stu in students:
+        ranked = rank_programs(stu, progs, cpef_enabled=True, include_eliminated=True)
+        for _, sc in ranked:
+            m = float(sc.fitness)
+            assert 0.0 <= m <= 1.0 and not math.isnan(m) and not math.isinf(m)
+
+
+# ── Float-boundary budget veto (deal-breaker hard floor) ─────────────────────
+
+
+def test_budget_veto_hard_floor_trips_at_analytic_epsilon_boundary():
+    """Regression for the float-boundary deal-breaker bug: a confirmed ~1.5x-over-
+    budget program whose analytic veto ``v`` lands EXACTLY at ``epsilon`` must still
+    trip the hard floor (it was escaping when float made v = 0.010000000000000009 >
+    epsilon). Budget 40000 → ceiling 50000, span 10000; tuition 59900 → analytic
+    v = 1 - 9900/10000 = 0.01 = epsilon."""
+    stu = StudentFeatures(
+        sparse={
+            "education_level": "bachelors",
+            "budget_max_usd_per_year": 40000,
+            "needs_aid": False,
+            "interest_themes": ["ai"],
+        }
+    )
+    boundary = ProgramFeatures(
+        program_id="boundary",
+        sparse={
+            "target_education_level": "masters",
+            "locations": ["USA"],
+            "tuition_usd_per_year": 59900,
+            "interest_themes": ["ai"],
+        },
+    )
+    _, bd = cpef(stu, boundary)
+    assert bd["hard_floor"] is True, "confirmed over-budget at the epsilon boundary must bury"
+    # a program just over the soft ceiling (within the linear ramp) stays SOFT
+    soft = ProgramFeatures(
+        program_id="soft",
+        sparse={
+            "target_education_level": "masters",
+            "locations": ["USA"],
+            "tuition_usd_per_year": 50001,
+            "interest_themes": ["ai"],
+        },
+    )
+    _, bd_soft = cpef(stu, soft)
+    assert bd_soft["hard_floor"] is False, "a mild overage in the ramp must only dent, not bury"
+
+
+# ── Confidence ↔ fit fusion: posterior-mean monotonicity (Chart 3, Spec 3 §5) ──
+
+
+def test_confidence_monotonicity_moves_fit_away_from_prior():
+    """The defining Chart-3 property ('fit & confidence FUSED'): for a FIXED raw fit
+    f, raising the per-signal confidence c moves the posterior-mean fhat AWAY from the
+    0.5 prior (sharper), lowering it moves fhat TOWARD the prior. Tested directly on
+    the posterior-mean math (fhat = f·rho + (1-rho)·prior with rho = confidence_to_gain(c))
+    because the live cpef() pins c at the Slice-A constant. This is the formula the §5
+    worked drop (imported→inferred) relies on."""
+    prior = DEFAULT_PARAMS["prior"]
+    cs = [0.1, 0.3, 0.5, 0.7, 0.9, 0.99]
+    for f in (0.9, 0.7, 0.3, 0.1):  # both above and below the prior
+        dists = []
+        for c in cs:
+            rho = confidence_to_gain(c)
+            fhat = f * rho + (1.0 - rho) * prior
+            dists.append(abs(fhat - prior))
+        # strictly increasing |fhat - prior| as confidence rises
+        assert all(b > a for a, b in zip(dists, dists[1:], strict=False)), (
+            f"|fhat-prior| not monotone-increasing in c for f={f}: {dists}"
+        )
+    # f == prior is a fixed point: confidence cannot manufacture a direction
+    for c in cs:
+        rho = confidence_to_gain(c)
+        fhat = prior * rho + (1.0 - rho) * prior
+        assert abs(fhat - prior) < 1e-12
+
+
+def test_claimed_derived_crawler_indistinguishable_today_slice_a():
+    """HONEST CONSEQUENCE of the Slice-A placeholder, pinned (Chart 2 'claimed
+    outweighs derived/crawler'): three programs identical except for data_completeness
+    (claimed 0.9 / derived 0.5 / crawler 0.4) produce BYTE-IDENTICAL CPEF + M today,
+    because _build_cpef_signals never reads program/student confidence. When a future
+    slice wires Spec-2 authority precedence into the per-signal c, this test will
+    (correctly) break — that is the signal the inert confidence axis went live."""
+    student = StudentFeatures(
+        sparse={
+            "education_level": "bachelors",
+            "interest_themes": ["data_science"],
+            "gpa": 3.5,
+            "field_of_study": "data_science",
+        },
+        profile_completeness=0.9,
+        extractor_quality=0.9,
+    )
+    base = {
+        "target_education_level": "masters",
+        "locations": ["USA"],
+        "tuition_usd_per_year": 30000,
+        "interest_themes": ["data_science"],
+    }
+    values = set()
+    for dc in (0.9, 0.5, 0.4):
+        prog = ProgramFeatures(program_id=f"p_{dc}", sparse=dict(base), data_completeness=dc)
+        v, _ = cpef(student, prog)
+        m, _ = mutual_match(student, prog)
+        values.add((round(v, 10), round(m, 10)))
+    assert len(values) == 1, f"data_completeness already moves the score: {values}"
+
+
+# ── Mutual-fit blend identities (Chart 3, Spec 3 §4) ──────────────────────────
+
+
+def test_mutual_blend_identities_alpha_extremes_and_p2s_monotone():
+    """Spec 3 §4 'Blend' identities: alpha=1 → M == CPEF_s→p (one-directional);
+    alpha=0.5 → M == geometric mean √(sp·ps); and lowering CPEF_p→s lowers M with
+    s→p fixed (a pickier program the student fails on its preferences pulls M down)."""
+    student = StudentFeatures(
+        sparse={
+            "education_level": "bachelors",
+            "geo_must": ["USA"],
+            "budget_max_usd_per_year": 60000,
+            "interest_themes": ["data_science"],
+            "gpa": 3.0,
+            "field_of_study": "data_science",
+        },
+        profile_completeness=0.8,
+    )
+    base = {
+        "target_education_level": "masters",
+        "locations": ["USA"],
+        "tuition_usd_per_year": 25000,
+        "interest_themes": ["data_science"],
+    }
+    lenient = ProgramFeatures(program_id="lenient", sparse=dict(base))
+    picky = ProgramFeatures(
+        program_id="picky",
+        sparse={**base, "pref_min_gpa": 3.95, "pref_fields": ["law"], "pref_levels": ["masters"]},
+    )
+    sp, _ = cpef(student, picky)
+    ps, _ = cpef_program_to_student(student, picky)
+
+    # alpha = 1 → purely student-directional
+    params1 = {**DEFAULT_PARAMS, "alpha": 1.0}
+    m1, _ = mutual_match(student, picky, params=params1)
+    assert abs(m1 - sp) < 1e-9, f"alpha=1 must equal s→p: M={m1} sp={sp}"
+
+    # alpha = 0.5 → geometric mean
+    params_half = {**DEFAULT_PARAMS, "alpha": 0.5}
+    m_half, _ = mutual_match(student, picky, params=params_half)
+    assert abs(m_half - (sp * ps) ** 0.5) < 1e-9, "alpha=0.5 must be √(sp·ps)"
+
+    # lowering p→s (pickier program the student fails) lowers M with s→p held
+    m_lenient, _ = mutual_match(student, lenient)
+    m_picky, _ = mutual_match(student, picky)
+    ps_lenient, _ = cpef_program_to_student(student, lenient)
+    assert ps_lenient > ps  # lenient (no prefs) → 1.0 > picky's satisfaction
+    assert m_picky < m_lenient, "a program the student fails on its prefs must pull M down"
+
+
+def test_tiebreak_secondary_key_is_confidence_today():
+    """HONEST NOTE pinned (Spec 3 §4 vs implementation): the spec mandates ties on M
+    break by coverage (ΣA_k) then raw fit (Σf_k). rank_programs' actual sort key is
+    (M, confidence=mean_rho). In Slice A mean_rho is the uniform constant, so the
+    secondary key is inert — the real ordering among M-ties is the stable-sort input
+    order. This pins the current behavior so a future slice that implements the §4
+    coverage/raw-fit tie-break (and varies mean_rho) will surface here."""
+    rhos = set()
+    for stu in _STUDENTS[::100]:
+        for _, sc in rank_programs(stu, _PROGRAMS[:8], cpef_enabled=True):
+            rhos.add(round(float(sc.confidence), 6))
+    # the secondary sort key collapses to a single value today → inert tie-break
+    assert len(rhos) == 1, f"confidence tie-break is no longer constant: {sorted(rhos)}"
