@@ -25,11 +25,12 @@ import { Bookmark, GraduationCap } from 'lucide-react'
 import type { MatchBand, SavedPriority, SavedProgram } from '../../types'
 import SavedProgramRow, { PRIORITY_CONFIG, PRIORITY_ORDER } from './saved/SavedProgramRow'
 import ListBalanceMeter from './saved/ListBalanceMeter'
+import CompareBoard from './saved/CompareBoard'
 import SavedSchoolCard from './saved/SavedSchoolCard'
 import { programSummaryOf, sortSavedPrograms, type SortKey } from './saved/savedUtils'
 
 type Tab = 'programs' | 'schools' | 'searches'
-type ViewMode = 'tier' | 'priority' | 'flat'
+type ViewMode = 'tier' | 'priority' | 'flat' | 'compare'
 type FilterKey = 'all' | SavedPriority
 
 const BAND_ORDER: MatchBand[] = ['reach', 'target', 'safer']
@@ -366,6 +367,7 @@ export default function SavedListPage() {
                 <option value="tier">Grouped by tier</option>
                 <option value="priority">Grouped by priority</option>
                 <option value="flat">Flat list</option>
+                <option value="compare">Compare board</option>
               </select>
             </label>
             <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -447,6 +449,8 @@ export default function SavedListPage() {
                 )
               })}
             </div>
+          ) : viewMode === 'compare' ? (
+            <CompareBoard programs={filtered} />
           ) : (
             <div className="stagger-list space-y-4">{filtered.map(renderRow)}</div>
           )}
