@@ -276,6 +276,74 @@ async def update_program(
     return await svc.update_program(inst.id, program_id, body)
 
 
+# ── AI Structure (Spec 2/3): a claimed school edits its target-applicant
+# preferences (the program→student match direction). ────────────────────────
+class ProgramPreferenceBody(BaseModel):
+    pref_min_gpa: float | None = None
+    pref_test_bands: dict | None = None
+    pref_fields: list[str] | None = None
+    pref_levels: list[str] | None = None
+    pref_countries: list[str] | None = None
+    weight_academic: int | None = None
+    weight_field_fit: int | None = None
+    weight_outcomes_alignment: int | None = None
+    weight_funding_need: int | None = None
+    weight_geographic: int | None = None
+
+
+class ProgramPreferenceResponse(ProgramPreferenceBody):
+    program_id: UUID
+    source: str
+
+
+def _pref_response(pref) -> ProgramPreferenceResponse:
+    return ProgramPreferenceResponse(
+        program_id=pref.program_id,
+        source=pref.source,
+        pref_min_gpa=float(pref.pref_min_gpa) if pref.pref_min_gpa is not None else None,
+        pref_test_bands=pref.pref_test_bands,
+        pref_fields=list(pref.pref_fields) if pref.pref_fields else None,
+        pref_levels=list(pref.pref_levels) if pref.pref_levels else None,
+        pref_countries=list(pref.pref_countries) if pref.pref_countries else None,
+        weight_academic=pref.weight_academic,
+        weight_field_fit=pref.weight_field_fit,
+        weight_outcomes_alignment=pref.weight_outcomes_alignment,
+        weight_funding_need=pref.weight_funding_need,
+        weight_geographic=pref.weight_geographic,
+    )
+
+
+@router.get(
+    "/me/programs/{program_id}/preferences", response_model=ProgramPreferenceResponse | None
+)
+async def get_program_preferences(
+    program_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.services.program_preference_service import ProgramPreferenceService
+
+    inst = await _svc(db).get_institution(user.id)
+    pref = await ProgramPreferenceService(db).get(inst.id, program_id)
+    return _pref_response(pref) if pref is not None else None
+
+
+@router.put("/me/programs/{program_id}/preferences", response_model=ProgramPreferenceResponse)
+async def update_program_preferences(
+    program_id: UUID,
+    body: ProgramPreferenceBody,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.services.program_preference_service import ProgramPreferenceService
+
+    inst = await _svc(db).get_institution(user.id)
+    pref = await ProgramPreferenceService(db).upsert(
+        inst.id, program_id, body.model_dump(exclude_unset=True)
+    )
+    return _pref_response(pref)
+
+
 @router.post("/me/programs/{program_id}/publish", response_model=ProgramResponse)
 async def publish_program(
     program_id: UUID,
