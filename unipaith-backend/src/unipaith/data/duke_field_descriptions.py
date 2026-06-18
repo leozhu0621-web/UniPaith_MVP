@@ -336,8 +336,8 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "with the Department of Religious Studies and the Duke Chapel's interfaith community."
     ),
     "Romance Studies": (
-        "Duke Romance Studies Ph.D. training spans French, Italian, Spanish, and Portuguese "
-        "literature and linguistics with faculty across the Romance Studies department."
+        "Duke Romance Studies majors study French, Italian, Spanish, and Portuguese language, "
+        "literature, and linguistics with faculty across the Romance Studies department."
     ),
     "Russian": (
         "Duke Russian language and literature study covers Slavic philology and culture with "
@@ -377,4 +377,106 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
 
 FIELD_ALIASES: dict[str, str] = {}
 
-SLUG_DESCRIPTIONS: dict[str, str] = {}
+# Per-slug overrides. Where a field offers both a bachelor's and a Ph.D., the shared
+# FIELD_DESCRIPTIONS clause reads at the undergraduate level; these entries give the
+# doctoral row its own research-level description (anti-stub: no body shared verbatim
+# across credential levels). Same verified Duke centers/labs as the field clause —
+# only the credential framing changes. Sources: The Graduate School programs directory
+# (gradschool.duke.edu) and the owning department pages.
+SLUG_DESCRIPTIONS: dict[str, str] = {
+    "duke-biology-grad-phd": (
+        "Duke biology doctoral students pursue dissertation research in molecular, cell, "
+        "genetic, and ecological systems, drawing on field sites at the Duke Forest, Duke "
+        "Marine Lab, and Duke Lemur Center."
+    ),
+    "duke-chemistry-grad-phd": (
+        "Doctoral research in Duke chemistry advances organic synthesis, inorganic materials, "
+        "physical chemistry, and chemical biology in labs shared across Trinity, Pratt, and "
+        "the School of Medicine."
+    ),
+    "duke-computer-science-grad-phd": (
+        "The Duke computer science Ph.D. supports dissertation research in algorithms, machine "
+        "learning, systems, and computational biology through the Department of Computer "
+        "Science and the Rhodes Information Initiative at Duke (iiD)."
+    ),
+    "duke-cultural-anthropology-grad-phd": (
+        "Duke cultural anthropology doctoral students design long-term ethnographic fieldwork "
+        "in medical anthropology and global inequality, with research programs in Africa, "
+        "Latin America, and the Middle East."
+    ),
+    "duke-earth-and-climate-sciences-grad-phd": (
+        "Doctoral research in Duke earth & climate sciences advances geochemistry, paleoclimate, "
+        "and hydrology through extended field campaigns and the Duke University Wetland Center's "
+        "long-term ecological monitoring."
+    ),
+    "duke-economics-grad-phd": (
+        "The Duke economics Ph.D. trains research economists in microeconomic theory, "
+        "econometrics, and applied policy, with dissertation work tied to the Center for the "
+        "History of Political Economy and the Sanford School."
+    ),
+    "duke-english-grad-phd": (
+        "Duke English doctoral candidates pursue dissertation research in literary history and "
+        "critical theory, with intellectual community through the Franklin Humanities Institute "
+        "and Duke University Press."
+    ),
+    "duke-history-grad-phd": (
+        "Duke history doctoral students undertake archival dissertation research across U.S., "
+        "European, Asian, African, and Latin American history, supported by the Franklin "
+        "Humanities Institute and the Hartman Center."
+    ),
+    "duke-marine-science-and-conservation-grad-phd": (
+        "Duke marine science & conservation doctoral research combines oceanography, fisheries "
+        "ecology, and coastal policy, based at the Duke University Marine Laboratory in "
+        "Beaufort, North Carolina."
+    ),
+    "duke-mathematics-grad-phd": (
+        "The Duke mathematics Ph.D. supports dissertation research in algebra, analysis, "
+        "geometry, and mathematical biology, with applied work through the Rhodes Information "
+        "Initiative at Duke (iiD)."
+    ),
+    "duke-music-grad-phd": (
+        "Duke music doctoral study advances composition and musicology research, with "
+        "performance and recording at the Mary Duke Biddle Music Building and the Duke "
+        "University Chamber Players."
+    ),
+    "duke-philosophy-grad-phd": (
+        "Duke philosophy doctoral candidates pursue dissertation research in ethics, "
+        "metaphysics, philosophy of mind, and political philosophy, with affiliations at the "
+        "Kenan Institute for Ethics."
+    ),
+    "duke-physics-grad-phd": (
+        "Duke physics doctoral research spans condensed matter, particle physics, astrophysics, "
+        "and biophysics, with experimental work at the Triangle Universities Nuclear Laboratory "
+        "and the Free Electron Laser Laboratory."
+    ),
+    "duke-political-science-grad-phd": (
+        "The Duke political science Ph.D. trains researchers in American politics, comparative "
+        "politics, and international relations, with dissertation support from the POLIS center "
+        "for political leadership."
+    ),
+    "duke-romance-studies-grad-phd": (
+        "Duke Romance Studies doctoral research spans French, Italian, Spanish, and Portuguese "
+        "literature and linguistics, with dissertation work across the department's "
+        "transnational faculty."
+    ),
+    "duke-sociology-grad-phd": (
+        "Duke sociology doctoral students research social inequality, organizations, and health "
+        "disparities, with quantitative support from the Duke Population Research Institute "
+        "(DuPRI)."
+    ),
+    "duke-statistical-science-grad-phd": (
+        "The Duke statistical science Ph.D. advances dissertation research in Bayesian "
+        "inference, machine learning, and biostatistics, with collaborations through the Rhodes "
+        "Information Initiative at Duke."
+    ),
+    "duke-biomedical-engineering-grad-phd": (
+        "Pratt biomedical engineering doctoral research advances device design, imaging, and "
+        "tissue engineering, with clinical translation through Duke University Hospital and the "
+        "Center for Biomolecular and Tissue Engineering."
+    ),
+    "duke-electrical-and-computer-engineering-grad-phd": (
+        "Pratt electrical & computer engineering doctoral research spans photonics, signal "
+        "processing, and embedded systems through the Fitzpatrick Institute for Photonics and "
+        "Duke's quantum computing research groups."
+    ),
+}
