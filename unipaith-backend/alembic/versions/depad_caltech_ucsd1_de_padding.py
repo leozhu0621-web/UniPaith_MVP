@@ -19,8 +19,13 @@ What changed in the data modules this migration re-applies:
 canonical (delete when FK-unreferenced, else unpublish), so the fabricated rows disappear
 from the live catalog. Idempotent; both applies are no-ops when the institution is absent.
 
+A concurrent session shipped ``ucsdseedmerge1`` (merging the same seed12univ1 +
+ucsdprof7 pair) to main while this PR was in flight, so this migration chains after
+that merge — the single current head — rather than re-merging the pair (which would
+recreate a dual head).
+
 Revision ID: depadcu1
-Revises: seed12univ1, ucsdprof7
+Revises: ucsdseedmerge1
 Create Date: 2026-06-18
 """
 
@@ -32,7 +37,7 @@ from alembic import op
 from unipaith.data import caltech_profile, ucsd_profile
 
 revision = "depadcu1"
-down_revision = ("seed12univ1", "ucsdprof7")
+down_revision = "ucsdseedmerge1"
 branch_labels = None
 depends_on = None
 
