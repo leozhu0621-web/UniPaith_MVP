@@ -6,6 +6,7 @@ import {
   MessageSquare, GraduationCap, ArrowRight, Send,
 } from 'lucide-react'
 import { PageContainer, PageHeader, SectionHeader, ListRow, StatTile } from '../../../components/student/density'
+import EnrichWidget from '../../../components/student/EnrichWidget'
 import Card from '../../../components/ui/Card'
 import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
@@ -183,6 +184,12 @@ export default function MySpaceHomePage() {
 
           {/* Your top matches — a discovery peek that deep-links to /s/explore. */}
           <TopMatchesPeek className="mt-5" />
+
+          {/* AI Structure (Spec 1) — the next signal to enrich; renders nothing
+              once the profile is full. Deeper profile → sharper matches. */}
+          <div className="mt-5">
+            <EnrichWidget />
+          </div>
 
           <div className="mt-5 grid gap-6 md:grid-cols-2">
             {/* Deadlines — next 14 days */}
