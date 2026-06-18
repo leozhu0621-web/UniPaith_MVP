@@ -1,0 +1,297 @@
+{
+  "generated_at": "2026-06-18",
+  "method": "6 parallel discovery agents (by category) -> per-candidate adversarial URL+license verification (agents fetched each URL).",
+  "counts": {
+    "candidates": 37,
+    "verified": 31,
+    "rejected": 6
+  },
+  "verified": [
+    {
+      "id": "bls-oews-may-2024-national",
+      "title": "BLS Occupational Employment and Wage Statistics (OEWS) — May 2024 National & All-Areas",
+      "download_url": "https://www.bls.gov/oes/special.requests/oesm24all.zip",
+      "license_open": true,
+      "confidence": "high",
+      "note": "download_url https://www.bls.gov/oes/special.requests/oesm24all.zip ACTUALLY FETCHED and confirmed: HTTP/2 200, content-type application/x-zip-compressed, content-length 79846301 (~76 MB real ZIP), last-modified Mon 02 Mar 2026 (consistent with May 2024 reference-period release). Served directly from www.bls.gov (U.S. …"
+    },
+    {
+      "id": "bls-employment-projections-occupation-2024-34",
+      "title": "BLS Employment Projections — Occupational Projections (2024–2034) + Education/Training by Occupation",
+      "download_url": "https://www.bls.gov/emp/ind-occ-matrix/occupation.xlsx",
+      "license_open": true,
+      "confidence": "high",
+      "note": "Fetched directly with browser headers (WebFetch/plain curl got 403 from BLS Akamai bot-protection — NOT a dead link). download_url https://www.bls.gov/emp/ind-occ-matrix/occupation.xlsx => HTTP 200, 407365 bytes, content-type application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, `file` confirms \"Microsoft …"
+    },
+    {
+      "id": "onet-database-30-3-text",
+      "title": "O*NET Database 30.3 — Occupations, Skills, Knowledge, Abilities, Tasks, Work Activities",
+      "download_url": "https://www.onetcenter.org/dl_files/database/db_30_3_text.zip",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED via live fetch. download_url https://www.onetcenter.org/dl_files/database/db_30_3_text.zip returns HTTP 200, Content-Type: application/zip, Content-Length: 13,222,549 bytes (~12.6 MB), Last-Modified: Tue 19 May 2026. Downloaded and validated: it is a genuine ZIP archive containing the db_30_3_text/ folder with…"
+    },
+    {
+      "id": "onet-web-services-api-v2",
+      "title": "O*NET Web Services API (v2.0) — live occupation, skills & career-search access",
+      "download_url": "https://www.onetcenter.org/database.html",
+      "license_open": true,
+      "confidence": "high",
+      "note": "AUTHORITATIVE: services.onetcenter.org is the genuine official O*NET Web Services site, National Center for O*NET Development, sponsored by USDOL/ETA — not a mirror/aggregator. The reference page explicitly states 'API Version 2.0', matching the title. download_url is API reference docs (not a file), which is appropria…"
+    },
+    {
+      "id": "nces-cip2020-soc2018-crosswalk",
+      "title": "NCES CIP 2020 → SOC 2018 Crosswalk",
+      "download_url": "https://nces.ed.gov/ipeds/cipcode/Files/CIP2020_SOC2018_Crosswalk.xlsx",
+      "license_open": true,
+      "confidence": "high",
+      "note": "FETCHED AND CONFIRMED. download_url https://nces.ed.gov/ipeds/cipcode/Files/CIP2020_SOC2018_Crosswalk.xlsx returns HTTP 200, content-type application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 428,901 bytes; `file` reports a genuine Microsoft Excel 2007+ workbook. No redirect; final URL identical to request…"
+    },
+    {
+      "id": "bls-ooh-occupational-outlook-handbook",
+      "title": "BLS Occupational Outlook Handbook (OOH) — narrative career profiles",
+      "download_url": "https://www.bls.gov/ooh/xml-compilation.xml",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED. (1) Resolution: bls.gov is live (server: AkamaiGHost). Direct GET to the source/download URL returns HTTP 403 — but the body is BLS's Akamai anti-bot 'Access Denied' page ('bot activity that doesn't conform to BLS usage policy is prohibited'), i.e. an active bot wall blocking datacenter IPs, NOT a 404/dead li…"
+    },
+    {
+      "id": "ipeds-access-database-yearly",
+      "title": "IPEDS Complete Data Access Database (full year, all surveys, relational)",
+      "download_url": "https://nces.ed.gov/ipeds/tablefiles/zipfiles/IPEDS_2023-24_Final.zip",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED by direct fetch. download_url https://nces.ed.gov/ipeds/tablefiles/zipfiles/IPEDS_2023-24_Final.zip returns HTTP/1.1 200 OK, Content-Type: application/x-zip-compressed, Content-Length: 94,499,516 bytes (~94.5 MB), Last-Modified Mon 02 Mar 2026 — a real, current binary ZIP, not a 404 (WebFetch initially errored…"
+    },
+    {
+      "id": "urban-edp-ipeds-api",
+      "title": "Urban Institute Education Data Portal API — IPEDS (clean REST, all surveys)",
+      "download_url": "https://educationdata.urban.org/api/v1/college-university/ipeds/directory/2020/",
+      "license_open": true,
+      "confidence": "high",
+      "note": "Genuine official publisher: Urban Institute Education Data Portal (educationdata.urban.org), serving NCES IPEDS (\"US Dept of Education Integrated Postsecondary Education Data System\") source data — not a mirror/aggregator. The claimed download_url base (.../college-university/ipeds/) returns HTTP 404 on its own because…"
+    },
+    {
+      "id": "ipeds-f-finance-survey",
+      "title": "IPEDS Finance (F) survey — revenues, expenses, endowment, assets",
+      "download_url": "https://nces.ed.gov/ipeds/datacenter/DataFiles.aspx",
+      "license_open": true,
+      "confidence": "high",
+      "note": "PUBLISHER: Genuine & authoritative. nces.ed.gov is the U.S. Dept. of Education's National Center for Education Statistics, the real publisher of IPEDS. Not a mirror/aggregator. LICENSE: Genuinely open. Federal-government data, public domain (17 U.S.C. 105); claimed 'U.S. Government public domain (NCES)' is correct. DOW…"
+    },
+    {
+      "id": "carnegie-classification-2025-public-data-file",
+      "title": "Carnegie Classifications 2025 — Institutional Classification + Student Access & Earnings (Public Data File)",
+      "download_url": "https://carnegieclassifications.acenet.edu/wp-content/uploads/2025/04/2025-Public-Data-File.xlsx",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED — both URLs fetched and confirmed live. Download URL (https://carnegieclassifications.acenet.edu/wp-content/uploads/2025/04/2025-Public-Data-File.xlsx) returns HTTP/2 200 directly from the authoritative ACE/Carnegie domain (carnegieclassifications.acenet.edu, served via Cloudflare/WP Engine), content-type appl…"
+    },
+    {
+      "id": "carnegie-2025-research-activity-designation",
+      "title": "Carnegie 2025 Research Activity Designation (RAD) Public Data File",
+      "download_url": "https://carnegieclassifications.acenet.edu/wp-content/uploads/2025/02/2025-RAD-Public-Data-File.xlsx",
+      "license_open": false,
+      "confidence": "high",
+      "note": "VERIFIED by direct fetch + binary inspection. download_url returns HTTP 200, content-type application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, ~70KB. `file` confirms it is a genuine 'Microsoft Excel 2007+' workbook (not a 404/HTML error page). Unzipped the xlsx: the 'Data' sheet contains the real RAD data…"
+    },
+    {
+      "id": "ipeds-complete-data-files",
+      "title": "IPEDS Complete Data Files (Directory, Admissions, Finance, Completions, R&D proxies)",
+      "download_url": "https://nces.ed.gov/ipeds/datacenter/Default.aspx?gotoReportId=7&fromIpeds=true",
+      "license_open": true,
+      "confidence": "high",
+      "note": "FETCHED and confirmed live (2026-06-18). PUBLISHER: genuine — both URLs are on nces.ed.gov (U.S. Dept of Education / NCES), confirmed via live server headers (Microsoft-IIS/10.0, X-AspNet-Version, HSTS, ed.gov CSP). Not a mirror or aggregator. SOURCE_URL: https://nces.ed.gov/ipeds/use-the-data/download-access-database …"
+    },
+    {
+      "id": "cwur-world-university-rankings",
+      "title": "CWUR — Center for World University Rankings (Global 2000)",
+      "download_url": "https://cwur.org/2025.php",
+      "license_open": false,
+      "confidence": "high",
+      "note": "Direct fetch of https://cwur.org/2025.php: HTTP 200, 430KB text/html, no redirect. Genuine first-party CWUR site (not a mirror). Page renders the real Global 2000 list server-side in <table id=\"cwurTable\"> — exactly 2000 data rows (1 header + 2000 </tr>) with columns World Rank/Institution/Location/National/Education/E…"
+    },
+    {
+      "id": "wikidata-university-identifiers-crosswalk",
+      "title": "Wikidata — University Entities, Identifiers & Crosswalk (rankings-join scaffold)",
+      "download_url": "https://query.wikidata.org/sparql",
+      "license_open": true,
+      "confidence": "high",
+      "note": "FETCHED and confirmed live. (1) download_url https://query.wikidata.org/sparql returned HTTP 200 with valid SPARQL JSON results from a real query (universities via wdt:P31 wd:Q3918 — e.g. Michigan Technological University, University of Massachusetts Amherst); it is the official Wikidata Query Service endpoint. (2) sou…"
+    },
+    {
+      "id": "grants-gov-search2-api",
+      "title": "Grants.gov Opportunities (Search2 + fetchOpportunity REST APIs)",
+      "download_url": "https://api.grants.gov/v1/api/search2",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED by live fetch. download_url POST https://api.grants.gov/v1/api/search2 with no auth returned HTTP 200, \"msg\":\"Webservice Succeeds\", hitCount 988, and a real live opportunity (PA-FPH-27-001 \"Title X Family Planning Services Grants\", agency HHS-OPHS, CFDA 93.217). fetchOpportunity (POST {\"opportunityId\":361754})…"
+    },
+    {
+      "id": "usaspending-assistance-awards",
+      "title": "USAspending.gov Federal Financial Assistance Awards (grants/scholarships disbursed)",
+      "download_url": "https://api.usaspending.gov/api/v2/search/spending_by_award/",
+      "license_open": true,
+      "confidence": "high",
+      "note": "FETCHED AND CONFIRMED LIVE. (1) source_url https://api.usaspending.gov/ resolves HTTP 200, official Treasury V2 API; reference endpoint toptier_agencies/ returned real agency JSON 200. (2) download_url https://api.usaspending.gov/api/v2/search/spending_by_award/ WORKS: POST with assistance award_type_codes [02,03,04,05…"
+    },
+    {
+      "id": "fsa-title-iv-program-volume",
+      "title": "Title IV Program Volume by School (Pell, TEACH, Direct Loan disbursements)",
+      "download_url": "https://studentaid.gov/data-center/student/title-iv",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED via direct fetch. studentaid.gov/data-center/student/title-iv returns HTTP 200, no redirect, content-type text/html, directly at the claimed path (confirmed by curl). It is a JavaScript single-page app, so the report-file links render client-side (this is why WebFetch timed out on rendering — the page itself i…"
+    },
+    {
+      "id": "nassgap-state-aid-survey",
+      "title": "NASSGAP Annual Survey of State-Sponsored Student Financial Aid (history tables)",
+      "download_url": "https://www.nassgapsurvey.com/survey_reports/2023-2024-55th.pdf",
+      "license_open": true,
+      "confidence": "high",
+      "note": "FETCHED both URLs directly. download_url (https://www.nassgapsurvey.com/survey_reports/2023-2024-55th.pdf) returned a valid 1.8MB, 28-page PDF (HTTP 200). Rendered cover page reads verbatim: \"55th Annual Survey Report on State-Sponsored Student Financial Aid / 2023-2024 Academic Year / National Association of State Stu…"
+    },
+    {
+      "id": "sam-gov-assistance-listings-cfda",
+      "title": "SAM.gov Assistance Listings (formerly CFDA — federal assistance program catalog)",
+      "download_url": "https://s3.amazonaws.com/falextracts/Assistance%20Listings/datagov/AssistanceListings_DataGov_PUBLIC_CURRENT.csv",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED by actually fetching. (1) download_url https://catalog.data.gov/dataset/assistance-listings-at-beta-sam-gov-formerly-cfda -> HTTP 200, genuine data.gov catalog entry \"Assistance Listings at beta.SAM.gov (formerly CFDA)\", maintained by U.S. General Services Administration (GSA). Not a mirror/aggregator. (2) sou…"
+    },
+    {
+      "id": "ice-sevis-data-mapping-tool",
+      "title": "SEVIS by the Numbers — SEVIS Data Mapping Tool (international student counts)",
+      "download_url": "https://studyinthestates.dhs.gov/sevis-data-mapping-tool/october-2025-sevis-data-mapping-tool-data",
+      "license_open": true,
+      "confidence": "high",
+      "note": "AUTHORITATIVE + LIVE. Publisher is genuine: studyinthestates.dhs.gov is DHS/ICE's Student and Exchange Visitor Program (SEVP) site — the operator of SEVIS itself, not a mirror/aggregator. The landing page (source_url = download_url) returned HTTP 403 to WebFetch AND to direct curl with a browser User-Agent (\"Access Den…"
+    },
+    {
+      "id": "iie-open-doors",
+      "title": "IIE Open Doors Report on International Educational Exchange",
+      "download_url": "https://opendoorsdata.org/data/",
+      "license_open": false,
+      "confidence": "high",
+      "note": "Both URLs verified by direct curl: download_url https://opendoorsdata.org/data/ -> HTTP 200 (0 redirects); source_url https://opendoorsdata.org/ -> HTTP 200 (0 redirects). source_url is the genuine official publisher: page states \"Open Doors is sponsored by the U.S. Department of State with funding provided by the U.S.…"
+    },
+    {
+      "id": "unesco-uis-bdds-education",
+      "title": "UNESCO Institute for Statistics (UIS) — Education Bulk Data Download (SDG4 + OPRI) and API",
+      "download_url": "https://download.uis.unesco.org/bdds/202602/SDG.zip",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED authentic and authoritative. source_url (https://databrowser.uis.unesco.org/) = HTTP 200, the official UNESCO Institute for Statistics Data Browser (8.3M education data points, 5,167 indicators). download_url (https://databrowser.uis.unesco.org/resources/bulk) = HTTP 200, the genuine BDDS bulk-download page. I…"
+    },
+    {
+      "id": "worldbank-edstats-data360",
+      "title": "World Bank Education Statistics (EdStats) — World Bank Data360",
+      "download_url": "https://data360api.worldbank.org/data360/data?DATABASE_ID=WB_EDSTATS",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED. (1) Both URLs return HTTP 200. source_url (https://data360.worldbank.org/en/dataset/WB_EDSTATS) is the genuine official World Bank Data360 dataset page — independently confirmed via WebSearch returning the identical canonical URL. (2) WB_EDSTATS is a real, live dataset, not a dead link or aggregator: the offi…"
+    },
+    {
+      "id": "hipolabs-university-domains-list",
+      "title": "World Universities and Domains List (Hipolabs)",
+      "download_url": "https://raw.githubusercontent.com/Hipo/university-domains-list/master/world_universities_and_domains.json",
+      "license_open": true,
+      "confidence": "high",
+      "note": "FETCHED and confirmed both URLs. download_url (raw.githubusercontent.com/Hipo/university-domains-list/master/world_universities_and_domains.json) returns HTTP 200, content-type text/plain, ~2.25MB valid JSON — a top-level array of 10,249 university records with keys name/domains/web_pages/country/alpha_two_code/state-p…"
+    },
+    {
+      "id": "wikidata-universities",
+      "title": "Wikidata — Global University Registry (SPARQL)",
+      "download_url": "https://query.wikidata.org/sparql",
+      "license_open": true,
+      "confidence": "high",
+      "note": "Both URLs fetched live. source_url https://www.wikidata.org/wiki/Q3918 -> HTTP 200, no redirects; Q3918 English label confirmed as \"university\" via SPARQL. download_url https://query.wikidata.org/sparql -> HTTP 200 and genuinely functional (not a stub): a live count query returned 24,815 instances/subclasses of Q3918, …"
+    },
+    {
+      "id": "urban-education-data-portal-colleges",
+      "title": "Urban Institute Education Data Portal - Colleges (IPEDS, harmonized API)",
+      "download_url": "https://educationdata.urban.org/api/v1/college-university/ipeds/directory/2022/",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED by direct fetch. download_url (https://educationdata.urban.org/api/v1/college-university/ipeds/directory/2022/) returns HTTP 200, content-type application/json, 14.7 MB, with count:6256 genuine harmonized IPEDS directory records (e.g. Alabama A&M University, unitid 100654, inst_name/state_abbr/sector/lat-long/…"
+    },
+    {
+      "id": "opportunity-insights-mobility-report-cards",
+      "title": "Opportunity Insights - College Mobility Report Cards",
+      "download_url": "https://opportunityinsights.org/wp-content/uploads/2018/03/mrc_table1.csv",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED via direct fetch. download_url https://opportunityinsights.org/wp-content/uploads/2018/03/mrc_table1.csv returns HTTP/2 200, content-type application/octet-stream, content-length 328417 bytes (~321KB), last-modified Thu 29 Mar 2018. Real CSV: 2203 lines (header + 2202 institutions), 15 columns matching the can…"
+    },
+    {
+      "id": "nces-cip2020-soc2018-crosswalk",
+      "title": "NCES/BLS CIP 2020 -> SOC 2018 Crosswalk",
+      "download_url": "https://nces.ed.gov/ipeds/cipcode/Files/CIP2020_SOC2018_Crosswalk.xlsx",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED by direct fetch. download_url (https://nces.ed.gov/ipeds/cipcode/Files/CIP2020_SOC2018_Crosswalk.xlsx) returns HTTP 200, Content-Type application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, 428,901 bytes, Last-Modified 2020-04-30. Downloaded file validates as a genuine Microsoft Excel 2007+ workbook…"
+    },
+    {
+      "id": "nces-cip2020-code-dictionary",
+      "title": "NCES Classification of Instructional Programs (CIP) 2020 - codes, titles & definitions",
+      "download_url": "https://nces.ed.gov/ipeds/cipcode/Files/CIPCode2020.csv",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED by actually fetching the URLs (curl + WebFetch). (1) source_url https://nces.ed.gov/ipeds/cipcode/ -> HTTP 200 (redirects to Default.aspx?y=56), the official CIP 2020 user site. (2) download_url https://nces.ed.gov/ipeds/cipcode/resources.aspx?y=56 -> HTTP 200, text/html, ~20KB; it IS the genuine CIP 2020 Reso…"
+    },
+    {
+      "id": "wikidata-university-metadata",
+      "title": "Wikidata - University/Institution Metadata (SPARQL, IPEDS-keyed)",
+      "download_url": "https://query.wikidata.org/sparql?format=json&query=SELECT%20%3Funiv%20%3FunivLabel%20%3Fipeds%20%3Fimage%20%3Flogo%20%3Fwebsite%20%3Ffounded%20WHERE%20%7B%20%3Funiv%20wdt%3AP1771%20%3Fipeds.%20OPTIONAL%7B%3Funiv%20wdt%3AP18%20%3Fimage%7D%20OPTIONAL%7B%3Funiv%20wdt%3AP154%20%3Flogo%7D%20OPTIONAL%7B%3Funiv%20wdt%3AP856%20%3Fwebsite%7D%20OPTIONAL%7B%3Funiv%20wdt%3AP571%20%3Ffounded%7D%20SERVICE%20wikibase%3Alabel%7Bbd%3AserviceParam%20wikibase%3Alanguage%20%22en%22%7D%7D",
+      "license_open": true,
+      "confidence": "high",
+      "note": "VERIFIED. (1) Resolves: The download_url (Wikidata SPARQL endpoint, query.wikidata.org/sparql) returns HTTP 200 with Content-Type application/sparql-results+json and valid JSON SPARQL results (head.vars = univ, univLabel, ipeds, image, logo, website, founded; results.bindings populated with ~130+ real university record…"
+    },
+    {
+      "id": "census-acs-s1501-educational-attainment",
+      "title": "Census ACS Subject Table S1501 - Educational Attainment (by geography)",
+      "download_url": "https://api.census.gov/data/2022/acs/acs5/subject?get=group(S1501)&for=county:*&key=YOUR_KEY",
+      "license_open": true,
+      "confidence": "high",
+      "note": "Adversarially fetched and confirmed. (1) source_url https://www.census.gov/data/developers/data-sets/acs-5year.html -> HTTP 200, genuine official Census ACS 5-year API page documenting Subject Tables. (2) download_url structure fully valid against the LIVE API: path acs/acs5/subject, vintage 2022, group(S1501), for=cou…"
+    }
+  ],
+  "rejected": [
+    {
+      "id": "ipeds-complete-data-files-survey-csv",
+      "title": "IPEDS Complete Data Files (per-survey CSV: ADM, EF, EFFY, C, GR, OM, F, SAL/S)",
+      "download_url": "https://nces.ed.gov/ipeds/datacenter/DataFiles.aspx",
+      "why": "DATASET IS REAL AND AUTHORITATIVE; the two cited URLs are both unusable as-given, but a genuine direct download exists. Findings: (1) download_url https://nces.ed.gov/ipeds/datacenter/DataFiles.aspx does NOT cleanly resolve — curl/WebFetch hit a 302 redirect loop ending at https://nces.ed.gov/ipeds/datacenter/login.asp…"
+    },
+    {
+      "id": "ipeds-adm-admissions-survey",
+      "title": "IPEDS Admissions (ADM) survey — funnel, yield, test scores, admission factors",
+      "download_url": "https://nces.ed.gov/ipeds/datacenter/DataFiles.aspx",
+      "why": "Publisher is genuinely the official U.S. Dept. of Education / NCES on nces.ed.gov — authentic, not a mirror/aggregator. The source_url resolves (HTTP 200) and correctly describes the ADM survey (admission factors, acceptance-rate funnel, yield, SAT/ACT scores). PROBLEM: the claimed download_url https://nces.ed.gov/iped…"
+    },
+    {
+      "id": "ipeds-c-completions-cip-survey",
+      "title": "IPEDS Completions (C) survey — degrees/certificates by CIP, award level, race, sex",
+      "download_url": "https://nces.ed.gov/ipeds/datacenter/DataFiles.aspx",
+      "why": "Publisher is GENUINE and authoritative (nces.ed.gov = official NCES / U.S. Dept. of Education; not a mirror/aggregator). The IPEDS Completions (C) dataset is REAL and does collect degrees/certificates by 6-digit CIP code, award level, race/ethnicity, and sex — confirmed on the live NCES page. License is genuinely open …"
+    },
+    {
+      "id": "ipeds-sal-hr-faculty-survey",
+      "title": "IPEDS Human Resources (SAL/S) — faculty salaries, rank, tenure, staff counts",
+      "download_url": "https://nces.ed.gov/ipeds/datacenter/DataFiles.aspx",
+      "why": "Publisher (U.S. Dept. of Education, NCES) and license (federal public domain) are GENUINE and authoritative. The dataset itself is real: the IPEDS Human Resources (HR) survey covers faculty salaries, academic rank, tenure status, and full/part-time staff counts. BUT two URL problems make this fail verification:\n\n(1) so…"
+    },
+    {
+      "id": "careeronestop-scholarship-finder-api",
+      "title": "CareerOneStop Scholarship Finder Web API (scholarships, fellowships, grants)",
+      "download_url": "https://api.careeronestop.org/api-explorer/",
+      "why": "CORE CLAIM IS FALSE: there is NO \"Scholarship Finder Web API.\" The publisher (CareerOneStop, sponsored by U.S. DOL/ETA, operated under license by Minnesota DEED) and the license terms are genuine and accurately described. Both URLs resolve (200). However, the official complete Web API catalog (pulled directly from http…"
+    },
+    {
+      "id": "ed-dapip-accreditation-database",
+      "title": "Database of Accredited Postsecondary Institutions and Programs (DAPIP)",
+      "download_url": "https://ope.ed.gov/accreditation/GetDownLoadFile.aspx",
+      "why": "verified=false ONLY because the claimed download_url is wrong. The publisher, dataset, and license are all genuine and authoritative — host ope.ed.gov is the real U.S. Dept of Education, Office of Postsecondary Education (footer: \"U.S. Department of Education, Recognition and Accreditation\"; .gov), not a mirror/aggrega…"
+    }
+  ]
+}

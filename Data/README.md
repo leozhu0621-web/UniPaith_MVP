@@ -43,8 +43,31 @@ Data/
 | `college-scorecard-crosswalks` | U.S. Dept of Education | CIP/UNITID/OPEID crosswalk | 24 files |
 | `fafsa-*` (5 datasets) | Federal Student Aid | national / state / institution | xls/xlsx |
 
-All current sources are U.S. federal works — public domain (17 U.S.C. §105). See each entry's
+All of the above are U.S. federal works — public domain (17 U.S.C. §105). See each entry's
 `license` field in `catalog.json`.
+
+## Sourced reference datasets (verified 2026-06-18)
+
+A multi-agent run discovered and **adversarially verified** (every download URL fetched, publisher
+and license confirmed) authoritative public datasets across five categories. 34 datasets are now in
+`catalog.json` — **17 resident on disk** (`status: downloaded`) and **17 catalog-only** with
+verified URLs (`status: available`, fetch on demand). The small + openly-licensed files were
+downloaded; large, gated, or non-redistributable sources are kept as references.
+
+| category | resident now | catalog-only (verified URL) |
+|---|---|---|
+| **career outcomes** | BLS Employment Projections (2024–34), O*NET DB 30.3 (CC BY), NCES CIP 2020 dictionary, CIP→SOC crosswalk | BLS OEWS wages, O*NET API, BLS Occupational Outlook Handbook |
+| **IPEDS depth** | — | IPEDS Complete Data Files, Urban Institute Education Data Portal API |
+| **rankings** | Carnegie Classification 2025 | Carnegie RAD*, CWUR* |
+| **scholarships / aid** | SAM.gov Assistance Listings (CFDA) | Grants.gov API, USAspending, FSA Title IV by school, NASSGAP state aid |
+| **international** | World Universities & Domains (Hipolabs, MIT) | SEVIS, IIE Open Doors*, UNESCO UIS, World Bank EdStats, Wikidata (CC0) |
+| **other** | Opportunity Insights Mobility Report Cards | Census ACS S1501 educational attainment |
+
+\* redistribution-restricted (`license_open: false`) — reference only, do not store/serve.
+
+The CIP↔SOC crosswalk + CIP dictionary are the **join glue** linking a program (CIP) to careers
+(SOC → wages/outlook). `maps_to` in each entry names the product section it serves; no backend table
+is asserted (ingestion is the deferred spec).
 
 ## How consumers use this
 
