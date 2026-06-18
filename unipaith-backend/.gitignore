@@ -24,3 +24,4 @@ model_checkpoints/
 *.swp
 *.swo
 uploads/
+*.ucla_repair_cache.json
