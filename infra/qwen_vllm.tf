@@ -25,7 +25,7 @@ resource "aws_security_group" "qwen_vllm" {
     to_port         = 8000
     protocol        = "tcp"
     security_groups = [aws_security_group.ecs_tasks.id] # backend ECS tasks only
-    description     = "vLLM OpenAI API — backend ECS only"
+    description     = "vLLM OpenAI API - backend ECS only"
   }
 
   egress {
