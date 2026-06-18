@@ -93,14 +93,20 @@ def test_catalog_breadth_and_shape():
 
 
 def test_coverable_programs_have_reviews():
+    """Every coverable program must EITHER carry a gathered review OR explicitly
+    record external_reviews as omitted in its _standard — never a silent blank,
+    and never a synthesized review."""
     from scripts.fleet_audit import is_coverable
 
     missing = [
-        p["slug"]
-        for p in u.PROGRAMS
-        if is_coverable(p) and p["slug"] not in u._REVIEWS_BY_SLUG
+        spec["slug"]
+        for spec in u.PROGRAMS
+        if is_coverable(spec)
+        and spec["slug"] not in u._REVIEWS_BY_SLUG
+        and "external_reviews.summary"
+        not in u._program_standard(spec["slug"], spec)["omitted"]
     ]
-    assert not missing, f"Coverable programs missing reviews: {missing[:10]}"
+    assert not missing, f"Coverable programs with neither a review nor an omit: {missing[:10]}"
 
 
 def test_institution_is_gold_except_recorded_omission():

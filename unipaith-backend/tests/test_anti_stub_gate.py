@@ -28,6 +28,7 @@ CERTIFIED_CLEAN = [
     "princeton",  # CIP rollups → real majors; textbook-def stubs → researched descriptions (#754)
     "carnegie_mellon",  # researched per-program clauses; "{program_name}: " prefix-double removed
     "duke",       # "{program_name}: " prefix-double removed; per-credential doctoral clauses
+    "usc",        # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
 ]
 
 
