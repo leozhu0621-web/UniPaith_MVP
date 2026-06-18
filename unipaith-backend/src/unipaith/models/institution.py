@@ -181,6 +181,16 @@ class School(Base):
     # Rich About-tab content (real, sourced): founded / named_for / leadership /
     # faculty[{name,title,focus}] / research_centers[] / source{label,url}.
     about_detail: Mapped[dict | None] = mapped_column(JSONB)
+    # AI Structure (Spec 2) — claim hinge. Unclaimed (default) → the crawler /
+    # enrichment routine owns it; claimed → a verified institution user owns it
+    # and first-party fields are never overwritten by the routine.
+    is_claimed: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
+    claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    claimed_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -306,6 +316,15 @@ class Program(Base):
     # Channel feeds + official social links for keyword-relevant Events/Updates
     # (mirrors Institution.content_sources); program-scoped, tagged on ingest.
     content_sources: Mapped[dict | None] = mapped_column(JSONB)
+    # AI Structure (Spec 2) — claim hinge (see School). Unclaimed → crawler owns
+    # it; claimed → first-party, never overwritten by the enrichment routine.
+    is_claimed: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
+    claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    claimed_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
