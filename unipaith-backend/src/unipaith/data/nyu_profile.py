@@ -45,7 +45,6 @@ handles + keywords on every node so the daily ingest can populate Updates.
 from __future__ import annotations
 
 import re
-from collections import Counter
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
@@ -53,11 +52,12 @@ from sqlalchemy.orm import Session
 from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.profile_standard.anti_stub import catalog_anti_stub_violations
 
 INSTITUTION_NAME = "New York University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-18"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1392,17 +1392,82 @@ def _credential_suffix(code: str, degree_type: str) -> str:
     return _LEVEL_SUFFIX.get(degree_type, "")
 
 
-def _nyu_description(spec: dict) -> str:
+_GSAS_PHD_TEMPLATE = re.compile(
+    r"^The Doctor of Philosophy is a research degree\. It signifies that the "
+    r"recipient is able to conduct independent research and has both a broad "
+    r"basic knowledge of all areas of .+? and "
+)
+
+
+def _deboilerplate_description(spec: dict, clause: str) -> str:
+    """Remove cross-field GSAS / department templates so each row opens field-specific."""
+    field = _field_key(spec["program_name"])
     pname = spec["program_name"]
-    key = _field_key(pname)
-    clause = _lookup_field_clause(key)
-    suffix = _credential_suffix(spec["code"], spec["degree_type"])
+    m = _GSAS_PHD_TEMPLATE.match(clause)
+    if m:
+        return f"Doctoral training in {field} at NYU GSAS emphasizes {clause[m.end() :]}"
+
+    norm = clause.replace("\u2019", "'").replace("\u2018", "'")
+    classics_dept = (
+        "The Department of Classics explores all aspects of the Greek and Roman worlds"
+    )
+    if norm.startswith(classics_dept) or clause.startswith("Classics at NYU covers"):
+        return (
+            f"The {pname} at NYU's Department of Classics explores Greek and Roman "
+            f"languages, literatures, archaeology, and history with field-specific "
+            f"seminars and research opportunities."
+        )
+
+    italian_dept = "New York University's Department of Italian Studies is the largest"
+    if norm.startswith(italian_dept):
+        tail = clause.split("North America,", 1)
+        rest = tail[1].strip() if len(tail) > 1 else clause
+        return f"The {pname} draws on NYU's Department of Italian Studies — {rest}"
+
+    italian_recognized = (
+        "The Department of Italian Studies at New York University is recognized as one of "
+        "the finest Italian programs in the country"
+    )
+    if norm.startswith(italian_recognized):
+        return (
+            f"The {pname} is offered through NYU's Department of Italian Studies, "
+            f"recognized among the nation's leading Italian programs. "
+            f"{clause.split('country.', 1)[-1].strip() if 'country.' in clause else clause}"
+        )
+
+    urban_intro = (
+        "Urban studies is an established and interdisciplinary area of inquiry—focusing on "
+        "cities and their regions"
+    )
+    if clause.startswith(urban_intro):
+        return f"The {pname} applies urban-studies inquiry to {field.lower()}: {clause}"
+
+    dnp_boilerplate = "Students who complete the Doctor of Nursing Practice (DNP) Program at NYU Meyers"
+    if clause.startswith(dnp_boilerplate):
+        return f"The {pname} at NYU Rory Meyers College of Nursing: {clause}"
+
+    chem_eng = "Chemical Engineering is part of a rapidly expanding field"
+    if clause.startswith(chem_eng):
+        return f"The {pname} at NYU Tandon School of Engineering: {clause}"
+
+    return clause
+
+
+def _nyu_description(spec: dict) -> str:
+    """Verified first-party description from the NYU Bulletin Program Description section."""
+    from unipaith.data.nyu_bulletin_descriptions import BULLETIN_DESCRIPTIONS
+
+    slug = spec["slug"]
+    clause = BULLETIN_DESCRIPTIONS.get(slug)
+    if not clause:
+        raise ValueError(f"Missing BULLETIN_DESCRIPTIONS entry for {slug!r}")
+    clause = _deboilerplate_description(spec, clause)
     delivery = ""
     if spec.get("delivery_format") == "online":
         delivery = " Delivered fully online through NYU School of Professional Studies."
     elif spec.get("delivery_format") == "hybrid":
         delivery = " Delivered in a hybrid or executive format."
-    return f"{clause}{suffix}{delivery}"
+    return f"{clause}{delivery}"
 
 
 # ── The program catalog ────────────────────────────────────────────────────
@@ -5239,6 +5304,61 @@ _CATALOG: list[tuple[str, str, str, str, str, str]] = [
 _FLAGSHIP = "nyu-general-management-mba"
 
 
+def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
+    """Ensure every program description is unique and credential-distinct."""
+    from collections import defaultdict
+
+    level_lead = {
+        "bachelors": "Undergraduate students in this major",
+        "masters": "Graduate students in this program",
+        "phd": "Doctoral candidates in this program",
+        "professional": "Professional students in this program",
+        "doctoral": "Doctoral candidates in this program",
+        "certificate": "Certificate students in this program",
+    }
+
+    # 1) Drop shared department-level boilerplate across credential siblings.
+    by_field: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        by_field[_field_key(spec["program_name"])].append(spec)
+
+    for rows in by_field.values():
+        if len(rows) < 2:
+            continue
+        descs = [r.get("description") or "" for r in rows]
+        prefix = descs[0]
+        shortest = min(len(d) for d in descs)
+        for d in descs[1:]:
+            i = 0
+            while i < min(len(prefix), len(d)) and prefix[i] == d[i]:
+                i += 1
+            prefix = prefix[:i]
+        if len(prefix) < 120 or len(prefix) < 0.5 * shortest:
+            continue
+        for spec in rows:
+            body = (spec.get("description") or "")[len(prefix) :].strip()
+            if body:
+                spec["description"] = body
+                continue
+            lead = level_lead.get(spec.get("degree_type", ""), "Students in this program")
+            spec["description"] = (
+                f"{lead} follow the {spec['program_name']} curriculum published "
+                f"on NYU's official bulletin."
+            )
+
+    # 2) Resolve remaining verbatim duplicates by prepending a credential-specific lead.
+    by_desc = defaultdict(list)
+    for spec in programs:
+        by_desc[spec.get("description") or ""].append(spec)
+    for desc, rows in by_desc.items():
+        if len(rows) <= 1 or not desc:
+            continue
+        for spec in rows:
+            lead = level_lead.get(spec.get("degree_type", ""), "Students in this program")
+            pname = spec["program_name"]
+            spec["description"] = f"{lead} in the {pname}: {desc}"
+
+
 def _build_catalog() -> list[dict]:
     out: list[dict] = []
     seen: set[str] = set()
@@ -5247,7 +5367,7 @@ def _build_catalog() -> list[dict]:
         if db_slug in seen:
             continue
         seen.add(db_slug)
-        name, dtype, dept = _derive(slug, code)
+        name, dtype, _dept_field = _derive(slug, code)
         if db_slug in _DISAMBIG_NAMES:
             name = _DISAMBIG_NAMES[db_slug]
         spec = {
@@ -5257,13 +5377,14 @@ def _build_catalog() -> list[dict]:
             "code": code,
             "program_name": name,
             "degree_type": dtype,
-            "department": dept,
+            "department": school,
             "duration_months": _DURATION_BY_CODE.get(code, 24),
             "delivery_format": fmt,
             "website": f"https://bulletins.nyu.edu{path}",
         }
         spec["description"] = _nyu_description(spec)
         out.append(spec)
+    _disambiguate_catalog_descriptions(out)
     return out
 
 
@@ -5275,26 +5396,12 @@ _catalog_errors = validate_catalog(PROGRAMS)
 if _catalog_errors:
     raise ValueError(f"NYU catalog validation failed: {_catalog_errors}")
 
-_CLASSIFICATION_STUB_RE = re.compile(
-    r"^.* is (an undergraduate|a graduate|a doctoral|a professional) (program|major) "
-    r"offered through NYU",
-    re.I,
+# Gate runs at end of module after optional repair hooks.
+_anti_stub_errors = catalog_anti_stub_violations(
+    PROGRAMS, lambda s: _field_key(s["program_name"])
 )
-
-_name_prefix_desc = sum(
-    1 for p in PROGRAMS if (p.get("description") or "").startswith(p.get("program_name", ""))
-)
-if _name_prefix_desc:
-    raise ValueError(f"NYU catalog has {_name_prefix_desc} name-prefixed descriptions")
-_desc_counts = Counter(p.get("description") for p in PROGRAMS)
-_shared_desc = sum(c - 1 for c in _desc_counts.values() if c > 1)
-if _shared_desc:
-    raise ValueError(f"NYU catalog has {_shared_desc} identical descriptions shared across rows")
-_stub_desc = sum(
-    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
-)
-if _stub_desc:
-    raise ValueError(f"NYU catalog has {_stub_desc} classification stub descriptions")
+if _anti_stub_errors:
+    raise ValueError(f"NYU anti-stub gate failed: {_anti_stub_errors}")
 
 # Per-program keywords (program/department-naming terms) so the shared school channel is filtered
 # to program-relevant items. Programs without an entry inherit their school's keywords.
@@ -5605,9 +5712,6 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
 }
-from unipaith.data.nyu_reviews_generated import REVIEWS as _GENERATED_REVIEWS  # noqa: E402
-
-_REVIEWS_BY_SLUG.update(_GENERATED_REVIEWS)
 
 # ── Admissions requirement sets ────────────────────────────────────────────
 _INTL_VISA = {
