@@ -238,6 +238,12 @@ class Program(Base):
     tuition: Mapped[int | None] = mapped_column(Integer)
     acceptance_rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))
     delivery_format: Mapped[str | None] = mapped_column(String(30))
+    # AI Structure (Spec 3 §3) — explicit part-time availability for the matcher's
+    # flexibility fit (the student's `wants_part_time`). Nullable + distinct from
+    # delivery_format (which only carries the online/hybrid/remote axis): a program
+    # may be in-person yet still offer a part-time track. Absent → no flexibility
+    # signal (gated), never a fabricated False that would falsely fail a want.
+    part_time_available: Mapped[bool | None] = mapped_column(Boolean)
     campus_setting: Mapped[str | None] = mapped_column(String(30))
     requirements: Mapped[dict | None] = mapped_column(JSONB)
     application_requirements: Mapped[dict | None] = mapped_column(JSONB)

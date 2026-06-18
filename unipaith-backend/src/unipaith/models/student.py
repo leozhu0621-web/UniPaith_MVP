@@ -352,6 +352,17 @@ class StudentPreference(Base):
     target_degree_level: Mapped[str | None] = mapped_column(String(30))
     target_start_term: Mapped[str | None] = mapped_column(String(30))
     thesis_interest: Mapped[str | None] = mapped_column(String(20))
+    # AI Structure (Spec 3 §3) — typed-fit student-side constraints the CPEF
+    # matcher projects onto its sparse vector. All nullable: an absent preference
+    # injects no phantom dimension (the matcher gates each signal on non-null).
+    #   desired_time_to_degree_months → the desired-time-to-degree fit (Gaussian
+    #     kernel vs the program's duration_months).
+    #   wants_part_time / wants_online → the flexibility fit (hard want floor).
+    #   wants_career_support → the support fit (soft want floor).
+    desired_time_to_degree_months: Mapped[int | None] = mapped_column(Integer)
+    wants_part_time: Mapped[bool | None] = mapped_column(Boolean)
+    wants_online: Mapped[bool | None] = mapped_column(Boolean)
+    wants_career_support: Mapped[bool | None] = mapped_column(Boolean)
     # Spec 20 §2 — when false, saving a program does not auto-follow its institution.
     auto_follow_on_save: Mapped[bool] = mapped_column(default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(

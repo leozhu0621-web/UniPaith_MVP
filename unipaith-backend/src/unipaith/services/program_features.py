@@ -46,8 +46,9 @@ logger = logging.getLogger(__name__)
 
 # delivery_format values that mean the program can be taken remotely. The matcher
 # reads `online_available` for the student's `wants_online` flexibility signal.
-# part-time has NO Program column today, so it is intentionally NOT derived here
-# (see module-level DEFERRED note) — a missing key emits no flexibility signal.
+# part-time is now its OWN explicit `Program.part_time_available` column (Spec 3
+# §3) read directly in program_row_from_orm — a null column emits no flexibility
+# signal (gated), never a fabricated False.
 _ONLINE_DELIVERY_FORMATS: frozenset[str] = frozenset({"online", "hybrid", "remote"})
 
 # AI Structure (Spec 2 — claim hinge): the program-record-level c_program floor
@@ -121,6 +122,7 @@ class ProgramRow:
     fields_offered: list[str] = field(default_factory=list)  # canonical field tokens
     duration_months: int | None = None  # for the desired-time-to-degree fit
     online_available: bool | None = None  # derived from delivery_format
+    part_time_available: bool | None = None  # explicit Program column (flexibility fit)
     career_services: bool | None = None  # derived from support_signals evidence
     cip_code: str | None = None
     data_completeness: float = 0.5  # default for sparse rows
@@ -161,6 +163,8 @@ def features_from_row(
         sparse["duration_months"] = row.duration_months
     if row.online_available is not None:
         sparse["online_available"] = row.online_available
+    if row.part_time_available is not None:
+        sparse["part_time_available"] = row.part_time_available
     # career_services: explicit row flag wins; else derive from the evidence-based
     # support_signals the featurizer already grounded in real description text.
     if row.career_services is not None:
@@ -271,6 +275,15 @@ def program_row_from_orm(program: Any) -> ProgramRow:
         if fmt:
             online_available = str(fmt).strip().lower() in _ONLINE_DELIVERY_FORMATS
 
+    # part_time_available: the real Program.part_time_available column (Spec 3
+    # §3). A null column leaves it None (no flexibility signal contribution),
+    # never a fabricated False — a stored vector value, if present, wins.
+    part_time_available = sparse.get("part_time_available")
+    if part_time_available is None:
+        raw_pt = getattr(program, "part_time_available", None)
+        if raw_pt is not None:
+            part_time_available = bool(raw_pt)
+
     support_signals = dict(sparse.get("support_signals") or {})
     name = getattr(program, "program_name", "") or ""
     cip_code = getattr(program, "cip_code", None)
@@ -301,6 +314,7 @@ def program_row_from_orm(program: Any) -> ProgramRow:
         fields_offered=list(sparse.get("fields_offered") or []),
         duration_months=duration_months,
         online_available=online_available,
+        part_time_available=part_time_available,
         cip_code=cip_code,
         data_completeness=data_completeness,
     )

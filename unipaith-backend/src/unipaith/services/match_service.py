@@ -714,9 +714,12 @@ class MatchService:
         )
 
     async def _overlay_student_attrs(self, student_id: UUID, sparse: dict) -> None:
-        """Add the student's GPA + field-of-study to the matcher sparse vector
-        (AI Structure D.2). Only the current AcademicRecord; missing → skip."""
-        from unipaith.models.student import AcademicRecord
+        """Add the student's GPA + field-of-study + typed-fit preferences to the
+        matcher sparse vector (AI Structure D.2 / Spec 3 §3). Only the current
+        AcademicRecord and the StudentPreference row; missing → skip. Each key is
+        GATED on a non-null source value, so an absent attribute injects no
+        phantom signal. Fail-soft: any read error leaves the sparse vector as-is."""
+        from unipaith.models.student import AcademicRecord, StudentPreference
 
         try:
             academic = await self.db.scalar(
@@ -728,21 +731,46 @@ class MatchService:
                 .limit(1)
             )
         except Exception:
-            return
-        if academic is None:
-            return
-        if academic.normalized_gpa is not None and "gpa" not in sparse:
-            sparse["gpa"] = float(academic.normalized_gpa)
-        if academic.field_of_study and "field_of_study" not in sparse:
-            # Canonicalize to the FIELD_SIM_TABLE vocab so the s→p field signal
-            # matches the (canonicalized) program-side fields_offered on live
-            # free-text data ("Computer Science" → "computer_science"). Gated:
-            # an unrecognizable field yields no field signal (no phantom 0.0).
-            from unipaith.services.match.field_canon import canonical_field
+            academic = None
+        if academic is not None:
+            if academic.normalized_gpa is not None and "gpa" not in sparse:
+                sparse["gpa"] = float(academic.normalized_gpa)
+            if academic.field_of_study and "field_of_study" not in sparse:
+                # Canonicalize to the FIELD_SIM_TABLE vocab so the s→p field signal
+                # matches the (canonicalized) program-side fields_offered on live
+                # free-text data ("Computer Science" → "computer_science"). Gated:
+                # an unrecognizable field yields no field signal (no phantom 0.0).
+                from unipaith.services.match.field_canon import canonical_field
 
-            canon = canonical_field(academic.field_of_study)
-            if canon:
-                sparse["field_of_study"] = canon
+                canon = canonical_field(academic.field_of_study)
+                if canon:
+                    sparse["field_of_study"] = canon
+
+        # AI Structure (Spec 3 §3) — typed-fit student constraints from the
+        # StudentPreference row. Each fuels a dormant matcher signal:
+        #   desired_time_to_degree_months → "time" fit (vs program duration_months)
+        #   wants_part_time / wants_online → "flexibility" fit (hard want floor)
+        #   wants_career_support           → "support" fit (soft want floor)
+        # GATED on non-null so a student who never stated a preference gets no
+        # phantom dimension. Each key is set only when not already present (the
+        # emitted feature vector wins if it ever carried one).
+        try:
+            pref = await self.db.scalar(
+                select(StudentPreference).where(StudentPreference.student_id == student_id).limit(1)
+            )
+        except Exception:
+            pref = None
+        if pref is not None:
+            if pref.desired_time_to_degree_months is not None and (
+                "desired_time_to_degree_months" not in sparse
+            ):
+                sparse["desired_time_to_degree_months"] = int(pref.desired_time_to_degree_months)
+            if pref.wants_part_time is not None and "wants_part_time" not in sparse:
+                sparse["wants_part_time"] = bool(pref.wants_part_time)
+            if pref.wants_online is not None and "wants_online" not in sparse:
+                sparse["wants_online"] = bool(pref.wants_online)
+            if pref.wants_career_support is not None and "wants_career_support" not in sparse:
+                sparse["wants_career_support"] = bool(pref.wants_career_support)
 
     async def _overlay_program_prefs(self, program_features: list[ProgramFeatures]) -> None:
         """Overlay each program's ProgramPreference (target applicant) onto its

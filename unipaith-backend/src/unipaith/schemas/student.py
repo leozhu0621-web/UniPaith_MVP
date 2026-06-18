@@ -361,6 +361,13 @@ class UpsertPreferencesRequest(BaseModel):
     target_degree_level: str | None = None
     target_start_term: str | None = None
     thesis_interest: str | None = None
+    # AI Structure (Spec 3 §3) — typed-fit constraints the CPEF matcher reads:
+    # desired time-to-degree (months) + the part-time / online / career-support
+    # wants. All optional; absent → the matcher emits no corresponding signal.
+    desired_time_to_degree_months: int | None = Field(None, ge=1, le=120)
+    wants_part_time: bool | None = None
+    wants_online: bool | None = None
+    wants_career_support: bool | None = None
     auto_follow_on_save: bool | None = None
 
 
@@ -399,6 +406,11 @@ class StudentPreferenceResponse(BaseModel):
     target_degree_level: str | None = None
     target_start_term: str | None = None
     thesis_interest: str | None = None
+    # AI Structure (Spec 3 §3) — typed-fit constraints (see request schema).
+    desired_time_to_degree_months: int | None = None
+    wants_part_time: bool | None = None
+    wants_online: bool | None = None
+    wants_career_support: bool | None = None
     auto_follow_on_save: bool = True
     created_at: datetime
     updated_at: datetime
