@@ -98,6 +98,8 @@ _SORT_MAP: dict[SortOption, str] = {
     SortOption.tuition_desc: "tuition_desc",
     SortOption.acceptance_asc: "acceptance_asc",
     SortOption.acceptance_desc: "acceptance_desc",
+    SortOption.salary_desc: "salary_desc",
+    SortOption.employment_desc: "employment_desc",
     SortOption.deadline: "deadline",
     SortOption.recently_added: "recently_added",
 }
