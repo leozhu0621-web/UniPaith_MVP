@@ -51,9 +51,9 @@ from collections import Counter
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
-from unipaith.data.profile_catalog_utils import validate_catalog
 
 INSTITUTION_NAME = "University of Michigan-Ann Arbor"
 ENRICHED_AT = "2026-06-18"
