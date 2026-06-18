@@ -5772,11 +5772,16 @@ if _shared_desc:
         f"USC catalog has {_shared_desc} identical descriptions shared across rows"
     )
 
-from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
 
-_stub_report = _anti_stub_analyze(PROGRAMS)
-if not _stub_report.is_clean:
-    raise ValueError(f"USC catalog anti-stub gate failed: {_stub_report.summary()}")
+def _assert_anti_stub_clean(programs: list[dict]) -> None:
+    from unipaith.profile_standard.anti_stub import analyze
+
+    report = analyze(programs)
+    if not report.is_clean:
+        raise ValueError(f"USC catalog anti-stub gate failed: {report.summary()}")
+
+
+_assert_anti_stub_clean(PROGRAMS)
 
 _WEBSITE_OVERRIDE: dict[str, str] = {
     "usc-full-time-mba-program-mba": "https://www.marshall.usc.edu/programs/graduate-programs/mba-programs/full-time-mba",
