@@ -99,6 +99,20 @@ resource "aws_iam_role_policy" "ecs_task_permissions" {
         Resource = ["*"]
       },
       {
+        # ECS Exec (Systems Manager) data/control channel — lets
+        # `aws ecs execute-command` open a shell into the running task, used to
+        # verify the in-VPC Qwen vLLM endpoint (curl 10.0.10.175:8000) and for
+        # future debugging. Standard ECS-exec permission set.
+        Effect = "Allow"
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel",
+        ]
+        Resource = ["*"]
+      },
+      {
         Effect = "Allow"
         Action = [
           "cognito-idp:AdminGetUser",
@@ -416,11 +430,12 @@ resource "aws_ecs_task_definition" "backend" {
 
 # --- ECS Service ---
 resource "aws_ecs_service" "backend" {
-  name            = "${var.project}-backend"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.backend.arn
-  desired_count   = var.backend_desired_count
-  launch_type     = "FARGATE"
+  name                   = "${var.project}-backend"
+  cluster                = aws_ecs_cluster.main.id
+  task_definition        = aws_ecs_task_definition.backend.arn
+  desired_count          = var.backend_desired_count
+  launch_type            = "FARGATE"
+  enable_execute_command = true # ECS Exec for in-VPC debugging (e.g. curl the Qwen vLLM box)
 
   network_configuration {
     subnets          = aws_subnet.private[*].id
