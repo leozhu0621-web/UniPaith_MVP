@@ -176,3 +176,32 @@ def test_no_name_prefixed_descriptions():
         if (prog.get("description") or "").startswith(prog.get("program_name", ""))
     )
     assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
+
+
+def test_no_fabricated_units_or_shared_credential_descriptions():
+    from collections import defaultdict
+
+    for spec in p.PROGRAMS:
+        assert "Center for Aerospace Research and Training" not in (
+            spec.get("description") or ""
+        ), spec["slug"]
+
+    by_key: dict[tuple[str, str], list[str]] = defaultdict(list)
+    for spec in p.PROGRAMS:
+        fn = spec["program_name"]
+        field = fn
+        for prefix in (
+            "Bachelor of Arts in ",
+            "Bachelor of Science in ",
+            "Master of Science in ",
+            "Doctor of Philosophy in ",
+            "Graduate Certificate in ",
+        ):
+            if fn.startswith(prefix):
+                field = fn[len(prefix) :].strip()
+                break
+        by_key[(field, spec["degree_type"])].append(spec.get("description") or "")
+
+    for key, descs in by_key.items():
+        if len(descs) >= 2:
+            assert len(set(descs)) == len(descs), f"shared descriptions for {key}"
