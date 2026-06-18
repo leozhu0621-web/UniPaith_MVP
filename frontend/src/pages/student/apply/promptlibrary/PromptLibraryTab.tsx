@@ -127,10 +127,6 @@ export default function PromptLibraryTab() {
         <h2 className="flex items-center gap-2 text-h3 text-foreground">
           <MessagesSquare size={20} /> Prompt Library
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Practice the questions admissions and interviewers actually ask. We coach structure and
-          flag gaps — we never write your answer.
-        </p>
       </header>
 
       {/* View toggle — behavioral practice (Spec 42) vs major-specific (Spec 43). */}

@@ -25,7 +25,6 @@ export default function StrategySnapshot() {
         <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
           <Route size={15} className="text-secondary" aria-hidden /> Your strategy
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">A career target sharpens every match and rationale.</p>
         <button
           onClick={() => navigate('/s')}
           className="ui-btn mt-3 inline-flex items-center gap-1.5 rounded-md bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground"

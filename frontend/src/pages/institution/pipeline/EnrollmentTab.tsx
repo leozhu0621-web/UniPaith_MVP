@@ -96,10 +96,9 @@ export default function EnrollmentTab({ applicationId }: { applicationId: string
     return (
       <Card pad={false} className="p-6">
         <p className="text-sm font-medium text-foreground mb-1">Enrollment hasn't started</p>
-        <p className="text-sm text-muted-foreground">
-          The enrollment window opens once {e.student_name || 'the applicant'} accepts their offer.
-          {e.decision ? ` Current decision: ${e.decision}.` : ''}
-        </p>
+        {e.decision && (
+          <p className="text-sm text-muted-foreground">Current decision: {e.decision}.</p>
+        )}
       </Card>
     )
   }
@@ -145,9 +144,6 @@ export default function EnrollmentTab({ applicationId }: { applicationId: string
             {e.deposit_status}
           </Badge>
         </div>
-        <p className="text-xs text-muted-foreground mb-3">
-          Status only — no payment is processed here (Spec 39 owns collection).
-        </p>
         {!withdrew && (
           <div className="flex items-end gap-2 flex-wrap">
             <Select
@@ -241,9 +237,6 @@ export default function EnrollmentTab({ applicationId }: { applicationId: string
               <Send size={14} className="mr-1" /> Send nudge
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Send a confirmation reminder from the inbox (reason-coded, AI-draftable).
-          </p>
           {deferralPending && e.deferral?.to_term && (
             <p className="text-xs text-muted-foreground mt-2">
               Requested term: {e.deferral.to_term.season} {e.deferral.to_term.year}

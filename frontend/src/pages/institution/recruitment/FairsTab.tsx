@@ -125,7 +125,6 @@ export default function FairsTab() {
           <EmptyState
             icon={<School size={28} />}
             title="No schools or fairs yet"
-            description="Build your directory of high schools and college fairs, then capture the prospects you meet."
             action={{ label: 'Add school or fair', onClick: () => setShowNew(true) }}
           />
         </Card>

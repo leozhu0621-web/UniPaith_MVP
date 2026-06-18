@@ -88,7 +88,7 @@ export default function FairnessPanel() {
       ) : (
         <p className="text-sm text-muted-foreground mb-2">
           Disparate-impact monitored across {data.program_count} program
-          {data.program_count !== 1 ? 's' : ''}. Bias is a practice, not a checkbox.
+          {data.program_count !== 1 ? 's' : ''}.
         </p>
       )}
 

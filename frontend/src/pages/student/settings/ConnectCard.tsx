@@ -30,13 +30,12 @@ export default function ConnectCard() {
   const autoFollow = prefs?.auto_follow_on_save ?? true
 
   return (
-    <SettingsSection icon={Users} title="Connect" description="How following works as you explore.">
+    <SettingsSection icon={Users} title="Connect">
       {isLoading ? (
         <Skeleton className="h-12 rounded-lg" />
       ) : (
         <SettingRow
           label="Auto-follow when I save a program"
-          description="Saving a program follows its institution so updates and events appear in Connect."
         >
           <Toggle
             checked={autoFollow}

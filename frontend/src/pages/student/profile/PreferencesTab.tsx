@@ -235,7 +235,7 @@ export default function PreferencesTab() {
   return (
     <div className="space-y-8">
       <section>
-        <SectionHeader title="Location & setting" description="Where you'd like to study." saveState={autosaveState} />
+        <SectionHeader title="Location & setting" saveState={autosaveState} />
         <Card pad={false} className="p-5 space-y-5">
           <div className="grid sm:grid-cols-2 gap-x-4 gap-y-5">
             <ChipMultiSelect label="Preferred countries" options={GEO_CHIPS} selected={form.preferred_countries} onToggle={v => toggleInList('preferred_countries', v)} />
@@ -249,7 +249,7 @@ export default function PreferencesTab() {
       </section>
 
       <section>
-        <SectionHeader title="Program" description="The shape of the program you're after." />
+        <SectionHeader title="Program" />
         <Card pad={false} className="p-5 grid sm:grid-cols-2 gap-x-4 gap-y-1">
           <Select label="Program size" placeholder="No preference" options={PROGRAM_SIZE} value={form.program_size_preference} onChange={e => set('program_size_preference', e.target.value)} />
           <Select label="Target degree level" placeholder="No preference" options={withCurrent(DEGREE_LEVEL_OPTIONS, form.target_degree_level)} value={form.target_degree_level} onChange={e => set('target_degree_level', e.target.value)} />
@@ -264,7 +264,7 @@ export default function PreferencesTab() {
       </section>
 
       <section>
-        <SectionHeader title="What matters most" description="Tune how strongly each factor weighs on your matches (0–10)." />
+        <SectionHeader title="What matters most" />
         <Card pad={false} className="p-5">
           <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
             {WEIGHTS.map(w => (

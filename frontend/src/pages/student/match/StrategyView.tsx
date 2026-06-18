@@ -126,11 +126,6 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
               <div className="text-sm font-medium text-foreground">
                 Tell me about you first.
               </div>
-              <div className="text-xs text-foreground mt-1 max-w-2xl">
-                Discover works against the broad strategy you build with Uni. Talk through your
-                goals and I'll surface the strategy here once you have at least one active
-                academic goal.
-              </div>
             </div>
           </div>
           <Link to="/s">
@@ -153,8 +148,7 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
                 Ready to plan your strategy.
               </div>
               <div className="text-xs text-foreground mt-1">
-                You have {goals.length} active goal{goals.length === 1 ? '' : 's'}. Generate a
-                draft strategy now and review/activate it from your profile.
+                You have {goals.length} active goal{goals.length === 1 ? '' : 's'}.
               </div>
             </div>
           </div>

@@ -83,7 +83,6 @@ export default function SavedSearchesPanel() {
       <EmptyState
         icon={<Bell size={48} />}
         title="No saved searches yet"
-        description="Run a search in Discover, then “Save search” to keep it here — turn on alerts and we’ll tell you when new programs match."
         action={{ label: 'Open Discover →', onClick: () => navigate('/s/explore') }}
       />
     )
@@ -91,10 +90,6 @@ export default function SavedSearchesPanel() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Saved searches keep your filters in one tap. Turn on alerts and we’ll notify you when new
-        programs match — consent-aware, never more than a few a day.
-      </p>
       {searches.map(s => (
         <SavedSearchRow
           key={s.id}

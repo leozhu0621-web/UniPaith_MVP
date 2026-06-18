@@ -117,10 +117,6 @@ export default function GraduatePage() {
           </span>
           <h2 className="text-lg font-semibold text-foreground">Graduate &amp; PhD admissions</h2>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Faculty-advisor matching, research-fit, and funding packages — the depth graduate
-          admissions needs on top of your shared pipeline.
-        </p>
       </header>
 
       {/* KPIs */}
@@ -165,7 +161,6 @@ export default function GraduatePage() {
           <EmptyState
             icon={<Building2 size={28} />}
             title="No departments yet"
-            description="Create a department to run its own scoped review, faculty roster, and funding budget."
           />
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

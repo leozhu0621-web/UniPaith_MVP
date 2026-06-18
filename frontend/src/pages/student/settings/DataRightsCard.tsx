@@ -148,7 +148,7 @@ export default function DataRightsCard() {
 
   return (
     <>
-      <SettingsSection icon={Database} title="Data & privacy" description="Independent controls over how your data is used.">
+      <SettingsSection icon={Database} title="Data & privacy">
         <Card pad={false} className="divide-y divide-border">
           {LEVERS.map(lever => (
             <div key={lever.key} className="flex items-start justify-between gap-4 p-4">
@@ -172,7 +172,7 @@ export default function DataRightsCard() {
         </p>
       </SettingsSection>
 
-      <SettingsSection icon={Download} title="Export your data" description="Download a copy of your data in a portable format.">
+      <SettingsSection icon={Download} title="Export your data">
         <div className="grid sm:grid-cols-2 gap-3">
           <Card pad={false} className="p-5 flex items-start justify-between gap-3">
             <div>
@@ -207,9 +207,9 @@ export default function DataRightsCard() {
         </div>
       </SettingsSection>
 
-      <SettingsSection icon={History} title="Access log" description="Who and what touched your data, and when.">
+      <SettingsSection icon={History} title="Access log">
         {logEntries.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No access recorded yet. Activity on your data — by you, the institutions you apply to, and AI — will appear here.</p>
+          <p className="text-sm text-muted-foreground">No access recorded yet.</p>
         ) : (
           <Card pad={false} className="p-0 overflow-x-auto">
             <table className="w-full text-sm">

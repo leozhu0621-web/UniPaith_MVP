@@ -139,9 +139,9 @@ export default function ExperienceTab() {
     <div className="space-y-10">
       {/* Activities */}
       <section>
-        <SectionHeader title="Activities" description="Clubs, leadership, and extracurriculars." action={<Button size="sm" onClick={() => open('activity')}><Plus size={14} /> Add activity</Button>} />
+        <SectionHeader title="Activities" action={<Button size="sm" onClick={() => open('activity')}><Plus size={14} /> Add activity</Button>} />
         {activities.length === 0 ? (
-          <EmptyState title="No activities yet" description="Add your first to surface relevant programs." action={{ label: 'Add an activity', onClick: () => open('activity') }} />
+          <EmptyState title="No activities yet" action={{ label: 'Add an activity', onClick: () => open('activity') }} />
         ) : (
           <div className="space-y-2">
             {activities.map(act => (
@@ -163,9 +163,9 @@ export default function ExperienceTab() {
 
       {/* Work & Service */}
       <section>
-        <SectionHeader title="Work & service" description="Internships, jobs, volunteering, and fellowships." action={<Button size="sm" onClick={() => open('work')}><Plus size={14} /> Add experience</Button>} />
+        <SectionHeader title="Work & service" action={<Button size="sm" onClick={() => open('work')}><Plus size={14} /> Add experience</Button>} />
         {work.length === 0 ? (
-          <EmptyState title="No work or service yet" description="Add internships, part-time roles, or volunteering." action={{ label: 'Add experience', onClick: () => open('work') }} />
+          <EmptyState title="No work or service yet" action={{ label: 'Add experience', onClick: () => open('work') }} />
         ) : (
           <div className="space-y-2">
             {work.map(w => (
@@ -189,9 +189,9 @@ export default function ExperienceTab() {
 
       {/* Competitions */}
       <section>
-        <SectionHeader title="Competitions" description="Hackathons, olympiads, and contests." action={<Button size="sm" onClick={() => open('competition')}><Plus size={14} /> Add competition</Button>} />
+        <SectionHeader title="Competitions" action={<Button size="sm" onClick={() => open('competition')}><Plus size={14} /> Add competition</Button>} />
         {comps.length === 0 ? (
-          <EmptyState title="No competitions yet" description="Add hackathons, olympiads, or other contests you've entered." action={{ label: 'Add a competition', onClick: () => open('competition') }} />
+          <EmptyState title="No competitions yet" action={{ label: 'Add a competition', onClick: () => open('competition') }} />
         ) : (
           <div className="space-y-2">
             {comps.map(c => (
@@ -214,9 +214,9 @@ export default function ExperienceTab() {
 
       {/* Portfolio */}
       <section>
-        <SectionHeader title="Portfolio" description="Projects and work samples." action={<Button size="sm" onClick={() => open('portfolio')}><Plus size={14} /> Add piece</Button>} />
+        <SectionHeader title="Portfolio" action={<Button size="sm" onClick={() => open('portfolio')}><Plus size={14} /> Add piece</Button>} />
         {portfolio.length === 0 ? (
-          <EmptyState title="No portfolio pieces yet" description="Showcase projects, writing, art, or code." action={{ label: 'Add a piece', onClick: () => open('portfolio') }} />
+          <EmptyState title="No portfolio pieces yet" action={{ label: 'Add a piece', onClick: () => open('portfolio') }} />
         ) : (
           <div className="grid sm:grid-cols-2 gap-3">
             {portfolio.map(item => (
@@ -238,9 +238,9 @@ export default function ExperienceTab() {
 
       {/* Online Presence */}
       <section>
-        <SectionHeader title="Online presence" description="LinkedIn, GitHub, personal site, and more." action={<Button size="sm" onClick={() => open('online')}><Plus size={14} /> Add link</Button>} />
+        <SectionHeader title="Online presence" action={<Button size="sm" onClick={() => open('online')}><Plus size={14} /> Add link</Button>} />
         {online.length === 0 ? (
-          <EmptyState title="No links yet" description="Add your LinkedIn, GitHub, or portfolio site to strengthen your entries." action={{ label: 'Add a link', onClick: () => open('online') }} />
+          <EmptyState title="No links yet" action={{ label: 'Add a link', onClick: () => open('online') }} />
         ) : (
           <div className="space-y-2">
             {online.map(op => (

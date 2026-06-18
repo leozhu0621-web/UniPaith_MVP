@@ -58,11 +58,7 @@ export default function TeamCard() {
   const members = teamQ.data ?? []
 
   return (
-    <SettingsSection
-      icon={Users}
-      title="Team & seats"
-      description="Invite staff and assign roles. Invitations send when email integration goes live (Phase 2)."
-    >
+    <SettingsSection icon={Users} title="Team & seats">
       {/* Invite row */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end mb-4">
         <div className="flex-1">

@@ -80,12 +80,6 @@ export default function BulkMessageSheet({
       }
     >
       <div className="space-y-4">
-        <p className="text-xs text-muted-foreground">
-          Operational, reason-coded messages to a whole segment. Each recipient gets their own
-          thread. Marketing-class reasons respect outreach consent; transactional messages tied to an
-          active application are always delivered.
-        </p>
-
         <label className="block">
           <span className="text-xs font-medium text-foreground">Segment</span>
           <select

@@ -552,9 +552,6 @@ export default function DataUploadPage() {
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Data</p>
           <h1 className="text-2xl font-bold text-foreground">Your datasets</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Upload admissions history, prospect lists, and outcomes for matching, campaigns, and analytics.
-          </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <div className="w-40">
@@ -580,7 +577,6 @@ export default function DataUploadPage() {
           <EmptyState
             icon={<Database size={40} />}
             title="No datasets yet"
-            description="Upload a dataset to power matching, campaigns, or analytics."
             action={{ label: 'Upload dataset', onClick: openCreateWizard }}
           />
         ) : (
@@ -633,7 +629,6 @@ export default function DataUploadPage() {
 
         {wizardMode === 'create' && wizardStep === 1 && (
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Choose how this file updates the dataset.</p>
             <label className="flex items-center gap-2 text-sm">
               <input type="radio" checked={updateMode === 'replace'} onChange={() => setUpdateMode('replace')} />
               Replace dataset (full refresh)
@@ -717,15 +712,12 @@ export default function DataUploadPage() {
 
         {wizardMode === 'create' && wizardStep === 4 && (
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Set where this dataset may be used.</p>
             <Select label="Usage scope *" options={USAGE_SCOPES} value={scope} onChange={e => setScope(e.target.value)} />
           </div>
         )}
 
         {((wizardMode === 'create' && wizardStep === 5) || (wizardMode !== 'create' && wizardStep === 2)) && (
-          <p className="text-sm text-muted-foreground">
-            Submit to validate rows and activate the dataset. Invalid rows can be skipped after review.
-          </p>
+          <p className="text-sm text-muted-foreground">Submit to validate rows and activate the dataset.</p>
         )}
 
         <div className="flex justify-end gap-2 mt-6">

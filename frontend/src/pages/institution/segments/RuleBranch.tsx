@@ -5,7 +5,7 @@ import { defaultRuleForSignal } from './helpers'
 
 interface Props {
   title: string
-  hint: string
+  hint?: string
   branch: 'include' | 'exclude'
   group: SegmentRuleGroup
   signals: Record<string, SignalDef>
@@ -36,7 +36,7 @@ export default function RuleBranch({ title, hint, branch, group, signals, dict, 
       <div className="mb-2 flex items-center justify-between">
         <div>
           <h4 className="text-sm font-semibold text-foreground">{title}</h4>
-          <p className="text-xs text-muted-foreground">{hint}</p>
+          {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
         </div>
         {leaves.length > 1 && (
           <div className="flex items-center gap-1 text-xs">

@@ -66,7 +66,6 @@ export default function TravelTab() {
           <EmptyState
             icon={<Plane size={28} />}
             title="No trips planned"
-            description="Plan recruiter travel — group school and fair visits into a trip with dates and a budget."
             action={{ label: 'Plan a trip', onClick: () => setShowNew(true) }}
           />
         </Card>

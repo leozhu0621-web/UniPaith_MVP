@@ -144,7 +144,7 @@ export default function TemplatesPage() {
       ) : templatesQ.isError ? (
         <QueryError variant="inline" detail="We couldn't load templates." onRetry={() => templatesQ.refetch()} />
       ) : templates.length === 0 ? (
-        <EmptyState icon={<FileStack size={40} />} title="No templates" description="Create templates for missing items, interview invites, decisions, and more." action={{ label: 'New Template', onClick: openCreate }} />
+        <EmptyState icon={<FileStack size={40} />} title="No templates" action={{ label: 'New Template', onClick: openCreate }} />
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {templates.map(t => (

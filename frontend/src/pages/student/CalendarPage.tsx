@@ -288,11 +288,6 @@ export default function CalendarPage() {
           <EmptyState
             icon={<CalendarClock size={40} />}
             title={hasActiveFilter ? 'Nothing matches these filters' : 'Your calendar is clear'}
-            description={
-              hasActiveFilter
-                ? 'Clear them to see your full timeline.'
-                : 'Deadlines and interviews land here as you save and apply to programs.'
-            }
             action={
               hasActiveFilter
                 ? { label: 'Clear filters', onClick: clearFilters }
@@ -564,14 +559,12 @@ function AgendaView({ items, hasActiveFilter, onClearFilters, onOpen, onDiscover
       <EmptyState
         icon={<CalendarClock size={48} />}
         title="No items match"
-        description="No calendar items match the current filters."
         action={{ label: 'Clear filters?', onClick: onClearFilters }}
       />
     ) : (
       <EmptyState
         icon={<CalendarClock size={48} />}
         title="Your calendar is clear"
-        description="Set a work block or RSVP to an event to get started."
         action={{ label: 'Discover programs', onClick: onDiscover }}
       />
     )

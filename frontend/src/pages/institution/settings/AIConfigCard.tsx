@@ -9,15 +9,15 @@ import type { AIConfig } from '../../../types'
 
 // Canonical institution AI surfaces (mirrors services/ai_config_service.AI_SURFACES).
 // `confidence: true` surfaces expose a per-surface threshold slider (Spec 37 §5).
-const SURFACE_META: { key: string; label: string; description: string; confidence: boolean }[] = [
-  { key: 'packet_summary', label: 'AI packet summary', description: 'Opus per-applicant packet summary in the review workspace (Spec 32 §6).', confidence: false },
-  { key: 'rubric_prefill', label: 'Rubric pre-fill', description: 'Suggested rubric notes + scores reviewers edit before saving.', confidence: true },
-  { key: 'assistant_chat', label: 'Applicant assistant chat', description: 'Grounded Q&A about one applicant — always cites packet evidence.', confidence: false },
-  { key: 'message_draft', label: 'AI message drafts', description: 'Decision / missing-items / interview-invite / clarification drafts staff edit before sending.', confidence: false },
-  { key: 'authenticity_risk', label: 'Authenticity risk scoring', description: 'Flags AI-pattern essays for human review (advisory, never an auto-reject).', confidence: true },
-  { key: 'intelligence_digest', label: 'Intelligence digest', description: 'Daily AI-narrated summary on the admissions dashboard.', confidence: false },
-  { key: 'doc_parse_triage', label: 'Document parse triage', description: 'Triage note above the deterministic data-upload validation report.', confidence: false },
-  { key: 'campaign_copy', label: 'Campaign copy suggestions', description: 'Drafts subject + body for outbound campaigns.', confidence: false },
+const SURFACE_META: { key: string; label: string; confidence: boolean }[] = [
+  { key: 'packet_summary', label: 'AI packet summary', confidence: false },
+  { key: 'rubric_prefill', label: 'Rubric pre-fill', confidence: true },
+  { key: 'assistant_chat', label: 'Applicant assistant chat', confidence: false },
+  { key: 'message_draft', label: 'AI message drafts', confidence: false },
+  { key: 'authenticity_risk', label: 'Authenticity risk scoring', confidence: true },
+  { key: 'intelligence_digest', label: 'Intelligence digest', confidence: false },
+  { key: 'doc_parse_triage', label: 'Document parse triage', confidence: false },
+  { key: 'campaign_copy', label: 'Campaign copy suggestions', confidence: false },
 ]
 
 interface AIConfigCardProps {
@@ -59,13 +59,12 @@ export default function AIConfigCard({ config, onChanged }: AIConfigCardProps) {
       <SettingsSection
         icon={Sparkles}
         title="AI-assistive features"
-        description="Turn each AI surface on or off. Humans always keep the final action — AI only drafts and suggests (Spec 37)."
         action={<AIBadge label="AI assist" />}
       >
         {SURFACE_META.map(s => {
           const sc = local.surfaces[s.key] ?? { enabled: true, min_confidence: 0 }
           return (
-            <SettingRow key={s.key} label={s.label} description={s.description}>
+            <SettingRow key={s.key} label={s.label}>
               <div className="flex flex-col items-end gap-2">
                 <Toggle
                   checked={sc.enabled}
@@ -98,15 +97,8 @@ export default function AIConfigCard({ config, onChanged }: AIConfigCardProps) {
         })}
       </SettingsSection>
 
-      <SettingsSection
-        icon={ShieldOff}
-        title="Data & training"
-        description="Controls how your applicants' data may be used beyond serving your admissions workflow."
-      >
-        <SettingRow
-          label="No-training tier"
-          description="Override every student's training consent to always off for your program data — nothing from your institution enters any future model-tuning corpus (Spec 46 §9). Data is still sent to the AI provider at inference time to serve your workflow; that is governed separately."
-        >
+      <SettingsSection icon={ShieldOff} title="Data & training">
+        <SettingRow label="No-training tier">
           <Toggle
             checked={local.no_training}
             disabled={saving}

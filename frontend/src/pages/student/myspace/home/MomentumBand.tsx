@@ -15,19 +15,19 @@ import type { WeekInputs } from './weekActivity'
 
 // The onboarding engine's step keys mapped to the route that completes each
 // (moved verbatim from the retired JourneyChecklistCard).
-const STEP_SPECS: { key: string; label: string; sub: string; to: string }[] = [
-  { key: 'basic_profile', label: 'Add your basic info', sub: 'Name and nationality unlock everything else', to: '/s/profile' },
-  { key: 'academics', label: 'Add an academic record', sub: 'Add your grades to sharpen your matches', to: '/s/profile?tab=academics' },
-  { key: 'test_scores', label: 'Add a test score', sub: 'SAT, GRE, IELTS — whatever you have', to: '/s/profile?tab=academics' },
-  { key: 'activities', label: 'Add an activity', sub: 'Clubs, projects, anything you give time to', to: '/s/profile?tab=experience' },
-  { key: 'online_presence', label: 'Link your LinkedIn or portfolio', sub: 'Links strengthen your other entries', to: '/s/profile?tab=experience' },
-  { key: 'portfolio', label: 'Showcase a project', sub: 'A work sample makes your story concrete', to: '/s/profile?tab=experience' },
-  { key: 'research', label: 'Add research experience', sub: 'Labs, papers, independent projects', to: '/s/profile?tab=academics' },
-  { key: 'languages', label: 'Add the languages you speak', sub: 'Programs care about language fit', to: '/s/profile?tab=academics' },
-  { key: 'work_experience', label: 'Add work or volunteer experience', sub: 'Internships and jobs count', to: '/s/profile?tab=experience' },
-  { key: 'competitions', label: 'Add a competition', sub: 'Olympiads, hackathons, case comps', to: '/s/profile?tab=experience' },
-  { key: 'goals', label: 'Describe your goals', sub: 'Sharpens your strategy and rationales', to: '/s/profile?tab=goals' },
-  { key: 'preferences', label: 'Set program preferences', sub: 'Location, budget and format filter your matches', to: '/s/profile?tab=preferences' },
+const STEP_SPECS: { key: string; label: string; to: string }[] = [
+  { key: 'basic_profile', label: 'Add your basic info', to: '/s/profile' },
+  { key: 'academics', label: 'Add an academic record', to: '/s/profile?tab=academics' },
+  { key: 'test_scores', label: 'Add a test score', to: '/s/profile?tab=academics' },
+  { key: 'activities', label: 'Add an activity', to: '/s/profile?tab=experience' },
+  { key: 'online_presence', label: 'Link your LinkedIn or portfolio', to: '/s/profile?tab=experience' },
+  { key: 'portfolio', label: 'Showcase a project', to: '/s/profile?tab=experience' },
+  { key: 'research', label: 'Add research experience', to: '/s/profile?tab=academics' },
+  { key: 'languages', label: 'Add the languages you speak', to: '/s/profile?tab=academics' },
+  { key: 'work_experience', label: 'Add work or volunteer experience', to: '/s/profile?tab=experience' },
+  { key: 'competitions', label: 'Add a competition', to: '/s/profile?tab=experience' },
+  { key: 'goals', label: 'Describe your goals', to: '/s/profile?tab=goals' },
+  { key: 'preferences', label: 'Set program preferences', to: '/s/profile?tab=preferences' },
 ]
 
 interface Props {
@@ -76,7 +76,6 @@ export default function MomentumBand({ stage, week, className }: Props) {
               <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
                 <ListChecks size={15} className="text-secondary" aria-hidden /> Set up your space
               </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Each step sharpens your matches.</p>
             </div>
             {done.size > 0 && (
               <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
@@ -89,7 +88,6 @@ export default function MomentumBand({ stage, week, className }: Props) {
               <ListRow
                 key={step.key}
                 title={step.label}
-                sub={step.sub}
                 trailing={<ArrowRight size={14} className="text-secondary" aria-hidden />}
                 onClick={() => goTo(step)}
               />

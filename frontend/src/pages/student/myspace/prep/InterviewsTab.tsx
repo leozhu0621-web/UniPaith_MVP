@@ -79,7 +79,7 @@ export default function InterviewsTab() {
   return (
     <div className="w-full px-4 sm:px-6 py-6 space-y-10">
       <section>
-        <SectionHeader title="Interviews" description="Everything proposed, scheduled, or done — across all your applications." />
+        <SectionHeader title="Interviews" />
         {isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-14" />
@@ -91,7 +91,6 @@ export default function InterviewsTab() {
           <EmptyState
             icon={<Video size={40} />}
             title="No interviews yet"
-            description="Interview invitations from your programs show up here."
           />
         ) : (
           <div className="stagger-list space-y-6">
@@ -123,7 +122,6 @@ export default function InterviewsTab() {
       <section>
         <SectionHeader
           title="Scheduling"
-          description="When you're available for interviews, advising, or visits."
           action={<Button size="sm" variant="tertiary" onClick={() => setModal('scheduling')}><Pencil size={14} /> Edit</Button>}
         />
         <Card pad={false} className="p-5">
@@ -145,7 +143,6 @@ export default function InterviewsTab() {
       <section>
         <SectionHeader
           title="Accommodations"
-          description="Private to you — used only to support your experience."
           action={<Button size="sm" variant="tertiary" onClick={() => setModal('accommodations')}><Pencil size={14} /> Edit</Button>}
         />
         <Card pad={false} className="p-5">

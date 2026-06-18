@@ -259,13 +259,13 @@ export default function RequirementsChecklistPage() {
       </Card>
 
       {!selectedProgram ? (
-        <EmptyState icon={<ClipboardList size={40} />} title="Select a program" description="Choose a program to configure its application requirements checklist." />
+        <EmptyState icon={<ClipboardList size={40} />} title="Select a program" />
       ) : checklistQ.isLoading ? (
         <Skeleton className="h-60" />
       ) : checklistQ.isError ? (
         <QueryError detail="We couldn't load this program's checklist." onRetry={() => checklistQ.refetch()} />
       ) : orderedItems.length === 0 ? (
-        <EmptyState icon={<ClipboardList size={40} />} title="No checklist items" description="Add required and optional items applicants need to submit." action={{ label: 'Add Item', onClick: openCreate }} />
+        <EmptyState icon={<ClipboardList size={40} />} title="No checklist items" action={{ label: 'Add Item', onClick: openCreate }} />
       ) : (
         <div className="space-y-4">
           {/* Summary */}

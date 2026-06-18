@@ -81,10 +81,6 @@ export default function MajorSpecificPanel() {
         <h3 className="flex items-center gap-2 text-h3 text-foreground">
           <Compass size={18} /> Major-specific readiness
         </h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Rate your readiness in your target field. We score your fit and suggest evidence to add —
-          we never fill it in for you.
-        </p>
       </header>
 
       <TrackSelector
@@ -109,7 +105,7 @@ export default function MajorSpecificPanel() {
         </>
       ) : (
         <Card pad={false} variant="card-flush" className="px-4 py-10 text-center text-sm text-muted-foreground">
-          Pick a track above to start rating your readiness.
+          Pick a track above.
         </Card>
       )}
     </div>

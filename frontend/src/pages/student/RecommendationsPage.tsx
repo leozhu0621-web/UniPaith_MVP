@@ -116,8 +116,7 @@ export default function RecommendationsPage() {
       {recs.length === 0 ? (
         <EmptyState
           icon={<UserCheck size={48} />}
-          title="You can add recommenders when you're ready"
-          description="Track recommendation letter requests here."
+          title="No recommenders yet"
           action={{ label: 'Add Recommender', onClick: () => setShowModal(true) }}
         />
       ) : (

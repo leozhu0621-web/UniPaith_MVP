@@ -47,11 +47,7 @@ export default function OrgAccountCard({ account, onChanged }: OrgAccountCardPro
   }
 
   return (
-    <SettingsSection
-      icon={Building2}
-      title="Organization account"
-      description="Legal name, billing contact, and primary domain for email and links."
-    >
+    <SettingsSection icon={Building2} title="Organization account">
       <div className="grid gap-3 sm:grid-cols-2">
         <Input label="Legal name" value={name} onChange={e => setName(e.target.value)} required />
         <Input

@@ -30,8 +30,8 @@ describe('Spec 14 — Workshops are feedback-only (UI invariant)', () => {
   it('essay panel: empty hint + cobalt "Get feedback" CTA, never a generate/rewrite button', () => {
     renderPanel(<EssayFeedbackPanel />)
 
-    // Spec §8 / §13 empty-state copy.
-    expect(screen.getByText('Drop in an essay draft to get structured feedback.')).toBeTruthy()
+    // Spec §8 / §13 empty-state label.
+    expect(screen.getByText('No feedback yet.')).toBeTruthy()
 
     const labels = buttonLabels()
     expect(labels.some(t => t.includes('get feedback'))).toBe(true)
@@ -43,7 +43,7 @@ describe('Spec 14 — Workshops are feedback-only (UI invariant)', () => {
     expect(cta.className).not.toContain('bg-primary')
   })
 
-  it('interview panel: CTA never says "Generate"; surfaces the practice-not-answers promise', () => {
+  it('interview panel: CTA never says "Generate"; only feedback-only affordances exist', () => {
     renderPanel(<InterviewPracticePanel />)
 
     const labels = buttonLabels()
@@ -51,6 +51,7 @@ describe('Spec 14 — Workshops are feedback-only (UI invariant)', () => {
     expect(labels.some(t => t.includes('get practice questions'))).toBe(true)
     expect(labels.some(t => t.includes('generate'))).toBe(false)
 
-    expect(screen.getByText(/these are practice questions, not answers\./i)).toBeTruthy()
+    // The coach-a-response path exists (scores a draft, never returns a model answer).
+    expect(screen.getByText(/coach a response you've drafted/i)).toBeTruthy()
   })
 })

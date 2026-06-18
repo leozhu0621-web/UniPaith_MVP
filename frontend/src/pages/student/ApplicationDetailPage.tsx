@@ -376,9 +376,6 @@ export default function ApplicationDetailPage() {
               {DECISION_STATE_LABEL[application.decision_state || application.decision] ||
                 `Decision: ${application.decision}`}
             </p>
-            {application.decision === 'admitted' && application.student_decision !== 'accepted_by_student' && (
-              <p className="text-xs text-muted-foreground">Review your offer in the Offer tab.</p>
-            )}
             {application.student_decision === 'accepted_by_student' && (
               <p className="text-xs text-muted-foreground">You&apos;re in — enrollment steps are on your calendar.</p>
             )}
@@ -557,11 +554,6 @@ export default function ApplicationDetailPage() {
                   Their portal
                 </button>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-2">
-                {isExternal
-                  ? "You'll submit on the institution's portal. Mark items complete here and attach confirmation evidence."
-                  : 'Submit directly through UniPaith once every required item is complete.'}
-              </p>
             </Card>
           )}
         </div>
@@ -641,14 +633,7 @@ export default function ApplicationDetailPage() {
                   <div className="text-sm text-foreground">
                     Resume / CV {resumeDocs.length > 0 && <Badge variant="success">On file</Badge>}
                   </div>
-                  {resumeDocs.length === 0 && (
-                    <span className="text-xs text-muted-foreground">Upload your resume or CV above.</span>
-                  )}
                 </div>
-
-                {documentsList.length === 0 && !uploading && (
-                  <p className="text-sm text-muted-foreground">Upload transcripts, recommendations, and other required documents above.</p>
-                )}
               </div>
             )}
 
@@ -660,9 +645,6 @@ export default function ApplicationDetailPage() {
                 <Card pad={false} className="p-4 flex items-center justify-between gap-3 flex-wrap">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground">Essay feedback</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Workshops score your draft and flag what's missing — they never write it for you.
-                    </p>
                   </div>
                   <Button size="sm" variant="secondary" className="shrink-0" onClick={() => navigate('/s/prep?tab=workshops')}>
                     <Sparkles size={14} className="mr-1" /> Get essay feedback
@@ -680,9 +662,6 @@ export default function ApplicationDetailPage() {
                   <Card pad={false} className="p-6 text-center">
                     <FileText size={32} className="text-muted-foreground mx-auto mb-3" />
                     <p className="text-sm text-foreground">No essay feedback yet.</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Run a draft through the essay workshop to see its feedback here.
-                    </p>
                   </Card>
                 ) : (
                   essayRunsList.map(run => (
@@ -757,9 +736,6 @@ export default function ApplicationDetailPage() {
                     <Card pad={false} className="p-6 text-center">
                       <Users size={32} className="text-muted-foreground mx-auto mb-3" />
                       <p className="text-sm text-foreground">No interviews scheduled yet.</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        You'll be notified when an interview is requested.
-                      </p>
                     </Card>
                   )}
                 </div>
@@ -838,7 +814,6 @@ export default function ApplicationDetailPage() {
                     <h3 className="text-sm font-medium text-foreground">Guardrail scan</h3>
                     <Button size="sm" onClick={runGuardrailScan} loading={scanning}>Run scan</Button>
                   </div>
-                  <p className="text-xs text-muted-foreground mb-3">Checks fit and flags anything to reconsider before you apply.</p>
                   {(guardrailResult || application.fit_band) && (
                     <div className={`rounded-lg p-3 ${
                       (guardrailResult?.fit_band || application.fit_band) === 'high' ? 'bg-success-soft'
@@ -937,9 +912,6 @@ export default function ApplicationDetailPage() {
       {/* Spec 39 §2.2 — fee-waiver request (equally prominent to paying) */}
       <Modal isOpen={waiverOpen} onClose={() => setWaiverOpen(false)} title="Request a fee waiver" size="sm">
         <div className="space-y-3">
-          <p className="text-sm text-foreground">
-            Choose a basis for your request. The school reviews it — there's no fee to ask.
-          </p>
           <Select
             label="Basis"
             value={waiverBasis}
@@ -1101,7 +1073,6 @@ function ChecklistTab({ items, completionPct, isExternal, canToggle, onToggle }:
           {completionPct >= 100 && <Badge variant="success">Ready to submit</Badge>}
         </div>
         <ProgressBar value={completionPct} />
-        {isExternal && <p className="text-xs text-muted-foreground mt-2">External submission — check items off as you complete them on the institution's portal.</p>}
       </Card>
       {Object.entries(grouped).map(([cat, catItems]) => (
         <div key={cat}>
@@ -1157,7 +1128,6 @@ function RecommendersTab({ recommenders, programId, onNudge }: {
       <Card pad={false} className="p-6 text-center">
         <Users size={32} className="text-muted-foreground mx-auto mb-3" />
         <p className="text-sm text-foreground">No recommenders yet.</p>
-        <p className="text-xs text-muted-foreground mt-1">Add recommenders in My Space → Prep to request letters for this program.</p>
         <Button size="sm" variant="secondary" className="mt-3" onClick={() => navigate('/s/prep?tab=recommenders')}>
           Go to Recommenders
         </Button>

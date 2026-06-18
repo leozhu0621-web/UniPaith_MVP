@@ -56,12 +56,10 @@ describe('Spec 40 · Recruitment CRM', () => {
     expect(screen.getByRole('tab', { name: 'Territories' })).toBeInTheDocument()
   })
 
-  it('shows the empty-state copy from §6/§10', async () => {
+  it('shows the empty-state from §6/§10', async () => {
     renderPage()
     await waitFor(() =>
-      expect(
-        screen.getByText('Import a prospect list or capture leads at a fair.'),
-      ).toBeInTheDocument(),
+      expect(screen.getByText('No prospects yet')).toBeInTheDocument(),
     )
   })
 

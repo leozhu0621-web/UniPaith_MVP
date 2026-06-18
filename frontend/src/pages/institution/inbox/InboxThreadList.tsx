@@ -208,8 +208,8 @@ export default function InboxThreadList({
             <InboxIcon size={28} className="mx-auto mb-2 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
               {filters.filter === 'unassigned'
-                ? 'No unassigned conversations. Assign one to yourself to respond.'
-                : 'No conversations yet. Messages from applicants and prospects land here.'}
+                ? 'No unassigned conversations.'
+                : 'No conversations yet.'}
             </p>
           </div>
         ) : (

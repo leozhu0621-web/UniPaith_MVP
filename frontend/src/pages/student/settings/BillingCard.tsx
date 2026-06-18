@@ -70,7 +70,7 @@ export default function BillingCard() {
   const busy = upgradeMut.isPending || cancelMut.isPending || resumeMut.isPending
 
   return (
-    <SettingsSection icon={CreditCard} title="Billing & plan" description="Your UniPaith subscription.">
+    <SettingsSection icon={CreditCard} title="Billing & plan">
       {isLoading || !billing ? (
         <Skeleton className="h-16 rounded-lg" />
       ) : (

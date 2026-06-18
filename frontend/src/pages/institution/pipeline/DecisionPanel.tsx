@@ -260,9 +260,7 @@ export default function DecisionPanel({
             )}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            No offer issued yet. Release an admit or conditional decision below to create one.
-          </p>
+          <p className="text-sm text-muted-foreground">No offer issued yet.</p>
         )}
       </Card>
 

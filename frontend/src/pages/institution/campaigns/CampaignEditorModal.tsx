@@ -286,7 +286,7 @@ export default function CampaignEditorModal({
           )}
         </div>
 
-        <Field label="Associated programs" hint="Optional — ties metrics and the program link to specific programs.">
+        <Field label="Associated programs" hint="Optional.">
           <ChipMultiSelect
             options={programOpts}
             selected={form.associate_program_ids}
@@ -307,7 +307,7 @@ export default function CampaignEditorModal({
               empty="No saved segments. Build one in Communications → Segments."
             />
           </Field>
-          <Field label="Uploaded lists" hint="External email only. Deduped by email against platform users; suppression honored.">
+          <Field label="Uploaded lists" hint="External email only.">
             <ChipMultiSelect
               options={listOpts}
               selected={form.audience_uploaded_list_ids}
@@ -382,7 +382,7 @@ export default function CampaignEditorModal({
           </p>
         </div>
 
-        <Field label="Schedule send" hint="Optional. Leave empty to send manually.">
+        <Field label="Schedule send" hint="Optional.">
           <Input type="datetime-local" value={form.scheduled_at} onChange={(e) => set('scheduled_at', e.target.value)} />
         </Field>
       </div>

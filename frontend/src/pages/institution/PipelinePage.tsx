@@ -383,7 +383,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
       {toolbar}
 
       {!selectedProgram ? (
-        <EmptyState title="Select a program" description="Choose a program above to manage its full admissions workflow." />
+        <EmptyState title="Select a program" />
       ) : applicationsQ.isError ? (
         <QueryError detail="Couldn’t load applications." onRetry={() => applicationsQ.refetch()} />
       ) : applicationsQ.isLoading ? (
@@ -456,7 +456,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
                 </Badge>
               </div>
               {filteredReviewableApps.length === 0 ? (
-                <EmptyState title="No pending reviews" description="All applications in this program are currently reviewed." />
+                <EmptyState title="No pending reviews" />
               ) : (
                 <Table columns={reviewColumns} data={filteredReviewableApps} onRowClick={(row) => goApplicant(row.id)} pageSize={50} />
               )}
@@ -473,7 +473,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
                 </Badge>
               </div>
               {filteredAllApps.length === 0 ? (
-                <EmptyState title="No applications found" description="Try clearing search or checking another program." />
+                <EmptyState title="No applications found" />
               ) : (
                 <Table columns={reviewColumns} data={filteredAllApps} onRowClick={(row) => goApplicant(row.id)} pageSize={50} />
               )}
@@ -487,7 +487,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
               ) : priorityQ.isLoading ? (
                 <Skeleton className="h-40" />
               ) : prioritized.length === 0 ? (
-                <EmptyState icon={<Zap size={40} />} title="No applications to prioritize" description="Applications needing review will be ranked here by urgency." />
+                <EmptyState icon={<Zap size={40} />} title="No applications to prioritize" />
               ) : (
                 prioritized.map((p, i) => (
                   <Card pad={false} key={p.application_id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => goApplicant(p.application_id)}>
@@ -591,7 +591,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
       >
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Propose a live interview to {selectedIds.size} application(s). Offer at least three times so applicants can choose (Spec 33 §5).
+            Propose a live interview to {selectedIds.size} application(s). Offer at least three times.
           </p>
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">Proposed times</label>

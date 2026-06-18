@@ -289,7 +289,7 @@ export default function SettingsPage() {
             <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10" />)}</div>
           ) : (
             <form onSubmit={onSaveProfile} className="space-y-6">
-              <Section title="Identity" hint="Core facts shown on your public profile card and header." divider={false}>
+              <Section title="Identity" divider={false}>
                 <Input label="Institution Name" required {...profileForm.register('name')} error={profileForm.formState.errors.name?.message} />
                 <Select label="Type" required options={INSTITUTION_TYPES} {...profileForm.register('type')} error={profileForm.formState.errors.type?.message} />
                 <div className="grid grid-cols-2 gap-4">
@@ -303,56 +303,56 @@ export default function SettingsPage() {
                 <Input label="Accreditation" {...profileForm.register('accreditation')} placeholder="e.g. Middle States Commission on Higher Education" />
               </Section>
 
-              <Section title="Campus" hint="The environment and scale of your campus.">
+              <Section title="Campus">
                 <div className="grid grid-cols-2 gap-4">
                   <Select label="Campus setting" options={CAMPUS_SETTING_OPTIONS} {...profileForm.register('campus_setting')} />
                   <Input label="Student body size" type="number" {...profileForm.register('student_body_size')} />
                 </div>
                 <Textarea label="Campus description" {...profileForm.register('campus_description')} rows={3} placeholder="How the campus looks and feels, where it's located..." />
-                <Field title="Media gallery" hint="Text-only per brand — S3 image URLs, one per row. The first is the hero.">
+                <Field title="Media gallery" hint="One URL per row. The first is the hero.">
                   <StringListEditor key={`mg-${seedKey}`} initial={Array.isArray(inst.media_gallery) ? inst.media_gallery : []} onChange={setMediaGallery} placeholder="https://…/campus.jpg" addLabel="Add image URL" />
                 </Field>
               </Section>
 
-              <Section title="Web presence" hint="Where students reach you online.">
+              <Section title="Web presence">
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Website URL" {...profileForm.register('website_url')} error={profileForm.formState.errors.website_url?.message} />
                   <Input label="Contact Email" {...profileForm.register('contact_email')} error={profileForm.formState.errors.contact_email?.message} />
                 </div>
                 <Input label="Contact Phone" {...profileForm.register('contact_phone')} placeholder="e.g. +1 (212) 555-0100" />
                 <Input label="Logo URL (S3)" {...profileForm.register('logo_url')} error={profileForm.formState.errors.logo_url?.message} />
-                <Field title="Social links" hint="Platform → profile URL. Shown in your public header.">
+                <Field title="Social links">
                   <PairRowsEditor key={`sl-${seedKey}`} initial={inst.social_links} onChange={setSocialLinks}
                     keyLabel="Platform" valueLabel="Profile URL" keySuggestions={SOCIAL_SUGGESTIONS}
                     valuePlaceholder="https://…" valueType="url" addLabel="Add social link" />
                 </Field>
               </Section>
 
-              <Section title="Story & support" hint="Your description and the support services students care about.">
+              <Section title="Story & support">
                 <Textarea label="Short description" {...profileForm.register('description_text')} rows={3} />
-                <Field title="Support services" hint="Shown on the public About tab (tutoring, career, counseling, …).">
+                <Field title="Support services">
                   <LinkRowsEditor key={`ss-${seedKey}`} initial={inst.support_services} onChange={setSupportServices}
                     withSummary={false} nameLabel="Service name" nameSuggestions={SUPPORT_SUGGESTIONS} addLabel="Add support service" />
                 </Field>
               </Section>
 
-              <Section title="Policies & international" hint="Admissions, transfer and international guidance.">
-                <Field title="Policies" hint="Each shows its name, an optional summary and a link on the About tab.">
+              <Section title="Policies & international">
+                <Field title="Policies">
                   <LinkRowsEditor key={`pol-${seedKey}`} initial={inst.policies} onChange={setPolicies}
                     withSummary nameLabel="Policy name" nameSuggestions={POLICY_SUGGESTIONS} addLabel="Add policy" />
                 </Field>
-                <Field title="International student info" hint="Test minimums, visa contacts, supported visas, etc.">
+                <Field title="International student info">
                   <MetricRowsEditor key={`intl-${seedKey}`} initial={inst.international_info} onChange={setInternationalInfo}
                     keySuggestions={INTL_SUGGESTIONS} addLabel="Add international detail" />
                 </Field>
               </Section>
 
-              <Section title="Outcomes" hint="Institution-wide stats, distinct from program outcomes. A number 0–1 renders as a percentage on the Overview tab.">
+              <Section title="Outcomes" hint="A number 0–1 renders as a percentage.">
                 <MetricRowsEditor key={`out-${seedKey}`} initial={inst.school_outcomes} onChange={setSchoolOutcomes}
                   keySuggestions={OUTCOME_SUGGESTIONS} addLabel="Add outcome metric" />
               </Section>
 
-              <Section title="Inquiry routing" hint="Where ‘Request info’ inquiries from your page should go, by type (email or URL).">
+              <Section title="Inquiry routing">
                 <PairRowsEditor key={`ir-${seedKey}`} initial={inst.inquiry_routing} onChange={setInquiryRouting}
                   keyLabel="Inquiry type" valueLabel="Destination" keySuggestions={INQUIRY_TYPE_SUGGESTIONS}
                   valuePlaceholder="admissions@example.edu" addLabel="Add routing rule" />

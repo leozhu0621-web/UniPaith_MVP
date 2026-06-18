@@ -223,7 +223,6 @@ export default function SegmentsPage() {
           <EmptyState
             icon={<Layers size={40} />}
             title="No segments yet"
-            description="Build one to target campaigns and events."
             action={{ label: 'New segment', onClick: openCreate }}
           />
         ) : (
@@ -319,7 +318,6 @@ export default function SegmentsPage() {
               <div className="space-y-3" onClickCapture={() => setPreviewRan(false)}>
                 <RuleBranch
                   title="Include"
-                  hint="Students must match these to enter the audience."
                   branch="include"
                   group={tree.include}
                   signals={signals}
@@ -328,7 +326,6 @@ export default function SegmentsPage() {
                 />
                 <RuleBranch
                   title="Exclude"
-                  hint="Students matching any of these are removed."
                   branch="exclude"
                   group={tree.exclude}
                   signals={signals}

@@ -155,7 +155,6 @@ export default function EssayFeedbackPanel() {
           />
           <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
             <span>{wordCount} words</span>
-            <span>Feedback only — never a rewrite.</span>
           </div>
         </div>
 
@@ -172,7 +171,7 @@ export default function EssayFeedbackPanel() {
       </Card>
 
       {!run && !feedbackMut.isPending && !feedbackMut.isError && (
-        <EmptyHint>Drop in an essay draft to get structured feedback.</EmptyHint>
+        <EmptyHint>No feedback yet.</EmptyHint>
       )}
 
       {feedbackMut.isError && !run && <ErrorNote onRetry={() => feedbackMut.mutate(targetProgram)} />}

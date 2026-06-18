@@ -299,7 +299,6 @@ export default function AcademicsTab() {
       <section>
         <SectionHeader
           title="Academics"
-          description="Degrees, GPA, and rigor. Add coursework under each record."
           action={
             <Button size="sm" onClick={() => open('academic')}>
               <Plus size={14} /> Add record
@@ -309,7 +308,6 @@ export default function AcademicsTab() {
         {records.length === 0 ? (
           <EmptyState
             title="No academic records yet"
-            description="Add a record to surface programs that fit your background."
             action={{ label: 'Add a record', onClick: () => open('academic') }}
           />
         ) : (
@@ -407,7 +405,6 @@ export default function AcademicsTab() {
       <section>
         <SectionHeader
           title="Test scores"
-          description="Superscored automatically across attempts of the same test."
           action={
             <Button size="sm" onClick={() => open('test')}>
               <Plus size={14} /> Add score
@@ -415,7 +412,7 @@ export default function AcademicsTab() {
           }
         />
         {testScores.length === 0 ? (
-          <EmptyState title="No test scores yet" description="Add SAT, ACT, GRE, TOEFL, or other scores to round out your readiness." action={{ label: 'Add a score', onClick: () => open('test') }} />
+          <EmptyState title="No test scores yet" action={{ label: 'Add a score', onClick: () => open('test') }} />
         ) : (
           <div className="grid sm:grid-cols-2 gap-3">
             {testScores.map(ts => {
@@ -473,7 +470,6 @@ export default function AcademicsTab() {
       <section>
         <SectionHeader
           title="Languages"
-          description="Proficiency and any certifications."
           action={
             <Button size="sm" onClick={() => open('language')}>
               <Plus size={14} /> Add language
@@ -481,7 +477,7 @@ export default function AcademicsTab() {
           }
         />
         {languages.length === 0 ? (
-          <EmptyState title="No languages yet" description="Add the languages you speak and any proof of proficiency." action={{ label: 'Add a language', onClick: () => open('language') }} />
+          <EmptyState title="No languages yet" action={{ label: 'Add a language', onClick: () => open('language') }} />
         ) : (
           <div className="space-y-2">
             {languages.map(lang => (
@@ -528,7 +524,6 @@ export default function AcademicsTab() {
       <section>
         <SectionHeader
           title="Research"
-          description="Projects, labs, and publications."
           action={
             <Button size="sm" onClick={() => open('research')}>
               <Plus size={14} /> Add research
@@ -536,7 +531,7 @@ export default function AcademicsTab() {
           }
         />
         {research.length === 0 ? (
-          <EmptyState title="No research yet" description="Add research projects, lab work, and any outputs like papers or posters." action={{ label: 'Add research', onClick: () => open('research') }} />
+          <EmptyState title="No research yet" action={{ label: 'Add research', onClick: () => open('research') }} />
         ) : (
           <div className="space-y-3">
             {research.map(r => (

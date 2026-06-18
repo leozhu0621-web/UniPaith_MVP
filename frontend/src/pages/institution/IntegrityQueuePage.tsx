@@ -163,13 +163,11 @@ export default function IntegrityQueuePage({ embedded = false }: { embedded?: bo
           <EmptyState
             icon={<Shield size={40} />}
             title="No signals of this type"
-            description={`Nothing flagged as ${(SIGNAL_LABELS[typeFilter] ?? typeFilter.replace(/_/g, ' ')).toLowerCase()} here. Clear the filter to see all signals.`}
           />
         ) : (
           <EmptyState
             icon={<Shield size={40} />}
             title={activeTab === 'open' ? 'No open integrity signals' : 'No signals'}
-            description="Integrity flags surface here as applications are scanned. All clear for now."
           />
         )
       ) : (

@@ -126,13 +126,13 @@ export default function IntakeRoundsPage() {
       </Card>
 
       {!selectedProgram ? (
-        <EmptyState icon={<CalendarRange size={40} />} title="Select a program" description="Choose a program to manage its intake rounds." />
+        <EmptyState icon={<CalendarRange size={40} />} title="Select a program" />
       ) : intakesQ.isLoading ? (
         <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32" />)}</div>
       ) : intakesQ.isError ? (
         <QueryError detail="We couldn't load this program's intake rounds." onRetry={() => intakesQ.refetch()} />
       ) : intakes.length === 0 ? (
-        <EmptyState icon={<CalendarRange size={40} />} title="No intake rounds" description="Create intake rounds with deadlines, capacity limits, and requirement sets." action={{ label: 'New Round', onClick: openCreate }} />
+        <EmptyState icon={<CalendarRange size={40} />} title="No intake rounds" action={{ label: 'New Round', onClick: openCreate }} />
       ) : (
         <div className="space-y-3">
           {intakes.map(r => (

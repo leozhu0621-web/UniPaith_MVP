@@ -104,10 +104,6 @@ export default function ProfilePage() {
       >
         <div>
           <p className="text-sm font-semibold text-foreground">Import from a file</p>
-          <p className="text-xs text-muted-foreground">
-            Upload a resume, transcript, or CV — Uni reads it and fills your profile, then asks
-            about anything it couldn't find.
-          </p>
         </div>
         <span className="shrink-0 text-sm font-medium text-secondary">Open Import →</span>
       </button>

@@ -67,10 +67,6 @@ export default function WorkshopsTab() {
     <div className="w-full p-6">
       <header className="mb-4">
         <h2 className="text-h3 text-foreground">Workshops</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Feedback on essays, interviews, and test prep. We score your draft and flag what&apos;s
-          missing — we never write it for you.
-        </p>
       </header>
 
       {showDisclosure && (

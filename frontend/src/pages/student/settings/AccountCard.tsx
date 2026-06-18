@@ -26,7 +26,7 @@ export default function AccountCard({ account, onSave, saving }: AccountCardProp
   const dirty = displayName !== (account.display_name ?? '') || photoUrl !== (account.photo_url ?? '')
 
   return (
-    <SettingsSection icon={User} title="Account" description="Your identity on UniPaith.">
+    <SettingsSection icon={User} title="Account">
       {/* Read-only identity */}
       <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2 text-sm mb-5">
         <div className="flex justify-between sm:block">

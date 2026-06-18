@@ -89,18 +89,10 @@ export default function FeeConfigCard() {
           {cfg.provider === 'stripe' ? 'Stripe live' : 'Test mode (mock)'}
         </Badge>
       </div>
-      <p className="-mt-3 text-xs text-muted-foreground">
-        Collect application fees and enrollment deposits from applicants. In test mode no real
-        money moves — Stripe goes live per environment once your account is connected.
-      </p>
-
       {/* Application fee */}
       <section className="border-t border-border pt-4 space-y-3">
         <div className="flex items-center justify-between">
-          <div>
-            <h4 className="text-[13px] font-semibold text-foreground">Application fee</h4>
-            <p className="text-xs text-muted-foreground">Charged when an applicant submits.</p>
-          </div>
+          <h4 className="text-[13px] font-semibold text-foreground">Application fee</h4>
           <Toggle
             checked={af.enabled}
             label="Application fee enabled"
@@ -134,12 +126,7 @@ export default function FeeConfigCard() {
       {/* Waiver policy */}
       {af.enabled && (
         <section className="border-t border-border pt-4 space-y-3">
-          <div>
-            <h4 className="text-[13px] font-semibold text-foreground">Fee-waiver policy</h4>
-            <p className="text-xs text-muted-foreground">
-              Equity matters — the waiver path is offered as prominently as paying.
-            </p>
-          </div>
+          <h4 className="text-[13px] font-semibold text-foreground">Fee-waiver policy</h4>
           <Select
             label="When a waiver is requested"
             value={cfg.waiver.policy}
@@ -178,9 +165,6 @@ export default function FeeConfigCard() {
                 )
               })}
             </div>
-            <p className="text-xs text-muted-foreground mt-1.5">
-              Unselected bases route to your waiver queue for a manual decision.
-            </p>
           </div>
         </section>
       )}
@@ -192,7 +176,6 @@ export default function FeeConfigCard() {
             <h4 className="text-[13px] font-semibold text-foreground flex items-center gap-1.5">
               <Landmark size={14} className="text-muted-foreground" /> Enrollment deposit
             </h4>
-            <p className="text-xs text-muted-foreground">Paid by admitted students to confirm a spot.</p>
           </div>
           <Toggle
             checked={dep.enabled}

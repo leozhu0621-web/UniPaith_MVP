@@ -59,7 +59,6 @@ export default function SecurityCard({
       id="settings-security-section"
       icon={ShieldCheck}
       title="Security"
-      description="Password, two-factor authentication, and active sessions."
     >
       <div className="divide-y divide-border">
         {/* Password */}
@@ -332,7 +331,6 @@ function EmailModal({ onClose, onDone }: { onClose: () => void; onDone: () => vo
         type="email"
         value={value}
         onChange={e => setValue(e.target.value)}
-        helperText="We'll email a confirmation link to the new address before switching."
       />
     </Modal>
   )

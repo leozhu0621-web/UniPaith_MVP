@@ -24,11 +24,6 @@ import MatchCard from './MatchCard'
 import PrioritySheet from './PrioritySheet'
 
 const BAND_ORDER: MatchBand[] = ['reach', 'target', 'safer']
-const BAND_BLURB: Record<MatchBand, string> = {
-  reach: 'Ambitious — more selective than your stated comfort.',
-  target: 'Well-matched to your strategy and odds.',
-  safer: 'Strong fit with friendlier admissions.',
-}
 
 interface MatchesSectionProps {
   savedIds: Set<string>
@@ -121,7 +116,7 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
           key={m.program_id}
           id="dualring"
           title="Two scores, not one"
-          body="The outer ring is your fitness; the inner ring is how confident we are. Open “Why this match” for the reasoning."
+          body="The outer ring is fitness; the inner ring is confidence."
           placement="bottom"
         >
           {card}
@@ -164,10 +159,7 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
       <section className="mb-6">
         <div className="rounded-xl border border-border bg-card p-6 text-center">
           <Compass size={28} className="mx-auto text-foreground/50 mb-3" />
-          <p className="text-sm font-semibold text-foreground mb-1">No matches yet</p>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto mb-4">
-            Add more to your profile to unlock matches. Talk through your goals with Uni.
-          </p>
+          <p className="text-sm font-semibold text-foreground mb-4">No matches yet</p>
           <div className="flex items-center justify-center gap-2">
             <Button size="sm" onClick={() => navigate('/s')}>
               <Compass size={14} className="mr-1.5" /> Talk to Uni
@@ -212,7 +204,6 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
               <div className="flex items-center gap-2 mb-2.5">
                 {/* One earned-gold beat as the band reveals (Ship B §2 milestone moment). */}
                 <BandBadge band={band} className="animate-beat" />
-                <span className="text-xs text-muted-foreground">{BAND_BLURB[band]}</span>
                 <span className="ml-auto text-[11px] text-muted-foreground">{groups[band].length}</span>
               </div>
               <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 [&>*]:min-w-0">

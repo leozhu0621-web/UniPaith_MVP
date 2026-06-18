@@ -23,13 +23,13 @@ type WeightKey =
   | 'weight_time_to_degree'
 
 // Spec 09 §5.2 slider order + labels.
-const SLIDERS: Array<{ key: WeightKey; label: string; hint: string }> = [
-  { key: 'weight_cost', label: 'Cost', hint: 'Affordability and total price' },
-  { key: 'weight_outcomes', label: 'Outcomes', hint: 'Salary, employment, ROI' },
-  { key: 'weight_ranking', label: 'Selectivity', hint: 'Prestige and admit difficulty' },
-  { key: 'weight_location', label: 'Location', hint: 'Geography and setting' },
-  { key: 'weight_flexibility', label: 'Modality', hint: 'Online / hybrid / in-person fit' },
-  { key: 'weight_time_to_degree', label: 'Time to degree', hint: 'How fast you finish' },
+const SLIDERS: Array<{ key: WeightKey; label: string }> = [
+  { key: 'weight_cost', label: 'Cost' },
+  { key: 'weight_outcomes', label: 'Outcomes' },
+  { key: 'weight_ranking', label: 'Selectivity' },
+  { key: 'weight_location', label: 'Location' },
+  { key: 'weight_flexibility', label: 'Modality' },
+  { key: 'weight_time_to_degree', label: 'Time to degree' },
 ]
 
 const DEFAULT = 5
@@ -95,9 +95,6 @@ export default function PrioritySheet({ isOpen, onClose, onSaved }: PriorityShee
         </>
       }
     >
-      <p className="text-sm text-foreground mb-5">
-        Tell me what matters most. I&apos;ll re-rank your matches to weigh these more heavily.
-      </p>
       <div className="space-y-5">
         {SLIDERS.map(s => (
           <div key={s.key}>
@@ -117,7 +114,6 @@ export default function PrioritySheet({ isOpen, onClose, onSaved }: PriorityShee
               onChange={e => set(s.key, Number(e.target.value))}
               className="w-full accent-secondary cursor-pointer"
             />
-            <p className="text-[11px] text-foreground/70 mt-0.5">{s.hint}</p>
           </div>
         ))}
       </div>

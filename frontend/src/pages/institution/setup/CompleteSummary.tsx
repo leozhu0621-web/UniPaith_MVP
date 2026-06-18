@@ -40,9 +40,6 @@ export default function CompleteSummary({
         <h2 className="mt-3 text-xl font-semibold text-foreground">
           {institution?.name ? `${institution.name} is set up` : 'Your institution is set up'}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Everything below is editable any time.
-        </p>
       </div>
 
       <ul className="mx-auto mt-6 max-w-md divide-y divide-border">

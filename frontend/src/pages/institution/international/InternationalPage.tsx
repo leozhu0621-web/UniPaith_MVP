@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Globe, ChevronDown, Check, X } from 'lucide-react'
+import { ChevronDown, Check, X } from 'lucide-react'
 import { listCountryRequirements, listInternationalApplicants } from '../../../api/international'
 import type { IntlApplicantRow, IntlFeasibilityBand } from '../../../types'
 import Card from '../../../components/ui/Card'
@@ -116,14 +116,6 @@ export default function InternationalPage({ embedded = false }: { embedded?: boo
         />
       )}
 
-      <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 px-4 py-2.5">
-        <Globe size={16} className="mt-0.5 shrink-0 text-secondary" />
-        <p className="text-xs text-muted-foreground">
-          Visa &amp; immigration status is operational only — it informs feasibility and yield planning
-          and is never a selection criterion.
-        </p>
-      </div>
-
       {isError ? (
         <Card pad={false} className="p-2">
           <QueryError detail="We couldn't load your international applicants." onRetry={() => refetch()} />
@@ -156,10 +148,6 @@ export default function InternationalPage({ embedded = false }: { embedded?: boo
         </button>
         {showPacks && (
           <div className="border-t border-border px-5 py-4 space-y-4">
-            <p className="text-xs text-muted-foreground">
-              Platform defaults auto-attach to an applicant's checklist by nationality. Edit per program
-              in the program editor's English-proficiency policy, or refine per applicant.
-            </p>
             {packs.map(pack => (
               <div key={pack.country_code} className="rounded-lg border border-border p-3">
                 <div className="mb-2 flex items-center gap-2">

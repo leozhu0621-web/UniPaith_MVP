@@ -212,13 +212,13 @@ export default function CohortComparisonPage({ embedded = false }: { embedded?: 
 
       {/* Comparison Table */}
       {selectedIds.length < 2 ? (
-        <EmptyState icon={<Users size={40} />} title="Select applicants" description="Pick 2 or more applicants from the same program to compare." />
+        <EmptyState icon={<Users size={40} />} title="Select 2 or more applicants" />
       ) : cohortQ.isLoading ? (
         <Skeleton className="h-80" />
       ) : cohortQ.isError ? (
         <QueryError detail="We couldn't load the comparison for these applicants." onRetry={() => cohortQ.refetch()} />
       ) : sorted.length === 0 ? (
-        <EmptyState icon={<BarChart3 size={40} />} title="No data" description="No comparison data available for the selected applicants." />
+        <EmptyState icon={<BarChart3 size={40} />} title="No data" />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">

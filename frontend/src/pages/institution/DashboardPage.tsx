@@ -522,7 +522,6 @@ export default function DashboardPage() {
             <EmptyState
               icon={<BookOpen size={40} />}
               title="No programs yet"
-              description="Create your first program to start accepting applications."
               action={{ label: 'Add Program', onClick: () => navigate('/i/programs/new') }}
             />
           ) : (

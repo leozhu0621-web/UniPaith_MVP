@@ -85,11 +85,7 @@ export default function DataGovernanceCard() {
   return (
     <div className="space-y-6">
       {/* §1 — the brand commitments (verbatim, contractual). */}
-      <SettingsSection
-        icon={ShieldCheck}
-        title="Our commitments"
-        description="The contractual promises behind every match and every score."
-      >
+      <SettingsSection icon={ShieldCheck} title="Our commitments">
         <div className="grid gap-3 sm:grid-cols-2">
           {data.brand_commitments.map(c => (
             <div key={c.title} className="rounded-lg border border-border p-3">
@@ -102,15 +98,8 @@ export default function DataGovernanceCard() {
       </SettingsSection>
 
       {/* §6/§9 — fairness governance. */}
-      <SettingsSection
-        icon={Scale}
-        title="Fairness governance"
-        description="How disparate-impact auto-halts behave for your programs (§6 / §9)."
-      >
-        <SettingRow
-          label="Default override expiry"
-          description="How long a logged override lifts a halt before it re-arms."
-        >
+      <SettingsSection icon={Scale} title="Fairness governance">
+        <SettingRow label="Default override expiry">
           <Select
             value={String(s.override_expiry_weeks_default)}
             onChange={e => save.mutate({ override_expiry_weeks_default: Number(e.target.value) })}
@@ -124,11 +113,7 @@ export default function DataGovernanceCard() {
         </SettingRow>
 
         <div className="py-2.5 border-t border-border">
-          <p className="text-sm font-medium text-foreground">Protected attributes tracked</p>
-          <p className="text-xs text-muted-foreground mt-0.5 mb-2">
-            Disable an attribute your institution doesn't collect. Disabled attributes are never
-            scored for disparate impact.
-          </p>
+          <p className="text-sm font-medium text-foreground mb-2">Protected attributes tracked</p>
           <div className="space-y-1">
             {ALL_ATTRS.map(attr => (
               <SettingRow key={attr} label={ATTR_LABEL[attr] ?? attr}>
@@ -172,15 +157,8 @@ export default function DataGovernanceCard() {
       </SettingsSection>
 
       {/* §9 — no-training tier + residency. */}
-      <SettingsSection
-        icon={Sparkles}
-        title="Model training & residency"
-        description="Control whether your applicants' data may ever train a UniPaith model."
-      >
-        <SettingRow
-          label="No-training tier"
-          description="Force consent.training = false for your program data, overriding per-student consent. Anthropic does not train on customer data by default."
-        >
+      <SettingsSection icon={Sparkles} title="Model training & residency">
+        <SettingRow label="No-training tier">
           <Toggle
             label="No-training tier"
             checked={s.no_training_tier}
@@ -188,10 +166,7 @@ export default function DataGovernanceCard() {
             onChange={v => save.mutate({ no_training_tier: v })}
           />
         </SettingRow>
-        <SettingRow
-          label="Data residency"
-          description="Where production data is hosted. Multi-region is a future phase — US only today."
-        >
+        <SettingRow label="Data residency">
           <Select
             value={s.data_residency}
             onChange={e => save.mutate({ data_residency: e.target.value })}
@@ -205,11 +180,7 @@ export default function DataGovernanceCard() {
       </SettingsSection>
 
       {/* §10 — sub-processor list. */}
-      <SettingsSection
-        icon={Server}
-        title="Sub-processors"
-        description="The vendors that touch data on UniPaith's behalf, and what each one touches (§10)."
-      >
+      <SettingsSection icon={Server} title="Sub-processors">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -236,11 +207,7 @@ export default function DataGovernanceCard() {
       </SettingsSection>
 
       {/* §5 — retention schedule. */}
-      <SettingsSection
-        icon={Clock}
-        title="Data retention"
-        description="How long each class of data is kept (§5)."
-      >
+      <SettingsSection icon={Clock} title="Data retention">
         <div className="divide-y divide-border">
           {data.retention_policy.map(r => (
             <div key={r.data_type} className="flex items-start justify-between gap-4 py-2">
@@ -254,11 +221,7 @@ export default function DataGovernanceCard() {
       </SettingsSection>
 
       {/* §9 — institution funnel export reuses the analytics export. */}
-      <SettingsSection
-        icon={Database}
-        title="Export your data"
-        description="Download your own funnel — applicants, engagement, and outcomes."
-      >
+      <SettingsSection icon={Database} title="Export your data">
         <div className="flex gap-2">
           <Button
             size="sm"

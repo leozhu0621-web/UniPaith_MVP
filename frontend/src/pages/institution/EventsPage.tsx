@@ -205,7 +205,6 @@ export default function EventsPage() {
         <EmptyState
           icon={<CalendarDays size={40} />}
           title="No events"
-          description="Create events for prospective students."
           action={{ label: 'New Event', onClick: () => setShowCreateModal(true) }}
         />
       ) : (

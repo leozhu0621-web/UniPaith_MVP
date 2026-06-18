@@ -290,16 +290,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
           ) : total === 0 ? (
             <div className="text-center py-16 bg-card rounded-xl border border-border">
               <Search size={28} className="mx-auto text-muted-foreground mb-3" />
-              <p className="text-sm text-foreground font-semibold mb-1">No programs match.</p>
-              <p className="text-xs text-muted-foreground mb-4">
-                Try removing a {chips.length ? 'chip' : 'filter'}
-                {chips.some(c => c.category === 'budget') ||
-                filters.max_tuition != null ||
-                filters.min_tuition != null
-                  ? ' or widening your budget'
-                  : ''}
-                .
-              </p>
+              <p className="text-sm text-foreground font-semibold mb-4">No programs match.</p>
               {chips.length > 0 ? (
                 <Button
                   size="sm"
@@ -318,7 +309,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
             <>
               {total > 100 && (
                 <p className="text-xs text-muted-foreground">
-                  Showing the top matches — add a constraint to narrow {total} programs.
+                  Showing the top matches.
                 </p>
               )}
               <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

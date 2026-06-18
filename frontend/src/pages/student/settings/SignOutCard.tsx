@@ -10,7 +10,6 @@ export default function SignOutCard() {
     <SettingsSection
       icon={LogOut}
       title="Sign out"
-      description="End your session on this device. To sign out everywhere, use Security → Sign out everywhere."
     >
       <Button variant="tertiary" onClick={logout}>
         <LogOut size={14} /> Sign out
