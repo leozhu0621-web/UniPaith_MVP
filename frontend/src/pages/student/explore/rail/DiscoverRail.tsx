@@ -2,8 +2,9 @@
 // browsing matches: latest updates, next events, deadline radar, following +
 // follow suggestions. Rail rows fire NO engagement tracking by design (§2).
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, Bell, BellPlus, CalendarClock, CalendarDays, GraduationCap, Newspaper, UserPlus } from 'lucide-react'
+import { ArrowRight, Bell, BellPlus, CalendarClock, CalendarDays, GraduationCap, Newspaper, RefreshCw, UserPlus } from 'lucide-react'
 import { getConnectEvents, getConnectFeed, type ConnectFeedItem } from '../../../../api/connect'
 import { getMatches } from '../../../../api/matching'
 import { listSaved } from '../../../../api/saved-lists'
@@ -32,19 +33,20 @@ interface Props {
 
 export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, onManageFollowing }: Props) {
   const qc = useQueryClient()
-  const { data: feed } = useQuery({
+  const navigate = useNavigate()
+  const { data: feed, isError: feedError, refetch: refetchFeed } = useQuery({
     queryKey: ['connect-feed-rail'],
     queryFn: () => getConnectFeed('recent', undefined, { limit: 8 }),
     staleTime: 5 * 60 * 1000,
     retry: false,
   })
-  const { data: eventsData } = useQuery({
+  const { data: eventsData, isError: eventsError, refetch: refetchEvents } = useQuery({
     queryKey: ['connect-events', 'upcoming'],
     queryFn: () => getConnectEvents('upcoming'),
     staleTime: 5 * 60 * 1000,
     retry: false,
   })
-  const { data: deadlines } = useQuery({
+  const { data: deadlines, isError: deadlinesError, refetch: refetchDeadlines } = useQuery({
     queryKey: ['connect-deadline-radar'],
     queryFn: () => getConnectFeed('recent', undefined, { limit: 12, kinds: 'deadline' }),
     staleTime: 5 * 60 * 1000,
@@ -99,6 +101,8 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
         icon={Newspaper}
         title="From your schools"
         action={updates.length > 0 ? { label: 'See all', onClick: () => onOpenTab('updates') } : undefined}
+        error={feedError}
+        onRetry={() => refetchFeed()}
       >
         {updates.length === 0 ? (
           <p className="text-xs text-muted-foreground px-1">No updates yet.</p>
@@ -123,6 +127,8 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
         icon={CalendarDays}
         title="Upcoming events"
         action={events.length > 0 ? { label: 'See all', onClick: () => onOpenTab('events') } : undefined}
+        error={eventsError}
+        onRetry={() => refetchEvents()}
       >
         {events.length === 0 ? (
           <p className="text-xs text-muted-foreground px-1">No upcoming events.</p>
@@ -144,7 +150,7 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
       </RailCard>
 
       {/* Deadline radar */}
-      <RailCard icon={CalendarClock} title="Deadline radar">
+      <RailCard icon={CalendarClock} title="Deadline radar" error={deadlinesError} onRetry={() => refetchDeadlines()}>
         {radar.length === 0 ? (
           <p className="text-xs text-muted-foreground px-1">No deadlines yet.</p>
         ) : (
@@ -153,7 +159,10 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
               key={it.id}
               className="flex items-center gap-2 px-1 py-1.5 rounded-md hover:bg-muted transition-colors"
             >
-              <button onClick={() => onOpenTab('updates')} className="min-w-0 flex-1 text-left">
+              <button
+                onClick={() => (it.program_id ? navigate(`/s/programs/${it.program_id}`) : onOpenTab('updates'))}
+                className="min-w-0 flex-1 text-left"
+              >
                 <p className="text-xs font-semibold text-foreground line-clamp-1">{it.program_name}</p>
                 <p
                   className={`text-[10px] truncate ${
@@ -215,11 +224,17 @@ function RailCard({
   icon: Icon,
   title,
   action,
+  error,
+  onRetry,
   children,
 }: {
   icon: typeof Newspaper
   title: string
   action?: { label: string; onClick: () => void }
+  /** Discover review 2026-06-14 — a failed load must read as an error, not as
+   *  emptiness; show a compact retry row in place of the (empty) content. */
+  error?: boolean
+  onRetry?: () => void
   children: React.ReactNode
 }) {
   return (
@@ -236,7 +251,16 @@ function RailCard({
           </button>
         )}
       </div>
-      <div className="space-y-0.5">{children}</div>
+      {error ? (
+        <button
+          onClick={onRetry}
+          className="flex w-full items-center gap-1.5 px-1 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <RefreshCw size={12} /> Couldn&apos;t load · Retry
+        </button>
+      ) : (
+        <div className="space-y-0.5">{children}</div>
+      )}
     </section>
   )
 }

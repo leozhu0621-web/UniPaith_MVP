@@ -21,10 +21,13 @@ interface Props {
   tab: DiscoverTab
   onChange: (t: DiscoverTab) => void
   onManageFollowing: () => void
+  /** Hide the Peers tab when its flag is off so it never dead-ends (Discover review 2026-06-14). */
+  peersEnabled?: boolean
 }
 
-export default function DiscoverTabBar({ tab, onChange, onManageFollowing }: Props) {
+export default function DiscoverTabBar({ tab, onChange, onManageFollowing, peersEnabled = true }: Props) {
   const tablistRef = useRef<HTMLDivElement>(null)
+  const visibleTabs = TABS.filter(t => t.key !== 'peers' || peersEnabled)
   const { data: follows } = useQuery({ queryKey: ['connect-follows'], queryFn: getFollowing, retry: false })
   const { data: unseen = 0 } = useQuery({
     queryKey: ['connect-unseen'],
@@ -54,14 +57,14 @@ export default function DiscoverTabBar({ tab, onChange, onManageFollowing }: Pro
     if (next >= 0) {
       e.preventDefault()
       buttons[next].focus()
-      onChange(TABS[next].key)
+      onChange(visibleTabs[next].key)
     }
   }
 
   return (
     <div className="flex items-end justify-between border-b border-border mb-5">
       <div ref={tablistRef} role="tablist" aria-label="Discover sections" className="flex gap-1 overflow-x-auto no-scrollbar">
-        {TABS.map((t, idx) => {
+        {visibleTabs.map((t, idx) => {
           const badge = badges[t.key] ?? 0
           return (
             <button

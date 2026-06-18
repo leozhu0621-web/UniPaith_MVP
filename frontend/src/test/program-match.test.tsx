@@ -63,13 +63,20 @@ describe('ProbabilityBands (§4A)', () => {
     expect(screen.getByText('Historical admit rate')).toBeInTheDocument()
   })
 
-  it('shows "Not enough data yet" with the no-history reason when null', () => {
+  // Discover review 2026-06-14 — the no-data copy now branches on `reason` so a
+  // student can tell whose side the gap is on (program history vs own profile).
+  it('explains a missing-program-history gap when reason=no_history', () => {
     render(<ProbabilityBands bands={null} reason="no_history" />)
-    expect(screen.getByText(/Not enough data yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/no admissions history yet/i)).toBeInTheDocument()
   })
 
-  it('shows "Not enough data yet" when not match-ready', () => {
+  it('explains a sparse-profile gap when reason=not_match_ready', () => {
     render(<ProbabilityBands bands={null} reason="not_match_ready" />)
+    expect(screen.getByText(/add more to your profile/i)).toBeInTheDocument()
+  })
+
+  it('falls back to the generic line with no reason', () => {
+    render(<ProbabilityBands bands={null} />)
     expect(screen.getByText(/Not enough data yet/i)).toBeInTheDocument()
   })
 })

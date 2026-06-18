@@ -8,7 +8,7 @@ import { PageContainer, PageHeader } from '../../components/student/density'
 import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { qk } from '../../api/queryKeys'
-import { getConnectEvents, getFollowing, followInstitution, unfollowInstitution } from '../../api/connect'
+import { getConnectEvents, getFollowing, followInstitution, unfollowInstitution, getPeersStatus } from '../../api/connect'
 import { showToast } from '../../stores/toast-store'
 import UniversityCard from './explore/cards/UniversityCard'
 import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type FilterState } from './explore/shared/ExploreFilters'
@@ -111,9 +111,23 @@ export default function ExplorePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
 
-  // Hub sub-tabs (Spec 2026-06-12 §2). Unknown/absent tab → For you.
+  // Peers ships behind a flag (connect_peers_enabled). When off, the body is a
+  // "coming soon" stub — so we hide the tab entirely rather than leave a hub tab
+  // that dead-ends (Discover review 2026-06-14). Optimistic: show Peers until the
+  // status query confirms it's disabled, so an enabled deep-link never flickers.
+  const { data: peersStatus } = useQuery({
+    queryKey: ['peers-status'],
+    queryFn: getPeersStatus,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  })
+  const peersEnabled = peersStatus ? peersStatus.enabled : true
+
+  // Hub sub-tabs (Spec 2026-06-12 §2). Unknown/absent tab → For you; a
+  // ?tab=peers deep-link falls back to For you once we KNOW peers is disabled.
   const urlTab = searchParams.get('tab') as DiscoverTab | null
-  const tab: DiscoverTab = urlTab && DISCOVER_TABS.includes(urlTab) ? urlTab : 'foryou'
+  const rawTab: DiscoverTab = urlTab && DISCOVER_TABS.includes(urlTab) ? urlTab : 'foryou'
+  const tab: DiscoverTab = rawTab === 'peers' && peersStatus && !peersStatus.enabled ? 'foryou' : rawTab
   const setTab = (t: DiscoverTab) =>
     setSearchParams(prev => {
       const next = new URLSearchParams(prev)
@@ -280,8 +294,8 @@ export default function ExplorePage() {
       <PageHeader eyebrow="Discover" title={TAB_HEADERS[tab].title} />
 
       {/* First-visit tour (Ship C) — orients the hub's tabs. */}
-      <Coachmark id="discover-tabs" title="Discover tabs" body="For you ranks your matches." placement="bottom">
-        <DiscoverTabBar tab={tab} onChange={setTab} onManageFollowing={() => setManaging(true)} />
+      <Coachmark id="discover-tabs" title="Discover tabs" body="For you = your strategy and ranked matches. Updates, Events, and Peers bring news from the schools you follow." placement="bottom">
+        <DiscoverTabBar tab={tab} onChange={setTab} onManageFollowing={() => setManaging(true)} peersEnabled={peersEnabled} />
       </Coachmark>
 
       {tab === 'foryou' ? (
@@ -301,7 +315,7 @@ export default function ExplorePage() {
             {!searchActive && featuredPromos && featuredPromos.length > 0 && (
               <div className="mb-6">
                 <h2 className="text-eyebrow uppercase text-muted-foreground font-semibold mb-3">Featured programs</h2>
-                <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
+                <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 [&>*]:min-w-0">
                   {featuredPromos.slice(0, 3).map(promo => (
                     <PromoCard
                       key={promo.id}
@@ -445,7 +459,7 @@ export default function ExplorePage() {
           tabIndex={0}
           className="focus-visible:outline-none"
         >
-          {tab === 'updates' && <UpdatesTab />}
+          {tab === 'updates' && <UpdatesTab onOpenEvents={() => setTab('events')} />}
           {tab === 'events' && <EventsTab />}
           {tab === 'peers' && <PeersTab />}
         </div>
