@@ -437,7 +437,7 @@ export default function ChatbotEvalPage() {
         <SectionHeading
           icon={ListChecks}
           title="Build-task checklist"
-          sub="Spec 61 §10 — each task classified by what's shipped versus what's next. The traffic-dependent halves (the production sample→judge cron, A/B promotion, the live 👍/👎 curate job) are named as in-progress, not hidden."
+          sub="Spec 61 §10 — each task classified by what's shipped versus what's next. The traffic-dependent halves (the production sample→judge cron, A/B promotion, the live thumbs-up/down curate job) are named as in-progress, not hidden."
         />
         <Card pad={false} className="mt-6 p-2 sm:p-5">
           <ul className="divide-y divide-border">

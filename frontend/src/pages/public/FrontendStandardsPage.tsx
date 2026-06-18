@@ -45,7 +45,7 @@ import {
 // reading its route table: it counts ITS OWN modules at build time via
 // import.meta.glob (eager:false → paths only, nothing executed), and confirms
 // each fe-verifiable build artifact actually exists in the running bundle. So
-// the "✓ in bundle" badges are read from the deployed app, not asserted.
+// the "in bundle" badges are read from the deployed app, not asserted.
 
 const API_GLOB = import.meta.glob('../../api/*.ts')
 const STORE_GLOB = import.meta.glob('../../stores/*.ts')
@@ -257,7 +257,7 @@ export default function FrontendStandardsPage() {
         <SectionHeading
           icon={ListChecks}
           title="The build checklist — honestly scored"
-          sub="Each task carries its real status and the artifact it produced. Where the artifact is a source file, the page confirms it's actually in the running bundle (✓) — done means done, not asserted."
+          sub="Each task carries its real status and the artifact it produced. Where the artifact is a source file, the page confirms it's actually in the running bundle — done means done, not asserted."
         />
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
