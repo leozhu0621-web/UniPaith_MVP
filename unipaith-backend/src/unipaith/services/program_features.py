@@ -124,6 +124,11 @@ class ProgramRow:
     online_available: bool | None = None  # derived from delivery_format
     part_time_available: bool | None = None  # explicit Program column (flexibility fit)
     career_services: bool | None = None  # derived from support_signals evidence
+    # Founder governance (2026-06-18) — can the program sponsor an international
+    # applicant? Read ONLY by the student→program feasibility veto (a visa-
+    # needing student can't attend a program that can't sponsor her). NULL =
+    # unknown → no veto. The program→student selection direction never reads it.
+    sponsors_international: bool | None = None
     cip_code: str | None = None
     data_completeness: float = 0.5  # default for sparse rows
 
@@ -165,6 +170,11 @@ def features_from_row(
         sparse["online_available"] = row.online_available
     if row.part_time_available is not None:
         sparse["part_time_available"] = row.part_time_available
+    # Founder governance (2026-06-18) — project sponsorship for the s→p
+    # feasibility veto. GATED: a NULL column emits no key, so the veto only fires
+    # when the program KNOWN-cannot sponsor (False); unknown never vetoes.
+    if row.sponsors_international is not None:
+        sparse["sponsors_international"] = row.sponsors_international
     # career_services: explicit row flag wins; else derive from the evidence-based
     # support_signals the featurizer already grounded in real description text.
     if row.career_services is not None:
@@ -284,6 +294,15 @@ def program_row_from_orm(program: Any) -> ProgramRow:
         if raw_pt is not None:
             part_time_available = bool(raw_pt)
 
+    # sponsors_international: the real Program.sponsors_international column
+    # (founder governance 2026-06-18). A null column leaves it None (no
+    # feasibility veto), never a fabricated False — a stored vector value wins.
+    sponsors_international = sparse.get("sponsors_international")
+    if sponsors_international is None:
+        raw_spon = getattr(program, "sponsors_international", None)
+        if raw_spon is not None:
+            sponsors_international = bool(raw_spon)
+
     support_signals = dict(sparse.get("support_signals") or {})
     name = getattr(program, "program_name", "") or ""
     cip_code = getattr(program, "cip_code", None)
@@ -315,6 +334,7 @@ def program_row_from_orm(program: Any) -> ProgramRow:
         duration_months=duration_months,
         online_available=online_available,
         part_time_available=part_time_available,
+        sponsors_international=sponsors_international,
         cip_code=cip_code,
         data_completeness=data_completeness,
     )

@@ -553,16 +553,34 @@ def _build_cpef_signals(
     if s_avoid and p_locs and (s_avoid & set(p_locs)) == set(p_locs):
         dealbreakers.append({"key": "geo_avoid", "v": p["epsilon"], "rho": veto_rho})
 
-    # NOTE — an immigration/eligibility deal-breaker is DELIBERATELY NOT added to
-    # this veto. The newer match charts (Spec 1 §1.1, Spec 3 §2.1/§6) sketch one,
-    # but the STRONGER, already-shipped fairness contract (Spec 38 §3/§9 + Spec
-    # 46 §6) mandates that immigration status NEVER be a selection or ranking
-    # criterion — it informs operational feasibility + yield planning only,
-    # outside the matcher. That guardrail is pinned by a source-level contract
-    # (tests/test_spec38_fairness_contract.py) which forbids any such token from
-    # appearing in this module. Wiring it into the rank key M would make
-    # immigration status a selection criterion — exactly what the fairness
-    # contract prohibits — so the fairness guardrail wins. (Documented deferral.)
+    # ── visa FEASIBILITY veto (founder governance, 2026-06-18) ──────────────
+    # The founder decided visa/eligibility IS a legitimate consideration — but
+    # ONLY in the student's OWN direction (s→p), and ONLY as feasibility, never
+    # as selection. The reasoning: a student who needs a study visa literally
+    # CANNOT attend a program that cannot enrol / sponsor an international
+    # applicant, so that program is INFEASIBLE FOR HER. Sinking it in HER own
+    # ranking HELPS her — it steers her away from a guaranteed dead end. This is
+    # exactly the asymmetry the fairness rules require:
+    #   • s→p (HERE): the student's feasibility may consider her own visa need.
+    #   • p→s (cpef_program_to_student): a program ranking APPLICANTS must NEVER
+    #     read immigration status — that would make immigration a selection
+    #     criterion, which Spec 38 §3/§9 + Spec 46 §6 forbid. That direction
+    #     reads only pref_min_gpa / pref_fields / pref_levels and never any visa
+    #     key; the fairness contract (tests/test_spec38_fairness_contract.py)
+    #     pins both halves of this asymmetry.
+    #
+    # Confidence-aware + GATED + fail-soft: the veto fires ONLY when the student
+    # genuinely needs sponsorship (`needs_visa_sponsorship` projected from her
+    # StudentVisaInfo.visa_required) AND the program is KNOWN-cannot-sponsor
+    # (`sponsors_international` explicitly False). Unknown sponsorship (key
+    # absent) → NO veto (never assume a program can't sponsor). Its trust gain is
+    # `veto_rho` (the c_student-gated certainty used by every other deal-breaker),
+    # so a thin profile only dents while a confirmed need buries — the same
+    # "deeper profile → sharper veto" behaviour as the degree / budget / geo
+    # breakers above. A buried-for-the-student program is still display-only to
+    # schools; this never changes the program→student direction.
+    if s.get("needs_visa_sponsorship") is True and pr.get("sponsors_international") is False:
+        dealbreakers.append({"key": "visa_feasibility", "v": p["epsilon"], "rho": veto_rho})
 
     full_w = _CANONICAL_N * (w_base / 10.0)
     return signals, dealbreakers, full_w

@@ -135,6 +135,10 @@ class CreateProgramRequest(BaseModel):
     # flexibility fit. Distinct from delivery_format: an in-person program can
     # still offer a part-time track.
     part_time_available: bool | None = None
+    # Founder governance (2026-06-18) — whether the program can sponsor an
+    # international applicant. Feeds ONLY the student→program feasibility veto
+    # (never the program→student selection direction). NULL = unknown → no veto.
+    sponsors_international: bool | None = None
     campus_setting: Literal["urban", "suburban", "rural"] | None = None
     requirements: dict | None = None
     application_requirements: list[dict] | None = None
@@ -172,6 +176,8 @@ class UpdateProgramRequest(BaseModel):
     delivery_format: Literal["in_person", "online", "hybrid"] | None = None
     # AI Structure (Spec 3 §3) — explicit part-time availability (see Create).
     part_time_available: bool | None = None
+    # Founder governance (2026-06-18) — international sponsorship (see Create).
+    sponsors_international: bool | None = None
     campus_setting: Literal["urban", "suburban", "rural"] | None = None
     requirements: dict | None = None
     application_requirements: list[dict] | None = None
@@ -206,6 +212,8 @@ class ProgramResponse(BaseModel):
     delivery_format: str | None = None
     # AI Structure (Spec 3 §3) — explicit part-time availability (see Create).
     part_time_available: bool | None = None
+    # Founder governance (2026-06-18) — international sponsorship (see Create).
+    sponsors_international: bool | None = None
     campus_setting: str | None = None
     requirements: dict | None
     application_requirements: list | dict | None = None

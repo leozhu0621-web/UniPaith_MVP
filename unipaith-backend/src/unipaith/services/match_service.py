@@ -714,12 +714,16 @@ class MatchService:
         )
 
     async def _overlay_student_attrs(self, student_id: UUID, sparse: dict) -> None:
-        """Add the student's GPA + field-of-study + typed-fit preferences to the
-        matcher sparse vector (AI Structure D.2 / Spec 3 §3). Only the current
-        AcademicRecord and the StudentPreference row; missing → skip. Each key is
-        GATED on a non-null source value, so an absent attribute injects no
-        phantom signal. Fail-soft: any read error leaves the sparse vector as-is."""
-        from unipaith.models.student import AcademicRecord, StudentPreference
+        """Add the student's GPA + field-of-study + typed-fit preferences +
+        (when the student needs a study visa) the visa-feasibility flag to the
+        matcher sparse vector (AI Structure D.2 / Spec 3 §3; visa = founder
+        governance 2026-06-18). Reads the current AcademicRecord, the
+        StudentPreference row, and the StudentVisaInfo row; missing → skip. Each
+        key is GATED on a non-null source value, so an absent attribute injects
+        no phantom signal. The visa key (`needs_visa_sponsorship`) feeds ONLY the
+        student→program feasibility veto — never program→student selection.
+        Fail-soft: any read error leaves the sparse vector as-is."""
+        from unipaith.models.student import AcademicRecord, StudentPreference, StudentVisaInfo
 
         try:
             academic = await self.db.scalar(
@@ -771,6 +775,38 @@ class MatchService:
                 sparse["wants_online"] = bool(pref.wants_online)
             if pref.wants_career_support is not None and "wants_career_support" not in sparse:
                 sparse["wants_career_support"] = bool(pref.wants_career_support)
+
+        # Founder governance (2026-06-18) — the visa FEASIBILITY signal, in the
+        # STUDENT's direction ONLY. A study-visa-needing student cannot attend a
+        # program that cannot sponsor an international applicant; surfacing that
+        # in HER own ranking (s→p) helps her avoid a dead end. We project a SINGLE
+        # derived boolean `needs_visa_sponsorship` — never nationality, country,
+        # refusals, or any other immigration field — because the feasibility veto
+        # needs nothing more, and projecting less keeps the surface area minimal.
+        #
+        # Direction asymmetry (the only defensible framing): this key feeds the
+        # student→program feasibility veto in matching.py. The program→student
+        # SELECTION direction (cpef_program_to_student) MUST NEVER read it — a
+        # program ranking APPLICANTS may not use immigration status (Spec 38
+        # §3/§9, Spec 46 §6). cpef_program_to_student reads only pref_min_gpa /
+        # pref_fields / pref_levels vs the student's gpa / field / level — never
+        # this key — and the fairness contract pins that.
+        #
+        # GATED: emitted only when a visa_info row exists AND visa_required is
+        # True. No visa row, or visa_required False → no key (a domestic student
+        # never gets the feasibility dimension). Fail-soft on any read error.
+        try:
+            visa = await self.db.scalar(
+                select(StudentVisaInfo).where(StudentVisaInfo.student_id == student_id).limit(1)
+            )
+        except Exception:
+            visa = None
+        if (
+            visa is not None
+            and bool(getattr(visa, "visa_required", False))
+            and "needs_visa_sponsorship" not in sparse
+        ):
+            sparse["needs_visa_sponsorship"] = True
 
     async def _overlay_program_prefs(self, program_features: list[ProgramFeatures]) -> None:
         """Overlay each program's ProgramPreference (target applicant) onto its
