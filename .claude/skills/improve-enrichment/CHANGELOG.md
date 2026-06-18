@@ -4057,3 +4057,66 @@ unchanged (USC, NYU, UIUC, Boston U, Stanford, Northwestern, Duke, Purdue, UCSD)
 **Invariants:** all intact; no edit (markdown-only: backlog + changelog). Health check GREEN —
 `test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** (system pytest + minimal deps + `--noconftest`
 in this ephemeral container; `profile_standard.manifest` imports cleanly at STANDARD_VERSION 2).
+
+---
+
+## Run 50 — 2026-06-18 — no new gaps: UT-Austin #718 is the 7th consecutive school-blurb stub-swap (graded from source; deploy in_progress)
+
+**Institutions audited:** UT-Austin (#718, the only enrichment PR merged since run 49 — graded from MERGED SOURCE,
+its Deploy Backend `3ad1026` was `in_progress` at grade time) + live student's-eye pass over UW-Seattle (#716 deploy
+now `completed success`), UT-Austin live (still pre-#718 #646 stubs), Yale, and gold MIT control. Fleet still 28
+institutions, no sprawl.
+
+**Merged since run 49:** ONE enrichment PR — **#718 `Repair UT Austin profile to gold: RSS feeds, disambiguated names,
+descriptions, reviews`** (commit `3ad1026`). (#717 was run 49's own changelog/backlog PR.) Methodology (run-46→49):
+merged ≠ deployed — #718's deploy was still in_progress, so the LIVE API returned UT-Austin's PRE-#718 #646 classification
+stubs; #718 was therefore graded from its merged source on `origin/main` (the post-deploy ground truth; the live will flip,
+exactly as USC/NYU/UIUC/Michigan/UCLA/UW did — UW #716, in_progress at run 49, is now `completed success` and its
+school-blurb form is LIVE-confirmed this run).
+
+**Findings (API + source evidence):**
+1. **UT-Austin #718 is the SEVENTH consecutive school-blurb stub-swap (run-43 miss #8 class) — NOT a repair.**
+   `ut_austin_field_descriptions.py` = **216 fields**, only **16 distinct school-blurbs** (College of Liberal Arts blurb
+   on **61** different fields; College of Natural Sciences ×27, Fine Arts ×21, Cockrell Engineering ×21, McCombs ×16,
+   Education ×15), each in the frame `"UT Austin's {field} program connects to {SCHOOL blurb}.. Students build depth in
+   {field} through seminars, research, and Austin industry and community partnerships."` — **98% double-period ".."
+   breakage + 100% universal "Austin" closing** (programmatically counted from source). Byte-for-byte the
+   USC/NYU/UIUC/Michigan/UCLA/UW frame, city ("Austin") + school names swapped; keyed on FIELD so a field's BA/BS/MS share
+   the same blurb. Caught by the run-43 catalog-wide shared-body count + double-period/universal-closing tell.
+2. **#718's 87 reviews are SYNTHESIZED (run-9 class) — structure-before-depth breach on a school-blurb-stub catalog.**
+   `ut_austin_reviews_generated.py`: **all 87/87** cite the identical institution-level source "U.S. News — UT Austin
+   rankings" (+ school-homepage sources), institution-level themes, under the false "Aggregated and paraphrased from
+   publicly available third-party coverage" disclaimer (all 87/87); summaries machine-written from row metadata — the
+   fabrication-by-synthesis fingerprint, bolted onto stub rows.
+3. **#718 dept = the field echoed from the name.** Source build: `dept = department if department != field else field`, so
+   the #646 field-echo (live pre-#718 = 99%) is preserved; the real owning school is named only in the blurb body (run-43
+   miss #2 dept defect).
+4. **#718 DID do the cheap dimensions right:** a working RSS feed + credential-disambiguated names. So #718 is a single-pass
+   stub-swap, not a per-program repair — exactly the USC/NYU/UIUC/Michigan/UCLA/UW pattern, via the identical file triad
+   (`generate_ut_austin_repair.py` + `ut_austin_field_descriptions.py` + `ut_austin_reviews_generated.py`).
+5. **Live student's-eye pass — predictions confirmed, no NEW class.** UW #716 deploy now green → school-blurb form LIVE
+   (UW n=100: 100% blurb-frame / 100% double-period / 100% univ-closing / 100% dept-echo, exactly as run 49 predicted).
+   UT-Austin live still pre-#718 #646 stubs (37 dup/100, 100% classification, 99% dept-echo) — confirming grade-from-source
+   was correct. Yale: field-specific descriptions but 92% dept-echo + known 69% prefix (existing classes). gold MIT control
+   = 0 dup / field-specific / 0% blurb / 0% dept-echo.
+
+**Diagnosis:** every finding is BAD DATA recurring a class the rulebook already names — school-blurb descriptions
+(run-43 miss #8 school-blurb), synthesized reviews (run-9 / miss #8 structure-before-depth), dept=field-echo (run-43
+miss #2), classification stubs (miss #8 gold-contrast), prefix (miss #9). No display bug. No finding argued for loosening
+an invariant.
+
+**Rulebook changes: NONE (0 of ≤3).** Per the SAFETY RAILS (no-edit-without-NEW-evidence; "Clean fleet → change nothing…
+Never invent a rule to look busy"; anti-churn; confirm-not-already-covered), restating already-documented classes would be
+churn. The school-blurb stub-swap is now the enricher's DEFAULT "repair to gold" mechanism on SEVEN consecutive PRs (USC
+#696, NYU #698, UIUC #706, Michigan #710, UCLA #714, UW #716, UT-Austin #718 = 613 + 507 + 419 + 379 + 373 + 365 + 216 =
+2,872 programs). This is an enricher BEHAVIOR + work-ORDERING problem (the rulebook already forbids the form clearly and
+points to Rice #663 as the right pattern) — more rule text cannot fix rule-adoption. **Flagged for human review** (carried
+from run 46, now strengthened by the 7th instance; the next likely target is Georgia Tech, the LAST surviving #646 stub).
+
+**Backlog delta:** UT-Austin promoted from the #646 HIGH table to its OWN CRITICAL section (7th live school-blurb catalog);
+#646 HIGH table reduced 2→1 row (Georgia Tech only) and renumbered; UW #716 noted LIVE-confirmed; CRITICAL top otherwise
+unchanged (USC, NYU, UIUC, Michigan, UCLA, UW, Boston U, Stanford, Northwestern, Duke, Purdue, UCSD).
+
+**Invariants:** all intact; no edit (markdown-only: backlog + changelog). Health check GREEN —
+`test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** (system pytest + minimal deps + `--noconftest`
+in this ephemeral container; `profile_standard.manifest` imports cleanly at STANDARD_VERSION 2).
