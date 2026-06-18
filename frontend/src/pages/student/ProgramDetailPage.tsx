@@ -7,6 +7,7 @@ import {
   searchPrograms, semanticSearch,
 } from '../../api/programs'
 import { getPublicInstitution, getPublicPosts } from '../../api/institutions'
+import { getProfile } from '../../api/students'
 import SocialLinks from '../../components/SocialLinks'
 import { pushRecentProgram } from '../../lib/recentPrograms'
 import usePageTitle from '../../hooks/usePageTitle'
@@ -48,6 +49,7 @@ import RationalePopover from './match/RationalePopover'
 import ProbabilityBands from './match/ProbabilityBands'
 import BandBadge from '../../components/ui/BandBadge'
 import StatGroup from './program/StatGroup'
+import WhereYouStand from './program/WhereYouStand'
 import AboutCard from './program/AboutCard'
 import RelatedSidebar from './program/RelatedSidebar'
 import InsightsPanel from './program/InsightsPanel'
@@ -156,6 +158,10 @@ export default function ProgramDetailPage() {
   })
   const programPosts = Array.isArray(programPostsData) ? programPostsData : []
   const { data: saved } = useQuery({ queryKey: qk.savedPrograms(), queryFn: listSaved })
+  // Student's own profile — powers the "Where you stand" cohort comparison. The
+  // profile response embeds academic_records + test_scores, so this is the
+  // single read; no new endpoint. Soft-fail so the page renders for anyone.
+  const { data: myProfile } = useQuery({ queryKey: ['profile'], queryFn: getProfile, retry: false })
   const { data: reviewsData } = useQuery({ queryKey: ['program-reviews', programId], queryFn: () => getProgramReviews(programId!), retry: false })
   const { data: employerData } = useQuery({ queryKey: ['employer-feedback', programId], queryFn: () => getEmployerFeedback(programId!), retry: false })
   const { data: sameSchoolData } = useQuery({
@@ -669,6 +675,11 @@ export default function ProgramDetailPage() {
                         </div>
                       ))}
                     </div>
+                    <WhereYouStand
+                      classProfile={cp}
+                      academicRecords={myProfile?.academic_records}
+                      testScores={myProfile?.test_scores}
+                    />
                     {cp.source && (
                       <p className="mt-3 text-[11px] text-muted-foreground/70">
                         Source:{' '}
