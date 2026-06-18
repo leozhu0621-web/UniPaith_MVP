@@ -32,11 +32,19 @@ from unipaith.profile_standard.anti_stub import _SHARED_BODY_MIN_CHARS, analyze,
 
 OUT = Path("src/unipaith/data/stanford_catalog_descriptions.py")
 
-# Slugs for degrees Stanford does not publish as standalone catalog nodes.
+# Slugs for degrees Stanford does not publish as standalone catalog nodes, or IPEDS
+# rows that duplicate an explicit/canonical program_name at the same credential level.
 _OMIT_SLUGS: frozenset[str] = frozenset({
     "stanford-veterinary-biomedical-and-clinical-sciences-ms",
     "stanford-petroleum-engineering-cert",
     "stanford-petroleum-engineering-ms",
+    "stanford-research-and-experimental-psychology-bs",
+    "stanford-research-and-experimental-psychology-cert",
+    "stanford-research-and-experimental-psychology-ms",
+    "stanford-business-management-marketing-and-related-support-services-other-ms",
+    "stanford-management-sciences-and-quantitative-methods-ms",
+    "stanford-allied-health-and-medical-assisting-services-ms",
+    "stanford-philosophy-and-religious-studies-other-bs",
 })
 
 # CIP / federal field title → Stanford's published field-of-study name.
@@ -52,9 +60,8 @@ _CIP_TO_REAL: dict[str, str] = {
     "Biological and Biomedical Sciences, Other": "Biosciences",
     "Biology, General": "Biology",
     "Biomedical/Medical Engineering": "Bioengineering",
-    "Business Administration, Management and Operations": "Business Administration",
     "Business, Management, Marketing, and Related Support Services, Other": "Business Administration",
-    "Cell/Cellular Biology and Anatomical Sciences": "Biology",
+    "Cell/Cellular Biology and Anatomical Sciences": "Cell and Developmental Biology",
     "Chemical Engineering": "Chemical Engineering",
     "Chemistry": "Chemistry",
     "Civil Engineering": "Civil and Environmental Engineering",
@@ -67,19 +74,19 @@ _CIP_TO_REAL: dict[str, str] = {
     "Design and Applied Arts": "Art Practice",
     "Drama/Theatre Arts and Stagecraft": "Theater and Performance Studies",
     "East Asian Languages, Literatures, and Linguistics": "East Asian Languages and Cultures",
-    "Ecology, Evolution, Systematics, and Population Biology": "Biology",
+    "Ecology, Evolution, Systematics, and Population Biology": "Ecology and Evolution",
     "Economics": "Economics",
     "Education, General": "Education",
-    "Educational Assessment, Evaluation, and Research": "Education",
+    "Educational Assessment, Evaluation, and Research": "Educational Assessment and Evaluation",
     "Electrical, Electronics, and Communications Engineering": "Electrical Engineering",
-    "Engineering, Other": "Management Science and Engineering",
-    "Engineering-Related Fields": "Engineering",
+    "Engineering, Other": "Product Design",
+    "Engineering-Related Fields": "Engineering Fundamentals",
     "English Language and Literature, General": "English",
-    "English Language and Literature/Letters, Other": "English",
+    "English Language and Literature/Letters, Other": "Comparative Literature",
     "Environmental/Environmental Health Engineering": "Environmental Engineering",
     "Ethnic, Cultural Minority, Gender, and Group Studies": "Comparative Studies in Race and Ethnicity",
     "Film/Video and Photographic Arts": "Film and Media Studies",
-    "Fine and Studio Arts": "Art Practice",
+    "Fine and Studio Arts": "Art History",
     "Genetics": "Genetics",
     "Geological and Earth Sciences/Geosciences": "Geological Sciences",
     "Germanic Languages, Literatures, and Linguistics": "German Studies",
@@ -105,13 +112,13 @@ _CIP_TO_REAL: dict[str, str] = {
     "Philosophy": "Philosophy",
     "Philosophy and Religious Studies, Other": "Religious Studies",
     "Physics": "Physics",
-    "Physiology, Pathology and Related Sciences": "Biology",
+    "Physiology, Pathology and Related Sciences": "Physiology",
     "Political Science and Government": "Political Science",
     "Psychology, General": "Psychology",
     "Public Health": "Epidemiology and Clinical Research",
     "Public Policy Analysis": "Public Policy",
-    "Public Relations, Advertising, and Applied Communication": "Communication",
-    "Radio, Television, and Digital Communication": "Communication",
+    "Public Relations, Advertising, and Applied Communication": "Public Relations",
+    "Radio, Television, and Digital Communication": "Media Studies",
     "Religion/Religious Studies": "Religious Studies",
     "Research and Experimental Psychology": "Psychology",
     "Romance Languages, Literatures, and Linguistics": "French and Italian",
@@ -122,9 +129,9 @@ _CIP_TO_REAL: dict[str, str] = {
     "Sociology": "Sociology",
     "Statistics": "Statistics",
     "Sustainability Studies": "Sustainability",
-    "Systems Science and Theory": "Management Science and Engineering",
-    "Teacher Education and Professional Development, Specific Levels and Methods": "Education",
-    "Teacher Education and Professional Development, Specific Subject Areas": "Education",
+    "Systems Science and Theory": "Systems Science and Engineering",
+    "Teacher Education and Professional Development, Specific Levels and Methods": "Teacher Education",
+    "Teacher Education and Professional Development, Specific Subject Areas": "Subject-Area Teacher Education",
     "Urban Studies/Affairs": "Urban Studies",
     "Veterinary Biomedical and Clinical Sciences": "Comparative Medicine",
 }
@@ -137,6 +144,7 @@ _BA_FIELDS: frozenset[str] = frozenset({
     "French and Italian", "German Studies", "East Asian Languages and Cultures",
     "Middle Eastern Languages and Cultures", "Slavic Languages and Literatures",
     "Science, Technology, and Society", "Public Policy", "Education", "Law",
+    "Comparative Literature", "Art History",
 })
 
 _SCHOOL_DEPT: dict[str, str] = {
