@@ -24,6 +24,7 @@ CERTIFIED_CLEAN = [
     "mit",      # gold reference
     "ucsd",     # cert padding dropped; per-credential descriptions (#745 + this run)
     "caltech",  # cert + non-terminal-MS padding dropped; field-specific descriptions (this run)
+    "nyu",      # bulletin-sourced descriptions; school-blurb + synthesized reviews removed (#753)
 ]
 
 
