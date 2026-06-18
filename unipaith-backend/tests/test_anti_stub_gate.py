@@ -16,7 +16,7 @@ import importlib
 
 import pytest
 
-from unipaith.profile_standard.anti_stub import analyze
+from unipaith.profile_standard.anti_stub import analyze, machine_artifacts
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
 # Grow this list as catalogs are genuinely de-fabricated — never weaken the assertions.
@@ -30,13 +30,16 @@ CERTIFIED_CLEAN = [
     "duke",       # "{program_name}: " prefix-double removed; per-credential doctoral clauses
     "uiuc",       # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
     "usc",        # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
-    "michigan",   # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
     "georgia_tech",  # catalog.gatech.edu descriptions; stubs + synth reviews removed (gatechprof3)
     "ut_austin",  # catalog.utexas.edu descriptions; school-blurb + synth reviews removed (utaprof2)
-    "ucla",       # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
-    "uw",         # catalogue-sourced descriptions; school-blurb + synth reviews removed (uwprof2)
-    "jhu",        # per-credential field clauses; verbatim-across-levels removed
+    "uw",         # Wikipedia-sourced per-credential descriptions; junk/Westwood removed (uwdefab1)
+    "jhu",        # per-credential field clauses (verbatim-across-levels removed); real reviews kept
     "stanford",   # catalogue descriptions; rollup names + synth reviews removed
+    # NOTE: "michigan" and "ucla" were REMOVED from this registry (2026-06-18, uwdefab1). Both
+    # still ship the same build-script junk UW carried — 374/364 descriptions opening
+    # "Catalog entry <hex>: Catalog entry <hex>: …" — so they FAIL the machine-artifact gate
+    # below and are NOT clean. They are queued in REPAIR_BACKLOG for the same Wikipedia-sourced
+    # regeneration UW received; re-add them here once de-fabricated.
 ]
 
 
@@ -62,6 +65,45 @@ def test_gold_mit_is_the_zero_baseline():
     """MIT — the gold reference — must score zero on every metric (the baseline)."""
     report = analyze(_programs("mit"))
     assert report.is_clean, f"gold MIT regressed: {report.summary()}"
+
+
+@pytest.mark.parametrize("name", CERTIFIED_CLEAN)
+def test_certified_catalog_has_no_machine_artifacts(name: str):
+    """A certified catalog must not render build-script junk (e.g. "Catalog entry <hex>:"
+    or a raw hex id) — these pass every description-quality metric yet show raw junk to
+    students. Three certified catalogs (UW/Michigan/UCLA) shipped this live; the gate
+    closes that hole (REPAIR_BACKLOG run 59)."""
+    hits = machine_artifacts(_programs(name))
+    assert not hits, (
+        f"{name} catalog carries machine-build artifacts in {len(hits)} descriptions: "
+        f"{hits[:5]}{' …' if len(hits) > 5 else ''}"
+    )
+
+
+def test_artifact_detector_bites_on_catalog_entry_junk():
+    """Regression guard: the artifact gate must flag the live "Catalog entry <hex>:" form
+    while passing a clean field-specific description."""
+    junk = [
+        {
+            "program_name": "Bachelor of Arts in Accounting",
+            "description": (
+                "Catalog entry 5686776b4e64: Catalog entry 5686776b4e64: UW's Foster "
+                "School of Business draws on the Department of Finance on the Westwood campus."
+            ),
+        }
+    ]
+    clean = [
+        {
+            "program_name": "Bachelor of Arts in Accounting",
+            "description": (
+                "Accounting is the process of recording and processing information about "
+                "economic entities. At the University of Washington's Foster School of "
+                "Business in Seattle, this program engages the discipline."
+            ),
+        }
+    ]
+    assert machine_artifacts(junk), "should flag the 'Catalog entry <hex>' junk"
+    assert not machine_artifacts(clean), "must not flag a clean field-specific description"
 
 
 def test_analyzer_detects_a_school_blurb_stub_catalog():

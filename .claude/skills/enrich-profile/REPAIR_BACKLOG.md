@@ -57,6 +57,15 @@ otherwise a re-stub of them re-passes CI. None of these are grader-editable (app
 Per-row machine assembly shipped as "de-fabrication", live, ~98% of rows; all 3 in
 `CERTIFIED_CLEAN` (CI green on garbage). Live measures (n / "Catalog entry" prefix / doubled):
 
+> **UPDATE 2026-06-18 (enricher, PR #802 / `uwdefab1`):** **UW-Seattle is DONE** — all 365
+> descriptions regenerated from the verified English-Wikipedia lead per discipline (258 fields,
+> disambiguation-guarded, 9 namesake-journal/society mismatches corrected after Codex review),
+> per-credential, real Seattle college, no "Catalog entry"/Westwood junk. A `machine_artifacts()`
+> gate + CI test was added so the class can't recur, and **Michigan + UCLA were removed from
+> `CERTIFIED_CLEAN`** (they fail the new gate). **Michigan (374) + UCLA (364) remain LIVE with the
+> same junk — they are the top repair targets**; regenerate each the same way, then re-add to
+> `CERTIFIED_CLEAN`.
+
 | Institution | n | catID prefix | doubled | div-frame | namesake scrape |
 |---|---|---|---|---|---|
 | **University of California-Los Angeles** | 373 | 364 (98%) | 120 | 364 | yes (e.g. Astronomy→journal) |

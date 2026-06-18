@@ -71,6 +71,20 @@ _CLASSIFICATION_RES: tuple[re.Pattern[str], ...] = (
 _SHARED_BODY_MIN_CHARS = 120
 _SHARED_BODY_MIN_FRACTION = 0.5
 
+# Machine-build artifacts that a description-generation script left in the prose. These
+# pass every metric above (no "..", no shared body, no classification phrase) yet render
+# raw junk to students — observed live on three "certified-clean" catalogs (UW/Michigan/
+# UCLA shipped 350-374 rows each opening "Catalog entry <hex>: Catalog entry <hex>: …",
+# UW additionally said "Westwood campus" — UCLA's neighborhood — on a Seattle university).
+# No real catalog prints an internal entry id, a commit/UUID-style hex token, or the same
+# clause twice in a row, so any of these is an automatic FAIL (gold MIT scores 0).
+_ARTIFACT_RES: tuple[re.Pattern[str], ...] = (
+    re.compile(r"\bCatalog entry\b", re.I),  # "Catalog entry 5686776b4e64: …"
+    # raw hex id (UUID/commit fragment) — requires both a digit and an a-f letter so plain
+    # numbers (years) and ordinary words never match
+    re.compile(r"\b(?=[0-9a-f]*[0-9])(?=[0-9a-f]*[a-f])[0-9a-f]{8,}\b"),
+)
+
 
 def field_of(program_name: str) -> str:
     """The field-of-study part of a program name (credential designation stripped)."""
@@ -199,3 +213,19 @@ def analyze(programs: list[dict]) -> AntiStubReport:
         shared_leading_body=shared_leading_body,
         cross_field_clause=cross_field_clause,
     )
+
+
+def machine_artifacts(programs: list[dict]) -> list[str]:
+    """Program names whose description carries a description-generation build artifact.
+
+    Separate from :func:`analyze` (and ``AntiStubReport.is_clean``) so that adding it
+    cannot crash an already-broken catalog's import-time self-check — it is enforced by
+    ``tests/test_anti_stub_gate.py`` over the certified-clean registry instead. Catches
+    the live "Catalog entry <hex>:" / raw-hex-id junk that three certified catalogs
+    shipped while scoring 0 on every description-quality metric above.
+    """
+    return [
+        (p.get("program_name") or "")
+        for p in programs
+        if any(rx.search(_desc(p)) for rx in _ARTIFACT_RES)
+    ]
