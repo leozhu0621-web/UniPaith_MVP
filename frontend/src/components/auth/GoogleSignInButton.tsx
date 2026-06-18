@@ -68,8 +68,14 @@ export default function GoogleSignInButton({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
+      <div
+        className="flex items-center gap-3 text-xs text-muted-foreground"
+        role="separator"
+        aria-label="or use email"
+      >
+        <span aria-hidden="true" className="h-px flex-1 bg-border" />
+        <span aria-hidden="true">or use email</span>
+        <span aria-hidden="true" className="h-px flex-1 bg-border" />
       </div>
       <button
         type="button"
