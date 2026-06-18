@@ -868,30 +868,41 @@ STRICT order:
      photo at all (most beyond the original 14) breaks both the card header and
      the detail hero;
    - **no `_standard` stamp**, or stamped at an older `STANDARD_VERSION`.
-3. **When NO existing university has a blocking issue (every one gold or
-   honestly-omitted), the run's job is GROWTH — actively ADD the next new
-   university. Do not idle on the existing set.** Repair-first ORDERS the work; it
-   does not CAP the fleet. The platform's value grows with coverage, so a run with
-   nothing left to repair is a run that expands the fleet by one.
+3. **Growth runs IN PARALLEL with repair — it is NOT gated on "all existing gold."**
+   Repair-first means repairs take PRIORITY within a run; it does NOT mean growth
+   waits for a flawless fleet (which never arrives — there is always one more
+   dimension to deepen). Gating growth on perfection froze the fleet at the seeded
+   set for dozens of runs. So distinguish two kinds of "not gold":
+   - **ACUTE / visible brokenness** — stub / duplicate / rollup / abbreviation
+     program names, fabricated or name-prefixed descriptions, a `content_sources`
+     feed that renders empty, missing `campus_photos`, a short/non-conformant
+     catalog. **These block growth: fix every acute defect in the fleet before
+     adding anything new** (this is the "fix the embarrassing stuff first" rule).
+   - **DEPTH-in-progress** — a university whose acute defects are clear but that is
+     still being deepened (some coverable programs lack reviews, some fields
+     honestly-omitted-pending). **This does NOT block growth** — deepening proceeds
+     in parallel with adding new universities.
+   So each run: (a) clear the top ACUTE defect if any exist anywhere in the fleet;
+   then (b) **add the next new university.** **Hard floor: never go more than 2 runs
+   without adding a new university while the US-News list has unseeded entries** — a
+   string of repair-only runs with the fleet never growing is the exact failure this
+   rule prevents.
    - **Where the next university comes from (so you never run dry):** walk the
      **U.S. News & World Report "Best Colleges" → National Universities** ranking in
-     rank order (#1, #2, #3, …) and add the highest-ranked university NOT yet in the
-     DB. The seeded fleet is already ≈ the top 30, so you continue down the list
-     (~#30 onward); **skip any already present** and any without a resolvable UNITID.
-     The ranking has hundreds of entries, so there is ALWAYS a next target. Resolve
-     the official name + UNITID for that ranked school, then enrich it fully to gold
-     (same bar as any existing one) per the steps below. Add ONE new university per
-     run. (Optional: a strong real student-demand signal — search / match / view /
-     saved-school — may bump a high-demand school ahead of its US-News rank; absent
-     a signal, just follow the list one by one.)
+     rank order and add the highest-ranked university NOT yet in the DB (skip any
+     already present / without a resolvable UNITID). A NEW university enters at
+     **institution level** (verified basics + `ranking_data` + `campus_photos` + a
+     few real flagship programs) and is then deepened to gold on later runs **like
+     any other — it does NOT have to reach full gold in the run it is added.**
+     (Optional: a strong real student-demand signal may bump a school ahead of its
+     US-News rank; absent a signal, follow the list one by one.)
 
-Within the repair phase, prioritize by student demand (saved-school / match / view
-counts) then by size of gaps. **Adding breadth while existing profiles are broken
-is the one thing this routine must NOT do — but once they are whole, refusing to
-grow is the second thing it must not do.** Only genuinely stop if every existing
-university is gold AND the growth universe is exhausted (it won't be) or the
-operator has explicitly paused growth — never stop merely because the originally
-seeded set is done.
+The two failure modes are symmetric and BOTH forbidden: (1) adding breadth while
+existing profiles are **acutely broken** (stubs / dead feeds / fabrication) — fix
+those first; and (2) **refusing to grow** because the fleet isn't yet flawless —
+grow in parallel per the hard floor above. Only genuinely stop if the US-News
+growth universe is exhausted (it won't be) or the operator has explicitly paused
+growth — never stop merely because the originally seeded set is done.
 
 **RE-AUDIT — do not trust a prior "done" mark or `_standard` stamp.** Boston U and
 Stanford were both shipped as "done" and are both broken (483 stub programs;
