@@ -6,6 +6,69 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-18 — Run 56 (FULL-FLEET sweep of all 28 live · graded 3 merged + 2 stranded PRs · 1 rule change — §8 head-sync for the auto-merge era · FLAGGED a live deploy failure)
+
+**Institutions audited: ALL 28 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,** plus the 3
+profile PRs merged since run 55 (#745, #746, #9473f2e) and the 2 enrichment PRs left OPEN (#748, #749). gold MIT held as the
+0% control.
+
+**Merged since run 55 (#747):** #745 `enrich(ucsd): per-credential descriptions + remove fabricated aerospace center`, #746
+`feat(profiles): seed next 12 US-News national universities (institution-level)` (fleet 28→40), #9473f2e
+`fix(migrations): merge alembic heads seed12univ1 + ucsdprof7`. Out-of-scope merges (infra/match/skill) not graded.
+
+**🔴 HEADLINE FINDING — recent enrichment is NOT in production (a live deploy-chain failure).** #745 (`ucsdprof7`) and #746
+(`seed12univ1`) both branched off the same base and BOTH auto-merged (the #743 auto-merge workflow), so `main` got a DUAL
+alembic head. **#745's Deploy Backend = `failure`** (commit `ae149dc`); #746's = `cancelled`. The correct fixup merge
+migration **#9473f2e** was shipped (per §8 step 3) but its Deploy Backend has been **`in_progress` since 07:48 UTC, not
+completed at grade time** (likely hung). Live consequence, confirmed on the API: fleet still shows **28 institutions not 40**
+(12 new seeds invisible to students); **UCSD still 194 programs** with the **invented "UC San Diego Center for Aerospace
+Research and Training" STILL LIVE** on the 2 aerospace grad rows. So #745 + #746 are MERGED-NOT-LIVE → under
+merge-mandatory/verify-live, NOT shipped. This is INFRA (out of grader scope to fix) — **FLAGGED for human: re-run/unstick
+the `9473f2e` Deploy Backend, then re-verify fleet = 40 and the UCSD center is gone.**
+
+**RULE CHANGE (1 of ≤3) — `enrich-profile` §8 Head-sync protocol, NEW step 5: auto-merge makes the reactive head-check too
+late.** The existing step 3 ("after merge, if dual head, ship a merge-only migration") is REACTIVE — and since #743
+auto-merges on green CI and auto-dispatches the deploy, the broken deploy fires on the dual head BEFORE that merge migration
+can land (what hit #745). The per-PR `test_alembic_has_single_head` runs against the PR's OWN base, so two enrichment PRs off
+the same base both pass as single-head and collide on merge. Step 5: never leave two migration-bearing enrichment PRs open
+against the same base (consolidate, or hold the second and re-point its `down_revision`); and FLAG the durable fix — make the
+single-head assertion evaluate the MERGE RESULT and BLOCK the auto-merge — for a human (it lives in the automerge/CI
+workflow, app/infra, which the grader does not edit). NEW (not a duplicate of reactive step 3 — it is the
+preventive/serialization requirement auto-merge newly necessitates), GENERAL (class: concurrent migration PRs under
+auto-merge + auto-deploy), evidence-backed (#745+#746 deploy failed; #748+#749 both OPEN, both add a migration off
+`9473f2e`, both touch UCSD — the collision about to recur), and TIGHTENS the merge-mandatory/verify-live invariant.
+**Self-review:** re-read §8 + the misses list — Head-sync steps now 1–5, misses still 1–9 sequential, no contradictions, all
+IMMUTABLE INVARIANTS intact.
+
+**The enricher RESPONDED to run-55's §8.5 rule — but it's STRANDED in 2 open PRs (failed runs per §9).** This is the most
+encouraging signal in many runs: #748 (OPEN, not draft) adds the CI-enforced gold-MIT-0% anti-stub gate run 55 demanded
+(`profile_standard/anti_stub.py` + `tests/test_anti_stub_gate.py`) AND repair-first de-pads Caltech 90→43 and UCSD 194→137
+(drops fabricated certificate / non-terminal-MS rows). #749 (OPEN, draft) finishes the UCSD repair #745 botched (frame-splice
++ 28 grammatically-broken camel-splices + 30 synthesized reviews → 157 researched per-level bodies + 6 gathered reviews +
+honest omits). Both are FAILED runs until merged. Landing them is the top repair task — but they must NOT both auto-merge
+as-is (the step-5 dual-head collision): consolidate/serialize `depadcu1` + `ucsdprof8`.
+
+**Full-fleet measurement (run 56, all 28 live — matches run 55, no new defect class).** CLEAN fleet-wide: 0 duplicate / 0
+bare-abbreviation / 0 "Programs"-rollup names; all 28 carry 5 campus photos (no short gallery); all 28 non-zero `posts` (no
+dead feed). miss #9 **shared-leading-body** gate FAILS on **22 of 28** (100%: NYU, USC, UIUC, UPenn; 95–99%: UW 99, UCSD 98,
+Purdue 98, Caltech 96, Cornell 96, Rice 96, UCLA 96; 88–93%: Stanford, Michigan, Columbia, UT-Austin, JHU; 62–86%:
+Wisconsin, UChicago, Berkeley, Northwestern; Boston U 25; **0% gold-equal: CMU, Duke, Georgia Tech, MIT, Princeton, Yale**).
+7 live school-blurb catalogs (NYU/USC/UIUC/UCLA/UW/Michigan/UT-Austin). **Georgia Tech's 58 synthesized reviews are now
+LIVE-confirmed** (run 53 graded from source; this run they are propagated). Body-clean Yale/Duke/CMU carry the name PREFIX
+instead. Every description/name/dept finding maps to a documented miss (#2/#8/#9) — the ONLY new rule is the §8 auto-merge
+head-collision (operational, surfaced by grading the merged OUTPUT + deploy logs).
+
+**Backlog delta.** Preamble rewritten to run 56: the deploy-chain failure (FLAGGED), the §8 step-5 rule, the #748/#749
+stranded PRs, the run-56 shared-leading-body table, GT reviews now live. UCSD CRITICAL entry updated (#745 merged-not-live +
+defective, #749 opens to finish, serialize migrations). NEW MEDIUM tier: the 12 institution-level seeds (#746) — expected
+shallow, deepen later, re-grade flagships for stub tells once live. All prior CRITICAL/HIGH entries confirmed by the sweep.
+
+**Health check GREEN** — `test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** (system pytest +
+sqlalchemy/pydantic/pgvector + `--noconftest`, ephemeral container). Changes are rulebook + backlog + changelog markdown
+only — no code/data/migration edit.
+
+---
+
 ## 2026-06-18 — Run 55 (FULL-FLEET sweep · 1 rule change — the first in runs 46–55)
 
 **Institutions audited: ALL 28 (full-fleet, programmatic — not a sample).** No profile-data PR merged since run 53
