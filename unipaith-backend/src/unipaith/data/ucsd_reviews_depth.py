@@ -1,8 +1,8 @@
 """University of California-San Diego external_reviews depth pass.
 
-Depth pass date: 2026-06-15. Consumed by the ``ucsdprof3`` migration to merge
-``DEPTH_REVIEWS`` into ``ucsd_profile._REVIEWS_BY_SLUG`` for 28
-remaining coverable programs (64/64 total).
+Depth pass date: 2026-06-15; MSBA + minor reviews added 2026-06-18 (``ucsdprof6``).
+Consumed by migrations merging ``DEPTH_REVIEWS`` into
+``ucsd_profile._REVIEWS_BY_SLUG`` — now 30 depth-pass entries (38/38 coverable total).
 """
 
 from __future__ import annotations
@@ -1159,6 +1159,110 @@ DEPTH_REVIEWS: dict[str, dict] = {
             {
                 "label": "U.S. News \u2014 UC San Diego",
                 "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
+            },
+        ],
+        "disclaimer": _DISCLAIMER,
+    },
+    "ucsd-management-sciences-and-quantitative-methods-bs": {
+        "summary": (
+            "Undergraduates pursuing Rady's Business Analytics minor (RSM-MN-008) describe "
+            "a quantitatively focused analytics sequence that pairs with any UCSD bachelor's "
+            "major without a separate admissions process. Praise includes the MGT 151A/153/155 "
+            "core, electives in customer analytics and spreadsheet modeling, and access to "
+            "Rady's undergraduate advising network, with cautions that the pathway is a minor "
+            "rather than a standalone degree, upper-division Rady seats are competitive, and "
+            "analytics recruiting in San Diego still favors engineering and data-science majors."
+        ),
+        "themes": [
+            {
+                "label": "Open minor access",
+                "sentiment": "positive",
+                "detail": "Any UCSD undergraduate can declare the minor through Tritonlink — no separate Rady admissions.",
+            },
+            {
+                "label": "Quantitative core",
+                "sentiment": "positive",
+                "detail": "Five-course core spans operations, market research, business analytics, and IT for analytics.",
+            },
+            {
+                "label": "Flexible pairing",
+                "sentiment": "positive",
+                "detail": "Students combine the minor with STEM, economics, or cognitive-science majors for hybrid profiles.",
+            },
+            {
+                "label": "Minor, not a degree",
+                "sentiment": "mixed",
+                "detail": "Graduates earn their primary major's credential; analytics depth comes through the minor transcript.",
+            },
+            {
+                "label": "Course access",
+                "sentiment": "caution",
+                "detail": "Popular MGT upper-division analytics courses fill quickly each quarter.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Rady School — Business Analytics Minor",
+                "url": "https://rady.ucsd.edu/programs/undergraduate/minors/business-analytics-minor.html",
+            },
+            {
+                "label": "Niche — UC San Diego",
+                "url": "https://www.niche.com/colleges/university-of-california-san-diego/",
+            },
+        ],
+        "disclaimer": _DISCLAIMER,
+    },
+    "ucsd-management-sciences-and-quantitative-methods-ms": {
+        "summary": (
+            "Students describe Rady's Master of Science in Business Analytics as a "
+            "STEM-designated, 11-month program blending machine learning, data engineering, "
+            "and business strategy with a GenAI-assisted curriculum. QS ranks the program "
+            "#40 globally for business analytics master's degrees (2026) and #10 among U.S. "
+            "public institutions; Rady's 2024 employment report shows 76% employed with a "
+            "~$105K median base salary. Praise includes capstone consulting projects and "
+            "placement into data-scientist and product-analyst roles, with cautions that "
+            "admission is selective for quantitative backgrounds and San Diego's finance "
+            "hiring is narrower than NYC or SF."
+        ),
+        "themes": [
+            {
+                "label": "QS analytics ranking",
+                "sentiment": "positive",
+                "detail": "QS ranks Rady's MSBA #40 globally and #10 among U.S. public institutions (2026).",
+            },
+            {
+                "label": "STEM & GenAI curriculum",
+                "sentiment": "positive",
+                "detail": "One-year STEM-designated program integrates LLMs across the analytics workflow.",
+            },
+            {
+                "label": "Employment outcomes",
+                "sentiment": "positive",
+                "detail": "Rady's 2024 report: 76% employed, ~$105K median base, top roles in data science and analytics.",
+            },
+            {
+                "label": "Capstone consulting",
+                "sentiment": "positive",
+                "detail": "Industry capstone projects pair student teams with San Diego employers.",
+            },
+            {
+                "label": "Selective admission",
+                "sentiment": "caution",
+                "detail": "Expects calculus, statistics, and Python/R/SQL proficiency with competitive applicant pools.",
+            },
+        ],
+        "sources": [
+            {
+                "label": "Rady School — Master of Science in Business Analytics",
+                "url": "https://rady.ucsd.edu/programs/ms-business-analytics/",
+            },
+            {
+                "label": "QS — Rady MSBA ranking",
+                "url": "https://www.topuniversities.com/universities/university-california-san-diego-ucsd/rady-school-management-uc-san-diego",
+            },
+            {
+                "label": "Rady — 2024 MSBA Employment Report",
+                "url": "https://rady.ucsd.edu/_files/why/2024-MSBA-Employment-Report.pdf",
             },
         ],
         "disclaimer": _DISCLAIMER,
