@@ -184,3 +184,8 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     # A catalog program with no FOS earnings falls back to the institution median.
     assert phys_bs.outcomes_data["median_salary"] == 110066
     assert phys_bs.outcomes_data["scope"] == "institution"
+    # Every program persists its CIP join key (the matcher's field/interest signal).
+    assert cs.cip_code == "11.07"
+    eas = next(pr for pr in progs if pr.slug == "princeton-east-asian-studies-bs")
+    assert eas.cip_code == "05.0104"
+    assert all(pr.cip_code for pr in progs), "every Princeton program must carry cip_code"
