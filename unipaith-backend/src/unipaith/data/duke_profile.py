@@ -1739,7 +1739,9 @@ def _duke_description(spec: dict, field: str | None = None) -> str:
         raise ValueError(
             f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
         )
-    return f"{spec['program_name']}: {clause}{delivery}"
+    # The program_name is already the page heading; prefixing it here doubled the
+    # heading (anti-stub `name_prefixed`). Open on the field fact instead.
+    return f"{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
