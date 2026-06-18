@@ -322,7 +322,7 @@ export default function SavedListPage() {
           <EmptyState
             icon={<GraduationCap size={48} />}
             title="No saved schools yet"
-            action={{ label: 'Open Match →', onClick: () => navigate('/s/explore') }}
+            action={{ label: 'Open Discover', onClick: () => navigate('/s/explore') }}
           />
         ) : (
           <div className="stagger-list grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -341,7 +341,7 @@ export default function SavedListPage() {
         <EmptyState
           icon={<Bookmark size={48} />}
           title="Your shortlist is empty"
-          action={{ label: 'Open Match →', onClick: () => navigate('/s/explore') }}
+          action={{ label: 'Open Discover', onClick: () => navigate('/s/explore') }}
         />
       ) : (
         <>

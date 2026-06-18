@@ -5,6 +5,7 @@ import { Download, Inbox, Lock, MessageSquarePlus } from 'lucide-react'
 import { getFeedbackInbox, type FeedbackItem } from '../../api/feedback'
 import { ApiError } from '../../api/client'
 import { PageContainer, PageHeader } from '../../components/student/density'
+import usePageTitle from '../../hooks/usePageTitle'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import QueryError from '../../components/ui/QueryError'
@@ -41,6 +42,7 @@ function downloadCsv(items: FeedbackItem[]) {
 }
 
 export default function FeedbackInboxPage() {
+  usePageTitle('Feedback inbox')
   const { data, isLoading, isError, error, refetch } = useQuery<FeedbackItem[]>({
     queryKey: ['feedback-inbox'],
     queryFn: getFeedbackInbox,

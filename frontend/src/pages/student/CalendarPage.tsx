@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PageContainer, PageHeader } from '../../components/student/density'
+import usePageTitle from '../../hooks/usePageTitle'
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
   format, addMonths, subMonths, addWeeks, subWeeks, isSameDay, isToday, parseISO,
@@ -113,6 +114,7 @@ const completable = (i: CalendarItem) =>
 const toISO = (local: string) => (local ? new Date(local).toISOString() : '')
 
 export default function CalendarPage() {
+  usePageTitle('Calendar')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()

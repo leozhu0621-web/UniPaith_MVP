@@ -11,6 +11,7 @@ import QueryError from '../../components/ui/QueryError'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { PageContainer, PageHeader, StatTile } from '../../components/student/density'
 import { useCountUp } from '../../hooks/useCountUp'
+import usePageTitle from '../../hooks/usePageTitle'
 import { formatDate } from '../../utils/format'
 
 /** Bucket counter numeral — counts up on mount, consistent with the My Space
@@ -157,6 +158,7 @@ function actionScore(app: Application): number {
 }
 
 export default function ApplicationsPage() {
+  usePageTitle('Applications')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const rawView = searchParams.get('tab')
