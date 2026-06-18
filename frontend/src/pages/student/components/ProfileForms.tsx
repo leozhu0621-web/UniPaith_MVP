@@ -24,14 +24,18 @@ export function BasicInfoForm({ defaultValues, onSubmit, loading }: FormProps) {
   const { register, handleSubmit } = useForm({ defaultValues: { first_name: defaultValues?.first_name || '', last_name: defaultValues?.last_name || '', preferred_pronouns: defaultValues?.preferred_pronouns || '', date_of_birth: defaultValues?.date_of_birth?.slice(0, 10) || '', nationality: defaultValues?.nationality || '', country_of_residence: defaultValues?.country_of_residence || '', bio_text: defaultValues?.bio_text || '', goals_text: defaultValues?.goals_text || '' } })
   return (
     <form onSubmit={handleSubmit(d => onSubmit(sanitizePayload(d)))} className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Input label="First Name" {...register('first_name')} />
         <Input label="Last Name" {...register('last_name')} />
       </div>
-      <Input label="Pronouns (optional)" placeholder="e.g., she/her, they/them" {...register('preferred_pronouns')} />
-      <Input label="Date of Birth" type="date" {...register('date_of_birth')} />
-      <Input label="Nationality" {...register('nationality')} />
-      <Input label="Country of Residence" {...register('country_of_residence')} />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Input label="Pronouns (optional)" placeholder="e.g., she/her, they/them" {...register('preferred_pronouns')} />
+        <Input label="Date of Birth" type="date" {...register('date_of_birth')} />
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Input label="Nationality" {...register('nationality')} />
+        <Input label="Country of Residence" {...register('country_of_residence')} />
+      </div>
       <Textarea label="Bio" {...register('bio_text')} />
       <Textarea label="Goals" {...register('goals_text')} />
       <Button type="submit" loading={loading} className="w-full">Save</Button>
