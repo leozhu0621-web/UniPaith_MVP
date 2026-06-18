@@ -1072,6 +1072,25 @@ async def _list_enriched_matches(
     return out
 
 
+def _strip_numbers(obj: object) -> object:
+    """Recursively remove every numeric scalar from a breakdown so the student
+    never sees a number (AI-Structure-3 §14). Qualitative driver names, boolean
+    flags, and nested structure are kept; ints/floats/Decimals are dropped at any
+    depth. ``bool`` is preserved (it is a flag, not a score). This guarantees the
+    raw CPEF readouts (value / m / inner / coverage / mean_rho / per-signal f, c,
+    rho, A …) cannot leak into the student's rationale popover."""
+    from decimal import Decimal
+
+    def _is_num(v: object) -> bool:
+        return isinstance(v, (int, float, Decimal)) and not isinstance(v, bool)
+
+    if isinstance(obj, dict):
+        return {k: _strip_numbers(v) for k, v in obj.items() if not _is_num(v)}
+    if isinstance(obj, list):
+        return [_strip_numbers(v) for v in obj if not _is_num(v)]
+    return obj
+
+
 def _redact_match_for_student(match: MatchResult) -> StudentMatchResponse:
     """Serialize a MatchResult to its student-safe response (spec 06 §5.5 +
     AI-Structure-3 §14 backend-only contract).
@@ -1080,14 +1099,15 @@ def _redact_match_for_student(match: MatchResult) -> StudentMatchResponse:
     ``match_score`` / ``score_breakdown``) are NOT carried on
     ``StudentMatchResponse`` at all — the student gets band + rationale +
     probability bands only. The breakdowns that DO survive (the rationale
-    popover's qualitative drivers) are still run through the §5.5 redaction map
-    so no institution-only comparative signal leaks.
+    popover's qualitative drivers) are run through the §5.5 redaction map so no
+    institution-only signal leaks, AND through ``_strip_numbers`` so no raw score
+    reaches the student through the breakdown channel (§14: never sees a number).
     """
     from unipaith.ai.rationale_redaction import redact_mapping
 
     resp = StudentMatchResponse.model_validate(match)
-    resp.fitness_breakdown = redact_mapping(resp.fitness_breakdown or {})
-    resp.confidence_breakdown = redact_mapping(resp.confidence_breakdown or {})
+    resp.fitness_breakdown = _strip_numbers(redact_mapping(resp.fitness_breakdown or {}))
+    resp.confidence_breakdown = _strip_numbers(redact_mapping(resp.confidence_breakdown or {}))
     return resp
 
 

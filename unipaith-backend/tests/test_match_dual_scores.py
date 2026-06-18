@@ -105,18 +105,32 @@ async def test_student_match_serializes_qualitative_readouts_not_raw_scores(
     the band) and never serialized to the student."""
     profile = await _ensure_profile(db_session, mock_student_user)
     program = await _seed_institution_and_program(db_session)
-    await _seed_match(db_session, profile, program)
+    await _seed_match(
+        db_session,
+        profile,
+        program,
+        fitness_breakdown={
+            "interest_match": 0.8,  # a raw number → must be stripped
+            "top_driver": "interest alignment",  # qualitative → survives
+            "applied": True,  # flag → survives
+        },
+        confidence_breakdown={"reason": "profile_complete", "value": 0.7},
+    )
 
     resp = await student_client.get(f"{MATCHES}/{program.id}")
     assert resp.status_code == 200, resp.text
     data = resp.json()
-    # qualitative drivers + readouts survive
-    assert data["fitness_breakdown"]["interest_match"] == 0.8
-    assert data["confidence_breakdown"]["reason"] == "profile_complete"
+    fb = data.get("fitness_breakdown") or {}
+    cb = data.get("confidence_breakdown") or {}
+    # qualitative drivers + flags survive
+    assert fb.get("top_driver") == "interest alignment"
+    assert fb.get("applied") is True
+    assert cb.get("reason") == "profile_complete"
     assert "band_label" in data
-    # raw scores are NOT serialized to the student
-    assert "fitness_score" not in data
-    assert "confidence_score" not in data
+    # the student never sees a number: raw scores absent AND breakdown numbers stripped
+    assert "fitness_score" not in data and "confidence_score" not in data
+    assert "interest_match" not in fb
+    assert "value" not in cb
 
 
 @pytest.mark.asyncio
@@ -129,13 +143,48 @@ async def test_student_match_response_contains_no_raw_score_field(
     rationale + probability bands only."""
     profile = await _ensure_profile(db_session, mock_student_user)
     program = await _seed_institution_and_program(db_session)
-    await _seed_match(db_session, profile, program)
+    # Seed a realistic CPEF breakdown carrying raw numbers at multiple depths.
+    await _seed_match(
+        db_session,
+        profile,
+        program,
+        fitness_breakdown={
+            "value": 0.46,
+            "m": 0.46,
+            "s2p_value": 0.46,
+            "inner": 0.59,
+            "coverage": 0.68,
+            "mean_rho": 0.81,
+            "alpha": 0.70,
+            "signals": [{"name": "cost", "f": 0.8, "rho": 0.9, "A": 0.81}],
+            "model": "cpef",
+        },
+        confidence_breakdown={"mean_rho": 0.81, "model": "cpef", "m": 0.46},
+    )
 
     raw_fields = {"fitness_score", "confidence_score", "match_score", "score_breakdown"}
+
+    def _has_number(obj) -> bool:
+        if isinstance(obj, bool):
+            return False
+        if isinstance(obj, (int, float)):
+            return True
+        if isinstance(obj, dict):
+            return any(_has_number(v) for v in obj.values())
+        if isinstance(obj, list):
+            return any(_has_number(v) for v in obj)
+        return False
 
     detail = (await student_client.get(f"{MATCHES}/{program.id}")).json()
     assert raw_fields.isdisjoint(detail.keys()), (
         f"student detail leaked raw score fields: {raw_fields & set(detail.keys())}"
+    )
+    # §14: no raw number may reach the student through the breakdown channel either.
+    assert not _has_number(detail.get("fitness_breakdown") or {}), (
+        "raw number leaked via student fitness_breakdown"
+    )
+    assert not _has_number(detail.get("confidence_breakdown") or {}), (
+        "raw number leaked via student confidence_breakdown"
     )
 
     listed = (await student_client.get(MATCHES)).json()
@@ -143,6 +192,8 @@ async def test_student_match_response_contains_no_raw_score_field(
         assert raw_fields.isdisjoint(item.keys()), (
             f"student list leaked raw score fields: {raw_fields & set(item.keys())}"
         )
+        assert not _has_number(item.get("fitness_breakdown") or {})
+        assert not _has_number(item.get("confidence_breakdown") or {})
 
 
 # ── CHECK constraints ────────────────────────────────────────────────────
