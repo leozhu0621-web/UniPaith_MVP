@@ -34,6 +34,62 @@ that node's `_standard.omitted`). An honestly-empty field is correct; a guessed 
 is a defect. Extra research tokens are acceptable; a wrong fact on a student-facing
 page is not.
 
+## Also enrich for the MATCH — Prompt Library + ProgramPreference (AI Structure)
+
+The profile you build is the **program side of the shared Prompt Library** — the
+same typed catalog the student side fills (Spec 1) and the deterministic **CPEF
+matcher** (Spec 3) sorts students against. Enrichment is therefore not only for the
+editorial detail page: the **matcher-relevant attributes below must be populated**
+(typed, verified, cited) or the match runs blind on them. Specs:
+`docs/superpowers/specs/2026-06-17-ai-structure-2-school-program-profile-design.md`
+(see the data map at `docs/superpowers/specs/assets/ai-structure/crawler_data_map.png`)
+and `...-3-match-engine-design.md`. (We use **this Claude routine** for program
+enrichment — there is no separate crawler service.)
+
+**Authority precedence — never overwrite first-party.** A **claimed** school/program
+(a verified institution user owns it) is authoritative. The routine must **not**
+overwrite any first-party field — enrich only **unclaimed** profiles, and on a
+claimed one fill **only** the gaps the school left empty. First-party always wins.
+
+**Matcher-relevant attributes to fill (each feeds a CPEF fit; omit-never-guess):**
+- **outcomes** — salary (median/start) · employment & underemployment · payback ·
+  top employers · placement geography (College Scorecard / IPEDS / institution).
+- **selectivity & admissions funnel** — applicants→admits→enrolled · admit rate ·
+  yield · class profile (GPA & test bands, academic-only) · selectivity band (CDS/IPEDS).
+- **full cost** — tuition + fees · total cost of attendance · net price · local living cost.
+- **funding** — program-linked scholarships · assistantships · % aid · avg award.
+- **format & schedule** — online/hybrid/in-person · campus setting · time-to-degree ·
+  start terms · intake rounds · deadlines.
+- **requirements** — test policy (test-optional?) · prerequisites · English policy.
+- **academic substance** — tracks/specializations · curriculum · faculty/research.
+- School **ranking** stays **editorial-only** — shown on cards, **never** a scored value.
+
+**Base match inputs + per-field provenance — the floor the matcher scores on.**
+Beyond the enrichment extras above, the matcher reads these *core* fields directly,
+so every program MUST carry them: `tuition` (budget fit), location / country (geo
+fit), `degree_type` → target level (eligibility veto), `cip_code` + a real,
+field-specific `description_text` (these drive the interest/field signals AND the
+dense embedding), and support-service signals (needs fit). On **every** field you
+write, stamp `field_provenance[field] = {source, source_url, confidence, fetched_at}`
+with the authority tier — **claimed › verified-feed › crawler › inferred** — because
+that becomes the program-side confidence the matcher trusts (a crawler fact is
+believed less than a school-confirmed one). A program missing these core fields is
+scored on thin data and will rank poorly for everyone.
+
+**NEW per-program step — derive the target applicant (`ProgramPreference`).** For
+every program, also write a **`program_preferences`** row (model `ProgramPreference`,
+table `program_preferences`, added in the AI-Structure build) so the **program →
+student** match direction works even before a school claims:
+- Set `source = "derived"` and a `confidence`.
+- From the public **class profile** infer the baseline target applicant —
+  `pref_min_gpa` (typical admitted GPA floor), `pref_test_bands` (e.g. `{"GRE": 320}`),
+  `pref_fields` (common feeder fields), `pref_levels` (eligible current levels),
+  `pref_countries` (recruiting geography).
+- **Omit any field you cannot ground** (never guess a cutoff). When a school later
+  claims, it overwrites these with `source = "claimed"` — **do not touch a claimed row**.
+A program with no `program_preferences` row simply has "no opinion" (the matcher
+treats it neutrally), so deriving it from real admit data is a genuine quality win.
+
 ## Completeness is non-negotiable — verify before you ship
 
 The first routine runs shipped **shallow** universities (only the cheap federal
@@ -762,6 +818,26 @@ when every node in its tree is gold.
 
 ## Per-run algorithm (one whole university)
 
+### Effort per run — finish a WHOLE university, not a token gesture
+The unit of work is **one university taken ALL the way**, not one cosmetic edit.
+Past runs under-delivered by swapping a single dimension (one batch of school
+blurbs, one review pass) and stopping — so the same university needed a dozen
+shallow runs and the grader kept flagging "Nth consecutive stub-swap." That is a
+**failed run**. Each run MUST:
+- Take its target through **every dimension to gold in the same run** — full real
+  catalog · feeds that actually fetch · `campus_photos` · `external_reviews` on
+  every coverable program · field-specific descriptions · conformance — not one
+  slice. A repair run clears **every acute defect on that university**, not the one
+  the grader happened to cite.
+- **Use your full budget.** Keep working until the target is genuinely gold (or
+  every remaining field is honestly omitted-with-reason) and the work is MERGED and
+  deployed. Do not stop at "made some progress."
+- Only a catalog too large to finish in one run (e.g. 300+ programs) may span runs
+  (§"Scope & resumption") — and even then, finish a complete *slice* (e.g. a whole
+  school's programs to gold), never a one-line edit. If you have budget left after
+  the target is gold, clear the next acute defect or add the next new university
+  (§2) rather than ending early.
+
 ### 1. Health check
 ```bash
 cd unipaith-backend && PYTHONPATH=src AI_MOCK_MODE=true .venv/bin/pytest tests/test_profile_standard.py tests/test_profile_enrichment.py -q
@@ -812,30 +888,56 @@ STRICT order:
      photo at all (most beyond the original 14) breaks both the card header and
      the detail hero;
    - **no `_standard` stamp**, or stamped at an older `STANDARD_VERSION`.
-3. **When NO existing university has a blocking issue (every one gold or
-   honestly-omitted), the run's job is GROWTH — actively ADD the next new
-   university. Do not idle on the existing set.** Repair-first ORDERS the work; it
-   does not CAP the fleet. The platform's value grows with coverage, so a run with
-   nothing left to repair is a run that expands the fleet by one.
+3. **Growth runs IN PARALLEL with repair — it is NOT gated on "all existing gold."**
+   Repair-first means repairs take PRIORITY within a run; it does NOT mean growth
+   waits for a flawless fleet (which never arrives — there is always one more
+   dimension to deepen). Gating growth on perfection froze the fleet at the seeded
+   set for dozens of runs. So distinguish two kinds of "not gold":
+   - **ACUTE / visible brokenness** — stub / duplicate / rollup / abbreviation
+     program names, fabricated or name-prefixed descriptions, a `content_sources`
+     feed that renders empty, missing `campus_photos`, a short/non-conformant
+     catalog. **These block growth: fix every acute defect in the fleet before
+     adding anything new** (this is the "fix the embarrassing stuff first" rule).
+   - **DEPTH-in-progress** — a university whose acute defects are clear but that is
+     still being deepened (some coverable programs lack reviews, some fields
+     honestly-omitted-pending). **This does NOT block growth** — deepening proceeds
+     in parallel with adding new universities.
+   So each run: (a) clear the top ACUTE defect if any exist anywhere in the fleet;
+   then (b) **add the next new university.** **Hard floor: never go more than 2 runs
+   without adding a new university while the US-News list has unseeded entries** — a
+   string of repair-only runs with the fleet never growing is the exact failure this
+   rule prevents.
    - **Where the next university comes from (so you never run dry):** walk the
      **U.S. News & World Report "Best Colleges" → National Universities** ranking in
-     rank order (#1, #2, #3, …) and add the highest-ranked university NOT yet in the
-     DB. The seeded fleet is already ≈ the top 30, so you continue down the list
-     (~#30 onward); **skip any already present** and any without a resolvable UNITID.
-     The ranking has hundreds of entries, so there is ALWAYS a next target. Resolve
-     the official name + UNITID for that ranked school, then enrich it fully to gold
-     (same bar as any existing one) per the steps below. Add ONE new university per
-     run. (Optional: a strong real student-demand signal — search / match / view /
-     saved-school — may bump a high-demand school ahead of its US-News rank; absent
-     a signal, just follow the list one by one.)
+     rank order and add the highest-ranked university NOT yet in the DB (skip any
+     already present / without a resolvable UNITID). A NEW university enters at
+     **institution level** — but "institution level" is NOT a license to ship a
+     broken surface: even the minimum seed must clear the same non-negotiable
+     **SEED FLOOR** as any live institution, IN THE SAME PR that adds it —
+     (a) verified basics + `ranking_data`; (b) a **≥4-photo verified-and-credited
+     `campus_photos` gallery** (a 1–3 photo gallery breaks the hero lightbox — never
+     ship one); (c) a **working, actually-fetching feed** (never a dead `posts=0`
+     feed); and (d) **a few GENUINELY-REAL flagship programs, each carrying a
+     researched `description_text` AND a real `department`** — NOT name-only rows
+     with empty `description_text` / null `department`, and NOT mis-credentialed
+     rows (e.g. a professional field typed as the wrong `degree_type`). A seed is
+     then deepened to gold on later runs **like any other — it does NOT have to
+     reach full gold in the run it is added** — but a seed that cannot yet meet the
+     floor is NOT ready: **meet the floor or do not add it this run** (a half-built
+     seed is itself an ACUTE defect that blocks the next growth, per §2 above).
+     (Optional: a strong real student-demand signal may bump a school ahead of its
+     US-News rank; absent a signal, follow the list one by one.)
+     _Live evidence (this run): a batch of institution-level seeds shipped with
+     5/5 empty-`description_text` null-`department` flagship rows each, ~⅔ with a
+     <4-photo gallery (as low as 1), and every one with a dead `posts=0` feed — the
+     exact half-built seed this floor forbids._
 
-Within the repair phase, prioritize by student demand (saved-school / match / view
-counts) then by size of gaps. **Adding breadth while existing profiles are broken
-is the one thing this routine must NOT do — but once they are whole, refusing to
-grow is the second thing it must not do.** Only genuinely stop if every existing
-university is gold AND the growth universe is exhausted (it won't be) or the
-operator has explicitly paused growth — never stop merely because the originally
-seeded set is done.
+The two failure modes are symmetric and BOTH forbidden: (1) adding breadth while
+existing profiles are **acutely broken** (stubs / dead feeds / fabrication) — fix
+those first; and (2) **refusing to grow** because the fleet isn't yet flawless —
+grow in parallel per the hard floor above. Only genuinely stop if the US-News
+growth universe is exhausted (it won't be) or the operator has explicitly paused
+growth — never stop merely because the originally seeded set is done.
 
 **RE-AUDIT — do not trust a prior "done" mark or `_standard` stamp.** Boston U and
 Stanford were both shipped as "done" and are both broken (483 stub programs;
@@ -947,6 +1049,24 @@ other sessions ship migrations concurrently, so never trust a stale checkout.
    dual pair anyway, ship a merge-of-merges (`down_revision = (mergeA, mergeB)`).
 4. Use READABLE revision ids (e.g. `nyuprof1`, `feedspennmerge1`) — auto-generated
    hex ids trip the repo's detect-secrets pre-commit hook as false positives.
+5. **Auto-merge changed the timing — step 3 alone is now TOO LATE; PREVENT the dual
+   head, don't just react to it.** This routine auto-merges enrichment PRs on green CI
+   and auto-dispatches the deploy on merge, so a PR's `test_alembic_has_single_head`
+   runs against its OWN base, never the post-merge `main`: two enrichment PRs each
+   branched off the SAME base each read as single-head, pass CI, auto-merge, and leave
+   `main` with a DUAL head — and the deploy fires on that dual head BEFORE any reactive
+   merge-only migration (step 3) can land, so the production deploy FAILS and the work
+   never reaches students. (Live this run: #745 `ucsdprof7` + #746 `seed12univ1` both
+   branched off the same base and both auto-merged; #745's Deploy Backend FAILED on the
+   resulting dual head and neither reached production until a fixup merge migration's
+   deploy ran — then #748 + #749 both sat OPEN, each adding a migration off the same
+   merged head: the identical collision about to recur.) So: (a) NEVER leave two
+   migration-bearing enrichment PRs open against the same base — fold them into one PR,
+   or hold the second until the first has merged AND you have re-pointed its
+   `down_revision` onto the new head; (b) the durable fix is to make the single-head
+   assertion evaluate the MERGE RESULT (rebased onto current `main`) and BLOCK the
+   auto-merge, which lives in the automerge / CI workflow (app/infra) — FLAG it for a
+   human; the grader does not edit it.
 
 ### 8.5 Conformance gate (do NOT skip — this is what the first runs missed)
 For the institution and **every** school and program in the tree, build its
@@ -958,6 +1078,64 @@ institution **and every school and every program** `content_sources` (so their
 Events & Updates aren't empty), `research`/`campus_life` (with links), the FULL
 program catalog (cross-checked against the IPEDS/Scorecard count), and program
 `delivery_format` are all populated. Stamp `_standard` on every node.
+
+**Conformance is PRESENCE-only — it does NOT catch stubs, so it must be PAIRED with an
+ENFORCED anti-stub gate.** `check_conformance` reports `conformant` from `not
+missing_fields and not missing_sections and not stale` — a catalog whose every required
+field is PRESENT is "conformant" even when every `description_text` is a school-blurb /
+classification / per-field stub. That hole is why a stub-swap PR sails through this gate,
+the step-9 "profile tests", and green CI, then **auto-merges** — observed on EIGHT
+consecutive "repair" PRs (live full-fleet sweep this run: 22 of 28 catalogs FAIL the
+miss #9 shared-leading-body gate, 7 carry the 95–100% double-period school-blurb frame,
+one is 100% classification descriptions — all shipped LIVE through green CI). The miss #9
+quantitative checks are today only a MANUAL "run it before shipping" pledge that nothing
+enforces, so they have been skipped on every one of those PRs. Fix the enforcement, not
+the wording: a catalog ships only when, IN ADDITION to `check_conformance`, it PASSES the
+miss #9 anti-stub gates computed programmatically over the FULL catalog and baselined to
+gold MIT's 0% — **verbatim-shared `description_text` = 0%, per-field shared-leading-body
+(≥120 chars AND ≥50% of the shortest sibling) = 0% of multi-credential fields, catalog-wide
+cross-field shared clause = 0%, pure-classification-description share = 0%, double-period
+".." / universal field-agnostic closing = 0%, `"{program_name}:"`/`" is "` prefix-double =
+0%, `department` echoing the name's field = 0%**. ANY non-zero is a conformance FAIL, not a
+warning — go back and research the failing rows per-program before shipping. And because
+this routine auto-merges on green CI, the gate is only real once it is ENFORCED by CI: the
+shipping change MUST add (or extend) an automated test in the profile test suite that CI
+runs — assert these gold-MIT-0% gates for the catalog being shipped — so a stub-swap PR
+FAILS CI and CANNOT auto-merge. (Do NOT weaken the thresholds to make a stub pass; a
+non-zero means the rows are un-researched, which is the no-fabrication / structure-before-
+depth invariant, not a tunable knob.)
+
+**The enforced gate as BUILT is DESCRIPTION-ONLY — `anti_stub.analyze` computes the
+description-quality tells (name-prefix, classification, double-period, verbatim /
+shared-leading-body, cross-field clause) but has NO STRUCTURE metric, so a catalog joins
+`CERTIFIED_CLEAN`, passes CI, and ships LIVE carrying the miss-#2 STRUCTURE defects this
+same §8.5 already lists as gold-MIT-0% gates. A green description-only certification is
+NOT a clean-catalog certification — and "anti-stub clean" in a PR title certifies only the
+descriptions, never the names / departments / decomposition.** The descriptions are the
+costume the analyzer sees; the structure is what it is blind to, so a "catalogue
+descriptions" repair can clear every description tell, earn `CERTIFIED_CLEAN`, and leave
+the field-echo departments and concentration-split rows exactly as they were. So a catalog
+may enter `CERTIFIED_CLEAN` only when `anti_stub.analyze` (and the `test_anti_stub_gate`
+parametrization) ALSO computes, baselined to gold MIT 0%, the STRUCTURE metrics:
+(a) **`department` field-echo** — `department` equal to the name's field on (near-)every
+row while a real owning school is known (the precise miss-#2 mechanical tell:
+`department == program_name`-field verbatim one-off per row / no two programs share a
+department / a `school_key` or the row's own description names the real school — NOT a
+naive `dept == field`, which would false-flag a genuinely shared real "Department of
+Economics"); (b) **CIP-rollup tells** in `program_name` AND `department` (trailing
+", General"/", Other", a federal comma-and list, an embedded slash, a bare CIP rollup
+title); (c) a **literal CIP code** (`(CIP NN.NN)` or a bare trailing code) in name or
+department; (d) **concentration-split rows** — a base field repeated across rows that
+differ only by a trailing "— {concentration}" / ", {emphasis}" (collapse into `tracks`,
+keep only genuine separate credentials). ANY non-zero blocks certification, same as a
+description tell. (Gold MIT scores 0 on all four, so the baseline holds.) Evidence: live
+API this run — a `CERTIFIED_CLEAN` 613-program catalog whose description metrics are
+genuinely 0 live still ships ~62% rows whose `department` is the degree's field echoed
+verbatim while the real owning school is named only in the description, PLUS one
+bachelor's degree decomposed into four "…, {Emphasis}" concentration-split rows (each its
+own program, `department` = the emphasis) — none caught, because the enforced gate has no
+structure metric and the PR shipped under an "anti-stub clean" claim that covered the
+descriptions only.
 
 ### 9. Ship — and MERGING IS MANDATORY (a run is not done until the work is on `main`)
 `ruff check src/<changed> tests/<changed>` (NOT `ruff check .`) + the profile tests +

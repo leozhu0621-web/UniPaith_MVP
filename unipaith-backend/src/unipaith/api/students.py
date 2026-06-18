@@ -20,7 +20,7 @@ from unipaith.schemas.matching import (
     EngagementSignalRequest,
     EngagementSignalResponse,
     ExplainMatchResponse,
-    MatchResultResponse,
+    StudentMatchResponse,
 )
 from unipaith.schemas.student import (
     AcademicRecordResponse,
@@ -932,7 +932,7 @@ async def upsert_preferences(
 # --- AI Matches ---
 
 
-@router.get("/me/matches", response_model=list[MatchResultResponse])
+@router.get("/me/matches", response_model=list[StudentMatchResponse])
 async def get_my_matches(
     limit: int = Query(20, ge=1, le=100),
     refresh: bool = Query(False, description="Recompute matches over the catalog first."),
@@ -956,7 +956,7 @@ async def get_my_matches(
     return await _list_enriched_matches(db, profile.id, limit=limit)
 
 
-@router.post("/me/matches/refresh", response_model=list[MatchResultResponse])
+@router.post("/me/matches/refresh", response_model=list[StudentMatchResponse])
 async def refresh_my_matches(
     limit: int = Query(20, ge=1, le=100),
     user: User = Depends(require_student),
@@ -1011,7 +1011,7 @@ async def _recompute_catalog_matches(db: AsyncSession, student_id: UUID) -> None
 
 async def _list_enriched_matches(
     db: AsyncSession, student_id: UUID, *, limit: int
-) -> list[MatchResultResponse]:
+) -> list[StudentMatchResponse]:
     """Read matches + join program/institution + derive band + probability bands."""
     from unipaith.config import settings as _cfg
     from unipaith.models.institution import Institution, Program
@@ -1053,7 +1053,7 @@ async def _list_enriched_matches(
     weight_ranking = getattr(pref, "weight_ranking", None)
     bands_enabled = _cfg.ai_probability_bands_enabled
 
-    out: list[MatchResultResponse] = []
+    out: list[StudentMatchResponse] = []
     for m in matches:  # preserves fitness-desc order
         row = row_by_pid.get(m.program_id)
         if row is None:
@@ -1072,18 +1072,42 @@ async def _list_enriched_matches(
     return out
 
 
-def _redact_match_for_student(match: MatchResult) -> MatchResultResponse:
-    """Serialize a MatchResult to its student-safe response (spec 06 §5.5).
+def _strip_numbers(obj: object) -> object:
+    """Recursively remove every numeric scalar from a breakdown so the student
+    never sees a number (AI-Structure-3 §14). Qualitative driver names, boolean
+    flags, and nested structure are kept; ints/floats/Decimals are dropped at any
+    depth. ``bool`` is preserved (it is a flag, not a score). This guarantees the
+    raw CPEF readouts (value / m / inner / coverage / mean_rho / per-signal f, c,
+    rho, A …) cannot leak into the student's rationale popover."""
+    from decimal import Decimal
 
-    Strips institution-only comparative signals from the score breakdowns so
-    no student match surface ever leaks them.
+    def _is_num(v: object) -> bool:
+        return isinstance(v, (int, float, Decimal)) and not isinstance(v, bool)
+
+    if isinstance(obj, dict):
+        return {k: _strip_numbers(v) for k, v in obj.items() if not _is_num(v)}
+    if isinstance(obj, list):
+        return [_strip_numbers(v) for v in obj if not _is_num(v)]
+    return obj
+
+
+def _redact_match_for_student(match: MatchResult) -> StudentMatchResponse:
+    """Serialize a MatchResult to its student-safe response (spec 06 §5.5 +
+    AI-Structure-3 §14 backend-only contract).
+
+    The raw CPEF numbers (``fitness_score`` / ``confidence_score`` /
+    ``match_score`` / ``score_breakdown``) are NOT carried on
+    ``StudentMatchResponse`` at all — the student gets band + rationale +
+    probability bands only. The breakdowns that DO survive (the rationale
+    popover's qualitative drivers) are run through the §5.5 redaction map so no
+    institution-only signal leaks, AND through ``_strip_numbers`` so no raw score
+    reaches the student through the breakdown channel (§14: never sees a number).
     """
     from unipaith.ai.rationale_redaction import redact_mapping
 
-    resp = MatchResultResponse.model_validate(match)
-    resp.fitness_breakdown = redact_mapping(resp.fitness_breakdown or {})
-    resp.confidence_breakdown = redact_mapping(resp.confidence_breakdown or {})
-    resp.score_breakdown = redact_mapping(resp.score_breakdown or {}) or None
+    resp = StudentMatchResponse.model_validate(match)
+    resp.fitness_breakdown = _strip_numbers(redact_mapping(resp.fitness_breakdown or {}))
+    resp.confidence_breakdown = _strip_numbers(redact_mapping(resp.confidence_breakdown or {}))
     return resp
 
 
@@ -1094,9 +1118,13 @@ def _enrich_match_for_student(
     institution_name: str | None = None,
     weight_ranking: int | None = None,
     bands_enabled: bool = True,
-) -> MatchResultResponse:
+) -> StudentMatchResponse:
     """Student-safe response (spec 06 §5.5) plus Spec 09 context: program
-    display fields, reach/target/safer band (§6), and probability bands (§4A)."""
+    display fields, reach/target/safer band (§6), and probability bands (§4A).
+
+    The raw fitness/confidence numbers drive the band + probability computation
+    here on the backend, but are never serialized into the response (backend-only
+    contract, AI-Structure-3 §14)."""
     from unipaith.ai.probability import estimate_probability_bands
     from unipaith.services.match_banding import band_for_acceptance
 
@@ -1126,7 +1154,7 @@ def _enrich_match_for_student(
     return resp
 
 
-@router.get("/me/matches/{program_id}", response_model=MatchResultResponse)
+@router.get("/me/matches/{program_id}", response_model=StudentMatchResponse)
 async def get_match_detail(
     program_id: UUID,
     user: User = Depends(require_student),

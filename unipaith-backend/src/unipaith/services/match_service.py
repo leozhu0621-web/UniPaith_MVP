@@ -313,6 +313,9 @@ class MatchService:
         program_features = [
             features_from_row(row, embedding=program_embeddings.get(row.id)) for row in program_rows
         ]
+        # AI Structure (Spec 3, D.2): overlay each program's target-applicant
+        # preferences so the CPEF program→student direction fires (batched).
+        await self._overlay_program_prefs(program_features)
 
         ranked: list[tuple[ProgramFeatures, Score]] = rank_programs(
             sfv, program_features, weights=weights, include_eliminated=False
@@ -628,6 +631,10 @@ class MatchService:
         if sfv is None:
             return None
         sparse = dict(sfv.sparse_features or {})
+        # AI Structure (Spec 3, D.2): overlay GPA + field-of-study so the
+        # program→student direction (CPEF p2s) can score the student against a
+        # program's preferences. Deterministic, no LLM; fail-soft.
+        await self._overlay_student_attrs(student_id, sparse)
         completeness = float(sparse.get("feature_completeness", 0.0))
         # Embedding column is JSONB at the ORM layer; round-trip as list.
         emb = sfv.embedding
@@ -641,6 +648,62 @@ class MatchService:
             profile_completeness=completeness,
             extractor_quality=0.85,  # cold-start placeholder
         )
+
+    async def _overlay_student_attrs(self, student_id: UUID, sparse: dict) -> None:
+        """Add the student's GPA + field-of-study to the matcher sparse vector
+        (AI Structure D.2). Only the current AcademicRecord; missing → skip."""
+        from unipaith.models.student import AcademicRecord
+
+        try:
+            academic = await self.db.scalar(
+                select(AcademicRecord)
+                .where(
+                    AcademicRecord.student_id == student_id,
+                    AcademicRecord.is_current.is_(True),
+                )
+                .limit(1)
+            )
+        except Exception:
+            return
+        if academic is None:
+            return
+        if academic.normalized_gpa is not None and "gpa" not in sparse:
+            sparse["gpa"] = float(academic.normalized_gpa)
+        if academic.field_of_study and "field_of_study" not in sparse:
+            sparse["field_of_study"] = academic.field_of_study
+
+    async def _overlay_program_prefs(self, program_features: list[ProgramFeatures]) -> None:
+        """Overlay each program's ProgramPreference (target applicant) onto its
+        matcher sparse vector so the CPEF program→student direction can fire
+        (AI Structure D.2). One batched query; fail-soft."""
+        from unipaith.models.institution import ProgramPreference
+
+        ids = [pf.program_id for pf in program_features]
+        if not ids:
+            return
+        try:
+            rows = (
+                (
+                    await self.db.execute(
+                        select(ProgramPreference).where(ProgramPreference.program_id.in_(ids))
+                    )
+                )
+                .scalars()
+                .all()
+            )
+        except Exception:
+            return
+        by_program = {r.program_id: r for r in rows}
+        for pf in program_features:
+            pref = by_program.get(pf.program_id)
+            if pref is None:
+                continue
+            if pref.pref_min_gpa is not None:
+                pf.sparse["pref_min_gpa"] = float(pref.pref_min_gpa)
+            if pref.pref_fields:
+                pf.sparse["pref_fields"] = list(pref.pref_fields)
+            if pref.pref_levels:
+                pf.sparse["pref_levels"] = list(pref.pref_levels)
 
     async def _student_feature_record(self, student_id: UUID) -> StudentFeatureVector | None:
         return await self.db.scalar(

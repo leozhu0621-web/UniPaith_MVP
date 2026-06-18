@@ -327,7 +327,7 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "computational life-sciences research culture."
     ),
     "cmu-neuro-bs": (
-        "Neuroscience undergraduate study spanning cognitive, systems, and molecular "
+        "Undergraduate study of the brain spanning cognitive, systems, and molecular "
         "levels with ties to CMU's BrainHub initiative."
     ),
     "cmu-chem-bs": (
@@ -565,7 +565,7 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "and chamber-music partnerships."
     ),
     "cmu-music-technology-bs": (
-        "Music and Technology combines acoustics, DSP, and computer music with SCS and CFA "
+        "Combines acoustics, DSP, and computer music with SCS and CFA "
         "recording and synthesis labs."
     ),
     "cmu-march": (
@@ -617,7 +617,7 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "performance and immersive theatre."
     ),
     "cmu-mm": (
-        "Master of Music in performance, composition, or conducting with conservatory "
+        "Conservatory training in performance, composition, or conducting with "
         "ensembles and recital requirements."
     ),
     "cmu-ms-music-tech": (
@@ -641,7 +641,7 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "delivery, and capital-project analytics."
     ),
     "cmu-ddes": (
-        "Doctor of Design practitioner-scholar doctorate advancing design knowledge through "
+        "Practitioner-scholar doctorate advancing design knowledge through "
         "built work and applied research."
     ),
     # ===== Tepper School of Business =====
@@ -650,8 +650,8 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "analytics, and data-driven leadership with experiential strategy labs."
     ),
     "cmu-mba-online": (
-        "Online Hybrid MBA delivering Tepper's analytics-heavy core with Access Weekend "
-        "immersions and the same quantitative curriculum."
+        "Delivers Tepper's analytics-heavy core with Access Weekend "
+        "immersions and the same quantitative curriculum as the residential MBA."
     ),
     "cmu-msba": (
         "Business Analytics master's combining machine learning, prescriptive analytics, "
@@ -699,7 +699,7 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "MLOps, ethics, and AI product strategy at Heinz."
     ),
     "cmu-heinz-ism-phd": (
-        "Ph.D. in Information Systems & Management researching digital platforms, "
+        "Doctoral research on digital platforms, "
         "health IT, and data-driven organizational change."
     ),
     "cmu-msppm": (

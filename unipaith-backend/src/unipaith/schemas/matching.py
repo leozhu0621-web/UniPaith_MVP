@@ -56,6 +56,53 @@ class MatchResultResponse(BaseModel):
     probability_bands: dict | None = None
 
 
+class StudentMatchResponse(BaseModel):
+    """Spec AI-Structure-3 §14 / §6 — the STUDENT projection of a match.
+
+    BACKEND-ONLY CONTRACT: the student never sees a raw matching number. This
+    schema deliberately OMITS ``fitness_score`` / ``confidence_score`` /
+    ``match_score`` / ``score_breakdown`` — the raw CPEF posterior and its
+    weights are internal. The student gets only the human-readable readouts:
+    the reach/target/safer ``band_label`` (Spec 09 §6), the probability bands
+    (Spec 09 §4A), the redacted score breakdowns (the rationale popover's
+    qualitative drivers, already passed through the §5.5 redaction map), and the
+    rationale text. The full numeric schema (``MatchResultResponse``) is served
+    only to institution/admin surfaces.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    student_id: UUID
+    program_id: UUID
+
+    # Qualitative, student-safe readouts only — NO raw score field.
+    fitness_breakdown: dict | None = None
+    confidence_breakdown: dict | None = None
+    rationale_text: str | None = None
+    rationale_generated_at: datetime | None = None
+    strategy_version_id: UUID | None = None
+
+    match_tier: int | None = None
+    reasoning_text: str | None = None
+    model_version: str | None = None
+    computed_at: datetime
+    is_stale: bool
+
+    program_name: str | None = None
+    institution_id: UUID | None = None
+    institution_name: str | None = None
+    degree_type: str | None = None
+    tuition: int | None = None
+    acceptance_rate: float | None = None
+
+    # Spec 09 §6 — reach / target / safer banding (the student's fit readout).
+    band_label: str | None = None
+
+    # Spec 09 §4A — probability bands (admit / scholarship / waitlist + drivers).
+    probability_bands: dict | None = None
+
+
 class ExplainMatchResponse(BaseModel):
     """Returned by POST /me/matches/{program_id}/explain. The rationale_text
     is generated on demand — Phase A synthesizes a deterministic 3-line

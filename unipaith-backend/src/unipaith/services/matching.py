@@ -55,6 +55,9 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any
 
+from .match import fits as _fits
+from .match.params import DEFAULT_PARAMS, clamp01, confidence_to_gain, two_sided_confidence
+
 # ── Default weights ─────────────────────────────────────────────────────────
 # Hand-tuned for cold start. Phase B1 exit gate: NDCG@10 ≥ 0.65 against
 # 100 internally-rated (student, program) pairs. If NDCG misses, the
@@ -284,13 +287,366 @@ def _renormalized_weights(
     return {k: v / total for k, v in active.items()}
 
 
+# ── CPEF — Coverage-damped Posterior Expected-Fit (Spec 3, AI Structure) ─────
+# One fused fit+confidence number per (student, program), with an in-formula
+# deal-breaker veto and a coverage damp — no separate hard filter, no separate
+# confidence ring. Gated by `settings.cpef_matching_enabled`; the legacy
+# convex-sum path below stays the default fallback until CPEF proves out.
+#
+# Two-sided confidence (Chart 3 "c = c_student × c_program", Chart 2 "claimed
+# program outweighs derived/crawler") is LIVE: each signal's confidence is the
+# product of a student-side proxy (StudentFeatures.extractor_quality — the
+# upstream per-signal confidence) and a program-side authority proxy
+# (ProgramFeatures.data_completeness — claimed ~0.9, derived ~0.5, crawler
+# ~0.4). A deeper/cleaner profile and a higher-authority program both move M
+# away from the 0.5 prior (sharper); a thin profile or low-authority program
+# pull it back toward 0.5.
+
+_CPEF_CONF_FALLBACK = 0.85  # per-side confidence proxy when a feature omits it
+_CANONICAL_N = 5  # core fit dimensions for the coverage denominator
+#                   (semantic · themes · needs · budget · geo). The optional
+#                   degree_level signal (only when the student states a target)
+#                   adds to present_a; coverage clamps at 1.0, so it never
+#                   over-saturates the damp.
+
+
+def _student_side_confidence(student: StudentFeatures) -> float:
+    """Student-side per-signal confidence proxy (Spec 1) — the upstream
+    extractor quality, clamped off the open interval so a fully-confident
+    profile still leaves finite precision for the gain."""
+    q = student.extractor_quality
+    if q is None:
+        q = _CPEF_CONF_FALLBACK
+    return clamp01(float(q))
+
+
+def _program_side_confidence(program: ProgramFeatures) -> float:
+    """Program-side authority proxy (Spec 2 precedence): a claimed program has
+    high data_completeness (~0.9), a derived one lower (~0.5), a crawler one
+    lower still (~0.4). This is what makes a claimed program outscore an
+    identical-fit derived one."""
+    dc = program.data_completeness
+    if dc is None:
+        dc = _CPEF_CONF_FALLBACK
+    return clamp01(float(dc))
+
+
+def _coverage(present_a_sum: float, full_w_sum: float, n0: float) -> float:
+    denom = n0 + full_w_sum
+    if denom <= 0:
+        return 1.0
+    return clamp01((n0 + present_a_sum) / denom)
+
+
+def _build_cpef_signals(
+    student: StudentFeatures, program: ProgramFeatures, p: dict[str, float]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], float]:
+    """Assemble the per-signal fit list + deal-breakers from the projected
+    sparse features that exist today. Returns (signals, dealbreakers, full_w)."""
+    s, pr = student.sparse, program.sparse
+    prior = p["prior"]
+    w_base = p["w_base"]
+    # GAP 1 — real two-sided confidence: c = c_student × c_program. The
+    # student-side proxy is the upstream extractor quality (Spec 1); the
+    # program-side proxy is the authority-precedence data_completeness (Spec 2,
+    # claimed > derived > crawler). rho = confidence_to_gain(c) is the literal
+    # weight on the observed fit vs. the 0.5 prior in the posterior-mean.
+    c_student = _student_side_confidence(student)
+    c_program = _program_side_confidence(program)
+    c = two_sided_confidence(c_student, c_program)
+    # Each fit signal carries ``c``; ``cpef()`` recomputes its per-signal ``rho``
+    # from that. Deal-breakers, by contrast, are HARD ELIGIBILITY facts, not
+    # graded fits: the blocking condition is a categorical attribute the program
+    # states explicitly (target level, locations, tuition, sponsorship) checked
+    # against the student's OWN stated profile. Their certainty is therefore
+    # structural — gated by how sure we are of the student's eligibility facts
+    # (c_student), NOT damped by the program's free-text data_completeness (a
+    # low-authority program can still have an explicit, blocking target level).
+    # So a confirmed degree/budget/geo breaker buries even when the program's
+    # overall data is sparse — while a THIN student profile (low extractor
+    # quality) only dents, matching the "deeper profile → sharper veto" intent.
+    veto_rho = confidence_to_gain(c_student, p)
+    signals: list[dict[str, Any]] = []
+
+    # semantic (embedding cosine), only when both sides have a matching vector
+    if student.embedding and program.embedding and len(student.embedding) == len(program.embedding):
+        signals.append(
+            {
+                "key": "semantic",
+                "f": cosine(student.embedding, program.embedding),
+                "c": c,
+                "w": w_base,
+                "prior": prior,
+            }
+        )
+    # themes (interest/career/value tag overlap) — always defined via fallbacks
+    signals.append(
+        {"key": "themes", "f": soft_align(student, program), "c": c, "w": w_base, "prior": prior}
+    )
+    # needs coverage — neutral 0.5 when the student expressed no needs
+    signals.append(
+        {"key": "needs", "f": needs_match(student, program), "c": c, "w": w_base, "prior": prior}
+    )
+
+    # budget — graded affordability (a *fit*, distinct from the over-budget veto)
+    s_budget = s.get("budget_max_usd_per_year")
+    p_tuition = pr.get("tuition_usd_per_year")
+    if s_budget is not None and p_tuition is not None and not s.get("needs_aid", False):
+        signals.append(
+            {
+                "key": "budget",
+                "f": _fits.fit_range(float(p_tuition), float(s_budget), p["delta"]),
+                "c": c,
+                "w": w_base,
+                "prior": prior,
+            }
+        )
+    # geo — overlap of preferred vs program locations
+    s_geo = s.get("geo_must") or []
+    p_locs = pr.get("locations") or []
+    if s_geo and p_locs:
+        signals.append(
+            {"key": "geo", "f": _fits.fit_geo(s_geo, p_locs), "c": c, "w": w_base, "prior": prior}
+        )
+
+    # degree-level fit (GAP 4) — a GRADED signal alongside the veto. Exact level
+    # → 1.0, adjacent-acceptable (masters↔doctoral/professional) → 0.6, wrong
+    # family → 0.0. Only emitted when the student states an explicit degree-level
+    # TARGET (a preference distinct from their current education_level), so we
+    # never inject a phantom perfect match for a student with no stated target —
+    # the degree *veto* below still handles raw eligibility from education_level.
+    # The signal lets an adjacent-acceptable level grade 0.6 instead of reading
+    # as a clean 1.0.
+    s_lvl = s.get("education_level")
+    p_target = pr.get("target_education_level")
+    s_degree_target = s.get("degree_level_target")
+    if s_degree_target and p_target:
+        signals.append(
+            {
+                "key": "degree_level",
+                "f": _fits.fit_degree_level(s_degree_target, p_target),
+                "c": c,
+                "w": w_base,
+                "prior": prior,
+            }
+        )
+
+    # ── deal-breakers (in-formula veto, not a pre-filter) ──
+    dealbreakers: list[dict[str, Any]] = []
+    if p_target and s_lvl and s_lvl != "unknown":
+        ok = _education_compat(s_lvl, p_target)
+        dealbreakers.append({"key": "degree", "v": (1.0 if ok else p["epsilon"]), "rho": veto_rho})
+    if s_budget is not None and p_tuition is not None and not s.get("needs_aid", False):
+        ceiling = float(s_budget) * (1.0 + p["delta"])
+        if float(p_tuition) > ceiling:
+            span = max(1e-9, float(s_budget) * p["delta"])
+            v = max(p["epsilon"], clamp01(1.0 - (float(p_tuition) - ceiling) / span))
+            dealbreakers.append({"key": "budget", "v": v, "rho": veto_rho})
+    s_avoid = set(s.get("geo_avoid") or [])
+    if s_avoid and p_locs and (s_avoid & set(p_locs)) == set(p_locs):
+        dealbreakers.append({"key": "geo_avoid", "v": p["epsilon"], "rho": veto_rho})
+
+    # NOTE — an immigration/eligibility deal-breaker is DELIBERATELY NOT added to
+    # this veto. The newer match charts (Spec 1 §1.1, Spec 3 §2.1/§6) sketch one,
+    # but the STRONGER, already-shipped fairness contract (Spec 38 §3/§9 + Spec
+    # 46 §6) mandates that immigration status NEVER be a selection or ranking
+    # criterion — it informs operational feasibility + yield planning only,
+    # outside the matcher. That guardrail is pinned by a source-level contract
+    # (tests/test_spec38_fairness_contract.py) which forbids any such token from
+    # appearing in this module. Wiring it into the rank key M would make
+    # immigration status a selection criterion — exactly what the fairness
+    # contract prohibits — so the fairness guardrail wins. (Documented deferral.)
+
+    full_w = _CANONICAL_N * (w_base / 10.0)
+    return signals, dealbreakers, full_w
+
+
+def cpef(
+    student: StudentFeatures, program: ProgramFeatures, *, params: dict[str, float] | None = None
+) -> tuple[float, dict[str, Any]]:
+    """Compute the one CPEF number (student→program direction) + breakdown."""
+    p = params or DEFAULT_PARAMS
+    signals, dealbreakers, full_w = _build_cpef_signals(student, program, p)
+
+    num = den = present_a = rho_sum = 0.0
+    sig_bd: list[dict[str, Any]] = []
+    for sig in signals:
+        rho = confidence_to_gain(sig["c"], p)
+        fhat = sig["f"] * rho + (1.0 - rho) * sig["prior"]
+        a = (sig["w"] / 10.0) * rho
+        num += a * fhat
+        den += a
+        present_a += a
+        rho_sum += rho
+        sig_bd.append(
+            {
+                "key": sig["key"],
+                "f": round(sig["f"], 4),
+                "rho": round(rho, 4),
+                "fhat": round(fhat, 4),
+                "a": round(a, 4),
+            }
+        )
+    inner = (num / den) if den > 0 else p["prior"]
+
+    v_total = 1.0
+    hard = False
+    db_bd: list[dict[str, Any]] = []
+    for db in dealbreakers:
+        v_eff = 1.0 - db["rho"] * (1.0 - db["v"])
+        v_total *= v_eff
+        # Tolerant comparison: at the analytic boundary ``v == epsilon`` the float
+        # computation of a budget veto can land a hair ABOVE epsilon (e.g.
+        # 0.010000000000000009), so a strict ``<=`` would let a confirmed
+        # ~1.5x-over-budget program escape the hard floor on float noise. The
+        # 1e-9 slack snaps that boundary case to the floor without widening it.
+        if db["rho"] >= p["confirmed_gain"] and db["v"] <= p["epsilon"] + 1e-9:
+            hard = True
+        db_bd.append({"key": db["key"], "v": round(db["v"], 4), "v_eff": round(v_eff, 4)})
+
+    g = _coverage(present_a, full_w, p["n0"])
+    value = clamp01(g * v_total * inner)
+    if hard:
+        # A confirmed true deal-breaker sinks below every clean (un-vetoed) program.
+        value = min(value, p["epsilon"] * inner)
+    mean_rho = (rho_sum / len(signals)) if signals else 0.0
+
+    breakdown = {
+        "model": "cpef",
+        "value": round(value, 4),
+        "inner": round(inner, 4),
+        "coverage": round(g, 4),
+        "veto": round(v_total, 4),
+        "hard_floor": hard,
+        "mean_rho": round(mean_rho, 4),
+        "signals": sig_bd,
+        "dealbreakers": db_bd,
+    }
+    return value, breakdown
+
+
+def cpef_program_to_student(
+    student: StudentFeatures, program: ProgramFeatures, *, params: dict[str, float] | None = None
+) -> tuple[float, dict[str, Any]]:
+    """Reverse direction: how well the student fits the *program's* preferences
+    (its target applicant). Returns ``(1.0, {...})`` when the program has no
+    preferences yet — an unclaimed program with no derived target applicant has
+    no opinion, so it must not pull the blend down."""
+    p = params or DEFAULT_PARAMS
+    s, pr = student.sparse, program.sparse
+
+    fits_present: list[float] = []
+    # academic strength: program's preferred minimum GPA vs the student's GPA
+    pref_gpa = pr.get("pref_min_gpa")
+    s_gpa = s.get("gpa")
+    if pref_gpa is not None and s_gpa is not None:
+        fits_present.append(_fits.fit_numeric_higher(float(s_gpa), float(pref_gpa), 0.3))
+    # field background: program's preferred fields vs the student's field
+    pref_fields = set(pr.get("pref_fields") or [])
+    s_field = s.get("field_of_study")
+    if pref_fields and s_field is not None:
+        fits_present.append(1.0 if s_field in pref_fields else 0.0)
+    # applicant level: program's preferred levels vs the student's current level
+    pref_levels = set(pr.get("pref_levels") or [])
+    s_lvl = s.get("education_level")
+    if pref_levels and s_lvl:
+        fits_present.append(1.0 if s_lvl in pref_levels else 0.0)
+
+    if not fits_present:
+        return 1.0, {"no_prefs": True}
+
+    # A *satisfaction* multiplier, not a fresh fit: perfect match → 1.0 (a
+    # well-matched program is never penalized for having preferences), worst
+    # match → ``ps_floor`` (pulled down but not buried — burying is the s→p
+    # veto's job). No coverage damp / 0.5-shrink here: those belong to the
+    # student's own ranking sharpness (s→p), not the program's interest gate.
+    sat = sum(fits_present) / len(fits_present)
+    floor = p.get("ps_floor", 0.2)
+
+    # GAP 1 (p→s direction) — gate the satisfaction by the program's PREFERENCE
+    # confidence (its authority proxy). A program that CLAIMS its preferences
+    # (high data_completeness) expresses a confident opinion, so its
+    # satisfaction signal moves M more — a poor satisfaction from a claimed
+    # preference pulls M down harder; a strong one lifts it more. A DERIVED
+    # preference is a softer opinion (lower confidence), so its satisfaction is
+    # shrunk toward the neutral 1.0 ("no strong opinion"). rho is the trust gain
+    # on the program-side confidence.
+    c_program = _program_side_confidence(program)
+    rho = confidence_to_gain(c_program, p)
+    # Shrink the *gate strength* by rho: at rho→1 a claimed preference applies
+    # its full satisfaction multiplier; at rho→0 a barely-trusted preference is
+    # nearly inert (value→1.0, "no real opinion"). The neutral anchor is 1.0
+    # (the no-prefs value), so a low-confidence preference cannot bury.
+    raw = clamp01(floor + (1.0 - floor) * sat)
+    value = clamp01(raw * rho + (1.0 - rho) * 1.0)
+    return value, {
+        "value": round(value, 4),
+        "satisfaction": round(sat, 4),
+        "raw": round(raw, 4),
+        "rho": round(rho, 4),
+        "c_program": round(c_program, 4),
+        "n_signals": len(fits_present),
+        "floor": floor,
+    }
+
+
+def mutual_match(
+    student: StudentFeatures, program: ProgramFeatures, *, params: dict[str, float] | None = None
+) -> tuple[float, dict[str, Any]]:
+    """The rank key ``M`` — a weighted geometric mean of both directions,
+    student side leading: ``M = CPEF_{s→p}^alpha * CPEF_{p→s}^(1-alpha)``.
+    """
+    p = params or DEFAULT_PARAMS
+    sp, sp_bd = cpef(student, program, params=p)
+    ps, ps_bd = cpef_program_to_student(student, program, params=p)
+    a = p["alpha"]
+    m = clamp01((sp**a) * (ps ** (1.0 - a)))
+    bd = {**sp_bd, "m": round(m, 4), "s2p_value": sp_bd.get("value"), "p2s": ps_bd, "alpha": a}
+    return m, bd
+
+
+def _cpef_flag() -> bool:
+    try:
+        from unipaith.config import settings
+
+        return bool(getattr(settings, "cpef_matching_enabled", False))
+    except Exception:
+        return False
+
+
+def _score_cpef(
+    student: StudentFeatures, program: ProgramFeatures, *, params: dict[str, float] | None = None
+) -> Score:
+    # The persisted fitness IS the rank key M (the two-direction blend). The
+    # breakdown keeps the full s→p detail plus the p→s direction and M.
+    m, bd = mutual_match(student, program, params=params)
+    conf = bd.get("mean_rho", 0.0)
+    return Score(
+        fitness=Decimal(str(round(m, 4))),
+        confidence=Decimal(str(round(conf, 4))),
+        eliminated=False,  # nothing is hard-dropped; vetoed programs sink instead
+        fitness_breakdown=bd,
+        confidence_breakdown={"mean_rho": conf, "model": "cpef", "m": round(m, 4)},
+    )
+
+
 def score(
     student: StudentFeatures,
     program: ProgramFeatures,
     *,
     weights: dict[str, float] | None = None,
+    cpef_enabled: bool | None = None,
 ) -> Score:
-    """Return a fully-explainable Score for one (student, program) pair."""
+    """Return a fully-explainable Score for one (student, program) pair.
+
+    When CPEF is enabled (flag or explicit `cpef_enabled=True`) the fused
+    Spec-3 score is used; otherwise the legacy convex-sum + hard-filter path.
+    """
+    if cpef_enabled is None:
+        cpef_enabled = _cpef_flag()
+    if cpef_enabled:
+        return _score_cpef(student, program)
+
     weights = weights or DEFAULT_WEIGHTS
     rp, reason = rule_pass(student, program)
     if not rp:
@@ -361,14 +717,16 @@ def rank_programs(
     *,
     weights: dict[str, float] | None = None,
     include_eliminated: bool = False,
+    cpef_enabled: bool | None = None,
 ) -> list[tuple[ProgramFeatures, Score]]:
     """Score every program and return them sorted by fitness desc.
 
     `include_eliminated`: if True, eliminated programs are returned at
     the bottom of the list with fitness=0 (useful for the rationale
-    agent, which may explain why something was filtered).
+    agent, which may explain why something was filtered). Under CPEF
+    nothing is eliminated — vetoed programs simply sink to the bottom.
     """
-    scored = [(p, score(student, p, weights=weights)) for p in programs]
+    scored = [(p, score(student, p, weights=weights, cpef_enabled=cpef_enabled)) for p in programs]
     if not include_eliminated:
         scored = [(p, s) for p, s in scored if not s.eliminated]
     scored.sort(key=lambda ps: (float(ps[1].fitness), float(ps[1].confidence)), reverse=True)

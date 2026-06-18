@@ -44,6 +44,10 @@ export default function TopMatchesPeek({ className }: { className?: string }) {
       </SectionHeader>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {top.map(m => {
+          // AI-Structure-3 §14 — the student response no longer carries a raw
+          // fitness number; show the precise % only when a score is present
+          // (cached/institution payloads), otherwise the band carries the readout.
+          const hasRaw = m.fitness_score != null && m.fitness_score !== ''
           const fitness = Math.round(toUnit(m.fitness_score) * 100)
           return (
             <button
@@ -55,9 +59,11 @@ export default function TopMatchesPeek({ className }: { className?: string }) {
               {m.institution_name && <p className="mt-0.5 truncate text-xs text-muted-foreground">{m.institution_name}</p>}
               <div className="mt-2 flex items-center gap-2">
                 {m.band_label && <BandBadge band={m.band_label as Band} />}
-                <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-secondary">
-                  <Sparkles size={12} /> {fitness}% fit
-                </span>
+                {hasRaw && (
+                  <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-secondary">
+                    <Sparkles size={12} /> {fitness}% fit
+                  </span>
+                )}
               </div>
             </button>
           )

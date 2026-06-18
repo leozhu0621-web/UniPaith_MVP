@@ -34,9 +34,24 @@ credit hour and publish no single annual figure, so those carry a sourced "see t
 tuition page" record rather than a guessed number (OMSCS and Online MS Analytics, which DO
 publish a total program cost, carry it). The institute does not publish a single combined
 "employed or continuing education" rate, so that institution field is omitted with reason.
-External reviews are attached to the flagship coverable programs that have substantial
-third-party coverage; the remaining programs record ``external_reviews`` in their
-``_standard.omitted`` pending a depth pass. Georgia Tech's events calendar
+De-fabrication (2026-06-18, gatechprof3): the program catalog is re-grounded on first-party
+sources. (a) Every program description is now a field-specific overview read off that
+program's own page at catalog.gatech.edu/programs/<slug>/ (``georgia_tech_catalog_descriptions``)
+— replacing the generated ``"{name} is a … program offered through Georgia Tech's {College}"``
+classification stub that was 100% prefix-doubled and 73% classification. (b) ``department`` is
+now the real owning GT school/unit (e.g. the Daniel Guggenheim School of Aerospace Engineering,
+the H. Milton Stewart School of Industrial and Systems Engineering) rather than the field
+echoed from the program name. (c) The ``DEPTH_REVIEWS`` batch (58 machine-synthesized
+external_reviews minted one-per-row from program metadata + institution rankings — identical
+institution-level themes repeated across the MS/PhD rows under a false "aggregated from public
+sources" disclaimer) is REMOVED; a review fabricated-by-synthesis lends a row false third-party
+credibility and is worse than an honest blank (SKILL.md miss #8), so those programs now record
+``external_reviews`` in ``_standard.omitted``. Only the four hand-gathered, program-specific
+flagship reviews remain (OMSCS, Online MS Analytics, the Scheller Full-Time MBA, and
+undergraduate Computer Science); the genuine program-specific reviews depth pass is deferred to
+a later run (structure-before-depth). An enforced anti-stub gate (``test_anti_stub_gate``,
+``georgia_tech`` certified) and an anti-synthesis test (``test_georgia_tech_profile``) block any
+future stub-swap or one-sweep review mint. Georgia Tech's events calendar
 (events.gatech.edu) exposes no verified public iCalendar/RSS feed, so the verified Institute
 news RSS (news.gatech.edu, current and image-carrying) feeds the Updates surface and no
 events feed is asserted.
@@ -52,13 +67,17 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.georgia_tech_catalog_descriptions import (
+    CATALOGUE_DESCRIPTIONS,
+    DEPARTMENTS,
+)
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Georgia Institute of Technology-Main Campus"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-13"
+ENRICHED_AT = "2026-06-18"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -963,34 +982,6 @@ def _derive(slug: str) -> tuple[str, str, str]:
     return field, "masters", field
 
 
-_DELIVERY_PHRASE = {
-    "online": " It is delivered fully online.",
-    "hybrid": " It is delivered in a hybrid/executive format.",
-}
-_DEGREE_ROLE = {
-    "phd": "a research doctorate",
-    "masters": "a master's program",
-    "professional": "a professional master's program",
-    "bachelors": "an undergraduate major",
-}
-
-
-def _college_display(college: str) -> str:
-    return college
-
-
-def _description(name: str, dtype: str, college: str, dept: str, fmt: str) -> str:
-    role = _DEGREE_ROLE.get(dtype, "a graduate program")
-    dept_phrase = ""
-    if dept and dept != college and dept not in name:
-        dept_phrase = f", with study in {dept}"
-    delivery = _DELIVERY_PHRASE.get(fmt, "")
-    return (
-        f"{name} is {role} offered through Georgia Tech's {_college_display(college)}"
-        f"{dept_phrase}.{delivery}"
-    )
-
-
 def _build_catalog() -> list[dict]:
     out: list[dict] = []
     seen: set[str] = set()
@@ -998,7 +989,13 @@ def _build_catalog() -> list[dict]:
         if slug in seen:
             continue
         seen.add(slug)
-        name, dtype, dept = _derive(slug)
+        name, dtype, _field = _derive(slug)
+        description = CATALOGUE_DESCRIPTIONS.get(slug)
+        department = DEPARTMENTS.get(slug)
+        if not description:
+            raise ValueError(f"GT catalog missing verified description for {slug!r}")
+        if not department:
+            raise ValueError(f"GT catalog missing real owning department for {slug!r}")
         out.append(
             {
                 "slug": f"gatech-{slug}",
@@ -1006,10 +1003,10 @@ def _build_catalog() -> list[dict]:
                 "school": college,
                 "program_name": name,
                 "degree_type": dtype,
-                "department": dept,
+                "department": department,
                 "duration_months": _duration(dtype, fmt),
                 "delivery_format": fmt,
-                "description": _description(name, dtype, college, dept, fmt),
+                "description": description,
             }
         )
     return out
@@ -1028,6 +1025,18 @@ def _duration(dtype: str, fmt: str) -> int:
 PROGRAMS: list[dict] = _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
+
+
+def _assert_anti_stub_clean(programs: list[dict]) -> None:
+    """Every GT description must score the gold-MIT zero on the anti-stub metrics."""
+    from unipaith.profile_standard.anti_stub import analyze
+
+    report = analyze(programs)
+    if not report.is_clean:
+        raise ValueError(f"GT catalog anti-stub gate failed: {report.summary()}")
+
+
+_assert_anti_stub_clean(PROGRAMS)
 
 # Per-program catalog website (catalog.gatech.edu/programs/<catalog_slug>/) or a verified
 # program homepage for the online degrees.

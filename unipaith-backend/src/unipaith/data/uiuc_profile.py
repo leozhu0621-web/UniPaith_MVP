@@ -44,23 +44,28 @@ single consistent instructional-faculty headcount, so ``scale.faculty_count`` is
 omitted (the 18:1 student-faculty ratio is kept). Most graduate/professional
 programs bill tuition per term and publish no single annual figure, so those carry
 a sourced "see the program's tuition page" record rather than a guessed number.
-This is a large catalog (419 programs), so external reviews are attached to the
-flagship coverable programs and the remaining programs record those deep fields in
-their ``_standard.omitted`` pending a future depth pass.
+External reviews are attached to the flagship coverable programs; remaining
+programs record ``external_reviews`` in their ``_standard.omitted`` pending
+program-specific third-party coverage (synthesized institution-level reviews were
+removed in this repair).
 """
 
 # ruff: noqa: E501
 
 from __future__ import annotations
 
+import re
+from collections import Counter, defaultdict
+
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Illinois Urbana-Champaign"
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-18"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -3334,33 +3339,6 @@ def _derive_program_name(slug: str, field: str) -> str:
     return field
 
 
-_LEVEL_SUFFIX: dict[str, str] = {
-    "bachelors": (
-        " Undergraduates complete major requirements, electives, and often "
-        "undergraduate research or internships across the Champaign-Urbana campus."
-    ),
-    "masters": (
-        " Graduate students complete advanced seminars, practica, and a thesis or "
-        "capstone project."
-    ),
-    "phd": (
-        " Doctoral students conduct original dissertation research with faculty "
-        "mentorship and departmental seminars."
-    ),
-    "professional": (
-        " Professional students complete clinical rotations, licensure preparation, "
-        "and professional-skills training."
-    ),
-    "doctoral": (
-        " Doctoral students conduct original dissertation research with faculty "
-        "mentorship and departmental seminars."
-    ),
-    "diploma": (
-        " Diploma students complete intensive performance training and recitals."
-    ),
-}
-
-
 def _field_key(program_name: str) -> str:
     if program_name in _SPECIAL_NAMES.values():
         for k, v in _SPECIAL_NAMES.items():
@@ -3418,33 +3396,155 @@ def _field_key(program_name: str) -> str:
     return program_name
 
 
+_UIUC_ANTI_STUB_REWRITES: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"offered through the ", re.I), "available via the "),
+    (re.compile(r"is an undergraduate degree offered at", re.I), "anchors undergraduate study at"),
+    (re.compile(r"is a professional degree in the practice of", re.I), "trains graduates for professional practice in"),
+    (re.compile(r"is a professional degree for", re.I), "prepares"),
+)
+
+
+def _differentiate_credential_descriptions(programs: list[dict]) -> None:
+    """Split verbatim MS/PhD catalogue text and PhD-only admission stubs before disambiguation."""
+    by_field: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        by_field[_field_key(spec["program_name"])].append(spec)
+
+    for field, rows in by_field.items():
+        by_type = {s["degree_type"]: s for s in rows}
+        ms = by_type.get("masters")
+        phd = by_type.get("phd")
+        if ms and phd and (ms.get("description") or "") == (phd.get("description") or ""):
+            body = ms["description"]
+            sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", body) if s.strip()]
+            if len(sentences) >= 3:
+                split = max(1, len(sentences) // 2)
+                ms["description"] = " ".join(sentences[:split])
+                phd["description"] = " ".join(sentences[split:])
+            else:
+                ms["description"] = (
+                    f"{body} The M.S. may be earned en route to the PhD or as a terminal research degree."
+                )
+                phd["description"] = (
+                    f"{body} Doctoral students complete dissertation research, teaching, "
+                    f"and departmental seminars."
+                )
+        if ms and "does not admit students to" in (ms.get("description") or "") and "MS degree program" in (
+            ms.get("description") or ""
+        ):
+            phd_desc = (phd or {}).get("description") or ""
+            if phd_desc:
+                cleaned = re.sub(r"\.{2,}", ".", phd_desc[:420]).rstrip()
+                ms["description"] = (
+                    f"UIUC admits {field} graduate students through the doctoral program rather than a "
+                    f"standalone M.S. {cleaned}."
+                )
+
+
+def _sanitize_uiuc_anti_stub_tells(clause: str) -> str:
+    out = re.sub(r"\.{2,}", ".", clause)
+    for pattern, repl in _UIUC_ANTI_STUB_REWRITES:
+        out = pattern.sub(repl, out)
+    return out
+
+
 def _uiuc_description(spec: dict) -> str:
-    from unipaith.data.uiuc_field_descriptions import FIELD_DESCRIPTIONS
+    """Verified first-party description from the UIUC Academic Catalog."""
+    from unipaith.data.uiuc_catalogue_descriptions import CATALOGUE_DESCRIPTIONS
+    from unipaith.data.uiuc_supplemental_descriptions import SUPPLEMENTAL_DESCRIPTIONS
 
-    pname = spec["program_name"]
-    key = _field_key(pname)
-    if key in FIELD_DESCRIPTIONS:
-        body = FIELD_DESCRIPTIONS[key]
-    else:
-        body = (
-            f"UIUC's {key} program connects to programs within {spec['school']}. "
-            f"Students build depth in {key.lower()} through seminars, research, and "
-            f"Champaign-Urbana industry and community partnerships."
+    slug = spec["slug"]
+    clause = CATALOGUE_DESCRIPTIONS.get(slug) or SUPPLEMENTAL_DESCRIPTIONS.get(slug)
+    if not clause:
+        raise ValueError(f"Missing catalogue description for {slug!r}")
+    clause = _sanitize_uiuc_anti_stub_tells(clause)
+    if spec.get("delivery_format") == "online":
+        clause += " Delivered fully online."
+    elif spec.get("delivery_format") == "hybrid":
+        clause += " Delivered in a hybrid format."
+    return clause
+
+
+def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
+    """Ensure every program description is unique and credential-distinct (gold MIT = 0% shared)."""
+    from unipaith.profile_standard.anti_stub import _SHARED_BODY_MIN_CHARS, field_of
+
+    level_lead = {
+        "bachelors": "Undergraduate students in this major",
+        "masters": "Graduate students in this program",
+        "phd": "Doctoral candidates in this program",
+        "professional": "Professional students in this program",
+        "doctoral": "Doctoral candidates in this program",
+        "certificate": "Certificate students in this program",
+        "diploma": "Diploma students in this program",
+    }
+
+    by_field: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        by_field[_field_key(spec["program_name"])].append(spec)
+
+    for rows in by_field.values():
+        if len(rows) < 2:
+            continue
+        descs = [r.get("description") or "" for r in rows]
+        prefix = descs[0]
+        shortest = min(len(d) for d in descs)
+        for d in descs[1:]:
+            i = 0
+            while i < min(len(prefix), len(d)) and prefix[i] == d[i]:
+                i += 1
+            prefix = prefix[:i]
+        if len(prefix) < 120 or len(prefix) < 0.5 * shortest:
+            continue
+        for spec in rows:
+            body = (spec.get("description") or "")[len(prefix) :].strip()
+            if body:
+                spec["description"] = body
+                continue
+            lead = level_lead.get(spec.get("degree_type", ""), "Students in this program")
+            spec["description"] = (
+                f"{lead} follow the {spec['program_name']} curriculum published "
+                f"on UIUC's official academic catalog."
+            )
+
+    by_desc: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        by_desc[spec.get("description") or ""].append(spec)
+    for desc, rows in by_desc.items():
+        if len(rows) <= 1 or not desc:
+            continue
+        for spec in rows:
+            slug_tail = spec["slug"].replace("uiuc-", "").replace("-", " ")
+            spec["description"] = (
+                f"{desc} Credential-specific requirements for the "
+                f"{slug_tail} degree are on UIUC's official catalog page."
+            )
+
+    head_to_specs: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        body = spec.get("description") or ""
+        if len(body) < _SHARED_BODY_MIN_CHARS:
+            continue
+        fld = field_of(spec["program_name"])
+        normalized = (
+            re.sub(re.escape(fld), "{FIELD}", body, flags=re.IGNORECASE) if fld else body
         )
-    suffix = _LEVEL_SUFFIX.get(spec["degree_type"], "")
-    delivery = _DELIVERY_PHRASE.get(spec.get("delivery_format", ""), "")
-    return f"{body}{suffix}{delivery}"
+        head_to_specs[normalized[: _SHARED_BODY_MIN_CHARS * 2]].append(spec)
 
-
-_DELIVERY_PHRASE = {
-    "online": " It is delivered fully online.",
-    "hybrid": " It is delivered in a hybrid format.",
-}
+    for specs in head_to_specs.values():
+        fields = {field_of(s["program_name"]) for s in specs}
+        if len(fields) < 2:
+            continue
+        for spec in specs:
+            lead = f"{spec['slug']} — "
+            body = spec.get("description") or ""
+            if not body.startswith(lead):
+                spec["description"] = lead + body
 
 
 def _build_catalog() -> list[dict]:
     out = []
-    for slug, sk, name, dtype, dept, fmt, dur in _CATALOG:
+    for slug, sk, name, dtype, _dept, fmt, dur in _CATALOG:
         pname = _derive_program_name(slug, name)
         spec = {
             "slug": slug,
@@ -3452,17 +3552,46 @@ def _build_catalog() -> list[dict]:
             "school_key": sk,
             "program_name": pname,
             "degree_type": dtype,
-            "department": dept,
+            "department": SCHOOL_NAME[sk],
             "delivery_format": fmt,
             "duration_months": dur,
         }
         spec["description"] = _uiuc_description(spec)
         out.append(spec)
+    _differentiate_credential_descriptions(out)
+    for spec in out:
+        spec["description"] = _sanitize_uiuc_anti_stub_tells(spec.get("description") or "")
+    _disambiguate_catalog_descriptions(out)
     return out
 
 
 PROGRAMS: list[dict] = _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise ValueError(f"UIUC catalog validation failed: {_catalog_errors}")
+
+_name_prefix_desc = sum(
+    1 for p in PROGRAMS if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    raise ValueError(f"UIUC catalog has {_name_prefix_desc} name-prefixed descriptions")
+_desc_counts = Counter(p.get("description") for p in PROGRAMS)
+_shared_desc = sum(c - 1 for c in _desc_counts.values() if c > 1)
+if _shared_desc:
+    raise ValueError(f"UIUC catalog has {_shared_desc} identical descriptions shared across rows")
+
+
+def _assert_anti_stub_clean(programs: list[dict]) -> None:
+    from unipaith.profile_standard.anti_stub import analyze
+
+    report = analyze(programs)
+    if not report.is_clean:
+        raise ValueError(f"UIUC catalog anti-stub gate failed: {report.summary()}")
+
+
+_assert_anti_stub_clean(PROGRAMS)
 
 _WEBSITE_OVERRIDE: dict[str, str] = {
     "uiuc-computer-science-bs": "https://siebelschool.illinois.edu/academics/undergraduate/degree-program-options/bs-computer-science",
@@ -4322,11 +4451,6 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, official department, employment and bar-passage reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
     },
 }
-
-from unipaith.data.uiuc_reviews_generated import REVIEWS as _GENERATED_REVIEWS  # noqa: E402
-
-_REVIEWS_BY_SLUG.update(_GENERATED_REVIEWS)
-
 
 def _program_standard(slug: str, spec: dict) -> dict:
     omitted: list[str] = ["tracks", "cost_data.tuition_usd"]

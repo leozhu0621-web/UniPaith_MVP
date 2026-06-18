@@ -1,0 +1,107 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --color-background-primary:#ffffff;--color-background-secondary:#f5f1e8;--color-background-info:#eaf0fb;--color-background-warning:#fdf6e3;
+  --color-border-tertiary:#e7e1d5;--color-border-info:#cdd9f3;
+  --color-text-primary:#2c2a26;--color-text-secondary:#56524a;--color-text-tertiary:#8b857a;--color-text-info:#33509e;--color-text-warning:#9a6700;
+  --border-radius-lg:12px;--border-radius-md:8px;
+}
+html,body{background:#faf7f0;margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+.cm{max-width:680px;margin:0 auto;font-size:14px;}
+.cm .box{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:13px 16px;}
+.cm .t{font-size:15px;font-weight:500;margin:0 0 2px;color:var(--color-text-primary);}
+.cm .sub{font-size:12px;color:var(--color-text-tertiary);margin:0 0 6px;}
+.cm .basic{background:var(--color-background-secondary);border:none;}
+.cm .basic ul{margin:4px 0 0;padding-left:18px;}
+.cm .basic li{font-size:12px;color:var(--color-text-secondary);line-height:1.5;margin:2px 0;}
+.cm .basic li b{color:var(--color-text-primary);font-weight:500;}
+.cm .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px;}
+.cm .card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;}
+.cm .ch{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.cm .cn{font-size:12.5px;font-weight:500;color:var(--color-text-primary);}
+.cm .dim{font-size:9.5px;color:var(--color-text-info);background:var(--color-background-info);padding:1px 6px;border-radius:8px;margin-left:auto;white-space:nowrap;}
+.cm .dimoff{font-size:9.5px;color:var(--color-text-tertiary);background:var(--color-background-secondary);padding:1px 6px;border-radius:8px;margin-left:auto;white-space:nowrap;}
+.cm .cf{font-size:11px;color:var(--color-text-secondary);line-height:1.45;margin:0;}
+.cm .csrc{font-size:10.5px;color:var(--color-text-tertiary);margin:5px 0 0;}
+.cm .gap{display:inline-block;font-size:9px;font-weight:500;color:var(--color-text-warning);background:var(--color-background-warning);padding:0 5px;border-radius:6px;margin-left:4px;}
+.cm .seed{background:var(--color-background-info);border:none;margin-top:10px;}
+.cm .seed .t{color:var(--color-text-info);}
+.cm .seed p{font-size:12px;color:var(--color-text-info);line-height:1.5;margin:4px 0 0;}
+.cm .seed code,.cm .cf code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;}
+.cm .legend{font-size:10.5px;color:var(--color-text-tertiary);text-align:center;margin-top:9px;}
+</style></head>
+<body>
+<div class="cm">
+  <h2 class="sr-only">Crawler enrichment data map.</h2>
+  <div class="box basic">
+    <p class="t">Basic — what catalog ingest gets today</p>
+    <p class="sub">already wired · the floor the crawler enriches on top of</p>
+    <ul>
+      <li><b>Identity</b> — program name · degree level · field (CIP) · department</li>
+      <li><b>Logistics</b> — tuition (single number) · duration · delivery format</li>
+      <li><b>Semantic</b> — description text → embedding</li>
+    </ul>
+  </div>
+  <p class="t" style="margin:14px 0 0;">Enrichment targets — what the routine crawler adds</p>
+  <p class="sub">each maps to a Prompt-Library dimension and feeds the match (Part 3)</p>
+  <div class="grid">
+    <div class="card">
+      <div class="ch"><span class="cn">Outcomes</span><span class="dim">weight: outcomes</span></div>
+      <p class="cf">median / starting salary · employment &amp; underemployment rate · payback period · top employers · placement geography</p>
+      <p class="csrc">College Scorecard · IPEDS · institution reports <span class="gap">table empty</span></p>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="cn">Selectivity &amp; funnel</span><span class="dim">admit odds</span></div>
+      <p class="cf">applicants → admits → enrolled · admit rate · yield · class profile (GPA &amp; test bands, academic-only) · selectivity band</p>
+      <p class="csrc">Common Data Set · IPEDS <span class="gap">not read yet</span></p>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="cn">Full cost</span><span class="dim">weight: cost</span></div>
+      <p class="cf">tuition + fees · total cost of attendance · net price · local living cost (city)</p>
+      <p class="csrc">IPEDS · institution · Numbeo/Mercer geo-cost</p>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="cn">Funding</span><span class="dim">cost · support</span></div>
+      <p class="cf">program-linked scholarships · assistantships · % receiving aid · average award</p>
+      <p class="csrc">gov · institution · scholarship aggregators</p>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="cn">Rankings</span><span class="dimoff">display only · not scored</span></div>
+      <p class="cf">ranker · rank · year — shown on cards as "reported by", <b>never enters the match math</b></p>
+      <p class="csrc">US News · QS · Times Higher Ed</p>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="cn">Accreditation</span><span class="dim">eligibility</span></div>
+      <p class="cf">body · status · valid-through · scope</p>
+      <p class="csrc">regional · national · programmatic accreditors</p>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="cn">Format &amp; schedule</span><span class="dim">flexibility · time</span></div>
+      <p class="cf">online / hybrid / in-person · campus setting · time-to-degree · start terms · intake rounds · deadlines</p>
+      <p class="csrc">institution catalog <span class="gap">not read yet</span></p>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="cn">Requirements</span><span class="dim">eligibility</span></div>
+      <p class="cf">test policy (test-optional?) · prerequisites · English policy &amp; waivers · application requirements</p>
+      <p class="csrc">institution · program pages</p>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="cn">Academic substance</span><span class="dim">fit · grad</span></div>
+      <p class="cf">tracks / specializations · curriculum · faculty &amp; research centers</p>
+      <p class="csrc">catalog · department pages</p>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="cn">Media</span><span class="dimoff">display only</span></div>
+      <p class="cf">campus photos (with credit) · gallery</p>
+      <p class="csrc">Wikimedia Commons (verified credit)</p>
+    </div>
+  </div>
+  <div class="box seed">
+    <p class="t"><i class="ti ti-target-arrow" style="margin-right:5px;"></i>Unclaimed → we determine the whole profile</p>
+    <p>For an unclaimed program we set <b>both sides from public materials</b>: <b>attributes</b> (the facts above) <b>and preferences</b> — a <b>baseline "target applicant"</b> inferred from the public class profile (typical admitted GPA / test bands, common feeder fields). So <code>program → student</code> works before any claim. When the school claims, they overwrite both with their real data.</p>
+  </div>
+  <p class="legend"><span class="gap">tag</span> = schema field / typed table exists but is not yet populated or read by the matcher — the build work, not new modeling.</p>
+</div>
+</body></html>

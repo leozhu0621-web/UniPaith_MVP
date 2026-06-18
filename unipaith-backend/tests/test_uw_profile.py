@@ -88,6 +88,24 @@ def test_catalog_breadth_and_shape():
     # ownership + classification drive the explore-card eyebrow
     assert u.RANKING_DATA["ownership_type"] == "public"
     assert "public research university in seattle" in u.DESCRIPTION.lower()
+    assert "washington.edu/news/feed/" in u._INSTITUTION_CONTENT["news_rss"]
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    assert not validate_catalog(u.PROGRAMS)
+
+
+def test_coverable_programs_have_reviews():
+    import sys
+
+    sys.path.insert(0, "scripts")
+    from fleet_audit import is_coverable
+
+    missing = [
+        p["slug"]
+        for p in u.PROGRAMS
+        if is_coverable(p) and p["slug"] not in u._REVIEWS_BY_SLUG
+    ]
+    assert not missing, f"Coverable programs missing reviews: {missing[:10]}"
 
 
 def test_institution_is_gold_except_recorded_omission():

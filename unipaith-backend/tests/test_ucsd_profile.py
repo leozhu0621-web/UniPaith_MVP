@@ -105,7 +105,15 @@ def _program_snapshot(spec: dict) -> dict:
 
 def test_catalog_breadth_and_shape():
     assert len(p.SCHOOLS) == 12
-    assert len(p.PROGRAMS) >= 180
+    # Breadth is gated on REALNESS, not a frozen row count (enrich miss #2). The catalog
+    # was de-padded to drop fabricated per-field graduate certificates — UC San Diego's
+    # academic departments award none (catalog.ucsd.edu/graduate/degrees-offered) — so the
+    # real count is well below the old padded floor. Assert a real-catalog floor plus zero
+    # certificate rows, never a >= padded_N that would reward re-padding.
+    assert len(p.PROGRAMS) >= 130
+    assert not [s for s in p.PROGRAMS if s["degree_type"] == "certificate"], (
+        "UCSD awards no departmental graduate certificates — none may be in the catalog"
+    )
     assert len(set(p.PROGRAM_SLUGS)) == len(p.PROGRAM_SLUGS)
     assert p.RANKING_DATA["ownership_type"] == "public"
     assert "public research university in la jolla" in p.DESCRIPTION.lower()
@@ -155,6 +163,28 @@ def test_flagship_programs_have_reviews():
     assert len(reviewed) >= 10
 
 
+def test_coverable_programs_have_reviews():
+    """Every coverable program must EITHER carry a gathered review OR explicitly
+    record external_reviews as omitted in its _standard — never a silent blank,
+    and never a synthesized review. (SKILL.md miss #8: remove synthesized reviews
+    and re-gather genuine program-specific coverage or omit-with-reason; an honest
+    blank beats a false 'aggregated from public sources' disclaimer.)"""
+    import sys
+
+    sys.path.insert(0, "scripts")
+    from fleet_audit import is_coverable
+
+    missing = [
+        spec["slug"]
+        for spec in p.PROGRAMS
+        if is_coverable(spec)
+        and spec["slug"] not in p._REVIEWS_BY_SLUG
+        and "external_reviews.summary"
+        not in p._program_standard(spec["slug"], spec)["omitted"]
+    ]
+    assert not missing, f"Coverable programs with neither a review nor an omit: {missing}"
+
+
 def test_no_name_prefixed_descriptions():
     name_prefix = sum(
         1
@@ -162,3 +192,32 @@ def test_no_name_prefixed_descriptions():
         if (prog.get("description") or "").startswith(prog.get("program_name", ""))
     )
     assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
+
+
+def test_no_fabricated_units_or_shared_credential_descriptions():
+    from collections import defaultdict
+
+    for spec in p.PROGRAMS:
+        assert "Center for Aerospace Research and Training" not in (
+            spec.get("description") or ""
+        ), spec["slug"]
+
+    by_key: dict[tuple[str, str], list[str]] = defaultdict(list)
+    for spec in p.PROGRAMS:
+        fn = spec["program_name"]
+        field = fn
+        for prefix in (
+            "Bachelor of Arts in ",
+            "Bachelor of Science in ",
+            "Master of Science in ",
+            "Doctor of Philosophy in ",
+            "Graduate Certificate in ",
+        ):
+            if fn.startswith(prefix):
+                field = fn[len(prefix) :].strip()
+                break
+        by_key[(field, spec["degree_type"])].append(spec.get("description") or "")
+
+    for key, descs in by_key.items():
+        if len(descs) >= 2:
+            assert len(set(descs)) == len(descs), f"shared descriptions for {key}"

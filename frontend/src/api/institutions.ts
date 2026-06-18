@@ -925,3 +925,38 @@ export async function getPublicPostsFeed(limit = 20): Promise<InstitutionPost[]>
   const { data } = await apiClient.get('/institutions/posts/feed', { params: { limit } })
   return data
 }
+
+// --- AI Structure (Spec 2/3): program target-applicant preferences ---
+
+export interface ProgramPreferences {
+  program_id: string
+  source: string
+  pref_min_gpa: number | null
+  pref_test_bands: Record<string, number> | null
+  pref_fields: string[] | null
+  pref_levels: string[] | null
+  pref_countries: string[] | null
+  weight_academic: number | null
+  weight_field_fit: number | null
+  weight_outcomes_alignment: number | null
+  weight_funding_need: number | null
+  weight_geographic: number | null
+}
+
+export async function getProgramPreferences(
+  programId: string,
+): Promise<ProgramPreferences | null> {
+  const { data } = await apiClient.get(`/institutions/me/programs/${programId}/preferences`)
+  return data
+}
+
+export async function updateProgramPreferences(
+  programId: string,
+  payload: Partial<ProgramPreferences>,
+): Promise<ProgramPreferences> {
+  const { data } = await apiClient.put(
+    `/institutions/me/programs/${programId}/preferences`,
+    payload,
+  )
+  return data
+}

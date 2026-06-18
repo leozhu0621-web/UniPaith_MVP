@@ -1,0 +1,110 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --color-background-primary:#ffffff;--color-background-secondary:#f5f1e8;--color-background-info:#eaf0fb;--color-background-warning:#fdf6e3;
+  --color-border-tertiary:#e7e1d5;--color-border-info:#cdd9f3;
+  --color-text-primary:#2c2a26;--color-text-secondary:#56524a;--color-text-tertiary:#8b857a;--color-text-info:#33509e;--color-text-warning:#9a6700;
+  --border-radius-lg:12px;--border-radius-md:8px;
+}
+html,body{background:#faf7f0;margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+.f3{max-width:660px;margin:0 auto;font-size:14px;}
+.f3 .box{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:13px 16px;}
+.f3 .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;}
+.f3 .eye{font-size:11px;color:var(--color-text-tertiary);}
+.f3 .t{font-size:15px;font-weight:500;margin:0 0 6px;color:var(--color-text-primary);}
+.f3 ul{margin:4px 0 0;padding-left:18px;}
+.f3 li{font-size:12px;color:var(--color-text-secondary);line-height:1.5;margin:3px 0;}
+.f3 li b{font-weight:500;color:var(--color-text-primary);}
+.f3 .arrow{display:flex;justify-content:center;align-items:center;gap:6px;color:var(--color-text-tertiary);padding:5px 0;font-size:11px;}
+.f3 .gate{border-color:var(--color-border-info);}
+.f3 .loopnote{background:var(--color-background-secondary);border:none;}
+.f3 .tag{font-size:10px;padding:1px 8px;border-radius:10px;white-space:nowrap;}
+.f3 .api{background:var(--color-background-info);color:var(--color-text-info);}
+.f3 .be{background:var(--color-background-secondary);color:var(--color-text-secondary);}
+.f3 .way{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;margin-top:8px;}
+.f3 .way .wt{font-size:13px;font-weight:500;color:var(--color-text-primary);margin:0 0 4px;}
+.f3 .tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;}
+.f3 .tbl td{padding:5px 4px;border-top:0.5px solid var(--color-border-tertiary);vertical-align:top;}
+.f3 .tbl td:first-child{color:var(--color-text-secondary);}
+.f3 .tbl td:last-child{text-align:right;font-weight:500;color:var(--color-text-primary);white-space:nowrap;}
+.f3 .prec{background:var(--color-background-primary);border:0.5px dashed var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:8px 11px;margin-top:9px;}
+.f3 .prec .pl{font-size:11px;font-weight:500;color:var(--color-text-primary);margin:0 0 3px;}
+.f3 .prec .pv{font-size:12px;color:var(--color-text-secondary);line-height:1.5;}
+.f3 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px;}
+.f3 .mc{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:8px 10px;}
+.f3 .mc .ml{font-size:11px;font-weight:500;color:var(--color-text-primary);margin:0 0 2px;}
+.f3 .mc .mv{font-size:11px;color:var(--color-text-secondary);line-height:1.4;}
+</style></head>
+<body>
+<div class="f3">
+  <h2 class="sr-only">Chart 2 of 3 — school/program profile.</h2>
+  <div style="display:flex;justify-content:center;gap:14px;font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px;">
+    <span><span class="tag api">API</span> LLM: crawl read · vision · docs · quantify</span>
+    <span><span class="tag be">Backend</span> deterministic: orchestrate · precedence · store</span>
+  </div>
+  <div class="box loopnote">
+    <p class="t">Part 2 · School / program profile — same Prompt Library, program side</p>
+    <ul>
+      <li><b>Mirrors the student exactly</b>: <b>attributes</b> (program facts) + <b>preferences</b> (what applicant they want) — that's why they share one library</li>
+      <li>One profile per school / program · depth → discoverability &amp; match quality</li>
+    </ul>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="box gate">
+    <div class="hd"><span class="eye">THE HINGE · is this school / program claimed?</span><span class="tag be">Backend</span></div>
+    <table class="tbl">
+      <tr><td><b>Unclaimed</b></td><td>→ we determine it (crawler owns it)</td></tr>
+      <tr><td><b>Claimed</b></td><td>→ crawler stops; school owns it fully</td></tr>
+    </table>
+    <ul style="margin-top:7px;"><li>Every school / program exists from day one (crawler) · claiming <b>hands the keys over</b> — the crawler steps away and never overwrites</li></ul>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="box">
+    <div class="hd"><span class="eye">TWO WAYS IN &amp; QUANTIFY</span><span class="tag api">API</span></div>
+    <div class="way">
+      <p class="wt"><i class="ti ti-world-search" style="margin-right:5px;"></i>Way ① · We build it — the crawler (unclaimed programs)</p>
+      <ul style="margin-top:0;">
+        <li>learns from <b>all public materials</b> — governed crawl + verified feeds · grounded · <b>never invents</b> · cites source</li>
+        <li>we determine <b>both</b>: <b>attributes</b> (outcomes · selectivity · cost · funding · accreditation · format · requirements · photos) <b>and preferences</b> (the target applicant)</li>
+        <li>source changes → re-enter the loop (consent + cap) · <b>stops the moment the school claims</b></li>
+      </ul>
+    </div>
+    <div class="way">
+      <p class="wt"><i class="ti ti-building-bank" style="margin-right:5px;"></i>Way ② · Claimed school users (first-party, authoritative)</p>
+      <ul style="margin-top:0;">
+        <li><b>claim</b> = verify ownership → unlocks editing, crawler steps away</li>
+        <li>from then on they fully own:</li>
+      </ul>
+      <div class="two">
+        <div class="mc"><p class="ml">Attributes</p><p class="mv">cost · outcomes · deadlines · capacity · requirements (direct entry · CSV · docs)</p></div>
+        <div class="mc"><p class="ml">Preferences</p><p class="mv">target applicant profile + the importance weights that drive recruiting</p></div>
+      </div>
+    </div>
+    <p style="margin:11px 0 2px;font-size:11px;font-weight:500;color:var(--color-text-primary);">QUANTIFY — raw (crawled HTML · form · CSV cell · doc) → typed value, same Prompt-Library schema:</p>
+    <table class="tbl">
+      <tr><td>Categorical (degree · field · country)</td><td>→ enum (taxonomy)</td></tr>
+      <tr><td>Numeric (cost · admit rate · outcomes)</td><td>→ number</td></tr>
+      <tr><td>Range (cost band · GPA / test band)</td><td>→ band</td></tr>
+      <tr><td>Boolean (funding · part-time · online)</td><td>→ flag</td></tr>
+      <tr><td>Date (deadlines · terms)</td><td>→ ISO date</td></tr>
+    </table>
+    <div class="prec">
+      <p class="pl"><i class="ti ti-stack-2" style="margin-right:4px;"></i>AUTHORITY PRECEDENCE — which source wins (= program-side confidence)</p>
+      <p class="pv">claimed school user (first-party) &nbsp;&gt;&nbsp; verified feed &nbsp;&gt;&nbsp; public crawl &nbsp;&gt;&nbsp; inferred &nbsp;·&nbsp; <b>once claimed, the crawler no longer writes</b></p>
+    </div>
+    <ul style="margin-top:8px;"><li><b>Validate</b> against allowed values · stamp <b>provenance · confidence · citation</b> → hand to backend</li></ul>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="box">
+    <div class="hd"><span class="eye">STORE · single source of truth</span><span class="tag be">Backend · Postgres</span></div>
+    <ul>
+      <li>backend receives only the <b>quantified value</b> (precedence already applied)</li>
+      <li>stores: raw + normalized · provenance · confidence · citation · <b>version</b></li>
+      <li>feeds the <b>same Prompt Library</b> Part 3 sorts on — student side ↔ program side</li>
+    </ul>
+  </div>
+  <div class="arrow"><i class="ti ti-arrow-up"></i> crawler loops only while unclaimed (no end gate)</div>
+</div>
+</body></html>

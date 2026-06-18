@@ -19,8 +19,8 @@ of Medicine (medschool.ucsd.edu), and Halıcıoğlu Data Science Institute
 FIELD_DESCRIPTIONS: dict[str, str] = {
     "Aerospace Engineering": (
         "Jacobs School aerospace coursework spans aerodynamics, propulsion, and spacecraft "
-        "systems with wind-tunnel and flight-research facilities at the UC San Diego "
-        "Center for Aerospace Research and Training."
+        "systems with wind-tunnel and flight-research facilities and the CaliBaja Center "
+        "for Resilient Materials and Systems."
     ),
     "Animal Biology": (
         "Ecology, Behavior and Evolution coursework examines vertebrate zoology, field "
@@ -439,6 +439,12 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
 }
 
 SLUG_DESCRIPTIONS: dict[str, str] = {
+    "ucsd-public-health-ms": (
+        "The Herbert Wertheim School of Public Health's Master of Public Health trains "
+        "practitioners in epidemiology, biostatistics, and health-policy analysis, pairing "
+        "graduate coursework with a supervised field practicum across San Diego County "
+        "community-health partners."
+    ),
     "ucsd-computer-science-bs": (
         "UCSD's Department of Computer Science and Engineering — consistently top-ranked — "
         "covers algorithms, systems, AI, and security with ties to the San Diego Supercomputer "
@@ -492,5 +498,15 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "The Halıcıoğlu Data Science Institute MS program trains students in machine "
         "learning, statistical inference, and large-scale data pipelines with the San Diego "
         "Supercomputer Center."
+    ),
+    "ucsd-area-studies-bs": (
+        "The BA in international studies through the School of Social Sciences combines "
+        "language training, regional area studies, and Pacific Rim cultural analysis across "
+        "the Americas and Asia."
+    ),
+    "ucsd-international-globalization-studies-bs": (
+        "Undergraduate globalization studies at the School of Global Policy and Strategy "
+        "examines transnational markets, migration, and development with the 21st Century "
+        "China Center and Center on Global Transformation."
     ),
 }

@@ -91,15 +91,23 @@ def test_catalog_breadth_and_shape():
     assert not validate_catalog(n.PROGRAMS)
 
 
-def test_coverable_programs_have_reviews():
+def test_no_synthesized_reviews_only_handcrafted():
+    """Coverable programs without gathered reviews must omit via _standard, not fake reviews."""
     from scripts.fleet_audit import is_coverable
 
-    missing = [
-        p["slug"]
-        for p in n.PROGRAMS
-        if is_coverable(p) and p["slug"] not in n._REVIEWS_BY_SLUG
-    ]
-    assert not missing, f"Coverable programs missing reviews: {missing[:10]}"
+    synthesized_source = "U.S. News — NYU rankings"
+    bad = []
+    for p in n.PROGRAMS:
+        if not is_coverable(p):
+            continue
+        slug = p["slug"]
+        rev = n._REVIEWS_BY_SLUG.get(slug)
+        if not rev:
+            continue
+        sources = [s.get("url", "") + s.get("label", "") for s in rev.get("sources", [])]
+        if any(synthesized_source in str(s) for s in sources):
+            bad.append(slug)
+    assert not bad, f"Synthesized institution-level reviews: {bad[:10]}"
 
 
 def test_institution_is_gold_except_recorded_omission():

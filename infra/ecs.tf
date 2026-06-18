@@ -99,6 +99,20 @@ resource "aws_iam_role_policy" "ecs_task_permissions" {
         Resource = ["*"]
       },
       {
+        # ECS Exec (Systems Manager) data/control channel — lets
+        # `aws ecs execute-command` open a shell into the running task, used to
+        # verify the in-VPC Qwen vLLM endpoint (curl 10.0.10.175:8000) and for
+        # future debugging. Standard ECS-exec permission set.
+        Effect = "Allow"
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel",
+        ]
+        Resource = ["*"]
+      },
+      {
         Effect = "Allow"
         Action = [
           "cognito-idp:AdminGetUser",
@@ -309,7 +323,18 @@ resource "aws_ecs_task_definition" "backend" {
       # Spec 03 §5/§6 — provider abstraction. anthropic is the default
       # for every agent. Per-agent overrides go in AI_PROVIDER_PER_AGENT_JSON.
       { name = "AI_PROVIDER_DEFAULT", value = "anthropic" },
-      { name = "AI_PROVIDER_PER_AGENT_JSON", value = "" },
+      # AI Structure — route the ML/extraction agents to the self-hosted Qwen
+      # (qwen_vllm.tf). The Claude<->Qwen boundary (ai/boundary.py) keeps every
+      # human-facing agent on Claude regardless; on a Qwen failure the failover
+      # chain (anthropic) serves the request. Embeddings stay on Voyage.
+      { name = "AI_PROVIDER_PER_AGENT_JSON", value = jsonencode({
+        extractor             = "qwen"
+        validator             = "qwen"
+        feature_emitter       = "qwen"
+        query_interpreter     = "qwen"
+        document_parse_triage = "qwen"
+        crawler_extraction    = "qwen"
+      }) },
       # Spec 03 §9 — failover order. Try anthropic → openai → rule_based.
       # Per-attempt timeout for the LLM round trip.
       { name = "AI_PROVIDER_FAILOVER_CSV", value = "anthropic,openai" },
@@ -334,6 +359,21 @@ resource "aws_ecs_task_definition" "backend" {
       # Ops token for programmatic access to internal reporting endpoints
       # (GET /feedback/admin, crawler ops). Internal-only; not a user credential.
       { name = "CRAWLER_OPS_TOKEN", value = "unipaith-ops-fbx-2026" },
+      # AI Structure (Spec 3) — turn the CPEF matcher ON (fused fit+confidence,
+      # two-sided M blend). Deterministic; the legacy convex-sum path remains the
+      # fallback, so this is reversible by setting it back to "false".
+      { name = "CPEF_MATCHING_ENABLED", value = "true" },
+      # AI Structure — self-hosted Qwen on vLLM (qwen_vllm.tf). Backend ML/extraction
+      # agents route here (AI_PROVIDER_PER_AGENT_JSON); on any failure the provider
+      # guard + failover (anthropic) serve the request, so this is reversible by
+      # setting QWEN_ENABLED=false. API key is unused (network-isolated SG); "EMPTY"
+      # satisfies the OpenAI client. One served model (7B) for all three tiers.
+      { name = "QWEN_ENABLED", value = "true" },
+      { name = "QWEN_BASE_URL", value = "http://${aws_instance.qwen_vllm.private_ip}:8000/v1" },
+      { name = "QWEN_API_KEY", value = "EMPTY" },
+      { name = "QWEN_MODEL_FLAGSHIP", value = "Qwen/Qwen2.5-7B-Instruct" },
+      { name = "QWEN_MODEL_WORKHORSE", value = "Qwen/Qwen2.5-7B-Instruct" },
+      { name = "QWEN_MODEL_BATCH", value = "Qwen/Qwen2.5-7B-Instruct" },
     ]
 
     secrets = [
@@ -390,11 +430,12 @@ resource "aws_ecs_task_definition" "backend" {
 
 # --- ECS Service ---
 resource "aws_ecs_service" "backend" {
-  name            = "${var.project}-backend"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.backend.arn
-  desired_count   = var.backend_desired_count
-  launch_type     = "FARGATE"
+  name                   = "${var.project}-backend"
+  cluster                = aws_ecs_cluster.main.id
+  task_definition        = aws_ecs_task_definition.backend.arn
+  desired_count          = var.backend_desired_count
+  launch_type            = "FARGATE"
+  enable_execute_command = true # ECS Exec for in-VPC debugging (e.g. curl the Qwen vLLM box)
 
   network_configuration {
     subnets          = aws_subnet.private[*].id
