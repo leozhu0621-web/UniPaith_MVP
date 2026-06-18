@@ -62,7 +62,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of California-San Diego"
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-18"
 
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is an undergraduate .+ at UC San Diego's .+\.$"
@@ -867,6 +867,16 @@ _PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
     "ucsd-medicine-prof": ["MD", "School of Medicine", "UC San Diego Health"],
     "ucsd-pharmacy-prof": ["PharmD", "Skaggs", "pharmacy"],
     "ucsd-data-science-ms": ["data science", "HDSI", "machine learning"],
+    "ucsd-management-sciences-and-quantitative-methods-bs": [
+        "Business Analytics",
+        "Rady",
+        "analytics minor",
+    ],
+    "ucsd-management-sciences-and-quantitative-methods-ms": [
+        "MSBA",
+        "Business Analytics",
+        "Rady",
+    ],
 }
 
 

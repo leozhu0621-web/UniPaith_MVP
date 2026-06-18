@@ -155,6 +155,20 @@ def test_flagship_programs_have_reviews():
     assert len(reviewed) >= 10
 
 
+def test_coverable_programs_have_reviews():
+    import sys
+
+    sys.path.insert(0, "scripts")
+    from fleet_audit import is_coverable
+
+    missing = [
+        spec["slug"]
+        for spec in p.PROGRAMS
+        if is_coverable(spec) and spec["slug"] not in p._REVIEWS_BY_SLUG
+    ]
+    assert not missing, f"Coverable programs missing reviews: {missing}"
+
+
 def test_no_name_prefixed_descriptions():
     name_prefix = sum(
         1
