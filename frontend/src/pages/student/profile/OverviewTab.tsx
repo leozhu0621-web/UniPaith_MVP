@@ -36,7 +36,7 @@ export default function OverviewTab() {
   const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Your name'
 
   return (
-    <div className="max-w-2xl space-y-5">
+    <div className="max-w-3xl space-y-5">
       <div className="flex items-center gap-4">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-muted text-xl font-bold text-foreground">
           {initials(fullName)}
