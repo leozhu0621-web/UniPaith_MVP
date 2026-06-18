@@ -1,0 +1,938 @@
+[
+ {
+  "name": "Brown University",
+  "city": "Providence",
+  "region": "RI",
+  "size": 7226,
+  "founded": 1764,
+  "description": "Brown University is a private Ivy League research university in Providence, Rhode Island, founded in 1764. The seventh-oldest institution of higher education in the United States, it was the first American college to admit students regardless of religious affiliation. Brown is known for its student-directed Open Curriculum, which has no general-education distribution requirements.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Looking_across_the_Main_Quad_toward_University_Hall%2C_Brown_University.jpg/1920px-Looking_across_the_Main_Quad_toward_University_Hall%2C_Brown_University.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "us_news_2025": 13,
+   "acceptance_rate": 0.0539,
+   "earnings_10yr_median": 93487,
+   "graduation_rate": 0.9569
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "admit_rate": 0.0539,
+   "completion_rate_4yr_150pct": 0.9569,
+   "median_earnings_10yr": 93487,
+   "avg_net_price": 25184,
+   "location": {
+    "lat": 41.826,
+    "lng": -71.403,
+    "source": "Wikipedia / Wikidata"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Looking_across_the_Main_Quad_toward_University_Hall%2C_Brown_University.jpg/1920px-Looking_across_the_Main_Quad_toward_University_Hall%2C_Brown_University.jpg",
+     "credit": "Wikimedia Commons / Chris Rycroft (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Ruth_Simmons_Quad_Brown_University.jpg/1920px-Ruth_Simmons_Quad_Brown_University.jpg",
+     "credit": "Wikimedia Commons / John Phelan (CC BY 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Brown_University_Robinson_Hall.jpg/1920px-Brown_University_Robinson_Hall.jpg",
+     "credit": "Wikimedia Commons / thurdl01 (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/9/9f/Lincoln_Field_Building%2C_Brown_University_campus-128.jpg",
+     "credit": "Wikimedia Commons / Elisa.rolle (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Chris Rycroft (CC BY 2.0)",
+   "source": "U.S. Dept. of Education College Scorecard",
+   "source_url": "https://collegescorecard.ed.gov/school/?217156"
+  },
+  "programs": [
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.0101"
+   },
+   {
+    "name": "Economics",
+    "degree": "BA",
+    "cip": "45.0601"
+   },
+   {
+    "name": "Applied Mathematics",
+    "degree": "BS",
+    "cip": "27.0301"
+   },
+   {
+    "name": "International and Public Affairs",
+    "degree": "BA",
+    "cip": "45.0901"
+   },
+   {
+    "name": "Biology",
+    "degree": "BS",
+    "cip": "26.0101"
+   }
+  ],
+  "unit_id": 217156
+ },
+ {
+  "name": "Dartmouth College",
+  "city": "Hanover",
+  "region": "NH",
+  "size": 4541,
+  "founded": 1769,
+  "description": "Dartmouth College is a private Ivy League research university in Hanover, NH, founded in 1769 under a charter signed by colonial New Hampshire governor John Wentworth. One of the nine colonial colleges established before the American Revolution, it pairs an undergraduate liberal-arts core with the Thayer School of Engineering, Tuck School of Business, Geisel School of Medicine, and the Guarini School of Graduate and Advanced Studies. Set on a wooded campus around the historic Dartmouth Green, it is among the smallest and most selective national research universities.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Baker_Tower_Panorama_%2810292276743%29.jpg/1920px-Baker_Tower_Panorama_%2810292276743%29.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "us_news_2025": 13,
+   "acceptance_rate": 0.054,
+   "earnings_10yr_median": 97434,
+   "graduation_rate": 0.9554
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "admit_rate": 0.054,
+   "completion_rate_4yr_150pct": 0.9554,
+   "median_earnings_10yr": 97434,
+   "avg_net_price": 29519,
+   "location": {
+    "lat": 43.704115,
+    "lng": -72.289949,
+    "source": "Wikipedia / Wikidata"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Baker_Tower_Panorama_%2810292276743%29.jpg/1920px-Baker_Tower_Panorama_%2810292276743%29.jpg",
+     "credit": "Wikimedia Commons / Šarūnas Burdulis (CC BY-SA 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Baker-Library-Dartmouth-College-Hanover-New-Hampshire-05-2018a.jpg/1920px-Baker-Library-Dartmouth-College-Hanover-New-Hampshire-05-2018a.jpg",
+     "credit": "Wikimedia Commons / Gunnar Klack (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Dartmouth_Hall_-_Dartmouth_College_-_DSC01608.jpg/1920px-Dartmouth_Hall_-_Dartmouth_College_-_DSC01608.jpg",
+     "credit": "Wikimedia Commons / Daderot (CC0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Wentworth_Hall%2C_Dartmouth_Hall%2C_Thornton_Hall_at_Dartmouth_College.jpg/1920px-Wentworth_Hall%2C_Dartmouth_Hall%2C_Thornton_Hall_at_Dartmouth_College.jpg",
+     "credit": "Wikimedia Commons / Kenneth C. Zirkel (CC BY 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/View_from_the_Green_%288732697677%29.jpg/1920px-View_from_the_Green_%288732697677%29.jpg",
+     "credit": "Wikimedia Commons / Šarūnas Burdulis (CC BY-SA 2.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Šarūnas Burdulis (CC BY-SA 2.0)",
+   "source": "U.S. Dept. of Education College Scorecard",
+   "source_url": "https://collegescorecard.ed.gov/school/?182670"
+  },
+  "programs": [
+   {
+    "name": "Economics",
+    "degree": "BA",
+    "cip": "45.0601"
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.0701"
+   },
+   {
+    "name": "Government",
+    "degree": "BA",
+    "cip": "45.1001"
+   },
+   {
+    "name": "Engineering Sciences",
+    "degree": "BS",
+    "cip": "14.0101"
+   },
+   {
+    "name": "Business Administration",
+    "degree": "MBA",
+    "cip": "52.0201"
+   }
+  ],
+  "unit_id": 182670
+ },
+ {
+  "name": "Vanderbilt University",
+  "city": "Nashville",
+  "region": "TN",
+  "size": 7208,
+  "founded": 1873,
+  "description": "Vanderbilt University is a private research university in Nashville, TN, founded in 1873 through a $1 million endowment from shipping and railroad magnate Cornelius Vanderbilt. Classified as an R1 doctoral university with very high research activity, it spans ten schools and colleges on a 330-acre parklike campus designated a national arboretum. Vanderbilt is known for its selective undergraduate colleges in arts and science, engineering, education and human development (Peabody), and music (Blair), alongside top-ranked graduate and professional schools.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Vanderbilt_University_Campus_2017_%282%29.jpg/1920px-Vanderbilt_University_Campus_2017_%282%29.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "R1: Doctoral Universities – Very high research activity",
+   "us_news_2025": 18,
+   "acceptance_rate": 0.0586,
+   "earnings_10yr_median": 91565,
+   "graduation_rate": 0.9354
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "R1: Doctoral Universities – Very high research activity",
+   "admit_rate": 0.0586,
+   "completion_rate_4yr_150pct": 0.9354,
+   "median_earnings_10yr": 91565,
+   "avg_net_price": 15846,
+   "location": {
+    "lat": 36.14659,
+    "lng": -86.803369,
+    "source": "Wikipedia / Wikidata"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Vanderbilt_University_Campus_2017_%282%29.jpg/1920px-Vanderbilt_University_Campus_2017_%282%29.jpg",
+     "credit": "Wikimedia Commons / Stablenode (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Tower%2C_E._Brown_Ingram_Commons%2C_Vanderbilt_University_at_night.jpg",
+     "credit": "Wikimedia Commons / Zheng sun (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/d/da/E._Bronson_Ingram_College.jpg",
+     "credit": "Wikimedia Commons / BugsMeanee (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Stablenode (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education College Scorecard",
+   "source_url": "https://collegescorecard.ed.gov/school/?221999"
+  },
+  "programs": [
+   {
+    "name": "Economics",
+    "degree": "BA",
+    "cip": "45.0601"
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.0701"
+   },
+   {
+    "name": "Neuroscience",
+    "degree": "BS",
+    "cip": "26.1501"
+   },
+   {
+    "name": "Biomedical Engineering",
+    "degree": "BS",
+    "cip": "14.0501"
+   },
+   {
+    "name": "Human and Organizational Development",
+    "degree": "BS",
+    "cip": null
+   }
+  ],
+  "unit_id": 221999
+ },
+ {
+  "name": "University of Notre Dame",
+  "city": "Notre Dame",
+  "region": "IN",
+  "size": 8818,
+  "founded": 1842,
+  "description": "University of Notre Dame is a private Catholic research university in Notre Dame, IN, founded in 1842 by the Congregation of Holy Cross. Classified as an R1 doctoral university with very high research activity, it is organized around colleges including Arts and Letters, the Mendoza College of Business, Engineering, and Science, and is anchored by its landmark Golden Dome Main Building and Basilica of the Sacred Heart. It is widely recognized for its undergraduate teaching, business and pre-professional programs, and a near-95% four-year graduation rate.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Main_Building_at_the_University_of_Notre_Dame.jpg/1920px-Main_Building_at_the_University_of_Notre_Dame.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "us_news_2025": 18,
+   "acceptance_rate": 0.1127,
+   "earnings_10yr_median": 99980,
+   "graduation_rate": 0.9517
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "admit_rate": 0.1127,
+   "completion_rate_4yr_150pct": 0.9517,
+   "median_earnings_10yr": 99980,
+   "avg_net_price": 26780,
+   "location": {
+    "lat": 41.7,
+    "lng": -86.23889,
+    "source": "Wikipedia / Wikidata"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Main_Building_at_the_University_of_Notre_Dame.jpg/1920px-Main_Building_at_the_University_of_Notre_Dame.jpg",
+     "credit": "Wikimedia Commons / Matthew Rice (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/North_Quad_in_the_Summer_from_the_Hesburgh_Library.JPG/1920px-North_Quad_in_the_Summer_from_the_Hesburgh_Library.JPG",
+     "credit": "Wikimedia Commons / Know1one1 (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Matthew Rice (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education College Scorecard",
+   "source_url": "https://collegescorecard.ed.gov/school/?152080"
+  },
+  "programs": [
+   {
+    "name": "Finance",
+    "degree": "BS",
+    "cip": "52.0801"
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BA",
+    "cip": "45.1001"
+   },
+   {
+    "name": "Economics",
+    "degree": "BA",
+    "cip": "45.0601"
+   },
+   {
+    "name": "Accountancy",
+    "degree": "BS",
+    "cip": "52.0301"
+   },
+   {
+    "name": "Theology and Religious Studies",
+    "degree": "BA",
+    "cip": "39.0601"
+   }
+  ],
+  "unit_id": 152080
+ },
+ {
+  "name": "Washington University in St Louis",
+  "city": "St. Louis",
+  "region": "MO",
+  "size": 7857,
+  "founded": 1853,
+  "description": "Washington University in St. Louis is a private research university in St. Louis, MO, founded in 1853. A member of the Association of American Universities, it is organized into seven schools spanning the arts and sciences, engineering, business, law, medicine, social work, and design and visual arts, and is classified among R1 doctoral universities for very high research activity. Its medical school and adjacent BJC/Barnes-Jewish campus anchor a major academic-medical research enterprise alongside the residential Danforth Campus.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/West_end_of_Danforth_Campus.jpg/1920px-West_end_of_Danforth_Campus.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "us_news_2025": 21,
+   "acceptance_rate": 0.1206,
+   "earnings_10yr_median": 86182,
+   "graduation_rate": 0.9426
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "admit_rate": 0.1206,
+   "completion_rate_4yr_150pct": 0.9426,
+   "median_earnings_10yr": 86182,
+   "avg_net_price": 21786,
+   "location": {
+    "lat": 38.647929,
+    "lng": -90.310604,
+    "source": "Wikipedia / Wikidata"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/West_end_of_Danforth_Campus.jpg/1920px-West_end_of_Danforth_Campus.jpg",
+     "credit": "Wikimedia Commons / Shubinator (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Ginkgo_All%C3%A9e.jpg/1920px-Ginkgo_All%C3%A9e.jpg",
+     "credit": "Wikimedia Commons / HOUYIMIN (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Washington_University_Campus_Exterior.jpg/1920px-Washington_University_Campus_Exterior.jpg",
+     "credit": "Wikimedia Commons / SuperDalio (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Shubinator (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education College Scorecard",
+   "source_url": "https://collegescorecard.ed.gov/school/?179867"
+  },
+  "programs": [
+   {
+    "name": "Biomedical Engineering",
+    "degree": "BS",
+    "cip": "14.0501"
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.0701"
+   },
+   {
+    "name": "Economics",
+    "degree": "BA",
+    "cip": "45.0601"
+   },
+   {
+    "name": "Business Administration and Management",
+    "degree": "MBA",
+    "cip": "52.0201"
+   },
+   {
+    "name": "Architecture",
+    "degree": "BS",
+    "cip": "04.0201"
+   }
+  ],
+  "unit_id": 179867
+ },
+ {
+  "name": "Georgetown University",
+  "city": "Washington",
+  "region": "DC",
+  "size": 7569,
+  "founded": 1789,
+  "description": "Georgetown University is a private Jesuit research university in Washington, DC, founded in 1789 as the oldest Catholic institution of higher education in the United States. Anchored by its landmark Healy Hall on a hill above the Potomac River, it enrolls students across its undergraduate colleges and graduate and professional schools and is classified as an R1 very-high-research-activity university. It is especially renowned for its Walsh School of Foreign Service, with additional strengths in government, law, business, and health.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Aerial_view_of_Georgetown_University.jpg/1920px-Aerial_view_of_Georgetown_University.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "R1: Doctoral Universities – Very high research activity",
+   "us_news_2025": 24,
+   "acceptance_rate": 0.1291,
+   "earnings_10yr_median": 103494,
+   "graduation_rate": 0.9481
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "R1: Doctoral Universities – Very high research activity",
+   "admit_rate": 0.1291,
+   "completion_rate_4yr_150pct": 0.9481,
+   "median_earnings_10yr": 103494,
+   "avg_net_price": 40815,
+   "location": {
+    "lat": 38.90722,
+    "lng": -77.07278,
+    "source": "Wikipedia / Wikidata"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Aerial_view_of_Georgetown_University.jpg/1920px-Aerial_view_of_Georgetown_University.jpg",
+     "credit": "Wikimedia Commons / Sdkb (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Georgetown_University%27s_Healy_Hall_from_across_the_Potomac.jpg/1920px-Georgetown_University%27s_Healy_Hall_from_across_the_Potomac.jpg",
+     "credit": "Wikimedia Commons / Jeff Vincent (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Georgetown_University_at_Sunset.jpg/1920px-Georgetown_University_at_Sunset.jpg",
+     "credit": "Wikimedia Commons / Caroline.seabolt (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/GeorgetownUniv.jpg/1920px-GeorgetownUniv.jpg",
+     "credit": "Wikimedia Commons / Duane Lempke (CC0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Sdkb (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education College Scorecard",
+   "source_url": "https://collegescorecard.ed.gov/school/?131496"
+  },
+  "programs": [
+   {
+    "name": "International Affairs (Foreign Service)",
+    "degree": "BS",
+    "cip": "44.0501"
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BA",
+    "cip": "45.1001"
+   },
+   {
+    "name": "Economics",
+    "degree": "BA",
+    "cip": "45.0601"
+   },
+   {
+    "name": "Finance",
+    "degree": "BS",
+    "cip": "52.0801"
+   },
+   {
+    "name": "Nursing",
+    "degree": "BS",
+    "cip": "51.3801"
+   }
+  ],
+  "unit_id": 131496
+ },
+ {
+  "name": "Emory University",
+  "city": "Atlanta",
+  "region": "GA",
+  "size": 7298,
+  "founded": 1836,
+  "description": "Emory University is a private research university in Atlanta, GA, founded in 1836. Set in the leafy Druid Hills neighborhood, it is classified for very high research activity (Carnegie R1) and is a member of the Association of American Universities, organized into nine schools and adjacent to the Centers for Disease Control and Prevention. It is known for its strengths in medicine, public health, nursing, and business, and maintains one of the largest university endowments in the United States.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/d/d1/Candler_Library%2C_Emory_University%2C_Night.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity",
+   "us_news_2025": 24,
+   "acceptance_rate": 0.1065,
+   "earnings_10yr_median": 80137,
+   "graduation_rate": 0.9109
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity",
+   "admit_rate": 0.1065,
+   "completion_rate_4yr_150pct": 0.9109,
+   "median_earnings_10yr": 80137,
+   "avg_net_price": 22585,
+   "location": {
+    "lat": 33.79111,
+    "lng": -84.32333,
+    "source": "Wikipedia / Wikidata"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/d/d1/Candler_Library%2C_Emory_University%2C_Night.jpg",
+     "credit": "Wikimedia Commons / Alexanderfernbank (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Emory_University_in_Atlanta_Georgia_-_Aerial_View_%2853839381683%29.jpg/1920px-Emory_University_in_Atlanta_Georgia_-_Aerial_View_%2853839381683%29.jpg",
+     "credit": "Wikimedia Commons / Tony Webster (CC BY 2.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Alexanderfernbank (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education College Scorecard",
+   "source_url": "https://collegescorecard.ed.gov/school/?139658"
+  },
+  "programs": [
+   {
+    "name": "Nursing",
+    "degree": "BS",
+    "cip": "51.3801"
+   },
+   {
+    "name": "Business Administration and Management",
+    "degree": "BS",
+    "cip": "52.0201"
+   },
+   {
+    "name": "Biology",
+    "degree": "BS",
+    "cip": "26.0101"
+   },
+   {
+    "name": "Economics",
+    "degree": "BA",
+    "cip": "45.0601"
+   },
+   {
+    "name": "Public Health",
+    "degree": "MS",
+    "cip": "51.2201"
+   }
+  ],
+  "unit_id": 139658
+ },
+ {
+  "name": "University of Virginia-Main Campus",
+  "city": "Charlottesville",
+  "region": "VA",
+  "size": 17597,
+  "founded": 1819,
+  "description": "The University of Virginia is a public research university in Charlottesville, VA, founded in 1819 by Thomas Jefferson, whose Academical Village and Rotunda form a UNESCO World Heritage Site. It is a member of the Association of American Universities and is classified as an R1 (very high research activity) doctoral university, known for selective undergraduate admissions and strong outcomes among American public universities.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/The_Rotunda_and_Lawn_University_of_Virginia_Charlottesville_VA_March_2011.jpg/1920px-The_Rotunda_and_Lawn_University_of_Virginia_Charlottesville_VA_March_2011.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "us_news_2025": 24,
+   "acceptance_rate": 0.1681,
+   "earnings_10yr_median": 86863,
+   "graduation_rate": 0.956
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "admit_rate": 0.1681,
+   "completion_rate_4yr_150pct": 0.956,
+   "median_earnings_10yr": 86863,
+   "avg_net_price": 21565,
+   "location": {
+    "lat": 38.03556,
+    "lng": -78.50333,
+    "source": "Wikipedia / Wikidata"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/The_Rotunda_and_Lawn_University_of_Virginia_Charlottesville_VA_March_2011.jpg/1920px-The_Rotunda_and_Lawn_University_of_Virginia_Charlottesville_VA_March_2011.jpg",
+     "credit": "Wikimedia Commons / Phil Roeder (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/4/41/Rotunda-uva-spring.jpg",
+     "credit": "Wikimedia Commons / Todd Vance (CC BY-SA 2.5)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Green_and_Rotunda_at_Academical_Village.jpg/1920px-Green_and_Rotunda_at_Academical_Village.jpg",
+     "credit": "Wikimedia Commons / Bestbudbrian (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Lawn_UVa_Rotunda_and_sky_2010.jpg/1920px-Lawn_UVa_Rotunda_and_sky_2010.jpg",
+     "credit": "Wikimedia Commons / Karen Blaha (CC BY-SA 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Rotunda-dusk.jpg/1920px-Rotunda-dusk.jpg",
+     "credit": "Wikimedia Commons / No machine-readable author provided. Tdvance~commonswiki assumed (based on copyright claims). (CC BY-SA 2.5)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Phil Roeder (CC BY 2.0)",
+   "source": "U.S. Dept. of Education College Scorecard",
+   "source_url": "https://collegescorecard.ed.gov/school/?234076"
+  },
+  "programs": [
+   {
+    "name": "Commerce",
+    "degree": "BS",
+    "cip": "52.0101"
+   },
+   {
+    "name": "Economics",
+    "degree": "BA",
+    "cip": "45.0601"
+   },
+   {
+    "name": "English Language and Literature",
+    "degree": "BA",
+    "cip": "23.0101"
+   },
+   {
+    "name": "Architecture",
+    "degree": "BS",
+    "cip": "04.0201"
+   },
+   {
+    "name": "Systems Engineering",
+    "degree": "BS",
+    "cip": "14.2701"
+   }
+  ],
+  "unit_id": 234076
+ },
+ {
+  "name": "University of North Carolina at Chapel Hill",
+  "city": "Chapel Hill",
+  "region": "NC",
+  "size": 20752,
+  "founded": 1789,
+  "description": "The University of North Carolina at Chapel Hill is a public research university in Chapel Hill, NC, chartered in 1789 and the first U.S. public university to admit students, in 1795. A flagship of the UNC System, it is classified R1 for very high research activity and is organized around the College of Arts & Sciences plus thirteen professional schools. It consistently ranks among the top public universities nationally and is widely recognized for its value to in-state students.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/The_%22Old_Well%22%2C_center_of_campus%2C_University_of_North_Carolina%2C_Chapel_Hill.jpg/1920px-The_%22Old_Well%22%2C_center_of_campus%2C_University_of_North_Carolina%2C_Chapel_Hill.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "R1: Doctoral Universities – Very High Research Activity",
+   "us_news_2025": 27,
+   "acceptance_rate": 0.1534,
+   "earnings_10yr_median": 72200,
+   "graduation_rate": 0.9117
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "R1: Doctoral Universities – Very High Research Activity",
+   "admit_rate": 0.1534,
+   "completion_rate_4yr_150pct": 0.9117,
+   "median_earnings_10yr": 72200,
+   "avg_net_price": 11655,
+   "location": {
+    "lat": 35.9086,
+    "lng": -79.0492,
+    "source": "Wikipedia / Wikidata"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/The_%22Old_Well%22%2C_center_of_campus%2C_University_of_North_Carolina%2C_Chapel_Hill.jpg/1920px-The_%22Old_Well%22%2C_center_of_campus%2C_University_of_North_Carolina%2C_Chapel_Hill.jpg",
+     "credit": "Wikimedia Commons / (User:Wgreaves) (public domain)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Wilson_Library_with_bell_tower_quad_view.jpg/1920px-Wilson_Library_with_bell_tower_quad_view.jpg",
+     "credit": "Wikimedia Commons / ManavParikh (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/f/fd/UNC_Chapel_Hill_-_Old_Well_with_flowers.jpg",
+     "credit": "Wikimedia Commons / Jack a lanier (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / (User:Wgreaves) (public domain)",
+   "source": "U.S. Dept. of Education College Scorecard",
+   "source_url": "https://collegescorecard.ed.gov/school/?199120"
+  },
+  "programs": [
+   {
+    "name": "Biology",
+    "degree": "BS",
+    "cip": "26.0101"
+   },
+   {
+    "name": "Media and Journalism",
+    "degree": "BA",
+    "cip": "09.0102"
+   },
+   {
+    "name": "Business Administration",
+    "degree": "BS",
+    "cip": "52.0201"
+   },
+   {
+    "name": "Psychology",
+    "degree": "BA",
+    "cip": "42.0101"
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.0701"
+   }
+  ],
+  "unit_id": 199120
+ },
+ {
+  "name": "University of Florida",
+  "city": "Gainesville",
+  "region": "FL",
+  "size": 35629,
+  "founded": 1853,
+  "description": "University of Florida is a public land-grant research university in Gainesville, FL, founded in 1853 and operating continuously on its Gainesville campus since 1906. It is classified as an R1 doctoral university with very high research activity and is the state's flagship institution, organized into 16 academic colleges. UF is consistently ranked among the top public universities in the United States.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/UF_TurlingtonPlaza.jpg/1920px-UF_TurlingtonPlaza.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "us_news_2025": 28,
+   "acceptance_rate": 0.242,
+   "earnings_10yr_median": 71588,
+   "graduation_rate": 0.9112
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "admit_rate": 0.242,
+   "completion_rate_4yr_150pct": 0.9112,
+   "median_earnings_10yr": 71588,
+   "avg_net_price": 6541,
+   "location": {
+    "lat": 29.6436,
+    "lng": -82.3549,
+    "source": "Wikipedia / Wikidata"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/UF_TurlingtonPlaza.jpg/1920px-UF_TurlingtonPlaza.jpg",
+     "credit": "Wikimedia Commons / William M (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / William M (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education College Scorecard",
+   "source_url": "https://collegescorecard.ed.gov/school/?134130"
+  },
+  "programs": [
+   {
+    "name": "Business Administration and Management",
+    "degree": "BS",
+    "cip": "52.0201"
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.1901"
+   },
+   {
+    "name": "Pharmacy",
+    "degree": "PhD",
+    "cip": "51.2001"
+   },
+   {
+    "name": "Agricultural and Food Sciences",
+    "degree": "BS",
+    "cip": "01.0000"
+   },
+   {
+    "name": "Law",
+    "degree": "PhD",
+    "cip": "22.0101"
+   }
+  ],
+  "unit_id": 134130
+ },
+ {
+  "name": "University of California-Davis",
+  "city": "Davis",
+  "region": "CA",
+  "size": 32253,
+  "founded": 1908,
+  "description": "University of California-Davis is a public land-grant research university in Davis, CA, founded in 1908 as the University Farm of the University of California. A member of the Association of American Universities and classified R1 for very high research activity, it grew from agricultural origins into a comprehensive research university spanning four colleges and six professional schools. UC Davis is especially renowned for veterinary medicine, agricultural and environmental sciences, and animal science, and enrolls roughly 32,000 undergraduates on a 5,300-acre campus near Sacramento.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/UC_Davis_campus_buildings_and_scenes_%2816188061937%29.jpg/1920px-UC_Davis_campus_buildings_and_scenes_%2816188061937%29.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "us_news_2025": 33,
+   "acceptance_rate": 0.418,
+   "earnings_10yr_median": 80838,
+   "graduation_rate": 0.854
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "admit_rate": 0.418,
+   "completion_rate_4yr_150pct": 0.854,
+   "median_earnings_10yr": 80838,
+   "avg_net_price": 14741,
+   "location": {
+    "lat": 38.5382,
+    "lng": -121.7617,
+    "source": "Wikipedia / Wikidata"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/UC_Davis_campus_buildings_and_scenes_%2816188061937%29.jpg/1920px-UC_Davis_campus_buildings_and_scenes_%2816188061937%29.jpg",
+     "credit": "Wikimedia Commons / UC Davis Arboretum and Public Garden (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/UC_Davis_Memorial_Union.jpg/1920px-UC_Davis_Memorial_Union.jpg",
+     "credit": "Wikimedia Commons / Borawik (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/The_Square_at_West_Village%2C_UC_Davis_%282014%29.jpg/1920px-The_Square_at_West_Village%2C_UC_Davis_%282014%29.jpg",
+     "credit": "Wikimedia Commons / Gildardo Sánchez (CC BY 2.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / UC Davis Arboretum and Public Garden (CC BY 2.0)",
+   "source": "U.S. Dept. of Education College Scorecard",
+   "source_url": "https://collegescorecard.ed.gov/school/?110644"
+  },
+  "programs": [
+   {
+    "name": "Veterinary Medicine",
+    "degree": "PhD",
+    "cip": "51.2401"
+   },
+   {
+    "name": "Animal Science",
+    "degree": "BS",
+    "cip": "01.0901"
+   },
+   {
+    "name": "Managerial Economics",
+    "degree": "BS",
+    "cip": "01.0103"
+   },
+   {
+    "name": "Psychology",
+    "degree": "BA",
+    "cip": "42.0101"
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.0701"
+   }
+  ],
+  "unit_id": 110644
+ },
+ {
+  "name": "University of California-Irvine",
+  "city": "Irvine",
+  "region": "CA",
+  "size": 30204,
+  "founded": 1965,
+  "description": "University of California-Irvine is a public land-grant research university in Irvine, CA, founded in 1965 as one of the ten campuses of the University of California system. Classified as an R1 doctoral university with very high research activity, it enrolls roughly 30,000 undergraduates and is widely regarded as a \"Public Ivy.\" Its Donald Bren School of Information and Computer Sciences and its biological sciences and health programs are among its best-known strengths.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Engineering_Tower_and_Computer_Science_Building.jpg/1920px-Engineering_Tower_and_Computer_Science_Building.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "us_news_2025": 32,
+   "acceptance_rate": 0.29,
+   "earnings_10yr_median": 80735,
+   "graduation_rate": 0.864
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: Very High Research Activity (R1)",
+   "admit_rate": 0.29,
+   "completion_rate_4yr_150pct": 0.864,
+   "median_earnings_10yr": 80735,
+   "avg_net_price": 15889,
+   "location": {
+    "lat": 33.6456,
+    "lng": -117.8425,
+    "source": "Wikipedia / Wikidata"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Engineering_Tower_and_Computer_Science_Building.jpg/1920px-Engineering_Tower_and_Computer_Science_Building.jpg",
+     "credit": "Wikimedia Commons / Alexliwiththe3 (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Humanities_Gateway.jpg/1920px-Humanities_Gateway.jpg",
+     "credit": "Wikimedia Commons / SinisterLizard (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Natural_Sciences_II.jpg/1920px-Natural_Sciences_II.jpg",
+     "credit": "Wikimedia Commons / Alexliwiththe3 (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Uc_Irvine_Bridge_%28108521873%29.jpeg/1920px-Uc_Irvine_Bridge_%28108521873%29.jpeg",
+     "credit": "Wikimedia Commons / Claudia Caro Sullivan (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Alexliwiththe3 (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education College Scorecard",
+   "source_url": "https://collegescorecard.ed.gov/school/?110653"
+  },
+  "programs": [
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.0701"
+   },
+   {
+    "name": "Biological Sciences",
+    "degree": "BS",
+    "cip": "26.0101"
+   },
+   {
+    "name": "Business Economics",
+    "degree": "BA",
+    "cip": "52.0601"
+   },
+   {
+    "name": "Psychology",
+    "degree": "BA",
+    "cip": "42.0101"
+   },
+   {
+    "name": "Nursing Science",
+    "degree": "BS",
+    "cip": "51.3801"
+   }
+  ],
+  "unit_id": 110653
+ }
+]
