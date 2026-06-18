@@ -309,7 +309,18 @@ resource "aws_ecs_task_definition" "backend" {
       # Spec 03 §5/§6 — provider abstraction. anthropic is the default
       # for every agent. Per-agent overrides go in AI_PROVIDER_PER_AGENT_JSON.
       { name = "AI_PROVIDER_DEFAULT", value = "anthropic" },
-      { name = "AI_PROVIDER_PER_AGENT_JSON", value = "" },
+      # AI Structure — route the ML/extraction agents to the self-hosted Qwen
+      # (qwen_vllm.tf). The Claude<->Qwen boundary (ai/boundary.py) keeps every
+      # human-facing agent on Claude regardless; on a Qwen failure the failover
+      # chain (anthropic) serves the request. Embeddings stay on Voyage.
+      { name = "AI_PROVIDER_PER_AGENT_JSON", value = jsonencode({
+        extractor             = "qwen"
+        validator             = "qwen"
+        feature_emitter       = "qwen"
+        query_interpreter     = "qwen"
+        document_parse_triage = "qwen"
+        crawler_extraction    = "qwen"
+      }) },
       # Spec 03 §9 — failover order. Try anthropic → openai → rule_based.
       # Per-attempt timeout for the LLM round trip.
       { name = "AI_PROVIDER_FAILOVER_CSV", value = "anthropic,openai" },
@@ -338,6 +349,17 @@ resource "aws_ecs_task_definition" "backend" {
       # two-sided M blend). Deterministic; the legacy convex-sum path remains the
       # fallback, so this is reversible by setting it back to "false".
       { name = "CPEF_MATCHING_ENABLED", value = "true" },
+      # AI Structure — self-hosted Qwen on vLLM (qwen_vllm.tf). Backend ML/extraction
+      # agents route here (AI_PROVIDER_PER_AGENT_JSON); on any failure the provider
+      # guard + failover (anthropic) serve the request, so this is reversible by
+      # setting QWEN_ENABLED=false. API key is unused (network-isolated SG); "EMPTY"
+      # satisfies the OpenAI client. One served model (7B) for all three tiers.
+      { name = "QWEN_ENABLED", value = "true" },
+      { name = "QWEN_BASE_URL", value = "http://${aws_instance.qwen_vllm.private_ip}:8000/v1" },
+      { name = "QWEN_API_KEY", value = "EMPTY" },
+      { name = "QWEN_MODEL_FLAGSHIP", value = "Qwen/Qwen2.5-7B-Instruct" },
+      { name = "QWEN_MODEL_WORKHORSE", value = "Qwen/Qwen2.5-7B-Instruct" },
+      { name = "QWEN_MODEL_BATCH", value = "Qwen/Qwen2.5-7B-Instruct" },
     ]
 
     secrets = [
