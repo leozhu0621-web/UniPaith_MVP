@@ -6,6 +6,68 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-18 — Run 53 (NO new gaps → 0 rule changes)
+
+**Institutions audited:** ONE profile-data PR merged since run 52 — **#730 `enrich(gatech): external_reviews depth pass for
+58 coverable programs`** (commit `b218479`). Graded Georgia Tech end-to-end (live API `n=143` + merged SOURCE for the
+reviews), plus a fleet checklist spot-check (GT photos+feed; gold MIT control unchanged from run 52).
+
+**Merged since run 52:** EIGHT PRs. Seven are OUT OF SCOPE for profile-data grading (AI-Structure infra/frontend, no
+profile data): #727 enrichment API + DB adapter (C.2), #728 frontend enrich widget (C.3), #729 claim hinge (D.1), #731
+matcher projects ProgramPreference + student GPA/field (D.2), #732 wire EnrichWidget into My Space (D.3), #733 institution
+ProgramPreference editor API (D.3), #734 institution ProgramPreference editor form (D.3). The ONE in-scope PR is **#730**.
+
+**Findings (live API + merged source evidence, `api.unipaith.co/api/v1`):**
+1. **#730 is the EIGHTH consecutive depth-pass-on-a-still-fabricated catalog** — the classification-stub variant of the
+   same defect the seven school-blurb catalogs carry. Two dimensions, both documented classes:
+   - **STRUCTURE-BEFORE-DEPTH breach (miss #8).** Live n=143: **100% classification descriptions** ("Bachelor of Science in
+     Aerospace Engineering is an undergraduate major offered through Georgia Tech's College of Engineering." — every row),
+     **100% prefix-doubled**, **98% dept=field-echo**, 6 rollup names. Every description is a gold-contrast STUB; the deep
+     fields are empty. The reviews were bolted onto these fabricated rows without de-fabricating them first.
+   - **58 SYNTHESIZED reviews (run-9 / miss #8 fabrication-by-synthesis), graded from MERGED SOURCE** (live API still shows
+     only the 4 flagships — deploy propagating). `georgia_tech_reviews_depth.py` built by a one-shot generator
+     (`generate_georgia_tech_reviews_depth.py`) from `(school, dept, U.S. News)` lookup tables: **49/58 carry an identical
+     institution-level "Georgia Tech — Rankings" theme**; theme DETAILS copy-pasted VERBATIM across rows (14× "Georgia Tech
+     Engineering is consistently ranked among U.S. leaders", 14× "Research assistantships are competitive; terminal MS
+     students may self-fund", 14× "Graduate sequences assume strong math and engineering foundations", 12× "Doctoral
+     students work with faculty across a top public research university"); **108 sources are the program's OWN dept homepage
+     / a generic DISCIPLINE ranking** ("Georgia Tech — Aerospace Engineering" homepage + "U.S. News — Aerospace
+     Engineering"), NOT program-specific coverage; all 58 under the false "Aggregated and paraphrased from publicly
+     available third-party coverage" disclaimer.
+   - ✅ **The 4 hand-crafted flagship reviews ARE genuine** (the only 4 live so far): BS Computer Science (Threads, real
+     cc.gatech.edu source), Full-Time MBA (Poets&Quants Scheller profile + career-services award), OMS Analytics, OMSCS
+     (OMSCentral / The Wandering Engineer / Forbes program reviews) — program-specific summary + themes + sources. The RIGHT
+     model for the other 58.
+2. **Fleet checklist GREEN.** Georgia Tech: 5 campus photos + feed alive (`posts=321`). gold MIT control (n=65) unchanged
+   from run 52: 0 dup / field-specific / 0% blurb / 0% dept-echo / 1% prefix. No dead feed, no short gallery in the fleet.
+
+**Diagnosis:** BAD DATA recurring classes the rulebook ALREADY names — the reviews pass on a 100%-classification-stub
+catalog = miss #8 structure-before-depth gate (classification descriptions are explicitly stub/fabricated rows per the
+gold-contrast bullet); the 58 machine-generated reviews = run-9 / miss #8 fabrication-by-synthesis (every fingerprint —
+institution-level themes, verbatim copy-pasted cautions, dept-homepage/discipline-ranking sources, false "aggregated"
+disclaimer — is already enumerated, including "a SOURCE is the … department homepage / an institution ranking rather than
+program-specific coverage"). No display bug. No finding argued for loosening an invariant.
+
+**Rulebook changes: NONE (0 of ≤3).** Per the SAFETY RAILS (no-edit-without-NEW-evidence; "Clean fleet → change nothing…
+Never invent a rule to look busy"; anti-churn; confirm-not-already-covered), restating documented classes would be churn —
+#730's two defects are exactly the structure-before-depth and fabrication-by-synthesis classes already in SKILL.md. The
+standing concern is unchanged and STRENGTHENED: enricher BEHAVIOR + work-ORDERING — the depth-pass-on-a-fabricated-catalog
+is now the default on EIGHT consecutive PRs (seven school-blurb + Georgia Tech), each adding synthesized reviews to
+un-de-fabricated descriptions while the CRITICAL repair-first top stays unrepaired; the #724 planner (run 52) has not yet
+redirected the enricher toward repair-first. More rule text cannot fix rule-adoption or work-ordering. **Flagged for human
+review** (carried + strengthened from runs 46–52).
+
+**Backlog delta:** Georgia Tech graduates from the HIGH #646 table (it was the last surviving row) to its own CRITICAL
+section (#730 structure-before-depth + 58 synthesized reviews). The HIGH "#646 catalogs" table is now EMPTY — all eight
+catalogs have left it (seven school-blurb, run 43–50; Georgia Tech, run 53). Preamble header refreshed run 52 → 53 with
+the #730 grade, the seven out-of-scope PRs, and the live re-grade numbers.
+
+**Health-check GREEN:** `test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** (system pytest +
+sqlalchemy/pydantic/pgvector installed + `--noconftest` in this ephemeral container; `profile_standard.manifest` imports
+cleanly at STANDARD_VERSION 2). The change is markdown-only — no SKILL.md / code / data edit.
+
+---
+
 ## 2026-06-18 — Run 52 (NO new gaps → 0 rule changes)
 
 **Institutions audited:** No profile-enrichment PR merged since run 51, so there was no new enrichment output to grade.
