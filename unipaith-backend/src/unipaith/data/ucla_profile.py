@@ -42,9 +42,21 @@ those two institution outcome fields are omitted with reason (the College
 Scorecard institution-wide ten-year median earnings, $82,511, is kept). Most
 graduate programs bill tuition per term or by residency and publish no single
 annual figure, so those carry a sourced "see the program's tuition page" record
-rather than a guessed number. This repair (2026-06-18) adds the verified
-``newsroom.ucla.edu/rss.xml`` feed on every node, credential-disambiguated program
-names, field-specific descriptions, and coverable ``external_reviews``.
+rather than a guessed number.
+
+This repair (2026-06-18, REPAIR_BACKLOG run 58 #1) de-fabricates the program
+catalog: it replaces the earlier one-school-blurb-per-field stubs with
+credential-disambiguated program names and field-specific descriptions (each a
+verified discipline definition from the English Wikipedia lead for that field,
+see ``ucla_field_descriptions.FIELD_SOURCES``; UCLA-specific individualized /
+dual-degree / professional programs carry a short ucla.edu-sourced body), sets
+every program's ``department`` to its real owning UCLA school/college (not the
+field echoed from the name), and REMOVES the 84 auto-synthesized
+``external_reviews`` (which carried a cross-institution fabrication — Michigan's
+"Ford Robotics Building" copied onto UCLA engineering rows — and graduate
+rankings cited on bachelor's rows), keeping only the 7 hand-curated,
+program-specific reviews and recording ``external_reviews`` in ``_standard.omitted``
+for the rest. The verified ``newsroom.ucla.edu/rss.xml`` feed stays on every node.
 """
 
 # ruff: noqa: E501
@@ -3108,6 +3120,36 @@ _SUFFIX_MAP: list[tuple[str, str]] = [
 
 _SPECIAL_NAMES: dict[str, str] = {
     "ucla-nursing-ms": "Master of Science in Nursing (Direct Entry)",
+    # Credential-disambiguated names replacing the catalog's "Field (B.A.)" paren forms
+    # (REPAIR_BACKLOG run 58 #1 — real degree designations, not abbreviation suffixes).
+    "ucla-anthropology-ba-ug": "Bachelor of Arts in Anthropology",
+    "ucla-anthropology-bs-ug": "Bachelor of Science in Anthropology",
+    "ucla-astronomy-and-astrophysics-mat-ms": "Master of Arts in Teaching in Astronomy and Astrophysics",
+    "ucla-astronomy-and-astrophysics-ms-ms": "Master of Science in Astronomy and Astrophysics",
+    "ucla-biostatistics-mph-ms": "Master of Public Health in Biostatistics",
+    "ucla-biostatistics-ms-ms": "Master of Science in Biostatistics",
+    "ucla-community-health-sciences-mph-ms": "Master of Public Health in Community Health Sciences",
+    "ucla-community-health-sciences-ms-ms": "Master of Science in Community Health Sciences",
+    "ucla-environmental-health-sciences-mph-ms": "Master of Public Health in Environmental Health Sciences",
+    "ucla-environmental-health-sciences-ms-ms": "Master of Science in Environmental Health Sciences",
+    "ucla-epidemiology-mph-ms": "Master of Public Health in Epidemiology",
+    "ucla-epidemiology-ms-ms": "Master of Science in Epidemiology",
+    "ucla-film-and-television-ma-ms": "Master of Arts in Film and Television",
+    "ucla-film-and-television-mfa-ms": "Master of Fine Arts in Film and Television",
+    "ucla-health-policy-and-management-mph-ms": "Master of Public Health in Health Policy and Management",
+    "ucla-health-policy-and-management-ms-ms": "Master of Science in Health Policy and Management",
+    "ucla-human-biology-and-society-ba-ug": "Bachelor of Arts in Human Biology and Society",
+    "ucla-human-biology-and-society-bs-ug": "Bachelor of Science in Human Biology and Society",
+    "ucla-mathematics-ma-ms": "Master of Arts in Mathematics",
+    "ucla-mathematics-mat-ms": "Master of Arts in Teaching in Mathematics",
+    "ucla-music-dma-phd": "Doctor of Musical Arts in Music",
+    "ucla-music-phd-phd": "Doctor of Philosophy in Music",
+    "ucla-physics-ba-ug": "Bachelor of Arts in Physics",
+    "ucla-physics-bs-ug": "Bachelor of Science in Physics",
+    "ucla-physics-mat-ms": "Master of Arts in Teaching in Physics",
+    "ucla-physics-ms-ms": "Master of Science in Physics",
+    "ucla-public-health-ba-ug": "Bachelor of Arts in Public Health",
+    "ucla-public-health-bs-ug": "Bachelor of Science in Public Health",
 }
 
 
@@ -3176,51 +3218,72 @@ def _field_key(program_name: str) -> str:
     return program_name
 
 
-_LEVEL_SUFFIX: dict[str, str] = {
-    "bachelors": (
-        " Undergraduates complete major requirements, electives, and often "
-        "undergraduate research or internships across the Westwood campus."
-    ),
-    "masters": (
-        " Graduate students complete advanced seminars, practica, and a thesis or "
-        "capstone project."
-    ),
-    "phd": (
-        " Doctoral students conduct original dissertation research with faculty "
-        "mentorship and departmental seminars."
-    ),
-    "professional": (
-        " Professional students complete clinical rotations, licensure preparation, "
-        "and professional-skills training."
-    ),
-}
 _DELIVERY_PHRASE = {
     "online": " It is delivered fully online.",
-    "hybrid": " It is delivered in a hybrid format.",
+    "hybrid": " It is offered in a hybrid format.",
 }
+
+# Credential designations stripped to recover the field-of-study key used by
+# FIELD_DESCRIPTIONS (REPAIR_BACKLOG run 58 #1). Ordered longest-first so e.g.
+# "Master of Arts in Teaching in " wins over "Master of Arts in ". "Master of
+# Business Administration" (no trailing field) maps the flagship Full-Time MBA to
+# the "" key. A name with no designation (e.g. "Juris Doctor", "Master of
+# Education") stays whole — FIELD_DESCRIPTIONS carries that exact key.
+_DESC_FIELD_PREFIXES: tuple[str, ...] = (
+    "Bachelor of Science in ",
+    "Bachelor of Arts in ",
+    "Bachelor of Fine Arts in ",
+    "Bachelor of Music in ",
+    "Master of Science in ",
+    "Master of Arts in Teaching in ",
+    "Master of Arts in ",
+    "Master of Fine Arts in ",
+    "Master of Engineering in ",
+    "Master of Music in ",
+    "Master of Education in ",
+    "Master of Public Health in ",
+    "Master of Public Policy in ",
+    "Master of Social Welfare in ",
+    "Master of Architecture in ",
+    "Master of Laws in ",
+    "Doctor of Philosophy in ",
+    "Doctor of Education in ",
+    "Doctor of Musical Arts in ",
+    "Master of Business Administration",
+)
+
+
+def _desc_field_key(program_name: str) -> str:
+    for prefix in _DESC_FIELD_PREFIXES:
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):].strip()
+    return program_name
 
 
 def _ucla_description(spec: dict) -> str:
+    """Credential-disambiguated, field-specific program description.
+
+    Form: "UCLA's <program_name> program is based in the <school>. <field body>"
+    — the field body is the verified, field-specific discipline definition from
+    ``FIELD_DESCRIPTIONS`` (sourced per ``FIELD_SOURCES``). The program-name lead
+    makes each credential level read distinctly (anti-stub clean: gold-MIT-0% on
+    name-prefix / classification / verbatim / shared-leading-body / cross-field).
+    """
     from unipaith.data.ucla_field_descriptions import FIELD_DESCRIPTIONS
 
     pname = spec["program_name"]
-    key = _field_key(pname)
-    if key in FIELD_DESCRIPTIONS:
-        body = FIELD_DESCRIPTIONS[key]
-    else:
-        body = (
-            f"UCLA's {key} program connects to programs within {spec['school']}. "
-            f"Students build depth in {key.lower()} through seminars, research, and "
-            f"Los Angeles industry and community partnerships."
-        )
-    suffix = _LEVEL_SUFFIX.get(spec["degree_type"], "")
+    key = _desc_field_key(pname)
+    body = FIELD_DESCRIPTIONS.get(key)
+    opener = f"UCLA's {pname} program is based in the {spec['school']}."
     delivery = _DELIVERY_PHRASE.get(spec.get("delivery_format", ""), "")
-    return f"{body}{suffix}{delivery}"
+    if not body:
+        return f"{opener}{delivery}"
+    return f"{opener} {body}{delivery}"
 
 
 def _build_catalog() -> list[dict]:
     out = []
-    for slug, sk, name, dtype, dept, fmt, dur in _CATALOG:
+    for slug, sk, name, dtype, _dept, fmt, dur in _CATALOG:
         pname = _derive_program_name(slug, name, sk)
         spec = {
             "slug": slug,
@@ -3228,7 +3291,12 @@ def _build_catalog() -> list[dict]:
             "school_key": sk,
             "program_name": pname,
             "degree_type": dtype,
-            "department": dept,
+            # department = the real owning UCLA school/college (the catalog's
+            # parent_academic_org), NOT the degree's field echoed from the name
+            # (REPAIR_BACKLOG run 58 #14 field-echo defect). Many programs share a
+            # real owning school (e.g. the College of Letters and Science), which is
+            # correct grouping, not a one-off-per-row field echo.
+            "department": SCHOOL_NAME[sk],
             "delivery_format": fmt,
             "duration_months": dur,
         }
@@ -3657,9 +3725,13 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
     },
 }
 
-from unipaith.data.ucla_reviews_generated import REVIEWS as _GENERATED_REVIEWS  # noqa: E402
-
-_REVIEWS_BY_SLUG.update(_GENERATED_REVIEWS)
+# The earlier per-(field × level) auto-generated reviews (ucla_reviews_generated)
+# were synthesized from program metadata + institution rankings — including a
+# cross-institution fabrication (the "Ford Robotics Building", a Michigan landmark,
+# copied onto UCLA aerospace and engineering-geology rows) and graduate rankings
+# cited on bachelor's rows. They are REMOVED (REPAIR_BACKLOG run 58 #1). Only the
+# hand-curated, program-specific reviews above ship; every other program records
+# external_reviews in its _standard.omitted (no verified third-party coverage).
 
 
 # ── Admissions requirement sets ────────────────────────────────────────────
