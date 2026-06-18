@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { MessageSquare } from 'lucide-react'
 import QueryError from '../../components/ui/QueryError'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -216,8 +217,9 @@ export default function MessagesPage({ initialThreadId }: { initialThreadId?: st
       {/* Right: thread view. Mobile: full screen when a thread is selected. */}
       <div className={`${selectedId ? 'flex' : 'hidden lg:flex'} flex-1 flex-col`}>
         {!selectedId ? (
-          <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-muted-foreground">
-            Pick a conversation to see it here.
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
+            <MessageSquare size={28} className="text-muted-foreground/50" aria-hidden="true" />
+            <p className="text-sm text-muted-foreground">Pick a conversation to see it here.</p>
           </div>
         ) : threadLoading ? (
           <ThreadSkeleton />
