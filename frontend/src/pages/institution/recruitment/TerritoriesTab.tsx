@@ -69,7 +69,6 @@ export default function TerritoriesTab() {
           <EmptyState
             icon={<Map size={28} />}
             title="No territories yet"
-            description="Divide your prospect geography into territories, assign recruiters, and track conversion per region."
             action={{ label: 'Create a territory', onClick: () => setShowNew(true) }}
           />
         </Card>

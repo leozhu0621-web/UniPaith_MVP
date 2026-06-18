@@ -66,12 +66,11 @@ describe('ProbabilityBands (§4A)', () => {
   it('shows "Not enough data yet" with the no-history reason when null', () => {
     render(<ProbabilityBands bands={null} reason="no_history" />)
     expect(screen.getByText(/Not enough data yet/i)).toBeInTheDocument()
-    expect(screen.getByText(/admissions history/i)).toBeInTheDocument()
   })
 
-  it('nudges the student to their profile when not match-ready', () => {
+  it('shows "Not enough data yet" when not match-ready', () => {
     render(<ProbabilityBands bands={null} reason="not_match_ready" />)
-    expect(screen.getByText(/Add more to your profile/i)).toBeInTheDocument()
+    expect(screen.getByText(/Not enough data yet/i)).toBeInTheDocument()
   })
 })
 

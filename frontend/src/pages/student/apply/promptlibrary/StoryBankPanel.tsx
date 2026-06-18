@@ -53,9 +53,6 @@ export default function StoryBankPanel({ stories }: { stories: Story[] }) {
           <h3 className="flex items-center gap-1.5 text-h3 text-foreground">
             <BookOpen size={18} /> Story bank
           </h3>
-          <p className="text-sm text-muted-foreground">
-            Reusable stories you can draw from across prompts and essays.
-          </p>
         </div>
         <Button variant="secondary" size="sm" onClick={openNew}>
           <Plus size={15} /> Add story
@@ -64,9 +61,7 @@ export default function StoryBankPanel({ stories }: { stories: Story[] }) {
 
       {stories.length === 0 ? (
         <Card pad={false} variant="card-flush" className="px-4 py-10 text-center">
-          <p className="text-sm text-muted-foreground">
-            No stories yet. Capture a defining experience once, then map it to any prompt.
-          </p>
+          <p className="text-sm text-muted-foreground">No stories yet.</p>
           <div className="mt-3">
             <Button variant="secondary" size="sm" onClick={openNew}>
               <Plus size={15} /> Add your first story

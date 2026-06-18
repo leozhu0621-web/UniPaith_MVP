@@ -108,7 +108,6 @@ export default function DepartmentPortalPage() {
         <EmptyState
           icon={<Users size={28} />}
           title="Department not found"
-          description="This department may have been removed."
         />
       </div>
     )
@@ -166,7 +165,6 @@ export default function DepartmentPortalPage() {
             <EmptyState
               icon={<Users size={28} />}
               title="No applicants yet"
-              description="Applicants to this department's programs appear here for scoped review and recommendation."
             />
           ) : (
             <div className="space-y-2.5">

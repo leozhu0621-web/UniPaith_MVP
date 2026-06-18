@@ -58,10 +58,10 @@ export default function ApplicationGamePlan() {
   const total = apps.length
   // The one most useful nudge about portfolio balance.
   const nudge = (() => {
-    if (total === 0) return 'No applications yet — start one from your saved list to build your game-plan.'
-    if (counts.safer === 0) return 'No safer schools yet — add one to balance your list.'
-    if (counts.reach === 0) return 'Every target looks safe — consider adding a reach school you would love.'
-    if (counts.target === 0) return 'Add a few target schools to anchor your list.'
+    if (total === 0) return 'No applications yet.'
+    if (counts.safer === 0) return 'No safer schools yet.'
+    if (counts.reach === 0) return 'No reach schools yet.'
+    if (counts.target === 0) return 'No target schools yet.'
     return null
   })()
 
@@ -94,7 +94,7 @@ export default function ApplicationGamePlan() {
 
         {unclassified > 0 && (
           <p className="text-xs text-muted-foreground">
-            {unclassified} application{unclassified === 1 ? '' : 's'} not yet scored for fit — open them to generate a match.
+            {unclassified} application{unclassified === 1 ? '' : 's'} not yet scored for fit
           </p>
         )}
 
@@ -128,12 +128,11 @@ export default function ApplicationGamePlan() {
           </div>
         )}
 
-        <p className="text-xs text-muted-foreground">
-          {savedCount > 0
-            ? `${savedCount} program${savedCount === 1 ? '' : 's'} saved. `
-            : ''}
-          Reach / target / safer reflects each application's fitness band.
-        </p>
+        {savedCount > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {savedCount} program{savedCount === 1 ? '' : 's'} saved
+          </p>
+        )}
       </Card>
     </div>
   )

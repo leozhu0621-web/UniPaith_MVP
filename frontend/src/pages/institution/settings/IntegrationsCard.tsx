@@ -16,11 +16,7 @@ const CONNECTORS = [
 
 export default function IntegrationsCard({ primaryDomain }: { primaryDomain: string | null }) {
   return (
-    <SettingsSection
-      icon={Plug}
-      title="Integrations"
-      description="Connect your SIS / CRM, verify your sending domain, and access your data exports."
-    >
+    <SettingsSection icon={Plug} title="Integrations">
       {/* SES sender domain */}
       <div className="flex items-center justify-between gap-3 py-3 border-b border-border">
         <div className="flex items-start gap-3 min-w-0">

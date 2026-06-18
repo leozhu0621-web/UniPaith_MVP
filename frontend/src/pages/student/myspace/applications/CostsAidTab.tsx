@@ -84,7 +84,7 @@ export default function CostsAidTab() {
   return (
     <div className="space-y-8">
       <section>
-        <SectionHeader title="Budget & funding" description="Your annual ceiling and how you plan to fund it." />
+        <SectionHeader title="Budget & funding" />
         <Card pad={false} className="p-5 space-y-4">
           <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1">
             <Input label="Annual budget — minimum (USD)" type="number" min={0} placeholder="0" value={form.budget_min} onChange={e => set('budget_min', e.target.value)} />
@@ -110,15 +110,13 @@ export default function CostsAidTab() {
 
       {/* Scholarship matcher (Spec 70 §3) — deterministic, profile-driven. */}
       <section>
-        <SectionHeader title="Scholarships you may qualify for" description="Matched from your profile — a verified mismatch excludes an award, an unknown field never does." />
+        <SectionHeader title="Scholarships you may qualify for" />
         {scholarships.isLoading ? (
           <SkeletonCard />
         ) : scholarships.isError ? (
           <QueryError variant="inline" detail="We couldn't load scholarship matches." onRetry={() => scholarships.refetch()} />
         ) : matchList.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No matches yet — completing your profile (academics, identity, goals) unlocks more awards.
-          </p>
+          <p className="text-sm text-muted-foreground">No matches yet</p>
         ) : (
           <div className="space-y-2">
             {matchList.map(s => (
@@ -143,7 +141,7 @@ export default function CostsAidTab() {
       </section>
 
       <section>
-        <SectionHeader title="Cost comparison" description="Estimate and compare net cost across your saved and applied programs." />
+        <SectionHeader title="Cost comparison" />
         <Suspense fallback={<SkeletonCard />}>
           <FinancialAidPage />
         </Suspense>

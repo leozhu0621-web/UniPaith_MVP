@@ -101,9 +101,7 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
         action={updates.length > 0 ? { label: 'See all', onClick: () => onOpenTab('updates') } : undefined}
       >
         {updates.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-1">
-            {followCount === 0 ? 'Follow a school to see its updates here.' : 'No updates yet from schools you follow.'}
-          </p>
+          <p className="text-xs text-muted-foreground px-1">No updates yet.</p>
         ) : (
           updates.map(it => (
             <button
@@ -127,7 +125,7 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
         action={events.length > 0 ? { label: 'See all', onClick: () => onOpenTab('events') } : undefined}
       >
         {events.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-1">No upcoming events from schools you follow.</p>
+          <p className="text-xs text-muted-foreground px-1">No upcoming events.</p>
         ) : (
           events.map(ev => (
             <button
@@ -148,7 +146,7 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
       {/* Deadline radar */}
       <RailCard icon={CalendarClock} title="Deadline radar">
         {radar.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-1">Save a program to track its deadline here.</p>
+          <p className="text-xs text-muted-foreground px-1">No deadlines yet.</p>
         ) : (
           radar.map(it => (
             <div
@@ -188,7 +186,7 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
       {/* Following + suggestions */}
       <RailCard icon={Bell} title={`Following · ${followCount}`} action={{ label: 'Manage', onClick: onManageFollowing }}>
         {suggestions.length === 0 ? (
-          <p className="text-xs text-muted-foreground px-1">Updates from schools you follow land in this rail.</p>
+          <p className="text-xs text-muted-foreground px-1">Not following any schools yet.</p>
         ) : (
           <>
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground px-1 mb-1">Add to your feed</p>

@@ -170,12 +170,6 @@ export default function FairnessPage() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-lg font-bold text-foreground">Fairness governance</h2>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            Disparate-impact is monitored per cohort, every week. If Δ exceeds a program’s threshold
-            for two consecutive weeks, scoring auto-pauses for that cohort until a human reviews it
-            (Spec 46 §6). Bias-avoidance is a practice — flags escalate to people; matching is never
-            fully automated.
-          </p>
         </div>
         <Button
           variant="secondary"
@@ -207,7 +201,6 @@ export default function FairnessPage() {
       {!hasSignals && (
         <EmptyState
           title="No fairness readings yet"
-          description="Run a recompute to score the last four weeks of cohorts. Readings appear once a program has at least 50 scored applicants in a week."
           action={{ label: 'Recompute now', onClick: () => recomputeMut.mutate() }}
         />
       )}

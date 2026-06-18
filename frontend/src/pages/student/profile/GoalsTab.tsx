@@ -29,10 +29,10 @@ import { formatDate } from '../../../utils/format'
 import { ConfidenceDots } from './shared'
 import type { GoalCategory, GoalStatus, StudentGoal } from '../../../types'
 
-const CATEGORIES: { key: GoalCategory; label: string; hint: string }[] = [
-  { key: 'academic', label: 'Academic', hint: 'Degree, major, programs.' },
-  { key: 'social', label: 'Social', hint: 'Connection, networking, community.' },
-  { key: 'personal', label: 'Personal', hint: 'Finance, wellbeing, growth.' },
+const CATEGORIES: { key: GoalCategory; label: string }[] = [
+  { key: 'academic', label: 'Academic' },
+  { key: 'social', label: 'Social' },
+  { key: 'personal', label: 'Personal' },
 ]
 
 const STATUS_VARIANTS: Record<GoalStatus, 'success' | 'info' | 'warning' | 'neutral'> = {
@@ -270,11 +270,10 @@ export default function GoalsTab() {
           <div key={cat.key}>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-foreground">{cat.label}</h3>
-              <span className="text-xs text-muted-foreground">{cat.hint}</span>
             </div>
             {grouped[cat.key].length === 0 ? (
               <Card pad={false} className="p-4 text-sm text-muted-foreground">
-                No {cat.label.toLowerCase()} goals yet — add one above.
+                None yet
               </Card>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

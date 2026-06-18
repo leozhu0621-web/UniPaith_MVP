@@ -93,9 +93,6 @@ export default function ProgramStep({
   return (
     <Card pad={false} className="p-5 sm:p-6">
       <h2 className="text-lg font-semibold text-foreground">Your first program</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        The essentials so students can find and match with it — add details later.
-      </p>
 
       <form onSubmit={onSubmit} className="mt-5 space-y-4">
         <Input label="Program name" required {...form.register('program_name')} error={form.formState.errors.program_name?.message} />

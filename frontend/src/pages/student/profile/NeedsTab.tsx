@@ -29,32 +29,12 @@ import type { MaslowLevel, NeedSeverity, StudentNeed } from '../../../types'
 // Maslow's hierarchy — bottom-up. We render top-down (self-actualization
 // first) because the page reads top-to-bottom and the higher tiers carry
 // the differentiating signal (community, scholarship, mental support).
-const MASLOW_TIERS: { key: MaslowLevel; label: string; hint: string }[] = [
-  {
-    key: 'self_actualization',
-    label: 'Self-actualization',
-    hint: 'Events, alums, career support, oversea education.',
-  },
-  {
-    key: 'self_esteem',
-    label: 'Self-esteem',
-    hint: 'Scholarship, peer-stress, environment.',
-  },
-  {
-    key: 'social',
-    label: 'Social',
-    hint: 'Community, culture, diversity, inclusion.',
-  },
-  {
-    key: 'safety',
-    label: 'Safety',
-    hint: 'Healthcare, finance, environment, policy.',
-  },
-  {
-    key: 'physiological',
-    label: 'Physiological',
-    hint: 'Housing, food.',
-  },
+const MASLOW_TIERS: { key: MaslowLevel; label: string }[] = [
+  { key: 'self_actualization', label: 'Self-actualization' },
+  { key: 'self_esteem', label: 'Self-esteem' },
+  { key: 'social', label: 'Social' },
+  { key: 'safety', label: 'Safety' },
+  { key: 'physiological', label: 'Physiological' },
 ]
 
 const SEVERITY_VARIANTS: Record<NeedSeverity, 'warning' | 'info' | 'neutral'> = {
@@ -271,11 +251,10 @@ export default function NeedsTab() {
           <div key={tier.key}>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-foreground">{tier.label}</h3>
-              <span className="text-xs text-muted-foreground">{tier.hint}</span>
             </div>
             {grouped[tier.key].length === 0 ? (
               <Card pad={false} className="p-4 text-sm text-muted-foreground">
-                No {tier.label.toLowerCase()} signals yet — add one above.
+                None yet
               </Card>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

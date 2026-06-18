@@ -82,7 +82,6 @@ export default function PreferencesCard({ preferences, onSave, saving }: Prefere
     <SettingsSection
       icon={SlidersHorizontal}
       title="Preferences"
-      description="Language, timezone, theme, and accessibility."
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <Select
@@ -91,7 +90,6 @@ export default function PreferencesCard({ preferences, onSave, saving }: Prefere
           value={preferences.locale ?? 'en'}
           onChange={e => onSave({ locale: e.target.value })}
           disabled={saving}
-          helperText="The language UniPaith speaks to you in."
         />
         <Select
           label="Timezone"
@@ -100,19 +98,18 @@ export default function PreferencesCard({ preferences, onSave, saving }: Prefere
           value={preferences.timezone ?? ''}
           onChange={e => onSave({ timezone: e.target.value })}
           disabled={saving}
-          helperText="Normalizes all deadlines & calendar times."
         />
       </div>
 
       <div className="border-t border-border mt-2 pt-1 divide-y divide-border">
-        <SettingRow label="Theme" description="Light, dark, or follow your system.">
+        <SettingRow label="Theme">
           <Segmented
             value={theme.theme}
             options={THEME_OPTIONS.map(o => ({ value: o.value, label: o.label, icon: o.icon }))}
             onChange={v => setTheme(v as Theme)}
           />
         </SettingRow>
-        <SettingRow label="Text size" description="Scales text across the app.">
+        <SettingRow label="Text size">
           <Segmented
             value={theme.fontSize}
             options={FONT_OPTIONS}
@@ -121,11 +118,10 @@ export default function PreferencesCard({ preferences, onSave, saving }: Prefere
         </SettingRow>
         <SettingRow
           label="Dyslexia-friendly"
-          description="Roomier spacing + a high-legibility typeface."
         >
           <Toggle checked={theme.dyslexia} onChange={setDyslexia} label="Dyslexia-friendly mode" />
         </SettingRow>
-        <SettingRow label="Reduce motion" description="Minimizes animations and transitions.">
+        <SettingRow label="Reduce motion">
           <Toggle checked={theme.reduceMotion} onChange={setReduce} label="Reduce motion" />
         </SettingRow>
       </div>

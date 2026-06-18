@@ -198,7 +198,6 @@ export default function CampaignsPage() {
         <EmptyState
           icon={<Megaphone size={40} />}
           title={tab === 'all' ? 'No campaigns yet' : `No ${STATUS_LABELS[tab as keyof typeof STATUS_LABELS]?.toLowerCase() ?? ''} campaigns`}
-          description="Plan your first outreach."
           action={{ label: 'New campaign', onClick: openNew }}
         />
       ) : (

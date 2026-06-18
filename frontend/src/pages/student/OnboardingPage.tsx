@@ -241,7 +241,6 @@ export default function OnboardingPage() {
           {step === 0 && (
             <StepShell
               title={firstName ? `Let's set up your space, ${firstName}` : "Let's set up your space"}
-              subtitle="A few taps to personalize your matches and deadlines."
               center
             >
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary/10 text-secondary mb-2 animate-scale-in">
@@ -254,7 +253,7 @@ export default function OnboardingPage() {
           )}
 
           {step === 1 && (
-            <StepShell title="What stage are you at?" subtitle="This shapes what we show you first.">
+            <StepShell title="What stage are you at?">
               <div className="grid gap-3" role="radiogroup" aria-label="Journey stage">
                 {STAGE_OPTIONS.map((o) => (
                   <OptionCard
@@ -271,7 +270,7 @@ export default function OnboardingPage() {
           )}
 
           {step === 2 && (
-            <StepShell title="Which fields interest you?" subtitle="Pick as many as you like.">
+            <StepShell title="Which fields interest you?">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 stagger-list" role="group" aria-label="Fields of interest">
                 {INTEREST_TRACKS.map((o) => (
                   <OptionCard
@@ -316,7 +315,7 @@ export default function OnboardingPage() {
           )}
 
           {step === 4 && (
-            <StepShell title="When do you want to start?" subtitle="Your target intake sets the deadline clock.">
+            <StepShell title="When do you want to start?">
               <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Target intake term">
                 {INTAKE_TERMS.map((term) => (
                   <OptionCard
@@ -526,7 +525,6 @@ function BuildMoment({
 
       <div className="space-y-2">
         <h1 className="text-lg font-bold text-foreground">Your space is ready</h1>
-        <p className="text-[15px] text-muted-foreground">Here&apos;s what we personalized:</p>
       </div>
 
       <ul className="stagger-list mx-auto w-full max-w-sm space-y-2.5 text-left">

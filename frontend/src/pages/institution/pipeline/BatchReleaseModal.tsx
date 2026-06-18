@@ -162,7 +162,7 @@ export default function BatchReleaseModal({
         {step === 'configure' && !result && (
           <>
             <p className="text-sm text-muted-foreground">
-              Confirm a decision for each applicant. Offer terms apply to admits and conditional admits.
+              Offer terms apply to admits and conditional admits.
             </p>
             {notInDecisionStage.length > 0 && (
               <p className="text-xs text-warning rounded-lg border border-warning/30 bg-warning-soft/30 px-3 py-2">

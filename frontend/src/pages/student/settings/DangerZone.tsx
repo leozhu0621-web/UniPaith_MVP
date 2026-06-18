@@ -31,7 +31,6 @@ export default function DangerZone({ deletion, onChanged }: DangerZoneProps) {
     <SettingsSection
       icon={AlertTriangle}
       title="Danger zone"
-      description="Permanently delete your account and data."
       tone="danger"
     >
       {deletion ? (
@@ -49,9 +48,6 @@ export default function DangerZone({ deletion, onChanged }: DangerZoneProps) {
                 >
                   Undo
                 </button>
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Your account and data will be permanently removed after the grace period.
               </p>
             </div>
           </div>

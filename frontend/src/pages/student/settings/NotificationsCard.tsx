@@ -93,9 +93,8 @@ export default function NotificationsCard({
     <SettingsSection
       icon={Bell}
       title="Notifications"
-      description="Choose how each kind of update reaches you. Essential application alerts always stay in-app."
     >
-      <SettingRow label="Email notifications" description="Master switch for all email.">
+      <SettingRow label="Email notifications">
         <Toggle
           checked={emailOn}
           onChange={v => persist({ emailOn: v })}
@@ -151,7 +150,7 @@ export default function NotificationsCard({
       </div>
 
       <div className="border-t border-border mt-1 pt-2">
-        <SettingRow label="Email frequency" description="How often we batch non-urgent email.">
+        <SettingRow label="Email frequency">
           <div className="w-44">
             <Select
               uiSize="sm"

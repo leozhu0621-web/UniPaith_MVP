@@ -37,7 +37,6 @@ export default function PeersTab() {
     return (
       <EmptyExplainer
         title="Peer connections coming soon"
-        body="A space to connect with other applicants targeting overlapping programs. We'll open it once moderation tooling is ready."
       />
     )
   }
@@ -74,14 +73,14 @@ export default function PeersTab() {
   return <PeersDiscovery />
 }
 
-function EmptyExplainer({ title, body }: { title: string; body: string }) {
+function EmptyExplainer({ title, body }: { title: string; body?: string }) {
   return (
     <div className="text-center py-12">
       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
         <Users size={20} className="text-muted-foreground" />
       </div>
       <p className="text-sm font-medium text-foreground mb-1">{title}</p>
-      <p className="text-xs text-muted-foreground max-w-sm mx-auto">{body}</p>
+      {body && <p className="text-xs text-muted-foreground max-w-sm mx-auto">{body}</p>}
     </div>
   )
 }
@@ -123,7 +122,6 @@ function PeersDiscovery() {
       ) : (peers?.length ?? 0) === 0 ? (
         <EmptyExplainer
           title="No peers yet for your programs"
-          body="We'll notify you as more applicants join the programs you've saved or applied to."
         />
       ) : (
         <div className="stagger-list grid sm:grid-cols-2 gap-3">

@@ -251,7 +251,6 @@ export default function PostsPage() {
         <EmptyState
           icon={<FileText size={40} />}
           title={activeTab === 'all' ? 'No posts yet' : `No ${activeTab} posts`}
-          description="Create your first post to share updates with prospective students."
           action={activeTab === 'all' ? { label: 'New Post', onClick: openCreate } : undefined}
         />
       ) : (
@@ -453,7 +452,6 @@ export default function PostsPage() {
           {/* CTAs (Spec 27 §2.4) */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">Call-to-action buttons</label>
-            <p className="text-xs text-muted-foreground mb-2">Buttons students see on this post in their feed.</p>
             <div className="space-y-2">
               {ctas.map((c, i) => (
                 <div key={i} className="flex items-center gap-2">

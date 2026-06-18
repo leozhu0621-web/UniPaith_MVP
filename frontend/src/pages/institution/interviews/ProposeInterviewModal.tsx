@@ -265,9 +265,7 @@ export default function ProposeInterviewModal({ isOpen, onClose, onProposed, pro
               <label className="block text-sm font-medium text-foreground mb-1">
                 Proposed times
               </label>
-              <p className="text-xs text-muted-foreground mb-2">
-                Offer at least three options so applicants can choose.
-              </p>
+              <p className="text-xs text-muted-foreground mb-2">Offer at least three.</p>
               {slots.map((t, i) => (
                 <div key={i} className="flex items-center gap-2 mb-2">
                   <Input

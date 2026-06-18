@@ -90,7 +90,7 @@ export default function DiscoverHomePage() {
       <div className="flex gap-6 xl:gap-8">
         <aside className="hidden lg:block w-60 shrink-0">
           {/* minViewport: the rail is CSS-hidden below lg — keep the mark out of the queue there. */}
-          <Coachmark id="uni-journey" title="Journey rail" body="Uni walks you through Profile, Goals, and Needs — revisit any stage anytime." placement="right" minViewport="lg">
+          <Coachmark id="uni-journey" title="Journey rail" body="Uni walks you through Profile, Goals, and Needs." placement="right" minViewport="lg">
             <JourneyRail {...railProps} />
           </Coachmark>
         </aside>

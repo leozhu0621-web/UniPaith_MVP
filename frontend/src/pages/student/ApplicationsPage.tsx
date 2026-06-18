@@ -323,7 +323,6 @@ export default function ApplicationsPage() {
           <EmptyState
             icon={<Mail size={48} />}
             title="No offers yet"
-            description="Offers land here the moment a program admits you."
           />
         ) : (
           <div className="stagger-list space-y-2">
@@ -379,7 +378,6 @@ export default function ApplicationsPage() {
         <EmptyState
           icon={<FileText size={48} />}
           title="No applications yet"
-          description="Start one from your Saved list or Discover when you're ready."
           action={{ label: 'Explore programs', onClick: () => navigate('/s/explore') }}
         />
       </PageContainer>
@@ -434,7 +432,6 @@ export default function ApplicationsPage() {
                 ? `You have ${pendingOfferApps.length} offer${pendingOfferApps.length !== 1 ? 's' : ''} to respond to`
                 : `${offerApps.length} offer${offerApps.length !== 1 ? 's' : ''} on the table`}
             </p>
-            <p className="text-xs text-muted-foreground">Weigh cost, fit, and deadlines side by side.</p>
           </div>
           {offerApps.length >= 2 ? (
             <button

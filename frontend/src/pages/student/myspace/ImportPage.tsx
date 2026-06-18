@@ -14,10 +14,10 @@ import { PageContainer, PageHeader } from '../../../components/student/density'
 import Card from '../../../components/ui/Card'
 
 const STEPS = [
-  { icon: Upload, label: 'Upload', sub: 'A resume, transcript, or CV — any format.' },
-  { icon: Sparkles, label: 'Uni reads it', sub: 'It extracts your details, grounded in the file.' },
-  { icon: FileText, label: 'Review', sub: 'You confirm everything before it is saved.' },
-  { icon: ListChecks, label: 'Fill the gaps', sub: 'Uni asks about anything the file left out.' },
+  { icon: Upload, label: 'Upload' },
+  { icon: Sparkles, label: 'Uni reads it' },
+  { icon: FileText, label: 'Review' },
+  { icon: ListChecks, label: 'Fill the gaps' },
 ]
 
 export default function ImportPage() {
@@ -63,7 +63,6 @@ export default function ImportPage() {
                 <p className="text-sm font-medium text-foreground">
                   {i + 1}. {s.label}
                 </p>
-                <p className="text-xs text-muted-foreground">{s.sub}</p>
               </div>
             </div>
           ))}

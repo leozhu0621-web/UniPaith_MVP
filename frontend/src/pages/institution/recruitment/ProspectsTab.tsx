@@ -186,7 +186,6 @@ export default function ProspectsTab() {
           <EmptyState
             icon={<Users size={28} />}
             title="No prospects yet"
-            description="Import a prospect list or capture leads at a fair."
             action={{ label: 'Import prospects', onClick: () => setShowImport(true) }}
           />
         </Card>

@@ -76,7 +76,6 @@ export interface ProbabilityBandsProps {
 
 export default function ProbabilityBands({
   bands,
-  reason,
   loading,
   hideHeading,
   className,
@@ -95,20 +94,12 @@ export default function ProbabilityBands({
   }
 
   if (!bands) {
-    const why =
-      reason === 'no_history'
-        ? "We don't have enough admissions history for this program yet."
-        : reason === 'not_match_ready'
-          ? 'Add more to your profile to unlock your odds.'
-          : 'Not enough data to estimate your odds yet.'
     return (
       <div className={className}>
         {!hideHeading && <Heading />}
         <div className="flex items-start gap-2 text-xs text-foreground">
           <Info size={13} className="mt-0.5 shrink-0 text-foreground/60" />
-          <span>
-            <span className="font-medium text-foreground">Not enough data yet.</span> {why}
-          </span>
+          <span className="font-medium text-foreground">Not enough data yet.</span>
         </div>
       </div>
     )
@@ -144,7 +135,7 @@ export default function ProbabilityBands({
       )}
 
       <p className="mt-2 text-[10px] text-foreground/60">
-        Ranges, not promises — institutions decide. Based on program history and your profile fit.
+        Ranges, not promises — institutions decide.
       </p>
     </div>
   )

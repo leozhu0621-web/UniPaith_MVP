@@ -38,7 +38,6 @@ export default function DocumentsTab() {
     <div className="w-full px-4 sm:px-6 py-6">
       <SectionHeader
         title="Documents"
-        description="Transcripts, certificates, and other uploads."
         action={
           <div className="w-44">
             <Select
@@ -73,7 +72,6 @@ export default function DocumentsTab() {
           <EmptyState
             icon={<FileText size={40} />}
             title="No documents yet"
-            description="Upload transcripts, test scores, and portfolios above to back your applications."
           />
         </div>
       ) : (

@@ -948,7 +948,7 @@ function AboutTab({ inst }: { inst: Institution }) {
   const nothing = !inst.description_text && !supportKeys.length && !policyKeys.length && !intlKeys.length && !facts.length
 
   if (nothing) {
-    return <EmptyBlock icon={BookOpen} title="More about this school is coming" body="Institution details haven't been published yet. Explore the schools and programs in the meantime." />
+    return <EmptyBlock icon={BookOpen} title="More about this school is coming" />
   }
 
   return (
@@ -1132,7 +1132,7 @@ function SchoolsTab({ schoolList, institutionName, onOpen, onShowPrograms, hrefF
   hrefFor: (sid: string) => string
 }) {
   if (schoolList.length === 0) {
-    return <EmptyBlock icon={GraduationCap} title="No schools listed" body="This institution hasn't organized its programs into schools yet — browse all programs instead." action={{ label: 'View all programs', onClick: onShowPrograms }} />
+    return <EmptyBlock icon={GraduationCap} title="No schools listed" action={{ label: 'View all programs', onClick: onShowPrograms }} />
   }
   return (
     <div>
@@ -1249,7 +1249,7 @@ function ProgramsTab({ programs, institutionName, savedIds, comparing, onSave, o
       </div>
 
       {programs.length === 0 ? (
-        <EmptyBlock icon={BookOpen} title="No published programs yet" body="This school hasn't published any programs yet. Check back soon." />
+        <EmptyBlock icon={BookOpen} title="No published programs yet" />
       ) : filtered.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-10">No programs match these filters. <button onClick={() => setF(EMPTY_PROG_FILTER)} className="text-secondary hover:underline">Clear filters</button></p>
       ) : (
@@ -1324,13 +1324,13 @@ function Fact({ label, value, hint }: { label: string; value: string; hint?: str
 }
 
 function EmptyBlock({ icon: Icon, title, body, action }: {
-  icon: ComponentType<{ size?: number; className?: string }>; title: string; body: string; action?: { label: string; onClick: () => void }
+  icon: ComponentType<{ size?: number; className?: string }>; title: string; body?: string; action?: { label: string; onClick: () => void }
 }) {
   return (
     <div className="text-center py-16 bg-card rounded-xl border border-border">
       <Icon size={32} className="mx-auto text-muted-foreground mb-3" />
       <p className="text-sm text-foreground font-medium mb-1">{title}</p>
-      <p className="text-xs text-muted-foreground max-w-md mx-auto">{body}</p>
+      {body && <p className="text-xs text-muted-foreground max-w-md mx-auto">{body}</p>}
       {action && <Button size="sm" variant="secondary" className="mt-4" onClick={action.onClick}>{action.label}</Button>}
     </div>
   )

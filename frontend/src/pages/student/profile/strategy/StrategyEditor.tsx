@@ -123,9 +123,6 @@ export default function StrategyEditor({ initial, onCancel, onSubmit, submitting
         )}
       />
 
-      <div className="text-xs text-muted-foreground">
-        Saving creates a new draft — your current version is archived. Activate the new draft when you're ready.
-      </div>
       <div className="flex justify-end gap-2 pt-1">
         <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
         <Button type="submit" loading={submitting}>Save as new draft</Button>
@@ -150,7 +147,7 @@ function TrackEditor<T>({
         <Button type="button" size="sm" variant="ghost" onClick={onAdd}><Plus size={13} className="mr-1" />Add</Button>
       </div>
       {rows.length === 0 ? (
-        <p className="text-xs text-muted-foreground">None yet — add a step to build out this track.</p>
+        <p className="text-xs text-muted-foreground">None yet</p>
       ) : (
         <div className="space-y-3">
           {rows.map((row, i) => (

@@ -318,9 +318,7 @@ export default function IdentityTab() {
         {identity.identity_summary ? (
           <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{identity.identity_summary}</p>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Add a few values and beliefs below — or talk it through with Uni — and we'll synthesize a short portrait of who you are.
-          </p>
+          <p className="text-sm text-muted-foreground">Nothing yet</p>
         )}
         {regenMut.isError && (
           <p className="mt-2 text-xs text-warning">We couldn't reach the AI service. Showing your last summary.</p>
@@ -336,7 +334,7 @@ export default function IdentityTab() {
           onAdd={() => setEditing({ kind: 'core_values', index: null, draft: { ...(EMPTY.core_values as CoreValue) } })}
         >
           {identity.core_values.length === 0 ? (
-            <EmptyHint label="a value" onAdd={() => setEditing({ kind: 'core_values', index: null, draft: { ...(EMPTY.core_values as CoreValue) } })} />
+            <EmptyHint onAdd={() => setEditing({ kind: 'core_values', index: null, draft: { ...(EMPTY.core_values as CoreValue) } })} />
           ) : (
             identity.core_values.map((v, i) => (
               <Row key={i} title={v.value} sub={v.evidence} quote={v.source_quote}
@@ -350,7 +348,7 @@ export default function IdentityTab() {
           onAdd={() => setEditing({ kind: 'worldview', index: null, draft: { ...(EMPTY.worldview as WorldviewItem) } })}
         >
           {identity.worldview.length === 0 ? (
-            <EmptyHint label="a belief" onAdd={() => setEditing({ kind: 'worldview', index: null, draft: { ...(EMPTY.worldview as WorldviewItem) } })} />
+            <EmptyHint onAdd={() => setEditing({ kind: 'worldview', index: null, draft: { ...(EMPTY.worldview as WorldviewItem) } })} />
           ) : (
             identity.worldview.map((w, i) => (
               <Row key={i} title={w.belief} sub={w.context}
@@ -364,7 +362,7 @@ export default function IdentityTab() {
           onAdd={() => setEditing({ kind: 'self_awareness', index: null, draft: { ...(EMPTY.self_awareness as SelfAwarenessItem) } })}
         >
           {identity.self_awareness.length === 0 ? (
-            <EmptyHint label="an insight" onAdd={() => setEditing({ kind: 'self_awareness', index: null, draft: { ...(EMPTY.self_awareness as SelfAwarenessItem) } })} />
+            <EmptyHint onAdd={() => setEditing({ kind: 'self_awareness', index: null, draft: { ...(EMPTY.self_awareness as SelfAwarenessItem) } })} />
           ) : (
             <div className="grid grid-cols-1 gap-x-5 gap-y-2.5 sm:grid-cols-2">
               {identity.self_awareness.map((s, i) => (
@@ -451,14 +449,14 @@ function Row({
 }
 
 /** Empty layer — a single clickable line instead of a big centered state. */
-function EmptyHint({ label, onAdd }: { label: string; onAdd: () => void }) {
+function EmptyHint({ onAdd }: { onAdd: () => void }) {
   return (
     <button
       type="button"
       onClick={onAdd}
       className="w-full rounded-md border border-dashed border-border px-3 py-2.5 text-left text-xs text-muted-foreground transition-colors hover:border-secondary/50 hover:text-foreground"
     >
-      Nothing yet — add {label}, or let Uni surface it from your chats.
+      Nothing yet
     </button>
   )
 }

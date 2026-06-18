@@ -208,7 +208,7 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
             {program.description_text.replace(/\s*\[Source:.*?\]\s*/g, '').trim()}
           </p>
         ) : (
-          <p className="text-[11px] text-muted-foreground/60 italic">No description available — open to view full details.</p>
+          <p className="text-[11px] text-muted-foreground/60 italic">No description available.</p>
         )}
       </div>
 

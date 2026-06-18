@@ -230,24 +230,11 @@ export default function InterviewPracticePanel() {
                   setResponseText(e.target.value)
                   if (draftRestored) setDraftRestored(false)
                 }}
-                placeholder="Paste your answer — we'll coach it, never rewrite it."
+                placeholder="Paste your answer"
               />
             </div>
           </div>
         </details>
-
-        <div className="text-xs text-muted-foreground">
-          {hasResponse ? (
-            <>
-              We'll coach your response — <strong>no model answer</strong> in return.
-            </>
-          ) : (
-            <>
-              You'll get questions to rehearse.{' '}
-              <strong>These are practice questions, not answers.</strong>
-            </>
-          )}
-        </div>
 
         <div className="flex justify-end">
           <Button
@@ -261,9 +248,7 @@ export default function InterviewPracticePanel() {
       </Card>
 
       {!run && !practiceMut.isPending && !practiceMut.isError && (
-        <EmptyHint>
-          Pick a type for practice questions, or paste a response for coaching.
-        </EmptyHint>
+        <EmptyHint>Nothing yet.</EmptyHint>
       )}
 
       {practiceMut.isError && !run && <ErrorNote onRetry={() => practiceMut.mutate(targetProgram)} />}

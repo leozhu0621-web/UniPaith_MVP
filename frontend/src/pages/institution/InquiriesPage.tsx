@@ -147,7 +147,6 @@ export default function InquiriesPage({ embedded = false }: { embedded?: boolean
         <EmptyState
           icon={<Inbox size={40} />}
           title="No inquiries"
-          description="When students request info from your school or program pages, their inquiries will appear here."
         />
       ) : (
         <div className="space-y-2">

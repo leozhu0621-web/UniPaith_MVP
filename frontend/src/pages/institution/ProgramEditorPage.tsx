@@ -456,7 +456,6 @@ export default function ProgramEditorPage() {
             id="english"
             index={idx('english')}
             title="English proficiency"
-            description="Accepted English tests + minimum scores for international applicants, plus waiver rules. Used by the international-admissions workspace."
             open={isOpen('english')}
             onToggle={() => toggleSection('english')}
             invalid={invalidSections.has('english')}

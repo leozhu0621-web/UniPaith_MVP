@@ -162,11 +162,7 @@ export default function YieldPage() {
         <YieldHeader programOptions={programOptions} programId={programId} setProgramId={setProgramId} />
         <Card pad={false} className="p-10 text-center">
           <TrendingUp size={28} className="mx-auto mb-3 text-muted-foreground" />
-          <p className="text-sm font-medium text-foreground mb-1">No yield to track yet</p>
-          <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-            Yield tracking begins once you release decisions. Admit applicants from the pipeline and
-            their enrollment progress will appear here.
-          </p>
+          <p className="text-sm font-medium text-foreground">No yield to track yet</p>
         </Card>
       </div>
     )
@@ -298,9 +294,7 @@ export default function YieldPage() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              Confirmation timing appears once admits start confirming.
-            </p>
+            <p className="text-sm text-muted-foreground py-8 text-center">No confirmations yet</p>
           )}
         </Card>
       </div>
@@ -338,9 +332,7 @@ export default function YieldPage() {
           </span>
         </div>
         {!programId ? (
-          <p className="text-sm text-muted-foreground">
-            Select a program above to release places to its ranked waitlist.
-          </p>
+          <p className="text-sm text-muted-foreground">Select a program.</p>
         ) : (waitlist?.waitlist_count ?? 0) === 0 ? (
           <p className="text-sm text-muted-foreground">No applicants on the waitlist for this program.</p>
         ) : (
@@ -401,9 +393,6 @@ function YieldHeader({
     <div className="flex items-center justify-between flex-wrap gap-3">
       <div>
         <h2 className="text-lg font-bold text-foreground">Enrollment & yield</h2>
-        <p className="text-sm text-muted-foreground">
-          Where your admitted class stands — confirmations, deposits, and melt.
-        </p>
       </div>
       <div className="w-56">
         <Select

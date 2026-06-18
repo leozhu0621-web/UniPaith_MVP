@@ -280,7 +280,7 @@ export default function ExplorePage() {
       <PageHeader eyebrow="Discover" title={TAB_HEADERS[tab].title} />
 
       {/* First-visit tour (Ship C) — orients the hub's tabs. */}
-      <Coachmark id="discover-tabs" title="Discover tabs" body="For you ranks your matches; Updates, Events, and Peers bring in the schools you follow." placement="bottom">
+      <Coachmark id="discover-tabs" title="Discover tabs" body="For you ranks your matches." placement="bottom">
         <DiscoverTabBar tab={tab} onChange={setTab} onManageFollowing={() => setManaging(true)} />
       </Coachmark>
 
@@ -380,14 +380,12 @@ export default function ExplorePage() {
                 ) : uniList.length === 0 ? (
                   <div className="text-center py-16 bg-card rounded-xl border border-border">
                     <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
-                    <p className="text-sm text-foreground font-semibold mb-1">No universities yet</p>
-                    <p className="text-xs text-muted-foreground">They'll appear here as they join.</p>
+                    <p className="text-sm text-foreground font-semibold">No universities yet</p>
                   </div>
                 ) : filteredUniList.length === 0 ? (
                   <div className="text-center py-16 bg-card rounded-xl border border-border">
                     <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
-                    <p className="text-sm text-foreground font-semibold mb-1">No universities match your filters</p>
-                    <p className="text-xs text-muted-foreground mb-4">Try removing a filter or broadening your search.</p>
+                    <p className="text-sm text-foreground font-semibold mb-4">No universities match your filters</p>
                     <button
                       onClick={() => setFilters(EMPTY_FILTERS)}
                       className="text-xs font-semibold text-secondary hover:underline"

@@ -127,10 +127,6 @@ export default function TestGuidancePanel() {
           </div>
         </div>
 
-        <div className="text-xs text-muted-foreground">
-          You'll get a structured prep plan by gap size — no practice questions.
-        </div>
-
         <div className="flex justify-end">
           <Button
             variant="secondary"
@@ -143,7 +139,7 @@ export default function TestGuidancePanel() {
       </Card>
 
       {!run && !guidanceMut.isPending && !guidanceMut.isError && (
-        <EmptyHint>Add your current and target scores to get a structured prep plan.</EmptyHint>
+        <EmptyHint>Nothing yet.</EmptyHint>
       )}
 
       {guidanceMut.isError && !run && <ErrorNote onRetry={() => guidanceMut.mutate(targetProgram)} />}

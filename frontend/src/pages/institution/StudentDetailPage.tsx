@@ -369,9 +369,7 @@ export default function StudentDetailPage() {
                 {interviewsQ.isLoading ? (
                   <Skeleton className="h-24" />
                 ) : interviews.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No interviews yet. Propose one from <span className="font-medium">Admissions → Interviews</span>.
-                  </p>
+                  <p className="text-sm text-muted-foreground">No interviews yet.</p>
                 ) : (
                   <div className="space-y-3">
                     {interviews.map(iv => (
@@ -443,7 +441,7 @@ export default function StudentDetailPage() {
       {/* Reveal modal */}
       <Modal isOpen={showRevealModal} onClose={() => setShowRevealModal(false)} title="Reveal applicant identity">
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">Revealing identity is audit-logged. Provide a reason (e.g. "scoring complete").</p>
+          <p className="text-sm text-muted-foreground">Revealing identity is audit-logged.</p>
           <Textarea label="Reason" value={revealReason} onChange={e => setRevealReason(e.target.value)} rows={2} placeholder="Reason for revealing identity…" />
           <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setShowRevealModal(false)}>Cancel</Button><Button onClick={doReveal}>Reveal &amp; log</Button></div>
         </div>
@@ -716,7 +714,7 @@ function ScoresTab({ packet, synthesis, onSynthesize, synthLoading }: { packet: 
             <Button variant="secondary" size="sm" onClick={onSynthesize} disabled={synthLoading} className="flex items-center gap-1"><RefreshCw size={13} className={synthLoading ? 'animate-spin' : ''} />{synthesis ? 'Re-synthesize' : 'Synthesize'}</Button>
           </div>
           {!synthesis ? (
-            <p className="text-sm text-muted-foreground">Generate a balanced cross-reviewer recommendation. Advisory only — the committee decides.</p>
+            <p className="text-sm text-muted-foreground">Advisory only — the committee decides.</p>
           ) : (
             <>
               <p className="text-sm text-foreground whitespace-pre-wrap">{synthesis.overall_recommendation}</p>
@@ -809,9 +807,8 @@ function AISummaryTab({ packet, regen, regenPending, matchRationale, matchLoadin
 
       <Card pad={false} className="p-5 space-y-3">
         <div className="flex items-center gap-2"><Brain size={18} className="text-secondary" /><h3 className="font-semibold text-foreground">Match rationale — full evidence view</h3><Badge variant="info"><Shield size={10} className="mr-1" />Reviewer-only</Badge></div>
-        <p className="text-xs text-muted-foreground">The applicant sees a redacted version of this. Comparative and internal matching signals shown here are withheld from the student (Spec 06 §3).</p>
         {matchLoading ? <Skeleton className="h-24" /> : !matchRationale?.available ? (
-          <p className="text-sm text-muted-foreground">No match rationale yet — the applicant hasn't completed Discovery / matching.</p>
+          <p className="text-sm text-muted-foreground">No match rationale yet.</p>
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-foreground whitespace-pre-wrap">{matchRationale.rationale_text}</p>

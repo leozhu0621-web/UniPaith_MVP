@@ -59,7 +59,6 @@ export default function DemoNotice() {
     >
       <div className="space-y-2 text-sm text-muted-foreground">
         <p>Try everything — your data resets each time you sign in.</p>
-        <p>Spot something to fix? Use the Feedback button — we read every note.</p>
       </div>
     </Modal>
   )

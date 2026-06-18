@@ -84,10 +84,7 @@ export default function WorkshopProgramPicker({
           {isLoading ? (
             <div className="text-xs text-foreground">Loading your programs…</div>
           ) : options.length === 0 ? (
-            <div className="text-xs text-foreground">
-              Save or start an application to target a specific program — showing general feedback
-              for now.
-            </div>
+            <div className="text-xs text-foreground">No applications yet.</div>
           ) : (
             <select
               aria-label="Target program"

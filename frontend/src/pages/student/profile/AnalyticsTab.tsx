@@ -96,7 +96,7 @@ export default function AnalyticsTab() {
     <div className="space-y-10">
       {/* 15.1 Profile analytics */}
       <section>
-        <SectionHeader title="Profile analytics" description="How complete your record is and where the gaps are." />
+        <SectionHeader title="Profile analytics" />
         <div className="grid lg:grid-cols-2 gap-4">
           <Card pad={false} className="p-5 flex items-center gap-5">
             <CompletionRing value={overall} size={96} stroke={8} />
@@ -117,9 +117,7 @@ export default function AnalyticsTab() {
         <Card pad={false} className="p-5">
           <p className="up-eyebrow mb-3">Progress over time</p>
           {progressData.length < 2 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              Add a few records and this chart fills in.
-            </p>
+            <p className="text-sm text-muted-foreground py-8 text-center">No data yet</p>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={progressData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
@@ -141,7 +139,7 @@ export default function AnalyticsTab() {
         <Card pad={false} className="p-5">
           <p className="up-eyebrow mb-3">Signal density</p>
           {densityData.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">Add records to see how your signals stack up by area.</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">No data yet</p>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={densityData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
@@ -187,24 +185,19 @@ export default function AnalyticsTab() {
 
       {/* 15.2 Peer comparison */}
       <section>
-        <SectionHeader title="Peer comparison" description="Anonymized benchmarks vs students with similar targets." />
+        <SectionHeader title="Peer comparison" />
         {!analyticsConsent ? (
           <Card pad={false} className="p-5">
-            <p className="text-sm text-muted-foreground">
-              Peer comparison requires analytics consent. Manage in{' '}
-              <button
-                onClick={() => navigate('/s/settings')}
-                className="font-semibold text-secondary hover:underline"
-              >
-                Settings → Data &amp; privacy →
-              </button>
-            </p>
+            <button
+              onClick={() => navigate('/s/settings')}
+              className="text-sm font-semibold text-secondary hover:underline"
+            >
+              Settings → Data &amp; privacy →
+            </button>
           </Card>
         ) : peerMetrics.length === 0 ? (
           <Card pad={false} className="p-5">
-            <p className="text-sm text-muted-foreground">
-              Add a GPA or test score and we'll benchmark you against similar students.
-            </p>
+            <p className="text-sm text-muted-foreground">No data yet</p>
           </Card>
         ) : (
           <div className="grid sm:grid-cols-2 gap-3">

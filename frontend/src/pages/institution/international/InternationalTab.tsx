@@ -195,9 +195,7 @@ export default function InternationalTab({ applicationId }: { applicationId: str
     return (
       <Card pad={false} className="p-6 text-center">
         <Globe size={28} className="mx-auto mb-3 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">
-          This applicant is domestic — no international processing needed.
-        </p>
+        <p className="text-sm text-muted-foreground">This applicant is domestic.</p>
       </Card>
     )
   }
@@ -429,9 +427,7 @@ export default function InternationalTab({ applicationId }: { applicationId: str
         )}
         <div className="space-y-2">
           {draft.country_requirements.length === 0 && (
-            <p className="text-sm italic text-muted-foreground">
-              No country requirements yet. Use “Suggest pack” or add them manually.
-            </p>
+            <p className="text-sm italic text-muted-foreground">No country requirements yet.</p>
           )}
           {draft.country_requirements.map((req, i) => (
             <div key={i} className="flex items-center gap-2">
@@ -493,7 +489,7 @@ export default function InternationalTab({ applicationId }: { applicationId: str
           <Badge variant="warning">High sensitivity</Badge>
         </div>
         <p className="mb-4 text-xs text-muted-foreground">
-          Access-gated &amp; audit-logged. Generates a SEVIS-batch file you upload to SEVIS yourself.
+          Access-gated &amp; audit-logged. You upload the export to SEVIS yourself.
         </p>
 
         <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">

@@ -132,7 +132,6 @@ export default function FinancialAidPage() {
         <EmptyState
           icon={<DollarSign size={48} />}
           title="No programs to compare"
-          description="Save or apply to programs to see cost estimates here."
           action={{ label: 'Discover Programs', onClick: () => navigate('/s/explore') }}
         />
       ) : (

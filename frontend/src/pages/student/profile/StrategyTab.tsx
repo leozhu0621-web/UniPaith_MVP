@@ -263,8 +263,7 @@ export default function StrategyTab() {
 
       {!isLoading && !active && drafts.length === 0 && versions.length === 0 && (
         <Card pad={false} className="p-5 text-sm text-muted-foreground">
-          You don't have a strategy yet. Generate one with AI, develop it with Uni, or write your
-          own — generation needs at least one active academic goal (add one in the Goals tab).
+          No strategy yet. Generation needs at least one active academic goal.
         </Card>
       )}
 

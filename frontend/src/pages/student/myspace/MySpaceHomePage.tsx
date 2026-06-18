@@ -118,7 +118,7 @@ export default function MySpaceHomePage() {
       <Coachmark
         id="myspace-home"
         title="Your new home base"
-        body="Everything personal lives here — applications, prep, calendar, messages, saved programs, and your profile. The left rail follows your journey, top to bottom."
+        body="Everything personal lives here — applications, prep, calendar, messages, saved programs, and your profile."
         placement="bottom"
       >
         <PageHeader eyebrow="My Space" title={`${greeting}${firstName ? `, ${firstName}` : ''}`} />
@@ -135,8 +135,7 @@ export default function MySpaceHomePage() {
         <div className="stagger-list mt-2 space-y-4">
           <MomentumBand stage={stage} week={week} />
           <Card pad={false} className="p-6">
-            <p className="text-sm font-medium text-foreground">Your space fills as you work.</p>
-            <p className="mt-1 mb-4 text-xs text-muted-foreground">Start with Uni to build your profile, then save programs you like.</p>
+            <p className="mb-4 text-sm font-medium text-foreground">Your space fills as you work.</p>
             <div className="flex flex-wrap gap-2">
               <button onClick={() => navigate('/s')} className="ui-btn inline-flex items-center gap-1.5 rounded-md bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground"><Compass size={13} /> Talk to Uni</button>
               <button onClick={() => navigate('/s/explore')} className="ui-btn inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"><Target size={13} /> Browse matches</button>
@@ -192,7 +191,7 @@ export default function MySpaceHomePage() {
               {calendar.isError ? (
                 <p className="py-2 text-sm text-muted-foreground">Couldn't load your calendar.</p>
               ) : deadlines.length === 0 ? (
-                <p className="py-2 text-sm text-muted-foreground">Nothing due in the next two weeks. Get ahead in <button className="text-secondary hover:underline" onClick={() => navigate('/s/prep')}>Prep</button>.</p>
+                <p className="py-2 text-sm text-muted-foreground">Nothing due in the next two weeks.</p>
               ) : (
                 deadlines.map(item => {
                   const d = daysUntil(item.start_at)
@@ -213,7 +212,7 @@ export default function MySpaceHomePage() {
             <div>
               <SectionHeader>Waiting on others</SectionHeader>
               {waitingRecs.length === 0 ? (
-                <p className="py-2 text-sm text-muted-foreground">No pending requests. <button className="text-secondary hover:underline" onClick={() => navigate('/s/prep?tab=recommenders')}>Request a letter</button>.</p>
+                <p className="py-2 text-sm text-muted-foreground">No pending requests.</p>
               ) : (
                 waitingRecs.slice(0, 3).map(r => (
                   <ListRow
@@ -238,7 +237,7 @@ export default function MySpaceHomePage() {
               <div className="mt-4">
                 <SectionHeader action={unreadThreads > 0 ? <button onClick={() => navigate('/s/messages')} className="inline-flex items-center gap-1 text-xs text-secondary hover:underline"><MessageSquare size={12} /> {unreadThreads} unread</button> : undefined}>Latest feedback</SectionHeader>
                 {runList.length === 0 ? (
-                  <p className="py-2 text-sm text-muted-foreground">No workshop runs yet — get feedback on an essay draft in <button className="text-secondary hover:underline" onClick={() => navigate('/s/prep?tab=workshops')}>Prep</button>.</p>
+                  <p className="py-2 text-sm text-muted-foreground">No workshop runs yet.</p>
                 ) : (
                   runList.slice(0, 3).map(run => (
                     <ListRow

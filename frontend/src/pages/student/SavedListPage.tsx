@@ -322,7 +322,6 @@ export default function SavedListPage() {
           <EmptyState
             icon={<GraduationCap size={48} />}
             title="No saved schools yet"
-            description="Follow a school from its profile to bookmark it here."
             action={{ label: 'Open Match →', onClick: () => navigate('/s/explore') }}
           />
         ) : (
@@ -342,7 +341,6 @@ export default function SavedListPage() {
         <EmptyState
           icon={<Bookmark size={48} />}
           title="Your shortlist is empty"
-          description="Save programs from Match or Discovery to see them here."
           action={{ label: 'Open Match →', onClick: () => navigate('/s/explore') }}
         />
       ) : (
@@ -408,7 +406,7 @@ export default function SavedListPage() {
 
           {filtered.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              No programs match this filter. Try clearing it or showing dropped items.
+              No programs match this filter.
             </p>
           ) : viewMode === 'tier' ? (
             <div className="space-y-8">
