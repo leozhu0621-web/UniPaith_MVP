@@ -69,6 +69,35 @@ def test_analyzer_detects_a_school_blurb_stub_catalog():
     assert report.cross_field_clause, "should flag one body stamped across different fields"
 
 
+def test_cross_field_clause_is_case_insensitive_on_the_field_token():
+    """The school-blurb stamp often lowercases the interpolated field token
+    ("anthropology program connects…") while program_name is title-cased
+    ("… in Anthropology"). The cross-field neutralization must be case-insensitive,
+    or a lowercase-field blurb with no '..'/classification tell would pass as clean.
+    """
+    # No double-period and no classification phrase — the cross-field clause is the
+    # ONLY tell, and the field token is lowercase in the body (mismatching the title-
+    # cased name), so a case-sensitive normalization would miss it.
+    blurb = (
+        "At Example University, {field_lc} students join a research collective that "
+        "spans the humanities and social sciences, building methodological depth "
+        "through seminars and faculty-led projects across the city's institutions."
+    )
+    fabricated = [
+        {
+            "program_name": f"Bachelor of Arts in {fld}",
+            "description": blurb.format(field_lc=fld.lower()),
+        }
+        for fld in ("Anthropology", "Classics", "Economics", "History")
+    ]
+    report = analyze(fabricated)
+    assert not report.double_period, "guard premise: this fixture has no '..' tell"
+    assert report.cross_field_clause, (
+        "case-insensitive field neutralization must still flag one body stamped "
+        "across different fields when the body lowercases the field token"
+    )
+
+
 def test_analyzer_detects_classification_and_prefix_stubs():
     fabricated = [
         {

@@ -175,13 +175,16 @@ def analyze(programs: list[dict]) -> AntiStubReport:
     # (the school-blurb stamp the field-keyed count above never compares). The field name
     # is interpolated into the blurb ("{Univ}'s {field} program connects to {SCHOOL
     # blurb}…"), so neutralize the field token before comparing — otherwise the leading
-    # text differs per row only by the swapped-in field and the stamp hides.
+    # text differs per row only by the swapped-in field and the stamp hides. The blurb may
+    # lowercase the field token ("anthropology program connects…") while program_name is
+    # title-cased ("… in Anthropology"), so the neutralization is CASE-INSENSITIVE — a
+    # case-sensitive replace would miss the lowercase occurrence and let the stamp hide.
     head_to_fields: dict[str, set[str]] = defaultdict(set)
     for d, n in zip(descs, names):
         if len(d) < _SHARED_BODY_MIN_CHARS:
             continue
         field = field_of(n)
-        normalized = d.replace(field, "{FIELD}") if field else d
+        normalized = re.sub(re.escape(field), "{FIELD}", d, flags=re.IGNORECASE) if field else d
         head_to_fields[normalized[: _SHARED_BODY_MIN_CHARS * 2]].add(field)
     cross_field_clause = [
         head for head, fields in head_to_fields.items() if len(fields) >= 2
