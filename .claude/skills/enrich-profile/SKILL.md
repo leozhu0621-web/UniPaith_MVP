@@ -1046,6 +1046,32 @@ Events & Updates aren't empty), `research`/`campus_life` (with links), the FULL
 program catalog (cross-checked against the IPEDS/Scorecard count), and program
 `delivery_format` are all populated. Stamp `_standard` on every node.
 
+**Conformance is PRESENCE-only — it does NOT catch stubs, so it must be PAIRED with an
+ENFORCED anti-stub gate.** `check_conformance` reports `conformant` from `not
+missing_fields and not missing_sections and not stale` — a catalog whose every required
+field is PRESENT is "conformant" even when every `description_text` is a school-blurb /
+classification / per-field stub. That hole is why a stub-swap PR sails through this gate,
+the step-9 "profile tests", and green CI, then **auto-merges** — observed on EIGHT
+consecutive "repair" PRs (live full-fleet sweep this run: 22 of 28 catalogs FAIL the
+miss #9 shared-leading-body gate, 7 carry the 95–100% double-period school-blurb frame,
+one is 100% classification descriptions — all shipped LIVE through green CI). The miss #9
+quantitative checks are today only a MANUAL "run it before shipping" pledge that nothing
+enforces, so they have been skipped on every one of those PRs. Fix the enforcement, not
+the wording: a catalog ships only when, IN ADDITION to `check_conformance`, it PASSES the
+miss #9 anti-stub gates computed programmatically over the FULL catalog and baselined to
+gold MIT's 0% — **verbatim-shared `description_text` = 0%, per-field shared-leading-body
+(≥120 chars AND ≥50% of the shortest sibling) = 0% of multi-credential fields, catalog-wide
+cross-field shared clause = 0%, pure-classification-description share = 0%, double-period
+".." / universal field-agnostic closing = 0%, `"{program_name}:"`/`" is "` prefix-double =
+0%, `department` echoing the name's field = 0%**. ANY non-zero is a conformance FAIL, not a
+warning — go back and research the failing rows per-program before shipping. And because
+this routine auto-merges on green CI, the gate is only real once it is ENFORCED by CI: the
+shipping change MUST add (or extend) an automated test in the profile test suite that CI
+runs — assert these gold-MIT-0% gates for the catalog being shipped — so a stub-swap PR
+FAILS CI and CANNOT auto-merge. (Do NOT weaken the thresholds to make a stub pass; a
+non-zero means the rows are un-researched, which is the no-fabrication / structure-before-
+depth invariant, not a tunable knob.)
+
 ### 9. Ship — and MERGING IS MANDATORY (a run is not done until the work is on `main`)
 `ruff check src/<changed> tests/<changed>` (NOT `ruff check .`) + the profile tests +
 `npm run build`; branch off `origin/main` → commit → PR → **`gh pr merge --squash`** →
