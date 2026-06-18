@@ -7,54 +7,56 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-17 (grader run 45). **NO new rulebook gaps → 0 rule changes.** One enrichment PR merged since run 44:
-**#706 `Repair UIUC profile to gold — RSS feeds, program names, 129 reviews` (`3a8bf4f`)** — graded LIVE this run (n=419).
-(#702 CLAUDE.md guardrails, #703 `/ship` skill, #704/#705/#707 UX text→interactive slices are NOT enrichment.) Every live
-defect maps to an already-named class, so per the SAFETY RAILS (no-edit-without-evidence-of-a-NEW-problem; anti-churn)
-SKILL.md is unchanged. The work this run is backlog accuracy.
+_Last graded: 2026-06-18 (grader run 46). **NO new rulebook gaps → 0 rule changes.** NO enrichment PR has merged since
+run 45 (#709 is the latest commit on `main`); the fleet is the run-45 fleet. But TWO run-45 backlog claims were STALE and
+are CORRECTED this run after grading the live API directly (n: NYU 507, USC 613, UIUC 419, MIT 65 control):
 
-- 🟠 **#706 UIUC is the THIRD "repair to gold" PR in a row that ships WITHOUT de-fabricating the structure (after USC #696
-  + NYU #698) — but a DIFFERENT shape, and NOT a fresh fabrication, so it stays HIGH (not CRITICAL).** Live n=419: #706
-  added a working feed (`posts=9`) + 129 reviews + flagship deep content, but the catalog STRUCTURE is the UNCHANGED #646
-  fabrication:
-  - **Duplicate IDENTICAL names across award levels — UNCHANGED (miss #2, the #646 class).** 186 dup-name rows / 105
-    distinct (Accountancy ×4, Aerospace Engineering ×3, Agricultural & Applied Economics ×3 — exactly the #646 table
-    signature; the credential lives in `degree_type`, NOT the name, so the bachelor's + master's + PhD "Accountancy" all
-    collide). vs the #646 UW-Seattle 187 — i.e. names byte-for-byte the old stub.
-  - **Classification descriptions + 100% prefix-doubling — UNCHANGED (miss #8 gold-contrast / miss #9 prefix).** Every row
-    is `"{name} is a {level} program/major offered through UIUC's {College}"` ("Accountancy is a master's program offered
-    through UIUC's Gies College of Business") — pure classification, no field-specific fact; the spliced double determiner
-    "UIUC's The Grainger College" is the mechanical-generation tell. 419/419 prefix-double.
-  - **`dept` = the field echoed from the name on 413/419** (real owning school — "Siebel School of Computing", "Gies
-    College" — named only in the description/faculty body) — the run-43 miss #2 dept defect, live.
-  - **Reviews + deep content are GENUINE but attached to still-fabricated rows = STRUCTURE-BEFORE-DEPTH breach (miss #8).**
-    Unlike USC/NYU, the sampled UIUC reviews read GATHERED + program-specific (CS "U.S. News ranks UIUC CS #7 undergraduate";
-    Accountancy "#1 undergraduate accounting program" — both true), NOT synthesized institution-boilerplate — so this is
-    real depth on un-de-fabricated rows, which is discarded the moment the names/descriptions are de-fabricated. UIUC
-    therefore STAYS in the #646 HIGH table with the #706 annotation; de-fabricate the names + descriptions + dept BEFORE
-    the depth work counts.
-- 🔴 **CRITICAL top UNCHANGED — nothing merged for NYU #698, USC #696, Boston U, Stanford, Northwestern, Duke, Purdue, or
-  UCSD since run 44.** NYU (school-blurb descriptions + dead feed `posts=0` despite the #698 "feeds" title + synthesized
-  reviews) and USC (school-blurb descriptions + dept=field-echo + 219 synthesized reviews) remain the two freshest broad
-  fabrications — both LIVE-CONFIRMED at run 44. See their CRITICAL sections below.
-- ⚠️ **BACKLOG-ACCURACY (carried from run 44): the "cleanest non-MIT tier" carries the run-30 verbatim-identical-across-
-  credential-levels defect** — JHU 79%, Caltech 53%, UChicago 50%, Rice 42% of rows share a `description_text` VERBATIM
-  with a credential sibling (gold MIT 0%). TRUE but stamped per-FIELD, never per-PROGRAM — NOT reviews-ready until each
-  credential level gets its own researched body. Only Princeton (0%) and gold MIT (0%) give each level its own text.
+- ✅ **CORRECTION 1 — UIUC #706 is the SCHOOL-BLURB form, NOT the #646 dup-name/prefix form run 45 reported. Run 45
+  graded UIUC on a STALE pre-deploy state.** Live n=419: **0 duplicate names, 0% prefix-doubling, 0% verbatim-shared** —
+  i.e. #706 DID clear the #646 dup-name/classification stubs run 45 attributed to it. What it shipped instead is the
+  IDENTICAL school-blurb template USC #696 / NYU #698 received: **100% "UIUC's {field} program connects to {one of 21
+  school-blurbs}.. Students build depth in {field}…" — 21 distinct blurbs covering all 419 rows (top blurb on 166
+  DIFFERENT fields), 96% double-period ".." breakage, 100% universal closing, dept=field-echo 98%.** So #706 is the THIRD
+  consecutive "repair to gold" PR (after USC #696 + NYU #698) that SWAPS one stub form for the school-blurb form rather
+  than researching per-program — the run-43 miss #8 school-blurb class is now LIVE on **THREE** catalogs (USC 613 + NYU
+  507 + UIUC 419 = **1,539 programs**), confirming it is the enricher's DEFAULT repair mechanism. **UIUC LEAVES the #646
+  HIGH table and is tracked in its own CRITICAL section below** (alongside USC + NYU). Its 129 reviews sit on
+  still-fabricated school-blurb rows (structure-before-depth breach, miss #8) and the sampled ones are partly synthesized
+  (institution-level "U.S. News — UIUC rankings" / "UIUC rankings" sources on undergrad rows), NOT the "gathered" depth
+  run 45 credited.
+  - **METHODOLOGY (run 46): MERGED ≠ DEPLOYED — grade only after the PR's Deploy Backend is CONFIRMED complete + propagated.**
+    Run 45 mis-reported UIUC's structure because it read the live API before #706's deploy had propagated, so it graded the
+    PRE-#706 stub and attributed the OLD #646 dup-name/prefix numbers (186 dup, 100% prefix, 413 dept-echo) to #706. The
+    SKILL.md "merged ≠ live" rule already exists for the ENRICHER (step 9); this is the GRADER analog: a same-day grade of a
+    just-merged PR can read the pre-deploy state. Confirm Deploy Backend `completed success` (and the field values changed)
+    before grading a freshly-merged enrichment.
+- ✅ **CORRECTION 2 — NYU's feed is now ALIVE (`posts=1376`); there is NO dead feed left in the fleet.** NYU was flagged as
+  "the ONLY dead feed `posts=0`" for 40+ runs, including run 44 grading #698. Live this run the NYU feed returns **1376
+  posts** (all `institution_id`=NYU; MIT control 216, UIUC 9 — so it is per-institution, not a global count). #698 DID
+  configure a working feed; the run-44 `posts=0` was a pre-ingest read (the daily ingest had not yet fetched). The
+  dead-feed flag is DROPPED from NYU; NYU's CRITICAL reasons are now ONLY the school-blurb descriptions + synthesized
+  reviews + dept=field-echo. **No institution in the fleet now has a dead feed.**
+- 🔴 **CRITICAL top otherwise UNCHANGED — nothing merged for USC #696, Boston U, Stanford, Northwestern, Duke, Purdue, or
+  UCSD.** USC + NYU + UIUC are the three LIVE school-blurb catalogs (the freshest broad fabrications). See CRITICAL
+  sections below.
+- ⚠️ **BACKLOG-ACCURACY (carried): the "cleanest non-MIT tier" carries the run-30 verbatim-identical-across-credential-
+  levels defect** — JHU 79%, Caltech 53%, UChicago 50%, Rice 42% of rows share a `description_text` VERBATIM with a
+  credential sibling (gold MIT 0%). TRUE but stamped per-FIELD, never per-PROGRAM — NOT reviews-ready until each credential
+  level gets its own researched body. Only Princeton (0%) and gold MIT (0%) give each level its own text.
 
-Fleet otherwise byte-identical to run 44 (28 institutions, no sprawl; **NYU STILL the ONLY dead feed `posts=0`**; UIUC feed
-now `posts=9`; gold MIT n=65 control = 0 dup / 1% prefix / 0% classif / 0% dept-echo). Student's-eye probe this run
-(UIUC CS/Accountancy detail; Michigan + UW-Seattle = unchanged #646 100% prefix/classif/dept-echo; MIT gold control)
-surfaced only existing named classes — **no NEW class**.
+Fleet: 28 institutions, no sprawl, program counts byte-identical to run 45 (USC 613, NYU 507, UIUC 419, Michigan 379, UCLA
+373, UW-Seattle 365, …). gold MIT n=65 control = 0 dup / 1% prefix / 0% classif / 0% dept-echo / 0% verbatim-shared.
+Student's-eye probe this run (Duke / Georgia Tech / UT-Austin / Michigan / UW-Seattle, plus UIUC detail) surfaced only
+existing named classes — UT-Austin/Michigan/UW-Seattle = unchanged #646 dup-name + classification + dept-echo, GaTech =
+classification, Duke = prefix-doubled + Pratt synthesized reviews; all photos=5, all feeds alive — **no NEW class**.
 
-**0 new rulebook gaps this run (0 of ≤3).** Every live defect recurs a class the rulebook already names: #646 duplicate
-names = miss #2; classification descriptions = miss #8 gold-contrast; 100% prefix = miss #9; dept=field-echo = run-43 miss
-#2; reviews/content on fabricated rows = miss #8 structure-before-depth. Per the SAFETY RAILS ("Clean fleet → change
-nothing… Never invent a rule to look busy"; anti-churn; confirm-not-already-covered), restating present rules would be
-churn — so SKILL.md is unchanged. The standing concern remains enricher BEHAVIOR + work-ORDERING: #706 is the THIRD
-consecutive "repair to gold" PR that ships still-fabricated structure (depth bolted onto un-de-fabricated rows), and the
-CRITICAL top stays unrepaired while the enricher worked a #646 HIGH catalog. More rule text cannot fix rule-adoption or
-work-ordering; flagged for human review.
+**0 new rulebook gaps this run (0 of ≤3).** Every live defect recurs a class the rulebook already names: school-blurb
+descriptions (USC/NYU/UIUC) = run-43 miss #8 school-blurb; dept=field-echo = run-43 miss #2; #646 duplicate names = miss
+#2; classification descriptions = miss #8 gold-contrast; 100% prefix = miss #9; reviews/content on fabricated rows = miss
+#8 structure-before-depth. Per the SAFETY RAILS ("Clean fleet → change nothing… Never invent a rule to look busy";
+anti-churn; confirm-not-already-covered), restating present rules would be churn — so SKILL.md is unchanged. The standing
+concern remains enricher BEHAVIOR + work-ORDERING: the school-blurb stub-swap is now the enricher's default (3 catalogs)
+and the CRITICAL top stays unrepaired. More rule text cannot fix rule-adoption or work-ordering; flagged for human review.
 (Health-check GREEN: `test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** via pip-installed pytest +
 minimal deps [sqlalchemy/pydantic/pydantic-settings/pgvector] + `--noconftest` in this ephemeral container; the change is
 markdown-only and `profile_standard.manifest` imports cleanly at STANDARD_VERSION 2.)_
@@ -150,36 +152,35 @@ prefix-strip pass).
 
 ---
 
-## CRITICAL — New York University (#698 applied the SAME school-blurb fabrication as USC; feed STILL dead despite the PR title; synthesized reviews — LIVE)
+## CRITICAL — New York University (#698 applied the SAME school-blurb fabrication as USC; synthesized reviews — LIVE. ✅ feed now ALIVE)
 
-507 programs. **#698 `feat(nyu): repair profile — feeds, descriptions, 152 reviews` is LIVE-CONFIRMED this run (run 44) —
-and it did NOT de-fabricate NYU; it applied the IDENTICAL school-blurb template USC #696 used.** The class is now LIVE on
-TWO catalogs (USC + NYU), confirming it is the enricher's new DEFAULT repair mechanism, not one catalog:
+507 programs. **#698 `feat(nyu): repair profile — feeds, descriptions, 152 reviews` is LIVE-CONFIRMED — and it did NOT
+de-fabricate NYU; it applied the IDENTICAL school-blurb template USC #696 used.** The class is LIVE on THREE catalogs
+(USC + NYU + UIUC), confirming it is the enricher's DEFAULT repair mechanism, not one catalog:
 - ❌ **SCHOOL-LEVEL-blurb descriptions — LIVE (run-43 miss #8 class).** **507/507 rows** built from only **17 distinct
-  school-blurbs** (College of Arts & Science ×135 different fields, Steinhardt ×125, GSAS/Courant ×56, Tandon ×45, SPS
-  ×35, Stern ×26, Tisch ×23, Meyers ×20), each in `"NYU's {field} program connects to {SCHOOL blurb}.. Students build
-  depth in {field} through seminars, research, and New York City industry and community partnerships."` — **100%**
-  universal closing, **100%** double-period ".." breakage. The frame is byte-for-byte USC's with only the city + school
-  names swapped. Caught by the run-43 catalog-wide shared-body count + the double-period/universal-closing tell.
-- ❌ **Feed STILL DEAD — LIVE `posts=0` despite the PR title claiming "feeds" repair.** NYU has been the ONLY dead feed
-  for 40+ runs; #698 says "repair profile — feeds, …" but the live feed produces ZERO items (miss #1/#9 — a feed counts
-  only if it FETCHES ≥1 item; the PR claim is not the live reality).
+  school-blurbs** (one blurb on 135 different fields, …), each in `"NYU's {field} program connects to {SCHOOL blurb}..
+  Students build depth in {field} through seminars, research, and New York City industry and community partnerships."` —
+  **100%** universal closing, **100%** double-period ".." breakage. The frame is byte-for-byte USC's with only the city +
+  school names swapped. Caught by the run-43 catalog-wide shared-body count + the double-period/universal-closing tell.
+- ✅ **FEED NOW ALIVE (run-46 correction) — LIVE `posts=1376`.** NYU was flagged "the ONLY dead feed `posts=0`" for 40+
+  runs (run 44 graded #698's feed dead), but the run-44 read was PRE-INGEST: #698 DID configure a working feed and the
+  daily ingest has since fetched 1376 items (all `institution_id`=NYU). The feed dimension is DONE; no institution in the
+  fleet now has a dead feed.
 - ❌ **SYNTHESIZED reviews — LIVE (run-9 class).** Sampled reviews all cite the identical institution-level source
   "U.S. News — NYU rankings" under a false "Aggregated and paraphrased from public third-party coverage" disclaimer; two
   different programs (BA Computer Science + BA Computer and Data Science) carry the IDENTICAL copy-paste summary — a
   structure-before-depth breach on a still-school-blurb-stub catalog (miss #8).
-- ❌ **`dept` = the field echoed from the name** on ~all rows (377 distinct depts, 290 one-off; real owning school named
+- ❌ **`dept` = the field echoed from the name** on 95% of rows (377 distinct depts, 290 one-off; real owning school named
   only in the blurb) — the run-43 miss #2 dept defect, live.
 
 **Repair: (1) RESEARCH each program's description from NYU's OWN catalogue/department page (one paragraph per PROGRAM, not
-one per school stamped across its fields); re-count cross-field shared bodies + double-period rows → 0. (2) Set a feed that
-actually FETCHES ≥1 item (confirm `posts>0` live before trusting it). (3) Put the real owning school/college in
-`department`, not the field. (4) REMOVE the synthesized reviews — re-gather genuine program-specific coverage or
-omit-with-reason. Do what Rice #663 did, not what #696/#698 did.**
+one per school stamped across its fields); re-count cross-field shared bodies + double-period rows → 0. (2) Put the real
+owning school/college in `department`, not the field. (3) REMOVE the synthesized reviews — re-gather genuine
+program-specific coverage or omit-with-reason. Do what Rice #663 did, not what #696/#698 did.** ✅ feed done.
 
-_First seen 2026-06-17 (run 44). NYU was a #646 HIGH catalog (the only dead feed); #698 "repaired" it into the SAME
-school-blurb fabrication form USC #696 received — so it leaves the #646 table and is tracked here. Fix the fabricated
-descriptions + the dead feed + the synthesized reviews before treating NYU as repaired._
+_First seen 2026-06-17 (run 44). NYU was a #646 HIGH catalog; #698 "repaired" it into the SAME school-blurb fabrication
+form USC #696 received — so it leaves the #646 table and is tracked here. Run 46: its feed is now confirmed ALIVE
+(`posts=1376`); fix the fabricated descriptions + the synthesized reviews + dept=field-echo before treating NYU as repaired._
 
 ## CRITICAL — University of Southern California (#696 swapped one stub form for another + added 219 synthesized reviews — LIVE-CONFIRMED)
 
@@ -210,6 +211,40 @@ _First seen 2026-06-17 (run 43, graded at source); LIVE-CONFIRMED run 44. USC wa
 single-pass "repair" that swapped stub forms instead of researching per-program. The two run-43 rule additions
 (catalog-wide shared-body count + dept=field-echo) are now LIVE-VALIDATED. Fix the fabricated descriptions/depts +
 synthesized reviews before treating USC as repaired._
+
+## CRITICAL — University of Illinois Urbana-Champaign (#706 swapped the #646 stubs for the SAME school-blurb form as USC/NYU; synthesized reviews on fabricated rows — LIVE, run-46 correction)
+
+419 programs. **#706 `Repair UIUC profile to gold — RSS feeds, program names, 129 reviews` — run 45 graded this as the
+UNCHANGED #646 dup-name/prefix form, but that was a STALE pre-deploy read. Graded LIVE this run (run 46, n=419), #706
+actually CLEARED the #646 stubs and replaced them with the IDENTICAL school-blurb template USC #696 / NYU #698 received.**
+The school-blurb class is now LIVE on THREE catalogs (USC 613 + NYU 507 + UIUC 419 = 1,539 programs):
+- ❌ **SCHOOL-LEVEL-blurb descriptions — LIVE (run-43 miss #8 class).** Live n=419: **419/419 rows** built from only **21
+  distinct school-blurbs** (one blurb on 166 different fields, another on many more), each in `"UIUC's {field} program
+  connects to {SCHOOL blurb}.. Students build depth in {field}…"` — **100%** universal closing, **96%** double-period
+  ".." breakage; the spliced run-on ("connects to the College of LAS — UIUC's largest college — spans the School of…") is
+  the school-blurb-into-frame breakage. A student reads the IDENTICAL College-of-LAS sentence on Anthropology AND Classics
+  AND Communication. (SKILL.md miss #8 catalog-wide shared-body.)
+- ❌ **`dept` = the field echoed from the name** on 98% of rows (234 distinct depts, 129 one-off; real owning school —
+  "Siebel School of Computing", "Gies College of Business" — named only in the blurb/faculty body) — run-43 miss #2 dept
+  defect, live.
+- ❌ **129 reviews on still-fabricated school-blurb rows = STRUCTURE-BEFORE-DEPTH breach (miss #8); sampled ones are
+  SYNTHESIZED, not "gathered."** Run 45 credited these as "GATHERED + program-specific," but the sampled reviews cite
+  institution-level ranking sources ("U.S. News — UIUC rankings" / "UIUC rankings") on undergrad rows (e.g. the Bachelor
+  of Landscape Architecture review opens "Students describe FAA's …") — the run-9 synthesized-review fingerprint. They are
+  discarded the moment the school-blurb rows are de-fabricated.
+- ✅ #706 DID clear the #646 duplicate names + classification + prefix — live **0 duplicate, 0% prefix, 0% verbatim-shared**
+  — so UIUC reads "clean" on those metrics, fabricated only on the cross-field shared-body the run-43 rule targets. ✅ feed
+  alive (`posts=9`).
+
+**Repair: (1) RESEARCH each program's description from UIUC's OWN catalogue/department page (one paragraph per PROGRAM, not
+one per school stamped across its fields); re-count cross-field shared bodies + double-period rows → 0. (2) Put the real
+owning school/college in `department`, not the field. (3) REMOVE the synthesized reviews — re-gather genuine
+program-specific coverage or omit-with-reason. Do what Rice #663 did, not what #696/#698/#706 did.**
+
+_First seen as a #646 HIGH stub; graded CRITICAL 2026-06-18 (run 46) once #706's deploy propagated and revealed the
+school-blurb form (run 45's #646 numbers were a pre-deploy read). UIUC LEAVES the #646 HIGH table and joins USC + NYU as
+the third LIVE school-blurb catalog. Fix the fabricated descriptions + dept=field-echo + synthesized reviews before
+treating UIUC as repaired._
 
 ## CRITICAL — Boston University (#690 cleared the enumerated peers LIVE but 4 un-enumerated denylist-gap peers survive live + suffix-diversifier morph; names/depts still broken)
 
@@ -417,10 +452,10 @@ is a no-fabrication invariant breach. UCSD otherwise joins the cleanest non-MIT 
 
 ## HIGH — #646 catalogs: breadth-expanded but FABRICATED (duplicate names + classification + 100% prefix), worst-first
 
-The 8 stubs #646 expanded to full breadth and shipped as "gold-standard" — but every one carries
+The 5 stubs #646 expanded to full breadth and shipped as "gold-standard" — but every one carries
 **duplicate IDENTICAL names across award levels** (a hard miss-#2 fabrication the other HIGH catalogs
 do NOT have), classification descriptions, and 100% prefix-doubling. Institution photos/ownership/feeds
-are now done (except NYU's dead feed). **Repair each catalog WHOLE (miss #8, dimension-agnostic): put
+are all done (no dead feed remains). **Repair each catalog WHOLE (miss #8, dimension-agnostic): put
 the credential IN the name so no two rows collide ("Bachelor of Science in Aerospace Engineering" /
 "Master of Science in …" / "PhD in …"), rewrite classification descriptions into field-specific TRUE
 ones with NO name-prefix, de-roll-up the few rollup departments, then fill GATHERED reviews + deep
@@ -428,19 +463,19 @@ content.**
 
 | # | University | Listed | Classif-desc | Prefix | Duplicate-name examples | Extra |
 |---|---|---|---|---|---|---|
-| 1 | University of Michigan-Ann Arbor | 379 | **100%** | 100% | Aerospace Engineering ×3, Architecture ×3, Anthropology ×2 | worst of the 7 |
-| 2 | University of Illinois Urbana-Champaign | 419 | ~100% | 100% | Accountancy ×4, Aerospace Engineering ×3 (186 dup-rows, UNCHANGED) | **#706 added feed (`posts=9`) + 129 GATHERED reviews + flagship deep content but left STRUCTURE = #646 (dup names + classification descs + 100% prefix + dept-echo 413/419) → structure-before-depth breach (miss #8); de-fab names/descs/dept FIRST** |
-| 3 | The University of Texas at Austin | 338 | 35% | 100% | Accounting ×4, Advertising ×3, Anthropology ×3 | |
-| 4 | University of California-Los Angeles | 373 | 38% | 100% | Aerospace Engineering ×3, Architecture ×2 | rollup depts (slash form) |
-| 5 | University of Washington-Seattle Campus | 365 | 31% | 100% | Anthropology ×3, Applied Mathematics ×3, Astronomy ×3 | |
-| 6 | Georgia Institute of Technology-Main Campus | 143 | 28% | 100% | (rollup names ×6) | smallest |
+| 1 | University of Michigan-Ann Arbor | 379 | **100%** | 100% | Aerospace Engineering ×3, Architecture ×3, Anthropology ×2 | worst of the 5 |
+| 2 | The University of Texas at Austin | 338 | 35% | 100% | Accounting ×4, Advertising ×3, Anthropology ×3 | |
+| 3 | University of California-Los Angeles | 373 | 38% | 100% | Aerospace Engineering ×3, Architecture ×2 | rollup depts (slash form) |
+| 4 | University of Washington-Seattle Campus | 365 | 31% | 100% | Anthropology ×3, Applied Mathematics ×3, Astronomy ×3 | |
+| 5 | Georgia Institute of Technology-Main Campus | 143 | 28% | 100% | (rollup names ×6) | smallest |
 
-_(USC left this table at run 43 and NYU at run 44 — #696/#698 "repaired" each into a DIFFERENT fabrication form
-(school-blurb descriptions + dept=field-echo + synthesized reviews; NYU's feed STILL dead), so both are now tracked in their
-own CRITICAL sections above. NYU keeps the only-dead-feed flag there.)_
+_(USC left this table at run 43, NYU at run 44, and UIUC at run 46 — #696/#698/#706 each "repaired" a #646 catalog into the
+SAME school-blurb fabrication form (school-blurb descriptions + dept=field-echo + synthesized reviews), so all three are now
+tracked in their own CRITICAL sections above. No dead feed remains in the fleet — NYU's feed is now alive (`posts=1376`).)_
 
 _First seen as MEDIUM 22-program stubs 2026-06-14; EXPANDED + promoted to HIGH 2026-06-17 (run 18) when
-#646 landed them as full-but-fabricated catalogs. NYU keeps its dead-feed flag (miss #1/#9)._
+#646 landed them as full-but-fabricated catalogs. Run 46: UIUC #706 left this table (now school-blurb, tracked CRITICAL);
+no dead feed remains in the fleet._
 
 ## HIGH — fabricated/incomplete catalogs (worst-first)
 
@@ -523,21 +558,26 @@ clean.
 
 ### Notes for the enricher
 - **A SINGLE-PASS "REPAIR" THAT SWAPS ONE STUB FORM FOR THE SCHOOL-BLURB FORM IS NOT A REPAIR — IT IS NOW THE
-  ENRICHER'S DEFAULT, LIVE ON TWO CATALOGS (run 44).** #696 (USC) and #698 (NYU) both took a #646 catalog and
-  replaced the duplicate-name/classification stubs with the IDENTICAL school-blurb template — `"{Univ}'s {field}
-  program connects to {one of ~18 school-blurbs}.. Students build depth in {field} through seminars, research, and
-  {City} industry…"` — 95–100% of rows share a school-level body across DIFFERENT fields, 100% universal closing,
-  ~100% double-period ".." breakage, + synthesized reviews. It reads "clean" on duplicate-name/rollup/prefix/
-  classification/verbatim-shared (the field is interpolated, so full strings differ) yet is a gold-contrast STUB.
-  RESEARCH one paragraph per PROGRAM (what THAT degree studies at THAT level); re-count cross-field shared bodies +
-  double-period rows → 0 (SKILL.md miss #8 catalog-wide shared-body + miss #9 gate). Do what Rice #663 did, not #696/#698.
-- **THE PR TITLE IS NOT THE LIVE REALITY — grade the API, never the claim (run 44).** #698's title says "repair
-  profile — feeds, descriptions, 152 reviews" yet LIVE the feed is dead (`posts=0`, NYU has been the only dead feed
-  40+ runs), the descriptions are school-blurb stubs, and the reviews are synthesized. Confirm each claimed repair on
-  `api.unipaith.co` (a feed counts only if it FETCHES ≥1 item; SKILL.md step 9 + miss #1/#9).
-- **Top open entries first.** NYU (#698 — freshest breach: school-blurb descriptions (100% cross-field shared body) +
-  STILL-dead feed (`posts=0`) despite the PR title + synthesized reviews — LIVE), USC (#696 — same school-blurb form,
-  95% shared body + dept=field-echo + 219 synthesized reviews — LIVE-CONFIRMED), Boston University (#690 cleared the
+  ENRICHER'S DEFAULT, LIVE ON THREE CATALOGS (USC #696 + NYU #698 + UIUC #706 = 1,539 programs, run 46).** All three took a
+  #646 catalog and replaced the duplicate-name/classification stubs with the IDENTICAL school-blurb template — `"{Univ}'s
+  {field} program connects to {one of ~18–21 school-blurbs}.. Students build depth in {field} through seminars, research,
+  and {City} industry…"` — 95–100% of rows share a school-level body across DIFFERENT fields (one blurb on 135–182 fields),
+  100% universal closing, ~96–100% double-period ".." breakage, + synthesized reviews. It reads "clean" on
+  duplicate-name/rollup/prefix/classification/verbatim-shared (the field is interpolated, so full strings differ) yet is a
+  gold-contrast STUB. RESEARCH one paragraph per PROGRAM (what THAT degree studies at THAT level); re-count cross-field
+  shared bodies + double-period rows → 0 (SKILL.md miss #8 catalog-wide shared-body + miss #9 gate). Do what Rice #663 did,
+  not #696/#698/#706.
+- **THE PR TITLE IS NOT THE LIVE REALITY — grade the API, never the claim, AND only AFTER the deploy propagates (run
+  46).** #698's title says "repair profile — feeds, descriptions, 152 reviews" yet the descriptions are school-blurb stubs
+  and the reviews are synthesized (its feed IS now alive — run 44 read it pre-ingest). Confirm each claimed repair on
+  `api.unipaith.co` (a feed counts only if it FETCHES ≥1 item; SKILL.md step 9 + miss #1/#9) — and note MERGED ≠ DEPLOYED:
+  run 45 mis-graded UIUC #706 on a pre-deploy state (it read the OLD #646 stub and reported 186 dup / 100% prefix when
+  #706 had actually shipped the school-blurb form). Wait for Deploy Backend `completed success` + changed field values
+  before grading a just-merged enrichment.
+- **Top open entries first.** NYU (#698 — school-blurb descriptions (100% cross-field shared body) + synthesized reviews +
+  dept=field-echo; ✅ feed now alive — LIVE), USC (#696 — same school-blurb form, 95% shared body + dept=field-echo + 219
+  synthesized reviews — LIVE-CONFIRMED), UIUC (#706 — same school-blurb form, 100% shared body + dept=field-echo + 129
+  synthesized reviews — LIVE run 46), Boston University (#690 cleared the
   enumerated peers LIVE but 4 un-enumerated denylist-gap peers
   survive live — Medill ×2 / Whiting / Feinberg — + 14% suffix-diversifier + 6% rollup names), Stanford (#681 cleared the prefix + Sibley + all foreign-peer +
   the identical-across-levels trap — gate-enforced — but LEFT the FSI-on-Public-Relations/Systems-Science mismatch,
@@ -547,7 +587,7 @@ clean.
   still read "department serving engineering, Haas, and CDSS students" — and 41% suffix-diversifier shared-body), Duke
   (synthesized Pratt reviews), Purdue (cross-institution-copy descriptions shipped by #661 — 49 foreign-sig rows live:
   SAS/Wharton/Perelman/Writing Seminars + 81% identical-across-levels), UCSD (1 invented aerospace center shipped by
-  #667 — smallest scope) — all CRITICAL — then the 8 #646 catalogs (duplicate names + classification + 100% prefix),
+  #667 — smallest scope) — all CRITICAL — then the 5 #646 catalogs (duplicate names + classification + 100% prefix),
   then the HIGH rollup-name + suffix-diversifier catalogs (incl. **Columbia #684** and **UW-Madison #688** — UW's peer
   copy is now CLEARED + LIVE-CONFIRMED (run 41), so it drops CRITICAL→HIGH: names already clean, only the run-38
   shared-BODY evasion + empty deep content left) — before any new university or depth pass.
