@@ -71,6 +71,7 @@ export default function UniConversation({
   onProfileOpenChange,
   guided = false,
   onReady,
+  prefill,
 }: {
   /** Living-profile drawer open state (the trigger lives in DiscoverHomePage). */
   profileOpen?: boolean
@@ -79,6 +80,8 @@ export default function UniConversation({
   guided?: boolean
   /** Register an imperative `ask` so the rail can drive the conversation. */
   onReady?: (api: { ask: (text: string) => void }) => void
+  /** Cross-sell hand-off question (from /s?prefill=…) — sent as the opening turn. */
+  prefill?: string
 } = {}) {
   const qc = useQueryClient()
   const user = useAuthStore(s => s.user)
@@ -321,6 +324,25 @@ export default function UniConversation({
     onReady?.({ ask: (t: string) => sendRef.current(t) })
   }, [onReady])
 
+  // Cross-sell prefill (e.g. "Ask counselor" on a program): DiscoverHomePage read
+  // it off /s?prefill=… and handed it down. Send it as the opening student turn
+  // once the session has resolved — and claim the opener slot so Uni answers the
+  // question directly instead of greeting generically. Fires once; works in both
+  // stream and non-stream (reduced-motion) modes, unlike the opener. Declared
+  // before the opener effect so it runs first within a commit.
+  const prefillFired = useRef(false)
+  useEffect(() => {
+    if (prefillFired.current) return
+    const q = prefill?.trim()
+    if (!q) return
+    if (sessionsLoading) return // wait for the active session to resolve
+    if (resolvedSessionId && !detail) return // wait for its messages to load
+    if (streaming || turnMut.isPending) return // don't fight an in-flight turn
+    prefillFired.current = true
+    openerFired.current = true // Uni answers the question instead of the greeting
+    sendRef.current(q)
+  }, [prefill, sessionsLoading, resolvedSessionId, detail, streaming, turnMut.isPending])
+
   // Uni speaks first — stream the proactive opener (no student bubble). On
   // failure, fall back to the static greeting.
   const sendOpener = async () => {
@@ -373,13 +395,14 @@ export default function UniConversation({
   // available. A returning student with messages never triggers it.
   useEffect(() => {
     if (openerFired.current) return
+    if (prefill?.trim() && !prefillFired.current) return // let the prefill drive, not a greeting
     if (sessionsLoading) return // wait for the active session to resolve
     if (resolvedSessionId && !detail) return // wait for its messages to load
     if (!isEmpty || streaming || turnMut.isPending) return
     if (!canStream) return // reduced-motion / no-stream → static greeting stands
     openerFired.current = true
     void sendOpenerRef.current()
-  }, [sessionsLoading, resolvedSessionId, detail, isEmpty, streaming, canStream])
+  }, [prefill, sessionsLoading, resolvedSessionId, detail, isEmpty, streaming, canStream])
 
   return (
     <div className="flex flex-col h-full min-h-[520px] max-w-[640px] mx-auto w-full">
