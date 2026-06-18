@@ -15,9 +15,13 @@ import Coachmark from '../../../components/ui/Coachmark'
 // children are their own rooms. Messages is no longer here — it graduated to a
 // top-level nav tab (a peer of My Space). Mobile keeps a flat pill row.
 
-type Sub = { label: string; to: string }
+// `defaultTab` names a page's real default ?tab key, set on the LANDING child of
+// a group (the child whose `to` has no ?tab). It lets subActive highlight that
+// landing row on the bare route AND on the page's own default tab, without
+// hard-coding tab names in subActive.
+type Sub = { label: string; to: string; defaultTab?: string }
 type Item =
-  | { kind: 'link'; label: string; to: string; icon: typeof Backpack }
+  | { kind: 'link'; label: string; to: string; icon: typeof Backpack; defaultTab?: string }
   | { kind: 'group'; label: string; to: string; icon: typeof Backpack; children: Sub[] }
 
 const OVERVIEW: Item = { kind: 'link', label: 'Overview', to: '/s/space', icon: Backpack }
@@ -29,7 +33,7 @@ const IMPORT: Item = { kind: 'link', label: 'Import', to: '/s/import', icon: Upl
 const PROFILE: Item = {
   kind: 'group', label: 'Profile', to: '/s/profile', icon: User,
   children: [
-    { label: 'Basic info', to: '/s/profile' },
+    { label: 'Basic info', to: '/s/profile', defaultTab: 'overview' },
     { label: 'Identity', to: '/s/profile?tab=identity' },
     { label: 'Academics', to: '/s/profile?tab=academics' },
     { label: 'Experience', to: '/s/profile?tab=experience' },
@@ -55,7 +59,7 @@ const PLANNING: Item = {
 const SAVED: Item = {
   kind: 'group', label: 'Saved', to: '/s/saved', icon: Bookmark,
   children: [
-    { label: 'Programs', to: '/s/saved' },
+    { label: 'Programs', to: '/s/saved', defaultTab: 'programs' },
     { label: 'Schools', to: '/s/saved?tab=schools' },
     { label: 'Searches', to: '/s/saved?tab=searches' },
   ],
@@ -67,7 +71,7 @@ const SAVED: Item = {
 const WORKSPACE: Item = {
   kind: 'group', label: 'Workspace', to: '/s/prep', icon: Briefcase,
   children: [
-    { label: 'Workshops', to: '/s/prep' },
+    { label: 'Workshops', to: '/s/prep', defaultTab: 'workshops' },
     { label: 'Prompts', to: '/s/prep?tab=prompts' },
     { label: 'Interviews', to: '/s/prep?tab=interviews' },
     { label: 'Recommenders', to: '/s/prep?tab=recommenders' },
@@ -81,9 +85,26 @@ const WORKSPACE: Item = {
 
 const ITEMS: Item[] = [OVERVIEW, IMPORT, PROFILE, PLANNING, SAVED, WORKSPACE]
 
-// Flat list of room landing routes — drives the top-nav My Space active state.
-// Messages is intentionally absent (it is its own nav tab now).
-export const MY_SPACE_ROUTES = ['/s/space', '/s/profile', '/s/saved', '/s/prep', '/s/applications', '/s/calendar']
+// Flat list of distinct room pathnames — drives the top-nav My Space active
+// state (via isMySpacePath in StudentLayout). DERIVED from the ITEMS tree so it
+// can't drift: walk every item's `to` plus every group child's `to`, strip the
+// query string, and keep distinct pathnames in first-seen order. Messages
+// (/s/messages) is intentionally absent — it is not in the tree (it is its own
+// nav tab now).
+function deriveRoomRoutes(items: Item[]): string[] {
+  const seen = new Set<string>()
+  const collect = (to: string) => {
+    const path = to.split('?')[0]
+    if (!seen.has(path)) seen.add(path)
+  }
+  for (const it of items) {
+    collect(it.to)
+    if (it.kind === 'group') for (const c of it.children) collect(c.to)
+  }
+  return [...seen]
+}
+
+export const MY_SPACE_ROUTES = deriveRoomRoutes(ITEMS)
 
 // Mobile pill row — flat top-level rooms (no nesting).
 const MOBILE_PILLS: { label: string; to: string; icon: typeof Backpack; end?: boolean }[] = [
@@ -100,17 +121,19 @@ const MOBILE_PILLS: { label: string; to: string; icon: typeof Backpack; end?: bo
  *  sub-item. ?tab-aware (via subActive) — required now that Profile and Planning
  *  share the /s/profile path but split its tabs between them. */
 function groupOwns(group: Extract<Item, { kind: 'group' }>, pathname: string, search: string): boolean {
-  return group.children.some(c => subActive(c.to, pathname, search))
+  return group.children.some(c => subActive(c.to, pathname, search, c.defaultTab))
 }
 
-/** Sub-item active = same pathname AND same ?tab (landing item = no/absent tab). */
-function subActive(to: string, pathname: string, search: string): boolean {
+/** Sub-item active = same pathname AND same ?tab (landing item = no/absent tab).
+ *  A landing item (its `to` carries no ?tab) is active on the bare route or on
+ *  the page's own default tab — passed in as `defaultTab`, so the rule lives
+ *  with each item instead of as a hard-coded tab list here. */
+function subActive(to: string, pathname: string, search: string, defaultTab?: string): boolean {
   const [path, query = ''] = to.split('?')
   if (pathname !== path) return false
   const toTab = new URLSearchParams(query).get('tab')
   const curTab = new URLSearchParams(search).get('tab')
-  // A landing item (no ?tab) matches the bare route or the page's default tab key.
-  if (!toTab) return !curTab || curTab === 'overview' || curTab === 'programs' || curTab === 'workshops'
+  if (!toTab) return !curTab || curTab === defaultTab
   return curTab === toTab
 }
 
@@ -160,7 +183,7 @@ export default function MySpaceShell() {
             if (item.kind === 'link') {
               // ?tab-aware active (Strategy → ?tab=timeline); NavLink alone
               // would match by pathname and over-highlight on profile routes.
-              const active = subActive(item.to, pathname, search)
+              const active = subActive(item.to, pathname, search, item.defaultTab)
               return (
                 <NavLink
                   key={item.to}
@@ -210,7 +233,7 @@ export default function MySpaceShell() {
                 {isOpen && (
                   <div className="mt-0.5 ml-[18px] border-l border-border pl-2">
                     {item.children.map(sub => {
-                      const active = subActive(sub.to, pathname, search)
+                      const active = subActive(sub.to, pathname, search, sub.defaultTab)
                       return (
                         <NavLink
                           key={sub.to}
