@@ -91,6 +91,11 @@ def _target_education_level(degree: str | None) -> str | None:
     return None
 
 
+def target_education_level(degree: str | None) -> str | None:
+    """Public alias of the degree -> target-level map (used by derive_preferences)."""
+    return _target_education_level(degree)
+
+
 # ── Public API ─────────────────────────────────────────────────────────────
 
 
