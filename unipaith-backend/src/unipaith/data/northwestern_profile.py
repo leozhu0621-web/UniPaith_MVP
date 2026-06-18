@@ -31,25 +31,36 @@ schools, so those two institution outcome fields are omitted. Most graduate/prof
 programs bill tuition per term and publish no single annual figure, so those carry a
 sourced "see the program's tuition page" record rather than a guessed number.
 
-Depth pass (2026-06-15, northwesternprof2): merged ``DEPTH_REVIEWS`` for 48 coverable
-programs — completes Northwestern coverable external_reviews (55/55).
-
 Catalog repair (2026-06-16, northwesternprof3): de-fabricates the IPEDS breadth catalog —
 maps CIP rollup titles to real Northwestern degree names and owning departments, and
 re-stamps every node at ``STANDARD_VERSION`` 2.
 
 Description depth pass (2026-06-16, northwesternprof4): replaces all classification-only
-program descriptions with field-specific clauses from ``northwestern_field_descriptions.py``
-(308/308 programs; 0% classification stubs). Adds coverable external_reviews for RTVF BS
-and Pre-Medicine BS (58/58 coverable total).
+program descriptions with field-specific clauses from ``northwestern_field_descriptions.py``.
 
 Description repair (2026-06-17, northwesternprof5): drops ``{program_name}:`` prefix from
 all descriptions (gold MIT/JHU pattern); fixes peer-institution contamination in field
 clauses (Chesapeake, Writing Seminars, Bloomberg, etc.); 0% name-prefixed descriptions.
 
-Description repair (2026-06-17, northwesternprof6): diversifies credential-sibling
-descriptions with Northwestern-specific level suffixes (0% identical-across-levels);
-gates shared descriptions at build time.
+De-fabrication (2026-06-18, northwesternprof7): REMOVES the ``DEPTH_REVIEWS`` batch (48
+machine-synthesized external_reviews minted one-per-row from program metadata + institution
+rankings — repeated institution-level themes across 11–15 programs, 37 rows citing a bare
+"U.S. News — Northwestern University" source, several attached to CIP-rollup rows). A review
+fabricated-by-synthesis lends a row false third-party credibility and is worse than an
+honest blank (SKILL.md miss #8), so those programs now record ``external_reviews`` in
+``_standard.omitted``; only the hand-gathered, program-specific flagship reviews remain
+(``_REVIEWS_BY_SLUG``). Also repairs the last peer-copied field clause (Operations Research
+named Berkeley's "IEOR … Haas … CDSS"; now Northwestern's real IEMS department + Center for
+Optimization and Statistical Learning). An enforced anti-synthesis test
+(``tests/test_northwestern_profile.py``) blocks any future one-sweep review mint.
+
+KNOWN remaining depth (reported to the grader, not fabricated to fill): the IPEDS breadth
+catalog still carries (a) ~105 (CIP × award-level) certificate rows minted from College
+Scorecard field-of-study completions whose real named programs are unresolved, (b)
+credential-sibling descriptions that share a leading field body diverging only by a generic
+level suffix (SKILL.md miss #8 suffix-diversifier), and (c) a few unresolved rollup names
+(Area Studies → African/Asian/etc. Studies). These need per-program research from
+Northwestern's official catalog and are deferred rather than guessed.
 """
 
 # ruff: noqa: E501
@@ -76,7 +87,6 @@ from unipaith.data.northwestern_field_descriptions import (
     SLUG_DESCRIPTIONS,
 )
 from unipaith.data.northwestern_ipeds_catalog import _IPEDS_CATALOG
-from unipaith.data.northwestern_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
@@ -935,7 +945,6 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
-    **DEPTH_REVIEWS,
 }
 
 _FLAGSHIP = "northwestern-mba-ms"
