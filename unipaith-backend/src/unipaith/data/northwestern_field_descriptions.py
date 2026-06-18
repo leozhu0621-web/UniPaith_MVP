@@ -837,7 +837,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Human nutrition, metabolic biology, and public-health dietetics through Northwestern Public Health and metabolic biology research."
     ),
     "Operations Research": (
-        "Optimization, stochastic modeling, and analytics in the IEOR department serving engineering, Haas, and CDSS students."
+        "Optimization, stochastic modeling, and decision analytics in Northwestern's Department of Industrial Engineering and Management Sciences (IEMS) within McCormick, with ties to the Center for Optimization and Statistical Learning."
     ),
     "Optometry": (
         "Clinical vision science and optometric training through Northwestern Optometry — the only UC optometry school — with on-campus eye clinics."

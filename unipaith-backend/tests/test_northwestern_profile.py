@@ -177,3 +177,67 @@ def test_no_identical_across_credential_levels():
     assert shared == 0, (
         f"{shared} programs share a description verbatim with a credential sibling"
     )
+
+
+# --- Anti-synthesized-review gate (SKILL.md miss #8: fabrication-by-synthesis) ---
+# A review ships ONLY when it is hand-gathered from program-specific coverage. A
+# batch minted one-per-row from (program_name, school, institution rank) leaves two
+# machine fingerprints these tests block so a future one-sweep re-mint FAILS CI:
+#   (1) the SAME theme detail copy-pasted across many programs, and
+#   (2) a single institution-level source cited on a large share of reviews.
+# (The 48-row ``DEPTH_REVIEWS`` batch removed in northwesternprof7 had a theme
+# repeated 13–15x and a bare "U.S. News — Northwestern University" source on 37 rows.)
+
+_REVIEWED = {s: r for s, r in n._REVIEWS_BY_SLUG.items() if s in n.PROGRAM_SLUGS}
+
+
+def test_reviews_only_on_real_non_rollup_programs():
+    name_by_slug = {p["slug"]: p["program_name"] for p in n.PROGRAMS}
+    rollup_tells = (", General", ", Other", ", and ", " Other")
+    offenders = [
+        name_by_slug[s]
+        for s in _REVIEWED
+        if any(t in name_by_slug[s] for t in rollup_tells)
+    ]
+    assert not offenders, f"reviews attached to CIP-rollup program names: {offenders}"
+
+
+def test_no_synthesized_review_theme_reuse():
+    from collections import Counter
+
+    theme_ct: Counter = Counter()
+    for r in _REVIEWED.values():
+        # de-dup within one review, then count cross-program reuse
+        for detail in {t["detail"] for t in r.get("themes", [])}:
+            theme_ct[detail] += 1
+    reused = {d: c for d, c in theme_ct.items() if c >= 3}
+    assert not reused, (
+        "theme detail copy-pasted across >=3 programs (synthesis tell): "
+        f"{ {d[:60]: c for d, c in reused.items()} }"
+    )
+
+
+def test_no_institution_source_monoculture():
+    from collections import Counter
+
+    src_ct: Counter = Counter()
+    for r in _REVIEWED.values():
+        for src in {s["label"] for s in r.get("sources", [])}:
+            src_ct[src] += 1
+    # genuine flagship reviews share at most an institution Niche page a few times;
+    # a synthesized batch cites one institution ranking on dozens of rows.
+    overused = {label: c for label, c in src_ct.items() if c >= 8}
+    assert not overused, (
+        f"a single source cited on >=8 reviews (synthesis tell): {overused}"
+    )
+
+
+def test_no_synthesized_depth_reviews_module():
+    # The machine-synthesized batch lived in this module; it must stay gone so a
+    # future "complete coverable reviews 55/55" pass cannot silently re-add it.
+    import importlib
+
+    import pytest
+
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module("unipaith.data.northwestern_reviews_depth")
