@@ -10,6 +10,7 @@ import EmptyState from '../../components/ui/EmptyState'
 import QueryError from '../../components/ui/QueryError'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { PageContainer, PageHeader, StatTile } from '../../components/student/density'
+import BandBalanceBar from '../../components/student/BandBalanceBar'
 import { useCountUp } from '../../hooks/useCountUp'
 import usePageTitle from '../../hooks/usePageTitle'
 import { formatDate } from '../../utils/format'
@@ -209,6 +210,23 @@ export default function ApplicationsPage() {
     }
     apps.forEach(a => { c[bucketOf(a)] += 1 })
     return c
+  }, [apps])
+
+  // Portfolio balance — derive each app's band the same way the priority filter
+  // does (fit_band low/medium/high → reach/target/safer). Apps with no band are
+  // simply uncounted, never assumed.
+  const bandCounts = useMemo(() => {
+    const counts = { reach: 0, target: 0, safer: 0 }
+    const fromBand: Record<string, 'reach' | 'target' | 'safer'> = {
+      low: 'reach',
+      medium: 'target',
+      high: 'safer',
+    }
+    apps.forEach(a => {
+      const band = a.fit_band ? fromBand[a.fit_band] : undefined
+      if (band) counts[band] += 1
+    })
+    return counts
   }, [apps])
 
   const institutions = useMemo(() => {
@@ -452,6 +470,9 @@ export default function ApplicationsPage() {
           )}
         </Card>
       )}
+
+      {/* Portfolio balance — reach/target/safer mix of the applications at a glance. */}
+      <BandBalanceBar {...bandCounts} className="mb-6" />
 
       {/* Counts */}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-6">

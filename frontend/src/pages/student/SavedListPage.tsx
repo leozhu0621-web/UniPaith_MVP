@@ -24,7 +24,7 @@ import usePageTitle from '../../hooks/usePageTitle'
 import { Bookmark, GraduationCap } from 'lucide-react'
 import type { MatchBand, SavedPriority, SavedProgram } from '../../types'
 import SavedProgramRow, { PRIORITY_CONFIG, PRIORITY_ORDER } from './saved/SavedProgramRow'
-import ListBalanceMeter from './saved/ListBalanceMeter'
+import BandBalanceBar from '../../components/student/BandBalanceBar'
 import SavedSchoolCard from './saved/SavedSchoolCard'
 import { programSummaryOf, sortSavedPrograms, type SortKey } from './saved/savedUtils'
 
@@ -167,6 +167,18 @@ export default function SavedListPage() {
     for (const sp of filtered) groups[sp.priority].push(sp)
     return groups
   }, [filtered])
+
+  // Portfolio balance reflects the whole saved list (dropped excluded), not the
+  // active priority filter — a counselor reads the list's true reach/target/safer mix.
+  const bandCounts = useMemo(() => {
+    const counts = { reach: 0, target: 0, safer: 0 }
+    for (const sp of programs) {
+      if (sp.priority === 'dropped') continue
+      const band = sp.band_label
+      if (band === 'reach' || band === 'target' || band === 'safer') counts[band] += 1
+    }
+    return counts
+  }, [programs])
 
   const priorityCounts = useMemo(() => {
     const counts: Record<string, number> = { all: programs.length }
@@ -346,8 +358,8 @@ export default function SavedListPage() {
         />
       ) : (
         <>
-          {/* List balance (Discover review 2026-06-14 #1) — reach/target/safer mix of the saved list. */}
-          <ListBalanceMeter programs={programs} />
+          {/* Portfolio balance — reach/target/safer mix of the saved list at a glance. */}
+          <BandBalanceBar {...bandCounts} className="mb-5" />
 
           {isError && (
             <p className="text-sm text-warning mb-4 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2">
