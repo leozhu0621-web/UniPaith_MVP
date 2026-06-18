@@ -11,6 +11,7 @@ import { differenceInDays } from 'date-fns'
 import BandBadge from '../../../../components/ui/BandBadge'
 import type { Band } from '../../../../components/ui/BandBadge'
 import DualRing from '../../match/DualRing'
+import { ringFromMatch } from '../../match/ringFill'
 import { cardLinkClick, CARD_LINK_OVERLAY } from '../shared/cardLink'
 
 function degreeAbbrev(degree: string): string {
@@ -66,12 +67,6 @@ interface Props {
   viewHref?: string
 }
 
-function toUnit(v: number | null | undefined): number {
-  if (v == null) return 0
-  const n = v > 1 ? v / 100 : v
-  return Math.max(0, Math.min(1, n))
-}
-
 export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView, following, onToggleFollow, nextEvent, onEventClick, viewHref }: Props) {
   const abbrev = degreeAbbrev(program.degree_type)
   const href = viewHref ?? `/s/programs/${program.id}`
@@ -80,10 +75,16 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
   const extMatch = match as (MatchResult & { fitness_score?: number | null; confidence_score?: number | null; band_label?: string | null }) | undefined
   const fitnessRaw = extMatch?.fitness_score ?? match?.match_score
   const confidenceRaw = extMatch?.confidence_score
-  const hasDual = fitnessRaw != null
-  const fitness = toUnit(fitnessRaw)
-  const confidence = toUnit(confidenceRaw)
   const bandLabel = extMatch?.band_label as Band | undefined
+  // Mirror MatchCard (AI-Structure-3 §14): use a raw score if served, else map
+  // the band to a representative ring fill and hide the precise numeral — so the
+  // program card and the match card never disagree on what's knowable.
+  const fitRing = ringFromMatch(fitnessRaw, bandLabel)
+  const confRing = ringFromMatch(confidenceRaw, bandLabel)
+  const fitness = fitRing.value
+  const confidence = confRing.value
+  const hideNumeral = fitRing.fromBand
+  const hasRing = fitnessRaw != null || !!bandLabel
 
   const duration = formatDuration(program.duration_months)
   const format = formatFormat(program.delivery_format)
@@ -93,7 +94,7 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
   const gradPct = program.employment_rate != null ? Math.round(program.employment_rate * 100) : null
 
   return (
-    <div className="h-full bg-card rounded-lg border border-border hover-lift hover:elev-raised overflow-hidden flex flex-col group/card">
+    <div className="h-full bg-card rounded-xl border border-border elev-subtle hover-lift hover:elev-raised overflow-hidden flex flex-col group/card">
       {/* ── Header — text-driven, white surface, hairline divider. The title
           <Link> stretches over the header (Ship D §4) so keyboard focus,
           Enter, and cmd/ctrl-click work; action buttons stay siblings raised
@@ -151,7 +152,7 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
         {/* Band / match-ring / event row — only when there's something to show.
             The degree is already conveyed by the monogram tile and the full
             program name, so no separate degree chip here. */}
-        {(bandLabel || hasDual || nextEvent) && (
+        {(hasRing || nextEvent) && (
           <div className="flex items-center gap-1.5 mt-3 flex-wrap">
             {bandLabel && <BandBadge band={bandLabel} />}
             {nextEvent && (
@@ -165,9 +166,16 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
                 {new Date(nextEvent.start_time).toLocaleDateString('en-US', { weekday: 'short' })}
               </button>
             )}
-            {hasDual && (
+            {hasRing && (
               <span className="ml-auto">
-                <DualRing fitness={fitness} confidence={confidence} size={40} compact />
+                <DualRing
+                  fitness={fitness}
+                  confidence={confidence}
+                  size={40}
+                  compact
+                  bandLabel={bandLabel}
+                  hideNumeral={hideNumeral}
+                />
               </span>
             )}
           </div>

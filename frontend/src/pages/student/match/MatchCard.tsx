@@ -30,29 +30,7 @@ import DualRing from './DualRing'
 import ProbabilityBands from './ProbabilityBands'
 import RationalePopover from './RationalePopover'
 import { cardLinkClick } from '../explore/shared/cardLink'
-
-function toUnit(v: string | number | null | undefined): number {
-  const n = typeof v === 'string' ? parseFloat(v) : (v ?? 0)
-  if (!Number.isFinite(n)) return 0
-  const u = n > 1 ? n / 100 : n
-  return Math.max(0, Math.min(1, u))
-}
-
-// AI-Structure-3 §14 backend-only contract: the student response no longer
-// carries a raw fitness/confidence number — only the reach/target/safer band.
-// The DualRing is a band-driven visual; when no raw score is present we map the
-// band to a representative ring fill so the visualization still reads at a glance
-// (without surfacing a precise number the backend deliberately withholds).
-const BAND_FILL: Record<string, number> = { safer: 0.82, target: 0.62, reach: 0.4 }
-
-function ringFromMatch(
-  raw: string | number | null | undefined,
-  band: string | null | undefined,
-): { value: number; fromBand: boolean } {
-  if (raw != null && raw !== '') return { value: toUnit(raw), fromBand: false }
-  if (band && band in BAND_FILL) return { value: BAND_FILL[band], fromBand: true }
-  return { value: 0, fromBand: true }
-}
+import { ringFromMatch } from './ringFill'
 
 interface MatchCardProps {
   match: MatchResultDual

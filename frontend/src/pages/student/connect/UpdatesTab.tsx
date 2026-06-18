@@ -16,7 +16,10 @@ import Skeleton from '../../../components/ui/Skeleton'
 
 const SEEN_KEY = 'unipaith_connect_last_seen'
 
-export default function UpdatesTab() {
+// Discover review 2026-06-14 — when rendered inside the hub, the parent passes
+// onOpenEvents so an RSVP click swaps to the Events tab in place (no full route
+// nav, scroll reset, or panel remount). Standalone callers fall back to navigate.
+export default function UpdatesTab({ onOpenEvents }: { onOpenEvents?: () => void } = {}) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [rank, setRank] = useState<'recent' | 'relevant'>('recent')
@@ -60,7 +63,7 @@ export default function UpdatesTab() {
 
   const onViewProgram = (programId: string) => navigate(`/s/programs/${programId}`)
   const onStartApplication = (programId: string) => navigate(`/s/programs/${programId}?apply=1`)
-  const onRsvpEvent = () => navigate('/s/explore?tab=events')
+  const onRsvpEvent = () => (onOpenEvents ? onOpenEvents() : navigate('/s/explore?tab=events'))
   const onRequestInfo = (programId: string) => navigate(`/s/messages?program=${programId}`)
 
   const onAddToCalendar = async (item: ConnectFeedItem) => {

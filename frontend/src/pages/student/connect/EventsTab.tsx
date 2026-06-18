@@ -1,7 +1,7 @@
 // Connect → Events (Spec 20 §5). Upcoming | Past | My RSVPs; RSVP / waitlist;
 // add-to-calendar; detail sheet with meeting-link reveal near start.
 // Brand: cobalt CTAs; GOLD reserved for the RSVP-confirmed state (§10).
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   CalendarPlus, Check, Clock, ExternalLink, MapPin, Sparkles, Users, Video,
@@ -97,7 +97,14 @@ export default function EventsTab() {
     },
   })
 
-  const events = data?.events ?? []
+  // Discover review 2026-06-14 — float events recommended for the student's
+  // saved/applied programs to the top of the Upcoming scope (stable within each
+  // group; the backend already keeps start-time order). Past/mine stay as-is.
+  const events = useMemo(() => {
+    const list = data?.events ?? []
+    if (scope !== 'upcoming') return list
+    return [...list].sort((a, b) => Number(b.recommended) - Number(a.recommended))
+  }, [data, scope])
 
   return (
     <div className="space-y-4">
@@ -234,7 +241,7 @@ function EventListCard({ event, busy, onOpen, onRsvp, onAddCalendar }: CardProps
   const capacityLabel = event.capacity ? ` of ${event.capacity}` : ''
   const waitlistLabel = event.waitlist_count > 0 ? ` · ${event.waitlist_count} waitlisted` : ''
   return (
-    <div className="bg-card rounded-xl border border-border hover:shadow-sm transition-shadow">
+    <div className="bg-card rounded-xl border border-border elev-subtle hover-lift hover:elev-raised">
       <div className="flex items-center gap-2 px-4 pt-3">
         <TypeBadge type={event.event_type} />
         {event.status === 'cancelled' && (
