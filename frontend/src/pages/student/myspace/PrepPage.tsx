@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { GraduationCap, NotebookPen, CalendarClock, Mail, FileText } from 'lucide-react'
 import { PageHeader } from '../../../components/student/density'
+import PrepReadiness from './prep/PrepReadiness'
 
 // My Space › Prep (Spec 2026-06-10 §5) — the preparation room. Gathers
 // Workshops + Prompts (from /s/manage) and Interviews + Recommenders +
@@ -70,6 +71,9 @@ export default function PrepPage() {
           eyebrow="My Space"
           title="Prep"
         />
+        {/* Readiness strip (Spec 2026-06-18 §1) — composes the room's own data into
+            a compact "am I ready?" answer, in the page gutters above the tabs. */}
+        <PrepReadiness />
       </div>
       {/* Hidden on lg+ where the My Space rail's Workspace group lists these tabs
           flat (Spec 2026-06-15 §2.2); kept below lg where the rail collapses to pills. */}
