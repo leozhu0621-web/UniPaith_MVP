@@ -1,0 +1,2291 @@
+[
+ {
+  "name": "Seton Hall University",
+  "city": "South Orange",
+  "region": "NJ",
+  "size": 3,
+  "description": "Seton Hall University is a private research university in South Orange, NJ.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Presidents_Hall_at_Seton_Hall_University.jpg/1920px-Presidents_Hall_at_Seton_Hall_University.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.7507,
+   "graduation_rate": 0.65
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.7507,
+   "completion_rate_4yr_150pct": 0.65,
+   "location": {
+    "lat": 40.742336,
+    "lng": -74.246027,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Presidents_Hall_at_Seton_Hall_University.jpg/1920px-Presidents_Hall_at_Seton_Hall_University.jpg",
+     "credit": "Wikimedia Commons / Joe829er (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Victorian_Gothic_-_South_Orange%2C_NJ_-_Seton_Hall_University_%28Presidents_Hall%29_%281%29.jpg/1920px-Victorian_Gothic_-_South_Orange%2C_NJ_-_Seton_Hall_University_%28Presidents_Hall%29_%281%29.jpg",
+     "credit": "Wikimedia Commons / Bmzuckerman (CC BY 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Jubilee_Hall_-_Seton_Hall.jpg",
+     "credit": "Wikimedia Commons / Chris Funkhouser (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/b/b7/Walshlib1.jpg",
+     "credit": "Wikimedia Commons / InfoAgent2 (talk) (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/The_Clay_Frick_Lynch_Science_Center.jpg/1920px-The_Clay_Frick_Lynch_Science_Center.jpg",
+     "credit": "Wikimedia Commons / Luna2130 (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Joe829er (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?186584"
+  },
+  "unit_id": 186584
+ },
+ {
+  "name": "Tennessee State University",
+  "city": "Nashville",
+  "region": "TN",
+  "size": 3,
+  "description": "Tennessee State University is a public research university in Nashville, TN.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/WTN_EVula_204.jpg/1920px-WTN_EVula_204.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "graduation_rate": 0.197
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "completion_rate_4yr_150pct": 0.197,
+   "location": {
+    "lat": 36.166321,
+    "lng": -86.828275,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/WTN_EVula_204.jpg/1920px-WTN_EVula_204.jpg",
+     "credit": "Wikimedia Commons / EVula (CC BY 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Hale_Stadium%2C_Tennessee_State_University%2C_WTN_EVula_205.jpg/1920px-Hale_Stadium%2C_Tennessee_State_University%2C_WTN_EVula_205.jpg",
+     "credit": "Wikimedia Commons / EVula (CC BY 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / EVula (CC BY 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?221838"
+  },
+  "unit_id": 221838
+ },
+ {
+  "name": "Tennessee Technological University",
+  "city": "Cookeville",
+  "region": "TN",
+  "size": 3,
+  "description": "Tennessee Technological University is a public research university in Cookeville, TN.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Derryberry-clock-tower-ttu-tn1.jpg/1920px-Derryberry-clock-tower-ttu-tn1.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.781,
+   "graduation_rate": 0.586
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.781,
+   "completion_rate_4yr_150pct": 0.586,
+   "location": {
+    "lat": 36.174754,
+    "lng": -85.504039,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Derryberry-clock-tower-ttu-tn1.jpg/1920px-Derryberry-clock-tower-ttu-tn1.jpg",
+     "credit": "Wikimedia Commons / Brian Stansberry (CC BY 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Henderson-hall-twilight-tn1.jpg/1920px-Henderson-hall-twilight-tn1.jpg",
+     "credit": "Wikimedia Commons / Brian Stansberry (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Laboratory-Science-Commons-TTU.jpg/1920px-Laboratory-Science-Commons-TTU.jpg",
+     "credit": "Wikimedia Commons / Brian Stansberry (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/b/bc/Clement-hall-winter-ttu1.jpg",
+     "credit": "Wikimedia Commons / Brian Stansberry (CC BY 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Brian Stansberry (CC BY 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?221847"
+  },
+  "unit_id": 221847
+ },
+ {
+  "name": "Texas A & M University-Kingsville",
+  "city": "Kingsville",
+  "region": "TX",
+  "size": 3,
+  "description": "Texas A & M University-Kingsville is a public research university in Kingsville, TX.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/b/b6/TAMUK_tower_after_victory.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.9655
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.9655,
+   "location": {
+    "lat": 27.525168,
+    "lng": -97.882387,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/b/b6/TAMUK_tower_after_victory.jpg",
+     "credit": "Wikimedia Commons / Matthew W. Jackson (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Texas_A%26M_University_Kingsville.jpg/1920px-Texas_A%26M_University_Kingsville.jpg",
+     "credit": "Wikimedia Commons / GeoAxisDrones (CC BY 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/5/58/Pharmacy_and_Business_buildings%2C_Texas_A%26M_University-Kingsville_-_20060129.jpg",
+     "credit": "Wikimedia Commons / Ccchhhrrriiisss (talk). (public domain)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/0/01/Irma_Rangel_College_of_Pharmacy.jpg",
+     "credit": "Wikimedia Commons / Ccchhhrrriiisss (talk) (public domain)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/9/9f/JerniganLibrary007.jpg",
+     "credit": "Wikimedia Commons / Ccchhhrrriiisss (talk) (public domain)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Matthew W. Jackson (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?228705"
+  },
+  "unit_id": 228705
+ },
+ {
+  "name": "Texas Southern University",
+  "city": "Houston",
+  "region": "TX",
+  "size": 3,
+  "description": "Texas Southern University is a public research university in Houston, TX.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Texas_Southern_University_Entrance.jpg/1920px-Texas_Southern_University_Entrance.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.968,
+   "graduation_rate": 0.252
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.968,
+   "completion_rate_4yr_150pct": 0.252,
+   "location": {
+    "lat": 29.721046,
+    "lng": -95.361113,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Texas_Southern_University_Entrance.jpg/1920px-Texas_Southern_University_Entrance.jpg",
+     "credit": "Wikimedia Commons / 2C2K Photography (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/TexasSouthernUniversity-1.jpg/1920px-TexasSouthernUniversity-1.jpg",
+     "credit": "Wikimedia Commons / 2C2KPhotography (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Texas_Southern_University.jpg/1920px-Texas_Southern_University.jpg",
+     "credit": "Wikimedia Commons / 2C2K Photography (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/TSU_Campus_View.jpg/1920px-TSU_Campus_View.jpg",
+     "credit": "Wikimedia Commons / Broadmoor (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/New_library_35.jpg/1920px-New_library_35.jpg",
+     "credit": "Wikimedia Commons / Tsucomms (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / 2C2K Photography (CC BY 2.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?229063"
+  },
+  "unit_id": 229063
+ },
+ {
+  "name": "The University of Montana",
+  "city": "Missoula",
+  "region": "MT",
+  "size": 3,
+  "description": "The University of Montana is a public research university in Missoula, MT.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/a/a6/University_of_Montana_Historic_District.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.9538,
+   "graduation_rate": 0.406
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.9538,
+   "completion_rate_4yr_150pct": 0.406,
+   "location": {
+    "lat": 46.859312,
+    "lng": -113.982912,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/a/a6/University_of_Montana_Historic_District.jpg",
+     "credit": "Wikimedia Commons / Robert D. Hubble (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/University_of_Montana_Missoula_Campus_-_View_from_Mount_Sentinel.jpg/1920px-University_of_Montana_Missoula_Campus_-_View_from_Mount_Sentinel.jpg",
+     "credit": "Wikimedia Commons / Djembayz (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/View_of_Missoula%2C_Montana_and_UM_campus_from_Mount_Sentinel.jpg/1920px-View_of_Missoula%2C_Montana_and_UM_campus_from_Mount_Sentinel.jpg",
+     "credit": "Wikimedia Commons / Djembayz (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/UofMT_University%28Main%29Hall.jpg/1920px-UofMT_University%28Main%29Hall.jpg",
+     "credit": "Wikimedia Commons / Edward Blake (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Payne_Family_Native_American_Center_-_University_of_Montana_Missoula_-_20130725_01.JPG/1920px-Payne_Family_Native_American_Center_-_University_of_Montana_Missoula_-_20130725_01.JPG",
+     "credit": "Wikimedia Commons / Djembayz (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Robert D. Hubble (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?180489"
+  },
+  "unit_id": 180489
+ },
+ {
+  "name": "University of Alabama in Huntsville",
+  "city": "Huntsville",
+  "region": "AL",
+  "size": 3,
+  "description": "University of Alabama in Huntsville is a public research university in Huntsville, AL.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Engineering_Building_UAH.JPG/1920px-Engineering_Building_UAH.JPG"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.781,
+   "graduation_rate": 0.739
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.781,
+   "completion_rate_4yr_150pct": 0.739,
+   "location": {
+    "lat": 34.724557,
+    "lng": -86.640449,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Engineering_Building_UAH.JPG/1920px-Engineering_Building_UAH.JPG",
+     "credit": "Wikimedia Commons / AlabamaUSA (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/NSSTCBuilding.jpg/1920px-NSSTCBuilding.jpg",
+     "credit": "Wikimedia Commons / Anivron (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Optics_Building_UAH.JPG/1920px-Optics_Building_UAH.JPG",
+     "credit": "Wikimedia Commons / AlabamaUSA (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/UAHShelbyCenter.jpg/1920px-UAHShelbyCenter.jpg",
+     "credit": "Wikimedia Commons / Anivron (CC BY 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/UAH_Shelby_Center.jpg/1920px-UAH_Shelby_Center.jpg",
+     "credit": "Wikimedia Commons / Aparna E. (CC BY-SA 2.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / AlabamaUSA (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?100706"
+  },
+  "unit_id": 100706
+ },
+ {
+  "name": "University of Alaska Fairbanks",
+  "city": "Fairbanks",
+  "region": "AK",
+  "size": 3,
+  "description": "University of Alaska Fairbanks is a public research university in Fairbanks, AK.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Elmer_E._Rasmuson_Library.jpg/1920px-Elmer_E._Rasmuson_Library.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "graduation_rate": 0.328
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "completion_rate_4yr_150pct": 0.328,
+   "location": {
+    "lat": 64.85756,
+    "lng": -147.823146,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Elmer_E._Rasmuson_Library.jpg/1920px-Elmer_E._Rasmuson_Library.jpg",
+     "credit": "Wikimedia Commons / RadioKAOS (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Signers_Hall.JPG/1920px-Signers_Hall.JPG",
+     "credit": "Wikimedia Commons / Burntorange72 at English Wikipedia (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Eielson_and_Gruening_buildings_and_dorms%2C_University_of_Alaska_Fairbanks.jpg/1920px-Eielson_and_Gruening_buildings_and_dorms%2C_University_of_Alaska_Fairbanks.jpg",
+     "credit": "Wikimedia Commons / RadioKAOS (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Cornerstone_Plaza_at_the_University_of_Alaska_Fairbanks.jpg/1920px-Cornerstone_Plaza_at_the_University_of_Alaska_Fairbanks.jpg",
+     "credit": "Wikimedia Commons / Quintin Soloviev (CC BY 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Wood_Campus_Center_at_UAF.jpg/1920px-Wood_Campus_Center_at_UAF.jpg",
+     "credit": "Wikimedia Commons / RadioKAOS (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / RadioKAOS (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?102614"
+  },
+  "unit_id": 102614
+ },
+ {
+  "name": "University of Arkansas at Little Rock",
+  "city": "Little Rock",
+  "region": "AR",
+  "size": 3,
+  "description": "University of Arkansas at Little Rock is a public research university in Little Rock, AR.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/b/bc/Cooper_Fountain.JPG"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.6146,
+   "graduation_rate": 0.625
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.6146,
+   "completion_rate_4yr_150pct": 0.625,
+   "location": {
+    "lat": 34.723254,
+    "lng": -92.339778,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/b/bc/Cooper_Fountain.JPG",
+     "credit": "Wikimedia Commons / Mkat85 (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/d/d5/UALR_Student_Services_Center%2C_8_April_2013.jpg",
+     "credit": "Wikimedia Commons / Mkat85 (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/2/2e/UALR_Student_Services_Center.jpg",
+     "credit": "Wikimedia Commons / Ualrcomm (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/5/54/UALR_SSC1.jpg",
+     "credit": "Wikimedia Commons / Mkat85 (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Mkat85 (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?106245"
+  },
+  "unit_id": 106245
+ },
+ {
+  "name": "University of Massachusetts-Dartmouth",
+  "city": "North Dartmouth",
+  "region": "MA",
+  "size": 3,
+  "description": "University of Massachusetts-Dartmouth is a public research university in North Dartmouth, MA.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/UMass_Dartmouth_campus.JPG/1920px-UMass_Dartmouth_campus.JPG"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.9552,
+   "graduation_rate": 0.369
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.9552,
+   "completion_rate_4yr_150pct": 0.369,
+   "location": {
+    "lat": 41.62869,
+    "lng": -71.004552,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/UMass_Dartmouth_campus.JPG/1920px-UMass_Dartmouth_campus.JPG",
+     "credit": "Wikimedia Commons / LGagnon (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/UMass_Dartmouth_Campus_Quad.jpg/1920px-UMass_Dartmouth_Campus_Quad.jpg",
+     "credit": "Wikimedia Commons / UMassD Marketing (CC0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/UMass_Dartmouth%2C_Claire_T._Carney_Library.jpg/1920px-UMass_Dartmouth%2C_Claire_T._Carney_Library.jpg",
+     "credit": "Wikimedia Commons / UMassD Marketing (CC0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/College_of_Visual_and_Performing_Arts%2C_UMass_Dartmouth.jpg/1920px-College_of_Visual_and_Performing_Arts%2C_UMass_Dartmouth.jpg",
+     "credit": "Wikimedia Commons / (Oinkers42) (CC BY 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Charlton_College_of_Business%2C_UMass_Dartmouth.jpg/1920px-Charlton_College_of_Business%2C_UMass_Dartmouth.jpg",
+     "credit": "Wikimedia Commons / Kenneth C. Zirkel (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / LGagnon (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?167987"
+  },
+  "unit_id": 167987
+ },
+ {
+  "name": "University of New England",
+  "city": "Biddeford",
+  "region": "ME",
+  "size": 3,
+  "description": "University of New England is a private research university in Biddeford, ME.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/UNE_Dixson_Library.jpg/1920px-UNE_Dixson_Library.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.9628,
+   "graduation_rate": 0.613
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.9628,
+   "completion_rate_4yr_150pct": 0.613,
+   "location": {
+    "lat": 43.458591,
+    "lng": -70.38535,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/UNE_Dixson_Library.jpg/1920px-UNE_Dixson_Library.jpg",
+     "credit": "Wikimedia Commons / User:MichaelGG (public domain)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/UNE_Graduate_Walk.jpg/1920px-UNE_Graduate_Walk.jpg",
+     "credit": "Wikimedia Commons / User:MichaelGG (public domain)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/UNE_Arcade_Area.jpg/1920px-UNE_Arcade_Area.jpg",
+     "credit": "Wikimedia Commons / User:MichaelGG (public domain)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / User:MichaelGG (public domain)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?161457"
+  },
+  "unit_id": 161457
+ },
+ {
+  "name": "University of New Orleans",
+  "city": "New Orleans",
+  "region": "LA",
+  "size": 3,
+  "description": "University of New Orleans is a public research university in New Orleans, LA.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/University_of_New_Orleans_Campus_Kirchman_Hall.JPG/1920px-University_of_New_Orleans_Campus_Kirchman_Hall.JPG"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.6976,
+   "graduation_rate": 0.436
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.6976,
+   "completion_rate_4yr_150pct": 0.436,
+   "location": {
+    "lat": 30.027704,
+    "lng": -90.067142,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/University_of_New_Orleans_Campus_Kirchman_Hall.JPG/1920px-University_of_New_Orleans_Campus_Kirchman_Hall.JPG",
+     "credit": "Wikimedia Commons / Infrogmation of New Orleans (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/UNO_Earl_K.Long_Library.jpg/1920px-UNO_Earl_K.Long_Library.jpg",
+     "credit": "Wikimedia Commons / Result02 (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/UNO_University_Center_Front.JPG/1920px-UNO_University_Center_Front.JPG",
+     "credit": "Wikimedia Commons / Infrogmation of New Orleans (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Pontchartrain_Hall.jpg/1920px-Pontchartrain_Hall.jpg",
+     "credit": "Wikimedia Commons / Result02 (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/UNORainQuad.JPG/1920px-UNORainQuad.JPG",
+     "credit": "Wikimedia Commons / Infrogmation of New Orleans stitched by Marku1988 This image was created with Hugin. (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Infrogmation of New Orleans (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?159939"
+  },
+  "unit_id": 159939
+ },
+ {
+  "name": "University of South Dakota",
+  "city": "Vermillion",
+  "region": "SD",
+  "size": 3,
+  "description": "University of South Dakota is a public research university in Vermillion, SD.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Aerial_view_of_University_of_South_Dakota_Vermillion_Campus.jpg/1920px-Aerial_view_of_University_of_South_Dakota_Vermillion_Campus.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.9946,
+   "graduation_rate": 0.333
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.9946,
+   "completion_rate_4yr_150pct": 0.333,
+   "location": {
+    "lat": 42.786019,
+    "lng": -96.925283,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Aerial_view_of_University_of_South_Dakota_Vermillion_Campus.jpg/1920px-Aerial_view_of_University_of_South_Dakota_Vermillion_Campus.jpg",
+     "credit": "Wikimedia Commons / anup khanal (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Old_Main%2C_University_of_South_Dakota.jpg/1920px-Old_Main%2C_University_of_South_Dakota.jpg",
+     "credit": "Wikimedia Commons / Jack Boucher (public domain)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Beacom_School_of_Business_-_University_of_South_Dakota.jpg/1920px-Beacom_School_of_Business_-_University_of_South_Dakota.jpg",
+     "credit": "Wikimedia Commons / Tony Webster (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Sanford_Coyote_Sports_Center_-_University_of_South_Dakota_-_Vermillion_%2852445593791%29.jpg/1920px-Sanford_Coyote_Sports_Center_-_University_of_South_Dakota_-_Vermillion_%2852445593791%29.jpg",
+     "credit": "Wikimedia Commons / Tony Webster (CC BY-SA 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/University_of_South_Dakota_Knudson_School_of_Law_-_USD_Law_School.jpg/1920px-University_of_South_Dakota_Knudson_School_of_Law_-_USD_Law_School.jpg",
+     "credit": "Wikimedia Commons / Tony Webster (CC BY 2.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / anup khanal (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?219471"
+  },
+  "unit_id": 219471
+ },
+ {
+  "name": "Wright State University-Main Campus",
+  "city": "Dayton",
+  "region": "OH",
+  "size": 3,
+  "description": "Wright State University-Main Campus is a public research university in Dayton, OH.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Wright_State_University.jpg/1920px-Wright_State_University.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.9522,
+   "graduation_rate": 0.294
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.9522,
+   "completion_rate_4yr_150pct": 0.294,
+   "location": {
+    "lat": 39.780634,
+    "lng": -84.064881,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Wright_State_University.jpg/1920px-Wright_State_University.jpg",
+     "credit": "Wikimedia Commons / Burkheiserj (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Burkheiserj (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?206604"
+  },
+  "unit_id": 206604
+ },
+ {
+  "name": "Yeshiva University",
+  "city": "New York",
+  "region": "NY",
+  "size": 3,
+  "description": "Yeshiva University is a private research university in New York, NY.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Yeshiva_University_Gottesman_Library.jpg/1920px-Yeshiva_University_Gottesman_Library.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.6322,
+   "graduation_rate": 0.893
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.6322,
+   "completion_rate_4yr_150pct": 0.893,
+   "location": {
+    "lat": 40.850605,
+    "lng": -73.929873,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Yeshiva_University_Gottesman_Library.jpg/1920px-Yeshiva_University_Gottesman_Library.jpg",
+     "credit": "Wikimedia Commons / Beyond My Ken (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Yeshiva_University_Schottenstein_Center.jpg/1920px-Yeshiva_University_Schottenstein_Center.jpg",
+     "credit": "Wikimedia Commons / Beyond My Ken (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Yeshiva_University_Wilf_Campus_marker_and_Max_Stern_Athletic_Center.jpg/1920px-Yeshiva_University_Wilf_Campus_marker_and_Max_Stern_Athletic_Center.jpg",
+     "credit": "Wikimedia Commons / Beyond My Ken (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Beyond My Ken (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?197708"
+  },
+  "unit_id": 197708
+ },
+ {
+  "name": "Air Force Institute of Technology-Graduate School of Engineering & Management",
+  "city": "Wright-Patterson AFB",
+  "region": "OH",
+  "size": 2,
+  "description": "Air Force Institute of Technology-Graduate School of Engineering & Management is a public research university in Wright-Patterson AFB, OH.",
+  "media_gallery": null,
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity"
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "location": {
+    "lat": 39.782221,
+    "lng": -84.082618,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?200697"
+  },
+  "unit_id": 200697
+ },
+ {
+  "name": "Claremont Graduate University",
+  "city": "Claremont",
+  "region": "CA",
+  "size": 2,
+  "description": "Claremont Graduate University is a private research university in Claremont, CA.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Harper_Hall%2C_Claremont_Graduate_University.jpg/1920px-Harper_Hall%2C_Claremont_Graduate_University.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity"
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "location": {
+    "lat": 34.103585,
+    "lng": -117.713703,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Harper_Hall%2C_Claremont_Graduate_University.jpg/1920px-Harper_Hall%2C_Claremont_Graduate_University.jpg",
+     "credit": "Wikimedia Commons / Sdkb (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Stauffer_Hall.jpg/1920px-Stauffer_Hall.jpg",
+     "credit": "Wikimedia Commons / CGU (public domain)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/CGU_Quad.jpg/1920px-CGU_Quad.jpg",
+     "credit": "Wikimedia Commons / CGU (public domain)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Blaisdell_House.JPG/1920px-Blaisdell_House.JPG",
+     "credit": "Wikimedia Commons / CGU (public domain)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Sdkb (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?112251"
+  },
+  "unit_id": 112251
+ },
+ {
+  "name": "Clark Atlanta University",
+  "city": "Atlanta",
+  "region": "GA",
+  "size": 2,
+  "description": "Clark Atlanta University is a private research university in Atlanta, GA.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/JP_Brawley_Drive%2C_Clark_Atlanta_University.jpg/1920px-JP_Brawley_Drive%2C_Clark_Atlanta_University.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.5626,
+   "graduation_rate": 1.0
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.5626,
+   "completion_rate_4yr_150pct": 1.0,
+   "location": {
+    "lat": 33.747628,
+    "lng": -84.412584,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/JP_Brawley_Drive%2C_Clark_Atlanta_University.jpg/1920px-JP_Brawley_Drive%2C_Clark_Atlanta_University.jpg",
+     "credit": "Wikimedia Commons / Thomson200 (CC0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Panther_Stadium%2C_Clark_Atlanta_University.jpg/1920px-Panther_Stadium%2C_Clark_Atlanta_University.jpg",
+     "credit": "Wikimedia Commons / Thomson200 (CC0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Thomson200 (CC0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?138947"
+  },
+  "unit_id": 138947
+ },
+ {
+  "name": "Clarkson University",
+  "city": "Potsdam",
+  "region": "NY",
+  "size": 2,
+  "description": "Clarkson University is a private research university in Potsdam, NY.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Clarkson_University_entrance.jpg/1920px-Clarkson_University_entrance.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.7842,
+   "graduation_rate": 0.656
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.7842,
+   "completion_rate_4yr_150pct": 0.656,
+   "location": {
+    "lat": 44.662716,
+    "lng": -74.999359,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Clarkson_University_entrance.jpg/1920px-Clarkson_University_entrance.jpg",
+     "credit": "Wikimedia Commons / Royalbroil (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/CU_School-of-Engineering.JPG/1920px-CU_School-of-Engineering.JPG",
+     "credit": "Wikimedia Commons / User:Foolboy007~enwiki (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/SnellHall%282009%29.jpg/1920px-SnellHall%282009%29.jpg",
+     "credit": "Wikimedia Commons / Ross P. Robinson (public domain)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Royalbroil (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?190044"
+  },
+  "unit_id": 190044
+ },
+ {
+  "name": "Gallaudet University",
+  "city": "Washington",
+  "region": "DC",
+  "size": 2,
+  "description": "Gallaudet University is a private research university in Washington, DC.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Chapel_Hall%2C_Gallaudet_University.jpg/1920px-Chapel_Hall%2C_Gallaudet_University.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.5921,
+   "graduation_rate": 0.294
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.5921,
+   "completion_rate_4yr_150pct": 0.294,
+   "location": {
+    "lat": 38.907371,
+    "lng": -76.993675,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Chapel_Hall%2C_Gallaudet_University.jpg/1920px-Chapel_Hall%2C_Gallaudet_University.jpg",
+     "credit": "Wikimedia Commons / AgnosticPreachersKid (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/College_Hall%2C_Gallaudet_University.jpg/1920px-College_Hall%2C_Gallaudet_University.jpg",
+     "credit": "Wikimedia Commons / AgnosticPreachersKid (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Gallaudet_Mall%2C_facing_south.jpg/1920px-Gallaudet_Mall%2C_facing_south.jpg",
+     "credit": "Wikimedia Commons / Sdkb (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Gallaudet_Mall%2C_facing_north_at_sunset.jpg/1920px-Gallaudet_Mall%2C_facing_north_at_sunset.jpg",
+     "credit": "Wikimedia Commons / Sdkb (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Gallaudet_University_Lincoln_Circle%2C_facing_south_1.jpg/1920px-Gallaudet_University_Lincoln_Circle%2C_facing_south_1.jpg",
+     "credit": "Wikimedia Commons / Sdkb (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / AgnosticPreachersKid (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?131450"
+  },
+  "unit_id": 131450
+ },
+ {
+  "name": "Hampton University",
+  "city": "Hampton",
+  "region": "VA",
+  "size": 2,
+  "description": "Hampton University is a private research university in Hampton, VA.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/HAMPTON_UNIVERSITY_Robert_C._Ogden_Hall.jpg/1920px-HAMPTON_UNIVERSITY_Robert_C._Ogden_Hall.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.7447
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.7447,
+   "location": {
+    "lat": 37.019944,
+    "lng": -76.339161,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/HAMPTON_UNIVERSITY_Robert_C._Ogden_Hall.jpg/1920px-HAMPTON_UNIVERSITY_Robert_C._Ogden_Hall.jpg",
+     "credit": "Wikimedia Commons / Douglas W. Reynolds (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/HAMPTON_UNIVERSITY_Virginia_Cleveland_Hall.jpg/1920px-HAMPTON_UNIVERSITY_Virginia_Cleveland_Hall.jpg",
+     "credit": "Wikimedia Commons / Douglas W. Reynolds (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/HAMPTON_UNIVERSITY_William_R._and_Norma_B._Harvey_Library.jpg/1920px-HAMPTON_UNIVERSITY_William_R._and_Norma_B._Harvey_Library.jpg",
+     "credit": "Wikimedia Commons / Douglas W. Reynolds (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/HAMPTON_UNIVERSITY_Olin_Engineering_Building.jpg/1920px-HAMPTON_UNIVERSITY_Olin_Engineering_Building.jpg",
+     "credit": "Wikimedia Commons / Douglas W. Reynolds (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Sunset_at_Hampton_University_Waterfront.jpg/1920px-Sunset_at_Hampton_University_Waterfront.jpg",
+     "credit": "Wikimedia Commons / Anastasiia Romanova (CC BY 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Douglas W. Reynolds (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?232265"
+  },
+  "unit_id": 232265
+ },
+ {
+  "name": "Teachers College at Columbia University",
+  "city": "New York",
+  "region": "NY",
+  "size": 2,
+  "description": "Teachers College at Columbia University is a private research university in New York, NY.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Columbia_Russell_Hall_tower_jeh.JPG/1920px-Columbia_Russell_Hall_tower_jeh.JPG"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity"
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "location": {
+    "lat": 40.810216,
+    "lng": -73.960194,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Columbia_Russell_Hall_tower_jeh.JPG/1920px-Columbia_Russell_Hall_tower_jeh.JPG",
+     "credit": "Wikimedia Commons / Jim.henderson (CC0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Whittier_Hall%2C_Morningside_Heights%2C_NYC.jpg/1920px-Whittier_Hall%2C_Morningside_Heights%2C_NYC.jpg",
+     "credit": "Wikimedia Commons / Jeff Reuben (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Columbia_University_-_Teachers_College_%2848170433667%29.jpg/1920px-Columbia_University_-_Teachers_College_%2848170433667%29.jpg",
+     "credit": "Wikimedia Commons / Ajay Suresh (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Teachers_College_of_Columbia_University_-_panoramio.jpg/1920px-Teachers_College_of_Columbia_University_-_panoramio.jpg",
+     "credit": "Wikimedia Commons / Bohao Zhao (CC BY 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Collegiate_Gothic_-_New_York%2C_NY_-_Columbia_University_%28Teachers_College_-_Main-Zankel_Hall%29_%281%29.jpg/1920px-Collegiate_Gothic_-_New_York%2C_NY_-_Columbia_University_%28Teachers_College_-_Main-Zankel_Hall%29_%281%29.jpg",
+     "credit": "Wikimedia Commons / Bmzuckerman (CC BY 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Jim.henderson (CC0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?196468"
+  },
+  "unit_id": 196468
+ },
+ {
+  "name": "The Catholic University of America",
+  "city": "Washington",
+  "region": "DC",
+  "size": 2,
+  "description": "The Catholic University of America is a private research university in Washington, DC.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Gibbons_Hall_CUA.jpg/1920px-Gibbons_Hall_CUA.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.8559,
+   "graduation_rate": 0.74
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.8559,
+   "completion_rate_4yr_150pct": 0.74,
+   "location": {
+    "lat": 38.933651,
+    "lng": -76.997909,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Gibbons_Hall_CUA.jpg/1920px-Gibbons_Hall_CUA.jpg",
+     "credit": "Wikimedia Commons / Farragutful (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Caldwell_Hall_CUA_rear.jpg/1920px-Caldwell_Hall_CUA_rear.jpg",
+     "credit": "Wikimedia Commons / Farragutful (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Maloney_Hall_CUA.jpg/1920px-Maloney_Hall_CUA.jpg",
+     "credit": "Wikimedia Commons / Farragutful (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Farragutful (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?131283"
+  },
+  "unit_id": 131283
+ },
+ {
+  "name": "University of Maryland Eastern Shore",
+  "city": "Princess Anne",
+  "region": "MD",
+  "size": 2,
+  "description": "University of Maryland Eastern Shore is a public research university in Princess Anne, MD.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Richard_Hazel_Hall_-_Home_of_the_Honors_Program.jpg/1920px-Richard_Hazel_Hall_-_Home_of_the_Honors_Program.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.8156,
+   "graduation_rate": 0.238
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.8156,
+   "completion_rate_4yr_150pct": 0.238,
+   "location": {
+    "lat": 38.207386,
+    "lng": -75.686852,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Richard_Hazel_Hall_-_Home_of_the_Honors_Program.jpg/1920px-Richard_Hazel_Hall_-_Home_of_the_Honors_Program.jpg",
+     "credit": "Wikimedia Commons / Honors Lane (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/d/d8/SSC_Rotunda_at_UMES_campus.jpg",
+     "credit": "Wikimedia Commons / Honors Lane (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/5/52/Princess_Anne_Academy.jpg",
+     "credit": "Wikimedia Commons / Unknown, book in which the image is published in was edited by W. N. Hartshorn and George W. Penniman. (public domain)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Honors Lane (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?163338"
+  },
+  "unit_id": 163338
+ },
+ {
+  "name": "University of Tulsa",
+  "city": "Tulsa",
+  "region": "OK",
+  "size": 2,
+  "description": "University of Tulsa is a private research university in Tulsa, OK.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/McFarlin_Library%2C_University_of_Tulsa%2C_2011.jpg/1920px-McFarlin_Library%2C_University_of_Tulsa%2C_2011.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "acceptance_rate": 0.6918,
+   "graduation_rate": 0.4
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "admit_rate": 0.6918,
+   "completion_rate_4yr_150pct": 0.4,
+   "location": {
+    "lat": 36.152324,
+    "lng": -95.945941,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/McFarlin_Library%2C_University_of_Tulsa%2C_2011.jpg/1920px-McFarlin_Library%2C_University_of_Tulsa%2C_2011.jpg",
+     "credit": "Wikimedia Commons / Blake Burkhart (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Uoftulsapano.jpg/1920px-Uoftulsapano.jpg",
+     "credit": "Wikimedia Commons / S. P. Moran (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/University_School_at_TU.jpg/1920px-University_School_at_TU.jpg",
+     "credit": "Wikimedia Commons / Matt91486 (CC BY-SA 2.5)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Blake Burkhart (CC BY 2.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?207971"
+  },
+  "unit_id": 207971
+ },
+ {
+  "name": "The Rockefeller University",
+  "city": "New York",
+  "region": "NY",
+  "size": 1,
+  "description": "The Rockefeller University is a private research university in New York, NY.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Rockefeller_University_-_exterior_%282%29.jpg/1920px-Rockefeller_University_-_exterior_%282%29.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity"
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral Universities: High Research Activity",
+   "location": {
+    "lat": 40.762489,
+    "lng": -73.955198,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Rockefeller_University_-_exterior_%282%29.jpg/1920px-Rockefeller_University_-_exterior_%282%29.jpg",
+     "credit": "Wikimedia Commons / Ksw222 (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Rockefeller_University_-_exterior_trees.jpg/1920px-Rockefeller_University_-_exterior_trees.jpg",
+     "credit": "Wikimedia Commons / Ksw222 (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Rockefeller_University_%2848064098757%29.jpg/1920px-Rockefeller_University_%2848064098757%29.jpg",
+     "credit": "Wikimedia Commons / Ajay Suresh (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/The_Rockefeller_University_-_Exterior.jpg/1920px-The_Rockefeller_University_-_Exterior.jpg",
+     "credit": "Wikimedia Commons / Flips4evr (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Ksw222 (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?195049"
+  },
+  "unit_id": 195049
+ },
+ {
+  "name": "California State University-Fresno",
+  "city": "Fresno",
+  "region": "CA",
+  "size": 5,
+  "description": "California State University-Fresno is a public research university in Fresno, CA.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/2009-0725-CA-CSUF-ThomasAdministration.jpg/1920px-2009-0725-CA-CSUF-ThomasAdministration.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.9543,
+   "graduation_rate": 0.4
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.9543,
+   "completion_rate_4yr_150pct": 0.4,
+   "location": {
+    "lat": 36.811154,
+    "lng": -119.744569,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/2009-0725-CA-CSUF-ThomasAdministration.jpg/1920px-2009-0725-CA-CSUF-ThomasAdministration.jpg",
+     "credit": "Wikimedia Commons / Bobak Ha'Eri (CC BY 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/2009-0725-CA-CSUF-TreeWalk.jpg/1920px-2009-0725-CA-CSUF-TreeWalk.jpg",
+     "credit": "Wikimedia Commons / Bobak Ha'Eri (CC BY 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/2009-0725-CA-CSUF-AgBuilding.jpg/1920px-2009-0725-CA-CSUF-AgBuilding.jpg",
+     "credit": "Wikimedia Commons / Bobak Ha'Eri (CC BY 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/CSU_Fresno_Nima_03.JPG/1920px-CSU_Fresno_Nima_03.JPG",
+     "credit": "Wikimedia Commons / Nightryder84 (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/CSU_Fresno_Nima_05.JPG/1920px-CSU_Fresno_Nima_05.JPG",
+     "credit": "Wikimedia Commons / Nightryder84 (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Bobak Ha'Eri (CC BY 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?110556"
+  },
+  "unit_id": 110556
+ },
+ {
+  "name": "Liberty University",
+  "city": "Lynchburg",
+  "region": "VA",
+  "size": 5,
+  "description": "Liberty University is a private research university in Lynchburg, VA.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Liberty_University_Freedom_Tower.jpg/1920px-Liberty_University_Freedom_Tower.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.9929,
+   "graduation_rate": 0.6
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.9929,
+   "completion_rate_4yr_150pct": 0.6,
+   "location": {
+    "lat": 37.350232,
+    "lng": -79.18222,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Liberty_University_Freedom_Tower.jpg/1920px-Liberty_University_Freedom_Tower.jpg",
+     "credit": "Wikimedia Commons / Northern-Virginia-Photographer (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Liberty_University_central_plaza%2C_focus_on_eastern_side.jpg/1920px-Liberty_University_central_plaza%2C_focus_on_eastern_side.jpg",
+     "credit": "Wikimedia Commons / Nyttend (public domain)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Liberty_University_central_plaza%2C_focus_on_western_side.jpg/1920px-Liberty_University_central_plaza%2C_focus_on_western_side.jpg",
+     "credit": "Wikimedia Commons / Nyttend (public domain)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Exterior_Jerry_Falwell_Library_at_LU.jpg/1920px-Exterior_Jerry_Falwell_Library_at_LU.jpg",
+     "credit": "Wikimedia Commons / PCHS-NJROTC (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Commons_Lawn%2C_2024.jpg/1920px-Commons_Lawn%2C_2024.jpg",
+     "credit": "Wikimedia Commons / Northern-Virginia-Photographer (CC0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Northern-Virginia-Photographer (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?232557"
+  },
+  "unit_id": 232557
+ },
+ {
+  "name": "Middle Tennessee State University",
+  "city": "Murfreesboro",
+  "region": "TN",
+  "size": 5,
+  "description": "Middle Tennessee State University is a public research university in Murfreesboro, TN.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/8/84/Kirskey_Old_Main.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.7254,
+   "graduation_rate": 0.519
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.7254,
+   "completion_rate_4yr_150pct": 0.519,
+   "location": {
+    "lat": 35.848005,
+    "lng": -86.360618,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/8/84/Kirskey_Old_Main.jpg",
+     "credit": "Wikimedia Commons / Dailynetworks at English Wikipedia (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/MTSU_Blue_Horseshoe.JPG/1920px-MTSU_Blue_Horseshoe.JPG",
+     "credit": "Wikimedia Commons / Tim Eubanks (Raider ATO at English Wikipedia) (public domain)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Walnut_Grove_at_MTSU.jpg",
+     "credit": "Wikimedia Commons / Dailynetworks at English Wikipedia (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/MTSU_Business_and_Aerospace_Building.JPG/1920px-MTSU_Business_and_Aerospace_Building.JPG",
+     "credit": "Wikimedia Commons / MTSUGoRaidersGo (CC BY 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Dailynetworks at English Wikipedia (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?220978"
+  },
+  "unit_id": 220978
+ },
+ {
+  "name": "Missouri State University-Springfield",
+  "city": "Springfield",
+  "region": "MO",
+  "size": 5,
+  "description": "Missouri State University-Springfield is a public research university in Springfield, MO.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/MSUMeyerLibraryandCarillon.jpg/1920px-MSUMeyerLibraryandCarillon.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.9256,
+   "graduation_rate": 0.377
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.9256,
+   "completion_rate_4yr_150pct": 0.377,
+   "location": {
+    "lat": 37.199258,
+    "lng": -93.281281,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/MSUMeyerLibraryandCarillon.jpg/1920px-MSUMeyerLibraryandCarillon.jpg",
+     "credit": "Wikimedia Commons / Keith8404 (talk) (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/MSUGlassHallandMeyerCarillon.jpg/1920px-MSUGlassHallandMeyerCarillon.jpg",
+     "credit": "Wikimedia Commons / Keith8404 (talk) (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/MoStatePlasterStudentUnion.jpg/1920px-MoStatePlasterStudentUnion.jpg",
+     "credit": "Wikimedia Commons / Keith8404 (talk) (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/2/2e/Springfield_Missouri_SMU_building_and_fountains.jpeg",
+     "credit": "Wikimedia Commons / (WT-en) Mark at English Wikivoyage (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Keith8404 (talk) (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?179566"
+  },
+  "unit_id": 179566
+ },
+ {
+  "name": "Sam Houston State University",
+  "city": "Huntsville",
+  "region": "TX",
+  "size": 5,
+  "description": "Sam Houston State University is a public research university in Huntsville, TX.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Austin_hall_huntsville_tx_2014.jpg/1920px-Austin_hall_huntsville_tx_2014.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.8463,
+   "graduation_rate": 0.579
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.8463,
+   "completion_rate_4yr_150pct": 0.579,
+   "location": {
+    "lat": 30.714738,
+    "lng": -95.546205,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Austin_hall_huntsville_tx_2014.jpg/1920px-Austin_hall_huntsville_tx_2014.jpg",
+     "credit": "Wikimedia Commons / Larry D. Moore (CC BY 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Peabody_library_building_huntsville_tx_2014.jpg/1920px-Peabody_library_building_huntsville_tx_2014.jpg",
+     "credit": "Wikimedia Commons / Larry D. Moore (CC BY 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/SHSUWelcome.jpg/1920px-SHSUWelcome.jpg",
+     "credit": "Wikimedia Commons / Bigguill (public domain)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Raven_Village_in_2007.jpg/1920px-Raven_Village_in_2007.jpg",
+     "credit": "Wikimedia Commons / M. B. Kent IV (MBK004) (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/SHV2007.jpg/1920px-SHV2007.jpg",
+     "credit": "Wikimedia Commons / M. B. Kent IV (MNK004) (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Larry D. Moore (CC BY 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?227881"
+  },
+  "unit_id": 227881
+ },
+ {
+  "name": "Ferris State University",
+  "city": "Big Rapids",
+  "region": "MI",
+  "size": 4,
+  "description": "Ferris State University is a public research university in Big Rapids, MI.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Ferris_State_University_August_2010_32_%28sign_and_FLITE%29.JPG/1920px-Ferris_State_University_August_2010_32_%28sign_and_FLITE%29.JPG"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.8788,
+   "graduation_rate": 0.833
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.8788,
+   "completion_rate_4yr_150pct": 0.833,
+   "location": {
+    "lat": 43.687724,
+    "lng": -85.481925,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Ferris_State_University_August_2010_32_%28sign_and_FLITE%29.JPG/1920px-Ferris_State_University_August_2010_32_%28sign_and_FLITE%29.JPG",
+     "credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Ferris_State_University_August_2010_01_%28Carlisle_Hall%29.JPG/1920px-Ferris_State_University_August_2010_01_%28Carlisle_Hall%29.JPG",
+     "credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?169910"
+  },
+  "unit_id": 169910
+ },
+ {
+  "name": "Hofstra University",
+  "city": "Hempstead",
+  "region": "NY",
+  "size": 4,
+  "description": "Hofstra University is a private research university in Hempstead, NY.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Hofstra_Hall_2021.jpg/1920px-Hofstra_Hall_2021.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.6933,
+   "graduation_rate": 0.643
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.6933,
+   "completion_rate_4yr_150pct": 0.643,
+   "location": {
+    "lat": 40.715959,
+    "lng": -73.60078,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Hofstra_Hall_2021.jpg/1920px-Hofstra_Hall_2021.jpg",
+     "credit": "Wikimedia Commons / Antony-22 (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/John_Cranford_Adams_Playhouse_2021.jpg/1920px-John_Cranford_Adams_Playhouse_2021.jpg",
+     "credit": "Wikimedia Commons / Antony-22 (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Mack_Student_Center_2021a.jpg/1920px-Mack_Student_Center_2021a.jpg",
+     "credit": "Wikimedia Commons / Antony-22 (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Hofstra_Windmill_outside_Bernon_Hall.jpg/1920px-Hofstra_Windmill_outside_Bernon_Hall.jpg",
+     "credit": "Wikimedia Commons / XanderAi (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Hofstra_skyline.jpg/1920px-Hofstra_skyline.jpg",
+     "credit": "Wikimedia Commons / Original uploader was Dan14641 at en.wikipedia (public domain)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Antony-22 (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?191649"
+  },
+  "unit_id": 191649
+ },
+ {
+  "name": "Keiser University-Ft Lauderdale",
+  "city": "Fort Lauderdale",
+  "region": "FL",
+  "size": 4,
+  "description": "Keiser University-Ft Lauderdale is a private research university in Fort Lauderdale, FL.",
+  "media_gallery": null,
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.9653,
+   "graduation_rate": 0.405
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.9653,
+   "completion_rate_4yr_150pct": 0.405,
+   "location": {
+    "lat": 26.185869,
+    "lng": -80.163959,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?135081"
+  },
+  "unit_id": 135081
+ },
+ {
+  "name": "Lamar University",
+  "city": "Beaumont",
+  "region": "TX",
+  "size": 4,
+  "description": "Lamar University is a public research university in Beaumont, TX.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/LUMJGrayLibrary6272011.jpg/1920px-LUMJGrayLibrary6272011.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.8373,
+   "graduation_rate": 0.364
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.8373,
+   "completion_rate_4yr_150pct": 0.364,
+   "location": {
+    "lat": 30.042738,
+    "lng": -94.072244,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/LUMJGrayLibrary6272011.jpg/1920px-LUMJGrayLibrary6272011.jpg",
+     "credit": "Wikimedia Commons / ThomasHorn7 (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/LUCherryEngineeringEntrance.jpg/1920px-LUCherryEngineeringEntrance.jpg",
+     "credit": "Wikimedia Commons / ThomasHorn7 (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/LUQuadNightPan.jpg/1920px-LUQuadNightPan.jpg",
+     "credit": "Wikimedia Commons / ThomasHorn7 (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/LUSetzerCenterClearView.jpg/1920px-LUSetzerCenterClearView.jpg",
+     "credit": "Wikimedia Commons / ThomasHorn7 (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / ThomasHorn7 (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?226091"
+  },
+  "unit_id": 226091
+ },
+ {
+  "name": "Long Island University",
+  "city": "Brookville",
+  "region": "NY",
+  "size": 4,
+  "description": "Long Island University is a private research university in Brookville, NY.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Long_Island_University_Brooklyn_Entrance_Gate.jpg/1920px-Long_Island_University_Brooklyn_Entrance_Gate.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.9265,
+   "graduation_rate": 0.6
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.9265,
+   "completion_rate_4yr_150pct": 0.6,
+   "location": {
+    "lat": 40.820714,
+    "lng": -73.593678,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Long_Island_University_Brooklyn_Entrance_Gate.jpg/1920px-Long_Island_University_Brooklyn_Entrance_Gate.jpg",
+     "credit": "Wikimedia Commons / BrokenSegue (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Entrance_arch%2C_LIU_Brooklyn%2C_Sept_2017.jpg/1920px-Entrance_arch%2C_LIU_Brooklyn%2C_Sept_2017.jpg",
+     "credit": "Wikimedia Commons / Thomson200 (CC0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/LIU_Brooklyn_campus%2C_Sept_2017.jpg/1920px-LIU_Brooklyn_campus%2C_Sept_2017.jpg",
+     "credit": "Wikimedia Commons / Thomson200 (CC0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/LIU_Brooklyn_-_Flags_%2848228096827%29.jpg/1920px-LIU_Brooklyn_-_Flags_%2848228096827%29.jpg",
+     "credit": "Wikimedia Commons / Ajay Suresh (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/LIU_Brooklyn_student_union_building%2C_Sept_2017.jpg/1920px-LIU_Brooklyn_student_union_building%2C_Sept_2017.jpg",
+     "credit": "Wikimedia Commons / Thomson200 (CC0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / BrokenSegue (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?192448"
+  },
+  "unit_id": 192448
+ },
+ {
+  "name": "Northcentral University",
+  "city": "San Diego",
+  "region": "CA",
+  "size": 4,
+  "description": "Northcentral University is a private research university in San Diego, CA.",
+  "media_gallery": null,
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral/Professional Universities"
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "location": {
+    "lat": 32.829299,
+    "lng": -117.127296,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?444130"
+  },
+  "unit_id": 444130
+ },
+ {
+  "name": "Northern Kentucky University",
+  "city": "Highland Heights",
+  "region": "KY",
+  "size": 4,
+  "description": "Northern Kentucky University is a public research university in Highland Heights, KY.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Northern_Kentucky_University_Griffin_Hall.jpg/1920px-Northern_Kentucky_University_Griffin_Hall.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.8601,
+   "graduation_rate": 0.571
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.8601,
+   "completion_rate_4yr_150pct": 0.571,
+   "location": {
+    "lat": 39.029714,
+    "lng": -84.463483,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Northern_Kentucky_University_Griffin_Hall.jpg/1920px-Northern_Kentucky_University_Griffin_Hall.jpg",
+     "credit": "Wikimedia Commons / Debaser42 (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/b/b4/NKU-studentunion-1.jpg",
+     "credit": "Wikimedia Commons / Samsvat (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/5/58/NKU-library-1.jpg",
+     "credit": "Wikimedia Commons / en:User:Samvscat (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/0/02/NKU-lake-3.jpg",
+     "credit": "Wikimedia Commons / Samvscat (talk) (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/d/de/NKU-lake-2.jpg",
+     "credit": "Wikimedia Commons / Samvscat (talk) (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Debaser42 (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?157447"
+  },
+  "unit_id": 157447
+ },
+ {
+  "name": "Pace University",
+  "city": "New York",
+  "region": "NY",
+  "size": 4,
+  "description": "Pace University is a private research university in New York, NY.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Elisabeth_Haub_School_of_Law_-_Pace_University_%2852641711048%29.jpg/1920px-Elisabeth_Haub_School_of_Law_-_Pace_University_%2852641711048%29.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.8293,
+   "graduation_rate": 1.0
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.8293,
+   "completion_rate_4yr_150pct": 1.0,
+   "location": {
+    "lat": 40.711014,
+    "lng": -74.004719,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Elisabeth_Haub_School_of_Law_-_Pace_University_%2852641711048%29.jpg/1920px-Elisabeth_Haub_School_of_Law_-_Pace_University_%2852641711048%29.jpg",
+     "credit": "Wikimedia Commons / ajay_suresh (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Pace_University.jpg/1920px-Pace_University.jpg",
+     "credit": "Wikimedia Commons / Oleg Yunakov (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Kessel_Student_Center.jpg/1920px-Kessel_Student_Center.jpg",
+     "credit": "Wikimedia Commons / Acressotti (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Pace_University_Pleasantville_Campus_1.JPG/1920px-Pace_University_Pleasantville_Campus_1.JPG",
+     "credit": "Wikimedia Commons / The original uploader was Ld at English Wikipedia. (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / ajay_suresh (CC BY 2.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?194310"
+  },
+  "unit_id": 194310
+ },
+ {
+  "name": "Regent University",
+  "city": "Virginia Beach",
+  "region": "VA",
+  "size": 4,
+  "description": "Regent University is a private research university in Virginia Beach, VA.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Regent_University_and_CBN.jpg/1920px-Regent_University_and_CBN.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.3234,
+   "graduation_rate": 0.556
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.3234,
+   "completion_rate_4yr_150pct": 0.556,
+   "location": {
+    "lat": 36.801173,
+    "lng": -76.194627,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Regent_University_and_CBN.jpg/1920px-Regent_University_and_CBN.jpg",
+     "credit": "Wikimedia Commons / WhisperToMe (CC0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Regent_University_Robertson_Hall.jpg/1920px-Regent_University_Robertson_Hall.jpg",
+     "credit": "Wikimedia Commons / DebateLord (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Regent_University_Library.jpg/1920px-Regent_University_Library.jpg",
+     "credit": "Wikimedia Commons / DebateLord (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Regent_University_Student_Center.jpg/1920px-Regent_University_Student_Center.jpg",
+     "credit": "Wikimedia Commons / DebateLord (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Regent_University_Fountain.jpg/1920px-Regent_University_Fountain.jpg",
+     "credit": "Wikimedia Commons / DebateLord (CC BY-SA 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / WhisperToMe (CC0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?231651"
+  },
+  "unit_id": 231651
+ },
+ {
+  "name": "Sacred Heart University",
+  "city": "Fairfield",
+  "region": "CT",
+  "size": 4,
+  "description": "Sacred Heart University is a private research university in Fairfield, CT.",
+  "media_gallery": null,
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.6571,
+   "graduation_rate": 0.682
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.6571,
+   "completion_rate_4yr_150pct": 0.682,
+   "location": {
+    "lat": 41.220893,
+    "lng": -73.243332,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?130253"
+  },
+  "unit_id": 130253
+ },
+ {
+  "name": "Southern Illinois University-Edwardsville",
+  "city": "Edwardsville",
+  "region": "IL",
+  "size": 4,
+  "description": "Southern Illinois University-Edwardsville is a public research university in Edwardsville, IL.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Lovejoy_Library_2.jpg/1920px-Lovejoy_Library_2.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.9751,
+   "graduation_rate": 0.55
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.9751,
+   "completion_rate_4yr_150pct": 0.55,
+   "location": {
+    "lat": 38.793949,
+    "lng": -89.997779,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Lovejoy_Library_2.jpg/1920px-Lovejoy_Library_2.jpg",
+     "credit": "Wikimedia Commons / Clarinetguy097 (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/b/b1/SIUE_Engineering_Building_Night.jpg",
+     "credit": "Wikimedia Commons / Tyler Warren (User:Illinois2011) (CC BY 2.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/SIUE_Entry_Sign.JPG/1920px-SIUE_Entry_Sign.JPG",
+     "credit": "Wikimedia Commons / Illinois2011 (Tyler Warren) (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/SIUE_Gardens_Artwork.jpg/1920px-SIUE_Gardens_Artwork.jpg",
+     "credit": "Wikimedia Commons / Tyler Warren (CC BY 2.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Clarinetguy097 (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?149231"
+  },
+  "unit_id": 149231
+ },
+ {
+  "name": "St. John's University-New York",
+  "city": "Queens",
+  "region": "NY",
+  "size": 4,
+  "description": "St. John's University-New York is a private research university in Queens, NY.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/STMC.jpg/1920px-STMC.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.8467,
+   "graduation_rate": 0.693
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.8467,
+   "completion_rate_4yr_150pct": 0.693,
+   "location": {
+    "lat": 40.722523,
+    "lng": -73.796104,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/STMC.jpg/1920px-STMC.jpg",
+     "credit": "Wikimedia Commons / StJohnHall (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Sun_Yat_Sen_Hall.jpg/1920px-Sun_Yat_Sen_Hall.jpg",
+     "credit": "Wikimedia Commons / J.P.Ng35 (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/TheDAC.jpg/1920px-TheDAC.jpg",
+     "credit": "Wikimedia Commons / StJohnHall (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/DaSilva_Memorial_Field.jpg/1920px-DaSilva_Memorial_Field.jpg",
+     "credit": "Wikimedia Commons / StJohnHall (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/b/bf/St_Johns_St_Augustine_Hall.jpg",
+     "credit": "Wikimedia Commons / Zeuscgp (CC BY 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / StJohnHall (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?195809"
+  },
+  "unit_id": 195809
+ },
+ {
+  "name": "Stephen F Austin State University",
+  "city": "Nacogdoches",
+  "region": "TX",
+  "size": 4,
+  "description": "Stephen F Austin State University is a public research university in Nacogdoches, TX.",
+  "media_gallery": null,
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.8951,
+   "graduation_rate": 0.46
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.8951,
+   "completion_rate_4yr_150pct": 0.46,
+   "location": {
+    "lat": 31.621056,
+    "lng": -94.64908,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?228431"
+  },
+  "unit_id": 228431
+ },
+ {
+  "name": "Texas A & M University-Commerce",
+  "city": "Commerce",
+  "region": "TX",
+  "size": 4,
+  "description": "Texas A & M University-Commerce is a public research university in Commerce, TX.",
+  "media_gallery": null,
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.8645,
+   "graduation_rate": 0.75
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.8645,
+   "completion_rate_4yr_150pct": 0.75,
+   "location": {
+    "lat": 33.242112,
+    "lng": -95.904579,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?224554"
+  },
+  "unit_id": 224554
+ },
+ {
+  "name": "Texas Woman's University",
+  "city": "Denton",
+  "region": "TX",
+  "size": 4,
+  "description": "Texas Woman's University is a public research university in Denton, TX.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Texas_Woman%27s_University_September_2015_04_%28Old_Main_Building%29.jpg/1920px-Texas_Woman%27s_University_September_2015_04_%28Old_Main_Building%29.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.9363,
+   "graduation_rate": 0.436
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.9363,
+   "completion_rate_4yr_150pct": 0.436,
+   "location": {
+    "lat": 33.226211,
+    "lng": -97.127842,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Texas_Woman%27s_University_September_2015_04_%28Old_Main_Building%29.jpg/1920px-Texas_Woman%27s_University_September_2015_04_%28Old_Main_Building%29.jpg",
+     "credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Texas_Woman%27s_University_September_2015_41_%28Little_Chapel-in-the-Woods%29.jpg/1920px-Texas_Woman%27s_University_September_2015_41_%28Little_Chapel-in-the-Woods%29.jpg",
+     "credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Texas_Woman%27s_University_September_2015_54_%28Mary_Evelyn_Blagg-Huey_Library%29.jpg/1920px-Texas_Woman%27s_University_September_2015_54_%28Mary_Evelyn_Blagg-Huey_Library%29.jpg",
+     "credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Texas_Woman%27s_University_September_2015_08_%28Ann_Stuart_Science_Complex%29.jpg/1920px-Texas_Woman%27s_University_September_2015_08_%28Ann_Stuart_Science_Complex%29.jpg",
+     "credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Michael Barera (CC BY-SA 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?229179"
+  },
+  "unit_id": 229179
+ },
+ {
+  "name": "The University of Tennessee-Chattanooga",
+  "city": "Chattanooga",
+  "region": "TN",
+  "size": 4,
+  "description": "The University of Tennessee-Chattanooga is a public research university in Chattanooga, TN.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/The_University_of_Tennessee_at_Chattanooga.jpg/1920px-The_University_of_Tennessee_at_Chattanooga.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.8265,
+   "graduation_rate": 0.577
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.8265,
+   "completion_rate_4yr_150pct": 0.577,
+   "location": {
+    "lat": 35.047519,
+    "lng": -85.300247,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/The_University_of_Tennessee_at_Chattanooga.jpg/1920px-The_University_of_Tennessee_at_Chattanooga.jpg",
+     "credit": "Wikimedia Commons / Harrison Keely (CC BY 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/University_of_Tennessee_at_Chattanooga_%281%29.jpg/1920px-University_of_Tennessee_at_Chattanooga_%281%29.jpg",
+     "credit": "Wikimedia Commons / Mei Kaneko (CC BY-SA 4.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/c/c1/UTC_Race_Hall.jpg",
+     "credit": "Wikimedia Commons / M-State Moc at English Wikipedia (public domain)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/PattenChapel.jpg/1920px-PattenChapel.jpg",
+     "credit": "Wikimedia Commons / Johncw1959 (public domain)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Harrison Keely (CC BY 4.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?221740"
+  },
+  "unit_id": 221740
+ },
+ {
+  "name": "Touro University",
+  "city": "New York",
+  "region": "NY",
+  "size": 4,
+  "description": "Touro University is a private research university in New York, NY.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Touro_University_California%2C_Wilderman_Hall%2C_Mare_Island%2C_California_-_panoramio_%28cropped%29.jpg/1920px-Touro_University_California%2C_Wilderman_Hall%2C_Mare_Island%2C_California_-_panoramio_%28cropped%29.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.7131,
+   "graduation_rate": 0.25
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.7131,
+   "completion_rate_4yr_150pct": 0.25,
+   "location": {
+    "lat": 40.757267,
+    "lng": -73.980813,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Touro_University_California%2C_Wilderman_Hall%2C_Mare_Island%2C_California_-_panoramio_%28cropped%29.jpg/1920px-Touro_University_California%2C_Wilderman_Hall%2C_Mare_Island%2C_California_-_panoramio_%28cropped%29.jpg",
+     "credit": "Wikimedia Commons / Bridget Canfield (CC BY 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Touro_University_California%2C_Wilderman_Hall%2C_Mare_Island%2C_California_-_panoramio.jpg/1920px-Touro_University_California%2C_Wilderman_Hall%2C_Mare_Island%2C_California_-_panoramio.jpg",
+     "credit": "Wikimedia Commons / Bridget Canfield (CC BY 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Touro_University_California%2C_College_of_Medicine%2C_Mare_Island%2C_California_-_panoramio.jpg/1920px-Touro_University_California%2C_College_of_Medicine%2C_Mare_Island%2C_California_-_panoramio.jpg",
+     "credit": "Wikimedia Commons / Bridget Canfield (CC BY 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Touro_University_California%2C_Mare_Island%2C_California_-_panoramio.jpg/1920px-Touro_University_California%2C_Mare_Island%2C_California_-_panoramio.jpg",
+     "credit": "Wikimedia Commons / Bridget Canfield (CC BY 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Touro_University_California%2C_Harter_Way%2C_Mare_Island%2C_California_-_panoramio.jpg/1920px-Touro_University_California%2C_Harter_Way%2C_Mare_Island%2C_California_-_panoramio.jpg",
+     "credit": "Wikimedia Commons / Bridget Canfield (CC BY 3.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Bridget Canfield (CC BY 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?196592"
+  },
+  "unit_id": 196592
+ },
+ {
+  "name": "Towson University",
+  "city": "Towson",
+  "region": "MD",
+  "size": 4,
+  "description": "Towson University is a public research university in Towson, MD.",
+  "media_gallery": [
+   "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Towson_University_-_Prettyman_hall.jpg/1920px-Towson_University_-_Prettyman_hall.jpg"
+  ],
+  "ranking_data": {
+   "ownership_type": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "acceptance_rate": 0.786,
+   "graduation_rate": 0.732
+  },
+  "school_outcomes": {
+   "ownership": "public",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "admit_rate": 0.786,
+   "completion_rate_4yr_150pct": 0.732,
+   "location": {
+    "lat": 39.393622,
+    "lng": -76.611164,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "campus_photos": [
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Towson_University_-_Prettyman_hall.jpg/1920px-Towson_University_-_Prettyman_hall.jpg",
+     "credit": "Wikimedia Commons / Adam Jackson, student at w:Towson University (CC BY-SA 3.0)"
+    },
+    {
+     "url": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Towson_University_glen_snow_%2816095534344%29.jpg",
+     "credit": "Wikimedia Commons / Katie Simmons-Barth Photography (CC BY 2.0)"
+    }
+   ],
+   "media_credit": "Wikimedia Commons / Adam Jackson, student at w:Towson University (CC BY-SA 3.0)",
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?164076"
+  },
+  "unit_id": 164076
+ },
+ {
+  "name": "Universidad Ana G. Mendez-Gurabo Campus",
+  "city": "Gurabo",
+  "region": "PR",
+  "size": 4,
+  "description": "Universidad Ana G. Mendez-Gurabo Campus is a private research university in Gurabo, PR.",
+  "media_gallery": null,
+  "ranking_data": {
+   "ownership_type": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "graduation_rate": 0.266
+  },
+  "school_outcomes": {
+   "ownership": "private",
+   "carnegie_classification": "Doctoral/Professional Universities",
+   "completion_rate_4yr_150pct": 0.266,
+   "location": {
+    "lat": 18.239647,
+    "lng": -66.006259,
+    "source": "IPEDS / Urban Institute Education Data API"
+   },
+   "source": "U.S. Dept. of Education IPEDS (via Urban Institute Education Data API)",
+   "source_url": "https://collegescorecard.ed.gov/school/?243601"
+  },
+  "unit_id": 243601
+ }
+]
