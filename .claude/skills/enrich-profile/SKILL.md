@@ -661,6 +661,51 @@ Concrete misses observed in the first runs — each broke a real page:
      description pass used only 18 distinct school-blurbs to cover 461 fields (95%) — one blurb on 124
      different fields, another on 80, another on 38 — with the universal "Students build depth in
      {field}…" closing on 100% of rows and the double-period ".." breakage on 95%.
+   - **A description must be RESEARCHED PROSE ABOUT THE PROGRAM — FAIL any description
+     that is a BUILD-ARTIFACT ASSEMBLY (a debug/ingest token + a school-division frame
+     + scraped namesake text), the live regression this run AND the most dangerous one
+     because a per-row id NONCE makes every row's text unique and thereby ZEROES every
+     anti_stub verbatim / shared-body / cross-field metric — it evaded BOTH the CI gate
+     AND this grader's own prior "win/clean" call.** A "de-fabrication" pass that fails
+     to actually research the catalog can emit, instead of one shared stub, a per-row
+     MACHINE ASSEMBLY of three parts — and because the id differs per row, no two
+     descriptions are byte-equal, so the entire shared-text gate reads 0 (the rows look
+     "uniquely described" while not one was researched). Any of these three tells is a
+     hard FAIL, independent of every form/share metric:
+     (a) a LEADING INTERNAL TOKEN — `"Catalog entry <hex/uuid>:"` (frequently DOUBLED:
+       `"Catalog entry 5686…: Catalog entry 5686…:"`), a bare UUID/hash, or any
+       ingest/database id. No real catalog prints a row id in a degree description; a
+       leading id is a build artifact leaked to the live page, and (being a per-row
+       nonce) it is ALSO the gate-evasion that hides parts (b)/(c) from the share count.
+     (b) a SCHOOL/DIVISION TEMPLATE FRAME — `"{Univ}'s {School} draws on {Department/
+       Division of X} for coursework and research on the {city} campus. Published through
+       {Univ}'s {School} on the {city} campus."` — pure classification boilerplate (the
+       run-43 school-blurb wearing a new costume; it adds no fact you couldn't infer from
+       `(school, field)`), and it routinely carries the run-25 GEOGRAPHY lie (every UW row
+       ends "on the **Westwood** campus" — Westwood is a PEER's campus, not UW's).
+     (c) a NAMESAKE SCRAPE — a paragraph about a DIFFERENT real-world entity that merely
+       shares the program's name: a journal ("…is a peer-reviewed scientific journal …
+       published by EDP Sciences"), a Wikipedia survey/definition ("Ethnic studies … is
+       the study of difference"), or a list article ("The following list features women
+       …") — often TRUNCATED MID-WORD ("hly peer-reviewed"), proof it was scraped by name,
+       not read off the program page. This is fabrication-by-name-collision: confidently
+       WRONG content (an Astronomy M.A.T. described as a journal's editorial board).
+     The repair is the same as every de-fabrication: research each description from THIS
+     institution's OWN catalog/department page, one paragraph per PROGRAM. The pre-ship
+     scan (miss #9) must STRIP any leading id-token/nonce BEFORE recomputing the
+     verbatim/shared-body counts (or the nonce hides the stamp) AND fail outright on the
+     id-token, the division-frame boilerplate, and a namesake-scrape — none of which the
+     description-FORM metrics see. **A catalog carrying this form is NOT clean even at 0
+     on every existing anti_stub metric, so it must NOT be trusted as CERTIFIED_CLEAN
+     until the analyzer gains a nonce-strip + id-token/division-frame/namesake metric**
+     (that lives in `profile_standard/anti_stub.py` + `test_anti_stub_gate.py`, app/test
+     code the grader does not edit — FLAG it for a human). Evidence: live API this run —
+     three #766/#770/#790 "de-fabricate" PRs that auto-merged green and joined
+     CERTIFIED_CLEAN ship this assembly on ~98% of rows (UCLA 364/373, UW 350/365, Michigan
+     374/379 carry the "Catalog entry <hex>:" prefix — UW 316 of them DOUBLED — plus the
+     division frame and the Westwood-campus geography lie), while UT-Austin #768 / NYU #753
+     / UIUC #763 in the SAME interval de-fabricated genuinely (0 artifacts) — so this is one
+     broken pass's class, not the only repair model.
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
@@ -742,6 +787,21 @@ Concrete misses observed in the first runs — each broke a real page:
      Evidence: live API this run — the field-specific-description passes prefix the name
      in 82–100% of rows on every description-passed catalog (Cornell/Berkeley/Penn/CMU
      100%, Northwestern 97%, Harvard 82%), vs gold MIT 2%.
+     - **Also FAIL the BUILD-ARTIFACT ASSEMBLY form (miss #8 build-artifact sub-bullet) —
+       and STRIP its per-row id NONCE before the verbatim/shared-body counts above, or the
+       nonce zeroes them.** Scan every `description_text` and FAIL on (i) a LEADING internal
+       token — `"Catalog entry <hex/uuid>:"` (often DOUBLED), a bare UUID/hash, any ingest
+       id; (ii) the `"{Univ}'s {School} draws on {Dept/Division} for coursework and research
+       on the {city} campus. Published through {Univ}'s {School} on the {city} campus."`
+       division-frame boilerplate (a classification stub — also re-run the miss-#8 geography
+       scan on its "{city} campus" tail); (iii) a NAMESAKE-SCRAPE paragraph (a journal /
+       Wikipedia-survey / list about a different entity sharing the name, often truncated
+       mid-word like "hly peer-reviewed"). Because the leading id is a per-row nonce, the
+       verbatim / shared-body / cross-field counts read 0 on this form while NOT ONE row was
+       researched — so strip a leading `^Catalog entry [0-9a-f]+:\s*` (and any leading id
+       token) from every description FIRST, then recompute those counts. Evidence: live API
+       this run — UCLA/UW/Michigan ship this on ~98% of rows yet scored 0 on every existing
+       metric and auto-merged into CERTIFIED_CLEAN.
    - **Named units — scan EVERY description for a unit that doesn't belong, and a
      REPAIR must clear the WHOLE class, not just the cited row.** The miss-#8
      named-unit-truth defect (a description naming a school/college/department/
