@@ -80,11 +80,15 @@ def test_catalog_breadth_and_shape():
     assert len(u.SCHOOLS) == 18
     assert len(u.PROGRAMS) >= 300
     assert len(set(u.PROGRAM_SLUGS)) == len(u.PROGRAM_SLUGS)
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    assert not validate_catalog(u.PROGRAMS)
     # online delivery is set on the Computer & Data Science Online programs
     assert any(p["delivery_format"] == "online" for p in u.PROGRAMS)
     # ownership + classification drive the explore-card eyebrow
     assert u.RANKING_DATA["ownership_type"] == "public"
     assert "public research university" in u.DESCRIPTION.lower()
+    assert u._INSTITUTION_CONTENT.get("news_rss") == "https://news.utexas.edu/feed/"
 
 
 def test_institution_is_gold_except_recorded_omission():
