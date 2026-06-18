@@ -334,6 +334,10 @@ resource "aws_ecs_task_definition" "backend" {
       # Ops token for programmatic access to internal reporting endpoints
       # (GET /feedback/admin, crawler ops). Internal-only; not a user credential.
       { name = "CRAWLER_OPS_TOKEN", value = "unipaith-ops-fbx-2026" },
+      # AI Structure (Spec 3) — turn the CPEF matcher ON (fused fit+confidence,
+      # two-sided M blend). Deterministic; the legacy convex-sum path remains the
+      # fallback, so this is reversible by setting it back to "false".
+      { name = "CPEF_MATCHING_ENABLED", value = "true" },
     ]
 
     secrets = [
