@@ -3243,11 +3243,16 @@ if _shared_desc:
 
 
 def _assert_anti_stub_clean(programs: list[dict]) -> None:
-    from unipaith.profile_standard.anti_stub import analyze
+    from unipaith.profile_standard.anti_stub import analyze, machine_artifacts
 
     report = analyze(programs)
     if not report.is_clean:
         raise ValueError(f"UCLA catalog anti-stub gate failed: {report.summary()}")
+    artifacts = machine_artifacts(programs)
+    if artifacts:
+        raise ValueError(
+            f"UCLA catalog has {len(artifacts)} machine-build artifacts, e.g. {artifacts[:3]}"
+        )
 
 
 _assert_anti_stub_clean(PROGRAMS)

@@ -16,7 +16,6 @@ Never emits school-blurb stubs ("connects to" / "Students build depth").
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import time
@@ -122,27 +121,19 @@ _FIELD_GUIDE: dict[str, str] = {
     "Urban and Regional Planning": "urban_planning",
 }
 
-_LEVEL_LEAD: dict[str, str] = {
-    "bachelors": (
-        "Undergraduate students complete Michigan's published degree requirements, department "
-        "electives, and often undergraduate research or internships on the Ann Arbor campus."
-    ),
-    "masters": (
-        "Master's students complete advanced coursework, research seminars, and a thesis, "
-        "capstone, or professional practicum per the published graduate requirements."
-    ),
-    "phd": (
-        "Doctoral students conduct original dissertation research, participate in departmental "
-        "seminars, and prepare for academic or industry research careers under faculty mentorship."
-    ),
-    "professional": (
-        "Professional students complete clinical rotations, licensure preparation, and skills "
-        "training required for professional certification or board examinations."
-    ),
-    "doctoral": (
-        "Doctoral students conduct original dissertation research, participate in departmental "
-        "seminars, and prepare for academic or industry research careers under faculty mentorship."
-    ),
+_LEVEL_PREFIX: dict[str, str] = {
+    "masters": "Graduate study. ",
+    "phd": "Doctoral study. ",
+    "doctoral": "Doctoral study. ",
+    "professional": "Professional study. ",
+}
+
+_LEVEL_TAIL: dict[str, str] = {
+    "bachelors": "undergraduate",
+    "masters": "master's",
+    "phd": "doctoral",
+    "doctoral": "doctoral",
+    "professional": "professional",
 }
 
 
@@ -191,6 +182,15 @@ def _wiki_relevant(extract: str, field: str) -> bool:
     if "may refer to" in low or "disambiguation" in low:
         return False
     if "research guide will get you started" in low:
+        return False
+    # Reject namesake scrapes (journals, list articles, wrong-entity pages).
+    if re.search(r"\b(peer-reviewed|scientific journal|academic journal)\b", low):
+        return False
+    if re.search(r"\bfollowing list\b", low):
+        return False
+    if re.search(r"\bis currently (a )?professor\b", low):
+        return False
+    if extract[0].islower() and not extract.startswith(("e.g.", "i.e.")):
         return False
     tokens = _field_tokens(field)
     if not tokens:
@@ -353,29 +353,19 @@ def _field_body(
     return body
 
 
-def _opaque_key(slug: str) -> str:
-    return hashlib.sha256(slug.encode()).hexdigest()[:12]
-
-
-def _school_research_fact(spec: dict) -> str:
-    from unipaith.data import ucla_profile as u
-
-    school = spec["school"]
-    slug = spec["slug"]
-    key = _opaque_key(slug)
-    meta = next((x for x in u._SCHOOL_META if x["name"] == school), None)
-    centers = (meta or {}).get("research_centers") or []
-    center = centers[hash(slug) % len(centers)] if centers else school
-    return (
-        f"Catalog entry {key}: UCLA's {school} draws on {center} for coursework and "
-        f"research on the Westwood campus."
-    )
-
-
 def _strip_name_prefix(text: str, program_name: str) -> str:
     if text.startswith(program_name):
         return text[len(program_name) :].lstrip(" :—-")
     return text
+
+
+def _credential_tail(spec: dict) -> str:
+    dtype = spec["degree_type"]
+    level = _LEVEL_TAIL.get(dtype, "graduate")
+    return (
+        f"At UCLA's {spec['school']} in Los Angeles (Westwood campus), "
+        f"the {spec['program_name']} engages this discipline at the {level} level."
+    )
 
 
 def _compose(spec: dict, field: str, body: str) -> str:
@@ -384,31 +374,15 @@ def _compose(spec: dict, field: str, body: str) -> str:
     if slug in _SLUG_OVERRIDES:
         base = _SLUG_OVERRIDES[slug]
     else:
-        school = spec["school"]
-        dtype = spec["degree_type"]
         if not body:
-            body = _school_research_fact(spec)
+            raise ValueError(f"No verified discipline summary for {slug!r} ({field!r})")
         body = _strip_name_prefix(body, pname)
-        if len(body) > 380:
-            if dtype == "masters":
-                slice_body = body[40:400]
-            elif dtype in ("phd", "doctoral"):
-                slice_body = body[80:440] if len(body) > 440 else body[-340:]
-            elif dtype == "professional":
-                slice_body = body[30:390]
-            else:
-                slice_body = body[:380]
-        else:
-            slice_body = body
-        key = _opaque_key(slug)
-        base = (
-            f"Catalog entry {key}: {slice_body} Published through UCLA's {school} "
-            f"on the Westwood campus."
-        )
+        prefix = _LEVEL_PREFIX.get(spec["degree_type"], "")
+        base = f"{prefix}{body} {_credential_tail(spec)}"
     if spec.get("delivery_format") == "online":
-        base += " Delivered fully online."
+        base += " The program is offered fully online."
     elif spec.get("delivery_format") == "hybrid":
-        base += " Delivered in a hybrid format."
+        base += " The program is offered in a hybrid format."
     return _clean(_strip_name_prefix(base, pname))
 
 
@@ -451,16 +425,7 @@ def _differentiate_credential_descriptions(programs: list[dict], field_key_fn) -
 
 
 def _disambiguate_catalog_descriptions(programs: list[dict], field_key_fn) -> None:
-    from unipaith.profile_standard.anti_stub import _SHARED_BODY_MIN_CHARS, field_of
-
-    level_lead = {
-        "bachelors": "Undergraduate students in this major",
-        "masters": "Graduate students in this program",
-        "phd": "Doctoral candidates in this program",
-        "professional": "Professional students in this program",
-        "doctoral": "Doctoral candidates in this program",
-    }
-
+    """Ensure credential siblings of one field do not share identical descriptions."""
     by_field: dict[str, list[dict]] = defaultdict(list)
     for spec in programs:
         by_field[field_key_fn(spec["program_name"])].append(spec)
@@ -468,66 +433,34 @@ def _disambiguate_catalog_descriptions(programs: list[dict], field_key_fn) -> No
     for rows in by_field.values():
         if len(rows) < 2:
             continue
-        descs = [r.get("description") or "" for r in rows]
-        prefix = descs[0]
-        shortest = min(len(d) for d in descs)
-        for d in descs[1:]:
-            i = 0
-            while i < min(len(prefix), len(d)) and prefix[i] == d[i]:
-                i += 1
-            prefix = prefix[:i]
-        if len(prefix) < 120 or len(prefix) < 0.5 * shortest:
-            continue
-        for spec in rows:
-            body = (spec.get("description") or "")[len(prefix) :].strip()
-            if body:
-                spec["description"] = body
-                continue
-            lead = level_lead.get(spec.get("degree_type", ""), "Students in this program")
-            spec["description"] = (
-                f"{lead} follow the {spec['program_name']} curriculum published "
-                f"in UCLA's General Catalog."
+        by_type = {s["degree_type"]: s for s in rows}
+        ms = by_type.get("masters")
+        phd = by_type.get("phd") or by_type.get("doctoral")
+        bs = by_type.get("bachelors")
+        if ms and phd and (ms.get("description") or "") == (phd.get("description") or ""):
+            phd_body = phd["description"]
+            phd["description"] = _clean(
+                f"{phd_body} Doctoral students complete dissertation research, teaching, "
+                f"and departmental seminars."
             )
-
-    by_desc: dict[str, list[dict]] = defaultdict(list)
-    for spec in programs:
-        by_desc[spec.get("description") or ""].append(spec)
-    for desc, rows in by_desc.items():
-        if len(rows) <= 1 or not desc:
-            continue
-        for spec in rows:
-            spec["description"] = _clean(
-                f"{desc} Catalog entry {_opaque_key(spec['slug'])}."
+        if bs and ms and (bs.get("description") or "") == (ms.get("description") or ""):
+            ms_body = ms["description"]
+            ms["description"] = _clean(
+                f"{ms_body} The M.S. may be earned en route to the Ph.D. or as a terminal degree."
             )
-
-    head_to_specs: dict[str, list[dict]] = defaultdict(list)
-    for spec in programs:
-        body = spec.get("description") or ""
-        if len(body) < _SHARED_BODY_MIN_CHARS:
-            continue
-        fld = field_of(spec["program_name"])
-        normalized = (
-            re.sub(re.escape(fld), "{FIELD}", body, flags=re.IGNORECASE) if fld else body
-        )
-        head_to_specs[normalized[: _SHARED_BODY_MIN_CHARS * 2]].append(spec)
-
-    for specs in head_to_specs.values():
-        fields = {field_of(s["program_name"]) for s in specs}
-        if len(fields) < 2:
-            continue
-        for spec in specs:
-            body = spec.get("description") or ""
-            tail = f" Catalog entry {_opaque_key(spec['slug'])}."
-            if tail.strip() not in body:
-                spec["description"] = _clean(body + tail)
 
 
 def _write_module(descriptions: dict[str, str], missing: list[str]) -> None:
     lines = [
         '"""Verified program descriptions for University of California, Los Angeles.',
         "",
-        "Built from Wikipedia discipline summaries located via MediaWiki search and",
-        "verified flagship program pages. Regenerate via scripts/build_ucla_catalogue_descriptions.py.",
+        "Each description leads with a verified definition of the program's field of study,",
+        "drawn from the English Wikipedia lead for that discipline, followed by a clause naming",
+        "the real owning UCLA school on the Westwood campus and the program's credential level.",
+        "Master's and doctoral rows carry a credential-specific lead so each credential of a",
+        "field reads distinctly. No fabricated facts and no build-script junk.",
+        "",
+        "Regenerate via scripts/build_ucla_catalogue_descriptions.py.",
         '"""',
         "",
         "# ruff: noqa: E501",
@@ -552,13 +485,13 @@ def _write_module(descriptions: dict[str, str], missing: list[str]) -> None:
 
 def main() -> None:
     from unipaith.data import ucla_profile as u
-    from unipaith.profile_standard.anti_stub import analyze
+    from unipaith.profile_standard.anti_stub import analyze, machine_artifacts
 
     cache: dict = {}
     if CACHE.exists():
         cache = json.loads(CACHE.read_text())
         for k in list(cache):
-            if k.startswith("field:") and not cache[k]:
+            if k.startswith("field:"):
                 del cache[k]
 
     programs = []
@@ -605,6 +538,11 @@ def main() -> None:
     report = analyze(programs)
     if not report.is_clean:
         raise SystemExit(f"Anti-stub gate failed before write: {report.summary()}\n{report.violations}")
+    artifacts = machine_artifacts(programs)
+    if artifacts:
+        raise SystemExit(
+            f"Machine-artifact gate failed before write: {len(artifacts)} rows, e.g. {artifacts[:3]}"
+        )
 
     for spec in programs:
         descriptions[spec["slug"]] = spec["description"]
