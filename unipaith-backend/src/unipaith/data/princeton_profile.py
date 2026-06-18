@@ -3073,6 +3073,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.degree_type = spec["degree_type"]
         p.duration_months = spec.get("duration_months")
         p.department = spec.get("department")
+        # CIP join key to ref_majors + the matcher's field vocabulary (Spec 69 §5/§8);
+        # without it the program is scored blind on the field/interest signal.
+        p.cip_code = spec.get("cip")
         p.description_text = spec["description"]
         # Website: verified department page where available, else the owning unit's site.
         p.website_url = _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"])
