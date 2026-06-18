@@ -16,7 +16,7 @@ import { showToast } from '../../stores/toast-store'
 import { getRecentPrograms, type RecentProgram } from '../../lib/recentPrograms'
 import UniversityCard from './explore/cards/UniversityCard'
 import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type FilterState } from './explore/shared/ExploreFilters'
-import { Building2, GraduationCap, LayoutGrid, MapPin } from 'lucide-react'
+import { Building2, GraduationCap, LibraryBig, MapPin } from 'lucide-react'
 import StrategyView from './match/StrategyView'
 import MatchesSection from './match/MatchesSection'
 import PromoCard from './explore/cards/PromoCard'
@@ -24,6 +24,9 @@ import DiscoverySearch from './explore/discovery/DiscoverySearch'
 import { parseChipsParam } from './explore/discovery/chipUtils'
 import { hasActiveFilters as hasProgramFilters, parseFiltersParam } from './explore/discovery/filterUtils'
 import DiscoverTabBar, { DISCOVER_TABS, type DiscoverTab } from './explore/DiscoverTabBar'
+import ResourcesTabBar, { normalizeSub, type ResourcesSub } from './explore/resources/ResourcesTabBar'
+import ResourcesFinancial from './explore/resources/ResourcesFinancial'
+import ResourcesInternational from './explore/resources/ResourcesInternational'
 import DiscoverRail from './explore/rail/DiscoverRail'
 import UpdatesTab from './connect/UpdatesTab'
 import EventsTab from './connect/EventsTab'
@@ -36,21 +39,22 @@ import type {
 } from './explore/shared/classifyInstitution'
 
 /**
- * ExplorePage — the Discover hub (Spec 2026-06-12: Discover + Connect merge).
+ * ExplorePage — the Discover hub (Spec 2026-06-12 merge + 2026-06-14 Resources).
  *
- * Sub-tabs: For you (the Stage-2 Match surface, Spec 09 + 10) · Updates ·
- * Events · Peers (the absorbed Connect surface, Spec 20). The For-you tab
- * keeps the original scroll — strategy, ranked dual-score matches, the
- * Spec-10 type-first program search, and the universities browse — plus a
- * live right rail (xl+) with updates / events / deadline radar / follow
- * suggestions. When a program search is active (chips/filters in the URL)
- * the matches + universities browse step aside so the results own the screen.
+ * Tabs: For you · Resources · Updates · Events · Peers.
+ *  - For you: strategy · recently-viewed · featured · ranked matches, plus the
+ *    live right rail (xl+) and a Resources hand-off button.
+ *  - Resources: a sub-tab bar (?sub=) — Universities (the Spec-10 program search
+ *    + universities browse), Financial (authored aid guide), International
+ *    (authored guide + a personalized readiness panel).
+ *  - Updates / Events / Peers: the absorbed Connect surface (Spec 20).
+ * A chips/filters deep-link (e.g. a saved search) opens Resources › Universities.
  */
 
 // Per-tab header copy (Spec 2026-06-12 §4).
 const TAB_HEADERS: Record<DiscoverTab, { title: string }> = {
   foryou: { title: 'Strategy & matches' },
-  browse: { title: 'Browse programs & schools' },
+  resources: { title: 'Resources' },
   updates: { title: 'Updates' },
   events: { title: 'Events' },
   peers: { title: 'Peers' },
@@ -136,14 +140,16 @@ export default function ExplorePage() {
     parseChipsParam(searchParams.get('chips')).length > 0 ||
     hasProgramFilters(parseFiltersParam(searchParams.get('filters')))
 
-  // Hub sub-tabs (Spec 2026-06-12 §2 + Browse split 2026-06-14). Unknown/absent
-  // tab → Browse when a search is active, else For you. A ?tab=peers deep-link
-  // falls back to For you once we KNOW peers is disabled.
-  const urlTab = searchParams.get('tab') as DiscoverTab | null
+  // Hub sub-tabs (Spec 2026-06-12 §2 + Resources tab 2026-06-14). Unknown/absent
+  // tab → Resources when a search is active, else For you. A ?tab=peers deep-link
+  // falls back to For you once we KNOW peers is disabled. Old ?tab=browse links
+  // resolve to Resources so the rename never dead-ends.
+  const rawUrlTab = searchParams.get('tab')
+  const urlTab = (rawUrlTab === 'browse' ? 'resources' : rawUrlTab) as DiscoverTab | null
   const rawTab: DiscoverTab = urlTab && DISCOVER_TABS.includes(urlTab)
     ? urlTab
     : searchActive
-      ? 'browse'
+      ? 'resources'
       : 'foryou'
   const tab: DiscoverTab = rawTab === 'peers' && peersStatus && !peersStatus.enabled ? 'foryou' : rawTab
   const setTab = (t: DiscoverTab) =>
@@ -151,13 +157,23 @@ export default function ExplorePage() {
       const next = new URLSearchParams(prev)
       if (t === 'foryou') next.delete('tab')
       else next.set('tab', t)
-      // Leaving Browse → drop the program-search params so other tabs stay clean
-      // and don't bounce back to Browse via the searchActive default.
-      if (t !== 'browse') {
+      // Leaving Resources → drop the program-search params + sub so other tabs
+      // stay clean and don't bounce back via the searchActive default.
+      if (t !== 'resources') {
         next.delete('q')
         next.delete('chips')
         next.delete('filters')
+        next.delete('sub')
       }
+      return next
+    }, { replace: true })
+  // Resources sub-tab (Universities · Financial · International).
+  const sub = normalizeSub(searchParams.get('sub'))
+  const setSub = (s: ResourcesSub) =>
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (s === 'universities') next.delete('sub')
+      else next.set('sub', s)
       return next
     }, { replace: true })
   const [managing, setManaging] = useState(false)
@@ -172,7 +188,7 @@ export default function ExplorePage() {
     queryKey: ['explore-universities'],
     queryFn: () => searchInstitutions({ page_size: 50 }),
     staleTime: 5 * 60 * 1000,
-    enabled: !searchActive && tab === 'browse',
+    enabled: !searchActive && tab === 'resources',
   })
 
   // Saved programs — for the MatchesSection cards.
@@ -264,7 +280,7 @@ export default function ExplorePage() {
     staleTime: 5 * 60 * 1000,
     retry: false,
     // Event chips appear on cards in both For you (matches) and Browse (results).
-    enabled: tab === 'foryou' || tab === 'browse',
+    enabled: tab === 'foryou' || tab === 'resources',
   })
   const nextEventByInst = useMemo(() => {
     const m = new Map<string, { event_name: string; start_time: string }>()
@@ -283,7 +299,7 @@ export default function ExplorePage() {
     queryFn: () => getMatches(),
     retry: 1,
     staleTime: 60_000,
-    enabled: (tab === 'foryou' || tab === 'browse') && peersEnabled && peersOptedIn,
+    enabled: (tab === 'foryou' || tab === 'resources') && peersEnabled && peersOptedIn,
   })
   const cohortProgramIds = useMemo(
     () => matchesForCohort.map(m => m.program_id).filter(Boolean) as string[],
@@ -427,12 +443,13 @@ export default function ExplorePage() {
               />
             </div>
 
-            {/* Browse hand-off — program search + universities live on their own tab now. */}
+            {/* Resources hand-off — program search, universities, financial &
+                international guides live on the Resources tab now. */}
             <button
-              onClick={() => setTab('browse')}
+              onClick={() => setTab('resources')}
               className="ui-btn inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
             >
-              <LayoutGrid size={15} className="text-secondary" /> Browse all programs &amp; schools
+              <LibraryBig size={15} className="text-secondary" /> Browse programs, schools &amp; resources
             </button>
           </div>
 
@@ -455,15 +472,24 @@ export default function ExplorePage() {
             </Coachmark>
           </aside>
         </div>
-      ) : tab === 'browse' ? (
+      ) : tab === 'resources' ? (
         <div
-          id="discover-panel-browse"
+          id="discover-panel-resources"
           role="tabpanel"
-          aria-labelledby="discover-tab-browse"
+          aria-labelledby="discover-tab-resources"
           tabIndex={0}
           className="focus-visible:outline-none"
         >
-          {/* Spec 10 — type-first program search (search box · chips · genre tiles · sort · results). */}
+          <ResourcesTabBar sub={sub} onChange={setSub} />
+
+          {sub === 'financial' ? (
+            <ResourcesFinancial />
+          ) : sub === 'international' ? (
+            <ResourcesInternational />
+          ) : (
+            <>
+          {/* Universities sub-tab — type-first program search (search box · chips ·
+              genre tiles · sort · results) + the universities browse grid. */}
           <div className="mb-8">
             <DiscoverySearch
               followedIds={followedIds}
@@ -551,6 +577,8 @@ export default function ExplorePage() {
                 </>
               )}
             </div>
+          )}
+            </>
           )}
         </div>
       ) : (

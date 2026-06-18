@@ -50,16 +50,17 @@ describe('DiscoverTabBar hides Peers when its flag is off', () => {
   })
 })
 
-// Browse split (2026-06-14) — program search + universities get their own tab.
-describe('DiscoverTabBar Browse tab', () => {
-  it('renders a Browse tab right after For you', () => {
+// Resources tab (2026-06-14) — program search + universities + guides.
+describe('DiscoverTabBar Resources tab', () => {
+  it('renders a Resources tab right after For you', () => {
     render(<DiscoverTabBar tab="foryou" onChange={() => {}} onManageFollowing={() => {}} />)
     const list = screen.getByRole('tablist', { name: 'Discover sections' })
     const labels = within(list).getAllByRole('tab').map(t => (t.textContent ?? '').trim())
     expect(labels[0]).toBe('For you')
-    expect(labels[1]).toBe('Browse')
+    expect(labels[1]).toBe('Resources')
   })
-  it('includes browse in the canonical tab list', () => {
-    expect(DISCOVER_TABS).toContain('browse')
+  it('includes resources (not the old browse) in the canonical tab list', () => {
+    expect(DISCOVER_TABS).toContain('resources')
+    expect(DISCOVER_TABS).not.toContain('browse')
   })
 })
