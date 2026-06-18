@@ -11,6 +11,15 @@ interface FormProps {
   loading: boolean
 }
 
+// Gender options — stored value is the label string (the column is free text,
+// so labels stay backward-compatible). No free-text entry; fixed options only.
+const GENDER_LABELS = ['Woman', 'Man', 'Non-binary', 'Another identity', 'Prefer not to say']
+const GENDER_OPTIONS = GENDER_LABELS.map(l => ({ value: l, label: l }))
+
+// A gender change locks the field for 3 months (90 days). Compute the unlock
+// date from the server-stamped timestamp; absent timestamp = never locked.
+const GENDER_LOCK_MS = 90 * 864e5
+
 // Empty <input>/<select> values arrive as '' — but the backend rejects '' for
 // optional date/number fields (Pydantic: "input is too short" / "not an int").
 // Convert blanks to null so optional fields validate and omitted values clear.
@@ -21,23 +30,37 @@ function sanitizePayload<T extends Record<string, unknown>>(data: T): T {
 }
 
 export function BasicInfoForm({ defaultValues, onSubmit, loading }: FormProps) {
-  const { register, handleSubmit } = useForm({ defaultValues: { first_name: defaultValues?.first_name || '', last_name: defaultValues?.last_name || '', preferred_pronouns: defaultValues?.preferred_pronouns || '', date_of_birth: defaultValues?.date_of_birth?.slice(0, 10) || '', nationality: defaultValues?.nationality || '', country_of_residence: defaultValues?.country_of_residence || '', bio_text: defaultValues?.bio_text || '', goals_text: defaultValues?.goals_text || '' } })
+  const { register, handleSubmit } = useForm({ defaultValues: { first_name: defaultValues?.first_name || '', last_name: defaultValues?.last_name || '', gender_identity: defaultValues?.gender_identity || '', preferred_pronouns: defaultValues?.preferred_pronouns || '', date_of_birth: defaultValues?.date_of_birth?.slice(0, 10) || '', nationality: defaultValues?.nationality || '', country_of_residence: defaultValues?.country_of_residence || '', bio_text: defaultValues?.bio_text || '', goals_text: defaultValues?.goals_text || '' } })
+
+  // 3-month change-lock for gender. The server stamps gender_identity_updated_at
+  // on every allowed change; the field stays locked until +90 days. Absent
+  // timestamp = first-set (no lock). The timestamp is server-managed — never sent.
+  const genderUpdatedAt = defaultValues?.gender_identity_updated_at
+  const lockedUntil = genderUpdatedAt ? new Date(new Date(genderUpdatedAt).getTime() + GENDER_LOCK_MS) : null
+  const locked = lockedUntil ? Date.now() < lockedUntil.getTime() : false
+  const genderSet = Boolean(defaultValues?.gender_identity)
+  const genderHelp = locked && lockedUntil
+    ? `You can change this again on ${lockedUntil.toLocaleDateString()}.`
+    : genderSet
+      ? 'Changing your gender locks it for 3 months.'
+      : undefined
+
   return (
-    <form onSubmit={handleSubmit(d => onSubmit(sanitizePayload(d)))} className="space-y-3">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="First Name" {...register('first_name')} />
-        <Input label="Last Name" {...register('last_name')} />
-      </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="Pronouns (optional)" placeholder="e.g., she/her, they/them" {...register('preferred_pronouns')} />
-        <Input label="Date of Birth" type="date" {...register('date_of_birth')} />
-      </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <form onSubmit={handleSubmit(d => onSubmit(sanitizePayload(d)))} className="space-y-6">
+      <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Input label="First name" {...register('first_name')} />
+        <Input label="Last name" {...register('last_name')} />
+        <Select label="Gender" options={GENDER_OPTIONS} placeholder="Select…" disabled={locked} helperText={genderHelp} {...register('gender_identity')} />
+        <Input label="Date of birth" type="date" {...register('date_of_birth')} />
+        <Input label="Pronouns" placeholder="e.g., she/her, they/them" {...register('preferred_pronouns')} />
         <Input label="Nationality" {...register('nationality')} />
-        <Input label="Country of Residence" {...register('country_of_residence')} />
+        <Input label="Country of residence" {...register('country_of_residence')} />
       </div>
-      <Textarea label="Bio" {...register('bio_text')} />
-      <Textarea label="Goals" {...register('goals_text')} />
+      <div className="space-y-4 border-t border-border pt-5">
+        <p className="text-[13px] font-semibold text-muted-foreground">About you</p>
+        <Textarea label="Bio" {...register('bio_text')} />
+        <Textarea label="Goals" {...register('goals_text')} />
+      </div>
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
   )

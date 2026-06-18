@@ -1,8 +1,8 @@
-"""Repair UCLA: replace the build-artifact-assembly descriptions (per-row
-"Catalog entry <hex>:" nonce + school-division frame + scraped-namesake text,
-REPAIR_BACKLOG run 59 critical #1) with real, verified per-program prose for all
-373 programs — UCLA General Catalog 2025 + de-namesaked Wikipedia discipline
-summaries + hand-verified UCLA prose. Idempotent re-apply (replace=True).
+"""De-fabricate UCLA program descriptions: replace machine-corrupted catalogue
+text (which opened "Catalog entry <hex>: …" and used namesake Wikipedia scrapes)
+with verified, per-credential, field-specific descriptions sourced from the
+English Wikipedia lead for each discipline, on the correct Westwood campus.
+Re-applies ucla_profile.apply (idempotent, by slug).
 
 Revision ID: uclaprof4
 Revises: uwseedmerge1

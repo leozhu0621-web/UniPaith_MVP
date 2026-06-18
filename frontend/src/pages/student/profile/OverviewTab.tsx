@@ -27,7 +27,8 @@ export default function OverviewTab() {
       qc.invalidateQueries({ queryKey: ['onboarding'] })
       showToast('Saved', 'success')
     },
-    onError: () => showToast("Something didn't work. Try again.", 'error'),
+    onError: (err: any) =>
+      showToast(err?.response?.data?.detail || "Something didn't work. Please try again.", 'error'),
   })
 
   if (isLoading || !profile) return <SkeletonCard />
@@ -36,7 +37,7 @@ export default function OverviewTab() {
   const fullName = [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Your name'
 
   return (
-    <div className="max-w-3xl space-y-5">
+    <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-center gap-4">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-muted text-xl font-bold text-foreground">
           {initials(fullName)}
