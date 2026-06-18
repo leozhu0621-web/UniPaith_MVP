@@ -65,10 +65,11 @@ describe('SavedListPage', () => {
 
   it('shows the saved header', async () => {
     // The descriptive sub-tagline was removed app-wide (maturity pass); the
-    // header is title-only now. Title is a plain noun (UX-QA voice rule 1).
+    // header is a plain noun (UX-QA voice rule 1) now followed by a live count
+    // of the active sub-view (desktop count parity with Applications).
     renderPage()
     expect(
-      (await screen.findAllByRole('heading', { name: /^saved$/i })).length,
+      (await screen.findAllByRole('heading', { name: /^saved\b/i })).length,
     ).toBeGreaterThan(0)
   })
 })
