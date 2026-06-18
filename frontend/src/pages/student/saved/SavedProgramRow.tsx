@@ -152,10 +152,11 @@ export default function SavedProgramRow({
             key={tag}
             type="button"
             onClick={() => onSaveTags(sp.tags.filter(t => t !== tag))}
-            className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/50 hover:border-error/40"
-            title="Remove tag"
+            className="inline-flex items-center gap-1 max-w-[140px] text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/50 hover:border-error/40"
+            title={`${tag} — remove tag`}
           >
-            {tag} ×
+            <span className="truncate">{tag}</span>
+            <span aria-hidden className="shrink-0">×</span>
           </button>
         ))}
 
