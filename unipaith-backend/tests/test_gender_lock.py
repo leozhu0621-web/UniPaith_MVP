@@ -11,7 +11,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.models.student import StudentProfile
@@ -34,12 +34,17 @@ async def _get_profile(db: AsyncSession, user: User) -> StudentProfile:
 
 async def _set_gender_stamp(db: AsyncSession, user: User, stamp: datetime | None) -> None:
     """Backdate (or clear) the stored gender_identity_updated_at directly, so the
-    lock window can be exercised without sleeping. Expire so the next request,
-    sharing this session, re-reads the committed value."""
-    profile = await _get_profile(db, user)
-    profile.gender_identity_updated_at = stamp
+    lock window can be exercised without sleeping. Uses a raw UPDATE (no ORM load,
+    no expire_all): expire_all() on the request-shared async session leaves
+    expired attributes that the next request touches in a sync context, raising
+    MissingGreenlet. A direct UPDATE + commit writes the value; the request's own
+    async fetch re-reads it cleanly."""
+    await db.execute(
+        update(StudentProfile)
+        .where(StudentProfile.user_id == user.id)
+        .values(gender_identity_updated_at=stamp)
+    )
     await db.commit()
-    db.expire_all()
 
 
 @pytest.mark.asyncio
