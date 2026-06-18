@@ -9,7 +9,7 @@ import Select from '../../components/ui/Select'
 import EmptyState from '../../components/ui/EmptyState'
 import QueryError from '../../components/ui/QueryError'
 import { SkeletonCard } from '../../components/ui/Skeleton'
-import { PageContainer, PageHeader, StatTile } from '../../components/student/density'
+import { PageContainer, PageHeader, SectionHeader, StatTile } from '../../components/student/density'
 import BandBalanceBar from '../../components/student/BandBalanceBar'
 import { useCountUp } from '../../hooks/useCountUp'
 import usePageTitle from '../../hooks/usePageTitle'
@@ -24,6 +24,7 @@ function BucketCount({ value }: { value: number }) {
 import { STATUS_COLORS } from '../../utils/constants'
 import { FileText, Star, ChevronRight, CalendarClock, CheckCircle2, ArrowRight, Mail } from 'lucide-react'
 import DecisionComparison from './apply/offer/DecisionComparison'
+import OfferComparisonTable from './apply/offer/OfferComparisonTable'
 import { hasPendingOfferResponse } from './apply/offer/offerFormat'
 import { daysUntil, deadlineTone, DEADLINE_TONE_CLASS } from '../../utils/deadline'
 import type { Application } from '../../types'
@@ -370,19 +371,14 @@ export default function ApplicationsPage() {
                 </Card>
               )
             })}
-            {offerApps.length >= 2 && (
-              <div className="pt-2">
-                <button
-                  onClick={() => setShowCompare(true)}
-                  className="text-sm text-secondary font-medium inline-flex items-center gap-1 hover:underline"
-                >
-                  Compare your {offerApps.length} offers <ArrowRight size={14} />
-                </button>
-              </div>
-            )}
           </div>
         )}
-        <DecisionComparison isOpen={showCompare} onClose={() => setShowCompare(false)} />
+        {offerApps.length >= 2 && (
+          <section className="mt-8">
+            <SectionHeader>Compare offers</SectionHeader>
+            <OfferComparisonTable />
+          </section>
+        )}
       </PageContainer>
     )
 
