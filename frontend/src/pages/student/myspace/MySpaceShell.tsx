@@ -6,6 +6,7 @@ import {
   SlidersHorizontal, ChevronRight, ChevronDown, Upload,
 } from 'lucide-react'
 import { listMyApplications } from '../../../api/applications'
+import { listRecommendations } from '../../../api/recommendations'
 import Coachmark from '../../../components/ui/Coachmark'
 
 // My Space shell (Spec 2026-06-10 §3; rail tree 2026-06-15) — one personal
@@ -142,10 +143,34 @@ export default function MySpaceShell() {
   const navigate = useNavigate()
   const { pathname, search } = location
 
-  // Application count badge on the Workspace group (cache shared with the home
-  // pipeline tiles + ApplicationsPage — reused, not refetched).
+  // Named, child-level rail meta on specific Workspace rooms — each names its
+  // noun via the row label, so a bare count reads unambiguously (Applications 4,
+  // Recommenders 2/3, Offers 1). Caches are shared with the home pipeline tiles
+  // + ApplicationsPage / RecommendationsPage — reused, not refetched.
   const { data: apps } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications, staleTime: 60_000 })
-  const appCount = Array.isArray(apps) ? apps.length : 0
+  const { data: recs } = useQuery({ queryKey: ['recommendations'], queryFn: listRecommendations, staleTime: 60_000 })
+
+  // child `to` → trailing meta string. Quiet by design: muted, no gold, no
+  // alarm. Only rendered when the count is meaningful (recs/offers hidden at 0).
+  const childMeta = new Map<string, string>()
+  if (Array.isArray(apps)) {
+    childMeta.set('/s/applications', String(apps.length))
+    // An app needs a response when it carries an offer with no student
+    // response/decision — same check ApplicationsPage uses (hasPendingOfferResponse).
+    const pendingOffers = apps.filter(
+      a => a.offer && !a.offer.student_response && a.student_decision == null,
+    ).length
+    if (pendingOffers > 0) childMeta.set('/s/applications?tab=offers', String(pendingOffers))
+  }
+  if (Array.isArray(recs)) {
+    const tracked = recs.filter((r: { status?: string }) =>
+      ['requested', 'submitted', 'received'].includes(r.status ?? ''),
+    )
+    if (tracked.length > 0) {
+      const received = tracked.filter((r: { status?: string }) => r.status === 'received').length
+      childMeta.set('/s/prep?tab=recommenders', `${received}/${tracked.length}`)
+    }
+  }
 
   // Expanded groups — seed with whichever group owns the current route; keep the
   // active group open as the route changes (others stay as the user left them).
@@ -201,10 +226,6 @@ export default function MySpaceShell() {
             }
             const isOpen = open.has(item.label)
             const owns = groupOwns(item, pathname, search)
-            const badge =
-              item.label === 'Workspace' && appCount > 0
-                ? <span className="ml-1 text-xs text-muted-foreground">{appCount}</span>
-                : null
             return (
               <div key={item.label} className="mt-1">
                 {/* Group header: navigates to the landing view AND opens the group. */}
@@ -218,7 +239,6 @@ export default function MySpaceShell() {
                 >
                   <item.icon size={15} strokeWidth={1.75} />
                   {item.label}
-                  {badge}
                   <span
                     role="button"
                     tabIndex={0}
@@ -234,15 +254,19 @@ export default function MySpaceShell() {
                   <div className="mt-0.5 ml-[18px] border-l border-border pl-2">
                     {item.children.map(sub => {
                       const active = subActive(sub.to, pathname, search, sub.defaultTab)
+                      const meta = childMeta.get(sub.to)
                       return (
                         <NavLink
                           key={sub.to}
                           to={sub.to}
-                          className={`block rounded-md px-2 py-1 text-[13px] transition-colors ${
+                          className={`flex items-center rounded-md px-2 py-1 text-[13px] transition-colors ${
                             active ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                           }`}
                         >
                           {sub.label}
+                          {meta && (
+                            <span className="ml-auto text-xs tabular-nums text-muted-foreground">{meta}</span>
+                          )}
                         </NavLink>
                       )
                     })}
