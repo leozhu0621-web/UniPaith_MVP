@@ -38,10 +38,22 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import UUID
 
+from unipaith.services.match.field_canon import fields_offered_for_program
 from unipaith.services.matching import ProgramFeatures
 from unipaith.services.program_featurizer import featurize_program, soft_feature_completeness
 
 logger = logging.getLogger(__name__)
+
+# delivery_format values that mean the program can be taken remotely. The matcher
+# reads `online_available` for the student's `wants_online` flexibility signal.
+# part-time has NO Program column today, so it is intentionally NOT derived here
+# (see module-level DEFERRED note) — a missing key emits no flexibility signal.
+_ONLINE_DELIVERY_FORMATS: frozenset[str] = frozenset({"online", "hybrid", "remote"})
+
+# AI Structure (Spec 2 — claim hinge): the program-record-level c_program floor
+# for a CLAIMED (first-party) program. Mirrors the `claimed` authority used for
+# claimed ProgramPreferences in match_service._program_authority.
+_CLAIMED_PROGRAM_COMPLETENESS = 0.9
 
 
 # ── Mapping helpers ────────────────────────────────────────────────────────
@@ -103,6 +115,14 @@ class ProgramRow:
     values: list[str] = field(default_factory=list)
     social_features: dict[str, float] = field(default_factory=dict)
     support_signals: dict[str, float] = field(default_factory=dict)
+    # AI Structure (Spec 3 §3) — typed-fit program-side attributes. Each is
+    # projected onto the matcher sparse vocab only when it genuinely exists on the
+    # Program; absent → key omitted → no phantom signal.
+    fields_offered: list[str] = field(default_factory=list)  # canonical field tokens
+    duration_months: int | None = None  # for the desired-time-to-degree fit
+    online_available: bool | None = None  # derived from delivery_format
+    career_services: bool | None = None  # derived from support_signals evidence
+    cip_code: str | None = None
     data_completeness: float = 0.5  # default for sparse rows
 
 
@@ -127,6 +147,26 @@ def features_from_row(
         "social_features": dict(row.social_features),
         "support_signals": dict(row.support_signals),
     }
+    # AI Structure (Spec 3 §3) — wire the typed-fit program-side keys so the
+    # round-3 s→p signals (field / time / flexibility / support) fire on real
+    # data. Each is GATED: a key appears only when the source attribute genuinely
+    # exists, so the matcher's per-signal `if program lists X` guard sees the real
+    # value (and an absent attribute injects no phantom dimension).
+    fields_offered = list(row.fields_offered) or fields_offered_for_program(
+        cip_code=row.cip_code, program_name=row.name
+    )
+    if fields_offered:
+        sparse["fields_offered"] = fields_offered
+    if row.duration_months is not None:
+        sparse["duration_months"] = row.duration_months
+    if row.online_available is not None:
+        sparse["online_available"] = row.online_available
+    # career_services: explicit row flag wins; else derive from the evidence-based
+    # support_signals the featurizer already grounded in real description text.
+    if row.career_services is not None:
+        sparse["career_services"] = row.career_services
+    elif row.support_signals.get("career_services"):
+        sparse["career_services"] = True
     return ProgramFeatures(
         program_id=row.id,
         sparse=sparse,
@@ -214,9 +254,40 @@ def program_row_from_orm(program: Any) -> ProgramRow:
     if tuition_usd is None and getattr(program, "tuition", None) is not None:
         tuition_usd = float(program.tuition)
 
+    # AI Structure (Spec 3 §3) — read the typed-fit attributes off the REAL ORM
+    # columns so the round-3 program-side keys are populated on live data.
+    duration_months = sparse.get("duration_months")
+    if duration_months is None:
+        raw_dur = getattr(program, "duration_months", None)
+        if raw_dur is not None:
+            duration_months = int(raw_dur)
+
+    # online_available: derived ONLY from the real delivery_format column. A
+    # missing / in-person format leaves it None (no flexibility signal), never a
+    # fabricated False that would falsely fail a student's online want.
+    online_available = sparse.get("online_available")
+    if online_available is None:
+        fmt = getattr(program, "delivery_format", None)
+        if fmt:
+            online_available = str(fmt).strip().lower() in _ONLINE_DELIVERY_FORMATS
+
+    support_signals = dict(sparse.get("support_signals") or {})
+    name = getattr(program, "program_name", "") or ""
+    cip_code = getattr(program, "cip_code", None)
+
+    # AI Structure (Spec 2 — claim hinge): a CLAIMED program is first-party,
+    # higher-authority data; lift its baseline c_program (data_completeness) so a
+    # claimed program outscores an identical-fit unclaimed one even before any
+    # ProgramPreference row exists. `_overlay_program_prefs` later refines this
+    # from the preference provenance when present (preference source is the
+    # sharper signal); this is the program-record-level floor.
+    data_completeness = float(sparse.get("data_completeness", 0.5))
+    if getattr(program, "is_claimed", False):
+        data_completeness = max(data_completeness, _CLAIMED_PROGRAM_COMPLETENESS)
+
     return ProgramRow(
         id=program.id,
-        name=getattr(program, "program_name", "") or "",
+        name=name,
         description=getattr(program, "description_text", "") or "",
         degree=getattr(program, "degree_type", None),
         locations=list(locations),
@@ -226,8 +297,12 @@ def program_row_from_orm(program: Any) -> ProgramRow:
         career_arcs=list(sparse.get("career_arcs") or []),
         values=list(sparse.get("values") or []),
         social_features=dict(sparse.get("social_features") or {}),
-        support_signals=dict(sparse.get("support_signals") or {}),
-        data_completeness=float(sparse.get("data_completeness", 0.5)),
+        support_signals=support_signals,
+        fields_offered=list(sparse.get("fields_offered") or []),
+        duration_months=duration_months,
+        online_available=online_available,
+        cip_code=cip_code,
+        data_completeness=data_completeness,
     )
 
 
