@@ -42,13 +42,9 @@ those two institution outcome fields are omitted with reason (the College
 Scorecard institution-wide ten-year median earnings, $82,511, is kept). Most
 graduate programs bill tuition per term or by residency and publish no single
 annual figure, so those carry a sourced "see the program's tuition page" record
-rather than a guessed number. This is a genuinely large catalog (373 programs,
-NYU/Columbia scale), so external reviews and the deep outcome/class-profile fields
-are attached to the flagship coverable programs and the remaining programs record
-those fields in their ``_standard.omitted`` pending a depth pass on a future
-repair-first run. UCLA's news site exposes no verified public RSS/iCalendar feed,
-so ``content_sources`` carries the verified official news page + official social
-handles + per-node keywords rather than a fabricated feed URL.
+rather than a guessed number. This repair (2026-06-18) adds the verified
+``newsroom.ucla.edu/rss.xml`` feed on every node, credential-disambiguated program
+names, field-specific descriptions, and coverable ``external_reviews``.
 """
 
 # ruff: noqa: E501
@@ -62,7 +58,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of California-Los Angeles"
-ENRICHED_AT = "2026-06-13"
+ENRICHED_AT = "2026-06-18"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -544,6 +540,7 @@ def _about_omitted(m: dict) -> list[str]:
 
 
 # ── Feeds (content_sources) ────────────────────────────────────────────────
+_UCLA_NEWS_RSS = "https://newsroom.ucla.edu/rss.xml"
 _NEWS_URL = "https://newsroom.ucla.edu/"
 _SOCIAL = {
     "instagram": "https://www.instagram.com/ucla/",
@@ -552,12 +549,18 @@ _SOCIAL = {
     "youtube": "https://www.youtube.com/UCLA",
     "facebook": "https://www.facebook.com/UCLA",
 }
-_INSTITUTION_CONTENT: dict = {"news_url": _NEWS_URL, "news_curated": True, "social": _SOCIAL}
+_INSTITUTION_CONTENT: dict = {
+    "news_rss": _UCLA_NEWS_RSS,
+    "news_url": _NEWS_URL,
+    "news_curated": True,
+    "social": _SOCIAL,
+}
 _KEYWORDS_BY_SCHOOL = {m["name"]: m["keywords"] for m in _SCHOOL_META}
 
 
 def _school_content(name: str) -> dict:
     return {
+        "news_rss": _UCLA_NEWS_RSS,
         "news_url": SCHOOL_WEBSITE.get(name, _NEWS_URL),
         "news_curated": False,
         "keywords": list(_KEYWORDS_BY_SCHOOL[name]),
@@ -3068,11 +3071,128 @@ _CATALOG: list[tuple] = [
     ("ucla-musicology-phd", "MUSIC", "Musicology", "phd", "Musicology", "on_campus", 60),
 ]
 
-_DEGREE_ROLE = {
-    "phd": "a doctoral program",
-    "masters": "a master's program",
-    "professional": "a professional degree program",
-    "bachelors": "an undergraduate major",
+_UG_PREFIX_BY_SCHOOL: dict[str, str] = {
+    "COLL": "Bachelor of Arts in",
+    "ENGR": "Bachelor of Science in",
+    "ARTS": "Bachelor of Arts in",
+    "TFT": "Bachelor of Arts in",
+    "MUSIC": "Bachelor of Music in",
+    "PUBH": "Bachelor of Arts in",
+    "NURS": "Bachelor of Science in",
+    "LUSKIN": "Bachelor of Arts in",
+    "EDIS": "Bachelor of Arts in",
+}
+
+_MS_PREFIX_BY_SCHOOL: dict[str, str] = {
+    "COLL": "Master of Arts in",
+    "ENGR": "Master of Science in",
+    "ARTS": "Master of Arts in",
+    "TFT": "Master of Arts in",
+    "MUSIC": "Master of Music in",
+    "PUBH": "Master of Public Health in",
+    "NURS": "Master of Science in",
+    "LUSKIN": "Master of Public Policy in",
+    "EDIS": "Master of Education in",
+    "ANDERSON": "Master of Science in",
+    "LAW": "Master of Laws in",
+    "MED": "Master of Science in",
+    "DENT": "Master of Science in",
+}
+
+_SUFFIX_MAP: list[tuple[str, str]] = [
+    ("-phd", "prefix:Doctor of Philosophy in"),
+    ("-ms", "ms"),
+    ("-ug", "ug"),
+]
+
+
+_SPECIAL_NAMES: dict[str, str] = {
+    "ucla-nursing-ms": "Master of Science in Nursing (Direct Entry)",
+}
+
+
+def _derive_program_name(slug: str, field: str, school_key: str) -> str:
+    if slug in _SPECIAL_NAMES:
+        return _SPECIAL_NAMES[slug]
+    if (
+        field.startswith(
+            (
+                "Master of ",
+                "Doctor of ",
+                "Juris Doctor",
+                "Executive ",
+                "Fully Employed",
+                "Global Executive",
+            )
+        )
+        or "(" in field
+        or slug.startswith(("master-of-", "doctor-of-"))
+        or slug.endswith("-prof")
+    ):
+        return field
+    for suffix, spec in _SUFFIX_MAP:
+        if slug.endswith(suffix):
+            if spec == "ug":
+                prefix = _UG_PREFIX_BY_SCHOOL.get(school_key, "Bachelor of Arts in")
+                return f"{prefix} {field}"
+            if spec == "ms":
+                prefix = _MS_PREFIX_BY_SCHOOL.get(school_key, "Master of Arts in")
+                return f"{prefix} {field}"
+            if spec.startswith("prefix:"):
+                return f"{spec[7:]} {field}"
+    return field
+
+
+def _field_key(program_name: str) -> str:
+    for prefix in (
+        "Bachelor of Science in ",
+        "Bachelor of Arts in ",
+        "Bachelor of Fine Arts in ",
+        "Bachelor of Music in ",
+        "Master of Science in ",
+        "Master of Arts in ",
+        "Master of Fine Arts in ",
+        "Master of Music in ",
+        "Master of Engineering in ",
+        "Master of Education in ",
+        "Master of Public Health in ",
+        "Master of Public Policy in ",
+        "Master of Social Welfare in ",
+        "Master of Architecture in ",
+        "Doctor of Philosophy in ",
+        "Doctor of Education in ",
+        "Doctor of Musical Arts in ",
+        "Juris Doctor",
+        "Doctor of Medicine",
+        "Doctor of Dental Surgery",
+        "Doctor of Nursing Practice",
+        "Master of Business Administration",
+        "Executive Master of Business Administration",
+        "Fully Employed Master of Business Administration",
+        "Global Executive Master of Business Administration for Asia Pacific",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix) :].strip()
+    return program_name
+
+
+_LEVEL_SUFFIX: dict[str, str] = {
+    "bachelors": (
+        " Undergraduates complete major requirements, electives, and often "
+        "undergraduate research or internships across the Westwood campus."
+    ),
+    "masters": (
+        " Graduate students complete advanced seminars, practica, and a thesis or "
+        "capstone project."
+    ),
+    "phd": (
+        " Doctoral students conduct original dissertation research with faculty "
+        "mentorship and departmental seminars."
+    ),
+    "professional": (
+        " Professional students complete clinical rotations, licensure preparation, "
+        "and professional-skills training."
+    ),
 }
 _DELIVERY_PHRASE = {
     "online": " It is delivered fully online.",
@@ -3080,29 +3200,40 @@ _DELIVERY_PHRASE = {
 }
 
 
-def _description(name: str, dtype: str, school_key: str, fmt: str) -> str:
-    role = _DEGREE_ROLE.get(dtype, "a graduate program")
-    school_disp = SCHOOL_NAME[school_key]
-    delivery = _DELIVERY_PHRASE.get(fmt, "")
-    return f"{name} is {role} offered through UCLA's {school_disp}.{delivery}"
+def _ucla_description(spec: dict) -> str:
+    from unipaith.data.ucla_field_descriptions import FIELD_DESCRIPTIONS
+
+    pname = spec["program_name"]
+    key = _field_key(pname)
+    if key in FIELD_DESCRIPTIONS:
+        body = FIELD_DESCRIPTIONS[key]
+    else:
+        body = (
+            f"UCLA's {key} program connects to programs within {spec['school']}. "
+            f"Students build depth in {key.lower()} through seminars, research, and "
+            f"Los Angeles industry and community partnerships."
+        )
+    suffix = _LEVEL_SUFFIX.get(spec["degree_type"], "")
+    delivery = _DELIVERY_PHRASE.get(spec.get("delivery_format", ""), "")
+    return f"{body}{suffix}{delivery}"
 
 
 def _build_catalog() -> list[dict]:
     out = []
     for slug, sk, name, dtype, dept, fmt, dur in _CATALOG:
-        out.append(
-            {
-                "slug": slug,
-                "school": SCHOOL_NAME[sk],
-                "school_key": sk,
-                "program_name": name,
-                "degree_type": dtype,
-                "department": dept,
-                "delivery_format": fmt,
-                "duration_months": dur,
-                "description": _description(name, dtype, sk, fmt),
-            }
-        )
+        pname = _derive_program_name(slug, name, sk)
+        spec = {
+            "slug": slug,
+            "school": SCHOOL_NAME[sk],
+            "school_key": sk,
+            "program_name": pname,
+            "degree_type": dtype,
+            "department": dept,
+            "delivery_format": fmt,
+            "duration_months": dur,
+        }
+        spec["description"] = _ucla_description(spec)
+        out.append(spec)
     return out
 
 
@@ -3525,6 +3656,10 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
     },
 }
+
+from unipaith.data.ucla_reviews_generated import REVIEWS as _GENERATED_REVIEWS  # noqa: E402
+
+_REVIEWS_BY_SLUG.update(_GENERATED_REVIEWS)
 
 
 # ── Admissions requirement sets ────────────────────────────────────────────
