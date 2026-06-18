@@ -22,6 +22,7 @@ import Modal from '../../components/ui/Modal'
 import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { SectionCard, Repeatable, Toggle, ChipsInput, MiniLabel } from './program-editor/widgets'
+import ProgramPreferenceEditor from './program-editor/ProgramPreferenceEditor'
 import {
   type EditorDraft,
   type SectionId,
@@ -709,6 +710,10 @@ export default function ProgramEditorPage() {
               })}
             </div>
           </SectionCard>
+
+          {/* AI Structure (Spec 2/3) — recruiting preferences (target applicant);
+              self-contained, only for a saved program. */}
+          {id && <ProgramPreferenceEditor programId={id} />}
         </div>
 
         {/* On-this-page rail */}
