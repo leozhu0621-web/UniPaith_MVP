@@ -34,9 +34,11 @@ credit hour and publish no single annual figure, so those carry a sourced "see t
 tuition page" record rather than a guessed number (OMSCS and Online MS Analytics, which DO
 publish a total program cost, carry it). The institute does not publish a single combined
 "employed or continuing education" rate, so that institution field is omitted with reason.
-External reviews are attached to the flagship coverable programs that have substantial
-third-party coverage; the remaining programs record ``external_reviews`` in their
-``_standard.omitted`` pending a depth pass. Georgia Tech's events calendar
+External reviews are attached to all coverable programs with substantial third-party
+coverage (depth pass 2026-06-18, gatechprof2): 62 coverable programs reviewed (4
+hand-crafted flagships + 58 depth-generated). Remaining programs record
+``external_reviews`` in their ``_standard.omitted`` when no reputable third-party
+coverage exists. Georgia Tech's events calendar
 (events.gatech.edu) exposes no verified public iCalendar/RSS feed, so the verified Institute
 news RSS (news.gatech.edu, current and image-carrying) feeds the Updates surface and no
 events feed is asserted.
@@ -52,13 +54,14 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.georgia_tech_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Georgia Institute of Technology-Main Campus"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-13"
+ENRICHED_AT = "2026-06-18"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1622,6 +1625,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
+    **DEPTH_REVIEWS,
 }
 
 
