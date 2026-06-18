@@ -54,7 +54,7 @@ export default function FeedItemCard(props: Props) {
 
 function CardShell({ children, accent }: { children: React.ReactNode; accent?: string }) {
   return (
-    <div className={`bg-card rounded-xl border ${accent || 'border-border'} hover:shadow-sm transition-shadow`}>
+    <div className={`bg-card rounded-xl border ${accent || 'border-border'} elev-subtle hover-lift hover:elev-raised`}>
       {children}
     </div>
   )

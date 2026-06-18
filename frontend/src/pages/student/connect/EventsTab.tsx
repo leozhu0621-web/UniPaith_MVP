@@ -234,7 +234,7 @@ function EventListCard({ event, busy, onOpen, onRsvp, onAddCalendar }: CardProps
   const capacityLabel = event.capacity ? ` of ${event.capacity}` : ''
   const waitlistLabel = event.waitlist_count > 0 ? ` · ${event.waitlist_count} waitlisted` : ''
   return (
-    <div className="bg-card rounded-xl border border-border hover:shadow-sm transition-shadow">
+    <div className="bg-card rounded-xl border border-border elev-subtle hover-lift hover:elev-raised">
       <div className="flex items-center gap-2 px-4 pt-3">
         <TypeBadge type={event.event_type} />
         {event.status === 'cancelled' && (

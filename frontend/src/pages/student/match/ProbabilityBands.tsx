@@ -74,8 +74,18 @@ export interface ProbabilityBandsProps {
   className?: string
 }
 
+// The "not enough data yet" copy depends on WHOSE side the gap is on (Spec 09
+// §4A honesty guardrail) — a program with no admit history reads differently
+// from a student profile too sparse to estimate. Without this the two collapse
+// into one misleading line.
+const NO_DATA_COPY: Record<string, string> = {
+  no_history: 'No admissions history yet for this program.',
+  not_match_ready: 'Add more to your profile to estimate your realistic shot.',
+}
+
 export default function ProbabilityBands({
   bands,
+  reason,
   loading,
   hideHeading,
   className,
@@ -99,7 +109,9 @@ export default function ProbabilityBands({
         {!hideHeading && <Heading />}
         <div className="flex items-start gap-2 text-xs text-foreground">
           <Info size={13} className="mt-0.5 shrink-0 text-foreground/60" />
-          <span className="font-medium text-foreground">Not enough data yet.</span>
+          <span className="font-medium text-foreground">
+            {(reason && NO_DATA_COPY[reason]) || 'Not enough data yet.'}
+          </span>
         </div>
       </div>
     )
