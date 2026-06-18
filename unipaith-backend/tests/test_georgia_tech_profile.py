@@ -107,18 +107,26 @@ def test_catalog_breadth_and_shape():
     assert len(g.SCHOOL_OUTCOMES.get("campus_photos") or []) >= 4
 
 
-def test_coverable_programs_have_reviews():
-    import sys
+def test_catalog_descriptions_are_field_specific_and_real():
+    """De-fabrication gate (gatechprof3): descriptions are researched per-program, not the
+    generated classification stub, and department is the real owning GT school, not the field."""
+    from unipaith.profile_standard.anti_stub import analyze
 
-    sys.path.insert(0, "scripts")
-    from fleet_audit import is_coverable
-
-    missing = [
+    report = analyze(g.PROGRAMS)
+    assert report.is_clean, f"GT catalog is not anti-stub clean: {report.summary()}"
+    # No description restates the program name (the prefix-double tell), and every program
+    # carries a real owning department that is NOT the field echoed from its name.
+    name_prefixed = [
+        p["slug"] for p in g.PROGRAMS if (p.get("description") or "").startswith(p["program_name"])
+    ]
+    assert not name_prefixed, f"name-prefixed descriptions: {name_prefixed[:5]}"
+    field_echo = [
         p["slug"]
         for p in g.PROGRAMS
-        if is_coverable(p) and p["slug"] not in g._REVIEWS_BY_SLUG
+        if (p.get("department") or "") == g._derive(p["catalog_slug"])[2]
     ]
-    assert not missing, f"Coverable programs missing reviews: {missing[:10]}"
+    assert not field_echo, f"department echoes the field name: {field_echo[:5]}"
+    assert all(p.get("department") for p in g.PROGRAMS), "every program needs a real department"
 
 
 def test_institution_is_gold_except_recorded_omission():
@@ -150,15 +158,54 @@ def test_every_program_is_conformant_or_omitted():
 
 
 def test_flagship_programs_carry_reviews():
+    # Only the hand-gathered, program-specific flagship reviews survive the gatechprof3
+    # de-fabrication; the 58 machine-synthesized DEPTH_REVIEWS were removed (miss #8).
     for slug in (
         "gatech-online-ms-computer-science-omscs",
         "gatech-online-ms-analytics",
         "gatech-mba",
         "gatech-computer-science-bs",
-        "gatech-industrial-engineering-bs",
-        "gatech-analytics-ms",
-        "gatech-aerospace-engineering-bs",
     ):
         assert slug in g._REVIEWS_BY_SLUG, f"{slug} should carry external_reviews"
         rev = g._REVIEWS_BY_SLUG[slug]
         assert rev["summary"] and rev["themes"] and rev["sources"] and rev["disclaimer"]
+
+
+# --- Anti-synthesized-review gate (SKILL.md miss #8: fabrication-by-synthesis) ---
+# A review ships ONLY when hand-gathered from program-specific coverage. The removed
+# 58-row DEPTH_REVIEWS batch had identical institution-level themes repeated across the
+# MS/PhD rows and dept-homepage/discipline-ranking "sources". These tests block a re-mint.
+_REVIEWED = {s: r for s, r in g._REVIEWS_BY_SLUG.items() if s in g.PROGRAM_SLUGS}
+
+
+def test_no_synthesized_review_theme_reuse():
+    from collections import Counter
+
+    theme_ct: Counter = Counter()
+    for r in _REVIEWED.values():
+        for detail in {t["detail"] for t in r.get("themes", [])}:
+            theme_ct[detail] += 1
+    reused = {d: c for d, c in theme_ct.items() if c >= 3}
+    assert not reused, f"theme detail reused across >=3 programs: {list(reused)[:3]}"
+
+
+def test_no_institution_source_monoculture():
+    from collections import Counter
+
+    src_ct: Counter = Counter()
+    for r in _REVIEWED.values():
+        for src in {s["label"] for s in r.get("sources", [])}:
+            src_ct[src] += 1
+    overused = {label: c for label, c in src_ct.items() if c >= 8}
+    assert not overused, f"a single source cited on >=8 reviews (synthesis tell): {overused}"
+
+
+def test_no_synthesized_depth_reviews_module():
+    # The machine-synthesized batch lived in this module; it must stay gone so a future
+    # "complete coverable reviews N/N" pass cannot silently re-add it.
+    import importlib
+
+    import pytest
+
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module("unipaith.data.georgia_tech_reviews_depth")

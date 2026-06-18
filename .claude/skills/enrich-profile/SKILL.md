@@ -1105,6 +1105,38 @@ FAILS CI and CANNOT auto-merge. (Do NOT weaken the thresholds to make a stub pas
 non-zero means the rows are un-researched, which is the no-fabrication / structure-before-
 depth invariant, not a tunable knob.)
 
+**The enforced gate as BUILT is DESCRIPTION-ONLY — `anti_stub.analyze` computes the
+description-quality tells (name-prefix, classification, double-period, verbatim /
+shared-leading-body, cross-field clause) but has NO STRUCTURE metric, so a catalog joins
+`CERTIFIED_CLEAN`, passes CI, and ships LIVE carrying the miss-#2 STRUCTURE defects this
+same §8.5 already lists as gold-MIT-0% gates. A green description-only certification is
+NOT a clean-catalog certification — and "anti-stub clean" in a PR title certifies only the
+descriptions, never the names / departments / decomposition.** The descriptions are the
+costume the analyzer sees; the structure is what it is blind to, so a "catalogue
+descriptions" repair can clear every description tell, earn `CERTIFIED_CLEAN`, and leave
+the field-echo departments and concentration-split rows exactly as they were. So a catalog
+may enter `CERTIFIED_CLEAN` only when `anti_stub.analyze` (and the `test_anti_stub_gate`
+parametrization) ALSO computes, baselined to gold MIT 0%, the STRUCTURE metrics:
+(a) **`department` field-echo** — `department` equal to the name's field on (near-)every
+row while a real owning school is known (the precise miss-#2 mechanical tell:
+`department == program_name`-field verbatim one-off per row / no two programs share a
+department / a `school_key` or the row's own description names the real school — NOT a
+naive `dept == field`, which would false-flag a genuinely shared real "Department of
+Economics"); (b) **CIP-rollup tells** in `program_name` AND `department` (trailing
+", General"/", Other", a federal comma-and list, an embedded slash, a bare CIP rollup
+title); (c) a **literal CIP code** (`(CIP NN.NN)` or a bare trailing code) in name or
+department; (d) **concentration-split rows** — a base field repeated across rows that
+differ only by a trailing "— {concentration}" / ", {emphasis}" (collapse into `tracks`,
+keep only genuine separate credentials). ANY non-zero blocks certification, same as a
+description tell. (Gold MIT scores 0 on all four, so the baseline holds.) Evidence: live
+API this run — a `CERTIFIED_CLEAN` 613-program catalog whose description metrics are
+genuinely 0 live still ships ~62% rows whose `department` is the degree's field echoed
+verbatim while the real owning school is named only in the description, PLUS one
+bachelor's degree decomposed into four "…, {Emphasis}" concentration-split rows (each its
+own program, `department` = the emphasis) — none caught, because the enforced gate has no
+structure metric and the PR shipped under an "anti-stub clean" claim that covered the
+descriptions only.
+
 ### 9. Ship — and MERGING IS MANDATORY (a run is not done until the work is on `main`)
 `ruff check src/<changed> tests/<changed>` (NOT `ruff check .`) + the profile tests +
 `npm run build`; branch off `origin/main` → commit → PR → **`gh pr merge --squash`** →

@@ -6,7 +6,7 @@ department to its real owning college, and keep only the hand-gathered flagship
 external_reviews. Idempotent re-apply of ut_austin_profile.apply().
 
 Revision ID: utaprof2
-Revises: uiucprof4
+Revises: michgate1
 Create Date: 2026-06-18
 """
 
@@ -18,7 +18,7 @@ from alembic import op
 from unipaith.data import ut_austin_profile
 
 revision = "utaprof2"
-down_revision = "uiucprof4"
+down_revision = "michgate1"
 branch_labels = None
 depends_on = None
 
