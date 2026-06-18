@@ -170,6 +170,7 @@ from unipaith.models.reference import (
     Scholarship,
 )
 from unipaith.models.saved_search import SavedSearch
+from unipaith.models.scholarship import Scholarship as ExternalScholarship
 from unipaith.models.settings import InstitutionTeamInvite, UserSettings
 from unipaith.models.strategy import StudentStrategy
 from unipaith.models.student import (
@@ -347,6 +348,8 @@ __all__ = [
     "EntityEnrichment",
     "ChangeEvent",
     "Scholarship",
+    # External scholarships catalog (Spec 2026-06-14 — CareerOneStop)
+    "ExternalScholarship",
     "RefOccupation",
     "RefTest",
     "RefVisa",

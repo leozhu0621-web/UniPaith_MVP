@@ -46,6 +46,7 @@ from unipaith.api.recruitment import router as recruitment_router
 from unipaith.api.reviews import router as reviews_router
 from unipaith.api.saved_lists import router as saved_lists_router
 from unipaith.api.saved_search import router as saved_search_router
+from unipaith.api.scholarships import router as scholarships_router
 from unipaith.api.search import router as search_router
 from unipaith.api.settings import router as settings_router
 from unipaith.api.strategy import router as strategy_router
@@ -124,6 +125,8 @@ api_router.include_router(documents_router)
 api_router.include_router(materials_router)
 api_router.include_router(saved_lists_router)
 api_router.include_router(saved_search_router)
+# Spec 2026-06-14 — external scholarships catalog (Resources › Financial).
+api_router.include_router(scholarships_router)
 api_router.include_router(search_router)
 # Phase E (Spec 2026-06-10 §7): the deprecated essay/resume drafting router
 # (api/workshops.py) and the orphaned /messages conversations router are gone —
