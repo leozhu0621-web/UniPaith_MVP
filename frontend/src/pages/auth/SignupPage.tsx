@@ -49,11 +49,11 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-center text-foreground mb-2">Create your account</h2>
+    <div className="space-y-5">
+      <h2 className="text-lg font-semibold text-foreground mb-1">Create your student account</h2>
 
       {error && (
-        <div className="bg-error-soft border border-error/30 text-error text-sm px-4 py-2 rounded-lg">
+        <div role="alert" aria-live="assertive" className="bg-error-soft border border-error/30 text-error text-sm px-4 py-2 rounded-lg">
           {error}
         </div>
       )}
@@ -73,18 +73,18 @@ export default function SignupPage() {
           helperText="8+ characters"
         />
         <Input
-          label="Confirm Password"
+          label="Confirm password"
           type="password"
           {...register('confirmPassword')}
           error={errors.confirmPassword?.message}
         />
 
         <Button type="submit" loading={loading} className="w-full">
-          Create Account
+          Create account
         </Button>
       </form>
 
-      <GoogleSignInButton label="Sign up with Google" />
+      <GoogleSignInButton label="Continue with Google" />
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
