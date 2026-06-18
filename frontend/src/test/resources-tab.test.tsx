@@ -69,10 +69,10 @@ describe('ReadinessPanel reads only real fields', () => {
       financial_proof_available: false,
       passport_expiration_date: null,
     } as never)
-    vi.mocked(listTestScores).mockResolvedValue([{ test: 'IELTS' }] as never)
+    vi.mocked(listTestScores).mockResolvedValue([{ test_type: 'IELTS', total_score: 7.5 }] as never)
     renderReadiness()
     expect(await screen.findByText('United States')).toBeTruthy() // present field value
-    expect(screen.getByText('IELTS on file')).toBeTruthy() // english test present
+    expect(screen.getByText('IELTS 7.5 on file')).toBeTruthy() // real test_type + total_score
     expect(screen.getAllByText('Add in Profile →').length).toBeGreaterThan(0) // a missing field prompts
   })
 
