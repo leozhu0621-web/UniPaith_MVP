@@ -1,8 +1,21 @@
-"""University of California-San Diego external_reviews depth pass.
+"""University of California-San Diego external_reviews — gathered graduate-flagship pass.
 
-Depth pass date: 2026-06-15; MSBA + minor reviews added 2026-06-18 (``ucsdprof6``).
+Replaces the 2026-06-15 / 2026-06-18 synthesized pass (``ucsdprof6``), which
+machine-generated 30 reviews from row metadata + an institution-level
+"U.S. News — UC San Diego" source under an "aggregated from public sources"
+disclaimer — the fabrication-by-synthesis pattern (SKILL.md miss #8). Those are
+removed.
+
+Each entry below is GATHERED from program-specific third-party coverage (U.S.
+News program-specific rankings, College Factual salary data, gradgpt admit
+data) plus the department's own program page — program-specific summaries and
+cautions, never institution-level boilerplate. Coverable programs without
+gathered program-specific coverage record ``external_reviews`` as omitted in
+``_standard`` (an honest blank) rather than carry a synthesized review; a
+genuine gathered review for those is a follow-up depth pass.
+
 Consumed by migrations merging ``DEPTH_REVIEWS`` into
-``ucsd_profile._REVIEWS_BY_SLUG`` — now 30 depth-pass entries (38/38 coverable total).
+``ucsd_profile._REVIEWS_BY_SLUG``.
 """
 
 from __future__ import annotations
@@ -15,1255 +28,130 @@ _DISCLAIMER = (
 )
 
 DEPTH_REVIEWS: dict[str, dict] = {
-    "ucsd-aerospace-aeronautical-and-astronautical-space-engineering-ms": {
-        "summary": "Graduate students describe UCSD's MS in in Aerospace, Aeronautical, and Astronautical/Space Engineering within the Jacobs School as a research- and coursework-intensive degree; praise includes faculty labs and San Diego biotech and defense recruiting, with cautions that terminal MS students typically self-fund and admission is selective.",
-        "themes": [
-            {
-                "label": "Research & industry access",
-                "sentiment": "positive",
-                "detail": "Faculty labs and San Diego employers enrich graduate training.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public graduate engineering schools.",
-            },
-            {
-                "label": "Biotech & defense pipeline",
-                "sentiment": "positive",
-                "detail": "Regional employers hire across engineering specializations.",
-            },
-            {
-                "label": "Self-funded MS",
-                "sentiment": "caution",
-                "detail": "Terminal MS students without RA/TA support typically self-fund.",
-            },
-            {
-                "label": "Selectivity",
-                "sentiment": "caution",
-                "detail": "Admission is competitive across engineering specializations.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Aerospace, Aeronautical, and Astronautical/Space Engineering",
-                "url": "https://mae.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-biological-and-biomedical-sciences-other-ms": {
-        "summary": "Students describe UCSD's MS pathways in biological and biomedical sciences as research-oriented degrees for pre-med, industry, or doctoral pipeline careers; praise includes School of Biological Sciences faculty and UC San Diego Health access, with cautions about self-funded tuition and outcomes that vary by specialization.",
-        "themes": [
-            {
-                "label": "Biosciences breadth",
-                "sentiment": "positive",
-                "detail": "Programs span molecular biology, neuroscience, and ecology divisions.",
-            },
-            {
-                "label": "Research access",
-                "sentiment": "positive",
-                "detail": "Undergraduates and graduate students join faculty labs across seven biology divisions.",
-            },
-            {
-                "label": "Health system ties",
-                "sentiment": "positive",
-                "detail": "UC San Diego Health provides clinical-research context.",
-            },
-            {
-                "label": "Self-funded tuition",
-                "sentiment": "caution",
-                "detail": "Most MS students self-fund without departmental assistantships.",
-            },
-            {
-                "label": "Outcome variability",
-                "sentiment": "mixed",
-                "detail": "Placement depends heavily on specialization and prior research experience.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UCSD Biological Sciences \u2014 Graduate",
-                "url": "https://biology.ucsd.edu/education/graduate/index.html",
-            },
-            {
-                "label": "U.S. News \u2014 Biological Sciences",
-                "url": "https://www.usnews.com/best-graduate-schools/top-science-schools/biological-sciences-rankings",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-biological-biosystems-engineering-bs": {
-        "summary": "Students describe UCSD's undergraduate Biological/Biosystems Engineering program within the Jacobs School as a rigorous B.S. at a top public research university; praise includes undergraduate research access, design courses, and San Diego biotech and defense-tech recruiting, with cautions about large lower-division classes and the quarter system's fast pace.",
-        "themes": [
-            {
-                "label": "Undergraduate research",
-                "sentiment": "positive",
-                "detail": "Students join faculty labs across Jacobs School departments.",
-            },
-            {
-                "label": "San Diego industry",
-                "sentiment": "positive",
-                "detail": "Qualcomm, Illumina, and defense contractors recruit engineering graduates.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public undergraduate engineering schools.",
-            },
-            {
-                "label": "Large core classes",
-                "sentiment": "mixed",
-                "detail": "High demand means crowded lower-division engineering sequences.",
-            },
-            {
-                "label": "Quarter pace",
-                "sentiment": "caution",
-                "detail": "Ten-week quarters move quickly; course planning is essential.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Biological/Biosystems Engineering",
-                "url": "https://be.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-biomedical-medical-engineering-ms": {
-        "summary": "Graduate students describe UCSD's MS in Bioengineering as a cross-disciplinary degree bridging engineering and medicine at a top-5 bioengineering program; praise includes the Institute of Engineering in Medicine and UC San Diego Health clinical ties, with cautions that terminal MS students typically self-fund and the program is highly selective.",
-        "themes": [
-            {
-                "label": "Top bioengineering rank",
-                "sentiment": "positive",
-                "detail": "U.S. News regularly ranks UCSD bioengineering among the top five nationally.",
-            },
-            {
-                "label": "Med-engineering bridge",
-                "sentiment": "positive",
-                "detail": "BioE sits at the interface of engineering, biology, and clinical care.",
-            },
-            {
-                "label": "Biotech pipeline",
-                "sentiment": "positive",
-                "detail": "San Diego biotech and med-device firms recruit BioE graduates.",
-            },
-            {
-                "label": "Self-funded MS",
-                "sentiment": "caution",
-                "detail": "Terminal MS students without assistantships typically self-fund.",
-            },
-            {
-                "label": "Workload intensity",
-                "sentiment": "caution",
-                "detail": "Demanding coursework combining engineering rigor with biology depth.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UCSD Bioengineering \u2014 Graduate",
-                "url": "https://be.ucsd.edu/grad/index.html",
-            },
-            {
-                "label": "U.S. News \u2014 Bioengineering rankings",
-                "url": "https://www.usnews.com/best-graduate-schools/top-engineering-schools/bioengineering-rankings",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-chemical-engineering-bs": {
-        "summary": "Students describe UCSD's undergraduate Chemical Engineering program within the Jacobs School as a rigorous B.S. at a top public research university; praise includes undergraduate research access, design courses, and San Diego biotech and defense-tech recruiting, with cautions about large lower-division classes and the quarter system's fast pace.",
-        "themes": [
-            {
-                "label": "Undergraduate research",
-                "sentiment": "positive",
-                "detail": "Students join faculty labs across Jacobs School departments.",
-            },
-            {
-                "label": "San Diego industry",
-                "sentiment": "positive",
-                "detail": "Qualcomm, Illumina, and defense contractors recruit engineering graduates.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public undergraduate engineering schools.",
-            },
-            {
-                "label": "Large core classes",
-                "sentiment": "mixed",
-                "detail": "High demand means crowded lower-division engineering sequences.",
-            },
-            {
-                "label": "Quarter pace",
-                "sentiment": "caution",
-                "detail": "Ten-week quarters move quickly; course planning is essential.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Chemical Engineering",
-                "url": "https://nanoengineering.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-chemical-engineering-ms": {
-        "summary": "Graduate students describe UCSD's MS in in Chemical Engineering within the Jacobs School as a research- and coursework-intensive degree; praise includes faculty labs and San Diego biotech and defense recruiting, with cautions that terminal MS students typically self-fund and admission is selective.",
-        "themes": [
-            {
-                "label": "Research & industry access",
-                "sentiment": "positive",
-                "detail": "Faculty labs and San Diego employers enrich graduate training.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public graduate engineering schools.",
-            },
-            {
-                "label": "Biotech & defense pipeline",
-                "sentiment": "positive",
-                "detail": "Regional employers hire across engineering specializations.",
-            },
-            {
-                "label": "Self-funded MS",
-                "sentiment": "caution",
-                "detail": "Terminal MS students without RA/TA support typically self-fund.",
-            },
-            {
-                "label": "Selectivity",
-                "sentiment": "caution",
-                "detail": "Admission is competitive across engineering specializations.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Chemical Engineering",
-                "url": "https://nanoengineering.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-civil-engineering-bs": {
-        "summary": "Students describe UCSD's undergraduate Civil Engineering program within the Jacobs School as a rigorous B.S. at a top public research university; praise includes undergraduate research access, design courses, and San Diego biotech and defense-tech recruiting, with cautions about large lower-division classes and the quarter system's fast pace.",
-        "themes": [
-            {
-                "label": "Undergraduate research",
-                "sentiment": "positive",
-                "detail": "Students join faculty labs across Jacobs School departments.",
-            },
-            {
-                "label": "San Diego industry",
-                "sentiment": "positive",
-                "detail": "Qualcomm, Illumina, and defense contractors recruit engineering graduates.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public undergraduate engineering schools.",
-            },
-            {
-                "label": "Large core classes",
-                "sentiment": "mixed",
-                "detail": "High demand means crowded lower-division engineering sequences.",
-            },
-            {
-                "label": "Quarter pace",
-                "sentiment": "caution",
-                "detail": "Ten-week quarters move quickly; course planning is essential.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Civil Engineering",
-                "url": "https://structuralengineering.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-civil-engineering-ms": {
-        "summary": "Graduate students describe UCSD's MS in in Civil Engineering within the Jacobs School as a research- and coursework-intensive degree; praise includes faculty labs and San Diego biotech and defense recruiting, with cautions that terminal MS students typically self-fund and admission is selective.",
-        "themes": [
-            {
-                "label": "Research & industry access",
-                "sentiment": "positive",
-                "detail": "Faculty labs and San Diego employers enrich graduate training.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public graduate engineering schools.",
-            },
-            {
-                "label": "Biotech & defense pipeline",
-                "sentiment": "positive",
-                "detail": "Regional employers hire across engineering specializations.",
-            },
-            {
-                "label": "Self-funded MS",
-                "sentiment": "caution",
-                "detail": "Terminal MS students without RA/TA support typically self-fund.",
-            },
-            {
-                "label": "Selectivity",
-                "sentiment": "caution",
-                "detail": "Admission is competitive across engineering specializations.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Civil Engineering",
-                "url": "https://structuralengineering.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-computer-engineering-bs": {
-        "summary": "Students describe UCSD's undergraduate Computer Engineering program within the Jacobs School as a rigorous B.S. at a top public research university; praise includes undergraduate research access, design courses, and San Diego biotech and defense-tech recruiting, with cautions about large lower-division classes and the quarter system's fast pace.",
-        "themes": [
-            {
-                "label": "Undergraduate research",
-                "sentiment": "positive",
-                "detail": "Students join faculty labs across Jacobs School departments.",
-            },
-            {
-                "label": "San Diego industry",
-                "sentiment": "positive",
-                "detail": "Qualcomm, Illumina, and defense contractors recruit engineering graduates.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public undergraduate engineering schools.",
-            },
-            {
-                "label": "Large core classes",
-                "sentiment": "mixed",
-                "detail": "High demand means crowded lower-division engineering sequences.",
-            },
-            {
-                "label": "Quarter pace",
-                "sentiment": "caution",
-                "detail": "Ten-week quarters move quickly; course planning is essential.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Computer Engineering",
-                "url": "https://cse.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-computer-engineering-ms": {
-        "summary": "Graduate students describe UCSD's MS in in Computer Engineering within the Jacobs School as a research- and coursework-intensive degree; praise includes faculty labs and San Diego biotech and defense recruiting, with cautions that terminal MS students typically self-fund and admission is selective.",
-        "themes": [
-            {
-                "label": "Research & industry access",
-                "sentiment": "positive",
-                "detail": "Faculty labs and San Diego employers enrich graduate training.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public graduate engineering schools.",
-            },
-            {
-                "label": "Biotech & defense pipeline",
-                "sentiment": "positive",
-                "detail": "Regional employers hire across engineering specializations.",
-            },
-            {
-                "label": "Self-funded MS",
-                "sentiment": "caution",
-                "detail": "Terminal MS students without RA/TA support typically self-fund.",
-            },
-            {
-                "label": "Selectivity",
-                "sentiment": "caution",
-                "detail": "Admission is competitive across engineering specializations.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Computer Engineering",
-                "url": "https://cse.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
     "ucsd-computer-science-ms": {
-        "summary": "Graduate students describe UCSD's MS in Computer Science through CSE as a selective, research-oriented degree at a top-20 public engineering school; praise includes systems, AI/ML, and HCI faculty plus San Diego biotech and defense-tech recruiting, with cautions that terminal MS students often self-fund and core sequences are demanding.",
+        "summary": (
+            "UC San Diego's MS in Computer Science and Engineering sits in a Jacobs School "
+            "ranked among the top engineering schools nationally, and applicants describe it "
+            "as selective — reported admit rates around 24% — and flexible, with thesis, "
+            "comprehensive-standard, and comprehensive-interdisciplinary plans. The GRE is "
+            "not required for recent cycles. The most common caution is funding: TA and RA "
+            "support is concentrated on PhD students, so terminal-MS students often self-fund."
+        ),
         "themes": [
-            {
-                "label": "CSE research depth",
-                "sentiment": "positive",
-                "detail": "Faculty span systems, AI, theory, and HCI with ties to SDSC and Qualcomm Institute.",
-            },
-            {
-                "label": "Industry pipeline",
-                "sentiment": "positive",
-                "detail": "Qualcomm, Illumina, and defense contractors recruit from Jacobs CSE.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public engineering schools nationally.",
-            },
-            {
-                "label": "Self-funded MS",
-                "sentiment": "caution",
-                "detail": "Terminal MS students without RA/TA support typically self-fund tuition.",
-            },
-            {
-                "label": "Selectivity",
-                "sentiment": "caution",
-                "detail": "Admission is competitive with strong quantitative prerequisites.",
-            },
+            {"label": "CSE reputation", "sentiment": "positive", "detail": "Housed in a top-ranked CSE department with depth in systems, AI/ML, and security."},
+            {"label": "Flexible MS plans", "sentiment": "positive", "detail": "Choice of thesis, comprehensive-standard, or comprehensive-interdisciplinary tracks."},
+            {"label": "Selective admission", "sentiment": "mixed", "detail": "Reported MS admit rate around 24%; strong quantitative prerequisites expected."},
+            {"label": "Self-funded MS", "sentiment": "caution", "detail": "Assistantships favor PhD students; many terminal-MS students fund themselves."},
         ],
         "sources": [
-            {
-                "label": "UCSD CSE \u2014 Graduate Programs",
-                "url": "https://cse.ucsd.edu/graduate/graduate-programs",
-            },
-            {
-                "label": "U.S. News \u2014 Computer Science rankings",
-                "url": "https://www.usnews.com/best-colleges/rankings/computer-science-overall",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-economics-ms": {
-        "summary": "Students describe UCSD's MS in Economics as a quantitatively rigorous graduate degree preparing for doctoral study or policy/analytics roles; praise includes micro/metrics training and faculty research in international trade and experimental economics, with cautions that it is research-oriented rather than a professional terminal degree and funding is limited.",
-        "themes": [
-            {
-                "label": "Quantitative training",
-                "sentiment": "positive",
-                "detail": "Core coursework spans micro, macro, econometrics, and field courses.",
-            },
-            {
-                "label": "Faculty research",
-                "sentiment": "positive",
-                "detail": "Strengths in international economics, development, and econometrics.",
-            },
-            {
-                "label": "Ph.D. pipeline",
-                "sentiment": "positive",
-                "detail": "Many graduates continue to doctoral programs or research roles.",
-            },
-            {
-                "label": "Limited funding",
-                "sentiment": "caution",
-                "detail": "Terminal MS students typically self-fund without assistantships.",
-            },
-            {
-                "label": "Selective admission",
-                "sentiment": "caution",
-                "detail": "Small cohort relative to applicant volume.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UCSD Economics \u2014 Graduate Programs",
-                "url": "https://economics.ucsd.edu/graduate-programs/index.html",
-            },
-            {
-                "label": "U.S. News \u2014 Economics rankings",
-                "url": "https://www.usnews.com/best-colleges/rankings/economics",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-electrical-electronics-and-communications-engineering-bs": {
-        "summary": "Students describe UCSD's undergraduate Electrical, Electronics, and Communications Engineering program within the Jacobs School as a rigorous B.S. at a top public research university; praise includes undergraduate research access, design courses, and San Diego biotech and defense-tech recruiting, with cautions about large lower-division classes and the quarter system's fast pace.",
-        "themes": [
-            {
-                "label": "Undergraduate research",
-                "sentiment": "positive",
-                "detail": "Students join faculty labs across Jacobs School departments.",
-            },
-            {
-                "label": "San Diego industry",
-                "sentiment": "positive",
-                "detail": "Qualcomm, Illumina, and defense contractors recruit engineering graduates.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public undergraduate engineering schools.",
-            },
-            {
-                "label": "Large core classes",
-                "sentiment": "mixed",
-                "detail": "High demand means crowded lower-division engineering sequences.",
-            },
-            {
-                "label": "Quarter pace",
-                "sentiment": "caution",
-                "detail": "Ten-week quarters move quickly; course planning is essential.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Electrical, Electronics, and Communications Engineering",
-                "url": "https://ece.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
+            {"label": "Jacobs School — CSE MS Program", "url": "https://cse.ucsd.edu/graduate/degree-programs/ms-program"},
+            {"label": "GradGPT — UC San Diego Computer Science (Master's)", "url": "https://www.gradgpt.com/university-of-california-san-diego/masters/computer-science"},
         ],
         "disclaimer": _DISCLAIMER,
     },
     "ucsd-electrical-electronics-and-communications-engineering-ms": {
-        "summary": "Graduate students describe UCSD's MS in in Electrical, Electronics, and Communications Engineering within the Jacobs School as a research- and coursework-intensive degree; praise includes faculty labs and San Diego biotech and defense recruiting, with cautions that terminal MS students typically self-fund and admission is selective.",
+        "summary": (
+            "The MS in Electrical and Computer Engineering at UC San Diego draws on a "
+            "department whose master's graduates report a median salary near $111,000 — "
+            "above the national master's-EE median — and on specializations including "
+            "machine learning & data science and intelligent systems, robotics & control. "
+            "Reviewers value the research breadth and San Diego employer pipeline; the main "
+            "caution is that the program is large and competitive."
+        ),
         "themes": [
-            {
-                "label": "Research & industry access",
-                "sentiment": "positive",
-                "detail": "Faculty labs and San Diego employers enrich graduate training.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public graduate engineering schools.",
-            },
-            {
-                "label": "Biotech & defense pipeline",
-                "sentiment": "positive",
-                "detail": "Regional employers hire across engineering specializations.",
-            },
-            {
-                "label": "Self-funded MS",
-                "sentiment": "caution",
-                "detail": "Terminal MS students without RA/TA support typically self-fund.",
-            },
-            {
-                "label": "Selectivity",
-                "sentiment": "caution",
-                "detail": "Admission is competitive across engineering specializations.",
-            },
+            {"label": "Salary outcomes", "sentiment": "positive", "detail": "Master's EE graduates report a median near $111K, above the national master's median."},
+            {"label": "AI and robotics tracks", "sentiment": "positive", "detail": "Specializations in machine learning & data science and intelligent systems, robotics & control."},
+            {"label": "San Diego pipeline", "sentiment": "positive", "detail": "Qualcomm and the region's wireless and defense employers recruit ECE graduates."},
+            {"label": "Large, competitive cohort", "sentiment": "mixed", "detail": "High demand for popular specializations means competitive course and adviser access."},
         ],
         "sources": [
-            {
-                "label": "UC San Diego \u2014 Electrical, Electronics, and Communications Engineering",
-                "url": "https://ece.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-engineering-other-bs": {
-        "summary": "Students describe UCSD's undergraduate Engineering, Other program within the Jacobs School as a rigorous B.S. at a top public research university; praise includes undergraduate research access, design courses, and San Diego biotech and defense-tech recruiting, with cautions about large lower-division classes and the quarter system's fast pace.",
-        "themes": [
-            {
-                "label": "Undergraduate research",
-                "sentiment": "positive",
-                "detail": "Students join faculty labs across Jacobs School departments.",
-            },
-            {
-                "label": "San Diego industry",
-                "sentiment": "positive",
-                "detail": "Qualcomm, Illumina, and defense contractors recruit engineering graduates.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public undergraduate engineering schools.",
-            },
-            {
-                "label": "Large core classes",
-                "sentiment": "mixed",
-                "detail": "High demand means crowded lower-division engineering sequences.",
-            },
-            {
-                "label": "Quarter pace",
-                "sentiment": "caution",
-                "detail": "Ten-week quarters move quickly; course planning is essential.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Engineering, Other",
-                "url": "https://jacobsschool.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-engineering-other-ms": {
-        "summary": "Graduate students describe UCSD's MS in in Engineering, Other within the Jacobs School as a research- and coursework-intensive degree; praise includes faculty labs and San Diego biotech and defense recruiting, with cautions that terminal MS students typically self-fund and admission is selective.",
-        "themes": [
-            {
-                "label": "Research & industry access",
-                "sentiment": "positive",
-                "detail": "Faculty labs and San Diego employers enrich graduate training.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public graduate engineering schools.",
-            },
-            {
-                "label": "Biotech & defense pipeline",
-                "sentiment": "positive",
-                "detail": "Regional employers hire across engineering specializations.",
-            },
-            {
-                "label": "Self-funded MS",
-                "sentiment": "caution",
-                "detail": "Terminal MS students without RA/TA support typically self-fund.",
-            },
-            {
-                "label": "Selectivity",
-                "sentiment": "caution",
-                "detail": "Admission is competitive across engineering specializations.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Engineering, Other",
-                "url": "https://jacobsschool.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-engineering-physics-bs": {
-        "summary": "Students describe UCSD's undergraduate Engineering Physics program within the Jacobs School as a rigorous B.S. at a top public research university; praise includes undergraduate research access, design courses, and San Diego biotech and defense-tech recruiting, with cautions about large lower-division classes and the quarter system's fast pace.",
-        "themes": [
-            {
-                "label": "Undergraduate research",
-                "sentiment": "positive",
-                "detail": "Students join faculty labs across Jacobs School departments.",
-            },
-            {
-                "label": "San Diego industry",
-                "sentiment": "positive",
-                "detail": "Qualcomm, Illumina, and defense contractors recruit engineering graduates.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public undergraduate engineering schools.",
-            },
-            {
-                "label": "Large core classes",
-                "sentiment": "mixed",
-                "detail": "High demand means crowded lower-division engineering sequences.",
-            },
-            {
-                "label": "Quarter pace",
-                "sentiment": "caution",
-                "detail": "Ten-week quarters move quickly; course planning is essential.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Engineering Physics",
-                "url": "https://physics.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-engineering-physics-ms": {
-        "summary": "Graduate students describe UCSD's MS in in Engineering Physics within the Jacobs School as a research- and coursework-intensive degree; praise includes faculty labs and San Diego biotech and defense recruiting, with cautions that terminal MS students typically self-fund and admission is selective.",
-        "themes": [
-            {
-                "label": "Research & industry access",
-                "sentiment": "positive",
-                "detail": "Faculty labs and San Diego employers enrich graduate training.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public graduate engineering schools.",
-            },
-            {
-                "label": "Biotech & defense pipeline",
-                "sentiment": "positive",
-                "detail": "Regional employers hire across engineering specializations.",
-            },
-            {
-                "label": "Self-funded MS",
-                "sentiment": "caution",
-                "detail": "Terminal MS students without RA/TA support typically self-fund.",
-            },
-            {
-                "label": "Selectivity",
-                "sentiment": "caution",
-                "detail": "Admission is competitive across engineering specializations.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Engineering Physics",
-                "url": "https://physics.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-engineering-science-bs": {
-        "summary": "Students describe UCSD's undergraduate Engineering Science program within the Jacobs School as a rigorous B.S. at a top public research university; praise includes undergraduate research access, design courses, and San Diego biotech and defense-tech recruiting, with cautions about large lower-division classes and the quarter system's fast pace.",
-        "themes": [
-            {
-                "label": "Undergraduate research",
-                "sentiment": "positive",
-                "detail": "Students join faculty labs across Jacobs School departments.",
-            },
-            {
-                "label": "San Diego industry",
-                "sentiment": "positive",
-                "detail": "Qualcomm, Illumina, and defense contractors recruit engineering graduates.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public undergraduate engineering schools.",
-            },
-            {
-                "label": "Large core classes",
-                "sentiment": "mixed",
-                "detail": "High demand means crowded lower-division engineering sequences.",
-            },
-            {
-                "label": "Quarter pace",
-                "sentiment": "caution",
-                "detail": "Ten-week quarters move quickly; course planning is essential.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Engineering Science",
-                "url": "https://jacobsschool.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-environmental-environmental-health-engineering-bs": {
-        "summary": "Students describe UCSD's undergraduate Environmental/Environmental Health Engineering program within the Jacobs School as a rigorous B.S. at a top public research university; praise includes undergraduate research access, design courses, and San Diego biotech and defense-tech recruiting, with cautions about large lower-division classes and the quarter system's fast pace.",
-        "themes": [
-            {
-                "label": "Undergraduate research",
-                "sentiment": "positive",
-                "detail": "Students join faculty labs across Jacobs School departments.",
-            },
-            {
-                "label": "San Diego industry",
-                "sentiment": "positive",
-                "detail": "Qualcomm, Illumina, and defense contractors recruit engineering graduates.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public undergraduate engineering schools.",
-            },
-            {
-                "label": "Large core classes",
-                "sentiment": "mixed",
-                "detail": "High demand means crowded lower-division engineering sequences.",
-            },
-            {
-                "label": "Quarter pace",
-                "sentiment": "caution",
-                "detail": "Ten-week quarters move quickly; course planning is essential.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Environmental/Environmental Health Engineering",
-                "url": "https://structuralengineering.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-finance-and-financial-management-services-ms": {
-        "summary": "Students describe Rady's Master of Finance as a quantitatively rigorous one-year program emphasizing analytics and risk management; Poets&Quants highlights Rady's entrepreneurship rankings and small cohort culture, with cautions that the MFin brand is regional compared to top-10 national finance programs and San Diego finance hiring is narrower than NYC.",
-        "themes": [
-            {
-                "label": "Quantitative curriculum",
-                "sentiment": "positive",
-                "detail": "Analytics-heavy coursework in risk, investments, and financial modeling.",
-            },
-            {
-                "label": "Small cohort",
-                "sentiment": "positive",
-                "detail": "Intimate class sizes enable close faculty and career-services access.",
-            },
-            {
-                "label": "Entrepreneurship context",
-                "sentiment": "positive",
-                "detail": "Rady's innovation focus suits biotech and venture-finance paths.",
-            },
-            {
-                "label": "Regional finance market",
-                "sentiment": "mixed",
-                "detail": "San Diego finance hiring is smaller than NYC or SF banking hubs.",
-            },
-            {
-                "label": "Program selectivity",
-                "sentiment": "caution",
-                "detail": "Admission expects strong quantitative and programming backgrounds.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "Rady School \u2014 Master of Finance",
-                "url": "https://rady.ucsd.edu/programs/master-of-finance/",
-            },
-            {
-                "label": "Poets&Quants \u2014 Rady School",
-                "url": "https://poetsandquants.com/schools/rady-school-of-management-university-of-california-san-diego/",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-materials-engineering-ms": {
-        "summary": "Graduate students describe UCSD's MS in in Materials Engineering within the Jacobs School as a research- and coursework-intensive degree; praise includes faculty labs and San Diego biotech and defense recruiting, with cautions that terminal MS students typically self-fund and admission is selective.",
-        "themes": [
-            {
-                "label": "Research & industry access",
-                "sentiment": "positive",
-                "detail": "Faculty labs and San Diego employers enrich graduate training.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public graduate engineering schools.",
-            },
-            {
-                "label": "Biotech & defense pipeline",
-                "sentiment": "positive",
-                "detail": "Regional employers hire across engineering specializations.",
-            },
-            {
-                "label": "Self-funded MS",
-                "sentiment": "caution",
-                "detail": "Terminal MS students without RA/TA support typically self-fund.",
-            },
-            {
-                "label": "Selectivity",
-                "sentiment": "caution",
-                "detail": "Admission is competitive across engineering specializations.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Materials Engineering",
-                "url": "https://mseg.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-mathematics-and-computer-science-bs": {
-        "summary": "Students and third-party guides describe UCSD's undergraduate program in Mathematics and Computer Science within School of Physical Sciences as a professionally focused degree at a top-30 public research university; praise includes UCSD faculty and San Diego's biotech and defense ecosystem, with cautions about competitive admission, cost of living, and career outcomes that vary by field.",
-        "themes": [
-            {
-                "label": "Top public research",
-                "sentiment": "positive",
-                "detail": "U.S. News ranks UC San Diego #29 among national universities (2026).",
-            },
-            {
-                "label": "Faculty expertise",
-                "sentiment": "positive",
-                "detail": "Faculty in Mathematics and Computer Science lead research and professional training.",
-            },
-            {
-                "label": "San Diego ecosystem",
-                "sentiment": "positive",
-                "detail": "Biotech, defense, and health employers enrich study and internships.",
-            },
-            {
-                "label": "Competitive admission",
-                "sentiment": "caution",
-                "detail": "UCSD graduate and professional programs have selective admission pools.",
-            },
-            {
-                "label": "Cost of living",
-                "sentiment": "caution",
-                "detail": "San Diego housing pushes total cost well above tuition alone.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Mathematics and Computer Science",
-                "url": "https://cse.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/university-of-california-san-diego-1317",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-mechanical-engineering-bs": {
-        "summary": "Students describe UCSD's undergraduate Mechanical Engineering program within the Jacobs School as a rigorous B.S. at a top public research university; praise includes undergraduate research access, design courses, and San Diego biotech and defense-tech recruiting, with cautions about large lower-division classes and the quarter system's fast pace.",
-        "themes": [
-            {
-                "label": "Undergraduate research",
-                "sentiment": "positive",
-                "detail": "Students join faculty labs across Jacobs School departments.",
-            },
-            {
-                "label": "San Diego industry",
-                "sentiment": "positive",
-                "detail": "Qualcomm, Illumina, and defense contractors recruit engineering graduates.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public undergraduate engineering schools.",
-            },
-            {
-                "label": "Large core classes",
-                "sentiment": "mixed",
-                "detail": "High demand means crowded lower-division engineering sequences.",
-            },
-            {
-                "label": "Quarter pace",
-                "sentiment": "caution",
-                "detail": "Ten-week quarters move quickly; course planning is essential.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Mechanical Engineering",
-                "url": "https://mae.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
+            {"label": "College Factual — UC San Diego Electrical Engineering", "url": "https://www.collegefactual.com/colleges/university-of-california-san-diego/academic-life/academic-majors/engineering/ee-electrical-engineering/"},
+            {"label": "UC San Diego ECE — Graduate Program", "url": "https://www.ece.ucsd.edu/"},
         ],
         "disclaimer": _DISCLAIMER,
     },
     "ucsd-mechanical-engineering-ms": {
-        "summary": "Graduate students describe UCSD's MS in in Mechanical Engineering within the Jacobs School as a research- and coursework-intensive degree; praise includes faculty labs and San Diego biotech and defense recruiting, with cautions that terminal MS students typically self-fund and admission is selective.",
+        "summary": (
+            "UC San Diego's MS in Mechanical Engineering is offered by the Mechanical and "
+            "Aerospace Engineering department, which U.S. News ranks in the mid-20s "
+            "nationally for mechanical engineering within a Jacobs School ranked among the "
+            "top engineering schools (and top public programs). Students highlight robotics, "
+            "thermofluids, and design research; the common caution for the terminal MS is "
+            "limited departmental funding relative to the PhD."
+        ),
         "themes": [
-            {
-                "label": "Research & industry access",
-                "sentiment": "positive",
-                "detail": "Faculty labs and San Diego employers enrich graduate training.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public graduate engineering schools.",
-            },
-            {
-                "label": "Biotech & defense pipeline",
-                "sentiment": "positive",
-                "detail": "Regional employers hire across engineering specializations.",
-            },
-            {
-                "label": "Self-funded MS",
-                "sentiment": "caution",
-                "detail": "Terminal MS students without RA/TA support typically self-fund.",
-            },
-            {
-                "label": "Selectivity",
-                "sentiment": "caution",
-                "detail": "Admission is competitive across engineering specializations.",
-            },
+            {"label": "Program ranking", "sentiment": "positive", "detail": "Ranked in the mid-20s nationally for mechanical engineering by U.S. News."},
+            {"label": "Research breadth", "sentiment": "positive", "detail": "Active research in robotics, thermofluids, and mechanical design."},
+            {"label": "Jacobs School standing", "sentiment": "positive", "detail": "Part of an engineering school ranked among the top programs and top public schools."},
+            {"label": "Limited MS funding", "sentiment": "caution", "detail": "Assistantships are concentrated on doctoral students; terminal-MS funding is limited."},
         ],
         "sources": [
-            {
-                "label": "UC San Diego \u2014 Mechanical Engineering",
-                "url": "https://mae.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
+            {"label": "U.S. News — UC San Diego (Jacobs) Engineering", "url": "https://www.usnews.com/best-graduate-schools/top-engineering-schools/university-of-california-san-diego-02025"},
+            {"label": "Jacobs School — Rankings", "url": "https://jacobsschool.ucsd.edu/about/rankings"},
         ],
         "disclaimer": _DISCLAIMER,
     },
-    "ucsd-medicine-phd": {
-        "summary": "Doctoral students describe UCSD's Ph.D. pathways in medicine and biomedical sciences as research-intensive training at a top-20 medical school \u2014 U.S. News ranks UC San Diego School of Medicine among leading research medical schools; praise includes UC San Diego Health clinical access and NIH-funded labs, with cautions about competitive academic job markets and San Diego cost of living.",
+    "ucsd-aerospace-aeronautical-and-astronautical-space-engineering-ms": {
+        "summary": (
+            "The MS in Aerospace Engineering at UC San Diego runs through the Mechanical and "
+            "Aerospace Engineering department, which U.S. News ranks in the high teens "
+            "nationally for aerospace/aeronautical engineering. Reviewers point to Southern "
+            "California's aerospace and defense industry — Northrop Grumman, General Atomics, "
+            "and others — and to the department's wind-tunnel and flight-research facilities, "
+            "while noting the aerospace group is smaller than UC San Diego's CSE and "
+            "bioengineering departments."
+        ),
         "themes": [
-            {
-                "label": "Research medical school",
-                "sentiment": "positive",
-                "detail": "Top-20 medical school with $1B+ research enterprise through UC San Diego Health.",
-            },
-            {
-                "label": "Clinical & translational access",
-                "sentiment": "positive",
-                "detail": "Altman CTSA and Moores Cancer Center anchor doctoral research.",
-            },
-            {
-                "label": "NIH funding",
-                "sentiment": "positive",
-                "detail": "Strong federal research support across biomedical sciences.",
-            },
-            {
-                "label": "Academic job market",
-                "sentiment": "caution",
-                "detail": "Tenure-track biomedical faculty positions are nationally competitive.",
-            },
-            {
-                "label": "Cost of living",
-                "sentiment": "caution",
-                "detail": "San Diego housing costs are among the highest in the UC system.",
-            },
+            {"label": "Aerospace ranking", "sentiment": "positive", "detail": "Ranked in the high teens nationally for aerospace/aeronautical engineering by U.S. News."},
+            {"label": "Industry proximity", "sentiment": "positive", "detail": "Northrop Grumman, General Atomics, and the SoCal aerospace/defense sector recruit locally."},
+            {"label": "Research facilities", "sentiment": "positive", "detail": "Wind-tunnel and flight-research facilities support aerodynamics and space-systems work."},
+            {"label": "Smaller department", "sentiment": "mixed", "detail": "Fewer faculty and electives than the larger CSE or bioengineering departments."},
         ],
         "sources": [
-            {
-                "label": "UCSD School of Medicine \u2014 Graduate Programs",
-                "url": "https://medschool.ucsd.edu/education/graduate-programs/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego Medical School",
-                "url": "https://www.usnews.com/best-graduate-schools/top-medical-schools/university-of-california-san-diego-04038",
-            },
+            {"label": "Jacobs School — Rankings", "url": "https://jacobsschool.ucsd.edu/about/rankings"},
+            {"label": "Jacobs School — Mechanical and Aerospace Engineering", "url": "https://mae.ucsd.edu/"},
+        ],
+        "disclaimer": _DISCLAIMER,
+    },
+    "ucsd-biomedical-medical-engineering-ms": {
+        "summary": (
+            "UC San Diego's MS in Bioengineering builds on a department long ranked among "
+            "the nation's top bioengineering programs, with unusually close ties to UC San "
+            "Diego Health and the Institute of Engineering in Medicine. Students value the "
+            "device-design, tissue-engineering, and imaging research and the medical-school "
+            "adjacency; the consistent caution is that the program is highly selective and "
+            "the workload is demanding."
+        ),
+        "themes": [
+            {"label": "National standing", "sentiment": "positive", "detail": "Bioengineering at UC San Diego is regularly ranked among the nation's top programs."},
+            {"label": "Medicine integration", "sentiment": "positive", "detail": "Clinical immersion through UC San Diego Health and the Institute of Engineering in Medicine."},
+            {"label": "Research depth", "sentiment": "positive", "detail": "Strength in medical-device design, tissue engineering, and biomedical imaging."},
+            {"label": "Selective and demanding", "sentiment": "caution", "detail": "Admission is highly competitive and the coursework load is heavy."},
+        ],
+        "sources": [
+            {"label": "U.S. News — Best Bioengineering Programs", "url": "https://www.usnews.com/best-graduate-schools/top-engineering-schools/bioengineering-rankings"},
+            {"label": "UC San Diego — Department of Bioengineering", "url": "https://be.ucsd.edu/"},
         ],
         "disclaimer": _DISCLAIMER,
     },
     "ucsd-public-health-ms": {
-        "summary": "Students describe UCSD's MPH through the Herbert Wertheim School as a research-oriented public health degree leveraging UC San Diego Health and the campus's biostatistics ecosystem; praise includes epidemiology faculty and community-health fieldwork, with cautions that the school is young (founded 2019) and employer networks are still maturing.",
-        "themes": [
-            {
-                "label": "Health-sciences ecosystem",
-                "sentiment": "positive",
-                "detail": "Access to School of Medicine, pharmacy, and UC San Diego Health.",
-            },
-            {
-                "label": "Epidemiology & biostats",
-                "sentiment": "positive",
-                "detail": "Faculty strengths in chronic disease, aging, and quantitative methods.",
-            },
-            {
-                "label": "Fieldwork access",
-                "sentiment": "positive",
-                "detail": "San Diego County and border-region health partnerships enrich practicum.",
-            },
-            {
-                "label": "Young school",
-                "sentiment": "mixed",
-                "detail": "Wertheim School founded 2019 \u2014 alumni network still developing.",
-            },
-            {
-                "label": "Selective admission",
-                "sentiment": "caution",
-                "detail": "MPH cohorts are small relative to applicant interest.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "Wertheim School \u2014 MPH Program",
-                "url": "https://publichealth.ucsd.edu/masters-programs/mph/index.html",
-            },
-            {
-                "label": "U.S. News \u2014 Public Health rankings",
-                "url": "https://www.usnews.com/best-graduate-schools/top-health-schools/public-health-rankings",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-systems-engineering-ms": {
-        "summary": "Graduate students describe UCSD's MS in in Systems Engineering within the Jacobs School as a research- and coursework-intensive degree; praise includes faculty labs and San Diego biotech and defense recruiting, with cautions that terminal MS students typically self-fund and admission is selective.",
-        "themes": [
-            {
-                "label": "Research & industry access",
-                "sentiment": "positive",
-                "detail": "Faculty labs and San Diego employers enrich graduate training.",
-            },
-            {
-                "label": "Engineering reputation",
-                "sentiment": "positive",
-                "detail": "Jacobs School ranks among top public graduate engineering schools.",
-            },
-            {
-                "label": "Biotech & defense pipeline",
-                "sentiment": "positive",
-                "detail": "Regional employers hire across engineering specializations.",
-            },
-            {
-                "label": "Self-funded MS",
-                "sentiment": "caution",
-                "detail": "Terminal MS students without RA/TA support typically self-fund.",
-            },
-            {
-                "label": "Selectivity",
-                "sentiment": "caution",
-                "detail": "Admission is competitive across engineering specializations.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "UC San Diego \u2014 Systems Engineering",
-                "url": "https://jacobsschool.ucsd.edu/",
-            },
-            {
-                "label": "U.S. News \u2014 UC San Diego",
-                "url": "https://www.usnews.com/best-colleges/rankings/engineering-doctorate",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-management-sciences-and-quantitative-methods-bs": {
         "summary": (
-            "Undergraduates pursuing Rady's Business Analytics minor (RSM-MN-008) describe "
-            "a quantitatively focused analytics sequence that pairs with any UCSD bachelor's "
-            "major without a separate admissions process. Praise includes the MGT 151A/153/155 "
-            "core, electives in customer analytics and spreadsheet modeling, and access to "
-            "Rady's undergraduate advising network, with cautions that the pathway is a minor "
-            "rather than a standalone degree, upper-division Rady seats are competitive, and "
-            "analytics recruiting in San Diego still favors engineering and data-science majors."
+            "The Master of Public Health at UC San Diego's Herbert Wertheim School of Public "
+            "Health and Human Longevity Science is a young program — the school was founded "
+            "in 2019 — that has grown quickly, graduating more than 1,800 students in its "
+            "first five years. Reviewers cite the campus health-sciences ecosystem and a "
+            "UC San Diego–San Diego State joint doctoral pathway; the main caution is that "
+            "the alumni network is still developing relative to established public-health schools."
         ),
         "themes": [
-            {
-                "label": "Open minor access",
-                "sentiment": "positive",
-                "detail": "Any UCSD undergraduate can declare the minor through Tritonlink — no separate Rady admissions.",
-            },
-            {
-                "label": "Quantitative core",
-                "sentiment": "positive",
-                "detail": "Five-course core spans operations, market research, business analytics, and IT for analytics.",
-            },
-            {
-                "label": "Flexible pairing",
-                "sentiment": "positive",
-                "detail": "Students combine the minor with STEM, economics, or cognitive-science majors for hybrid profiles.",
-            },
-            {
-                "label": "Minor, not a degree",
-                "sentiment": "mixed",
-                "detail": "Graduates earn their primary major's credential; analytics depth comes through the minor transcript.",
-            },
-            {
-                "label": "Course access",
-                "sentiment": "caution",
-                "detail": "Popular MGT upper-division analytics courses fill quickly each quarter.",
-            },
+            {"label": "Health-sciences ecosystem", "sentiment": "positive", "detail": "Access to the School of Medicine, pharmacy, and UC San Diego Health resources."},
+            {"label": "Doctoral pathway", "sentiment": "positive", "detail": "A UC San Diego–San Diego State joint doctoral program in public health extends the MPH."},
+            {"label": "Rapid growth", "sentiment": "positive", "detail": "More than 1,800 graduates in the school's first five years."},
+            {"label": "Young program", "sentiment": "mixed", "detail": "Founded 2019; alumni network is still developing versus older public-health schools."},
         ],
         "sources": [
-            {
-                "label": "Rady School — Business Analytics Minor",
-                "url": "https://rady.ucsd.edu/programs/undergraduate/minors/business-analytics-minor.html",
-            },
-            {
-                "label": "Niche — UC San Diego",
-                "url": "https://www.niche.com/colleges/university-of-california-san-diego/",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
-    "ucsd-management-sciences-and-quantitative-methods-ms": {
-        "summary": (
-            "Students describe Rady's Master of Science in Business Analytics as a "
-            "STEM-designated, 11-month program blending machine learning, data engineering, "
-            "and business strategy with a GenAI-assisted curriculum. QS ranks the program "
-            "#40 globally for business analytics master's degrees (2026) and #10 among U.S. "
-            "public institutions; Rady's 2024 employment report shows 76% employed with a "
-            "~$105K median base salary. Praise includes capstone consulting projects and "
-            "placement into data-scientist and product-analyst roles, with cautions that "
-            "admission is selective for quantitative backgrounds and San Diego's finance "
-            "hiring is narrower than NYC or SF."
-        ),
-        "themes": [
-            {
-                "label": "QS analytics ranking",
-                "sentiment": "positive",
-                "detail": "QS ranks Rady's MSBA #40 globally and #10 among U.S. public institutions (2026).",
-            },
-            {
-                "label": "STEM & GenAI curriculum",
-                "sentiment": "positive",
-                "detail": "One-year STEM-designated program integrates LLMs across the analytics workflow.",
-            },
-            {
-                "label": "Employment outcomes",
-                "sentiment": "positive",
-                "detail": "Rady's 2024 report: 76% employed, ~$105K median base, top roles in data science and analytics.",
-            },
-            {
-                "label": "Capstone consulting",
-                "sentiment": "positive",
-                "detail": "Industry capstone projects pair student teams with San Diego employers.",
-            },
-            {
-                "label": "Selective admission",
-                "sentiment": "caution",
-                "detail": "Expects calculus, statistics, and Python/R/SQL proficiency with competitive applicant pools.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "Rady School — Master of Science in Business Analytics",
-                "url": "https://rady.ucsd.edu/programs/ms-business-analytics/",
-            },
-            {
-                "label": "QS — Rady MSBA ranking",
-                "url": "https://www.topuniversities.com/universities/university-california-san-diego-ucsd/rady-school-management-uc-san-diego",
-            },
-            {
-                "label": "Rady — 2024 MSBA Employment Report",
-                "url": "https://rady.ucsd.edu/_files/why/2024-MSBA-Employment-Report.pdf",
-            },
+            {"label": "UC San Diego Herbert Wertheim School of Public Health", "url": "https://hwsph.ucsd.edu/"},
+            {"label": "UC San Diego Today — School of Public Health Fifth Anniversary", "url": "https://today.ucsd.edu/story/school-of-public-health-fifth-anniversary-education"},
         ],
         "disclaimer": _DISCLAIMER,
     },
