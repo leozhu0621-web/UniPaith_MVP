@@ -7,7 +7,63 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-18 (grader run 53). **NO new rulebook gaps → 0 rule changes.** ONE profile-data PR merged since
+_Last graded: 2026-06-18 (grader run 54). **NO new rulebook gaps → 0 rule changes.** ONE profile-data PR merged since
+run 53: **#737 `enrich(ucsd): external_reviews for Business Analytics minor + MSBA`** (commit `4db287f`) — graded below.
+The other PRs merged since run 53 are OUT OF SCOPE for profile-data grading (skill/infra, no profile data): #736
+`docs(enrich): routine gathers base match inputs + per-field provenance` (a HUMAN tightening of enrich-profile/SKILL.md —
+adds the matcher core-field + field_provenance requirement; not my edit), #738 `feat(skill): improve-enrichment as a real
+skill`, #739 `feat(infra): CPEF matcher in prod`, #741/#742 `feat(infra): self-hosted Qwen on vLLM`, #740 `fix(skill):
+growth runs IN PARALLEL with repair`.
+
+**⚠️ HUMAN INVARIANT EDIT — #740 reconciled the repair-first gate (NOTED, not reverted).** The founder
+(`leozhu0621-web` + `junczhu-ui` + Claude) merged #740, which edits enrich-profile/SKILL.md to distinguish ACUTE/visible
+brokenness (stubs, fabricated/name-prefixed descriptions, dead feeds, missing photos, non-conformant catalog — still
+blocks growth, fixed first) from DEPTH-in-progress (missing some reviews / honestly-omitted fields — does NOT block
+growth), with a hard floor "never >2 runs without adding a university while the US-News list has entries." This LOOSENS
+the strict repair-first-then-grow ordering the grader treats as an immutable invariant. Per the SAFETY RAILS (a finding
+that argues for loosening an invariant → LOG FOR HUMAN REVIEW, do not act), this is a HUMAN decision already on `main`, so
+the grader does NOT revert it and does NOT propagate it further — flagged here for audit. No-fabrication / verify-or-omit /
+verify-rendered-output / workshop-feedback-only / required-fields / merge-mandatory remain untouched and intact.
+
+**#737 GRADE — a SMALL, GENUINELY-SOURCED reviews addition (the RIGHT model, NOT a synthesized pass).** #737 adds
+`external_reviews` for UCSD's last 2 coverable programs (Business Analytics minor + MSBA), citing program-specific sources
+(QS #40 global / #10 US public, Rady 2024 employment report, the Rady Business Analytics minor RSM-MN-008 page) — NOT the
+institution-ranking boilerplate of the synthesized passes. Deploy still propagating at grade time (the live Business
+Analytics BS/MS nodes do not yet show the 2 reviews; 40/194 UCSD programs carry live reviews). This is the correct way to
+add depth and is NOT a defect. **BUT** it is the 9th consecutive depth-pass merged while UCSD's own CRITICAL acute breach
+stays LIVE (see below) — and even under #740's reconciled rule that breach is ACUTE (a no-fabrication violation), so it
+should have been cleared first.
+
+**UCSD acute breach STILL LIVE + run-30 verbatim-shared CONFIRMED (re-graded this run).** The invented
+**"UC San Diego Center for Aerospace Research and Training"** (a center UCSD does NOT have — miss #8 verified-true) is STILL
+live on the 2 aerospace GRAD rows (Graduate Certificate + MS in Aerospace Engineering), unrepaired since run 29; #737 did
+not touch it. Live n=194: 0% dup / 0% prefix / 0% classification / 0% dept-echo / 0 rollup / 0 connects-to — UCSD reads
+clean on every structural-form metric EXCEPT **80% verbatim-shared-across-credential-levels** (57 of 58 shared groups are
+same-field credential siblings — e.g. the BA + Graduate Certificate + MS in Anthropology carry one IDENTICAL field-specific
+description; gold MIT 0%). So UCSD = cleanest-tier structure + run-30 defect (joins JHU 79% / Berkeley 80% / Penn 74% /
+Purdue 81% / Cornell 76%); NOT reviews-ready per the run-44 correction even though its descriptions are TRUE.
+
+**Fleet checklist GREEN (re-confirmed live, n=28):** every institution carries ≥4 campus photos (no short galleries) and a
+non-zero posts feed (no dead feeds). Fleet still 28 institutions, no sprawl, counts unchanged (USC 613, NYU 507, UIUC 419,
+Michigan 379, UCLA 373, UT-Austin 338, GT 143, UCSD 194, …). The seven school-blurb catalogs (USC/NYU/UIUC/Michigan/UCLA/
+UW/UT-Austin) all re-confirmed LIVE this run (100% "connects to" / 93–100% double-period). Georgia Tech #730 LIVE (100%
+classification + 100% prefix + 98% dept-echo). gold MIT control clean (n=65: 0 dup / field-specific / 0% blurb / 0%
+dept-echo / 1% prefix / 0% verbatim-shared).
+
+**0 new rulebook gaps this run (0 of ≤3).** Every live defect recurs a class the rulebook ALREADY names — school-blurb
+descriptions (run-43 miss #8), classification stubs + invented units (miss #8), synthesized reviews (run-9 / miss #8),
+rollup names (miss #2), prefix-doubling + dept-echo (miss #2/#9), verbatim-shared-across-levels (run-30 / miss #8). #737 is
+a clean small depth pass, not a defect. Per the SAFETY RAILS ("Clean fleet → change nothing… Never invent a rule to look
+busy"; anti-churn; confirm-not-already-covered), SKILL.md is unchanged. The standing concern is unchanged: enricher
+BEHAVIOR + work-ORDERING (depth/reviews passes keep landing while CRITICAL acute breaches — UCSD's invented center, the
+seven school-blurb catalogs, Boston U / Stanford / Northwestern / Duke / Purdue — stay unrepaired). #740 (human) has now
+reconciled the ordering rule to allow parallel growth; whether the enricher adopts repair-of-ACUTE-first remains a
+behavior question more rule text cannot fix. **Flagged for human review** (carried + strengthened from runs 46–53).
+(Health-check GREEN — see CHANGELOG run 54; markdown-only change, no SKILL.md/code/data edit.)_
+
+---
+
+_Prior (run 53): ONE profile-data PR merged since
 run 52: **#730 `enrich(gatech): external_reviews depth pass for 58 coverable programs`** (commit `b218479`) — graded below.
 The other PRs merged since run 52 are all OUT OF SCOPE for profile-data grading (AI-Structure infra/frontend, no profile
 data): #727 `feat(enrich): enrichment API + DB adapter (C.2)`, #728 `feat(enrich): frontend enrich widget (C.3)`,
@@ -661,6 +717,14 @@ _First seen 2026-06-17 (run 29) — a LIVE no-fabrication breach shipped by #667
 other CRITICALs (2 rows on an otherwise model-clean catalog), but a fabricated unit on a student-facing page
 is a no-fabrication invariant breach. UCSD otherwise joins the cleanest non-MIT structure tier
 (MIT/Rice/UChicago/Caltech/JHU). Fix the invented center before treating UCSD's description pass as done._
+**Run 54 update — STILL LIVE + #737 graded:** the invented "UC San Diego Center for Aerospace Research and Training" is
+re-confirmed LIVE this run on the 2 aerospace GRAD rows (Graduate Certificate + MS in Aerospace Engineering — both share
+the identical body ending "…facilities at the UC San Diego Center for Aerospace Research and Training"; the BS row
+correctly uses the generic "wind-tunnel and flight-research facilities at UC San Diego"). #737 (the only UCSD PR since run
+29) added 2 genuinely-sourced reviews (MSBA + Business Analytics minor) but did NOT touch the invented center. UCSD also
+carries the run-30 verbatim-identical-across-credential-levels defect at **80%** (57/58 shared groups are same-field
+credential siblings; gold MIT 0%) — so beyond fixing the invented center it needs each credential level its OWN researched
+body before it is reviews-ready.
 
 ## HIGH — #646 catalogs: breadth-expanded but FABRICATED (duplicate names + classification + 100% prefix), worst-first — TABLE NOW EMPTY (all graduated to CRITICAL)
 
