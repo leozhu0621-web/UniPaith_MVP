@@ -167,8 +167,25 @@ def test_catalog_has_no_padding_stubs():
     assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
 
 
+def test_no_fabricated_graduate_credentials():
+    """Caltech awards NO graduate certificates and a terminal MS in only three options
+    (Aeronautics, Electrical Engineering, Space Engineering — Caltech Graduate Studies
+    Office). Every other certificate/masters IPEDS row is CIP×award-level padding and
+    must not be in the catalog. Breadth is gated on REALNESS, not a frozen count
+    (enrich miss #2) — so the de-padded catalog (well below the old >= 70 floor) passes."""
+    assert not [s for s in c.PROGRAMS if s["degree_type"] == "certificate"], (
+        "Caltech awards no graduate certificates — none may be in the catalog"
+    )
+    masters = {s["slug"] for s in c.PROGRAMS if s["degree_type"] == "masters"}
+    assert masters <= set(c._TERMINAL_MS_SLUGS), (
+        f"only verified terminal-MS options may carry a masters row; extra: "
+        f"{masters - set(c._TERMINAL_MS_SLUGS)}"
+    )
+    assert len(c.PROGRAMS) >= 40, "real undergraduate + PhD + terminal-MS catalog breadth"
+
+
 def test_every_program_is_gold_except_recorded_omissions():
-    assert len(c.PROGRAMS) >= 70, "full IPEDS/Scorecard catalog breadth (UNITID 110404)"
+    assert len(c.PROGRAMS) >= 40, "real catalog breadth (UNITID 110404, de-padded)"
     for spec in c.PROGRAMS:
         slug = spec["slug"]
         res = check_conformance(
@@ -218,10 +235,9 @@ def test_coverable_programs_have_external_reviews():
         "caltech-biology-bs",
         "caltech-ids-bs",
         "caltech-bem-bs",
-        "caltech-computer-science-ms",
-        "caltech-physics-ms",
+        # Only the two verified terminal-MS options remain (CS/Physics/ME MS were
+        # fabricated CIP×award-level rows and were dropped along with their reviews).
         "caltech-electrical-electronics-and-communications-engineering-ms",
-        "caltech-mechanical-engineering-ms",
         "caltech-aerospace-aeronautical-and-astronautical-space-engineering-ms",
     ]
     for slug in coverable:
