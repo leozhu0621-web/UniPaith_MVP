@@ -24,6 +24,7 @@ import usePageTitle from '../../hooks/usePageTitle'
 import { Bookmark, GraduationCap } from 'lucide-react'
 import type { MatchBand, SavedPriority, SavedProgram } from '../../types'
 import SavedProgramRow, { PRIORITY_CONFIG, PRIORITY_ORDER } from './saved/SavedProgramRow'
+import ListBalanceMeter from './saved/ListBalanceMeter'
 import SavedSchoolCard from './saved/SavedSchoolCard'
 import { programSummaryOf, sortSavedPrograms, type SortKey } from './saved/savedUtils'
 
@@ -345,6 +346,9 @@ export default function SavedListPage() {
         />
       ) : (
         <>
+          {/* List balance (Discover review 2026-06-14 #1) — reach/target/safer mix of the saved list. */}
+          <ListBalanceMeter programs={programs} />
+
           {isError && (
             <p className="text-sm text-warning mb-4 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2">
               We could not refresh your list. Showing the last saved copy if available.

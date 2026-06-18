@@ -77,7 +77,7 @@ export default function UniversityCard({ institution: inst, onClick, following, 
     // card, so keyboard + cmd/ctrl-click work; the Follow button stays a
     // sibling <button> raised above the overlay (no nested-interactive).
     <div
-      className="relative bg-card rounded-lg border border-border hover-lift hover:elev-raised overflow-hidden flex flex-col group/card"
+      className="relative bg-card rounded-xl border border-border elev-subtle hover-lift hover:elev-raised overflow-hidden flex flex-col group/card"
     >
       {/* Header — TALLER campus photo fading into the card at its bottom edge;
           the identity block sits fully BELOW the fade so text never collides

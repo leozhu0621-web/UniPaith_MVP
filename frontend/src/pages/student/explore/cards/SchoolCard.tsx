@@ -20,7 +20,7 @@ export default function SchoolCard({ school, institutionName, onClick, href }: P
   return (
     <div
       onClick={href ? undefined : onClick}
-      className={`relative bg-card rounded-lg border border-border hover:elev-raised transition-all duration-200 ease-out overflow-hidden flex flex-col group/card ${href ? '' : 'cursor-pointer'}`}
+      className={`relative bg-card rounded-xl border border-border elev-subtle hover-lift hover:elev-raised overflow-hidden flex flex-col group/card ${href ? '' : 'cursor-pointer'}`}
     >
       <div className="flex-1 px-5 pt-4 pb-3">
         <h3 className="text-[15px] font-bold text-foreground leading-snug mb-1">
