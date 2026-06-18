@@ -24,7 +24,8 @@ function BucketCount({ value }: { value: number }) {
 import { STATUS_COLORS } from '../../utils/constants'
 import { FileText, Star, ChevronRight, CalendarClock, CheckCircle2, ArrowRight, Mail } from 'lucide-react'
 import DecisionComparison from './apply/offer/DecisionComparison'
-import { deadlineTone, DEADLINE_TONE_CLASS, hasPendingOfferResponse } from './apply/offer/offerFormat'
+import { hasPendingOfferResponse } from './apply/offer/offerFormat'
+import { daysUntil, deadlineTone, DEADLINE_TONE_CLASS } from '../../utils/deadline'
 import type { Application } from '../../types'
 
 // My Space › Applications views (Spec 2026-06-10 §5): All · Offers · Costs & aid.
@@ -79,11 +80,6 @@ function bucketOf(app: Application): Bucket {
       if (pct > 0) return 'in_progress'
       return 'not_started'
   }
-}
-
-function daysUntil(deadline?: string | null): number | null {
-  if (!deadline) return null
-  return Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000)
 }
 
 /** Human "Next: <action>" string for a row (spec 15 §2). */
@@ -510,7 +506,7 @@ export default function ApplicationsPage() {
                     {nextAction(a)} — <span className="text-foreground">{a.program?.program_name}</span>
                   </span>
                   {d != null && d >= 0 && d <= 30 && (
-                    <span className={`text-xs flex-shrink-0 ${d <= 7 ? 'text-destructive' : 'text-warning'}`}>
+                    <span className={`text-xs flex-shrink-0 ${DEADLINE_TONE_CLASS[deadlineTone(d)]}`}>
                       {d === 0 ? 'today' : `${d}d`}
                     </span>
                   )}
@@ -629,7 +625,7 @@ export default function ApplicationsPage() {
                         <span className="text-xs text-muted-foreground">{pct}% ready</span>
                       )}
                       {d != null && d >= 0 && d <= 30 && isDraft && (
-                        <span className={`text-xs font-medium inline-flex items-center gap-1 ${d <= 7 ? 'text-destructive' : 'text-warning'}`}>
+                        <span className={`text-xs font-medium inline-flex items-center gap-1 ${DEADLINE_TONE_CLASS[deadlineTone(d)]}`}>
                           <CalendarClock size={11} />{d === 0 ? 'Due today' : `${d}d left`}
                         </span>
                       )}

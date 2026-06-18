@@ -67,15 +67,11 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-center text-foreground mb-2">Welcome back</h2>
-
-      <div className="rounded-lg border border-secondary/30 bg-secondary/5 px-4 py-2.5 text-center text-xs text-muted-foreground">
-        You're viewing a live demo. Your data resets each time you sign in.
-      </div>
+    <div className="space-y-5">
+      <h2 className="text-lg font-semibold text-foreground mb-1">Welcome back</h2>
 
       {error && (
-        <div className="bg-error-soft border border-error/30 text-error text-sm px-4 py-2 rounded-lg">
+        <div role="alert" aria-live="assertive" className="bg-error-soft border border-error/30 text-error text-sm px-4 py-2 rounded-lg">
           {error}
         </div>
       )}
@@ -102,10 +98,14 @@ export default function LoginPage() {
       <GoogleSignInButton />
 
       <p className="text-center text-sm text-muted-foreground">
-        Don't have an account?{' '}
+        New here?{' '}
         <Link to="/signup" className="text-secondary font-semibold hover:underline">
           Sign up
         </Link>
+      </p>
+
+      <p className="text-center text-xs text-muted-foreground/80">
+        This is a live demo — explore freely. Your data resets each time you sign in.
       </p>
     </div>
   )

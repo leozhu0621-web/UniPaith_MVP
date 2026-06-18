@@ -30,6 +30,7 @@ import StrategySnapshot from './home/StrategySnapshot'
 import TopMatchesPeek from './home/TopMatchesPeek'
 import ScholarshipsPeek from './home/ScholarshipsPeek'
 import { freshWinIds, markCelebrated } from './home/celebrate'
+import { DeadlinePill } from '../../../utils/deadline'
 import type { Application, WorkshopFeedbackRun, OnboardingStatus } from '../../../types'
 
 // My Space · Home — mission control (Spec 2026-06-10 §4, redesigned 2026-06-14).
@@ -38,10 +39,6 @@ import type { Application, WorkshopFeedbackRun, OnboardingStatus } from '../../.
 // client-side composition of endpoints that already exist; no aggregate backend.
 
 const STALE = 60_000
-
-function daysUntil(iso: string): number {
-  return Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000)
-}
 
 export default function MySpaceHomePage() {
   const navigate = useNavigate()
@@ -200,18 +197,15 @@ export default function MySpaceHomePage() {
               ) : deadlines.length === 0 ? (
                 <p className="py-2 text-sm text-muted-foreground">Nothing due in the next two weeks.</p>
               ) : (
-                deadlines.map(item => {
-                  const d = daysUntil(item.start_at)
-                  return (
-                    <ListRow
-                      key={item.id}
-                      title={item.title}
-                      sub={item.subtitle ?? item.institution_name ?? undefined}
-                      trailing={<span className={`text-xs ${d <= 3 ? 'text-error font-medium' : 'text-muted-foreground'}`}>{new Date(item.start_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>}
-                      onClick={() => navigate('/s/calendar')}
-                    />
-                  )
-                })
+                deadlines.map(item => (
+                  <ListRow
+                    key={item.id}
+                    title={item.title}
+                    sub={item.subtitle ?? item.institution_name ?? undefined}
+                    trailing={<DeadlinePill date={item.start_at} />}
+                    onClick={() => navigate('/s/calendar')}
+                  />
+                ))
               )}
             </div>
 
