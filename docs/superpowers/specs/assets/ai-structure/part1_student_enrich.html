@@ -1,0 +1,116 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --color-background-primary:#ffffff;--color-background-secondary:#f5f1e8;--color-background-info:#eaf0fb;--color-background-warning:#fdf6e3;
+  --color-border-tertiary:#e7e1d5;--color-border-info:#cdd9f3;
+  --color-text-primary:#2c2a26;--color-text-secondary:#56524a;--color-text-tertiary:#8b857a;--color-text-info:#33509e;--color-text-warning:#9a6700;
+  --border-radius-lg:12px;--border-radius-md:8px;
+}
+html,body{background:#faf7f0;margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+.f1{max-width:660px;margin:0 auto;font-size:14px;}
+.f1 .box{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:13px 16px;}
+.f1 .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;}
+.f1 .eye{font-size:11px;color:var(--color-text-tertiary);}
+.f1 .t{font-size:15px;font-weight:500;margin:0 0 6px;color:var(--color-text-primary);}
+.f1 ul{margin:4px 0 0;padding-left:18px;}
+.f1 li{font-size:12px;color:var(--color-text-secondary);line-height:1.5;margin:3px 0;}
+.f1 li b{font-weight:500;color:var(--color-text-primary);}
+.f1 .arrow{display:flex;justify-content:center;align-items:center;gap:6px;color:var(--color-text-tertiary);padding:5px 0;font-size:11px;}
+.f1 .gate{border-color:var(--color-border-info);}
+.f1 .loopnote{background:var(--color-background-secondary);border:none;}
+.f1 .cutin{background:var(--color-background-info);border:0.5px solid var(--color-border-info);border-radius:var(--border-radius-lg);padding:11px 14px;}
+.f1 .cutin li,.f1 .cutin li b{color:var(--color-text-info);}
+.f1 .tag{font-size:10px;padding:1px 8px;border-radius:10px;white-space:nowrap;}
+.f1 .api{background:var(--color-background-info);color:var(--color-text-info);}
+.f1 .be{background:var(--color-background-secondary);color:var(--color-text-secondary);}
+.f1 .way{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;margin-top:8px;}
+.f1 .way .wt{font-size:13px;font-weight:500;color:var(--color-text-primary);margin:0 0 4px;}
+.f1 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px;}
+.f1 .mc{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:8px 10px;}
+.f1 .mc .ml{font-size:11px;font-weight:500;color:var(--color-text-primary);margin:0 0 2px;}
+.f1 .mc .mv{font-size:11px;color:var(--color-text-secondary);line-height:1.4;}
+.f1 .tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;}
+.f1 .tbl td{padding:5px 4px;border-top:0.5px solid var(--color-border-tertiary);vertical-align:top;}
+.f1 .tbl td:first-child{color:var(--color-text-secondary);}
+.f1 .tbl td:last-child{text-align:right;font-weight:500;color:var(--color-text-primary);white-space:nowrap;}
+</style></head>
+<body>
+<div class="f1">
+  <h2 class="sr-only">Chart 1 of 3 — enrich the student profile.</h2>
+  <div style="display:flex;justify-content:center;gap:14px;font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px;">
+    <span><span class="tag api">API</span> LLM: language · vision · materials · quantify</span>
+    <span><span class="tag be">Backend</span> deterministic: orchestrate · store · score</span>
+  </div>
+  <div class="box loopnote">
+    <p class="t">Part 1 · Enrich the student — a continuous loop, never a gate</p>
+    <ul>
+      <li>Signals span the student's <b>attributes</b> (their facts) + <b>preferences</b> (what they want) — same library, student side</li>
+      <li>Fills it signal by signal · depth → match <b>quality</b> (Part 3), not permission</li>
+    </ul>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="box">
+    <div class="hd"><span class="eye">LOOP · pick the next signal</span><span class="tag be">Backend</span></div>
+    <p class="t">Choose the next Prompt Library signal</p>
+    <ul>
+      <li><b>Signal</b> = one library field · priority: <b>essentials → high-value gaps → low-confidence re-asks</b></li>
+      <li>Surfaced as an <b>"enrich your profile" widget</b> — droppable into chat or other places</li>
+    </ul>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="box gate">
+    <div class="hd"><span class="eye">DECISION · what does this signal need?</span><span class="tag be">Backend</span></div>
+    <table class="tbl">
+      <tr><td>not present</td><td>→ ASK</td></tr>
+      <tr><td>inferred · <b>weak</b></td><td>→ ASK</td></tr>
+      <tr><td>imported · <b>okay</b></td><td>→ CONFIRM (1-tap)</td></tr>
+      <tr><td>confirmed · <b>solid</b></td><td>→ SKIP</td></tr>
+    </table>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="cutin">
+    <div class="hd"><span class="eye" style="color:var(--color-text-info);"><i class="ti ti-arrow-bear-right"></i> CUT IN ANYTIME</span></div>
+    <ul><li>Student can also jump in to add/change <b>any</b> value — it enters Info fetching directly, skipping the queue</li></ul>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="box">
+    <div class="hd"><span class="eye">INFO FETCHING &amp; QUANTIFY · two ways</span><span class="tag api">API</span></div>
+    <div class="way">
+      <p class="wt"><i class="ti ti-file-text" style="margin-right:5px;"></i>Way ① · Import</p>
+      <ul style="margin-top:0;">
+        <li>read uploaded materials / links (vision) → extract candidate values</li>
+        <li>high confidence → kept · <b>low-confidence / missing → routed to Ask ↓</b></li>
+      </ul>
+    </div>
+    <div class="way">
+      <p class="wt"><i class="ti ti-message-2" style="margin-right:5px;"></i>Way ② · Ask — two types</p>
+      <div class="two">
+        <div class="mc"><p class="ml">Widget (structured)</p><p class="mv">cards · slider 0–5 · range · multiple choice — by the signal's type</p></div>
+        <div class="mc"><p class="ml">Conversation (text)</p><p class="mv">free-text back-and-forth, normal-LLM style</p></div>
+      </div>
+      <ul style="margin-top:7px;"><li>both: LLM <b>wording</b> · <b>tone</b> = <span style="color:var(--color-text-info);">set by founder (your call)</span></li></ul>
+    </div>
+    <p style="margin:11px 0 2px;font-size:11px;font-weight:500;color:var(--color-text-primary);">QUANTIFY — raw (text · pics · widget value) → typed value:</p>
+    <table class="tbl">
+      <tr><td>Categorical / multiple choice</td><td>→ enum (from taxonomy)</td></tr>
+      <tr><td>Weight (a preference)</td><td>→ slider 0–5 → stored 0–10</td></tr>
+      <tr><td>Range</td><td>→ band (e.g. $20–45k/yr)</td></tr>
+      <tr><td>Date</td><td>→ ISO date</td></tr>
+      <tr><td>Yes / no</td><td>→ boolean flag</td></tr>
+      <tr><td>Text</td><td>→ cleaned, structured text</td></tr>
+    </table>
+    <ul style="margin-top:8px;"><li><b>Validate</b> against allowed values · stamp <b>confidence</b> + <b>provenance</b> → hand to backend</li></ul>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="box">
+    <div class="hd"><span class="eye">STORE · single source of truth</span><span class="tag be">Backend · Postgres</span></div>
+    <ul>
+      <li>backend receives only the <b>quantified value</b></li>
+      <li>stores: raw + normalized · provenance · confidence · version</li>
+    </ul>
+  </div>
+  <div class="arrow"><i class="ti ti-arrow-up"></i> backend loops · next signal (no end gate)</div>
+</div>
+</body></html>

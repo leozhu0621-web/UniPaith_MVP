@@ -1,0 +1,115 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.5.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --color-background-primary:#ffffff;--color-background-secondary:#f5f1e8;--color-background-info:#eaf0fb;--color-background-warning:#fdf6e3;
+  --color-border-tertiary:#e7e1d5;--color-border-info:#cdd9f3;
+  --color-text-primary:#2c2a26;--color-text-secondary:#56524a;--color-text-tertiary:#8b857a;--color-text-info:#33509e;--color-text-warning:#9a6700;
+  --border-radius-lg:12px;--border-radius-md:8px;
+}
+html,body{background:#faf7f0;margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+.f2{max-width:660px;margin:0 auto;font-size:14px;}
+.f2 .box{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:13px 16px;}
+.f2 .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;}
+.f2 .eye{font-size:11px;color:var(--color-text-tertiary);}
+.f2 .t{font-size:15px;font-weight:500;margin:0 0 6px;color:var(--color-text-primary);}
+.f2 ul{margin:4px 0 0;padding-left:18px;}
+.f2 li{font-size:12px;color:var(--color-text-secondary);line-height:1.5;margin:3px 0;}
+.f2 li b{font-weight:500;color:var(--color-text-primary);}
+.f2 li code,.f2 .src code,.f2 .src2 code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;}
+.f2 .arrow{display:flex;justify-content:center;align-items:center;gap:6px;color:var(--color-text-tertiary);padding:5px 0;font-size:11px;}
+.f2 .gate{border-color:var(--color-border-info);}
+.f2 .loopnote{background:var(--color-background-secondary);border:none;}
+.f2 .tag{font-size:10px;padding:1px 8px;border-radius:10px;white-space:nowrap;}
+.f2 .api{background:var(--color-background-info);color:var(--color-text-info);}
+.f2 .be{background:var(--color-background-secondary);color:var(--color-text-secondary);}
+.f2 .eq{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:9px 11px;margin-top:8px;color:var(--color-text-primary);line-height:1.6;overflow-x:auto;white-space:nowrap;}
+.f2 .src{background:var(--color-background-primary);border:0.5px dashed var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:7px 11px;margin-top:8px;font-size:11.5px;color:var(--color-text-secondary);}
+.f2 .src b{color:var(--color-text-primary);font-weight:500;}
+.f2 .src2{background:var(--color-background-info);border:none;border-radius:var(--border-radius-md);padding:7px 11px;margin-top:8px;font-size:11.5px;color:var(--color-text-info);}
+.f2 .src2 b{font-weight:500;}
+.f2 .dir{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px;}
+.f2 .dc{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px 10px;}
+.f2 .dc .dl{font-size:11px;font-weight:500;color:var(--color-text-primary);margin:0 0 2px;}
+.f2 .dc .dv{font-size:11px;color:var(--color-text-secondary);line-height:1.4;}
+.f2 .hide{background:var(--color-background-info);border:none;border-radius:var(--border-radius-md);padding:7px 11px;margin-top:8px;font-size:11.5px;color:var(--color-text-info);}
+.f2 .rankkey{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:7px 11px;margin-top:8px;font-size:11.5px;color:var(--color-text-primary);}
+.f2 .rankkey b{font-weight:500;}
+</style></head>
+<body>
+<div class="f2">
+  <h2 class="sr-only">Chart 3 of 3 — match.</h2>
+  <div style="display:flex;justify-content:center;gap:14px;font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px;">
+    <span><span class="tag api">API</span> rationale sentence only</span>
+    <span><span class="tag be">Backend</span> score · blend · sort — deterministic, no LLM</span>
+  </div>
+  <div class="box loopnote">
+    <p class="t">Part 3 · Match — independent of enrich · two-sided</p>
+    <ul><li>Runs on whatever profiles exist; deeper profiles sharpen the score · API only writes the "why"</li></ul>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="box gate">
+    <div class="hd"><span class="eye">THE ONE PREREQUISITE</span><span class="tag be">Backend</span></div>
+    <p class="t">Essentials present? (basics + direction)</p>
+    <ul>
+      <li><b>Basic identity</b> — name · gender · nationality · age · current country</li>
+      <li><b>Direction</b> — target degree level · field of interest</li>
+      <li>Missing → ask just these few · present → go</li>
+    </ul>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="box">
+    <div class="hd"><span class="eye">FETCH BOTH PROFILES</span><span class="tag be">Backend</span></div>
+    <ul>
+      <li><b>student</b> — attributes + preferences + 0–10 weights + per-signal confidence</li>
+      <li><b>program</b> — attributes + preferences + per-field confidence (by source)</li>
+    </ul>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="box">
+    <div class="hd"><span class="eye">SCORE — CPEF, one number per direction</span><span class="tag be">Backend</span></div>
+    <ul>
+      <li><b>Each direction</b> = one side's <b>preferences</b> scored against the other side's <b>attributes</b></li>
+      <li><b>Raw fit</b> per signal: <code>f</code> = preferred value vs the matching attribute</li>
+      <li><b>Two-sided confidence</b>: <code>c = c_A × c_B</code> → trust-gain <code>ρ</code></li>
+    </ul>
+    <div class="src">program-side <b>c</b> by source: claimed school <b>1.0</b> &gt; verified feed <b>0.85</b> &gt; crawler <b>0.6</b> &gt; inferred <b>0.4</b></div>
+    <ul>
+      <li><b>Shrink</b>: <code>f̂ = ρ·f + (1−ρ)·prior</code> — sure signals move it, unsure ones barely do</li>
+      <li><b>Weight</b>: <code>A = (importance/10)·ρ</code>, averaged over <b>present</b> signals only</li>
+      <li><b>Deal-breakers</b>: confidence-aware <b>veto</b> craters degree / visa / over-budget — no separate filter</li>
+      <li><b>Coverage damp</b>: thin / guessed profile pulled toward neutral → deeper = sharper</li>
+    </ul>
+    <div class="eq">CPEF = g · V · ( Σ A·f̂ ) / ( Σ A )&nbsp;&nbsp;∈ [0,1]</div>
+    <div class="src"><i class="ti ti-ban" style="margin-right:4px;"></i>School <b>rankings</b> (US News / QS) are <b>shown on cards, never scored</b> — not a quant value the match considers.</div>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="box gate">
+    <div class="hd"><span class="eye">BLEND — mutual fit (run CPEF both ways)</span><span class="tag be">Backend</span></div>
+    <div class="dir">
+      <div class="dc"><p class="dl">student → program</p><p class="dv">student's preferences vs program's attributes</p></div>
+      <div class="dc"><p class="dl">program → student</p><p class="dv">program's preferences vs student's attributes</p></div>
+    </div>
+    <div class="eq">M = CPEF<sub>s→p</sub><sup>α</sup> · CPEF<sub>p→s</sub><sup>(1−α)</sup></div>
+    <div class="src2"><b>α ≈ 0.7 — student side leads</b>, the program's interest only nudges. α=1 → one-directional · α=0.5 → fully mutual. A program that wouldn't want this student gets pulled down (realistic odds).</div>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="box">
+    <div class="hd"><span class="eye">SORT</span><span class="tag be">Backend</span></div>
+    <ul><li>order every program / university by <b>M</b>, descending (ties → coverage, then raw fit)</li></ul>
+    <div class="rankkey"><i class="ti ti-key" style="margin-right:5px;"></i><b>M is the rank key.</b> CPEF is the per-direction ingredient; the sort never uses it directly.</div>
+    <div class="hide"><i class="ti ti-eye-off" style="margin-right:5px;"></i><b>Backend-only — no number is ever shown to the student.</b></div>
+  </div>
+  <div class="arrow"><i class="ti ti-chevron-down"></i></div>
+  <div class="box gate">
+    <div class="hd"><span class="eye">RANKED LIST</span><span class="tag api">API · rationale</span></div>
+    <ul>
+      <li>editorial cards · campus photo · facts · <b>fit-in-words</b> — no score, no ring</li>
+      <li>the one-sentence "why" written by the API from the score breakdown</li>
+    </ul>
+  </div>
+  <div class="arrow"><i class="ti ti-arrow-up"></i> engagement → backend refines weights → feeds enrich</div>
+  <div class="src" style="margin-top:10px;border-style:solid;"><i class="ti ti-arrows-left-right" style="margin-right:5px;"></i><b>Same engine powers the institution side</b> — programs rank applicants by <code>CPEF<sub>p→s</sub></code> on the one shared Prompt Library.</div>
+</div>
+</body></html>
