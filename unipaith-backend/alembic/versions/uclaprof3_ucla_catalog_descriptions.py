@@ -2,7 +2,7 @@
 college departments, anti-stub clean; remove synthesized external_reviews.
 
 Revision ID: uclaprof3
-Revises: michgate1
+Revises: utaprof2
 Create Date: 2026-06-18
 """
 
@@ -14,7 +14,7 @@ from alembic import op
 from unipaith.data import ucla_profile
 
 revision = "uclaprof3"
-down_revision = "michgate1"
+down_revision = "utaprof2"
 branch_labels = None
 depends_on = None
 
