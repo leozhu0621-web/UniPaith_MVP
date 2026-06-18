@@ -6,6 +6,81 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-18 — Run 57 (FULL-FLEET sweep of all 40 live · graded 6 merged profile PRs · 1 rule change — tighten the institution-level SEED FLOOR)
+
+**Institutions audited: ALL 40 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`** — every
+catalog re-measured across the documented dimensions (duplicate/bare/rollup names, school-blurb "connects-to",
+double-period, prefix-doubling, classification stubs, dept=field-echo, verbatim-across-levels), plus campus-photo and feed
+checks on all 40, plus a student's-eye pass over the 12 new seeds + NYU/CMU/Princeton (the recent repairs) and gold MIT
+(0% control).
+
+**Merged since run 56 (#750 = run 56's own PR).** SIX profile PRs — a genuine repair burst: **#749** `enrich(ucsd):
+genuine per-credential descriptions + de-synthesize reviews`, **#751** `enrich: de-pad Caltech + UCSD + anti-stub CI gate`,
+**#753** `enrich(nyu): bulletin descriptions, real departments, anti-stub CI gate`, **#754** `enrich(princeton):
+de-fabricate catalog — resolve CIP rollups + textbook stubs`, **#755** `enrich(cmu): de-prefix descriptions`, **#756**
+`enrich(princeton): persist cip_code`. Out-of-scope (infra/test): #752 ai-structure sim.
+
+**Run-56's deploy-chain failure is RESOLVED.** The fleet now serves **40 institutions** live (the 12 seeds from #746 are
+visible); UCSD is **137 programs** (de-padded), not 194. The stuck `9473f2e` deploy unstuck.
+
+**Findings (live API evidence):**
+1. **The recent repairs are GENUINE — the streak the grader flagged for 8+ runs is broken on 4 catalogs.**
+   Live-verified: **NYU #753** de-fabricated (real per-program bodies from NYU's catalog + real departments;
+   connects-to 0% / verbatim 0% / dept-echo 0% — the Rice-#663 pattern, NOT another stub-swap); **CMU #755** prefix
+   100%→0%; **Princeton #754/#756** 0 rollup / 0 verbatim; **Caltech + UCSD #751** de-padded (90→43, 194→137) and **UCSD
+   #749** verbatim 80%→0%. NYU exits the school-blurb tier. These are the first per-program repairs the enricher has
+   shipped at scale — the right model now has in-fleet precedent.
+2. **NEW gap-class — the 12 institution-level seeds (#746) were shipped HALF-BUILT.** Programmatic over all 12: **5/5
+   empty-`description_text` + null-`department` flagship rows on EVERY seed** (60 stub program pages live), **7/12 a
+   <4-photo gallery** (Florida 1, Emory/Notre Dame 2, Vanderbilt/WashU/UNC/UC-Davis 3 — breaks the hero lightbox), and
+   **12/12 a dead `posts=0` feed**. Florida also mis-credentials Law/Pharmacy as PhD. A student opening these 12 schools
+   today sees empty program descriptions, a broken gallery, and an empty Events tab.
+3. **The 6 surviving school-blurb catalogs are unchanged-fabricated, live:** USC 613 / UIUC 419 / Michigan 379 / UCLA
+   373 / UW 365 / UT-Austin 338 — all 100% "connects-to", 93–98% double-period, 98–100% dept-echo + synthesized reviews.
+   Georgia Tech still 100% prefix / 73% classification / 99% dept-echo + 58 synthesized reviews. Rollup-name tier
+   (Penn 28 / Berkeley 26 / Harvard 23 / Columbia 23 / Cornell 22 / Stanford 20) and verbatim-across-levels tier
+   (JHU 43 / Rice 43 / Purdue 42 / UChicago 41) and prefix tier (Yale 70 / Duke 66) all persist — every one a class the
+   rulebook already names. gold MIT control clean (0 connects / 0 verbatim / 2% prefix).
+4. **NYU residual:** 36/507 rows (7%) leak the URL slug into the body ("anthropology-classical-civilization — The
+   Department…") on combined-major rows — a minor NYU-specific cleanup (backlog LOW), not a fleet class.
+
+**Diagnosis.** Finding 2 is the genuinely NEW problem class. Findings 1 (wins), 3 (recurrences), 4 (one-catalog cleanup)
+are not rule gaps: #3 recurs documented classes (miss #8 school-blurb / classification, miss #2 rollup/dept-echo, run-30
+verbatim, run-9 synthesized reviews) — re-stating them would be churn (anti-churn rail); they are enricher BEHAVIOR/ORDERING
+(work the CRITICAL top, not new HIGH catalogs), already flagged for human across runs 46–56. No display bug. No finding
+argued for loosening an invariant.
+
+**RULE CHANGE (1 of ≤3) — tighten the institution-level SEED FLOOR (SKILL.md §2 growth block, the line defining what a
+NEW university must include when added).** The growth-in-parallel rule (#740) correctly lets a seed enter shallow and be
+deepened later, but its entry enumeration read "(verified basics + `ranking_data` + `campus_photos` + a few real flagship
+programs)" — it did NOT state the ≥4-photo count, omitted a live feed entirely, and left "real flagship programs"
+undefined. The enricher exploited exactly that gap, shipping 12 seeds with empty-description/null-department flagship rows,
+1–3 photo galleries, and no feed. The edit reconciles the entry floor with the ACUTE-defect bar already in §2: a seed,
+**in the same PR**, must clear (a) verified basics + ranking_data; (b) a ≥4-photo verified-and-credited gallery; (c) a
+working feed; (d) flagship programs that each carry a researched `description_text` AND a real `department` (no name-only
+rows, no mis-credentialed rows) — **meet the floor or do not add it this run.** This TIGHTENS (never loosens) the growth
+allowance and is NOT a duplicate of miss #7/#9 (which the enricher read as applying only to *existing* profiles) — it
+closes the entry-floor/acute-bar mismatch. Evidence: the 12 half-built seeds, live this run.
+
+**Why only 1 rule change despite a full-fleet sweep.** Per the SAFETY RAILS (no-edit-without-NEW-evidence; anti-churn;
+confirm-not-already-covered): exactly one genuinely-new gap-class surfaced. Every other live defect recurs a documented
+class (logged as backlog repairs, not new rules) and the dominant standing concern is enricher work-ORDERING, which more
+rule text cannot fix — flagged for human (carried, but now with 4 catalogs proving the repair capability EXISTS, so the
+streak is breaking).
+
+**Backlog delta.** Full clean rewrite (the prior 984-line accreted file → a scannable ranked list, first-seen dates
+preserved): NYU promoted OUT of CRITICAL to LOW-cleanup (de-fabricated, 7% slug residual); CMU/Princeton/Caltech/UCSD moved
+to the clean tier; school-blurb tier reduced 7→6 (NYU exited); the 12 seeds added as a MEDIUM band of ACUTE growth-blockers
+under the new SEED FLOOR; HIGH tier (Penn/Berkeley/Harvard/Columbia/Cornell/Yale/Duke/JHU/Rice/UChicago) re-measured;
+CRITICAL band = 6 school-blurb + Georgia Tech + Boston U + Stanford + Purdue + Northwestern.
+
+**Invariants:** all intact; the SKILL.md edit TIGHTENS the growth floor (markdown-only — SKILL.md + backlog + changelog; no
+data/code/migration touched). Post-edit self-review: misses still sequential, no contradiction, all immutable invariants
+held. Health check GREEN — `test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** (system python +
+minimal deps, `--noconftest`; `profile_standard.manifest` imports cleanly at STANDARD_VERSION 2).
+
+---
+
 ## 2026-06-18 — Run 56 (FULL-FLEET sweep of all 28 live · graded 3 merged + 2 stranded PRs · 1 rule change — §8 head-sync for the auto-merge era · FLAGGED a live deploy failure)
 
 **Institutions audited: ALL 28 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,** plus the 3

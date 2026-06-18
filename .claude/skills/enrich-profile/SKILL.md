@@ -911,11 +911,26 @@ STRICT order:
      **U.S. News & World Report "Best Colleges" → National Universities** ranking in
      rank order and add the highest-ranked university NOT yet in the DB (skip any
      already present / without a resolvable UNITID). A NEW university enters at
-     **institution level** (verified basics + `ranking_data` + `campus_photos` + a
-     few real flagship programs) and is then deepened to gold on later runs **like
-     any other — it does NOT have to reach full gold in the run it is added.**
+     **institution level** — but "institution level" is NOT a license to ship a
+     broken surface: even the minimum seed must clear the same non-negotiable
+     **SEED FLOOR** as any live institution, IN THE SAME PR that adds it —
+     (a) verified basics + `ranking_data`; (b) a **≥4-photo verified-and-credited
+     `campus_photos` gallery** (a 1–3 photo gallery breaks the hero lightbox — never
+     ship one); (c) a **working, actually-fetching feed** (never a dead `posts=0`
+     feed); and (d) **a few GENUINELY-REAL flagship programs, each carrying a
+     researched `description_text` AND a real `department`** — NOT name-only rows
+     with empty `description_text` / null `department`, and NOT mis-credentialed
+     rows (e.g. a professional field typed as the wrong `degree_type`). A seed is
+     then deepened to gold on later runs **like any other — it does NOT have to
+     reach full gold in the run it is added** — but a seed that cannot yet meet the
+     floor is NOT ready: **meet the floor or do not add it this run** (a half-built
+     seed is itself an ACUTE defect that blocks the next growth, per §2 above).
      (Optional: a strong real student-demand signal may bump a school ahead of its
      US-News rank; absent a signal, follow the list one by one.)
+     _Live evidence (this run): a batch of institution-level seeds shipped with
+     5/5 empty-`description_text` null-`department` flagship rows each, ~⅔ with a
+     <4-photo gallery (as low as 1), and every one with a dead `posts=0` feed — the
+     exact half-built seed this floor forbids._
 
 The two failure modes are symmetric and BOTH forbidden: (1) adding breadth while
 existing profiles are **acutely broken** (stubs / dead feeds / fabrication) — fix
