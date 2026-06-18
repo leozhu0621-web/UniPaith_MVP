@@ -11,7 +11,7 @@ Re-applies ``georgia_tech_profile.apply()`` after the gatechprof3 de-fabrication
 Idempotent; no-op when Georgia Tech is absent (fresh/CI databases).
 
 Revision ID: gatechprof3
-Revises: uiucprof3
+Revises: uiucprof4
 Create Date: 2026-06-18
 """
 
@@ -23,7 +23,7 @@ from alembic import op
 from unipaith.data import georgia_tech_profile
 
 revision = "gatechprof3"
-down_revision = "uiucprof3"
+down_revision = "uiucprof4"
 branch_labels = None
 depends_on = None
 
