@@ -73,10 +73,12 @@ interface ThemeState extends ThemeApplyState {
 
 function readInitial(): ThemeApplyState {
   const theme = (ls(LS.theme) as Theme) || 'system'
-  const fontSize = (ls(LS.fontSize) as FontSize) || 'md'
+  // Default text size is "sm" (founder preference 2026-06-18) — comfortable and
+  // dense; M/L/XL remain for users who want bigger.
+  const fontSize = (ls(LS.fontSize) as FontSize) || 'sm'
   return {
     theme: (['light', 'dark', 'system'] as const).includes(theme) ? theme : 'system',
-    fontSize: (['sm', 'md', 'lg', 'xl'] as const).includes(fontSize) ? fontSize : 'md',
+    fontSize: (['sm', 'md', 'lg', 'xl'] as const).includes(fontSize) ? fontSize : 'sm',
     dyslexia: ls(LS.dyslexia) === '1',
     reduceMotion: ls(LS.reduceMotion) === '1',
   }
