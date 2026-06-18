@@ -155,7 +155,15 @@ export default function RecommendationsPage() {
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => sendMut.mutate(rec.id)}
+                        onClick={async () => {
+                          const ok = await confirmDialog({
+                            title: 'Send this request?',
+                            body: `This emails ${rec.recommender_name}${rec.recommender_email ? ` at ${rec.recommender_email}` : ''} a recommendation request.`,
+                            confirmLabel: 'Send',
+                          })
+                          if (!ok) return
+                          sendMut.mutate(rec.id)
+                        }}
                         loading={sendMut.isPending}
                       >
                         <Send size={12} className="mr-1" /> Send

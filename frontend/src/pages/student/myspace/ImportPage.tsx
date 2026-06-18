@@ -7,18 +7,10 @@
  * reachable inline in the Uni chat; this is its home.
  */
 import { useQueryClient } from '@tanstack/react-query'
-import { FileText, ListChecks, Sparkles, Upload } from 'lucide-react'
 
 import MaterialUpload from '../../../components/student/MaterialUpload'
 import { PageContainer, PageHeader } from '../../../components/student/density'
 import Card from '../../../components/ui/Card'
-
-const STEPS = [
-  { icon: Upload, label: 'Upload' },
-  { icon: Sparkles, label: 'Uni reads it' },
-  { icon: FileText, label: 'Review' },
-  { icon: ListChecks, label: 'Fill the gaps' },
-]
 
 export default function ImportPage() {
   const qc = useQueryClient()
@@ -53,24 +45,7 @@ export default function ImportPage() {
       />
 
       <Card variant="card" pad>
-        <div className="grid gap-x-5 gap-y-3 sm:grid-cols-2">
-          {STEPS.map((s, i) => (
-            <div key={s.label} className="flex items-start gap-2">
-              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary/10 text-secondary">
-                <s.icon size={15} />
-              </span>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">
-                  {i + 1}. {s.label}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 border-t border-border pt-4">
-          <MaterialUpload onApplied={refreshProfile} />
-        </div>
+        <MaterialUpload onApplied={refreshProfile} />
       </Card>
     </PageContainer>
   )

@@ -12,20 +12,13 @@ import { showToast } from '../../../stores/toast-store'
 import { formatDateTime } from '../../../utils/format'
 import {
   ASYNC_INTERVIEW_TYPES,
+  INTERVIEW_STATUS_LABELS,
   INTERVIEW_TYPE_LABELS,
   STATUS_COLORS,
 } from '../../../utils/constants'
 import type { Interview } from '../../../types'
 
 type BadgeVariant = 'neutral' | 'info' | 'success' | 'warning' | 'danger'
-
-const STATUS_LABELS: Record<string, string> = {
-  proposed: 'Awaiting student',
-  confirmed: 'Confirmed',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
-  no_show: 'No show',
-}
 
 interface Props {
   interview: Interview
@@ -96,7 +89,7 @@ export default function InterviewRespondPanel({ interview, compact = false, onUp
     const variant = (STATUS_COLORS[interview.status] as BadgeVariant) ?? 'neutral'
     return (
       <Badge variant={variant}>
-        {STATUS_LABELS[interview.status] || interview.status.replace(/_/g, ' ')}
+        {INTERVIEW_STATUS_LABELS[interview.status] || interview.status.replace(/_/g, ' ')}
       </Badge>
     )
   }

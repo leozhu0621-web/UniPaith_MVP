@@ -183,6 +183,21 @@ export const INTERVIEW_TYPE_LABELS: Record<string, string> = {
 // Async types submit within a window rather than at a fixed live time (§5/§8).
 export const ASYNC_INTERVIEW_TYPES = ['recorded_async', 'technical_assessment']
 
+// Humane labels for interview lifecycle statuses — used wherever a raw status
+// enum would otherwise show (e.g. `no_show` → "No show", `async_expired` →
+// "Expired"). Callers fall back to a de-underscored value for anything missing.
+export const INTERVIEW_STATUS_LABELS: Record<string, string> = {
+  proposed: 'Awaiting your response',
+  reschedule_requested: 'Reschedule requested',
+  scheduled: 'Scheduled',
+  confirmed: 'Confirmed',
+  completed: 'Completed',
+  declined: 'Declined',
+  cancelled: 'Cancelled',
+  no_show: 'No show',
+  async_expired: 'Expired',
+}
+
 export const DECISION_OPTIONS = [
   { value: 'admitted', label: 'Admit' },
   { value: 'rejected', label: 'Reject' },
