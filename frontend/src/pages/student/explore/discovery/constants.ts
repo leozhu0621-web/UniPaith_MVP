@@ -27,6 +27,8 @@ export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'tuition_desc', label: 'Tuition (high to low)' },
   { value: 'acceptance_asc', label: 'Acceptance rate (low to high)' },
   { value: 'acceptance_desc', label: 'Acceptance rate (high to low)' },
+  { value: 'salary_desc', label: 'Best outcomes (salary)' },
+  { value: 'employment_desc', label: 'Best job placement' },
   { value: 'deadline', label: 'Deadline (earliest)' },
   { value: 'recently_added', label: 'Recently added' },
 ]
