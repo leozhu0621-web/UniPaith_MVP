@@ -156,6 +156,11 @@ def test_flagship_programs_have_reviews():
 
 
 def test_coverable_programs_have_reviews():
+    """Every coverable program must EITHER carry a gathered review OR explicitly
+    record external_reviews as omitted in its _standard — never a silent blank,
+    and never a synthesized review. (SKILL.md miss #8: remove synthesized reviews
+    and re-gather genuine program-specific coverage or omit-with-reason; an honest
+    blank beats a false 'aggregated from public sources' disclaimer.)"""
     import sys
 
     sys.path.insert(0, "scripts")
@@ -164,9 +169,12 @@ def test_coverable_programs_have_reviews():
     missing = [
         spec["slug"]
         for spec in p.PROGRAMS
-        if is_coverable(spec) and spec["slug"] not in p._REVIEWS_BY_SLUG
+        if is_coverable(spec)
+        and spec["slug"] not in p._REVIEWS_BY_SLUG
+        and "external_reviews.summary"
+        not in p._program_standard(spec["slug"], spec)["omitted"]
     ]
-    assert not missing, f"Coverable programs missing reviews: {missing}"
+    assert not missing, f"Coverable programs with neither a review nor an omit: {missing}"
 
 
 def test_no_name_prefixed_descriptions():
