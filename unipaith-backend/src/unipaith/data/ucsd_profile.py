@@ -55,6 +55,7 @@ from unipaith.data.ucsd_catalog_maps import (
     SLUG_PROGRAM_NAMES,
     clean_cip_field,
 )
+from unipaith.data.ucsd_credential_descriptions import description_for as _credential_description
 from unipaith.data.ucsd_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
 from unipaith.data.ucsd_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.ucsd_reviews_depth import DEPTH_REVIEWS
@@ -406,6 +407,60 @@ def _ucsd_program_name(field_name: str, degree_type: str, school: str) -> str:
     return field
 
 
+_FABRICATED_UNIT_PHRASES = (
+    "Center for Aerospace Research and Training",
+)
+
+
+def _field_key_for_program(spec: dict) -> str:
+    return _field_from_program_name(spec.get("program_name", ""))
+
+
+def _shared_description_violations(programs: list[dict]) -> list[str]:
+    """Fail verbatim-identical or shared-body descriptions across credential siblings."""
+    from collections import defaultdict
+
+    by_field: dict[tuple[str, str], list[dict]] = defaultdict(list)
+    for spec in programs:
+        field = _field_key_for_program(spec)
+        dtype = spec.get("degree_type", "")
+        by_field[(field, dtype)].append(spec)
+
+    errors: list[str] = []
+    for key, rows in by_field.items():
+        field, _dtype = key
+        if len(rows) < 2:
+            continue
+        descs = [r.get("description") or "" for r in rows]
+        if len(set(descs)) < len(descs):
+            errors.append(
+                f"verbatim-identical descriptions in {field!r} ({len(rows)} rows)"
+            )
+            continue
+        prefix = descs[0]
+        shortest = min(len(d) for d in descs)
+        for d in descs[1:]:
+            i = 0
+            while i < min(len(prefix), len(d)) and prefix[i] == d[i]:
+                i += 1
+            prefix = prefix[:i]
+        if len(prefix) >= 120 and len(prefix) >= 0.5 * shortest:
+            errors.append(
+                f"shared description body prefix ({len(prefix)} chars) in {field!r}"
+            )
+    return errors
+
+
+def _fabricated_unit_violations(programs: list[dict]) -> list[str]:
+    errors: list[str] = []
+    for spec in programs:
+        desc = spec.get("description") or ""
+        for phrase in _FABRICATED_UNIT_PHRASES:
+            if phrase in desc:
+                errors.append(f"{spec['slug']} cites fabricated unit {phrase!r}")
+    return errors
+
+
 def _field_from_program_name(name: str) -> str:
     if name in (
         "Doctor of Medicine",
@@ -425,6 +480,15 @@ def _field_from_program_name(name: str) -> str:
         if name.startswith(prefix):
             return name[len(prefix) :].strip()
     return clean_cip_field(name)
+
+
+def _field_key_from_spec(spec: dict, raw_field: str | None = None) -> str:
+    slug = spec.get("slug", "")
+    if slug in SLUG_PROGRAM_NAMES:
+        return _field_from_program_name(SLUG_PROGRAM_NAMES[slug])
+    if raw_field:
+        return clean_cip_field(raw_field)
+    return _field_from_program_name(spec.get("program_name", ""))
 
 
 def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
@@ -451,14 +515,20 @@ def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
 def _ucsd_description(spec: dict, *, field: str) -> str:
     """Field-specific description — never the degree-type classification stub."""
     slug = spec["slug"]
+    dtype = spec.get("degree_type", "")
     if slug in SLUG_DESCRIPTIONS:
         clause = SLUG_DESCRIPTIONS[slug]
     else:
-        clause = FIELD_DESCRIPTIONS.get(field)
-        if not clause:
-            raise ValueError(
-                f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
-            )
+        field_key = field or _field_key_from_spec(spec)
+        cred = _credential_description(field_key, dtype)
+        if cred:
+            clause = cred
+        else:
+            clause = FIELD_DESCRIPTIONS.get(field_key)
+            if not clause:
+                raise ValueError(
+                    f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
+                )
     fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
     if fmt == "online":
@@ -545,6 +615,8 @@ if _new_templ:
     _catalog_errors.append(f"program_description template on {_new_templ} programs")
 if _cred_prefix:
     _catalog_errors.append(f"credential-prefix program_name on {_cred_prefix} programs")
+_catalog_errors.extend(_fabricated_unit_violations(PROGRAMS))
+_catalog_errors.extend(_shared_description_violations(PROGRAMS))
 if _catalog_errors:
     raise RuntimeError(f"UCSD catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
