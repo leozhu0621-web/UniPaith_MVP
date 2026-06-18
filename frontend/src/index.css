@@ -273,11 +273,16 @@ html {
    by the no-FOUC init script in index.html. (Spec 21 §2.3, 03 §9.)
    ---------------------------------------------------------------- */
 
-/* Font size scales the rem base, so all rem-based type scales with it. */
-html[data-font-size="sm"] { font-size: 14px; }
-html[data-font-size="md"] { font-size: 16px; }
-html[data-font-size="lg"] { font-size: 18px; }
-html[data-font-size="xl"] { font-size: 20px; }
+/* Font size scales the rem base, so all rem-based type + spacing scale with it.
+   The default ("md") is FLUID — it grows smoothly with the viewport so the app
+   never looks tiny on a large monitor or cramped on a laptop. The init script
+   always sets data-font-size, so "md" is the real default. sm/lg/xl shift the
+   whole fluid band up or down for the accessibility toggle. */
+html { font-size: clamp(16px, 12.8px + 0.42vw, 20px); }
+html[data-font-size="sm"] { font-size: clamp(15px, 12.4px + 0.34vw, 17px); }
+html[data-font-size="md"] { font-size: clamp(16px, 12.8px + 0.42vw, 20px); }
+html[data-font-size="lg"] { font-size: clamp(18px, 14.8px + 0.42vw, 22px); }
+html[data-font-size="xl"] { font-size: clamp(20px, 16.8px + 0.42vw, 24px); }
 
 /* Dyslexia-friendly: a high-legibility stack + roomier tracking/leading. */
 html[data-dyslexia] body,
