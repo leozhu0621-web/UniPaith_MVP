@@ -122,7 +122,9 @@ or **"no new gaps found"** if the fleet is clean.
 ## Safety rails (you edit the rules that govern ALL enrichment — non-negotiable)
 
 - **IMMUTABLE INVARIANTS** — never weaken or remove, only ADD to or TIGHTEN:
-  no-fabrication (verify or omit); repair-first → then-grow; verify-rendered-output;
+  no-fabrication (verify or omit); enrichment-only (the routine NEVER adds
+  universities — seeding is external; repair-first → then-deepen the next
+  not-yet-gold stub); verify-rendered-output;
   workshop-feedback-only; the manifest's required fields; merging-is-mandatory. If a
   finding seems to argue for LOOSENING an invariant, **log it for human review and
   do not act.**
