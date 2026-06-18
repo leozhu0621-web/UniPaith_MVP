@@ -439,6 +439,12 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
 }
 
 SLUG_DESCRIPTIONS: dict[str, str] = {
+    "ucsd-public-health-ms": (
+        "The Herbert Wertheim School of Public Health's Master of Public Health trains "
+        "practitioners in epidemiology, biostatistics, and health-policy analysis, pairing "
+        "graduate coursework with a supervised field practicum across San Diego County "
+        "community-health partners."
+    ),
     "ucsd-computer-science-bs": (
         "UCSD's Department of Computer Science and Engineering — consistently top-ranked — "
         "covers algorithms, systems, AI, and security with ties to the San Diego Supercomputer "

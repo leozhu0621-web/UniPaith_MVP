@@ -564,6 +564,16 @@ def _build_catalog() -> list[dict]:
     for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
         if slug in seen:
             continue
+        # UC San Diego's academic departments award NO graduate certificates — the only
+        # certificates UCSD offers are professional/continuing-education credentials from
+        # the Division of Extended Studies, not departmental academic programs an applicant
+        # enrols in by field. Every per-field "certificate" row the federal IPEDS list
+        # reports is a CIP×award-level artifact, so it is dropped rather than shipped as a
+        # fabricated departmental certificate. Source: UC San Diego Graduate Degrees
+        # Offered 2026-27 (catalog.ucsd.edu/graduate/degrees-offered) — no graduate
+        # certificates are listed among the credentials academic departments award.
+        if dtype == "certificate":
+            continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
         seen.add(slug)
