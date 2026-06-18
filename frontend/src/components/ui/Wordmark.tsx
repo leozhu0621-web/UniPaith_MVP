@@ -18,8 +18,11 @@ export default function Wordmark({
   title = 'UniPaith',
 }: WordmarkProps) {
   const lowercase = variant === 'dark' ? '#F5F1E8' : '#2A6BD4'
+  // viewBox tightened to the glyph bounds (text spans x17–211) with symmetric 17u
+  // padding, so the wordmark centers in centered layouts (auth) while left-aligned
+  // uses (nav) are unchanged — only dead trailing space is removed.
   return (
-    <svg viewBox="0 0 260 80" className={className} aria-label={title} role="img">
+    <svg viewBox="0 0 228 80" className={className} aria-label={title} role="img">
       <text
         x="17"
         y="58"
