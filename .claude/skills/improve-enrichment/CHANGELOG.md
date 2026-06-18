@@ -4300,3 +4300,72 @@ unchanged (USC, NYU, UIUC, Michigan, UCLA, UW, Boston U, Stanford, Northwestern,
 **Invariants:** all intact; no edit (markdown-only: backlog + changelog). Health check GREEN —
 `test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** (system pytest + minimal deps + `--noconftest`
 in this ephemeral container; `profile_standard.manifest` imports cleanly at STANDARD_VERSION 2).
+
+---
+
+## Run 54 — 2026-06-18 — no new gaps: #737 is a CLEAN small reviews pass (the right model); UCSD invented center STILL live; #740 (human) reconciled repair-first — NOTED not reverted
+
+_(Note: CHANGELOG entries for runs 51–53 were tracked in REPAIR_BACKLOG headers but not appended to this file; run 54
+resumes the audit log. The backlog remained authoritative throughout.)_
+
+**Institutions audited:** UCSD (#737, the only profile-data PR merged since run 53 — graded live + from merged source) +
+a fleet-wide structural grade of all 28 catalogs via the live API (`api.unipaith.co/api/v1`) + a student's-eye pass over
+UCSD program pages (aerospace triad, Business Analytics BS/MS) and gold MIT control. Fleet still 28 institutions, no sprawl.
+
+**Merged since run 53 (PR #735 was run 53's own PR):** ONE profile-data PR — **#737 `enrich(ucsd): external_reviews for
+Business Analytics minor + MSBA`** (commit `4db287f`, cursor[bot]). Out-of-scope (skill/infra, no profile data): #736
+`docs(enrich): matcher core-field + field_provenance` (HUMAN SKILL.md tightening), #738 `feat(skill): improve-enrichment
+as a real skill`, #739 `feat(infra): CPEF matcher in prod`, #740 `fix(skill): growth runs IN PARALLEL with repair` (HUMAN
+SKILL.md invariant edit — see below), #741/#742 `feat(infra): self-hosted Qwen on vLLM`.
+
+**Findings (API + source evidence):**
+1. **#737 is a SMALL, GENUINELY-SOURCED reviews pass — the RIGHT model, NOT a defect.** It adds `external_reviews` for
+   UCSD's last 2 coverable programs (Business Analytics minor + MSBA), citing program-specific sources (QS #40 global /
+   #10 US public, Rady 2024 employment report, the Rady Business Analytics minor RSM-MN-008 page) — NOT the
+   institution-ranking boilerplate of the synthesized passes (run-9 class). Live: 40/194 UCSD programs carry reviews; the
+   2 new Business Analytics nodes do not yet show them (deploy propagating at grade time). This is how depth SHOULD be
+   added; it is not flagged.
+2. **UCSD's run-29 acute breach is STILL LIVE and unrepaired.** The invented **"UC San Diego Center for Aerospace
+   Research and Training"** (a center UCSD does not have — miss #8 verified-true) remains on the 2 aerospace GRAD rows
+   (Graduate Certificate + MS in Aerospace Engineering); #737 did not touch it. Even under #740's reconciled rule this is
+   ACUTE (a no-fabrication violation) and should have been cleared before another depth pass.
+3. **UCSD run-30 verbatim-shared CONFIRMED at 80%.** 57 of 58 shared-description groups are same-field credential
+   siblings (BA + Graduate Certificate + MS of one field share one identical field-specific body; gold MIT 0%). UCSD =
+   cleanest-tier structure (0% dup/prefix/classification/dept-echo, 0 rollup, 0 connects-to) + the run-30 defect; joins
+   JHU 79% / Berkeley 80% / Penn 74% / Purdue 81% / Cornell 76%. Not reviews-ready per the run-44 correction.
+4. **Fleet structural grade (all 28) — only documented classes recur.** Seven school-blurb catalogs LIVE (USC/NYU/UIUC/
+   Michigan/UCLA/UW/UT-Austin: 100% "connects to", 93–100% double-period); Georgia Tech #730 LIVE (100% classification +
+   100% prefix + 98% dept-echo); rollup-name catalogs (Cornell 92 / Berkeley 100 / Harvard 121 / Columbia 90 / Penn 68 /
+   Stanford 65); prefix-doubling (CMU 100%, Yale 69%, Duke 66%); dept-echo (Rice 38%, BU 13%); verbatim-shared tier as
+   above. gold MIT control clean (n=65: 0 dup / field-specific / 0% blurb / 0% dept-echo / 1% prefix / 0% verbatim-shared).
+5. **Fleet checklist GREEN:** all 28 institutions carry ≥4 campus photos and a non-zero posts feed (no short galleries,
+   no dead feeds).
+
+**Diagnosis:** every live defect is BAD DATA recurring a class the rulebook ALREADY names — invented unit + classification
+stubs (miss #8), school-blurb descriptions (run-43 miss #8), synthesized reviews (run-9 / miss #8 structure-before-depth),
+rollup names (miss #2), prefix-doubling + dept-echo (miss #2/#9), verbatim-shared-across-levels (run-30 / miss #8). #737 is
+not a defect. No display bug. **No finding argued for loosening an invariant by the grader.**
+
+**HUMAN INVARIANT EDIT (#740) — NOTED, NOT REVERTED.** The founder merged #740, which edits enrich-profile/SKILL.md to
+distinguish ACUTE/visible brokenness (still blocks growth, fixed first) from DEPTH-in-progress (does not block growth),
+with a hard floor "never >2 runs without adding a university while the US-News list has entries." This LOOSENS the strict
+repair-first-then-grow ordering the grader treats as immutable. Per the SAFETY RAILS (a finding that argues for loosening
+an invariant → LOG FOR HUMAN REVIEW, do not act), this is a HUMAN decision already on `main`: the grader does NOT revert
+it and does NOT propagate the loosening further. The other immutable invariants (no-fabrication / verify-or-omit /
+verify-rendered-output / workshop-feedback-only / required-fields / merge-mandatory) remain intact. Logged for audit.
+
+**Rulebook changes: NONE (0 of ≤3).** Per the SAFETY RAILS (no-edit-without-NEW-evidence; "Clean fleet → change nothing…
+Never invent a rule to look busy"; anti-churn; confirm-not-already-covered), restating documented classes would be churn.
+The standing concern is unchanged: enricher BEHAVIOR + work-ORDERING (depth/reviews passes keep landing while CRITICAL
+acute breaches stay unrepaired). #740 (human) has reconciled the ordering rule; whether the enricher now adopts
+repair-of-ACUTE-first is a behavior question more rule text cannot fix. **Flagged for human review** (carried + strengthened
+from runs 46–53).
+
+**Backlog delta:** run-54 header added (graded #737, noted #740 + #736 human edits, re-confirmed fleet GREEN + the seven
+school-blurb + GT live); UCSD CRITICAL section updated (invented aerospace center re-confirmed live; run-30 verbatim-shared
+80% recorded; #737 graded as a clean small depth pass). CRITICAL top otherwise unchanged.
+
+**Invariants:** all intact; no SKILL.md edit by the grader (markdown-only: backlog + changelog). Health check GREEN —
+`test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** (system pytest + minimal deps — sqlalchemy /
+pgvector / pydantic — with `--noconftest` in this ephemeral container; `profile_standard.manifest` imports cleanly at
+STANDARD_VERSION 2).
