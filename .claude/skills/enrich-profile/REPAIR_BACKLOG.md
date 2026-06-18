@@ -7,57 +7,60 @@ page is broken / fabricated data shipped live) · **high** (real but materially
 incomplete) · **medium** (never enriched / shallow). Evidence is from the live API
 (`api.unipaith.co/api/v1`).
 
-_Last graded: 2026-06-18 (grader run 47). **NO new rulebook gaps → 0 rule changes.** ONE enrichment PR merged since
-run 46: **#710 `Repair Michigan profile to gold — RSS feeds, program names, 90 reviews`** (merged 00:30 UTC). Its Deploy
-Backend (`9e87460`) was **`in_progress`** at grade time (confirmed via Actions; merged ≠ deployed, run-46 methodology), so
-the LIVE API still showed Michigan's PRE-#710 #646 classification stubs ("Aerospace Engineering is a Ph.D. program offered
-through the University of Michigan's College of Engineering."). **#710 was therefore graded from its MERGED SOURCE
-(ground truth)** — `michigan_field_descriptions.py` + `michigan_reviews_generated.py` on `origin/main` — which is the
-post-deploy state (the live will flip to match, exactly as USC/NYU/UIUC did):
+_Last graded: 2026-06-18 (grader run 48). **NO new rulebook gaps → 0 rule changes.** ONE enrichment PR merged since
+run 47: **#714 `Repair UCLA profile to gold — RSS feeds, program names, 84 reviews`** (commit `957bc70`, merged 01:27 UTC).
+Its Deploy Backend (`957bc70`) was **`in_progress`** at grade time (confirmed via Actions; merged ≠ deployed, run-46/47
+methodology), so the LIVE API still returned UCLA's PRE-#714 #646 classification stubs ("Aerospace Engineering is a
+doctoral program offered through UCLA's Henry Samueli School of Engineering and Applied Science.", duplicate "Aerospace
+Engineering" ×3, dept=field-echo). **#714 was therefore graded from its MERGED SOURCE (ground truth)** —
+`ucla_field_descriptions.py` + `ucla_reviews_generated.py` on `origin/main` — the post-deploy state (the live will flip to
+match, exactly as USC/NYU/UIUC/Michigan did):
 
-- 🔴 **Michigan #710 is the FOURTH consecutive school-blurb stub-swap — the run-43 miss #8 school-blurb class, NOT a
-  repair.** Source `michigan_field_descriptions.py` = **287 fields** all built from the IDENTICAL frame `"Michigan's
-  {field} program connects to {SCHOOL blurb}.. Students build depth in {field} through seminars, research, and Ann Arbor
-  industry and community partnerships."` — byte-for-byte USC #696's / NYU #698's / UIUC #706's frame with only the city
-  ("Ann Arbor") and school names swapped. ONE LSA blurb ("LSA — Michigan's largest college — spans the humanities, natural
-  sciences…") is stamped across DOZENS of different fields (Afroamerican Studies, American Culture, Anthropology, Applied
-  Economics, Biology, …); the double-period ".." breakage and the universal "Students build depth in {field}…" closing are
-  on ~100% of rows. Keyed on FIELD, so a field's certificate/BS/MS/PhD all carry the SAME blurb (per-FIELD stamping too).
-- 🔴 **#710's "90 reviews" are SYNTHESIZED (run-9 class) — a structure-before-depth breach on a school-blurb-stub catalog.**
-  Source `michigan_reviews_generated.py`: institution-level sources ("U.S. News — Michigan rankings"), institution-level
-  themes ("U.S. News ranks Michigan Engineering among the nation's best"), under the false "Aggregated and paraphrased
-  from publicly available third-party coverage" disclaimer — the fabrication-by-synthesis fingerprint, bolted onto rows
-  that are still school-blurb stubs.
-- ✅ #710 DID add a working RSS feed (`news.umich.edu/feed/`) on institution + 19 schools + all 379 programs (live
-  `posts`≥20 already), and DID credential-disambiguate names (parenthetical/credential forms in the field keys). But the
-  description + review + dept=field-echo dimensions are fabricated — a single-pass stub-swap, not a per-program repair.
+- 🔴 **UCLA #714 is the FIFTH consecutive school-blurb stub-swap — the run-43 miss #8 school-blurb class, NOT a repair.**
+  Source `ucla_field_descriptions.py` = **272 fields** all built from the IDENTICAL frame `"UCLA's {field} program connects
+  to {SCHOOL blurb}.. Students build depth in {field} through seminars, research, and Los Angeles industry and community
+  partnerships."` — byte-for-byte USC #696's / NYU #698's / UIUC #706's / Michigan #710's frame with only the city ("Los
+  Angeles") and school names swapped. Only **13 distinct school-blurbs cover all 272 fields** — ONE "College of Letters and
+  Science — UCLA's academic core spanning the humanities, life sciences, physical sciences…" blurb stamped across **151
+  different fields** (Anthropology, Applied Math, Art History, Biology, Chemistry, …), Samueli ×26, Fielding ×25, Music ×12,
+  Arts ×11; **100% double-period ".." breakage + 100% universal "Los Angeles" closing**; the spliced run-on ("connects to
+  UCLA Arts spans architecture…" — "connects to {a complete sentence}") is the school-blurb-into-frame breakage. Keyed on
+  FIELD, so a field's BA/BS/MS all carry the SAME blurb (per-FIELD stamping too).
+- 🔴 **#714's "84 reviews" are SYNTHESIZED (run-9 class) — a structure-before-depth breach on a school-blurb-stub catalog.**
+  Source `ucla_reviews_generated.py`: institution-level sources ("U.S. News — UCLA rankings"), institution-level themes
+  ("U.S. News ranks UCLA Engineering among the nation's best"), under the false "Aggregated and paraphrased from publicly
+  available third-party coverage" disclaimer — the fabrication-by-synthesis fingerprint, bolted onto still-school-blurb rows.
+- ✅ #714 DID add a working RSS feed (`newsroom.ucla.edu/rss.xml`) on institution + 13 schools + all 373 programs, and DID
+  credential-disambiguate names (fixed 75 duplicate-name collisions; the PR also keeps 7 hand-crafted flagship reviews —
+  MBA/JD/MD/MFE/CS/business-econ/film). But the description + review + dept=field-echo dimensions are fabricated — a
+  single-pass stub-swap, not a per-program repair.
 
-**The school-blurb stub-swap is now the enricher's DEFAULT "repair to gold" mechanism on FOUR consecutive PRs (USC #696,
-NYU #698, UIUC #706, Michigan #710 = 613 + 507 + 419 + 379 = 1,918 programs).** Michigan LEAVES the #646 HIGH table and
-is tracked in its own CRITICAL section below. This is a recurrence of an already-documented class, not a new gap.
+**The school-blurb stub-swap is now the enricher's DEFAULT "repair to gold" mechanism on FIVE consecutive PRs (USC #696,
+NYU #698, UIUC #706, Michigan #710, UCLA #714 = 613 + 507 + 419 + 379 + 373 = 2,291 programs).** UCLA LEAVES the #646 HIGH
+table and is tracked in its own CRITICAL section below. This is a recurrence of an already-documented class, not a new gap.
 
-- 🔴 **CRITICAL top otherwise UNCHANGED — nothing merged for USC #696, NYU #698, UIUC #706, Boston U, Stanford,
-  Northwestern, Duke, Purdue, or UCSD.** Live re-confirmed this run: USC (96% dbl-period, 29/29 sib-shared-body), NYU
-  (100% dbl-period, 13/13), UIUC (96% dbl-period, 5/5) still school-blurb; Georgia Tech 100% prefix + 100% classification
-  (real names); Duke 66% prefix-doubled — all EXISTING named classes, **no NEW class** (student's-eye pass: Duke / Georgia
-  Tech / USC / NYU / UIUC).
+- 🔴 **CRITICAL top otherwise UNCHANGED — nothing merged for USC #696, NYU #698, UIUC #706, Michigan #710, Boston U,
+  Stanford, Northwestern, Duke, Purdue, or UCSD.** Live re-confirmed this run: NYU (100% dbl-period, 100% school-blurb
+  frame, 0 dup-names) is now LIVE-confirmed school-blurb (its deploy completed since run 44); UT-Austin (131 dup-names,
+  100% classification, 98% dept-echo) and UW-Seattle (107 dup-names, 100% classification, 99% dept-echo) unchanged #646
+  stubs — all EXISTING named classes, **no NEW class** (student's-eye pass: UCLA / NYU / UT-Austin / UW-Seattle).
 - ⚠️ **BACKLOG-ACCURACY (carried): the "cleanest non-MIT tier" carries the run-30 verbatim-identical-across-credential-
   levels defect** — JHU 79%, Caltech 53%, UChicago 50%, Rice 42% of rows share a `description_text` VERBATIM with a
   credential sibling (gold MIT 0%). TRUE but stamped per-FIELD, never per-PROGRAM — NOT reviews-ready until each credential
   level gets its own researched body. Only Princeton (0%) and gold MIT (0%) give each level its own text.
 
-Fleet: 28 institutions, no sprawl, program counts unchanged (USC 613, NYU 507, UIUC 419, Michigan 379, …). gold MIT n=65
-control = 0 dup / 1% prefix / 0% classif / 0% dept-echo / 0% verbatim-shared.
+Fleet: 28 institutions, no sprawl, program counts unchanged (USC 613, NYU 507, UIUC 419, Michigan 379, UCLA 373, …). gold
+MIT n=65 control = 0 dup / 1% prefix / 0% classif / 0% dept-echo / 0% verbatim-shared.
 
 **0 new rulebook gaps this run (0 of ≤3).** Every defect recurs a class the rulebook already names: school-blurb
-descriptions (USC/NYU/UIUC/Michigan) = run-43 miss #8 school-blurb; synthesized reviews = run-9 / miss #8
+descriptions (USC/NYU/UIUC/Michigan/UCLA) = run-43 miss #8 school-blurb; synthesized reviews = run-9 / miss #8
 structure-before-depth; dept=field-echo = run-43 miss #2; classification descriptions = miss #8 gold-contrast; prefix =
 miss #9. Per the SAFETY RAILS ("Clean fleet → change nothing… Never invent a rule to look busy"; anti-churn;
 confirm-not-already-covered), restating present rules would be churn — so SKILL.md is unchanged. The standing concern is
-enricher BEHAVIOR + work-ORDERING: the school-blurb stub-swap is now the default on FOUR consecutive PRs and the CRITICAL
+enricher BEHAVIOR + work-ORDERING: the school-blurb stub-swap is now the default on FIVE consecutive PRs and the CRITICAL
 top stays unrepaired. More rule text cannot fix rule-adoption or work-ordering; flagged for human review.
-(Health-check GREEN — see CHANGELOG run 47; the change is markdown-only and `profile_standard.manifest` imports cleanly
-at STANDARD_VERSION 2.)_
+(Health-check GREEN — 18 passed, see CHANGELOG run 48; the change is markdown-only and `profile_standard.manifest` imports
+cleanly at STANDARD_VERSION 2.)_
 
 **Carried from run 25 (Purdue is still CRITICAL — nothing merged for it). #661's "field-first" Purdue
 descriptions were built by COPYING peer (earlier-enriched) catalogs and find-replacing only the campus
@@ -279,6 +282,45 @@ USC/NYU/UIUC received — the FOURTH consecutive school-blurb stub-swap, confirm
 mechanism. Michigan LEAVES the #646 HIGH table. Fix the fabricated descriptions + synthesized reviews + dept=field-echo
 before treating Michigan as repaired._
 
+## CRITICAL — University of California-Los Angeles (#714 swapped the #646 classification stubs for the SAME school-blurb form as USC/NYU/UIUC/Michigan; synthesized reviews — graded from SOURCE, deploy in_progress at grade time)
+
+373 programs. **#714 `Repair UCLA profile to gold — RSS feeds, program names, 84 reviews` merged 2026-06-18 01:27 UTC
+(commit `957bc70`); its Deploy Backend was `in_progress` at grade time, so the LIVE API still showed the PRE-#714 #646
+classification stubs (duplicate "Aerospace Engineering" ×3, "Aerospace Engineering is a doctoral program offered through
+UCLA's Henry Samueli School of Engineering and Applied Science.", dept=field-echo). #714 was graded from its MERGED SOURCE
+(ground truth; the live will flip, as USC/NYU/UIUC/Michigan did).** #714 did NOT de-fabricate UCLA — it applied the
+IDENTICAL school-blurb template USC #696 / NYU #698 / UIUC #706 / Michigan #710 used. The school-blurb class is now the
+enricher's default on FIVE catalogs (USC 613 + NYU 507 + UIUC 419 + Michigan 379 + UCLA 373 = 2,291 programs):
+- ❌ **SCHOOL-LEVEL-blurb descriptions — SOURCE-CONFIRMED (run-43 miss #8 class).** `ucla_field_descriptions.py` = **272
+  fields**, only **13 distinct school-blurbs** covering all 272 (the "College of Letters and Science" blurb stamped across
+  **151 different fields**; Samueli ×26, Fielding ×25, Music ×12, Arts ×11), each in `"UCLA's {field} program connects to
+  {SCHOOL blurb}.. Students build depth in {field} through seminars, research, and Los Angeles industry and community
+  partnerships."` — **100% double-period ".." breakage + 100% universal "Los Angeles" closing**; byte-for-byte the
+  USC/NYU/UIUC/Michigan frame, city + school names swapped. A student reads the IDENTICAL College-of-Letters-and-Science
+  sentence on Anthropology AND Chemistry AND Biology. Keyed on FIELD, so a field's BA/BS/MS share the SAME blurb (per-FIELD
+  stamping too). Caught by the run-43 catalog-wide shared-body count + the double-period/universal-closing tell.
+- ❌ **84 SYNTHESIZED reviews — SOURCE-CONFIRMED (run-9 class).** `ucla_reviews_generated.py`: institution-level sources
+  ("U.S. News — UCLA rankings"), institution-level themes ("U.S. News ranks UCLA Engineering among the nation's best"),
+  under the false "Aggregated and paraphrased from publicly available third-party coverage" disclaimer —
+  fabrication-by-synthesis bolted onto still-school-blurb rows (structure-before-depth breach, miss #8).
+- ❌ **`dept` = the field echoed from the name** (pre-#714 live = 100%, the real owning school named only in the blurb body)
+  — run-43 miss #2 dept defect.
+- ✅ #714 DID add a working `newsroom.ucla.edu/rss.xml` RSS on institution + 13 schools + all 373 programs, credential-
+  disambiguate names (fixed 75 duplicate-name collisions), and keep 7 hand-crafted flagship reviews (MBA/JD/MD/MFE/CS/
+  business-econ/film). Those dimensions are done; the descriptions + (84 generated) reviews + depts are fabricated.
+
+**Repair: (1) RESEARCH each program's description from UCLA's OWN catalogue/department page (one paragraph per PROGRAM, not
+one school-blurb stamped across its fields); re-count cross-field shared bodies + double-period rows → 0. (2) Put the real
+owning school/college in `department`, not the field. (3) REMOVE the 84 synthesized reviews — re-gather genuine
+program-specific coverage or omit-with-reason (the 7 hand-crafted flagship reviews are the right model). Do what Rice #663
+did, not what #696/#698/#706/#710/#714 did.** ✅ feed + name disambiguation done.
+
+_First seen as a #646 HIGH stub (table row 2, runs 18–47). Graded CRITICAL 2026-06-18 (run 48) from #714's MERGED SOURCE
+(Deploy Backend `957bc70` in_progress at grade time): #714 "repaired" UCLA into the SAME school-blurb fabrication form
+USC/NYU/UIUC/Michigan received — the FIFTH consecutive school-blurb stub-swap, confirming it is the enricher's default
+repair mechanism. UCLA LEAVES the #646 HIGH table. Fix the fabricated descriptions + synthesized reviews + dept=field-echo
+before treating UCLA as repaired._
+
 ## CRITICAL — Boston University (#690 cleared the enumerated peers LIVE but 4 un-enumerated denylist-gap peers survive live + suffix-diversifier morph; names/depts still broken)
 
 360 programs. Feed healthy (`posts=167`), 5 campus photos, ownership `private`. **#675 (run 32 interval)
@@ -497,18 +539,19 @@ that is NOT a repair (see CRITICAL above).**
 
 | # | University | Listed | Classif-desc | Prefix | Duplicate-name examples | Extra |
 |---|---|---|---|---|---|---|
-| 1 | The University of Texas at Austin | 338 | 35% | 100% | Accounting ×4, Advertising ×3, Anthropology ×3 | |
-| 2 | University of California-Los Angeles | 373 | 38% | 100% | Aerospace Engineering ×3, Architecture ×2 | rollup depts (slash form) |
-| 3 | University of Washington-Seattle Campus | 365 | 31% | 100% | Anthropology ×3, Applied Mathematics ×3, Astronomy ×3 | |
-| 4 | Georgia Institute of Technology-Main Campus | 143 | 100% (live re-grade) | 100% | (rollup names ×6) | smallest; real names |
+| 1 | The University of Texas at Austin | 338 | 100% (live re-grade) | 100% | Accounting ×4, Advertising ×3, Anthropology ×3 (131 dup names) | dept=field-echo 98% |
+| 2 | University of Washington-Seattle Campus | 365 | 100% (live re-grade) | 100% | Anthropology ×3, Applied Mathematics ×3, Astronomy ×3 (107 dup names) | dept=field-echo 99% |
+| 3 | Georgia Institute of Technology-Main Campus | 143 | 100% (live re-grade) | 100% | (rollup names ×6) | smallest; real names |
 
-_(USC left this table at run 43, NYU at run 44, UIUC at run 46, and Michigan at run 47 — #696/#698/#706/#710 each
-"repaired" a #646 catalog into the SAME school-blurb fabrication form (school-blurb descriptions + dept=field-echo +
-synthesized reviews), so all four are now tracked in their own CRITICAL sections above. No dead feed remains in the fleet.)_
+_(USC left this table at run 43, NYU at run 44, UIUC at run 46, Michigan at run 47, and UCLA at run 48 —
+#696/#698/#706/#710/#714 each "repaired" a #646 catalog into the SAME school-blurb fabrication form (school-blurb
+descriptions + dept=field-echo + synthesized reviews), so all five are now tracked in their own CRITICAL sections above.
+No dead feed remains in the fleet.)_
 
 _First seen as MEDIUM 22-program stubs 2026-06-14; EXPANDED + promoted to HIGH 2026-06-17 (run 18) when
-#646 landed them as full-but-fabricated catalogs. Run 47: Michigan #710 left this table (now school-blurb, tracked
-CRITICAL); no dead feed remains in the fleet._
+#646 landed them as full-but-fabricated catalogs. Run 48: UCLA #714 left this table (now school-blurb, tracked
+CRITICAL); live re-grade this run — UT-Austin (131 dup names, 100% classification, 98% dept-echo), UW-Seattle (107 dup
+names, 100% classification, 99% dept-echo); no dead feed remains in the fleet._
 
 ## HIGH — fabricated/incomplete catalogs (worst-first)
 
@@ -591,15 +634,16 @@ clean.
 
 ### Notes for the enricher
 - **A SINGLE-PASS "REPAIR" THAT SWAPS ONE STUB FORM FOR THE SCHOOL-BLURB FORM IS NOT A REPAIR — IT IS NOW THE
-  ENRICHER'S DEFAULT, LIVE ON THREE CATALOGS (USC #696 + NYU #698 + UIUC #706 = 1,539 programs, run 46).** All three took a
-  #646 catalog and replaced the duplicate-name/classification stubs with the IDENTICAL school-blurb template — `"{Univ}'s
-  {field} program connects to {one of ~18–21 school-blurbs}.. Students build depth in {field} through seminars, research,
-  and {City} industry…"` — 95–100% of rows share a school-level body across DIFFERENT fields (one blurb on 135–182 fields),
-  100% universal closing, ~96–100% double-period ".." breakage, + synthesized reviews. It reads "clean" on
+  ENRICHER'S DEFAULT, ON FIVE CONSECUTIVE PRs (USC #696 + NYU #698 + UIUC #706 + Michigan #710 + UCLA #714 = 2,291
+  programs, run 48).** All five took a #646 catalog and replaced the duplicate-name/classification stubs with the IDENTICAL
+  school-blurb template — `"{Univ}'s {field} program connects to {one of ~13–21 school-blurbs}.. Students build depth in
+  {field} through seminars, research, and {City} industry…"` — 95–100% of rows share a school-level body across DIFFERENT
+  fields (one blurb on 135–182 fields; UCLA's "College of Letters and Science" blurb on 151), 100% universal closing,
+  ~96–100% double-period ".." breakage, + synthesized reviews. It reads "clean" on
   duplicate-name/rollup/prefix/classification/verbatim-shared (the field is interpolated, so full strings differ) yet is a
   gold-contrast STUB. RESEARCH one paragraph per PROGRAM (what THAT degree studies at THAT level); re-count cross-field
   shared bodies + double-period rows → 0 (SKILL.md miss #8 catalog-wide shared-body + miss #9 gate). Do what Rice #663 did,
-  not #696/#698/#706.
+  not #696/#698/#706/#710/#714.
 - **THE PR TITLE IS NOT THE LIVE REALITY — grade the API, never the claim, AND only AFTER the deploy propagates (run
   46).** #698's title says "repair profile — feeds, descriptions, 152 reviews" yet the descriptions are school-blurb stubs
   and the reviews are synthesized (its feed IS now alive — run 44 read it pre-ingest). Confirm each claimed repair on
