@@ -100,6 +100,63 @@ class MatchWithRationale:
 # ── Service ────────────────────────────────────────────────────────────────
 
 
+# AI Structure (Spec 3, GAP 1) — c_student floor. A brand-new profile that
+# emitted feature_completeness=0 should not zero out c_student (which would make
+# rho≈0 and read every match as the bare prior). A modest floor keeps a thin
+# profile's signals dented-but-alive while still letting a deeper profile climb
+# toward 1.0 — the "deeper profile → sharper match" intent. 0.5 maps (with
+# tau0==kappa) to rho≈0.5, i.e. observed fit and prior weighted equally.
+_STUDENT_CONFIDENCE_FLOOR = 0.5
+
+
+def _student_confidence(feature_completeness: float) -> float:
+    """Map the emitter's per-profile `feature_completeness` [0,1] to the student-
+    side confidence c_student, fail-soft and bounded. Deeper profile → higher
+    confidence → sharper (less prior-shrunk) signals."""
+    try:
+        c = float(feature_completeness)
+    except (TypeError, ValueError):
+        return _STUDENT_CONFIDENCE_FLOOR
+    if c != c:  # NaN guard
+        return _STUDENT_CONFIDENCE_FLOOR
+    # Linear lift from the floor to 1.0 across [0,1] completeness.
+    c = max(0.0, min(1.0, c))
+    return _STUDENT_CONFIDENCE_FLOOR + (1.0 - _STUDENT_CONFIDENCE_FLOOR) * c
+
+
+# AI Structure (Spec 2 §authority-precedence / Spec 3 GAP) — claim → c_program.
+# ProgramPreference.source records HOW the target-applicant preferences were
+# obtained; that provenance IS the program-side authority (c_program). A claimed
+# (first-party, verified) preference outweighs a derived (crawler-inferred) one,
+# which outweighs a bare crawler row — the "claimed program outweighs derived"
+# rule from Chart 2. An explicit per-program `confidence` (a school that dialed it
+# in) takes precedence over the source default.
+_PROGRAM_AUTHORITY_BY_SOURCE: dict[str, float] = {
+    "claimed": 0.9,
+    "manual": 0.9,  # set by a verified school user via the editor — first-party
+    "verified": 0.9,
+    "derived": 0.5,
+    "inferred": 0.45,
+    "crawler": 0.4,
+}
+
+
+def _program_authority(source: str | None, confidence: Any | None = None) -> float | None:
+    """Map a ProgramPreference's provenance to c_program (data authority), or None
+    when the source is unrecognized (leave the existing data_completeness). An
+    explicit numeric `confidence` wins; else the per-source default."""
+    if confidence is not None:
+        try:
+            c = float(confidence)
+        except (TypeError, ValueError):
+            c = None
+        if c is not None and c == c:  # not NaN
+            return max(0.0, min(1.0, c))
+    if not source:
+        return None
+    return _PROGRAM_AUTHORITY_BY_SOURCE.get(str(source).strip().lower())
+
+
 def _program_embedding_text(program: Any) -> str:
     """Semantic text for a program's dense embedding (Spec 65 §3) — its name,
     degree, and description, the same kind of free text the student applicant
@@ -646,7 +703,14 @@ class MatchService:
             sparse=sparse,
             embedding=emb_list,
             profile_completeness=completeness,
-            extractor_quality=0.85,  # cold-start placeholder
+            # AI Structure (Spec 3, GAP 1) — c_student is now DERIVED from the
+            # real profile, not a constant. The feature emitter writes a per-
+            # profile `feature_completeness` in [0,1] reflecting how much source
+            # data backed this emission; that IS the student-side confidence
+            # (a thin profile → low c_student → its signals shrink toward the
+            # prior; a deep profile → high c_student → sharper match). Falls back
+            # to the cold-start proxy only when the emitter wrote no completeness.
+            extractor_quality=_student_confidence(completeness),
         )
 
     async def _overlay_student_attrs(self, student_id: UUID, sparse: dict) -> None:
@@ -670,7 +734,15 @@ class MatchService:
         if academic.normalized_gpa is not None and "gpa" not in sparse:
             sparse["gpa"] = float(academic.normalized_gpa)
         if academic.field_of_study and "field_of_study" not in sparse:
-            sparse["field_of_study"] = academic.field_of_study
+            # Canonicalize to the FIELD_SIM_TABLE vocab so the s→p field signal
+            # matches the (canonicalized) program-side fields_offered on live
+            # free-text data ("Computer Science" → "computer_science"). Gated:
+            # an unrecognizable field yields no field signal (no phantom 0.0).
+            from unipaith.services.match.field_canon import canonical_field
+
+            canon = canonical_field(academic.field_of_study)
+            if canon:
+                sparse["field_of_study"] = canon
 
     async def _overlay_program_prefs(self, program_features: list[ProgramFeatures]) -> None:
         """Overlay each program's ProgramPreference (target applicant) onto its
@@ -701,9 +773,31 @@ class MatchService:
             if pref.pref_min_gpa is not None:
                 pf.sparse["pref_min_gpa"] = float(pref.pref_min_gpa)
             if pref.pref_fields:
-                pf.sparse["pref_fields"] = list(pref.pref_fields)
+                # Canonicalize the program's target-applicant fields to the same
+                # vocab as the (canonicalized) student field_of_study, so the p→s
+                # field comparison matches on live free-text. Gated: unrecognizable
+                # entries drop; if none survive, no pref_fields signal.
+                from unipaith.services.match.field_canon import canonical_field
+
+                canon_fields = [c for c in (canonical_field(f) for f in pref.pref_fields) if c]
+                if canon_fields:
+                    pf.sparse["pref_fields"] = canon_fields
             if pref.pref_levels:
                 pf.sparse["pref_levels"] = list(pref.pref_levels)
+            # AI Structure (Spec 2/3, GAP — claim → c_program): the program-side
+            # confidence is its DATA AUTHORITY. A claimed preference (first-party,
+            # verified school user) is high-authority; a derived one (crawler-
+            # inferred for an unclaimed program) is lower. This is what makes a
+            # claimed program outscore an identical-fit derived one. We read the
+            # real `ProgramPreference.source` (+ an explicit `confidence` when the
+            # school set one) and lift `data_completeness` (= c_program) to match.
+            authority = _program_authority(pref.source, pref.confidence)
+            if authority is not None:
+                # Authority can only RAISE c_program — never knock a claimed
+                # program (record floor 0.9 from is_claimed) down because it
+                # carries a lower-source preference row. A claimed-source pref
+                # still outscores a derived-source one on otherwise-equal records.
+                pf.data_completeness = max(pf.data_completeness, authority)
 
     async def _student_feature_record(self, student_id: UUID) -> StudentFeatureVector | None:
         return await self.db.scalar(
@@ -863,7 +957,8 @@ def features_from_emitted(emitted: EmittedFeatures) -> StudentFeatures:
         sparse=sparse,
         embedding=list(emitted.embedding) if emitted.embedding else None,
         profile_completeness=completeness,
-        extractor_quality=0.85,
+        # AI Structure (Spec 3, GAP 1) — c_student derived from real completeness.
+        extractor_quality=_student_confidence(completeness),
     )
 
 
