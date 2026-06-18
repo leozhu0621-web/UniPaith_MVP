@@ -1072,6 +1072,30 @@ async def _list_enriched_matches(
     return out
 
 
+def _qualitative_fit_word(fitness: float) -> str:
+    """Map a raw fitness score to a band WORD for the student-facing stub
+    rationale (AI-Structure-3 §14: never a number). Thresholds mirror the
+    _fitness_band cut points (0.75 / 0.55 / 0.40)."""
+    if fitness >= 0.75:
+        return "Strong"
+    if fitness >= 0.55:
+        return "Solid"
+    if fitness >= 0.40:
+        return "Moderate"
+    return "Limited"
+
+
+def _qualitative_confidence_word(confidence: float) -> str:
+    """Map a raw confidence score to a word for the stub rationale (§14)."""
+    if confidence >= 0.75:
+        return "high"
+    if confidence >= 0.50:
+        return "solid"
+    if confidence >= 0.30:
+        return "moderate"
+    return "still building as your profile fills in"
+
+
 def _strip_numbers(obj: object) -> object:
     """Recursively remove every numeric scalar from a breakdown so the student
     never sees a number (AI-Structure-3 §14). Qualitative driver names, boolean
@@ -1416,8 +1440,13 @@ async def explain_match(
                     )
                     # MatchService persists rationale into `match_rationales` cache,
                     # not match_results.rationale_text. Mirror it back so consumers
-                    # of GET /me/matches/{id} get the inline value too.
-                    match.rationale_text = out.rationale_text
+                    # of GET /me/matches/{id} get the inline value too. §14: scrub
+                    # the string of any number the LLM may have written, since the
+                    # GET endpoint re-serves match_results.rationale_text directly to
+                    # the student (proj.rationale_text below is already scrubbed).
+                    from unipaith.ai.rationale_redaction import scrub_numbers_from_text
+
+                    match.rationale_text = scrub_numbers_from_text(out.rationale_text)
                     match.rationale_generated_at = func.now()  # type: ignore[assignment]
                     await db.flush()
                     await db.refresh(match)
@@ -1441,17 +1470,23 @@ async def explain_match(
                 e,
             )
 
-    # Stub path: 3-line rationale from the breakdown JSON. Breakdowns are
+    # Stub path: a QUALITATIVE rationale from the breakdown JSON. Breakdowns are
     # redacted to the student-safe view (spec 06 §5.5) before they leave.
+    # AI-Structure-3 §14 — the student NEVER sees a number, so the stub uses band
+    # words + qualitative driver names only; it formats NO raw fitness/confidence
+    # score into the string. The persisted text is also scrubbed of any stray
+    # number (defense in depth) so GET /me/matches re-serves a number-free string.
     from unipaith.ai.rationale_redaction import project_for_student as _proj_student
+    from unipaith.ai.rationale_redaction import scrub_numbers_from_text
 
     fitness_drivers = list((match.fitness_breakdown or {}).keys())
-    confidence_reason = (match.confidence_breakdown or {}).get("reason", "default")
-    rationale = (
-        f"Fitness {float(match.fitness_score):.2f}: drivers — "
-        f"{', '.join(fitness_drivers) if fitness_drivers else 'no breakdown captured yet'}. "
-        f"Confidence {float(match.confidence_score):.2f}: {confidence_reason}. "
-        "(Stub rationale — full LLM-written explanation arrives with Plan 2.)"
+    fit_word = _qualitative_fit_word(float(match.fitness_score))
+    conf_word = _qualitative_confidence_word(float(match.confidence_score))
+    drivers_phrase = ", ".join(fitness_drivers) if fitness_drivers else "your overall profile"
+    rationale = scrub_numbers_from_text(
+        f"{fit_word} fit, driven by {drivers_phrase}. "
+        f"Our confidence in this read is {conf_word}. "
+        "(A fuller written explanation arrives when the rationale agent runs.)"
     )
     match.rationale_text = rationale
     match.rationale_generated_at = func.now()  # type: ignore[assignment]

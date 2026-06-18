@@ -56,7 +56,14 @@ from decimal import Decimal
 from typing import Any
 
 from .match import fits as _fits
-from .match.params import DEFAULT_PARAMS, clamp01, confidence_to_gain, two_sided_confidence
+from .match.params import (
+    DEFAULT_PARAMS,
+    FIELD_SIM_TABLE,
+    clamp01,
+    confidence_to_gain,
+    prior_for,
+    two_sided_confidence,
+)
 
 # ── Default weights ─────────────────────────────────────────────────────────
 # Hand-tuned for cold start. Phase B1 exit gate: NDCG@10 ≥ 0.65 against
@@ -305,9 +312,11 @@ def _renormalized_weights(
 _CPEF_CONF_FALLBACK = 0.85  # per-side confidence proxy when a feature omits it
 _CANONICAL_N = 5  # core fit dimensions for the coverage denominator
 #                   (semantic · themes · needs · budget · geo). The optional
-#                   degree_level signal (only when the student states a target)
-#                   adds to present_a; coverage clamps at 1.0, so it never
-#                   over-saturates the damp.
+#                   per-preference signals (degree_level, field, time,
+#                   flexibility, support — each emitted only when the student
+#                   states that preference) add to present_a; coverage clamps at
+#                   1.0, so a student who expresses many preferences saturates
+#                   the damp without ever over-saturating it.
 
 
 def _student_side_confidence(student: StudentFeatures) -> float:
@@ -344,7 +353,6 @@ def _build_cpef_signals(
     """Assemble the per-signal fit list + deal-breakers from the projected
     sparse features that exist today. Returns (signals, dealbreakers, full_w)."""
     s, pr = student.sparse, program.sparse
-    prior = p["prior"]
     w_base = p["w_base"]
     # GAP 1 — real two-sided confidence: c = c_student × c_program. The
     # student-side proxy is the upstream extractor quality (Spec 1); the
@@ -376,17 +384,48 @@ def _build_cpef_signals(
                 "f": cosine(student.embedding, program.embedding),
                 "c": c,
                 "w": w_base,
-                "prior": prior,
+                "prior": prior_for("semantic", p),
             }
         )
     # themes (interest/career/value tag overlap) — always defined via fallbacks
     signals.append(
-        {"key": "themes", "f": soft_align(student, program), "c": c, "w": w_base, "prior": prior}
+        {
+            "key": "themes",
+            "f": soft_align(student, program),
+            "c": c,
+            "w": w_base,
+            "prior": prior_for("themes", p),
+        }
     )
     # needs coverage — neutral 0.5 when the student expressed no needs
     signals.append(
-        {"key": "needs", "f": needs_match(student, program), "c": c, "w": w_base, "prior": prior}
+        {
+            "key": "needs",
+            "f": needs_match(student, program),
+            "c": c,
+            "w": w_base,
+            "prior": prior_for("needs", p),
+        }
     )
+
+    # field-of-study (GAP — Spec 3 §3 categorical). Graded against the program's
+    # offered fields via the curated similarity table: exact → 1.0, related (e.g.
+    # data_science↔statistics) → its table value, unrelated → 0.0. Only emitted
+    # when the student states a field AND the program lists offered fields, so an
+    # absent field injects no phantom dimension. `themes` is interest-tag Jaccard
+    # (a soft signal); this is the structural field-vs-fields-offered fit §3 names.
+    s_field = s.get("field_of_study")
+    p_fields = pr.get("fields_offered") or []
+    if s_field is not None and p_fields:
+        signals.append(
+            {
+                "key": "field",
+                "f": _fits.fit_categorical_best(s_field, list(p_fields), FIELD_SIM_TABLE),
+                "c": c,
+                "w": w_base,
+                "prior": prior_for("field", p),
+            }
+        )
 
     # budget — graded affordability (a *fit*, distinct from the over-budget veto)
     s_budget = s.get("budget_max_usd_per_year")
@@ -398,15 +437,83 @@ def _build_cpef_signals(
                 "f": _fits.fit_range(float(p_tuition), float(s_budget), p["delta"]),
                 "c": c,
                 "w": w_base,
-                "prior": prior,
+                "prior": prior_for("budget", p),
             }
         )
+
+    # desired time-to-degree (GAP — Spec 3 §3 numeric-target). Gaussian kernel
+    # around the student's desired duration vs the program's length: exact → 1.0,
+    # far → 0. Only emitted when the student states a target AND the program lists
+    # a duration, so an absent preference injects no phantom dimension.
+    s_time = s.get("desired_time_to_degree_months")
+    p_duration = pr.get("duration_months")
+    if s_time is not None and p_duration is not None:
+        signals.append(
+            {
+                "key": "time",
+                "f": _fits.fit_numeric_target(float(p_duration), float(s_time), p["time_h"]),
+                "c": c,
+                "w": w_base,
+                "prior": prior_for("time", p),
+            }
+        )
+
     # geo — overlap of preferred vs program locations
     s_geo = s.get("geo_must") or []
     p_locs = pr.get("locations") or []
     if s_geo and p_locs:
         signals.append(
-            {"key": "geo", "f": _fits.fit_geo(s_geo, p_locs), "c": c, "w": w_base, "prior": prior}
+            {
+                "key": "geo",
+                "f": _fits.fit_geo(s_geo, p_locs),
+                "c": c,
+                "w": w_base,
+                "prior": prior_for("geo", p),
+            }
+        )
+
+    # flexibility (GAP — Spec 3 §3 boolean). A part-time/online WANT met by the
+    # program → 1.0, unmet → 0.0 (hard want floor). Only emitted when the student
+    # expresses a flexibility want, so no phantom dimension for students who
+    # don't care. A single signal covers both want flavors (the strongest unmet
+    # want dominates the floor); the want-strength rides in the weight, not f.
+    wants_part_time = bool(s.get("wants_part_time"))
+    wants_online = bool(s.get("wants_online"))
+    if wants_part_time or wants_online:
+        have = False
+        if wants_part_time and bool(pr.get("part_time_available")):
+            have = True
+        if wants_online and bool(pr.get("online_available")):
+            have = True
+        # If the student wants BOTH and only one is offered, the want is partly
+        # unmet → still a hard miss on the floor (have stays True only if every
+        # expressed want is satisfied).
+        if wants_part_time and not bool(pr.get("part_time_available")):
+            have = False
+        if wants_online and not bool(pr.get("online_available")):
+            have = False
+        signals.append(
+            {
+                "key": "flexibility",
+                "f": _fits.fit_boolean(have, want_hard=True),
+                "c": c,
+                "w": w_base,
+                "prior": prior_for("flexibility", p),
+            }
+        )
+
+    # support (GAP — Spec 3 §3 boolean, soft want). A career-services / support
+    # WANT met by the program → 1.0, unmet → 0.3 floor (a soft want, unlike the
+    # hard flexibility floor). Only emitted when the student expresses the want.
+    if bool(s.get("wants_career_support")):
+        signals.append(
+            {
+                "key": "support",
+                "f": _fits.fit_boolean(bool(pr.get("career_services")), want_hard=False),
+                "c": c,
+                "w": w_base,
+                "prior": prior_for("support", p),
+            }
         )
 
     # degree-level fit (GAP 4) — a GRADED signal alongside the veto. Exact level
@@ -427,7 +534,7 @@ def _build_cpef_signals(
                 "f": _fits.fit_degree_level(s_degree_target, p_target),
                 "c": c,
                 "w": w_base,
-                "prior": prior,
+                "prior": prior_for("degree_level", p),
             }
         )
 
@@ -468,7 +575,7 @@ def cpef(
     p = params or DEFAULT_PARAMS
     signals, dealbreakers, full_w = _build_cpef_signals(student, program, p)
 
-    num = den = present_a = rho_sum = 0.0
+    num = den = present_a = rho_sum = raw_f_sum = 0.0
     sig_bd: list[dict[str, Any]] = []
     for sig in signals:
         rho = confidence_to_gain(sig["c"], p)
@@ -478,6 +585,7 @@ def cpef(
         den += a
         present_a += a
         rho_sum += rho
+        raw_f_sum += sig["f"]
         sig_bd.append(
             {
                 "key": sig["key"],
@@ -519,6 +627,12 @@ def cpef(
         "veto": round(v_total, 4),
         "hard_floor": hard,
         "mean_rho": round(mean_rho, 4),
+        # Spec 3 §4 tie-break ingredients: coverage Σ A_k (present attention) then
+        # raw Σ f_k. Exposed so rank_programs can break M-ties by evidence (how
+        # much present, confident signal backs the match) rather than by the
+        # displayable mean_rho. NOT a sort primary — M is.
+        "coverage_sum": round(present_a, 6),
+        "raw_fit_sum": round(raw_f_sum, 6),
         "signals": sig_bd,
         "dealbreakers": db_bd,
     }
@@ -541,11 +655,14 @@ def cpef_program_to_student(
     s_gpa = s.get("gpa")
     if pref_gpa is not None and s_gpa is not None:
         fits_present.append(_fits.fit_numeric_higher(float(s_gpa), float(pref_gpa), 0.3))
-    # field background: program's preferred fields vs the student's field
-    pref_fields = set(pr.get("pref_fields") or [])
+    # field background: program's preferred fields vs the student's field. Graded
+    # via the curated similarity table (Spec 3 §3 categorical), so a related-field
+    # applicant (statistics vs a DS program's preferred data_science) reads as a
+    # partial fit, not a hard 0 — exact match still scores the full 1.0.
+    pref_fields = list(pr.get("pref_fields") or [])
     s_field = s.get("field_of_study")
     if pref_fields and s_field is not None:
-        fits_present.append(1.0 if s_field in pref_fields else 0.0)
+        fits_present.append(_fits.fit_categorical_best(s_field, pref_fields, FIELD_SIM_TABLE))
     # applicant level: program's preferred levels vs the student's current level
     pref_levels = set(pr.get("pref_levels") or [])
     s_lvl = s.get("education_level")
@@ -729,5 +846,21 @@ def rank_programs(
     scored = [(p, score(student, p, weights=weights, cpef_enabled=cpef_enabled)) for p in programs]
     if not include_eliminated:
         scored = [(p, s) for p, s in scored if not s.eliminated]
-    scored.sort(key=lambda ps: (float(ps[1].fitness), float(ps[1].confidence)), reverse=True)
+
+    def _sort_key(ps: tuple[ProgramFeatures, Score]) -> tuple[float, float, float]:
+        sc = ps[1]
+        bd = sc.fitness_breakdown or {}
+        if bd.get("model") == "cpef":
+            # Spec 3 §4: sort by M desc; ties → coverage Σ A_k, then raw Σ f_k.
+            # mean_rho (a displayable certainty the spec says ranking never uses)
+            # is deliberately NOT in the key.
+            return (
+                float(sc.fitness),
+                float(bd.get("coverage_sum") or 0.0),
+                float(bd.get("raw_fit_sum") or 0.0),
+            )
+        # Legacy convex-sum path keeps its original (fitness, confidence) key.
+        return (float(sc.fitness), float(sc.confidence), 0.0)
+
+    scored.sort(key=_sort_key, reverse=True)
     return scored
