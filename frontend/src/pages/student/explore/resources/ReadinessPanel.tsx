@@ -35,10 +35,17 @@ export default function ReadinessPanel() {
 
   if (visaLoading) return null
 
+  // TestScore uses `test_type` + `total_score` (see AcademicsTab). Find an
+  // English test on file and surface its real score — never a guess.
   const englishTest = (Array.isArray(tests) ? tests : []).find(
-    (t): t is { test: string } =>
-      typeof t === 'object' && t !== null && ENGLISH_TESTS.has(String((t as { test?: unknown }).test).toUpperCase()),
+    (t): t is { test_type: string; total_score: number | null } =>
+      typeof t === 'object' &&
+      t !== null &&
+      ENGLISH_TESTS.has(String((t as { test_type?: unknown }).test_type).toUpperCase()),
   )
+  const englishLabel = englishTest
+    ? `${englishTest.test_type}${englishTest.total_score != null ? ` ${englishTest.total_score}` : ''} on file`
+    : undefined
 
   // A student who doesn't need a study visa: collapse the checklist (the guide
   // above still applies as general reading).
@@ -75,7 +82,7 @@ export default function ReadinessPanel() {
       key: 'english',
       label: 'English proficiency test',
       done: !!englishTest,
-      value: englishTest ? `${englishTest.test} on file` : undefined,
+      value: englishLabel,
       to: '/s/profile?tab=academics',
     },
     {
