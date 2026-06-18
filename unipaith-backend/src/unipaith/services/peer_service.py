@@ -34,6 +34,12 @@ logger = logging.getLogger(__name__)
 
 PEER_REQUEST_DAILY_LIMIT = 20  # anti-spam (Spec 20 §6.4)
 
+# k-anonymity floor for the per-program peer-cohort count (Discover review
+# 2026-06-14 #5). A program's "N peers open to connect" count is surfaced only
+# when at least this many eligible peers share it — below the floor the program
+# is omitted entirely, so a count of 1–2 can never re-identify anyone.
+PEER_COHORT_MIN = 3
+
 
 class PeerService:
     def __init__(self, db: AsyncSession):
@@ -171,6 +177,80 @@ class PeerService:
             shared_progs = shared.get(prof.student_id, set())
             cards.append(self._to_card(prof, shared_progs, prog_names, conn_states))
         return cards
+
+    async def cohort_counts(self, student_id: UUID, program_ids: list[UUID]) -> dict[UUID, int]:
+        """k-anonymized per-program count of peers "open to connect" (Discover
+        review 2026-06-14 #5). Counts DISTINCT eligible peers — ``visible`` +
+        ``consent_peer_connect`` + same age bucket + not blocked + not me —
+        whose saved/applied programs include each given program. Returns ONLY
+        counts ``>= PEER_COHORT_MIN``; below the floor a program is omitted.
+
+        Empty for a viewer who isn't opted in: an aggregate derived from peer
+        profiles is still peer data, which flows only among consenting
+        participants (Spec 20 §6.1 contract). No identities are ever returned.
+        """
+        if not program_ids or not await self.is_opted_in(student_id):
+            return {}
+        prog_set = set(program_ids)
+        my_bucket = await self._age_bucket(student_id)
+        blocked = await self._blocked_student_ids(student_id)
+
+        # (program_id, other_student_id) engagement pairs for the target programs.
+        cand_rows = await self.db.execute(
+            select(SavedListItem.program_id, SavedList.student_id)
+            .join(SavedList, SavedList.id == SavedListItem.list_id)
+            .where(SavedListItem.program_id.in_(prog_set), SavedList.student_id != student_id)
+        )
+        applied_rows = await self.db.execute(
+            select(Application.program_id, Application.student_id).where(
+                Application.program_id.in_(prog_set), Application.student_id != student_id
+            )
+        )
+        all_pairs = list(cand_rows.all()) + list(applied_rows.all())
+        pairs = [(p, s) for p, s in all_pairs if s not in blocked]
+        cand_ids = {s for _, s in pairs}
+        if not cand_ids:
+            return {}
+
+        # Visible + opted-in candidates (mirrors discover()'s profile gate).
+        prof_rows = await self.db.execute(
+            select(PeerProfile.student_id)
+            .join(StudentDataConsent, StudentDataConsent.student_id == PeerProfile.student_id)
+            .where(
+                PeerProfile.student_id.in_(cand_ids),
+                PeerProfile.visible.is_(True),
+                StudentDataConsent.consent_peer_connect.is_(True),
+            )
+        )
+        eligible = {r[0] for r in prof_rows.all()}
+        if not eligible:
+            return {}
+
+        # Batch age-bucket (minor↔adult blocked, §6.4) — one query, same rule as
+        # _age_bucket: unknown DOB → 'adult'.
+        dob_rows = await self.db.execute(
+            select(StudentProfile.id, StudentProfile.date_of_birth).where(
+                StudentProfile.id.in_(eligible)
+            )
+        )
+        today = date.today()
+
+        def _bucket(dob: date | None) -> str:
+            if dob is None:
+                return "adult"
+            age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+            return "minor" if age < 18 else "adult"
+
+        matched = {sid for sid, dob in dob_rows.all() if _bucket(dob) == my_bucket}
+        if not matched:
+            return {}
+
+        # Count DISTINCT matched peers per program; suppress below the k-floor.
+        per_program: dict[UUID, set[UUID]] = {}
+        for prog_id, sid in pairs:
+            if sid in matched:
+                per_program.setdefault(prog_id, set()).add(sid)
+        return {pid: len(s) for pid, s in per_program.items() if len(s) >= PEER_COHORT_MIN}
 
     def _to_card(
         self,
