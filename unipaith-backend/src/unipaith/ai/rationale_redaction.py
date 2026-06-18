@@ -74,6 +74,23 @@ INSTITUTION_ONLY_KEY_SUBSTRINGS: tuple[str, ...] = (
 )
 
 
+# ── Raw matching-number keys (AI-Structure-3 §14) ───────────────────────────
+#
+# These keys ARE the CPEF rank key M and its internal posterior terms — the
+# literal "number" that Spec AI-Structure-3 §14 ("backend-only / the student
+# never sees a number") forbids the student from seeing. They are dropped from
+# the STUDENT breakdown projection so the rationale popover can render no numeric
+# chip derived from the rank key. The INSTITUTION projection keeps them in full
+# (project_for_institution never routes through this drop). Matched EXACTLY (not
+# as substrings like the comparative-signal list above) because short keys such
+# as "m" / "value" would over-match unrelated keys; and qualitative numeric
+# drivers (e.g. ``academic_fit``) are deliberately NOT listed — only the raw
+# rank-key scalars are stripped here.
+RAW_SCORE_KEYS: frozenset[str] = frozenset(
+    {"value", "m", "s2p_value", "inner", "coverage", "veto", "mean_rho", "alpha"}
+)
+
+
 def is_institution_only(key: str) -> bool:
     """True when a breakdown key or citation-path segment names a sensitive
     comparative/internal signal that students must not see."""
@@ -81,6 +98,23 @@ def is_institution_only(key: str) -> bool:
         return False
     low = str(key).lower()
     return any(sub in low for sub in INSTITUTION_ONLY_KEY_SUBSTRINGS)
+
+
+def drop_raw_score_keys(value: Any) -> Any:
+    """Recursively drop the raw CPEF posterior / rank-key scalars (``RAW_SCORE_KEYS``)
+    from a breakdown mapping (AI-Structure-3 §14).
+
+    Lists are walked element-wise (so a nested ``p2s`` sub-breakdown's ``value`` is
+    dropped too); everything else passes through. Never mutates the input — the
+    institution projection of the same row stays intact. Applied to the STUDENT
+    projection only."""
+    if isinstance(value, dict):
+        return {
+            k: drop_raw_score_keys(v) for k, v in value.items() if str(k) not in RAW_SCORE_KEYS
+        }
+    if isinstance(value, list):
+        return [drop_raw_score_keys(v) for v in value]
+    return value
 
 
 def redact_mapping(value: Any) -> Any:
@@ -169,15 +203,18 @@ def project_for_student(
     confidence_breakdown: dict[str, Any] | None = None,
     grounded: bool = True,
 ) -> RationaleProjection:
-    """The redacted, safe student view (spec 06 §3 / §5.5).
+    """The redacted, safe student view (spec 06 §3 / §5.5 + AI-Structure-3 §14).
 
     Keeps the plain-language prose and the student's OWN profile-signal
     citations; redacts program citations that touch sensitive comparative
-    signals and strips institution-only keys from both breakdowns.
+    signals, strips institution-only keys from both breakdowns, AND drops the raw
+    CPEF rank-key scalars (``RAW_SCORE_KEYS``) so the rationale popover renders no
+    numeric chip derived from the matching number (§14: the student never sees a
+    number). Qualitative drivers (per-signal ``key`` names, the model tag) survive.
     """
     safe_program_citations = redact_citations(cited_program_fields)
-    redacted_fitness = redact_mapping(fitness_breakdown or {})
-    redacted_confidence = redact_mapping(confidence_breakdown or {})
+    redacted_fitness = drop_raw_score_keys(redact_mapping(fitness_breakdown or {}))
+    redacted_confidence = drop_raw_score_keys(redact_mapping(confidence_breakdown or {}))
 
     was_redacted = (
         len(safe_program_citations) != len(cited_program_fields or [])

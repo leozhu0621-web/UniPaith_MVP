@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from unipaith.ai.rationale_redaction import (
     INSTITUTION_ONLY_KEY_SUBSTRINGS,
+    RAW_SCORE_KEYS,
+    drop_raw_score_keys,
     flatten_keys,
     is_institution_only,
     project_for_institution,
@@ -17,6 +19,7 @@ from unipaith.ai.rationale_redaction import (
     redact_citations,
     redact_mapping,
 )
+from unipaith.services.matching import ProgramFeatures, StudentFeatures, mutual_match
 
 # A representative rationale artifact: student-own signals + public program
 # facts (safe) mixed with comparative/internal signals (institution-only).
@@ -147,3 +150,109 @@ def test_student_and_institution_views_diverge_only_on_sensitive_signals():
 def test_redaction_map_is_nonempty():
     # Guardrail: an empty map would silently disable the asymmetry.
     assert len(INSTITUTION_ONLY_KEY_SUBSTRINGS) >= 10
+
+
+# ── AI-Structure-3 §14 — the student never sees a (rank-key) number ──────────
+
+
+def _real_cpef_breakdown() -> dict:
+    """The REAL mutual_match (CPEF) fitness breakdown — not a hand-seeded
+    look-alike — so the §14 assertions below run against the exact shape
+    production writes under cpef_matching_enabled=true."""
+    student = StudentFeatures(
+        sparse={
+            "education_level": "bachelors",
+            "geo_must": ["USA"],
+            "budget_max_usd_per_year": 35000,
+            "interest_themes": ["data_science"],
+            "gpa": 3.0,
+            "field_of_study": "data_science",
+        },
+        profile_completeness=0.8,
+    )
+    program = ProgramFeatures(
+        program_id="good",
+        sparse={
+            "target_education_level": "masters",
+            "locations": ["USA"],
+            "tuition_usd_per_year": 30000,
+            "interest_themes": ["data_science"],
+            "pref_min_gpa": 3.0,  # gives the program prefs → a numeric p2s sub-dict
+            "pref_fields": ["data_science"],
+            "pref_levels": ["bachelors"],
+        },
+    )
+    _, bd = mutual_match(student, program)
+    return bd
+
+
+def _renders_a_numeric_chip(breakdown: dict) -> bool:
+    """Mirror RationalePopover.formatBreakdownValue: only TOP-LEVEL scalars render
+    as chips (nested dicts/lists return null), and a number renders as a numeric
+    chip. True iff the popover would show at least one numeric chip."""
+    for v in breakdown.values():
+        if isinstance(v, bool):
+            continue  # rendered as "yes"/"no", not a number
+        if isinstance(v, (int, float)):
+            return True
+    return False
+
+
+def test_drop_raw_score_keys_strips_rank_key_scalars_at_every_depth():
+    bd = _real_cpef_breakdown()
+    # Sanity: the raw breakdown carries the rank-key scalars (test isn't vacuous).
+    assert {"value", "m", "s2p_value", "inner", "mean_rho"} <= set(bd)
+    assert "value" in bd["p2s"]  # nested sub-breakdown also carries one
+
+    dropped = drop_raw_score_keys(bd)
+    leaked = flatten_keys(dropped) & RAW_SCORE_KEYS
+    assert not leaked, f"raw rank-key scalars survived: {leaked}"
+    # input untouched (institution projection of the same row stays intact)
+    assert "value" in bd and "m" in bd
+
+
+def test_student_projection_of_real_cpef_breakdown_renders_no_number():
+    """§14 contract on the /explain channel (the breakdowns the rationale popover
+    actually renders): the student projection of a REAL CPEF breakdown drops every
+    rank-key scalar so no numeric chip can render, while the qualitative shell (the
+    ``model`` tag + per-signal ``key`` driver names) survives."""
+    bd = _real_cpef_breakdown()
+    confidence_bd = {"mean_rho": bd["mean_rho"], "model": "cpef", "m": bd["m"]}
+
+    proj = project_for_student(
+        rationale_text="Strong fit for your goals.",
+        cited_student_fields=["sparse.gpa"],
+        cited_program_fields=["program.outcomes"],
+        fitness_breakdown=bd,
+        confidence_breakdown=confidence_bd,
+    )
+
+    # No rank-key scalar survives — at any depth.
+    leaked = flatten_keys(proj.fitness_breakdown) & RAW_SCORE_KEYS
+    leaked |= flatten_keys(proj.confidence_breakdown) & RAW_SCORE_KEYS
+    assert not leaked, f"student projection leaked rank-key scalars: {leaked}"
+    # …and the popover renders NO numeric chip from either breakdown.
+    assert not _renders_a_numeric_chip(proj.fitness_breakdown)
+    assert not _renders_a_numeric_chip(proj.confidence_breakdown)
+    # The qualitative shell survives so the popover still has drivers to show.
+    assert proj.fitness_breakdown.get("model") == "cpef"
+    driver_names = [s.get("key") for s in proj.fitness_breakdown.get("signals", [])]
+    assert driver_names and all(isinstance(k, str) for k in driver_names)
+    assert proj.redacted is True
+
+
+def test_institution_projection_keeps_the_real_cpef_numbers():
+    """The asymmetry's other half: the institution reviewer still gets the full
+    rank-key numbers from the same real CPEF breakdown."""
+    bd = _real_cpef_breakdown()
+    inst = project_for_institution(
+        rationale_text="Strong fit.",
+        cited_student_fields=["sparse.gpa"],
+        cited_program_fields=["program.outcomes"],
+        fitness_breakdown=bd,
+        confidence_breakdown={"mean_rho": bd["mean_rho"], "m": bd["m"]},
+    )
+    assert inst.fitness_breakdown["value"] == bd["value"]
+    assert inst.fitness_breakdown["m"] == bd["m"]
+    assert inst.confidence_breakdown["mean_rho"] == bd["mean_rho"]
+    assert inst.redacted is False
