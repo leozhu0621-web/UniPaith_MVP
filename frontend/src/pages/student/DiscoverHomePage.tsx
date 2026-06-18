@@ -7,7 +7,8 @@
  * slim journey bar that opens a bottom sheet, so the conversation owns the
  * screen. The rail drives the conversation through an imperative `ask`.
  */
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ChevronDown, Sparkles } from 'lucide-react'
 
 import Card from '../../components/ui/Card'
@@ -23,6 +24,22 @@ export default function DiscoverHomePage() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [journeySheetOpen, setJourneySheetOpen] = useState(false)
   const askRef = useRef<(t: string) => void>(() => {})
+
+  // Cross-sell hand-off: writers ("Ask counselor" on a program/school/institution,
+  // the review CTA, the Discover search empty state) navigate to
+  // /s?prefill=<question>. Capture it once on mount and strip it from the URL so a
+  // refresh / back-nav doesn't silently re-ask. UniConversation sends it as the
+  // opening student turn once the session resolves.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [prefill] = useState(() => searchParams.get('prefill') || undefined)
+  useEffect(() => {
+    if (!searchParams.has('prefill')) return
+    const next = new URLSearchParams(searchParams)
+    next.delete('prefill')
+    setSearchParams(next, { replace: true })
+    // Run once on mount — the captured `prefill` outlives the cleared param.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // Guided workspace shell is gated on the backend ai_uni_guided_v1 flag
   // (spec §9). Flag off → the prior single-column open Uni experience (no rail,
   // no journey chrome) so nothing regresses.
@@ -63,6 +80,7 @@ export default function DiscoverHomePage() {
             profileOpen={profileOpen}
             onProfileOpenChange={setProfileOpen}
             onReady={onReady}
+            prefill={prefill}
           />
         </Card>
       </div>
@@ -103,6 +121,7 @@ export default function DiscoverHomePage() {
                 profileOpen={profileOpen}
                 onProfileOpenChange={setProfileOpen}
                 onReady={onReady}
+                prefill={prefill}
               />
             </Card>
           </div>
