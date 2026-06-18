@@ -263,6 +263,41 @@ async def test_search_outcome_filters(
     assert _names(r2.json()) == {"High Outcomes MS"}
 
 
+@pytest.mark.asyncio
+async def test_search_sort_salary_desc(
+    student_client, db_session, mock_student_user, mock_institution_user
+):
+    """Discover review 2026-06-14 #2 — outcome-first 'Best outcomes' sort orders
+    by median salary desc (nulls last)."""
+    inst, _ = await _seed(db_session, mock_student_user, mock_institution_user)
+    db_session.add_all(
+        [
+            Program(
+                institution_id=inst.id,
+                program_name="Higher Salary MS",
+                degree_type="masters",
+                is_published=True,
+                tuition=45000,
+                outcomes_data={"median_salary": 95000},
+            ),
+            Program(
+                institution_id=inst.id,
+                program_name="Lower Salary MS",
+                degree_type="masters",
+                is_published=True,
+                tuition=45000,
+                outcomes_data={"median_salary": 60000},
+            ),
+        ]
+    )
+    await db_session.commit()
+
+    resp = await student_client.post(SEARCH, json={"sort": "salary_desc"})
+    assert resp.status_code == 200
+    names = [r["program_name"] for r in resp.json()["results"]]
+    assert names.index("Higher Salary MS") < names.index("Lower Salary MS")
+
+
 # ── compare set ──────────────────────────────────────────────────────────────
 
 

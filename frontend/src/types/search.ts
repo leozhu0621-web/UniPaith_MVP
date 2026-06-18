@@ -29,6 +29,8 @@ export type SortOption =
   | 'tuition_desc'
   | 'acceptance_asc'
   | 'acceptance_desc'
+  | 'salary_desc'
+  | 'employment_desc'
   | 'deadline'
   | 'recently_added'
 
