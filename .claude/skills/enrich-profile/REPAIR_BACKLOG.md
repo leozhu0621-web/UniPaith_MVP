@@ -61,10 +61,11 @@ Per-row machine assembly shipped as "de-fabrication", live, ~98% of rows; all 3 
 > descriptions regenerated from the verified English-Wikipedia lead per discipline (258 fields,
 > disambiguation-guarded, 9 namesake-journal/society mismatches corrected after Codex review),
 > per-credential, real Seattle college, no "Catalog entry"/Westwood junk. A `machine_artifacts()`
-> gate + CI test was added so the class can't recur, and **Michigan + UCLA were removed from
-> `CERTIFIED_CLEAN`** (they fail the new gate). **Michigan (374) + UCLA (364) remain LIVE with the
-> same junk — they are the top repair targets**; regenerate each the same way, then re-add to
-> `CERTIFIED_CLEAN`.
+> gate + CI test was added so the class can't recur, and **Michigan, UCLA, and Stanford were
+> removed from `CERTIFIED_CLEAN`** (they fail the new gate). **Michigan (374) + UCLA (364) +
+> Stanford (150) remain LIVE with the same junk — they are the top repair targets**; regenerate
+> each the same way, then re-add to `CERTIFIED_CLEAN`. (Stanford #803 was certified clean before
+> this gate existed; its 150 "Catalog entry <hex>:" rows are the same build-script artifact.)
 
 | Institution | n | catID prefix | doubled | div-frame | namesake scrape |
 |---|---|---|---|---|---|

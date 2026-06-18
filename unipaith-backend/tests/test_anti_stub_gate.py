@@ -34,12 +34,12 @@ CERTIFIED_CLEAN = [
     "ut_austin",  # catalog.utexas.edu descriptions; school-blurb + synth reviews removed (utaprof2)
     "uw",         # Wikipedia-sourced per-credential descriptions; junk/Westwood removed (uwdefab1)
     "jhu",        # per-credential field clauses (verbatim-across-levels removed); real reviews kept
-    "stanford",   # catalogue descriptions; rollup names + synth reviews removed
-    # NOTE: "michigan" and "ucla" were REMOVED from this registry (2026-06-18, uwdefab1). Both
-    # still ship the same build-script junk UW carried — 374/364 descriptions opening
-    # "Catalog entry <hex>: Catalog entry <hex>: …" — so they FAIL the machine-artifact gate
-    # below and are NOT clean. They are queued in REPAIR_BACKLOG for the same Wikipedia-sourced
-    # regeneration UW received; re-add them here once de-fabricated.
+    # NOTE: "michigan", "ucla", and "stanford" were REMOVED from this registry (2026-06-18,
+    # uwdefab1). All three still ship the same build-script junk UW carried — 374 / 364 / 150
+    # descriptions opening "Catalog entry <hex>: …" — so they FAIL the machine-artifact gate
+    # below and are NOT clean (stanford was certified by #803 before this gate existed). They
+    # are queued in REPAIR_BACKLOG for the same Wikipedia-sourced regeneration UW received;
+    # re-add each here once de-fabricated.
 ]
 
 

@@ -18,7 +18,7 @@ from alembic import op
 from unipaith.data import uw_profile
 
 revision = "uwdefab1"
-down_revision = "jhudefab1"
+down_revision = "jhustanmerge1"
 branch_labels = None
 depends_on = None
 
