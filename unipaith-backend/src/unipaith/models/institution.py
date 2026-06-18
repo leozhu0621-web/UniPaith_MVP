@@ -5,6 +5,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
+    ARRAY,
     Boolean,
     Date,
     DateTime,
@@ -1181,3 +1182,50 @@ class EmployerFeedback(Base):
         server_default=func.now(),
         nullable=False,
     )
+
+
+class ProgramPreference(Base):
+    """The program side of the shared Prompt Library — what applicant the
+    program wants (its "target applicant"). The mirror of ``StudentPreference``.
+
+    AI Structure (Spec 2/3): drives the ``program → student`` match direction.
+    ``source`` records whether these preferences were *derived* from public
+    materials (crawler, for an unclaimed program) or *claimed* (first-party,
+    set by a verified school user) — the authority that becomes ``c_program``.
+    """
+
+    __tablename__ = "program_preferences"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    program_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("programs.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    # Target-applicant profile (the values the student's attributes are scored against).
+    pref_min_gpa: Mapped[Decimal | None] = mapped_column(Numeric(4, 2))
+    pref_test_bands: Mapped[dict | None] = mapped_column(JSONB)  # e.g. {"GRE": 320}
+    # preferred applicant fields / current levels / recruiting geography
+    pref_fields: Mapped[list[str] | None] = mapped_column(ARRAY(String))
+    pref_levels: Mapped[list[str] | None] = mapped_column(ARRAY(String))
+    pref_countries: Mapped[list[str] | None] = mapped_column(ARRAY(String))
+    # Recruiting importance weights (0–10) — the program-side analogue of the
+    # student preference weights.
+    weight_academic: Mapped[int | None] = mapped_column(Integer)
+    weight_field_fit: Mapped[int | None] = mapped_column(Integer)
+    weight_outcomes_alignment: Mapped[int | None] = mapped_column(Integer)
+    weight_funding_need: Mapped[int | None] = mapped_column(Integer)
+    weight_geographic: Mapped[int | None] = mapped_column(Integer)
+    # Provenance / authority. 'derived' = crawler-inferred (unclaimed program);
+    # 'claimed' = first-party (verified school user). Feeds c_program in matching.
+    source: Mapped[str] = mapped_column(String(30), default="derived", nullable=False)
+    confidence: Mapped[Decimal | None] = mapped_column(Numeric(3, 2))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    program: Mapped[Program] = relationship()

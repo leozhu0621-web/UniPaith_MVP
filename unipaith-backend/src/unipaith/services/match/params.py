@@ -17,6 +17,8 @@ DEFAULT_PARAMS: dict[str, float] = {
     "w_base": 6.0,  # default importance for structural signals (0–10 scale)
     "n0": 3.0,  # coverage soft-saturation constant
     "alpha": 0.7,  # mutual-fit blend, student side leads (used in Slice B)
+    "ps_floor": 0.2,  # p→s satisfaction floor — a program that rejects the student
+    #                   pulls M down but never buries it (the s→p veto's job)
     "prior": 0.5,  # neutral base-rate fit when no per-(program,dim) prior
     "confirmed_gain": 0.85,  # rho >= this ⇒ a "confirmed" deal-breaker (hardened floor)
 }
