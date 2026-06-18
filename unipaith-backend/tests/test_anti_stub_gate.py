@@ -30,6 +30,7 @@ CERTIFIED_CLEAN = [
     "duke",       # "{program_name}: " prefix-double removed; per-credential doctoral clauses
     "uiuc",       # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
     "usc",        # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
+    "michigan",   # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
 ]
 
 

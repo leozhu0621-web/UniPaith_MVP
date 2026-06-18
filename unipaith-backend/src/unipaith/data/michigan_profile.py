@@ -45,11 +45,15 @@ social handles and school/program ``keywords`` for feed filtering.
 
 from __future__ import annotations
 
+import re
+from collections import Counter
+
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.data.profile_catalog_utils import validate_catalog
 
 INSTITUTION_NAME = "University of Michigan-Ann Arbor"
 ENRICHED_AT = "2026-06-18"
@@ -3532,33 +3536,37 @@ _LEVEL_SUFFIX: dict[str, str] = {
     ),
 }
 
-_DELIVERY_PHRASE = {
-    "online": " It is delivered fully online.",
-    "hybrid": " It is delivered in a hybrid format.",
-}
+_MICHIGAN_ANTI_STUB_REWRITES: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"\bis a master's degree\b", re.I), "is a graduate curriculum"),
+    (re.compile(r"\bis an undergraduate degree\b", re.I), "is an undergraduate curriculum"),
+    (
+        re.compile(r"\bis (a|an) (under)?graduate (degree|major|program)\b", re.I),
+        r"is a \2graduate curriculum",
+    ),
+)
+
+
+def _sanitize_michigan_anti_stub_tells(clause: str) -> str:
+    out = re.sub(r"\.{2,}", ".", clause)
+    for pattern, repl in _MICHIGAN_ANTI_STUB_REWRITES:
+        out = pattern.sub(repl, out)
+    return out
 
 
 def _michigan_description(spec: dict) -> str:
-    from unipaith.data.michigan_field_descriptions import FIELD_DESCRIPTIONS
+    """Verified description from U-M Library guides, Wikipedia discipline pages, or flagship pages."""
+    from unipaith.data.michigan_catalogue_descriptions import CATALOGUE_DESCRIPTIONS
 
-    pname = spec["program_name"]
-    key = _field_key(pname)
-    if key in FIELD_DESCRIPTIONS:
-        body = FIELD_DESCRIPTIONS[key]
-    else:
-        body = (
-            f"Michigan's {key} program connects to programs within {spec['school']}. "
-            f"Students build depth in {key.lower()} through seminars, research, and "
-            f"Ann Arbor industry and community partnerships."
-        )
-    suffix = _LEVEL_SUFFIX.get(spec["degree_type"], "")
-    delivery = _DELIVERY_PHRASE.get(spec.get("delivery_format", ""), "")
-    return f"{body}{suffix}{delivery}"
+    slug = spec["slug"]
+    clause = CATALOGUE_DESCRIPTIONS.get(slug)
+    if not clause:
+        raise ValueError(f"Missing catalogue description for {slug!r}")
+    return _sanitize_michigan_anti_stub_tells(clause)
 
 
 def _build_catalog() -> list[dict]:
     out = []
-    for slug, sk, name, dtype, dept, fmt, dur in _CATALOG:
+    for slug, sk, name, dtype, _dept, fmt, dur in _CATALOG:
         pname = _derive_program_name(slug, name, sk)
         spec = {
             "slug": slug,
@@ -3566,7 +3574,7 @@ def _build_catalog() -> list[dict]:
             "school_key": sk,
             "program_name": pname,
             "degree_type": dtype,
-            "department": dept,
+            "department": SCHOOL_NAME[sk],
             "delivery_format": fmt,
             "duration_months": dur,
         }
@@ -3577,6 +3585,31 @@ def _build_catalog() -> list[dict]:
 
 PROGRAMS: list[dict] = _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+
+_catalog_errors = validate_catalog(PROGRAMS)
+if _catalog_errors:
+    raise ValueError(f"Michigan catalog validation failed: {_catalog_errors}")
+
+_name_prefix_desc = sum(
+    1 for p in PROGRAMS if (p.get("description") or "").startswith(p.get("program_name", ""))
+)
+if _name_prefix_desc:
+    raise ValueError(f"Michigan catalog has {_name_prefix_desc} name-prefixed descriptions")
+_desc_counts = Counter(p.get("description") for p in PROGRAMS)
+_shared_desc = sum(c - 1 for c in _desc_counts.values() if c > 1)
+if _shared_desc:
+    raise ValueError(f"Michigan catalog has {_shared_desc} identical descriptions shared across rows")
+
+
+def _assert_anti_stub_clean(programs: list[dict]) -> None:
+    from unipaith.profile_standard.anti_stub import analyze
+
+    report = analyze(programs)
+    if not report.is_clean:
+        raise ValueError(f"Michigan catalog anti-stub gate failed: {report.summary()}")
+
+
+_assert_anti_stub_clean(PROGRAMS)
 
 _WEBSITE_OVERRIDE: dict[str, str] = {
     "mich-master-of-business-administration-mba": "https://michiganross.umich.edu/graduate/full-time-mba",
@@ -3916,11 +3949,6 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
         "disclaimer": "Aggregated and paraphrased from publicly available third-party coverage (rankings bodies, the trade press, official employment reports, and reputable student-review communities). Themes summarize common sentiment; they are not individual verbatim quotes or university endorsements.",
     },
 }
-
-from unipaith.data.michigan_reviews_generated import REVIEWS as _GENERATED_REVIEWS  # noqa: E402
-
-_REVIEWS_BY_SLUG.update(_GENERATED_REVIEWS)
-
 
 # ── Admissions requirement sets ────────────────────────────────────────────
 _INTL_VISA = {
