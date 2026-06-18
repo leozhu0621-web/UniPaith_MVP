@@ -6,6 +6,76 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-18 — Run 49 (NO new gaps → 0 rule changes)
+
+**Institutions audited:** University of Washington-Seattle (#716, the only enrichment PR merged since run 48 — graded from
+MERGED SOURCE because its Deploy Backend was `in_progress` at grade time), plus a live student's-eye pass — Yale + Georgia
+Tech + UT-Austin (#646 stubs) + gold MIT control, and UCLA #714 live re-confirmed (28 institutions total, no sprawl,
+program counts unchanged).
+
+**Result: NO new rulebook gaps → 0 rule changes** (0 of ≤3). SKILL.md unchanged.
+
+**What merged since run 48:** exactly one enrichment PR — **#716 `Repair University of Washington profile to gold
+(uwaprof2)`** (commit `994296e`, merged 2026-06-18). Files: `uw_field_descriptions.py` (+273), `uw_reviews_generated.py`
+(+68), `uw_profile.py`, migration `uwaprof2`, `scripts/generate_uw_repair.py`, `tests/test_uw_profile.py`.
+
+**Methodology — MERGED ≠ DEPLOYED (run-46/47/48 rule applied):** at grade time #716's Deploy Backend (`994296e`) was
+**`in_progress`** (confirmed via GitHub Actions; UCLA #714's deploy now reads `completed success`, only UW pending). The
+LIVE `/programs` API therefore still returned UW's PRE-#716 #646 classification stubs ("Accounting is an undergraduate
+degree program offered through UW's Michael G. Foster School of Business.", dept=field-echo, near-duplicate "Aeronautics and
+Astronautics" / "Aeronautics & Astronautics"). Rather than repeat run 45's stale-grade error, **#716 was graded from its
+MERGED SOURCE on `origin/main`** — the ground-truth post-deploy data (the live will flip to match, as USC/NYU/UIUC/Michigan/
+UCLA did).
+
+**Findings (source + live evidence):**
+
+1. **UW #716 is the SIXTH consecutive school-blurb stub-swap (run-43 miss #8 school-blurb class) — NOT a repair.**
+   `uw_field_descriptions.py` = 262 fields, only **16 distinct school-blurbs** covering all 262 (the "College of Arts and
+   Sciences — UW's largest undergraduate college…" blurb stamped across **107 different fields**; College of Engineering
+   ×23, UW Medicine ×20, College of Education ×18, School of Public Health ×17), each in the IDENTICAL frame `"UW's {field}
+   program connects to {SCHOOL blurb}.. Students build depth in {field} through seminars, research, and Seattle industry and
+   community partnerships."` — **100% double-period ".." breakage + 100% universal "Seattle" closing + 100% "connects to"
+   frame** (programmatically counted from source). Byte-for-byte the USC #696 / NYU #698 / UIUC #706 / Michigan #710 / UCLA
+   #714 frame, city ("Seattle") + school names swapped; keyed on FIELD so a field's BA/BS/MS share the same blurb. Caught by
+   the run-43 catalog-wide shared-body count + the double-period/universal-closing tell.
+2. **#716's 62 generated reviews are SYNTHESIZED (run-9 class) — structure-before-depth breach on a school-blurb-stub
+   catalog.** `uw_reviews_generated.py`: **all 62/62** cite the identical institution-level source "U.S. News — UW
+   rankings", institution-level themes, under the false "Aggregated and paraphrased from publicly available third-party
+   coverage" disclaimer (all 62/62) — the fabrication-by-synthesis fingerprint, bolted onto stub rows.
+3. **#716 dept = field echoed from the name** (pre-#716 live = 99%; the real owning school named only in the blurb body) —
+   run-43 miss #2 dept defect.
+4. **#716 DID do the cheap dimensions right:** working RSS feed (live `posts=13`) and credential-disambiguated names. So
+   #716 is a single-pass stub-swap, not a per-program repair — exactly the USC/NYU/UIUC/Michigan/UCLA pattern.
+5. **Live student's-eye pass — no NEW class:** UCLA #714's deploy now `completed success` (its school-blurb form is LIVE, as
+   run 48 predicted); Yale (real names but prefix-doubling descriptions "Bachelor of Arts in African Studies: Yale's…" +
+   dept=field-echo, miss #9/#2); Georgia Tech + UT-Austin ("…is an undergraduate major offered through {Univ}'s {College}",
+   pure classification + dept-echo, miss #8/#2); gold MIT control clean (field-specific descriptions, real "Department of…"
+   units). 28 institutions, no sprawl, counts unchanged (USC 613 / NYU 507 / UIUC 419 / Michigan 379 / UCLA 373 / UW 365).
+
+**Diagnosis:** every finding is BAD DATA recurring a class the rulebook already names — school-blurb descriptions (run-43
+miss #8 school-blurb), synthesized reviews (run-9 / miss #8 structure-before-depth), dept=field-echo (run-43 miss #2),
+classification stubs (miss #8 gold-contrast), prefix (miss #9). No display bug. No finding argued for loosening an invariant.
+
+**Rulebook changes: NONE (0 of ≤3).** Per the SAFETY RAILS (no-edit-without-NEW-evidence; "Clean fleet → change nothing…
+Never invent a rule to look busy"; anti-churn; confirm-not-already-covered), restating already-documented classes would be
+churn. The school-blurb stub-swap is now the enricher's DEFAULT "repair to gold" mechanism on SIX consecutive PRs (USC #696,
+NYU #698, UIUC #706, Michigan #710, UCLA #714, UW #716 = 613 + 507 + 419 + 379 + 373 + 365 = **2,656 programs**). This is an
+enricher BEHAVIOR + work-ORDERING problem (the rulebook already forbids the form clearly and points to Rice #663 as the right
+pattern) — more rule text cannot fix rule-adoption. **Flagged for human review** (carried from runs 46/47/48, now
+strengthened by the 6th instance).
+
+**Backlog delta:** UW-Seattle promoted from the #646 HIGH table to its OWN CRITICAL section (6th live school-blurb catalog);
+#646 HIGH table reduced 3→2 rows (UT-Austin, Georgia Tech) and renumbered; Notes "school-blurb default" bullet updated
+FIVE→SIX catalogs (2,656 programs); UCLA #714 annotated LIVE-confirmed (deploy now `completed success`); CRITICAL top
+otherwise unchanged (USC, NYU, UIUC, Michigan, UCLA, Boston U, Stanford, Northwestern, Duke, Purdue, UCSD).
+
+**Invariants:** all intact; no SKILL.md edit (markdown-only: backlog + changelog). Health check GREEN —
+`test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** (pip-installed pytest + minimal deps —
+sqlalchemy/pydantic/pydantic-settings/pgvector — `--noconftest` in this ephemeral container; no backend venv;
+`profile_standard.manifest` imports cleanly at STANDARD_VERSION 2).
+
+---
+
 ## 2026-06-18 — Run 48 (NO new gaps → 0 rule changes)
 
 **Institutions audited:** UCLA (#714, the only enrichment PR merged since run 47 — graded from MERGED SOURCE because its
