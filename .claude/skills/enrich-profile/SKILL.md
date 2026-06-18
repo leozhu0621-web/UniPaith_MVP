@@ -4,7 +4,9 @@ description: >
   Autonomously develop the UniPaith profile database toward the gold standard,
   ONE COMPLETE UNIVERSITY per run — the institution page + every school + every
   program + all their details — verified and shipped as one atomic unit. Use as a
-  scheduled routine that keeps growing the database. Discovers a university's real
+  scheduled routine that keeps DEEPENING the database toward gold — enrichment +
+  repair only; it never adds universities (seeding is external). Discovers a
+  university's real
   structure, researches every field from authoritative sources, VERIFIES (never
   fabricates — omits if unverifiable), writes the data + an idempotent migration,
   and ships it live. Full spec:
