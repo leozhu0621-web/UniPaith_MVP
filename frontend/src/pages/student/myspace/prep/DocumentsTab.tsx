@@ -5,7 +5,7 @@
  */
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FileText, Trash2 } from 'lucide-react'
+import { Download, FileText, Trash2 } from 'lucide-react'
 
 import Badge from '../../../../components/ui/Badge'
 import Button from '../../../../components/ui/Button'
@@ -13,10 +13,10 @@ import Select from '../../../../components/ui/Select'
 import Skeleton from '../../../../components/ui/Skeleton'
 import QueryError from '../../../../components/ui/QueryError'
 import EmptyState from '../../../../components/ui/EmptyState'
-import { deleteDocument, listDocuments } from '../../../../api/documents'
+import { deleteDocument, getDocument, listDocuments } from '../../../../api/documents'
 import { confirmDialog } from '../../../../stores/confirm-store'
 import { showToast } from '../../../../stores/toast-store'
-import { formatFileSize } from '../../../../utils/format'
+import { formatDate, formatFileSize } from '../../../../utils/format'
 import { DOCUMENT_TYPES } from '../../../../utils/constants'
 import { SectionHeader } from '../../profile/shared'
 import FileDropzone from '../../profile/FileDropzone'
@@ -25,12 +25,31 @@ export default function DocumentsTab() {
   const qc = useQueryClient()
   const { data: documents, isLoading, isError, refetch } = useQuery({ queryKey: ['documents'], queryFn: listDocuments })
   const [docType, setDocType] = useState('transcript')
+  const [openingId, setOpeningId] = useState<string | null>(null)
 
   const docDelete = useMutation({
     mutationFn: deleteDocument,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['documents'] }); showToast('Document removed', 'success') },
     onError: () => showToast("We couldn't remove the document. Please try again.", 'error'),
   })
+
+  const openDocument = async (docId: string) => {
+    if (openingId) return
+    setOpeningId(docId)
+    try {
+      const doc = await getDocument(docId)
+      const url: string | null = doc?.download_url ?? null
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer')
+      } else {
+        showToast("We couldn't open that file. Please try again.", 'error')
+      }
+    } catch {
+      showToast("We couldn't open that file. Please try again.", 'error')
+    } finally {
+      setOpeningId(null)
+    }
+  }
 
   const documentsList: any[] = Array.isArray(documents) ? documents : []
 
@@ -80,11 +99,23 @@ export default function DocumentsTab() {
             <div key={doc.id} className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{doc.file_name}</p>
-                <p className="text-xs text-muted-foreground">{formatFileSize(doc.file_size_bytes)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatFileSize(doc.file_size_bytes)}
+                  {doc.uploaded_at ? ` · ${formatDate(doc.uploaded_at)}` : ''}
+                </p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="neutral">{doc.document_type}</Badge>
+                <Badge variant="neutral">{DOCUMENT_TYPES.find(d => d.value === doc.document_type)?.label ?? doc.document_type}</Badge>
                 {doc.verification_status === 'verified' && <Badge variant="success">verified</Badge>}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label={`Download ${doc.file_name}`}
+                  disabled={openingId === doc.id}
+                  onClick={() => openDocument(doc.id)}
+                >
+                  <Download size={14} />
+                </Button>
                 <Button
                   size="sm"
                   variant="ghost"
