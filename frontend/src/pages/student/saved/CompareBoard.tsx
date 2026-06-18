@@ -7,8 +7,23 @@ import { ArrowUp, ArrowDown } from 'lucide-react'
 import BandBadge from '../../../components/ui/BandBadge'
 import { formatCurrency } from '../../../utils/format'
 import type { MatchBand, SavedProgram } from '../../../types'
-import { computeBalance } from './listBalance'
 import { COMPARE_COLUMNS, sortRows, type CompareColumn, type SortDir } from './compareSort'
+
+/** Reach/target/safer counts over the shortlist (self-contained — the page's
+ *  BandBalanceBar covers the headline; here we only need the reach-heavy flag). */
+function bandCounts(programs: SavedProgram[]) {
+  let reach = 0
+  let target = 0
+  let safer = 0
+  let unscored = 0
+  for (const p of programs) {
+    if (p.band_label === 'reach') reach++
+    else if (p.band_label === 'target') target++
+    else if (p.band_label === 'safer') safer++
+    else unscored++
+  }
+  return { reach, target, safer, unscored, scored: reach + target + safer }
+}
 
 function fmtAcceptance(r?: number | null): string {
   return r == null ? '—' : `${Math.round(r * (r <= 1 ? 100 : 1))}%`
@@ -25,7 +40,7 @@ export default function CompareBoard({ programs }: { programs: SavedProgram[] })
   const navigate = useNavigate()
   const [sort, setSort] = useState<{ key: CompareColumn; dir: SortDir }>({ key: 'band', dir: 'asc' })
   const rows = sortRows(programs, sort.key, sort.dir)
-  const balance = computeBalance(programs)
+  const balance = bandCounts(programs)
   const reachHeavy = balance.scored >= 3 && balance.reach > balance.scored / 2
 
   const onHeader = (key: CompareColumn) =>

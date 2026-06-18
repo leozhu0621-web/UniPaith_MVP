@@ -36,9 +36,11 @@ export default function PrepPage() {
 
   const switchTab = (t: Tab) => {
     setTab(t)
-    // Preserve deep-link params other than tab (e.g. prompts ?view=major).
     const params = new URLSearchParams(searchParams)
-    params.delete('view')
+    // `view` belongs to the Prompts tab (its major/behavioral toggle). Only drop
+    // it when actually leaving Prompts — otherwise a ?view=major deep-link and
+    // in-session toggles survive any other in-Prep interaction.
+    if (t !== 'prompts') params.delete('view')
     if (t === 'workshops') params.delete('tab')
     else params.set('tab', t)
     const qs = params.toString()

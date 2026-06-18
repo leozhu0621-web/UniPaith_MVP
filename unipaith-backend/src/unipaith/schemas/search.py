@@ -57,6 +57,10 @@ class SortOption(StrEnum):
     tuition_desc = "tuition_desc"
     acceptance_asc = "acceptance_asc"
     acceptance_desc = "acceptance_desc"
+    # Outcome-first discovery (Discover review 2026-06-14 #2) — order by ROI.
+    # InstitutionService.search_programs already supports these sort_by keys.
+    salary_desc = "salary_desc"
+    employment_desc = "employment_desc"
     deadline = "deadline"
     recently_added = "recently_added"
 

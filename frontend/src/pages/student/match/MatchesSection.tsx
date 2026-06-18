@@ -31,6 +31,9 @@ interface MatchesSectionProps {
   /** Spec 2026-06-12 §6.4 — next upcoming event per institution, for the card event chips. */
   nextEventByInstitution?: Map<string, { event_name: string; start_time: string }>
   onEventClick?: () => void
+  /** True when the student has an active strategy — drives the strategy→matches
+   *  bridge line (the matches are banded off the strategy; refine it to update them). */
+  strategyActive?: boolean
 }
 
 function relativeTime(iso?: string | null): string {
@@ -45,7 +48,7 @@ function relativeTime(iso?: string | null): string {
   return `${Math.round(hrs / 24)}d ago`
 }
 
-export default function MatchesSection({ savedIds, onToggleSave, nextEventByInstitution, onEventClick }: MatchesSectionProps) {
+export default function MatchesSection({ savedIds, onToggleSave, nextEventByInstitution, onEventClick, strategyActive }: MatchesSectionProps) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const compareStore = useCompareStore()
@@ -188,6 +191,22 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
         refreshing={refreshMut.isPending}
         onRefinePriorities={() => setPrioritiesOpen(true)}
       />
+
+      {/* Strategy → matches bridge. Only with an active strategy + matches present:
+          names the honest relationship (matches are banded off the strategy, not
+          ranked in this view) and puts Refine priorities right at the seam. */}
+      {strategyActive && (
+        <p className="-mt-1 mb-3 text-xs text-muted-foreground">
+          These matches reflect your strategy.{' '}
+          <button
+            onClick={() => setPrioritiesOpen(true)}
+            className="font-medium text-secondary hover:underline"
+          >
+            Refine priorities
+          </button>{' '}
+          to update them.
+        </p>
+      )}
 
       {/* AI-down cached fallback banner (§8). */}
       {isError && (

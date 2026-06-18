@@ -19,6 +19,7 @@ import EmptyState from '../../../../components/ui/EmptyState'
 import { getMyInterviews } from '../../../../api/interviews'
 import { getAccommodations, getScheduling, upsertAccommodations, upsertScheduling } from '../../../../api/students'
 import { showToast } from '../../../../stores/toast-store'
+import { INTERVIEW_STATUS_LABELS } from '../../../../utils/constants'
 import { AccommodationForm, SchedulingForm } from '../../components/ProfileForms'
 import { SectionHeader } from '../../profile/shared'
 import InterviewRespondPanel from '../../interviews/InterviewRespondPanel'
@@ -26,6 +27,17 @@ import type { Interview } from '../../../../types'
 
 const RESPOND_STATUSES = new Set(['proposed', 'reschedule_requested'])
 const SCHEDULED_STATUSES = new Set(['scheduled', 'confirmed'])
+// "Didn't happen" — interviews that closed without taking place.
+const DIDNT_HAPPEN_STATUSES = new Set(['declined', 'cancelled', 'no_show'])
+
+// Humane status label — an expired async window reads "Expired" regardless of
+// the stored status; otherwise reuse the shared map, falling back to a
+// de-underscored value.
+function statusLabel(iv: Interview): string {
+  if (iv.async_expired) return INTERVIEW_STATUS_LABELS.async_expired
+  const status = String(iv.status)
+  return INTERVIEW_STATUS_LABELS[status] ?? status.replace(/_/g, ' ')
+}
 
 function InterviewRow({ iv }: { iv: Interview }) {
   const when = iv.confirmed_time ?? iv.scheduled_at
@@ -47,7 +59,7 @@ function InterviewRow({ iv }: { iv: Interview }) {
         {!iv.meeting_link && iv.location && (
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><MapPin size={12} /> {iv.location}</span>
         )}
-        <Badge variant={SCHEDULED_STATUSES.has(String(iv.status)) ? 'success' : 'neutral'}>{String(iv.status).replace(/_/g, ' ')}</Badge>
+        <Badge variant={SCHEDULED_STATUSES.has(String(iv.status)) ? 'success' : 'neutral'}>{statusLabel(iv)}</Badge>
       </div>
     </div>
   )
@@ -75,6 +87,12 @@ export default function InterviewsTab() {
   const needsResponse = list.filter(iv => RESPOND_STATUSES.has(String(iv.status)) && !iv.async_expired)
   const scheduled = list.filter(iv => SCHEDULED_STATUSES.has(String(iv.status)))
   const past = list.filter(iv => !RESPOND_STATUSES.has(String(iv.status)) && !SCHEDULED_STATUSES.has(String(iv.status)))
+  // Split the past bucket so a completed interview never sits next to a
+  // declined / cancelled / no-show / expired one under one vague heading.
+  const completed = past.filter(iv => String(iv.status) === 'completed' && !iv.async_expired)
+  const didntHappen = past.filter(
+    iv => iv.async_expired || DIDNT_HAPPEN_STATUSES.has(String(iv.status)),
+  )
 
   return (
     <div className="w-full px-4 sm:px-6 py-6 space-y-10">
@@ -108,10 +126,16 @@ export default function InterviewsTab() {
                 {scheduled.map(iv => <InterviewRow key={iv.id} iv={iv} />)}
               </div>
             )}
-            {past.length > 0 && (
+            {completed.length > 0 && (
               <div>
-                <p className="mb-1 text-eyebrow uppercase text-muted-foreground">Past & other</p>
-                {past.map(iv => <InterviewRow key={iv.id} iv={iv} />)}
+                <p className="mb-1 text-eyebrow uppercase text-muted-foreground">Completed</p>
+                {completed.map(iv => <InterviewRow key={iv.id} iv={iv} />)}
+              </div>
+            )}
+            {didntHappen.length > 0 && (
+              <div>
+                <p className="mb-1 text-eyebrow uppercase text-muted-foreground">Didn&apos;t happen</p>
+                {didntHappen.map(iv => <InterviewRow key={iv.id} iv={iv} />)}
               </div>
             )}
           </div>
