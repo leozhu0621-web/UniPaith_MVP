@@ -19,6 +19,7 @@ from unipaith.api.connect import router as connect_router
 from unipaith.api.content_ingest import router as content_ingest_router
 from unipaith.api.discovery import router as discovery_router
 from unipaith.api.documents import router as documents_router
+from unipaith.api.enrichment import router as enrichment_router
 from unipaith.api.events import router as events_router
 from unipaith.api.feedback import router as feedback_router
 from unipaith.api.goals import router as goals_router
@@ -84,6 +85,9 @@ api_router.include_router(major_specific_router)
 # students_router so the literal sub-paths win over `/students/me/*` (and over
 # the legacy `/students/me/intake/chat` stub still served by students_router).
 api_router.include_router(intake_router)
+# AI Structure (Spec 1) — enrichment loop under `/students/me/enrichment/*`;
+# before students_router for the same literal-path-precedence reason.
+api_router.include_router(enrichment_router)
 api_router.include_router(students_router)
 api_router.include_router(discovery_router)
 api_router.include_router(goals_router)
