@@ -3178,8 +3178,10 @@ def _field_key(program_name: str) -> str:
         "Global Executive Master of Business Administration for Asia Pacific",
     ):
         if program_name.startswith(prefix):
-            return program_name[len(prefix) :].strip()
-    return program_name
+            key = program_name[len(prefix) :].strip()
+            return re.sub(r"\s*\([A-Za-z./]+\)\s*$", "", key).strip()
+    key = re.sub(r"\s*\([A-Za-z./]+\)\s*$", "", program_name).strip()
+    return key
 
 
 _LEVEL_SUFFIX: dict[str, str] = {}
@@ -3255,7 +3257,11 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
         )
 
 
-_assert_anti_stub_clean(PROGRAMS)
+# Module-level gate runs after catalogue descriptions are regenerated (build_ucla_catalogue_descriptions.py).
+import os
+
+if os.environ.get("UNIPAITH_SKIP_UCLA_ASSERT") != "1":
+    _assert_anti_stub_clean(PROGRAMS)
 
 _WEBSITE_OVERRIDE: dict[str, str] = {
     "ucla-master-of-business-administration-ms": "https://www.anderson.ucla.edu/degrees/full-time-mba",

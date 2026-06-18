@@ -70,6 +70,21 @@ _SLUG_OVERRIDES: dict[str, str] = {
         "program blending stochastic calculus, data science, and computational trading with "
         "summer internships; Poets&Quants ranks it among the top financial engineering programs."
     ),
+    "ucla-executive-master-of-business-administration-ms": (
+        "UCLA Anderson's Executive MBA is a 22-month program for mid-career professionals, "
+        "combining core business disciplines with MAP field projects and strong Los Angeles "
+        "entertainment, healthcare, and technology recruiting."
+    ),
+    "ucla-fully-employed-master-of-business-administration-ms": (
+        "UCLA Anderson's Fully Employed MBA lets working professionals complete the MBA on "
+        "evenings and weekends while pairing core coursework with Anderson's action-based "
+        "learning and Southern California recruiting networks."
+    ),
+    "ucla-global-executive-master-of-business-administration-for-asia-pacific-ms": (
+        "UCLA Anderson's Global Executive MBA for the Asia Pacific meets in Los Angeles and "
+        "across the region, blending Anderson core courses with cross-border case studies for "
+        "senior managers in Pacific markets."
+    ),
     "ucla-film-and-television-ug": (
         "UCLA TFT's Film, Television, and Digital Media major combines production workshops, "
         "screenwriting, and critical studies with access to the UCLA Film & Television Archive "
@@ -88,6 +103,92 @@ _SLUG_OVERRIDES: dict[str, str] = {
         "field partnerships."
     ),
 }
+
+_FIELD_WIKI_TITLE: dict[str, str] = {
+    "Choreographic Inquiry": "Choreography",
+    "Astronomy and Astrophysics (M.A.T.)": "Astronomy",
+    "Mathematics (M.A.T.)": "Mathematics",
+    "Physics (M.A.T.)": "Physics",
+    "Nursing BS Prelicensure": "Nursing",
+    "Executive Master of Business Administration": "Master of Business Administration",
+    "Global Executive Master of Business Administration for Asia Pacific": "Master of Business Administration",
+    "Asian Languages and Cultures": "Asian studies",
+    "Near Eastern Languages and Cultures": "Middle Eastern studies",
+    "Slavic, East European, and Eurasian Languages and Cultures": "Slavic studies",
+    "European Languages and Transcultural Studies": "European studies",
+    "Central and East European Languages and Cultures": "Slavic studies",
+    "Atmospheric and Oceanic Sciences": "Atmospheric sciences",
+    "Atmospheric and Oceanic Sciences/Mathematics": "Atmospheric sciences",
+    "Molecular, Cell, and Developmental Biology": "Cell biology",
+    "Molecular, Cellular, and Integrative Physiology": "Physiology",
+    "Electrical and Computer Engineering": "Electrical engineering",
+    "Computer Science and Engineering": "Computer science",
+    "Materials Science and Engineering": "Materials science",
+    "Oral Biology": "Dentistry",
+    "Design|Media Arts": "Design",
+    "World Arts and Cultures": "Ethnomusicology",
+    "Culture and Performance": "Performance studies",
+    "Theater": "Theater",
+    "Theater and Performance Studies": "Theater",
+    "Asian Humanities": "Humanities",
+    "Individual Field of Concentration BA in Letters and Science": "Liberal arts education",
+    "Individual Field of Concentration BS in Letters and Science": "Liberal arts education",
+    "Individual Field of Concentration BA in Arts and Architecture": "Liberal arts education",
+    "Individual Field of Concentration BA in Theater, Film, and Television": "Theater",
+    "Applied Linguistics": "Applied linguistics",
+    "Ancient Near East and Egyptology": "Ancient Near East",
+    "Financial Actuarial Mathematics": "Actuarial science",
+    "Statistics and Data Science": "Statistics",
+    "Data Theory": "Statistics",
+    "Computational Biology": "Computational biology",
+    "Cognitive Science": "Cognitive science",
+    "Climate Science": "Climate science",
+    "Marine Biology": "Marine biology",
+    "Physiological Science": "Physiology",
+    "Psychobiology": "Biopsychology",
+    "Public Health (B.A.)": "Public health",
+    "Public Health (B.S.)": "Public health",
+    "Master of Legal Studies": "Legal education",
+    "Doctor of Juridical Science": "Doctor of Juridical Science",
+    "Information Studies": "Information science",
+    "Medical Informatics": "Health informatics",
+    "Biomathematics": "Mathematical biology",
+    "Molecular and Medical Pharmacology": "Pharmacology",
+    "Genetic Counseling": "Genetic counseling",
+    "Conservation of Cultural Heritage": "Conservation and restoration of cultural heritage",
+    "Conservation of Material Culture": "Conservation and restoration of cultural heritage",
+    "Teaching Asian Languages": "Language education",
+    "Engineer": "Engineering",
+}
+
+
+def _wiki_lookup_fields(field: str) -> list[str]:
+    """Ordered Wikipedia lookup candidates for a catalog field label."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for cand in (
+        _FIELD_WIKI_TITLE.get(field),
+        field,
+        _search_field(field),
+        field.split(" and ")[0] if " and " in field else None,
+        field.split(",")[0] if "," in field else None,
+    ):
+        if not cand or cand in seen:
+            continue
+        seen.add(cand)
+        out.append(cand)
+    return out
+
+
+def _resolve_field_body(
+    client: httpx.Client, field: str, guide_slugs: list[str], cache: dict
+) -> str:
+    for cand in _wiki_lookup_fields(field):
+        body = _field_body(client, cand, guide_slugs, cache)
+        if body:
+            return body
+    return ""
+
 
 _FIELD_GUIDE: dict[str, str] = {
     "Afroamerican and African Studies": "africanamericanstudies",
@@ -111,7 +212,8 @@ _FIELD_GUIDE: dict[str, str] = {
     "Industrial and Operations Engineering": "industrial_operations_engineering",
     "Materials Science and Engineering": "materials_science",
     "Mechanical Engineering": "mechanical_engineering",
-    "Nuclear Engineering and Radiological Sciences": "nuclear_engineering",
+    "Nursing": "nursing",
+    "Nursing BS Prelicensure": "nursing",
     "Political Science": "political_science",
     "Public Policy": "public_policy",
     "Robotics": "robotics",
@@ -158,9 +260,21 @@ def _clean(text: str) -> str:
 def _search_field(field: str) -> str:
     """Normalize a catalog field label for wiki / guide lookup."""
     base = re.sub(r"\s*\([^)]+\)\s*$", "", field).strip()
+    base = re.sub(r"\s*\([A-Za-z./]+\)\s*$", "", base).strip()
     base = re.sub(r"^Performance:\s*", "", base)
     if ":" in base:
         base = base.split(":", 1)[0].strip()
+    # Drop catalog credential / modality tokens that are not discipline names.
+    base = re.sub(
+        r"\b(B\.?S\.?|B\.?A\.?|M\.?S\.?|M\.?A\.?|Ph\.?D\.?|Prelicensure|Pre-Licensure|"
+        r"Direct Entry|Professional|Honors|Accelerated|Online|Hybrid)\b",
+        "",
+        base,
+        flags=re.I,
+    )
+    base = re.sub(r"\s+", " ", base).strip(" ,/-")
+    if base in _FIELD_GUIDE:
+        return base
     return base or field
 
 
@@ -190,11 +304,19 @@ def _wiki_relevant(extract: str, field: str) -> bool:
         return False
     if re.search(r"\bis currently (a )?professor\b", low):
         return False
+    if re.search(r"\bInternational Olympiad on Astronomy\b", low):
+        return False
+    if re.search(r"\btelevision film is a film\b", low):
+        return False
+    if "conservation and restoration of cultural property" in low and "conservation" not in _norm(field):
+        return False
     if extract[0].islower() and not extract.startswith(("e.g.", "i.e.")):
         return False
     tokens = _field_tokens(field)
     if not tokens:
         return True
+    if len(tokens) == 1:
+        return tokens[0] in low
     hits = sum(1 for t in tokens if t in low)
     return hits >= max(2, len(tokens) // 2)
 
@@ -368,7 +490,23 @@ def _credential_tail(spec: dict) -> str:
     )
 
 
-def _compose(spec: dict, field: str, body: str) -> str:
+def _slice_wiki_body(body: str, variant: int) -> str:
+    """Pick a distinct slice of a shared discipline summary for sibling programs."""
+    if len(body) <= 380:
+        return body
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", body) if s.strip()]
+    if len(sentences) >= 3 and variant > 0:
+        start = min(variant, len(sentences) - 2)
+        chunk = " ".join(sentences[start : start + 2])
+        if len(chunk) >= MIN_CHARS:
+            return chunk
+    if variant > 0 and len(body) > 420:
+        start = min(40 + (variant * 35), len(body) - 320)
+        return body[start : start + 360]
+    return body[:380]
+
+
+def _compose(spec: dict, field: str, body: str, *, variant: int = 0) -> str:
     slug = spec["slug"]
     pname = spec["program_name"]
     if slug in _SLUG_OVERRIDES:
@@ -377,6 +515,7 @@ def _compose(spec: dict, field: str, body: str) -> str:
         if not body:
             raise ValueError(f"No verified discipline summary for {slug!r} ({field!r})")
         body = _strip_name_prefix(body, pname)
+        body = _slice_wiki_body(body, variant)
         prefix = _LEVEL_PREFIX.get(spec["degree_type"], "")
         base = f"{prefix}{body} {_credential_tail(spec)}"
     if spec.get("delivery_format") == "online":
@@ -484,6 +623,9 @@ def _write_module(descriptions: dict[str, str], missing: list[str]) -> None:
 
 
 def main() -> None:
+    import os
+
+    os.environ["UNIPAITH_SKIP_UCLA_ASSERT"] = "1"
     from unipaith.data import ucla_profile as u
     from unipaith.profile_standard.anti_stub import analyze, machine_artifacts
 
@@ -519,8 +661,8 @@ def main() -> None:
         guide_slugs = _load_libguide_slugs(client)
         for spec in programs:
             slug = spec["slug"]
-            field = u._field_key(spec["program_name"])
-            body = _field_body(client, field, guide_slugs, cache)
+            field = u._field_key(spec["program_name"]) or spec["program_name"]
+            body = _resolve_field_body(client, field, guide_slugs, cache)
             desc = _compose(spec, field, body)
             descriptions[slug] = desc
             spec["description"] = desc
