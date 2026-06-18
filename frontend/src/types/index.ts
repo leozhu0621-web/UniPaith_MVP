@@ -2997,16 +2997,21 @@ export interface MatchResultDual {
   id: string
   student_id: string
   program_id: string
-  fitness_score: string
-  confidence_score: string
+  // AI-Structure-3 §14 — backend-only contract: the STUDENT match response no
+  // longer carries the raw fitness/confidence numbers (only band + rationale +
+  // probability bands). These stay typed-but-optional for institution/admin
+  // payloads and any cached pre-cutover responses; student surfaces read the
+  // band_label instead.
+  fitness_score?: string | null
+  confidence_score?: string | null
   fitness_breakdown: Record<string, unknown> | null
   confidence_breakdown: Record<string, unknown> | null
   rationale_text: string | null
   rationale_generated_at: string | null
   strategy_version_id: string | null
   // DEPRECATED — drop in Phase E. Kept for backcompat during transition.
-  match_score: string | null
-  score_breakdown: Record<string, unknown> | null
+  match_score?: string | null
+  score_breakdown?: Record<string, unknown> | null
   match_tier: number | null
   reasoning_text: string | null
   model_version: string | null

@@ -126,10 +126,14 @@ def make_students(n: int = 1000) -> list[StudentFeatures]:
     tags, needs map, gpa, field, profile_completeness, and (crucially) ENRICHMENT
     DEPTH + per-signal confidence — modeled via a confidence knob derived from index.
 
-    A deal-breaker subset (every 7th student, ~14%) carries a hard-veto condition:
+    A deal-breaker subset carries a hard-veto condition:
       - i % 21 == 0  → reaches for a degree-INCOMPATIBLE level (wrong family)
       - i % 21 == 7  → way-over budget on most programs (tiny budget, no aid)
       - i % 21 == 14 → geo_avoid covers a country many programs sit in
+
+    (No immigration/eligibility deal-breaker is modeled — see the GAP-3 deferral
+    note in matching.py: the fairness contract Spec 38 §3/§9 + Spec 46 §6 keeps
+    immigration status out of ranking, so the matcher never vetoes on it.)
     """
     rng = random.Random(20260618)
     students: list[StudentFeatures] = []
@@ -213,12 +217,17 @@ def make_students(n: int = 1000) -> list[StudentFeatures]:
         # jitter completeness a hair so confidence isn't perfectly tiered (still seeded)
         completeness = round(min(1.0, max(0.0, completeness + rng.uniform(-0.05, 0.05))), 3)
 
+        # A confirmed deal-breaker must come from a HIGH-confidence profile (so the
+        # structural veto_rho clears confirmed_gain). Give the deal-breaker subset a
+        # high extractor_quality so the veto confirms regardless of enrichment depth.
+        eq = 0.95 if sparse.get("_dealbreaker") else round(0.6 + depth * 0.15, 3)
+
         students.append(
             StudentFeatures(
                 sparse=sparse,
                 embedding=None,  # cold-start: no embeddings (mirrors production today)
                 profile_completeness=completeness,
-                extractor_quality=round(0.6 + depth * 0.15, 3),
+                extractor_quality=eq,
             )
         )
     return students
@@ -590,46 +599,176 @@ def test_confirmed_dealbreaker_below_clean_of_comparable_fit():
     assert checked > 0, "expected comparable-fit comparisons to verify"
 
 
-def test_honest_note_confirmed_dealbreaker_not_below_every_clean():
+def test_honest_note_hardened_floor_is_proportional_to_inner():
     """HONEST FINDING (spec-vs-implementation gap), pinned as a passing test so it is
     not silently lost: the spec promises a CONFIRMED deal-breaker ranks BELOW *every*
-    non-vetoed program. The implementation does NOT guarantee this.
+    non-vetoed program. The implementation does NOT guarantee that absolute wording,
+    because the hardened floor is ``value = min(value, epsilon · inner)`` — PROPORTIONAL
+    to the program's OWN inner fit, not a flat constant.
 
-    The hardened floor is ``value = min(value, epsilon · inner)`` — proportional to
-    the program's OWN inner fit. So a confirmed-deal-breaker program with a strong
-    inner fit (e.g. perfect theme + budget) keeps M ≈ ``(epsilon·inner)^alpha``, which
-    can EXCEED a 'clean' program that is only *softly* vetoed (a budget overage whose
-    veto ``v`` sits just above ``epsilon``, so ``hard`` never trips) AND has near-zero
-    inner fit. Concretely, student #35 (geo_avoid, high_school, gpa 2.07): a clean
-    program scores M=0.0164 while a hard-floored one scores M=0.0276.
+    Consequence: among two confirmed deal-breakers, the one with the stronger inner fit
+    keeps the higher M (``≈ (epsilon·inner)^alpha``). So a confirmed deal-breaker with a
+    strong inner fit can still EXCEED a clean-but-softly-vetoed program whose inner is
+    near zero. (This is the deliberate design tension the prior pass documented — the
+    floor scales with inner instead of being absolute. NOT changed here.)
 
-    Two design choices combine to break the absolute wording:
-      1. the floor scales with ``inner`` instead of a flat constant, and
-      2. a soft (just-above-epsilon) budget veto can drag a clean program's M *below*
-         that proportional floor.
+    This pins the MECHANISM directly (floor ∝ inner), which is robust to dataset shifts,
+    rather than a specific population inversion that depends on a particular seed.
 
     Fix options for a future slice (NOT done here — this is a validation pass):
       • make the hard floor absolute (``value = epsilon`` or ``epsilon * prior``), or
       • bury any program once the cumulative veto product drops below a threshold,
         not only when a single dimension confirms at the epsilon floor.
     """
-    found_violation = False
-    for stu in _STUDENTS:
-        if stu.sparse.get("_dealbreaker") != "geo_avoid":
-            continue
-        ranked = rank_programs(stu, _PROGRAMS, cpef_enabled=True, include_eliminated=True)
-        hard = [float(sc.fitness) for _, sc in ranked if sc.fitness_breakdown.get("hard_floor")]
-        clean = [
-            float(sc.fitness) for _, sc in ranked if not sc.fitness_breakdown.get("hard_floor")
-        ]
-        if hard and clean and max(hard) >= min(clean):
-            found_violation = True
-            break
-    assert found_violation, (
-        "expected to reproduce the floor-vs-soft-veto inversion; if this now FAILS, "
-        "the hardened floor was tightened and the spec's absolute wording finally holds "
-        "— update/delete this honest-note test."
+    eps = DEFAULT_PARAMS["epsilon"]
+    # A student with a confirmed geo_avoid deal-breaker and a high-confidence profile
+    # (so the veto is CONFIRMED for both programs below).
+    stu = StudentFeatures(
+        sparse={
+            "education_level": "bachelors",
+            "geo_avoid": ["USA"],
+            "interest_themes": ["data_science", "ai"],
+            "gpa": 3.5,
+            "field_of_study": "data_science",
+        },
+        extractor_quality=0.95,
+        profile_completeness=0.9,
     )
+    # Both hard-floored (all locations on the avoid list), differ only in inner fit:
+    # strong = perfect theme overlap; weak = no theme overlap.
+    strong = ProgramFeatures(
+        program_id="hard_strong",
+        sparse={
+            "target_education_level": "masters",
+            "locations": ["USA"],
+            "tuition_usd_per_year": 20000,
+            "interest_themes": ["data_science", "ai"],
+        },
+        data_completeness=0.9,
+    )
+    weak = ProgramFeatures(
+        program_id="hard_weak",
+        sparse={
+            "target_education_level": "masters",
+            "locations": ["USA"],
+            "tuition_usd_per_year": 20000,
+            "interest_themes": ["art_history"],
+        },
+        data_completeness=0.9,
+    )
+    v_strong, bd_strong = cpef(stu, strong)
+    v_weak, bd_weak = cpef(stu, weak)
+    assert bd_strong["hard_floor"] and bd_weak["hard_floor"], (bd_strong, bd_weak)
+    # the floor is proportional to inner: stronger inner → strictly higher floored value
+    assert bd_strong["inner"] > bd_weak["inner"], (bd_strong["inner"], bd_weak["inner"])
+    assert v_strong > v_weak, (v_strong, v_weak)
+    # each is exactly the proportional floor epsilon·inner (not a flat constant)
+    assert abs(v_strong - eps * bd_strong["inner"]) < 1e-4, (v_strong, bd_strong["inner"])
+    assert abs(v_weak - eps * bd_weak["inner"]) < 1e-4, (v_weak, bd_weak["inner"])
+
+
+def test_immigration_status_never_enters_the_veto():
+    """GAP 3 DEFERRED by fairness contract (Spec 38 §3/§9 + Spec 46 §6): immigration
+    status must NEVER be a ranking/selection criterion. Even when a student carries an
+    eligibility flag and a program states a sponsorship attribute, the matcher MUST NOT
+    raise any such deal-breaker — eligibility is an operational feasibility readout
+    (InternationalService), not a matcher input. Pinned here so a future attempt to wire
+    it into the veto trips both this test and tests/test_spec38_fairness_contract.py."""
+    student = StudentFeatures(
+        sparse={
+            "education_level": "bachelors",
+            "interest_themes": ["data_science", "ai"],
+            # an upstream eligibility flag must be inert in the matcher:
+            "visa_required": True,
+            "gpa": 3.5,
+            "field_of_study": "data_science",
+        },
+        extractor_quality=0.95,
+        profile_completeness=0.9,
+    )
+    prog = ProgramFeatures(
+        program_id="no_sponsor",
+        sparse={
+            "target_education_level": "masters",
+            "locations": ["USA"],
+            "tuition_usd_per_year": 25000,
+            "interest_themes": ["data_science", "ai"],
+            "sponsors_international": False,
+        },
+        data_completeness=0.9,
+    )
+    _, bd = cpef(student, prog)
+    keys = {db["key"] for db in bd["dealbreakers"]}
+    assert "visa" not in keys and "immigration" not in keys and "eligibility" not in keys, bd
+    # and it is NOT hard-floored on an otherwise-clean, well-fit pair
+    assert bd["hard_floor"] is False, bd
+
+
+def test_degree_level_graded_signal_present_and_grades_adjacent():
+    """GAP 4 — the graded degree-level fit signal is now part of the CPEF assembly:
+    an EXACT level grades 1.0, an ADJACENT-acceptable level (masters↔doctoral /
+    professional) grades 0.6 (not a clean pass), and it appears as a scored signal
+    'degree_level' in the breakdown. The veto still buries a true wrong-family
+    mismatch — this signal only adds graded nuance for the acceptable cases."""
+    # exact: a student targeting masters at a masters program → degree_level f == 1.0
+    exact_student = StudentFeatures(
+        sparse={
+            "education_level": "bachelors",
+            "degree_level_target": "masters",
+            "interest_themes": ["data_science"],
+            "gpa": 3.5,
+        },
+        extractor_quality=0.9,
+    )
+    masters_prog = ProgramFeatures(
+        program_id="masters",
+        sparse={"target_education_level": "masters", "interest_themes": ["data_science"]},
+        data_completeness=0.9,
+    )
+    doctoral_prog = ProgramFeatures(
+        program_id="doctoral",
+        sparse={"target_education_level": "doctoral", "interest_themes": ["data_science"]},
+        data_completeness=0.9,
+    )
+    _, bd_exact = cpef(exact_student, masters_prog)
+    dl_exact = next(s for s in bd_exact["signals"] if s["key"] == "degree_level")
+    assert dl_exact["f"] == 1.0, bd_exact
+
+    # adjacent-acceptable: masters target at a doctoral program → graded 0.6 (NOT 1.0,
+    # NOT vetoed — doctoral is a compatible reach for a bachelors holder)
+    _, bd_adj = cpef(exact_student, doctoral_prog)
+    dl_adj = next(s for s in bd_adj["signals"] if s["key"] == "degree_level")
+    assert dl_adj["f"] == 0.6, bd_adj
+    assert bd_adj["hard_floor"] is False, bd_adj
+
+
+def test_degree_grade_lifts_exact_over_adjacent_all_else_equal():
+    """GAP 4 — with everything else identical, an EXACT degree-level match scores higher
+    than an ADJACENT-acceptable one, because the graded degree_level signal (1.0 vs 0.6)
+    now contributes to the inner fit instead of both reading as a clean pass."""
+    student = StudentFeatures(
+        sparse={
+            "education_level": "bachelors",
+            "degree_level_target": "masters",
+            "interest_themes": ["data_science", "ai"],
+            "gpa": 3.5,
+        },
+        extractor_quality=0.9,
+    )
+    themes = {"interest_themes": ["data_science", "ai"]}
+    exact = ProgramFeatures(
+        program_id="exact",
+        sparse={"target_education_level": "masters", **themes},
+        data_completeness=0.9,
+    )
+    adjacent = ProgramFeatures(
+        program_id="adjacent",
+        sparse={"target_education_level": "professional", **themes},
+        data_completeness=0.9,
+    )
+    v_exact, _ = cpef(student, exact)
+    v_adj, _ = cpef(student, adjacent)
+    assert v_exact > v_adj, (v_exact, v_adj)
 
 
 def test_no_preference_program_gives_neutral_p2s():
@@ -810,20 +949,90 @@ def test_essentials_present_gates_matching():
 # ── Confidence / two-sided-confidence honesty (Chart 2 / Chart 3) ────────────
 
 
-def test_two_sided_confidence_is_capped_at_slice_a_placeholder():
-    """HONEST NOTE encoded as a test: today per-signal confidence is the uniform
-    Slice-A placeholder (_CPEF_CONF=0.95 each side → c≈0.9025), NOT yet fed by
-    Spec-1 student confidence or Spec-2 program authority. So 'claimed vs derived'
-    does NOT change the s→p signal confidence — every student's mean_rho is the
-    same constant. This test pins that so a future slice that wires real
-    per-signal confidence will (correctly) break it and force an update."""
+def test_two_sided_confidence_is_live_and_varies_mean_rho():
+    """GAP 1 — two-sided confidence is LIVE (Chart 3 'c = c_student × c_program /
+    fit & confidence fused'). Per-signal confidence is now the product of the
+    student's extractor_quality (Spec 1) and the program's data_completeness
+    (Spec 2 authority precedence), so mean_rho VARIES across (student, program)
+    pairs instead of collapsing to one Slice-A constant. This is the flip that
+    proves the previously-inert confidence axis went live."""
     rhos = set()
     for stu in _STUDENTS[::50]:
         ranked = rank_programs(stu, _PROGRAMS[:5], cpef_enabled=True)
         for _, sc in ranked:
             rhos.add(sc.fitness_breakdown.get("mean_rho"))
-    # all mean_rho values collapse to the single Slice-A constant
-    assert len(rhos) == 1, f"expected a single Slice-A mean_rho, got {sorted(rhos)}"
+    # confidence now varies with profile depth × program authority
+    assert len(rhos) > 1, f"expected mean_rho to vary now confidence is live, got {sorted(rhos)}"
+    # and every value is a valid gain in (0, 1)
+    assert all(r is not None and 0.0 < r < 1.0 for r in rhos), sorted(rhos)
+
+
+def test_extractor_quality_sharpens_inner_away_from_prior():
+    """GAP 1 'fit & confidence FUSED / deeper profile sharper': for a FIXED program and
+    a strong (above-prior) fit, raising the student's extractor_quality moves the fused
+    posterior-mean ``inner`` strictly AWAY from the 0.5 prior (sharper), and the final
+    coverage-damped value rises monotonically too. Verified end-to-end through cpef on a
+    clean, un-vetoed pair (the live path, not just the helper)."""
+    base_sparse = {
+        "education_level": "bachelors",
+        "interest_themes": ["data_science", "ai"],
+        "career_arcs": ["industry"],
+        "values": ["impact"],
+        "gpa": 3.6,
+        "field_of_study": "data_science",
+    }
+    prog = ProgramFeatures(
+        program_id="clean_strong",
+        sparse={
+            "target_education_level": "masters",
+            "locations": ["USA"],
+            "interest_themes": ["data_science", "ai"],
+            "career_arcs": ["industry"],
+            "values": ["impact"],
+        },
+        data_completeness=0.9,  # claimed/high authority so c is dominated by the student side
+    )
+    prior = DEFAULT_PARAMS["prior"]
+    inner_dists = []
+    values = []
+    for q in (0.2, 0.5, 0.85, 0.99):
+        stu = StudentFeatures(sparse=dict(base_sparse), extractor_quality=q)
+        v, bd = cpef(stu, prog)
+        inner_dists.append(bd["inner"] - prior)  # strong fit → inner above prior
+        values.append(v)
+    # the fused posterior mean sharpens away from the prior as confidence rises
+    assert all(b > a for a, b in zip(inner_dists, inner_dists[1:], strict=False)), inner_dists
+    # and the coverage-damped value rises monotonically with confidence on a strong fit
+    assert all(b > a for a, b in zip(values, values[1:], strict=False)), values
+
+
+def test_lower_confidence_pulls_inner_toward_prior():
+    """GAP 1 (the symmetric direction): on a WEAK (below-prior) fit, raising confidence
+    pulls the fused ``inner`` further BELOW the prior, and lowering it relaxes ``inner``
+    back toward 0.5 — confidence sharpens in whichever direction the raw fit points."""
+    prior = DEFAULT_PARAMS["prior"]
+    base_sparse = {
+        "education_level": "bachelors",
+        "interest_themes": ["art_history"],  # no overlap with the program → weak fit
+        "gpa": 3.0,
+    }
+    prog = ProgramFeatures(
+        program_id="weak",
+        sparse={
+            "target_education_level": "masters",
+            "interest_themes": ["robotics"],
+            "needs_signals": {},
+        },
+        data_completeness=0.9,
+    )
+    inners = []
+    for q in (0.99, 0.5, 0.2):
+        stu = StudentFeatures(sparse=dict(base_sparse), extractor_quality=q)
+        _, bd = cpef(stu, prog)
+        inners.append(bd["inner"])
+    # as confidence drops, inner relaxes UP toward the prior (less sharp below it)
+    assert all(b > a for a, b in zip(inners, inners[1:], strict=False)), inners
+    assert inners[-1] <= prior + 1e-9, inners
 
 
 # ── Per-type fit functions: boundary values + exception-safety (Spec 3 §3/§9) ──
@@ -1002,36 +1211,80 @@ def test_confidence_monotonicity_moves_fit_away_from_prior():
         assert abs(fhat - prior) < 1e-12
 
 
-def test_claimed_derived_crawler_indistinguishable_today_slice_a():
-    """HONEST CONSEQUENCE of the Slice-A placeholder, pinned (Chart 2 'claimed
-    outweighs derived/crawler'): three programs identical except for data_completeness
-    (claimed 0.9 / derived 0.5 / crawler 0.4) produce BYTE-IDENTICAL CPEF + M today,
-    because _build_cpef_signals never reads program/student confidence. When a future
-    slice wires Spec-2 authority precedence into the per-signal c, this test will
-    (correctly) break — that is the signal the inert confidence axis went live."""
+def test_claimed_outscores_derived_outscores_crawler():
+    """GAP 1 / Chart 2 ('claimed program outweighs derived/crawler'): three programs
+    identical in every fit dimension but differing in data_completeness (claimed 0.9 /
+    derived 0.5 / crawler 0.4) now produce DISTINCT CPEF + M, and they order
+    claimed > derived > crawler — a higher-authority program with the SAME fit lands a
+    sharper (further-from-prior) score. This is the live behavior the Slice-A placeholder
+    used to suppress."""
     student = StudentFeatures(
         sparse={
             "education_level": "bachelors",
-            "interest_themes": ["data_science"],
+            "interest_themes": ["data_science", "ai"],
+            "career_arcs": ["industry"],
+            "values": ["impact"],
             "gpa": 3.5,
             "field_of_study": "data_science",
         },
         profile_completeness=0.9,
         extractor_quality=0.9,
     )
+    # A clean, strong-fit program (above the 0.5 prior) so higher authority → higher M.
     base = {
         "target_education_level": "masters",
         "locations": ["USA"],
         "tuition_usd_per_year": 30000,
-        "interest_themes": ["data_science"],
+        "interest_themes": ["data_science", "ai"],
+        "career_arcs": ["industry"],
+        "values": ["impact"],
     }
-    values = set()
-    for dc in (0.9, 0.5, 0.4):
-        prog = ProgramFeatures(program_id=f"p_{dc}", sparse=dict(base), data_completeness=dc)
-        v, _ = cpef(student, prog)
+    by_kind: dict[str, float] = {}
+    for kind, dc in (("claimed", 0.9), ("derived", 0.5), ("crawler", 0.4)):
+        prog = ProgramFeatures(program_id=f"p_{kind}", sparse=dict(base), data_completeness=dc)
         m, _ = mutual_match(student, prog)
-        values.add((round(v, 10), round(m, 10)))
-    assert len(values) == 1, f"data_completeness already moves the score: {values}"
+        by_kind[kind] = m
+    # all distinct
+    assert len({round(v, 10) for v in by_kind.values()}) == 3, by_kind
+    # and ordered by authority on a strong (above-prior) fit
+    assert by_kind["claimed"] > by_kind["derived"] > by_kind["crawler"], by_kind
+
+
+def test_claimed_preference_moves_m_more_than_derived_p2s():
+    """GAP 1 (p→s direction) — a CLAIMED program preference the student fails on pulls M
+    down MORE than a DERIVED one with the identical preference. The program-side
+    authority (data_completeness) gates the satisfaction multiplier, so a confident
+    (claimed) 'we want a different applicant' bites harder than a soft (derived) one."""
+    student = StudentFeatures(
+        sparse={
+            "education_level": "bachelors",
+            "interest_themes": ["data_science"],
+            "gpa": 3.0,
+            "field_of_study": "data_science",
+        },
+        extractor_quality=0.85,
+    )
+    # identical, picky preferences the student fails; differ only in authority. The
+    # program's themes do NOT match the student's, so the s→p inner stays near/below
+    # the prior — that keeps the p→s satisfaction gate (the part GAP 1 changed) the
+    # dominant lever, isolating the claimed-vs-derived effect on M.
+    pref_sparse = {
+        "target_education_level": "masters",
+        "interest_themes": ["art_history"],
+        "pref_min_gpa": 3.95,
+        "pref_fields": ["law"],
+        "pref_levels": ["masters"],
+    }
+    claimed = ProgramFeatures(program_id="claimed", sparse=dict(pref_sparse), data_completeness=0.9)
+    derived = ProgramFeatures(program_id="derived", sparse=dict(pref_sparse), data_completeness=0.5)
+    ps_claimed, bd_c = cpef_program_to_student(student, claimed)
+    ps_derived, bd_d = cpef_program_to_student(student, derived)
+    # a claimed rejection satisfaction is LOWER (pulls harder) than a derived one
+    assert ps_claimed < ps_derived, (bd_c, bd_d)
+    # …which makes the claimed program's M lower (more buried by its own pickiness).
+    m_claimed, _ = mutual_match(student, claimed)
+    m_derived, _ = mutual_match(student, derived)
+    assert m_claimed < m_derived, (m_claimed, m_derived)
 
 
 # ── Mutual-fit blend identities (Chart 3, Spec 3 §4) ──────────────────────────
@@ -1084,16 +1337,18 @@ def test_mutual_blend_identities_alpha_extremes_and_p2s_monotone():
     assert m_picky < m_lenient, "a program the student fails on its prefs must pull M down"
 
 
-def test_tiebreak_secondary_key_is_confidence_today():
+def test_tiebreak_secondary_key_is_confidence_and_now_varies():
     """HONEST NOTE pinned (Spec 3 §4 vs implementation): the spec mandates ties on M
     break by coverage (ΣA_k) then raw fit (Σf_k). rank_programs' actual sort key is
-    (M, confidence=mean_rho). In Slice A mean_rho is the uniform constant, so the
-    secondary key is inert — the real ordering among M-ties is the stable-sort input
-    order. This pins the current behavior so a future slice that implements the §4
-    coverage/raw-fit tie-break (and varies mean_rho) will surface here."""
+    (M, confidence=mean_rho). With GAP 1 two-sided confidence live, mean_rho now VARIES
+    (it tracks profile depth × program authority), so the secondary key is an ACTIVE
+    tie-break — confidence, not the §4 coverage/raw-fit pair. This pins that the
+    secondary key is confidence and is no longer inert; a future slice implementing the
+    §4 coverage/raw-fit tie-break will surface here."""
     rhos = set()
     for stu in _STUDENTS[::100]:
         for _, sc in rank_programs(stu, _PROGRAMS[:8], cpef_enabled=True):
             rhos.add(round(float(sc.confidence), 6))
-    # the secondary sort key collapses to a single value today → inert tie-break
-    assert len(rhos) == 1, f"confidence tie-break is no longer constant: {sorted(rhos)}"
+    # the secondary sort key (confidence = mean_rho) now varies → active tie-break
+    assert len(rhos) > 1, f"confidence tie-break is unexpectedly constant: {sorted(rhos)}"
+    assert all(0.0 < r < 1.0 for r in rhos), sorted(rhos)

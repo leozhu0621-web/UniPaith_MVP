@@ -96,9 +96,13 @@ async def _seed_match(
 
 
 @pytest.mark.asyncio
-async def test_new_columns_persist_and_serialize(
+async def test_student_match_serializes_qualitative_readouts_not_raw_scores(
     student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
 ):
+    """AI-Structure-3 §14 backend-only contract: the student match response carries
+    the qualitative readouts (breakdown drivers, band, rationale) but NOT the raw CPEF
+    numbers. The raw fitness/confidence numbers are computed on the backend (they drive
+    the band) and never serialized to the student."""
     profile = await _ensure_profile(db_session, mock_student_user)
     program = await _seed_institution_and_program(db_session)
     await _seed_match(db_session, profile, program)
@@ -106,29 +110,39 @@ async def test_new_columns_persist_and_serialize(
     resp = await student_client.get(f"{MATCHES}/{program.id}")
     assert resp.status_code == 200, resp.text
     data = resp.json()
-    assert Decimal(data["fitness_score"]) == Decimal("0.85")
-    assert Decimal(data["confidence_score"]) == Decimal("0.7")
+    # qualitative drivers + readouts survive
     assert data["fitness_breakdown"]["interest_match"] == 0.8
     assert data["confidence_breakdown"]["reason"] == "profile_complete"
+    assert "band_label" in data
+    # raw scores are NOT serialized to the student
+    assert "fitness_score" not in data
+    assert "confidence_score" not in data
 
 
 @pytest.mark.asyncio
-async def test_response_includes_legacy_match_score_for_backcompat(
+async def test_student_match_response_contains_no_raw_score_field(
     student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
 ):
-    """During Phase A→E, the response must continue to include the legacy
-    `match_score` field so frontend callers don't break before they migrate.
-    Phase A writes leave it null; that's still a valid serialization."""
+    """Serialization contract (AI-Structure-3 §14 'backend-only … the student never sees
+    a number'): NONE of the raw matching-number fields may appear on ANY student match
+    response — neither the list nor the detail endpoint. The student gets band +
+    rationale + probability bands only."""
     profile = await _ensure_profile(db_session, mock_student_user)
     program = await _seed_institution_and_program(db_session)
     await _seed_match(db_session, profile, program)
 
-    resp = await student_client.get(f"{MATCHES}/{program.id}")
-    data = resp.json()
-    assert "match_score" in data  # field present
-    assert "score_breakdown" in data  # legacy breakdown present
-    # New rows have null legacy values; that's expected.
-    assert data["match_score"] is None
+    raw_fields = {"fitness_score", "confidence_score", "match_score", "score_breakdown"}
+
+    detail = (await student_client.get(f"{MATCHES}/{program.id}")).json()
+    assert raw_fields.isdisjoint(detail.keys()), (
+        f"student detail leaked raw score fields: {raw_fields & set(detail.keys())}"
+    )
+
+    listed = (await student_client.get(MATCHES)).json()
+    for item in listed:
+        assert raw_fields.isdisjoint(item.keys()), (
+            f"student list leaked raw score fields: {raw_fields & set(item.keys())}"
+        )
 
 
 # ── CHECK constraints ────────────────────────────────────────────────────

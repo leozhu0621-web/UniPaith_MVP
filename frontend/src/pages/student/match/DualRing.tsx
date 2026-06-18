@@ -25,7 +25,18 @@ export interface DualRingProps {
   compact?: boolean
   className?: string
   onClick?: () => void
+  /**
+   * AI-Structure-3 §14 — when the student response carries no raw score (the
+   * backend-only contract), the ring is band-driven: pass the reach/target/safer
+   * band so the center reads the BAND, not a precise number, and the aria-label
+   * announces the band instead of percentages.
+   */
+  bandLabel?: string
+  /** Hide the precise numeral (band-derived ring → show the band glyph instead). */
+  hideNumeral?: boolean
 }
+
+const BAND_GLYPH: Record<string, string> = { safer: 'Safer', target: 'Target', reach: 'Reach' }
 
 // Duotone per Spec/11 §10: fitness ring = sunlit gold (--primary),
 // confidence ring = cobalt (--secondary). No status-color rainbow.
@@ -39,6 +50,8 @@ export default function DualRing({
   compact = false,
   className,
   onClick,
+  bandLabel,
+  hideNumeral = false,
 }: DualRingProps) {
   const fitnessPct = Math.round(fitness * 100)
   const confidencePct = Math.round(confidence * 100)
@@ -96,9 +109,13 @@ export default function DualRing({
           : undefined
       }
       aria-label={
-        interactive
-          ? `Match — fitness ${fitnessPct}%, confidence ${confidencePct}%. Click for explanation.`
-          : `Match — fitness ${fitnessPct}%, confidence ${confidencePct}%.`
+        hideNumeral
+          ? `Match — ${bandLabel ? BAND_GLYPH[bandLabel] ?? bandLabel : 'fit'} band.${
+              interactive ? ' Click for explanation.' : ''
+            }`
+          : interactive
+            ? `Match — fitness ${fitnessPct}%, confidence ${confidencePct}%. Click for explanation.`
+            : `Match — fitness ${fitnessPct}%, confidence ${confidencePct}%.`
       }
     >
       <div
@@ -155,18 +172,32 @@ export default function DualRing({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-          <span className="text-base font-bold text-foreground">{countedFitnessPct}</span>
-          <span className="text-[9px] uppercase tracking-wide text-muted-foreground mt-0.5">
-            fit
-          </span>
+          {hideNumeral ? (
+            <span className="text-[10px] font-bold uppercase tracking-wide text-foreground text-center px-1">
+              {bandLabel ? BAND_GLYPH[bandLabel] ?? bandLabel : 'Fit'}
+            </span>
+          ) : (
+            <>
+              <span className="text-base font-bold text-foreground">{countedFitnessPct}</span>
+              <span className="text-[9px] uppercase tracking-wide text-muted-foreground mt-0.5">
+                fit
+              </span>
+            </>
+          )}
         </div>
       </div>
       {!compact && (
         <div className="text-xs">
-          <div className="text-foreground font-medium">Fitness · {fitnessPct}%</div>
-          <div className="text-muted-foreground">
-            Confidence · {confidencePct}%
-          </div>
+          {hideNumeral ? (
+            <div className="text-foreground font-medium">
+              {bandLabel ? BAND_GLYPH[bandLabel] ?? bandLabel : 'Fit'} match
+            </div>
+          ) : (
+            <>
+              <div className="text-foreground font-medium">Fitness · {fitnessPct}%</div>
+              <div className="text-muted-foreground">Confidence · {confidencePct}%</div>
+            </>
+          )}
         </div>
       )}
     </div>

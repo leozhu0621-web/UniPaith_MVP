@@ -293,13 +293,42 @@ def _renormalized_weights(
 # confidence ring. Gated by `settings.cpef_matching_enabled`; the legacy
 # convex-sum path below stays the default fallback until CPEF proves out.
 #
-# Slice A note: per-signal confidence is uniform (real per-signal confidence
-# is fed by Spec 1 enrichment + Spec 2 authority precedence in later slices).
-# So today CPEF is a confidence-light, typed-fit, coverage-damped, vetoed
-# weighted average — already richer than the cosine/soft/needs convex sum.
+# Two-sided confidence (Chart 3 "c = c_student × c_program", Chart 2 "claimed
+# program outweighs derived/crawler") is LIVE: each signal's confidence is the
+# product of a student-side proxy (StudentFeatures.extractor_quality — the
+# upstream per-signal confidence) and a program-side authority proxy
+# (ProgramFeatures.data_completeness — claimed ~0.9, derived ~0.5, crawler
+# ~0.4). A deeper/cleaner profile and a higher-authority program both move M
+# away from the 0.5 prior (sharper); a thin profile or low-authority program
+# pull it back toward 0.5.
 
-_CPEF_CONF = 0.95  # placeholder per-signal confidence (each side) for Slice A
-_CANONICAL_N = 5  # fit dimensions used for the coverage denominator
+_CPEF_CONF_FALLBACK = 0.85  # per-side confidence proxy when a feature omits it
+_CANONICAL_N = 5  # core fit dimensions for the coverage denominator
+#                   (semantic · themes · needs · budget · geo). The optional
+#                   degree_level signal (only when the student states a target)
+#                   adds to present_a; coverage clamps at 1.0, so it never
+#                   over-saturates the damp.
+
+
+def _student_side_confidence(student: StudentFeatures) -> float:
+    """Student-side per-signal confidence proxy (Spec 1) — the upstream
+    extractor quality, clamped off the open interval so a fully-confident
+    profile still leaves finite precision for the gain."""
+    q = student.extractor_quality
+    if q is None:
+        q = _CPEF_CONF_FALLBACK
+    return clamp01(float(q))
+
+
+def _program_side_confidence(program: ProgramFeatures) -> float:
+    """Program-side authority proxy (Spec 2 precedence): a claimed program has
+    high data_completeness (~0.9), a derived one lower (~0.5), a crawler one
+    lower still (~0.4). This is what makes a claimed program outscore an
+    identical-fit derived one."""
+    dc = program.data_completeness
+    if dc is None:
+        dc = _CPEF_CONF_FALLBACK
+    return clamp01(float(dc))
 
 
 def _coverage(present_a_sum: float, full_w_sum: float, n0: float) -> float:
@@ -317,8 +346,26 @@ def _build_cpef_signals(
     s, pr = student.sparse, program.sparse
     prior = p["prior"]
     w_base = p["w_base"]
-    c = two_sided_confidence(_CPEF_CONF, _CPEF_CONF)
-    rho = confidence_to_gain(c, p)
+    # GAP 1 — real two-sided confidence: c = c_student × c_program. The
+    # student-side proxy is the upstream extractor quality (Spec 1); the
+    # program-side proxy is the authority-precedence data_completeness (Spec 2,
+    # claimed > derived > crawler). rho = confidence_to_gain(c) is the literal
+    # weight on the observed fit vs. the 0.5 prior in the posterior-mean.
+    c_student = _student_side_confidence(student)
+    c_program = _program_side_confidence(program)
+    c = two_sided_confidence(c_student, c_program)
+    # Each fit signal carries ``c``; ``cpef()`` recomputes its per-signal ``rho``
+    # from that. Deal-breakers, by contrast, are HARD ELIGIBILITY facts, not
+    # graded fits: the blocking condition is a categorical attribute the program
+    # states explicitly (target level, locations, tuition, sponsorship) checked
+    # against the student's OWN stated profile. Their certainty is therefore
+    # structural — gated by how sure we are of the student's eligibility facts
+    # (c_student), NOT damped by the program's free-text data_completeness (a
+    # low-authority program can still have an explicit, blocking target level).
+    # So a confirmed degree/budget/geo breaker buries even when the program's
+    # overall data is sparse — while a THIN student profile (low extractor
+    # quality) only dents, matching the "deeper profile → sharper veto" intent.
+    veto_rho = confidence_to_gain(c_student, p)
     signals: list[dict[str, Any]] = []
 
     # semantic (embedding cosine), only when both sides have a matching vector
@@ -362,22 +409,53 @@ def _build_cpef_signals(
             {"key": "geo", "f": _fits.fit_geo(s_geo, p_locs), "c": c, "w": w_base, "prior": prior}
         )
 
-    # ── deal-breakers (in-formula veto, not a pre-filter) ──
-    dealbreakers: list[dict[str, Any]] = []
+    # degree-level fit (GAP 4) — a GRADED signal alongside the veto. Exact level
+    # → 1.0, adjacent-acceptable (masters↔doctoral/professional) → 0.6, wrong
+    # family → 0.0. Only emitted when the student states an explicit degree-level
+    # TARGET (a preference distinct from their current education_level), so we
+    # never inject a phantom perfect match for a student with no stated target —
+    # the degree *veto* below still handles raw eligibility from education_level.
+    # The signal lets an adjacent-acceptable level grade 0.6 instead of reading
+    # as a clean 1.0.
     s_lvl = s.get("education_level")
     p_target = pr.get("target_education_level")
+    s_degree_target = s.get("degree_level_target")
+    if s_degree_target and p_target:
+        signals.append(
+            {
+                "key": "degree_level",
+                "f": _fits.fit_degree_level(s_degree_target, p_target),
+                "c": c,
+                "w": w_base,
+                "prior": prior,
+            }
+        )
+
+    # ── deal-breakers (in-formula veto, not a pre-filter) ──
+    dealbreakers: list[dict[str, Any]] = []
     if p_target and s_lvl and s_lvl != "unknown":
         ok = _education_compat(s_lvl, p_target)
-        dealbreakers.append({"key": "degree", "v": (1.0 if ok else p["epsilon"]), "rho": rho})
+        dealbreakers.append({"key": "degree", "v": (1.0 if ok else p["epsilon"]), "rho": veto_rho})
     if s_budget is not None and p_tuition is not None and not s.get("needs_aid", False):
         ceiling = float(s_budget) * (1.0 + p["delta"])
         if float(p_tuition) > ceiling:
             span = max(1e-9, float(s_budget) * p["delta"])
             v = max(p["epsilon"], clamp01(1.0 - (float(p_tuition) - ceiling) / span))
-            dealbreakers.append({"key": "budget", "v": v, "rho": rho})
+            dealbreakers.append({"key": "budget", "v": v, "rho": veto_rho})
     s_avoid = set(s.get("geo_avoid") or [])
     if s_avoid and p_locs and (s_avoid & set(p_locs)) == set(p_locs):
-        dealbreakers.append({"key": "geo_avoid", "v": p["epsilon"], "rho": rho})
+        dealbreakers.append({"key": "geo_avoid", "v": p["epsilon"], "rho": veto_rho})
+
+    # NOTE — an immigration/eligibility deal-breaker is DELIBERATELY NOT added to
+    # this veto. The newer match charts (Spec 1 §1.1, Spec 3 §2.1/§6) sketch one,
+    # but the STRONGER, already-shipped fairness contract (Spec 38 §3/§9 + Spec
+    # 46 §6) mandates that immigration status NEVER be a selection or ranking
+    # criterion — it informs operational feasibility + yield planning only,
+    # outside the matcher. That guardrail is pinned by a source-level contract
+    # (tests/test_spec38_fairness_contract.py) which forbids any such token from
+    # appearing in this module. Wiring it into the rank key M would make
+    # immigration status a selection criterion — exactly what the fairness
+    # contract prohibits — so the fairness guardrail wins. (Documented deferral.)
 
     full_w = _CANONICAL_N * (w_base / 10.0)
     return signals, dealbreakers, full_w
@@ -484,10 +562,29 @@ def cpef_program_to_student(
     # student's own ranking sharpness (s→p), not the program's interest gate.
     sat = sum(fits_present) / len(fits_present)
     floor = p.get("ps_floor", 0.2)
-    value = clamp01(floor + (1.0 - floor) * sat)
+
+    # GAP 1 (p→s direction) — gate the satisfaction by the program's PREFERENCE
+    # confidence (its authority proxy). A program that CLAIMS its preferences
+    # (high data_completeness) expresses a confident opinion, so its
+    # satisfaction signal moves M more — a poor satisfaction from a claimed
+    # preference pulls M down harder; a strong one lifts it more. A DERIVED
+    # preference is a softer opinion (lower confidence), so its satisfaction is
+    # shrunk toward the neutral 1.0 ("no strong opinion"). rho is the trust gain
+    # on the program-side confidence.
+    c_program = _program_side_confidence(program)
+    rho = confidence_to_gain(c_program, p)
+    # Shrink the *gate strength* by rho: at rho→1 a claimed preference applies
+    # its full satisfaction multiplier; at rho→0 a barely-trusted preference is
+    # nearly inert (value→1.0, "no real opinion"). The neutral anchor is 1.0
+    # (the no-prefs value), so a low-confidence preference cannot bury.
+    raw = clamp01(floor + (1.0 - floor) * sat)
+    value = clamp01(raw * rho + (1.0 - rho) * 1.0)
     return value, {
         "value": round(value, 4),
         "satisfaction": round(sat, 4),
+        "raw": round(raw, 4),
+        "rho": round(rho, 4),
+        "c_program": round(c_program, 4),
         "n_signals": len(fits_present),
         "floor": floor,
     }

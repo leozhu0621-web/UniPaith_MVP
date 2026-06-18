@@ -38,6 +38,22 @@ function toUnit(v: string | number | null | undefined): number {
   return Math.max(0, Math.min(1, u))
 }
 
+// AI-Structure-3 §14 backend-only contract: the student response no longer
+// carries a raw fitness/confidence number — only the reach/target/safer band.
+// The DualRing is a band-driven visual; when no raw score is present we map the
+// band to a representative ring fill so the visualization still reads at a glance
+// (without surfacing a precise number the backend deliberately withholds).
+const BAND_FILL: Record<string, number> = { safer: 0.82, target: 0.62, reach: 0.4 }
+
+function ringFromMatch(
+  raw: string | number | null | undefined,
+  band: string | null | undefined,
+): { value: number; fromBand: boolean } {
+  if (raw != null && raw !== '') return { value: toUnit(raw), fromBand: false }
+  if (band && band in BAND_FILL) return { value: BAND_FILL[band], fromBand: true }
+  return { value: 0, fromBand: true }
+}
+
 interface MatchCardProps {
   match: MatchResultDual
   saved: boolean
@@ -67,8 +83,12 @@ export default function MatchCard({
   const href = `/s/programs/${match.program_id}`
 
   const degree = match.degree_type ? DEGREE_LABELS[match.degree_type] ?? match.degree_type : null
-  const fitness = toUnit(match.fitness_score)
-  const confidence = toUnit(match.confidence_score)
+  const fitRing = ringFromMatch(match.fitness_score, match.band_label)
+  const confRing = ringFromMatch(match.confidence_score, match.band_label)
+  const fitness = fitRing.value
+  const confidence = confRing.value
+  // Hide the precise numeral when the ring is band-derived (no raw score served).
+  const hideNumeral = fitRing.fromBand
   const acceptPct =
     match.acceptance_rate != null ? Math.round(match.acceptance_rate * 100) : null
   // Without an explicit reason on the list payload, derive the right "not
@@ -79,7 +99,7 @@ export default function MatchCard({
     <div className="bg-card rounded-xl border border-border elev-subtle flex flex-col overflow-hidden hover-lift hover:elev-raised">
       {/* ── Header ── */}
       <div className="p-4 flex items-start gap-3">
-        <DualRing fitness={fitness} confidence={confidence} size={72} compact onClick={() => setRationaleOpen(true)} />
+        <DualRing fitness={fitness} confidence={confidence} size={72} compact bandLabel={match.band_label ?? undefined} hideNumeral={hideNumeral} onClick={() => setRationaleOpen(true)} />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <Link to={href} onClick={cardLinkClick(onView)} className="min-w-0 text-left">
