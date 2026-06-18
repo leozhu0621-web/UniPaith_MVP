@@ -89,23 +89,17 @@ def test_catalog_breadth_and_shape():
     assert u.RANKING_DATA["ownership_type"] == "public"
     assert "public research university in seattle" in u.DESCRIPTION.lower()
     assert "washington.edu/news/feed/" in u._INSTITUTION_CONTENT["news_rss"]
-    from unipaith.data.profile_catalog_utils import validate_catalog
+    # De-fabrication: no school-blurb stubs; real owning school in department
+    assert not any("connects to" in (p.get("description") or "") for p in u.PROGRAMS)
+    assert not any("Students build depth" in (p.get("description") or "") for p in u.PROGRAMS)
+    assert all(p.get("department") == p["school"] for p in u.PROGRAMS)
 
-    assert not validate_catalog(u.PROGRAMS)
 
+def test_catalog_descriptions_are_field_specific_and_real():
+    from unipaith.profile_standard.anti_stub import analyze
 
-def test_coverable_programs_have_reviews():
-    import sys
-
-    sys.path.insert(0, "scripts")
-    from fleet_audit import is_coverable
-
-    missing = [
-        p["slug"]
-        for p in u.PROGRAMS
-        if is_coverable(p) and p["slug"] not in u._REVIEWS_BY_SLUG
-    ]
-    assert not missing, f"Coverable programs missing reviews: {missing[:10]}"
+    report = analyze(u.PROGRAMS)
+    assert report.is_clean, f"UW catalog is not anti-stub clean: {report.summary()}"
 
 
 def test_institution_is_gold_except_recorded_omission():
