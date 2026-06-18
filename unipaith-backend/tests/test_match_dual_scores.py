@@ -196,6 +196,32 @@ async def test_student_match_response_contains_no_raw_score_field(
         assert not _has_number(item.get("confidence_breakdown") or {})
 
 
+@pytest.mark.asyncio
+async def test_student_rationale_text_channel_carries_no_number(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    """§14 string-channel guard: the rationale_text the student receives — on the
+    /explain stub AND the GET detail/list re-serve — must contain no digit. The
+    stub used to format "Fitness 0.85 …" verbatim into this string; this pins the
+    leak closed so the breakdown-only number guard can't be silently bypassed via
+    the prose channel."""
+    profile = await _ensure_profile(db_session, mock_student_user)
+    program = await _seed_institution_and_program(db_session)
+    await _seed_match(db_session, profile, program, fitness="0.82", confidence="0.67")
+
+    explained = (await student_client.post(f"{MATCHES}/{program.id}/explain")).json()
+    assert not any(ch.isdigit() for ch in explained["rationale_text"]), (
+        f"§14: digit leaked via /explain rationale_text: {explained['rationale_text']!r}"
+    )
+
+    # GET detail re-serves the persisted rationale_text — also number-free.
+    detail = (await student_client.get(f"{MATCHES}/{program.id}")).json()
+    if detail.get("rationale_text"):
+        assert not any(ch.isdigit() for ch in detail["rationale_text"]), (
+            f"§14: digit leaked via GET detail rationale_text: {detail['rationale_text']!r}"
+        )
+
+
 # ── CHECK constraints ────────────────────────────────────────────────────
 
 
@@ -247,10 +273,13 @@ async def test_explain_returns_stub_rationale(
     data = resp.json()
     assert data["program_id"] == str(program.id)
     assert data["is_stub"] is True
-    assert "Fitness 0.85" in data["rationale_text"]
-    assert "Confidence 0.70" in data["rationale_text"]
-    # The driver names from fitness_breakdown should appear.
-    assert "gpa_alignment" in data["rationale_text"]
+    text = data["rationale_text"]
+    # AI-Structure-3 §14: the student NEVER sees a number — the stub rationale
+    # must carry NO digit (no "Fitness 0.85", no "Confidence 0.70", no percent).
+    assert not any(ch.isdigit() for ch in text), f"§14 leak — digit in stub: {text!r}"
+    # It is still informative: a qualitative band word + the driver names survive.
+    assert any(w in text for w in ("Strong", "Solid", "Moderate", "Limited"))
+    assert "gpa_alignment" in text
 
 
 @pytest.mark.asyncio

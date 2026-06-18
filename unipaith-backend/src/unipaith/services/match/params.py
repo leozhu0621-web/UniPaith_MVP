@@ -21,6 +21,84 @@ DEFAULT_PARAMS: dict[str, float] = {
     #                   pulls M down but never buries it (the s→p veto's job)
     "prior": 0.5,  # neutral base-rate fit when no per-(program,dim) prior
     "confirmed_gain": 0.85,  # rho >= this ⇒ a "confirmed" deal-breaker (hardened floor)
+    "time_h": 12.0,  # gaussian bandwidth (months) for desired-time-to-degree fit
+}
+
+# ── Per-dimension priors m_k (Spec 3 §2.1) ───────────────────────────────────
+# "Do not ship flat 0.5 everywhere" — a flat prior compresses thin/inferred
+# profiles toward the same mid value regardless of how a typical applicant
+# actually fares on that dimension. These are deterministic per-DIMENSION base
+# rates (the realistic average raw-fit of a random student↔program pair on that
+# dim), used as the shrink anchor m_k for any program lacking a precomputed
+# per-(program,dim) base rate. They are NOT the program-specific priors §2.1
+# also envisions (those would be computed offline in program_features.py from
+# admit-cohort medians); this per-dim table is the strictly-better-than-flat
+# fallback the spec calls for, and it stays in [0,1].
+#
+# Rationale for each value:
+#   themes / field  — a random (student, program) pair rarely shares interest
+#                     tags or sits in the same field, so the base rate is low.
+#   needs           — programs broadly offer common supports, so coverage of a
+#                     random need is moderate.
+#   budget / time   — affordability and duration land near the middle on average.
+#   geo             — most students are flexible / many programs sit in popular
+#                     locations, so overlap is more-likely-than-not.
+#   degree_level    — degree targets cluster (masters-heavy catalog), so an
+#                     average target lands a bit above the midpoint.
+#   flexibility / support — part-time/online and dedicated support are the
+#                     minority of programs, so the base rate is below 0.5.
+#   semantic        — neutral; cosine of unrelated summaries averages mid-low.
+DIMENSION_PRIORS: dict[str, float] = {
+    "semantic": 0.45,
+    "themes": 0.30,
+    "field": 0.30,
+    "needs": 0.55,
+    "budget": 0.50,
+    "time": 0.50,
+    "geo": 0.60,
+    "degree_level": 0.55,
+    "flexibility": 0.35,
+    "support": 0.40,
+}
+
+
+def prior_for(dim: str, params: dict[str, float] | None = None) -> float:
+    """The shrink anchor m_k for a dimension: its per-dim base rate, falling
+    back to the global neutral ``prior`` (0.5) for any unknown dimension."""
+    p = params or DEFAULT_PARAMS
+    return DIMENSION_PRIORS.get(dim, p["prior"])
+
+
+# ── Curated field-of-study similarity table (Spec 3 §3 categorical) ──────────
+# Symmetric related-field grades for ``fit_categorical``. Exact match is 1.0 (no
+# entry needed); an unrelated pair with no entry is 0.0. Keys are lower_snake
+# canonical field names; the lookup tries both orderings. Kept small + auditable
+# (the CIP-family idea from §3, hand-curated for the fields we actually model).
+FIELD_SIM_TABLE: dict[tuple[str, str], float] = {
+    ("data_science", "statistics"): 0.8,
+    ("data_science", "computer_science"): 0.7,
+    ("data_science", "mathematics"): 0.6,
+    ("data_science", "economics"): 0.5,
+    ("computer_science", "statistics"): 0.6,
+    ("computer_science", "mathematics"): 0.6,
+    ("computer_science", "engineering"): 0.6,
+    ("statistics", "mathematics"): 0.7,
+    ("statistics", "economics"): 0.6,
+    ("mathematics", "physics"): 0.6,
+    ("physics", "engineering"): 0.6,
+    ("biology", "neuroscience"): 0.7,
+    ("biology", "public_health"): 0.6,
+    ("biology", "chemistry"): 0.6,
+    ("chemistry", "engineering"): 0.5,
+    ("neuroscience", "psychology"): 0.6,
+    ("psychology", "public_health"): 0.5,
+    ("economics", "business"): 0.6,
+    ("business", "finance"): 0.7,
+    ("economics", "finance"): 0.6,
+    ("political_science", "economics"): 0.5,
+    ("political_science", "history"): 0.5,
+    ("history", "art_history"): 0.5,
+    ("english", "history"): 0.4,
 }
 
 # Confidence is clamped off the open interval so precision stays finite.

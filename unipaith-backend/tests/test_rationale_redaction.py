@@ -16,6 +16,7 @@ from unipaith.ai.rationale_redaction import (
     project_for_student,
     redact_citations,
     redact_mapping,
+    scrub_numbers_from_text,
 )
 
 # A representative rationale artifact: student-own signals + public program
@@ -147,3 +148,37 @@ def test_student_and_institution_views_diverge_only_on_sensitive_signals():
 def test_redaction_map_is_nonempty():
     # Guardrail: an empty map would silently disable the asymmetry.
     assert len(INSTITUTION_ONLY_KEY_SUBSTRINGS) >= 10
+
+
+# ── §14 string-channel scrubber ──────────────────────────────────────────────
+
+
+def test_scrub_numbers_removes_every_digit():
+    leaky = [
+        "Fitness 0.85: drivers — gpa_alignment. Confidence 0.70: profile_complete.",
+        "You are a 95% match with a 3.8 GPA.",
+        "Top 10 percent; admit rate is 12.5%.",
+    ]
+    for text in leaky:
+        out = scrub_numbers_from_text(text)
+        assert not any(ch.isdigit() for ch in out), f"digit survived: {out!r}"
+
+
+def test_scrub_numbers_preserves_clean_prose():
+    clean = "Strong fit, driven by your research goals. Our confidence is high."
+    assert scrub_numbers_from_text(clean) == clean
+
+
+def test_scrub_numbers_handles_empty_and_none():
+    assert scrub_numbers_from_text("") == ""
+    assert scrub_numbers_from_text(None) == ""
+
+
+def test_project_for_student_scrubs_numeric_rationale_text():
+    # §14: even if the LLM/stub emits a number, the student projection strips it.
+    proj = project_for_student(
+        rationale_text="Fitness 0.82 makes this a 90% match.",
+        cited_student_fields=[],
+        cited_program_fields=[],
+    )
+    assert not any(ch.isdigit() for ch in proj.rationale_text)

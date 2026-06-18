@@ -30,8 +30,43 @@ institution-only") is realized here, and documented in specs 11 + 32.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any
+
+# AI-Structure-3 §14 — the student NEVER sees a number. The breakdowns are
+# stripped of numeric scalars by ``_strip_numbers`` (api/students.py), but the
+# ``rationale_text`` STRING is a separate channel: the deterministic stub used to
+# format raw scores ("Fitness 0.85 …") into it, and a free-text LLM rationale can
+# emit percentages/scores too. This scrubber is the string-side guard — it
+# removes digit-bearing score/percent tokens from any student-facing rationale
+# text before it is returned OR persisted, closing the leak the breakdown
+# stripper can't reach. It is intentionally conservative: it removes numeric
+# tokens (and an immediately-trailing ``%``) and tidies the punctuation left
+# behind, but never invents or reorders words.
+_NUM_TOKEN = re.compile(r"\b\d[\d,]*(?:\.\d+)?%?")
+_PCT_WORD = re.compile(r"\b\d[\d,]*(?:\.\d+)?\s*(?:percent|percentage)\b", re.IGNORECASE)
+
+
+def scrub_numbers_from_text(text: str | None) -> str:
+    """Strip every numeric/percent token from a student-facing rationale string
+    (AI-Structure-3 §14). Removes the number, tidies the orphaned spacing and a
+    leading-label colon left behind (e.g. "Fitness 0.85: drivers" → "drivers"),
+    and collapses double spaces. Returns "" for falsy input."""
+    if not text:
+        return ""
+    out = _PCT_WORD.sub("", text)
+    out = _NUM_TOKEN.sub("", out)
+    # A label that ONLY introduced a number ("Fitness : drivers", "Confidence : ok")
+    # is left dangling; drop a single capitalized label-word + colon when the
+    # number it labeled is now gone.
+    out = re.sub(r"\b([A-Z][a-z]+)\s*:\s*", "", out)
+    # Tidy: collapse spaces, fix " ." / " ," / orphan parens-spacing.
+    out = re.sub(r"\s+([.,;)])", r"\1", out)
+    out = re.sub(r"\(\s+", "(", out)
+    out = re.sub(r"\s{2,}", " ", out)
+    return out.strip()
+
 
 # ── The redaction map ───────────────────────────────────────────────────────
 #
@@ -187,7 +222,8 @@ def project_for_student(
 
     return RationaleProjection(
         audience="student",
-        rationale_text=rationale_text or "",
+        # §14: the student never sees a number — scrub the string channel too.
+        rationale_text=scrub_numbers_from_text(rationale_text),
         # The student's own data reflected back is always safe.
         cited_student_fields=list(cited_student_fields or []),
         cited_program_fields=safe_program_citations,

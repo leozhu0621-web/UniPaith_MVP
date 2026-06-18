@@ -6,6 +6,82 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-18 — Run 59 (FULL-FLEET sweep of all 150 live · graded the interval's profile PRs · 1 rule change — the BUILD-ARTIFACT ASSEMBLY description class)
+
+**Institutions audited: ALL 150 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+using the repo's own `profile_standard/anti_stub.py` analyzer over every catalog plus structure metrics
+(field-echo department, CIP-rollup name, literal CIP code, concentration-split) and the seed-floor checks
+(campus-photo count, `posts` feed). Plus a student's-eye pass over the interval's repairs (UCLA/UW/Michigan/
+UT-Austin) and gold MIT (0% control).
+
+**The fleet TRIPLED since run 58: 40 → 150.** The external bulk-seed **#779** added **110 institution-level
+stubs (US-News ranks 37–152)**, and **#780** refocused the routine to **enrichment+repair only — seeding is
+now external, the SEED FLOOR rule was removed, and the routine never adds universities.** So the 122 seeds
+(110 new + the 12 earlier #746) are not rule violations — they are the enrichment backlog.
+
+**Merged since run 58 (#767):** profile PRs **#766** michigan, **#768** ut-austin, **#770** ucla, **#790** uw
+(the run-58 school-blurb CRITICAL band), plus **#763/#764** uiuc, **#765** georgia-tech, **#759** usc, **#760**
+northwestern, **#757** duke (most landed just before run-58's grade but verified live here). Out of scope: the
+large frontend/UX batch (#774–#799), #779 seed, #780/#771 skill-refocus.
+
+**🔴 HEADLINE FINDING — run-58's "wins" REGRESSED into a NEW, gate-defeating fabrication form on 3 of 4
+catalogs.** UCLA #770, UW #790, Michigan #766 each auto-merged green and **joined `CERTIFIED_CLEAN`**, yet
+ship a per-row **BUILD-ARTIFACT ASSEMBLY** on ~98% of rows (live): a `"Catalog entry <hex>:"` debug-id nonce
+(UW DOUBLES it on 316/365 rows) + a `"{Univ}'s {School} draws on {Division}… Published through {School} on the
+**Westwood** campus"` division frame (UW wrongly names UCLA's campus — a run-25 geography lie) + scraped
+**namesake** text where the program name collides with a famous entity (an Astronomy M.A.T. described as the
+*journal* "Astronomy & Astrophysics"'s editorial board; an Archaeology BA described as a Wikipedia "list of
+women"; truncated mid-word "hly peer-reviewed"). **Mechanism:** the per-row id is a NONCE, so no two
+descriptions are byte-equal → every `anti_stub` verbatim / shared-body / cross-field metric reads **0**, and
+the catalog passes both the CI gate AND (last run) this grader's "win/clean" call. Only **UT-Austin #768** of
+the four de-fabricated genuinely (0 artifacts, like NYU #753 / UIUC #763).
+
+**Other live findings (documented classes → backlog, not new rules):** the mature-catalog structure tiers
+persist unchanged — rollup-name (Berkeley 37 / Stanford 35 / Harvard 35 / Columbia 34 / Cornell 33 / Penn 27 %),
+verbatim-across-levels (Purdue 82 / Berkeley 81 / JHU 80 / Cornell 76 / Penn 74 / UChicago 50 / Rice 43 %),
+field-echo department (Stanford 95 / UChicago 89 / Columbia 88 / Penn 88 / Cornell 86 / Berkeley 82 / USC 80 %),
+prefix-doubling (Yale 70 %), literal "(CIP NN.NN)" (Penn 11 %). USC's run-58 structure defect persists (80%
+field-echo dept + concentration-split, certified clean on descriptions). Seeds: all 110 new `posts=0`, **19 with
+ZERO campus photos** (broken card+hero), 38 with <4; the 12 earlier seeds still 5/5 empty-desc/null-dept.
+
+**Diagnosis.** The headline is a genuinely NEW gap-class — no existing miss names the `"Catalog entry <hex>"`
+build token, the per-row-nonce gate-evasion, the "draws on…/Published through…/campus" division-frame, or the
+namesake-scrape. The structure tiers and synthesized reviews recur DOCUMENTED classes (miss #2 rollup/dept-echo,
+run-30 verbatim, run-25 cross-institution-copy, run-9 synthesized reviews) → backlog repairs, not re-stated
+rules (anti-churn). No display bug. No finding argued for loosening an invariant.
+
+**RULE CHANGE (1 of ≤3) — new miss-#8 sub-bullet + matching §9 programmatic-gate clause: the BUILD-ARTIFACT
+ASSEMBLY description class.** A description must be researched prose ABOUT THE PROGRAM; FAIL any that is a
+machine assembly of (a) a leading internal id-token (`"Catalog entry <hex/uuid>:"`, often doubled), (b) the
+`"{Univ}'s {School} draws on {Div}… Published through {School} on the {city} campus"` division-frame
+boilerplate (re-run the geography scan on its campus tail), or (c) a namesake-scrape (journal/Wikipedia-survey/
+list about a different entity sharing the name, often truncated mid-word). Critically: because the leading id
+is a per-row NONCE that zeroes the share metrics, the §9 pre-ship scan must STRIP `^Catalog entry [0-9a-f]+:`
+(and any leading id) BEFORE recomputing verbatim/shared-body, AND fail outright on the id-token / division-frame
+/ namesake — none of which the form metrics see. NEW (not a duplicate — prior misses key on description FORM/
+SHARE, which this nonce defeats by construction), GENERAL (the class: a non-researching "de-fabrication" pass
+emitting a per-row build assembly), evidence-backed (UCLA/UW/Michigan live, 0 on every metric), and TIGHTENS
+(adds a FAIL condition) the no-fabrication + verify-rendered-output invariants. Self-review: re-read miss #8 +
+§9 — misses still 1–9 sequential, no contradiction, all IMMUTABLE INVARIANTS intact; the edit only ADDS FAIL
+conditions.
+
+**FLAGGED FOR HUMAN (code, out of grader scope):** the CI gate `anti_stub.py` is description-FORM-only and has
+now been defeated twice (run-55 stub-swap, run-59 nonce-assembly). It needs (1) a leading-id-token / division-
+frame / namesake metric, (2) a nonce-strip before the share counts, and (3) **UCLA · UW · Michigan removed from
+`CERTIFIED_CLEAN`** until genuinely repaired — else a re-stub re-passes CI. All three are app/test code the
+grader does not edit.
+
+**Backlog delta.** Full rewrite to the 150-institution fleet: NEW CRITICAL #1 = UCLA/UW/Michigan build-artifact
+tier (regressed from run-58 wins); Stanford/Purdue/Boston-U remain CRITICAL; HIGH tier re-measured
+(Berkeley/Penn/Cornell/Columbia/Harvard/JHU/UChicago/Rice/Yale + USC-structure); MEDIUM = the 110 new seeds
+(19 zero-photo acute) + the 12 earlier seeds; CLEANUP = NYU slug-residual, Georgia Tech RESOLVED (deploy
+flipped, clean live), clean tier expanded (UT-Austin/UIUC/Northwestern/Wisconsin/GT joined MIT/NYU/UCSD/etc.).
+
+**Invariants:** all intact; markdown-only (SKILL.md + backlog + changelog; no data/code/migration touched).
+Health check GREEN — see below.
+
+---
+
 ## 2026-06-18 — Run 57 (FULL-FLEET sweep of all 40 live · graded 6 merged profile PRs · 1 rule change — tighten the institution-level SEED FLOOR)
 
 **Institutions audited: ALL 40 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`** — every

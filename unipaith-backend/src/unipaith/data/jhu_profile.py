@@ -441,6 +441,30 @@ def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
     return clean_cip_field(spec.get("program_name", ""))
 
 
+# Per-credential, field-specific lead so a field's credential siblings (BS / MS /
+# certificate / PhD) no longer share one verbatim field clause (the run-58 backlog
+# verbatim-across-levels defect: gold MIT = 0%). The lead states what THAT degree is;
+# the verified field clause follows as the field's distinction.
+_CRED_LEAD: dict[str, str] = {
+    "bachelors": "Johns Hopkins offers the undergraduate major in {f}.",
+    "masters": "Johns Hopkins offers a master's program in {f}.",
+    "phd": "Doctoral study in {f} at Johns Hopkins centers on dissertation research.",
+    "doctoral": "Doctoral study in {f} at Johns Hopkins centers on dissertation research.",
+    "certificate": "Johns Hopkins offers a graduate certificate in {f}.",
+    "professional": "Johns Hopkins offers a professional program in {f}.",
+}
+
+
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    """Drop undergraduate-specific phrasing from a field clause stamped on a
+    non-bachelor's row (e.g. an MS page should not say "the undergraduate major")."""
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(r"\bundergraduate (major|program)\b", "program", clause, flags=re.I)
+    return clause
+
+
 def _jhu_description(
     program_name: str,
     degree_type: str,
@@ -449,16 +473,19 @@ def _jhu_description(
     field: str,
     delivery_format: str = "on_campus",
 ) -> str:
-    """Field-specific description — never the degree-type classification stub."""
+    """Field-specific, per-credential description — never a degree-type classification
+    stub and never the same field clause stamped verbatim across credential levels."""
     clause = FIELD_DESCRIPTIONS.get(field)
     if not clause:
         raise ValueError(f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({program_name})")
+    lead = _CRED_LEAD.get(degree_type, "Johns Hopkins offers a program in {f}.").format(f=field)
+    clause = _level_appropriate_clause(clause, degree_type)
     delivery = ""
     if delivery_format == "online":
         delivery = " Delivered online."
     elif delivery_format == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{clause}{delivery}"
+    return f"{lead} {clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:

@@ -37,6 +37,20 @@ def fit_categorical(
     return 0.0
 
 
+def fit_categorical_best(
+    student_val: object,
+    program_vals: list | None,
+    sim_table: dict | None = None,
+) -> float:
+    """Best categorical fit of one student value against a LIST of program-side
+    options (e.g. the student's field vs every field a program offers). Returns
+    the max ``fit_categorical`` over the options; an empty/unknown list yields
+    the neutral 0.5 (same convention as the single-value form)."""
+    if student_val is None or not program_vals:
+        return 0.5
+    return max(fit_categorical(student_val, pv, sim_table) for pv in program_vals)
+
+
 def fit_numeric_higher(
     x: float | None, mu: float | None, sigma: float | None, slope: float = 1.7
 ) -> float:
