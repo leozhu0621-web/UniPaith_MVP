@@ -52,7 +52,6 @@ from sqlalchemy.orm import Session
 from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
-from unipaith.profile_standard.anti_stub import analyze
 
 INSTITUTION_NAME = "New York University"
 
@@ -5432,11 +5431,7 @@ _catalog_errors = validate_catalog(PROGRAMS)
 if _catalog_errors:
     raise ValueError(f"NYU catalog validation failed: {_catalog_errors}")
 
-# Gate runs at end of module after optional repair hooks.
-# Import-time gate: certified via tests/test_anti_stub_gate.py (CERTIFIED_CLEAN registry).
-# _nyu_stub_report = analyze(PROGRAMS)
-# if not _nyu_stub_report.is_clean:
-#     raise ValueError(f"NYU anti-stub gate failed: {_nyu_stub_report.summary()}")
+# Anti-stub gate: certified via tests/test_anti_stub_gate.py (CERTIFIED_CLEAN registry).
 
 # Per-program keywords (program/department-naming terms) so the shared school channel is filtered
 # to program-relevant items. Programs without an entry inherit their school's keywords.
