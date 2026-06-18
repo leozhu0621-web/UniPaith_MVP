@@ -4577,3 +4577,86 @@ school-blurb + GT live); UCSD CRITICAL section updated (invented aerospace cente
 `test_profile_standard.py` + `test_profile_enrichment.py` = **18 passed** (system pytest + minimal deps — sqlalchemy /
 pgvector / pydantic — with `--noconftest` in this ephemeral container; `profile_standard.manifest` imports cleanly at
 STANDARD_VERSION 2).
+
+---
+
+## Run 58 — 2026-06-18 — full-fleet sweep of all 40; CERTIFIED_CLEAN is description-only → tighten §8.5 to gate STRUCTURE too
+
+**Institutions audited:** ALL 40 LIVE institutions, every structural dimension, via the live API
+(`api.unipaith.co/api/v1`) — a programmatic per-catalog scan (duplicate/bare/`Programs` names,
+null/CIP-rollup/CIP-code/field-echo departments, prefix-doubling, classification, double-period,
+verbatim-shared, connects-to school-blurb) over the full paginated program list of each, plus campus-photo
+count, posts feed, and `_standard` stamp; gold MIT control + a student's-eye read of the USC and GT
+program pages. Fleet = 40 (28 mature + 12 seeds), no sprawl.
+
+**Merged since run 57 (PR #758):** #759 USC (catalogue descriptions, anti-stub clean), #760 Northwestern
+(remove synthesized reviews + anti-synthesis gate), #762 alembic dual-head merge, #763 + #764 UIUC
+(catalogue descriptions + heading-lead repair), #765 Georgia Tech (de-fabricate catalog, remove 58
+synthesized reviews). **Open profile PR:** #766 Michigan (catalogue descriptions, in-flight — checks
+pending). Old review/feedback-export PRs (#403/#420/#439/#489/#499/#503/#515/#516/#617/#674) remain open
+but superseded by later merges — stranded low-priority, flagged not actioned (no app-code edits in scope).
+
+**Findings (live API + source evidence):**
+1. **WINS verified live:** USC #759 + UIUC #763/#764 — the school-blurb frame is GONE live (USC
+   connects 100%→0, double-period 0; UIUC connects 0). Northwestern #760 — synthesized reviews removed,
+   structure clean (verbatim 0 / rollup 2%). Duke #757 — certified clean (prefix 0 / verbatim 0). The
+   school-blurb tier dropped 6→3 still-live (UCLA, UW-Seattle, UT-Austin — each 100% connects / 93–98%
+   double-period), with Michigan a 4th but under OPEN repair PR #766.
+2. **Georgia Tech #765 is a GENUINE source de-fabrication, NOT live yet.** Source
+   `georgia_tech_catalog_descriptions.py` carries field-specific catalog.gatech.edu descriptions
+   ("Built around Georgia Tech's distinctive Threads curriculum, the BS in Computer Science…"), real
+   departments, 58 synthesized reviews removed; GT joined `CERTIFIED_CLEAN` and its module-load
+   `_assert_anti_stub_clean` passes. The LIVE API still returns the pre-#765 #730 stubs (100%
+   prefix-double / 66% dept-echo) because **Deploy Backend was in_progress at grade time** (confirmed
+   via Actions: run on `d80cf7b`, status in_progress). Merged-≠-deployed lag; live will flip. WIN pending.
+3. **NEW gap-class (drives the rule change): `CERTIFIED_CLEAN` certifies DESCRIPTIONS ONLY.** The
+   enforced gate `profile_standard/anti_stub.py::analyze` computes name-prefix / classification /
+   double-period / verbatim / shared-leading-body / cross-field-clause — and **NO structure metric**
+   (no department, no rollup-name, no CIP-code, no concentration-split). So a "catalogue descriptions"
+   repair can clear every description tell, join the registry, pass `test_anti_stub_gate`, auto-merge,
+   and ship LIVE with the miss-#2 STRUCTURE defects intact. **Evidence: USC — `CERTIFIED_CLEAN` (#759
+   "anti-stub clean"), every description metric 0 LIVE — ships ~62% rows whose `department` is the
+   degree's field echoed verbatim (e.g. BA in Economics → dept "Economics") while the real owning USC
+   school is named only in the description, PLUS one BA decomposed into four "Dramatic Arts, {Comedy/
+   Design/Directing/Musical Theatre} Emphasis" concentration-split rows (each its own program,
+   `department` = the emphasis).** Gold MIT scores 0 on all four structure metrics, so the baseline holds.
+4. **Documented classes recurring (no new rule — already covered):** rollup names (Berkeley 38% /
+   Columbia 36% / Harvard 36% / Cornell 34% / Penn 28%, miss #2); Penn literal "(CIP NN.NN)" codes 28%
+   (miss #2 CIP-code tell); verbatim-across-levels (Purdue 82% / Berkeley 81% / JHU 80% / Cornell 76% /
+   Penn 74% / UChicago 50% / Rice 43%, run-30 / miss #8); Yale 70% prefix-doubling (miss #9); Stanford
+   fabricated units + 36% rollup (miss #8); Boston U peer-signatures (run-25, not re-scanned). Checklist
+   GREEN on the 28 mature catalogs (5 photos each, non-zero feeds). The 12 seeds remain half-built
+   (run-57 SEED FLOOR). All are BAD DATA recurring a documented class → backlog, not new rules.
+
+**Diagnosis:** finding 3 is a genuine NEW enforcement gap — the gate the rulebook (§8.5) demanded was
+BUILT description-only, and catalogs are certified through that partial gate while still carrying
+field-echo departments + concentration-splits. The "default-flipped" test: §8.5 already PRESCRIBES the
+structure gates ("`department` echoing the name's field = 0%", rollup/CIP), but the implemented
+`analyze()` omits them — so this is a TIGHTENING of an existing gate with new live evidence, not a
+duplicate. Findings 1/2/4 are BAD DATA / deploy-lag in documented classes → backlog only.
+
+**Rulebook changes: 1 of ≤3.** §8.5 tightened: the enforced gate (`anti_stub.analyze` +
+`CERTIFIED_CLEAN`) must ALSO compute, baselined to gold MIT 0%, the miss-#2 STRUCTURE metrics —
+(a) `department` field-echo (the precise miss-#2 tell: dept == name-field verbatim one-off per row /
+no two share a dept / a real school known — NOT naive dept==field, which would false-flag a genuinely
+shared "Department of Economics"); (b) CIP-rollup tells in name AND department; (c) a literal CIP code;
+(d) concentration-split "— {emphasis}" rows. A catalog may join `CERTIFIED_CLEAN` only when these are
+also zero; "anti-stub clean" in a PR title certifies the descriptions only. Cited the live USC evidence
+(no school name in SKILL.md). No invariant loosened (a tightening); post-edit re-read confirms §8.5
+coherent and the numbered misses unchanged.
+
+**Standing concern (flagged for human review, carried from runs 46–54, strengthened):** the dominant
+failure remains enricher BEHAVIOR + work-ORDERING, which more rule text cannot fix — single-dimension
+"repairs" (descriptions fixed, structure left) keep shipping as "clean", and the still-live school-blurb
+catalogs (UCLA/UW/UT-Austin) persist while certified-clean PRs land elsewhere. The run-58 gate-tightening
+removes the description-only loophole at the CI level once the enricher implements it; whether it does is
+a behavior question.
+
+**Backlog delta:** rewritten worst-first. School-blurb tier 6→3 still-live (USC/UIUC removed as wins;
+Michigan noted in-flight #766). Duke + Northwestern demoted to clean. NEW HIGH #14 — the
+CERTIFIED-but-structure-incomplete class (USC field-echo dept + concentration-splits). GT moved to a
+CLEANUP "verify the deploy flipped" note. HIGH band re-measured + renumbered from live. 12-seed MEDIUM
+band unchanged. Penn CIP-code tell re-confirmed (28%).
+
+**Invariants:** all intact; SKILL.md edit is a §8.5 gate tightening (adds structure metrics; loosens
+nothing). Health check: see below.
