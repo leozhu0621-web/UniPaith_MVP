@@ -1,6 +1,6 @@
 """Seed the external scholarships catalog (Spec 2026-06-14).
 
-Reads ``seed_data/scholarships.json`` (the 9,500-row CareerOneStop export) and
+Reads ``data/scholarships.json`` (the 9,500-row CareerOneStop export) and
 upserts each row by ``external_id`` — idempotent, safe to re-run locally or in
 prod via the ``aws ecs run-task`` one-off pattern. The json ``id`` field is the
 CareerOneStop detail id and maps to ``external_id``.
@@ -23,9 +23,11 @@ from unipaith.models.scholarship import Scholarship
 
 # Resolve the seed file relative to the backend repo root robustly: this file is
 # at ``<repo>/scripts/seed_scholarships.py``; the data lives at
-# ``<repo>/seed_data/scholarships.json``.
+# ``<repo>/data/scholarships.json`` (``data/`` is the dir the Dockerfile copies
+# into the image, alongside university_seeds.json / real_universities.json — so
+# the file is present for the prod ``aws ecs run-task`` seed).
 _REPO_ROOT = Path(__file__).resolve().parent.parent
-_SEED_FILE = _REPO_ROOT / "seed_data" / "scholarships.json"
+_SEED_FILE = _REPO_ROOT / "data" / "scholarships.json"
 
 # Per-statement chunk size for the upsert (keeps each round-trip bounded).
 _CHUNK = 500
@@ -97,7 +99,7 @@ async def upsert_rows(db: AsyncSession, rows: list[dict]) -> int:
 async def seed() -> int:
     rows = _load_rows()
     if not rows:
-        print("No scholarship rows found in seed_data/scholarships.json")
+        print("No scholarship rows found in data/scholarships.json")
         return 0
 
     async with async_session() as db:
