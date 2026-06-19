@@ -63,29 +63,26 @@ descriptions with Columbia-specific level suffixes (0% identical-across-levels);
 remaining peer-contamination (Kelly Writers House, Perry World House, Morris Arboretum,
 Haas/CDSS, ICA); gates shared descriptions and peer signatures at build time.
 
-Structural de-fabrication (2026-06-19, columbiadefab1): resolves federal CIP rollup
-titles to Columbia's real published degrees or drops aggregation buckets; replaces
-possessive IPEDS award-level names with conferred designations; sets department to the
-real owning school; per-credential ``_level_body`` descriptions (0% possessive / rollup).
-
 Depth pass (2026-06-15, columbiaprof8): merged ``DEPTH_REVIEWS`` for 37 coverable
 programs (46/46 total external_reviews on coverable programs).
 """
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import re
+from collections import Counter
 from datetime import date
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.columbia_field_descriptions import (
+    CORE,
     FIELD_ALIASES,
-    FIELD_DESCRIPTIONS,
     SLUG_DESCRIPTIONS,
 )
-from unipaith.data.columbia_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.columbia_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
@@ -94,7 +91,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Columbia University in the City of New York"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-19"
+ENRICHED_AT = "2026-06-17"
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -439,6 +436,8 @@ _SSW = "Columbia School of Social Work"
 _GSAPP = "Graduate School of Architecture, Planning and Preservation"
 _ARTS = "Columbia School of the Arts"
 _NURSING = "Columbia School of Nursing"
+_GSAS = "Graduate School of Arts and Sciences"
+_DENTAL = "College of Dental Medicine"
 
 SCHOOLS: list[dict] = [
     {
@@ -562,6 +561,26 @@ SCHOOLS: list[dict] = [
             "Practice (DNP) and the Ph.D. across advanced-practice specialties."
         ),
     },
+    {
+        "name": _GSAS,
+        "sort_order": 13,
+        "description": (
+            "The Graduate School of Arts and Sciences is Columbia's central school for "
+            "advanced study in the arts, humanities, sciences and social sciences. Working "
+            "through the Faculty of Arts and Sciences departments, it awards the M.A., "
+            "M.Phil. and Ph.D. and trains scholars and researchers across the disciplines."
+        ),
+    },
+    {
+        "name": _DENTAL,
+        "sort_order": 14,
+        "description": (
+            "The College of Dental Medicine, founded in 1916 and part of Columbia "
+            "University Irving Medical Center, awards the Doctor of Dental Surgery (D.D.S.) "
+            "and advanced postdoctoral certificates, integrating dental education with the "
+            "biomedical sciences and patient care in New York City."
+        ),
+    },
 ]
 
 # Each school's official website (verified to resolve at author time).
@@ -578,6 +597,8 @@ _SCHOOL_WEBSITE: dict[str, str] = {
     _GSAPP: "https://www.arch.columbia.edu/",
     _ARTS: "https://arts.columbia.edu/",
     _NURSING: "https://www.nursing.columbia.edu/",
+    _GSAS: "https://www.gsas.columbia.edu/",
+    _DENTAL: "https://www.dental.columbia.edu/",
 }
 
 # Rich, sourced About-tab content per school. Deans + titles are quoted from each school's
@@ -748,6 +769,20 @@ _ABOUT_DETAIL: dict[str, dict] = {
             "url": "https://www.nursing.columbia.edu/about-us/leadership",
         },
     },
+    _GSAS: {
+        "founded": 1880,
+        "source": {
+            "label": "Columbia Graduate School of Arts and Sciences — About",
+            "url": "https://www.gsas.columbia.edu/content/about-gsas",
+        },
+    },
+    _DENTAL: {
+        "founded": 1916,
+        "source": {
+            "label": "Columbia College of Dental Medicine — About",
+            "url": "https://www.dental.columbia.edu/about-us",
+        },
+    },
 }
 
 # About-detail fields omitted per school (verified-unavailable), recorded in each school's
@@ -769,6 +804,16 @@ _ABOUT_OMITTED: dict[str, list[str]] = {
     _GSAPP: list(_FACULTY_OMIT),
     _ARTS: list(_FACULTY_OMIT),
     _NURSING: [*_FACULTY_OMIT, "about_detail.research_centers"],
+    _GSAS: [
+        *_FACULTY_OMIT,
+        "about_detail.leadership",
+        "about_detail.research_centers",
+    ],
+    _DENTAL: [
+        *_FACULTY_OMIT,
+        "about_detail.leadership",
+        "about_detail.research_centers",
+    ],
 }
 
 # ── Per-node content feeds (so EVERY school + program has a populated Events &
@@ -843,6 +888,14 @@ _SCHOOL_FEED_SPEC: dict[str, dict] = {
     _GSAPP: {"rss": _GSAPP_RSS, "keywords": ["GSAPP", "architecture", "planning", "preservation"]},
     _ARTS: {"rss": _CC_SEAS_RSS, "keywords": ["School of the Arts", "MFA", "film", "theatre"]},
     _NURSING: {"rss": _NURSING_RSS, "keywords": ["School of Nursing", "nursing"]},
+    _GSAS: {
+        "rss": _CC_SEAS_RSS,
+        "keywords": ["Graduate School of Arts and Sciences", "GSAS", "doctoral", "research"],
+    },
+    _DENTAL: {
+        "rss": _CUIMC_RSS,
+        "keywords": ["College of Dental Medicine", "dental", "dentistry", "oral"],
+    },
 }
 
 # Per-program keyword overrides (department/program-naming terms). Programs without an
@@ -912,665 +965,378 @@ _INSTITUTION_CONTENT: dict = {
     "social": dict(_SOCIAL_COLUMBIA),
 }
 
-# ── The program catalog (real majors/degrees, organized by school) ─────────
-# slug = idempotency key. Every program is mapped to its owning school from Columbia's
-# official structure. The program set is built from the College Scorecard Field-of-Study
-# list for UNITID 190150 (the deterministic federal view, degree-by-CIP). Graduate degrees
-# use the generic ``masters`` type with the real degree name carried in the program name
-# (professional doctorates J.D. and M.D. are modelled as ``masters`` to match the platform
-# enum, with the degree named in the title).
-PROGRAMS: list[dict] = [
-    # ── Columbia College (undergraduate B.A. majors) ──
-    {
-        "slug": "columbia-economics-ba",
-        "school": _CC,
-        "program_name": "Economics",
-        "degree_type": "bachelors",
-        "cip": "45.06",
-        "duration_months": 48,
-        "description": "Economics — micro, macro, econometrics and economic history.",
-    },
-    {
-        "slug": "columbia-political-science-ba",
-        "school": _CC,
-        "program_name": "Political Science",
-        "degree_type": "bachelors",
-        "cip": "45.10",
-        "duration_months": 48,
-        "description": (
-            "Political science — American, comparative and international politics and "
-            "political theory."
-        ),
-    },
-    {
-        "slug": "columbia-history-ba",
-        "school": _CC,
-        "program_name": "History",
-        "degree_type": "bachelors",
-        "cip": "54.01",
-        "duration_months": 48,
-        "description": "History — the study of the human past across periods and regions.",
-    },
-    {
-        "slug": "columbia-english-ba",
-        "school": _CC,
-        "program_name": "English and Comparative Literature",
-        "degree_type": "bachelors",
-        "cip": "23.01",
-        "duration_months": 48,
-        "description": "English and comparative literature — literature, criticism and writing.",
-    },
-    {
-        "slug": "columbia-psychology-ba",
-        "school": _CC,
-        "program_name": "Psychology",
-        "degree_type": "bachelors",
-        "cip": "42.27",
-        "duration_months": 48,
-        "description": "Psychology — cognitive, developmental, social and clinical science.",
-    },
-    {
-        "slug": "columbia-sociology-ba",
-        "school": _CC,
-        "program_name": "Sociology",
-        "degree_type": "bachelors",
-        "cip": "45.11",
-        "duration_months": 48,
-        "description": "Sociology — social structure, inequality and the study of society.",
-    },
-    {
-        "slug": "columbia-biology-ba",
-        "school": _CC,
-        "program_name": "Biology",
-        "degree_type": "bachelors",
-        "cip": "26.01",
-        "duration_months": 48,
-        "description": "Biology — molecular, cellular and organismal biology and genetics.",
-    },
-    # ── The Fu Foundation School of Engineering and Applied Science (undergraduate) ──
-    {
-        "slug": "columbia-computer-science-bs",
-        "school": _SEAS,
-        "program_name": "Computer Science",
-        "degree_type": "bachelors",
-        "cip": "11.07",
-        "duration_months": 48,
-        "description": (
-            "Columbia's flagship computing major — offered as the B.S. (Columbia "
-            "Engineering) and the B.A. (Columbia College), spanning AI, machine learning, "
-            "systems, theory and graphics through the Department of Computer Science."
-        ),
-    },
-    {
-        "slug": "columbia-operations-research-bs",
-        "school": _SEAS,
-        "program_name": "Operations Research",
-        "degree_type": "bachelors",
-        "cip": "14.37",
-        "duration_months": 48,
-        "description": (
-            "Operations research — optimization, stochastic modeling and analytics in the "
-            "Department of Industrial Engineering and Operations Research."
-        ),
-    },
-    {
-        "slug": "columbia-mechanical-engineering-bs",
-        "school": _SEAS,
-        "program_name": "Mechanical Engineering",
-        "degree_type": "bachelors",
-        "cip": "14.19",
-        "duration_months": 48,
-        "description": (
-            "Mechanical engineering — mechanics, thermofluids, robotics and design."
-        ),
-    },
-    {
-        "slug": "columbia-electrical-engineering-bs",
-        "school": _SEAS,
-        "program_name": "Electrical Engineering",
-        "degree_type": "bachelors",
-        "cip": "14.10",
-        "duration_months": 48,
-        "description": (
-            "Electrical engineering — circuits, signals, devices, communications and systems."
-        ),
-    },
-    {
-        "slug": "columbia-applied-mathematics-bs",
-        "school": _SEAS,
-        "program_name": "Applied Mathematics",
-        "degree_type": "bachelors",
-        "cip": "27.03",
-        "duration_months": 48,
-        "description": (
-            "Applied mathematics — modeling, analysis and computation in the Department of "
-            "Applied Physics and Applied Mathematics."
-        ),
-    },
-    {
-        "slug": "columbia-biomedical-engineering-bs",
-        "school": _SEAS,
-        "program_name": "Biomedical Engineering",
-        "degree_type": "bachelors",
-        "cip": "14.05",
-        "duration_months": 48,
-        "description": (
-            "Biomedical engineering — engineering principles applied to medicine and biology."
-        ),
-    },
-    # ── The Fu Foundation School of Engineering and Applied Science (graduate) ──
-    {
-        "slug": "columbia-computer-science-ms",
-        "school": _SEAS,
-        "program_name": "Master of Science in Computer Science (M.S.)",
-        "degree_type": "masters",
-        "cip": "11.07",
-        "duration_months": 18,
-        "description": (
-            "The 30-point M.S. in Computer Science — advanced study across tracks such as "
-            "machine learning, systems, vision, NLP, security and theory."
-        ),
-    },
-    # ── Columbia Business School ──
-    {
-        "slug": "columbia-mba",
-        "school": _CBS,
-        "program_name": "Master of Business Administration (MBA)",
-        "degree_type": "masters",
-        "cip": "52.02",
-        "duration_months": 24,
-        "description": (
-            "The full-time, two-year MBA — connecting academic theory to real-world "
-            "practice from the heart of New York City."
-        ),
-    },
-    # ── Columbia Law School ──
-    {
-        "slug": "columbia-jd",
-        "school": _LAW,
-        "program_name": "Juris Doctor (J.D.)",
-        "degree_type": "masters",
-        "cip": "22.01",
-        "duration_months": 36,
-        "description": (
-            "The three-year Juris Doctor — Columbia Law School's professional law degree, "
-            "with strength in corporate, constitutional and international law."
-        ),
-    },
-    # ── Vagelos College of Physicians and Surgeons ──
-    {
-        "slug": "columbia-md",
-        "school": _PS,
-        "program_name": "Doctor of Medicine (M.D.)",
-        "degree_type": "masters",
-        "cip": "51.12",
-        "duration_months": 48,
-        "description": (
-            "The four-year Doctor of Medicine — awarded by the first U.S. medical school to "
-            "confer the M.D., at Columbia University Irving Medical Center."
-        ),
-    },
-    # ── Columbia Journalism School ──
-    {
-        "slug": "columbia-journalism-ms",
-        "school": _JOUR,
-        "program_name": "Master of Science in Journalism (M.S.)",
-        "degree_type": "masters",
-        "cip": "09.04",
-        "duration_months": 10,
-        "description": (
-            "The Master of Science in Journalism — the flagship reporting degree of the only "
-            "Ivy League journalism school, which administers the Pulitzer Prizes."
-        ),
-    },
-    # ── School of International and Public Affairs ──
-    {
-        "slug": "columbia-sipa-mia",
-        "school": _SIPA,
-        "program_name": "Master of International Affairs (MIA)",
-        "degree_type": "masters",
-        "cip": "45.09",
-        "duration_months": 24,
-        "description": (
-            "The two-year Master of International Affairs — policy, security and development "
-            "for careers in international and public affairs."
-        ),
-    },
-    {
-        "slug": "columbia-sipa-mpa",
-        "school": _SIPA,
-        "program_name": "Master of Public Administration (MPA)",
-        "degree_type": "masters",
-        "cip": "44.04",
-        "duration_months": 24,
-        "description": (
-            "The two-year Master of Public Administration — management and policy analysis "
-            "for public-service and policy leadership."
-        ),
-    },
-    # ── Mailman School of Public Health ──
-    {
-        "slug": "columbia-public-health-mph",
-        "school": _MAILMAN,
-        "program_name": "Master of Public Health (MPH)",
-        "degree_type": "masters",
-        "cip": "51.22",
-        "duration_months": 24,
-        "description": (
-            "The accredited Master of Public Health — biostatistics, epidemiology, "
-            "environmental health, health policy and population health."
-        ),
-    },
-    # ── Columbia School of Social Work ──
-    {
-        "slug": "columbia-social-work-msw",
-        "school": _SSW,
-        "program_name": "Master of Science in Social Work (MSW)",
-        "degree_type": "masters",
-        "cip": "44.07",
-        "duration_months": 24,
-        "description": (
-            "The Master of Science in Social Work — clinical practice and social policy at "
-            "the oldest school of social work in the United States."
-        ),
-    },
-    # ── Graduate School of Architecture, Planning and Preservation ──
-    {
-        "slug": "columbia-architecture-march",
-        "school": _GSAPP,
-        "program_name": "Master of Architecture (M.Arch)",
-        "degree_type": "masters",
-        "cip": "04.02",
-        "duration_months": 36,
-        "description": (
-            "The three-year professional Master of Architecture — Columbia GSAPP's flagship "
-            "design degree."
-        ),
-    },
-    # ── Columbia School of the Arts ──
-    {
-        "slug": "columbia-arts-mfa",
-        "school": _ARTS,
-        "program_name": "Master of Fine Arts (MFA)",
-        "degree_type": "masters",
-        "cip": "50.06",
-        "duration_months": 24,
-        "description": (
-            "The Master of Fine Arts — Columbia's terminal arts degree in film, theatre, "
-            "visual arts or writing."
-        ),
-    },
-    # ── Columbia School of Nursing ──
-    {
-        "slug": "columbia-nursing-msn",
-        "school": _NURSING,
-        "program_name": "Master's Direct Entry Program in Nursing (MDE)",
-        "degree_type": "masters",
-        "cip": "51.38",
-        "duration_months": 15,
-        "description": (
-            "The Master's Direct Entry program — an accelerated path to registered-nurse "
-            "licensure for students entering nursing from another field."
-        ),
-    },
+# ── The program catalog (Columbia's REAL degrees, organized by school) ──────
+# Rebuilt 2026-06-19 (columbiadefab1). The prior catalog was minted per
+# (CIP × award-level) from IPEDS: possessive "Bachelor's in {CIP rollup}" names,
+# field-echo departments, 88 fabricated departmental "graduate certificates", and
+# descriptions that imported PEER-institution units (Harvard's Nieman Foundation,
+# Carpenter Center, and Visual & Environmental Studies program) — fabrication, not
+# breadth. This catalog is Columbia's REAL degree set, sourced from the Columbia
+# College / School of General Studies arts-&-sciences major list
+# (bulletin.columbia.edu/general-studies/majors-concentrations/), Columbia
+# Engineering's departments and degree pages (bulletin.columbia.edu/columbia-
+# engineering/; engineering.columbia.edu), the Graduate School of Arts and Sciences
+# (gsas.columbia.edu), and each professional school's official site. Every row carries
+# its CONFERRED degree designation, its REAL owning department, and a field-specific
+# description (no peer-institution unit, no classification stub, per-credential leads).
+
+_LEVEL_DEGREE_TYPE = {
+    "ba": "bachelors", "bs": "bachelors",
+    "ma": "masters", "ms": "masters",
+    "phd": "phd", "profm": "masters", "profd": "professional",
+}
+_LEVEL_DURATION = {"ba": 48, "bs": 48, "ma": 24, "ms": 24, "phd": 60, "profm": 24, "profd": 36}
+
+
+def _conferred_name(field: str, level: str) -> str:
+    return {
+        "ba": f"Bachelor of Arts in {field}",
+        "bs": f"Bachelor of Science in {field}",
+        "ma": f"Master of Arts in {field}",
+        "ms": f"Master of Science in {field}",
+        "phd": f"Doctor of Philosophy in {field}",
+    }[level]
+
+
+def _mk(slug, school, field, level, dept, cip, *, dur=None, delivery="on_campus", name=None):
+    """One catalog row with a conferred name + real owning department."""
+    dtype = _LEVEL_DEGREE_TYPE[level]
+    if name is None:
+        name = _conferred_name(field, level)
+    return {
+        "slug": slug,
+        "school": school,
+        "program_name": name,
+        "degree_type": dtype,
+        "department": dept,
+        "cip": cip,
+        "duration_months": dur or _LEVEL_DURATION[level],
+        "delivery_format": delivery,
+        "_field": field,
+    }
+
+
+# Department name shorthands.
+_D_ECON = "Department of Economics"
+_D_POLISCI = "Department of Political Science"
+_D_HIST = "Department of History"
+_D_ENGL = "Department of English and Comparative Literature"
+_D_PSYCH = "Department of Psychology"
+_D_SOC = "Department of Sociology"
+_D_BIO = "Department of Biological Sciences"
+_D_CHEM = "Department of Chemistry"
+_D_PHYS = "Department of Physics"
+_D_MATH = "Department of Mathematics"
+_D_STAT = "Department of Statistics"
+_D_ASTRO = "Department of Astronomy"
+_D_ANTH = "Department of Anthropology"
+_D_ARTH = "Department of Art History and Archaeology"
+_D_CLAS = "Department of Classics"
+_D_MUSIC = "Department of Music"
+_D_PHIL = "Department of Philosophy"
+_D_REL = "Department of Religion"
+_D_EES = "Department of Earth and Environmental Sciences"
+_D_E3B = "Department of Ecology, Evolution, and Environmental Biology"
+_D_FRENCH = "Department of French and Romance Philology"
+_D_GERMAN = "Department of Germanic Languages"
+_D_ITAL = "Department of Italian"
+_D_LAIC = "Department of Latin American and Iberian Cultures"
+_D_SLAVIC = "Department of Slavic Languages"
+_D_MESAAS = "Department of Middle Eastern, South Asian, and African Studies"
+_D_EALAC = "Department of East Asian Languages and Cultures"
+_D_AAADS = "Department of African American and African Diaspora Studies"
+_D_LING = "Department of Linguistics"
+# Engineering departments.
+_D_APAM = "Department of Applied Physics and Applied Mathematics"
+_D_BME = "Department of Biomedical Engineering"
+_D_CHE = "Department of Chemical Engineering"
+_D_CEEM = "Department of Civil Engineering and Engineering Mechanics"
+_D_CS = "Department of Computer Science"
+_D_EEE = "Department of Earth and Environmental Engineering"
+_D_EE = "Department of Electrical Engineering"
+_D_IEOR = "Department of Industrial Engineering and Operations Research"
+_D_ME = "Department of Mechanical Engineering"
+
+
+# ── Columbia College — Bachelor of Arts (Arts & Sciences) ──
+_CC_BA: list[dict] = [
+    _mk("columbia-economics-ba", _CC, "Economics", "ba", _D_ECON, "45.06"),
+    _mk("columbia-political-science-ba", _CC, "Political Science", "ba", _D_POLISCI, "45.10"),
+    _mk("columbia-history-ba", _CC, "History", "ba", _D_HIST, "54.01"),
+    _mk("columbia-english-ba", _CC, "English and Comparative Literature", "ba", _D_ENGL, "23.01"),
+    _mk("columbia-psychology-ba", _CC, "Psychology", "ba", _D_PSYCH, "42.27"),
+    _mk("columbia-sociology-ba", _CC, "Sociology", "ba", _D_SOC, "45.11"),
+    _mk("columbia-biology-ba", _CC, "Biology", "ba", _D_BIO, "26.01"),
+    _mk("columbia-anthropology-ba", _CC, "Anthropology", "ba", _D_ANTH, "45.02"),
+    _mk("columbia-art-history-ba", _CC, "Art History", "ba", _D_ARTH, "50.07"),
+    _mk("columbia-archaeology-ba", _CC, "Archaeology", "ba", _D_ARTH, "45.03"),
+    _mk("columbia-chemistry-ba", _CC, "Chemistry", "ba", _D_CHEM, "40.05"),
+    _mk("columbia-biochemistry-ba", _CC, "Biochemistry", "ba", _D_CHEM, "26.02"),
+    _mk("columbia-physics-ba", _CC, "Physics", "ba", _D_PHYS, "40.08"),
+    _mk("columbia-astronomy-ba", _CC, "Astronomy", "ba", _D_ASTRO, "40.02"),
+    _mk("columbia-astrophysics-ba", _CC, "Astrophysics", "ba", _D_ASTRO, "40.0202"),
+    _mk("columbia-mathematics-ba", _CC, "Mathematics", "ba", _D_MATH, "27.01"),
+    _mk("columbia-statistics-ba", _CC, "Statistics", "ba", _D_STAT, "27.05"),
+    _mk("columbia-philosophy-ba", _CC, "Philosophy", "ba", _D_PHIL, "38.01"),
+    _mk("columbia-religion-ba", _CC, "Religion", "ba", _D_REL, "38.02"),
+    _mk("columbia-classics-ba", _CC, "Classics", "ba", _D_CLAS, "16.12"),
+    _mk("columbia-music-ba", _CC, "Music", "ba", _D_MUSIC, "50.09"),
+    _mk("columbia-french-ba", _CC, "French", "ba", _D_FRENCH, "16.09"),
+    _mk("columbia-german-ba", _CC, "German", "ba", _D_GERMAN, "16.05"),
+    _mk("columbia-italian-ba", _CC, "Italian", "ba", _D_ITAL, "16.04"),
+    _mk("columbia-hispanic-studies-ba", _CC, "Hispanic Studies", "ba", _D_LAIC, "16.09"),
+    _mk("columbia-russian-ba", _CC, "Russian Language and Culture", "ba", _D_SLAVIC, "16.04"),
+    _mk("columbia-slavic-studies-ba", _CC, "Slavic Studies", "ba", _D_SLAVIC, "16.04"),
+    _mk("columbia-east-asian-studies-ba", _CC, "East Asian Studies", "ba", _D_EALAC, "05.01"),
+    _mk("columbia-mesaas-ba", _CC, "Middle Eastern, South Asian, and African Studies", "ba", _D_MESAAS, "05.01"),
+    _mk("columbia-aaads-ba", _CC, "African American and African Diaspora Studies", "ba", _D_AAADS, "05.02"),
+    _mk("columbia-linguistics-ba", _CC, "Linguistics", "ba", _D_LING, "16.01"),
+    _mk("columbia-earth-science-ba", _CC, "Earth Science", "ba", _D_EES, "40.06"),
+    _mk("columbia-environmental-science-ba", _CC, "Environmental Science", "ba", _D_EES, "03.01"),
+    _mk("columbia-environmental-biology-ba", _CC, "Environmental Biology", "ba", _D_E3B, "26.13"),
+    _mk("columbia-neuroscience-and-behavior-ba", _CC, "Neuroscience and Behavior", "ba", _D_BIO, "30.24"),
+    _mk("columbia-financial-economics-ba", _CC, "Financial Economics", "ba", _D_ECON, "52.08"),
+    _mk("columbia-american-studies-ba", _CC, "American Studies", "ba", "Center for American Studies", "05.01"),
+    _mk("columbia-ancient-studies-ba", _CC, "Ancient Studies", "ba", "Center for the Ancient Mediterranean", "30.13"),
+    _mk("columbia-comparative-literature-and-society-ba", _CC, "Comparative Literature and Society", "ba", "Institute for Comparative Literature and Society", "16.01"),
+    _mk("columbia-creative-writing-ba", _CC, "Creative Writing", "ba", "Undergraduate Creative Writing Program", "23.13"),
+    _mk("columbia-drama-and-theatre-arts-ba", _CC, "Drama and Theatre Arts", "ba", "Theatre Program, School of the Arts", "50.05"),
+    _mk("columbia-film-and-media-studies-ba", _CC, "Film and Media Studies", "ba", "Film and Media Studies Program", "50.06"),
+    _mk("columbia-visual-arts-ba", _CC, "Visual Arts", "ba", "Visual Arts Program, School of the Arts", "50.07"),
+    _mk("columbia-architecture-ba", _CC, "Architecture", "ba", "Undergraduate Program in Architecture", "04.02"),
+    _mk("columbia-cognitive-science-ba", _CC, "Cognitive Science", "ba", "Cognitive Science Program", "30.25"),
+    _mk("columbia-data-science-ba", _CC, "Data Science", "ba", "Data Science Institute", "30.70"),
+    _mk("columbia-human-rights-ba", _CC, "Human Rights", "ba", "Institute for the Study of Human Rights", "30.25"),
+    _mk("columbia-medical-humanities-ba", _CC, "Medical Humanities", "ba", "Program in Medical Humanities", "30.13"),
+    _mk("columbia-sustainable-development-ba", _CC, "Sustainable Development", "ba", "Undergraduate Program in Sustainable Development", "03.01"),
+    _mk("columbia-urban-studies-ba", _CC, "Urban Studies", "ba", "Urban Studies Program", "45.12"),
+    _mk("columbia-ethnicity-and-race-studies-ba", _CC, "Ethnicity and Race Studies", "ba", "Center for the Study of Ethnicity and Race", "05.02"),
+    _mk("columbia-womens-and-gender-studies-ba", _CC, "Women's and Gender Studies", "ba", "Institute for Research on Women, Gender, and Sexuality", "05.02"),
+    _mk("columbia-latin-american-studies-ba", _CC, "Latin American and Caribbean Studies", "ba", "Institute of Latin American Studies", "05.01"),
+    _mk("columbia-economics-mathematics-ba", _CC, "Economics-Mathematics", "ba", "Departments of Economics and Mathematics", "52.08"),
+    _mk("columbia-mathematics-statistics-ba", _CC, "Mathematics-Statistics", "ba", "Departments of Mathematics and Statistics", "27.01"),
+    _mk("columbia-computer-science-mathematics-ba", _CC, "Computer Science-Mathematics", "ba", "Departments of Computer Science and Mathematics", "11.01"),
 ]
 
-for _ep in PROGRAMS:
-    _ep.setdefault("delivery_format", "in_person")
+# ── GSAS — Doctor of Philosophy (and select terminal MAs) ──
+_GSAS_PROGRAMS: list[dict] = [
+    _mk("columbia-economics-phd", _GSAS, "Economics", "phd", _D_ECON, "45.06"),
+    _mk("columbia-political-science-phd", _GSAS, "Political Science", "phd", _D_POLISCI, "45.10"),
+    _mk("columbia-history-phd", _GSAS, "History", "phd", _D_HIST, "54.01"),
+    _mk("columbia-english-phd", _GSAS, "English and Comparative Literature", "phd", _D_ENGL, "23.01"),
+    _mk("columbia-psychology-phd", _GSAS, "Psychology", "phd", _D_PSYCH, "42.27"),
+    _mk("columbia-sociology-phd", _GSAS, "Sociology", "phd", _D_SOC, "45.11"),
+    _mk("columbia-biological-sciences-phd", _GSAS, "Biological Sciences", "phd", _D_BIO, "26.01"),
+    _mk("columbia-chemistry-phd", _GSAS, "Chemistry", "phd", _D_CHEM, "40.05"),
+    _mk("columbia-physics-phd", _GSAS, "Physics", "phd", _D_PHYS, "40.08"),
+    _mk("columbia-mathematics-phd", _GSAS, "Mathematics", "phd", _D_MATH, "27.01"),
+    _mk("columbia-statistics-phd", _GSAS, "Statistics", "phd", _D_STAT, "27.05"),
+    _mk("columbia-astronomy-phd", _GSAS, "Astronomy", "phd", _D_ASTRO, "40.02"),
+    _mk("columbia-anthropology-phd", _GSAS, "Anthropology", "phd", _D_ANTH, "45.02"),
+    _mk("columbia-art-history-and-archaeology-phd", _GSAS, "Art History and Archaeology", "phd", _D_ARTH, "50.07"),
+    _mk("columbia-classics-phd", _GSAS, "Classics", "phd", _D_CLAS, "16.12"),
+    _mk("columbia-music-phd", _GSAS, "Music", "phd", _D_MUSIC, "50.09"),
+    _mk("columbia-philosophy-phd", _GSAS, "Philosophy", "phd", _D_PHIL, "38.01"),
+    _mk("columbia-religion-phd", _GSAS, "Religion", "phd", _D_REL, "38.02"),
+    _mk("columbia-earth-and-environmental-sciences-phd", _GSAS, "Earth and Environmental Sciences", "phd", _D_EES, "40.06"),
+    _mk("columbia-ecology-evolution-phd", _GSAS, "Ecology, Evolution, and Environmental Biology", "phd", _D_E3B, "26.13"),
+    _mk("columbia-french-phd", _GSAS, "French", "phd", _D_FRENCH, "16.09"),
+    _mk("columbia-german-phd", _GSAS, "German", "phd", _D_GERMAN, "16.05"),
+    _mk("columbia-italian-phd", _GSAS, "Italian", "phd", _D_ITAL, "16.04"),
+    _mk("columbia-hispanic-studies-phd", _GSAS, "Hispanic Studies", "phd", _D_LAIC, "16.09"),
+    _mk("columbia-slavic-studies-phd", _GSAS, "Slavic Studies", "phd", _D_SLAVIC, "16.04"),
+    _mk("columbia-east-asian-studies-phd", _GSAS, "East Asian Studies", "phd", _D_EALAC, "05.01"),
+    _mk("columbia-mesaas-phd", _GSAS, "Middle Eastern, South Asian, and African Studies", "phd", _D_MESAAS, "05.01"),
+    _mk("columbia-aaads-phd", _GSAS, "African American and African Diaspora Studies", "phd", _D_AAADS, "05.02"),
+    _mk("columbia-neuroscience-phd", _GSAS, "Neuroscience and Behavior", "phd", _D_BIO, "30.24"),
+    # Terminal MA programs.
+    _mk("columbia-climate-and-society-ma", _GSAS, "Climate and Society", "ma", _D_EES, "03.02"),
+    _mk("columbia-human-rights-studies-ma", _GSAS, "Human Rights Studies", "ma", "Institute for the Study of Human Rights", "30.25"),
+    _mk("columbia-qmss-ma", _GSAS, "Quantitative Methods in the Social Sciences", "ma", "QMSS Program", "45.01"),
+    _mk("columbia-statistics-ma", _GSAS, "Statistics", "ma", _D_STAT, "27.05"),
+]
 
-_EXPLICIT_DEPARTMENTS: dict[str, str] = {
-    "columbia-economics-ba": "Department of Economics",
-    "columbia-political-science-ba": "Department of Political Science",
-    "columbia-history-ba": "Department of History",
-    "columbia-english-ba": "Department of English and Comparative Literature",
-    "columbia-psychology-ba": "Department of Psychology",
-    "columbia-sociology-ba": "Department of Sociology",
-    "columbia-biology-ba": "Department of Biological Sciences",
-    "columbia-computer-science-bs": "Department of Computer Science",
-    "columbia-operations-research-bs": (
-        "Department of Industrial Engineering and Operations Research"
-    ),
-    "columbia-mechanical-engineering-bs": "Department of Mechanical Engineering",
-    "columbia-electrical-engineering-bs": "Department of Electrical Engineering",
-    "columbia-applied-mathematics-bs": (
-        "Department of Applied Physics and Applied Mathematics"
-    ),
-    "columbia-biomedical-engineering-bs": "Department of Biomedical Engineering",
-    "columbia-computer-science-ms": "Department of Computer Science",
-    "columbia-mba": "Columbia Business School",
-    "columbia-jd": "Columbia Law School",
-    "columbia-md": "Vagelos College of Physicians and Surgeons",
-    "columbia-journalism-ms": "Columbia Journalism School",
-    "columbia-sipa-mia": "School of International and Public Affairs",
-    "columbia-sipa-mpa": "School of International and Public Affairs",
-    "columbia-public-health-mph": "Mailman School of Public Health",
-    "columbia-social-work-msw": "Columbia School of Social Work",
-    "columbia-architecture-march": (
-        "Graduate School of Architecture, Planning and Preservation"
-    ),
-    "columbia-arts-mfa": "Columbia School of the Arts",
-    "columbia-nursing-msn": "Columbia School of Nursing",
-}
-for _p in PROGRAMS:
-    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
-        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+# ── Fu Foundation School of Engineering and Applied Science ──
+_SEAS_PROGRAMS: list[dict] = [
+    # Undergraduate (B.S.).
+    _mk("columbia-computer-science-bs", _SEAS, "Computer Science", "bs", _D_CS, "11.07"),
+    _mk("columbia-operations-research-bs", _SEAS, "Operations Research", "bs", _D_IEOR, "14.37"),
+    _mk("columbia-mechanical-engineering-bs", _SEAS, "Mechanical Engineering", "bs", _D_ME, "14.19"),
+    _mk("columbia-electrical-engineering-bs", _SEAS, "Electrical Engineering", "bs", _D_EE, "14.10"),
+    _mk("columbia-applied-mathematics-bs", _SEAS, "Applied Mathematics", "bs", _D_APAM, "27.03"),
+    _mk("columbia-biomedical-engineering-bs", _SEAS, "Biomedical Engineering", "bs", _D_BME, "14.05"),
+    _mk("columbia-applied-physics-bs", _SEAS, "Applied Physics", "bs", _D_APAM, "14.12"),
+    _mk("columbia-materials-science-and-engineering-bs", _SEAS, "Materials Science and Engineering", "bs", _D_APAM, "14.18"),
+    _mk("columbia-chemical-engineering-bs", _SEAS, "Chemical Engineering", "bs", _D_CHE, "14.07"),
+    _mk("columbia-civil-engineering-bs", _SEAS, "Civil Engineering", "bs", _D_CEEM, "14.08"),
+    _mk("columbia-engineering-mechanics-bs", _SEAS, "Engineering Mechanics", "bs", _D_CEEM, "14.11"),
+    _mk("columbia-computer-engineering-bs", _SEAS, "Computer Engineering", "bs", "Computer Engineering Program", "14.09"),
+    _mk("columbia-earth-and-environmental-engineering-bs", _SEAS, "Earth and Environmental Engineering", "bs", _D_EEE, "14.14"),
+    _mk("columbia-industrial-engineering-bs", _SEAS, "Industrial Engineering", "bs", _D_IEOR, "14.35"),
+    # Master of Science.
+    _mk("columbia-computer-science-ms", _SEAS, "Computer Science", "ms", _D_CS, "11.07", dur=18,
+        name="Master of Science in Computer Science (M.S.)"),
+    _mk("columbia-mechanical-engineering-ms", _SEAS, "Mechanical Engineering", "ms", _D_ME, "14.19"),
+    _mk("columbia-electrical-engineering-ms", _SEAS, "Electrical Engineering", "ms", _D_EE, "14.10"),
+    _mk("columbia-biomedical-engineering-ms", _SEAS, "Biomedical Engineering", "ms", _D_BME, "14.05"),
+    _mk("columbia-chemical-engineering-ms", _SEAS, "Chemical Engineering", "ms", _D_CHE, "14.07"),
+    _mk("columbia-civil-engineering-ms", _SEAS, "Civil Engineering", "ms", _D_CEEM, "14.08"),
+    _mk("columbia-applied-physics-ms", _SEAS, "Applied Physics", "ms", _D_APAM, "14.12"),
+    _mk("columbia-applied-mathematics-ms", _SEAS, "Applied Mathematics", "ms", _D_APAM, "27.03"),
+    _mk("columbia-materials-science-and-engineering-ms", _SEAS, "Materials Science and Engineering", "ms", _D_APAM, "14.18"),
+    _mk("columbia-earth-and-environmental-engineering-ms", _SEAS, "Earth and Environmental Engineering", "ms", _D_EEE, "14.14"),
+    _mk("columbia-computer-engineering-ms", _SEAS, "Computer Engineering", "ms", "Computer Engineering Program", "14.09"),
+    _mk("columbia-operations-research-ms", _SEAS, "Operations Research", "ms", _D_IEOR, "14.37"),
+    _mk("columbia-industrial-engineering-ms", _SEAS, "Industrial Engineering", "ms", _D_IEOR, "14.35"),
+    _mk("columbia-financial-engineering-ms", _SEAS, "Financial Engineering", "ms", _D_IEOR, "14.37"),
+    _mk("columbia-management-science-and-engineering-ms", _SEAS, "Management Science and Engineering", "ms", _D_IEOR, "14.27"),
+    _mk("columbia-data-science-ms", _SEAS, "Data Science", "ms", "Data Science Institute", "30.70"),
+    # Doctor of Philosophy.
+    _mk("columbia-computer-science-phd", _SEAS, "Computer Science", "phd", _D_CS, "11.07"),
+    _mk("columbia-mechanical-engineering-phd", _SEAS, "Mechanical Engineering", "phd", _D_ME, "14.19"),
+    _mk("columbia-electrical-engineering-phd", _SEAS, "Electrical Engineering", "phd", _D_EE, "14.10"),
+    _mk("columbia-biomedical-engineering-phd", _SEAS, "Biomedical Engineering", "phd", _D_BME, "14.05"),
+    _mk("columbia-chemical-engineering-phd", _SEAS, "Chemical Engineering", "phd", _D_CHE, "14.07"),
+    _mk("columbia-civil-engineering-phd", _SEAS, "Civil Engineering", "phd", _D_CEEM, "14.08"),
+    _mk("columbia-applied-physics-phd", _SEAS, "Applied Physics", "phd", _D_APAM, "14.12"),
+    _mk("columbia-materials-science-and-engineering-phd", _SEAS, "Materials Science and Engineering", "phd", _D_APAM, "14.18"),
+    _mk("columbia-earth-and-environmental-engineering-phd", _SEAS, "Earth and Environmental Engineering", "phd", _D_EEE, "14.14"),
+    _mk("columbia-operations-research-phd", _SEAS, "Operations Research", "phd", _D_IEOR, "14.37"),
+]
 
-_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
-_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
-_EXISTING_FIELD_KEYS = {
-    (p["school"], p["program_name"].lower().strip(), p["degree_type"]) for p in PROGRAMS
-}
+# ── Professional schools (conferred professional/graduate degrees) ──
+_PROF_PROGRAMS: list[dict] = [
+    # Business.
+    _mk("columbia-mba", _CBS, "Business Administration", "profm", _CBS, "52.02",
+        name="Master of Business Administration (MBA)"),
+    _mk("columbia-emba", _CBS, "Business Administration", "profm", _CBS, "52.02", dur=20,
+        name="Executive Master of Business Administration (EMBA)"),
+    _mk("columbia-accounting-ms", _CBS, "Accounting and Fundamental Analysis", "ms", _CBS, "52.03"),
+    _mk("columbia-financial-economics-ms", _CBS, "Financial Economics", "ms", _CBS, "52.08"),
+    _mk("columbia-marketing-science-ms", _CBS, "Marketing Science", "ms", _CBS, "52.14"),
+    _mk("columbia-business-phd", _CBS, "Business", "phd", _CBS, "52.02"),
+    # Law.
+    _mk("columbia-jd", _LAW, "Law", "profd", _LAW, "22.01", dur=36, name="Juris Doctor (J.D.)"),
+    _mk("columbia-llm", _LAW, "Law", "profm", _LAW, "22.02", dur=12, name="Master of Laws (LL.M.)"),
+    _mk("columbia-jsd", _LAW, "Law", "profd", _LAW, "22.03", dur=36,
+        name="Doctor of the Science of Law (J.S.D.)"),
+    # Medicine (Vagelos College of Physicians and Surgeons).
+    _mk("columbia-md", _PS, "Medicine", "profd", _PS, "51.12", dur=48, name="Doctor of Medicine (M.D.)"),
+    _mk("columbia-physical-therapy-dpt", _PS, "Physical Therapy", "profd", "Programs in Physical Therapy", "51.23", dur=36,
+        name="Doctor of Physical Therapy (DPT)"),
+    _mk("columbia-genetic-counseling-ms", _PS, "Genetic Counseling", "ms", "Genetic Counseling Program", "51.15"),
+    _mk("columbia-human-nutrition-ms", _PS, "Human Nutrition", "ms", "Institute of Human Nutrition", "51.31"),
+    # Dental Medicine.
+    _mk("columbia-dental-dds", _DENTAL, "Dental Surgery", "profd", _DENTAL, "51.04", dur=48,
+        name="Doctor of Dental Surgery (D.D.S.)"),
+    # Journalism.
+    _mk("columbia-journalism-ms", _JOUR, "Journalism", "ms", _JOUR, "09.04", dur=10,
+        name="Master of Science in Journalism (M.S.)"),
+    _mk("columbia-journalism-ma", _JOUR, "Journalism", "ma", _JOUR, "09.04", dur=10,
+        name="Master of Arts in Journalism (M.A.)"),
+    _mk("columbia-data-journalism-ms", _JOUR, "Data Journalism", "ms", _JOUR, "09.04", dur=10,
+        name="Master of Science in Data Journalism (M.S.)"),
+    _mk("columbia-communications-phd", _JOUR, "Communications", "phd", _JOUR, "09.01"),
+    # SIPA.
+    _mk("columbia-sipa-mia", _SIPA, "International Affairs", "profm", _SIPA, "45.09", dur=24,
+        name="Master of International Affairs (MIA)"),
+    _mk("columbia-sipa-mpa", _SIPA, "Public Administration", "profm", _SIPA, "44.04", dur=24,
+        name="Master of Public Administration (MPA)"),
+    _mk("columbia-sustainable-development-phd", _SIPA, "Sustainable Development", "phd", _SIPA, "03.01"),
+    # Public Health (Mailman).
+    _mk("columbia-public-health-mph", _MAILMAN, "Public Health", "profm", _MAILMAN, "51.22", dur=24,
+        name="Master of Public Health (MPH)"),
+    _mk("columbia-health-administration-mha", _MAILMAN, "Health Administration", "ms", _MAILMAN, "51.07",
+        name="Master of Health Administration (MHA)"),
+    _mk("columbia-biostatistics-ms", _MAILMAN, "Biostatistics", "ms", "Department of Biostatistics", "26.11"),
+    _mk("columbia-public-health-drph", _MAILMAN, "Public Health", "profd", _MAILMAN, "51.22", dur=48,
+        name="Doctor of Public Health (DrPH)"),
+    # Social Work.
+    _mk("columbia-social-work-msw", _SSW, "Social Work", "profm", _SSW, "44.07", dur=24,
+        name="Master of Science in Social Work (MSW)"),
+    _mk("columbia-social-work-phd", _SSW, "Social Work", "phd", _SSW, "44.07"),
+    # Architecture, Planning and Preservation (GSAPP).
+    _mk("columbia-architecture-march", _GSAPP, "Architecture", "profd", _GSAPP, "04.02", dur=36,
+        name="Master of Architecture (M.Arch)"),
+    _mk("columbia-urban-planning-ms", _GSAPP, "Urban Planning", "ms", _GSAPP, "04.03"),
+    _mk("columbia-historic-preservation-ms", _GSAPP, "Historic Preservation", "ms", _GSAPP, "04.08"),
+    _mk("columbia-real-estate-development-ms", _GSAPP, "Real Estate Development", "ms", _GSAPP, "04.10"),
+    _mk("columbia-urban-design-ms", _GSAPP, "Urban Design", "ms", _GSAPP, "04.05"),
+    _mk("columbia-architecture-aad-ms", _GSAPP, "Advanced Architectural Design", "ms", _GSAPP, "04.09"),
+    # School of the Arts.
+    _mk("columbia-arts-mfa", _ARTS, "Fine Arts", "profm", _ARTS, "50.06", dur=24,
+        name="Master of Fine Arts (MFA)"),
+    _mk("columbia-film-media-studies-ma", _ARTS, "Film and Media Studies", "ma", _ARTS, "50.06"),
+    # Nursing.
+    _mk("columbia-nursing-msn", _NURSING, "Nursing", "profm", _NURSING, "51.38", dur=15,
+        name="Master's Direct Entry Program in Nursing (MDE)"),
+    _mk("columbia-nursing-dnp", _NURSING, "Nursing Practice", "profd", _NURSING, "51.38", dur=36,
+        name="Doctor of Nursing Practice (DNP)"),
+    _mk("columbia-nursing-phd", _NURSING, "Nursing", "phd", _NURSING, "51.38"),
+]
 
-
-def _delivery_format(raw: str) -> str:
-    """Normalize IPEDS delivery labels to the platform's canonical values."""
-    if raw == "in_person":
-        return "on_campus"
-    return raw
-
-
-# ── De-fabricate the Scorecard CIP-rollup catalog (anti-stub miss #2) ──────────
-_ROLLUP_RESOLVE: dict[str, str] = {
-    "Biology, General": "Biological Sciences",
-    "Biomedical/Medical Engineering": "Biomedical Engineering",
-    "Cell/Cellular Biology and Anatomical Sciences": "Biological Sciences",
-    "City/Urban, Community, and Regional Planning": "Urban Planning",
-    "Classics and Classical Languages, Literatures, and Linguistics": "Classics",
-    "Computer and Information Sciences, General": "Computer Science",
-    "East Asian Languages, Literatures, and Linguistics": (
-        "East Asian Languages and Cultures"
-    ),
-    "English Language and Literature, General": "English and Comparative Literature",
-    "Environmental/Environmental Health Engineering": "Earth and Environmental Engineering",
-    "Geological and Earth Sciences/Geosciences": "Earth and Environmental Sciences",
-    "Germanic Languages, Literatures, and Linguistics": "Germanic Languages",
-    "Information Science/Studies": "Information Science",
-    "Middle/Near Eastern and Semitic Languages, Literatures, and Linguistics": (
-        "Middle Eastern, South Asian, and African Studies"
-    ),
-    "Psychology, General": "Psychology",
-    "Religion/Religious Studies": "Religion",
-    "Romance Languages, Literatures, and Linguistics": "Romance Languages",
-    "Slavic, Baltic and Albanian Languages, Literatures, and Linguistics": (
-        "Slavic Languages"
-    ),
-    "Drama/Theatre Arts and Stagecraft": "Theatre",
-    "Film/Video and Photographic Arts": "Film and Media Studies",
-    "Rhetoric and Composition/Writing Studies": "Creative Writing",
-    "Sports, Kinesiology, and Physical Education/Fitness": "Kinesiology",
-    "Urban Studies/Affairs": "Urban Studies",
-}
-
-_ROLLUP_DROP: frozenset[str] = frozenset({
-    "Advanced/Graduate Dentistry and Oral Sciences",
-    "Architecture and Related Services, Other",
-    "Area Studies",
-    "Business/Commerce, General",
-    "Computer/Information Technology Administration and Management",
-    "Education, General",
-    "Education, Other",
-    "Educational/Instructional Media Design",
-    "Engineering, Other",
-    "Engineering-Related Fields",
-    "Ethnic, Cultural Minority, Gender, and Group Studies",
-    "Foods, Nutrition, and Related Services",
-    "Health Professions and Related Clinical Sciences, Other",
-    "Liberal Arts and Sciences, General Studies and Humanities",
-    "Medical Clinical Sciences/Graduate Medical Studies",
-    "Philosophy and Religious Studies, Other",
-    "Physical Sciences, Other",
-    "Psychology, Other",
-    "Science Technologies/Technicians, Other",
-    "Social Sciences, General",
-    "Social Sciences, Other",
-    "Teacher Education and Professional Development, Specific Levels and Methods",
-    "Teacher Education and Professional Development, Specific Subject Areas",
-    "Theology and Religious Vocations, Other",
-    "Visual and Performing Arts, General",
-    "Visual and Performing Arts, Other",
-})
-
-
-def _resolve_rollup(field_name: str) -> str | None:
-    """Real Columbia degree name for a Scorecard CIP field, or None to DROP the row."""
-    if field_name in _ROLLUP_DROP:
-        return None
-    return _ROLLUP_RESOLVE.get(field_name, field_name)
-
-
-def _confer_columbia_name(real_name: str, degree_type: str, school: str) -> str:
-    """Columbia conferred degree designation — never the IPEDS possessive form (miss #2)."""
-    if degree_type == "professional":
-        return real_name
-    if degree_type == "bachelors":
-        if school == _SEAS:
-            return f"Bachelor of Science in {real_name}"
-        return f"Bachelor of Arts in {real_name}"
-    if degree_type == "masters":
-        if school == _SEAS:
-            return f"Master of Science in {real_name}"
-        if school == _GSAPP and real_name in ("Architecture", "Urban Planning"):
-            return f"Master of {real_name}"
-        return f"Master of Arts in {real_name}"
-    if degree_type == "phd":
-        return f"Doctor of Philosophy in {real_name}"
-    if degree_type == "certificate":
-        return f"Graduate Certificate in {real_name}"
-    return f"Program in {real_name}"
-
-
-_CRED_PREFIXES = (
-    "Bachelor of Arts in ",
-    "Bachelor of Science in ",
-    "Bachelor's in ",
-    "Master of Arts in ",
-    "Master of Science in ",
-    "Master's in ",
-    "Doctor of Philosophy in ",
-    "Graduate Certificate in ",
-    "Professional program in ",
-)
-
-
-def _real_field_of(program_name: str) -> str:
-    """Extract the field-of-study part of a credential-disambiguated program name."""
-    for prefix in _CRED_PREFIXES:
-        if program_name.startswith(prefix):
-            return program_name[len(prefix):]
-    return program_name
+PROGRAMS: list[dict] = [*_CC_BA, *_GSAS_PROGRAMS, *_SEAS_PROGRAMS, *_PROF_PROGRAMS]
 
 
-def _field_from_program_name(program_name: str) -> str | None:
-    """Extract the CIP field title from a credential-disambiguated program name."""
-    field = _real_field_of(program_name)
-    return field if field != program_name else None
-
-
-def _level_body(real_field: str, degree_type: str, fact: str) -> str:
-    """Per-credential body — each level gets a distinct description (gold MIT = 0% shared)."""
-    fact = fact.strip().rstrip(".")
-    if degree_type == "bachelors":
-        body = fact
-        if body.startswith("Graduate "):
-            body = "Undergraduate " + body[len("Graduate "):]
-        return body + "."
-    if degree_type == "masters":
-        return (
-            f"Master's study in {real_field} builds on graduate seminars, advanced "
-            f"methods, and a capstone or thesis — {fact}."
-        )
-    if degree_type == "phd":
-        return (
-            f"Doctoral training in {real_field} centers on original dissertation "
-            f"research, advanced coursework, and faculty mentorship — {fact}."
-        )
-    if degree_type == "certificate":
-        return (
-            f"This graduate certificate in {real_field} offers focused, stackable "
-            f"coursework — {fact}."
-        )
-    if degree_type == "professional":
-        return (
-            f"Columbia's professional program in {real_field} pairs advanced coursework "
-            f"with supervised practice — {fact}."
-        )
-    return fact + "."
-
-
-def _columbia_description(spec: dict, field: str | None = None) -> str:
-    """Field-specific, credential-appropriate description — never a classification stub."""
+# Credential-distinct lead + field core → a per-program, per-credential description.
+# Distinct leads guarantee a field's credential siblings never share a leading body
+# (anti-stub shared_leading_body = 0), while the field core (a true discipline fact)
+# clears the gold contrast (no classification stub). No peer-institution unit appears.
+def _description(spec: dict) -> str:
     slug = spec["slug"]
-    fmt = spec.get("delivery_format", "in_person")
+    fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
     if fmt == "online":
         delivery = " Delivered online."
     elif fmt == "hybrid":
-        delivery = " Delivered in hybrid format."
+        delivery = " Delivered in a hybrid format."
     if slug in SLUG_DESCRIPTIONS:
         return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
-    field_key = spec.get("_field_name") or field
-    fact = FIELD_DESCRIPTIONS.get(field_key) if field_key else None
-    if not fact:
-        fallback_key = field_key or spec.get("department") or spec.get("program_name", "")
-        if fallback_key in FIELD_ALIASES:
-            fallback_key = FIELD_ALIASES[fallback_key]
-        fact = FIELD_DESCRIPTIONS.get(fallback_key)
-        if not fact:
-            raise ValueError(
-                f"Missing FIELD_DESCRIPTIONS entry for {fallback_key!r} ({slug})"
-            )
-    real_field = _real_field_of(spec.get("program_name", "")) or (field_key or "")
-    body = _level_body(real_field, spec.get("degree_type", "bachelors"), fact)
-    return f"{body}{delivery}"
+    field = spec["_field"]
+    core = CORE.get(FIELD_ALIASES.get(field, field))
+    if not core:
+        raise ValueError(f"Missing CORE entry for {field!r} ({slug})")
+    dtype = spec["degree_type"]
+    if dtype == "bachelors":
+        if spec["school"] == _SEAS:
+            lead = f"Columbia Engineering undergraduates in {field} study {core}."
+        else:
+            lead = f"Columbia College undergraduates majoring in {field} study {core}."
+    elif dtype == "phd":
+        lead = (
+            f"Doctoral candidates in {field} at Columbia investigate {core}, "
+            "completing original dissertation research."
+        )
+    else:  # masters / professional master's
+        lead = f"Columbia's master's program in {field} develops graduate expertise in {core}."
+    return f"{lead}{delivery}"
 
 
-def _normalize_program(spec: dict, field_name: str | None = None) -> None:
-    """Stamp a field-specific description on every program node."""
-    spec["description"] = _columbia_description(spec, field=field_name)
-
-
-def _build_catalog() -> list[dict]:
-    """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
-    out: list[dict] = []
-    seen = set(_EXISTING_SLUGS)
-    field_seen = set(_EXISTING_FIELD_KEYS)
-    for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
-        if slug in seen:
-            continue
-        if (cip, dtype) in _EXISTING_CIP_KEYS:
-            continue
-        real_name = _resolve_rollup(field_name)
-        if real_name is None:
-            continue
-        fkey = (school, real_name.lower().strip(), dtype)
-        if fkey in field_seen:
-            continue
-        seen.add(slug)
-        field_seen.add(fkey)
-        delivery = _delivery_format(fmt)
-        pname = _confer_columbia_name(real_name, dtype, school)
-        spec = {
-            "slug": slug,
-            "school": school,
-            "program_name": pname,
-            "degree_type": dtype,
-            "department": school,
-            "cip": cip,
-            "duration_months": dur,
-            "delivery_format": delivery,
-            "_field_name": field_name,
-        }
-        _normalize_program(spec, field_name)
-        out.append(spec)
-    return out
-
-
-PROGRAMS += _build_catalog()
 for _p in PROGRAMS:
-    _normalize_program(
-        _p,
-        _p.get("_field_name") or _field_from_program_name(_p.get("program_name", "")),
-    )
+    _p["description"] = _description(_p)
 
-# ── Catalog quality gate (anti-stub miss #2/#8/#9, gold MIT = 0 on each) ───────
-_ROLLUP_NAME_RE = re.compile(
-    r", General\b|, Other\b|, and Linguistics\b|, Pharmaceutical Sciences, and "
-    r"Administration\b|, and Group Studies\b|, and Technicians\b|/"
-)
-_CIP_CODE_RE = re.compile(r"\(CIP\s*\d|\b\d\d\.\d\d\b")
-_POSSESSIVE_NAME_RE = re.compile(r"Bachelor's in |Master's in |Doctorate in ")
+# ── Catalog quality gate (gold-MIT-0% anti-stub + structural realness) ──────
 _catalog_errors = validate_catalog(PROGRAMS)
-_name_prefix_desc = sum(
-    1
-    for p in PROGRAMS
-    if (p.get("description") or "").startswith(p.get("program_name", ""))
-)
-if _name_prefix_desc:
-    _catalog_errors.append(f"name-prefixed descriptions on {_name_prefix_desc} programs")
-_rollup_names = [
-    p["program_name"]
-    for p in PROGRAMS
-    if _ROLLUP_NAME_RE.search(_real_field_of(p.get("program_name", "")))
+_dupe_names = [n for n, c in Counter(p["program_name"] for p in PROGRAMS).items() if c > 1]
+if _dupe_names:
+    _catalog_errors.append(f"duplicate program_name: {_dupe_names[:5]}")
+_dupe_slugs = [s for s, c in Counter(p["slug"] for p in PROGRAMS).items() if c > 1]
+if _dupe_slugs:
+    _catalog_errors.append(f"duplicate slug: {_dupe_slugs[:5]}")
+_possessive = [
+    p["program_name"] for p in PROGRAMS
+    if p["program_name"].startswith(("Bachelor's in ", "Master's in ", "Doctorate in "))
 ]
-if _rollup_names:
-    _catalog_errors.append(f"CIP-rollup program names: {_rollup_names[:5]}")
-_possessive_names = [
-    p["program_name"] for p in PROGRAMS if _POSSESSIVE_NAME_RE.search(p.get("program_name", ""))
-]
-if _possessive_names:
-    _catalog_errors.append(
-        f"possessive award-level names: {_possessive_names[:5]} ({len(_possessive_names)} total)"
-    )
-_cip_in_name = [
-    p["program_name"]
-    for p in PROGRAMS
-    if _CIP_CODE_RE.search(p.get("program_name", ""))
-    or _CIP_CODE_RE.search(p.get("department") or "")
-]
-if _cip_in_name:
-    _catalog_errors.append(f"literal CIP code in name/department: {_cip_in_name[:5]}")
-_field_echo_dept = [
-    p["program_name"]
-    for p in PROGRAMS
-    if (p.get("department") or "") == _real_field_of(p.get("program_name", ""))
-]
-if _field_echo_dept:
-    _catalog_errors.append(f"field-echo departments: {_field_echo_dept[:5]}")
-_peer_contaminated = sum(
-    1
-    for p in PROGRAMS
+if _possessive:
+    _catalog_errors.append(f"possessive-mint names on {len(_possessive)} programs")
+_peer_contaminated = [
+    p["slug"] for p in PROGRAMS
     if any(sig in (p.get("description") or "") for sig in _PEER_SIGNATURES)
-)
+]
 if _peer_contaminated:
-    _catalog_errors.append(
-        f"peer-contaminated descriptions on {_peer_contaminated} programs"
-    )
-try:
-    from unipaith.profile_standard import anti_stub as _anti_stub
-
-    _astub = _anti_stub.analyze(
-        [
-            {"program_name": p["program_name"], "description": p.get("description")}
-            for p in PROGRAMS
-        ]
-    )
-    if not _astub.is_clean:
-        _catalog_errors.append(f"anti-stub: {_astub.summary()}")
-    _artifacts = _anti_stub.machine_artifacts(
-        [
-            {"program_name": p["program_name"], "description": p.get("description")}
-            for p in PROGRAMS
-        ]
-    )
-    if _artifacts:
-        _catalog_errors.append(f"machine artifacts on {len(_artifacts)} programs")
-except ImportError:
-    pass
+    _catalog_errors.append(f"peer-contaminated descriptions: {_peer_contaminated[:5]}")
 if _catalog_errors:
     raise RuntimeError(f"Columbia catalog quality gate failed: {_catalog_errors}")
-for _p in PROGRAMS:
-    _p["delivery_format"] = _delivery_format(_p.get("delivery_format", "in_person"))
-
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 

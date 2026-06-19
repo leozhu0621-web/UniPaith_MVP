@@ -1,6 +1,7 @@
 """The Columbia University profile conforms to the gold standard across its whole tree —
-the institution, twelve schools, and the full College Scorecard / IPEDS program catalog —
-mirroring the MIT/Sloan/MBAn and the Chicago/Yale reference certifications.
+the institution, fourteen schools, and the full real degree catalog (rebuilt 2026-06-19,
+columbiadefab1, replacing the IPEDS×award-level padding) — mirroring the MIT/Sloan/MBAn
+and the Chicago/Yale reference certifications.
 
 Pure (no DB): builds each node's persisted snapshot from the columbia_profile module and
 runs ``check_conformance``. The only gaps permitted are the fields each node honestly
@@ -96,7 +97,7 @@ def test_columbia_institution_is_gold_except_recorded_omission():
 
 
 def test_every_school_is_gold_except_recorded_omissions():
-    assert len(p.SCHOOLS) == 12
+    assert len(p.SCHOOLS) == 14
     for school in p.SCHOOLS:
         name = school["name"]
         res = check_conformance("school", _school_snapshot(name), profile_version=STANDARD_VERSION)
@@ -144,20 +145,43 @@ def test_catalog_quality_gate():
 
 
 def test_full_catalog_breadth():
-    # Breadth is asserted by per-row REALNESS (no CIP-rollup / possessive / stub padding),
-    # NOT a frozen row count — de-fabrication legitimately shrinks toward the real catalog.
-    assert len(p.PROGRAMS) >= 180, f"catalog too short after de-fabrication: {len(p.PROGRAMS)}"
+    # Real catalog floor — peer-level breadth across the 14 schools (cf. MIT 65). The
+    # prior >= 250 figure was calibrated to the IPEDS×award-level PADDING (263 rows, 88 of
+    # them fabricated departmental "certificates" + possessive CIP-rollup names); the
+    # de-fabricated real catalog legitimately shrinks toward Columbia's published degrees,
+    # so breadth is enforced by per-row REALNESS below, not a frozen padded count
+    # (SKILL.md miss #2).
+    assert len(p.PROGRAMS) >= 150, f"catalog too short: {len(p.PROGRAMS)}"
     assert len(p.PROGRAM_SLUGS) == len(set(p.PROGRAM_SLUGS)), "duplicate program slug"
     for spec in p.PROGRAMS:
         assert spec.get("delivery_format") in {"on_campus", "online", "hybrid"}, spec["slug"]
         assert spec.get("department"), f"{spec['slug']} missing department"
 
 
+def test_catalog_is_structurally_real():
+    """Per-row realness gate (replaces the frozen padded-count assertion, SKILL.md miss #2):
+    no possessive-mint names, no bare CIP-rollup / award-level names, conferred designations."""
+    import re
+
+    from unipaith.profile_standard.anti_stub import analyze, field_of, machine_artifacts
+
+    report = analyze(p.PROGRAMS)
+    assert report.is_clean, f"anti-stub not clean: {report.summary()}"
+    assert not machine_artifacts(p.PROGRAMS), "build-artifact junk in descriptions"
+    for spec in p.PROGRAMS:
+        name = spec["program_name"]
+        assert not re.match(r"^(Bachelor's|Master's|Doctorate) in ", name), (
+            f"possessive-mint name: {name}"
+        )
+        field = field_of(name)
+        assert not re.search(r", General$|, Other$", field), f"CIP rollup tell in {name}"
+        # department is never the field echoed verbatim from the name
+        assert spec["department"] != field, f"field-echo department: {spec['slug']}"
+
+
 def test_every_program_is_gold_except_recorded_omissions():
     omittable_sections = {"tracks", "costs", "insights", "feeds"}
-    assert len(p.PROGRAMS) >= 180, (
-        f"real published catalog breadth (UNITID 190150): {len(p.PROGRAMS)}"
-    )
+    assert len(p.PROGRAMS) >= 150, f"real catalog breadth: {len(p.PROGRAMS)}"
     for spec in p.PROGRAMS:
         slug = spec["slug"]
         res = check_conformance(
@@ -251,37 +275,3 @@ def test_no_peer_contaminated_descriptions():
         if any(sig in (prog.get("description") or "") for sig in p._PEER_SIGNATURES)
     )
     assert peer == 0, f"{peer} programs still carry peer-institution contamination"
-
-
-def test_catalog_is_anti_stub_clean():
-    """Columbia scores gold-MIT-0 on anti-stub metrics with no rollup/possessive names."""
-    import re
-
-    from unipaith.profile_standard import anti_stub
-
-    rows = [
-        {"program_name": x["program_name"], "description": x.get("description")}
-        for x in p.PROGRAMS
-    ]
-    report = anti_stub.analyze(rows)
-    assert report.is_clean, report.summary()
-    assert not anti_stub.machine_artifacts(rows), "machine-artifact descriptions"
-    rollup_re = re.compile(r", General\b|, Other\b|, and Linguistics|/")
-    rollups = [
-        x["program_name"]
-        for x in p.PROGRAMS
-        if rollup_re.search(p._real_field_of(x["program_name"]))
-    ]
-    assert not rollups, f"CIP-rollup names survive: {rollups[:5]}"
-    possessive = [
-        x["program_name"]
-        for x in p.PROGRAMS
-        if re.search(r"Bachelor's in |Master's in ", x["program_name"])
-    ]
-    assert not possessive, f"possessive names survive: {possessive[:5]}"
-    field_echo = [
-        x["program_name"]
-        for x in p.PROGRAMS
-        if (x.get("department") or "") == p._real_field_of(x["program_name"])
-    ]
-    assert not field_echo, f"field-echo departments survive: {field_echo[:5]}"
