@@ -65,6 +65,7 @@ from sqlalchemy.orm import Session
 from unipaith.data.chicago_field_descriptions import (
     FIELD_ALIASES,
     FIELD_DESCRIPTIONS,
+    GRAD_FIELD_DESCRIPTIONS,
     SLUG_DESCRIPTIONS,
 )
 from unipaith.data.chicago_ipeds_catalog import _IPEDS_CATALOG
@@ -1309,6 +1310,8 @@ def _field_from_program_name(program_name: str) -> str | None:
         "Bachelor of Arts in ",
         "Bachelor of Science in ",
         "Bachelor's in ",
+        "Master of Science in ",
+        "Master of Arts in ",
         "Master's in ",
         "Doctor of Philosophy in ",
         "Graduate Certificate in ",
@@ -1358,7 +1361,17 @@ def _chicago_description(spec: dict, field: str | None = None) -> str:
     )
     if field_key in FIELD_ALIASES:
         field_key = FIELD_ALIASES[field_key]
-    clause = FIELD_DESCRIPTIONS.get(field_key)
+    # Per-credential body: a field's master's row uses the graduate clause so it never
+    # shares text with the bachelor's row of the same field (anti-stub verbatim gate).
+    # Key the graduate lookup off the clean published program_name field (e.g. "Master of
+    # Science in Economics" -> "Economics"), which matches the GRAD dict keys even when the
+    # raw IPEDS field aliases to a different FIELD_DESCRIPTIONS key.
+    clause = None
+    if spec["degree_type"] == "masters":
+        pname_field = _field_from_program_name(spec.get("program_name", "")) or field_key
+        clause = GRAD_FIELD_DESCRIPTIONS.get(pname_field) or GRAD_FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        clause = FIELD_DESCRIPTIONS.get(field_key)
     if not clause:
         raise ValueError(
             f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
@@ -1383,6 +1396,11 @@ def _build_catalog() -> list[dict]:
         if slug in _SKIP_CATALOG_SLUGS:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
+            continue
+        # Drop federal-certificate padding (one minted per CIP×award-level): UChicago does
+        # not publish a standalone graduate certificate in each of these fields, and the
+        # row only duplicated the field's degree description (enrich-profile miss #2).
+        if dtype == "certificate":
             continue
         if name.startswith("Program (CIP") or name.startswith("Health Professions (CIP"):
             continue

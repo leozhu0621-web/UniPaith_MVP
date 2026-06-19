@@ -505,6 +505,118 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
     ),
 }
 
+# Master's-level descriptions for fields that ALSO award a bachelor's, so the two
+# credential rows never share text (the anti-stub gold-MIT-0% gate). Each describes
+# GRADUATE study in the field at UChicago — distinct in substance and framing from the
+# undergraduate clause above, not the same body with a credential tag prepended.
+GRAD_FIELD_DESCRIPTIONS: dict[str, str] = {
+    "Economics": (
+        "Graduate economics at UChicago centers on rigorous theory and empirical research "
+        "across price theory, econometrics, and applied micro, with the Kenneth C. Griffin "
+        "Department of Economics and the Becker Friedman Institute."
+    ),
+    "Mathematics": (
+        "Graduate mathematics pursues research in algebra, analysis, geometry/topology, and "
+        "number theory, drawing on one of the country's most influential doctoral traditions."
+    ),
+    "Statistics": (
+        "Graduate statistics advances research in probability, statistical theory, and "
+        "machine learning, with applications across the sciences and computational data analysis."
+    ),
+    "Political Science": (
+        "Graduate political science trains researchers in American and comparative politics, "
+        "international relations, and political theory, with formal and quantitative methods."
+    ),
+    "Biological Sciences": (
+        "Graduate study in the Division of the Biological Sciences spans genetics, ecology, "
+        "molecular biology, and neurobiology, with laboratory dissertation research."
+    ),
+    "Neuroscience": (
+        "Graduate neuroscience pursues research across molecular, systems, cognitive, and "
+        "computational levels through the interdisciplinary neuroscience graduate program."
+    ),
+    "English Language and Literature": (
+        "Graduate study in English advances literary scholarship, criticism, and theory "
+        "from the medieval period to the present, with archival and digital research."
+    ),
+    "History": (
+        "Graduate history trains scholars in global, U.S., and intellectual history, with "
+        "dissertation research drawing on the Special Collections Research Center."
+    ),
+    "Environmental and Urban Studies": (
+        "Graduate study of environment and urbanism combines geography, climate science, and "
+        "policy to research cities, sustainability, and environmental justice."
+    ),
+    "Area Studies": (
+        "Graduate area studies deepens regional expertise — East Asia, Latin America, the "
+        "Middle East, and South Asia — through advanced language work and interdisciplinary research."
+    ),
+    "Media Arts and Design": (
+        "Graduate work in media arts and design advances computational media, data "
+        "visualization, and digital art practice through the Media Arts, Data and Design program."
+    ),
+    "Linguistics": (
+        "Graduate linguistics researches phonology, syntax, semantics, and language "
+        "acquisition with empirical and formal methods."
+    ),
+    "East Asian Languages and Civilizations": (
+        "Graduate study in East Asian languages and civilizations advances research in "
+        "Chinese, Japanese, and Korean literature, history, and thought."
+    ),
+    "Romance Languages and Literatures": (
+        "Graduate study in Romance languages researches French, Italian, Spanish, and "
+        "Portuguese literature and linguistics in their cultural and historical contexts."
+    ),
+    "Near Eastern Languages and Civilizations": (
+        "Graduate study in Near Eastern languages and civilizations researches ancient and "
+        "modern texts and history with the collections of the Institute for the Study of Ancient Cultures."
+    ),
+    "Classics": (
+        "Graduate classics advances research in Greek and Latin philology, ancient history, "
+        "and archaeology in one of the nation's oldest doctoral programs in the field."
+    ),
+    "Philosophy": (
+        "Graduate philosophy researches logic, ethics, philosophy of science, and the "
+        "history of philosophy, central to both analytic and continental traditions."
+    ),
+    "Astronomy and Astrophysics": (
+        "Graduate astrophysics pursues observational and theoretical research in cosmology, "
+        "high-energy astrophysics, and instrumentation through the Department of Astronomy and Astrophysics."
+    ),
+    "Chemistry": (
+        "Graduate chemistry advances research across organic, inorganic, physical, and "
+        "theoretical chemistry, with faculty including Nobel laureates."
+    ),
+    "Geophysical Sciences": (
+        "Graduate geophysical sciences research spans climate dynamics, geochemistry, "
+        "paleobiology, and planetary science."
+    ),
+    "Physics": (
+        "Graduate physics pursues research in particle, condensed-matter, and astrophysics "
+        "through the Enrico Fermi Institute and the James Franck Institute."
+    ),
+    "Anthropology": (
+        "Graduate anthropology trains researchers in sociocultural, linguistic, and "
+        "archaeological anthropology with extended ethnographic and field research."
+    ),
+    "Sociology": (
+        "Graduate sociology advances research in stratification, urban sociology, and "
+        "organizations in the home of the Chicago school of sociology."
+    ),
+    "Cinema and Media Studies": (
+        "Graduate study in cinema and media advances film history, media theory, and "
+        "screen-cultures research through the Department of Cinema and Media Studies."
+    ),
+    "Visual Arts": (
+        "Graduate study in visual arts supports advanced studio practice in painting, "
+        "photography, and new media, with the Logan Center and MFA exhibitions."
+    ),
+    "Music": (
+        "Graduate music advances research and composition in music history, theory, "
+        "ethnomusicology, and composition, with performance at the Logan Center."
+    ),
+}
+
 SLUG_DESCRIPTIONS: dict[str, str] = {
     "uchicago-mba": (
         "A rigorous, discipline-based program built on the most flexible curriculum among "

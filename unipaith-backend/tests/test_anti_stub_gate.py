@@ -38,6 +38,7 @@ CERTIFIED_CLEAN = [
     "michigan",   # per-credential discipline definitions; build-artifact junk removed (michprof4)
     "stanford",   # per-credential defs; Catalog entry junk removed (stanfordprof11)
     "purdue",     # per-credential discipline defs; peer-copy + rollups removed (purduedefab1)
+    "chicago",    # per-credential graduate descriptions; cert padding dropped (chicagodefab1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
