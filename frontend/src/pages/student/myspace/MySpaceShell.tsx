@@ -35,12 +35,12 @@ const PROFILE: Item = {
   kind: 'group', label: 'Profile', to: '/s/profile', icon: User,
   children: [
     { label: 'Basic info', to: '/s/profile', defaultTab: 'overview' },
-    { label: 'Identity', to: '/s/profile?tab=identity' },
-    { label: 'Academics', to: '/s/profile?tab=academics' },
-    { label: 'Experience', to: '/s/profile?tab=experience' },
-    { label: 'Analytics', to: '/s/profile?tab=analytics' },
-    // Data rights moved to account Settings (Spec 2026-06-15 §2.1). Goals ·
-    // Needs · Preferences live in the Planning cluster below.
+    { label: 'Personality', to: '/s/profile?tab=identity' },
+    { label: 'Academics & experience', to: '/s/profile?tab=academics' },
+    // Profile refinement v2 (2026-06-18): Identity → Personality; Academics +
+    // Experience merged; Analytics dropped. Data rights moved to account
+    // Settings (Spec 2026-06-15 §2.1). Goals · Needs · Preferences live in the
+    // Planning cluster below.
   ],
 }
 

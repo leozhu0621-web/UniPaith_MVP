@@ -25,10 +25,10 @@ reference instance.
 Depth pass (2026-06-15, stanfordprof6): merged ``DEPTH_REVIEWS`` for 28 coverable
 programs (38/38 total coverable reviews).
 
-Description repair (2026-06-18, stanfordprof10): de-fabricates the 185-program catalog —
-real credential-disambiguated names, real owning departments (not CIP field echo), per-slug
-catalogue descriptions (anti-stub clean), and removes 28 synthesized ``DEPTH_REVIEWS``.
-Only hand-gathered program-specific reviews remain on flagship programs.
+Description repair (2026-06-19, stanfordprof11): replaces 150 "Catalog entry <hex>:" build-
+artifact descriptions with verified per-credential discipline definitions (same model as
+Michigan michprof4 / UW uwdefab1). Prior stanfordprof10 de-fabricated names/departments but
+left the machine-assembly descriptions live.
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ from unipaith.profile_standard.anti_stub import analyze
 INSTITUTION_NAME = "Stanford University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-18"
+ENRICHED_AT = "2026-06-19"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -723,9 +723,14 @@ _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROG
 
 def _assert_anti_stub_clean(programs: list[dict]) -> None:
     """Every Stanford description must score the gold-MIT zero on anti-stub metrics."""
+    from unipaith.profile_standard.anti_stub import machine_artifacts
+
     report = analyze(programs)
-    if not report.is_clean:
-        raise ValueError(f"Stanford catalog anti-stub gate failed: {report.summary()}")
+    arts = machine_artifacts(programs)
+    if not report.is_clean or arts:
+        raise ValueError(
+            f"Stanford catalog anti-stub gate failed: {report.summary()} artifacts={len(arts)}"
+        )
 
 
 _assert_anti_stub_clean(PROGRAMS)

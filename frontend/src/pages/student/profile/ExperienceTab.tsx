@@ -42,7 +42,7 @@ import {
   PortfolioItemForm,
   WorkExperienceForm,
 } from '../components/ProfileForms'
-import { SectionHeader } from './shared'
+import { TabSectionHeader } from './TabSectionHeader'
 
 /**
  * Normalize a user-supplied URL to a safe http(s) href, or null if it can't be
@@ -136,10 +136,10 @@ export default function ExperienceTab() {
   const comps: any[] = Array.isArray(competitions) ? competitions : []
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       {/* Activities */}
       <section>
-        <SectionHeader title="Activities" action={<Button size="sm" onClick={() => open('activity')}><Plus size={14} /> Add activity</Button>} />
+        <TabSectionHeader title="Activities" action={<Button size="sm" onClick={() => open('activity')}><Plus size={14} /> Add activity</Button>} />
         {activities.length === 0 ? (
           <EmptyState title="No activities yet" action={{ label: 'Add an activity', onClick: () => open('activity') }} />
         ) : (
@@ -163,7 +163,7 @@ export default function ExperienceTab() {
 
       {/* Work & Service */}
       <section>
-        <SectionHeader title="Work & service" action={<Button size="sm" onClick={() => open('work')}><Plus size={14} /> Add experience</Button>} />
+        <TabSectionHeader title="Work & service" action={<Button size="sm" onClick={() => open('work')}><Plus size={14} /> Add experience</Button>} />
         {work.length === 0 ? (
           <EmptyState title="No work or service yet" action={{ label: 'Add experience', onClick: () => open('work') }} />
         ) : (
@@ -189,7 +189,7 @@ export default function ExperienceTab() {
 
       {/* Competitions */}
       <section>
-        <SectionHeader title="Competitions" action={<Button size="sm" onClick={() => open('competition')}><Plus size={14} /> Add competition</Button>} />
+        <TabSectionHeader title="Competitions" action={<Button size="sm" onClick={() => open('competition')}><Plus size={14} /> Add competition</Button>} />
         {comps.length === 0 ? (
           <EmptyState title="No competitions yet" action={{ label: 'Add a competition', onClick: () => open('competition') }} />
         ) : (
@@ -214,7 +214,7 @@ export default function ExperienceTab() {
 
       {/* Portfolio */}
       <section>
-        <SectionHeader title="Portfolio" action={<Button size="sm" onClick={() => open('portfolio')}><Plus size={14} /> Add piece</Button>} />
+        <TabSectionHeader title="Portfolio" action={<Button size="sm" onClick={() => open('portfolio')}><Plus size={14} /> Add piece</Button>} />
         {portfolio.length === 0 ? (
           <EmptyState title="No portfolio pieces yet" action={{ label: 'Add a piece', onClick: () => open('portfolio') }} />
         ) : (
@@ -238,7 +238,7 @@ export default function ExperienceTab() {
 
       {/* Online Presence */}
       <section>
-        <SectionHeader title="Online presence" action={<Button size="sm" onClick={() => open('online')}><Plus size={14} /> Add link</Button>} />
+        <TabSectionHeader title="Online presence" action={<Button size="sm" onClick={() => open('online')}><Plus size={14} /> Add link</Button>} />
         {online.length === 0 ? (
           <EmptyState title="No links yet" action={{ label: 'Add a link', onClick: () => open('online') }} />
         ) : (
