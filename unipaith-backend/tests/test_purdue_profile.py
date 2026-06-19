@@ -163,3 +163,46 @@ def test_no_name_prefixed_descriptions():
         if (spec.get("description") or "").startswith(spec.get("program_name", ""))
     )
     assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
+
+
+def test_no_peer_institution_signatures_in_descriptions():
+    """Descriptions must name only Purdue units — never peer catalogs (REPAIR_BACKLOG #3)."""
+    peer_signatures = (
+        "Wharton",
+        "SAS",
+        "Perelman",
+        "Writing Seminars",
+        "Chesapeake",
+        "Kelly Writers House",
+        "McCormick",
+        "Weill",
+        "CALS",
+        "Bloomberg",
+        "Mailman",
+        "Peabody",
+        "Nolan School",
+        "STScI",
+        "APL",
+        "UC Botanical",
+        "Hutchins Center",
+        "Berman Institute",
+        "SEAS",
+        "CUIMC",
+        "New Bolton Center",
+        "Rausser",
+        "Blake Garden",
+        "Mahoney Institute",
+        "East West Lafayette",
+        "Purdue Lab of Ornithology",
+        "Purdue Hospital",
+        "Purdue Business School",
+        "Purdue Psychiatry",
+        "Purdue Kennedy",
+        "VMD curriculum",
+    )
+    offenders = [
+        spec["slug"]
+        for spec in p.PROGRAMS
+        if any(sig in (spec.get("description") or "") for sig in peer_signatures)
+    ]
+    assert not offenders, f"peer signatures in descriptions: {offenders[:5]}"

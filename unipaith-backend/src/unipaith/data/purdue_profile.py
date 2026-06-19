@@ -44,6 +44,10 @@ Description repair (2026-06-17, purdueprof5): replaces all name-prefixed
 ``{program_name} is {role} at Purdue University's {school}`` classification stubs
 with field-specific clauses from ``purdue_field_descriptions.py`` (gold MIT/JHU
 pattern); 0% name-prefixed descriptions.
+
+Description repair (2026-06-19, purdueprof6): rewrites all 148 FIELD_DESCRIPTIONS
+clauses to remove cross-institution-copy peer signatures (Wharton, SAS, Perelman,
+Bloomberg, Nolan School, etc.) — every description names a real Purdue unit only.
 """
 
 # ruff: noqa: E501
