@@ -144,7 +144,9 @@ def test_catalog_quality_gate():
 
 
 def test_full_catalog_breadth():
-    assert len(p.PROGRAMS) >= 250, f"catalog too short: {len(p.PROGRAMS)}"
+    # Breadth is asserted by per-row REALNESS (no CIP-rollup / possessive / stub padding),
+    # NOT a frozen row count — de-fabrication legitimately shrinks toward the real catalog.
+    assert len(p.PROGRAMS) >= 180, f"catalog too short after de-fabrication: {len(p.PROGRAMS)}"
     assert len(p.PROGRAM_SLUGS) == len(set(p.PROGRAM_SLUGS)), "duplicate program slug"
     for spec in p.PROGRAMS:
         assert spec.get("delivery_format") in {"on_campus", "online", "hybrid"}, spec["slug"]
@@ -153,7 +155,9 @@ def test_full_catalog_breadth():
 
 def test_every_program_is_gold_except_recorded_omissions():
     omittable_sections = {"tracks", "costs", "insights", "feeds"}
-    assert len(p.PROGRAMS) >= 250, f"full IPEDS catalog breadth (UNITID 190150): {len(p.PROGRAMS)}"
+    assert len(p.PROGRAMS) >= 180, (
+        f"real published catalog breadth (UNITID 190150): {len(p.PROGRAMS)}"
+    )
     for spec in p.PROGRAMS:
         slug = spec["slug"]
         res = check_conformance(
@@ -247,3 +251,37 @@ def test_no_peer_contaminated_descriptions():
         if any(sig in (prog.get("description") or "") for sig in p._PEER_SIGNATURES)
     )
     assert peer == 0, f"{peer} programs still carry peer-institution contamination"
+
+
+def test_catalog_is_anti_stub_clean():
+    """Columbia scores gold-MIT-0 on anti-stub metrics with no rollup/possessive names."""
+    import re
+
+    from unipaith.profile_standard import anti_stub
+
+    rows = [
+        {"program_name": x["program_name"], "description": x.get("description")}
+        for x in p.PROGRAMS
+    ]
+    report = anti_stub.analyze(rows)
+    assert report.is_clean, report.summary()
+    assert not anti_stub.machine_artifacts(rows), "machine-artifact descriptions"
+    rollup_re = re.compile(r", General\b|, Other\b|, and Linguistics|/")
+    rollups = [
+        x["program_name"]
+        for x in p.PROGRAMS
+        if rollup_re.search(p._real_field_of(x["program_name"]))
+    ]
+    assert not rollups, f"CIP-rollup names survive: {rollups[:5]}"
+    possessive = [
+        x["program_name"]
+        for x in p.PROGRAMS
+        if re.search(r"Bachelor's in |Master's in ", x["program_name"])
+    ]
+    assert not possessive, f"possessive names survive: {possessive[:5]}"
+    field_echo = [
+        x["program_name"]
+        for x in p.PROGRAMS
+        if (x.get("department") or "") == p._real_field_of(x["program_name"])
+    ]
+    assert not field_echo, f"field-echo departments survive: {field_echo[:5]}"

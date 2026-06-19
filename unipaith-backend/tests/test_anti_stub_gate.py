@@ -54,6 +54,8 @@ CERTIFIED_CLEAN = [
     #             so credential siblings no longer share a leading body (yaledefab1)
     "harvard",    # CIP rollup de-fab; suffix-diversifier removed; per-credential bodies
     #             (harvarddefab1 — HIGH #4)
+    "columbia",   # CIP rollup + possessive de-fab; real owning schools; per-credential
+    #             bodies (columbiadefab1 — HIGH #1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]

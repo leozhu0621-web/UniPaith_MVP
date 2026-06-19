@@ -63,6 +63,11 @@ descriptions with Columbia-specific level suffixes (0% identical-across-levels);
 remaining peer-contamination (Kelly Writers House, Perry World House, Morris Arboretum,
 Haas/CDSS, ICA); gates shared descriptions and peer signatures at build time.
 
+Structural de-fabrication (2026-06-19, columbiadefab1): resolves federal CIP rollup
+titles to Columbia's real published degrees or drops aggregation buckets; replaces
+possessive IPEDS award-level names with conferred designations; sets department to the
+real owning school; per-credential ``_level_body`` descriptions (0% possessive / rollup).
+
 Depth pass (2026-06-15, columbiaprof8): merged ``DEPTH_REVIEWS`` for 37 coverable
 programs (46/46 total external_reviews on coverable programs).
 """
@@ -83,14 +88,14 @@ from unipaith.data.columbia_field_descriptions import (
 )
 from unipaith.data.columbia_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.columbia_reviews_depth import DEPTH_REVIEWS
-from unipaith.data.profile_catalog_utils import disambiguate_program_name, validate_catalog
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Columbia University in the City of New York"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-19"
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -1253,6 +1258,9 @@ for _p in PROGRAMS:
 
 _EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
 _EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
+_EXISTING_FIELD_KEYS = {
+    (p["school"], p["program_name"].lower().strip(), p["degree_type"]) for p in PROGRAMS
+}
 
 
 def _delivery_format(raw: str) -> str:
@@ -1262,95 +1270,156 @@ def _delivery_format(raw: str) -> str:
     return raw
 
 
-def _department_for(field_name: str, school: str) -> str:
-    """Owning department — the CIP field title unless it duplicates the school name."""
-    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
-        return school
-    return field_name
+# ── De-fabricate the Scorecard CIP-rollup catalog (anti-stub miss #2) ──────────
+_ROLLUP_RESOLVE: dict[str, str] = {
+    "Biology, General": "Biological Sciences",
+    "Biomedical/Medical Engineering": "Biomedical Engineering",
+    "Cell/Cellular Biology and Anatomical Sciences": "Biological Sciences",
+    "City/Urban, Community, and Regional Planning": "Urban Planning",
+    "Classics and Classical Languages, Literatures, and Linguistics": "Classics",
+    "Computer and Information Sciences, General": "Computer Science",
+    "East Asian Languages, Literatures, and Linguistics": (
+        "East Asian Languages and Cultures"
+    ),
+    "English Language and Literature, General": "English and Comparative Literature",
+    "Environmental/Environmental Health Engineering": "Earth and Environmental Engineering",
+    "Geological and Earth Sciences/Geosciences": "Earth and Environmental Sciences",
+    "Germanic Languages, Literatures, and Linguistics": "Germanic Languages",
+    "Information Science/Studies": "Information Science",
+    "Middle/Near Eastern and Semitic Languages, Literatures, and Linguistics": (
+        "Middle Eastern, South Asian, and African Studies"
+    ),
+    "Psychology, General": "Psychology",
+    "Religion/Religious Studies": "Religion",
+    "Romance Languages, Literatures, and Linguistics": "Romance Languages",
+    "Slavic, Baltic and Albanian Languages, Literatures, and Linguistics": (
+        "Slavic Languages"
+    ),
+    "Drama/Theatre Arts and Stagecraft": "Theatre",
+    "Film/Video and Photographic Arts": "Film and Media Studies",
+    "Rhetoric and Composition/Writing Studies": "Creative Writing",
+    "Sports, Kinesiology, and Physical Education/Fitness": "Kinesiology",
+    "Urban Studies/Affairs": "Urban Studies",
+}
+
+_ROLLUP_DROP: frozenset[str] = frozenset({
+    "Advanced/Graduate Dentistry and Oral Sciences",
+    "Architecture and Related Services, Other",
+    "Area Studies",
+    "Business/Commerce, General",
+    "Computer/Information Technology Administration and Management",
+    "Education, General",
+    "Education, Other",
+    "Educational/Instructional Media Design",
+    "Engineering, Other",
+    "Engineering-Related Fields",
+    "Ethnic, Cultural Minority, Gender, and Group Studies",
+    "Foods, Nutrition, and Related Services",
+    "Health Professions and Related Clinical Sciences, Other",
+    "Liberal Arts and Sciences, General Studies and Humanities",
+    "Medical Clinical Sciences/Graduate Medical Studies",
+    "Philosophy and Religious Studies, Other",
+    "Physical Sciences, Other",
+    "Psychology, Other",
+    "Science Technologies/Technicians, Other",
+    "Social Sciences, General",
+    "Social Sciences, Other",
+    "Teacher Education and Professional Development, Specific Levels and Methods",
+    "Teacher Education and Professional Development, Specific Subject Areas",
+    "Theology and Religious Vocations, Other",
+    "Visual and Performing Arts, General",
+    "Visual and Performing Arts, Other",
+})
+
+
+def _resolve_rollup(field_name: str) -> str | None:
+    """Real Columbia degree name for a Scorecard CIP field, or None to DROP the row."""
+    if field_name in _ROLLUP_DROP:
+        return None
+    return _ROLLUP_RESOLVE.get(field_name, field_name)
+
+
+def _confer_columbia_name(real_name: str, degree_type: str, school: str) -> str:
+    """Columbia conferred degree designation — never the IPEDS possessive form (miss #2)."""
+    if degree_type == "professional":
+        return real_name
+    if degree_type == "bachelors":
+        if school == _SEAS:
+            return f"Bachelor of Science in {real_name}"
+        return f"Bachelor of Arts in {real_name}"
+    if degree_type == "masters":
+        if school == _SEAS:
+            return f"Master of Science in {real_name}"
+        if school == _GSAPP and real_name in ("Architecture", "Urban Planning"):
+            return f"Master of {real_name}"
+        return f"Master of Arts in {real_name}"
+    if degree_type == "phd":
+        return f"Doctor of Philosophy in {real_name}"
+    if degree_type == "certificate":
+        return f"Graduate Certificate in {real_name}"
+    return f"Program in {real_name}"
+
+
+_CRED_PREFIXES = (
+    "Bachelor of Arts in ",
+    "Bachelor of Science in ",
+    "Bachelor's in ",
+    "Master of Arts in ",
+    "Master of Science in ",
+    "Master's in ",
+    "Doctor of Philosophy in ",
+    "Graduate Certificate in ",
+    "Professional program in ",
+)
+
+
+def _real_field_of(program_name: str) -> str:
+    """Extract the field-of-study part of a credential-disambiguated program name."""
+    for prefix in _CRED_PREFIXES:
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):]
+    return program_name
 
 
 def _field_from_program_name(program_name: str) -> str | None:
     """Extract the CIP field title from a credential-disambiguated program name."""
-    for prefix in (
-        "Bachelor of Arts in ",
-        "Bachelor of Science in ",
-        "Bachelor's in ",
-        "Master's in ",
-        "Doctor of Philosophy in ",
-        "Graduate Certificate in ",
-        "Professional program in ",
-    ):
-        if program_name.startswith(prefix):
-            return program_name[len(prefix):]
-    return None
+    field = _real_field_of(program_name)
+    return field if field != program_name else None
 
 
-_LEVEL_SUFFIX: dict[str, str] = {
-    "bachelors": (
-        " Columbia College and Columbia Engineering undergraduates pursue Core "
-        "Curriculum requirements, departmental majors, and optional senior thesis "
-        "research on Morningside Heights."
-    ),
-    "masters": (
-        " Master's students complete advanced seminars, practica, and professional "
-        "development through Columbia's graduate and professional schools in New York City."
-    ),
-    "phd": (
-        " Ph.D. candidates conduct original dissertation research with faculty "
-        "advisement across Columbia's research institutes and laboratories."
-    ),
-    "certificate": (
-        " The graduate certificate offers focused graduate coursework for working "
-        "professionals without requiring a full degree program."
-    ),
-    "professional": "",
-}
-
-
-def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
-    """Fix credential-level lies (e.g. 'Graduate …' on a bachelor's row)."""
+def _level_body(real_field: str, degree_type: str, fact: str) -> str:
+    """Per-credential body — each level gets a distinct description (gold MIT = 0% shared)."""
+    fact = fact.strip().rstrip(".")
     if degree_type == "bachelors":
-        if clause.startswith("Graduate "):
-            return "Undergraduate " + clause[len("Graduate "):]
-        if clause.startswith("Graduate-level "):
-            return "Undergraduate-level " + clause[len("Graduate-level "):]
-    return clause
-
-
-def _diversify_descriptions(programs: list[dict]) -> None:
-    """Ensure credential-sibling rows do not share identical description text."""
-    by_desc: dict[str, list[dict]] = {}
-    for p in programs:
-        desc = p.get("description") or ""
-        by_desc.setdefault(desc, []).append(p)
-    for desc, group in by_desc.items():
-        if len(group) < 2:
-            continue
-        for p in group:
-            suffix = _LEVEL_SUFFIX.get(p["degree_type"], "")
-            if suffix:
-                p["description"] = f"{desc}{suffix}"
-
-
-def _needs_normalize(desc: str, program_name: str = "") -> bool:
-    """True when a description is a classification, template, or name-prefixed stub."""
-    if not desc:
-        return True
-    if program_name and desc.startswith(program_name):
-        return True
-    if _CLASSIFICATION_STUB_RE.match(desc):
-        return True
-    if _TEMPLATE_STUB_RE.search(desc):
-        return True
-    if "offered through the " in desc:
-        return True
-    if " — " in desc and len(desc) < 160 and not desc.startswith("The "):
-        return True
-    return False
+        body = fact
+        if body.startswith("Graduate "):
+            body = "Undergraduate " + body[len("Graduate "):]
+        return body + "."
+    if degree_type == "masters":
+        return (
+            f"Master's study in {real_field} builds on graduate seminars, advanced "
+            f"methods, and a capstone or thesis — {fact}."
+        )
+    if degree_type == "phd":
+        return (
+            f"Doctoral training in {real_field} centers on original dissertation "
+            f"research, advanced coursework, and faculty mentorship — {fact}."
+        )
+    if degree_type == "certificate":
+        return (
+            f"This graduate certificate in {real_field} offers focused, stackable "
+            f"coursework — {fact}."
+        )
+    if degree_type == "professional":
+        return (
+            f"Columbia's professional program in {real_field} pairs advanced coursework "
+            f"with supervised practice — {fact}."
+        )
+    return fact + "."
 
 
 def _columbia_description(spec: dict, field: str | None = None) -> str:
-    """Field-specific description — never the degree-type classification stub."""
+    """Field-specific, credential-appropriate description — never a classification stub."""
     slug = spec["slug"]
     fmt = spec.get("delivery_format", "in_person")
     delivery = ""
@@ -1360,29 +1429,24 @@ def _columbia_description(spec: dict, field: str | None = None) -> str:
         delivery = " Delivered in hybrid format."
     if slug in SLUG_DESCRIPTIONS:
         return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
-    field_key = (
-        field
-        or spec.get("_field_name")
-        or _field_from_program_name(spec.get("program_name", ""))
-        or spec.get("department")
-        or spec.get("program_name", "")
-    )
-    if field_key in FIELD_ALIASES:
-        field_key = FIELD_ALIASES[field_key]
-    clause = FIELD_DESCRIPTIONS.get(field_key)
-    if not clause:
-        raise ValueError(
-            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
-        )
-    clause = _adapt_clause_for_degree_type(clause, spec["degree_type"])
-    return f"{clause}{delivery}"
+    field_key = spec.get("_field_name") or field
+    fact = FIELD_DESCRIPTIONS.get(field_key) if field_key else None
+    if not fact:
+        fallback_key = field_key or spec.get("department") or spec.get("program_name", "")
+        if fallback_key in FIELD_ALIASES:
+            fallback_key = FIELD_ALIASES[fallback_key]
+        fact = FIELD_DESCRIPTIONS.get(fallback_key)
+        if not fact:
+            raise ValueError(
+                f"Missing FIELD_DESCRIPTIONS entry for {fallback_key!r} ({slug})"
+            )
+    real_field = _real_field_of(spec.get("program_name", "")) or (field_key or "")
+    body = _level_body(real_field, spec.get("degree_type", "bachelors"), fact)
+    return f"{body}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
-    """Stamp a field-specific description on stub program nodes."""
-    pname = spec.get("program_name", "")
-    if not _needs_normalize(spec.get("description") or "", pname):
-        return
+    """Stamp a field-specific description on every program node."""
     spec["description"] = _columbia_description(spec, field=field_name)
 
 
@@ -1390,57 +1454,89 @@ def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
     out: list[dict] = []
     seen = set(_EXISTING_SLUGS)
+    field_seen = set(_EXISTING_FIELD_KEYS)
     for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
         if slug in seen:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
+        real_name = _resolve_rollup(field_name)
+        if real_name is None:
+            continue
+        fkey = (school, real_name.lower().strip(), dtype)
+        if fkey in field_seen:
+            continue
         seen.add(slug)
-        dept = _department_for(field_name, school)
+        field_seen.add(fkey)
         delivery = _delivery_format(fmt)
-        pname = disambiguate_program_name(field_name, dtype)
+        pname = _confer_columbia_name(real_name, dtype, school)
         spec = {
             "slug": slug,
             "school": school,
             "program_name": pname,
             "degree_type": dtype,
-            "department": dept,
+            "department": school,
             "cip": cip,
             "duration_months": dur,
             "delivery_format": delivery,
             "_field_name": field_name,
         }
         _normalize_program(spec, field_name)
-        spec.pop("_field_name", None)
         out.append(spec)
     return out
 
 
 PROGRAMS += _build_catalog()
 for _p in PROGRAMS:
-    _normalize_program(_p, _field_from_program_name(_p.get("program_name", "")))
-_diversify_descriptions(PROGRAMS)
+    _normalize_program(
+        _p,
+        _p.get("_field_name") or _field_from_program_name(_p.get("program_name", "")),
+    )
 
+# ── Catalog quality gate (anti-stub miss #2/#8/#9, gold MIT = 0 on each) ───────
+_ROLLUP_NAME_RE = re.compile(
+    r", General\b|, Other\b|, and Linguistics\b|, Pharmaceutical Sciences, and "
+    r"Administration\b|, and Group Studies\b|, and Technicians\b|/"
+)
+_CIP_CODE_RE = re.compile(r"\(CIP\s*\d|\b\d\d\.\d\d\b")
+_POSSESSIVE_NAME_RE = re.compile(r"Bachelor's in |Master's in |Doctorate in ")
 _catalog_errors = validate_catalog(PROGRAMS)
-_stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
-_new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
 _name_prefix_desc = sum(
     1
     for p in PROGRAMS
     if (p.get("description") or "").startswith(p.get("program_name", ""))
 )
-if _stub_desc:
-    _catalog_errors.append(f"template stub descriptions on {_stub_desc} programs")
-if _new_templ:
-    _catalog_errors.append(f"program_description template on {_new_templ} programs")
 if _name_prefix_desc:
     _catalog_errors.append(f"name-prefixed descriptions on {_name_prefix_desc} programs")
-_desc_counts = Counter(p.get("description") for p in PROGRAMS)
-_shared_desc = sum(c for c in _desc_counts.values() if c >= 2)
-if _shared_desc:
+_rollup_names = [
+    p["program_name"]
+    for p in PROGRAMS
+    if _ROLLUP_NAME_RE.search(_real_field_of(p.get("program_name", "")))
+]
+if _rollup_names:
+    _catalog_errors.append(f"CIP-rollup program names: {_rollup_names[:5]}")
+_possessive_names = [
+    p["program_name"] for p in PROGRAMS if _POSSESSIVE_NAME_RE.search(p.get("program_name", ""))
+]
+if _possessive_names:
     _catalog_errors.append(
-        f"identical descriptions shared across {_shared_desc} credential-sibling programs"
+        f"possessive award-level names: {_possessive_names[:5]} ({len(_possessive_names)} total)"
     )
+_cip_in_name = [
+    p["program_name"]
+    for p in PROGRAMS
+    if _CIP_CODE_RE.search(p.get("program_name", ""))
+    or _CIP_CODE_RE.search(p.get("department") or "")
+]
+if _cip_in_name:
+    _catalog_errors.append(f"literal CIP code in name/department: {_cip_in_name[:5]}")
+_field_echo_dept = [
+    p["program_name"]
+    for p in PROGRAMS
+    if (p.get("department") or "") == _real_field_of(p.get("program_name", ""))
+]
+if _field_echo_dept:
+    _catalog_errors.append(f"field-echo departments: {_field_echo_dept[:5]}")
 _peer_contaminated = sum(
     1
     for p in PROGRAMS
@@ -1450,13 +1546,27 @@ if _peer_contaminated:
     _catalog_errors.append(
         f"peer-contaminated descriptions on {_peer_contaminated} programs"
     )
-_classification_stubs = sum(
-    1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
-)
-if _classification_stubs:
-    _catalog_errors.append(
-        f"classification-only descriptions on {_classification_stubs} programs"
+try:
+    from unipaith.profile_standard import anti_stub as _anti_stub
+
+    _astub = _anti_stub.analyze(
+        [
+            {"program_name": p["program_name"], "description": p.get("description")}
+            for p in PROGRAMS
+        ]
     )
+    if not _astub.is_clean:
+        _catalog_errors.append(f"anti-stub: {_astub.summary()}")
+    _artifacts = _anti_stub.machine_artifacts(
+        [
+            {"program_name": p["program_name"], "description": p.get("description")}
+            for p in PROGRAMS
+        ]
+    )
+    if _artifacts:
+        _catalog_errors.append(f"machine artifacts on {len(_artifacts)} programs")
+except ImportError:
+    pass
 if _catalog_errors:
     raise RuntimeError(f"Columbia catalog quality gate failed: {_catalog_errors}")
 for _p in PROGRAMS:
