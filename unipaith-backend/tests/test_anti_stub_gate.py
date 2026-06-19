@@ -49,6 +49,9 @@ CERTIFIED_CLEAN = [
     "penn",       # CIP-rollup buckets → real Penn degrees or dropped; dept = real owning
     #             school (field-echo removed); per-credential description leads with the
     #             resolved real name, no rollup leak (verbatim/shared-body removed) (penndefab1)
+    "yale",       # "{program_name}: " prefix-double removed; per-credential bodies — graduate
+    #             rows take a distinct doctoral/master's clause (GRADUATE_FIELD_DESCRIPTIONS),
+    #             so credential siblings no longer share a leading body (yaledefab1)
     "harvard",    # CIP rollup de-fab; suffix-diversifier removed; per-credential bodies
     #             (harvarddefab1 — HIGH #4)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
