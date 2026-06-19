@@ -883,7 +883,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "School of Public Health coursework spans epidemiology, biostatistics, and health policy with Boston University Medicine population-health research on the Medical Campus."
     ),
     "Public Relations — Public Relations": (
-        "Medill integrated marketing communications and public relations trains brand strategy, crisis communication, and digital campaigns with Boston agency partnerships."
+        "Boston University's College of Communication trains public-relations students in brand strategy, media relations, crisis communication, and campaign analytics, with agency and nonprofit internships across Boston."
     ),
     "Rehabilitation Sciences": (
         "Sargent rehabilitation-sciences Ph.D. research spans motor control, assistive technology, and clinical outcomes in PT and OT."
@@ -1180,6 +1180,380 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
     ),
     "bu-academics-ssw-msw": (
         "SSW's M.S.W. emphasizes clinical practice, trauma-informed care, and macro policy with field placements across Greater Boston."
+    ),
+    # --- Public Relations: distinct undergraduate / master's bodies (replaces the
+    #     mis-attributed "Medill" clause — Medill is Northwestern's, not BU's). ---
+    "bu-academics-com-public-relations-bs-in-public-relations": (
+        "Boston University's College of Communication trains public-relations undergraduates in brand strategy, media relations, crisis communication, and campaign analytics, with agency and nonprofit internships across Boston."
+    ),
+    "bu-academics-com-public-relations-ms-in-public-relations": (
+        "The College of Communication master's in public relations builds advanced strategic-communication practice — reputation management, digital campaigns, and audience measurement — through Boston-agency practicums."
+    ),
+    # --- Per-credential bodies for CAS/GRS fields whose BA/MA/MS/PhD rows otherwise
+    #     shared one leading body (anti-stub shared_leading_body / cross_field). Each
+    #     credential level opens distinctly and names the field's real subfields. ---
+    # Archaeology (CAS Dept of Archaeology, BU campus collections, Mediterranean/Near East)
+    "bu-academics-cas-archaeology-ba": (
+        "Boston University's archaeology major trains undergraduates in excavation method, artifact and ceramic analysis, and the archaeology of the Mediterranean and Near East, with summer field-school seasons and campus collections study."
+    ),
+    "bu-academics-cas-archaeology-ba-ma": (
+        "Through BU's accelerated bachelor's-to-master's, archaeology students add a fifth year of graduate fieldwork, lithic and zooarchaeological analysis, and a research thesis."
+    ),
+    "bu-academics-grs-archaeology-ma": (
+        "The Graduate School of Arts & Sciences master's in archaeology deepens survey, GIS, and material-culture method toward doctoral study or cultural-heritage careers."
+    ),
+    "bu-academics-grs-archaeology-phd": (
+        "Doctoral candidates in archaeology at BU pursue original fieldwork and dissertation projects across Mediterranean, Near Eastern, and environmental-archaeology specializations."
+    ),
+    # Biology (CAS Dept of Biology; MET evening B.S.)
+    "bu-academics-cas-biology-ba": (
+        "Boston University's biology major surveys genetics, cell biology, ecology, and neurobiology, with introductory-through-advanced laboratory sequences and undergraduate research placements in campus life-sciences labs."
+    ),
+    "bu-academics-grs-biology-master-of-science-in-biology": (
+        "The Graduate School of Arts & Sciences master's in biology pairs advanced coursework with a laboratory research project in molecular, cellular, or organismal biology."
+    ),
+    "bu-academics-grs-biology-phd": (
+        "Doctoral research in biology at BU centers on original dissertation work in genetics, ecology, evolution, or neurobiology within faculty laboratories."
+    ),
+    "bu-academics-met-biology": (
+        "Metropolitan College's evening B.S. in biology offers working students a flexible path through the core genetics, cell-biology, and physiology sequence with campus laboratory sections."
+    ),
+    # Chemistry (CAS Dept of Chemistry)
+    "bu-academics-cas-chemistry-ba": (
+        "Boston University's chemistry major grounds undergraduates in organic, inorganic, physical, and analytical chemistry through laboratory sequences and access to faculty research groups in the CAS department."
+    ),
+    "bu-academics-cas-chemistry-ba-ma": (
+        "BU's accelerated bachelor's-to-master's in chemistry adds a fifth year of graduate coursework and a research project across organic, inorganic, physical, or chemical-biology areas."
+    ),
+    "bu-academics-grs-chemistry-ma": (
+        "The Graduate School of Arts & Sciences master's in chemistry combines advanced coursework with a directed research project toward doctoral study or industry roles."
+    ),
+    "bu-academics-grs-chemistry-phd": (
+        "Doctoral research in chemistry at BU pursues original work in synthesis, spectroscopy, materials, or chemical biology, with funded dissertation work in faculty laboratories."
+    ),
+    "bu-academics-gms-chemistry": (
+        "Graduate Medical Sciences chemistry coursework gives biomedical-track students rigorous foundations in organic and biological chemistry on the Medical Campus."
+    ),
+    # History (CAS Dept of History)
+    "bu-academics-cas-history-ba": (
+        "Boston University's history major spans American, European, and global fields, building research and writing skills through seminars and primary-source work toward a capstone."
+    ),
+    "bu-academics-grs-history-ma": (
+        "The Graduate School of Arts & Sciences master's in history develops historiography and archival method in American, European, or history-of-science fields."
+    ),
+    "bu-academics-grs-history-phd": (
+        "Doctoral candidates in history at BU write original dissertations grounded in archival research across American, European, global, and science-and-medicine specialties."
+    ),
+    # Classical Studies (CAS Dept of Classical Studies)
+    "bu-academics-cas-classical-studies-ba-latin": (
+        "Boston University's classical-studies major builds Greek and Latin language alongside ancient history, literature, and Mediterranean archaeology."
+    ),
+    "bu-academics-cas-classical-studies-ba-ma": (
+        "BU's accelerated bachelor's-to-master's in classical studies adds graduate philology and a research thesis in Greek or Latin texts."
+    ),
+    "bu-academics-grs-classical-studies-ma": (
+        "The Graduate School of Arts & Sciences master's in classical studies advances Greek and Latin philology, textual criticism, and ancient history."
+    ),
+    "bu-academics-grs-classical-studies-phd": (
+        "Doctoral research in classical studies at BU produces a dissertation in Greek or Latin literature, ancient philosophy, or Mediterranean history with manuscript and archaeological resources."
+    ),
+    "bu-academics-grs-classical-studies-ma-phd-phil": (
+        "BU's combined-track doctoral program in classical philology trains scholars in advanced Greek and Latin textual criticism toward an original dissertation."
+    ),
+    # Neuroscience (CAS undergrad; GMS Ph.D.; GRS M.A.)
+    "bu-academics-cas-neuroscience": (
+        "Boston University's neuroscience major surveys cellular, cognitive, and systems neuroscience, with laboratory courses and research placements across CAS and the medical-campus institutes."
+    ),
+    "bu-academics-grs-neuroscience-ma": (
+        "The Graduate School of Arts & Sciences master's in neuroscience pairs advanced systems- and cognitive-neuroscience coursework with a laboratory research project."
+    ),
+    "bu-academics-gms-neuroscience": (
+        "Doctoral candidates in BU's Graduate Program for Neuroscience conduct dissertation research spanning molecular, systems, and cognitive neuroscience across affiliated medical-campus labs."
+    ),
+    # Physics (CAS Dept of Physics)
+    "bu-academics-cas-physics-ba": (
+        "Boston University's physics major covers classical and quantum mechanics, electromagnetism, and laboratory technique, with research exposure in condensed-matter, particle, and biophysics groups."
+    ),
+    "bu-academics-cas-physics-ba-ma": (
+        "BU's accelerated bachelor's-to-master's in physics adds a fifth year of graduate coursework and a research project in condensed-matter, particle, or biological physics."
+    ),
+    "bu-academics-grs-physics-ma": (
+        "The Graduate School of Arts & Sciences master's in physics combines core graduate coursework with directed research toward doctoral study or technical careers."
+    ),
+    "bu-academics-grs-physics-phd": (
+        "Doctoral research in physics at BU pursues original dissertation work in condensed-matter, high-energy, or biophysics, with funded placements in faculty laboratories."
+    ),
+    # Psychology (CAS Dept of Psychological & Brain Sciences; MET B.S.)
+    "bu-academics-cas-psychology-ba": (
+        "Boston University's psychology major — one of its largest — introduces cognitive, developmental, social, and clinical science with statistics, research methods, and campus-lab participation."
+    ),
+    "bu-academics-grs-psychology-ma": (
+        "The Graduate School of Arts & Sciences master's in psychology builds advanced research design and analysis in cognitive, developmental, or clinical specializations."
+    ),
+    "bu-academics-grs-psychology-phd": (
+        "Doctoral candidates in psychology at BU pursue mentored dissertation research in clinical, cognitive, developmental, or behavioral neuroscience tracks."
+    ),
+    "bu-academics-met-psychology": (
+        "Metropolitan College's evening B.S. in psychology gives working students the core methods, statistics, and cognitive- and social-psychology sequence with flexible scheduling."
+    ),
+    # Sociology (CAS Dept of Sociology; MET B.S.)
+    "bu-academics-cas-sociology-ba": (
+        "Boston University's sociology major examines urban inequality, health disparities, and social networks, building survey and field methods with Boston community-based research."
+    ),
+    "bu-academics-grs-sociology-ma": (
+        "The Graduate School of Arts & Sciences master's in sociology advances quantitative and qualitative method in stratification, health, and urban sociology."
+    ),
+    "bu-academics-grs-sociology-phd": (
+        "Doctoral research in sociology at BU produces a dissertation in inequality, health, migration, or social-network analysis with mixed-method training."
+    ),
+    "bu-academics-met-sociology-bs": (
+        "Metropolitan College's evening B.S. in sociology offers working students the core theory and methods sequence with an emphasis on urban and applied social analysis."
+    ),
+    # Advertising (COM undergrad; MET M.S.)
+    "bu-academics-com-advertising-advertising-bs": (
+        "Boston University's College of Communication advertising major covers creative strategy, media planning, and account management, with agency internship pipelines across Boston and New York."
+    ),
+    "bu-academics-met-advertising": (
+        "Metropolitan College's master's in advertising builds brand strategy, analytics, and campaign management for working communications professionals."
+    ),
+    # Computer Science master's: accelerated (CAS) vs standalone (GRS)
+    "bu-academics-cas-computer-science-ba-ms": (
+        "BU's accelerated bachelor's-to-master's in computer science lets undergraduates add a fifth year of graduate coursework in systems, AI, and theory toward an M.S."
+    ),
+    "bu-academics-grs-computer-science-ms": (
+        "The Graduate School of Arts & Sciences M.S. in computer science deepens algorithms, systems, machine learning, and security with ties to the Hariri Institute."
+    ),
+    # Economics master's: accelerated (CAS) vs standalone (GRS)
+    "bu-academics-cas-economics-ba-ma": (
+        "BU's accelerated bachelor's-to-master's in economics adds graduate microeconomics, macroeconomics, and econometrics toward a fifth-year master's degree."
+    ),
+    "bu-academics-grs-economics-ma": (
+        "The Graduate School of Arts & Sciences master's in economics builds rigorous theory and applied econometrics for policy, finance, and pre-doctoral preparation."
+    ),
+    # Oral Biology: DSc vs PhD (Goldman School of Dental Medicine)
+    "bu-academics-sdm-oral-biology-dsc": (
+        "The Goldman School of Dental Medicine Doctor of Science in oral biology trains clinician-scientists in craniofacial development, biomaterials, and salivary diagnostics alongside advanced clinical specialty training."
+    ),
+    "bu-academics-sdm-oral-biology-phd": (
+        "Doctoral candidates in oral biology at BU's Goldman School conduct dissertation research in craniofacial biology, biomaterials, and oral microbiology in GMS-affiliated laboratories."
+    ),
+    # CGS Liberal Arts: September vs January entry
+    "bu-cgs-liberal-arts-bs": (
+        "The College of General Studies September Program offers a two-year, team-taught liberal-arts core on the Charles River Campus before students transition into a BU bachelor's major."
+    ),
+    "bu-cgs-january-liberal-arts-bs": (
+        "The College of General Studies January Program admits a spring-entry cohort into the same two-year liberal-arts core, with a guided summer-abroad term before students join a BU major."
+    ),
+    # Wheelock educational policy: accelerated BS/MA vs standalone MA
+    "bu-academics-wheelock-policy-planning-administration-bs-ma-educational-policy-studies": (
+        "Wheelock's accelerated bachelor's-to-master's in educational policy lets undergraduates begin graduate study of school finance, leadership, and equity toward a fifth-year M.A."
+    ),
+    "bu-academics-wheelock-policy-planning-administration-ma-in-educational-policy-studies": (
+        "Wheelock's master's in educational policy and planning examines school finance, leadership, and equity in urban districts through applied policy analysis."
+    ),
+    # Online M.S. in Data Science is delivered through the Faculty of Computing & Data
+    # Sciences (CDS) — not Metropolitan College — via the BU Spark! online platform.
+    "bu-academics-cds-ms-in-data-science-online": (
+        "The Faculty of Computing & Data Sciences online M.S. in Data Science covers statistical modeling, machine learning, and data visualization for working professionals."
+    ),
+    # CFA musicology: distinct M.A. / M.M. / Ph.D. bodies (otherwise share one field clause).
+    "bu-academics-cfa-school-of-music-musicology-ma": (
+        "The College of Fine Arts M.A. in musicology builds historical research, analysis, and bibliographic method across Western and global repertoires toward doctoral study or arts careers."
+    ),
+    "bu-academics-cfa-school-of-music-musicology-mm": (
+        "CFA's Master of Music in musicology pairs scholarly study of music history and ethnomusicology with performance-informed research for practicing musicians."
+    ),
+    "bu-academics-cfa-school-of-music-musicology-phd": (
+        "Doctoral candidates in musicology at the College of Fine Arts produce original dissertation research in music history, theory, or ethnomusicology with Boston-area archival collections."
+    ),
+    # CFA art education: museum-education M.A. vs online M.A. (distinct bodies).
+    "bu-academics-cfa-school-of-visual-arts-museum-education": (
+        "The College of Fine Arts M.A. in art education with a museum-education focus trains educators in object-based learning, gallery teaching, and accessibility for cultural institutions."
+    ),
+    "bu-academics-cfa-school-of-visual-arts-art-education-online-ma-in-art-education": (
+        "CFA's online M.A. in art education prepares practicing K-12 teachers in studio pedagogy, curriculum design, and assessment through a flexible distance program."
+    ),
+    # CFA conducting M.M. (not a D.M.A.) — score study and orchestral/choral podium training.
+    "bu-academics-cfa-school-of-music-conducting-mm": (
+        "CFA's Master of Music in conducting emphasizes score study, rehearsal technique, and orchestral and choral podium training with BU ensembles."
+    ),
+    # --- College of Fine Arts: per-program researched bodies (the URL nests the discipline
+    #     under the school segment, so each gets its own clause to avoid school-as-field). ---
+    # School of Visual Arts
+    "bu-academics-cfa-school-of-visual-arts-ba-in-art": (
+        "The College of Fine Arts B.A. in art pairs studio practice in drawing, painting, and new media with art-history coursework for a liberal-arts foundation."
+    ),
+    "bu-academics-cfa-school-of-visual-arts-art-education-bfa": (
+        "CFA's B.F.A. in art education combines studio training with teaching method and a classroom practicum toward initial K-12 visual-arts licensure."
+    ),
+    "bu-academics-cfa-school-of-visual-arts-graphic-design-bfa": (
+        "CFA's B.F.A. in graphic design develops typography, branding, and interaction design through studio critique and professional portfolio work."
+    ),
+    "bu-academics-cfa-school-of-visual-arts-printmaking-2-bfa": (
+        "CFA's B.F.A. in printmaking trains students in intaglio, lithography, screenprint, and relief processes in dedicated print studios."
+    ),
+    "bu-academics-cfa-school-of-visual-arts-sculpture-bfa": (
+        "CFA's B.F.A. in sculpture explores fabrication, casting, and installation across wood, metal, and mixed media in studio and shop facilities."
+    ),
+    "bu-academics-cfa-school-of-visual-arts-art-education-art-education-with-initial-license": (
+        "CFA's M.A. in art education with initial licensure prepares career-changers to teach K-12 visual arts through studio pedagogy and a supervised practicum."
+    ),
+    # School of Theatre
+    "bu-academics-cfa-school-of-theatre-acting": (
+        "CFA's B.F.A. in acting combines Stanislavski-based studio training, voice and movement, and mainstage production work in the School of Theatre."
+    ),
+    "bu-academics-cfa-school-of-theatre-lighting-design-bfa": (
+        "CFA's B.F.A. in lighting design teaches stage and event lighting, drafting, and console programming through production assignments."
+    ),
+    "bu-academics-cfa-school-of-theatre-scene-design-bfa": (
+        "CFA's B.F.A. in scene design develops set design, scenic painting, and model-building for theatre and opera productions."
+    ),
+    "bu-academics-cfa-school-of-theatre-sound-design-bfa": (
+        "CFA's B.F.A. in sound design covers audio engineering, composition, and live mixing for theatrical production."
+    ),
+    "bu-academics-cfa-school-of-theatre-stage-management-bfa": (
+        "CFA's B.F.A. in stage management trains students to coordinate rehearsals, calling, and production logistics across mainstage seasons."
+    ),
+    "bu-academics-cfa-school-of-theatre-technical-production-bfa": (
+        "CFA's B.F.A. in technical production covers scenery construction, rigging, and production management for the stage."
+    ),
+    "bu-academics-cfa-school-of-theatre-theatre-arts-bfa-design-production": (
+        "CFA's B.F.A. in theatre arts with a design-and-production focus builds sets, costumes, and lighting through collaborative production seasons."
+    ),
+    "bu-academics-cfa-school-of-theatre-theatre-arts-bfa-performance": (
+        "CFA's B.F.A. in theatre arts with a performance focus develops acting, voice, and movement with extensive mainstage stage experience."
+    ),
+    # School of Music
+    "bu-academics-cfa-school-of-music-music": (
+        "The College of Fine Arts B.A. in music pairs applied study and music history with the academic breadth of a liberal-arts degree."
+    ),
+    "bu-academics-cfa-school-of-music-composition-bm": (
+        "CFA's Bachelor of Music in composition develops counterpoint, orchestration, and contemporary technique with regular performance of student works."
+    ),
+    "bu-academics-cfa-school-of-music-composition-mm": (
+        "CFA's Master of Music in composition advances large-ensemble writing, electronic media, and a portfolio of performed compositions."
+    ),
+    "bu-academics-cfa-school-of-music-composition-dma": (
+        "Doctoral candidates in composition at CFA produce a substantial body of original work alongside research in contemporary practice."
+    ),
+    "bu-academics-cfa-school-of-music-music-education-bm": (
+        "CFA's Bachelor of Music in music education combines applied study with K-12 teaching method toward Massachusetts licensure."
+    ),
+    "bu-academics-cfa-school-of-music-music-education-mm": (
+        "CFA's Master of Music in music education deepens curriculum, assessment, and conducting for practicing school-music teachers."
+    ),
+    "bu-academics-cfa-school-of-music-music-education-cags": (
+        "CFA's Certificate of Advanced Graduate Study in music education extends post-master's training in research and advanced pedagogy for veteran teachers."
+    ),
+    "bu-academics-cfa-school-of-music-performance-bm": (
+        "CFA's Bachelor of Music in performance centers on applied lessons, chamber music, and recitals in the student's principal instrument or voice."
+    ),
+    "bu-academics-cfa-school-of-music-performance-mm": (
+        "CFA's Master of Music in performance builds advanced repertoire, recital preparation, and orchestral or operatic experience."
+    ),
+    "bu-academics-cfa-school-of-music-performance-dma": (
+        "Doctoral performance candidates at CFA pursue recitals, a research document, and advanced artistry in their instrument or voice."
+    ),
+    "bu-academics-cfa-school-of-music-conducting-dma": (
+        "Doctoral conducting candidates at CFA develop orchestral and choral podium artistry, score study, and a research document."
+    ),
+    "bu-academics-cfa-school-of-music-historical-performance-mm": (
+        "CFA's Master of Music in historical performance trains musicians in period-instrument technique and historically informed interpretation."
+    ),
+    "bu-academics-cfa-school-of-music-historical-performance-dma": (
+        "Doctoral historical-performance candidates at CFA combine period-instrument artistry with research in performance practice."
+    ),
+    "bu-academics-cfa-school-of-music-music-theory": (
+        "CFA's M.A. in music theory examines Schenkerian and set-theoretic analysis, the history of theory, and pedagogy."
+    ),
+    "bu-academics-cfa-school-of-visual-arts-painting-bfa": (
+        "CFA's B.F.A. in painting combines figure study, color and composition, critique seminars, and solo exhibition preparation."
+    ),
+    "bu-academics-cfa-school-of-visual-arts-bfa-ma": (
+        "CFA's accelerated B.F.A.-to-M.A. pathway lets studio-art undergraduates add a graduate year of advanced critique, art education, or art history."
+    ),
+    "bu-academics-cfa-school-of-music-music-education-bm-mm": (
+        "CFA's accelerated Bachelor of Music to Master of Music in music education adds a graduate year of pedagogy and licensure coursework."
+    ),
+    # --- Mathematics & Statistics: distinct per-credential / per-track bodies ---
+    "bu-academics-cas-mathematics-statistics-ba": (
+        "Boston University's mathematics & statistics major builds calculus, linear algebra, real analysis, and probability through proof-based coursework with computational and applied electives."
+    ),
+    "bu-academics-cas-mathematics-statistics-ba-ma": (
+        "BU's accelerated bachelor's-to-master's in mathematics & statistics adds graduate analysis, algebra, or statistics toward a fifth-year master's."
+    ),
+    "bu-academics-grs-mathematics-statistics-ma-statistics": (
+        "The Graduate School of Arts & Sciences M.A. in statistics covers statistical theory, regression, and computing for applied data analysis."
+    ),
+    "bu-academics-grs-mathematics-statistics-ms-in-statistical-practice": (
+        "CAS's M.S. in statistical practice trains applied statisticians in consulting, data analysis, and statistical computing for industry roles."
+    ),
+    "bu-academics-grs-mathematics-statistics-phd-mathematics": (
+        "Doctoral research in mathematics at BU pursues original dissertation work in analysis, algebra, geometry, or dynamical systems."
+    ),
+    "bu-academics-grs-mathematics-statistics-phd-statistics": (
+        "Doctoral research in statistics at BU develops dissertation work in statistical theory, computation, and applied modeling."
+    ),
+    "bu-academics-cas-mathematics-statistics-ba-in-mathematics-computer-science-ms-in-computer-science": (
+        "BU's accelerated pathway pairs a mathematics bachelor's with a master's in computer science, adding graduate algorithms and systems coursework."
+    ),
+    # --- Economics: distinct bodies for the master's / doctoral / accelerated variants ---
+    "bu-academics-grs-economics-ma-global-development-economics": (
+        "The Graduate School of Arts & Sciences M.A. in economics with a global-development focus applies econometrics to growth, poverty, and policy in developing economies."
+    ),
+    "bu-academics-grs-economics-ma-phd": (
+        "Doctoral research in economics at BU produces original dissertation work in micro theory, macroeconomics, and applied fields with the Institute for Economic Research."
+    ),
+    "bu-academics-cas-economics-ba-econ-math-ma": (
+        "BU's accelerated bachelor's-to-master's in economics and mathematics combines economic theory with rigorous quantitative and statistical training."
+    ),
+    "bu-academics-grs-economics-ma-mba": (
+        "The Pardee–Questrom M.A. in economics with an M.B.A. pairs applied economic analysis with management, finance, and strategy coursework."
+    ),
+    # Mathematics combined majors + graduate degrees (distinct per program)
+    "bu-academics-cas-mathematics-statistics-ba-mathematics-computer-science": (
+        "BU's combined major in mathematics and computer science pairs proof-based mathematics with algorithms, data structures, and computing theory."
+    ),
+    "bu-academics-cas-mathematics-statistics-ba-mathematics-education": (
+        "BU's mathematics education major combines the mathematics core with teaching method toward secondary-school licensure."
+    ),
+    "bu-academics-cas-mathematics-statistics-ba-mathematics-philosophy": (
+        "BU's joint major in mathematics and philosophy connects formal logic and proof with the philosophy of mathematics and analytic reasoning."
+    ),
+    "bu-academics-cas-mathematics-statistics-ba-in-mathematics-physics": (
+        "BU's joint major in mathematics and physics builds analysis and algebra alongside classical and quantum physics."
+    ),
+    "bu-academics-cas-mathematics-statistics-ba-in-statistics-computer-science": (
+        "BU's combined major in statistics and computer science pairs probability and inference with programming and data structures."
+    ),
+    "bu-academics-grs-mathematics-statistics-ma-mathematics": (
+        "The Graduate School of Arts & Sciences M.A. in mathematics advances analysis, algebra, and topology toward doctoral study or technical careers."
+    ),
+    # World Languages & Literatures: separate language majors
+    "bu-academics-cas-world-languages-literatures-ba-chinese": (
+        "Boston University's Chinese major builds Mandarin proficiency alongside Chinese literature, film, and cultural history in the Department of World Languages & Literatures."
+    ),
+    "bu-academics-cas-world-languages-literatures-ba-comparative-literature": (
+        "BU's comparative literature major reads across national traditions in translation and the original, with literary theory and cross-cultural study."
+    ),
+    "bu-academics-cas-world-languages-literatures-ba-japanese": (
+        "BU's Japanese major develops language proficiency with the study of Japanese literature, media, and cultural history."
+    ),
+    "bu-academics-cas-world-languages-literatures-korean-ba-in-korean-language-literature": (
+        "BU's Korean language and literature major builds proficiency in Korean with its literature, film, and culture."
+    ),
+    "bu-academics-cas-world-languages-literatures-bachelor-of-arts-in-middle-eastern-and-south-asian-languages-literatures": (
+        "BU's major in Middle Eastern and South Asian languages and literatures combines language study — Arabic, Hebrew, Hindi-Urdu, or Persian — with regional literature and history."
+    ),
+    "bu-academics-cas-world-languages-literatures-ba-russian": (
+        "BU's Russian major develops language proficiency with Russian literature, film, and cultural history."
+    ),
+    # Pathology & Laboratory Medicine: distinct master's vs doctoral bodies.
+    "bu-academics-gms-pathology-laboratory-medicine-ma": (
+        "Graduate Medical Sciences' master's in pathology and laboratory medicine builds foundations in diagnostic pathology, hematology, and clinical laboratory science for biomedical and clinical careers."
+    ),
+    "bu-academics-gms-pathology-laboratory-medicine-phd": (
+        "Doctoral candidates in pathology and laboratory medicine at GMS pursue dissertation research in disease mechanisms, transfusion medicine, and molecular diagnostics on the Medical Campus."
     ),
 }
 
