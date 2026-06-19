@@ -50,8 +50,9 @@ function SignalInput({
   }
 
   if (item.ask_kind === 'scale') {
-    // 0–5 importance slider (reuses the conversation widget).
-    return <AnswerChoices kind="scale" options={[]} onPick={onSubmit} disabled={disabled} />
+    // 0–5 importance slider (reuses the conversation widget). `numeric` submits
+    // the raw number — the backend scales it 0–10 onto StudentPreference.
+    return <AnswerChoices kind="scale" options={[]} numeric onPick={onSubmit} disabled={disabled} />
   }
 
   if (item.ask_kind === 'range') {

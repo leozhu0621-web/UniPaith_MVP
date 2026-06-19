@@ -99,11 +99,15 @@ function Scale({
   disabled,
   lowLabel,
   highLabel,
+  numeric,
 }: {
   onPick: (v: string) => void
   disabled?: boolean
   lowLabel?: string
   highLabel?: string
+  // Enrichment fields need the raw 0–5 number (the backend scales it 0–10 onto
+  // StudentPreference); the conversational path keeps the natural-language phrase.
+  numeric?: boolean
 }) {
   const [v, setV] = useState(3)
   const low = lowLabel || 'not important'
@@ -135,7 +139,12 @@ function Scale({
       </div>
       <div className="mt-2 flex items-center justify-between">
         <span className="text-xs font-medium text-secondary">{phrase}</span>
-        <Button variant="secondary" size="sm" disabled={disabled} onClick={() => onPick(phrase)}>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={disabled}
+          onClick={() => onPick(numeric ? String(v) : phrase)}
+        >
           Set
         </Button>
       </div>
@@ -150,6 +159,7 @@ export default function AnswerChoices({
   kind = 'choice',
   lowLabel,
   highLabel,
+  numeric = false,
 }: {
   options: string[]
   onPick: (value: string) => void
@@ -157,9 +167,18 @@ export default function AnswerChoices({
   kind?: AnswerKind
   lowLabel?: string
   highLabel?: string
+  numeric?: boolean
 }) {
   if (kind === 'scale') {
-    return <Scale onPick={onPick} disabled={disabled} lowLabel={lowLabel} highLabel={highLabel} />
+    return (
+      <Scale
+        onPick={onPick}
+        disabled={disabled}
+        lowLabel={lowLabel}
+        highLabel={highLabel}
+        numeric={numeric}
+      />
+    )
   }
   if (options.length === 0) return null
   if (kind === 'multi') {
