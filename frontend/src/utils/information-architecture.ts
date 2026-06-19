@@ -59,21 +59,28 @@ export const PROFILE_TAB_ALIASES: Record<string, string> = {
   // Data rights (consent + export + access log) moved to account Settings
   // (Spec 2026-06-15 §2.1) — the Profile Data tab is retired.
   data: '/s/settings',
+  // Profile refinement v2 (2026-06-18): Identity → "Personality" (route key
+  // stays `identity`); Academics + Experience merged under `academics`;
+  // Analytics dropped (lands on the merged record tab).
+  personality: '/s/profile?tab=identity',
+  experience: '/s/profile?tab=academics',
+  analytics: '/s/profile?tab=academics',
 }
 
 // Strategy lives in the Planning rail cluster (2026-06-15); 'timeline' is retired
 // (its chronological view was dropped). ProfilePage redirects ?tab=timeline →
 // ?tab=strategy for old links.
+// Profile refinement v2 (2026-06-18): `experience` merged into `academics`;
+// `analytics` dropped. `identity` keeps its route key (labelled "Personality").
+// `experience`/`analytics`/`personality` resolve via PROFILE_TAB_ALIASES.
 export const PROFILE_TABS_SPEC = [
   'overview',
   'identity',
   'academics',
-  'experience',
   'goals',
   'needs',
   'preferences',
   'strategy',
-  'analytics',
 ] as const
 
 export type ProfileTabSpec = (typeof PROFILE_TABS_SPEC)[number]
