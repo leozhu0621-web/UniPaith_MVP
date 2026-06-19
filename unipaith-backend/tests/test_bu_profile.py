@@ -171,3 +171,41 @@ def test_catalog_has_no_padding_stubs():
 
     errors = validate_catalog(b.PROGRAMS)
     assert not errors, f"Catalog padding detected: {errors}"
+
+
+def _field_of(name: str) -> str:
+    """The field-of-study portion of a program name (strip the credential designation)."""
+    import re
+
+    head = name.split(" / ")[0]
+    return re.sub(r"^.*? in ", "", head).strip() if " in " in head else head
+
+
+def test_no_department_is_a_bare_field_echo():
+    """The department must be the real owning school/college, NEVER the field echoed
+    verbatim from the program name (miss #2 dept-echo — the BU CRITICAL #1 defect: 216
+    rows once set department == the field, e.g. 'Bachelor of Arts in Anthropology' ->
+    'Anthropology', while the real owning College of Arts & Sciences was known). Gold MIT
+    scores 0 here; so must BU."""
+    echoes = [
+        (p["program_name"], p["department"])
+        for p in b.PROGRAMS
+        if p.get("department") and p["department"] == _field_of(p["program_name"])
+    ]
+    assert not echoes, f"department echoes the name's field on {len(echoes)} rows: {echoes[:8]}"
+
+
+def test_no_credential_combo_names_or_departments():
+    """No program_name or department may be a bare/mechanical credential-combo token —
+    'Jdma English', 'Jdllm In Finance', 'PhD, MD/PhD' (miss #2). Real joint degrees carry
+    their full designation ('Juris Doctor / Master of Arts in English')."""
+    import re
+
+    bad_token = re.compile(r"^(Jd|Jdma|Jdllm|Mdjd|Mdphd|Md|Mph|Phd|PhD,|Llm|Ba|Bs|Ma|Ms)\b")
+    bad = [
+        (p["program_name"], p.get("department"))
+        for p in b.PROGRAMS
+        if bad_token.match(p["program_name"])
+        or (p.get("department") and bad_token.match(p["department"]))
+    ]
+    assert not bad, f"credential-combo stub names/departments: {bad}"

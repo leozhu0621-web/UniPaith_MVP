@@ -109,7 +109,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Boston University"
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-19"
 
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is (an undergraduate major|a graduate degree|a doctoral program|"
@@ -160,6 +160,22 @@ _PEER_SIGNATURES: tuple[str, ...] = (
     "Lab of Ornithology",
     "Chesapeake",
     "Writing Seminars",
+    "Medill",  # Northwestern's journalism school — must never reappear on a BU PR row (buprof11)
+    # buprof12 (2026-06-19): Penn/Harvard/Cornell units copied into BU CAS + Engineering
+    # descriptions that the denylist above missed. BU's engineering school is the
+    # "College of Engineering" (never "SEAS"); it has no GRASP/Singh/Warren/Perry World
+    # House. NOTE: a denylist is incomplete by construction (SKILL miss #8 prescribes a
+    # positive allowlist against BU's org chart) — this only blocks the known regressions.
+    "SEAS ",
+    " SEAS",
+    "GRASP",
+    "Perry World House",
+    "Singh Center",
+    "Warren Center",
+    "Graduate School of Design",
+    "upstate New York",
+    "Computing & Information Sciences",
+    "University CIS",
 )
 
 _TEMPLATE_STUB_RE = re.compile(
@@ -669,7 +685,7 @@ _CATALOG: list[tuple] = [
     ("bu-academics-gms-oral-biology", "GMS", "PhD", "phd", "Programs", "on_campus", 60, "https://www.bu.edu/academics/gms/programs/oral-biology/"),
     ("bu-academics-gms-pharmacology-experimental-therapeutics", "GMS", "PhD", "phd", "Programs", "on_campus", 60, "https://www.bu.edu/academics/gms/programs/pharmacology-experimental-therapeutics/"),
     ("bu-academics-gms-physiology-biophysics", "GMS", "PhD", "phd", "Programs", "on_campus", 60, "https://www.bu.edu/academics/gms/programs/physiology-biophysics/"),
-    ("bu-academics-gms-virology-immunology-microbiology-program", "GMS", "PhD, MD/PhD", "professional", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/virology-immunology-microbiology-program/"),
+    ("bu-academics-gms-virology-immunology-microbiology-program", "GMS", "PhD", "phd", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/virology-immunology-microbiology-program/"),
     ("bu-academics-grs-african-american-studies", "GRS", "MA", "masters", "Programs", "on_campus", 24, "https://www.bu.edu/academics/grs/programs/african-american-studies/"),
     ("bu-academics-grs-anthropology-ma", "GRS", "MA", "masters", "Programs", "on_campus", 24, "https://www.bu.edu/academics/grs/programs/anthropology/ma/"),
     ("bu-academics-grs-archaeology-ma", "GRS", "MA", "masters", "Programs", "on_campus", 24, "https://www.bu.edu/academics/grs/programs/archaeology/ma/"),
@@ -954,6 +970,294 @@ _PROGRAM_NAME_OVERRIDES: dict[str, str] = {
     "bu-academics-wheelock-bilingual-education-bs-edm-tesol-applied-linguistics": (
         "Bachelor of Science in Bilingual Education"
     ),
+    # --- Law J.D./M.A. duals: real names (never the bare "Jdma <field>" URL token). ---
+    "bu-academics-law-jdma-english": "Juris Doctor / Master of Arts in English",
+    "bu-academics-law-jdma-history": "Juris Doctor / Master of Arts in History",
+    "bu-academics-law-jdma-ir": "Juris Doctor / Master of Arts in International Relations",
+    "bu-academics-law-jdma-philosophy": "Juris Doctor / Master of Arts in Philosophy",
+    # GMS virology/immunology/microbiology PhD — never the bare "PhD, MD/PhD" credential combo.
+    "bu-academics-gms-virology-immunology-microbiology-program": (
+        "Doctor of Philosophy in Virology, Immunology & Microbiology"
+    ),
+    # --- Dual / joint / accelerated degrees: real names (never a bare credential combo). ---
+    "bu-academics-busm-combined-mdjd": "Doctor of Medicine / Juris Doctor (MD/JD)",
+    "bu-academics-busm-combined-md-mba": "Doctor of Medicine / Master of Business Administration (MD/MBA)",
+    "bu-academics-busm-md-phd-combined-degree": "Doctor of Medicine / Doctor of Philosophy (MD/PhD)",
+    "bu-academics-cas-bamph-program": "Bachelor of Arts to Master of Public Health (Accelerated)",
+    "bu-academics-cas-world-languages-literatures-ba-in-comparative-literature-mfa-in-literary-translation": (
+        "Bachelor of Arts in Comparative Literature / Master of Fine Arts in Literary Translation"
+    ),
+    "bu-academics-cds-bs-data-science-ms-bioinformatics": (
+        "Bachelor of Science in Data Science to Master of Science in Bioinformatics (Accelerated)"
+    ),
+    "bu-academics-cfa-school-of-visual-arts-bfa-ma": (
+        "Bachelor of Fine Arts to Master of Arts in Visual Arts (Accelerated)"
+    ),
+    "bu-academics-cfa-school-of-theatre-theatre-arts-bfa-design-production": (
+        "Bachelor of Fine Arts in Theatre Arts — Design & Production"
+    ),
+    "bu-academics-cfa-school-of-theatre-theatre-arts-bfa-performance": (
+        "Bachelor of Fine Arts in Theatre Arts — Performance"
+    ),
+    "bu-academics-cfa-school-of-music-music-education-bm-mm": (
+        "Bachelor of Music to Master of Music in Music Education (Accelerated)"
+    ),
+    "bu-academics-eng-product-design-manufacture-msmba": (
+        "Master of Science in Product Design & Manufacture / Master of Business Administration"
+    ),
+    "bu-academics-gms-dermatology": "Doctor of Science in Dermatology",
+    "bu-academics-grs-international-relations-international-relations-ma-mba": (
+        "Master of Arts in International Relations / Master of Business Administration"
+    ),
+    "bu-academics-law-jdmba": "Juris Doctor / Master of Business Administration (JD/MBA)",
+    "bu-academics-law-jdmba-health": (
+        "Juris Doctor / Master of Business Administration — Health Sector Management"
+    ),
+    "bu-academics-law-jdmph": "Juris Doctor / Master of Public Health (JD/MPH)",
+    "bu-academics-law-jdma-preservation": "Juris Doctor / Master of Arts in Preservation Studies",
+    "bu-academics-questrom-bachelor-of-science-in-business-administration-bsba-to-master-of-science-in-business-analytics-msb": (
+        "Bachelor of Science in Business Administration to Master of Science in Business Analytics (Accelerated)"
+    ),
+    "bu-academics-questrom-msdt": "Master of Science in Digital Technology",
+    "bu-academics-sar-speech-language-hearing-sciences-bs-ms": (
+        "Bachelor of Science to Master of Science in Speech-Language Pathology (Accelerated)"
+    ),
+    "bu-academics-sar-physical-therapy-bs-dpt": (
+        "Bachelor of Science to Doctor of Physical Therapy (Accelerated)"
+    ),
+    "bu-academics-sar-physical-therapy-dpt-phd": (
+        "Doctor of Physical Therapy / Doctor of Philosophy in Rehabilitation Sciences"
+    ),
+    "bu-academics-sar-speech-language-hearing-sciences-ms-phd": (
+        "Master of Science / Doctor of Philosophy in Speech, Language & Hearing Sciences"
+    ),
+    "bu-academics-sar-occupational-therapy-otd-phd": (
+        "Doctor of Occupational Therapy / Doctor of Philosophy in Rehabilitation Sciences"
+    ),
+    "bu-academics-sdm-oral-biology-dsc": "Doctor of Science in Oral Biology",
+    "bu-academics-sdm-dental-biomaterials-msd-cags": (
+        "Master of Science in Dentistry / Certificate of Advanced Graduate Study in Dental Biomaterials"
+    ),
+    "bu-academics-sha-bs-mla": (
+        "Bachelor of Science in Hospitality Administration to Master of Liberal Arts (Accelerated)"
+    ),
+    "bu-academics-sph-mba-mph": "Master of Business Administration / Master of Public Health (MBA/MPH)",
+    "bu-academics-sph-medicine-and-public-health": "Doctor of Medicine / Master of Public Health (MD/MPH)",
+    "bu-academics-sph-social-work-and-public-health": "Master of Social Work / Master of Public Health (MSW/MPH)",
+    "bu-academics-ssw-dual-degree-programs-in-social-work-and-education": (
+        "Master of Social Work / Doctor of Education (MSW/EdD)"
+    ),
+    "bu-academics-ssw-dual-degree-in-theology-and-social-work": (
+        "Master of Social Work / Master of Theological Studies (MSW/MTS)"
+    ),
+    "bu-academics-wheelock-policy-planning-administration-bs-ma-educational-policy-studies": (
+        "Bachelor of Science to Master of Arts in Educational Policy Studies (Accelerated)"
+    ),
+    # --- GMS combined-degree and malformed title-case rows ---
+    "bu-academics-gms-anatomy-neurobiology-mdphd": (
+        "Doctor of Medicine / Doctor of Philosophy in Anatomy & Neurobiology"
+    ),
+    "bu-academics-gms-biochemistry-mdphd": "Doctor of Medicine / Doctor of Philosophy in Biochemistry",
+    "bu-academics-gms-mdphd-in-bioinformatics": "Doctor of Medicine / Doctor of Philosophy in Bioinformatics",
+    "bu-academics-gms-medical-anthropology-and-cross-cultural-practice": (
+        "Master of Science in Medical Anthropology & Cross-Cultural Practice"
+    ),
+    "bu-academics-gms-chemistry": "Master of Arts in Chemistry (Graduate Medical Sciences)",
+    # --- School of Law LL.M. and joint J.D./LL.M. programs ---
+    "bu-academics-law-accelerated-llm-in-banking-financial-law": (
+        "Accelerated LL.M. in Banking & Financial Law"
+    ),
+    "bu-academics-law-jdllm-in-european-law-at-paris-ii": (
+        "Juris Doctor / LL.M. in European Law (with Université Paris II)"
+    ),
+    "bu-academics-law-jdllm-in-finance": "Juris Doctor / LL.M. in Finance",
+    "bu-academics-law-jd-llm-in-international-commercial-and-investment-arbitration-at-paris2": (
+        "Juris Doctor / LL.M. in International Commercial & Investment Arbitration (with Université Paris II)"
+    ),
+    "bu-academics-law-jdllm-in-international-and-european-business-law-at-icade": (
+        "Juris Doctor / LL.M. in International & European Business Law (with ICADE)"
+    ),
+    "bu-academics-law-accelerated-llm-in-taxation": "Accelerated LL.M. in Taxation",
+    "bu-academics-law-graduate-program-in-banking-financial-law": (
+        "Master of Laws (LL.M.) in Banking & Financial Law"
+    ),
+    "bu-academics-law-two-year-master-of-laws-llm-in-american-law": "Two-Year LL.M. in American Law",
+    "bu-academics-law-two-year-master-of-laws-llm-in-banking-financial-law": (
+        "Two-Year LL.M. in Banking & Financial Law"
+    ),
+    "bu-academics-law-two-year-master-of-laws-llm-in-intellectual-property-information-law": (
+        "Two-Year LL.M. in Intellectual Property & Information Law"
+    ),
+    # --- Sargent / SDM / SHA malformed names ---
+    "bu-academics-sar-bs-in-behavior-and-health": "Bachelor of Science in Behavior & Health",
+    "bu-academics-sdm-oral-and-maxillofacial-surgery-cags": (
+        "Certificate of Advanced Graduate Study in Oral & Maxillofacial Surgery"
+    ),
+    "bu-academics-sdm-oral-and-maxillofacial-surgery-dscd": (
+        "Doctor of Science in Oral & Maxillofacial Surgery"
+    ),
+    "bu-academics-sdm-oral-and-maxillofacial-surgery-msd": (
+        "Master of Science in Oral & Maxillofacial Surgery"
+    ),
+    "bu-academics-sha-bachelor-of-science-in-hospitality-administration": (
+        "Bachelor of Science in Hospitality Administration"
+    ),
+    # --- School of Public Health: M.P.H. core + concentrations (not "M.S. in Mph"). ---
+    "bu-academics-sph-ms-in-genetic-counseling-master-of-public-health-ms-mph": (
+        "Master of Science in Genetic Counseling / Master of Public Health"
+    ),
+    "bu-academics-sph-medical-sciences-and-public-health": (
+        "Master of Science in Medical Sciences & Public Health"
+    ),
+    "bu-academics-sph-mph-in-health-equity": "Master of Public Health — Health Equity",
+    "bu-academics-sph-mph-global-health-2": "Master of Public Health — Global Health",
+    "bu-academics-sph-mph-chronic-and-non-communicable-diseases": (
+        "Master of Public Health — Chronic & Non-Communicable Diseases"
+    ),
+    "bu-academics-sph-mph-community-assessment": "Master of Public Health — Community Assessment",
+    "bu-academics-sph-mph-environmental-health": "Master of Public Health — Environmental Health",
+    "bu-academics-sph-mph-epidemiology-and-biostatistics": (
+        "Master of Public Health — Epidemiology & Biostatistics"
+    ),
+    "bu-academics-sph-mph-monitoring-and-evaluation": "Master of Public Health — Monitoring & Evaluation",
+    "bu-academics-sph-mph-healthcare-management": "Master of Public Health — Healthcare Management",
+    "bu-academics-sph-mph-health-policy-and-law": "Master of Public Health — Health Policy & Law",
+    "bu-academics-sph-mph-human-rights-and-social-justice": (
+        "Master of Public Health — Human Rights & Social Justice"
+    ),
+    "bu-academics-sph-mph-infectious-disease": "Master of Public Health — Infectious Disease",
+    "bu-academics-sph-mph-maternal-and-child-health": "Master of Public Health — Maternal & Child Health",
+    "bu-academics-sph-mph-mental-health-and-substance-use": (
+        "Master of Public Health — Mental Health & Substance Use"
+    ),
+    "bu-academics-sph-mph-pharmaceutical-development-delivery-and-access": (
+        "Master of Public Health — Pharmaceutical Development, Delivery & Access"
+    ),
+    # --- Online variants whose dedup suffix left a bare credential name ---
+    "bu-academics-cds-ms-in-data-science-online": "Master of Science in Data Science (Online)",
+    "bu-academics-ssw-msw": "Master of Social Work (Online)",
+    # --- CFA rows where the URL leaked the school name as the field (real field is the
+    #     deeper URL segment: art / music / acting / painting / composition / …). ---
+    "bu-academics-cfa-school-of-visual-arts-ba-in-art": "Bachelor of Arts in Art",
+    "bu-academics-cfa-school-of-music-music": "Bachelor of Arts in Music",
+    "bu-academics-cfa-school-of-theatre-acting": "Bachelor of Fine Arts in Acting",
+    "bu-academics-cfa-school-of-visual-arts-painting-bfa": "Bachelor of Fine Arts in Painting",
+    "bu-academics-cfa-school-of-music-composition-bm": "Bachelor of Music in Composition",
+    "bu-academics-cfa-school-of-music-music-education-cags": (
+        "Certificate of Advanced Graduate Study in Music Education"
+    ),
+    "bu-academics-cfa-school-of-visual-arts-museum-education": "Master of Arts in Art Education",
+    "bu-academics-cfa-school-of-music-music-theory": "Master of Arts in Music Theory",
+    "bu-academics-cfa-school-of-music-conducting-mm": "Master of Music in Conducting",
+    "bu-academics-cfa-school-of-music-musicology-phd": "Doctor of Philosophy in Musicology",
+    "bu-academics-cfa-school-of-theatre-scene-design-bfa": "Bachelor of Fine Arts in Scene Design",
+    "bu-academics-cfa-school-of-visual-arts-sculpture-bfa": "Bachelor of Fine Arts in Sculpture",
+    "bu-academics-cfa-school-of-music-performance-bm": "Bachelor of Music in Performance",
+    "bu-academics-cfa-school-of-visual-arts-art-education-online-ma-in-art-education": (
+        "Master of Arts in Art Education (Online)"
+    ),
+    "bu-academics-cfa-school-of-music-musicology-ma": "Master of Arts in Musicology",
+    "bu-academics-cfa-school-of-music-musicology-mm": "Master of Music in Musicology",
+    "bu-academics-cfa-school-of-visual-arts-printmaking-2-bfa": "Bachelor of Fine Arts in Printmaking",
+    # --- Residual title-case / missing-"&" / trailing-credential field cleanups ---
+    "bu-academics-cas-cinema-media-studies-ba-in-cinema-media-studies": (
+        "Bachelor of Arts in Cinema & Media Studies"
+    ),
+    "bu-academics-cas-world-languages-literatures-ba-german": "Bachelor of Arts in German",
+    "bu-academics-cas-holocaust-genocide-human-rights-studies-ba": (
+        "Bachelor of Arts in Holocaust, Genocide & Human Rights Studies"
+    ),
+    "bu-academics-cas-ba-in-middle-east-north-africa-studies": (
+        "Bachelor of Arts in Middle East & North Africa Studies"
+    ),
+    "bu-academics-cds-phd-in-computing-data-sciences": (
+        "Doctor of Philosophy in Computing & Data Sciences"
+    ),
+    "bu-academics-com-film-television-film-televisionbs": "Bachelor of Science in Film & Television",
+    "bu-academics-com-advertising-advertising-ms": "Master of Science in Advertising",
+    "bu-academics-met-advertising": "Master of Science in Advertising (Online)",
+    "bu-academics-eng-product-design-manufacture-product-design-manufacture": (
+        "Master of Science in Product Design & Manufacture"
+    ),
+    "bu-academics-gms-mental-health-counseling-behavioral-medicine-program-ma": (
+        "Master of Arts in Mental Health Counseling & Behavioral Medicine"
+    ),
+    "bu-academics-gms-pathology-laboratory-medicine-phd": (
+        "Doctor of Philosophy in Pathology & Laboratory Medicine"
+    ),
+    "bu-academics-gms-oral-health-sciences-ms": "Master of Science in Oral Health Sciences",
+    "bu-academics-gms-pibs": "Doctor of Philosophy in Biomedical Sciences",
+    "bu-academics-gms-pharmacology-experimental-therapeutics": (
+        "Doctor of Philosophy in Pharmacology & Experimental Therapeutics"
+    ),
+    "bu-academics-gms-physiology-biophysics": "Doctor of Philosophy in Physiology & Biophysics",
+    "bu-academics-grs-latin-american-studies-ma": "Master of Arts in Latin American Studies",
+    "bu-academics-grs-economics-ma-phd": "Doctor of Philosophy in Economics",
+    "bu-academics-grs-economics-ma": "Master of Arts in Economics (Policy)",
+    "bu-academics-grs-economics-ma-global-development-economics": (
+        "Master of Arts in Economics (Global Development)"
+    ),
+    "bu-academics-cas-economics-ba-ma": "Master of Arts in Economics (Accelerated)",
+    "bu-academics-grs-neuroscience-phd": (
+        "Doctor of Philosophy in Neuroscience (Graduate School of Arts & Sciences)"
+    ),
+    "bu-academics-law-graduate-tax-program": "Master of Laws (LL.M.) in Taxation",
+    "bu-academics-sdm-dental-biomaterials-dscd-cags": "Doctor of Science in Dental Biomaterials",
+    "bu-academics-sdm-oral-biology-phd": (
+        "Doctor of Philosophy in Oral Biology (Goldman School of Dental Medicine)"
+    ),
+    "bu-academics-sth-theological-studies-phd": "Doctor of Philosophy in Theological Studies",
+    # --- Mathematics & Statistics: the base major, the combined majors, and the graduate
+    #     degrees are distinct programs (the collapse wrongly merged them). ---
+    "bu-academics-cas-mathematics-statistics-ba": "Bachelor of Arts in Mathematics",
+    "bu-academics-cas-mathematics-statistics-ba-mathematics-computer-science": (
+        "Bachelor of Arts in Mathematics & Computer Science"
+    ),
+    "bu-academics-cas-mathematics-statistics-ba-mathematics-education": (
+        "Bachelor of Arts in Mathematics Education"
+    ),
+    "bu-academics-cas-mathematics-statistics-ba-mathematics-philosophy": (
+        "Bachelor of Arts in Mathematics & Philosophy"
+    ),
+    "bu-academics-cas-mathematics-statistics-ba-in-mathematics-physics": (
+        "Bachelor of Arts in Mathematics & Physics"
+    ),
+    "bu-academics-cas-mathematics-statistics-ba-in-statistics-computer-science": (
+        "Bachelor of Arts in Statistics & Computer Science"
+    ),
+    "bu-academics-cas-mathematics-statistics-ba-ma": (
+        "Master of Arts in Mathematics & Statistics (Accelerated)"
+    ),
+    "bu-academics-grs-mathematics-statistics-ma-mathematics": "Master of Arts in Mathematics",
+    "bu-academics-grs-mathematics-statistics-ma-statistics": "Master of Arts in Statistics",
+    "bu-academics-grs-mathematics-statistics-ms-in-statistical-practice": (
+        "Master of Science in Statistical Practice"
+    ),
+    "bu-academics-grs-mathematics-statistics-phd-mathematics": "Doctor of Philosophy in Mathematics",
+    "bu-academics-grs-mathematics-statistics-phd-statistics": "Doctor of Philosophy in Statistics",
+    "bu-academics-cas-mathematics-statistics-ba-in-mathematics-computer-science-ms-in-computer-science": (
+        "Bachelor of Arts in Mathematics / Master of Science in Computer Science (Accelerated)"
+    ),
+    # --- World Languages & Literatures: separate language majors (not one merged row). ---
+    "bu-academics-cas-world-languages-literatures-ba-chinese": "Bachelor of Arts in Chinese",
+    "bu-academics-cas-world-languages-literatures-ba-comparative-literature": (
+        "Bachelor of Arts in Comparative Literature"
+    ),
+    "bu-academics-cas-world-languages-literatures-ba-japanese": "Bachelor of Arts in Japanese",
+    "bu-academics-cas-world-languages-literatures-korean-ba-in-korean-language-literature": (
+        "Bachelor of Arts in Korean"
+    ),
+    "bu-academics-cas-world-languages-literatures-bachelor-of-arts-in-middle-eastern-and-south-asian-languages-literatures": (
+        "Bachelor of Arts in Middle Eastern & South Asian Languages & Literatures"
+    ),
+    "bu-academics-cas-world-languages-literatures-ba-russian": "Bachelor of Arts in Russian",
+    # --- Economics accelerated / dual variants ---
+    "bu-academics-cas-economics-ba-econ-math-ma": (
+        "Master of Arts in Economics & Mathematics (Accelerated)"
+    ),
+    "bu-academics-grs-economics-ma-mba": (
+        "Master of Arts in Economics / Master of Business Administration"
+    ),
 }
 
 # Title-cased URL tokens → real owning units (miss #2 department bullet).
@@ -962,8 +1266,88 @@ _DEPARTMENT_FIXES: dict[str, str] = {
     "Mathematics Statistics": "Department of Mathematics & Statistics",
     "School Of Music": "School of Music",
     "School Of Visual Arts": "School of Visual Arts",
+    "School Of Theatre": "School of Theatre",
     "Mph": "School of Public Health",
 }
+
+# Per-slug real owning unit for rows whose derived department was a credential combo or a
+# title-cased URL token (miss #2 department bullet — never a credential / field echo).
+_DEPARTMENT_OVERRIDES: dict[str, str] = {
+    "bu-academics-gms-anatomy-neurobiology-mdphd": "Department of Anatomy & Neurobiology",
+    "bu-academics-gms-biochemistry-mdphd": "Department of Biochemistry & Cell Biology",
+    "bu-academics-gms-mdphd-in-bioinformatics": "Graduate Medical Sciences",
+    "bu-academics-gms-medical-anthropology-and-cross-cultural-practice": "Graduate Medical Sciences",
+    "bu-academics-gms-chemistry": "Graduate Medical Sciences",
+    "bu-academics-sdm-oral-and-maxillofacial-surgery-cags": "Department of Oral & Maxillofacial Surgery",
+    "bu-academics-sdm-oral-and-maxillofacial-surgery-dscd": "Department of Oral & Maxillofacial Surgery",
+    "bu-academics-sdm-oral-and-maxillofacial-surgery-msd": "Department of Oral & Maxillofacial Surgery",
+    "bu-academics-sar-bs-in-behavior-and-health": "Sargent College of Health & Rehabilitation Sciences",
+    "bu-academics-sha-bachelor-of-science-in-hospitality-administration": "School of Hospitality Administration",
+    "bu-academics-sph-ms-in-genetic-counseling-master-of-public-health-ms-mph": "School of Public Health",
+    "bu-academics-sph-medical-sciences-and-public-health": "School of Public Health",
+    "bu-academics-sph-mph-in-health-equity": "School of Public Health",
+}
+
+# A department string that is really a credential (combo) abbreviation, not an owning unit
+# — "JD/MBA", "MD/JD", "BS-to-MS-SLP", "DSC", "Md Phd Combined Degree" (miss #2). Such a
+# value is replaced by the program's real owning school in ``_build_catalog``.
+_CREDENTIAL_DEPT_RE = re.compile(
+    r"^(B\.?A|B\.?S|BFA|BM|BSBA|M\.?A|M\.?S|MFA|MM|MBA|MD|JD|Ph\.?D|DPT|OTD|MSW|MTS|"
+    r"EdD|DSc|DSC|MSD|CAGS|LLM|DMD|MSDT|MLA|Md|Phd|Mph)"
+    r"([\s./\-—].*)?$"
+)
+
+
+def _looks_like_credential_dept(dept: str) -> bool:
+    d = (dept or "").strip()
+    if not d:
+        return True
+    if "Combined Degree" in d:
+        return True
+    return bool(_CREDENTIAL_DEPT_RE.match(d))
+
+
+# College of Fine Arts URL school segment → the real owning sub-school (miss #2: the
+# discipline echoed from the name is not the owning unit; the sub-school is).
+_CFA_SUBSCHOOLS: dict[str, str] = {
+    "school-of-music": "School of Music",
+    "school-of-visual-arts": "School of Visual Arts",
+    "school-of-theatre": "School of Theatre",
+}
+
+
+def _cfa_subschool(url: str) -> str | None:
+    m = re.search(r"/programs/(school-of-[a-z-]+?)/", url)
+    return _CFA_SUBSCHOOLS.get(m.group(1)) if m else None
+
+
+# Compound BU field names whose ``&`` / commas ``.title()`` dropped (the slug joins them with
+# a hyphen). Applied to the rendered program_name + department only (display), longest-first.
+_DISPLAY_NORMALIZE: tuple[tuple[str, str], ...] = (
+    ("Holocaust Genocide Human Rights Studies", "Holocaust, Genocide & Human Rights Studies"),
+    ("Pharmacology Experimental Therapeutics", "Pharmacology & Experimental Therapeutics"),
+    ("Mental Health Counseling Behavioral Medicine", "Mental Health Counseling & Behavioral Medicine"),
+    ("Middle East North Africa Studies", "Middle East & North Africa Studies"),
+    ("Pathology Laboratory Medicine", "Pathology & Laboratory Medicine"),
+    ("World Languages Literatures", "World Languages & Literatures"),
+    ("Computing Data Sciences", "Computing & Data Sciences"),
+    ("Product Design Manufacture", "Product Design & Manufacture"),
+    ("Mathematics Statistics", "Mathematics & Statistics"),
+    ("Physiology Biophysics", "Physiology & Biophysics"),
+    ("Cinema Media Studies", "Cinema & Media Studies"),
+    ("Anatomy Neurobiology", "Anatomy & Neurobiology"),
+    ("Genetics Genomics", "Genetics & Genomics"),
+    ("Earth Environment", "Earth & Environment"),
+    ("Film Television", "Film & Television"),
+)
+
+
+def _normalize_display(text: str) -> str:
+    if not text:
+        return text
+    for raw, fixed in _DISPLAY_NORMALIZE:
+        text = text.replace(raw, fixed)
+    return text
 
 # Slugs removed by concentration collapse → keeper slug (reviews migrate after _REVIEWS_BY_SLUG).
 _SLUG_REDIRECT: dict[str, str] = {}
@@ -985,6 +1369,11 @@ def _field_from_url(url: str, *, strip_degree: bool = True) -> str:
     if not m:
         return ""
     parts = [p for p in m.group(1).split("/") if p and p != "programs"]
+    # CFA URLs nest the real discipline under a "school-of-*" segment
+    # (school-of-music/conducting/mm) — drop the leading school slug so the field is the
+    # real discipline (Conducting), not the school name (miss #2 school-as-field).
+    while len(parts) > 1 and parts[0].startswith("school-of-"):
+        parts.pop(0)
     if strip_degree:
         while parts and parts[-1].lower() in _DEGREE_TOKENS:
             parts.pop()
@@ -994,12 +1383,12 @@ def _field_from_url(url: str, *, strip_degree: bool = True) -> str:
 
 
 def _department_for(field: str, school: str) -> str:
-    if not field:
-        return school
-    base = field.split(" — ")[0]
-    if base.lower() in school.lower() or school.lower() in base.lower():
-        return school
-    return base
+    # The owning school/college is the real, verified grouping unit. The bare field echoed
+    # from the program name is NOT a real owning department (miss #2 department bullet — a
+    # one-off-per-row field echo while a real owning school is known is the BU defect), so
+    # always group under the real college unless a per-slug _DEPARTMENT_OVERRIDES gives a
+    # more specific verified unit (applied later, wins).
+    return school
 
 
 def _use_url_name(legacy: str) -> bool:
@@ -1043,6 +1432,12 @@ def _bu_program_name(field: str, dtype: str, school: str, legacy: str) -> str:
             return f"Master of Fine Arts in {label}"
         if legacy == "MA":
             return f"Master of Arts in {label}"
+        if legacy == "MM":
+            return f"Master of Music in {label}"
+        if legacy == "DMA":
+            # The catalog files D.M.A. under the masters bucket, but it is a doctoral
+            # performance degree — name it correctly.
+            return f"Doctor of Musical Arts in {label}"
         if legacy == "MSW":
             return "Master of Social Work"
         if legacy == "MPH":
@@ -1270,6 +1665,16 @@ def _build_catalog() -> list[dict]:
         field = _field_from_url(url) if _use_url_name(legacy) else legacy
         department = dept if dept and dept != "Programs" else _department_for(field, school)
         department = _fix_department(department)
+        if slug in _DEPARTMENT_OVERRIDES:
+            department = _DEPARTMENT_OVERRIDES[slug]
+        elif (cfa_unit := _cfa_subschool(url)) is not None:
+            # CFA URLs name the real owning sub-school (School of Music / Visual Arts /
+            # Theatre); use it rather than the discipline echoed from the name.
+            department = cfa_unit
+        elif _looks_like_credential_dept(department):
+            # A credential-combo / blank department is never a real owning unit — use the
+            # program's real BU school instead (miss #2 department bullet).
+            department = school
         out.append({
             "slug": slug,
             "school": school,
@@ -1285,7 +1690,7 @@ def _build_catalog() -> list[dict]:
 
     counts = Counter(p["program_name"] for p in out)
     for p in out:
-        if counts[p["program_name"]] > 1:
+        if counts[p["program_name"]] > 1 and p["slug"] not in _PROGRAM_NAME_OVERRIDES:
             field = _field_from_url(p["catalog_url"], strip_degree=False)
             if field and p["legacy_credential"] != "MEng":
                 p["program_name"] = _bu_program_name(
@@ -1294,14 +1699,18 @@ def _build_catalog() -> list[dict]:
 
     counts = Counter(p["program_name"] for p in out)
     for p in out:
-        if counts[p["program_name"]] > 1:
+        if counts[p["program_name"]] > 1 and p["slug"] not in _PROGRAM_NAME_OVERRIDES:
             suffix = " (Online)" if p["delivery_format"] == "online" else f" ({p['school']})"
             p["program_name"] += suffix
 
     counts = Counter(p["program_name"] for p in out)
     for p in out:
         legacy = p["legacy_credential"]
-        if counts[p["program_name"]] > 1 and legacy not in BARE_DEGREE_ABBREVIATIONS:
+        if (
+            counts[p["program_name"]] > 1
+            and legacy not in BARE_DEGREE_ABBREVIATIONS
+            and p["slug"] not in _PROGRAM_NAME_OVERRIDES
+        ):
             p["program_name"] += f" — {legacy}"
 
     for p in out:
@@ -1316,7 +1725,7 @@ def _build_catalog() -> list[dict]:
     # Re-disambiguate names after collapse (collapsed base names can collide with standalone rows).
     counts = Counter(p["program_name"] for p in out)
     for p in out:
-        if counts[p["program_name"]] > 1:
+        if counts[p["program_name"]] > 1 and p["slug"] not in _PROGRAM_NAME_OVERRIDES:
             field = _field_from_url(p["catalog_url"], strip_degree=False)
             if field:
                 p["program_name"] = _bu_program_name(
@@ -1324,17 +1733,30 @@ def _build_catalog() -> list[dict]:
                 )
     counts = Counter(p["program_name"] for p in out)
     for p in out:
-        if counts[p["program_name"]] > 1:
+        if counts[p["program_name"]] > 1 and p["slug"] not in _PROGRAM_NAME_OVERRIDES:
             suffix = " (Online)" if p["delivery_format"] == "online" else f" ({p['school']})"
             p["program_name"] += suffix
     counts = Counter(p["program_name"] for p in out)
     for p in out:
-        if counts[p["program_name"]] > 1:
+        if counts[p["program_name"]] > 1 and p["slug"] not in _PROGRAM_NAME_OVERRIDES:
             url_tail = p["catalog_url"].rstrip("/").split("/")[-1]
             if url_tail.lower() in {"ba", "bs", "ma", "ms", "phd", "bfa", "programs"}:
                 parts = [x for x in p["catalog_url"].rstrip("/").split("/") if x]
                 url_tail = parts[-2] if len(parts) >= 2 else url_tail
             p["program_name"] += f" — {url_tail.replace('-', ' ').title()}"
+
+    # Restore the "&" / joiners that ``.title()`` dropped from compound field names in the
+    # rendered program_name and department (display only — the description-lookup field is
+    # untouched). Fixes "Mathematics Statistics" → "Mathematics & Statistics" everywhere.
+    for p in out:
+        p["program_name"] = _normalize_display(p["program_name"])
+        p["department"] = _normalize_display(p["department"])
+
+    # Force-win the explicit overrides over any dedup rename above (a collision must never
+    # silently revert an override to a bare-credential URL-derived name, e.g. "M.S. in Mph").
+    for p in out:
+        if p["slug"] in _PROGRAM_NAME_OVERRIDES:
+            p["program_name"] = _PROGRAM_NAME_OVERRIDES[p["slug"]]
 
     return out
 

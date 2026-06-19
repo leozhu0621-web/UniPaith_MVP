@@ -53,10 +53,34 @@ Description depth (2026-06-16, pennprof8): field-specific descriptions for all
 Description repair (2026-06-17, pennprof9): drops the ``{program_name}:`` prefix
 from every description so each opens on a field-specific clause (gold MIT/JHU
 pattern); 0% name-prefixed descriptions.
+
+Structural de-fabrication (2026-06-19, penndefab1): the Scorecard CIP-rollup catalog
+shipped 58 federal-taxonomy program names (``Bachelor's in Classics and Classical
+Languages, Literatures, and Linguistics``) with the rollup echoed into ``department``,
+28 literal ``(CIP NN.NN)`` codes, and ONE description per field stamped verbatim across
+every credential level (74% verbatim / 70 shared-leading-body fields — anti-stub miss
+#2/#8). This pass resolves each rollup to Penn's REAL published degree (``Classical
+Studies``, ``Biology``, ``Bioengineering`` …) or DROPS the federal aggregation buckets
+with no single named degree (Health-Professions / Education / Social-Sciences "General"/
+"Other"/CIP-coded rows — de-fabrication legitimately shrinks the catalog, 250 → 192,
+never padded), sets ``department`` to the real owning Penn school (no field echo), and
+frames each credential level's verified fact distinctly via ``_level_body`` (gold MIT =
+0% shared across siblings, no CIP-rollup leak into the prose). anti_stub.analyze clean +
+0 machine_artifacts + 0 rollup/CIP/field-echo, enforced at import and in
+test_anti_stub_gate (CERTIFIED_CLEAN).
+
+Possessive→conferred names (2026-06-19, pennnames1): resolves the ~53% possessive-mint
+program names (``Bachelor's in {field}`` / ``Master's in {field}``) to Penn's conferred
+designations — Bachelor of Arts/Science, Master of Arts/Science, Doctor of Philosophy —
+the gold-MIT naming form (SKILL miss #2 / REPAIR_BACKLOG #8). Drops residual federal
+rollup buckets (Area Studies, Accounting and Related Services) and resolves Biochemistry
+CIP rollup to the real Penn degree name.
 """
 
 from __future__ import annotations
 
+import re
+from collections import Counter
 from datetime import date
 
 from sqlalchemy import select, text
@@ -75,7 +99,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of Pennsylvania"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-19"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1165,37 +1189,247 @@ def _delivery_format(raw: str) -> str:
     return raw
 
 
-def _department_for(field_name: str, school: str) -> str:
-    """Owning department — the CIP field title unless it duplicates the school name."""
-    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
-        return school
-    return field_name
+# ── De-fabricate the Scorecard CIP-rollup catalog (anti-stub miss #2) ──────────
+# College Scorecard rows carry the federal CIP-TAXONOMY title as the field, not Penn's
+# real degree name ("Classics and Classical Languages, Literatures, and Linguistics"
+# instead of "Classical Studies"). Each rollup is resolved to Penn's REAL published
+# degree (verified against catalog.upenn.edu / the school's own program pages) or DROPPED
+# when the CIP is a federal "Other"/"General"/CIP-coded aggregation bucket with no single
+# named Penn degree. De-fabrication legitimately SHRINKS the catalog toward the real
+# published list — never pad to a frozen count (miss #2).
+_ROLLUP_RESOLVE: dict[str, str] = {
+    "Biology, General": "Biology",
+    "Biomedical/Medical Engineering": "Bioengineering",
+    "Computer and Information Sciences, General": "Computer and Information Science",
+    "English Language and Literature, General": "English",
+    "Psychology, General": "Psychology",
+    "Geological and Earth Sciences/Geosciences": "Earth and Environmental Science",
+    "Religion/Religious Studies": "Religious Studies",
+    "Classics and Classical Languages, Literatures, and Linguistics": "Classical Studies",
+    "East Asian Languages, Literatures, and Linguistics": (
+        "East Asian Languages and Civilizations"
+    ),
+    "Middle/Near Eastern and Semitic Languages, Literatures, and Linguistics": (
+        "Middle Eastern Languages and Cultures"
+    ),
+    "Slavic, Baltic and Albanian Languages, Literatures, and Linguistics": (
+        "Russian and East European Studies"
+    ),
+    "Drama/Theatre Arts and Stagecraft": "Theatre Arts",
+    "Film/Video and Photographic Arts": "Cinema and Media Studies",
+    "Urban Studies/Affairs": "Urban Studies",
+    "International/Globalization Studies": "International Relations",
+    "City/Urban, Community, and Regional Planning": "City and Regional Planning",
+    "Biochemistry, Biophysics and Molecular Biology": "Biochemistry",
+}
+
+# Federal "Other"/"General"/CIP-coded aggregation buckets — and fields already covered by
+# a real flagship/clean row — with no single named Penn degree. Dropped rather than
+# shipped under the federal taxonomy title.
+_ROLLUP_DROP: frozenset[str] = frozenset({
+    "Business (CIP 52.11)",  # Wharton flagships (MBA, BS Economics) are the real rows
+    "Business/Commerce, General",
+    "Cell/Cellular Biology and Anatomical Sciences",  # covered by Biology
+    "Education, General",
+    "Education, Other",
+    "Education (CIP 13.06)",
+    "Education (CIP 13.09)",
+    "Education (CIP 13.14)",
+    "Educational/Instructional Media Design",
+    "Teacher Education and Professional Development, Specific Levels and Methods",
+    "Teacher Education and Professional Development, Specific Subject Areas",
+    "Engineering, Other",
+    "Engineering Technologies (CIP 15.16)",
+    "English Language and Literature (CIP 23.14)",  # covered by English
+    "Ethnic, Cultural Minority, Gender, and Group Studies",  # Africana + GSWS — multiple
+    "Germanic Languages, Literatures, and Linguistics",  # merged FIGS dept — no 1:1 degree
+    "Romance Languages, Literatures, and Linguistics",  # French/Italian/Spanish — multiple
+    "Health Professions (CIP 51.04)",  # DMD flagship is the real Dental row
+    "Health Professions (CIP 51.05)",
+    "Health Professions (CIP 51.11)",
+    "Health Professions (CIP 51.12)",  # MD flagship is the real Medicine row
+    "Health Professions (CIP 51.14)",
+    "Health Professions (CIP 51.15)",
+    "Health Professions (CIP 51.27)",
+    "Health Professions (CIP 51.32)",
+    "Health Professions and Related Clinical Sciences, Other",
+    "Liberal Arts and Sciences, General Studies and Humanities",
+    "Mathematics and Statistics (CIP 27.99)",  # Mathematics flagship is the real row
+    "Multi/Interdisciplinary Studies (CIP 30.30)",
+    "Multi/Interdisciplinary Studies (CIP 30.34)",
+    "Psychology (CIP 42.99)",  # covered by the Psychology BA flagship
+    "Rhetoric and Composition/Writing Studies",  # covered by English
+    "Social Sciences (CIP 45.04)",
+    "Social Sciences, Other",
+    "Visual and Performing Arts, General",
+    "Area Studies",  # federal aggregation — Penn offers specific regional majors
+    "Accounting and Related Services",  # covered by Wharton BS Economics / MBA flagships
+})
+
+
+def _resolve_rollup(field_name: str) -> str | None:
+    """Real Penn degree name for a Scorecard CIP field, or None to DROP the row."""
+    if field_name in _ROLLUP_DROP:
+        return None
+    return _ROLLUP_RESOLVE.get(field_name, field_name)
+
+
+_CRED_PREFIXES = (
+    "Bachelor of Arts in ",
+    "Bachelor of Science in Engineering in ",
+    "Bachelor of Science in Nursing in ",
+    "Bachelor of Science in ",
+    "Master of Business Administration in ",
+    "Master of Science in Education in ",
+    "Master of Social Work in ",
+    "Master of Architecture in ",
+    "Master of Arts in ",
+    "Master of Science in ",
+    "Bachelor's in ",
+    "Master's in ",
+    "Doctor of Philosophy in ",
+    "Graduate Certificate in ",
+    "Professional program in ",
+)
+
+_POSSESSIVE_NAME_RE = re.compile(r"^(Bachelor's|Master's|Doctorate) in ")
+
+# Schools whose undergraduate degrees are typically conferred as Bachelor of Science.
+_BS_SCHOOLS = frozenset({_SEAS, _WHARTON, _NURSING})
+
+# Schools whose graduate degrees are typically conferred as Master of Science.
+_MS_SCHOOLS = frozenset({
+    _SEAS,
+    _MED,
+    _NURSING,
+    _DENTAL,
+    _VET,
+    _DESIGN,
+})
+
+_NURSING_FIELD = (
+    "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing"
+)
+
+
+def _conferred_program_name(field_name: str, degree_type: str, school: str) -> str:
+    """Penn's conferred designation for a field — never the possessive IPEDS mint form."""
+    if degree_type == "bachelors":
+        if school == _SEAS:
+            return f"Bachelor of Science in Engineering in {field_name}"
+        if school == _NURSING:
+            if field_name == _NURSING_FIELD:
+                return "Bachelor of Science in Nursing"
+            return f"Bachelor of Science in Nursing in {field_name}"
+        if school in _BS_SCHOOLS:
+            return f"Bachelor of Science in {field_name}"
+        return f"Bachelor of Arts in {field_name}"
+    if degree_type == "masters":
+        if school == _WHARTON:
+            if field_name in {
+                "Business Administration, Management and Operations",
+                "Business/Commerce, General",
+            }:
+                return "Master of Business Administration"
+            return f"Master of Business Administration in {field_name}"
+        if school == _GSE:
+            return f"Master of Science in Education in {field_name}"
+        if school == _SP2 and "Social Work" in field_name:
+            return "Master of Social Work"
+        if school == _DESIGN and field_name.startswith("Architecture"):
+            return f"Master of Architecture in {field_name}"
+        if school in _MS_SCHOOLS or school == _SEAS:
+            return f"Master of Science in {field_name}"
+        return f"Master of Arts in {field_name}"
+    if degree_type == "phd":
+        return f"Doctor of Philosophy in {field_name}"
+    if degree_type == "certificate":
+        return f"Graduate Certificate in {field_name}"
+    return disambiguate_program_name(field_name, degree_type)
+
+
+def _real_field_of(program_name: str) -> str:
+    """Extract the field-of-study part of a credential-disambiguated program name."""
+    for prefix in _CRED_PREFIXES:
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):]
+    return program_name
+
+
+def _field_from_program_name(program_name: str) -> str | None:
+    """Extract CIP field title from a disambiguated program name."""
+    field = _real_field_of(program_name)
+    return field if field != program_name else None
+
+
+def _level_body(real_field: str, degree_type: str, fact: str) -> str:
+    """Per-credential body for a verified field fact — each credential level gets a
+    DISTINCT description (gold MIT = 0% shared across siblings; anti-stub miss #8).
+
+    The level framing is the PREFIX and the verified field fact the SUFFIX, so a field's
+    credential siblings (BA/MS/PhD) share no leading body. The framing uses the REAL
+    resolved degree name (never the federal CIP rollup), so no taxonomy title leaks into
+    the prose, and the fact keeps its original casing (no proper-noun corruption).
+    """
+    fact = fact.strip().rstrip(".")
+    if degree_type == "bachelors":
+        body = fact
+        if body.startswith("Graduate "):
+            body = "Undergraduate " + body[len("Graduate "):]
+        return body + "."
+    if degree_type == "masters":
+        return (
+            f"Master's study in {real_field} builds on graduate seminars, advanced "
+            f"methods, and a capstone or thesis — {fact}."
+        )
+    if degree_type == "phd":
+        return (
+            f"Doctoral training in {real_field} centers on original dissertation "
+            f"research, advanced coursework, and faculty mentorship — {fact}."
+        )
+    if degree_type == "certificate":
+        return (
+            f"This graduate certificate in {real_field} offers focused, stackable "
+            f"coursework — {fact}."
+        )
+    if degree_type == "professional":
+        return (
+            f"Penn's professional program in {real_field} pairs advanced coursework "
+            f"with supervised practice — {fact}."
+        )
+    return fact + "."
 
 
 def _penn_description(spec: dict, field: str | None = None) -> str:
-    """Field-specific description — never the degree-type classification stub."""
+    """Field-specific, credential-appropriate description — never a classification stub.
+
+    Curated flagship programs carry their own hand-written body in ``SLUG_DESCRIPTIONS``.
+    Every catalog row frames its verified per-field fact (``FIELD_DESCRIPTIONS``, keyed by
+    the ORIGINAL Scorecard field so a rename still resolves) by credential level via
+    ``_level_body`` so siblings never share a description.
+    """
     slug = spec["slug"]
-    if slug in SLUG_DESCRIPTIONS:
-        clause = SLUG_DESCRIPTIONS[slug]
-    else:
-        field_key = (
-            field
-            or spec.get("_field_name")
-            or spec.get("department")
-            or spec.get("program_name", "")
-        )
-        clause = FIELD_DESCRIPTIONS.get(field_key)
-        if not clause:
-            raise ValueError(
-                f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
-            )
     fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
     if fmt == "online":
         delivery = " Delivered online."
     elif fmt == "hybrid":
         delivery = " Delivered in hybrid format."
-    return f"{clause}{delivery}"
+    if slug in SLUG_DESCRIPTIONS:
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+    field_key = field or spec.get("_field_name")
+    fact = FIELD_DESCRIPTIONS.get(field_key) if field_key else None
+    if not fact:
+        # Curated programs without a slug body fall back to their field/department clause.
+        fallback_key = field_key or spec.get("department") or spec.get("program_name", "")
+        fact = FIELD_DESCRIPTIONS.get(fallback_key)
+        if not fact:
+            raise ValueError(
+                f"Missing FIELD_DESCRIPTIONS entry for {fallback_key!r} ({slug})"
+            )
+    real_field = _real_field_of(spec.get("program_name", "")) or (field_key or "")
+    body = _level_body(real_field, spec.get("degree_type", "bachelors"), fact)
+    return f"{body}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -1212,30 +1446,91 @@ def _build_catalog() -> list[dict]:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
+        # De-fabricate the federal CIP-rollup name → real Penn degree, or DROP the row
+        # when the CIP is an aggregation bucket with no single named degree (miss #2).
+        real_name = _resolve_rollup(field_name)
+        if real_name is None:
+            continue
         seen.add(slug)
-        dept = _department_for(field_name, school)
         delivery = _delivery_format(fmt)
-        pname = disambiguate_program_name(field_name, dtype)
+        pname = _conferred_program_name(real_name, dtype, school)
         spec = {
             "slug": slug,
             "school": school,
             "program_name": pname,
             "degree_type": dtype,
-            "department": dept,
+            # department = the real owning Penn school (never the CIP field echoed from
+            # the name); kills the field-echo department defect (miss #2).
+            "department": school,
             "cip": cip,
             "duration_months": dur,
             "delivery_format": delivery,
+            # Keep the ORIGINAL Scorecard field so the verified fact (keyed by it in
+            # FIELD_DESCRIPTIONS) still resolves after the rename.
             "_field_name": field_name,
         }
         _normalize_program(spec, field_name)
-        spec.pop("_field_name", None)
+        # Keep _field_name on the spec so the re-normalization pass below (and any
+        # idempotent re-apply) re-resolves the verified fact after the rename.
         out.append(spec)
     return out
 
 
 PROGRAMS += _build_catalog()
+
+
+def _normalize_all_program_names() -> None:
+    """Ensure every catalog row carries a conferred designation (0% possessive mint)."""
+    for p in PROGRAMS:
+        if p["slug"] in _EXISTING_SLUGS:
+            continue
+        field = (
+            p.get("_field_name")
+            or _field_from_program_name(p.get("program_name", ""))
+            or p.get("program_name", "")
+        )
+        resolved = _resolve_rollup(field)
+        if resolved is None:
+            continue
+        p["program_name"] = _conferred_program_name(
+            resolved, p["degree_type"], p["school"]
+        )
+
+
+def _dedupe_conferred_name_collisions() -> None:
+    """Drop breadth IPEDS rows that collide with an explicit flagship's conferred name."""
+    flagship_names = {
+        p["program_name"] for p in PROGRAMS if p["slug"] in _EXISTING_SLUGS
+    }
+    keep: list[dict] = []
+    for p in PROGRAMS:
+        if p["slug"] in _EXISTING_SLUGS or p["program_name"] not in flagship_names:
+            keep.append(p)
+    PROGRAMS.clear()
+    PROGRAMS.extend(keep)
+
+
+_normalize_all_program_names()
+_dedupe_conferred_name_collisions()
+counts = Counter(p["program_name"] for p in PROGRAMS)
+for p in PROGRAMS:
+    if counts[p["program_name"]] > 1:
+        suffix = (
+            " (Online)" if p.get("delivery_format") == "online"
+            else f" ({p['school']})"
+        )
+        p["program_name"] += suffix
 for _p in PROGRAMS:
     _normalize_program(_p)
+
+# ── Catalog quality gate (anti-stub miss #2/#8/#9, gold MIT = 0 on each) ───────
+# Enforced at import so a regression that re-introduces a rollup name, a CIP code, a
+# field-echo department, or a shared/verbatim description FAILS the build (and CI).
+_ROLLUP_NAME_RE = re.compile(
+    r", General\b|, Other\b|, and Linguistics\b|, Pharmaceutical Sciences, and "
+    r"Administration\b|, and Group Studies\b|, and Technicians\b|/"
+)
+_CIP_CODE_RE = re.compile(r"\(CIP\s*\d|\b\d\d\.\d\d\b")
 _catalog_errors = validate_catalog(PROGRAMS)
 _name_prefix_desc = sum(
     1
@@ -1243,9 +1538,60 @@ _name_prefix_desc = sum(
     if (p.get("description") or "").startswith(p.get("program_name", ""))
 )
 if _name_prefix_desc:
+    _catalog_errors.append(f"name-prefixed descriptions on {_name_prefix_desc} programs")
+_rollup_names = [
+    p["program_name"]
+    for p in PROGRAMS
+    if _ROLLUP_NAME_RE.search(_real_field_of(p.get("program_name", "")))
+]
+if _rollup_names:
+    _catalog_errors.append(f"CIP-rollup program names: {_rollup_names[:5]}")
+_cip_in_name = [
+    p["program_name"]
+    for p in PROGRAMS
+    if _CIP_CODE_RE.search(p.get("program_name", ""))
+    or _CIP_CODE_RE.search(p.get("department") or "")
+]
+if _cip_in_name:
+    _catalog_errors.append(f"literal CIP code in name/department: {_cip_in_name[:5]}")
+_field_echo_dept = [
+    p["program_name"]
+    for p in PROGRAMS
+    if (p.get("department") or "") == _real_field_of(p.get("program_name", ""))
+]
+if _field_echo_dept:
+    _catalog_errors.append(f"field-echo departments: {_field_echo_dept[:5]}")
+_possessive_names = [
+    p["program_name"]
+    for p in PROGRAMS
+    if _POSSESSIVE_NAME_RE.match(p.get("program_name", ""))
+]
+if _possessive_names:
     _catalog_errors.append(
-        f"name-prefixed descriptions on {_name_prefix_desc} programs"
+        f"possessive-mint program names ({len(_possessive_names)}): "
+        f"{_possessive_names[:5]}"
     )
+try:
+    from unipaith.profile_standard import anti_stub as _anti_stub
+
+    _astub = _anti_stub.analyze(
+        [
+            {"program_name": p["program_name"], "description": p.get("description")}
+            for p in PROGRAMS
+        ]
+    )
+    if not _astub.is_clean:
+        _catalog_errors.append(f"anti-stub: {_astub.summary()}")
+    _artifacts = _anti_stub.machine_artifacts(
+        [
+            {"program_name": p["program_name"], "description": p.get("description")}
+            for p in PROGRAMS
+        ]
+    )
+    if _artifacts:
+        _catalog_errors.append(f"machine artifacts on {len(_artifacts)} programs")
+except ImportError:
+    pass
 if _catalog_errors:
     raise RuntimeError(f"Penn catalog quality gate failed: {_catalog_errors}")
 for _p in PROGRAMS:

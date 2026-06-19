@@ -66,7 +66,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Southern California"
-ENRICHED_AT = "2026-06-18"
+ENRICHED_AT = "2026-06-19"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -5602,6 +5602,9 @@ def _usc_description(spec: dict) -> str:
     from unipaith.data.usc_supplemental_descriptions import SUPPLEMENTAL_DESCRIPTIONS
 
     slug = spec["slug"]
+    override = _CROSS_FIELD_DESCRIPTION_FIXES.get(slug)
+    if override:
+        return override
     clause = CATALOGUE_DESCRIPTIONS.get(slug) or SUPPLEMENTAL_DESCRIPTIONS.get(slug)
     if not clause:
         raise ValueError(f"Missing description for {slug!r}")
@@ -5620,10 +5623,15 @@ _TRANS_MA_BOILERPLATE = "The department does not accept applicants for a Master 
 
 def _deboilerplate_usc_description(spec: dict, clause: str) -> str:
     """Prepend program context when catalogue text is a cross-field template."""
+    field = _field_key(spec["program_name"])
+    school = spec["school"]
     if clause.startswith(_TRANS_MA_BOILERPLATE):
-        return f"{spec['slug']} — {clause}"
+        return (
+            f"Graduate study in {field} at USC's {school}: "
+            f"{clause[0].lower()}{clause[1:]}"
+        )
     if clause.startswith("The Bachelor of Science in Human Development and Aging is an undergraduate"):
-        return f"{spec['slug']} — {clause}"
+        return f"At USC's {school}, {clause}"
     return clause
 
 
@@ -5647,6 +5655,250 @@ def _sanitize_usc_anti_stub_tells(clause: str) -> str:
     for pattern, repl in _USC_ANTI_STUB_REWRITES:
         out = pattern.sub(repl, out)
     return out
+
+
+# Real, per-program prose for the programs whose catalogue scrape had attached another
+# program's text (a shared cross-field leading body). Each opens on the field's substance
+# at the program's verified owning USC school (no invented centers, rankings, or
+# superlatives, and no catalogue-ref/slug — superseding the slug-ref opener).
+_CROSS_FIELD_DESCRIPTION_FIXES: dict[str, str] = {
+    "usc-mathematics-bs": (
+        "Mathematics at USC Dornsife trains students in analysis, algebra, geometry, and "
+        "applied methods, building rigorous proof and modeling skills for graduate study "
+        "and quantitative careers."
+    ),
+    "usc-applied-and-computational-mathematics-bs": (
+        "Applied and computational mathematics emphasizes mathematical modeling, numerical "
+        "methods, and scientific computing, applying mathematics to problems across science, "
+        "engineering, and data at USC Dornsife."
+    ),
+    "usc-comparative-studies-in-literature-and-culture-comparative-literature-ma": (
+        "Comparative literary study at USC Dornsife examines literature, media, and culture "
+        "across languages and national traditions, grounded in critical and comparative theory."
+    ),
+    "usc-organizational-change-and-leadership-ma": (
+        "Organizational change and leadership prepares professionals to diagnose, design, and "
+        "lead evidence-based change in education, business, and the public sector through USC "
+        "Rossier."
+    ),
+    "usc-mathematical-data-science-ms": (
+        "Mathematical data science combines advanced mathematics, statistics, and machine "
+        "learning to model, analyze, and draw inference from large-scale data at USC Dornsife."
+    ),
+    "usc-data-science-for-learning-applications-ms": (
+        "This program applies data science and analytics to education and learning, building "
+        "skills in data modeling, measurement, and applied machine learning for learning "
+        "systems through USC Rossier."
+    ),
+    "usc-data-science-ba": (
+        "Data science at USC Dornsife blends computing, statistics, and a substantive "
+        "application area, giving students a liberal-arts grounding in data analysis, "
+        "visualization, and the ethics of data."
+    ),
+    "usc-mathematics-ma": (
+        "Graduate study of mathematics at USC Dornsife offers a Master of Arts with coursework "
+        "in pure and applied mathematics for students advancing toward doctoral work or "
+        "quantitative careers."
+    ),
+    "usc-applied-mathematics-ma": (
+        "Applied mathematics at the master's level at USC Dornsife emphasizes mathematical "
+        "modeling, analysis, and computation applied to problems in science and engineering."
+    ),
+    "usc-mathematics-phd": (
+        "Doctoral study in mathematics centers on original research across analysis, algebra, "
+        "geometry, and applied mathematics, with advanced coursework and a dissertation at USC "
+        "Dornsife."
+    ),
+    "usc-applied-mathematics-phd": (
+        "Doctoral research in applied mathematics develops mathematical modeling, computation, "
+        "and analysis applied to problems in the sciences and engineering, culminating in an "
+        "original dissertation at USC Dornsife."
+    ),
+    "usc-sound-design-bfa": (
+        "Sound design at the USC School of Dramatic Arts trains students in audio technology, "
+        "sound, and music for live theatre and performance."
+    ),
+    "usc-stage-management-bfa": (
+        "Stage management trains students to coordinate rehearsals, technical production, and "
+        "performance for theatre, opera, and dance at the USC School of Dramatic Arts."
+    ),
+    "usc-technical-direction-bfa": (
+        "Technical direction prepares students to plan, engineer, and supervise the "
+        "construction and operation of theatrical scenery and stage technology at the USC "
+        "School of Dramatic Arts."
+    ),
+    "usc-theatrical-design-bfa": (
+        "Theatrical design develops scenic, costume, and lighting design for live theatrical "
+        "production at the USC School of Dramatic Arts."
+    ),
+    "usc-applied-biostatistics-and-epidemiology-ms": (
+        "Applied biostatistics and epidemiology trains students in statistical methods, study "
+        "design, and epidemiologic analysis for biomedical and population-health research at "
+        "USC."
+    ),
+    "usc-aging-biology-msab": (
+        "This program applies biostatistics and epidemiology to the biology of aging and "
+        "age-related disease, pairing quantitative methods with gerontology at USC."
+    ),
+    "usc-public-health-mph-2": (
+        "Delivered fully online, USC's Master of Public Health offers professional training in "
+        "epidemiology, biostatistics, health policy, and public-health practice for working "
+        "professionals."
+    ),
+    "usc-urban-planning-executive-mup-online-mup": (
+        "USC's Executive Master of Urban Planning delivers the planning curriculum — land use, "
+        "transportation, housing, and environmental planning — in an online format for working "
+        "professionals through the USC Price School."
+    ),
+    "usc-choral-music-bm": (
+        "Choral music study at USC Thornton develops choral conducting, vocal musicianship, and "
+        "ensemble leadership within a conservatory curriculum."
+    ),
+    "usc-composition-bm": (
+        "Composition at USC Thornton trains student composers in writing for voices and "
+        "instruments, orchestration, and contemporary techniques."
+    ),
+    "usc-performance-classical-guitar-bm": (
+        "Performance study at USC Thornton provides intensive conservatory training across "
+        "instrumental and vocal concentrations, combining private studio instruction, "
+        "ensembles, and recitals."
+    ),
+    "usc-composition-mm": (
+        "Graduate composition at USC Thornton advances compositional craft, orchestration, and "
+        "contemporary practice for student composers."
+    ),
+    "usc-conducting-mm": (
+        "Graduate conducting at USC Thornton trains conductors in score study, rehearsal "
+        "technique, and ensemble leadership."
+    ),
+    "usc-performance-classical-guitar-mm": (
+        "Graduate performance at USC Thornton offers advanced conservatory study across "
+        "instrumental and vocal concentrations, with private studio instruction, chamber "
+        "music, and recitals."
+    ),
+    "usc-materials-science-ms": (
+        "Materials science studies the structure, properties, and processing of metals, "
+        "ceramics, polymers, and semiconductors through coursework and research at USC Viterbi."
+    ),
+    "usc-materials-engineering-ms": (
+        "Materials engineering applies materials science to the design, selection, and "
+        "processing of engineering materials for advanced applications at USC Viterbi."
+    ),
+    "usc-aerospace-engineering-phd": (
+        "Doctoral research in aerospace engineering spans fluid dynamics, structures, "
+        "propulsion, controls, and space systems at USC Viterbi, culminating in a dissertation."
+    ),
+    "usc-mechanical-engineering-phd": (
+        "Doctoral research in mechanical engineering spans dynamics, thermal sciences, "
+        "mechanics, and design at USC Viterbi, culminating in an original dissertation."
+    ),
+    # Catalogue rows whose only text was an administrative note or a classification stub.
+    "usc-english-ma": (
+        "Graduate study in English at USC Dornsife is pursued within the doctoral program; "
+        "the Master of Arts is earned by PhD students en route to the doctorate, with "
+        "coursework in literary history, theory, and criticism."
+    ),
+    "usc-religion-ma": (
+        "Graduate study of religion at USC Dornsife is pursued within the doctoral program; "
+        "the Master of Arts is available to enrolled PhD students and covers the academic "
+        "study of religious traditions, texts, and theory."
+    ),
+    "usc-american-studies-and-ethnicity-phd": (
+        "Doctoral study in American studies and ethnicity at USC Dornsife pursues "
+        "interdisciplinary research on race, ethnicity, and American cultures through "
+        "seminars, qualifying examinations, and a dissertation."
+    ),
+    "usc-human-development-and-aging-bs": (
+        "Human development and aging at the USC Leonard Davis School studies the biological, "
+        "psychological, and social dimensions of the lifespan, preparing students for careers "
+        "in health, aging services, and research."
+    ),
+}
+
+# Parenthetical suffixes that are credential designations (or a delivery tag), NOT
+# concentrations — a row carrying one is a whole degree, not a track of another.
+_CREDENTIAL_PARENS = frozenset(
+    {"J.D.", "M.D.", "D.D.S.", "Pharm.D.", "O.T.D.", "D.P.T.", "D.S.W.", "Au.D.", "Ed.D."}
+)
+
+
+def _strip_concentration(program_name: str) -> tuple[str, str | None]:
+    """``(base_program_name, concentration)`` — ``concentration`` is ``None`` when the name
+    carries none (or only a credential designation, stripped from the base, or an "(Online)"
+    delivery tag, left in place and handled as delivery)."""
+    m = re.match(r"^(?P<base>.*\S) \((?P<conc>[^()]+)\)$", program_name)
+    if m:
+        conc = m.group("conc").strip()
+        if conc in _CREDENTIAL_PARENS:
+            return m.group("base").strip(), None
+        if conc == "Online":
+            return program_name, None
+        return m.group("base").strip(), conc
+    m = re.match(r"^(?P<base>.*\S), (?P<conc>.+?) (?:Emphasis|Track)$", program_name)
+    if m:
+        return m.group("base").strip(), m.group("conc").strip()
+    return program_name, None
+
+
+def _collapse_concentration_variants(specs: list[dict]) -> list[dict]:
+    """Collapse concentration / emphasis / track split rows into their base degree, carrying
+    the concentrations as ``tracks`` (REPAIR_BACKLOG miss #2 — never one program row per
+    concentration). Credential designations ("(J.D.)") and "(Online)" delivery tags are not
+    concentrations. Grouping is by the FULL base program_name (credential included) so a BA
+    and a BS in one field stay distinct degrees."""
+    from collections import defaultdict
+
+    for s in specs:
+        base, conc = _strip_concentration(s["program_name"])
+        if conc is None and base != s["program_name"]:
+            s["program_name"] = base
+        if s["program_name"].endswith("(Online)"):
+            s["delivery_format"] = "online"
+
+    base_of: dict[int, tuple[str, list[str]]] = {}
+    for s in specs:
+        pn = s["program_name"]
+        thornton = (
+            re.match(r"^(?P<base>.*\bPerformance)\b.*\(", pn)
+            if s["school_key"] == "THORNTON"
+            else None
+        )
+        if thornton and "(" in pn:
+            base = thornton.group("base")
+            concs = [c for c in re.findall(r"\(([^)]+)\)", pn) if c != "Online"]
+        else:
+            base, conc = _strip_concentration(pn)
+            concs = [conc] if conc else []
+        base_of[id(s)] = (base, concs)
+
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for s in specs:
+        groups[base_of[id(s)][0]].append(s)
+
+    kept: list[dict] = []
+    for base_name, members in groups.items():
+        bases = [s for s in members if not base_of[id(s)][1]]
+        variants = [s for s in members if base_of[id(s)][1]]
+        if not variants:
+            kept.extend(members)
+            continue
+        base_spec = bases[0] if bases else variants[0]
+        base_spec["program_name"] = base_name
+        concentrations: list[str] = []
+        for s in members:
+            for c in base_of[id(s)][1]:
+                if c not in concentrations:
+                    concentrations.append(c)
+        if concentrations:
+            base_spec["tracks"] = {
+                "concentrations": concentrations,
+                "note": "Concentrations published in the USC Catalogue.",
+            }
+        kept.append(base_spec)
+        for s in bases:
+            if s is not base_spec:
+                kept.append(s)
+    return kept
 
 
 def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
@@ -5699,10 +5951,11 @@ def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
         if len(rows) <= 1 or not desc:
             continue
         for spec in rows:
-            slug_tail = spec["slug"].replace("usc-", "").replace("-", " ")
+            # Distinguish credential siblings that share identical catalogue prose.
+            lead = level_lead.get(spec.get("degree_type", ""), "Students in this program")
             spec["description"] = (
-                f"{desc} Credential-specific requirements for the "
-                f"{slug_tail} degree are on USC's official catalogue page."
+                f"{lead} follow the {spec['program_name']} curriculum published "
+                f"on USC's official catalogue. {desc}"
             )
 
     head_to_specs: dict[str, list[dict]] = defaultdict(list)
@@ -5721,10 +5974,18 @@ def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
         if len(fields) < 2:
             continue
         for spec in specs:
-            lead = f"{spec['slug']} — "
-            body = spec.get("description") or ""
-            if not body.startswith(lead):
-                spec["description"] = lead + body
+            fix = _CROSS_FIELD_DESCRIPTION_FIXES.get(spec["slug"])
+            if fix:
+                spec["description"] = fix
+
+
+def _normalize_department(spec: dict) -> str:
+    """Map field-echo departments to USC's real owning school/college."""
+    dept = (spec.get("department") or "").strip()
+    field = _field_key(spec["program_name"])
+    if not dept or dept == field or dept == spec.get("program_name"):
+        return spec["school"]
+    return dept
 
 
 def _build_catalog() -> list[dict]:
@@ -5741,8 +6002,15 @@ def _build_catalog() -> list[dict]:
             "delivery_format": fmt,
             "duration_months": dur,
         }
-        spec["description"] = _usc_description(spec)
+        spec["department"] = _normalize_department(spec)
         out.append(spec)
+    # Collapse concentration/emphasis/track splits into base degrees BEFORE building
+    # descriptions (collapse renames the base program_name and sets delivery), then derive
+    # each kept program's description and disambiguate.
+    out = _collapse_concentration_variants(out)
+    for spec in out:
+        spec["department"] = _normalize_department(spec)
+        spec["description"] = _usc_description(spec)
     _disambiguate_catalog_descriptions(out)
     return out
 
@@ -5771,6 +6039,19 @@ if _shared_desc:
     raise ValueError(
         f"USC catalog has {_shared_desc} identical descriptions shared across rows"
     )
+
+_SLUG_LEAK_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+){2,}\s*[—–-]\s")
+_slug_leaks = sum(1 for p in PROGRAMS if _SLUG_LEAK_RE.match(p.get("description") or ""))
+if _slug_leaks:
+    raise ValueError(f"USC catalog has {_slug_leaks} slug-prefixed descriptions")
+
+_dept_echo = sum(
+    1
+    for p in PROGRAMS
+    if p.get("department") == _field_key(p["program_name"])
+)
+if _dept_echo:
+    raise ValueError(f"USC catalog has {_dept_echo} field-echo departments")
 
 
 def _assert_anti_stub_clean(programs: list[dict]) -> None:
@@ -6350,7 +6631,9 @@ def _requirements_for(spec: dict) -> dict:
 
 
 def _program_standard(slug: str, spec: dict) -> dict:
-    omitted: list[str] = ["tracks", "cost_data.tuition_usd"]
+    omitted: list[str] = ["cost_data.tuition_usd"]
+    if not spec.get("tracks"):
+        omitted.append("tracks")
     if slug not in _OUTCOMES_BY_SLUG:
         omitted += [
             "outcomes_data.employment_rate",
@@ -6494,7 +6777,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)
         p.outcomes_data = outcomes
-        p.tracks = None
+        p.tracks = spec.get("tracks")
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)

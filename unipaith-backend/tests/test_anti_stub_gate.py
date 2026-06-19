@@ -38,6 +38,24 @@ CERTIFIED_CLEAN = [
     "michigan",   # per-credential discipline definitions; build-artifact junk removed (michprof4)
     "stanford",   # per-credential defs; Catalog entry junk removed (stanfordprof11)
     "purdue",     # per-credential discipline defs; peer-copy + rollups removed (purduedefab1)
+    "chicago",    # per-credential graduate descriptions; cert padding dropped (chicagodefab1)
+    "bu",         # Medill peer-copy removed; real dual-degree/MPH/CFA/math/world-lang
+    #             names + depts; per-credential bodies; school-as-field fixes (budefab1,
+    #             supersedes buprof11's narrower description-only repair)
+    "berkeley",   # CIP rollup de-fab; real dept names; per-credential descriptions (berkeleyprof9)
+    "cornell",    # CIP-rollup buckets → real Cornell degrees or dropped; field-echo
+    #             departments → real owning college; per-credential description leads
+    #             (verbatim/shared-body removed) (cornelldefab1)
+    "penn",       # CIP-rollup buckets → real Penn degrees or dropped; dept = real owning
+    #             school (field-echo removed); per-credential description leads with the
+    #             resolved real name, no rollup leak (verbatim/shared-body removed) (penndefab1)
+    "yale",       # "{program_name}: " prefix-double removed; per-credential bodies — graduate
+    #             rows take a distinct doctoral/master's clause (GRADUATE_FIELD_DESCRIPTIONS),
+    #             so credential siblings no longer share a leading body (yaledefab1)
+    "harvard",    # CIP rollup de-fab; suffix-diversifier removed; per-credential bodies
+    #             (harvarddefab1 — HIGH #4)
+    "columbia",   # CIP rollup + possessive de-fab; real owning schools; per-credential
+    #             bodies (columbiadefab1 — HIGH #1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
@@ -166,3 +184,40 @@ def test_analyzer_detects_classification_and_prefix_stubs():
     report = analyze(fabricated)
     assert report.name_prefixed, "should flag the program_name-prefixed description"
     assert report.classification, "should flag the classification-only description"
+
+
+def test_harvard_catalog_has_no_rollup_or_shared_leading_body():
+    """Regression guard: Harvard must not ship CIP rollup names or suffix-diversifier
+    shared-leading-body descriptions (REPAIR_BACKLOG HIGH #4)."""
+    from unipaith.data import harvard_profile
+
+    rollup_tells = (", General", ", Other", "(CIP ", "/")
+    rollup_names = [
+        p["slug"]
+        for p in harvard_profile.PROGRAMS
+        if any(t in p.get("program_name", "") for t in rollup_tells)
+    ]
+    assert not rollup_names, (
+        f"Harvard catalog has {len(rollup_names)} rollup program_name rows: "
+        f"{rollup_names[:5]}"
+    )
+    report = analyze(harvard_profile.PROGRAMS)
+    assert report.is_clean, f"Harvard anti-stub regressed: {report.summary()}"
+
+
+def test_nyu_catalog_has_no_slug_leak_prefixes():
+    """Regression guard: kebab-case bulletin slugs must not prefix description_text
+    (REPAIR_BACKLOG CRITICAL #2 — invisible to machine_artifacts, visible to students)."""
+    import re
+
+    from unipaith.data import nyu_profile
+
+    slug_re = re.compile(r"^[a-z0-9]+(-[a-z0-9]+){2,}\s*[—–-]\s")
+    hits = [
+        p["slug"]
+        for p in nyu_profile.PROGRAMS
+        if slug_re.match((p.get("description") or "").strip())
+    ]
+    assert not hits, (
+        f"NYU catalog has {len(hits)} slug-prefixed descriptions: {hits[:5]}"
+    )

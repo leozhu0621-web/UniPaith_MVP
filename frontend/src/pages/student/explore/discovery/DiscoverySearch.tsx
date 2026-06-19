@@ -14,7 +14,6 @@ import type { ProgramSummary } from '../../../../types'
 import ProgramCard from '../cards/ProgramCard'
 import ConstraintChips from './ConstraintChips'
 import FiltersPanel from './FiltersPanel'
-import OutcomeTiles from './OutcomeTiles'
 import SaveSearchButton from './SaveSearchButton'
 import SortMenu from './SortMenu'
 import { encodeChipsParam, parseChipsParam, withChipId } from './chipUtils'
@@ -255,8 +254,9 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
         />
       )}
 
-      {/* Toolbar — Filters (always available) · results count + Sort (when active). Spec §2/§5/§6. */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      {/* Toolbar — Filters (always available) · results count + Sort (when active). Spec §2/§5/§6.
+          Centered until a search is active, then split (filters left · sort right). */}
+      <div className={`flex items-center gap-3 flex-wrap ${active ? 'justify-between' : 'justify-center'}`}>
         <div className="flex items-center gap-3">
           <FiltersPanel filters={filters} onApply={setFilters} />
           {active && (
@@ -344,14 +344,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
             </>
           )}
         </>
-      ) : (
-        <>
-          {/* Browse by outcome — each tile writes the ROI filters + sort so only
-              programs with real outcome data surface (Spec 2026-06-14: filters are
-              EITHER outcome-based OR the traditional dropdowns below). */}
-          <OutcomeTiles onPick={p => writeUrl({ q: urlQuery, chips, sort: p.sort, filters: p.filters })} />
-        </>
-      )}
+      ) : null}
     </section>
   )
 }
