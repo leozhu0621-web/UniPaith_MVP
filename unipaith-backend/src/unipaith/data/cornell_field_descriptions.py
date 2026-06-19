@@ -1,11 +1,22 @@
 """Field-specific program description clauses for Cornell University.
 
 Each entry states something concrete about what Cornell's program in that field
-covers — never a credential/school classification stub. Sources: Cornell school
-and department program pages (cornell.edu, cals.cornell.edu, engineering.cornell.edu,
-johnson.cornell.edu, sha.cornell.edu, ilr.cornell.edu, aap.cornell.edu,
-bowers.cornell.edu, publicpolicy.cornell.edu, lawschool.cornell.edu,
-vet.cornell.edu, medicalcollege.weill.cornell.edu).
+covers — never a credential/school classification stub, and only Cornell's OWN
+verified units (no peer-institution landmarks). Sources: Cornell school and
+department program pages (cornell.edu, as.cornell.edu, cals.cornell.edu,
+engineering.cornell.edu / duffield.cornell.edu, johnson.cornell.edu,
+sha.cornell.edu, ilr.cornell.edu, aap.cornell.edu, bowers.cornell.edu,
+publicpolicy.cornell.edu, lawschool.cornell.edu, vet.cornell.edu,
+astro.cornell.edu, physics.cornell.edu, chemistry.cornell.edu, cnf.cornell.edu,
+pma.cornell.edu, einaudi.cornell.edu, philosophy.cornell.edu).
+
+De-contamination pass (2026-06-19, cornelldecontam1): the prior build copied peer
+institutions' descriptions and find-replaced the campus token, leaving foreign
+academic units (from Penn, Berkeley, and Johns Hopkins) and Penn Vet's clinical
+center wrongly attributed to Cornell rows. Every foreign unit has been replaced
+with Cornell's own verified unit or a true generic clause, allowlist-checked
+against Cornell's published org chart (REPAIR_BACKLOG CRITICAL #1; SKILL miss #8
+allowlist).
 """
 
 # ruff: noqa: E501
@@ -28,10 +39,10 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Weill Cornell allied-health pathways prepare clinical technologists and diagnostic specialists within New York City's academic medical center."
     ),
     'Animal Sciences': (
-        'CALS animal science covers livestock production, nutrition, genetics, and welfare with research at the Cornell University Animal Science teaching barns.'
+        'CALS animal science covers livestock production, nutrition, genetics, and welfare with research at the Cornell University animal science teaching barns.'
     ),
     'Anthropology': (
-        'Arts and Sciences anthropology combines archaeological field schools, biological anthropology, and sociocultural ethnography with the Cornell Museum collections and global research sites.'
+        'Arts and Sciences anthropology combines archaeological field schools, biological anthropology, and sociocultural ethnography with the Cornell Institute of Archaeology and Material Studies and global research sites.'
     ),
     'Apparel and Textiles': (
         'Human Ecology fiber science and apparel design combines material testing, sustainable textiles, and industry partnerships through the Cornell Costume and Textile Collection.'
@@ -40,12 +51,11 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         'CALS horticulture coursework combines greenhouse management, plant breeding, and viticulture with Finger Lakes field sites and Cornell AgriTech.'
     ),
     'Applied Mathematics': (
-        "Graduate applied mathematics at Cornell spans modeling, numerical analysis, "
-        "and scientific computing applied to engineering, finance, and biology across "
-        "Arts and Sciences and Cornell Engineering."
+        "Applied mathematics at Cornell spans modeling, numerical analysis, "
+        "and scientific computing applied to engineering, finance, and biology, with graduate ties to the Center for Applied Mathematics."
     ),
     'Archeology': (
-        'Classical and Near Eastern archaeology at Arts and Sciences includes field seasons, museum study at the Cornell Museum, and interdisciplinary work with art history and anthropology.'
+        'Classical and Near Eastern archaeology at Arts and Sciences includes field seasons, material-studies labs, and interdisciplinary work with art history and anthropology.'
     ),
     'Architectural History, Criticism, and Conservation': (
         'AAP architectural history examines built heritage, preservation theory, and field documentation with Ithaca and New York City studio projects.'
@@ -60,19 +70,19 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "AAP interdisciplinary design studies span urbanism, digital fabrication, and environmental systems in Cornell's Rome and New York City programs."
     ),
     'Area Studies': (
-        'Regional specializations — East Asia, Latin America, Middle East, and South Asia — combine language immersion with political and cultural scholarship in SAS.'
+        'Regional specializations — East Asia, Latin America, the Middle East, and South Asia — combine language immersion with political and cultural scholarship in the College of Arts and Sciences, coordinated through the Mario Einaudi Center for International Studies.'
     ),
     'Astronomy and Astrophysics': (
-        'Observational and theoretical astrophysics with access to Lick Observatory, Keck partnerships, and the campus radio astronomy lab.'
+        'Observational and theoretical astrophysics through the Cornell Center for Astrophysics and Planetary Science and the Cornell-led CCAT Observatory (Fred Young Submillimeter Telescope).'
     ),
     'Atmospheric Sciences and Meteorology': (
         "Earth and environmental science coursework at Arts and Sciences examines climate dynamics, atmospheric chemistry, and earth-system modeling with Cornell's climate research groups."
     ),
     'Behavioral Sciences': (
-        'Interdisciplinary behavioral science at Arts and Sciences and SP2 examines cognition, decision making, and policy-relevant experiments linking psychology and social research.'
+        'Interdisciplinary behavioral science at Arts and Sciences examines cognition, decision making, and policy-relevant experiments linking psychology and the social sciences.'
     ),
     'Biochemistry, Biophysics and Molecular Biology': (
-        'Graduate biochemistry and biophysics at Arts and Sciences and Weill Cornell studies protein structure, enzymology, and molecular mechanisms in NIH-funded Cornell labs.'
+        'Biochemistry and biophysics at Arts and Sciences and the Weill Institute for Cell and Molecular Biology studies protein structure, enzymology, and molecular mechanisms in NIH-funded Cornell labs.'
     ),
     'Biological and Physical Sciences': (
         'CALS biological and physical sciences integrates chemistry, physics, and life-sciences foundations for pre-professional and research-track students.'
@@ -81,7 +91,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         'Cornell biological engineering integrates CALS life sciences with Duffield Engineering design for agricultural, environmental, and biomedical systems.'
     ),
     'Biology, General': (
-        'Arts and Sciences biology spans genetics, cell biology, ecology, and neurobiology with undergraduate research in campus life-sciences institutes and the Cornell Medicine research network.'
+        'Arts and Sciences biology spans genetics, cell biology, ecology, and neurobiology with undergraduate research in campus life-sciences institutes and the Weill Cornell research network.'
     ),
     'Biomathematics, Bioinformatics, and Computational Biology': (
         "Computational biology training pairs genomics pipelines, statistical genetics, "
@@ -89,34 +99,34 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Cornell precision-medicine initiatives."
     ),
     'Biomedical/Medical Engineering': (
-        'Cornell Bioengineering integrates device design, imaging, and tissue engineering with Weill Cornell Hospital clinical immersion — routinely ranked among the top undergraduate BME programs nationally.'
+        'Cornell biomedical engineering integrates device design, imaging, and tissue engineering with clinical collaboration at Weill Cornell Medicine in New York City.'
     ),
     'Botany/Plant Biology': (
-        'Plant physiology, ecology, and evolutionary biology with field work at the UC Botanical Garden and agricultural research stations.'
+        'Plant physiology, ecology, and evolutionary biology with field work at Cornell Botanic Gardens and CALS agricultural research stations.'
     ),
     'Business Administration, Management and Operations': (
         "Johnson MBA and executive programs combine finance, strategy, and operations with 18+ majors and the school's deep analytics and entrepreneurship ecosystem."
     ),
     'Cell/Cellular Biology and Anatomical Sciences': (
-        'Graduate cell biology at Arts and Sciences and Weill Cornell focuses on signaling, developmental biology, and microscopy methods in cancer and immunology research labs.'
+        'Cell biology at Arts and Sciences and the Weill Institute for Cell and Molecular Biology focuses on signaling, developmental biology, and microscopy methods in cancer and immunology research labs.'
     ),
     'Chemical Engineering': (
-        "Cornell Engineering chemical and biomolecular engineering spans reaction engineering, materials, and bioprocess design with ties to Cornell's Institute for Medicine and Engineering."
+        "The Robert Frederick Smith School of Chemical and Biomolecular Engineering spans reaction engineering, materials, and bioprocess design with ties to Cornell's energy and biotechnology research."
     ),
     'Chemistry': (
-        'Arts and Sciences chemistry runs organic, inorganic, physical, and chemical-biology groups whose faculty hold joint appointments with Weill Cornell and the Cornell Chemistry Research Institute.'
+        "Cornell's Department of Chemistry and Chemical Biology runs organic, inorganic, physical, and chemical-biology research groups, several with joint appointments at Weill Cornell Medicine."
     ),
     'City/Urban, Community, and Regional Planning': (
-        'AAP city and regional planning covers housing policy, transportation, and urban design with Ithaca field studios and the Cornell Institute for Urban Research.'
+        'AAP city and regional planning covers housing policy, transportation, and urban design with Ithaca and New York City field studios in the Department of City and Regional Planning.'
     ),
     'Civil Engineering': (
         'Civil and systems engineering at Cornell Engineering emphasizes infrastructure resilience, transportation systems, and urban hydrology.'
     ),
     'Classics and Classical Languages, Literatures, and Linguistics': (
-        'Greek and Latin language, ancient history, and philology at Arts and Sciences with manuscript resources and Mediterranean archaeology ties through the Cornell Museum.'
+        'Greek and Latin language, ancient history, and philology at Arts and Sciences with manuscript resources and Mediterranean archaeology ties.'
     ),
     'Communication and Media Studies': (
-        "Annenberg coursework covers media effects, political communication, and digital culture with the school's research centers and Ithaca media partnerships."
+        "Cornell's Department of Communication in CALS covers media effects, science communication, and digital culture with social-scientific research labs."
     ),
     'Community Organization and Advocacy': (
         'Brooks School and ILR community-organizing coursework examines grassroots mobilization, policy advocacy, and labor-community coalitions.'
@@ -127,7 +137,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "and robotics labs on campus."
     ),
     'Computer and Information Sciences, General': (
-        "Broad computing foundations — programming, data structures, and information systems — within Cornell's Department of Computer and Information Science."
+        "Broad computing foundations — programming, data structures, and information systems — within Cornell's Bowers College of Computing and Information Science."
     ),
     'Computer/Information Technology Administration and Management': (
         "Bowers College IT management spans enterprise systems, cybersecurity policy, and data governance for Cornell's computing and information-science students."
@@ -136,25 +146,25 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         'SHA hospitality coursework includes culinary management, restaurant operations, and food-service entrepreneurship in Nolan School labs.'
     ),
     'Dance': (
-        "Peabody Conservatory dance combines conservatory technique with composition and performance on Ithaca's Mount Vernon campus."
+        "Cornell's Department of Performing and Media Arts teaches dance technique, composition, and performance in the Schwartz Center for the Performing Arts."
     ),
     'Design and Applied Arts': (
         "AAP and Arts and Sciences design coursework spans visual communication, interaction design, and creative practice in Cornell's studio and fabrication facilities."
     ),
     'Drama/Theatre Arts and Stagecraft': (
-        'Arts and Sciences theatre arts combines acting, directing, dramaturgy, and technical production with performances in campus theaters and Ithaca stage partnerships.'
+        "Arts and Sciences theatre arts in the Department of Performing and Media Arts combines acting, directing, dramaturgy, and technical production with performances in the Schwartz Center."
     ),
     'East Asian Languages, Literatures, and Linguistics': (
-        'Chinese, Japanese, and Korean language and cultural studies at Arts and Sciences with the Center for East Asian Studies and study-abroad pathways.'
+        'Chinese, Japanese, and Korean language and cultural studies at Arts and Sciences with the East Asia Program and study-abroad pathways.'
     ),
     'Ecology, Evolution, Systematics, and Population Biology': (
-        "Field ecology, evolutionary genomics, and conservation biology at Arts and Sciences with research at Cornell's Morris Arboretum and global field-station partnerships."
+        "Field ecology, evolutionary genomics, and conservation biology at Arts and Sciences with research at Cornell Botanic Gardens natural areas and global field-station partnerships."
     ),
     'Economics': (
-        'Arts and Sciences and Johnson economics is empirically rigorous — faculty research spans health, trade, development, and behavioral economics with the Cornell Institute for Economic Research.'
+        'Arts and Sciences and Johnson economics is empirically rigorous — faculty research spans health, trade, development, and behavioral economics.'
     ),
     'Education, General': (
-        'Graduate School of Education programs target urban reform, special education, and evidence-based teaching in Ithaca partner districts.'
+        'Graduate education programs at Cornell target urban reform, special education, and evidence-based teaching in Ithaca partner districts.'
     ),
     'Electrical, Electronics, and Communications Engineering': (
         "Cornell Engineering electrical and systems engineering spans signal processing, photonics, and communications with Cornell's medical-device and robotics research groups."
@@ -163,7 +173,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         'Solid mechanics, fluid dynamics, and computational mechanics at Cornell Engineering support aerospace and biomedical device research.'
     ),
     'Engineering Physics': (
-        'Applied physics for engineering — quantum devices, plasmas, and materials — bridging the College of Engineering and physics department.'
+        'Applied physics for engineering — quantum devices, plasmas, and materials — bridging the Duffield College of Engineering and the physics department.'
     ),
     'Engineering, General': (
         "Cross-disciplinary engineering master's and doctoral study spanning Cornell Engineering's departments and research centers."
@@ -172,13 +182,13 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         'Flexible engineering pathways at Cornell Engineering let students combine design, computing, and lab research before declaring a specialized major.'
     ),
     'English Language and Literature, General': (
-        'Arts and Sciences English combines literary history, creative writing, and rhetoric with Kelly Writers House programming and Ithaca literary community ties.'
+        "Arts and Sciences English in the Department of Literatures in English combines literary history, creative writing, and rhetoric with Cornell's M.F.A. program and Ithaca's literary community."
     ),
     'Environmental Design': (
         'AAP environmental design integrates landscape architecture, ecological planning, and sustainable site design with Ithaca urban greening projects.'
     ),
     'Environmental/Environmental Health Engineering': (
-        'Air and water quality, exposure science, and environmental health engineering linking CEE and the School of Public Health.'
+        'Air and water quality, exposure science, and environmental health engineering linking civil and environmental engineering with public-health research.'
     ),
     'Environmental/Natural Resources Management and Policy': (
         "CALS natural-resources policy analysis covers GIS, forest and water governance, "
@@ -188,10 +198,10 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         'Arts and Sciences programs in Africana studies, gender and sexuality, and ethnic studies examine race, diaspora, and social justice with Ithaca community research.'
     ),
     'Film/Video and Photographic Arts': (
-        "Arts and Sciences cinema and media studies covers production, documentary, and media theory with access to Cornell's media labs and Ithaca film internships."
+        "Arts and Sciences cinema and media studies in the Department of Performing and Media Arts covers production, documentary, and media theory with Cornell's media labs and Ithaca film internships."
     ),
     'Fine and Studio Arts': (
-        'Arts and Sciences fine arts combines drawing, painting, printmaking, and new media with Institute of Contemporary Art partnerships and Ithaca gallery culture.'
+        'Arts and Sciences fine arts combines drawing, painting, printmaking, and new media with the Herbert F. Johnson Museum of Art and Ithaca gallery culture.'
     ),
     'Food Science and Technology': (
         "CALS food science spans sensory evaluation, food microbiology, and product development in Cornell's pilot plant and dairy-processing facilities."
@@ -200,7 +210,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         'Human Ecology nutrition science covers dietetics, community health, and metabolic research with Cornell Cooperative Extension outreach.'
     ),
     'Genetics': (
-        'Genomics and genetic-analysis training at Arts and Sciences connects to Hopkins Gene Therapy and precision-medicine institutes.'
+        'Genomics and genetic-analysis training at Arts and Sciences connects to the Department of Molecular Biology and Genetics and the Weill Institute for Cell and Molecular Biology.'
     ),
     'Geological and Earth Sciences/Geosciences': (
         "Earth and environmental science at Arts and Sciences studies climate, geophysics, and planetary surfaces with Cornell's paleontology and geochemistry research groups."
@@ -209,7 +219,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         'German language, literature, and culture at Arts and Sciences includes Berlin study-abroad and European intellectual-history coursework.'
     ),
     'Health Professions and Related Clinical Sciences, Other': (
-        'Interdisciplinary clinical-science coursework at Cornell Medicine spans specialized health disciplines with hospital and lab research access.'
+        'Interdisciplinary clinical-science coursework at Weill Cornell Medicine spans specialized health disciplines with hospital and lab research access.'
     ),
     'Historic Preservation and Conservation': (
         'AAP preservation studies combine documentation, materials conservation, and heritage policy with field work across upstate New York.'
@@ -227,7 +237,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Human Ecology human development spans lifespan psychology, family policy, and Cornell's Bronfenbrenner Center for Translational Research."
     ),
     'Human Resources Management and Services': (
-        'Johnson management coursework covers organizational behavior, talent strategy, and labor relations with Ithaca corporate and nonprofit placements.'
+        'ILR and Johnson management coursework covers organizational behavior, talent strategy, and labor relations with Ithaca corporate and nonprofit placements.'
     ),
     'Industrial Production Technologies/Technicians': (
         'Cornell Engineering and CALS production technology coursework covers manufacturing processes, automation, and quality systems.'
@@ -236,98 +246,98 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "CALS international agriculture examines global food systems, development economics, and field research through Cornell's land-grant mission abroad."
     ),
     'Landscape Architecture': (
-        "Site design, ecological planning, and urban landscapes in CED's landscape architecture studios and Blake Garden."
+        "Site design, ecological planning, and urban landscapes in CALS landscape architecture studios — the only accredited landscape architecture program in the Ivy League — with Cornell Botanic Gardens field sites."
     ),
     'Law': (
-        "Cornell Johnson Law's JD and advanced legal-degree programs emphasize cross-disciplinary study with Johnson, Med, and SP2 plus nationally ranked clinical offerings."
+        "Cornell Law School's J.D. and advanced legal-degree programs emphasize cross-disciplinary study and a small, collegial, clinic-rich curriculum."
     ),
     'Legal Research and Advanced Professional Studies': (
-        'Cornell Johnson Law LLM and advanced legal-study programs combine doctrinal coursework with cross-registration at Johnson, Med, and SP2.'
+        'Cornell Law School LL.M. and advanced legal-study programs combine doctrinal coursework with cross-disciplinary legal research.'
     ),
     'Liberal Arts and Sciences, General Studies and Humanities': (
         'Arts and Sciences general studies pathways satisfy College distribution requirements across humanities, social sciences, and natural sciences for flexible degree plans.'
     ),
     'Linguistic, Comparative, and Related Language Studies and Services': (
-        'Arts and Sciences linguistics covers phonetics, syntax, sociolinguistics, and computational language science with ties to Cornell CIS and the Language Data Institute.'
+        "Arts and Sciences linguistics covers phonetics, syntax, sociolinguistics, and computational language science with ties to Cornell's Bowers College of Computing and Information Science."
     ),
     'Management Sciences and Quantitative Methods': (
         'Johnson operations and decision-science coursework emphasizes optimization, stochastic modeling, and analytics for finance and consulting careers.'
     ),
     'Materials Engineering': (
-        "Cornell Engineering materials science studies biomaterials, nanomaterials, and characterization with Cornell's Singh Center for Nanotechnology."
+        "Cornell Engineering materials science studies biomaterials, nanomaterials, and characterization with the Cornell NanoScale Facility (CNF) and Cornell Center for Materials Research (CCMR)."
     ),
     'Mathematics': (
         'Pure and applied mathematics at Arts and Sciences spans analysis, algebra, probability, and mathematical biology with small upper-level seminars.'
     ),
     'Mechanical Engineering': (
-        "Cornell Engineering mechanical engineering and applied mechanics emphasizes design, robotics, fluid mechanics, and energy systems through Cornell's GRASP and robotics labs."
+        'Cornell Engineering mechanical engineering and applied mechanics emphasizes design, robotics, fluid mechanics, and energy systems in the Sibley School of Mechanical and Aerospace Engineering.'
     ),
     'Medieval and Renaissance Studies': (
-        "Arts and Sciences medieval studies combines Latin paleography, art history, and Cornell's world-renowned library collections in rare books."
+        "Arts and Sciences medieval studies combines Latin paleography, art history, and Cornell's world-renowned rare-book library collections."
     ),
     'Microbiological Sciences and Immunology': (
-        'Graduate microbiology and immunology at Arts and Sciences and Weill Cornell studies pathogens, host defense, and vaccine science in Cornell Medicine research labs.'
+        'Microbiology and immunology at Arts and Sciences and Weill Cornell studies pathogens, host defense, and vaccine science in Cornell research labs.'
     ),
     'Multi/Interdisciplinary Studies, Other': (
-        'Custom interdisciplinary majors combining methods from multiple Cornell colleges under L&S advising.'
+        'Custom interdisciplinary majors combining methods from multiple Cornell colleges under College of Arts and Sciences advising.'
     ),
     'Music': (
         'Arts and Sciences music combines musicology, theory, and performance with Ithaca orchestra partnerships and campus ensemble opportunities.'
     ),
     'Natural Resources Conservation and Research': (
-        'Environmental science and resource-management coursework at Arts and Sciences addresses conservation biology, sustainability, and policy with Morris Arboretum field work.'
+        'Environmental science and resource-management coursework at Arts and Sciences addresses conservation biology, sustainability, and policy with Cornell Botanic Gardens natural-areas field work.'
     ),
     'Neurobiology and Neurosciences': (
-        'Cornell neuroscience spans cellular, cognitive, and systems levels across SAS, Weill Cornell, and the Mahoney Institute of Neurological Sciences.'
+        'Cornell neuroscience spans cellular, cognitive, and systems levels across the Department of Neurobiology and Behavior, Cornell Neurotech, and Weill Cornell Medicine.'
     ),
     'Nuclear Engineering': (
-        "Nuclear energy systems, radiation detection, and fusion research in Cornell's Nuclear Engineering department and national-lab partnerships."
+        "Nuclear energy systems, radiation detection, and fusion research in Cornell's nuclear science and engineering program and national-lab partnerships."
     ),
     'Nutrition Sciences': (
-        'Human nutrition, metabolic biology, and public-health dietetics through Cornell Public Health and metabolic biology research.'
+        'Human nutrition, metabolic biology, and public-health dietetics through the Division of Nutritional Sciences and metabolic biology research.'
     ),
     'Operations Research': (
-        'Optimization, stochastic modeling, and analytics in the IEOR department serving engineering, Haas, and CDSS students.'
+        "Optimization, stochastic modeling, and analytics in Cornell's School of Operations Research and Information Engineering (ORIE)."
     ),
     'Pharmacology and Toxicology': (
-        'Graduate pharmacology at Weill Cornell and Arts and Sciences studies drug mechanisms, chemical biology, and toxicology adjacent to Cornell drug-discovery pipelines.'
+        'Pharmacology at Weill Cornell and Arts and Sciences studies drug mechanisms, chemical biology, and toxicology adjacent to Cornell drug-discovery pipelines.'
     ),
     'Philosophy': (
-        "Arts and Sciences philosophy emphasizes logic, ethics, metaphysics, and philosophy of science — strengths that anchor Cornell's PPE interdisciplinary major."
+        "Arts and Sciences philosophy in the Sage School of Philosophy emphasizes logic, ethics, metaphysics, and philosophy of science, and edits The Philosophical Review."
     ),
     'Physics': (
-        "Arts and Sciences physics covers condensed matter, particle physics, and biophysics with faculty affiliated to Cornell's Laboratory for Research on the Structure of Matter."
+        "Arts and Sciences physics covers condensed matter, particle physics, and biophysics with faculty in Cornell's Laboratory of Atomic and Solid State Physics (LASSP)."
     ),
     'Physiology, Pathology and Related Sciences': (
-        'Human physiology, disease mechanisms, and pathobiology in MCB and integrative biology research labs.'
+        'Human physiology, disease mechanisms, and pathobiology in molecular and integrative biology research labs.'
     ),
     'Plant Sciences': (
         "CALS plant sciences spans crop genetics, horticulture, and microbial biology "
         "with field stations and Cornell AgriTech research facilities."
     ),
     'Political Science and Government': (
-        'Arts and Sciences political science combines American politics, comparative methods, and international relations with Perry World House and D.C. internship access.'
+        'Arts and Sciences political science combines American politics, comparative methods, and international relations with the Mario Einaudi Center for International Studies and Cornell in Washington.'
     ),
     'Psychology, General': (
         'Arts and Sciences psychology is among the largest majors, with research tracks in cognitive, developmental, social, and clinical science in campus psychology labs.'
     ),
     'Public Health': (
-        'Weill Cornell and Nursing public-health coursework spans epidemiology, biostatistics, and health policy with Cornell Medicine population-health research.'
+        "Cornell's Master of Public Health program spans epidemiology, biostatistics, and health policy with Weill Cornell Medicine population-health research."
     ),
     'Public Policy Analysis': (
-        'Fels Institute and SP2 policy programs analyze housing, education, and health policy with Ithaca practitioner faculty and capstone projects.'
+        'Cornell Jeb E. Brooks School of Public Policy programs analyze housing, education, and health policy with the Cornell Institute for Public Affairs and Ithaca practitioner faculty.'
     ),
     'Real Estate': (
         "Johnson's real-estate program combines finance, development, and urban economics with Ithaca and New York City market case studies."
     ),
     'Religion/Religious Studies': (
-        "Arts and Sciences religious studies examines world religions, theology, and religion-and-culture with the Cornell Department of Religious Studies' global faculty."
+        "Arts and Sciences religious studies examines world religions, theology, and religion-and-culture across an interdisciplinary program with global faculty."
     ),
     'Research and Experimental Psychology': (
         "Laboratory-based psychology at Arts and Sciences uses behavioral, cognitive, and neuroscience methods in Cornell's psychology department research institutes."
     ),
     'Rhetoric and Composition/Writing Studies': (
-        'Arts and Sciences writing and rhetoric courses support Kelly Writers House programming and professional communication across disciplines.'
+        "Arts and Sciences writing and rhetoric courses support the John S. Knight Institute for Writing in the Disciplines and professional communication across fields."
     ),
     'Romance Languages, Literatures, and Linguistics': (
         "French, Spanish, and Italian language and literature at Arts and Sciences include study-abroad and translation workshops through Cornell's language departments."
@@ -342,26 +352,26 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         'Arts and Sciences interdisciplinary social-science foundations span economics, sociology, and government before students declare a major.'
     ),
     'Social Sciences, Other': (
-        'Interdisciplinary social-science coursework at Arts and Sciences and SP2 integrates policy analysis, urban studies, and community-engaged research.'
+        'Interdisciplinary social-science coursework at Arts and Sciences integrates policy analysis, urban studies, and community-engaged research.'
     ),
     'Sociology': (
-        'Arts and Sciences sociology examines urban inequality, health disparities, and social networks with Ithaca community-based research and the Cornell Population Studies Center.'
+        'Arts and Sciences sociology examines urban inequality, health disparities, and social networks with Ithaca community-based research and the Cornell Population Center.'
     ),
     'Statistics': (
         'Arts and Sciences and Johnson statistics training covers inference, Bayesian methods, and high-dimensional data for finance, biostatistics, and data-science careers.'
     ),
     'Sustainability Studies': (
         "Interdisciplinary sustainability coursework spans CALS, AAP design studios, "
-        "and Cornell's Atkinson Center for Sustainability research initiatives."
+        "and the Cornell Atkinson Center for Sustainability research initiatives."
     ),
     'Systems Engineering': (
-        "Cornell Engineering systems engineering models complex health-care, transportation, and defense systems with Cornell's GRASP robotics and medical-device groups."
+        "Cornell Engineering systems engineering models complex health-care, transportation, and defense systems in the Systems Engineering program's research groups."
     ),
     'Veterinary Biomedical and Clinical Sciences': (
         'Cornell Vet biomedical sciences covers comparative pathology, infectious disease, and translational research at the College of Veterinary Medicine.'
     ),
     'Veterinary Medicine': (
-        "Cornell Vet's VMD curriculum moves from animal health sciences to extensive clinical training at New Bolton Center — the only private vet school developed in association with a medical school."
+        "Cornell Vet's D.V.M. curriculum moves from animal health sciences to extensive clinical training at the Cornell University Hospital for Animals in Ithaca."
     ),
     'Visual and Performing Arts, Other': (
         "AAP and Arts and Sciences visual and performing arts span studio practice, critical theory, and Cornell's Schwartz Center for the Performing Arts."
@@ -394,7 +404,7 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "The College of Veterinary Medicine's four-year D.V.M. — a top-ranked professional program in veterinary clinical and biomedical science."
     ),
     'cornell-economics-bs': (
-        '— micro, macro, econometrics and economic policy.'
+        'Micro, macro, econometrics and economic policy in the College of Arts and Sciences.'
     ),
     'cornell-electrical-computer-eng-bs': (
         'Electrical and computer engineering — circuits, signals, devices, computer systems and communications.'
