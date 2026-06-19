@@ -43,7 +43,7 @@ export default function AcademicTabBar({
   }
 
   return (
-    <div ref={ref} role="tablist" aria-label="Academic sections" className="mb-5 flex gap-1.5 overflow-x-auto no-scrollbar">
+    <div ref={ref} role="tablist" aria-label="Academic sections" className="mb-5 flex justify-center gap-1.5 overflow-x-auto no-scrollbar">
       {SUBS.map((s, idx) => {
         const Icon = s.icon
         const active = sub === s.key

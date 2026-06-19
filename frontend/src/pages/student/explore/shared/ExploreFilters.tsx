@@ -194,11 +194,11 @@ export default function ExploreFilters({ universities, filters, onChange }: Prop
 
   return (
     <div className="mb-4">
-      {/* Row 1: traditional filters (larger controls — Spec 2026-06-14). */}
-      <div className="flex items-center gap-2 flex-wrap">
+      {/* Row 1: filters (larger controls — Spec 2026-06-14; centered 2026-06-19). */}
+      <div className="flex items-center justify-center gap-2 flex-wrap">
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground/70 uppercase tracking-wider mr-1">
           <Filter size={13} />
-          Traditional filters
+          Filters
         </span>
 
         <FilterDropdown
@@ -284,7 +284,7 @@ export default function ExploreFilters({ universities, filters, onChange }: Prop
         {activeCount > 0 && (
           <button
             onClick={clearAll}
-            className="inline-flex items-center gap-1 text-[11px] text-foreground/70 hover:text-foreground ml-auto"
+            className="inline-flex items-center gap-1 text-[11px] text-foreground/70 hover:text-foreground"
           >
             <X size={12} /> Clear all
           </button>
@@ -292,7 +292,7 @@ export default function ExploreFilters({ universities, filters, onChange }: Prop
       </div>
 
       {/* Row 2: boolean toggle pills */}
-      <div className="flex flex-wrap items-center gap-2 mt-2">
+      <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
         <TogglePill label="Open for applications" active={filters.appOpen} onClick={() => toggleBool('appOpen')} />
         <TogglePill label="International friendly" active={filters.international} onClick={() => toggleBool('international')} />
         <TogglePill label="Study abroad" active={filters.studyAbroad} onClick={() => toggleBool('studyAbroad')} />
@@ -301,7 +301,7 @@ export default function ExploreFilters({ universities, filters, onChange }: Prop
 
       {/* Active filter chip review */}
       {activeCount > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2">
           {(['country', 'setting', 'type', 'degreeLevel', 'deliveryFormat',
              'subjects', 'industries', 'satTier', 'tuitionTier'] as const).flatMap(key =>
             (filters[key] as string[]).map(value => (
