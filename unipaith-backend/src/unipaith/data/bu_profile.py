@@ -161,6 +161,21 @@ _PEER_SIGNATURES: tuple[str, ...] = (
     "Chesapeake",
     "Writing Seminars",
     "Medill",  # Northwestern's journalism school — must never reappear on a BU PR row (buprof11)
+    # buprof12 (2026-06-19): Penn/Harvard/Cornell units copied into BU CAS + Engineering
+    # descriptions that the denylist above missed. BU's engineering school is the
+    # "College of Engineering" (never "SEAS"); it has no GRASP/Singh/Warren/Perry World
+    # House. NOTE: a denylist is incomplete by construction (SKILL miss #8 prescribes a
+    # positive allowlist against BU's org chart) — this only blocks the known regressions.
+    "SEAS ",
+    " SEAS",
+    "GRASP",
+    "Perry World House",
+    "Singh Center",
+    "Warren Center",
+    "Graduate School of Design",
+    "upstate New York",
+    "Computing & Information Sciences",
+    "University CIS",
 )
 
 _TEMPLATE_STUB_RE = re.compile(
