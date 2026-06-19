@@ -22,10 +22,10 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision = "schol1a2b3c4d"
-# Re-pointed uclaprof5 → stanfordprof11 to resolve the dual head from a concurrent
-# Stanford-enrichment migration (both branched off uclaprof5). The table is purely
-# additive, so chaining after stanfordprof11 is safe.
-down_revision = "stanfordprof11"
+# Re-pointed to chain after each concurrent head as it landed on main
+# (uclaprof5 → stanfordprof11 → progprefbf1). The table is purely additive, so
+# chaining after the latest head is always safe.
+down_revision = "progprefbf1"
 branch_labels = None
 depends_on = None
 
