@@ -685,7 +685,7 @@ _CATALOG: list[tuple] = [
     ("bu-academics-gms-oral-biology", "GMS", "PhD", "phd", "Programs", "on_campus", 60, "https://www.bu.edu/academics/gms/programs/oral-biology/"),
     ("bu-academics-gms-pharmacology-experimental-therapeutics", "GMS", "PhD", "phd", "Programs", "on_campus", 60, "https://www.bu.edu/academics/gms/programs/pharmacology-experimental-therapeutics/"),
     ("bu-academics-gms-physiology-biophysics", "GMS", "PhD", "phd", "Programs", "on_campus", 60, "https://www.bu.edu/academics/gms/programs/physiology-biophysics/"),
-    ("bu-academics-gms-virology-immunology-microbiology-program", "GMS", "PhD, MD/PhD", "professional", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/virology-immunology-microbiology-program/"),
+    ("bu-academics-gms-virology-immunology-microbiology-program", "GMS", "PhD", "phd", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/virology-immunology-microbiology-program/"),
     ("bu-academics-grs-african-american-studies", "GRS", "MA", "masters", "Programs", "on_campus", 24, "https://www.bu.edu/academics/grs/programs/african-american-studies/"),
     ("bu-academics-grs-anthropology-ma", "GRS", "MA", "masters", "Programs", "on_campus", 24, "https://www.bu.edu/academics/grs/programs/anthropology/ma/"),
     ("bu-academics-grs-archaeology-ma", "GRS", "MA", "masters", "Programs", "on_campus", 24, "https://www.bu.edu/academics/grs/programs/archaeology/ma/"),
@@ -969,6 +969,15 @@ _PROGRAM_NAME_OVERRIDES: dict[str, str] = {
     ),
     "bu-academics-wheelock-bilingual-education-bs-edm-tesol-applied-linguistics": (
         "Bachelor of Science in Bilingual Education"
+    ),
+    # --- Law J.D./M.A. duals: real names (never the bare "Jdma <field>" URL token). ---
+    "bu-academics-law-jdma-english": "Juris Doctor / Master of Arts in English",
+    "bu-academics-law-jdma-history": "Juris Doctor / Master of Arts in History",
+    "bu-academics-law-jdma-ir": "Juris Doctor / Master of Arts in International Relations",
+    "bu-academics-law-jdma-philosophy": "Juris Doctor / Master of Arts in Philosophy",
+    # GMS virology/immunology/microbiology PhD — never the bare "PhD, MD/PhD" credential combo.
+    "bu-academics-gms-virology-immunology-microbiology-program": (
+        "Doctor of Philosophy in Virology, Immunology & Microbiology"
     ),
     # --- Dual / joint / accelerated degrees: real names (never a bare credential combo). ---
     "bu-academics-busm-combined-mdjd": "Doctor of Medicine / Juris Doctor (MD/JD)",
@@ -1374,12 +1383,12 @@ def _field_from_url(url: str, *, strip_degree: bool = True) -> str:
 
 
 def _department_for(field: str, school: str) -> str:
-    if not field:
-        return school
-    base = field.split(" — ")[0]
-    if base.lower() in school.lower() or school.lower() in base.lower():
-        return school
-    return base
+    # The owning school/college is the real, verified grouping unit. The bare field echoed
+    # from the program name is NOT a real owning department (miss #2 department bullet — a
+    # one-off-per-row field echo while a real owning school is known is the BU defect), so
+    # always group under the real college unless a per-slug _DEPARTMENT_OVERRIDES gives a
+    # more specific verified unit (applied later, wins).
+    return school
 
 
 def _use_url_name(legacy: str) -> bool:
