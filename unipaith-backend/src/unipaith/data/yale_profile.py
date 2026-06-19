@@ -1409,11 +1409,17 @@ def _normalize_program(spec: dict, field_name: str | None = None) -> None:
 
 
 def _ug_program_name(field_name: str, degree_label: str) -> str:
-    """Disambiguate Yale College majors by credential (B.A. vs B.S.)."""
-    if degree_label.startswith("B.S."):
+    """Disambiguate Yale College majors by the institution's conferred designation.
+
+    The possessive award-level form ("Bachelor's in {field}") is a name-realness defect
+    even on a real field (SKILL miss #2 — the conferred designation is part of the real
+    name; gold MIT = 0%). Majors Yale offers as "B.A. or B.S." are all quantitative /
+    science / engineering fields that confer a Bachelor of Science track (the verbatim
+    catalog label encodes that the B.S. is offered), so they take the conferred B.S.
+    designation under one convention rather than the possessive umbrella.
+    """
+    if degree_label.startswith("B.S.") or "B.A. or B.S." in degree_label:
         return f"Bachelor of Science in {field_name}"
-    if "B.A. or B.S." in degree_label:
-        return f"Bachelor's in {field_name}"
     return f"Bachelor of Arts in {field_name}"
 
 
@@ -1619,6 +1625,28 @@ _GRAD_PROGRAMS: list[tuple[str, str, str, int, str, str]] = [
 # Yale Graduate School of Arts and Sciences — arts-&-sciences Ph.D./terminal-master's
 # programs (the professional-school doctorates above are not duplicated here).
 # (name, degree_type). Verbatim from gsas.yale.edu/programs-of-study.
+# Conferred designation for each terminal master's GSAS offers (the possessive
+# "Master's in {field}" form is a name-realness defect — SKILL miss #2). Verified June
+# 2026 against Yale sources: African / East Asian / European & Russian Studies and the
+# IDE program confer the M.A. (gsas.yale.edu, macmillan.yale.edu); Archaeological Studies
+# confers the M.A. (archaeology.yale.edu/academics/ma-degree-archaeological-studies);
+# Statistics confers the 8-course terminal M.A. (statistics.yale.edu/graduates/
+# terminal-mams-programs); Personalized Medicine and Applied Engineering confers the M.S.
+# (engineering.yale.edu — Biomedical Engineering PMAE M.S. program).
+_GSAS_MASTERS_DESIGNATION: dict[str, str] = {
+    "African Studies": "Master of Arts in African Studies",
+    "Archaeological Studies": "Master of Arts in Archaeological Studies",
+    "East Asian Studies": "Master of Arts in East Asian Studies",
+    "European and Russian Studies": "Master of Arts in European and Russian Studies",
+    "International and Development Economics": (
+        "Master of Arts in International and Development Economics"
+    ),
+    "Personalized Medicine and Applied Engineering": (
+        "Master of Science in Personalized Medicine and Applied Engineering"
+    ),
+    "Statistics": "Master of Arts in Statistics",
+}
+
 _GSAS_PROGRAMS: list[tuple[str, str]] = [
     ("African Studies", "masters"),
     ("American Studies", "phd"),
@@ -1733,7 +1761,14 @@ def _build_catalog() -> list[dict]:
             continue
         seen.add(slug)
         dept = _department_for(name, _GSAS)
-        pname = disambiguate_program_name(name, dtype)
+        # PhD rows take the conferred "Doctor of Philosophy in {field}" from the shared
+        # helper; terminal master's rows take Yale's verified conferred designation
+        # (M.A./M.S., sourced below) rather than the possessive "Master's in {field}"
+        # form, which is a name-realness defect (SKILL miss #2; gold MIT = 0%).
+        if dtype == "masters":
+            pname = _GSAS_MASTERS_DESIGNATION[name]
+        else:
+            pname = disambiguate_program_name(name, dtype)
         fmt = "in_person"
         spec = {
             "slug": slug,
