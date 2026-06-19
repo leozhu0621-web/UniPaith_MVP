@@ -6,6 +6,87 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-19 — Run 60 (FULL-FLEET sweep of all 300 live · run-59 build-artifact tier RESOLVED · 1 rule change — the URL-SLUG-leak build-artifact tell)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+using the repo's own `profile_standard/anti_stub.py` analyzer (`analyze` + `machine_artifacts`) over every
+one of the 40 catalogs-with-programs, plus structure heuristics (dept-echo, rollup-name/dept, CIP-code,
+concentration-split, leading-URL-slug), campus-photo count, posts feed, and the 12+260 seed floor. Fleet
+grew 150→300 (the #813 bulk-seed). gold MIT control clean.
+
+**Merged since run 59 (live `git log origin/main`):** the run-59 CRITICAL build-artifact tier was REPAIRED —
+#823/#822 UCLA, #826 Michigan, #827/#803 Stanford, #802 UW (de-fabricate build-artifact descriptions →
+verified per-credential prose); #825 derive ProgramPreference fleet-wide (matcher program→student fires);
+#824 reconcile skills with AI-Structure; #813 seed 150 more universities; #814 alembic dual-head merge.
+No profile PRs left stranded-open that I could see.
+
+**Findings (live API + the repo's analyzer):**
+1. **🟢 WIN — run-59 CRITICAL build-artifact-assembly tier FULLY RESOLVED live.** UCLA (373), UW-Seattle
+   (365), Michigan (379), Stanford (178) each shipped ~98% "Catalog entry <hex>:" + division-frame +
+   namesake junk last run; all four now de-fabricated live (real per-credential names, real owning
+   departments/colleges, field-specific researched prose), **0 build artifacts** (`machine_artifacts`=0
+   each), all four in `CERTIFIED_CLEAN`. Verified row-by-row. The prior CRITICAL #1 + #2 (build-artifact
+   + Stanford) are cleared.
+2. **🔴 NEW gap-class (drives the rule change): a leading URL-SLUG leak in `description_text`, live on
+   CERTIFIED_CLEAN catalogs, invisible to the built gate.** USC (118 rows / 19%), NYU (41 / 8%), UIUC
+   (33 / 8%) ship descriptions OPENING with the program's kebab-case catalog slug
+   (`"usc-american-studies-and-ethnicity-ba — African American Studies is…"`,
+   `"anthropology-classical-civilization — …"`, `"uiuc-agricultural-biological-engineering-bs — …"`).
+   It is a build artifact leaked to the page — and **0 of all 192 rows are caught by
+   `machine_artifacts`** (the slug carries no "Catalog entry" string and no a-f+digit hex run, so
+   `_ARTIFACT_RES` returns 0), so **USC + UIUC carry it WHILE CERTIFIED_CLEAN**. Confirmed in the SOURCE
+   module (`usc_profile.py` lines 1224+), not a render bug.
+3. **Purdue STILL ships 52 cross-institution-copy peer signatures live** (Chesapeake/SAS/Writing
+   Seminars/Perelman on Purdue programs) + 82% verbatim-across-levels + 10% rollup — unrepaired since
+   run 25. Now the top CRITICAL (build-artifact tier cleared). BU peer-signatures + dept-echo 80% persist.
+4. **Wisconsin (94 fields) + Northwestern (59 fields) carry shared-leading-body / per-field stamping**
+   (verbatim 0%, so a suffix-diversifier evades the full-string count — miss #8). BOTH were MIS-GRADED
+   "genuinely clean" in the run-59 backlog; corrected to HIGH this run. (A grader-process miss, not an
+   enricher rule gap — the analyzer's `shared_leading_body` flags them.)
+5. **Documented structure tiers persist (no new rule — already covered):** rollup names (Berkeley 37 /
+   Harvard 34 / Columbia 33 / Cornell 32 / Penn 26 %), verbatim-across-levels (Purdue 82 / Berkeley 81 /
+   Cornell 76 / Penn 74 / UChicago 50 / Rice 43 %), Penn literal "(CIP NN.NN)" 11%, Yale prefix-doubling
+   70%, field-echo dept (USC real-defect 79% one-off; Cornell/Columbia/Penn echo the CIP rollup). The
+   dept-echo heuristic OVER-counts on small real-department catalogs (Caltech 88 / Princeton 74 / Harvard
+   68 / Duke 67 / Rice 64 % — "Chemistry"/"Anthropology" IS the real owning dept) — recorded as artifact.
+6. **Matcher-side pass:** `cip_code` is NOT exposed on the public `GET /programs/{id}` schema, so it can't
+   be audited via the live API (backend-only — noted, not a finding). `program_preferences` is off the
+   public API too; #825 backfilled it fleet-wide (`derive ProgramPreference`), so the program→student
+   direction now fires — addressed by the doer. Rankings surface in `ranking_data` (display) only.
+7. **Seed floor:** 12 five-program seeds = 5/5 empty `description_text` + null `department` (7 with <4
+   photos: Florida 1, Emory/Notre Dame 2, …); ~260 zero-program institution stubs (0 posts, 33 zero-photo
+   — broken explore card + hero). Seeding is external; these are the enrichment backlog (#15/#16).
+
+**Diagnosis:** Finding 2 is a genuine NEW gap-class. Applying the "default-flipped" test: the build-artifact
+rule's SPIRIT covers "a leading internal token / any ingest/database id", but its ENUMERATED tells + the
+built `_ARTIFACT_RES` regex key only on `Catalog entry`/hex, and the URL-slug form provably evades the gate
+(0/192 caught) and shipped live on 2 CERTIFIED_CLEAN catalogs — so this is a TIGHTENING of an existing gate
+with new live evidence, not a duplicate. Findings 1/3/4/5/7 are WIN / BAD-DATA / backlog-correction in
+documented classes → backlog only, no rule. No display bug. No finding argued for loosening an invariant.
+
+**Rulebook changes: 1 of ≤3.** Extended the miss-#8 build-artifact "leading internal token" tell (part a)
+AND the §9 pre-ship scan to ALSO enumerate + strip + FAIL on a **leading kebab-case URL slug**
+(`^[a-z0-9]+(-[a-z0-9]+){2,}\s*[—–-]\s`), noting it is human-readable and passes the hex-keyed
+`machine_artifacts` gate untouched (live: 19%/8%/8% across three catalogs, 2 certified, 0 caught). Cited
+the live evidence; no school name baked into SKILL.md. No invariant loosened (a tightening). Post-edit
+re-read: misses still numbered sequentially, §8.5/§9 coherent, invariants intact.
+
+**Flag for human (code, carried + strengthened):** `anti_stub.py` is description-FORM-only and was defeated
+AGAIN by the slug form. Needs (a) the URL-slug pattern in `machine_artifacts`/`_ARTIFACT_RES` + a slug-strip
+before the share counts; (b) the STRUCTURE metrics §8.5 has prescribed since run 58 but that remain unbuilt
+(dept-echo/rollup/CIP-code/concentration-split); (c) USC + UIUC removed from `CERTIFIED_CLEAN` until the
+slug is stripped. Plus the standing auto-merge dual-head race (single-head assertion evaluates own base, not
+merge result). None grader-editable.
+
+**Backlog delta:** rewritten worst-first against the live 300-fleet. CRITICAL re-ranked — build-artifact
+tier (old #1/#2 UCLA/UW/Michigan/Stanford) RESOLVED → CLEANUP; Purdue promoted to #1; NEW CRITICAL #2 =
+URL-slug tier (USC/NYU/UIUC); BU #3. HIGH re-measured + renumbered; NEW HIGH Wisconsin #10 + Northwestern
+#11 (corrected from run-59 "clean"). MEDIUM seed bands updated for the 300-fleet (12 + ~260). Stanford +
+UCLA/UW/Michigan moved to CLEANUP-RESOLVED.
+
+**Invariants:** all intact; the SKILL.md edit adds a build-artifact tell (tightening; loosens nothing).
+Health check: see below.
+
 ## 2026-06-18 — Run 59 (FULL-FLEET sweep of all 150 live · graded the interval's profile PRs · 1 rule change — the BUILD-ARTIFACT ASSEMBLY description class)
 
 **Institutions audited: ALL 150 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
