@@ -700,10 +700,21 @@ Concrete misses observed in the first runs — each broke a real page:
      "uniquely described" while not one was researched). Any of these three tells is a
      hard FAIL, independent of every form/share metric:
      (a) a LEADING INTERNAL TOKEN — `"Catalog entry <hex/uuid>:"` (frequently DOUBLED:
-       `"Catalog entry 5686…: Catalog entry 5686…:"`), a bare UUID/hash, or any
-       ingest/database id. No real catalog prints a row id in a degree description; a
-       leading id is a build artifact leaked to the live page, and (being a per-row
-       nonce) it is ALSO the gate-evasion that hides parts (b)/(c) from the share count.
+       `"Catalog entry 5686…: Catalog entry 5686…:"`), a bare UUID/hash, **a leading
+       kebab-case URL SLUG** (`"usc-american-studies-and-ethnicity-ba — …"`,
+       `"anthropology-classical-civilization — …"`, `"uiuc-agricultural-biological-
+       engineering-bs — …"`), or any ingest/database id. No real catalog prints a row
+       id — or its catalog/URL slug — in a degree description; a leading id/slug is a
+       build artifact leaked to the live page, and (being a per-row token) it is ALSO
+       the gate-evasion that hides parts (b)/(c) from the share count. **The URL-slug
+       form is the live tell THIS run, and it is MORE dangerous than the hex nonce
+       because it is human-readable and passes the hex-keyed `machine_artifacts` gate
+       untouched: it carries no "Catalog entry" string and no a-f+digit hex run, so the
+       built `_ARTIFACT_RES` returns 0 on it while it ships live — observed on
+       CERTIFIED_CLEAN catalogs (a 19%-of-rows / 8% / 8% slug-prefix leak across three
+       certified catalogs, 0 of them caught by `machine_artifacts`). Treat a leading
+       kebab slug exactly like the hex nonce: STRIP it before the share counts and FAIL
+       on it.**
      (b) a SCHOOL/DIVISION TEMPLATE FRAME — `"{Univ}'s {School} draws on {Department/
        Division of X} for coursework and research on the {city} campus. Published through
        {Univ}'s {School} on the {city} campus."` — pure classification boilerplate (the
@@ -817,8 +828,10 @@ Concrete misses observed in the first runs — each broke a real page:
      - **Also FAIL the BUILD-ARTIFACT ASSEMBLY form (miss #8 build-artifact sub-bullet) —
        and STRIP its per-row id NONCE before the verbatim/shared-body counts above, or the
        nonce zeroes them.** Scan every `description_text` and FAIL on (i) a LEADING internal
-       token — `"Catalog entry <hex/uuid>:"` (often DOUBLED), a bare UUID/hash, any ingest
-       id; (ii) the `"{Univ}'s {School} draws on {Dept/Division} for coursework and research
+       token — `"Catalog entry <hex/uuid>:"` (often DOUBLED), a bare UUID/hash, **a leading
+       kebab-case URL slug (`^[a-z0-9]+(-[a-z0-9]+){2,}\s*[—–-]\s` — e.g.
+       `"usc-american-studies-and-ethnicity-ba — …"`), which the hex-keyed gate MISSES**,
+       any ingest id; (ii) the `"{Univ}'s {School} draws on {Dept/Division} for coursework and research
        on the {city} campus. Published through {Univ}'s {School} on the {city} campus."`
        division-frame boilerplate (a classification stub — also re-run the miss-#8 geography
        scan on its "{city} campus" tail); (iii) a NAMESAKE-SCRAPE paragraph (a journal /
