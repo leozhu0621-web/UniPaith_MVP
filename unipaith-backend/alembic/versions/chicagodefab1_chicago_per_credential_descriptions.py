@@ -12,16 +12,16 @@ Re-applies ``chicago_profile.apply()`` after the data module was de-fabricated
   slugs and the real published degree catalog stands on its own (enrich-profile
   miss #2: a de-fabrication legitimately SHRINKS the count toward the real catalog).
 
-This migration ALSO merges the two concurrent heads that were live on ``main``
-(``purduedefab1`` from the Purdue de-fabrication and ``schol1a2b3c4d`` from the
-scholarships table) into a single head, unblocking deploys.
+This migration ALSO unifies the two concurrent heads currently live on ``main``
+(``purdueprof12`` and ``purduereapply1`` — both branched off ``purduescholmerge1``
+from concurrent auto-merges) into a single head, unblocking deploys.
 
 ``backfill_program_preferences`` re-derives a grounded target-applicant row for every
 remaining UChicago program (skipping any claimed/first-party row), so the program ->
 student match keeps firing after the catalog change.
 
 Revision ID: chicagodefab1
-Revises: purduedefab1, schol1a2b3c4d
+Revises: purdueprof12, purduereapply1
 Create Date: 2026-06-19
 """
 
@@ -36,7 +36,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "chicagodefab1"
-down_revision = ("purduedefab1", "schol1a2b3c4d")
+down_revision = ("purdueprof12", "purduereapply1")
 branch_labels = None
 depends_on = None
 
