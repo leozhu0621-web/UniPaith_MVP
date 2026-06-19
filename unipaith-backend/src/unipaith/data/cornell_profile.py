@@ -1476,6 +1476,23 @@ _ROLLUP_RESOLVE: dict[str, str] = {
     "Psychology, General": "Psychology",
     "Drama/Theatre Arts and Stagecraft": "Performing and Media Arts",
     "Hospitality Administration/Management": "Hospitality Management",
+    # Federal CIP-taxonomy titles resolved to Cornell's real degree/field names
+    # (verified against courses.cornell.edu / department pages, cornelldecontam1).
+    "Architectural History, Criticism, and Conservation": (
+        "History of Architecture and Urban Development"
+    ),
+    "Biomathematics, Bioinformatics, and Computational Biology": (
+        "Computational Biology"
+    ),
+    "Foods, Nutrition, and Related Services": "Nutritional Sciences",
+    "Linguistic, Comparative, and Related Language Studies and Services": "Linguistics",
+    "Ecology, Evolution, Systematics, and Population Biology": (
+        "Ecology and Evolutionary Biology"
+    ),
+    "Electrical, Electronics, and Communications Engineering": (
+        "Electrical and Computer Engineering"
+    ),
+    "Human Development, Family Studies, and Related Services": "Human Development",
 }
 
 # Federal "Other"/"General" buckets (and fields fully covered by a real flagship/other
@@ -1502,6 +1519,8 @@ _ROLLUP_DROP: frozenset[str] = frozenset({
     "Film/Video and Photographic Arts",  # covered by Performing and Media Arts
     "Visual and Performing Arts, Other",
     "Health Professions and Related Clinical Sciences, Other",
+    # Federal clinical-professions bucket with no single named Cornell degree (Weill-side).
+    "Allied Health Diagnostic, Intervention, and Treatment Professions",
 })
 
 # (rollup title, degree_type) → level-specific real Cornell degree name.
