@@ -1,0 +1,596 @@
+{
+  "_meta": {
+    "source": "Decoded from the Field-of-Study CSV naming grammar (data.yaml omits these columns)",
+    "keyed_by": "raw CSV column name",
+    "columns": 178,
+    "grammar": {
+      "DEBT_<pop>_<loan>_<filter>_<stat>": {
+        "pop": {
+          "ALL": "all students",
+          "MALE": "men",
+          "NOTMALE": "women / not-men",
+          "NOMALE": "women / not-men",
+          "PELL": "Pell recipients",
+          "NOPELL": "non-Pell students"
+        },
+        "loan": {
+          "STGP": "Stafford + Grad PLUS loans",
+          "PP": "Parent PLUS loans"
+        },
+        "filter": {
+          "ANY": "any borrowers",
+          "EVAL": "evaluated cohort"
+        },
+        "stat": {
+          "N": "count",
+          "MEAN": "mean",
+          "MDN": "median",
+          "MDN10YRPAY": "median monthly payment on a 10-year plan"
+        }
+      },
+      "EARN_*": {
+        "work": {
+          "WNE": "working and not enrolled",
+          "NWNE": "not working and not enrolled",
+          "NE": "not enrolled"
+        },
+        "pop": {
+          "ALL": "all students",
+          "MALE": "men",
+          "NOTMALE": "women / not-men",
+          "NOMALE": "women / not-men",
+          "PELL": "Pell recipients",
+          "NOPELL": "non-Pell students"
+        },
+        "tokens": "MDN=median, P25/P75=percentiles, HI=highest credential, NAT=national, IN_STATE=in-state, <n>YR=years after completion"
+      },
+      "BBRR<n>_FED_COMP_<status>": {
+        "N": "cohort size",
+        "DFLT": "in default",
+        "DLNQ": "delinquent",
+        "FBR": "in forbearance",
+        "DFR": "in deferment",
+        "NOPROG": "not making progress",
+        "MAKEPROG": "making progress",
+        "PAIDINFULL": "paid in full",
+        "DISCHARGE": "discharged"
+      }
+    }
+  },
+  "fields": {
+    "UNITID": {
+      "description": "Institution unit ID (IPEDS)"
+    },
+    "OPEID6": {
+      "description": "6-digit Office of Postsecondary Education ID"
+    },
+    "INSTNM": {
+      "description": "Institution name"
+    },
+    "CONTROL": {
+      "description": "Control of institution (Public / Private nonprofit / Private for-profit)"
+    },
+    "MAIN": {
+      "description": "Main campus flag (1 = main campus)"
+    },
+    "CIPCODE": {
+      "description": "4-digit CIP code identifying the field of study"
+    },
+    "CIPDESC": {
+      "description": "CIP field-of-study description"
+    },
+    "CREDLEV": {
+      "description": "Credential level code (1 UG cert, 2 Associate, 3 Bachelor, 4 Post-bacc cert, 5 Master, 6 Doctoral, 7 First-professional, 8 Grad/prof cert)"
+    },
+    "CREDDESC": {
+      "description": "Credential level description"
+    },
+    "IPEDSCOUNT1": {
+      "description": "Number of awards (IPEDS completions, primary count)"
+    },
+    "IPEDSCOUNT2": {
+      "description": "Number of awards (IPEDS completions, secondary count)"
+    },
+    "DEBT_ALL_STGP_ANY_N": {
+      "description": "Debt — count of Stafford + Grad PLUS loans for all students (any borrowers)"
+    },
+    "DEBT_ALL_STGP_ANY_MEAN": {
+      "description": "Debt — mean of Stafford + Grad PLUS loans for all students (any borrowers)"
+    },
+    "DEBT_ALL_STGP_ANY_MDN": {
+      "description": "Debt — median of Stafford + Grad PLUS loans for all students (any borrowers)"
+    },
+    "DEBT_ALL_STGP_EVAL_N": {
+      "description": "Debt — count of Stafford + Grad PLUS loans for all students (evaluated cohort)"
+    },
+    "DEBT_ALL_STGP_EVAL_MEAN": {
+      "description": "Debt — mean of Stafford + Grad PLUS loans for all students (evaluated cohort)"
+    },
+    "DEBT_ALL_STGP_EVAL_MDN": {
+      "description": "Debt — median of Stafford + Grad PLUS loans for all students (evaluated cohort)"
+    },
+    "DEBT_ALL_PP_ANY_N": {
+      "description": "Debt — count of Parent PLUS loans for all students (any borrowers)"
+    },
+    "DEBT_ALL_PP_ANY_MEAN": {
+      "description": "Debt — mean of Parent PLUS loans for all students (any borrowers)"
+    },
+    "DEBT_ALL_PP_ANY_MDN": {
+      "description": "Debt — median of Parent PLUS loans for all students (any borrowers)"
+    },
+    "DEBT_ALL_PP_EVAL_N": {
+      "description": "Debt — count of Parent PLUS loans for all students (evaluated cohort)"
+    },
+    "DEBT_ALL_PP_EVAL_MEAN": {
+      "description": "Debt — mean of Parent PLUS loans for all students (evaluated cohort)"
+    },
+    "DEBT_ALL_PP_EVAL_MDN": {
+      "description": "Debt — median of Parent PLUS loans for all students (evaluated cohort)"
+    },
+    "DEBT_MALE_STGP_ANY_N": {
+      "description": "Debt — count of Stafford + Grad PLUS loans for men (any borrowers)"
+    },
+    "DEBT_MALE_STGP_ANY_MEAN": {
+      "description": "Debt — mean of Stafford + Grad PLUS loans for men (any borrowers)"
+    },
+    "DEBT_MALE_STGP_ANY_MDN": {
+      "description": "Debt — median of Stafford + Grad PLUS loans for men (any borrowers)"
+    },
+    "DEBT_MALE_STGP_EVAL_N": {
+      "description": "Debt — count of Stafford + Grad PLUS loans for men (evaluated cohort)"
+    },
+    "DEBT_MALE_STGP_EVAL_MEAN": {
+      "description": "Debt — mean of Stafford + Grad PLUS loans for men (evaluated cohort)"
+    },
+    "DEBT_MALE_STGP_EVAL_MDN": {
+      "description": "Debt — median of Stafford + Grad PLUS loans for men (evaluated cohort)"
+    },
+    "DEBT_MALE_PP_ANY_N": {
+      "description": "Debt — count of Parent PLUS loans for men (any borrowers)"
+    },
+    "DEBT_MALE_PP_ANY_MEAN": {
+      "description": "Debt — mean of Parent PLUS loans for men (any borrowers)"
+    },
+    "DEBT_MALE_PP_ANY_MDN": {
+      "description": "Debt — median of Parent PLUS loans for men (any borrowers)"
+    },
+    "DEBT_MALE_PP_EVAL_N": {
+      "description": "Debt — count of Parent PLUS loans for men (evaluated cohort)"
+    },
+    "DEBT_MALE_PP_EVAL_MEAN": {
+      "description": "Debt — mean of Parent PLUS loans for men (evaluated cohort)"
+    },
+    "DEBT_MALE_PP_EVAL_MDN": {
+      "description": "Debt — median of Parent PLUS loans for men (evaluated cohort)"
+    },
+    "DEBT_NOTMALE_STGP_ANY_N": {
+      "description": "Debt — count of Stafford + Grad PLUS loans for women / not-men (any borrowers)"
+    },
+    "DEBT_NOTMALE_STGP_ANY_MEAN": {
+      "description": "Debt — mean of Stafford + Grad PLUS loans for women / not-men (any borrowers)"
+    },
+    "DEBT_NOTMALE_STGP_ANY_MDN": {
+      "description": "Debt — median of Stafford + Grad PLUS loans for women / not-men (any borrowers)"
+    },
+    "DEBT_NOTMALE_STGP_EVAL_N": {
+      "description": "Debt — count of Stafford + Grad PLUS loans for women / not-men (evaluated cohort)"
+    },
+    "DEBT_NOTMALE_STGP_EVAL_MEAN": {
+      "description": "Debt — mean of Stafford + Grad PLUS loans for women / not-men (evaluated cohort)"
+    },
+    "DEBT_NOTMALE_STGP_EVAL_MDN": {
+      "description": "Debt — median of Stafford + Grad PLUS loans for women / not-men (evaluated cohort)"
+    },
+    "DEBT_NOTMALE_PP_ANY_N": {
+      "description": "Debt — count of Parent PLUS loans for women / not-men (any borrowers)"
+    },
+    "DEBT_NOTMALE_PP_ANY_MEAN": {
+      "description": "Debt — mean of Parent PLUS loans for women / not-men (any borrowers)"
+    },
+    "DEBT_NOTMALE_PP_ANY_MDN": {
+      "description": "Debt — median of Parent PLUS loans for women / not-men (any borrowers)"
+    },
+    "DEBT_NOTMALE_PP_EVAL_N": {
+      "description": "Debt — count of Parent PLUS loans for women / not-men (evaluated cohort)"
+    },
+    "DEBT_NOTMALE_PP_EVAL_MEAN": {
+      "description": "Debt — mean of Parent PLUS loans for women / not-men (evaluated cohort)"
+    },
+    "DEBT_NOTMALE_PP_EVAL_MDN": {
+      "description": "Debt — median of Parent PLUS loans for women / not-men (evaluated cohort)"
+    },
+    "DEBT_PELL_STGP_ANY_N": {
+      "description": "Debt — count of Stafford + Grad PLUS loans for Pell recipients (any borrowers)"
+    },
+    "DEBT_PELL_STGP_ANY_MEAN": {
+      "description": "Debt — mean of Stafford + Grad PLUS loans for Pell recipients (any borrowers)"
+    },
+    "DEBT_PELL_STGP_ANY_MDN": {
+      "description": "Debt — median of Stafford + Grad PLUS loans for Pell recipients (any borrowers)"
+    },
+    "DEBT_PELL_STGP_EVAL_N": {
+      "description": "Debt — count of Stafford + Grad PLUS loans for Pell recipients (evaluated cohort)"
+    },
+    "DEBT_PELL_STGP_EVAL_MEAN": {
+      "description": "Debt — mean of Stafford + Grad PLUS loans for Pell recipients (evaluated cohort)"
+    },
+    "DEBT_PELL_STGP_EVAL_MDN": {
+      "description": "Debt — median of Stafford + Grad PLUS loans for Pell recipients (evaluated cohort)"
+    },
+    "DEBT_PELL_PP_ANY_N": {
+      "description": "Debt — count of Parent PLUS loans for Pell recipients (any borrowers)"
+    },
+    "DEBT_PELL_PP_ANY_MEAN": {
+      "description": "Debt — mean of Parent PLUS loans for Pell recipients (any borrowers)"
+    },
+    "DEBT_PELL_PP_ANY_MDN": {
+      "description": "Debt — median of Parent PLUS loans for Pell recipients (any borrowers)"
+    },
+    "DEBT_PELL_PP_EVAL_N": {
+      "description": "Debt — count of Parent PLUS loans for Pell recipients (evaluated cohort)"
+    },
+    "DEBT_PELL_PP_EVAL_MEAN": {
+      "description": "Debt — mean of Parent PLUS loans for Pell recipients (evaluated cohort)"
+    },
+    "DEBT_PELL_PP_EVAL_MDN": {
+      "description": "Debt — median of Parent PLUS loans for Pell recipients (evaluated cohort)"
+    },
+    "DEBT_NOPELL_STGP_ANY_N": {
+      "description": "Debt — count of Stafford + Grad PLUS loans for non-Pell students (any borrowers)"
+    },
+    "DEBT_NOPELL_STGP_ANY_MEAN": {
+      "description": "Debt — mean of Stafford + Grad PLUS loans for non-Pell students (any borrowers)"
+    },
+    "DEBT_NOPELL_STGP_ANY_MDN": {
+      "description": "Debt — median of Stafford + Grad PLUS loans for non-Pell students (any borrowers)"
+    },
+    "DEBT_NOPELL_STGP_EVAL_N": {
+      "description": "Debt — count of Stafford + Grad PLUS loans for non-Pell students (evaluated cohort)"
+    },
+    "DEBT_NOPELL_STGP_EVAL_MEAN": {
+      "description": "Debt — mean of Stafford + Grad PLUS loans for non-Pell students (evaluated cohort)"
+    },
+    "DEBT_NOPELL_STGP_EVAL_MDN": {
+      "description": "Debt — median of Stafford + Grad PLUS loans for non-Pell students (evaluated cohort)"
+    },
+    "DEBT_NOPELL_PP_ANY_N": {
+      "description": "Debt — count of Parent PLUS loans for non-Pell students (any borrowers)"
+    },
+    "DEBT_NOPELL_PP_ANY_MEAN": {
+      "description": "Debt — mean of Parent PLUS loans for non-Pell students (any borrowers)"
+    },
+    "DEBT_NOPELL_PP_ANY_MDN": {
+      "description": "Debt — median of Parent PLUS loans for non-Pell students (any borrowers)"
+    },
+    "DEBT_NOPELL_PP_EVAL_N": {
+      "description": "Debt — count of Parent PLUS loans for non-Pell students (evaluated cohort)"
+    },
+    "DEBT_NOPELL_PP_EVAL_MEAN": {
+      "description": "Debt — mean of Parent PLUS loans for non-Pell students (evaluated cohort)"
+    },
+    "DEBT_NOPELL_PP_EVAL_MDN": {
+      "description": "Debt — median of Parent PLUS loans for non-Pell students (evaluated cohort)"
+    },
+    "DEBT_ALL_PP_ANY_MDN10YRPAY": {
+      "description": "Debt — median monthly payment on a 10-year plan of Parent PLUS loans for all students (any borrowers)"
+    },
+    "DEBT_ALL_PP_EVAL_MDN10YRPAY": {
+      "description": "Debt — median monthly payment on a 10-year plan of Parent PLUS loans for all students (evaluated cohort)"
+    },
+    "DEBT_ALL_STGP_ANY_MDN10YRPAY": {
+      "description": "Debt — median monthly payment on a 10-year plan of Stafford + Grad PLUS loans for all students (any borrowers)"
+    },
+    "DEBT_ALL_STGP_EVAL_MDN10YRPAY": {
+      "description": "Debt — median monthly payment on a 10-year plan of Stafford + Grad PLUS loans for all students (evaluated cohort)"
+    },
+    "EARN_COUNT_NWNE_HI_1YR": {
+      "description": "Earnings — count of students, not working and not enrolled, highest-credential graduates — 1 year(s) after completion"
+    },
+    "EARN_CNTOVER150_HI_1YR": {
+      "description": "Earnings — count of students, highest-credential graduates — 1 year(s) after completion"
+    },
+    "EARN_COUNT_WNE_HI_1YR": {
+      "description": "Earnings — count of students, working and not enrolled, highest-credential graduates — 1 year(s) after completion"
+    },
+    "EARN_MDN_HI_1YR": {
+      "description": "Earnings — median earnings of students, highest-credential graduates — 1 year(s) after completion"
+    },
+    "EARN_COUNT_NWNE_HI_2YR": {
+      "description": "Earnings — count of students, not working and not enrolled, highest-credential graduates — 2 year(s) after completion"
+    },
+    "EARN_CNTOVER150_HI_2YR": {
+      "description": "Earnings — count of students, highest-credential graduates — 2 year(s) after completion"
+    },
+    "EARN_COUNT_WNE_HI_2YR": {
+      "description": "Earnings — count of students, working and not enrolled, highest-credential graduates — 2 year(s) after completion"
+    },
+    "EARN_MDN_HI_2YR": {
+      "description": "Earnings — median earnings of students, highest-credential graduates — 2 year(s) after completion"
+    },
+    "BBRR2_FED_COMP_N": {
+      "description": "Repayment (federal loans, completers) 2 year(s) out — cohort size"
+    },
+    "BBRR2_FED_COMP_DFLT": {
+      "description": "Repayment (federal loans, completers) 2 year(s) out — in default"
+    },
+    "BBRR2_FED_COMP_DLNQ": {
+      "description": "Repayment (federal loans, completers) 2 year(s) out — delinquent"
+    },
+    "BBRR2_FED_COMP_FBR": {
+      "description": "Repayment (federal loans, completers) 2 year(s) out — in forbearance"
+    },
+    "BBRR2_FED_COMP_DFR": {
+      "description": "Repayment (federal loans, completers) 2 year(s) out — in deferment"
+    },
+    "BBRR2_FED_COMP_NOPROG": {
+      "description": "Repayment (federal loans, completers) 2 year(s) out — not making progress"
+    },
+    "BBRR2_FED_COMP_MAKEPROG": {
+      "description": "Repayment (federal loans, completers) 2 year(s) out — making progress"
+    },
+    "BBRR2_FED_COMP_PAIDINFULL": {
+      "description": "Repayment (federal loans, completers) 2 year(s) out — paid in full"
+    },
+    "BBRR2_FED_COMP_DISCHARGE": {
+      "description": "Repayment (federal loans, completers) 2 year(s) out — discharged"
+    },
+    "BBRR3_FED_COMP_N": {
+      "description": "Repayment (federal loans, completers) 3 year(s) out — cohort size"
+    },
+    "BBRR3_FED_COMP_DFLT": {
+      "description": "Repayment (federal loans, completers) 3 year(s) out — in default"
+    },
+    "BBRR3_FED_COMP_DLNQ": {
+      "description": "Repayment (federal loans, completers) 3 year(s) out — delinquent"
+    },
+    "BBRR3_FED_COMP_FBR": {
+      "description": "Repayment (federal loans, completers) 3 year(s) out — in forbearance"
+    },
+    "BBRR3_FED_COMP_DFR": {
+      "description": "Repayment (federal loans, completers) 3 year(s) out — in deferment"
+    },
+    "BBRR3_FED_COMP_NOPROG": {
+      "description": "Repayment (federal loans, completers) 3 year(s) out — not making progress"
+    },
+    "BBRR3_FED_COMP_MAKEPROG": {
+      "description": "Repayment (federal loans, completers) 3 year(s) out — making progress"
+    },
+    "BBRR3_FED_COMP_PAIDINFULL": {
+      "description": "Repayment (federal loans, completers) 3 year(s) out — paid in full"
+    },
+    "BBRR3_FED_COMP_DISCHARGE": {
+      "description": "Repayment (federal loans, completers) 3 year(s) out — discharged"
+    },
+    "EARN_COUNT_PELL_WNE_1YR": {
+      "description": "Earnings — count of Pell recipients, working and not enrolled — 1 year(s) after completion"
+    },
+    "EARN_PELL_WNE_MDN_1YR": {
+      "description": "Earnings — median earnings of Pell recipients, working and not enrolled — 1 year(s) after completion"
+    },
+    "EARN_COUNT_NOPELL_WNE_1YR": {
+      "description": "Earnings — count of non-Pell students, working and not enrolled — 1 year(s) after completion"
+    },
+    "EARN_NOPELL_WNE_MDN_1YR": {
+      "description": "Earnings — median earnings of non-Pell students, working and not enrolled — 1 year(s) after completion"
+    },
+    "EARN_COUNT_MALE_WNE_1YR": {
+      "description": "Earnings — count of men, working and not enrolled — 1 year(s) after completion"
+    },
+    "EARN_MALE_WNE_MDN_1YR": {
+      "description": "Earnings — median earnings of men, working and not enrolled — 1 year(s) after completion"
+    },
+    "EARN_COUNT_NOMALE_WNE_1YR": {
+      "description": "Earnings — count of women / not-men, working and not enrolled — 1 year(s) after completion"
+    },
+    "EARN_NOMALE_WNE_MDN_1YR": {
+      "description": "Earnings — median earnings of women / not-men, working and not enrolled — 1 year(s) after completion"
+    },
+    "EARN_COUNT_NE_3YR": {
+      "description": "Earnings — count of students, not enrolled — 3 year(s) after completion"
+    },
+    "EARN_NE_MDN_3YR": {
+      "description": "Earnings — median earnings of students, not enrolled — 3 year(s) after completion"
+    },
+    "EARN_COUNT_WNE_3YR": {
+      "description": "Earnings — count of students, working and not enrolled — 3 year(s) after completion"
+    },
+    "EARN_CNTOVER150_3YR": {
+      "description": "Earnings — count of students — 3 year(s) after completion"
+    },
+    "EARN_COUNT_PELL_NE_3YR": {
+      "description": "Earnings — count of Pell recipients, not enrolled — 3 year(s) after completion"
+    },
+    "EARN_PELL_NE_MDN_3YR": {
+      "description": "Earnings — median earnings of Pell recipients, not enrolled — 3 year(s) after completion"
+    },
+    "EARN_COUNT_NOPELL_NE_3YR": {
+      "description": "Earnings — count of non-Pell students, not enrolled — 3 year(s) after completion"
+    },
+    "EARN_NOPELL_NE_MDN_3YR": {
+      "description": "Earnings — median earnings of non-Pell students, not enrolled — 3 year(s) after completion"
+    },
+    "EARN_COUNT_MALE_NE_3YR": {
+      "description": "Earnings — count of men, not enrolled — 3 year(s) after completion"
+    },
+    "EARN_MALE_NE_MDN_3YR": {
+      "description": "Earnings — median earnings of men, not enrolled — 3 year(s) after completion"
+    },
+    "EARN_COUNT_NOMALE_NE_3YR": {
+      "description": "Earnings — count of women / not-men, not enrolled — 3 year(s) after completion"
+    },
+    "EARN_NOMALE_NE_MDN_3YR": {
+      "description": "Earnings — median earnings of women / not-men, not enrolled — 3 year(s) after completion"
+    },
+    "EARN_COUNT_NWNE_1YR": {
+      "description": "Earnings — count of students, not working and not enrolled — 1 year(s) after completion"
+    },
+    "EARN_COUNT_WNE_1YR": {
+      "description": "Earnings — count of students, working and not enrolled — 1 year(s) after completion"
+    },
+    "EARN_MDN_1YR": {
+      "description": "Earnings — median earnings of students — 1 year(s) after completion"
+    },
+    "EARN_GT_THRESHOLD_1YR": {
+      "description": "Earnings — count earning above the earnings threshold for students — 1 year(s) after completion"
+    },
+    "EARN_COUNT_HIGH_CRED_1YR": {
+      "description": "Earnings — count of students — 1 year(s) after completion"
+    },
+    "EARN_IN_STATE_1YR": {
+      "description": "Earnings — earnings metric for students, in-state — 1 year(s) after completion"
+    },
+    "EARN_COUNT_NWNE_4YR": {
+      "description": "Earnings — count of students, not working and not enrolled — 4 year(s) after completion"
+    },
+    "EARN_COUNT_WNE_4YR": {
+      "description": "Earnings — count of students, working and not enrolled — 4 year(s) after completion"
+    },
+    "EARN_MDN_4YR": {
+      "description": "Earnings — median earnings of students — 4 year(s) after completion"
+    },
+    "EARN_GT_THRESHOLD_4YR": {
+      "description": "Earnings — count earning above the earnings threshold for students — 4 year(s) after completion"
+    },
+    "EARN_COUNT_PELL_WNE_4YR": {
+      "description": "Earnings — count of Pell recipients, working and not enrolled — 4 year(s) after completion"
+    },
+    "EARN_PELL_WNE_MDN_4YR": {
+      "description": "Earnings — median earnings of Pell recipients, working and not enrolled — 4 year(s) after completion"
+    },
+    "EARN_COUNT_NOPELL_WNE_4YR": {
+      "description": "Earnings — count of non-Pell students, working and not enrolled — 4 year(s) after completion"
+    },
+    "EARN_NOPELL_WNE_MDN_4YR": {
+      "description": "Earnings — median earnings of non-Pell students, working and not enrolled — 4 year(s) after completion"
+    },
+    "EARN_COUNT_MALE_WNE_4YR": {
+      "description": "Earnings — count of men, working and not enrolled — 4 year(s) after completion"
+    },
+    "EARN_MALE_WNE_MDN_4YR": {
+      "description": "Earnings — median earnings of men, working and not enrolled — 4 year(s) after completion"
+    },
+    "EARN_COUNT_NOMALE_WNE_4YR": {
+      "description": "Earnings — count of women / not-men, working and not enrolled — 4 year(s) after completion"
+    },
+    "EARN_NOMALE_WNE_MDN_4YR": {
+      "description": "Earnings — median earnings of women / not-men, working and not enrolled — 4 year(s) after completion"
+    },
+    "EARN_COUNT_HIGH_CRED_4YR": {
+      "description": "Earnings — count of students — 4 year(s) after completion"
+    },
+    "EARN_IN_STATE_4YR": {
+      "description": "Earnings — earnings metric for students, in-state — 4 year(s) after completion"
+    },
+    "BBRR1_FED_COMP_N": {
+      "description": "Repayment (federal loans, completers) 1 year(s) out — cohort size"
+    },
+    "BBRR1_FED_COMP_DFLT": {
+      "description": "Repayment (federal loans, completers) 1 year(s) out — in default"
+    },
+    "BBRR1_FED_COMP_DLNQ": {
+      "description": "Repayment (federal loans, completers) 1 year(s) out — delinquent"
+    },
+    "BBRR1_FED_COMP_FBR": {
+      "description": "Repayment (federal loans, completers) 1 year(s) out — in forbearance"
+    },
+    "BBRR1_FED_COMP_DFR": {
+      "description": "Repayment (federal loans, completers) 1 year(s) out — in deferment"
+    },
+    "BBRR1_FED_COMP_NOPROG": {
+      "description": "Repayment (federal loans, completers) 1 year(s) out — not making progress"
+    },
+    "BBRR1_FED_COMP_MAKEPROG": {
+      "description": "Repayment (federal loans, completers) 1 year(s) out — making progress"
+    },
+    "BBRR1_FED_COMP_PAIDINFULL": {
+      "description": "Repayment (federal loans, completers) 1 year(s) out — paid in full"
+    },
+    "BBRR1_FED_COMP_DISCHARGE": {
+      "description": "Repayment (federal loans, completers) 1 year(s) out — discharged"
+    },
+    "BBRR4_FED_COMP_N": {
+      "description": "Repayment (federal loans, completers) 4 year(s) out — cohort size"
+    },
+    "BBRR4_FED_COMP_DFLT": {
+      "description": "Repayment (federal loans, completers) 4 year(s) out — in default"
+    },
+    "BBRR4_FED_COMP_DLNQ": {
+      "description": "Repayment (federal loans, completers) 4 year(s) out — delinquent"
+    },
+    "BBRR4_FED_COMP_FBR": {
+      "description": "Repayment (federal loans, completers) 4 year(s) out — in forbearance"
+    },
+    "BBRR4_FED_COMP_DFR": {
+      "description": "Repayment (federal loans, completers) 4 year(s) out — in deferment"
+    },
+    "BBRR4_FED_COMP_NOPROG": {
+      "description": "Repayment (federal loans, completers) 4 year(s) out — not making progress"
+    },
+    "BBRR4_FED_COMP_MAKEPROG": {
+      "description": "Repayment (federal loans, completers) 4 year(s) out — making progress"
+    },
+    "BBRR4_FED_COMP_PAIDINFULL": {
+      "description": "Repayment (federal loans, completers) 4 year(s) out — paid in full"
+    },
+    "BBRR4_FED_COMP_DISCHARGE": {
+      "description": "Repayment (federal loans, completers) 4 year(s) out — discharged"
+    },
+    "DISTANCE": {
+      "description": "Program offered via distance education"
+    },
+    "EARN_COUNT_NWNE_5YR": {
+      "description": "Earnings — count of students, not working and not enrolled — 5 year(s) after completion"
+    },
+    "EARN_COUNT_WNE_5YR": {
+      "description": "Earnings — count of students, working and not enrolled — 5 year(s) after completion"
+    },
+    "EARN_MDN_5YR": {
+      "description": "Earnings — median earnings of students — 5 year(s) after completion"
+    },
+    "EARN_GT_THRESHOLD_5YR": {
+      "description": "Earnings — count earning above the earnings threshold for students — 5 year(s) after completion"
+    },
+    "EARN_COUNT_PELL_WNE_5YR": {
+      "description": "Earnings — count of Pell recipients, working and not enrolled — 5 year(s) after completion"
+    },
+    "EARN_PELL_WNE_MDN_5YR": {
+      "description": "Earnings — median earnings of Pell recipients, working and not enrolled — 5 year(s) after completion"
+    },
+    "EARN_COUNT_NOPELL_WNE_5YR": {
+      "description": "Earnings — count of non-Pell students, working and not enrolled — 5 year(s) after completion"
+    },
+    "EARN_NOPELL_WNE_MDN_5YR": {
+      "description": "Earnings — median earnings of non-Pell students, working and not enrolled — 5 year(s) after completion"
+    },
+    "EARN_COUNT_MALE_WNE_5YR": {
+      "description": "Earnings — count of men, working and not enrolled — 5 year(s) after completion"
+    },
+    "EARN_MALE_WNE_MDN_5YR": {
+      "description": "Earnings — median earnings of men, working and not enrolled — 5 year(s) after completion"
+    },
+    "EARN_COUNT_NOMALE_WNE_5YR": {
+      "description": "Earnings — count of women / not-men, working and not enrolled — 5 year(s) after completion"
+    },
+    "EARN_NOMALE_WNE_MDN_5YR": {
+      "description": "Earnings — median earnings of women / not-men, working and not enrolled — 5 year(s) after completion"
+    },
+    "EARN_COUNT_HIGH_CRED_5YR": {
+      "description": "Earnings — count of students — 5 year(s) after completion"
+    },
+    "EARN_IN_STATE_5YR": {
+      "description": "Earnings — earnings metric for students, in-state — 5 year(s) after completion"
+    },
+    "EARN_COUNT_WNE_4YR_NAT": {
+      "description": "Earnings — count of students, working and not enrolled, national benchmark — 4 year(s) after completion"
+    },
+    "EARN_MDN_4YR_NAT": {
+      "description": "Earnings — median earnings of students, national benchmark — 4 year(s) after completion"
+    },
+    "EARN_P25_4YR_NAT": {
+      "description": "Earnings — 25th-percentile earnings of students, national benchmark — 4 year(s) after completion"
+    },
+    "EARN_P75_4YR_NAT": {
+      "description": "Earnings — 75th-percentile earnings of students, national benchmark — 4 year(s) after completion"
+    }
+  }
+}

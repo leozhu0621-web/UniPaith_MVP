@@ -33,13 +33,12 @@ CERTIFIED_CLEAN = [
     "georgia_tech",  # catalog.gatech.edu descriptions; stubs + synth reviews removed (gatechprof3)
     "ut_austin",  # catalog.utexas.edu descriptions; school-blurb + synth reviews removed (utaprof2)
     "uw",         # Wikipedia-sourced per-credential descriptions; junk/Westwood removed (uwdefab1)
+    "ucla",       # Wikipedia per-credential descriptions; Catalog entry junk removed (uclaprof4)
     "jhu",        # per-credential field clauses (verbatim-across-levels removed); real reviews kept
-    # NOTE: "michigan", "ucla", and "stanford" were REMOVED from this registry (2026-06-18,
-    # uwdefab1). All three still ship the same build-script junk UW carried — 374 / 364 / 150
-    # descriptions opening "Catalog entry <hex>: …" — so they FAIL the machine-artifact gate
-    # below and are NOT clean (stanford was certified by #803 before this gate existed). They
-    # are queued in REPAIR_BACKLOG for the same Wikipedia-sourced regeneration UW received;
-    # re-add each here once de-fabricated.
+    "michigan",   # per-credential discipline definitions; build-artifact junk removed (michprof4)
+    "stanford",   # per-credential defs; Catalog entry junk removed (stanfordprof11)
+    # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
+    # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
 
 

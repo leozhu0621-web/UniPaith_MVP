@@ -3,15 +3,16 @@
 // posts since last visit (server count); Events = recommended upcoming events.
 import { useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Calendar, ChevronDown, Newspaper, Sparkles, Users } from 'lucide-react'
+import { Calendar, ChevronDown, LibraryBig, Newspaper, Sparkles, Users } from 'lucide-react'
 import { getConnectEvents, getFollowing, getUnseenCount } from '../../../api/connect'
 import { getConnectSeenAt } from '../../../utils/connectSeen'
 
-export type DiscoverTab = 'foryou' | 'updates' | 'events' | 'peers'
-export const DISCOVER_TABS: readonly DiscoverTab[] = ['foryou', 'updates', 'events', 'peers'] as const
+export type DiscoverTab = 'foryou' | 'resources' | 'updates' | 'events' | 'peers'
+export const DISCOVER_TABS: readonly DiscoverTab[] = ['foryou', 'resources', 'updates', 'events', 'peers'] as const
 
 const TABS: { key: DiscoverTab; label: string; icon: typeof Newspaper }[] = [
   { key: 'foryou', label: 'For you', icon: Sparkles },
+  { key: 'resources', label: 'Resources', icon: LibraryBig },
   { key: 'updates', label: 'Updates', icon: Newspaper },
   { key: 'events', label: 'Events', icon: Calendar },
   { key: 'peers', label: 'Peers', icon: Users },

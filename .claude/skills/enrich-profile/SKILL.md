@@ -4,11 +4,15 @@ description: >
   Autonomously develop the UniPaith profile database toward the gold standard,
   ONE COMPLETE UNIVERSITY per run — the institution page + every school + every
   program + all their details — verified and shipped as one atomic unit. Use as a
-  scheduled routine that keeps growing the database. Discovers a university's real
+  scheduled routine that keeps DEEPENING the database toward gold — enrichment +
+  repair only; it never adds universities (seeding is external). Discovers a
+  university's real
   structure, researches every field from authoritative sources, VERIFIES (never
   fabricates — omits if unverifiable), writes the data + an idempotent migration,
   and ships it live. Full spec:
-  docs/superpowers/specs/2026-06-10-university-enrichment-routine.md.
+  docs/superpowers/specs/2026-06-10-university-enrichment-routine.md (editorial/standard
+  axis); the program-side MATCHER contracts are governed by the 2026-06-17 AI-Structure
+  specs 2 + 3, which SUPERSEDE the 2026-06-10 doc on the matcher and seeding axes.
 ---
 
 # Enrich a whole university to the gold standard
@@ -80,7 +84,10 @@ scored on thin data and will rank poorly for everyone.
 every program, also write a **`program_preferences`** row (model `ProgramPreference`,
 table `program_preferences`, added in the AI-Structure build) so the **program →
 student** match direction works even before a school claims:
-- Set `source = "derived"` and a `confidence`.
+- Set `source = "derived"` and the **inferred** confidence anchor **`0.4`** (§3.6
+  authority precedence — NOT 0.6 public-crawl, 0.85 verified-feed, or 1.0 claimed). A
+  derived preference is the lowest authority tier, so the matcher reads its `c_program`
+  low; only a school's later claim raises it to 1.0.
 - From the public **class profile** infer the baseline target applicant —
   `pref_min_gpa` (typical admitted GPA floor), `pref_test_bands` (e.g. `{"GRE": 320}`),
   `pref_fields` (common feeder fields), `pref_levels` (eligible current levels),
@@ -89,6 +96,17 @@ student** match direction works even before a school claims:
   claims, it overwrites these with `source = "claimed"` — **do not touch a claimed row**.
 A program with no `program_preferences` row simply has "no opinion" (the matcher
 treats it neutrally), so deriving it from real admit data is a genuine quality win.
+
+**This whole section is EXECUTED IN YOUR DATA MODULE, not just read here.** As of this
+writing the gold template `data/mit_profile.py` and every shipped data module predate
+the AI Structure — **none of them write `program_preferences` or `field_provenance`**,
+so the entire fleet runs the match blind on the program side. Do NOT assume copying the
+template covers it. Each program your module builds must emit (a) a derived
+`program_preferences` entry (or omit-with-reason when there is no public class profile)
+and (b) a `field_provenance` stamp on every attribute you write. These two are part of
+the per-program completeness gate (§8.5) — a program missing them is **not gold**, the
+same as one missing a required editorial field. (The match SCORE math itself is Spec 3
+and stays backend-only; your job is only to feed it typed, provenanced data.)
 
 ## Completeness is non-negotiable — verify before you ship
 
@@ -869,8 +887,15 @@ Concrete misses observed in the first runs — each broke a real page:
 - **`services/profile_enrichment/gate.py`** — the deterministic verify rules.
 - **`unipaith-backend/src/unipaith/data/mit_profile.py`** — the gold reference and the
   data-module template (copy its *shape*, never its values).
-- **Full routine spec:** `docs/superpowers/specs/2026-06-10-university-enrichment-routine.md`.
-  Parent design: `docs/superpowers/specs/2026-06-09-profile-standard-and-enrichment-design.md`.
+- **Full routine spec (editorial/standard axis):**
+  `docs/superpowers/specs/2026-06-10-university-enrichment-routine.md` — note its
+  "add a brand-new university" step is **SUPERSEDED** (this routine never adds
+  universities; seeding is external). Parent design:
+  `docs/superpowers/specs/2026-06-09-profile-standard-and-enrichment-design.md`.
+- **Program-side MATCHER contracts (co-authoritative — read for claim hinge, ProgramPreference,
+  authority→`c_program`, rankings-display-only):**
+  `docs/superpowers/specs/2026-06-17-ai-structure-2-school-program-profile-design.md` +
+  `docs/superpowers/specs/2026-06-17-ai-structure-3-match-engine-design.md`.
 
 A node is **gold** when `check_conformance` returns no missing required fields
 (except fields legitimately in its `_standard.omitted`). A **university is gold**
@@ -1108,6 +1133,14 @@ institution **and every school and every program** `content_sources` (so their
 Events & Updates aren't empty), `research`/`campus_life` (with links), the FULL
 program catalog (cross-checked against the IPEDS/Scorecard count), and program
 `delivery_format` are all populated. Stamp `_standard` on every node.
+
+**Match-side gate (AI Structure — `check_conformance` does NOT cover this, so enforce it
+by hand).** For **every** program also confirm: (a) a derived `program_preferences` row
+exists (or is omitted-with-reason when the program has no public class profile), and (b)
+`field_provenance` is stamped on every attribute written, with the confidence anchored to
+its tier (claimed 1.0 · verified-feed 0.85 · public-crawl 0.6 · derived/inferred 0.4). A
+program missing either is **not gold** — it feeds the matcher blind. (See "Also enrich for
+the MATCH" above.)
 
 **Conformance is PRESENCE-only — it does NOT catch stubs, so it must be PAIRED with an
 ENFORCED anti-stub gate.** `check_conformance` reports `conformant` from `not

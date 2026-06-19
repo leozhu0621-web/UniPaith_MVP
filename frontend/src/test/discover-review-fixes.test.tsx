@@ -5,7 +5,7 @@ import { render, screen, within } from '@testing-library/react'
 vi.mock('@tanstack/react-query', () => ({ useQuery: () => ({ data: undefined }) }))
 
 import ProbabilityBands from '../pages/student/match/ProbabilityBands'
-import DiscoverTabBar from '../pages/student/explore/DiscoverTabBar'
+import DiscoverTabBar, { DISCOVER_TABS } from '../pages/student/explore/DiscoverTabBar'
 import { ringFromMatch, BAND_FILL } from '../pages/student/match/ringFill'
 
 describe('ProbabilityBands no-data copy branches on reason', () => {
@@ -47,5 +47,20 @@ describe('DiscoverTabBar hides Peers when its flag is off', () => {
     const list = screen.getByRole('tablist', { name: 'Discover sections' })
     expect(within(list).queryByText('Peers')).toBeNull()
     expect(within(list).getByText('For you')).toBeTruthy()
+  })
+})
+
+// Resources tab (2026-06-14) — program search + universities + guides.
+describe('DiscoverTabBar Resources tab', () => {
+  it('renders a Resources tab right after For you', () => {
+    render(<DiscoverTabBar tab="foryou" onChange={() => {}} onManageFollowing={() => {}} />)
+    const list = screen.getByRole('tablist', { name: 'Discover sections' })
+    const labels = within(list).getAllByRole('tab').map(t => (t.textContent ?? '').trim())
+    expect(labels[0]).toBe('For you')
+    expect(labels[1]).toBe('Resources')
+  })
+  it('includes resources (not the old browse) in the canonical tab list', () => {
+    expect(DISCOVER_TABS).toContain('resources')
+    expect(DISCOVER_TABS).not.toContain('browse')
   })
 })

@@ -40,6 +40,15 @@ node_modules/
 .vscode/
 .idea/
 
+# Reference data archive (Data/): commit only the catalog layer, never the heavy raw files.
+# Keeps the ~3.6 GB raw archive out of git while catalog.json + dictionaries/ + tools/ + README stay tracked.
+Data/sources/
+Data/**/*.csv
+Data/**/*.xls
+Data/**/*.xlsx
+Data/**/*.doc
+Data/**/*.zip
+
 # Terraform
 infra/.terraform/
 *.tfstate

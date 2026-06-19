@@ -11,6 +11,27 @@ interface FormProps {
   loading: boolean
 }
 
+// Gender options — stored value is the label string (the column is free text,
+// so labels stay backward-compatible). No free-text entry; fixed options only.
+const GENDER_LABELS = ['Woman', 'Man', 'Non-binary', 'Another identity', 'Prefer not to say']
+const GENDER_OPTIONS = GENDER_LABELS.map(l => ({ value: l, label: l }))
+
+// Legal sex (separate from gender identity) — a fixed set used for official
+// documents and visa paperwork. Stored value = the label string.
+const LEGAL_SEX_OPTIONS = ['Female', 'Male', 'Intersex', 'Prefer not to say'].map(l => ({ value: l, label: l }))
+
+// A gender change locks the field for 3 months (90 days). Compute the unlock
+// date from the server-stamped timestamp; absent timestamp = never locked.
+const GENDER_LOCK_MS = 90 * 864e5
+
+// A small density section label — sentence-case, muted, with a bottom rule.
+// Leads each grouped block of the comprehensive demographic form.
+function FormGroupHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="border-b border-border pb-1.5 text-eyebrow uppercase text-muted-foreground">{children}</p>
+  )
+}
+
 // Empty <input>/<select> values arrive as '' — but the backend rejects '' for
 // optional date/number fields (Pydantic: "input is too short" / "not an int").
 // Convert blanks to null so optional fields validate and omitted values clear.
@@ -21,23 +42,109 @@ function sanitizePayload<T extends Record<string, unknown>>(data: T): T {
 }
 
 export function BasicInfoForm({ defaultValues, onSubmit, loading }: FormProps) {
-  const { register, handleSubmit } = useForm({ defaultValues: { first_name: defaultValues?.first_name || '', last_name: defaultValues?.last_name || '', preferred_pronouns: defaultValues?.preferred_pronouns || '', date_of_birth: defaultValues?.date_of_birth?.slice(0, 10) || '', nationality: defaultValues?.nationality || '', country_of_residence: defaultValues?.country_of_residence || '', bio_text: defaultValues?.bio_text || '', goals_text: defaultValues?.goals_text || '' } })
+  const addr = defaultValues?.addresses?.current
+  const { register, handleSubmit } = useForm({
+    defaultValues: {
+      first_name: defaultValues?.first_name || '',
+      last_name: defaultValues?.last_name || '',
+      preferred_name: defaultValues?.preferred_name || '',
+      gender_identity: defaultValues?.gender_identity || '',
+      legal_sex: defaultValues?.legal_sex || '',
+      date_of_birth: defaultValues?.date_of_birth?.slice(0, 10) || '',
+      preferred_pronouns: defaultValues?.preferred_pronouns || '',
+      nationality: defaultValues?.nationality || '',
+      place_of_birth: defaultValues?.place_of_birth || '',
+      passport_issuing_country: defaultValues?.passport_issuing_country || '',
+      country_of_residence: defaultValues?.country_of_residence || '',
+      secondary_phone: defaultValues?.secondary_phone || '',
+      addr_line1: addr?.line1 || '',
+      addr_city: addr?.city || '',
+      addr_state: addr?.state || '',
+      addr_postal_code: addr?.postal_code || '',
+      addr_country: addr?.country || '',
+      bio_text: defaultValues?.bio_text || '',
+    },
+  })
+
+  // 3-month change-lock for gender. The server stamps gender_identity_updated_at
+  // on every allowed change; the field stays locked until +90 days. Absent
+  // timestamp = first-set (no lock). The timestamp is server-managed — never sent.
+  const genderUpdatedAt = defaultValues?.gender_identity_updated_at
+  const lockedUntil = genderUpdatedAt ? new Date(new Date(genderUpdatedAt).getTime() + GENDER_LOCK_MS) : null
+  const locked = lockedUntil ? Date.now() < lockedUntil.getTime() : false
+  const genderSet = Boolean(defaultValues?.gender_identity)
+  const genderHelp = locked && lockedUntil
+    ? `You can change this again on ${lockedUntil.toLocaleDateString()}.`
+    : genderSet
+      ? 'Changing your gender locks it for 3 months.'
+      : undefined
+
+  // Mailing address is one key inside the addresses JSONB. PUT replaces the
+  // whole object, so spread the existing addresses + existing .current and
+  // overwrite only the fields this form owns — never wiping permanent/billing.
+  const submit = (d: Record<string, unknown>) => {
+    const { addr_line1, addr_city, addr_state, addr_postal_code, addr_country, ...rest } = d
+    const existing = defaultValues?.addresses ?? {}
+    onSubmit(
+      sanitizePayload({
+        ...rest,
+        addresses: {
+          ...existing,
+          current: {
+            ...(existing.current ?? {}),
+            line1: addr_line1 || null,
+            city: addr_city || null,
+            state: addr_state || null,
+            postal_code: addr_postal_code || null,
+            country: addr_country || null,
+          },
+        },
+      }),
+    )
+  }
+
   return (
-    <form onSubmit={handleSubmit(d => onSubmit(sanitizePayload(d)))} className="space-y-3">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="First Name" {...register('first_name')} />
-        <Input label="Last Name" {...register('last_name')} />
-      </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="Pronouns (optional)" placeholder="e.g., she/her, they/them" {...register('preferred_pronouns')} />
-        <Input label="Date of Birth" type="date" {...register('date_of_birth')} />
-      </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="Nationality" {...register('nationality')} />
-        <Input label="Country of Residence" {...register('country_of_residence')} />
-      </div>
-      <Textarea label="Bio" {...register('bio_text')} />
-      <Textarea label="Goals" {...register('goals_text')} />
+    <form onSubmit={handleSubmit(submit)} className="space-y-6">
+      <section className="space-y-4">
+        <FormGroupHeader>Identity</FormGroupHeader>
+        <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Input label="First name" {...register('first_name')} />
+          <Input label="Last name" {...register('last_name')} />
+          <Input label="Preferred name" placeholder="What you go by" {...register('preferred_name')} />
+          <Select label="Gender" options={GENDER_OPTIONS} placeholder="Select…" disabled={locked} helperText={genderHelp} {...register('gender_identity')} />
+          <Select label="Legal sex" options={LEGAL_SEX_OPTIONS} placeholder="Select…" {...register('legal_sex')} />
+          <Input label="Date of birth" type="date" {...register('date_of_birth')} />
+          <Input label="Pronouns" placeholder="e.g., she/her, they/them" {...register('preferred_pronouns')} />
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <FormGroupHeader>Citizenship & origin</FormGroupHeader>
+        <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Input label="Citizenship / nationality" {...register('nationality')} />
+          <Input label="Place of birth" placeholder="City, country" {...register('place_of_birth')} />
+          <Input label="Passport issuing country" {...register('passport_issuing_country')} />
+          <Input label="Country of residence" {...register('country_of_residence')} />
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <FormGroupHeader>Contact</FormGroupHeader>
+        <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Input label="Phone" type="tel" placeholder="+1 555 123 4567" {...register('secondary_phone')} />
+          <Input label="Address line" placeholder="123 Main St, Apt 4" {...register('addr_line1')} />
+          <Input label="City" {...register('addr_city')} />
+          <Input label="State / region" {...register('addr_state')} />
+          <Input label="Postal code" {...register('addr_postal_code')} />
+          <Input label="Country" {...register('addr_country')} />
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <FormGroupHeader>About you</FormGroupHeader>
+        <Textarea label="Bio" {...register('bio_text')} />
+      </section>
+
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
   )

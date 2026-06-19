@@ -30,6 +30,31 @@ export async function searchInstitutions(params?: {
   return data
 }
 
+/**
+ * Fetch EVERY institution for the browse grid. The /search endpoint caps page_size
+ * at 50, and the Explore filters run client-side, so a single page hid (and made
+ * unfilterable) the other ~250 of the 300-strong fleet. This walks all pages —
+ * page 1 reveals total_pages, the rest fetch in parallel — and returns one merged
+ * { items, total }. Cheap (~300 light rows) and cached by TanStack Query.
+ */
+export async function searchAllInstitutions(params?: {
+  q?: string; country?: string; type?: string
+}): Promise<{ items: any[]; total: number }> {
+  const SIZE = 50
+  const first = await searchInstitutions({ ...params, page: 1, page_size: SIZE })
+  const items = [...(first.items ?? [])]
+  const totalPages: number = first.total_pages ?? 1
+  if (totalPages > 1) {
+    const rest = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, i) =>
+        searchInstitutions({ ...params, page: i + 2, page_size: SIZE }),
+      ),
+    )
+    for (const r of rest) items.push(...(r.items ?? []))
+  }
+  return { items, total: first.total ?? items.length }
+}
+
 export async function getPublicInstitution(institutionId: string): Promise<Institution> {
   const { data } = await apiClient.get(`/institutions/${institutionId}`)
   return data

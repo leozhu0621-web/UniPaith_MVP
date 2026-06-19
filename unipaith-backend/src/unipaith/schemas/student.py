@@ -908,6 +908,9 @@ class StudentProfileResponse(BaseModel):
     preferred_pronouns: str | None = None
     date_of_birth: date | None
     gender_identity: str | None = None
+    # Server-managed: stamped on every applied gender change. The client reads it
+    # to compute the 3-month (90-day) lock window; it never sends this field.
+    gender_identity_updated_at: datetime | None = None
     legal_sex: str | None = None
     place_of_birth: str | None = None
     nationality: str | None
