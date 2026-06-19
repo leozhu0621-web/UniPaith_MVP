@@ -12,11 +12,11 @@ tier feeding ``c_program``).
 Idempotent + authority-safe: a program that already has a (derived OR claimed) row is
 skipped — first-party data is never overwritten, and re-running inserts nothing.
 
-Chains off ``uclaprof5`` (the current single head — it already merged the prior
-gendlock3mo/uclaprof4 split), keeping a single Alembic head.
+Chains off ``stanfordprof11`` (the current single head after the concurrent
+michigan/stanford enrich migrations landed), keeping a single Alembic head.
 
 Revision ID: progprefbf1
-Revises: uclaprof5
+Revises: stanfordprof11
 Create Date: 2026-06-18
 
 """
@@ -30,7 +30,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "progprefbf1"  # pragma: allowlist secret
-down_revision = "uclaprof5"  # pragma: allowlist secret
+down_revision = "stanfordprof11"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 
