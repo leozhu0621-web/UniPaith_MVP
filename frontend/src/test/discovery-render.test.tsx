@@ -34,16 +34,17 @@ function renderDS() {
 }
 
 describe('DiscoverySearch (render smoke)', () => {
-  it('renders the search box and outcome tiles in the empty state', () => {
+  it('renders the search box with no browse-by tiles in the empty state', () => {
     renderDS()
     expect(
       screen.getByPlaceholderText('What kind of program are you looking for?'),
     ).toBeInTheDocument()
-    // Browse by outcome stays; the subject quick-tiles were dropped (Spec
-    // 2026-06-14: filters are EITHER outcome-based OR the traditional dropdowns).
-    expect(screen.getByText('High earning potential')).toBeInTheDocument()
+    // 2026-06-19: "no browse by, just filters" — both the outcome tiles and the
+    // subject quick-tiles are gone; the empty state is the search box + Filters.
+    expect(screen.queryByTestId('outcome-tiles')).not.toBeInTheDocument()
+    expect(screen.queryByText('High earning potential')).not.toBeInTheDocument()
     expect(screen.queryByText('Or browse')).not.toBeInTheDocument()
-    // Empty state shows tiles, not a results count.
+    // Empty state shows no results count (that appears only once a search runs).
     expect(screen.queryByTestId('results-count')).not.toBeInTheDocument()
   })
 })
