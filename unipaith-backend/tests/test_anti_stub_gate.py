@@ -51,6 +51,10 @@ CERTIFIED_CLEAN = [
     #             resolved real name, no rollup leak (verbatim/shared-body removed) (penndefab1)
     "harvard",    # CIP rollup de-fab; suffix-diversifier removed; per-credential bodies
     #             (harvarddefab1 — HIGH #4)
+    "columbia",   # IPEDS×award-level padding replaced by Columbia's real degree catalog:
+    #             conferred names, real owning departments, per-credential field cores;
+    #             88 fabricated certificates dropped + Harvard peer-unit contamination
+    #             (Nieman/Carpenter/VES) removed (columbiadefab1 — HIGH #1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
