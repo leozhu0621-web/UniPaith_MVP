@@ -138,12 +138,25 @@ def test_catalog_quality_gate():
     assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
 
 
+def test_catalog_has_no_peer_institution_signatures():
+    """Regression guard: descriptions must not carry foreign-university unit names."""
+    contaminated = [
+        p["slug"]
+        for p in cu.PROGRAMS
+        if any(sig in (p.get("description") or "") for sig in cu._PEER_SIGNATURES)
+    ]
+    assert not contaminated, (
+        f"{len(contaminated)} programs still carry peer-institution signatures: "
+        f"{contaminated[:5]}"
+    )
+
+
 def test_catalog_breadth_and_shape():
     assert len(cu.SCHOOLS) == 14
     # Breadth is a REALNESS gate, not a frozen count: de-fabricating the Scorecard rollup
     # buckets (federal "Other"/"General" CIP titles → real Cornell degrees or dropped)
     # legitimately shrinks the catalog below the old padded 260 (enrich-profile miss #2).
-    assert len(cu.PROGRAMS) >= 230
+    assert len(cu.PROGRAMS) >= 239
     _assert_no_cip_rollup_names(cu.PROGRAMS)
     assert len(set(cu.PROGRAM_SLUGS)) == len(cu.PROGRAM_SLUGS)
     assert cu.RANKING_DATA["ownership_type"] == "private"
@@ -216,7 +229,7 @@ def test_structure_integrity():
     # Slugs are unique.
     assert len(cu.PROGRAM_SLUGS) == len(set(cu.PROGRAM_SLUGS)), "duplicate program slug"
     # Full catalog breadth: College Scorecard Field-of-Study list for UNITID 190415.
-    assert len(cu.PROGRAMS) >= 230, "verified real Cornell catalog breadth (de-padded)"
+    assert len(cu.PROGRAMS) >= 239, "verified real Cornell catalog breadth (de-padded)"
     # Every program sets a delivery_format, and at least one online + one hybrid exist.
     fmts = {p.get("delivery_format") for p in cu.PROGRAMS}
     assert None not in fmts
