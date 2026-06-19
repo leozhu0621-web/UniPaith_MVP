@@ -15,7 +15,9 @@ import Button from '../ui/Button'
 import { getEnrichNext, setEnrichValue, type EnrichItem } from '../../api/enrichment'
 import { ACTION_PROMPT, humanizeField } from './enrichHelpers'
 
-const QK = ['enrichment', 'next'] as const
+/** Section-scoped query key so each tab's panel caches independently
+ *  (the unscoped home usage keys on 'all'). */
+const qk = (section?: string) => ['enrichment', 'next', section ?? 'all'] as const
 
 /** The typed input for one signal. Keyed by field so state resets per signal. */
 function SignalInput({
@@ -91,9 +93,12 @@ function SignalInput({
   )
 }
 
-export default function EnrichWidget() {
+export default function EnrichWidget({ section }: { section?: string }) {
   const qc = useQueryClient()
-  const { data, isLoading } = useQuery({ queryKey: QK, queryFn: () => getEnrichNext(1) })
+  // limit 1 for a section-scoped per-tab panel; the unscoped home usage keeps 3.
+  const limit = section ? 1 : 3
+  const QK = qk(section)
+  const { data, isLoading } = useQuery({ queryKey: QK, queryFn: () => getEnrichNext(limit, section) })
   const mutation = useMutation({
     mutationFn: ({ field, value }: { field: string; value: unknown }) => setEnrichValue(field, value),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),

@@ -24,9 +24,9 @@ export interface EnrichNextResponse {
   essentials_present: boolean;
 }
 
-export async function getEnrichNext(limit = 3): Promise<EnrichNextResponse> {
+export async function getEnrichNext(limit = 3, section?: string): Promise<EnrichNextResponse> {
   const { data } = await apiClient.get<EnrichNextResponse>(`${BASE}/next`, {
-    params: { limit },
+    params: section ? { limit, section } : { limit },
   });
   return data;
 }
