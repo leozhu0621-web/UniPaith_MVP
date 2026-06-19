@@ -24,6 +24,7 @@ from unipaith.models.attribution import AttributionEvent
 from unipaith.models.audit import AdmissionsAuditLog
 from unipaith.models.base import Base
 from unipaith.models.billing import StudentSubscription
+from unipaith.models.chat_session import ChatFolder, ChatSession
 from unipaith.models.confidence_outcome import ConfidenceOutcomePair
 from unipaith.models.crawler import (
     ChangeEvent,
@@ -228,6 +229,9 @@ __all__ = [
     # Discovery (Phase A — parallel session, merged in #111)
     "DiscoverySession",
     "DiscoveryMessage",
+    # Uni chat-tab sessions model (2026-06-19 chat-tab redesign)
+    "ChatFolder",
+    "ChatSession",
     # Adaptive Intake Engine (Spec 44 — four-layer signal pipeline)
     "RawInput",
     "StudentSignal",

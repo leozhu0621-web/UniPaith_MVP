@@ -14,6 +14,7 @@ from unipaith.api.auth import router as auth_router
 from unipaith.api.billing import router as billing_router
 from unipaith.api.build import router as build_router
 from unipaith.api.calendar import router as calendar_router
+from unipaith.api.chat_sessions import router as chat_sessions_router
 from unipaith.api.checklists import router as checklists_router
 from unipaith.api.claims import router as claims_router
 from unipaith.api.connect import router as connect_router
@@ -90,6 +91,9 @@ api_router.include_router(intake_router)
 # AI Structure (Spec 1) — enrichment loop under `/students/me/enrichment/*`;
 # before students_router for the same literal-path-precedence reason.
 api_router.include_router(enrichment_router)
+# Uni chat-tab sessions model — folders + sessions under `/students/me/chat/*`;
+# before students_router for the same literal-path-precedence reason.
+api_router.include_router(chat_sessions_router)
 api_router.include_router(students_router)
 api_router.include_router(discovery_router)
 api_router.include_router(goals_router)
