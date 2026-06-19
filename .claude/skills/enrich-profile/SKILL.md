@@ -279,6 +279,29 @@ Concrete misses observed in the first runs — each broke a real page:
      rollup echoed as department and the template description, including one listing
      a "Bachelor's in Intelligence, Command Control and Information Operations" the
      institution does not offer.
+   - **The conferred-degree DESIGNATION is itself part of the real name — the
+     possessive award-level form ("Bachelor's in {field}" / "Master's in {field}" /
+     "Doctorate in {field}") is the IPEDS-mint fingerprint and is a name-realness
+     defect EVEN WHEN the field is genuine, not only when the field is a CIP rollup.**
+     The prior bullet's tells (", General", federal comma-lists, slashes) catch rollup
+     FIELDS; this catches the mint FORM on a legitimate field. Gold MIT and the clean
+     fleet name every row with the institution's conferred designation ("Bachelor of
+     Science in Biology", "Bachelor of Arts in Anthropology", "Master of Engineering in
+     …"); the possessive "Bachelor's in {field}" form is fleet-anomalous — it survives
+     only in catalogs minted straight off the IPEDS award-level taxonomy, so its
+     presence at ANY density is a tell the rows were never resolved to the real degree.
+     A "structural de-fabrication" / "per-credential descriptions" pass that resolves
+     the rollup FIELDS and rewrites descriptions but leaves the bachelor's/master's rows
+     in possessive form has NOT finished the NAME dimension — most self-evidently when
+     the SAME field's doctoral row already ships the conferred form ("Doctor of
+     Philosophy in Anthropology" beside "Bachelor's in Anthropology"), which proves the
+     enricher knew the real designation and applied it inconsistently across credential
+     levels of one field. A de-fab is done only when, per field, every credential row
+     uses the institution's conferred designation under ONE convention and the
+     possessive award-level form is 0% (gold MIT = 0%). Evidence: live API this run —
+     freshly de-fabbed, already-DEPLOYED catalogs ship 53–55% possessive "Bachelor's in
+     {field}" rows beside conferred doctoral siblings, with federal CIP titles ("Area
+     Studies", "… and Related Services") still riding the surviving bachelor's rows.
    - **Do NOT mint one program row per concentration / track / specialization of a
      single degree (count-padding by over-decomposition).** A degree's
      concentrations belong in that program's `tracks` field (step 6), not as
