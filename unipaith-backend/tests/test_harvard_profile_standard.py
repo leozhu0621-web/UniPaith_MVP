@@ -167,6 +167,26 @@ def test_catalog_has_no_padding_stubs():
     assert not errors, f"Catalog padding detected: {errors}"
 
 
+def test_catalog_is_structurally_real():
+    """Per-row realness gate (SKILL.md miss #2): 0% possessive-mint names, no rollup buckets."""
+    import re
+
+    from unipaith.profile_standard.anti_stub import analyze, field_of, machine_artifacts
+
+    report = analyze(h.PROGRAMS)
+    assert report.is_clean, f"anti-stub not clean: {report.summary()}"
+    assert not machine_artifacts(h.PROGRAMS), "build-artifact junk in descriptions"
+    for spec in h.PROGRAMS:
+        name = spec["program_name"]
+        assert not re.match(r"^(Bachelor's|Master's|Doctorate) in ", name), (
+            f"possessive-mint name: {name}"
+        )
+        field = field_of(name)
+        assert not re.search(r", General$|, Other$", field), f"CIP rollup tell in {name}"
+        assert "Area Studies" not in name, f"rollup bucket in {name}"
+        assert "Related Services" not in name, f"rollup bucket in {name}"
+
+
 def test_institution_has_campus_photo_gallery():
     photos = h.SCHOOL_OUTCOMES.get("campus_photos") or []
     assert len(photos) >= 4, "institution needs a verified 4–5 photo gallery"
