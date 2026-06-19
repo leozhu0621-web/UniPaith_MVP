@@ -68,6 +68,47 @@ def test_weight_fields_use_scale_widget():
     assert weights and all(f["ask_kind"] == "scale" for f in weights)
 
 
+# ── Prompt Library: every field carries a question; choice/multi carry options ──
+
+
+def test_every_catalog_entry_has_a_nonempty_question():
+    for f in CATALOG:
+        q = f.get("question")
+        assert isinstance(q, str) and q.strip(), f"{f['key']} has no question"
+
+
+def test_plan_next_items_carry_question_and_options():
+    items = plan_next({}, limit=len(CATALOG))
+    assert items
+    for i in items:
+        assert "question" in i and isinstance(i["question"], str) and i["question"].strip()
+        # options key is always present (may be None for non-option fields)
+        assert "options" in i
+
+
+def test_choice_multi_options_surface_in_plan_next():
+    items = {i["field"]: i for i in plan_next({}, limit=len(CATALOG))}
+    # gender (choice) surfaces its option labels including "Non-binary"
+    assert "Non-binary" in items["gender"]["options"]
+    # funding_requirement (choice) surfaces exactly its 4 options
+    assert len(items["funding_requirement"]["options"]) == 4
+    # languages (multi) surfaces its option labels
+    assert "Mandarin" in items["languages"]["options"]
+
+
+def test_number_field_options_is_none():
+    items = {i["field"]: i for i in plan_next({}, limit=len(CATALOG))}
+    assert items["gpa"]["ask_kind"] == "number"
+    assert items["gpa"]["options"] is None
+
+
+def test_open_categoricals_have_no_options():
+    # nationality / country_of_residence are choice ask_kind but free text (no options)
+    by_key = {f["key"]: f for f in CATALOG}
+    assert by_key["nationality"].get("options") is None
+    assert by_key["country_of_residence"].get("options") is None
+
+
 # ── Ship 2: section scoping ──────────────────────────────────────────────
 
 

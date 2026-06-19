@@ -33,6 +33,22 @@ function SignalInput({
   const [min, setMin] = useState('')
   const [max, setMax] = useState('')
 
+  const options = item.options ?? []
+
+  // choice / multi → option cards (the picked label is the stored value).
+  // When a choice/multi field has no fixed option set (nationality,
+  // country_of_residence), fall through to the free-text input below.
+  if ((item.ask_kind === 'choice' || item.ask_kind === 'multi') && options.length > 0) {
+    return (
+      <AnswerChoices
+        kind={item.ask_kind}
+        options={options}
+        onPick={onSubmit}
+        disabled={disabled}
+      />
+    )
+  }
+
   if (item.ask_kind === 'scale') {
     // 0–5 importance slider (reuses the conversation widget).
     return <AnswerChoices kind="scale" options={[]} onPick={onSubmit} disabled={disabled} />
@@ -120,9 +136,15 @@ export default function EnrichWidget({ section }: { section?: string }) {
           </span>
         )}
       </div>
-      <p className="mb-3 text-sm text-foreground">
-        <span className="font-medium">{humanizeField(item.field)}</span>
-        <span className="text-muted-foreground"> · {ACTION_PROMPT[item.action]}</span>
+      <p className="mb-3 text-sm font-medium text-foreground">
+        {item.question ? (
+          item.question
+        ) : (
+          <>
+            <span>{humanizeField(item.field)}</span>
+            <span className="font-normal text-muted-foreground"> · {ACTION_PROMPT[item.action]}</span>
+          </>
+        )}
       </p>
       <SignalInput
         key={item.field}
