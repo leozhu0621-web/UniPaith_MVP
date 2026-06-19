@@ -1,7 +1,7 @@
 """External scholarships catalog — Spec 2026-06-14 (Resources › Financial).
 
 9,500 real awards scraped from the U.S. Dept of Labor's CareerOneStop
-Scholarship Finder, seeded from ``seed_data/scholarships.json``. ``external_id``
+Scholarship Finder, seeded from ``data/scholarships.json``. ``external_id``
 is the CareerOneStop detail id (a numeric string) and drives an idempotent
 re-seed.
 
