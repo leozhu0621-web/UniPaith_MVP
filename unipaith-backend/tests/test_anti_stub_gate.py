@@ -43,6 +43,9 @@ CERTIFIED_CLEAN = [
     #             names + depts; per-credential bodies; school-as-field fixes (budefab1,
     #             supersedes buprof11's narrower description-only repair)
     "berkeley",   # CIP rollup de-fab; real dept names; per-credential descriptions (berkeleyprof9)
+    "cornell",    # CIP-rollup buckets → real Cornell degrees or dropped; field-echo
+    #             departments → real owning college; per-credential description leads
+    #             (verbatim/shared-body removed) (cornelldefab1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]

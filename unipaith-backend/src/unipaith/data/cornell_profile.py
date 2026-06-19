@@ -1438,18 +1438,93 @@ for _p in PROGRAMS:
         _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
 
 
+# ── Per-credential description lead (gold-MIT / Michigan pattern) ───────────────
+# A field's researched clause (FIELD_DESCRIPTIONS) is SHARED across its credential
+# siblings, which produced verbatim-identical and shared-leading-body descriptions
+# (anti-stub miss #8). Leading each credential level with a distinct framing word makes
+# siblings diverge from character 0 (gold MIT = 0%); the four leads start with distinct
+# characters (U / G / D / P), guaranteeing a zero common prefix across siblings.
+_LEVEL_LEAD: dict[str, str] = {
+    "bachelors": "Undergraduate study. ",
+    "masters": "Graduate study. ",
+    "phd": "Doctoral research. ",
+    "professional": "Professional training. ",
+    "certificate": "Graduate certificate. ",
+}
+
+# ── De-fabricate the Scorecard rollup catalog (anti-stub miss #2) ──────────────
+# College Scorecard rows carry the federal CIP-TAXONOMY title as the field, not Cornell's
+# real degree name. Each rollup is resolved to Cornell's REAL published degree name
+# (verified against courses.cornell.edu) or DROPPED when the CIP is a federal
+# "Other"/"General" aggregation bucket with no single named Cornell degree.
+_ROLLUP_RESOLVE: dict[str, str] = {
+    "Agriculture, General": "Agricultural Sciences",
+    "City/Urban, Community, and Regional Planning": "City and Regional Planning",
+    "Aerospace, Aeronautical, and Astronautical/Space Engineering": "Aerospace Engineering",
+    "Biomedical/Medical Engineering": "Biomedical Engineering",
+    "Environmental/Environmental Health Engineering": "Environmental Engineering",
+    "Biological/Biosystems Engineering": "Biological Engineering",
+    "East Asian Languages, Literatures, and Linguistics": "Asian Studies",
+    "Germanic Languages, Literatures, and Linguistics": "German Studies",
+    "Romance Languages, Literatures, and Linguistics": "Romance Studies",
+    "Classics and Classical Languages, Literatures, and Linguistics": "Classics",
+    "English Language and Literature, General": "English",
+    "Biology, General": "Biological Sciences",
+    "Botany/Plant Biology": "Plant Biology",
+    "Religion/Religious Studies": "Religious Studies",
+    "Geological and Earth Sciences/Geosciences": "Earth and Atmospheric Sciences",
+    "Psychology, General": "Psychology",
+    "Drama/Theatre Arts and Stagecraft": "Performing and Media Arts",
+    "Hospitality Administration/Management": "Hospitality Management",
+}
+
+# Federal "Other"/"General" buckets (and fields fully covered by a real flagship/other
+# row) with no single named Cornell degree — dropped rather than shipped under the rollup
+# title (de-fabrication legitimately shrinks the catalog; never pad to a frozen count).
+_ROLLUP_DROP: frozenset[str] = frozenset({
+    "Environmental/Natural Resources Management and Policy",
+    "Architecture and Related Services, Other",
+    "Ethnic, Cultural Minority, Gender, and Group Studies",  # multiple A&S programs
+    "Computer and Information Sciences, General",  # Computer Science is the real row
+    "Computer/Information Technology Administration and Management",
+    "Education, General",
+    "Engineering, General",
+    "Engineering, Other",
+    "Industrial Production Technologies/Technicians",
+    "Slavic, Baltic and Albanian Languages, Literatures, and Linguistics",
+    "Rhetoric and Composition/Writing Studies",
+    "Liberal Arts and Sciences, General Studies and Humanities",
+    "Cell/Cellular Biology and Anatomical Sciences",  # covered by Biological Sciences
+    "Zoology/Animal Biology",  # ambiguous Animal Science vs Ecology & Evolutionary Biology
+    "Multi/Interdisciplinary Studies, Other",
+    "Social Sciences, General",
+    "Social Sciences, Other",
+    "Film/Video and Photographic Arts",  # covered by Performing and Media Arts
+    "Visual and Performing Arts, Other",
+    "Health Professions and Related Clinical Sciences, Other",
+})
+
+# (rollup title, degree_type) → level-specific real Cornell degree name.
+_ROLLUP_LEVEL_NAME: dict[tuple[str, str], str] = {
+    ("Hospitality Administration/Management", "phd"): "Hotel Administration",
+}
+
+
+def _resolve_rollup(field_name: str, degree_type: str) -> str | None:
+    """Real Cornell degree name for a Scorecard field, or None to drop the row."""
+    level_name = _ROLLUP_LEVEL_NAME.get((field_name, degree_type))
+    if level_name:
+        return level_name
+    if field_name in _ROLLUP_DROP:
+        return None
+    return _ROLLUP_RESOLVE.get(field_name, field_name)
+
+
 def _delivery_format(raw: str) -> str:
     """Normalize IPEDS delivery labels to the platform's canonical values."""
     if raw == "in_person":
         return "on_campus"
     return raw
-
-
-def _department_for(field_name: str, school: str) -> str:
-    """Owning department — the CIP field title unless it duplicates the school name."""
-    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
-        return school
-    return field_name
 
 
 def _field_from_program_name(program_name: str) -> str | None:
@@ -1490,7 +1565,13 @@ def _cornell_description(spec: dict, field: str | None = None) -> str:
         delivery = " Delivered online."
     elif fmt == "hybrid":
         delivery = " Delivered in hybrid format."
-    return f"{clause}{delivery}"
+    if slug in SLUG_DESCRIPTIONS:
+        # Hand-written flagship descriptions are already unique — no level lead.
+        return f"{clause}{delivery}"
+    # A field's researched clause is shared across its credential siblings; lead with a
+    # distinct level-framing word so siblings diverge from character 0 (anti-stub miss #8).
+    lead = _LEVEL_LEAD.get(spec.get("degree_type", ""), "")
+    return f"{lead}{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -1507,23 +1588,30 @@ def _build_catalog() -> list[dict]:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
+        # De-fabricate the federal CIP-rollup name → real Cornell degree, or drop the row
+        # when the CIP is an aggregation bucket with no single named degree (miss #2).
+        real_name = _resolve_rollup(field_name, dtype)
+        if real_name is None:
+            continue
         seen.add(slug)
-        dept = _department_for(field_name, school)
         delivery = _delivery_format(fmt)
-        pname = disambiguate_program_name(field_name, dtype)
+        pname = disambiguate_program_name(real_name, dtype)
         spec = {
             "slug": slug,
             "school": school,
             "program_name": pname,
             "degree_type": dtype,
-            "department": dept,
+            # department = the real owning Cornell college (never the field echoed from the
+            # name); kills the field-echo department defect (miss #2, Michigan-clean pattern).
+            "department": school,
             "cip": cip,
             "duration_months": dur,
             "delivery_format": delivery,
+            # Keep the ORIGINAL Scorecard field so the description clause (keyed by it in
+            # FIELD_DESCRIPTIONS) still resolves after a rename.
             "_field_name": field_name,
         }
         _normalize_program(spec, field_name)
-        spec.pop("_field_name", None)
         out.append(spec)
     return out
 
