@@ -14,6 +14,13 @@ export interface EnrichItem {
   type: string;
   tier: Tier;
   ask_kind: AskKind;
+  /** The canonical Prompt-Library question shown to the student (replaces the
+   *  old generic "{Field} · Add this…" wording). */
+  question: string;
+  /** Human labels for choice/multi fields (each label doubles as the stored
+   *  value). Null/absent for number/date/range/scale/text and the open-ended
+   *  categoricals (nationality / country_of_residence → free text). */
+  options?: string[] | null;
   action: "ask" | "confirm";
   current_value: unknown;
   confidence: number | null;
