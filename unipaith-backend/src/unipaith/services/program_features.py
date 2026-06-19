@@ -79,12 +79,35 @@ _DEGREE_TO_TARGET_LEVEL: dict[str, str] = {
 }
 
 
+# Full-word degree_type values — the enrichment fleet stores words ("masters",
+# "phd", "professional"), NOT the BS/MS/PhD abbreviations. Mirrors
+# derive_preferences._DEGREE_WORD_TO_TARGET so the s→p and p→s sides agree.
+# "certificate"/"associate" stay unmapped (→ None): intentionally unclassifiable.
+_DEGREE_WORD_TO_TARGET: dict[str, str] = {
+    "bachelors": "bachelors",
+    "bachelor": "bachelors",
+    "undergraduate": "bachelors",
+    "masters": "masters",
+    "master": "masters",
+    "graduate": "masters",
+    "phd": "doctoral",
+    "doctorate": "doctoral",
+    "doctoral": "doctoral",
+    "professional": "professional",
+}
+
+
 def _target_education_level(degree: str | None) -> str | None:
     if not degree:
         return None
-    # Try exact match, then prefix.
+    # Abbreviation exact match (case-sensitive: BS / MS / PhD / JD ...).
     if degree in _DEGREE_TO_TARGET_LEVEL:
         return _DEGREE_TO_TARGET_LEVEL[degree]
+    # Full word (case-insensitive, punctuation-stripped: "masters", "Ph.D." ...).
+    key = degree.strip().lower().replace(".", "").replace("'", "").replace("’", "")
+    if key in _DEGREE_WORD_TO_TARGET:
+        return _DEGREE_WORD_TO_TARGET[key]
+    # Abbreviation prefix (MS-CS, PhD-CS ...).
     for prefix, level in _DEGREE_TO_TARGET_LEVEL.items():
         if degree.startswith(prefix):
             return level
