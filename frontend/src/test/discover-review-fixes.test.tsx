@@ -31,36 +31,18 @@ describe('ringFromMatch (shared band-only ring)', () => {
   })
 })
 
-describe('DiscoverTabBar hides Peers when its flag is off', () => {
-  const renderBar = (peersEnabled: boolean) =>
-    render(
-      <DiscoverTabBar tab="foryou" onChange={() => {}} onManageFollowing={() => {}} peersEnabled={peersEnabled} />,
-    )
-
-  it('shows Peers when enabled', () => {
-    renderBar(true)
-    const list = screen.getByRole('tablist', { name: 'Discover sections' })
-    expect(within(list).getByText('Peers')).toBeTruthy()
-  })
-  it('omits Peers when disabled (no dead-end tab)', () => {
-    renderBar(false)
-    const list = screen.getByRole('tablist', { name: 'Discover sections' })
-    expect(within(list).queryByText('Peers')).toBeNull()
-    expect(within(list).getByText('For you')).toBeTruthy()
-  })
-})
-
-// Resources tab (2026-06-14) — program search + universities + guides.
-describe('DiscoverTabBar Resources tab', () => {
-  it('renders a Resources tab right after For you', () => {
-    render(<DiscoverTabBar tab="foryou" onChange={() => {}} onManageFollowing={() => {}} />)
+// Discover restructure (2026-06-14): For you · Academic · Financial · International;
+// Peers dropped, Resources dissolved (Financial/International promoted to top tabs).
+describe('DiscoverTabBar restructured tabs', () => {
+  it('renders the four tabs in order, no Peers/Resources', () => {
+    render(<DiscoverTabBar tab="foryou" onChange={() => {}} />)
     const list = screen.getByRole('tablist', { name: 'Discover sections' })
     const labels = within(list).getAllByRole('tab').map(t => (t.textContent ?? '').trim())
-    expect(labels[0]).toBe('For you')
-    expect(labels[1]).toBe('Resources')
+    expect(labels).toEqual(['For you', 'Academic', 'Financial', 'International'])
+    expect(within(list).queryByText('Peers')).toBeNull()
+    expect(within(list).queryByText('Resources')).toBeNull()
   })
-  it('includes resources (not the old browse) in the canonical tab list', () => {
-    expect(DISCOVER_TABS).toContain('resources')
-    expect(DISCOVER_TABS).not.toContain('browse')
+  it('has the canonical top-tab list', () => {
+    expect(DISCOVER_TABS).toEqual(['foryou', 'academic', 'financial', 'international'])
   })
 })
