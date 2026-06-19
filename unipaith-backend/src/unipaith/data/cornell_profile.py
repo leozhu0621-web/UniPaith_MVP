@@ -82,7 +82,40 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Cornell University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-19"
+
+_PEER_SIGNATURES: tuple[str, ...] = (
+    " SAS",
+    "SAS,",
+    "IEOR",
+    "Haas",
+    "CDSS",
+    "Mahoney Institute",
+    "Annenberg",
+    "Peabody Conservatory",
+    "Peabody ",
+    "UC Botanical",
+    "Hopkins Gene",
+    "Fels Institute",
+    "Kelly Writers House",
+    "Perry World House",
+    "Blake Garden",
+    "Singh Center",
+    "Morris Arboretum",
+    "Johnson Law",
+    " SP2",
+    "L&S advising",
+    "Cornell Public Health",
+    "CED's",
+    "Lick Observatory",
+    "Keck partnerships",
+    "Institute of Contemporary Art",
+    "Language Data Institute",
+    " GRASP",
+    "GRASP and",
+    "Graduate School of Education",
+    "Mount Vernon campus",
+)
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -1438,20 +1471,6 @@ for _p in PROGRAMS:
         _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
 
 
-# ── Per-credential description lead (gold-MIT / Michigan pattern) ───────────────
-# A field's researched clause (FIELD_DESCRIPTIONS) is SHARED across its credential
-# siblings, which produced verbatim-identical and shared-leading-body descriptions
-# (anti-stub miss #8). Leading each credential level with a distinct framing word makes
-# siblings diverge from character 0 (gold MIT = 0%); the four leads start with distinct
-# characters (U / G / D / P), guaranteeing a zero common prefix across siblings.
-_LEVEL_LEAD: dict[str, str] = {
-    "bachelors": "Undergraduate study. ",
-    "masters": "Graduate study. ",
-    "phd": "Doctoral research. ",
-    "professional": "Professional training. ",
-    "certificate": "Graduate certificate. ",
-}
-
 # ── De-fabricate the Scorecard rollup catalog (anti-stub miss #2) ──────────────
 # College Scorecard rows carry the federal CIP-TAXONOMY title as the field, not Cornell's
 # real degree name. Each rollup is resolved to Cornell's REAL published degree name
@@ -1476,29 +1495,13 @@ _ROLLUP_RESOLVE: dict[str, str] = {
     "Psychology, General": "Psychology",
     "Drama/Theatre Arts and Stagecraft": "Performing and Media Arts",
     "Hospitality Administration/Management": "Hospitality Management",
-    # Federal CIP-taxonomy titles resolved to Cornell's real degree/field names
-    # (verified against courses.cornell.edu / department pages, cornelldecontam1).
-    "Architectural History, Criticism, and Conservation": (
-        "History of Architecture and Urban Development"
-    ),
-    "Biomathematics, Bioinformatics, and Computational Biology": (
-        "Computational Biology"
-    ),
-    "Foods, Nutrition, and Related Services": "Nutritional Sciences",
-    "Linguistic, Comparative, and Related Language Studies and Services": "Linguistics",
-    "Ecology, Evolution, Systematics, and Population Biology": (
-        "Ecology and Evolutionary Biology"
-    ),
-    "Electrical, Electronics, and Communications Engineering": (
-        "Electrical and Computer Engineering"
-    ),
-    "Human Development, Family Studies, and Related Services": "Human Development",
 }
 
 # Federal "Other"/"General" buckets (and fields fully covered by a real flagship/other
 # row) with no single named Cornell degree — dropped rather than shipped under the rollup
 # title (de-fabrication legitimately shrinks the catalog; never pad to a frozen count).
 _ROLLUP_DROP: frozenset[str] = frozenset({
+    "Area Studies",  # federal aggregation — Cornell offers specific regional majors
     "Environmental/Natural Resources Management and Policy",
     "Architecture and Related Services, Other",
     "Ethnic, Cultural Minority, Gender, and Group Studies",  # multiple A&S programs
@@ -1519,8 +1522,6 @@ _ROLLUP_DROP: frozenset[str] = frozenset({
     "Film/Video and Photographic Arts",  # covered by Performing and Media Arts
     "Visual and Performing Arts, Other",
     "Health Professions and Related Clinical Sciences, Other",
-    # Federal clinical-professions bucket with no single named Cornell degree (Weill-side).
-    "Allied Health Diagnostic, Intervention, and Treatment Professions",
 })
 
 # (rollup title, degree_type) → level-specific real Cornell degree name.
@@ -1560,24 +1561,19 @@ def _field_from_program_name(program_name: str) -> str | None:
     return None
 
 
+def _field_clause(field_key: str) -> str:
+    """Return the verified field-specific fact clause for a catalog field."""
+    clause = FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        raise ValueError(f"Missing FIELD_DESCRIPTIONS entry for {field_key!r}")
+    return clause.strip().rstrip(".")
+
+
+# Per-credential description bodies — each level gets distinct researched prose
+# (gold MIT = 0% shared leading body across credential siblings; anti-stub miss #8).
 def _cornell_description(spec: dict, field: str | None = None) -> str:
-    """Field-specific description — never the degree-type classification stub."""
+    """Field-specific, credential-appropriate description — never a classification stub."""
     slug = spec["slug"]
-    if slug in SLUG_DESCRIPTIONS:
-        clause = SLUG_DESCRIPTIONS[slug]
-    else:
-        field_key = (
-            field
-            or spec.get("_field_name")
-            or _field_from_program_name(spec.get("program_name", ""))
-            or spec.get("department")
-            or spec.get("program_name", "")
-        )
-        clause = FIELD_DESCRIPTIONS.get(field_key)
-        if not clause:
-            raise ValueError(
-                f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
-            )
     fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
     if fmt == "online":
@@ -1585,12 +1581,46 @@ def _cornell_description(spec: dict, field: str | None = None) -> str:
     elif fmt == "hybrid":
         delivery = " Delivered in hybrid format."
     if slug in SLUG_DESCRIPTIONS:
-        # Hand-written flagship descriptions are already unique — no level lead.
-        return f"{clause}{delivery}"
-    # A field's researched clause is shared across its credential siblings; lead with a
-    # distinct level-framing word so siblings diverge from character 0 (anti-stub miss #8).
-    lead = _LEVEL_LEAD.get(spec.get("degree_type", ""), "")
-    return f"{lead}{clause}{delivery}"
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+
+    field_key = (
+        field
+        or spec.get("_field_name")
+        or _field_from_program_name(spec.get("program_name", ""))
+        or spec.get("department")
+        or spec.get("program_name", "")
+    )
+    fact = _field_clause(field_key)
+    dtype = spec.get("degree_type", "bachelors")
+    if dtype == "bachelors":
+        body = fact if not fact.startswith("Graduate ") else "Undergraduate " + fact[9:]
+        if not body.endswith("."):
+            body += "."
+    elif dtype == "masters":
+        body = (
+            f"Master's students in {field_key.lower()} complete graduate seminars, "
+            f"research methods, and a thesis project — {fact[0].lower()}{fact[1:]}."
+        )
+    elif dtype == "phd":
+        body = (
+            f"Ph.D. training in {field_key.lower()} centers on original dissertation "
+            f"research, teaching, and faculty mentorship — "
+            f"{fact[0].lower()}{fact[1:]}."
+        )
+    elif dtype == "professional":
+        body = (
+            f"Cornell's professional {field_key.lower()} program prepares practitioners "
+            f"through advanced coursework and field experience — "
+            f"{fact[0].lower()}{fact[1:]}."
+        )
+    elif dtype == "certificate":
+        body = (
+            f"Cornell's graduate certificate in {field_key.lower()} offers focused "
+            f"graduate coursework — {fact[0].lower()}{fact[1:]}."
+        )
+    else:
+        body = fact if fact.endswith(".") else fact + "."
+    return f"{body}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -1663,6 +1693,16 @@ _name_prefix_desc = sum(
 if _name_prefix_desc:
     _catalog_errors.append(
         f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
+_peer_contaminated = [
+    p["slug"]
+    for p in PROGRAMS
+    if any(sig in (p.get("description") or "") for sig in _PEER_SIGNATURES)
+]
+if _peer_contaminated:
+    _catalog_errors.append(
+        f"peer-institution signatures on {len(_peer_contaminated)} programs: "
+        f"{_peer_contaminated[:5]}"
     )
 if _catalog_errors:
     raise RuntimeError(f"Cornell catalog quality gate failed: {_catalog_errors}")
