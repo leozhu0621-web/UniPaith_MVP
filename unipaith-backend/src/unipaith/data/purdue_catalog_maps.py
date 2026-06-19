@@ -132,6 +132,11 @@ FIELD_ALIASES: dict[str, str] = {
     "Agricultural Engineering": "Agricultural Engineering",
     "Agricultural Business and Management": "Agricultural Economics",
     "Agricultural Economics": "Agricultural Economics",
+    # Slash / comma-and CIP rollups → Purdue's real published program name
+    # (verified against admissions.purdue.edu and the Purdue catalog, 2026-06-19).
+    "Hospitality Administration/Management": "Hospitality and Tourism Management",
+    "Industrial Production Technologies/Technicians": "Industrial Engineering Technology",
+    "Sports, Kinesiology, and Physical Education/Fitness": "Kinesiology",
 }
 
 # Field name (after alias) → Purdue's published owning unit.
@@ -205,6 +210,16 @@ DEPARTMENT_BY_FIELD: dict[str, str] = {
     "Aviation Management": "School of Aviation and Transportation Technology",
     "Information Technology": "Department of Computer and Information Technology",
     "Computer Graphics Technology": "Department of Computer Graphics Technology",
+    # De-rolled-up CIP fields → Purdue's real owning unit (verified 2026-06-19).
+    "Hospitality and Tourism Management": "White Lodging-J.W. Marriott, Jr. School of Hospitality and Tourism Management",
+    "Industrial Engineering Technology": "School of Engineering Technology",
+    "Medical Laboratory Sciences": "School of Health Sciences",
+    "Selling and Sales Management": "Division of Consumer Science",
+    "Retail Management": "White Lodging-J.W. Marriott, Jr. School of Hospitality and Tourism Management",
+    "Film and Video Studies": "Patti and Rusty Rueff School of Design, Art, and Performance",
+    "Learning Design and Technology": "Department of Curriculum and Instruction",
+    "Biochemistry and Molecular Biology": "Department of Biochemistry",
+    "Comparative Pathobiology": "Department of Comparative Pathobiology",
 }
 
 # Slug → full published program name (explicit flagship rows).
@@ -233,6 +248,100 @@ SLUG_DEPARTMENTS: dict[str, str] = {
     "purdue-agricultural-economics-bs": "Department of Agricultural Economics",
     "purdue-psychology-bs": "Department of Psychological Sciences",
 }
+
+# Per-slug full resolution for CIP-rollup rows whose real Purdue name / owning unit /
+# college differs from the federal taxonomy or diverges across credential levels.
+# (program_name, department, school) — verified against admissions.purdue.edu + catalog.
+SLUG_OVERRIDES: dict[str, tuple[str, str, str]] = {
+    "purdue-clinical-medical-laboratory-science-research-and-allied-professions-bs": (
+        "Bachelor of Science in Medical Laboratory Sciences",
+        "School of Health Sciences",
+        "College of Health and Human Sciences",
+    ),
+    "purdue-film-video-and-photographic-arts-bs": (
+        "Bachelor of Arts in Film and Video Studies",
+        "Patti and Rusty Rueff School of Design, Art, and Performance",
+        "College of Liberal Arts",
+    ),
+    "purdue-educational-instructional-media-design-cert": (
+        "Graduate Certificate in Learning Design and Technology",
+        "Department of Curriculum and Instruction",
+        "College of Education",
+    ),
+    "purdue-family-and-consumer-sciences-human-sciences-business-services-bs": (
+        "Bachelor of Science in Retail Management",
+        "White Lodging-J.W. Marriott, Jr. School of Hospitality and Tourism Management",
+        "College of Health and Human Sciences",
+    ),
+    "purdue-family-and-consumer-sciences-human-sciences-general-bs": (
+        "Bachelor of Science in Selling and Sales Management",
+        "Division of Consumer Science",
+        "College of Health and Human Sciences",
+    ),
+    "purdue-biochemistry-biophysics-and-molecular-biology-bs": (
+        "Bachelor of Science in Biochemistry",
+        "Department of Biochemistry",
+        "College of Agriculture",
+    ),
+    "purdue-biochemistry-biophysics-and-molecular-biology-ms": (
+        "Master of Science in Biochemistry and Molecular Biology",
+        "Department of Biochemistry",
+        "College of Agriculture",
+    ),
+    "purdue-physiology-pathology-and-related-sciences-ms": (
+        "Master of Science in Comparative Pathobiology",
+        "Department of Comparative Pathobiology",
+        "College of Veterinary Medicine",
+    ),
+}
+
+# Field (after alias) → real owning COLLEGE override, where the IPEDS row's college was wrong.
+SCHOOL_OVERRIDE_BY_FIELD: dict[str, str] = {
+    "Hospitality and Tourism Management": "College of Health and Human Sciences",
+    "Kinesiology": "College of Health and Human Sciences",
+}
+
+# CIP-rollup rows dropped because no single real Purdue degree name can be verified for
+# that (CIP × credential), or because the resolution would duplicate an existing real row.
+# Omitting an unverifiable row is correct; a guessed real name would be fabrication, and a
+# rollup name ("X/Y", "X, Y, and Z") is itself a defect (enrich-profile miss #2).
+DROP_SLUGS: frozenset[str] = frozenset({
+    # CIP 15.0101 Architectural Eng. Tech. — no single verified Purdue degree across levels
+    "purdue-architectural-engineering-technologies-technicians-bs",
+    "purdue-architectural-engineering-technologies-technicians-cert",
+    "purdue-architectural-engineering-technologies-technicians-ms",
+    # Business/Corporate Communications — ambiguous (Strategic Comm. cert vs MS)
+    "purdue-business-corporate-communications-cert",
+    "purdue-business-corporate-communications-ms",
+    "purdue-cultural-studies-critical-theory-and-analysis-cert",
+    # duplicates the existing real "Bachelor of Science in Health Sciences" row
+    "purdue-health-services-allied-health-health-sciences-general-bs",
+    "purdue-intercultural-multicultural-and-diversity-studies-cert",
+    # duplicates the existing real "Graduate Certificate in Interdisciplinary Studies"; MS unverified
+    "purdue-multi-interdisciplinary-studies-general-cert",
+    "purdue-multi-interdisciplinary-studies-general-ms",
+    # Rhetoric & Composition/Writing Studies — real name diverges by level; not a Purdue BS
+    "purdue-rhetoric-and-composition-writing-studies-bs",
+    "purdue-rhetoric-and-composition-writing-studies-cert",
+    # No standalone Purdue Zoology degree (covered under Biological Sciences / Animal Sciences)
+    "purdue-zoology-animal-biology-bs",
+    "purdue-zoology-animal-biology-cert",
+    "purdue-zoology-animal-biology-ms",
+    # overlaps the real Retail Management / Selling and Sales Management majors
+    "purdue-general-sales-merchandising-and-related-marketing-operations-bs",
+    "purdue-clinical-counseling-and-applied-psychology-cert",
+    "purdue-bilingual-multilingual-and-multicultural-education-cert",
+    "purdue-educational-assessment-evaluation-and-research-cert",
+    # Physiology/Pathology — only the MS (Comparative Pathobiology) is verifiable; BS/cert dropped
+    "purdue-physiology-pathology-and-related-sciences-bs",
+    "purdue-physiology-pathology-and-related-sciences-cert",
+    # uncertain certificate; the BS (Biochemistry) and MS (Biochem & Molecular Biology) are kept
+    "purdue-biochemistry-biophysics-and-molecular-biology-cert",
+    # CIP rollups with no verifiable single Purdue degree name
+    "purdue-mental-and-social-health-services-and-allied-professions-cert",
+    "purdue-military-technologies-and-applied-sciences-other-ms",
+})
+
 
 # Liberal-arts fields that confer a B.A. at Purdue (College of Liberal Arts).
 BA_FIELDS = frozenset({
