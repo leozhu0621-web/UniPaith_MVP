@@ -70,6 +70,30 @@ _TIER_RANK = {"essential": 0, "high_value": 1, "standard": 2}
 _ACTION_RANK = {"ask": 0, "confirm": 1}
 _CATALOG_ORDER = {f["key"]: i for i, f in enumerate(CATALOG)}
 
+# Profile-tab → CATALOG keys (Spec "Profile refinement v2" Ship 2). When the
+# enrich planner is scoped to a section, only the catalog entries whose key is
+# in SECTION_FIELDS[section] are considered. An unknown/absent section means
+# "all of CATALOG" (the global next). This is the shared contract both the
+# backend planner and the per-tab EnrichPanel use.
+SECTION_FIELDS: dict[str, list[str]] = {
+    "identity": ["identity"],
+    "academics": ["gpa", "test_scores", "activities", "work_experience", "languages"],
+    "goals": ["goals"],
+    "needs": ["needs"],
+    "preferences": [
+        "budget_band",
+        "preferred_countries",
+        "weight_cost",
+        "weight_location",
+        "weight_outcomes",
+        "weight_flexibility",
+        "weight_support",
+        "weight_time_to_degree",
+        "funding_requirement",
+    ],
+    "strategy": ["target_degree_level", "field_of_interest"],
+}
+
 
 def action_for(entry: dict[str, Any] | None) -> str:
     """Decide ask / confirm / skip for one field's stored state.
@@ -100,16 +124,26 @@ def essentials_present(signal_state: dict[str, Any]) -> bool:
     return True
 
 
-def plan_next(signal_state: dict[str, Any], *, limit: int = 3) -> list[dict[str, Any]]:
+def plan_next(
+    signal_state: dict[str, Any], *, limit: int = 3, section: str | None = None
+) -> list[dict[str, Any]]:
     """Return up to `limit` next signals to enrich, highest priority first.
 
     Priority = (tier, action, catalog order): essentials before high-value
     before standard; within a tier, ASK (missing/weak) before CONFIRM (1-tap).
     SKIP fields are omitted.
+
+    When `section` is a known key in ``SECTION_FIELDS`` the candidate set is
+    restricted to that tab's fields (the same tier/action/catalog-order ranking
+    is preserved among them). An unknown or ``None`` section is unscoped — the
+    global next over all of ``CATALOG`` — so behavior is unchanged by default.
     """
+    allowed = SECTION_FIELDS.get(section) if section is not None else None
     candidates: list[dict[str, Any]] = []
     for field in CATALOG:
         key = field["key"]
+        if allowed is not None and key not in allowed:
+            continue
         entry = signal_state.get(key)
         action = action_for(entry)
         if action == "skip":

@@ -12,6 +12,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 
 
 import { PageContainer } from '../../components/student/density'
+import EnrichPanel from '../../components/student/EnrichPanel'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import usePageTitle from '../../hooks/usePageTitle'
 import { PROFILE_TAB_ALIASES, normalizeProfileTab, type ProfileTabSpec } from '../../utils/information-architecture'
@@ -153,19 +154,50 @@ export default function ProfilePage() {
         className="stagger-list focus-visible:outline-none"
       >
         <Suspense fallback={<div className="space-y-3"><SkeletonCard /><SkeletonCard /></div>}>
+          {/* Basic info (overview) gets NO enrich panel; every other tab leads
+              with its section-scoped "Enrich with Uni" card (Profile v2 Ship 2).
+              The panel hides itself when the section has no pending signal. */}
           {activeTab === 'overview' && <OverviewTab />}
-          {activeTab === 'identity' && <IdentityTab />}
+          {activeTab === 'identity' && (
+            <>
+              <EnrichPanel section="identity" />
+              <IdentityTab />
+            </>
+          )}
           {/* Academics & experience — one tab; the two panels stack. */}
           {activeTab === 'academics' && (
-            <div className="space-y-10">
-              <AcademicsTab />
-              <ExperienceTab />
-            </div>
+            <>
+              <EnrichPanel section="academics" />
+              <div className="space-y-10">
+                <AcademicsTab />
+                <ExperienceTab />
+              </div>
+            </>
           )}
-          {activeTab === 'goals' && <GoalsTab />}
-          {activeTab === 'needs' && <NeedsTab />}
-          {activeTab === 'preferences' && <PreferencesTab />}
-          {activeTab === 'strategy' && <StrategyTab />}
+          {activeTab === 'goals' && (
+            <>
+              <EnrichPanel section="goals" />
+              <GoalsTab />
+            </>
+          )}
+          {activeTab === 'needs' && (
+            <>
+              <EnrichPanel section="needs" />
+              <NeedsTab />
+            </>
+          )}
+          {activeTab === 'preferences' && (
+            <>
+              <EnrichPanel section="preferences" />
+              <PreferencesTab />
+            </>
+          )}
+          {activeTab === 'strategy' && (
+            <>
+              <EnrichPanel section="strategy" />
+              <StrategyTab />
+            </>
+          )}
         </Suspense>
       </div>
     </PageContainer>

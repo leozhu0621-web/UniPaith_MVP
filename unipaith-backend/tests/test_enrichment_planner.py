@@ -3,6 +3,7 @@
 from unipaith.services.enrichment_planner import (
     CATALOG,
     ESSENTIAL_KEYS,
+    SECTION_FIELDS,
     action_for,
     essentials_present,
     plan_next,
@@ -65,3 +66,58 @@ def test_ranking_weight_excluded_from_catalog():
 def test_weight_fields_use_scale_widget():
     weights = [f for f in CATALOG if f["type"] == "weight"]
     assert weights and all(f["ask_kind"] == "scale" for f in weights)
+
+
+# ── Ship 2: section scoping ──────────────────────────────────────────────
+
+
+def test_section_fields_keys_all_exist_in_catalog():
+    catalog_keys = {f["key"] for f in CATALOG}
+    for section, keys in SECTION_FIELDS.items():
+        assert keys, f"{section} has no fields"
+        for k in keys:
+            assert k in catalog_keys, f"{section}: '{k}' is not a CATALOG key"
+
+
+def test_section_goals_only_returns_goals():
+    # empty state → every goals candidate is the only thing that can surface
+    items = plan_next({}, limit=10, section="goals")
+    assert items, "goals section should surface its pending signal"
+    assert {i["field"] for i in items} == {"goals"}
+
+
+def test_section_preferences_only_returns_preferences_fields():
+    items = plan_next({}, limit=20, section="preferences")
+    expected = set(SECTION_FIELDS["preferences"])
+    fields = {i["field"] for i in items}
+    assert fields, "preferences section should surface pending signals"
+    assert fields <= expected
+    # the contract's preferences fields are exactly weight_*/budget_band/
+    # preferred_countries/funding_requirement — nothing else may leak in
+    for f in fields:
+        assert f.startswith("weight_") or f in {
+            "budget_band",
+            "preferred_countries",
+            "funding_requirement",
+        }, f"unexpected field '{f}' in preferences section"
+
+
+def test_section_scoping_preserves_ranking_order():
+    # within preferences, high-value (budget/countries/weight_cost/...) precede
+    # standard (weight_flexibility/support/time_to_degree, funding_requirement)
+    items = plan_next({}, limit=20, section="preferences")
+    tiers = [i["tier"] for i in items]
+    rank = {"essential": 0, "high_value": 1, "standard": 2}
+    assert [rank[t] for t in tiers] == sorted(rank[t] for t in tiers)
+
+
+def test_unknown_section_is_unchanged_global_next():
+    base = plan_next({}, limit=3)
+    assert plan_next({}, limit=3, section="not-a-section") == base
+
+
+def test_none_section_is_unchanged_global_next():
+    base = plan_next({}, limit=5)
+    assert plan_next({}, limit=5, section=None) == base
+    # explicit default call is identical too
+    assert plan_next({}, limit=5) == base

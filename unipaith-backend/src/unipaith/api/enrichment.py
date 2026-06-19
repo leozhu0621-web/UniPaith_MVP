@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,11 +28,14 @@ class EnrichmentValueIn(BaseModel):
 @router.get("/next")
 async def get_next(
     limit: int = 3,
+    section: str | None = Query(None),
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
+    # `section` (optional) scopes the planner to one profile tab's fields; when
+    # absent or unknown the behavior is unchanged (global next).
     student_id = await IntakeEngineService(db).profile_id_for_user(user.id)
-    return await EnrichmentService(db).next_signals(student_id, limit=limit)
+    return await EnrichmentService(db).next_signals(student_id, limit=limit, section=section)
 
 
 @router.post("/{field}/value")
