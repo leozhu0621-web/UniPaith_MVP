@@ -34,14 +34,16 @@ function renderDS() {
 }
 
 describe('DiscoverySearch (render smoke)', () => {
-  it('renders the search box and genre tiles in the empty state', () => {
+  it('renders the search box and outcome tiles in the empty state', () => {
     renderDS()
     expect(
       screen.getByPlaceholderText('What kind of program are you looking for?'),
     ).toBeInTheDocument()
-    expect(screen.getByText('Or browse')).toBeInTheDocument()
-    expect(screen.getByText('Computer Science')).toBeInTheDocument()
-    // Empty state shows genre tiles, not a results count.
+    // Browse by outcome stays; the subject quick-tiles were dropped (Spec
+    // 2026-06-14: filters are EITHER outcome-based OR the traditional dropdowns).
+    expect(screen.getByText('High earning potential')).toBeInTheDocument()
+    expect(screen.queryByText('Or browse')).not.toBeInTheDocument()
+    // Empty state shows tiles, not a results count.
     expect(screen.queryByTestId('results-count')).not.toBeInTheDocument()
   })
 })

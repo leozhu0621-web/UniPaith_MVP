@@ -194,11 +194,11 @@ export default function ExploreFilters({ universities, filters, onChange }: Prop
 
   return (
     <div className="mb-4">
-      {/* Row 1: dropdown filters */}
+      {/* Row 1: traditional filters (larger controls — Spec 2026-06-14). */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground/70 uppercase tracking-wider mr-1">
-          <Filter size={11} />
-          Filter
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground/70 uppercase tracking-wider mr-1">
+          <Filter size={13} />
+          Traditional filters
         </span>
 
         <FilterDropdown
@@ -352,7 +352,7 @@ function FilterDropdown({ label, active, options, selected, onToggle }: Dropdown
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-full border transition-colors ${
+        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[13px] font-medium rounded-full border transition-colors ${
           hasActive
             ? 'bg-secondary text-secondary-foreground border-secondary'
             : 'bg-card text-foreground border-border hover:border-secondary hover:text-secondary'
@@ -415,7 +415,7 @@ function TogglePill({ label, active, onClick }: { label: string; active: boolean
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-full border transition-colors ${
+      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[13px] font-medium rounded-full border transition-colors ${
         active
           ? 'bg-secondary text-secondary-foreground border-secondary'
           : 'bg-card text-foreground border-border hover:border-secondary hover:text-secondary'

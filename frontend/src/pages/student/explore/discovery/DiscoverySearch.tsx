@@ -14,7 +14,6 @@ import type { ProgramSummary } from '../../../../types'
 import ProgramCard from '../cards/ProgramCard'
 import ConstraintChips from './ConstraintChips'
 import FiltersPanel from './FiltersPanel'
-import GenreTiles from './GenreTiles'
 import OutcomeTiles from './OutcomeTiles'
 import SaveSearchButton from './SaveSearchButton'
 import SortMenu from './SortMenu'
@@ -347,20 +346,10 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
         </>
       ) : (
         <>
-          {/* Outcome-first browse (Discover review #2) — each tile writes the ROI
-              filters + sort so only programs with real outcome data surface. */}
+          {/* Browse by outcome — each tile writes the ROI filters + sort so only
+              programs with real outcome data surface (Spec 2026-06-14: filters are
+              EITHER outcome-based OR the traditional dropdowns below). */}
           <OutcomeTiles onPick={p => writeUrl({ q: urlQuery, chips, sort: p.sort, filters: p.filters })} />
-          <GenreTiles
-            onPick={tile =>
-              addChip({
-                category: 'major',
-                value: tile.value,
-                display: tile.label,
-                confidence: 100,
-                user_confirmed: true,
-              })
-            }
-          />
         </>
       )}
     </section>
