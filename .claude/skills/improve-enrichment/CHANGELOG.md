@@ -6,6 +6,111 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-19 — Run 64 (FULL-FLEET sweep of all 300 live · enricher CLEARED 3 tiers + the run-63 Cornell regression — Cornell peer-copy, BU field-echo, Penn descriptions · 1 rule change — the possessive award-level NAME form is a realness defect on REAL fields, not only rollups)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
+A per-catalog scan over the full paginated program list of all 40 program-bearing catalogs —
+duplicate / bare-abbreviation / "Programs" / null-dept names; word-boundary rollup tell on name +
+department; literal `(CIP NN.NN)`; concentration-split; prefix-doubling; verbatim-shared +
+per-field shared-leading-body; double-period / connects-to school-blurb; URL-slug + hex
+build-artifact; an **OWN-UNIT-EXCLUDED** word-boundary peer-signature scan; **a name-form
+measurement (possessive "Bachelor's in {field}" vs conferred "Bachelor of Arts/Science in {field}")**;
+plus campus-photo count, posts feed, a matcher-side `cip_code`/`external_reviews` spot-check, and a
+short-/stub-name scan; gold MIT (n=65) control. For mid-deploy Harvard I cross-checked the merged
+source + deploy status against the live API. Fleet = 300 (40 catalogs: 28 mature + 12 seeds; 260 bare
+stubs), no sprawl.
+
+**Merged since run 63 (PR #858):** #857 BU (real owning-college departments + dual-degree names —
+LANDED the run-63 in-flight repair), #859 + #861 Cornell (de-contaminate descriptions + de-roll-up
+CIP names → per-credential descriptions + peer-signature gate + Area Studies drop), #863 Penn
+(structural de-fabrication — real degree names + per-credential descriptions), #862 Harvard
+(de-fabricate CIP rollups + per-credential descriptions — **Deploy Backend `in_progress` at grade
+time**, 343→289 pending). Old stranded review/feedback-export + superseded PRs (#769 UCLA, #515/#503/
+#499/#489 reviews, #439/#420/#403 gold, feedback exports) remain open — low-priority, out of grader
+scope, flagged not actioned.
+
+**Findings (live API + merged-source evidence):**
+1. **THREE tiers + the run-63 CRITICAL regression CLEARED — verified live.** (a) **Cornell peer-copy =
+   0** — the run-63 CRITICAL (Berkeley IEOR/Haas/CDSS + Penn Mahoney/SAS on 7 rows from #856) is gone
+   after #859/#861; an own-unit-excluded scan finds NO foreign units (the lone "Sloan" hit is Cornell's
+   OWN Sloan Program in Health Administration), real Cornell colleges now fill `department`, and a
+   build-time peer-gate was added. (b) **BU field-echo 216 → 0** — #857 landed + deployed; departments
+   are now the real owning colleges (Graduate/College of Arts & Sciences, Questrom, Goldman, Sargent…).
+   (c) **Penn descriptions** — #863 deployed: verbatim 74%→0, shared-leading-body 70f→0, literal CIP
+   28%→0. The repair loop is clearing acute breaches, not shipping single-dimension stub-swaps.
+2. **NEW GAP-CLASS (drives the 1 rule change): the possessive award-level NAME form survives a
+   "de-fabrication".** Penn #863 + Cornell #861 are DEPLOYED passes that resolved the rollup FIELDS +
+   rewrote descriptions but ship the bachelor's/master's rows in possessive mint form — **Penn 53%
+   (102 rows), Cornell 54% (129)** "Bachelor's in {field}" — beside the SAME field's CONFERRED doctoral
+   sibling (live: "Doctor of Philosophy in Anthropology" next to "Bachelor's in Anthropology"). The
+   possessive form is fleet-anomalous: **0% on gold MIT and 23/28 catalogs** (which name 85–100% of
+   rows "Bachelor of Arts/Science in …"); it survives only on the IPEDS-minted catalogs (Harvard 54 /
+   Columbia 55 / Cornell 54 / Penn 53 / Duke 34 / Yale 10 %). Penn's bachelor's rows also still carry
+   federal CIP titles the pass claimed to drop ("Area Studies", "Accounting and Related Services",
+   "Biochemistry, Biophysics and Molecular Biology"). This is the inverse of the run-58 finding (then:
+   descriptions fixed, structure left → §8.5 structure gate): now the NAME dimension is left.
+3. **Harvard #862 is MID-DEPLOY** (`6bfbb7f` Deploy Backend `in_progress`); live still shows the
+   pre-#862 catalog (25% aggregate-rollup + 54% possessive). About-to-be-live — re-grade next run;
+   repair only if the deployed result still carries the defect (same treatment run 63 gave mid-deploy
+   Cornell).
+4. **A likely-fabricated INTERNAL owning unit (Cornell).** Cornell's `department` is now real colleges,
+   but **"Cornell David A. Duffield College of Engineering" rides 31 rows** — Cornell's college is
+   "College of Engineering" (Duffield is a building donor, not the college's name). A fabricated
+   internal unit that contains "Cornell"/"Engineering" passes a peer-signature scan but fails miss #8's
+   EXACT-NAME org-chart allowlist — a COMPLIANCE GAP + an enforcement gap (FLAG #2), not a new rule.
+5. **Documented structural classes persist (no new rule):** aggregate CIP-rollup names (Columbia
+   25%(65) / Harvard 25%(85, mid-deploy) / BU 8% / UIUC 6%, miss #2); prefix-doubling (Yale 70%, miss
+   #9); per-field shared-leading-body (Wisconsin 75f / Northwestern 56f / BU 31f, miss #8); verbatim
+   (Rice 43%, run-30/miss #8); bare-field + dept-echo names (Rice: English/Religion/Global Affairs/
+   Operations Research/Sport Analytics/Management, miss #2/#9); one literal stub name (BU "minor").
+   Checklist GREEN on the 28 mature catalogs (≥4 photos + live feed each; 0 dup / 0 bare / 0 "Programs"
+   / 0 null-dept); reviews richly present on coverable flagship rows. The 12 seeds remain half-built (7
+   <4 photos, dead feeds); 260 bare stubs (33 zero-photo). `program_preferences` backfill IS called in
+   the recent migrations (coverage maintained). `cip_code` is `None` on the public API for EVERY
+   program (serializer gap, FLAG #3). All BAD DATA / external-seed-backlog → backlog, not rules.
+
+**Diagnosis:** finding 2 is a genuine NEW rulebook gap. The "default-flipped" test: miss #2 already
+forbids the possessive form, but ONLY as a CIP-ROLLUP carrier ("Bachelor's in {rollup}") — its tell
+list is keyed on rollup-field punctuation (", General", comma-lists, slashes), so a reader following it
+literally fixes the rollup FIELDS + doctoral rows (which Penn/Cornell did) and concludes "Bachelor's in
+{real field}" is acceptable. Penn #863 — a DEPLOYED pass that explicitly asserts "0 rollup live" yet
+ships "Bachelor's in Anthropology" beside "Doctor of Philosophy in Anthropology" — is direct live proof
+the current text permits the defect. So this is a TIGHTENING of miss #2 with NEW evidence, not a
+duplicate. Findings 1/3/4/5 are wins / deploy-lag / compliance-gaps in documented classes → backlog +
+FLAGS. No display bug. No finding argued for loosening an invariant.
+
+**Rulebook changes: 1 of ≤3.** Miss #2 gains one sub-bullet: the conferred-degree DESIGNATION is part
+of the real name; the possessive award-level form ("Bachelor's/Master's/Doctorate in {field}") is a
+realness defect EVEN WHEN the field is genuine (gold MIT = 0%; clean fleet = 0%), most self-evidently
+when the same field's doctoral row already ships the conferred form — proof the enricher knew the real
+designation and applied it inconsistently; a de-fab is done only when, per field, every credential row
+uses the conferred designation under ONE convention and possessive form is 0%. The rule text is fully
+general (no school named in SKILL.md); the live Penn #863 / Cornell #861 evidence is cited as the class,
+not a school. Post-edit re-read: misses 1–9 still sequentially numbered; the addition is a sub-bullet within
+miss #2; no contradiction; all invariants intact (a tightening — loosens nothing). File 1296→1319 lines.
+
+**Standing concern (flagged for human review, carried):** the dominant residual is enricher BEHAVIOR +
+ENFORCEMENT, which more rule text cannot fix — the de-fab passes keep finishing ONE dimension and
+shipping (descriptions fixed → names left this interval; names/structure fixed → descriptions left in
+run 58). The leverage is (a) the enricher clearing the WHOLE class per catalog, and (b) the missing
+gate enforcement (FLAG #2): `anti_stub.analyze` has no possessive-name scan, its rollup scan misses
+bare CIP-bucket titles, and it has no exact-name org-chart allowlist — so Penn #863 + the Cornell
+Duffield unit cleared green CI. Escalated in the FLAGS, not converted to duplicate rules.
+
+**Backlog delta:** rewritten worst-first as run 64. Cornell + BU + Penn moved from CRITICAL/HIGH to
+CLEARED (with live-verified zeros) + a residual entry each. CRITICAL tier is now EMPTY (no fabricated /
+cross-contaminated content live). HIGH band re-measured + re-ranked from live: Columbia (worst rollup)
+· Harvard (mid-deploy verify) · Yale (prefix) · Rice (verbatim+bare-field) · Wisconsin / Northwestern
+(per-field stamping) · Cornell (possessive + Duffield unit) · Penn (possessive + surviving rollups) ·
+Duke (possessive) · BU (shared-body + "minor") · UIUC/BU residual rollup. 12-seed + 260-stub MEDIUM
+bands carried. FLAGS: dual-head auto-merge race (re-escalated), the anti-stub gate gaps (now with Penn
+#863 + Cornell Duffield as live proof), cip_code serializer gap, URL-slug pattern.
+
+**Invariants:** all intact; SKILL.md edit is a miss-#2 tightening (adds a name-realness sub-bullet;
+loosens nothing). Health check: see below.
+
+---
+
 ## 2026-06-19 — Run 63 (FULL-FLEET sweep of all 300 live · enricher CLEARED 4 backlog tiers — UIUC/NYU slug-leaks, Berkeley/Purdue structure, BU peer-copy · NEW regression: Cornell #856 de-fab shipped Berkeley/Penn peer-copy · 0 rule changes)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
