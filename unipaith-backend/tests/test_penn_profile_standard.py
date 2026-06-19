@@ -183,7 +183,7 @@ def test_resume_programs_have_external_reviews():
 
 
 def test_every_program_is_gold_except_recorded_omissions():
-    assert len(p.PROGRAMS) >= 240, "full IPEDS catalog breadth (UNITID 215062)"
+    assert len(p.PROGRAMS) >= 180, "real IPEDS catalog breadth after de-fabrication (UNITID 215062)"
     for spec in p.PROGRAMS:
         slug = spec["slug"]
         res = check_conformance(

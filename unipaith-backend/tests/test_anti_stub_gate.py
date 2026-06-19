@@ -46,6 +46,8 @@ CERTIFIED_CLEAN = [
     "cornell",    # CIP-rollup buckets → real Cornell degrees or dropped; field-echo
     #             departments → real owning college; per-credential description leads
     #             (verbatim/shared-body removed) (cornelldefab1)
+    "penn",       # CIP rollup de-fab; real school departments; per-credential bodies
+    #             (penndefab1 — HIGH #3)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
@@ -174,6 +176,31 @@ def test_analyzer_detects_classification_and_prefix_stubs():
     report = analyze(fabricated)
     assert report.name_prefixed, "should flag the program_name-prefixed description"
     assert report.classification, "should flag the classification-only description"
+
+
+def test_penn_catalog_has_no_rollup_or_verbatim_shared_descriptions():
+    """Regression guard: Penn must not ship CIP rollup names or per-field stamped bodies
+    (REPAIR_BACKLOG HIGH #3 — 23% rollup + 74% verbatim-across-levels)."""
+    from unipaith.data import penn_profile
+
+    rollup_tells = (
+        ", General",
+        ", Other",
+        "(CIP ",
+        "/",
+    )
+    rollup_names = [
+        p["slug"]
+        for p in penn_profile.PROGRAMS
+        if any(t in p.get("program_name", "") for t in rollup_tells)
+        or "Literatures, and Linguistics" in p.get("program_name", "")
+    ]
+    assert not rollup_names, (
+        f"Penn catalog has {len(rollup_names)} rollup program_name rows: "
+        f"{rollup_names[:5]}"
+    )
+    report = analyze(penn_profile.PROGRAMS)
+    assert report.is_clean, f"Penn anti-stub regressed: {report.summary()}"
 
 
 def test_nyu_catalog_has_no_slug_leak_prefixes():

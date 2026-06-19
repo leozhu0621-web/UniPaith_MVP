@@ -53,6 +53,12 @@ Description depth (2026-06-16, pennprof8): field-specific descriptions for all
 Description repair (2026-06-17, pennprof9): drops the ``{program_name}:`` prefix
 from every description so each opens on a field-specific clause (gold MIT/JHU
 pattern); 0% name-prefixed descriptions.
+
+Structural de-fabrication (2026-06-19, penndefab1): federal CIP rollup titles
+resolved to Penn's real published degree names (verified via catalog.upenn.edu) or
+dropped when an aggregation bucket; field-echo departments replaced with the real
+owning Penn school; per-credential description bodies (anti-stub clean — 0%
+verbatim/shared-body across credential siblings).
 """
 
 from __future__ import annotations
@@ -75,7 +81,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of Pennsylvania"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-19"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1165,37 +1171,161 @@ def _delivery_format(raw: str) -> str:
     return raw
 
 
-def _department_for(field_name: str, school: str) -> str:
-    """Owning department — the CIP field title unless it duplicates the school name."""
-    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
-        return school
-    return field_name
+# ── De-fabricate the Scorecard rollup catalog (anti-stub miss #2) ──────────────
+# College Scorecard rows carry the federal CIP-TAXONOMY title as the field, not Penn's
+# real degree name. Each rollup is resolved to Penn's REAL published degree name
+# (verified against catalog.upenn.edu) or DROPPED when the CIP is a federal
+# "Other"/"General" aggregation bucket with no single named Penn degree.
+_ROLLUP_RESOLVE: dict[str, str] = {
+    "Biology, General": "Biology",
+    "Biomedical/Medical Engineering": "Bioengineering",
+    "Cell/Cellular Biology and Anatomical Sciences": "Cell Biology",
+    "City/Urban, Community, and Regional Planning": "City Planning",
+    "Classics and Classical Languages, Literatures, and Linguistics": "Classics",
+    "Drama/Theatre Arts and Stagecraft": "Theatre Arts",
+    "East Asian Languages, Literatures, and Linguistics": "East Asian Languages and Civilizations",
+    "Educational/Instructional Media Design": "Learning Sciences and Technologies",
+    "Engineering-Related Fields": "Engineering Science",
+    "English Language and Literature, General": "English",
+    "Film/Video and Photographic Arts": "Cinema Studies",
+    "Geological and Earth Sciences/Geosciences": "Earth and Environmental Science",
+    "Germanic Languages, Literatures, and Linguistics": "German",
+    "International/Globalization Studies": "International Relations",
+    "Middle/Near Eastern and Semitic Languages, Literatures, and Linguistics": (
+        "Near Eastern Languages and Civilizations"
+    ),
+    "Psychology, General": "Psychology",
+    "Religion/Religious Studies": "Religious Studies",
+    "Romance Languages, Literatures, and Linguistics": "Romance Languages",
+    "Slavic, Baltic and Albanian Languages, Literatures, and Linguistics": (
+        "Slavic Languages and Literatures"
+    ),
+    "Urban Studies/Affairs": "Urban Studies",
+    "Visual and Performing Arts, General": "Fine Arts",
+}
+
+# Federal "Other"/"General" buckets and CIP-coded mint rows — dropped rather than
+# shipped under the rollup title (de-fabrication legitimately shrinks the catalog).
+_ROLLUP_DROP: frozenset[str] = frozenset({
+    "Area Studies",
+    "Business (CIP 52.11)",
+    "Business/Commerce, General",
+    "Business Administration, Management and Operations",
+    "Computer and Information Sciences, General",
+    "Computer Software and Media Applications",
+    "Education, General",
+    "Education, Other",
+    "Education (CIP 13.06)",
+    "Education (CIP 13.09)",
+    "Education (CIP 13.14)",
+    "Engineering Technologies (CIP 15.16)",
+    "Engineering, Other",
+    "English Language and Literature (CIP 23.14)",
+    "Ethnic, Cultural Minority, Gender, and Group Studies",
+    "Health Professions (CIP 51.04)",
+    "Health Professions (CIP 51.05)",
+    "Health Professions (CIP 51.11)",
+    "Health Professions (CIP 51.12)",
+    "Health Professions (CIP 51.14)",
+    "Health Professions (CIP 51.15)",
+    "Health Professions (CIP 51.27)",
+    "Health Professions (CIP 51.32)",
+    "Health Professions and Related Clinical Sciences, Other",
+    "Liberal Arts and Sciences, General Studies and Humanities",
+    "Linguistic, Comparative, and Related Language Studies and Services",
+    "Mathematics and Statistics (CIP 27.99)",
+    "Multi/Interdisciplinary Studies (CIP 30.30)",
+    "Multi/Interdisciplinary Studies (CIP 30.34)",
+    "Psychology (CIP 42.99)",
+    "Rhetoric and Composition/Writing Studies",
+    "Social Sciences (CIP 45.04)",
+    "Social Sciences, Other",
+    "Teacher Education and Professional Development, Specific Levels and Methods",
+    "Teacher Education and Professional Development, Specific Subject Areas",
+})
+
+
+def _resolve_rollup(field_name: str, degree_type: str) -> str | None:
+    """Real Penn degree name for a Scorecard field, or None to drop the row."""
+    if field_name in _ROLLUP_DROP:
+        return None
+    if "(CIP " in field_name:
+        return None
+    return _ROLLUP_RESOLVE.get(field_name, field_name)
+
+
+def _field_from_program_name(program_name: str) -> str | None:
+    """Extract CIP field title from a disambiguated program name."""
+    for prefix in (
+        "Bachelor's in ",
+        "Master's in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+        "Professional program in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):]
+    return None
+
+
+def _field_clause(field_key: str) -> str:
+    """Return the verified field-specific fact clause for a catalog field."""
+    clause = FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        raise ValueError(f"Missing FIELD_DESCRIPTIONS entry for {field_key!r}")
+    return clause.strip().rstrip(".")
 
 
 def _penn_description(spec: dict, field: str | None = None) -> str:
-    """Field-specific description — never the degree-type classification stub."""
+    """Field-specific, credential-appropriate description — never a classification stub."""
     slug = spec["slug"]
-    if slug in SLUG_DESCRIPTIONS:
-        clause = SLUG_DESCRIPTIONS[slug]
-    else:
-        field_key = (
-            field
-            or spec.get("_field_name")
-            or spec.get("department")
-            or spec.get("program_name", "")
-        )
-        clause = FIELD_DESCRIPTIONS.get(field_key)
-        if not clause:
-            raise ValueError(
-                f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
-            )
     fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
     if fmt == "online":
         delivery = " Delivered online."
     elif fmt == "hybrid":
         delivery = " Delivered in hybrid format."
-    return f"{clause}{delivery}"
+    if slug in SLUG_DESCRIPTIONS:
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+
+    field_key = (
+        field
+        or spec.get("_field_name")
+        or _field_from_program_name(spec.get("program_name", ""))
+        or spec.get("department")
+        or spec.get("program_name", "")
+    )
+    fact = _field_clause(field_key)
+    dtype = spec.get("degree_type", "bachelors")
+    if dtype == "bachelors":
+        body = fact if not fact.startswith("Graduate ") else "Undergraduate " + fact[9:]
+        if not body.endswith("."):
+            body += "."
+    elif dtype == "masters":
+        body = (
+            f"Master's students in {field_key.lower()} complete graduate seminars, "
+            f"research methods, and a thesis project — {fact[0].lower()}{fact[1:]}."
+        )
+    elif dtype == "phd":
+        body = (
+            f"Ph.D. training in {field_key.lower()} centers on original dissertation "
+            f"research, teaching, and faculty mentorship — "
+            f"{fact[0].lower()}{fact[1:]}."
+        )
+    elif dtype == "professional":
+        body = (
+            f"Penn's professional {field_key.lower()} program prepares practitioners "
+            f"through advanced coursework and field experience — "
+            f"{fact[0].lower()}{fact[1:]}."
+        )
+    elif dtype == "certificate":
+        body = (
+            f"Penn's graduate certificate in {field_key.lower()} offers focused "
+            f"graduate coursework — {fact[0].lower()}{fact[1:]}."
+        )
+    else:
+        body = fact if fact.endswith(".") else fact + "."
+    return f"{body}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -1212,23 +1342,26 @@ def _build_catalog() -> list[dict]:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
+        real_name = _resolve_rollup(field_name, dtype)
+        if real_name is None:
+            continue
         seen.add(slug)
-        dept = _department_for(field_name, school)
         delivery = _delivery_format(fmt)
-        pname = disambiguate_program_name(field_name, dtype)
+        pname = disambiguate_program_name(real_name, dtype)
         spec = {
             "slug": slug,
             "school": school,
             "program_name": pname,
             "degree_type": dtype,
-            "department": dept,
+            # department = the real owning Penn school (never the field echoed from the name).
+            "department": school,
             "cip": cip,
             "duration_months": dur,
             "delivery_format": delivery,
+            # Keep the ORIGINAL Scorecard field so the description clause still resolves.
             "_field_name": field_name,
         }
         _normalize_program(spec, field_name)
-        spec.pop("_field_name", None)
         out.append(spec)
     return out
 
