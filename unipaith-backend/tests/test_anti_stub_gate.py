@@ -46,6 +46,9 @@ CERTIFIED_CLEAN = [
     "cornell",    # CIP-rollup buckets → real Cornell degrees or dropped; field-echo
     #             departments → real owning college; per-credential description leads
     #             (verbatim/shared-body removed) (cornelldefab1)
+    "penn",       # CIP-rollup buckets → real Penn degrees or dropped; dept = real owning
+    #             school (field-echo removed); per-credential description leads with the
+    #             resolved real name, no rollup leak (verbatim/shared-body removed) (penndefab1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
