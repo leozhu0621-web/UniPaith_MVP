@@ -450,7 +450,7 @@ export default function ExplorePage() {
 
               {!searchActive && (
                 <div>
-                  <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center justify-center gap-3 mb-3">
                     <h2 className="text-base font-bold text-foreground">Browse universities</h2>
                     <button
                       onClick={requestNearMe}
@@ -503,7 +503,7 @@ export default function ExplorePage() {
                     </div>
                   ) : (
                     <>
-                      <p className="text-[11px] text-muted-foreground mb-3">
+                      <p className="text-[11px] text-muted-foreground mb-3 text-center">
                         Showing <span className="font-semibold text-foreground">{Math.min(visibleCount, displayUniList.length)}</span> of {hasActiveFilters ? `${filteredUniList.length} filtered` : displayUniList.length} universities
                       </p>
                       <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
