@@ -49,6 +49,11 @@ in field clauses (Perelman, Lick/Keck, Menil, Carey, Kellogg, Weinberg, Bloomber
 School); diversifies credential-sibling descriptions with BU-specific level
 suffixes (0% identical-across-levels); gates shared descriptions at build time.
 
+Description repair (2026-06-19, buprof11): removes Northwestern Medill peer signature
+from COM public-relations rows; maps field-echo departments to real owning schools;
+adds per-credential FIELD_DEGREE_DESCRIPTIONS for shared-leading-body fields and
+slug-specific descriptions for cross-school credential siblings (anti-stub clean).
+
 Depth pass (2026-06-15, buprof6): expanded ``_REVIEWS_BY_SLUG`` from 94 to 124
 coverable programs — engineering materials/systems PhD, GRS economics MA/PhD and
 energy-environment MBA dual, CAS combined economics/math and physics/CS degrees, MET
@@ -99,7 +104,11 @@ from collections import Counter
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from unipaith.data.bu_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
+from unipaith.data.bu_field_descriptions import (
+    FIELD_DEGREE_DESCRIPTIONS,
+    FIELD_DESCRIPTIONS,
+    SLUG_DESCRIPTIONS,
+)
 from unipaith.data.profile_catalog_utils import (
     BARE_DEGREE_ABBREVIATIONS,
     disambiguate_program_name,
@@ -109,7 +118,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Boston University"
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-19"
 
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is (an undergraduate major|a graduate degree|a doctoral program|"
@@ -160,6 +169,7 @@ _PEER_SIGNATURES: tuple[str, ...] = (
     "Lab of Ornithology",
     "Chesapeake",
     "Writing Seminars",
+    "Medill",
 )
 
 _TEMPLATE_STUB_RE = re.compile(
@@ -1002,6 +1012,36 @@ def _department_for(field: str, school: str) -> str:
     return base
 
 
+def _field_key(program_name: str) -> str:
+    """Field-of-study portion of a credential-disambiguated program name."""
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Master of Science in ",
+        "Master of Arts in ",
+        "Doctor of Philosophy in ",
+        "Master of Engineering in ",
+        "Bachelor's in ",
+        "Master's in ",
+        "Doctorate in ",
+        "Graduate Certificate in ",
+        "Professional program in ",
+    ):
+        if program_name.startswith(prefix):
+            rest = program_name[len(prefix) :].strip()
+            return rest or program_name
+    return program_name
+
+
+def _normalize_department(spec: dict) -> str:
+    """Map field-echo departments to BU's real owning school/college (miss #2)."""
+    dept = (spec.get("department") or "").strip()
+    field = _field_key(spec["program_name"])
+    if not dept or dept == field or dept == spec.get("program_name"):
+        return spec["school"]
+    return dept
+
+
 def _use_url_name(legacy: str) -> bool:
     return legacy in BARE_DEGREE_ABBREVIATIONS or _LEGACY_COUNTS[legacy] > 1
 
@@ -1104,9 +1144,14 @@ def _field_from_spec(spec: dict) -> str:
     return name
 
 
-def _lookup_clause(field: str) -> str | None:
+def _lookup_clause(field: str, degree_type: str = "") -> str | None:
     if not field:
         return None
+    base = field.split(" — ")[0]
+    if degree_type:
+        deg_clause = FIELD_DEGREE_DESCRIPTIONS.get(f"{base}::{degree_type}")
+        if deg_clause:
+            return deg_clause
     parts = field.split(" — ")
     for end in range(len(parts), 0, -1):
         key = " — ".join(parts[:end])
@@ -1133,7 +1178,7 @@ def _bu_description(spec: dict) -> str:
         clause = SLUG_DESCRIPTIONS[slug]
     else:
         field = _field_from_spec(spec)
-        clause = _lookup_clause(field)
+        clause = _lookup_clause(field, spec.get("degree_type", ""))
         if not clause:
             # Try prefix match on keys sharing the same leading segments
             prefix = field + " — "
@@ -1311,6 +1356,7 @@ def _build_catalog() -> list[dict]:
     out = _collapse_concentration_splits(out)
 
     for p in out:
+        p["department"] = _normalize_department(p)
         p["description"] = _bu_description(p)
 
     # Re-disambiguate names after collapse (collapsed base names can collide with standalone rows).
@@ -1335,6 +1381,9 @@ def _build_catalog() -> list[dict]:
                 parts = [x for x in p["catalog_url"].rstrip("/").split("/") if x]
                 url_tail = parts[-2] if len(parts) >= 2 else url_tail
             p["program_name"] += f" — {url_tail.replace('-', ' ').title()}"
+
+    for p in out:
+        p["department"] = _normalize_department(p)
 
     return out
 
@@ -1376,6 +1425,13 @@ if _peer_contamination:
     _catalog_errors.append(
         f"peer-contaminated descriptions on {_peer_contamination} programs"
     )
+_dept_echo = sum(
+    1
+    for p in PROGRAMS
+    if p.get("department") == _field_key(p["program_name"])
+)
+if _dept_echo:
+    _catalog_errors.append(f"field-echo departments on {_dept_echo} programs")
 _desc_counts = Counter(p.get("description") for p in PROGRAMS)
 _shared_desc = sum(c for c in _desc_counts.values() if c >= 2)
 if _shared_desc:

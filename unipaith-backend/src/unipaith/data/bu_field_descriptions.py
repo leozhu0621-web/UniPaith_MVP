@@ -883,7 +883,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "School of Public Health coursework spans epidemiology, biostatistics, and health policy with Boston University Medicine population-health research on the Medical Campus."
     ),
     "Public Relations — Public Relations": (
-        "Medill integrated marketing communications and public relations trains brand strategy, crisis communication, and digital campaigns with Boston agency partnerships."
+        "COM public relations and integrated marketing communications trains brand strategy, crisis communication, and digital campaigns with Boston agency partnerships."
     ),
     "Rehabilitation Sciences": (
         "Sargent rehabilitation-sciences Ph.D. research spans motor control, assistive technology, and clinical outcomes in PT and OT."
@@ -1127,6 +1127,140 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
     ),
 }
 
+# Per-field, per-credential descriptions — each credential level gets a distinct researched
+# opening so BA/MS/PhD siblings do not share a ≥120-char leading body (gold MIT = 0%).
+FIELD_DEGREE_DESCRIPTIONS: dict[str, str] = {
+    "Archaeology::bachelors": (
+        "Undergraduate archaeology at BU's College of Arts & Sciences runs field seasons, "
+        "museum study at the Boston University Museum, and interdisciplinary work with art "
+        "history and anthropology."
+    ),
+    "Archaeology::masters": (
+        "Graduate archaeology at Boston University trains students in classical and Near "
+        "Eastern material culture, excavation methods, and museum curation through CAS and "
+        "GRS faculty."
+    ),
+    "Archaeology::phd": (
+        "Archaeology Ph.D. candidates at BU conduct dissertation research in classical and "
+        "Near Eastern fieldwork, bioarchaeology, and material-culture analysis."
+    ),
+    "Biology::bachelors": (
+        "Undergraduate biology at BU's College of Arts & Sciences spans genetics, cell "
+        "biology, ecology, and neurobiology with research placements in campus life-sciences "
+        "institutes."
+    ),
+    "Biology::masters": (
+        "BU's graduate biology programs emphasize advanced coursework and thesis research in "
+        "molecular biology, ecology, and neurobiology across CAS and GRS laboratories."
+    ),
+    "Biology::phd": (
+        "Biology Ph.D. candidates at BU conduct original dissertation research in genetics, "
+        "cell biology, ecology, or neurobiology with funded support through GRS."
+    ),
+    "Chemistry::bachelors": (
+        "Undergraduate chemistry at BU covers organic, inorganic, physical, and chemical "
+        "biology with laboratory coursework in the Center for Molecular Discovery."
+    ),
+    "Chemistry::masters": (
+        "Graduate chemistry at BU trains students in synthesis, spectroscopy, and chemical "
+        "biology with faculty affiliated to the Chobanian & Avedisian School of Medicine."
+    ),
+    "Chemistry::phd": (
+        "Chemistry Ph.D. research at BU spans organic synthesis, materials chemistry, and "
+        "chemical biology with joint appointments across CAS, GMS, and the Center for "
+        "Molecular Discovery."
+    ),
+    "Chemistry::professional": (
+        "GMS professional chemistry coursework supports medical and biomedical graduate "
+        "training with foundational chemical principles on the Medical Campus."
+    ),
+    "History::bachelors": (
+        "Undergraduate history at BU's College of Arts & Sciences spans American, European, "
+        "global, and science-and-medicine specialties with archival partnerships across "
+        "Greater Boston."
+    ),
+    "History::masters": (
+        "BU's M.A. in history emphasizes historiography, archival research, and "
+        "specialized seminars across American, European, and global fields through GRS."
+    ),
+    "History::phd": (
+        "History Ph.D. candidates at BU produce original dissertation scholarship with "
+        "faculty advising across American, European, global, and science-and-medicine "
+        "specializations."
+    ),
+    "Classical Studies::bachelors": (
+        "Undergraduate classical studies at BU combines Greek and Latin language, ancient "
+        "history, and philology with manuscript resources at the Boston University Museum."
+    ),
+    "Classical Studies::masters": (
+        "Graduate classical studies at BU trains students in philology, ancient history, and "
+        "Mediterranean archaeology through CAS and GRS seminars."
+    ),
+    "Classical Studies::phd": (
+        "Classical studies Ph.D. research at BU spans philology, ancient history, and "
+        "archaeology with dissertation advising from the Department of Classical Studies."
+    ),
+    "Neuroscience::bachelors": (
+        "Undergraduate neuroscience at BU spans cellular, cognitive, and systems levels "
+        "across CAS coursework and the Center for Systems Neuroscience."
+    ),
+    "Neuroscience::masters": (
+        "BU's M.A. in neuroscience integrates coursework in systems, cognitive, and cellular "
+        "neuroscience with research opportunities across CAS and the Medical Campus."
+    ),
+    "Neuroscience::phd": (
+        "Neuroscience Ph.D. candidates at BU conduct dissertation research across cellular, "
+        "cognitive, and systems neuroscience with GMS and Center for Systems Neuroscience "
+        "faculty."
+    ),
+    "Physics::bachelors": (
+        "Undergraduate physics at BU covers condensed matter, particle physics, and biophysics "
+        "with laboratory work at the Laboratory for Research on the Structure of Matter."
+    ),
+    "Physics::masters": (
+        "Graduate physics at BU emphasizes advanced coursework and research in condensed "
+        "matter, particle physics, and biophysics through CAS and GRS programs."
+    ),
+    "Physics::phd": (
+        "Physics Ph.D. candidates at BU conduct dissertation research in condensed matter, "
+        "particle physics, or biophysics with faculty at the Laboratory for Research on the "
+        "Structure of Matter."
+    ),
+    "Psychology::bachelors": (
+        "Undergraduate psychology at BU is among the largest CAS majors, with research tracks "
+        "in cognitive, developmental, social, and clinical science in campus psychology labs."
+    ),
+    "Psychology::masters": (
+        "BU's M.A. in psychology emphasizes advanced seminars and research training in "
+        "cognitive, developmental, social, and clinical science through GRS."
+    ),
+    "Psychology::phd": (
+        "Psychology Ph.D. candidates at BU conduct original dissertation research in "
+        "cognitive, developmental, social, or clinical science with funded graduate support."
+    ),
+    "Sociology::bachelors": (
+        "Undergraduate sociology at BU's College of Arts & Sciences examines urban "
+        "inequality, health disparities, and social networks with Boston community-based "
+        "research."
+    ),
+    "Sociology::masters": (
+        "BU's M.A. in sociology emphasizes advanced theory, quantitative methods, and "
+        "dissertation-preparatory research in urban inequality and health disparities."
+    ),
+    "Sociology::phd": (
+        "Sociology Ph.D. candidates at BU conduct original dissertation research in urban "
+        "inequality, health disparities, and social networks with GRS faculty advising."
+    ),
+    "Advertising::bachelors": (
+        "Undergraduate advertising at COM covers creative strategy, media planning, and "
+        "account management with agency internship pipelines."
+    ),
+    "Advertising::masters": (
+        "COM's M.S. in advertising integrates consumer research, brand strategy, and "
+        "digital campaign analytics."
+    ),
+}
+
 SLUG_DESCRIPTIONS: dict[str, str] = {
     "bu-academics-busm-four-year-program": (
         "BU's Chobanian & Avedisian School of Medicine four-year M.D. curriculum combines foundational sciences, clinical clerkships at Boston Medical Center, and longitudinal patient-care experiences on the Medical Campus."
@@ -1180,6 +1314,93 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
     ),
     "bu-academics-ssw-msw": (
         "SSW's M.S.W. emphasizes clinical practice, trauma-informed care, and macro policy with field placements across Greater Boston."
+    ),
+    # Cross-school / cross-credential fixes (anti-stub cross_field_clause)
+    "bu-academics-cas-computer-science-ba-ms": (
+        "CAS's combined B.A./M.S. in computer science lets undergraduates begin graduate "
+        "coursework in algorithms and systems while completing the Hariri Institute-affiliated "
+        "undergraduate major."
+    ),
+    "bu-academics-grs-computer-science-ms": (
+        "GRS's M.S. in computer science emphasizes graduate seminars, thesis research, and "
+        "faculty advising in algorithms, systems, and AI within the Faculty of Computing & "
+        "Information Sciences."
+    ),
+    "bu-academics-grs-computer-science-phd": (
+        "Computer science Ph.D. candidates at BU conduct dissertation research in theory, "
+        "systems, AI, and robotics with Warren Center and GRASP-affiliated faculty."
+    ),
+    "bu-academics-met-computer-science-bs": (
+        "MET's online B.S. in computer science covers programming, databases, and software "
+        "engineering for working professionals through part-time evening and online coursework."
+    ),
+    "bu-academics-met-computer-science-ms": (
+        "MET's online M.S. in computer science trains working professionals in software "
+        "development, databases, and distributed systems through part-time graduate coursework."
+    ),
+    "bu-academics-cas-economics-ba-ma": (
+        "CAS's combined B.A./M.A. in economics lets undergraduates begin graduate econometrics "
+        "and theory seminars while completing the undergraduate major."
+    ),
+    "bu-academics-grs-economics-ma": (
+        "GRS's M.S. in economics emphasizes econometric methods, microeconomic theory, and "
+        "empirical research with faculty at the Institute for Economic Research."
+    ),
+    "bu-academics-grs-economics-ma-global-development-economics": (
+        "GRS's M.A. in global development economics trains students in trade, development, "
+        "and policy analysis with field-research opportunities in emerging economies."
+    ),
+    "bu-academics-grs-economics-ma-phd": (
+        "Economics Ph.D. candidates at BU conduct dissertation research in applied "
+        "microeconomics, econometrics, and development with GRS faculty advising."
+    ),
+    "bu-academics-met-economics": (
+        "MET's online B.S. in economics covers micro and macro theory, statistics, and policy "
+        "analysis for working professionals through part-time coursework."
+    ),
+    "bu-cgs-january-liberal-arts-bs": (
+        "CGS's January Program offers a spring-start liberal-arts core on the Charles River "
+        "Campus before students transfer into a BU bachelor's degree."
+    ),
+    "bu-academics-grs-classical-studies-ma-phd-phil": (
+        "GRS's combined M.A./Ph.D. philosophy track in classical studies integrates philology, "
+        "ancient philosophy, and dissertation research in Greek and Roman thought."
+    ),
+    "bu-academics-gms-oral-biology": (
+        "GMS oral-biology Ph.D. research examines craniofacial development, biomaterials, and "
+        "salivary diagnostics in Medical Campus laboratories."
+    ),
+    "bu-academics-sdm-oral-biology-msd": (
+        "SDM's M.S.D. in oral biology trains dental specialists in craniofacial research, "
+        "biomaterials, and salivary diagnostics within Goldman School clinics."
+    ),
+    "bu-academics-sdm-oral-biology-phd": (
+        "SDM oral-biology Ph.D. candidates conduct dissertation research in craniofacial "
+        "development and dental biomaterials within Goldman School research labs."
+    ),
+    "bu-academics-wheelock-policy-planning-administration-cags": (
+        "Wheelock's graduate certificate in educational policy and planning covers school "
+        "finance, leadership, and equity for educators pursuing administrative credentials."
+    ),
+    "bu-academics-wheelock-policy-planning-administration-ma-in-educational-policy-studies": (
+        "Wheelock's M.A. in educational policy and planning examines school finance, "
+        "leadership, and equity in urban districts with Boston school-district fieldwork."
+    ),
+    "bu-academics-met-biology": (
+        "MET's online B.S. in biology covers genetics, cell biology, and ecology for working "
+        "professionals through part-time laboratory and online coursework."
+    ),
+    "bu-academics-met-psychology": (
+        "MET's online B.S. in psychology covers research methods, cognitive science, and "
+        "behavioral analysis for working professionals through part-time coursework."
+    ),
+    "bu-academics-met-sociology-bs": (
+        "MET's online B.S. in sociology covers social theory, research methods, and urban "
+        "policy analysis for working professionals through part-time coursework."
+    ),
+    "bu-academics-met-advertising": (
+        "MET's online M.S. in advertising covers consumer research, brand strategy, and "
+        "digital campaign analytics for working professionals through part-time coursework."
     ),
 }
 
