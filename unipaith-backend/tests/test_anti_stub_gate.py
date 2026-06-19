@@ -36,7 +36,7 @@ CERTIFIED_CLEAN = [
     "ucla",       # Wikipedia per-credential descriptions; Catalog entry junk removed (uclaprof4)
     "jhu",        # per-credential field clauses (verbatim-across-levels removed); real reviews kept
     "michigan",   # per-credential discipline definitions; build-artifact junk removed (michprof4)
-    "stanford",   # per-credential discipline definitions; Catalog entry junk removed (stanfordprof11)
+    "stanford",   # per-credential defs; Catalog entry junk removed (stanfordprof11)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]

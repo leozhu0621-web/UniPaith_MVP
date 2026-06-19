@@ -6,6 +6,8 @@ verified per-credential descriptions from stanford_catalogue_descriptions.py (re
 """
 # ruff: noqa: E501
 
+from unipaith.data.stanford_catalogue_descriptions import CATALOGUE_DESCRIPTIONS
+
 REAL_NAMES: dict[str, str] = {
     "stanford-cs-ms": "Master of Science in Computer Science",
     "stanford-cs-bs": "Bachelor of Science in Computer Science",
@@ -368,7 +370,6 @@ DEPARTMENTS: dict[str, str] = {
     "stanford-history-ms": "Department of History"
 }
 
-from unipaith.data.stanford_catalogue_descriptions import CATALOGUE_DESCRIPTIONS
 PROGRAMS: list[dict] = [
     {
         "slug": "stanford-cs-ms",
