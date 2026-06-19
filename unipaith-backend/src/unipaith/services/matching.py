@@ -182,6 +182,27 @@ def _education_compat(student_level: str, program_target: str) -> bool:
     return program_target in allowed
 
 
+# The student "current education level" vocabulary — the keys of the _education_compat
+# table. Kept beside it so eligible_current_levels() inverts the SAME table (no drift).
+_STUDENT_EDUCATION_LEVELS: tuple[str, ...] = (
+    "high_school",
+    "bachelors",
+    "masters",
+    "gap_year",
+    "working",
+)
+
+
+def eligible_current_levels(program_target: str | None) -> list[str]:
+    """Invert ``_education_compat``: the current student levels eligible to apply to a
+    program whose target level is ``program_target``. Used to derive a program's
+    ``pref_levels`` baseline (Spec 2 §3.4) from the SAME compatibility table the
+    eligibility veto uses, so the two never drift. Empty when target is None/unknown."""
+    if not program_target:
+        return []
+    return [lvl for lvl in _STUDENT_EDUCATION_LEVELS if _education_compat(lvl, program_target)]
+
+
 # ── Component scorers ──────────────────────────────────────────────────────
 
 

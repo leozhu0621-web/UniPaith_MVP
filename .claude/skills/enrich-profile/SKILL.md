@@ -97,16 +97,25 @@ student** match direction works even before a school claims:
 A program with no `program_preferences` row simply has "no opinion" (the matcher
 treats it neutrally), so deriving it from real admit data is a genuine quality win.
 
-**This whole section is EXECUTED IN YOUR DATA MODULE, not just read here.** As of this
-writing the gold template `data/mit_profile.py` and every shipped data module predate
-the AI Structure — **none of them write `program_preferences` or `field_provenance`**,
-so the entire fleet runs the match blind on the program side. Do NOT assume copying the
-template covers it. Each program your module builds must emit (a) a derived
-`program_preferences` entry (or omit-with-reason when there is no public class profile)
-and (b) a `field_provenance` stamp on every attribute you write. These two are part of
-the per-program completeness gate (§8.5) — a program missing them is **not gold**, the
-same as one missing a required editorial field. (The match SCORE math itself is Spec 3
-and stays backend-only; your job is only to feed it typed, provenanced data.)
+**The match-side feed is EXECUTED IN YOUR DATA-MODULE MIGRATION — and `program_preferences`
+is now AUTOMATED.** In the migration that calls `<uni>_profile.apply(session)`, add one
+line right after it:
+
+```python
+from unipaith.services.match.derive_preferences import backfill_program_preferences
+backfill_program_preferences(session, institution_id=inst.id)  # derive target-applicant rows
+```
+
+That deterministic helper (`services/match/derive_preferences.py`) derives a grounded
+target-applicant row for every program of that institution lacking one — `pref_fields`
+from the name/CIP, `pref_levels` from the degree, `pref_min_gpa` from a real class
+profile (omit-never-guess) — stamping `source="derived"`, `confidence=0.4`, and it
+**never touches a claimed/first-party row**. The whole fleet was backfilled once
+(migration `progprefbf1`); calling it in your migration keeps each newly-enriched
+university covered. `field_provenance` per-attribute stamping is NOT yet automated or
+matcher-consumed — stamp it as you populate attributes for future authority-precedence,
+but it is not a hard gate today. (The match SCORE math is Spec 3, backend-only; your job
+is to feed it typed, grounded data.)
 
 ## Completeness is non-negotiable — verify before you ship
 
@@ -1135,12 +1144,14 @@ program catalog (cross-checked against the IPEDS/Scorecard count), and program
 `delivery_format` are all populated. Stamp `_standard` on every node.
 
 **Match-side gate (AI Structure — `check_conformance` does NOT cover this, so enforce it
-by hand).** For **every** program also confirm: (a) a derived `program_preferences` row
-exists (or is omitted-with-reason when the program has no public class profile), and (b)
-`field_provenance` is stamped on every attribute written, with the confidence anchored to
-its tier (claimed 1.0 · verified-feed 0.85 · public-crawl 0.6 · derived/inferred 0.4). A
-program missing either is **not gold** — it feeds the matcher blind. (See "Also enrich for
-the MATCH" above.)
+by hand).** Confirm your migration called `backfill_program_preferences(session,
+institution_id=inst.id)` after `apply` — that derives a grounded `program_preferences`
+row for every program (skipping claimed rows), so the program -> student match fires.
+Verify it ran: each program should have a row (`SELECT count(*) FROM program_preferences
+pp JOIN programs p ON p.id=pp.program_id WHERE p.institution_id=...`). `field_provenance`
+stamping is encouraged-not-gated today (not matcher-consumed yet; the tier anchors are
+claimed 1.0 · verified-feed 0.85 · public-crawl 0.6 · derived/inferred 0.4). (See "Also
+enrich for the MATCH" above.)
 
 **Conformance is PRESENCE-only — it does NOT catch stubs, so it must be PAIRED with an
 ENFORCED anti-stub gate.** `check_conformance` reports `conformant` from `not

@@ -57,10 +57,15 @@ class EnrichmentService:
             }
         return state
 
-    async def next_signals(self, student_id: UUID, *, limit: int = 3) -> dict[str, Any]:
+    async def next_signals(
+        self, student_id: UUID, *, limit: int = 3, section: str | None = None
+    ) -> dict[str, Any]:
         state = await self.build_signal_state(student_id)
         return {
-            "items": plan_next(state, limit=limit),
+            # `section` scopes the planner to one tab's fields; an unknown/None
+            # section is unscoped (global next). `essentials_present` is always
+            # global — it is the match prerequisite, not a per-tab signal.
+            "items": plan_next(state, limit=limit, section=section),
             "essentials_present": essentials_present(state),
         }
 
