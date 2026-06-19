@@ -74,6 +74,39 @@ def test_education_level_mapping_phd_to_doctoral() -> None:
     assert f.sparse["target_education_level"] == "doctoral"
 
 
+# ── full-word degree_type (the enrichment fleet writes words, not BS/MS/PhD) ──
+# Backend-alignment audit gap #3: features_from_row must resolve full words so the
+# s→p degree fit + veto fire on live enriched programs (mirrors derive_preferences).
+def test_education_level_full_word_bachelors() -> None:
+    assert (
+        features_from_row(ProgramRow(id="p", degree="bachelors")).sparse["target_education_level"]
+        == "bachelors"
+    )
+
+
+def test_education_level_full_word_masters() -> None:
+    assert (
+        features_from_row(ProgramRow(id="p", degree="masters")).sparse["target_education_level"]
+        == "masters"
+    )
+
+
+def test_education_level_full_word_phd() -> None:
+    assert (
+        features_from_row(ProgramRow(id="p", degree="phd")).sparse["target_education_level"]
+        == "doctoral"
+    )
+
+
+def test_education_level_full_word_professional() -> None:
+    assert (
+        features_from_row(ProgramRow(id="p", degree="professional")).sparse[
+            "target_education_level"
+        ]
+        == "professional"
+    )
+
+
 def test_education_level_mapping_bfa_to_bachelors() -> None:
     row = ProgramRow(id="p1", degree="BFA")
     f = features_from_row(row)
