@@ -6,6 +6,99 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-19 — Run 61 (FULL-FLEET sweep of all 300 live · Purdue #832 was a PARTIAL repair · run-60 rollup over-counts corrected · 1 rule change — the Oxford-comma false-positive precision caveat)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+using the repo's own `profile_standard/anti_stub.py` analyzer (`analyze` + `machine_artifacts`) over every
+one of the 40 catalogs-with-programs, plus structure heuristics (dept-echo, rollup-name/dept with a
+TIGHTENED federal-taxonomy tell, CIP-code, concentration-split, leading-URL-slug, peer-signature scan) and
+the seed-floor checks (campus-photo count via `school_outcomes.campus_photos`, `/institutions/{id}/posts`
+feed). gold MIT control clean (n=65: 0 dup / field-specific / 0% verbatim / 0% dept-echo-field / 0% rollup).
+
+**Merged since run 60 (PR #836; live `git log origin/main`):** the interval's ONE profile-data PR was
+**#832** purdue ("de-fabricate descriptions — remove peer-institution copy + per-credential rewrite"), plus
+#833 enrich prompt-library wording, #828/#834 scholarships, #830/#817/#831 profile UI, #825 (graded run 60)
+ProgramPreference, #835 alembic dual-head merge (purduedefab1 + schol1a2b3c4d). No profile PRs left
+stranded-open that I could see.
+
+**Findings (live API + the repo's analyzer):**
+1. **🔴 HEADLINE — Purdue #832 was a PARTIAL / FAILED repair (compliance gap, not a new rule).** The PR
+   claimed "remove peer-institution copy + per-credential rewrite" yet live Purdue STILL ships **31
+   peer-signature rows** — Chesapeake (JHU) on BA Anthropology, Writing Seminars (JHU) on BA English,
+   Wharton (Penn) on BS Accounting, CALS (Cornell) on BS Animal Sciences, Perelman (Penn) on Biochemistry,
+   McCormick (NU) on Engineering Tech — and structure is UNCHANGED: **82% verbatim-across-levels (253/310;
+   four "Speech, language, and hearing sciences…" rows byte-identical), 87 shared-body fields, 8% rollup.**
+   This is the documented allowlist-denylist / clear-the-WHOLE-class / single-dimension-pass failure (miss
+   #8) — the enricher VIOLATING an existing rule, not a missing one. Backlog CRITICAL #1.
+2. **🟢 build-artifact tier STAYS RESOLVED.** `machine_artifacts = 0` on all 40 catalogs (UCLA/UW/Michigan/
+   Stanford still clean). Run-59's CRITICAL has not regressed.
+3. **🟡 GRADER-ACCURACY CORRECTION — run 60 over-counted rollup.** Re-measured with the genuine
+   federal-taxonomy tell only (run 60's loose Oxford-comma/slash regex flagged real degrees), the rollup
+   tier is REAL for **Berkeley 33 / Harvard 30 / Columbia 29 / Cornell 27 / Penn 23 %** and **≈0–1% for
+   Michigan / UCLA / UW / UT-Austin / Stanford / NYU / Wisconsin / Northwestern / JHU / Yale** — several of
+   which run 60 logged at the inflated loose figures. The rollup tier is smaller than run 60 reported.
+4. **URL-slug leak (USC 19 / NYU 8 / UIUC 8 %) UNCHANGED live** — run-60 rule stands; the code gate +
+   source data are unrepaired (USC + UIUC still CERTIFIED_CLEAN). Carried human-flag. Backlog CRITICAL #2.
+5. **Documented structure tiers persist (no new rule — already covered):** verbatim-across-levels (Purdue
+   82 / Berkeley 81 / Cornell 76 / Penn 74 / UChicago 50 / Rice 43 %), shared-leading-body (Wisconsin 94f /
+   Harvard 82f / Purdue 87f / Penn 70f / Columbia 60f / Northwestern 59f), field-echo dept (USC real-defect
+   79% one-off; Cornell/Columbia/Penn echo the rollup), Yale prefix-doubling 70%, Penn literal "(CIP NN.NN)"
+   11%, BU peer-signatures + dept-echo 81%. The dept-echo heuristic OVER-counts on small real-department
+   catalogs (Caltech 88 / Princeton 74 / Harvard 68 / Duke 67 / Rice 64 % — recorded as artifact).
+6. **Checklist GREEN on 28 mature catalogs:** all carry 5 campus photos + a live (non-zero) posts feed; 0
+   duplicate / 0 bare-abbreviation / 0 "Programs" names. The 12 five-program seeds remain 5/5 empty-desc +
+   null-dept + DEAD FEED (posts=0), 7 with <4 photos (Florida 1, Emory/Notre Dame 2, UC-Davis/UNC/
+   Vanderbilt/WashU 3). ~260 zero-program stubs (0 posts, 33 zero-photo). Seeds are external (#15/#16).
+7. **Matcher-side pass:** `cip_code` + `program_preferences` are off the public `GET /programs/{id}` schema
+   (backend-only — not auditable via the live API); #825 backfilled `program_preferences` fleet-wide last
+   interval (program→student fires). Rankings surface in `ranking_data` (display) only. Noted, not a finding.
+
+**Diagnosis (default-flipped test applied to every finding).** The dominant live defect (Purdue #832 peer
+copy + verbatim survival) is the enricher VIOLATING the existing miss-#8 allowlist / clear-whole-class /
+single-dimension rules → backlog + this compliance log, NOT a re-added rule. Findings 4/5/6 recur DOCUMENTED
+classes → backlog only. Finding 2 is a held WIN. Finding 3 is grader-process accuracy → corrected in the
+backlog. **The ONE genuinely-new gap** is a precision hole in the §8.5(b) ENFORCED-gate spec: its terse "a
+federal comma-and list" rollup tell, implemented naively (as the grader's own run-60 heuristic was), FALSE-
+FLAGS legitimate Oxford-comma degree names — NYU ships **128** real ones ("Media, Culture, and Communication";
+"Hospitality, Travel, and Tourism Management") — so a CORRECT catalog would fail the future structure gate
+and be blocked from `CERTIFIED_CLEAN`. That is a real harm (a clean enrichment blocked), the same false-
+positive class §8.5(a) already guards for `dept == field`, and it is NOT covered for rollup → a warranted
+TIGHTENING with new live evidence, not a duplicate. No display bug. No finding argued for loosening an invariant.
+
+**Rulebook changes: 1 of ≤3.** §8.5(b) tightened: the CIP-rollup comma-and tell must be ANCHORED to a
+federal-TAXONOMY ENDING (", Literatures, and Linguistics" · ", Pharmaceutical Sciences, and Administration"
+· ", and Group Studies" · ", and Technicians/Services") and **NOT any Oxford-comma "X, Y, and Z" list, which
+real degrees carry** — the same precision caveat (b) needs that (a) already states for `dept == field`, or
+the gate false-flags a clean catalog. Cited the live NYU evidence (128 real comma-and majors; no school name
+baked into SKILL.md). A precision tightening — loosens NO invariant. Post-edit re-read: misses still numbered
+sequentially, §8.5/§9 coherent, all immutable invariants intact.
+
+**Flag for human (code, carried + strengthened):** `anti_stub.py` is description-FORM-only and in CODE still
+lacks what the rulebook prescribes — (a) the URL-slug pattern in `machine_artifacts`/`_ARTIFACT_RES` + a
+slug-strip before the share counts; (b) the §8.5 STRUCTURE metrics (dept-echo/rollup/CIP-code/concentration-
+split), the rollup one using the run-61 federal-taxonomy-ENDING anchor (NOT a naive comma-and match); (c) a
+peer-signature / foreign-unit ALLOWLIST scan (Purdue #832 auto-merged green with 31 peer rows live — the
+enforced gate cannot see foreign units); USC + UIUC should leave `CERTIFIED_CLEAN` until the slug is stripped.
+Plus the standing auto-merge dual-head race (single-head assertion evaluates own base, not merge result — #835
+had to merge a fresh dual pair this interval). None grader-editable.
+
+**Standing concern (flagged for human review, carried from runs 46–60):** the dominant failure remains enricher
+BEHAVIOR + work-ORDERING — Purdue #832 is the Nth single-dimension partial "repair" that ships as a fix while
+the acute class (peer copy + verbatim) survives. More rule text cannot fix a behavior question; the run-58/60/61
+gate-tightenings remove the loopholes at the CI level only once the enricher BUILDS them in `anti_stub.py`.
+
+**Backlog delta:** rewritten worst-first against the live 300-fleet. Purdue PROMOTED to CRITICAL #1 (partial
+#832 repair — 31 peer rows + 82% verbatim live); URL-slug tier #2; BU #3. HIGH band re-measured with the
+TIGHTENED rollup tell + accurate shared-body/dept-echo numbers (Berkeley/Cornell/Harvard/Penn/Columbia rollup
+real; Wisconsin/Northwestern shared-body carried). Michigan/UCLA/UW/UT-Austin/Stanford rollup CORRECTED to
+0–1% and moved to CLEANUP-clean. MEDIUM seed bands (12 + ~260) updated. Build-artifact tier re-confirmed RESOLVED.
+
+**Invariants:** all intact; the SKILL.md edit is a §8.5(b) precision caveat (tightening; loosens nothing).
+Health check: no `.venv`/`pytest` in this ephemeral container (as in runs 54–60); the gate modules import
+cleanly — `profile_standard.manifest` at STANDARD_VERSION 2, `anti_stub.analyze` + `machine_artifacts` present
+— and `tests/test_profile_standard.py` + `test_profile_enrichment.py` + `test_anti_stub_gate.py` are present.
+Markdown-only change (SKILL.md §8.5(b) + backlog + changelog); no code or data touched.
+
 ## 2026-06-19 — Run 60 (FULL-FLEET sweep of all 300 live · run-59 build-artifact tier RESOLVED · 1 rule change — the URL-SLUG-leak build-artifact tell)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**

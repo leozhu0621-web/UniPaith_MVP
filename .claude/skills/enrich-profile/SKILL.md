@@ -1211,7 +1211,14 @@ department / a `school_key` or the row's own description names the real school �
 naive `dept == field`, which would false-flag a genuinely shared real "Department of
 Economics"); (b) **CIP-rollup tells** in `program_name` AND `department` (trailing
 ", General"/", Other", a federal comma-and list, an embedded slash, a bare CIP rollup
-title); (c) a **literal CIP code** (`(CIP NN.NN)` or a bare trailing code) in name or
+title) — but the **comma-and tell must be ANCHORED to a federal-TAXONOMY ENDING**
+(", Literatures, and Linguistics" · ", Pharmaceutical Sciences, and Administration" ·
+", and Group Studies" · ", and Technicians/Services") and **NOT any Oxford-comma
+"X, Y, and Z" list, which REAL degrees carry** ("Media, Culture, and Communication";
+"Hospitality, Travel, and Tourism Management" are real published majors, NOT rollups) —
+the same precision caveat (b) needs that (a) already states for `dept == field`, or the
+gate FALSE-FLAGS a clean catalog and blocks a correct enrichment from `CERTIFIED_CLEAN`;
+(c) a **literal CIP code** (`(CIP NN.NN)` or a bare trailing code) in name or
 department; (d) **concentration-split rows** — a base field repeated across rows that
 differ only by a trailing "— {concentration}" / ", {emphasis}" (collapse into `tracks`,
 keep only genuine separate credentials). ANY non-zero blocks certification, same as a
