@@ -5294,6 +5294,26 @@ _CATALOG: list[tuple[str, str, str, str, str, str]] = [
 _FLAGSHIP = "nyu-general-management-mba"
 
 
+def _distinguishing_focus(name: str, siblings: list[str]) -> str:
+    """The part of a published ``program_name`` that sets it apart from the siblings it
+    shares a parent-program bulletin paragraph with — the joint discipline, dual-degree
+    pairing, clinical nurse-practitioner track, or teaching subject the name already
+    carries. Used to lead each sibling's description with a real, name-grounded
+    differentiator instead of the URL slug (which leaked a build artifact to the page)."""
+    from unipaith.profile_standard.anti_stub import field_of
+
+    word_lists = [s.split() for s in siblings]
+    common = 0
+    for i in range(min(len(w) for w in word_lists)):
+        if len({w[i] for w in word_lists}) == 1:
+            common += 1
+        else:
+            break
+    tail = " ".join(name.split()[common:])
+    tail = re.sub(r"\s*7[\s-]*12\s*$", "", tail).strip(" ,—–-:")
+    return tail or field_of(name)
+
+
 def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
     """Ensure every program description is unique and credential-distinct."""
     from collections import defaultdict
@@ -5365,32 +5385,14 @@ def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
         head_to_specs[normalized[: _SHARED_BODY_MIN_CHARS * 2]].append(spec)
 
     for specs in head_to_specs.values():
-        fields = {field_of(s["program_name"]) for s in specs}
-        if len(fields) < 2:
+        if len({field_of(s["program_name"]) for s in specs}) < 2:
             continue
+        names = [s["program_name"] for s in specs]
         for spec in specs:
-            track = spec["slug"].removeprefix("nyu-")
-            for suf in (
-                "-bs-bs",
-                "-ba",
-                "-bs",
-                "-ms",
-                "-ma",
-                "-phd",
-                "-dnp",
-                "-jd",
-                "-mba",
-                "-bfa",
-                "-mfa",
-                "-edd",
-            ):
-                if track.endswith(suf):
-                    track = track[: -len(suf)]
-                    break
-            # Hyphenated slug tail avoids matching field_of() during cross-field normalization.
-            lead = f"{track} — "
+            focus = _distinguishing_focus(spec["program_name"], names)
+            lead = f"This degree concentrates in {focus}. "
             body = spec.get("description") or ""
-            if not body.startswith(lead):
+            if focus and not body.startswith(lead):
                 spec["description"] = lead + body
 
 
