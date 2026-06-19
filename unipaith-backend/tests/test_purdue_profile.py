@@ -105,11 +105,46 @@ def _program_snapshot(spec: dict) -> dict:
 
 def test_catalog_breadth_and_shape():
     assert len(p.SCHOOLS) == 10
-    assert len(p.PROGRAMS) >= 300
+    # Breadth is asserted by per-row REALNESS, NOT a frozen padded count: when a
+    # de-fabrication drops CIP-rollup / unverifiable rows the real catalog legitimately
+    # SHRINKS (enrich-profile miss #2). The bar is a large, real, peer-leading catalog
+    # (cf. MIT's 65) — every row a single real, distinctly-named degree.
+    assert len(p.PROGRAMS) >= 250
     assert len(set(p.PROGRAM_SLUGS)) == len(p.PROGRAM_SLUGS)
     assert p.RANKING_DATA["ownership_type"] == "public"
     assert "public land-grant research university in west lafayette" in p.DESCRIPTION.lower()
     assert len(p.SCHOOL_OUTCOMES["campus_photos"]) >= 4
+
+
+def test_no_cip_rollup_names_or_departments():
+    """No program_name OR department carries an unambiguous CIP-rollup tell
+    (enrich-profile miss #2): a trailing ', General'/', Other', an embedded slash, or a
+    literal '(CIP NN.NN)' code. Each such row was resolved to Purdue's real degree/unit
+    or dropped. (Federal comma-and lists are NOT scanned here because Purdue has real
+    units with internal commas — e.g. 'Department of Speech, Language, and Hearing
+    Sciences' — which were each verified individually.)
+    """
+    import re
+
+    from unipaith.profile_standard.anti_stub import field_of
+
+    def tells(text: str) -> list[str]:
+        hits = []
+        if re.search(r",\s*(General|Other)$", text):
+            hits.append("suffix")
+        if "/" in text:
+            hits.append("slash")
+        if re.search(r"\(CIP|\b\d\d\.\d\d\b", text):
+            hits.append("cip-code")
+        return hits
+
+    bad = []
+    for spec in p.PROGRAMS:
+        fields = (("name", field_of(spec["program_name"])), ("dept", spec.get("department") or ""))
+        for label, text in fields:
+            if tells(text):
+                bad.append(f"{spec['slug']} {label}={text!r}")
+    assert not bad, f"CIP-rollup tells remain: {bad[:10]}"
 
 
 def test_institution_is_gold_except_recorded_omission():

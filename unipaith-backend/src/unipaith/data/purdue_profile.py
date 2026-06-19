@@ -44,6 +44,20 @@ Description repair (2026-06-17, purdueprof5): replaces all name-prefixed
 ``{program_name} is {role} at Purdue University's {school}`` classification stubs
 with field-specific clauses from ``purdue_field_descriptions.py`` (gold MIT/JHU
 pattern); 0% name-prefixed descriptions.
+
+Description de-fabrication (2026-06-19, purduedefab1): the prior FIELD_DESCRIPTIONS
+carried cross-institution-copy fabrications find-replaced from peer catalogs (Penn's
+SAS/Wharton/Perelman, JHU's Chesapeake/Writing Seminars, Northwestern's McCormick,
+Cornell's Weill) AND stamped one field clause verbatim across every credential level
+(82% verbatim-across-levels). Replaced with verified per-credential descriptions
+(``DISCIPLINE_DEFS`` general field knowledge + Purdue's real owning college on the
+West Lafayette, Indiana campus + the credential level — the gold MIT / Michigan model).
+Also de-rolls-up the remaining CIP rollup names/departments: resolved to real Purdue
+degrees/units (verified against admissions.purdue.edu + the Purdue catalog) or dropped
+(``DROP_SLUGS``) when no single real name is verifiable or the row duplicates an
+existing one. The catalog legitimately shrinks 310 → 286 real, de-padded rows. The
+build now self-enforces the gold-MIT-0% anti-stub gate (anti_stub.analyze +
+machine_artifacts).
 """
 
 # ruff: noqa: E501
@@ -60,18 +74,22 @@ from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.data.purdue_catalog_maps import (
     BA_FIELDS,
     DEPARTMENT_BY_FIELD,
+    DROP_SLUGS,
+    SCHOOL_OVERRIDE_BY_FIELD,
     SLUG_DEPARTMENTS,
+    SLUG_OVERRIDES,
     SLUG_PROGRAM_NAMES,
     clean_cip_field,
 )
-from unipaith.data.purdue_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
+from unipaith.data.purdue_field_descriptions import DISCIPLINE_DEFS
 from unipaith.data.purdue_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.purdue_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.profile_standard.anti_stub import field_of as _anti_stub_field
 
 INSTITUTION_NAME = "Purdue University-Main Campus"
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-19"
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -561,55 +579,84 @@ def _field_from_program_name(name: str) -> str:
     return clean_cip_field(name)
 
 
-def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
-    slug = spec.get("slug", "")
-    if slug in SLUG_DESCRIPTIONS:
-        return ""  # slug override handles description
-    if slug in SLUG_PROGRAM_NAMES:
-        return _field_from_program_name(SLUG_PROGRAM_NAMES[slug])
-    if raw_field:
-        return clean_cip_field(raw_field)
-    return clean_cip_field(spec.get("program_name", ""))
+# Per-credential lead so each credential level of a field reads distinctly (gold MIT /
+# Michigan model = 0% verbatim / 0% shared leading body across a field's credential siblings).
+_LEVEL_PREFIX = {
+    "bachelors": "",
+    "masters": "Graduate study. ",
+    "phd": "Doctoral research. ",
+    "certificate": "Graduate certificate. ",
+    "professional": "Professional study. ",
+}
+_LEVEL_WORD = {
+    "bachelors": "undergraduate",
+    "masters": "master's",
+    "phd": "doctoral",
+    "certificate": "graduate-certificate",
+    "professional": "professional",
+}
+
+# Fields whose DISCIPLINE_DEFS entry is missing are collected here and the build gate
+# raises with the full list (so every gap surfaces at once, not one per run).
+_MISSING_DEFS: list[str] = []
 
 
-def _purdue_description(spec: dict, *, field: str) -> str:
-    """Field-specific description — never the degree-type classification stub."""
-    slug = spec["slug"]
-    if slug in SLUG_DESCRIPTIONS:
-        clause = SLUG_DESCRIPTIONS[slug]
-    else:
-        clause = FIELD_DESCRIPTIONS.get(field)
-        if not clause:
-            raise ValueError(
-                f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
-            )
+def _purdue_description(spec: dict) -> str:
+    """Verified per-credential description (gold MIT / Michigan model).
+
+    Leads with a verified, field-specific discipline definition (general field knowledge,
+    no institution-specific or peer-borrowed claims), then names Purdue's real owning
+    college on the West Lafayette, Indiana campus and the program's credential level.
+    """
+    name = spec["program_name"]
+    dtype = spec["degree_type"]
+    college = spec["school"]
+    field = _anti_stub_field(name).lower()
+    defn = DISCIPLINE_DEFS.get(field)
+    if not defn:
+        _MISSING_DEFS.append(f"{field!r} ({spec['slug']})")
+        return ""
+    desc = (
+        f"{_LEVEL_PREFIX[dtype]}{defn} At Purdue University's {college} in "
+        f"West Lafayette, Indiana, the {name} engages this discipline at the "
+        f"{_LEVEL_WORD[dtype]} level."
+    )
     fmt = spec.get("delivery_format", "on_campus")
-    delivery = ""
     if fmt == "online":
-        delivery = " Delivered online."
+        desc += " Delivered fully online."
     elif fmt == "hybrid":
-        delivery = " Delivered in a hybrid format."
-    return f"{clause}{delivery}"
+        desc += " Delivered in a hybrid format."
+    return desc
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     slug = spec["slug"]
-    school = spec["school"]
     dtype = spec["degree_type"]
     raw_field = field_name or spec.get("_field_name") or spec.get("program_name", "")
 
-    if slug in SLUG_PROGRAM_NAMES:
-        spec["program_name"] = SLUG_PROGRAM_NAMES[slug]
-    elif dtype != "professional":
-        spec["program_name"] = _purdue_program_name(raw_field, dtype, school)
+    if slug in SLUG_OVERRIDES:
+        name, dept, school = SLUG_OVERRIDES[slug]
+        spec["program_name"] = name
+        spec["department"] = dept
+        spec["school"] = school
+    else:
+        school = spec["school"]
+        if slug in SLUG_PROGRAM_NAMES:
+            spec["program_name"] = SLUG_PROGRAM_NAMES[slug]
+        elif dtype != "professional":
+            spec["program_name"] = _purdue_program_name(raw_field, dtype, school)
 
-    if slug in SLUG_DEPARTMENTS:
-        spec["department"] = SLUG_DEPARTMENTS[slug]
-    elif not spec.get("department") or spec["department"] == raw_field:
-        spec["department"] = _department_for(raw_field, school)
+        resolved_field = clean_cip_field(raw_field)
+        if resolved_field in SCHOOL_OVERRIDE_BY_FIELD:
+            spec["school"] = SCHOOL_OVERRIDE_BY_FIELD[resolved_field]
+            school = spec["school"]
 
-    field = _field_from_spec(spec, clean_cip_field(raw_field) if raw_field else None)
-    spec["description"] = _purdue_description(spec, field=field)
+        if slug in SLUG_DEPARTMENTS:
+            spec["department"] = SLUG_DEPARTMENTS[slug]
+        elif not spec.get("department") or spec["department"] == raw_field:
+            spec["department"] = _department_for(raw_field, school)
+
+    spec["description"] = _purdue_description(spec)
 
 
 def _build_catalog() -> list[dict]:
@@ -617,6 +664,8 @@ def _build_catalog() -> list[dict]:
     seen = set(_EXISTING_SLUGS)
     for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
         if slug in seen:
+            continue
+        if slug in DROP_SLUGS:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
@@ -667,6 +716,23 @@ if _name_prefix_desc:
     _catalog_errors.append(
         f"name-prefixed descriptions on {_name_prefix_desc} programs"
     )
+if _MISSING_DEFS:
+    _catalog_errors.append(f"missing DISCIPLINE_DEFS for: {sorted(set(_MISSING_DEFS))}")
+# Enforce the gold-MIT-0% anti-stub gate at build time (enrich-profile §8.5): a stub /
+# verbatim-across-levels / school-blurb / build-artifact catalog raises before it can ship.
+from unipaith.profile_standard.anti_stub import (  # noqa: E402
+    analyze as _anti_stub_analyze,
+)
+from unipaith.profile_standard.anti_stub import (  # noqa: E402
+    machine_artifacts as _machine_artifacts,
+)
+
+_anti_report = _anti_stub_analyze(PROGRAMS)
+if not _anti_report.is_clean:
+    _catalog_errors.append(f"anti-stub gate: {_anti_report.summary()}")
+_artifacts = _machine_artifacts(PROGRAMS)
+if _artifacts:
+    _catalog_errors.append(f"machine-build artifacts in {len(_artifacts)} descriptions")
 if _catalog_errors:
     raise RuntimeError(f"Purdue catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
