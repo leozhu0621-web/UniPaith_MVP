@@ -183,7 +183,12 @@ def test_resume_programs_have_external_reviews():
 
 
 def test_every_program_is_gold_except_recorded_omissions():
-    assert len(p.PROGRAMS) >= 240, "full IPEDS catalog breadth (UNITID 215062)"
+    # Breadth is asserted by per-row REALNESS (no CIP-rollup / stub padding), NOT a frozen
+    # row count — a de-fabrication that drops federal aggregation buckets legitimately
+    # SHRINKS the catalog toward the real published list (SKILL miss #2). A peer-scale real
+    # catalog still vastly exceeds the gold MIT reference (65); the floor guards a partial
+    # build, never a padded count.
+    assert len(p.PROGRAMS) >= 150, "Penn real published catalog breadth (UNITID 215062)"
     for spec in p.PROGRAMS:
         slug = spec["slug"]
         res = check_conformance(
@@ -238,6 +243,41 @@ def test_catalog_passes_quality_gate():
         if (prog.get("description") or "").startswith(prog.get("program_name", ""))
     )
     assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
+
+
+def test_catalog_is_anti_stub_clean():
+    """Penn scores gold-MIT-0 on every anti-stub metric, and carries no CIP-rollup name,
+    literal CIP code, or field-echo department (SKILL miss #2/#8/#9)."""
+    import re
+
+    from unipaith.profile_standard import anti_stub
+
+    rows = [
+        {"program_name": x["program_name"], "description": x.get("description")}
+        for x in p.PROGRAMS
+    ]
+    report = anti_stub.analyze(rows)
+    assert report.is_clean, report.summary()
+    assert not anti_stub.machine_artifacts(rows), "machine-artifact descriptions"
+    rollup_re = re.compile(r", General\b|, Other\b|, and Linguistics|/")
+    rollups = [
+        x["program_name"]
+        for x in p.PROGRAMS
+        if rollup_re.search(p._real_field_of(x["program_name"]))
+    ]
+    assert not rollups, f"CIP-rollup names survive: {rollups[:5]}"
+    cips = [
+        x["program_name"]
+        for x in p.PROGRAMS
+        if "(CIP" in x["program_name"] or "(CIP" in (x.get("department") or "")
+    ]
+    assert not cips, f"literal CIP codes survive: {cips[:5]}"
+    field_echo = [
+        x["program_name"]
+        for x in p.PROGRAMS
+        if (x.get("department") or "") == p._real_field_of(x["program_name"])
+    ]
+    assert not field_echo, f"field-echo departments survive: {field_echo[:5]}"
 
 
 def test_every_program_maps_to_a_real_unit_with_unique_slug():
