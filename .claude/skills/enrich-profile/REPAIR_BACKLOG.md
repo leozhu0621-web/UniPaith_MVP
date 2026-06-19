@@ -3,184 +3,167 @@
 Ranked **worst-first**. The enricher MUST clear the top open entry before deepening any
 other university (repair-first, SKILL.md §2). This is the ONLY file where specific
 schools appear. Severity: **critical** (fabricated / cross-contaminated / build-junk text
-shipped live — peer-signature copies / URL-slug leaks / namesake-scrapes) · **high** (real
-data but materially broken structure — rollup names / verbatim-across-levels / prefix-
-doubling / field-echo departments) · **medium** (institution-level seed below gold).
-Evidence is from the live API (`api.unipaith.co/api/v1`), measured with WORD-BOUNDARY-anchored
-structure heuristics (substring matching over-counts — see run-62 correction).
+shipped or about-to-ship live — peer-signature copies / URL-slug leaks / namesake-scrapes) ·
+**high** (real data but materially broken structure — rollup names / verbatim-across-levels /
+prefix-doubling / per-field stamping / field-echo departments) · **medium** (institution-level
+seed below gold). Evidence is from the live API (`api.unipaith.co/api/v1`), measured with
+WORD-BOUNDARY-anchored structure heuristics (substring matching over-counts — see run-62
+correction) and corroborated against the MERGED source where a deploy is mid-flight.
 
-_Last graded: 2026-06-19 (grader **run 62** — **FULL-FLEET sweep: all 300 LIVE institutions
+_Last graded: 2026-06-19 (grader **run 63** — **FULL-FLEET sweep: all 300 LIVE institutions
 re-measured** via the live API; all 40 catalogs scanned across every description + structure
-dimension + a WORD-BOUNDARY peer-signature scan + matcher-side cip_code/reviews spot-checks,
-plus campus-photo / feed checks). **0 rule changes** — after a full-fleet sweep every live
-defect maps to an EXISTING miss (#2/#8/#9) or is deploy-lag / app-code; no NEW gap-class, so
-per the anti-churn + no-edit-without-new-evidence rails the rulebook is unchanged. This run
-records REAL enricher PROGRESS (Purdue/USC/Chicago/NYU repaired since run 61) and CORRECTS
-run-61's substring-noise peer counts (Purdue peer-copy is now 0, not 31). See CHANGELOG run 62._
+dimension + an OWN-UNIT-EXCLUDED word-boundary peer-signature scan + matcher-side
+cip_code/reviews spot-checks + campus-photo / feed checks, plus a source-vs-live cross-check of
+the mid-deploy Cornell PR). **0 rule changes** — after a full-fleet sweep every live defect maps
+to an EXISTING miss (#2/#8/#9), is the external seed backlog, or is deploy-mechanics/app-code; no
+NEW gap-class, so per the anti-churn + no-edit-without-new-evidence rails the rulebook is
+unchanged. This run records the enricher CLEARING UIUC + NYU slug-leaks, Berkeley + Purdue
+structure, and BU peer-copy — and catches a NEW regression: the **Cornell #856 "de-fabrication"
+merged carrying cross-institution peer-copy** (Berkeley/Penn units) + rollup names + per-field
+stamping. See CHANGELOG run 63._
 
-## Fleet at a glance (run 62, live `api.unipaith.co/api/v1`)
+## Fleet at a glance (run 63, live `api.unipaith.co/api/v1`)
 
 - **Fleet = 300 institutions LIVE.** **40 carry programs; 260 are bare institution-level
   stubs** (0 programs, dead feed, 33 with ZERO campus photo). Seeding is **external**; the
   routine ENRICHES + REPAIRS only — these 260 stubs are the backlog.
-- **🟢 HEADLINE — the enricher is now REPAIRING the top backlog, and it WORKED.** Since run 61
-  it merged Purdue #840 (force de-fab live + drop Area Studies rollup), USC #843/#844 (collapse
-  concentration splits + remove slug-leak + fix field-echo depts), Chicago #839 (per-credential
-  grad descriptions), NYU #845/#846 (strip slug-leak). Verified LIVE: **Purdue peer-copy = 0**
-  (word-boundary scan; run-61's "31 peer rows" was substring noise — see correction — AND #840
-  cleared it), verbatim 82%→0%, rollup 8%→0%; **USC** dept-echo-field 79%→**5%**, slug-leak
-  19%→**0%**, peer-sig clean, n 613→520 (splits collapsed). This is the FIRST interval the
-  enricher cleared CRITICAL items instead of shipping single-dimension stub-swaps.
-- **🔴 DEPLOY-MECHANICS is now the bottleneck, NOT missing rules.** The dual-head auto-merge
-  race (SKILL §8 step 8.5/5, flagged-for-human) is ACTIVELY FAILING deploys this interval:
-  **Chicago #839 Deploy Backend FAILED** (dual head), **NYU #845 Deploy Backend FAILED** (dual
-  head), then a cascade of merge-fixups (#842, #847 cancelled, b30d6ec6 merge-of-merges pending).
-  So **NYU's slug-leak fix is MERGED IN SOURCE but NOT LIVE** — stranded mid-deploy, not a false
-  repair. The fix-the-deploy work outweighs the fix-the-data work right now.
-- **🟡 GRADER-ACCURACY CORRECTION — run-61 peer-signature counts were substring noise.** A
-  naive `"CALS" in desc` matches "chemi**cals**"; `"Stern"` matches "we**stern**/ea**stern**".
-  Run 61's "Purdue 31 peer rows / BU Perelman+Lick+Medill" were inflated by this. The
-  WORD-BOUNDARY (`\bSIG\b`) scan this run returns: **Purdue 0, USC 0, UIUC 0, NYU 0 peer sigs**;
-  the ONLY surviving real peer signature fleet-wide is **Boston U "Medill" ×2** (Northwestern's
-  journalism school on a Public-Relations row). The peer-copy CRITICAL tier has collapsed from
-  "3 catalogs" to "BU ×2 rows."
-- **Mature-catalog structure tiers persist (documented classes, no new rule):** field-echo dept
-  (BU 81%, plus the substring-heuristic over-counts on small real-dept catalogs — Caltech/
-  Princeton/UChicago "Chemistry" IS the real dept), genuine rollup-name (**Berkeley 32 · Harvard
-  29 · Cornell 28 · Columbia 27 · Penn 22 %**), verbatim-across-levels (**Berkeley 80 · Cornell
-  76 · Penn 74 · Rice 42 %**), shared-leading-body / per-field stamping (**Wisconsin 94f ·
-  Harvard 82f · Cornell 78f · Penn 72f · Columbia 60f · Northwestern 59f · Rice 25f**),
-  prefix-doubling (**Yale 69 · Stanford 19 · Purdue 16 %**), literal "(CIP NN.NN)" (**Penn 11%**).
-- **Checklist on the 40 catalogs:** 0 duplicate / 0 bare-abbreviation / 0 "Programs" names on
-  the 28 mature catalogs; **all 28 carry 5 campus photos + a live posts feed**. The 12
-  five-program seeds remain 5/5 empty-`description_text` + null-`department` + DEAD FEED;
-  **7 of them have <4 photos** (Florida 1, Emory/Notre Dame 2, Vanderbilt/WashU/UNC/UC-Davis 3).
+- **🟢 HEADLINE — the enricher cleared FOUR backlog tiers this interval (the repair loop is
+  working).** Verified LIVE this run: **UIUC slug-leak = 0** (was CRITICAL #2, 33 rows; #849),
+  **NYU slug-leak = 0** (was CRITICAL #3, 41 rows; #845/#846 now DEPLOYED), **Berkeley** verbatim
+  80%→**0**, rollup 32%→**1%** (was HIGH #4; #854), **Purdue** prefix 16%→**0** (was HIGH #13
+  residual; clean), **BU Medill peer-copy = 0** (#851–853). Slug-leak + hex build-artifact tiers
+  are now empty fleet-wide.
+- **🔴 NEW CRITICAL — Cornell #856 shipped CROSS-INSTITUTION PEER-COPY into source.** The merged
+  `cornell_field_descriptions.py` (PR #856 "structural de-fabrication", merged 2026-06-19) carries
+  **Berkeley's** "IEOR department serving engineering, Haas, and CDSS students" on Operations
+  Research and **Penn's** "Mahoney Institute of Neurological Sciences" + "SAS" on Neurobiology /
+  Area Studies — **7 live rows** naming foreign units Cornell does not have (Cornell's dept is
+  ORIE, not IEOR; there is no Mahoney Institute at Cornell). The same pass **kept 42 rollup names
+  (15%)** and stamps **one description per CIP-field across all credential levels (verbatim 76%)**.
+  This is the run-62-flagged risk made live: a "de-fabrication" pass that introduces/retains
+  miss-#8 contamination. Deploy Backend was in_progress at grade time, so it is about-to-be-live.
+- **🟡 BU repair is IN FLIGHT (open PR #857, NOT merged).** #851–853 removed BU's peer-copy +
+  classification stubs but left **216 field-echo departments (56%)** + **9 credential-combo
+  name/dept stubs** ("Jdma English", "PhD, MD/PhD"). #857 fixes exactly these (real owning
+  colleges + real dual-degree names + 2 regression tests) but is **open, not merged** — an
+  unmerged fix is a stranded run (SKILL §9). Land #857.
+- **Mature-catalog structure tiers persist (documented classes, no new rule):** genuine
+  rollup-name (**Harvard 30 · Cornell 29(crit) · Columbia 29 · Penn 23 %**), verbatim-across-levels
+  (**Cornell 76(crit) · Penn 74 · Rice 43 %**), per-field shared-leading-body (**Wisconsin 98f ·
+  Harvard 96f · Columbia 67f · Northwestern 63f · Rice 25f**), prefix-doubling (**Yale 70 %**),
+  literal "(CIP NN.NN)" (**Penn 28%**).
+- **Checklist on the 40 catalogs:** 0 duplicate / 0 bare-abbreviation / 0 "Programs" names on the
+  28 mature catalogs; **all 28 carry 5 campus photos + a live posts feed**. The 12 five-program
+  seeds remain 5/5 empty-`description_text` + null-`department` + DEAD FEED; **7 of them have <4
+  photos** (Florida 1, Emory/Notre Dame 2, Vanderbilt/WashU/UNC/UC-Davis 3 — carried from run 62,
+  seeds untouched this interval).
 
 ⚠️ **FLAG FOR HUMAN (code/workflow, out of grader scope):**
-1. **Auto-merge dual-head race is FAILING PRODUCTION DEPLOYS (escalated from run 61).** Two
-   data-PR deploys FAILED on dual heads this interval (Chicago #839, NYU #845), stranding the
-   NYU slug-leak fix off-prod despite a green-CI merge, and spawning a merge-of-merges cascade
-   (#842/#847/b30d6ec6). The durable fix — make `test_alembic_has_single_head` evaluate the
-   REBASED-onto-`main` MERGE RESULT and BLOCK auto-merge — lives in the automerge/CI workflow
-   (SKILL §8 step 8.5/5). Not grader-editable. **This is now the single highest-leverage fix in
-   the system: good repairs are being merged but not reaching students.**
-2. **`cip_code` is NOT serialized on the public `/programs/{id}`** — it returns `None` on EVERY
-   program including gold MIT (whose data module certainly sets it), so the skill's matcher-side
-   audit channel ("flag empty `cip_code` via the public API") is UNUSABLE; the field must be
-   audited via DB/git, or the public program schema must expose it. A serializer gap, not a data
-   gap — out of grader scope.
-3. `anti_stub.py` is description-FORM-only and still misses, IN CODE, what the rulebook
-   prescribes (carried from runs 58–61): (a) the **URL-slug pattern** in `machine_artifacts`
-   (`^[a-z0-9]+(-[a-z0-9]+){2,}\s*[—–-]\s`) — NYU + UIUC ship it live while otherwise passing;
-   (b) the §8.5 **STRUCTURE metrics** (dept-echo, rollup, CIP-code, concentration-split, anchored
-   to the run-61 federal-taxonomy-ending tell, NOT a naive comma-and); (c) a **peer-signature
-   WORD-BOUNDARY allowlist scan** (Purdue #832 once shipped peer rows green). None grader-editable.
+1. **Auto-merge dual-head race keeps FAILING/forcing fixup deploys (escalated, runs 61–63).** This
+   interval alone: NYU #845 Deploy FAILED on a dual head, then #847 (cancelled) + #848 + #855
+   ("merge dual heads buprof12 + berkeleyprof9, auto-merge race") were all merge-fixups. The durable
+   fix — make `test_alembic_has_single_head` evaluate the REBASED-onto-`main` MERGE RESULT and BLOCK
+   auto-merge — lives in the automerge/CI workflow (SKILL §8 step 8.5/5). Not grader-editable.
+2. **The enforced anti-stub gate has NO peer-signature allowlist scan — and it just let a
+   contaminated de-fab pass auto-merge (Cornell #856).** `anti_stub.analyze` computes description-form
+   + (per run 58) structure metrics, but **no allowlist scan of named units against the institution's
+   own org chart** (SKILL miss #8 allowlist sub-bullet; carried from runs 58–62 as FLAG #3c). Cornell
+   #856 cleared CI and merged while shipping Berkeley/Penn units — direct live proof the missing
+   enforced scan now actively passes cross-institution contamination. Add a positive-allowlist
+   peer-unit scan to `anti_stub.py` + `test_anti_stub_gate.py`. Not grader-editable.
+3. **`cip_code` is NOT serialized on the public `/programs/{id}` or the list endpoint** — it returns
+   `None` on EVERY program including gold MIT, so the skill's matcher-side audit channel ("flag empty
+   `cip_code` via the public API") is UNUSABLE; audit via DB/git, or expose it in the program schema.
+   A serializer gap, not a data gap — out of grader scope.
+4. `anti_stub.py` still misses, IN CODE, the **URL-slug `machine_artifacts` pattern**
+   (`^[a-z0-9]+(-[a-z0-9]+){2,}\s*[—–-]\s`) — the enricher hand-fixed UIUC/NYU this interval, but the
+   gate would not have caught the next one. Not grader-editable.
 
 ---
 
-# CRITICAL — fabricated / contaminated / build-junk content shipped live (fix before any other deepening)
+# CRITICAL — fabricated / contaminated content shipped or about-to-ship live (fix before any other deepening)
 
-## 1. Boston University — peer-signature copy + field-echo dept + classification — severity: critical — first seen run 32 · 2026-06-16
-376 programs, UNREPAIRED. WORD-BOUNDARY scan: **"Medill" (Northwestern's journalism school) ×2**
-e.g. on BS Public Relations ("…Medill integrated marketing communications…"). Plus structure:
-**dept-echo-field 81% (308/376, ~one-off per program), classification descriptions 15% (58),
-rollup 6% (24), shared-body 10f.** **Repair:** ALLOWLIST-scan every description against BU's OWN
-org chart and FAIL on any foreign unit (miss #8 allowlist, NOT a denylist) — research each
-description from BU's catalog; put the real BU school/college in `department` (not the field
-echoed from the name); de-roll-up the 24 names; replace the 58 classification stubs with
-field-specific prose.
+## 1. Cornell University — cross-institution peer-copy (Berkeley + Penn) shipped by the #856 de-fab — severity: critical — first seen run 63 · 2026-06-19
+274 programs. PR #856 ("structural de-fabrication") merged but its `cornell_field_descriptions.py`
+ships **7 live rows naming foreign units Cornell does not have:**
+- **Berkeley** — "Optimization, stochastic modeling, and analytics in the **IEOR** department serving
+  engineering, **Haas**, and **CDSS** students" on *Operations Research* (BS + Master's + PhD). Cornell's
+  unit is **ORIE**, not Berkeley's IEOR; Haas + CDSS are Berkeley schools.
+- **Penn** — "...across **SAS**, Weill Cornell, and the **Mahoney Institute of Neurological Sciences**"
+  on *Neurobiology* (Master's + PhD), and "...in **SAS**" on *Area Studies* (BS/MS/PhD). The Mahoney
+  Institute is **Penn's** (Perelman); SAS is Penn's School of Arts and Sciences.
 
-## 2. University of Illinois Urbana-Champaign — URL-slug-leak (UNREPAIRED, no PR) — severity: critical — first seen run 60 · 2026-06-19
-419 programs. A leading kebab-case catalog/URL slug bled into `description_text` LIVE on **33 rows
-(8%)** — e.g. `"uiuc-agricultural-biological-engineering-bs — Agricultural and Biological Engineers
-apply…"`, `"uiuc-chemistry-bs — …"`. Invisible to the built `machine_artifacts` gate (carries no
-hex / "Catalog entry" token). **No repair PR has been opened** — this is genuinely unrepaired work.
-**Repair:** strip the leading `^[a-z0-9]+(-[a-z0-9]+){2,}\s*[—–-]\s` slug from every description and
-open on the field fact (miss #8 build-artifact / §9). The slug is in the source data module.
+Same pass also left **42 rollup names (15%)** ("Bachelor's in Area Studies", ", General"/", Other"
+field titles — miss #2) and stamps **one description per CIP-field across every credential level
+(verbatim 76%, miss #8 per-field tell)**. **Repair (miss #8 allowlist + miss #2 + structure-before-depth):**
+ALLOWLIST-scan every description against Cornell's OWN org chart and FAIL on any foreign unit (research
+each from cornell.edu/department pages, never adapt a peer's blurb); de-roll-up the 42 federal-CIP names
+to Cornell's real degree names; give each credential level its OWN researched body (gold MIT = 0% verbatim).
 
-## 3. New York University — URL-slug-leak: fix MERGED but DEPLOY-STRANDED — severity: critical — first seen run 60 · 2026-06-19
-507 programs. **41 rows (8%)** still carry a leading kebab slug LIVE — e.g.
-`"anthropology-classical-civilization — The Department of Anthropology…"`,
-`"global-public-health-anthropology — …"` (cross-field joint-major slugs). #845/#846
-("strip slug-leak / remove slug-leak prefixes (41 rows)") ARE merged to `main`, but **#845's
-Deploy Backend FAILED on a dual head** and #846 is still deploying — so the fix is in SOURCE but
-NOT yet live. **Repair (verify-don't-rebuild):** confirm the slug is stripped in the source module,
-then drive the deploy green (clear the dual head per SKILL §8) and **re-query the live API until the
-41 rows render slug-free** — a merged fix that never deployed is a FAILED run (§9), not a clear.
+## 2. Boston University — finish the IN-FLIGHT repair (open PR #857, NOT merged) — severity: critical — first seen run 32 · 2026-06-16
+399 programs. #851–853 cleared the Medill/Penn/Harvard peer-copy + classification stubs (peer-copy now
+0 live — the "Anderson" hits are the real Anderson Mesa AZ observatory, a false positive). **Residual,
+fixed in OPEN PR #857:** **216 field-echo departments (56%)** (`_department_for` echoed the program's
+field into `department` while the real **College of Arts & Sciences** was known) + **9 credential-combo
+name/dept stubs** ("Jdma English", "Jdllm In Finance", "PhD, MD/PhD"). #857 resolves all of this (real
+owning colleges + real Law/GMS dual-degree names + 2 regression guards; scratch-DB: 0 field-echo / 0
+garbage). **Repair: LAND #857** — head-sync `buprof13` onto current `main`, merge, and verify the 216
+rows render their real owning college live. An open-but-unmerged fix is a stranded run (SKILL §9).
 
 ---
 
-# HIGH — real data, structurally broken (rollup · verbatim-across-levels · per-field stamping · field-echo dept · prefix)
+# HIGH — real data, structurally broken (rollup · verbatim-across-levels · per-field stamping · prefix)
 
-## 4. University of California-Berkeley — severity: high — first seen run 22 · 2026-06-15
-269 programs. **32% rollup names + 80% verbatim-across-levels + 89% field-echo dept + 18% (50f)
-shared-body.** De-roll-up the federal-CIP names; per-credential researched bodies; real owning
-schools in `department`.
+## 3. University of Pennsylvania — severity: high — first seen run 24 · 2026-06-15
+250 programs. **23% rollup names + 28% literal "(CIP NN.NN)" in names + 74% verbatim-across-levels +
+75 fields sharing a ≥120-char leading body.** Strip the CIP codes (miss #2 CIP-code tell); de-roll-up the
+federal-CIP names; give each credential level its OWN researched body; real owning schools in `department`.
 
-## 5. Cornell University — severity: high — first seen run 22 · 2026-06-15
-274 programs. **28% rollup + 76% verbatim + 86% dept-echo (dept echoes the CIP rollup) + 28% (78f)
-shared-body + 3% prefix.** De-roll-up; per-credential bodies; real departments.
+## 4. Harvard University — severity: high — first seen ≤run 24 · 2026-06-15
+343 programs. **30% rollup names + 96 fields sharing a ≥120-char leading body** (verbatim 0% — a
+suffix-diversifier evades the full-string count, miss #8). De-roll-up names; per-credential researched
+bodies (gold MIT = 0). Verify the terse "Chemistry"/"Applied Mathematics" depts are the real owning unit
+(dept-echo heuristic over-count risk — mostly real).
 
-## 6. University of Pennsylvania — severity: high — first seen run 24 · 2026-06-15
-250 programs. **22% rollup + 11% literal "(CIP NN.NN)" in names + 74% verbatim + 89% dept-echo +
-28% (72f) shared-body.** Strip the CIP codes (miss #2 CIP-code tell); de-roll-up; per-credential
-bodies; real departments.
+## 5. Columbia University — severity: high — first seen ≤run 24 · 2026-06-15
+263 programs. **29% rollup names + 67 fields sharing a ≥120-char leading body.** De-roll-up names;
+per-credential researched bodies; real departments.
 
-## 7. Columbia University — severity: high — first seen ≤run 24 · 2026-06-15
-263 programs. **27% rollup + 88% dept-echo + 22% (60f) shared-body.** De-roll-up names;
-per-credential bodies; real departments.
-
-## 8. Harvard University — severity: high — first seen ≤run 24 · 2026-06-15
-343 programs. **29% rollup + 23% (82f) shared-body + 67% dept-echo.** De-roll-up names;
-per-credential bodies; verify the terse "Chemistry"/"Applied Mathematics" depts are the real owning
-unit (dept-echo heuristic over-count risk — mostly real) vs a field echo.
-
-## 9. University of Wisconsin-Madison — per-field stamping (shared leading body) — severity: high — first seen run 60 · 2026-06-19
-348 programs. **94 fields where credential siblings share a ≥120-char leading body** (verbatim 0%,
-rollup 1% — a suffix-diversifier evades the full-string count, miss #8). Give each credential level
+## 6. University of Wisconsin-Madison — per-field stamping (shared leading body) — severity: high — first seen run 60 · 2026-06-19
+348 programs. **98 fields where credential siblings share a ≥120-char leading body** (verbatim 0%,
+rollup 0% — a suffix-diversifier evades the full-string count, miss #8). Give each credential level
 (BA/BS/MS/PhD) its OWN researched body (gold MIT = 0).
 
-## 10. Northwestern University — per-field stamping (shared leading body) — severity: high — first seen run 60 · 2026-06-19
-308 programs. **59 fields share a ≥120-char leading body** across credential siblings (verbatim 0%,
-rollup 1%). Per-credential researched bodies (gold MIT = 0).
+## 7. Northwestern University — per-field stamping (shared leading body) — severity: high — first seen run 60 · 2026-06-19
+308 programs. **63 fields share a ≥120-char leading body** across credential siblings (verbatim 0%,
+rollup 2%). Per-credential researched bodies (gold MIT = 0). (The McCormick/Kellogg/Medill mentions are
+Northwestern's OWN schools — not contamination.)
 
-## 11. Yale University — severity: high — first seen ≤run 30 · 2026-06-16
-189 programs. **69% prefix-doubling (`description_text.startswith(program_name)`) + 75% dept-echo.**
-Strip the name prefix; open on the field fact; per-credential bodies; real departments.
+## 8. Yale University — severity: high — first seen ≤run 30 · 2026-06-16
+189 programs. **70% prefix-doubling (`description_text.startswith(program_name)`).** Strip the name
+prefix; open each description on the field fact (gold MIT = 2%); per-credential bodies.
 
-## 12. Rice University — severity: high — first seen run 30 · 2026-06-16
-159 programs. **42% verbatim + 62% dept-echo + 15% (25f) shared-body + 8% prefix.** Per-credential
-bodies; verify departments.
-
-## 13. Purdue University-Main Campus — residual prefix-doubling (peer-copy + verbatim RESOLVED) — severity: high — first seen run 25 · 2026-06-15
-283 programs. #840 RESOLVED the peer-copy (word-boundary = 0) and verbatim-across-levels (82%→0%) and
-rollup (8%→0%) — a real repair. **Residual: 47 rows (16%) prefix-doubling** (`description_text`
-restates the `program_name`). Strip the name prefix; open each on the field fact (miss #9). Demoted
-from CRITICAL #1 to HIGH residual.
-
-## 14. University of Southern California — residual field-echo dept (peer + slug + splits RESOLVED) — severity: high — first seen run 58 · 2026-06-18
-520 programs. #843/#844 RESOLVED the slug-leak (19%→0%), collapsed the concentration splits (n
-613→520), and cut dept-echo 79%→**5% (30 rows)**. **Residual: 30 rows still set `department` to the
-field echoed from the name** while the real USC school (Dornsife/Marshall/Viterbi) is known. Put the
-real owning school in those 30 rows' `department` (miss #2). Demoted from HIGH to near-clean residual.
+## 9. Rice University — severity: high — first seen run 30 · 2026-06-16
+159 programs. **43% verbatim-across-levels + 25 fields sharing a ≥120-char leading body + 8% prefix.**
+Per-credential researched bodies; verify departments.
 
 ---
 
 # MEDIUM — institution-level seeds: the enrichment backlog (seeding is external)
 
-## 15. The 12 earlier flagship seeds (5 programs each) — severity: medium — first seen run 57 · 2026-06-18
+## 10. The 12 earlier flagship seeds (5 programs each) — severity: medium — first seen run 57 · 2026-06-18
 Each ships 5 flagship rows with **5/5 empty `description_text` + null `department`** + a **DEAD FEED**;
 **7 have <4 campus photos** (Florida 1, Emory/Notre Dame 2, Vanderbilt/WashU/UNC/UC-Davis 3).
-**Enrich (per university, one PR):** researched descriptions + real departments for the flagship rows,
-a working feed (`posts`>0), a ≥4-photo verified+credited gallery, then deepen toward a full catalog.
+**Enrich (per university, one PR):** researched descriptions + real departments for the flagship rows, a
+working feed (`posts`>0), a ≥4-photo verified+credited gallery, then deepen toward a full catalog.
 Seeds: Florida · Emory · Notre Dame · Vanderbilt · WashU · UNC-Chapel Hill · UC-Davis · Brown ·
 Georgetown · UC-Irvine · Dartmouth · UVA.
 
-## 16. The ~260 bulk institution-level seeds (0 programs) — severity: medium — first seen run 59/60
+## 11. The ~260 bulk institution-level seeds (0 programs) — severity: medium — first seen run 59/60
 Each entered at institution level with **0 programs, a dead feed**, and **33 with ZERO campus photos**
-(broken explore-card gradient header + detail hero — the acute sub-set to clear first; e.g. Arizona
-State (both campuses), Oregon State, U of Houston, U of Utah, UAB, Colorado State, U of Kentucky,
-Virginia Commonwealth, Thomas Jefferson, James Madison, Loyola Chicago/Marymount, Michigan Tech).
+(broken explore-card gradient header + detail hero — the acute sub-set to clear first; e.g. Arizona State
+(both campuses), Oregon State, U of Houston, U of Utah, UAB, Colorado State, U of Kentucky, Virginia
+Commonwealth, Thomas Jefferson, James Madison, Loyola Chicago/Marymount, Michigan Tech).
 **Enrich (per university, one PR):** a full real-named catalog + field-specific descriptions + real
 departments · a working feed · a ≥4-photo verified gallery · reviews on coverable programs · `_standard`.
 Pick the highest-priority (a 0-photo seed) once the CRITICAL/HIGH tiers are clear.
@@ -189,17 +172,19 @@ Pick the highest-priority (a 0-photo seed) once the CRITICAL/HIGH tiers are clea
 
 # CLEANUP / CLEAN (verify-only)
 
-## Repaired this interval — re-confirmed live run 62 (no data repair needed)
-- **Purdue** — peer-copy + verbatim + rollup cleared by #840 (residual prefix → HIGH #13).
-- **USC** — slug-leak + concentration-splits cleared by #843/#844; dept-echo 79%→5% (residual → HIGH #14).
-- **Chicago** (#839), **build-artifact tier** (UCLA/UW/Michigan/Stanford, run-59 CRITICAL) — STAY clean;
-  `hex_artifact = 0` re-confirmed on every catalog this run.
+## Cleared this interval — re-confirmed live run 63 (no data repair needed)
+- **UIUC** — slug-leak 33 rows → **0** live (#849). CLEAN.
+- **NYU** — slug-leak 41 rows → **0** live (#845/#846 deployed); structure clean (rollup 0). CLEAN.
+- **Berkeley** — verbatim 80%→0, rollup 32%→1% (#854). CLEAN.
+- **Purdue** — residual prefix-doubling 16%→0; peer-copy/verbatim/rollup already 0. CLEAN.
+- **USC** — slug-leak + concentration-splits cleared (#843/#844); dept-echo now **2%** (near-clean residual
+  — 30→ a handful of rows still echo the field while Dornsife/Marshall/Viterbi is known; lowest-priority).
+- **Build-artifact tier** (UCLA/UW/Michigan/Stanford, run-59 CRITICAL) — `hex_artifact = 0` re-confirmed.
 
-## Genuinely clean (desc + structure; no action) — MIT (gold) · UCSD · Caltech · Princeton · CMU · Duke · UT-Austin · Georgia Tech · JHU · NYU(structure) · Michigan · UCLA · UW · Stanford(structure)
+## Genuinely clean (desc + structure; no action) — MIT (gold) · UCSD · Caltech · Princeton · CMU · Duke · UT-Austin · Georgia Tech · JHU · Michigan · UCLA · UW · Stanford
 Verified clean on the description + rollup metrics this run. The dept-echo substring heuristic
-OVER-counts on small real-department catalogs (Caltech 88% / UChicago 87% / Princeton 74% / Harvard
-67% / Duke 65% — "Chemistry"/"Anthropology" IS the real owning department, not a field echo) — treat
-as a heuristic artifact UNLESS a row's `department` is literally the field copied from the name while a
-real owning school is separately known (BU/USC-residual = real defect; Princeton/Caltech = not). NYU's
-STRUCTURE is clean (rollup 0%); its only residual is the slug-leak in CRITICAL #3 (deploy-stranded).
-Stanford's structure is clean; prefix-doubling 19% is its only residual (below the HIGH threshold).
+OVER-counts on small real-department catalogs (Caltech 79% / UChicago 88% / Princeton 74% / Duke 62% —
+"Chemistry"/"Anthropology" IS the real owning department, not a field echo) — treat as a heuristic
+artifact UNLESS a row's `department` is literally the field copied from the name while a real owning
+school is separately known (BU/USC-residual = real defect; Princeton/Caltech = not). Stanford's structure
+is clean; prefix-doubling 0% this run.

@@ -6,6 +6,91 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-19 — Run 63 (FULL-FLEET sweep of all 300 live · enricher CLEARED 4 backlog tiers — UIUC/NYU slug-leaks, Berkeley/Purdue structure, BU peer-copy · NEW regression: Cornell #856 de-fab shipped Berkeley/Penn peer-copy · 0 rule changes)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
+A per-catalog scan over the full paginated program list of all 40 program-bearing catalogs — duplicate /
+bare-abbreviation / "Programs" / null-dept names; WORD-BOUNDARY rollup tell on name + department;
+literal `(CIP NN.NN)`; concentration-split; prefix-doubling; verbatim-shared + per-field shared-leading-body +
+catalog-wide cross-field clause; double-period / connects-to school-blurb; URL-slug + hex build-artifact;
+an **OWN-UNIT-EXCLUDED** word-boundary peer-signature scan — plus campus-photo count, posts feed, `_standard`,
+and a matcher-side `cip_code`/`external_reviews` spot-check; gold MIT (n=65) control. Fleet = 300 (40 catalogs:
+28 mature + 12 seeds; 260 bare stubs), no sprawl. For the mid-deploy Cornell PR I cross-checked the MERGED
+source against the live API.
+
+**Merged since run 62 (PR #850):** #849 UIUC (strip 33-row URL-slug-leak), #851/#852/#853 BU (remove Medill
+peer-copy → de-fabricate names/depts → replace Penn/Harvard/Cornell unit contamination missed by a denylist),
+#854 Berkeley (structural de-fabrication), #855 alembic merge (buprof12 + berkeleyprof9 auto-merge race),
+#856 Cornell (structural de-fabrication). **Open profile PR (NOT merged):** #857 BU (real owning-college
+departments + real dual-degree names — finishes the in-flight BU repair). Old stranded review/feedback-export
+PRs (#769 UCLA superseded, #515/#503/#499/#489 reviews, #439 MIT, feedback exports) remain open — low-priority,
+flagged not actioned (out of grader scope).
+
+**Findings (live API + merged-source evidence):**
+1. **FOUR backlog tiers CLEARED — verified live (the repair loop is working).** UIUC slug-leak 33 rows→**0**
+   (#849); NYU slug-leak 41 rows→**0** (#845/#846 now deployed); Berkeley verbatim 80%→**0**, rollup 32%→**1%**
+   (#854); Purdue residual prefix 16%→**0**; BU Medill peer-copy→**0** (#851–853). Slug-leak + hex build-artifact
+   tiers are now EMPTY fleet-wide. First interval the enricher cleared CRITICAL acute breaches rather than
+   shipping single-dimension stub-swaps.
+2. **NEW LIVE REGRESSION (drives the top of the backlog): Cornell #856 "structural de-fabrication" merged
+   carrying CROSS-INSTITUTION PEER-COPY.** The merged `cornell_field_descriptions.py` ships **7 live rows**
+   naming foreign units Cornell does not have: **Berkeley's** "IEOR department serving engineering, Haas, and
+   CDSS students" on Operations Research (BS/MS/PhD — Cornell's unit is ORIE), and **Penn's** "Mahoney Institute
+   of Neurological Sciences" + "SAS" on Neurobiology + Area Studies. The same pass **kept 42 rollup names (15%)**
+   and stamps **one description per CIP-field across all credential levels (verbatim 76%)** — the `FIELD_DESCRIPTIONS`
+   dict is keyed by the federal CIP field title, so per-field stamping is structural-by-construction. Deploy
+   Backend was in_progress at grade time → about-to-be-live. This is the run-62-named risk realized: a "de-fab"
+   pass that introduces/retains miss-#8 contamination.
+3. **BU repair is IN FLIGHT but UNMERGED (#857).** #851–853 left BU with **216 field-echo departments (56%)** +
+   **9 credential-combo stubs** ("Jdma English", "PhD, MD/PhD"); #857 fixes exactly these with 2 regression
+   guards but is **open, not merged** — a stranded run (SKILL §9). The BU "Anderson" peer hits are the real
+   Anderson Mesa AZ observatory (false positive) — BU peer-copy is genuinely 0.
+4. **GRADER-ACCURACY NOTE — the peer-signature scan must EXCLUDE each institution's OWN named schools.** A naive
+   peer list flags USC's Marshall/Viterbi/Dornsife, NYU's Stern/Tisch/Tandon, Penn's Wharton/SAS/Perelman,
+   Northwestern's McCormick/Kellogg/Medill, Cornell's CALS/Weill/Lab-of-Ornithology, Wisconsin's CALS, etc. —
+   all OWN units, not contamination. After own-unit exclusion + word boundaries, the ONLY genuine cross-peer
+   contamination fleet-wide is **Cornell's 7 Berkeley/Penn rows** (finding 2). This corrects any prior
+   own-unit over-count; the allowlist-direction (verify against the institution's own org chart) is the only
+   sound method (miss #8 allowlist sub-bullet).
+5. **Documented structural classes persist (no new rule):** rollup names (Harvard 30 / Cornell 29 / Columbia 29 /
+   Penn 23 %, miss #2); Penn literal "(CIP NN.NN)" 28% (miss #2 CIP-code tell); verbatim-across-levels (Cornell 76 /
+   Penn 74 / Rice 43 %, run-30 / miss #8); per-field shared-leading-body (Wisconsin 98f / Harvard 96f / Columbia 67f /
+   Northwestern 63f / Rice 25f, miss #8 suffix-diversifier); Yale 70% prefix-doubling (miss #9). Checklist GREEN on
+   the 28 mature catalogs (5 photos + live feed each). The 12 seeds remain half-built (7 <4 photos); 260 bare stubs
+   (33 zero-photo). All BAD DATA / external-seed-backlog in documented classes → backlog, not rules.
+
+**Diagnosis:** every live defect maps to an EXISTING miss — Cornell peer-copy = miss #8 (cross-institution copy /
+named-unit-truth + the allowlist sub-bullet, the SAME class #853 just had to follow up for on BU); Cornell rollup =
+miss #2; Cornell/Penn/Harvard/etc. per-field stamping + verbatim = miss #8; Yale prefix = miss #9; Penn CIP-code =
+miss #2; seeds = the external seed backlog. The "default-flipped" test: Cornell #856 is the enricher **disobeying**
+miss #8's allowlist ("research each description from THIS institution's own page, never adapt a peer's by
+find-replace; a repair must clear the WHOLE class to zero") — a COMPLIANCE GAP, not a missing rule. No display bug.
+No finding argued for loosening an invariant.
+
+**Rulebook changes: NONE (0 of ≤3).** Per the SAFETY RAILS (no-edit-without-NEW-evidence; "Clean fleet / only
+documented classes → change nothing; never invent a rule to look busy"; anti-churn; confirm-not-already-covered;
+default-has-flipped), re-stating miss #8 would be churn on an already-1297-line rulebook. The persistent leverage is
+NOT more rule text — it is (a) the enricher running the allowlist scan it is already told to (a behavior question),
+and (b) the missing ENFORCEMENT (FLAG #2): `anti_stub.analyze` has no peer-allowlist scan, so Cornell #856's
+contamination cleared green CI and auto-merged. That code gap (carried from runs 58–62) now has DIRECT live proof
+it is letting contaminated de-fab passes ship — escalated in the FLAGS, not converted into a duplicate rule.
+
+**Backlog delta:** rewritten worst-first as run 63. CRITICAL re-headed: **#1 Cornell** (NEW — Berkeley/Penn
+peer-copy + rollup + verbatim from #856), **#2 BU** (in-flight #857 — land it). UIUC + NYU (former CRITICAL #2/#3)
++ Berkeley (former HIGH #4) + Purdue (former HIGH #13) moved to CLEAN with live-verified zeros. HIGH band
+re-measured + renumbered from live (Penn / Harvard / Columbia / Wisconsin / Northwestern / Yale / Rice). 12-seed +
+260-stub MEDIUM bands carried. FLAGS: dual-head auto-merge race (re-escalated — NYU #845 failed + #847/#848/#855
+fixups this interval), the anti-stub peer-allowlist code gap (now with Cornell #856 as live proof), cip_code
+serializer gap, URL-slug `machine_artifacts` pattern.
+
+**Invariants:** all intact; no SKILL.md edit by the grader (markdown-only: backlog + changelog). Health check:
+backend test deps (sqlalchemy / pytest) are absent in this ephemeral container, so the documented FALLBACK was
+used — `unipaith.profile_standard.manifest` imports cleanly at **STANDARD_VERSION 2** (the run-57 fallback); the
+PR's CI runs the real `test_profile_standard.py` + `test_profile_enrichment.py` suite. Working tree clean; only the
+3 grader-owned files changed.
+
+---
+
 ## 2026-06-19 — Run 62 (FULL-FLEET sweep of all 300 live · enricher REPAIRED the top backlog — Purdue/USC/Chicago/NYU · run-61 peer counts were substring noise, CORRECTED · deploy-mechanics is now the bottleneck · 0 rule changes)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
