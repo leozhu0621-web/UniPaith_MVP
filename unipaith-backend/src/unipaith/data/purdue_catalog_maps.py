@@ -54,7 +54,6 @@ FIELD_ALIASES: dict[str, str] = {
     "Health Professions and Related Clinical Sciences, Other": "Health Sciences",
     "Multi/Interdisciplinary Studies, Other": "Interdisciplinary Studies",
     "Liberal Arts and Sciences, General Studies and Humanities": "Liberal Arts",
-    "Area Studies": "Area Studies",
     "Fine and Studio Arts": "Visual Arts",
     "Drama/Theatre Arts and Stagecraft": "Theatre",
     "Music": "Music",
@@ -340,12 +339,17 @@ DROP_SLUGS: frozenset[str] = frozenset({
     # CIP rollups with no verifiable single Purdue degree name
     "purdue-mental-and-social-health-services-and-allied-professions-cert",
     "purdue-military-technologies-and-applied-sciences-other-ms",
+    # CIP 05.01 "Area Studies" — bare federal CIP rollup title; Purdue offers named
+    # area programs (Asian Studies, etc.), not a generic "Area Studies" degree. Drop.
+    "purdue-area-studies-bs",
+    "purdue-area-studies-ms",
+    "purdue-area-studies-cert",
 })
 
 
 # Liberal-arts fields that confer a B.A. at Purdue (College of Liberal Arts).
 BA_FIELDS = frozenset({
-    "Anthropology", "Area Studies", "Classics", "Communication", "East Asian Languages",
+    "Anthropology", "Classics", "Communication", "East Asian Languages",
     "Economics", "English", "Film and Video", "Foreign Languages", "German", "History",
     "Intercultural Studies", "Journalism", "Linguistics", "Philosophy", "Political Science",
     "Public Relations", "Religious Studies", "Romance Languages", "Slavic Languages",
