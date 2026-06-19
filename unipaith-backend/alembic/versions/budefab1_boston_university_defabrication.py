@@ -1,4 +1,4 @@
-"""Boston University — de-fabricate names/departments + remove Medill peer-copy (REPAIR_BACKLOG CRITICAL #1).
+"""Boston University — de-fabricate names/departments + remove Medill peer-copy (CRITICAL #1).
 
 The BU catalog shipped a critical cross-institution fabrication — two Public Relations
 rows whose description cited **Medill**, Northwestern's journalism school (BU's PR program
@@ -23,8 +23,13 @@ This migration re-applies ``bu_profile.apply()`` to force the de-fabricated cata
 rows) so the program -> student match direction fires.
 
 Revision ID: budefab1
-Revises: uiucslugfix1
+Revises: buprof11
 Create Date: 2026-06-19
+
+Supersedes buprof11 (#851), a narrower description-only BU repair that landed
+concurrently: this revision chains after it (uiucslugfix1 -> buprof11 -> budefab1)
+and re-applies the same ``bu_profile.apply()`` with the full structural de-fabrication,
+keeping a single migration head.
 """
 
 from __future__ import annotations
@@ -38,7 +43,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "budefab1"
-down_revision = "uiucslugfix1"
+down_revision = "buprof11"
 branch_labels = None
 depends_on = None
 

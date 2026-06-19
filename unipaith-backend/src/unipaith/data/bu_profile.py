@@ -160,6 +160,7 @@ _PEER_SIGNATURES: tuple[str, ...] = (
     "Lab of Ornithology",
     "Chesapeake",
     "Writing Seminars",
+    "Medill",  # Northwestern's journalism school — must never reappear on a BU PR row (buprof11)
 )
 
 _TEMPLATE_STUB_RE = re.compile(
