@@ -11,15 +11,21 @@ import { postLoginDestination, roleDefaultPath, resolveNextParam } from '../util
 
 /** Spec/04 compliance — route contract tests. */
 describe('Spec/04 information architecture', () => {
-  it('defines 9 profile tabs (Data → Settings; Strategy in Planning; Timeline retired)', () => {
-    expect(PROFILE_TABS_SPEC).toHaveLength(9)
+  // Profile refinement v2 (2026-06-18): Identity → "Personality" (route key
+  // `identity` stays); Academics + Experience merged under `academics`;
+  // Analytics dropped. 9 → 7 tabs.
+  it('defines 7 profile tabs (experience merged into academics; analytics dropped)', () => {
+    expect(PROFILE_TABS_SPEC).toHaveLength(7)
     expect(PROFILE_TABS_SPEC[0]).toBe('overview')
     expect(PROFILE_TABS_SPEC).not.toContain('preparation')
     expect(PROFILE_TABS_SPEC).not.toContain('financial')
     expect(PROFILE_TABS_SPEC).not.toContain('data')
     expect(PROFILE_TABS_SPEC).not.toContain('timeline')
+    expect(PROFILE_TABS_SPEC).not.toContain('experience')
+    expect(PROFILE_TABS_SPEC).not.toContain('analytics')
+    expect(PROFILE_TABS_SPEC).toContain('identity')
+    expect(PROFILE_TABS_SPEC).toContain('academics')
     expect(PROFILE_TABS_SPEC).toContain('strategy')
-    expect(PROFILE_TABS_SPEC).toContain('analytics')
   })
 
   it('maps legacy profile tab aliases out of the profile', () => {
@@ -30,8 +36,18 @@ describe('Spec/04 information architecture', () => {
     expect(PROFILE_TAB_ALIASES.data).toBe('/s/settings')
   })
 
+  // v2 tab-restructure aliases: Personality resolves to the stable identity
+  // key; Experience + Analytics fold into the merged Academics & experience tab.
+  it('aliases the restructured profile tabs to their new homes', () => {
+    expect(PROFILE_TAB_ALIASES.personality).toBe('/s/profile?tab=identity')
+    expect(PROFILE_TAB_ALIASES.experience).toBe('/s/profile?tab=academics')
+    expect(PROFILE_TAB_ALIASES.analytics).toBe('/s/profile?tab=academics')
+  })
+
   it('normalizes deprecated tab keys', () => {
     expect(normalizeProfileTab('preparation')).toBe('overview')
+    expect(normalizeProfileTab('experience')).toBe('overview')
+    expect(normalizeProfileTab('analytics')).toBe('overview')
     expect(normalizeProfileTab(null)).toBe('overview')
     expect(normalizeProfileTab('academics')).toBe('academics')
   })
