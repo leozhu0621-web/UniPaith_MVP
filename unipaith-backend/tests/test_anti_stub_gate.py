@@ -40,6 +40,7 @@ CERTIFIED_CLEAN = [
     "purdue",     # per-credential discipline defs; peer-copy + rollups removed (purduedefab1)
     "chicago",    # per-credential graduate descriptions; cert padding dropped (chicagodefab1)
     "bu",         # Medill peer-copy removed; dept-echo fixed; per-credential (buprof11)
+    "berkeley",   # CIP rollup de-fab; real dept names; per-credential descriptions (berkeleyprof9)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]

@@ -48,6 +48,12 @@ clauses from ``berkeley_field_descriptions.py`` (269/269 programs).
 Description repair (2026-06-17, berkeleyprof8): drops the ``{program_name}:`` prefix
 from every description so clauses open on field-specific facts (gold MIT/Chicago
 pattern); 0% name-prefixed descriptions.
+
+Structural de-fabrication (2026-06-19, berkeleyprof9): maps federal CIP rollup
+titles to Berkeley's real published departments; replaces ``Bachelor's in {rollup}``
+credential-prefix names with real degree designations (B.A./B.S./M.S./Ph.D.); drops
+IPEDS padding rows with no distinct Berkeley degree; per-credential descriptions so
+credential siblings no longer share verbatim text (anti-stub clean).
 """
 
 from __future__ import annotations
@@ -58,17 +64,24 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.berkeley_cip_mapping import (
+    BS_MAJORS,
+    CIP_TO_DEPARTMENT,
+    PROFESSIONAL_SCHOOLS,
+    SKIP_CATALOG_SLUGS,
+)
 from unipaith.data.berkeley_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
 from unipaith.data.berkeley_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.berkeley_reviews_depth import DEPTH_REVIEWS
-from unipaith.data.profile_catalog_utils import disambiguate_program_name, validate_catalog
+from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.profile_standard.anti_stub import analyze
 
 INSTITUTION_NAME = "University of California-Berkeley"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-19"
 
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is (an|a) (undergraduate|graduate|doctoral|professional|degree) program at Berkeley",
@@ -971,14 +984,159 @@ def _delivery_format(raw: str) -> str:
 
 
 def _department_for(field_name: str, school: str) -> str:
-    """Owning department — the CIP field title unless it duplicates the school name."""
-    if field_name.lower() in school.lower() or school.lower() in field_name.lower():
+    """Owning department — map federal CIP titles to Berkeley's published names."""
+    mapped = CIP_TO_DEPARTMENT.get(field_name, field_name)
+    if school in PROFESSIONAL_SCHOOLS:
+        if mapped != field_name and not mapped.startswith("Department of "):
+            return mapped
         return school
-    return field_name
+    if mapped.lower() in school.lower() or school.lower() in mapped.lower():
+        return school
+    return mapped
+
+
+def _display_field(field_name: str, school: str) -> str:
+    """Field label for program_name — distinct per CIP row; de-roll federal buckets."""
+    rollup_tells = (
+        ", General",
+        ", Other",
+        " and Related Fields",
+        " and Related Sciences",
+        " and Administration",
+    )
+    if any(t in field_name for t in rollup_tells) or "/" in field_name:
+        mapped = CIP_TO_DEPARTMENT.get(field_name, field_name)
+        if mapped.startswith("Department of "):
+            return mapped[len("Department of ") :]
+        if mapped not in PROFESSIONAL_SCHOOLS and mapped != school:
+            return mapped
+        return field_name.split(",")[0].split("/")[0].strip()
+    return field_name.split(",")[0].split("/")[0].strip()
+
+
+def _field_from_program_name(program_name: str) -> str | None:
+    """Extract field title from a disambiguated program name."""
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Master of Science in ",
+        "Master of Arts in ",
+        "Master of Architecture (M.Arch.)",
+        "Master of City Planning (M.C.P.)",
+        "Master of Landscape Architecture (M.L.A.)",
+        "Master of Public Health (M.P.H.)",
+        "Master of Public Policy (M.P.P.)",
+        "Master of Social Welfare (M.S.W.)",
+        "Master of Engineering in ",
+        "Juris Doctor (J.D.)",
+        "Doctor of Philosophy in ",
+        "Doctor of Public Health (Dr.P.H.)",
+        "Bachelor's in ",
+        "Master's in ",
+        "Professional program in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix) :].strip()
+    return None
+
+
+def _berkeley_program_name(
+    field_name: str, degree_type: str, school: str, slug: str
+) -> str:
+    """Real Berkeley degree designation — never a CIP-rollup credential prefix."""
+    display = _display_field(field_name, school)
+    if degree_type == "bachelors":
+        if display in BS_MAJORS or school in {_COE, _CHEM, _CDSS}:
+            return f"Bachelor of Science in {display}"
+        return f"Bachelor of Arts in {display}"
+    if degree_type == "masters":
+        if slug == "berkeley-architecture-ms":
+            return "Master of Architecture (M.Arch.)"
+        if slug == "berkeley-city-urban-community-and-regional-planning-ms":
+            return "Master of City Planning (M.C.P.)"
+        if slug == "berkeley-landscape-architecture-ms":
+            return "Master of Landscape Architecture (M.L.A.)"
+        if school in {_COE, _CHEM} or display in BS_MAJORS:
+            return f"Master of Science in {display}"
+        return f"Master of Arts in {display}"
+    if degree_type == "phd":
+        return f"Doctor of Philosophy in {display}"
+    if degree_type == "professional":
+        if field_name == "Law" or slug == "berkeley-law-prof":
+            return "Juris Doctor (J.D.)"
+        if field_name == "Public Health" or "public-health" in slug:
+            return "Master of Public Health (M.P.H.)"
+        if field_name == "Public Policy Analysis":
+            return "Master of Public Policy (M.P.P.)"
+        if field_name == "Social Work":
+            return "Master of Social Welfare (M.S.W.)"
+        if field_name == "Architecture":
+            return "Master of Architecture (M.Arch.)"
+        if "engineering" in field_name.lower() or school == _COE:
+            return f"Master of Engineering in {display}"
+        return display
+    return display
+
+
+def _field_clause(field_key: str) -> str:
+    """Return the verified field-specific fact clause for a catalog field."""
+    clause = FIELD_DESCRIPTIONS.get(field_key)
+    if not clause:
+        raise ValueError(f"Missing FIELD_DESCRIPTIONS entry for {field_key!r}")
+    return clause.strip().rstrip(".")
+
+
+_EXPLICIT_FIELD_BY_SLUG: dict[str, str] = {
+    "berkeley-eecs-bs": "Electrical, Electronics, and Communications Engineering",
+    "berkeley-mechanical-engineering-bs": "Mechanical Engineering",
+    "berkeley-chemistry-bs": "Chemistry",
+    "berkeley-chemical-engineering-bs": "Chemical Engineering",
+    "berkeley-computer-science-bs": "Computer Science",
+    "berkeley-data-science-bs": "Data Science",
+    "berkeley-economics-bs": "Economics",
+    "berkeley-molecular-cell-biology-bs": "Cell/Cellular Biology and Anatomical Sciences",
+    "berkeley-integrative-biology-bs": "Biology, General",
+    "berkeley-political-science-bs": "Political Science and Government",
+    "berkeley-psychology-bs": "Psychology, General",
+    "berkeley-sociology-bs": "Sociology",
+    "berkeley-media-studies-bs": "Communication and Media Studies",
+    "berkeley-applied-mathematics-bs": "Applied Mathematics",
+    "berkeley-cognitive-science-bs": "Cognitive Science",
+    "berkeley-english-bs": "English Language and Literature, General",
+    "berkeley-legal-studies-bs": "Non-Professional Legal Studies",
+    "berkeley-public-health-bs": "Public Health",
+    "berkeley-environmental-sciences-bs": "Natural Resources Conservation and Research",
+    "berkeley-conservation-resource-studies-bs": (
+        "Environmental/Natural Resources Management and Policy"
+    ),
+    "berkeley-business-administration-bs": (
+        "Business Administration, Management and Operations"
+    ),
+    "berkeley-architecture-bs": "Architecture",
+}
+
+
+def _field_key_for(spec: dict, field: str | None = None) -> str:
+    """Resolve the FIELD_DESCRIPTIONS lookup key for a program node."""
+    if field:
+        return field
+    slug = spec.get("slug", "")
+    if slug in _EXPLICIT_FIELD_BY_SLUG:
+        return _EXPLICIT_FIELD_BY_SLUG[slug]
+    if slug in _SLUG_TO_FIELD:
+        return _SLUG_TO_FIELD[slug]
+    pname_field = _field_from_program_name(spec.get("program_name", ""))
+    if pname_field:
+        for cip_title, dept in CIP_TO_DEPARTMENT.items():
+            if dept == pname_field or cip_title == pname_field:
+                return cip_title
+        if pname_field in FIELD_DESCRIPTIONS:
+            return pname_field
+    return spec.get("department") or spec.get("program_name", "")
 
 
 def _berkeley_description(spec: dict, field: str | None = None) -> str:
-    """Field-specific description — never the degree-type classification stub."""
+    """Field-specific, credential-appropriate description — never a classification stub."""
     slug = spec["slug"]
     fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
@@ -988,23 +1146,69 @@ def _berkeley_description(spec: dict, field: str | None = None) -> str:
         delivery = " Delivered in a hybrid format."
     if slug in SLUG_DESCRIPTIONS:
         return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
-    field_key = (
-        field
-        or spec.get("_field_name")
-        or _SLUG_TO_FIELD.get(slug)
-        or spec.get("program_name", "")
-    )
-    clause = FIELD_DESCRIPTIONS.get(field_key)
-    if not clause:
-        raise ValueError(
-            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
+    field_key = _field_key_for(spec, field)
+    fact = _field_clause(field_key)
+    dtype = spec.get("degree_type", "bachelors")
+    if dtype == "bachelors":
+        if fact.startswith("Graduate "):
+            body = "Undergraduate " + fact[9:]
+        else:
+            body = fact + "."
+    elif dtype == "masters":
+        body = (
+            f"Master's students in {field_key.lower()} complete graduate seminars, "
+            f"research methods, and a thesis project — {fact[0].lower()}{fact[1:]}."
         )
-    return f"{clause}{delivery}"
+    elif dtype == "phd":
+        body = (
+            f"Ph.D. training in {field_key.lower()} centers on original dissertation "
+            f"research, teaching, and faculty mentorship — "
+            f"{fact[0].lower()}{fact[1:]}."
+        )
+    elif dtype == "professional":
+        body = (
+            f"Berkeley's professional {field_key.lower()} program prepares practitioners "
+            f"through advanced coursework and field experience — "
+            f"{fact[0].lower()}{fact[1:]}."
+        )
+    else:
+        body = fact + "."
+    return f"{body}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     """Stamp a field-specific description on every program node."""
     spec["description"] = _berkeley_description(spec, field=field_name)
+
+
+_EXPLICIT_FULL_NAMES: dict[str, str] = {
+    "berkeley-eecs-bs": (
+        "Bachelor of Science in Electrical Engineering and Computer Sciences"
+    ),
+    "berkeley-mechanical-engineering-bs": "Bachelor of Science in Mechanical Engineering",
+    "berkeley-chemistry-bs": "Bachelor of Science in Chemistry",
+    "berkeley-chemical-engineering-bs": "Bachelor of Science in Chemical Engineering",
+    "berkeley-computer-science-bs": "Bachelor of Arts in Computer Science",
+    "berkeley-data-science-bs": "Bachelor of Arts in Data Science",
+    "berkeley-economics-bs": "Bachelor of Arts in Economics",
+    "berkeley-molecular-cell-biology-bs": "Bachelor of Arts in Molecular and Cell Biology",
+    "berkeley-integrative-biology-bs": "Bachelor of Arts in Integrative Biology",
+    "berkeley-political-science-bs": "Bachelor of Arts in Political Science",
+    "berkeley-psychology-bs": "Bachelor of Arts in Psychology",
+    "berkeley-sociology-bs": "Bachelor of Arts in Sociology",
+    "berkeley-media-studies-bs": "Bachelor of Arts in Media Studies",
+    "berkeley-applied-mathematics-bs": "Bachelor of Arts in Applied Mathematics",
+    "berkeley-cognitive-science-bs": "Bachelor of Arts in Cognitive Science",
+    "berkeley-english-bs": "Bachelor of Arts in English",
+    "berkeley-legal-studies-bs": "Bachelor of Arts in Legal Studies",
+    "berkeley-public-health-bs": "Bachelor of Arts in Public Health",
+    "berkeley-environmental-sciences-bs": "Bachelor of Science in Environmental Sciences",
+    "berkeley-conservation-resource-studies-bs": (
+        "Bachelor of Arts in Conservation and Resource Studies"
+    ),
+    "berkeley-business-administration-bs": "Bachelor of Science in Business Administration",
+    "berkeley-architecture-bs": "Bachelor of Arts in Architecture",
+}
 
 
 def _build_catalog() -> list[dict]:
@@ -1014,12 +1218,14 @@ def _build_catalog() -> list[dict]:
     for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
         if slug in seen:
             continue
+        if slug in SKIP_CATALOG_SLUGS:
+            continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
         seen.add(slug)
         dept = _department_for(field_name, school)
         delivery = _delivery_format(fmt)
-        pname = disambiguate_program_name(field_name, dtype)
+        pname = _berkeley_program_name(field_name, dtype, school, slug)
         spec = {
             "slug": slug,
             "school": school,
@@ -1039,7 +1245,16 @@ def _build_catalog() -> list[dict]:
 
 PROGRAMS += _build_catalog()
 for _p in PROGRAMS:
-    _normalize_program(_p)
+    if _p["slug"] in _EXPLICIT_FULL_NAMES:
+        _p["program_name"] = _EXPLICIT_FULL_NAMES[_p["slug"]]
+    if _p["slug"] in _EXPLICIT_DEPARTMENTS:
+        _p["department"] = _EXPLICIT_DEPARTMENTS[_p["slug"]]
+    _normalize_program(
+        _p,
+        _EXPLICIT_FIELD_BY_SLUG.get(_p["slug"])
+        or _SLUG_TO_FIELD.get(_p["slug"])
+        or None,
+    )
 
 _catalog_errors = validate_catalog(PROGRAMS)
 _classification_stubs = sum(
@@ -1058,6 +1273,9 @@ if _name_prefix_desc:
     _catalog_errors.append(
         f"name-prefixed descriptions on {_name_prefix_desc} programs"
     )
+_anti_stub = analyze(PROGRAMS)
+if not _anti_stub.is_clean:
+    _catalog_errors.append(f"anti-stub gate failed: {_anti_stub.summary()}")
 if _catalog_errors:
     raise RuntimeError(f"Berkeley catalog quality gate failed: {_catalog_errors}")
 for _p in PROGRAMS:
