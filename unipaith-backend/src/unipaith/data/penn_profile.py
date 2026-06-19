@@ -1307,6 +1307,10 @@ _MS_SCHOOLS = frozenset({
     _DESIGN,
 })
 
+_NURSING_FIELD = (
+    "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing"
+)
+
 
 def _conferred_program_name(field_name: str, degree_type: str, school: str) -> str:
     """Penn's conferred designation for a field — never the possessive IPEDS mint form."""
@@ -1314,7 +1318,7 @@ def _conferred_program_name(field_name: str, degree_type: str, school: str) -> s
         if school == _SEAS:
             return f"Bachelor of Science in Engineering in {field_name}"
         if school == _NURSING:
-            if field_name == "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing":
+            if field_name == _NURSING_FIELD:
                 return "Bachelor of Science in Nursing"
             return f"Bachelor of Science in Nursing in {field_name}"
         if school in _BS_SCHOOLS:
