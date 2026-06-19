@@ -68,11 +68,19 @@ frames each credential level's verified fact distinctly via ``_level_body`` (gol
 0% shared across siblings, no CIP-rollup leak into the prose). anti_stub.analyze clean +
 0 machine_artifacts + 0 rollup/CIP/field-echo, enforced at import and in
 test_anti_stub_gate (CERTIFIED_CLEAN).
+
+Possessive→conferred names (2026-06-19, pennnames1): resolves the ~53% possessive-mint
+program names (``Bachelor's in {field}`` / ``Master's in {field}``) to Penn's conferred
+designations — Bachelor of Arts/Science, Master of Arts/Science, Doctor of Philosophy —
+the gold-MIT naming form (SKILL miss #2 / REPAIR_BACKLOG #8). Drops residual federal
+rollup buckets (Area Studies, Accounting and Related Services) and resolves Biochemistry
+CIP rollup to the real Penn degree name.
 """
 
 from __future__ import annotations
 
 import re
+from collections import Counter
 from datetime import date
 
 from sqlalchemy import select, text
@@ -91,7 +99,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "University of Pennsylvania"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-19"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1212,6 +1220,7 @@ _ROLLUP_RESOLVE: dict[str, str] = {
     "Urban Studies/Affairs": "Urban Studies",
     "International/Globalization Studies": "International Relations",
     "City/Urban, Community, and Regional Planning": "City and Regional Planning",
+    "Biochemistry, Biophysics and Molecular Biology": "Biochemistry",
 }
 
 # Federal "Other"/"General"/CIP-coded aggregation buckets — and fields already covered by
@@ -1253,6 +1262,8 @@ _ROLLUP_DROP: frozenset[str] = frozenset({
     "Social Sciences (CIP 45.04)",
     "Social Sciences, Other",
     "Visual and Performing Arts, General",
+    "Area Studies",  # federal aggregation — Penn offers specific regional majors
+    "Accounting and Related Services",  # covered by Wharton BS Economics / MBA flagships
 })
 
 
@@ -1264,12 +1275,77 @@ def _resolve_rollup(field_name: str) -> str | None:
 
 
 _CRED_PREFIXES = (
+    "Bachelor of Arts in ",
+    "Bachelor of Science in Engineering in ",
+    "Bachelor of Science in Nursing in ",
+    "Bachelor of Science in ",
+    "Master of Business Administration in ",
+    "Master of Science in Education in ",
+    "Master of Social Work in ",
+    "Master of Architecture in ",
+    "Master of Arts in ",
+    "Master of Science in ",
     "Bachelor's in ",
     "Master's in ",
     "Doctor of Philosophy in ",
     "Graduate Certificate in ",
     "Professional program in ",
 )
+
+_POSSESSIVE_NAME_RE = re.compile(r"^(Bachelor's|Master's|Doctorate) in ")
+
+# Schools whose undergraduate degrees are typically conferred as Bachelor of Science.
+_BS_SCHOOLS = frozenset({_SEAS, _WHARTON, _NURSING})
+
+# Schools whose graduate degrees are typically conferred as Master of Science.
+_MS_SCHOOLS = frozenset({
+    _SEAS,
+    _MED,
+    _NURSING,
+    _DENTAL,
+    _VET,
+    _DESIGN,
+})
+
+_NURSING_FIELD = (
+    "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing"
+)
+
+
+def _conferred_program_name(field_name: str, degree_type: str, school: str) -> str:
+    """Penn's conferred designation for a field — never the possessive IPEDS mint form."""
+    if degree_type == "bachelors":
+        if school == _SEAS:
+            return f"Bachelor of Science in Engineering in {field_name}"
+        if school == _NURSING:
+            if field_name == _NURSING_FIELD:
+                return "Bachelor of Science in Nursing"
+            return f"Bachelor of Science in Nursing in {field_name}"
+        if school in _BS_SCHOOLS:
+            return f"Bachelor of Science in {field_name}"
+        return f"Bachelor of Arts in {field_name}"
+    if degree_type == "masters":
+        if school == _WHARTON:
+            if field_name in {
+                "Business Administration, Management and Operations",
+                "Business/Commerce, General",
+            }:
+                return "Master of Business Administration"
+            return f"Master of Business Administration in {field_name}"
+        if school == _GSE:
+            return f"Master of Science in Education in {field_name}"
+        if school == _SP2 and "Social Work" in field_name:
+            return "Master of Social Work"
+        if school == _DESIGN and field_name.startswith("Architecture"):
+            return f"Master of Architecture in {field_name}"
+        if school in _MS_SCHOOLS or school == _SEAS:
+            return f"Master of Science in {field_name}"
+        return f"Master of Arts in {field_name}"
+    if degree_type == "phd":
+        return f"Doctor of Philosophy in {field_name}"
+    if degree_type == "certificate":
+        return f"Graduate Certificate in {field_name}"
+    return disambiguate_program_name(field_name, degree_type)
 
 
 def _real_field_of(program_name: str) -> str:
@@ -1278,6 +1354,12 @@ def _real_field_of(program_name: str) -> str:
         if program_name.startswith(prefix):
             return program_name[len(prefix):]
     return program_name
+
+
+def _field_from_program_name(program_name: str) -> str | None:
+    """Extract CIP field title from a disambiguated program name."""
+    field = _real_field_of(program_name)
+    return field if field != program_name else None
 
 
 def _level_body(real_field: str, degree_type: str, fact: str) -> str:
@@ -1371,7 +1453,7 @@ def _build_catalog() -> list[dict]:
             continue
         seen.add(slug)
         delivery = _delivery_format(fmt)
-        pname = disambiguate_program_name(real_name, dtype)
+        pname = _conferred_program_name(real_name, dtype, school)
         spec = {
             "slug": slug,
             "school": school,
@@ -1395,6 +1477,49 @@ def _build_catalog() -> list[dict]:
 
 
 PROGRAMS += _build_catalog()
+
+
+def _normalize_all_program_names() -> None:
+    """Ensure every catalog row carries a conferred designation (0% possessive mint)."""
+    for p in PROGRAMS:
+        if p["slug"] in _EXISTING_SLUGS:
+            continue
+        field = (
+            p.get("_field_name")
+            or _field_from_program_name(p.get("program_name", ""))
+            or p.get("program_name", "")
+        )
+        resolved = _resolve_rollup(field)
+        if resolved is None:
+            continue
+        p["program_name"] = _conferred_program_name(
+            resolved, p["degree_type"], p["school"]
+        )
+
+
+def _dedupe_conferred_name_collisions() -> None:
+    """Drop breadth IPEDS rows that collide with an explicit flagship's conferred name."""
+    flagship_names = {
+        p["program_name"] for p in PROGRAMS if p["slug"] in _EXISTING_SLUGS
+    }
+    keep: list[dict] = []
+    for p in PROGRAMS:
+        if p["slug"] in _EXISTING_SLUGS or p["program_name"] not in flagship_names:
+            keep.append(p)
+    PROGRAMS.clear()
+    PROGRAMS.extend(keep)
+
+
+_normalize_all_program_names()
+_dedupe_conferred_name_collisions()
+counts = Counter(p["program_name"] for p in PROGRAMS)
+for p in PROGRAMS:
+    if counts[p["program_name"]] > 1:
+        suffix = (
+            " (Online)" if p.get("delivery_format") == "online"
+            else f" ({p['school']})"
+        )
+        p["program_name"] += suffix
 for _p in PROGRAMS:
     _normalize_program(_p)
 
@@ -1436,6 +1561,16 @@ _field_echo_dept = [
 ]
 if _field_echo_dept:
     _catalog_errors.append(f"field-echo departments: {_field_echo_dept[:5]}")
+_possessive_names = [
+    p["program_name"]
+    for p in PROGRAMS
+    if _POSSESSIVE_NAME_RE.match(p.get("program_name", ""))
+]
+if _possessive_names:
+    _catalog_errors.append(
+        f"possessive-mint program names ({len(_possessive_names)}): "
+        f"{_possessive_names[:5]}"
+    )
 try:
     from unipaith.profile_standard import anti_stub as _anti_stub
 

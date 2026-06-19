@@ -247,7 +247,7 @@ def test_catalog_passes_quality_gate():
 
 def test_catalog_is_anti_stub_clean():
     """Penn scores gold-MIT-0 on every anti-stub metric, and carries no CIP-rollup name,
-    literal CIP code, or field-echo department (SKILL miss #2/#8/#9)."""
+    literal CIP code, possessive-mint name, or field-echo department (SKILL miss #2/#8/#9)."""
     import re
 
     from unipaith.profile_standard import anti_stub
@@ -259,6 +259,12 @@ def test_catalog_is_anti_stub_clean():
     report = anti_stub.analyze(rows)
     assert report.is_clean, report.summary()
     assert not anti_stub.machine_artifacts(rows), "machine-artifact descriptions"
+    possessive = [
+        x["program_name"]
+        for x in p.PROGRAMS
+        if re.match(r"^(Bachelor's|Master's|Doctorate) in ", x["program_name"])
+    ]
+    assert not possessive, f"possessive-mint names survive: {possessive[:5]}"
     rollup_re = re.compile(r", General\b|, Other\b|, and Linguistics|/")
     rollups = [
         x["program_name"]
