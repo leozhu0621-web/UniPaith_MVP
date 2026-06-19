@@ -167,3 +167,21 @@ def test_analyzer_detects_classification_and_prefix_stubs():
     report = analyze(fabricated)
     assert report.name_prefixed, "should flag the program_name-prefixed description"
     assert report.classification, "should flag the classification-only description"
+
+
+def test_nyu_catalog_has_no_slug_leak_prefixes():
+    """Regression guard: kebab-case bulletin slugs must not prefix description_text
+    (REPAIR_BACKLOG CRITICAL #2 — invisible to machine_artifacts, visible to students)."""
+    import re
+
+    from unipaith.data import nyu_profile
+
+    slug_re = re.compile(r"^[a-z0-9]+(-[a-z0-9]+){2,}\s*[—–-]\s")
+    hits = [
+        p["slug"]
+        for p in nyu_profile.PROGRAMS
+        if slug_re.match((p.get("description") or "").strip())
+    ]
+    assert not hits, (
+        f"NYU catalog has {len(hits)} slug-prefixed descriptions: {hits[:5]}"
+    )
