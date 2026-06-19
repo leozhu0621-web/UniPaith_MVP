@@ -1245,7 +1245,7 @@ DEPTH_REVIEWS: dict[str, dict] = {
         ],
         "disclaimer": _DISCLAIMER,
     },
-    "duke-masters-in-biomedical-engineering-ms": {
+    "duke-master-of-science-in-biomedical-engineering-ms": {
         "summary": "Graduate students describe Duke's Master's in Biomedical Engineering within Pratt as a research and coursework degree; praise includes Triangle tech and biotech recruiting and faculty labs, with cautions about self-funded tuition for terminal master's students and a smaller engineering school than large public tech universities.",
         "themes": [
             {
@@ -1286,7 +1286,7 @@ DEPTH_REVIEWS: dict[str, dict] = {
         ],
         "disclaimer": _DISCLAIMER,
     },
-    "duke-masters-in-electrical-and-computer-engineering-ms": {
+    "duke-master-of-science-in-electrical-and-computer-engineering-ms": {
         "summary": "Graduate students describe Duke's Master's in Electrical & Computer Engineering within Pratt as a research and coursework degree; praise includes Triangle tech and biotech recruiting and faculty labs, with cautions about self-funded tuition for terminal master's students and a smaller engineering school than large public tech universities.",
         "themes": [
             {
@@ -1327,7 +1327,7 @@ DEPTH_REVIEWS: dict[str, dict] = {
         ],
         "disclaimer": _DISCLAIMER,
     },
-    "duke-masters-in-mechanical-engineering-and-materials-science-ms": {
+    "duke-master-of-science-in-mechanical-engineering-and-materials-science-ms": {
         "summary": "Graduate students describe Duke's Master's in Mechanical Engineering & Materials Science within Pratt as a research and coursework degree; praise includes Triangle tech and biotech recruiting and faculty labs, with cautions about self-funded tuition for terminal master's students and a smaller engineering school than large public tech universities.",
         "themes": [
             {
