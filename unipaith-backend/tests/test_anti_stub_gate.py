@@ -36,11 +36,9 @@ CERTIFIED_CLEAN = [
     "ucla",       # Wikipedia per-credential descriptions; Catalog entry junk removed (uclaprof4)
     "jhu",        # per-credential field clauses (verbatim-across-levels removed); real reviews kept
     "michigan",   # per-credential discipline definitions; build-artifact junk removed (michprof4)
-    # NOTE: "stanford" was REMOVED from this registry (2026-06-18, uwdefab1). It still ships
-    # the same build-script junk UW carried — 150 descriptions opening "Catalog entry <hex>: …"
-    # — so it FAILS the machine-artifact gate below and is NOT clean (stanford was certified by
-    # #803 before this gate existed). It is queued in REPAIR_BACKLOG for the same regeneration
-    # Michigan/UW received; re-add it here once de-fabricated.
+    "stanford",   # per-credential defs; Catalog entry junk removed (stanfordprof11)
+    # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
+    # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
 
 
