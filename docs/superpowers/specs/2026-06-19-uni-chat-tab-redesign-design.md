@@ -40,6 +40,8 @@ A single brand element represents Uni; **there is no name label and no avatar/mo
   | Error | desaturates, calm and courteous |
 - **Energy:** lively but refined — a turn's entrance animates **once** (no looping); brand-faithful, never gimmicky.
 
+![Uni orb — the states (idle is still; motion only on activity)](assets/uni-chat-tab/03-orb-states.png)
+
 ---
 
 ## 2. Shell & layout
@@ -105,6 +107,8 @@ Shown by default and on `+ New session`. ChatGPT-style empty state, but organize
   - **Guide/info cards** — visa basics, how funding works, etc.
 - **Templates** — preset session starters grouped by the three stages, shown as chips. **Placeholder for now** — see §8.2.
 
+![The New-session launcher (center) and the intelligent session browser (left) — product-category sections with diverse cards; left rail shows preset topic folders, a custom folder, pinned, search, and controls](assets/uni-chat-tab/01-new-session.png)
+
 ---
 
 ## 5. The conversation
@@ -117,6 +121,8 @@ Counselor-led, warm, one topic per turn.
 - **Statuses** are visible during a turn (Thinking… / Reading your file…) with the matching orb state.
 - **Composer** — text input + the **`+` upload** + cobalt send. The text escape hatch is always available.
 - **Answered turns** may collapse into a tidy trail (from the one-topic-per-turn brief); the durable record lives in My Space.
+
+![The counselor-led conversation — orb, advisor message as plain text, cobalt-tint user bubble, an inline content card (widget placeholder), steering chips, and the composer with the upload "+"](assets/uni-chat-tab/02-conversation.png)
 
 ---
 
