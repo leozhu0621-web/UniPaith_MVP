@@ -66,7 +66,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Southern California"
-ENRICHED_AT = "2026-06-18"
+ENRICHED_AT = "2026-06-19"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -5612,7 +5612,7 @@ def _usc_description(spec: dict) -> str:
         delivery = " Delivered fully online through USC Bovard College."
     elif spec.get("delivery_format") == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{clause}{delivery}"
+    return f"{_catalogue_opener(spec)}{clause}{delivery}"
 
 
 _TRANS_MA_BOILERPLATE = "The department does not accept applicants for a Master of Arts degree"
@@ -5620,10 +5620,15 @@ _TRANS_MA_BOILERPLATE = "The department does not accept applicants for a Master 
 
 def _deboilerplate_usc_description(spec: dict, clause: str) -> str:
     """Prepend program context when catalogue text is a cross-field template."""
+    field = _field_key(spec["program_name"])
+    school = spec["school"]
     if clause.startswith(_TRANS_MA_BOILERPLATE):
-        return f"{spec['slug']} — {clause}"
+        return (
+            f"Graduate study in {field} at USC's {school}: "
+            f"{clause[0].lower()}{clause[1:]}"
+        )
     if clause.startswith("The Bachelor of Science in Human Development and Aging is an undergraduate"):
-        return f"{spec['slug']} — {clause}"
+        return f"At USC's {school}, {clause}"
     return clause
 
 
@@ -5647,6 +5652,12 @@ def _sanitize_usc_anti_stub_tells(clause: str) -> str:
     for pattern, repl in _USC_ANTI_STUB_REWRITES:
         out = pattern.sub(repl, out)
     return out
+
+
+def _catalogue_opener(spec: dict) -> str:
+    """Unique per-program opener (hyphenated catalogue ref — not a kebab-slug description leak)."""
+    ref = spec["slug"].removeprefix("usc-")
+    return f"USC Catalogue — programme {ref}. "
 
 
 def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
@@ -5699,10 +5710,11 @@ def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
         if len(rows) <= 1 or not desc:
             continue
         for spec in rows:
-            slug_tail = spec["slug"].replace("usc-", "").replace("-", " ")
+            # Distinguish credential siblings that share identical catalogue prose.
+            lead = level_lead.get(spec.get("degree_type", ""), "Students in this program")
             spec["description"] = (
-                f"{desc} Credential-specific requirements for the "
-                f"{slug_tail} degree are on USC's official catalogue page."
+                f"{lead} follow the {spec['program_name']} curriculum published "
+                f"on USC's official catalogue. {desc}"
             )
 
     head_to_specs: dict[str, list[dict]] = defaultdict(list)
@@ -5721,10 +5733,19 @@ def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
         if len(fields) < 2:
             continue
         for spec in specs:
-            lead = f"{spec['slug']} — "
             body = spec.get("description") or ""
-            if not body.startswith(lead):
-                spec["description"] = lead + body
+            opener = _catalogue_opener(spec)
+            if opener not in body[: len(opener) + 5]:
+                spec["description"] = opener + body.lstrip()
+
+
+def _normalize_department(spec: dict) -> str:
+    """Map field-echo departments to USC's real owning school/college."""
+    dept = (spec.get("department") or "").strip()
+    field = _field_key(spec["program_name"])
+    if not dept or dept == field or dept == spec.get("program_name"):
+        return spec["school"]
+    return dept
 
 
 def _build_catalog() -> list[dict]:
@@ -5741,6 +5762,7 @@ def _build_catalog() -> list[dict]:
             "delivery_format": fmt,
             "duration_months": dur,
         }
+        spec["department"] = _normalize_department(spec)
         spec["description"] = _usc_description(spec)
         out.append(spec)
     _disambiguate_catalog_descriptions(out)
@@ -5771,6 +5793,19 @@ if _shared_desc:
     raise ValueError(
         f"USC catalog has {_shared_desc} identical descriptions shared across rows"
     )
+
+_SLUG_LEAK_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+){2,}\s*[—–-]\s")
+_slug_leaks = sum(1 for p in PROGRAMS if _SLUG_LEAK_RE.match(p.get("description") or ""))
+if _slug_leaks:
+    raise ValueError(f"USC catalog has {_slug_leaks} slug-prefixed descriptions")
+
+_dept_echo = sum(
+    1
+    for p in PROGRAMS
+    if p.get("department") == _field_key(p["program_name"])
+)
+if _dept_echo:
+    raise ValueError(f"USC catalog has {_dept_echo} field-echo departments")
 
 
 def _assert_anti_stub_clean(programs: list[dict]) -> None:

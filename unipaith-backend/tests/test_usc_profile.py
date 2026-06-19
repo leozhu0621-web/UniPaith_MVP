@@ -137,7 +137,23 @@ def test_every_program_is_conformant_or_omitted():
         assert snap["content_sources"], f"{spec['slug']} missing content_sources"
 
 
-def test_flagship_programs_carry_reviews_and_outcomes():
+def test_no_slug_prefixed_descriptions():
+    """Kebab-case catalogue slugs must not leak into description_text (miss #8)."""
+    import re
+
+    slug_re = re.compile(r"^[a-z0-9]+(-[a-z0-9]+){2,}\s*[—–-]\s")
+    leaks = [s["slug"] for s in u.PROGRAMS if slug_re.match(s.get("description") or "")]
+    assert not leaks, f"slug-prefixed descriptions: {leaks[:5]}"
+
+
+def test_no_field_echo_departments():
+    """department must name USC's real school/college, not echo the field (miss #2)."""
+    echo = [
+        s["slug"]
+        for s in u.PROGRAMS
+        if s.get("department") == u._field_key(s["program_name"])
+    ]
+    assert not echo, f"field-echo departments: {echo[:5]}"
     # Beat the "1 reviewed program" bug: the coverable flagships carry external_reviews.
     for slug in (
         "usc-full-time-mba-program-mba",
