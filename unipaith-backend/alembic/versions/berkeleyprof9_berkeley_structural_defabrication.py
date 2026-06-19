@@ -23,7 +23,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "berkeleyprof9"
-down_revision = "buprof11"
+down_revision = "budefab1"
 branch_labels = None
 depends_on = None
 
