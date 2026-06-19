@@ -86,16 +86,16 @@ the score itself is backend-only and most of this is NOT on the public API:
   substance for the embedding). Confirm any US News / QS / THE **ranking surfaces only in
   display fields** (`ranking_data` / `ref_rankings`, the card eyebrow) — never as a scored
   value (Spec 2 §7: rankings are display-only · never scored).
-- **Merged enrichment PR / data module (read via `git`, since these fields are not on the
-  public API)** — confirm the run wrote, per program, a `field_provenance` stamp with the
-  confidence anchored to its tier (claimed 1.0 · verified-feed 0.85 · public-crawl 0.6 ·
-  derived/inferred 0.4) AND a derived `program_preferences` row (or omit-with-reason when
-  there is no public class profile). A data module that writes **neither** (the current
-  fleet-wide state — `data/mit_profile.py` and every shipped module predate this) is a
-  **compliance gap**: the rule already exists in `enrich-profile` ("Also enrich for the
-  MATCH" + §8.5 gate) — do NOT re-add it; queue the repair in `REPAIR_BACKLOG.md` and log
-  the compliance gap. (Never pressure the enricher to fabricate — an honestly-omitted
-  field with a reason is correct, not a miss.)
+- **`program_preferences` coverage (read via `git` / DB — not on the public API)** —
+  the fleet was backfilled once (migration `progprefbf1`) and the enricher now calls
+  `backfill_program_preferences(session, institution_id=inst.id)` in each data-module
+  migration, so **every program should carry a derived target-applicant row** (`source=
+  "derived"`, `confidence=0.4`). Flag a program that has NONE — that means the enricher
+  skipped the helper call in its migration (a **compliance gap**: the rule already exists
+  in `enrich-profile` "Also enrich for the MATCH" + §8.5 — do NOT re-add it; queue the
+  repair + log it). `field_provenance` is encouraged-not-gated (not matcher-consumed yet),
+  so its absence is a note, not a miss. (Never pressure the enricher to fabricate — an
+  honestly-omitted field with a reason is correct.)
 
 ### 3. Diagnose each finding
 Confirm via the API whether the **data** is wrong or the page just **renders** it
