@@ -34,6 +34,12 @@ Structural de-fabrication (2026-06-19, harvarddefab1): federal CIP rollup titles
 resolved to Harvard's real published degrees or dropped when an aggregation bucket;
 field-echo departments replaced with real owning Harvard schools; per-credential
 description bodies via ``_level_body`` (0% shared-leading-body; anti-stub clean).
+
+Possessive-name repair (2026-06-19, harvardnames1): replaces every IPEDS-minted
+"Bachelor's in {field}" / "Master's in {field}" name with Harvard's conferred
+designations (Bachelor of Arts/Science, Master of Arts/Science, Doctor of
+Philosophy, Graduate Certificate — gold MIT = 0% possessive); drops residual federal
+rollup buckets (Area Studies, Foods/Accounting and Related Services).
 """
 
 from __future__ import annotations
@@ -1415,7 +1421,9 @@ _ROLLUP_RESOLVE: dict[str, str] = {
 }
 
 _ROLLUP_DROP: frozenset[str] = frozenset({
+    "Accounting and Related Services",
     "Advanced/Graduate Dentistry and Oral Sciences",
+    "Area Studies",
     "Biological and Biomedical Sciences, Other",
     "Business/Commerce, General",
     "Business/Corporate Communications",
@@ -1428,6 +1436,7 @@ _ROLLUP_DROP: frozenset[str] = frozenset({
     "Educational/Instructional Media Design",
     "Environmental/Natural Resources Management and Policy",
     "Ethnic, Cultural Minority, Gender, and Group Studies",
+    "Foods, Nutrition, and Related Services",
     "Health/Medical Preparatory Programs",
     "Intercultural/Multicultural and Diversity Studies",
     "Liberal Arts and Sciences, General Studies and Humanities",
@@ -1453,12 +1462,53 @@ def _resolve_rollup(field_name: str) -> str | None:
 _CRED_PREFIXES = (
     "Bachelor of Arts in ",
     "Bachelor of Science in ",
+    "Bachelor of Science in Engineering in ",
     "Bachelor's in ",
+    "Master of Arts in ",
+    "Master of Science in ",
+    "Master of Education in ",
+    "Master of Business Administration in ",
     "Master's in ",
     "Doctor of Philosophy in ",
     "Graduate Certificate in ",
     "Professional program in ",
 )
+
+_POSSESSIVE_NAME_RE = re.compile(r"^(Bachelor's|Master's|Doctorate) in ")
+
+# Schools whose graduate degrees are typically conferred as Master of Science.
+_MS_SCHOOLS = frozenset({
+    _SEAS,
+    _HSPH,
+    _HMS,
+    _HSDM,
+})
+
+
+def _conferred_program_name(field_name: str, degree_type: str, school: str) -> str:
+    """Harvard's conferred designation for a field — never the possessive IPEDS mint form."""
+    if degree_type == "bachelors":
+        if school == _SEAS:
+            return f"Bachelor of Science in {field_name}"
+        return f"Bachelor of Arts in {field_name}"
+    if degree_type == "masters":
+        if school == _HBS:
+            if field_name in {
+                "Business Administration, Management and Operations",
+                "Business/Commerce, General",
+            }:
+                return "Master of Business Administration"
+            return f"Master of Business Administration in {field_name}"
+        if school == _HGSE:
+            return f"Master of Education in {field_name}"
+        if school in _MS_SCHOOLS or school == _SEAS:
+            return f"Master of Science in {field_name}"
+        return f"Master of Arts in {field_name}"
+    if degree_type == "phd":
+        return f"Doctor of Philosophy in {field_name}"
+    if degree_type == "certificate":
+        return f"Graduate Certificate in {field_name}"
+    return disambiguate_program_name(field_name, degree_type)
 
 
 def _real_field_of(program_name: str) -> str:
@@ -1556,7 +1606,7 @@ def _build_catalog() -> list[dict]:
             continue
         seen.add(slug)
         field_seen.add(fkey)
-        pname = disambiguate_program_name(real_name, dtype)
+        pname = _conferred_program_name(real_name, dtype, school)
         spec = {
             "slug": slug,
             "school": school,
@@ -3003,24 +3053,60 @@ def _finalize_catalog(programs: list[dict]) -> None:
         if slug in _FULL_NAME_BY_SLUG:
             p["program_name"] = _FULL_NAME_BY_SLUG[slug]
         else:
-            p["program_name"] = disambiguate_program_name(raw_field, dtype)
+            field = _field_from_program_name(raw_field) or raw_field
+            resolved = _resolve_rollup(field)
+            if resolved is not None:
+                p["program_name"] = _conferred_program_name(resolved, dtype, school)
         p["department"] = school
 
-    counts = Counter(p["program_name"] for p in programs)
-    for p in programs:
-        if counts[p["program_name"]] > 1:
-            suffix = (
-                " (Online)" if p.get("delivery_format") == "online"
-                else f" ({p['school']})"
-            )
-            p["program_name"] += suffix
-    counts = Counter(p["program_name"] for p in programs)
-    for p in programs:
-        if counts[p["program_name"]] > 1 and p.get("cip"):
-            p["program_name"] += f" — {p['cip']}"
+
+def _normalize_all_program_names() -> None:
+    """Ensure every catalog row carries a conferred designation (0% possessive mint)."""
+    for p in PROGRAMS:
+        slug = p["slug"]
+        if slug in _FULL_NAME_BY_SLUG:
+            p["program_name"] = _FULL_NAME_BY_SLUG[slug]
+            continue
+        field = (
+            p.get("_field_name")
+            or _field_from_program_name(p.get("program_name", ""))
+            or p.get("program_name", "")
+        )
+        resolved = _resolve_rollup(field)
+        if resolved is None:
+            continue
+        p["program_name"] = _conferred_program_name(
+            resolved, p["degree_type"], p["school"]
+        )
+
+
+def _dedupe_conferred_name_collisions() -> None:
+    """Drop breadth IPEDS rows that collide with an explicit flagship's conferred name."""
+    flagship_names = {
+        (_FULL_NAME_BY_SLUG.get(p["slug"]) or p["program_name"])
+        for p in PROGRAMS
+        if p["slug"] in _FLAGSHIP_SLUGS
+    }
+    keep: list[dict] = []
+    for p in PROGRAMS:
+        if p["slug"] in _FLAGSHIP_SLUGS or p["program_name"] not in flagship_names:
+            keep.append(p)
+    PROGRAMS.clear()
+    PROGRAMS.extend(keep)
 
 
 _finalize_catalog(PROGRAMS)
+_normalize_all_program_names()
+_dedupe_conferred_name_collisions()
+PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
+counts = Counter(p["program_name"] for p in PROGRAMS)
+for p in PROGRAMS:
+    if counts[p["program_name"]] > 1:
+        suffix = (
+            " (Online)" if p.get("delivery_format") == "online"
+            else f" ({p['school']})"
+        )
+        p["program_name"] += suffix
 for _p in PROGRAMS:
     _normalize_program(
         _p,
@@ -3064,6 +3150,16 @@ _field_echo_dept = [
 ]
 if _field_echo_dept:
     _catalog_errors.append(f"field-echo departments: {_field_echo_dept[:5]}")
+_possessive_names = [
+    p["program_name"]
+    for p in PROGRAMS
+    if _POSSESSIVE_NAME_RE.match(p.get("program_name", ""))
+]
+if _possessive_names:
+    _catalog_errors.append(
+        f"possessive-mint program names ({len(_possessive_names)}): "
+        f"{_possessive_names[:5]}"
+    )
 try:
     from unipaith.profile_standard import anti_stub as _anti_stub
 
