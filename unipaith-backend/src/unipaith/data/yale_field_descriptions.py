@@ -434,9 +434,184 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
     ),
 }
 
+# Graduate-level (master's / doctoral) description clauses for fields Yale offers at MORE
+# THAN ONE credential level. A real bachelor's major and a Ph.D. in the same field study
+# different things (an undergraduate survey vs funded doctoral research), so each credential
+# level carries its OWN researched body — gold MIT describes every program uniquely (anti-stub
+# verbatim / shared-leading-body = 0%). These reframe the SAME verified facts as the matching
+# ``FIELD_DESCRIPTIONS`` undergraduate clause (same departments, labs, museums, collections)
+# for the graduate level, sourced from gsas.yale.edu programs-of-study and the department
+# program pages cited in this module's docstring. Single-level grad fields keep their one
+# ``FIELD_DESCRIPTIONS`` clause (no sibling to collide with).
+GRADUATE_FIELD_DESCRIPTIONS: dict[str, str] = {
+    "African Studies": (
+        "Yale's M.A. in African Studies, based in the MacMillan Center, pairs advanced Swahili "
+        "or Yoruba language work with graduate research on African history, politics, and diaspora "
+        "scholarship."
+    ),
+    "American Studies": (
+        "Yale's American Studies Ph.D. trains scholars across U.S. history, literature, and "
+        "material culture, drawing on interdisciplinary faculty and the Sterling Memorial "
+        "Library's Americana holdings."
+    ),
+    "Anthropology": (
+        "Yale's anthropology Ph.D. supports doctoral research in archaeology, biological "
+        "anthropology, and sociocultural ethnography through the Peabody Museum collections "
+        "and sustained global fieldwork."
+    ),
+    "Applied Physics": (
+        "Doctoral research in applied physics at Yale advances quantum materials, photonics, and "
+        "instrumentation within the Wright Laboratory and the Yale Quantum Institute."
+    ),
+    "Archaeological Studies": (
+        "Graduate study in Archaeological Studies at Yale deepens excavation field seasons, "
+        "laboratory analysis, and museum research through the Peabody Museum and classical and "
+        "Near Eastern archaeology faculty."
+    ),
+    "Astronomy": (
+        "Yale's astronomy Ph.D. pursues observational astrophysics and cosmology research using "
+        "the Leitner Family Observatory and the Yale Center for Astronomy and Astrophysics."
+    ),
+    "Biomedical Engineering": (
+        "Doctoral biomedical engineering at Yale's SEAS pursues device design, imaging, and tissue "
+        "engineering with the Yale School of Medicine and the Yale Center for Biomedical Innovation."
+    ),
+    "Chemistry": (
+        "Yale's chemistry Ph.D. organizes doctoral research into organic, inorganic, physical, and "
+        "chemical-biology groups, with faculty appointments spanning SEAS and the School of Medicine."
+    ),
+    "Classics": (
+        "Yale's Classics Ph.D. trains scholars in Greek and Latin philology, ancient history, "
+        "papyrology, and archaeological fieldwork in one of the oldest classics programs in the "
+        "United States."
+    ),
+    "Comparative Literature": (
+        "Yale's comparative literature Ph.D. develops literary theory and multilingual textual "
+        "scholarship, drawing on the Beinecke Rare Book Library's global manuscript collections."
+    ),
+    "Computer Science": (
+        "Yale's computer science Ph.D. advances research in theory, systems, artificial "
+        "intelligence, and machine learning through SEAS laboratories including the Yale Social "
+        "Robotics Lab."
+    ),
+    "Earth and Planetary Sciences": (
+        "Yale's Ph.D. in earth and planetary sciences pursues geology, geophysics, and "
+        "climate-dynamics research with field campaigns and the Yale Institute for Biospheric Studies."
+    ),
+    "East Asian Languages and Literatures": (
+        "Yale's East Asian Languages and Literatures Ph.D. trains scholars in classical and modern "
+        "Chinese, Japanese, and Korean literary traditions alongside advanced language study."
+    ),
+    "East Asian Studies": (
+        "Yale's M.A. in East Asian Studies pairs advanced language immersion with graduate research "
+        "in history, politics, and culture through the Council on East Asian Studies."
+    ),
+    "Ecology and Evolutionary Biology": (
+        "Yale's EEB Ph.D. supports research in field ecology, evolutionary genetics, and "
+        "conservation biology at the Yale Myers Forest and the Peabody Museum's collections."
+    ),
+    "Economics": (
+        "Yale's economics Ph.D. trains researchers in microeconomic theory, macroeconomics, and "
+        "econometrics, with faculty fields spanning development, labor, and market design."
+    ),
+    "Film and Media Studies": (
+        "Yale's film and media studies Ph.D. advances doctoral research in cinema and media history "
+        "and theory through the Film Studies Center and Yale's broader arts community."
+    ),
+    "French": (
+        "Yale's French Ph.D. trains scholars in francophone literature and culture from the medieval "
+        "period to the present, with archival study and ties to research institutions in France."
+    ),
+    "History": (
+        "Yale's history Ph.D. supports archival doctoral research across every region and period, "
+        "including the Program in the History of Science and Medicine and the Sterling Memorial "
+        "Library archives."
+    ),
+    "History of Art": (
+        "Yale's history of art Ph.D. combines object-based research and theory through direct study "
+        "of works in the Yale University Art Gallery and the Yale Center for British Art."
+    ),
+    "Italian Studies": (
+        "Yale's Italian Studies Ph.D. trains scholars in Italian literature and culture from the "
+        "Renaissance to the present, with advanced language and manuscript study."
+    ),
+    "Linguistics": (
+        "Yale's linguistics Ph.D. pursues research in phonetics, syntax, semantics, and language "
+        "acquisition using the Yale Linguistics Laboratory and psycholinguistics facilities."
+    ),
+    "Mathematics": (
+        "Yale's mathematics Ph.D. supports doctoral research in analysis, algebra, geometry, number "
+        "theory, and topology within a research-intensive department."
+    ),
+    "Mechanical Engineering": (
+        "Yale's SEAS mechanical engineering Ph.D. pursues research in dynamics, robotics, and "
+        "advanced manufacturing through the Center for Engineering Innovation and Design."
+    ),
+    "Molecular Biophysics and Biochemistry": (
+        "Yale's MB&B Ph.D. supports structural biology, biophysics, and biochemistry research in "
+        "School of Medicine laboratories and the Yale cryo-EM facility."
+    ),
+    "Molecular, Cellular, and Developmental Biology": (
+        "Yale's MCDB Ph.D. trains researchers in genetics, cell biology, and developmental "
+        "mechanisms in NIH-funded laboratories across the life-sciences campus."
+    ),
+    "Music": (
+        "Yale's music Ph.D. supports doctoral scholarship in music history, theory, and "
+        "ethnomusicology, drawing on the Yale Collection of Musical Instruments and the wider "
+        "School of Music community."
+    ),
+    "Near Eastern Languages and Civilizations": (
+        "Yale's NELC Ph.D. trains scholars in Arabic, Hebrew, and related languages with archaeology "
+        "and philology grounded in the Yale Babylonian Collection."
+    ),
+    "Philosophy": (
+        "Yale's philosophy Ph.D. supports doctoral research in ethics, metaphysics, epistemology, "
+        "and logic, with departmental strengths in philosophy of mind and political philosophy."
+    ),
+    "Physics": (
+        "Yale's physics Ph.D. pursues experimental and theoretical research in condensed matter, "
+        "particle physics, and astrophysics, including work at the Wright Laboratory."
+    ),
+    "Political Science": (
+        "Yale's political science Ph.D. supports research across American and comparative politics, "
+        "international relations, and political theory through the Institution for Social and Policy "
+        "Studies."
+    ),
+    "Psychology": (
+        "Yale's psychology Ph.D. supports doctoral research in cognitive, developmental, social, "
+        "and clinical science across the Psychology Department's laboratories."
+    ),
+    "Religious Studies": (
+        "Yale's religious studies Ph.D. examines world religions, theology, and religion in society "
+        "in partnership with the Yale Divinity School and Sterling Library's theological collections."
+    ),
+    "Sociology": (
+        "Yale's sociology Ph.D. supports research on social inequality, organizations, and culture "
+        "through the Center for Research on Inequalities and the Life Course."
+    ),
+    "Statistics and Data Science": (
+        "Yale's statistics and data science Ph.D. advances research in probability, statistical "
+        "inference, and machine learning through the department and the Yale Data-Intensive Social "
+        "Science Center."
+    ),
+    "Women's, Gender, and Sexuality Studies": (
+        "Yale's WGSS Ph.D. supports doctoral research on gender, sexuality, and feminist theory "
+        "across history, literature, and the social sciences."
+    ),
+}
+
 FIELD_ALIASES: dict[str, str] = {
     "Statistics and data science": "Statistics and Data Science",
     "Statistics": "Statistics and Data Science",
 }
 
-SLUG_DESCRIPTIONS: dict[str, str] = {}
+SLUG_DESCRIPTIONS: dict[str, str] = {
+    # The master's in Statistics shares the "Statistics and Data Science" field with the
+    # B.A. and the Ph.D.; it carries its OWN body so it neither restates the Ph.D. clause
+    # nor reads as a doctoral program (a credential-level lie). Source: stat.yale.edu.
+    "yale-statistics-gsas-ma": (
+        "Yale's terminal master's in Statistics and Data Science offers a focused graduate "
+        "year in probability, statistical inference, and computation for students advancing "
+        "into data-science practice or further doctoral study."
+    ),
+}

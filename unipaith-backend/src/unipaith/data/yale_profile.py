@@ -67,6 +67,7 @@ from unipaith.data.profile_catalog_utils import (
 from unipaith.data.yale_field_descriptions import (
     FIELD_ALIASES,
     FIELD_DESCRIPTIONS,
+    GRADUATE_FIELD_DESCRIPTIONS,
     SLUG_DESCRIPTIONS,
 )
 from unipaith.data.yale_reviews_depth import DEPTH_REVIEWS
@@ -1379,12 +1380,25 @@ def _yale_description(spec: dict, field: str | None = None) -> str:
     )
     if field_key in FIELD_ALIASES:
         field_key = FIELD_ALIASES[field_key]
-    clause = FIELD_DESCRIPTIONS.get(field_key)
+    # A field Yale offers at more than one credential level carries a distinct researched
+    # body per level (an undergraduate major vs funded doctoral research are different
+    # things) so credential siblings never share a leading body — gold MIT = 0% verbatim /
+    # shared-leading-body (anti-stub §8.5). Graduate rows take the graduate clause when one
+    # exists; everything else takes the (undergraduate/default) FIELD_DESCRIPTIONS clause.
+    if spec.get("degree_type") in {"masters", "phd", "doctorate"} and (
+        field_key in GRADUATE_FIELD_DESCRIPTIONS
+    ):
+        clause = GRADUATE_FIELD_DESCRIPTIONS[field_key]
+    else:
+        clause = FIELD_DESCRIPTIONS.get(field_key)
     if not clause:
         raise ValueError(
             f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
         )
-    return f"{spec['program_name']}: {clause}{delivery}"
+    # The program name is already the page heading; opening the description on the field
+    # fact (never restating the name) keeps the heading from rendering twice (anti-stub
+    # name_prefixed = 0, gold-MIT contrast).
+    return f"{clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
