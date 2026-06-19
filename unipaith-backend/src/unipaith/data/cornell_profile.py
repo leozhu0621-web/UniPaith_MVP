@@ -59,11 +59,19 @@ Description depth (2026-06-16, cornellprof6): field-specific descriptions for al
 Description repair (2026-06-17, cornellprof7): drops the ``{program_name}:`` prefix
 from every description so clauses open on field-specific facts (gold MIT/Chicago
 pattern); 0% name-prefixed descriptions.
+
+Possessive-name repair (2026-06-19, cornellnames1): replaces every IPEDS-minted
+``Bachelor's in {field}`` / ``Master's in {field}`` name with Cornell's conferred
+designations (Bachelor of Arts/Science, Master of Arts/Science, Doctor of Philosophy —
+gold MIT = 0% possessive); drops residual federal rollup buckets (Culinary Arts,
+Foods/HR-at-Johnson) and resolves ORIE / Human Development / Nutritional Sciences
+rollups to real Cornell degree names (REPAIR BACKLOG #7 / SKILL miss #2).
 """
 
 from __future__ import annotations
 
 import re
+from collections import Counter
 from datetime import date
 
 from sqlalchemy import select, text
@@ -1522,22 +1530,103 @@ _ROLLUP_DROP: frozenset[str] = frozenset({
     "Film/Video and Photographic Arts",  # covered by Performing and Media Arts
     "Visual and Performing Arts, Other",
     "Health Professions and Related Clinical Sciences, Other",
+    "Culinary Arts and Related Services",  # federal bucket — not a Cornell A&S degree
 })
 
 # (rollup title, degree_type) → level-specific real Cornell degree name.
 _ROLLUP_LEVEL_NAME: dict[tuple[str, str], str] = {
     ("Hospitality Administration/Management", "phd"): "Hotel Administration",
+    ("Operations Research", "bachelors"): "Operations Research and Engineering",
+    ("Operations Research", "phd"): "Operations Research and Information Engineering",
 }
 
+# Schools whose degrees are typically conferred as Bachelor/Master of Science.
+_BS_SCHOOLS = frozenset({
+    _ENGINEERING,
+    _BOWERS,
+    _CALS,
+    _HUMAN_ECOLOGY,
+    _DYSON,
+    _NOLAN,
+    _AAP,
+})
+_MS_SCHOOLS = frozenset({
+    _ENGINEERING,
+    _BOWERS,
+    _CALS,
+    _HUMAN_ECOLOGY,
+    _VET,
+    _AAP,
+})
 
-def _resolve_rollup(field_name: str, degree_type: str) -> str | None:
+_CRED_PREFIXES = (
+    "Bachelor of Arts in ",
+    "Bachelor of Science in ",
+    "Bachelor's in ",
+    "Master of Arts in ",
+    "Master of Science in ",
+    "Master of Business Administration in ",
+    "Master's in ",
+    "Doctor of Philosophy in ",
+    "Graduate Certificate in ",
+    "Professional program in ",
+)
+
+_POSSESSIVE_NAME_RE = re.compile(r"^(Bachelor's|Master's|Doctorate) in ")
+_ROLLUP_NAME_RE = re.compile(
+    r", General\b|, Other\b|, and Linguistics\b|, Pharmaceutical Sciences, and "
+    r"Administration\b|, and Group Studies\b|, and Technicians\b|, and Related Services\b"
+    r"|[A-Za-z]/[A-Za-z]"
+)
+_CIP_CODE_RE = re.compile(r"\(CIP\s*\d|\b\d\d\.\d\d\b")
+
+
+def _resolve_rollup(field_name: str, degree_type: str, school: str = "") -> str | None:
     """Real Cornell degree name for a Scorecard field, or None to drop the row."""
+    if field_name == "Human Resources Management and Services" and school == _JOHNSON:
+        return None
+    if field_name == "Foods, Nutrition, and Related Services":
+        return "Nutrition Sciences"
+    if field_name == "Human Development, Family Studies, and Related Services":
+        return "Human Development"
     level_name = _ROLLUP_LEVEL_NAME.get((field_name, degree_type))
     if level_name:
         return level_name
     if field_name in _ROLLUP_DROP:
         return None
     return _ROLLUP_RESOLVE.get(field_name, field_name)
+
+
+def _real_field_of(program_name: str) -> str:
+    """Extract the field-of-study portion of a credential-disambiguated program name."""
+    for prefix in _CRED_PREFIXES:
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):]
+    return program_name
+
+
+def _conferred_program_name(field_name: str, degree_type: str, school: str) -> str:
+    """Cornell's conferred designation for a field — never the possessive IPEDS mint form."""
+    if degree_type == "bachelors":
+        if school in _BS_SCHOOLS:
+            return f"Bachelor of Science in {field_name}"
+        return f"Bachelor of Arts in {field_name}"
+    if degree_type == "masters":
+        if school == _JOHNSON:
+            if field_name in {
+                "Business Administration, Management and Operations",
+                "Business/Commerce, General",
+            }:
+                return "Master of Business Administration"
+            return f"Master of Business Administration in {field_name}"
+        if school in _MS_SCHOOLS:
+            return f"Master of Science in {field_name}"
+        return f"Master of Arts in {field_name}"
+    if degree_type == "phd":
+        return f"Doctor of Philosophy in {field_name}"
+    if degree_type == "certificate":
+        return f"Graduate Certificate in {field_name}"
+    return disambiguate_program_name(field_name, degree_type)
 
 
 def _delivery_format(raw: str) -> str:
@@ -1549,16 +1638,8 @@ def _delivery_format(raw: str) -> str:
 
 def _field_from_program_name(program_name: str) -> str | None:
     """Extract CIP field title from a disambiguated program name."""
-    for prefix in (
-        "Bachelor's in ",
-        "Master's in ",
-        "Doctor of Philosophy in ",
-        "Graduate Certificate in ",
-        "Professional program in ",
-    ):
-        if program_name.startswith(prefix):
-            return program_name[len(prefix):]
-    return None
+    field = _real_field_of(program_name)
+    return field if field != program_name else None
 
 
 def _field_clause(field_key: str) -> str:
@@ -1639,12 +1720,12 @@ def _build_catalog() -> list[dict]:
             continue
         # De-fabricate the federal CIP-rollup name → real Cornell degree, or drop the row
         # when the CIP is an aggregation bucket with no single named degree (miss #2).
-        real_name = _resolve_rollup(field_name, dtype)
+        real_name = _resolve_rollup(field_name, dtype, school)
         if real_name is None:
             continue
         seen.add(slug)
         delivery = _delivery_format(fmt)
-        pname = disambiguate_program_name(real_name, dtype)
+        pname = _conferred_program_name(real_name, dtype, school)
         spec = {
             "slug": slug,
             "school": school,
@@ -1665,9 +1746,57 @@ def _build_catalog() -> list[dict]:
     return out
 
 
+def _normalize_all_program_names() -> None:
+    """Ensure every catalog row carries a conferred designation (0% possessive mint)."""
+    for p in PROGRAMS:
+        if p["slug"] in _EXISTING_SLUGS:
+            continue
+        field = (
+            p.get("_field_name")
+            or _field_from_program_name(p.get("program_name", ""))
+            or p.get("program_name", "")
+        )
+        resolved = _resolve_rollup(field, p["degree_type"], p["school"])
+        if resolved is None:
+            continue
+        p["program_name"] = _conferred_program_name(
+            resolved, p["degree_type"], p["school"]
+        )
+
+
+def _dedupe_conferred_name_collisions() -> None:
+    """Drop breadth IPEDS rows that collide with an explicit flagship's program name."""
+    flagship_names = {
+        p["program_name"] for p in PROGRAMS if p["slug"] in _EXISTING_SLUGS
+    }
+    keep: list[dict] = []
+    for p in PROGRAMS:
+        if p["slug"] in _EXISTING_SLUGS or p["program_name"] not in flagship_names:
+            keep.append(p)
+    PROGRAMS.clear()
+    PROGRAMS.extend(keep)
+
+
 PROGRAMS += _build_catalog()
+_normalize_all_program_names()
+_dedupe_conferred_name_collisions()
+_name_counts = Counter(p["program_name"] for p in PROGRAMS)
 for _p in PROGRAMS:
-    _normalize_program(_p)
+    if _name_counts[_p["program_name"]] > 1:
+        suffix = (
+            " (Online)" if _p.get("delivery_format") == "online"
+            else f" ({_p['school']})"
+        )
+        _p["program_name"] += suffix
+        _name_counts[_p["program_name"]] -= 1
+for _p in PROGRAMS:
+    _normalize_program(
+        _p,
+        _p.get("_field_name")
+        or _field_from_program_name(_p.get("program_name", "")),
+    )
+
+# ── Catalog quality gate (anti-stub miss #2/#8/#9, gold MIT = 0 on each) ─────
 _catalog_errors = validate_catalog(PROGRAMS)
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
 _new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
@@ -1694,6 +1823,31 @@ if _name_prefix_desc:
     _catalog_errors.append(
         f"name-prefixed descriptions on {_name_prefix_desc} programs"
     )
+_rollup_names = [
+    p["program_name"]
+    for p in PROGRAMS
+    if _ROLLUP_NAME_RE.search(_real_field_of(p.get("program_name", "")))
+]
+if _rollup_names:
+    _catalog_errors.append(f"CIP-rollup program names: {_rollup_names[:5]}")
+_cip_in_name = [
+    p["program_name"]
+    for p in PROGRAMS
+    if _CIP_CODE_RE.search(p.get("program_name", ""))
+    or _CIP_CODE_RE.search(p.get("department") or "")
+]
+if _cip_in_name:
+    _catalog_errors.append(f"literal CIP code in name/department: {_cip_in_name[:5]}")
+_possessive_names = [
+    p["program_name"]
+    for p in PROGRAMS
+    if _POSSESSIVE_NAME_RE.match(p.get("program_name", ""))
+]
+if _possessive_names:
+    _catalog_errors.append(
+        f"possessive-mint program names ({len(_possessive_names)}): "
+        f"{_possessive_names[:5]}"
+    )
 _peer_contaminated = [
     p["slug"]
     for p in PROGRAMS
@@ -1704,6 +1858,19 @@ if _peer_contaminated:
         f"peer-institution signatures on {len(_peer_contaminated)} programs: "
         f"{_peer_contaminated[:5]}"
     )
+try:
+    from unipaith.profile_standard import anti_stub as _anti_stub
+
+    _astub = _anti_stub.analyze(
+        [
+            {"program_name": p["program_name"], "description": p.get("description")}
+            for p in PROGRAMS
+        ]
+    )
+    if not _astub.is_clean:
+        _catalog_errors.append(f"anti-stub: {_astub.summary()}")
+except ImportError:
+    pass
 if _catalog_errors:
     raise RuntimeError(f"Cornell catalog quality gate failed: {_catalog_errors}")
 for _p in PROGRAMS:

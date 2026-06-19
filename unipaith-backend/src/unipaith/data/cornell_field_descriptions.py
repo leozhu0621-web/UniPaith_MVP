@@ -236,6 +236,9 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
     'Human Development, Family Studies, and Related Services': (
         "Human Ecology human development spans lifespan psychology, family policy, and Cornell's Bronfenbrenner Center for Translational Research."
     ),
+    'Human Development': (
+        "Human Ecology human development spans lifespan psychology, family policy, and Cornell's Bronfenbrenner Center for Translational Research."
+    ),
     'Human Resources Management and Services': (
         'ILR and Johnson management coursework covers organizational behavior, talent strategy, and labor relations with Ithaca corporate and nonprofit placements.'
     ),
@@ -298,6 +301,12 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
     ),
     'Operations Research': (
         "Optimization, stochastic modeling, and analytics in Cornell's School of Operations Research and Information Engineering (ORIE)."
+    ),
+    'Operations Research and Engineering': (
+        "Undergraduate ORIE training in optimization, probability, and data-driven decision models within Cornell Engineering's School of Operations Research and Information Engineering."
+    ),
+    'Operations Research and Information Engineering': (
+        "Graduate and doctoral ORIE training in optimization, stochastic modeling, financial engineering, and analytics at Cornell's School of Operations Research and Information Engineering."
     ),
     'Pharmacology and Toxicology': (
         'Pharmacology at Weill Cornell and Arts and Sciences studies drug mechanisms, chemical biology, and toxicology adjacent to Cornell drug-discovery pipelines.'
