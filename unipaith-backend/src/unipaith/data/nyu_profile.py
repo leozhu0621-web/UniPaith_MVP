@@ -38,6 +38,12 @@ NYU's official news site (Adobe Experience Manager) is captcha-gated and exposes
 university RSS endpoint; ``content_sources`` uses the verified Washington Square News RSS
 (``nyunews.com/feed/``, NYU's independent student newspaper since 1973) plus official social
 handles + keywords on every node so the daily ingest can populate Updates.
+
+Slug-leak repair (2026-06-19, nyuslugfix1): cross-field disambiguation had prefixed 41
+programme descriptions with a raw kebab-case bulletin slug
+(``anthropology-classical-civilization — …``). Replaced with a name-grounded
+``This degree concentrates in {focus}.`` lead (``_distinguishing_focus``) plus a
+build-time ``_SLUG_LEAK_RE`` gate so the leak cannot recur.
 """
 
 # ruff: noqa: E501
@@ -56,7 +62,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "New York University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-18"
+ENRICHED_AT = "2026-06-19"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1458,6 +1464,19 @@ def _nyu_description(spec: dict) -> str:
     elif spec.get("delivery_format") == "hybrid":
         delivery = " Delivered in a hybrid or executive format."
     return f"{clause}{delivery}"
+
+
+# Kebab-case slug prefixes in description_text are a build-artifact leak (REPAIR_BACKLOG
+# CRITICAL #2) — no real bulletin prints ``anthropology-classical-civilization — …``.
+_SLUG_LEAK_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+){2,}\s*[—–-]\s")
+
+
+def _strip_slug_leak_prefix(text: str) -> str:
+    stripped = text.strip()
+    if _SLUG_LEAK_RE.match(stripped):
+        return _SLUG_LEAK_RE.sub("", stripped, count=1).lstrip()
+    return text
+
 
 
 # ── The program catalog ────────────────────────────────────────────────────
@@ -5389,11 +5408,13 @@ def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
             continue
         names = [s["program_name"] for s in specs]
         for spec in specs:
+            body = _strip_slug_leak_prefix(spec.get("description") or "")
             focus = _distinguishing_focus(spec["program_name"], names)
             lead = f"This degree concentrates in {focus}. "
-            body = spec.get("description") or ""
             if focus and not body.startswith(lead):
                 spec["description"] = lead + body
+            else:
+                spec["description"] = body
 
 
 def _build_catalog() -> list[dict]:
@@ -5432,6 +5453,12 @@ _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 _catalog_errors = validate_catalog(PROGRAMS)
 if _catalog_errors:
     raise ValueError(f"NYU catalog validation failed: {_catalog_errors}")
+
+_slug_leaks = sum(
+    1 for p in PROGRAMS if _SLUG_LEAK_RE.match((p.get("description") or "").strip())
+)
+if _slug_leaks:
+    raise ValueError(f"NYU catalog has {_slug_leaks} slug-prefixed descriptions")
 
 # Anti-stub gate: certified via tests/test_anti_stub_gate.py (CERTIFIED_CLEAN registry).
 
