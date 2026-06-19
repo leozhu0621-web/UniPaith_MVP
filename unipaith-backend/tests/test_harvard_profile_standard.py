@@ -152,7 +152,7 @@ def test_all_twelve_schools_done():
 
 
 def test_full_catalog_breadth():
-    assert len(h.PROGRAMS) >= 280, f"catalog too short: {len(h.PROGRAMS)}"
+    assert len(h.PROGRAMS) >= 270, f"catalog too short after de-fabrication: {len(h.PROGRAMS)}"
     assert len(h.PROGRAM_SLUGS) == len(set(h.PROGRAM_SLUGS)), "duplicate program slug"
     for spec in h.PROGRAMS:
         fmt = spec.get("delivery_format", "in_person")
