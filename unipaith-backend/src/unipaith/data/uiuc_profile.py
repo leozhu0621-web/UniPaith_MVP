@@ -3536,10 +3536,405 @@ def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
         if len(fields) < 2:
             continue
         for spec in specs:
-            lead = f"{spec['slug']} — "
+            # Lead each cross-field sibling with its real, name-grounded discipline — the
+            # field-of-study from its published program_name — NOT the URL slug (which used
+            # to leak a build artifact onto the live page; REPAIR_BACKLOG CRITICAL #2).
+            lead = f"{field_of(spec['program_name'])}: "
             body = spec.get("description") or ""
-            if not body.startswith(lead):
+            if not body.startswith(lead) and not body.startswith(field_of(spec["program_name"])):
                 spec["description"] = lead + body
+
+
+# Real, field-specific, per-program descriptions for the 33 rows whose shared parent-program
+# bulletin paragraph caused _disambiguate_catalog_descriptions to prepend the kebab URL slug
+# (REPAIR_BACKLOG CRITICAL #2, mirroring the NYU #845 repair). Each opens on the discipline's
+# real substance, names the program's already-verified UIUC college/department, and states
+# what THAT credential studies — distinct from its credential siblings (gold MIT shares 0%).
+# Grounded in UIUC's official academic catalog; no slug, no filler, no fabricated unit.
+_SLUG_LEAK_OVERRIDES: dict[str, str] = {
+    # College of Applied Health Sciences
+    "uiuc-community-health-phd": (
+        "Community health examines the determinants of population health and the design of "
+        "programs and policies that prevent disease and promote well-being, drawing on "
+        "epidemiology, health behavior, and health-systems research. The College of Applied "
+        "Health Sciences doctorate trains researchers in community and public health science "
+        "through advanced methods coursework and an original dissertation."
+    ),
+    "uiuc-kinesiology-phd": (
+        "Kinesiology is the study of human movement and physical activity, spanning exercise "
+        "physiology, biomechanics, motor control, and the role of activity in health and "
+        "disease. The College of Applied Health Sciences doctorate prepares researchers "
+        "through advanced coursework, laboratory study, and original dissertation research."
+    ),
+    # College of Education
+    "uiuc-curriculum-instruction-edm": (
+        "Curriculum and instruction examines how subject-matter teaching, learning, and "
+        "curriculum design come together in classrooms and school systems. The College of "
+        "Education's Master of Education prepares experienced teachers as reflective "
+        "practitioners and instructional leaders, emphasizing applied pedagogy, assessment, "
+        "and curriculum reform over a research thesis."
+    ),
+    "uiuc-curriculum-instruction-ma": (
+        "Curriculum and instruction studies the theory and practice of teaching, learning, "
+        "and curriculum across subject areas. The College of Education's Master of Arts adds "
+        "a scholarly, research-oriented core — coursework in educational inquiry and a thesis "
+        "or research project — for teachers moving toward research or doctoral study."
+    ),
+    "uiuc-curriculum-instruction-ms": (
+        "Curriculum and instruction investigates teaching, learning, and curriculum with "
+        "close attention to evidence and measurement. The College of Education's Master of "
+        "Science pairs curriculum coursework with empirical and quantitative research "
+        "methods, culminating in a research thesis."
+    ),
+    "uiuc-early-childhood-education-edm": (
+        "Early childhood education focuses on the learning and development of young children "
+        "from birth through the early grades. The College of Education's Master of Education "
+        "prepares teachers and specialists in developmentally appropriate curriculum, family "
+        "engagement, and early-grades instruction."
+    ),
+    "uiuc-elementary-education-edm": (
+        "Elementary education prepares teachers to instruct reading, mathematics, science, "
+        "and social studies across the elementary grades. The College of Education's Master "
+        "of Education strengthens practicing teachers' classroom practice and integrated "
+        "curriculum knowledge for the elementary classroom."
+    ),
+    "uiuc-secondary-education-edm": (
+        "Secondary education prepares teachers to instruct adolescents in subject-area "
+        "disciplines at the middle and high school levels. The College of Education's Master "
+        "of Education builds advanced disciplinary pedagogy and curriculum expertise for "
+        "practicing secondary teachers."
+    ),
+    "uiuc-education-policy-organization-leadership-edm": (
+        "Education policy, organization and leadership studies the governance, administration, "
+        "and improvement of educational institutions, spanning education policy, leadership, "
+        "higher education, and human resource development. The College of Education's Master "
+        "of Education prepares professionals for administrative and policy roles across "
+        "schools, districts, and postsecondary organizations."
+    ),
+    "uiuc-educational-psychology-edm": (
+        "Educational psychology applies the science of learning, human development, "
+        "motivation, and measurement to educational settings. The College of Education's "
+        "Master of Education grounds students in cognition, assessment, and research on how "
+        "people learn for roles in teaching, evaluation, and educational research."
+    ),
+    "uiuc-curriculum-instruction-edd": (
+        "Curriculum and instruction at the doctoral level advances research and leadership in "
+        "teaching, learning, and curriculum. The College of Education's Doctor of Education "
+        "prepares scholarly practitioners for leadership in teacher-preparation institutions, "
+        "state education agencies, and school districts, combining applied research with "
+        "field problems of practice."
+    ),
+    "uiuc-curriculum-instruction-phd": (
+        "Curriculum and instruction doctoral study centers original research on teaching, "
+        "learning, and curriculum. The College of Education's Doctor of Philosophy prepares "
+        "researchers for careers in universities and research settings, where teacher "
+        "education is generally combined with scholarship."
+    ),
+    # The Grainger College of Engineering
+    "uiuc-agricultural-biological-engineering-bs": (
+        "Agricultural and biological engineers apply core engineering science to agriculture, "
+        "food, bioenergy, water, and biological systems. Offered by the Grainger College of "
+        "Engineering, this professionally accredited Bachelor of Science combines engineering "
+        "fundamentals, design, and laboratory work to develop technological solutions across "
+        "these systems."
+    ),
+    "uiuc-agricultural-biological-engineering-ms": (
+        "Agricultural and biological engineering applies engineering to food, bioenergy, "
+        "water, and other biological systems. The Grainger College of Engineering's Master "
+        "of Science centers advanced coursework and research, with an optional concentration "
+        "in computational science and engineering, and may be a terminal research degree or "
+        "a step toward the PhD."
+    ),
+    "uiuc-agricultural-biological-engineering-phd": (
+        "Agricultural and biological engineering doctoral work develops original research "
+        "across food, bioenergy, water, and biological systems. The Grainger College of "
+        "Engineering's doctorate is built on dissertation research, teaching, and "
+        "departmental seminars, with an optional computational science and engineering "
+        "concentration."
+    ),
+    "uiuc-materials-science-engineering-ms": (
+        "Materials science and engineering studies how processing controls the structure and "
+        "properties of metals, ceramics, polymers, and electronic materials. The Grainger "
+        "College of Engineering's Master of Science combines advanced coursework and "
+        "research, with an optional computational science and engineering concentration, as "
+        "a terminal degree or a step toward the PhD."
+    ),
+    "uiuc-materials-science-engineering-phd": (
+        "Materials science and engineering doctoral research probes the structure–property–"
+        "processing relationships of metals, ceramics, polymers, and electronic and "
+        "biological materials. The Grainger College of Engineering's doctorate centers "
+        "dissertation research, with departmental seminars and an optional computational "
+        "science and engineering concentration."
+    ),
+    "uiuc-nuclear-plasma-radiological-engineering-ms": (
+        "Nuclear, plasma and radiological engineering spans fission and fusion energy, plasma "
+        "science, and the radiological and medical uses of radiation. The Grainger College of "
+        "Engineering's Master of Science pairs advanced coursework with research and offers "
+        "an optional computational science and engineering concentration, as a terminal "
+        "degree or a path to the PhD."
+    ),
+    "uiuc-nuclear-plasma-radiological-engineering-phd": (
+        "Nuclear, plasma and radiological engineering doctoral study advances fission and "
+        "fusion energy, plasma science, and radiological applications of radiation. The "
+        "Grainger College of Engineering's doctorate is built on dissertation research, "
+        "departmental seminars, and an optional computational science and engineering "
+        "concentration."
+    ),
+    "uiuc-industrial-engineering-ms": (
+        "Industrial engineering designs and improves complex systems of people, processes, "
+        "and resources using optimization, operations research, manufacturing systems, and "
+        "human factors. Within the Grainger College of Engineering's Department of Industrial "
+        "and Enterprise Systems Engineering, the Master of Science offers thesis and "
+        "non-thesis tracks, with thesis students working under a research advisor."
+    ),
+    "uiuc-industrial-engineering-phd": (
+        "Industrial engineering doctoral research advances the optimization, "
+        "operations-research, and human-factors science of complex production and service "
+        "systems. The Grainger College of Engineering's Department of Industrial and "
+        "Enterprise Systems Engineering offers traditional and direct doctoral paths — the "
+        "direct path admitting students without a prior master's — each centered on "
+        "dissertation research under a faculty advisor."
+    ),
+    "uiuc-systems-entrepreneurial-engineering-ms": (
+        "Systems and entrepreneurial engineering joins systems engineering — the modeling, "
+        "decision-making, and design of large engineered systems — with technology "
+        "management and entrepreneurship. Within the Grainger College of Engineering's "
+        "Department of Industrial and Enterprise Systems Engineering, the Master of Science "
+        "offers thesis and non-thesis tracks for engineers building technology ventures."
+    ),
+    "uiuc-systems-entrepreneurial-engineering-phd": (
+        "Systems and entrepreneurial engineering doctoral work unites systems engineering "
+        "with technology management and entrepreneurship. The Grainger College of "
+        "Engineering's Department of Industrial and Enterprise Systems Engineering offers "
+        "traditional and direct doctoral paths centered on dissertation research under a "
+        "faculty advisor."
+    ),
+    "uiuc-materials-science-engineering-data-science-bs": (
+        "Materials science and engineering studies how the synthesis and processing of "
+        "materials shape the relationship between structure and properties — the foundation "
+        "of every engineering field. This Grainger College of Engineering blended degree "
+        "joins that core with data science, training students to apply computation, "
+        "statistics, and machine learning to materials discovery and design."
+    ),
+    # College of Liberal Arts and Sciences (Chemical Engineering is housed in LAS at UIUC)
+    "uiuc-chemical-engineering-data-science-bs": (
+        "Chemical engineering applies chemistry, thermodynamics, transport phenomena, and "
+        "reaction engineering to design and operate processes that turn raw materials into "
+        "fuels, chemicals, and materials. This blended degree joins the chemical engineering "
+        "core with data science, equipping students to apply computation, statistics, and "
+        "machine learning to process modeling, optimization, and molecular design."
+    ),
+    # College of Fine and Applied Arts — Department of Landscape Architecture
+    "uiuc-landscape-architecture-mla": (
+        "Landscape architecture designs outdoor environments at scales from the individual "
+        "site to the region, integrating ecology, planning, and design. The College of Fine "
+        "and Applied Arts' Department of Landscape Architecture offers the professional "
+        "Master of Landscape Architecture, with studio work and faculty research spanning "
+        "environmental planning, community design, cultural heritage, and landscape history."
+    ),
+    "uiuc-sustainable-urban-design-msud": (
+        "Sustainable urban design shapes cities and their public realm for environmental "
+        "performance, livability, and resilience. Offered through the College of Fine and "
+        "Applied Arts' Department of Landscape Architecture, the Master of Science in Urban "
+        "Design centers studio and research on sustainable form-making at the building, "
+        "district, and regional scales."
+    ),
+    # College of Agricultural, Consumer and Environmental Sciences
+    "uiuc-agricultural-biological-engineering-bs-agricultural-engineering-agricultural-science-bsag": (
+        "Agricultural and biological engineering applies engineering principles to "
+        "agricultural production, food, bioenergy, water, and environmental systems. Set in "
+        "the College of Agricultural, Consumer and Environmental Sciences, this Bachelor of "
+        "Science in Agricultural Sciences track pairs engineering fundamentals with agronomic "
+        "and environmental coursework for careers in agricultural technology and systems."
+    ),
+    # College of Liberal Arts and Sciences
+    "uiuc-chemistry-bslas": (
+        "Chemistry studies matter and its transformations across the organic, inorganic, "
+        "physical, analytical, and biological branches. This College of Liberal Arts and "
+        "Sciences Bachelor of Science follows the flexible LAS curriculum, with classroom and "
+        "laboratory study and room for undergraduate research, internships, and a second "
+        "major or minor."
+    ),
+    "uiuc-chemistry-bs": (
+        "Chemistry investigates the composition, structure, and reactions of matter through "
+        "laboratory and classroom work. This College of Liberal Arts and Sciences Bachelor of "
+        "Science follows the specialized, professionally certified track, with a deeper core "
+        "in the chemical subdisciplines and undergraduate research that prepares students for "
+        "graduate study and the chemical industry."
+    ),
+    "uiuc-integrative-biology-bslas": (
+        "Integrative biology examines how living systems work across scales — from molecules "
+        "and cells to organisms, ecosystems, and global cycles. In the College of Liberal "
+        "Arts and Sciences' School of Integrative Biology, this Bachelor of Science offers "
+        "interdisciplinary training and laboratory skills from prairie restoration to genome "
+        "editing, aimed at challenges in health, biodiversity, and sustainability."
+    ),
+    "uiuc-ecology-evolution-conservation-biology-ms": (
+        "Ecology, evolution and conservation biology studies the diversity, interactions, and "
+        "history of life and the science of protecting it. Through the College of Liberal "
+        "Arts and Sciences' interdepartmental Program in Ecology, Evolution and Conservation "
+        "Biology, the Master of Science offers flexible, individualized training and a "
+        "research thesis drawing on multiple departments."
+    ),
+    "uiuc-ecology-evolution-conservation-biology-phd": (
+        "Ecology, evolution and conservation biology doctoral study investigates biological "
+        "diversity and its conservation across populations, species, and ecosystems. Through "
+        "the same interdepartmental Program in the College of Liberal Arts and Sciences, the "
+        "doctorate provides individualized, cross-departmental training centered on original "
+        "dissertation research."
+    ),
+}
+
+
+# Additional rows whose pre-existing description was a credential-template stub ("The M.S.
+# may be earned en route…", "Doctoral students complete dissertation research…"), a
+# classification stub ("…follow the {name} curriculum published on UIUC's official academic
+# catalog."), an empty body (German MA/PhD were literally "."), a truncated catalog scrape
+# ("Fields of specialization include:"), or a cross-field copy carrying the WRONG field's
+# body (Engineering Physics carried the plain Physics blurb; Biology carried Integrative
+# Biology's; Teaching of Latin carried the general Classics blurb). None were slug-leaked, so
+# they evaded both the slug check and anti_stub.analyze, yet each rendered a stub or a wrong
+# fact to students. Each is replaced with real, field-specific prose grounded in the
+# discipline + the program's already-verified UIUC college/department, distinct per
+# credential (gold MIT shares 0%).
+_STUB_OVERRIDES: dict[str, str] = {
+    # College of Agricultural, Consumer and Environmental Sciences — Animal Sciences
+    "uiuc-animal-sciences-mansc": (
+        "Animal sciences studies the genetics, nutrition, physiology, and management of "
+        "livestock and companion animals and the production of animal-derived foods. In the "
+        "College of Agricultural, Consumer and Environmental Sciences, the professional "
+        "Master of Animal Sciences is a coursework-based degree for advanced practitioners in "
+        "the animal and food-animal industries."
+    ),
+    "uiuc-animal-sciences-ms": (
+        "Animal sciences examines the biology, nutrition, genetics, and management of "
+        "livestock and the science of animal food products. The College of Agricultural, "
+        "Consumer and Environmental Sciences' Department of Animal Sciences offers this "
+        "research-based Master of Science with a thesis and specialization across the animal "
+        "and food sciences."
+    ),
+    "uiuc-animal-sciences-phd": (
+        "Animal sciences doctoral research advances the genetics, nutrition, physiology, and "
+        "reproduction of livestock and the science of animal food production. The College of "
+        "Agricultural, Consumer and Environmental Sciences' Department of Animal Sciences "
+        "offers the Doctor of Philosophy with dissertation research across the animal "
+        "sciences."
+    ),
+    # College of Education — Education Policy, Organization & Leadership
+    "uiuc-education-policy-organization-leadership-ma": (
+        "Education policy, organization and leadership spans the analysis of education "
+        "systems, their governance, and the leadership of schools and postsecondary "
+        "institutions. The College of Education's Master of Arts adds a research-oriented "
+        "core for students pursuing scholarship or doctoral study in education policy and "
+        "administration."
+    ),
+    "uiuc-education-policy-organization-leadership-edd": (
+        "Education policy, organization and leadership at the doctoral level prepares "
+        "experienced professionals to lead and improve educational institutions and systems. "
+        "The College of Education's Doctor of Education centers applied research on problems "
+        "of practice for leadership roles in schools, agencies, and higher education."
+    ),
+    "uiuc-education-policy-organization-leadership-phd": (
+        "Education policy, organization and leadership doctoral research investigates how "
+        "policy, governance, and leadership shape educational institutions and outcomes. The "
+        "College of Education's Doctor of Philosophy prepares scholars through advanced "
+        "methods and an original dissertation for academic and policy-research careers."
+    ),
+    # College of Education — Educational Psychology
+    "uiuc-educational-psychology-ma": (
+        "Educational psychology applies research on learning, development, motivation, and "
+        "measurement to education. The College of Education's Master of Arts emphasizes "
+        "scholarly study and research methods for students moving toward research or doctoral "
+        "work in the field."
+    ),
+    "uiuc-educational-psychology-ms": (
+        "Educational psychology studies how people learn and develop and how learning is "
+        "measured and supported. The College of Education's Master of Science pairs "
+        "coursework in cognition, assessment, and statistics with empirical research "
+        "training."
+    ),
+    "uiuc-educational-psychology-phd": (
+        "Educational psychology doctoral research advances the science of learning, human "
+        "development, measurement, and motivation. The College of Education's Doctor of "
+        "Philosophy prepares researchers through advanced quantitative and qualitative "
+        "methods and an original dissertation."
+    ),
+    # The Grainger College of Engineering
+    "uiuc-engineering-physics-bs": (
+        "Engineering physics applies fundamental physics and mathematics to engineering "
+        "problems, bridging the science of physics with engineering design and emerging "
+        "technology. Offered by the Grainger College of Engineering, this Bachelor of Science "
+        "pairs a deep physics core with engineering coursework for careers in research, "
+        "advanced technology, and graduate study."
+    ),
+    "uiuc-physics-bs": (
+        "Physics seeks the fundamental laws governing matter, energy, space, and time, from "
+        "subatomic particles to the cosmos. In the Grainger College of Engineering, this "
+        "Bachelor of Science builds a deep conceptual and mathematical foundation through "
+        "coursework and research, preparing students for industry, teaching, or graduate "
+        "study."
+    ),
+    "uiuc-environmental-engineering-civil-engineering-ms": (
+        "Environmental engineering applies engineering science to protect and restore air, "
+        "water, and land — water and wastewater treatment, pollution control, and sustainable "
+        "infrastructure. Within the Grainger College of Engineering's Department of Civil and "
+        "Environmental Engineering, this Master of Science offers thesis and non-thesis study "
+        "and may lead toward the PhD."
+    ),
+    "uiuc-environmental-engineering-civil-engineering-phd": (
+        "Environmental engineering doctoral research advances the science of protecting air, "
+        "water, and land, from treatment and remediation to sustainable infrastructure and "
+        "environmental systems. Within the Grainger College of Engineering's Department of "
+        "Civil and Environmental Engineering, this doctorate centers original dissertation "
+        "research."
+    ),
+    # College of Liberal Arts and Sciences
+    "uiuc-biology-ms": (
+        "Biology is the study of living organisms — their cells, genetics, physiology, "
+        "evolution, and ecology. In the College of Liberal Arts and Sciences, this Master of "
+        "Science offers broad graduate training in the biological sciences for students "
+        "preparing for research, professional, or teaching careers."
+    ),
+    "uiuc-integrative-biology-ms": (
+        "Integrative biology studies how living systems function across scales, from "
+        "molecules and cells to organisms, ecosystems, and global cycles. In the College of "
+        "Liberal Arts and Sciences' School of Integrative Biology, this non-thesis, "
+        "course-based Master of Science gives students a one-year, interdisciplinary path to "
+        "advanced training for scientific and professional roles."
+    ),
+    "uiuc-honors": (
+        "Integrative biology examines how life works across scales, from molecules to "
+        "ecosystems and global cycles, to address challenges in health, biodiversity, and "
+        "sustainability. In the College of Liberal Arts and Sciences' School of Integrative "
+        "Biology, this honors Bachelor of Science adds an enriched, research-intensive track "
+        "— independent study, an honors thesis, and advanced seminars — for high-achieving "
+        "majors."
+    ),
+    "uiuc-german-ma": (
+        "German studies explores the language, literature, and culture of the German-speaking "
+        "world and its intellectual and historical traditions. In the College of Liberal Arts "
+        "and Sciences, this Master of Arts builds advanced language proficiency and literary "
+        "and cultural analysis for teaching, research, and further graduate study."
+    ),
+    "uiuc-german-phd": (
+        "German doctoral study advances scholarship on German language, literature, and "
+        "culture across historical periods and critical approaches. In the College of Liberal "
+        "Arts and Sciences, this Doctor of Philosophy centers original dissertation research "
+        "and prepares scholars for academic and research careers."
+    ),
+    "uiuc-classics-ma": (
+        "Classics is the study of the languages, literatures, and civilizations of ancient "
+        "Greece and Rome. In the College of Liberal Arts and Sciences' Department of the "
+        "Classics, this Master of Arts offers tracks in both Greek and Latin, Greek alone, or "
+        "Latin alone, with an optional concentration in Medieval Studies."
+    ),
+    "uiuc-teaching-latin-ma": (
+        "The teaching of Latin prepares classicists to teach the Latin language and Roman "
+        "culture at the secondary and collegiate levels. In the College of Liberal Arts and "
+        "Sciences' Department of the Classics, this Master of Arts in the Teaching of Latin "
+        "combines Latin scholarship with pedagogy and classroom practice."
+    ),
+}
 
 
 def _build_catalog() -> list[dict]:
@@ -3562,6 +3957,12 @@ def _build_catalog() -> list[dict]:
     for spec in out:
         spec["description"] = _sanitize_uiuc_anti_stub_tells(spec.get("description") or "")
     _disambiguate_catalog_descriptions(out)
+    # Real per-program descriptions for the cross-field/shared-bulletin rows that the
+    # disambiguator would otherwise lead with a URL slug (REPAIR_BACKLOG CRITICAL #2).
+    for spec in out:
+        override = _SLUG_LEAK_OVERRIDES.get(spec["slug"]) or _STUB_OVERRIDES.get(spec["slug"])
+        if override:
+            spec["description"] = override
     return out
 
 
