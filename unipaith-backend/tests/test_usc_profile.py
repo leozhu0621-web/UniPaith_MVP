@@ -1,6 +1,6 @@
 """The USC profile conforms to the gold standard across its WHOLE tree — the
 institution, every one of its 21 real schools/academic units, and every one of
-its 613 programs — mirroring the MIT/Sloan/MBAn reference certification.
+its real published programs — mirroring the MIT/Sloan/MBAn reference certification.
 
 Pure (no DB): builds each node's persisted snapshot from the ``usc_profile`` module
 exactly as ``apply()`` writes it, and runs ``check_conformance``. A node passes when
@@ -64,7 +64,7 @@ def _program_snapshot(spec: dict) -> dict:
         "description_text": spec["description"],
         "website_url": u._website_for(spec),
         "department": spec.get("department"),
-        "tracks": None,
+        "tracks": spec.get("tracks"),
         "application_requirements": u._requirements_for(spec),
         "cost_data": cost,
         "outcomes_data": outcomes,
@@ -77,8 +77,12 @@ def _program_snapshot(spec: dict) -> dict:
 
 def test_catalog_breadth_and_shape():
     # Full published degree catalog across Dornsife + 20 professional schools.
+    # The count floor asserts a FULL real catalog, not a frozen padded number: the
+    # uscdefab1 de-fabrication collapsed 93 concentration/emphasis split rows into their
+    # base degrees (613 -> 520 real programs), so the floor tracks the real catalog while
+    # structural REALNESS is enforced by validate_catalog (below) + test_anti_stub_gate.
     assert len(u.SCHOOLS) == 21
-    assert len(u.PROGRAMS) >= 600
+    assert len(u.PROGRAMS) >= 500
     assert len(set(u.PROGRAM_SLUGS)) == len(u.PROGRAM_SLUGS)
     # online delivery is set on Bovard / online programs
     assert any(p["delivery_format"] == "online" for p in u.PROGRAMS)

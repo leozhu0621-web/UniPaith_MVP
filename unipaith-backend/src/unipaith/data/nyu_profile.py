@@ -39,12 +39,11 @@ university RSS endpoint; ``content_sources`` uses the verified Washington Square
 (``nyunews.com/feed/``, NYU's independent student newspaper since 1973) plus official social
 handles + keywords on every node so the daily ingest can populate Updates.
 
-Slug-leak repair (2026-06-19, nyuprof4): cross-field disambiguation had prefixed 41
+Slug-leak repair (2026-06-19, nyuslugfix1): cross-field disambiguation had prefixed 41
 programme descriptions with a raw kebab-case bulletin slug
-(``anthropology-classical-civilization — …``) — a build-artifact leak invisible to
-``machine_artifacts`` but visible to students. Replaced with a human-readable
-``NYU Bulletin — programme {ref}.`` opener (USC ``uscprof4`` model) and a build-time
-``_SLUG_LEAK_RE`` gate so the leak cannot recur.
+(``anthropology-classical-civilization — …``). Replaced with a name-grounded
+``This degree concentrates in {focus}.`` lead (``_distinguishing_focus``) plus a
+build-time ``_SLUG_LEAK_RE`` gate so the leak cannot recur.
 """
 
 # ruff: noqa: E501
@@ -1478,11 +1477,6 @@ def _strip_slug_leak_prefix(text: str) -> str:
         return _SLUG_LEAK_RE.sub("", stripped, count=1).lstrip()
     return text
 
-
-def _bulletin_opener(spec: dict) -> str:
-    """Unique per-program opener (human-readable bulletin ref — not a kebab-slug leak)."""
-    ref = spec["slug"].removeprefix("nyu-")
-    return f"NYU Bulletin — programme {ref}. "
 
 
 # ── The program catalog ────────────────────────────────────────────────────
@@ -5319,6 +5313,26 @@ _CATALOG: list[tuple[str, str, str, str, str, str]] = [
 _FLAGSHIP = "nyu-general-management-mba"
 
 
+def _distinguishing_focus(name: str, siblings: list[str]) -> str:
+    """The part of a published ``program_name`` that sets it apart from the siblings it
+    shares a parent-program bulletin paragraph with — the joint discipline, dual-degree
+    pairing, clinical nurse-practitioner track, or teaching subject the name already
+    carries. Used to lead each sibling's description with a real, name-grounded
+    differentiator instead of the URL slug (which leaked a build artifact to the page)."""
+    from unipaith.profile_standard.anti_stub import field_of
+
+    word_lists = [s.split() for s in siblings]
+    common = 0
+    for i in range(min(len(w) for w in word_lists)):
+        if len({w[i] for w in word_lists}) == 1:
+            common += 1
+        else:
+            break
+    tail = " ".join(name.split()[common:])
+    tail = re.sub(r"\s*7[\s-]*12\s*$", "", tail).strip(" ,—–-:")
+    return tail or field_of(name)
+
+
 def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
     """Ensure every program description is unique and credential-distinct."""
     from collections import defaultdict
@@ -5390,14 +5404,15 @@ def _disambiguate_catalog_descriptions(programs: list[dict]) -> None:
         head_to_specs[normalized[: _SHARED_BODY_MIN_CHARS * 2]].append(spec)
 
     for specs in head_to_specs.values():
-        fields = {field_of(s["program_name"]) for s in specs}
-        if len(fields) < 2:
+        if len({field_of(s["program_name"]) for s in specs}) < 2:
             continue
+        names = [s["program_name"] for s in specs]
         for spec in specs:
             body = _strip_slug_leak_prefix(spec.get("description") or "")
-            opener = _bulletin_opener(spec)
-            if not body.startswith(opener):
-                spec["description"] = opener + body
+            focus = _distinguishing_focus(spec["program_name"], names)
+            lead = f"This degree concentrates in {focus}. "
+            if focus and not body.startswith(lead):
+                spec["description"] = lead + body
             else:
                 spec["description"] = body
 
