@@ -4,12 +4,17 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Calculator } from 'lucide-react'
 import GuideSections from './GuideSections'
+import ScholarshipsBlock from './ScholarshipsBlock'
 import { AID_GUIDE, AID_GUIDE_DISCLAIMER } from './aidGuide'
 
 export default function ResourcesFinancial() {
   const navigate = useNavigate()
   return (
     <div>
+      {/* Real scholarship listings lead; the authored "how aid works" guide follows. */}
+      <ScholarshipsBlock />
+
+      <h2 className="mb-3 text-base font-bold text-foreground">How financial aid works</h2>
       <GuideSections sections={AID_GUIDE} disclaimer={AID_GUIDE_DISCLAIMER} />
 
       {/* Hand-off to the real, personalized cost comparison. */}
