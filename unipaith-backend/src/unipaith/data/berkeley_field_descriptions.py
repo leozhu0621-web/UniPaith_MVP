@@ -97,6 +97,9 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
     "Computer Science": (
         "Algorithms, systems, AI, and theory in a top-ranked CS program with research groups spanning EECS and the College of Computing, Data Science, and Society."
     ),
+    "Data Science": (
+        "Statistics, computing, and societal impacts of data in CDSS's undergraduate data science major launched as a Berkeley-first interdisciplinary degree."
+    ),
     "Computer and Information Sciences, General": (
         "Broad computing foundations — programming, data structures, and information systems — within CDSS's interdisciplinary computing curriculum."
     ),

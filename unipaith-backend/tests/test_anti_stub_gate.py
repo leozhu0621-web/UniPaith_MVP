@@ -42,6 +42,7 @@ CERTIFIED_CLEAN = [
     "bu",         # Medill peer-copy removed; real dual-degree/MPH/CFA/math/world-lang
     #             names + depts; per-credential bodies; school-as-field fixes (budefab1,
     #             supersedes buprof11's narrower description-only repair)
+    "berkeley",   # CIP rollup de-fab; real dept names; per-credential descriptions (berkeleyprof9)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
