@@ -1,15 +1,11 @@
-"""Columbia structural de-fabrication — real degree catalog, real departments, clean descriptions.
+"""Columbia structural de-fabrication — real names, schools, per-credential descriptions.
 
-Re-applies ``columbia_profile.apply()`` after HIGH #1 repair (columbiadefab1):
-  * the IPEDS×award-level catalog (263 rows: possessive "Bachelor's in {CIP rollup}"
-    names, field-echo departments, 88 fabricated departmental "graduate certificates")
-    is replaced by Columbia's REAL degree set — 167 programs with conferred designations,
-    real owning departments, and per-credential field-specific descriptions
-  * descriptions that imported PEER-institution units (Harvard's Nieman Foundation,
-    Carpenter Center, and Visual & Environmental Studies program) are removed
-  * two real schools added: the Graduate School of Arts and Sciences (it confers the
-    arts-&-sciences PhD/MA the prior catalog mis-assigned to Columbia College) and the
-    College of Dental Medicine (D.D.S.)
+Re-applies ``columbia_profile.apply()`` after REPAIR_BACKLOG HIGH #1 repair:
+  * federal CIP rollup titles resolved to Columbia's real published degrees
+    or dropped when an aggregation bucket
+  * possessive IPEDS award-level names replaced with conferred designations
+  * field-echo departments replaced with real owning Columbia schools
+  * suffix-diversifier descriptions replaced with per-credential ``_level_body`` prose
 Derives ``program_preferences`` for every Columbia program (skips claimed rows).
 
 Revision ID: columbiadefab1

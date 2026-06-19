@@ -49,12 +49,13 @@ CERTIFIED_CLEAN = [
     "penn",       # CIP-rollup buckets → real Penn degrees or dropped; dept = real owning
     #             school (field-echo removed); per-credential description leads with the
     #             resolved real name, no rollup leak (verbatim/shared-body removed) (penndefab1)
+    "yale",       # "{program_name}: " prefix-double removed; per-credential bodies — graduate
+    #             rows take a distinct doctoral/master's clause (GRADUATE_FIELD_DESCRIPTIONS),
+    #             so credential siblings no longer share a leading body (yaledefab1)
     "harvard",    # CIP rollup de-fab; suffix-diversifier removed; per-credential bodies
     #             (harvarddefab1 — HIGH #4)
-    "columbia",   # IPEDS×award-level padding replaced by Columbia's real degree catalog:
-    #             conferred names, real owning departments, per-credential field cores;
-    #             88 fabricated certificates dropped + Harvard peer-unit contamination
-    #             (Nieman/Carpenter/VES) removed (columbiadefab1 — HIGH #1)
+    "columbia",   # CIP rollup + possessive de-fab; real owning schools; per-credential
+    #             bodies (columbiadefab1 — HIGH #1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
