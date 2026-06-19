@@ -6,6 +6,91 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-19 — Run 62 (FULL-FLEET sweep of all 300 live · enricher REPAIRED the top backlog — Purdue/USC/Chicago/NYU · run-61 peer counts were substring noise, CORRECTED · deploy-mechanics is now the bottleneck · 0 rule changes)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
+A per-catalog scan over the full paginated program list of all 40 program-bearing catalogs (duplicate /
+bare-abbreviation / "Programs" / null-dept names; WORD-BOUNDARY rollup tell on the field part of name +
+dept; literal CIP code; URL-slug leak; hex/"Catalog entry" artifact; verbatim-shared description;
+field-echo dept; per-field shared-leading-body ≥120 chars & ≥50% of shortest sibling; classification
+share; prefix-doubling; double-period), a **WORD-BOUNDARY (`\bSIG\b`) peer-signature scan** on the
+critical catalogs, matcher-side `cip_code`/`external_reviews` spot-checks via `/programs/{id}`, plus
+campus-photo + posts-feed checks on the 12 flagship seeds and the 0-image proxy across all 300. Gold MIT
+control + a student's-eye read of the NYU/UIUC/Purdue/BU/USC program lists. Deploy status read from
+GitHub Actions (Deploy Backend, branch `main`).
+
+**Merged to `main` since run 61 (the interval's profile-data PRs — a GOOD interval):** #837/#840/#842
+Purdue (force de-fab descriptions live + drop Area Studies rollup + merge dual heads), #843/#844 USC
+(collapse concentration splits + real per-program prose + remove slug-leak + fix field-echo depts),
+#839 Chicago (per-credential graduate descriptions + drop cert padding), #845/#846/#847 NYU (strip
+URL-slug-leak descriptions + merge dual heads). Plus an alembic merge-of-merges (b30d6ec6) still pending.
+
+**Findings (live API + deploy evidence):**
+1. **WINS verified live — the enricher cleared CRITICAL items for the first time.** Purdue #840:
+   peer-copy **= 0** (word-boundary scan), verbatim-across-levels 82%→**0%**, rollup 8%→**0%** (residual:
+   16% prefix-doubling). USC #843/#844: slug-leak 19%→**0%**, concentration-splits collapsed (n 613→520),
+   dept-echo-field 79%→**5%** (residual: 30 rows). Chicago #839: verbatim cleared. This is the first
+   interval that cleared backlog CRITICALs instead of shipping single-dimension stub-swaps.
+2. **GRADER-ACCURACY CORRECTION — run-61's peer-signature counts were SUBSTRING NOISE.** A naive
+   `"CALS" in desc` matches "chemi**cals**"; `"Stern"` matches "we**stern**/ea**stern**"; `"Medill"` is
+   clean. Run 61's "Purdue 31 peer rows survive #832 / BU Perelman+Lick+Medill" were inflated by
+   substring matching (the SAME class of false-positive as run-61's own Oxford-comma rollup correction).
+   The WORD-BOUNDARY scan this run returns **Purdue 0, USC 0, UIUC 0, NYU 0**; the ONLY real surviving
+   peer signature fleet-wide is **Boston U "Medill" ×2** (Northwestern's journalism school on a BS
+   Public-Relations row). The peer-copy CRITICAL tier collapsed from "3 catalogs" to "BU ×2 rows."
+3. **NYU slug-leak (41 rows) is DEPLOY-STRANDED, not unrepaired.** #845/#846 ("strip slug-leak / remove
+   slug-leak prefixes (41 rows)") are merged, but Deploy Backend for **#845 FAILED on a dual head** and
+   #846 is still in_progress — so the fix is in SOURCE but the 41 rows still render live
+   (`"anthropology-classical-civilization — …"`). Classified deploy-lag, not a false repair (§9 verify-live).
+4. **UIUC slug-leak (33 rows) is genuinely UNREPAIRED** — no PR opened; live `"uiuc-chemistry-bs — …"`.
+   Compliance gap against the miss #8 build-artifact / §9 slug rule (already exists; do NOT re-add).
+5. **Boston U is the worst-off catalog now** — Medill ×2 peer + dept-echo-field 81% (308/376) +
+   classification descriptions 15% (58) + rollup 6% (24), all unrepaired (CRITICAL #1).
+6. **Mature-catalog structure tiers persist (documented classes #2/#8/#9):** rollup (Berkeley 32 /
+   Harvard 29 / Cornell 28 / Columbia 27 / Penn 22 %), verbatim (Berkeley 80 / Cornell 76 / Penn 74 /
+   Rice 42 %), shared-leading-body (Wisconsin 94f / Harvard 82f / Cornell 78f / Penn 72f / Columbia 60f /
+   Northwestern 59f), prefix-doubling (Yale 69 / Stanford 19 / Purdue 16 %), Penn "(CIP NN.NN)" 11%.
+7. **Matcher-side:** `cip_code` returns `None` on EVERY program including gold MIT → the public
+   `/programs/{id}` serializer does not expose it (a serializer gap, NOT a data gap — MIT's module sets
+   it); the skill's "flag empty `cip_code` via the public API" channel is unusable as written. Flagged for
+   human. `external_reviews` present on a few rows (MIT Architecture, Harvard CS), absent on most — the
+   documented reviews-coverage gap (miss #8), unchanged.
+8. **Deploy mechanics is the bottleneck.** Two data-PR deploys FAILED on dual heads this interval
+   (Chicago #839, NYU #845), stranding good fixes off-prod and spawning a merge-fixup cascade
+   (#842/#847-cancelled/b30d6ec6-pending). This is the run-61 flagged-for-human auto-merge dual-head
+   race, now demonstrably FAILING production deploys — escalated.
+
+**Diagnosis (default-flipped test applied to each finding):** every live defect maps to an EXISTING
+rule — UIUC/NYU slug = miss #8 build-artifact / §9; BU peer = miss #8 allowlist; BU/Harvard/Berkeley/
+Cornell/Columbia/Penn/Wisconsin/Northwestern/Yale/Rice structure = misses #2/#8/#9; seeds/stubs/photos =
+documented MEDIUM. NYU = deploy-lag (the documented dual-head race). cip_code = serializer/code, out of
+scope. **No finding is a NEW gap-class** — the rulebook already forbids/requires all of them, so adding a
+rule would duplicate-and-bloat (the skill is 1297 lines). No finding argued for loosening an invariant.
+
+**Rulebook changes: 0 of ≤3.** Per the SAFETY RAILS (NO-EDIT-WITHOUT-NEW-EVIDENCE; "Clean fleet → change
+nothing… Never invent a rule to look busy"; BOUNDED + ANTI-CHURN; confirm-not-already-covered) and the
+"default has flipped" guidance (most defects are VIOLATIONS of existing rules, not missing rules), this
+full-fleet sweep found no NEW problem class — every defect is a compliance gap with an existing miss, a
+deploy-lag, or app-code. Restating documented classes would be churn. `enrich-profile/SKILL.md` UNCHANGED.
+The leverage this interval is NOT more rule text — it is (a) the enricher continuing to clear the backlog
+(it now is) and (b) the human-side durable fix to the dual-head auto-merge race that is failing deploys.
+
+**Backlog delta:** rewritten worst-first with the run-62 corrections. CRITICAL re-ranked: BU #1 (worst
+live — Medill peer + 81% dept-echo + 15% classification), UIUC #2 (slug-leak, no PR), NYU #3 (slug-leak,
+deploy-stranded — verify+reship). Purdue demoted CRITICAL-#1 → HIGH #13 (peer/verbatim/rollup RESOLVED;
+residual 16% prefix). USC demoted HIGH → near-clean HIGH #14 (slug/splits/dept-echo largely RESOLVED;
+residual 30 rows). HIGH band (Berkeley/Cornell/Penn/Columbia/Harvard/Wisconsin/Northwestern/Yale/Rice)
+re-measured from live. 12-seed + 260-stub MEDIUM bands carried with verified photo counts (7 seeds <4
+photos; 33 zero-photo stubs). Purdue/USC/Chicago moved to a "repaired this interval" cleanup note. Two
+human flags escalated/added (dual-head race failing deploys; cip_code not serialized).
+
+**Invariants:** all intact; markdown-only change (backlog + this changelog; SKILL.md untouched). Health
+check: `profile_standard.manifest` imports cleanly at STANDARD_VERSION 2; `pytest` is not installed in
+this ephemeral container (same as runs 54/58 — the profile tests need the DB stack), so the
+markdown-only, no-code, no-rule nature of this run is its own safety: nothing CI-gated changed.
+
+---
+
 ## 2026-06-19 — Run 61 (FULL-FLEET sweep of all 300 live · Purdue #832 was a PARTIAL repair · run-60 rollup over-counts corrected · 1 rule change — the Oxford-comma false-positive precision caveat)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
