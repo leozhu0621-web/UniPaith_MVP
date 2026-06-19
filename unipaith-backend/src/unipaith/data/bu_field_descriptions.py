@@ -268,34 +268,34 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "The M.D./J.D. dual degree links BU School of Medicine clinical training with health-law and bioethics coursework at the School of Law."
     ),
     "Computer Engineering": (
-        "SEAS computer engineering combines hardware, embedded systems, and VLSI design within Boston University Engineering's robotics and device-research labs."
+        "Boston University's Department of Electrical & Computer Engineering teaches computer engineering across hardware, embedded systems, and VLSI design, with research in the College of Engineering's Photonics Center and Center for Information & Systems Engineering."
     ),
     "Computer Science": (
-        "Boston University CIS covers algorithms, systems, AI, and theory in a top-ranked department with research groups spanning SEAS, the Warren Center, and GRASP robotics."
+        "Boston University's Department of Computer Science covers algorithms, systems, artificial intelligence, and theory, with research groups across the Faculty of Computing & Data Sciences and the Rafik B. Hariri Institute for Computing."
     ),
     "Computer Science — Accelerated": (
-        "Boston University CIS covers algorithms, systems, AI, and theory in a top-ranked department with research groups spanning SEAS, the Warren Center, and GRASP robotics."
+        "Boston University's Department of Computer Science covers algorithms, systems, artificial intelligence, and theory, with research groups across the Faculty of Computing & Data Sciences and the Rafik B. Hariri Institute for Computing."
     ),
     "Computer Science — Artificial Intelligence": (
-        "Boston University CIS covers algorithms, systems, AI, and theory in a top-ranked department with research groups spanning SEAS, the Warren Center, and GRASP robotics."
+        "Boston University's Department of Computer Science covers algorithms, systems, artificial intelligence, and theory, with research groups across the Faculty of Computing & Data Sciences and the Rafik B. Hariri Institute for Computing."
     ),
     "Computer Science — Health Informatics": (
-        "Boston University CIS covers algorithms, systems, AI, and theory in a top-ranked department with research groups spanning SEAS, the Warren Center, and GRASP robotics."
+        "Boston University's Department of Computer Science covers algorithms, systems, artificial intelligence, and theory, with research groups across the Faculty of Computing & Data Sciences and the Rafik B. Hariri Institute for Computing."
     ),
     "Computer Science — Master Of Science In Applied Data Analytics": (
-        "Boston University CIS covers algorithms, systems, AI, and theory in a top-ranked department with research groups spanning SEAS, the Warren Center, and GRASP robotics."
+        "Boston University's Department of Computer Science covers algorithms, systems, artificial intelligence, and theory, with research groups across the Faculty of Computing & Data Sciences and the Rafik B. Hariri Institute for Computing."
     ),
     "Computer Science — Ms": (
-        "Boston University CIS covers algorithms, systems, AI, and theory in a top-ranked department with research groups spanning SEAS, the Warren Center, and GRASP robotics."
+        "Boston University's Department of Computer Science covers algorithms, systems, artificial intelligence, and theory, with research groups across the Faculty of Computing & Data Sciences and the Rafik B. Hariri Institute for Computing."
     ),
     "Computer Science — Mscis": (
-        "Boston University CIS covers algorithms, systems, AI, and theory in a top-ranked department with research groups spanning SEAS, the Warren Center, and GRASP robotics."
+        "Boston University's Department of Computer Science covers algorithms, systems, artificial intelligence, and theory, with research groups across the Faculty of Computing & Data Sciences and the Rafik B. Hariri Institute for Computing."
     ),
     "Computer Science — Software Development": (
-        "Boston University CIS covers algorithms, systems, AI, and theory in a top-ranked department with research groups spanning SEAS, the Warren Center, and GRASP robotics."
+        "Boston University's Department of Computer Science covers algorithms, systems, artificial intelligence, and theory, with research groups across the Faculty of Computing & Data Sciences and the Rafik B. Hariri Institute for Computing."
     ),
     "Computer Science — Telecommunication": (
-        "Boston University CIS covers algorithms, systems, AI, and theory in a top-ranked department with research groups spanning SEAS, the Warren Center, and GRASP robotics."
+        "Boston University's Department of Computer Science covers algorithms, systems, artificial intelligence, and theory, with research groups across the Faculty of Computing & Data Sciences and the Rafik B. Hariri Institute for Computing."
     ),
     "Computing Data Sciences": (
         "CDS doctoral research spans responsible AI, computational social science, and large-scale data systems in the Center for Computing & Data Sciences."
@@ -409,7 +409,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Wheelock's B.S. in education and human development combines child development science with educator-preparation coursework."
     ),
     "Electrical Engineering": (
-        "SEAS electrical and systems engineering spans signal processing, photonics, and communications with Boston University's medical-device and robotics research groups."
+        "Boston University's Department of Electrical & Computer Engineering spans signal processing, photonics, and communications, anchored by the Photonics Center and biomedical-device research in the College of Engineering."
     ),
     "Elementary Education": (
         "Wheelock elementary education combines child development science with classroom management and licensure practica."
@@ -571,25 +571,25 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "CAS/GRS B.A./M.A. linguistics accelerates undergraduates into graduate syntax, semantics, and fieldwork coursework."
     ),
     "Linguistics — French Linguistics": (
-        "College of Arts & Sciences linguistics covers phonetics, syntax, sociolinguistics, and computational language science with ties to Boston University CIS and the Language Data Institute."
+        "Boston University's Department of Linguistics covers phonetics, syntax, sociolinguistics, and computational language science, with cross-disciplinary ties to the Department of Computer Science and the Hariri Institute for Computing."
     ),
     "Linguistics — Italian Linguistics": (
-        "College of Arts & Sciences linguistics covers phonetics, syntax, sociolinguistics, and computational language science with ties to Boston University CIS and the Language Data Institute."
+        "Boston University's Department of Linguistics covers phonetics, syntax, sociolinguistics, and computational language science, with cross-disciplinary ties to the Department of Computer Science and the Hariri Institute for Computing."
     ),
     "Linguistics — Japanese Linguistics": (
-        "College of Arts & Sciences linguistics covers phonetics, syntax, sociolinguistics, and computational language science with ties to Boston University CIS and the Language Data Institute."
+        "Boston University's Department of Linguistics covers phonetics, syntax, sociolinguistics, and computational language science, with cross-disciplinary ties to the Department of Computer Science and the Hariri Institute for Computing."
     ),
     "Linguistics — Linguistics": (
-        "College of Arts & Sciences linguistics covers phonetics, syntax, sociolinguistics, and computational language science with ties to Boston University CIS and the Language Data Institute."
+        "Boston University's Department of Linguistics covers phonetics, syntax, sociolinguistics, and computational language science, with cross-disciplinary ties to the Department of Computer Science and the Hariri Institute for Computing."
     ),
     "Linguistics — Linguistics Philosophy": (
-        "College of Arts & Sciences linguistics covers phonetics, syntax, sociolinguistics, and computational language science with ties to Boston University CIS and the Language Data Institute."
+        "Boston University's Department of Linguistics covers phonetics, syntax, sociolinguistics, and computational language science, with cross-disciplinary ties to the Department of Computer Science and the Hariri Institute for Computing."
     ),
     "Linguistics — Linguistics Speech Language And Hearing Sciences": (
-        "College of Arts & Sciences linguistics covers phonetics, syntax, sociolinguistics, and computational language science with ties to Boston University CIS and the Language Data Institute."
+        "Boston University's Department of Linguistics covers phonetics, syntax, sociolinguistics, and computational language science, with cross-disciplinary ties to the Department of Computer Science and the Hariri Institute for Computing."
     ),
     "Linguistics — Spanish Linguistics": (
-        "College of Arts & Sciences linguistics covers phonetics, syntax, sociolinguistics, and computational language science with ties to Boston University CIS and the Language Data Institute."
+        "Boston University's Department of Linguistics covers phonetics, syntax, sociolinguistics, and computational language science, with cross-disciplinary ties to the Department of Computer Science and the Hariri Institute for Computing."
     ),
     "Literacy Education": (
         "Wheelock literacy education covers reading specialist licensure, dyslexia intervention, and K-12 literacy coaching."
@@ -613,7 +613,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Questrom's M.B.A. emphasizes data-driven management, health-sector analytics, and social impact with Boston's finance, biotech, and consulting recruiting."
     ),
     "Materials Science Engineering": (
-        "SEAS materials science studies biomaterials, nanomaterials, and characterization with Boston University's Singh Center for Nanotechnology."
+        "Boston University's Division of Materials Science & Engineering studies biomaterials, nanomaterials, and characterization, with fabrication and imaging facilities in the College of Engineering's Photonics Center."
     ),
     "Mathematical Finance": (
         "Questrom mathematical finance combines stochastic calculus, derivatives pricing, and computational finance for Wall Street and Boston quant roles."
@@ -667,7 +667,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "BU's M.D./Ph.D. in bioinformatics integrates clinical training with computational genomics and biomedical data science."
     ),
     "Mechanical Engineering": (
-        "SEAS mechanical engineering and applied mechanics emphasizes design, robotics, fluid mechanics, and energy systems through Boston University's GRASP and robotics labs."
+        "Boston University's Department of Mechanical Engineering emphasizes design, robotics, fluid mechanics, and energy systems, with robotics research in the Robotics & Autonomous Systems Teaching and Innovation Center (RASTIC) and the Center for Information & Systems Engineering."
     ),
     "Media Science — Media Science": (
         "COM media science examines audience analytics, media effects research, and experimental methods in persuasion science."
@@ -856,10 +856,10 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Wheelock educational policy and planning examines school finance, leadership, and equity in urban districts."
     ),
     "Political Science": (
-        "College of Arts & Sciences political science combines American politics, comparative methods, and international relations with Perry World House and D.C. internship access."
+        "Boston University's Department of Political Science combines American politics, comparative methods, and international relations, with global-affairs ties to the Frederick S. Pardee School of Global Studies and Washington, D.C. internship access."
     ),
     "Preservation Studies": (
-        "Graduate School of Design preservation studies combine documentation, materials conservation, and heritage policy with field work across upstate New York."
+        "Boston University's MA in Preservation Studies, based in the American & New England Studies Program, combines documentation, materials conservation, and heritage policy with hands-on field work across Boston and New England."
     ),
     "Product Design Manufacture — Msmba": (
         "The product-design M.S./M.B.A. dual degree pairs ENG design studios with Questrom management coursework for product-development leaders."
@@ -1128,6 +1128,58 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
 }
 
 SLUG_DESCRIPTIONS: dict[str, str] = {
+    # buprof12 (2026-06-19): per-credential bodies for the five fields whose Penn-copied
+    # clauses were replaced — each credential level gets its own self-contained researched
+    # BU body (taking SLUG priority) so the field's siblings no longer share a leading body
+    # (anti-stub shared_leading_body=0). Verified units: Dept of Electrical & Computer /
+    # Mechanical Engineering, Division of Materials Science & Engineering, Photonics Center,
+    # RASTIC, Center for Information & Systems Engineering, Dept of Political Science, Pardee
+    # School of Global Studies.
+    "bu-academics-cas-political-science-ba": (
+        "Undergraduate political science at Boston University spans American politics, comparative government, and political theory, with international-relations coursework shared with the Frederick S. Pardee School of Global Studies and Washington, D.C. internship placements."
+    ),
+    "bu-academics-grs-political-science-ma": (
+        "BU's M.A. in political science deepens American politics, comparative methods, and international relations through graduate seminars and faculty research in the Department of Political Science and the Pardee School of Global Studies."
+    ),
+    "bu-academics-grs-political-science-phd": (
+        "Political science Ph.D. candidates at Boston University pursue dissertation research in American politics, comparative politics, international relations, and political theory with faculty advising in the Department of Political Science."
+    ),
+    "bu-academics-eng-computer-engineering-bs": (
+        "Undergraduate computer engineering at Boston University covers digital hardware, embedded systems, and VLSI design in the Department of Electrical & Computer Engineering, with lab work in the College of Engineering's Photonics Center."
+    ),
+    "bu-academics-eng-computer-engineering-ms": (
+        "BU's M.S. in computer engineering advances embedded systems, computer architecture, and hardware-software co-design through graduate coursework in the Department of Electrical & Computer Engineering and the Center for Information & Systems Engineering."
+    ),
+    "bu-academics-eng-computer-engineering-phd": (
+        "Computer engineering Ph.D. research at Boston University spans embedded and reconfigurable systems, hardware security, and computer architecture in the Department of Electrical & Computer Engineering and the Photonics Center."
+    ),
+    "bu-academics-eng-electrical-engineering-bs": (
+        "Undergraduate electrical engineering at Boston University covers signal processing, photonics, and communications in the Department of Electrical & Computer Engineering, with research access to the Photonics Center."
+    ),
+    "bu-academics-eng-electrical-engineering-ms": (
+        "BU's M.S. in electrical engineering advances signal processing, photonics, and communications systems through graduate coursework and biomedical-device research in the College of Engineering."
+    ),
+    "bu-academics-eng-electrical-engineering-phd": (
+        "Electrical engineering Ph.D. research at Boston University spans photonics, signal processing, and communications, anchored by the Photonics Center and the Department of Electrical & Computer Engineering."
+    ),
+    "bu-academics-eng-mechanical-engineering-bs": (
+        "Undergraduate mechanical engineering at Boston University covers design, robotics, fluid mechanics, and energy systems in the Department of Mechanical Engineering, with hands-on work in the Robotics & Autonomous Systems Teaching and Innovation Center (RASTIC)."
+    ),
+    "bu-academics-eng-mechanical-engineering-ms": (
+        "BU's M.S. in mechanical engineering advances dynamics, robotics, and thermofluids through graduate coursework in the Department of Mechanical Engineering and the Center for Information & Systems Engineering."
+    ),
+    "bu-academics-eng-mechanical-engineering-phd": (
+        "Mechanical engineering Ph.D. research at Boston University spans robotics and autonomous systems, fluid mechanics, and energy in the Department of Mechanical Engineering and the RASTIC robotics center."
+    ),
+    "bu-academics-eng-materials-science-engineering-meng": (
+        "BU's M.Eng. in materials science & engineering builds applied expertise in biomaterials, nanomaterials, and characterization in the cross-departmental Division of Materials Science & Engineering, with fabrication facilities in the Photonics Center."
+    ),
+    "bu-academics-eng-materials-science-engineering-ms": (
+        "BU's M.S. in materials science & engineering studies biomaterials, nanomaterials, and characterization in the cross-departmental Division of Materials Science & Engineering, with fabrication and imaging facilities in the Photonics Center."
+    ),
+    "bu-academics-eng-materials-science-engineering-phd": (
+        "Materials science & engineering Ph.D. research at Boston University spans biomaterials, nanomaterials, and electronic materials in the Division of Materials Science & Engineering and the Photonics Center."
+    ),
     "bu-academics-busm-four-year-program": (
         "BU's Chobanian & Avedisian School of Medicine four-year M.D. curriculum combines foundational sciences, clinical clerkships at Boston Medical Center, and longitudinal patient-care experiences on the Medical Campus."
     ),
