@@ -75,7 +75,6 @@ programs (46/46 total external_reviews on coverable programs).
 from __future__ import annotations
 
 import re
-from collections import Counter
 from datetime import date
 
 from sqlalchemy import select, text
