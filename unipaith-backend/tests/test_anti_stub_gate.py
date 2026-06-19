@@ -52,6 +52,8 @@ CERTIFIED_CLEAN = [
     "yale",       # "{program_name}: " prefix-double removed; per-credential bodies — graduate
     #             rows take a distinct doctoral/master's clause (GRADUATE_FIELD_DESCRIPTIONS),
     #             so credential siblings no longer share a leading body (yaledefab1)
+    "harvard",    # CIP rollup de-fab; suffix-diversifier removed; per-credential bodies
+    #             (harvarddefab1 — HIGH #4)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
@@ -180,6 +182,25 @@ def test_analyzer_detects_classification_and_prefix_stubs():
     report = analyze(fabricated)
     assert report.name_prefixed, "should flag the program_name-prefixed description"
     assert report.classification, "should flag the classification-only description"
+
+
+def test_harvard_catalog_has_no_rollup_or_shared_leading_body():
+    """Regression guard: Harvard must not ship CIP rollup names or suffix-diversifier
+    shared-leading-body descriptions (REPAIR_BACKLOG HIGH #4)."""
+    from unipaith.data import harvard_profile
+
+    rollup_tells = (", General", ", Other", "(CIP ", "/")
+    rollup_names = [
+        p["slug"]
+        for p in harvard_profile.PROGRAMS
+        if any(t in p.get("program_name", "") for t in rollup_tells)
+    ]
+    assert not rollup_names, (
+        f"Harvard catalog has {len(rollup_names)} rollup program_name rows: "
+        f"{rollup_names[:5]}"
+    )
+    report = analyze(harvard_profile.PROGRAMS)
+    assert report.is_clean, f"Harvard anti-stub regressed: {report.summary()}"
 
 
 def test_nyu_catalog_has_no_slug_leak_prefixes():

@@ -8,7 +8,7 @@ gold-MIT baseline). Re-applies ``yale_profile.apply()`` (idempotent, replace-by-
 and re-derives target-applicant rows for the matcher.
 
 Revision ID: yaledefab1
-Revises: penndefab1
+Revises: harvarddefab1
 Create Date: 2026-06-19
 """
 
@@ -23,7 +23,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "yaledefab1"
-down_revision = "penndefab1"
+down_revision = "harvarddefab1"
 branch_labels = None
 depends_on = None
 
