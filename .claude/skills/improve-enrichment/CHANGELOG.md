@@ -5300,3 +5300,80 @@ band unchanged. Penn CIP-code tell re-confirmed (28%).
 
 **Invariants:** all intact; SKILL.md edit is a §8.5 gate tightening (adds structure metrics; loosens
 nothing). Health check: see below.
+
+---
+
+## Run 66 — 2026-06-20 (grader)
+
+**Scope:** FULL-FLEET sweep — all **300 LIVE institutions** + all **40 program catalogs**
+re-fetched from `api.unipaith.co/api/v1` (cached) and re-measured across every description +
+structure dimension. **Critical method change vs run 65:** the shared-body metric is now
+**longest-common-substring measured ANYWHERE after stripping a leading credential frame**
+(FAIL ≥80 chars AND ≥50% of the shortest sibling), NOT the leading-PREFIX count run 65 used.
+Gold MIT (n=65) = 0 control; the freshly-rebuilt Purdue/Rice + Emory/Caltech/Dartmouth/CMU
+also read 0, confirming the metric is well-calibrated (it is not a blanket over-count).
+
+**Headline — run 65 mis-graded the fleet.** Run 65's leading-prefix shared-body count reads 0
+whenever the per-credential FRAME differs by credential (which it always does), so run 65
+false-cleared ~12 mature catalogs into its "genuinely clean" list — Harvard, JHU, UCLA,
+UW-Seattle, Penn, Berkeley were ALL broken. Measured by LCS-anywhere, **16 catalogs ship a
+credential frame over ONE field body stamped across BA/MS/PhD** (multi-credential fields
+sharing a body): UW-Madison 109/111 · Florida 102/102 · JHU 81/82 · UW-Seattle 77/77 · Harvard
+75/77 · Michigan 71/74 · UCLA 70/77 · Penn 55/56 · Stanford 51/58 · BU 46/79 · Berkeley 40/68 ·
+Cornell 38/71 · Notre Dame 25/28 · UT-Austin 21/88 · UIUC 17/96 · Columbia 14/42 — vs gold MIT 0.
+Verified by reading siblings directly (e.g. UW-Seattle Anthropology BA/MS/PhD all carry
+"Anthropology is the scientific study of humanity…"; Harvard Anthropology BA/Cert/MA all carry
+"Harvard FAS anthropology combines archaeological field schools…"). Contrast Duke (clean):
+BA "Duke biology majors explore… field work at the Duke Forest" vs PhD "Duke biology doctoral
+students pursue dissertation research…" — distinct per credential.
+
+**Findings (with live evidence):**
+- **NEW CLASS → 1 rule change: scraped catalog debris as `description_text`.** The four LARGEST
+  catalogs ship raw catalog-page text instead of researched prose: USC ~50/520 (degree-requirements
+  fragments "28 additional units must be selected from MATH 225, MATH 226…", "Four MATH courses at
+  the 400-level…, chosen from the following list:", capstone-option lists, and a raw CONTACT/ADDRESS
+  block "…Stonier Hall, Suite 101… (213) 740-1060 Email:…@…edu"), UIUC 18, NYU 11, UT-Austin 2. Often
+  truncated mid-sentence; ≥2 USC rows MISMATCHED to the wrong program (Archaeology row → American-
+  Studies requirements). Each fragment is unique per row, so it scores 0 on every share/form metric
+  AND a requirements list is field-ish enough to pass the gold-contrast classification test — so run
+  65 graded these "clean." NOT covered by the existing build-artifact tells (leading-id / division-
+  frame / namesake-scrape) → added miss #8 SCRAPED-CATALOG-DEBRIS sub-bullet + a (iv) hook in the
+  miss #9 / §8.5 pre-ship scan.
+- **COMPLIANCE GAP (rule already exists; queued not re-added): fleet-wide credential-frame +
+  tail-shared field body.** miss #8's credential-FRAME sub-bullet (added run 65) already mandates
+  "strip the frame, measure the shared body ANYWHERE (LCS), FAIL ≥80 chars AND ≥50% of shortest";
+  the enricher's per-credential passes (#876/#877/#878 + the Harvard/JHU/Penn/UCLA/Michigan passes)
+  VIOLATED it. Queued as HIGH #3–#18.
+- **COMPLIANCE GAP: cross-institution contamination still live.** BU "Master of Science in Data
+  Science… Whiting's MS in Data…" (Whiting = JHU) — flagged run 65, never fixed (miss #8). CRITICAL #2.
+- **COMPLIANCE GAP: dead feeds on freshly-enriched nodes.** Notre Dame (#886), Emory (#885),
+  Dartmouth (#884) all ship posts=0 despite being enriched this interval — miss #1/#9 "a feed counts
+  only if it FETCHES ≥1 item." (Florida's feed, dead at run 65, now fetches posts=25 — cleared.)
+- **COMPLIANCE GAP: concentration-split over-decomposition (miss #2).** Michigan 33 ("PhD in
+  Performance: Bassoon/Cello/Flute…"), UIUC 26, NYU 17, CMU 15, USC 8, Rice 6 — collapse into `tracks`.
+- **Enricher WINS verified live:** run-65 CRITICAL #1 Northwestern rebuilt 308→125 with 0
+  contamination (#888) · HIGH #2 Purdue per-credential bodies, shared-body 0 (#889) · HIGH #3 Rice
+  shared-body 0 (#891) · Florida feed fetches (#883). Emory shipped clean descriptions.
+
+**Rule change (1, miss #8 — bounded, evidence-backed, not a duplicate):** added the SCRAPED-CATALOG-
+DEBRIS sub-bullet under miss #8 (a raw degree-requirements / course-code / capstone-list / contact-
+address fragment as `description_text` is an un-researched stub that ZEROES every share metric and
+passes the gold contrast; tells = course-code token, unit-count opening, trailing-colon / mid-sentence
+truncation, address/email, or field/program mismatch — research each as prose from the institution's
+own page) + a (iv) hook in the miss #9 / §8.5 pre-ship programmatic scan. No other rule warranted —
+every other defect is a violation of an existing rule (default-flipped → queued + logged, not re-added).
+
+**Flags (code/workflow, not grader-editable):** (1) auto-merge dual-head race still forcing fixup merge
+migrations; (2) `anti_stub.analyze` lacks the LCS-anywhere frame-stripped shared-body metric (let all
+16 frame+tail-share catalogs through green CI), the scrape-debris metric, and a positive org-chart
+allowlist (let BU "Whiting" through); URL-slug `machine_artifacts` still unimplemented; (3) `cip_code`
+not serialized on the public program endpoints.
+
+**Backlog delta:** rewritten worst-first, full-fleet. CRITICAL = USC (scrape-debris + wrong-program) +
+BU (Whiting contamination). HIGH = the 16 frame+tail-share catalogs ranked by density (run 65's
+"genuinely clean" Harvard/JHU/UCLA/UW-Seattle/Penn/Berkeley re-added). MEDIUM = dead-feed enriched
+nodes (Dartmouth/Emory/Notre Dame), the 8 five-program seeds, the ~260 bare stubs (33 zero-photo).
+CLEAN = MIT + rebuilt Northwestern/Purdue/Rice + Duke/Yale/UChicago/UCSD/Caltech/Georgia Tech/Princeton.
+
+**Invariants:** all intact; the SKILL.md edit is a miss #8 / §8.5 gate TIGHTENING (adds a scrape-debris
+tell; loosens nothing). Health check: see below.
