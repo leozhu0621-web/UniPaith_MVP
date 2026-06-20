@@ -88,17 +88,23 @@ function deriveOptions(universities: UniversityForFilters[]) {
   const countries = new Set<string>()
   const subjects = new Set<string>()
   const industries = new Set<string>()
+  let hasSat = false
+  let hasTuition = false
 
   for (const u of universities) {
     if (u.country) countries.add(u.country)
     if (Array.isArray(u.subjects_offered)) u.subjects_offered.forEach(s => s && subjects.add(s))
     if (Array.isArray(u.top_industries)) u.top_industries.forEach(i => i && industries.add(i))
+    if (u.sat_avg != null && u.sat_avg > 0) hasSat = true
+    if (u.tuition_annual != null && u.tuition_annual > 0) hasTuition = true
   }
 
   return {
     countries: Array.from(countries).sort(),
     subjects: Array.from(subjects).sort(),
     industries: Array.from(industries).sort(),
+    hasSat,
+    hasTuition,
   }
 }
 
@@ -176,7 +182,7 @@ export function countActiveFilters(f: FilterState): number {
 }
 
 export default function ExploreFilters({ universities, filters, onChange }: Props) {
-  const { countries, subjects, industries } = deriveOptions(universities)
+  const { countries, subjects, industries, hasSat, hasTuition } = deriveOptions(universities)
   const activeCount = countActiveFilters(filters)
   const clearAll = () => onChange(EMPTY_FILTERS)
 
@@ -265,21 +271,28 @@ export default function ExploreFilters({ universities, filters, onChange }: Prop
           />
         )}
 
-        <FilterDropdown
-          label="SAT"
-          active={filters.satTier.length}
-          options={SAT_OPTIONS.map(s => ({ value: s.code, label: s.label }))}
-          selected={filters.satTier}
-          onToggle={v => toggleList('satTier', v)}
-        />
+        {/* SAT / Tuition only appear when the data can actually fill them —
+            most browse universities carry neither, so a static dropdown would
+            silently zero out the grid. */}
+        {hasSat && (
+          <FilterDropdown
+            label="SAT"
+            active={filters.satTier.length}
+            options={SAT_OPTIONS.map(s => ({ value: s.code, label: s.label }))}
+            selected={filters.satTier}
+            onToggle={v => toggleList('satTier', v)}
+          />
+        )}
 
-        <FilterDropdown
-          label="Tuition"
-          active={filters.tuitionTier.length}
-          options={TUITION_OPTIONS.map(t => ({ value: t.code, label: t.label }))}
-          selected={filters.tuitionTier}
-          onToggle={v => toggleList('tuitionTier', v)}
-        />
+        {hasTuition && (
+          <FilterDropdown
+            label="Tuition"
+            active={filters.tuitionTier.length}
+            options={TUITION_OPTIONS.map(t => ({ value: t.code, label: t.label }))}
+            selected={filters.tuitionTier}
+            onToggle={v => toggleList('tuitionTier', v)}
+          />
+        )}
 
         {activeCount > 0 && (
           <button

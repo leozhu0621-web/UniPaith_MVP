@@ -2,7 +2,7 @@ import type { ComponentType } from 'react'
 import { Link } from 'react-router-dom'
 import {
   MapPin, Users, Building2, BookOpen, BellPlus, BellRing, ChevronRight, Sprout,
-  Trophy, DollarSign, GraduationCap,
+  Trophy, GraduationCap,
 } from 'lucide-react'
 import { classifyInstitution, sizeBucket, formatSetting, SIZE_OPTIONS } from '../shared/classifyInstitution'
 import { cardLinkClick, CARD_LINK_OVERLAY } from '../shared/cardLink'
@@ -68,15 +68,11 @@ export default function UniversityCard({ institution: inst, onClick, following, 
     inst.acceptance_rate != null && inst.acceptance_rate > 0
       ? Math.round(inst.acceptance_rate * (inst.acceptance_rate <= 1 ? 100 : 1))
       : null
-  const earnings =
-    inst.median_earnings != null && inst.median_earnings > 0 ? Math.round(inst.median_earnings) : null
-  const earningsLabel = earnings != null ? `$${(earnings / 1000).toFixed(0)}K median earnings` : null
   const gradPct =
     inst.graduation_rate != null && inst.graduation_rate > 0
       ? Math.round(inst.graduation_rate * (inst.graduation_rate <= 1 ? 100 : 1))
       : null
-  const hasStats =
-    rank != null || acceptancePct != null || gradPct != null || earningsLabel != null
+  const hasStats = rank != null || acceptancePct != null || gradPct != null
 
   return (
     // Stretched-link card (Ship D §4): the title <Link> overlays the whole
@@ -166,7 +162,7 @@ export default function UniversityCard({ institution: inst, onClick, following, 
           {(inst.program_count ?? 0) > 0 && <FactPill icon={BookOpen}>{inst.program_count} programs</FactPill>}
         </div>
 
-        {/* Stat strip — rank · acceptance · earnings, all display-only (UX-QA
+        {/* Stat strip — rank · acceptance · grad rate, all display-only (UX-QA
             Part 2). The rank pill takes the earned-gold tint only at #1. */}
         {hasStats && (
           <div className="flex flex-wrap items-center gap-1.5 mb-3">
@@ -189,7 +185,6 @@ export default function UniversityCard({ institution: inst, onClick, following, 
               </span>
             )}
             {gradPct != null && <FactPill icon={GraduationCap}>{gradPct}% grad rate</FactPill>}
-            {earningsLabel && <FactPill icon={DollarSign}>{earningsLabel}</FactPill>}
           </div>
         )}
 
