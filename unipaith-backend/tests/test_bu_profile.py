@@ -195,6 +195,30 @@ def test_no_department_is_a_bare_field_echo():
     assert not echoes, f"department echoes the name's field on {len(echoes)} rows: {echoes[:8]}"
 
 
+def test_no_literal_minor_stub_names():
+    """No program may ship the literal stub name 'minor' (REPAIR BACKLOG #10)."""
+    stubs = [p["slug"] for p in b.PROGRAMS if (p.get("program_name") or "").lower() == "minor"]
+    assert not stubs, f"literal 'minor' stub names: {stubs}"
+
+
+def test_no_identical_across_credential_levels():
+    from collections import Counter
+
+    desc_counts = Counter(prog.get("description") for prog in b.PROGRAMS)
+    shared = sum(c for c in desc_counts.values() if c >= 2)
+    assert shared == 0, (
+        f"{shared} programs share a description verbatim with a credential sibling"
+    )
+
+
+def test_catalog_is_anti_stub_clean():
+    """Per-credential description leads — gold MIT = 0% shared-leading-body (REPAIR #10)."""
+    from unipaith.profile_standard.anti_stub import analyze
+
+    report = analyze(b.PROGRAMS)
+    assert report.is_clean, f"anti-stub not clean: {report.summary()}"
+
+
 def test_no_credential_combo_names_or_departments():
     """No program_name or department may be a bare/mechanical credential-combo token —
     'Jdma English', 'Jdllm In Finance', 'PhD, MD/PhD' (miss #2). Real joint degrees carry

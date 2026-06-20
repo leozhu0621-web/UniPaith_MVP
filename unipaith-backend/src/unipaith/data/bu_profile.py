@@ -107,14 +107,25 @@ from unipaith.data.profile_catalog_utils import (
 )
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
 
 INSTITUTION_NAME = "Boston University"
-ENRICHED_AT = "2026-06-19"
+ENRICHED_AT = "2026-06-20"
 
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is (an undergraduate major|a graduate degree|a doctoral program|"
     r"a professional degree|a graduate certificate|a degree program) at Boston University's ",
 )
+
+# Per-credential leads so a field's credential siblings (BA / MS / PhD / cert) no longer
+# share one verbatim FIELD_DESCRIPTIONS clause (REPAIR BACKLOG #10 shared-leading-body).
+_CRED_LEAD: dict[str, str] = {
+    "bachelors": "Boston University offers the undergraduate major in {f}.",
+    "masters": "Boston University offers a master's program in {f}.",
+    "phd": "Doctoral study in {f} at Boston University centers on dissertation research in",
+    "professional": "Boston University offers a professional program in {f}.",
+    "certificate": "Boston University offers a graduate certificate in {f}.",
+}
 
 _LEVEL_SUFFIX: dict[str, str] = {
     "bachelors": (
@@ -983,6 +994,7 @@ _PROGRAM_NAME_OVERRIDES: dict[str, str] = {
     "bu-academics-busm-combined-mdjd": "Doctor of Medicine / Juris Doctor (MD/JD)",
     "bu-academics-busm-combined-md-mba": "Doctor of Medicine / Master of Business Administration (MD/MBA)",
     "bu-academics-busm-md-phd-combined-degree": "Doctor of Medicine / Doctor of Philosophy (MD/PhD)",
+    "bu-academics-sar-public-health-bs-mph": "Bachelor of Science-to-Master of Public Health",
     "bu-academics-cas-bamph-program": "Bachelor of Arts to Master of Public Health (Accelerated)",
     "bu-academics-cas-world-languages-literatures-ba-in-comparative-literature-mfa-in-literary-translation": (
         "Bachelor of Arts in Comparative Literature / Master of Fine Arts in Literary Translation"
@@ -1286,6 +1298,9 @@ _DEPARTMENT_OVERRIDES: dict[str, str] = {
     "bu-academics-sph-ms-in-genetic-counseling-master-of-public-health-ms-mph": "School of Public Health",
     "bu-academics-sph-medical-sciences-and-public-health": "School of Public Health",
     "bu-academics-sph-mph-in-health-equity": "School of Public Health",
+    "bu-academics-sar-public-health-bs-mph": (
+        "Sargent College of Health & Rehabilitation Sciences"
+    ),
 }
 
 # A department string that is really a credential (combo) abbreviation, not an owning unit
@@ -1521,26 +1536,21 @@ def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
     return clause
 
 
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    """Drop undergraduate-specific phrasing from a field clause on graduate rows."""
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(
+        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
+    )
+    return clause
+
+
 def _bu_description(spec: dict) -> str:
-    """Field-specific description — never the degree-type classification stub."""
+    """Field-specific, per-credential description — never a classification stub."""
     slug = spec["slug"]
-    if slug in SLUG_DESCRIPTIONS:
-        clause = SLUG_DESCRIPTIONS[slug]
-    else:
-        field = _field_from_spec(spec)
-        clause = _lookup_clause(field)
-        if not clause:
-            # Try prefix match on keys sharing the same leading segments
-            prefix = field + " — "
-            for key, val in FIELD_DESCRIPTIONS.items():
-                if key.startswith(prefix) or field.startswith(key + " — "):
-                    clause = val
-                    break
-        if not clause:
-            raise ValueError(
-                f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
-            )
-        clause = _adapt_clause_for_degree_type(clause, spec["degree_type"])
+    dtype = spec["degree_type"]
     fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
     if fmt == "online":
@@ -1551,7 +1561,26 @@ def _bu_description(spec: dict) -> str:
         )
     elif fmt == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{clause}{delivery}"
+    if slug in SLUG_DESCRIPTIONS:
+        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
+    field = _field_from_spec(spec)
+    clause = _lookup_clause(field)
+    if not clause:
+        prefix = field + " — "
+        for key, val in FIELD_DESCRIPTIONS.items():
+            if key.startswith(prefix) or field.startswith(key + " — "):
+                clause = val
+                break
+    if not clause:
+        raise ValueError(
+            f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
+        )
+    clause = _adapt_clause_for_degree_type(clause, dtype)
+    clause = _level_appropriate_clause(clause, dtype)
+    lead = _CRED_LEAD.get(dtype, "Boston University offers a program in {f}.").format(
+        f=field or spec.get("program_name", "")
+    )
+    return f"{lead} {clause}{delivery}"
 
 
 def _diversify_descriptions(programs: list[dict]) -> None:
@@ -1804,6 +1833,13 @@ if _shared_desc:
     _catalog_errors.append(
         f"identical descriptions shared across {_shared_desc} credential-sibling programs"
     )
+_minor_stubs = [p["slug"] for p in PROGRAMS if (p.get("program_name") or "").lower() == "minor"]
+if _minor_stubs:
+    _catalog_errors.append(f"literal 'minor' stub program names: {_minor_stubs}")
+
+_anti_stub = _anti_stub_analyze(PROGRAMS)
+if not _anti_stub.is_clean:
+    _catalog_errors.append(f"anti-stub not clean: {_anti_stub.summary()}")
 if _catalog_errors:
     raise RuntimeError(f"Boston University catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
