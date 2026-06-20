@@ -287,6 +287,7 @@ DEPARTMENT_BY_FIELD: dict[str, str] = {
     "Nuclear Engineering": "Department of Materials Science and Engineering",
     "Nursing": "College of Nursing",
     "Nutrition Science": "Food Science and Human Nutrition Department",
+    "Nutrition Sciences": "Food Science and Human Nutrition Department",
     "Pharmaceutical Sciences": "College of Pharmacy",
     "Philosophy": "Department of Philosophy",
     "Physics": "Department of Physics",
@@ -404,6 +405,18 @@ SLUG_OVERRIDES: dict[str, tuple[str, str, str]] = {
 SCHOOL_OVERRIDE_BY_FIELD: dict[str, str] = {
     "Hospitality and Tourism Management": "College of Health and Human Performance",
     "Kinesiology": "College of Health and Human Performance",
+    # Route each field to the college that actually owns its department, so the
+    # description's named college matches the program's department (no
+    # college/department mismatch — REPAIR_BACKLOG #4).
+    "Bioinformatics": "Herbert Wertheim College of Engineering",
+    "Liberal Arts": "College of Liberal Arts and Sciences",
+    "Health Sciences": "College of Public Health and Health Professions",
+    "Allied Health": "College of Public Health and Health Professions",
+    "Nutrition Science": "College of Agricultural and Life Sciences",
+    "Nutrition Sciences": "College of Agricultural and Life Sciences",
+    "Human Development and Family Studies": "College of Agricultural and Life Sciences",
+    "Apparel Design": "College of Agricultural and Life Sciences",
+    "Agriculture": "College of Agricultural and Life Sciences",
 }
 
 DROP_SLUGS: frozenset[str] = frozenset({
