@@ -104,6 +104,86 @@ def _common_prefix(a: str, b: str) -> str:
     return a[:i]
 
 
+# A leading per-credential FRAME / degree-classification / field-definition sentence. When
+# a still-shared field body is prepended with such a frame ("Rice offers the undergraduate
+# major in {field}.", "Doctoral study in {field} … centers on dissertation research in",
+# "Master's students in {field} complete …", "{Field} is the study of …"), the frame
+# differs by credential while the body stays identical across a field's BA / MS / PhD rows —
+# so the leading-PREFIX shared-body count in :func:`analyze` reads a false 0 (REPAIR_BACKLOG
+# miss #8 credential-frame sub-bullet). Strip the frame, then measure the shared body
+# ANYWHERE in the siblings (longest common substring), not only as a leading prefix.
+_FRAME_LEAD_RES: tuple[re.Pattern[str], ...] = (
+    re.compile(r"^Doctoral study in .{0,140}?dissertation research in\s+", re.I),
+    re.compile(r"^Doctoral study\b.{0,200}?(?:—|\.)\s+", re.I),
+    re.compile(r"^Master'?s students\b.{0,200}?(?:—|\.)\s+", re.I),
+    re.compile(r"^.{0,160}?\boffers?\b.{0,160}?\.\s+", re.I),
+    re.compile(r"^Graduate (?:study|certificate)\.\s+", re.I),
+    re.compile(r"^[A-Z][a-z]+(?: [a-z]+){0,3} is the (?:study|science) of .{0,160}?\.\s+"),
+)
+
+
+def _strip_frame(description: str) -> str:
+    """Remove a leading credential-frame / classification / field-definition sentence."""
+    for rx in _FRAME_LEAD_RES:
+        m = rx.match(description)
+        if m and m.end() < len(description):
+            return description[m.end():]
+    return description
+
+
+def _longest_common_substring(a: str, b: str) -> int:
+    if not a or not b:
+        return 0
+    prev = [0] * (len(b) + 1)
+    best = 0
+    for i in range(1, len(a) + 1):
+        cur = [0] * (len(b) + 1)
+        ai = a[i - 1]
+        for j in range(1, len(b) + 1):
+            if ai == b[j - 1]:
+                cur[j] = prev[j - 1] + 1
+                if cur[j] > best:
+                    best = cur[j]
+        prev = cur
+    return best
+
+
+def frame_stripped_shared_body(
+    programs: list[dict],
+    min_chars: int = 80,
+    min_fraction: float = 0.5,
+) -> list[str]:
+    """Fields whose credential siblings share a body once a leading frame is stripped.
+
+    For each field (program name minus its credential designation) with >= 2 rows, strip a
+    leading credential-frame sentence from every sibling description and compute the longest
+    common substring of each pair. A field is flagged when any sibling pair shares a run of
+    >= ``min_chars`` characters that is also >= ``min_fraction`` of the shorter stripped
+    body — the run-65 credential-frame + tail-shared field body (miss #8). Gold MIT scores
+    0 (every credential level has its own researched body); a non-zero is the
+    no-fabrication / per-program-research invariant, not a tunable knob.
+    """
+    by_field: dict[str, list[str]] = defaultdict(list)
+    for p in programs:
+        by_field[field_of(p.get("program_name") or "")].append(_strip_frame(_desc(p)))
+    flagged: list[str] = []
+    for field, bodies in by_field.items():
+        if len(bodies) < 2:
+            continue
+        hit = False
+        for i in range(len(bodies)):
+            for j in range(i + 1, len(bodies)):
+                shortest = min(len(bodies[i]), len(bodies[j]))
+                if not shortest:
+                    continue
+                lcs = _longest_common_substring(bodies[i], bodies[j])
+                if lcs >= min_chars and lcs >= min_fraction * shortest:
+                    hit = True
+        if hit:
+            flagged.append(field)
+    return flagged
+
+
 @dataclass(frozen=True)
 class AntiStubReport:
     """Per-metric violation lists. A gold-equal catalog has every list empty."""

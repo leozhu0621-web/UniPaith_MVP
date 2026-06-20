@@ -39,6 +39,15 @@ degree designations (not bare field names); ``department`` names Rice's real
 owning unit (never ``program_name`` echoed verbatim); per-credential description
 leads so credential siblings no longer share a verbatim body (REPAIR BACKLOG #4 —
 gold MIT/JHU = 0% verbatim / shared-leading-body).
+
+Per-credential bodies (2026-06-20, ricepercred1): the ``ricedefab1`` pass left a
+single ``FIELD_DESCRIPTIONS`` clause stamped behind a swapped credential frame, so a
+field's BA / MS / PhD rows still shared one body in the description TAIL — the run-65
+credential-frame + tail-shared field body (REPAIR BACKLOG #3 / miss #8). This pass
+gives every multi-credential field a distinct per-(field, degree_type) body from
+``FIELD_CRED_DESCRIPTIONS`` (what THAT degree studies at THAT level) and drops the
+redundant "Rice offers the … in {field}." classification lead; gold MIT = 0%
+frame-stripped shared body, now enforced at import + in ``test_anti_stub_gate.py``.
 """
 
 # ruff: noqa: E501
@@ -52,11 +61,17 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.profile_catalog_utils import validate_catalog
-from unipaith.data.rice_field_descriptions import FIELD_DESCRIPTIONS
+from unipaith.data.rice_field_descriptions import (
+    FIELD_CRED_DESCRIPTIONS,
+    FIELD_DESCRIPTIONS,
+)
 from unipaith.data.rice_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
+from unipaith.profile_standard.anti_stub import (
+    frame_stripped_shared_body as _frame_stripped_shared_body,
+)
 
 INSTITUTION_NAME = "Rice University"
 
@@ -1040,16 +1055,6 @@ def _field_from_spec(spec: dict) -> str:
     return name
 
 
-# Per-credential leads so a field's credential siblings (BA / MS / PhD / prof) no longer
-# share one verbatim FIELD_DESCRIPTIONS clause (REPAIR BACKLOG #4 verbatim-across-levels).
-_CRED_LEAD: dict[str, str] = {
-    "bachelors": "Rice offers the undergraduate major in {f}.",
-    "masters": "Rice offers a master's program in {f}.",
-    "phd": "Doctoral study in {f} at Rice centers on dissertation research in",
-    "professional": "Rice offers a professional program in {f}.",
-    "certificate": "Rice offers a graduate certificate in {f}.",
-}
-
 # UG major name → Rice's published owning department (never the bare field echoed as
 # ``program_name``; cf. grad ``_GRAD_EXPLICIT`` dept column + General Announcements).
 _FIELD_TO_DEPT: dict[str, str] = {
@@ -1126,23 +1131,36 @@ def _level_appropriate_clause(clause: str, degree_type: str) -> str:
 
 
 def _rice_description(spec: dict) -> str:
-    """Field-specific, per-credential description — never a classification stub."""
+    """Field-specific, per-credential description — never a classification stub.
+
+    Multi-credential fields draw a distinct per-(field, degree_type) body from
+    ``FIELD_CRED_DESCRIPTIONS`` so a field's BA / MS / PhD rows no longer share one
+    ``FIELD_DESCRIPTIONS`` clause behind a swapped credential frame (REPAIR BACKLOG #3 —
+    the run-65 credential-frame + tail-shared field body, gold MIT = 0% shared). Each
+    credential level says what THAT degree studies at THAT level. Single-credential fields
+    use their unique ``FIELD_DESCRIPTIONS`` clause directly — the redundant
+    "Rice offers the … in {field}." classification lead is dropped (gold MIT opens on the
+    field fact, never a credential frame).
+    """
     field = _field_from_spec(spec)
-    clause = FIELD_DESCRIPTIONS.get(field)
-    if not clause:
-        raise ValueError(
-            f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({spec.get('slug')})"
-        )
     dtype = spec["degree_type"]
-    lead = _CRED_LEAD.get(dtype, "Rice offers a program in {f}.").format(f=field)
-    clause = _level_appropriate_clause(clause, dtype)
+    cred_body = FIELD_CRED_DESCRIPTIONS.get(field, {}).get(dtype)
+    if cred_body:
+        body = cred_body
+    else:
+        clause = FIELD_DESCRIPTIONS.get(field)
+        if not clause:
+            raise ValueError(
+                f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({spec.get('slug')})"
+            )
+        body = _level_appropriate_clause(clause, dtype)
     fmt = spec.get("delivery_format", "in_person")
     delivery = ""
     if fmt == "online":
         delivery = " Delivered online."
     elif fmt == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{lead} {clause}{delivery}"
+    return f"{body}{delivery}"
 
 
 def _build_catalog() -> list[dict]:
@@ -1215,6 +1233,15 @@ if _name_prefix_desc:
 _anti = _anti_stub_analyze(PROGRAMS)
 if not _anti.is_clean:
     _catalog_errors.append(f"anti-stub not clean: {_anti.summary()}")
+# Frame-stripped shared body: a field's credential siblings (BA / MS / PhD) must NOT share
+# a body once a leading credential frame is stripped — the run-65 evasion the leading-prefix
+# count in analyze() reads as a false 0 (REPAIR BACKLOG #3 / miss #8 credential-frame). Gold
+# MIT = 0; any non-zero here means a field body is stamped across its credential levels.
+_frame_shared = _frame_stripped_shared_body(PROGRAMS)
+if _frame_shared:
+    _catalog_errors.append(
+        f"credential siblings share a frame-stripped body on fields: {_frame_shared}"
+    )
 _dept_echo = [
     p["slug"]
     for p in PROGRAMS
