@@ -125,9 +125,9 @@ export default function ChatTabShell() {
             onClose={() => setActiveSession(null)}
           />
         ) : (
-          /* Free Uni conversation — unchanged */
+          /* Free Uni conversation — clean chat-tab mode (no journey rail / dashboard) */
           <div className="flex-1 min-w-0 overflow-y-auto">
-            <DiscoverHomePage />
+            <DiscoverHomePage chatTabMode />
           </div>
         )}
       </div>
