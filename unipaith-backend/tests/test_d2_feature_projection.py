@@ -149,3 +149,147 @@ async def test_claimed_preference_lifts_c_program(
     await MatchService(db_session)._overlay_program_prefs([claimed_pf, derived_pf])
     assert claimed_pf.data_completeness > derived_pf.data_completeness
     assert claimed_pf.data_completeness >= 0.9
+
+
+# ── Spec 3 §3 typed-fit columns: the 5 deferred columns now project + fire ───
+# Each test seeds the REAL ORM column, asserts the value lands in the matcher
+# sparse vector, AND that the corresponding dormant CPEF signal now fires on it.
+
+
+@pytest.mark.asyncio
+async def test_student_preference_typed_fit_attrs_overlaid_and_fire(db_session, mock_student_user):
+    """The new StudentPreference columns (desired_time_to_degree_months +
+    wants_part_time/online/career_support) must project into the student sparse
+    vector via _overlay_student_attrs, and each must drive its CPEF signal."""
+    from unipaith.models.student import StudentPreference
+    from unipaith.services.match.params import DEFAULT_PARAMS
+    from unipaith.services.matching import _build_cpef_signals
+
+    profile = await ensure_profile(db_session, mock_student_user)
+    db_session.add(
+        StudentPreference(
+            student_id=profile.id,
+            desired_time_to_degree_months=24,
+            wants_part_time=True,
+            wants_online=True,
+            wants_career_support=True,
+        )
+    )
+    db_session.add(StudentFeatureVector(student_id=profile.id, sparse_features={}))
+    await db_session.flush()
+
+    feats = await MatchService(db_session)._student_features(profile.id)
+    assert feats is not None
+    # each column projected into the sparse vector
+    assert feats.sparse["desired_time_to_degree_months"] == 24
+    assert feats.sparse["wants_part_time"] is True
+    assert feats.sparse["wants_online"] is True
+    assert feats.sparse["wants_career_support"] is True
+
+    # and now each dormant signal FIRES against a matching program
+    program = ProgramFeatures(
+        program_id="p",
+        sparse={
+            "duration_months": 24,
+            "part_time_available": True,
+            "online_available": True,
+            "career_services": True,
+        },
+    )
+    signals, _db, _w = _build_cpef_signals(feats, program, DEFAULT_PARAMS)
+    keys = {s["key"] for s in signals}
+    assert "time" in keys
+    assert "flexibility" in keys
+    assert "support" in keys
+
+
+@pytest.mark.asyncio
+async def test_student_preference_absent_typed_fit_attrs_emit_no_signal(
+    db_session, mock_student_user
+):
+    """Gated: a StudentPreference with the typed-fit columns left NULL injects no
+    phantom dimension — no key in the sparse vector, no signal fired."""
+    from unipaith.models.student import StudentPreference
+    from unipaith.services.match.params import DEFAULT_PARAMS
+    from unipaith.services.matching import _build_cpef_signals
+
+    profile = await ensure_profile(db_session, mock_student_user)
+    db_session.add(StudentPreference(student_id=profile.id))  # all typed-fit cols null
+    db_session.add(StudentFeatureVector(student_id=profile.id, sparse_features={}))
+    await db_session.flush()
+
+    feats = await MatchService(db_session)._student_features(profile.id)
+    assert feats is not None
+    assert "desired_time_to_degree_months" not in feats.sparse
+    assert "wants_part_time" not in feats.sparse
+    assert "wants_online" not in feats.sparse
+    assert "wants_career_support" not in feats.sparse
+
+    program = ProgramFeatures(
+        program_id="p",
+        sparse={"duration_months": 24, "part_time_available": True, "career_services": True},
+    )
+    signals, _db, _w = _build_cpef_signals(feats, program, DEFAULT_PARAMS)
+    keys = {s["key"] for s in signals}
+    assert "time" not in keys
+    assert "flexibility" not in keys
+    assert "support" not in keys
+
+
+@pytest.mark.asyncio
+async def test_program_part_time_available_projects_and_fires_flexibility(
+    institution_client, db_session, mock_institution_user
+):
+    """The new Program.part_time_available column must flow through
+    program_row_from_orm → features_from_row into the program sparse vector, and
+    fire the flexibility signal for a student who wants part-time."""
+    from unipaith.services.match.params import DEFAULT_PARAMS
+    from unipaith.services.matching import StudentFeatures, _build_cpef_signals
+    from unipaith.services.program_features import features_from_row, program_row_from_orm
+
+    inst = Institution(
+        admin_user_id=mock_institution_user.id, name="PT U", type="university", country="USA"
+    )
+    db_session.add(inst)
+    await db_session.flush()
+    prog = Program(
+        institution_id=inst.id,
+        program_name="MS Flexible",
+        degree_type="masters",
+        part_time_available=True,
+    )
+    db_session.add(prog)
+    await db_session.flush()
+
+    row = program_row_from_orm(prog)
+    assert row.part_time_available is True
+    pf = features_from_row(row)
+    assert pf.sparse["part_time_available"] is True
+
+    stu = StudentFeatures(sparse={"wants_part_time": True}, extractor_quality=0.9)
+    signals, _db, _w = _build_cpef_signals(stu, pf, DEFAULT_PARAMS)
+    flex = next(s for s in signals if s["key"] == "flexibility")
+    assert flex["f"] == 1.0  # program offers it → full fit
+
+
+@pytest.mark.asyncio
+async def test_program_null_part_time_emits_no_part_time_key(
+    institution_client, db_session, mock_institution_user
+):
+    """A program that never set part_time_available leaves the sparse key absent
+    (gated) — never a fabricated False."""
+    from unipaith.services.program_features import features_from_row, program_row_from_orm
+
+    inst = Institution(
+        admin_user_id=mock_institution_user.id, name="No-PT U", type="university", country="USA"
+    )
+    db_session.add(inst)
+    await db_session.flush()
+    prog = Program(institution_id=inst.id, program_name="MS Standard", degree_type="masters")
+    db_session.add(prog)
+    await db_session.flush()
+
+    row = program_row_from_orm(prog)
+    assert row.part_time_available is None
+    pf = features_from_row(row)
+    assert "part_time_available" not in pf.sparse

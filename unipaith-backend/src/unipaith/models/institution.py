@@ -238,6 +238,22 @@ class Program(Base):
     tuition: Mapped[int | None] = mapped_column(Integer)
     acceptance_rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))
     delivery_format: Mapped[str | None] = mapped_column(String(30))
+    # AI Structure (Spec 3 §3) — explicit part-time availability for the matcher's
+    # flexibility fit (the student's `wants_part_time`). Nullable + distinct from
+    # delivery_format (which only carries the online/hybrid/remote axis): a program
+    # may be in-person yet still offer a part-time track. Absent → no flexibility
+    # signal (gated), never a fabricated False that would falsely fail a want.
+    part_time_available: Mapped[bool | None] = mapped_column(Boolean)
+    # AI Structure (Spec 3) + founder governance (2026-06-18) — whether this
+    # program can enrol / sponsor an international applicant who needs a study
+    # visa. Read ONLY by the student→program (s→p) FEASIBILITY veto: a visa-
+    # needing student literally cannot attend a program that cannot sponsor her,
+    # so such a program is INFEASIBLE FOR HER and sinks in HER ranking (it helps
+    # her avoid a dead end). NULL = unknown sponsorship → NO veto (never assume).
+    # This is asymmetric by design: the program→student (p→s) SELECTION direction
+    # MUST NEVER read this — immigration status is not an applicant-selection
+    # criterion (Spec 38 §3/§9, Spec 46 §6). Pinned by the fairness contract.
+    sponsors_international: Mapped[bool | None] = mapped_column(Boolean)
     campus_setting: Mapped[str | None] = mapped_column(String(30))
     requirements: Mapped[dict | None] = mapped_column(JSONB)
     application_requirements: Mapped[dict | None] = mapped_column(JSONB)
