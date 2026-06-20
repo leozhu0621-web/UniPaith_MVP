@@ -14,8 +14,9 @@ import { getActiveStrategy } from '../../api/strategy'
 import { showToast } from '../../stores/toast-store'
 import { getRecentPrograms, type RecentProgram } from '../../lib/recentPrograms'
 import UniversityCard from './explore/cards/UniversityCard'
+import UniversityListRow from './explore/cards/UniversityListRow'
 import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type FilterState } from './explore/shared/ExploreFilters'
-import { Building2, GraduationCap, MapPin } from 'lucide-react'
+import { Building2, GraduationCap, MapPin, LayoutGrid, List } from 'lucide-react'
 import StrategyView from './match/StrategyView'
 import MatchesSection from './match/MatchesSection'
 import PromoCard from './explore/cards/PromoCard'
@@ -326,6 +327,15 @@ export default function ExplorePage() {
     browseTopRef.current?.scrollIntoView({ block: 'start' })
   }
 
+  // Grid (photo cards) vs list (dense rows) — remembered across visits.
+  const [browseView, setBrowseView] = useState<'grid' | 'list'>(() => {
+    const v = typeof localStorage !== 'undefined' ? localStorage.getItem('unipaith:browseView') : null
+    return v === 'list' ? 'list' : 'grid'
+  })
+  useEffect(() => {
+    try { localStorage.setItem('unipaith:browseView', browseView) } catch { /* ignore */ }
+  }, [browseView])
+
   return (
     <PageContainer>
       {/* First-visit tour (Ship C) — orients the hub's tabs. */}
@@ -516,21 +526,38 @@ export default function ExplorePage() {
                       const pageItems = displayUniList.slice(from, from + BROWSE_PAGE_SIZE)
                       return (
                         <>
-                          <p className="text-[11px] text-muted-foreground mb-3 text-center">
-                            Showing <span className="font-semibold text-foreground">{from + 1}–{from + pageItems.length}</span> of {total}{hasActiveFilters ? ' matching' : ''} universities
-                          </p>
-                          {/* key on the page so the stagger entrance replays as each page flips in */}
-                          <div key={browsePage} className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
-                            {pageItems.map((inst: UniversityRow) => (
-                              <UniversityCard
-                                key={inst.id}
-                                institution={inst}
-                                onClick={() => navigate(`/s/institutions/${inst.id}`)}
-                                following={followedIds.has(String(inst.id))}
-                                onToggleFollow={() => toggleFollow(String(inst.id))}
-                              />
-                            ))}
+                          <div className="flex items-center justify-between gap-3 mb-3">
+                            <p className="text-[11px] text-muted-foreground">
+                              Showing <span className="font-semibold text-foreground">{from + 1}–{from + pageItems.length}</span> of {total}{hasActiveFilters ? ' matching' : ''} universities
+                            </p>
+                            <BrowseViewToggle value={browseView} onChange={setBrowseView} />
                           </div>
+                          {/* key on the page so the stagger entrance replays as each page flips in */}
+                          {browseView === 'grid' ? (
+                            <div key={browsePage} className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
+                              {pageItems.map((inst: UniversityRow) => (
+                                <UniversityCard
+                                  key={inst.id}
+                                  institution={inst}
+                                  onClick={() => navigate(`/s/institutions/${inst.id}`)}
+                                  following={followedIds.has(String(inst.id))}
+                                  onToggleFollow={() => toggleFollow(String(inst.id))}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div key={browsePage} className="stagger-list flex flex-col gap-2 [&>*]:min-w-0">
+                              {pageItems.map((inst: UniversityRow) => (
+                                <UniversityListRow
+                                  key={inst.id}
+                                  institution={inst}
+                                  onClick={() => navigate(`/s/institutions/${inst.id}`)}
+                                  following={followedIds.has(String(inst.id))}
+                                  onToggleFollow={() => toggleFollow(String(inst.id))}
+                                />
+                              ))}
+                            </div>
+                          )}
                           <Pagination
                             page={browsePage}
                             pageCount={browsePageCount}
@@ -550,6 +577,32 @@ export default function ExplorePage() {
 
       {managing && <ManageFollowingPanel onClose={() => setManaging(false)} />}
     </PageContainer>
+  )
+}
+
+// Grid / list segmented control for the browse results.
+function BrowseViewToggle({ value, onChange }: { value: 'grid' | 'list'; onChange: (v: 'grid' | 'list') => void }) {
+  const opts = [
+    { v: 'grid' as const, Icon: LayoutGrid, label: 'Grid view' },
+    { v: 'list' as const, Icon: List, label: 'List view' },
+  ]
+  return (
+    <div role="group" aria-label="View" className="inline-flex items-center rounded-md border border-border overflow-hidden flex-shrink-0">
+      {opts.map(({ v, Icon, label }) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => onChange(v)}
+          aria-pressed={value === v}
+          aria-label={label}
+          className={`inline-flex h-7 w-8 items-center justify-center transition-colors ${
+            value === v ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground hover:bg-muted'
+          }`}
+        >
+          <Icon size={14} />
+        </button>
+      ))}
+    </div>
   )
 }
 
