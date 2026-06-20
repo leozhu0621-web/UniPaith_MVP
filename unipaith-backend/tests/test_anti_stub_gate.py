@@ -338,7 +338,9 @@ def test_scrape_debris_detector_bites_on_requirements_and_contact_text():
     debris = [
         {
             "program_name": "Bachelor of Science in Earth Sciences",
-            "description": "28 additional units must be selected from MATH 225, MATH 226 (28 units):",
+            "description": (
+                "28 additional units must be selected from MATH 225, MATH 226 (28 units):"
+            ),
         },
         {
             "program_name": "Master of Science in Global Medicine",
