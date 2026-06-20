@@ -37,6 +37,10 @@ export interface ChatSession {
   origin_kind: string;
   /** The topic_key of the owning folder (null if folder not returned). */
   topic_key: string | null;
+  /** The discovery/conversation thread bound to this session (null until the
+   *  first turn creates one). Drives session↔conversation resume. Optional so
+   *  older fixtures/responses without it still type-check; the API always sends it. */
+  conversation_session_id?: string | null;
 }
 
 /** A folder with its sessions — the shape returned by GET /folders. */
@@ -71,7 +75,12 @@ export async function createSession(params: {
 /** PATCH /students/me/chat/sessions/{id} — rename / pin / reorder a session. */
 export async function updateSession(
   id: string,
-  patch: { title?: string; pinned?: boolean; sort_order?: number },
+  patch: {
+    title?: string;
+    pinned?: boolean;
+    sort_order?: number;
+    conversation_session_id?: string | null;
+  },
 ): Promise<ChatSession> {
   const { data } = await apiClient.patch<ChatSession>(`${BASE}/sessions/${id}`, patch);
   return data;

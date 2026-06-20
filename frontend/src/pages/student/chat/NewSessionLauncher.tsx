@@ -27,11 +27,17 @@
  * pipeline); this slice only provides the affordance.
  */
 
-import { useRef, useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, ArrowUp, BookOpen, List, Scale, Compass, Flag, Heart, Calendar, Users } from "lucide-react";
 import { getChatTemplates, type ChatTemplate } from "../../../api/chatTemplates";
 import { createSession, type ChatSession } from "../../../api/chatSessions";
+import { searchPrograms } from "../../../api/programs";
+import { searchScholarships, type Scholarship } from "../../../api/scholarships";
+import type { ProgramSummary } from "../../../types";
+import UniOrb from "../../../components/student/UniOrb";
+import MaterialUpload from "../../../components/student/MaterialUpload";
+import { showToast } from "../../../stores/toast-store";
 
 // ── Props ──────────────────────────────────────────────────────────────────
 
@@ -53,57 +59,6 @@ const STAGE_LABELS: Record<string, string> = {
   application: "Application Strategy & Support",
 };
 
-// ── Orb ─────────────────────────────────────────────────────────────────
-
-function UniOrb({ size = 48 }: { size?: number }) {
-  return (
-    <div
-      aria-hidden="true"
-      style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        flexShrink: 0,
-        background: "radial-gradient(circle at 38% 34%, hsl(var(--primary)), hsl(var(--secondary)) 80%)",
-        boxShadow: "0 0 18px 1px hsl(var(--primary) / 0.35)",
-      }}
-    />
-  );
-}
-
-// ── Upload stub menu ───────────────────────────────────────────────────────
-
-const UPLOAD_ITEMS = ["Upload a file", "Add a photo", "From My Space"] as const;
-
-function UploadMenu({ anchor, onClose }: { anchor: DOMRect; onClose: () => void }) {
-  return (
-    <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div
-        role="menu"
-        aria-label="Upload options"
-        className="fixed z-50 min-w-[180px] rounded-[10px] border border-border bg-card shadow-[0_6px_16px_-4px_rgba(10,20,40,.14),0_2px_4px_rgba(10,20,40,.07)] py-1 animate-in fade-in zoom-in-95 duration-100"
-        style={{
-          left: Math.max(8, anchor.left),
-          bottom: window.innerHeight - anchor.top + 6,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {UPLOAD_ITEMS.map((item) => (
-          <button
-            key={item}
-            role="menuitem"
-            onClick={onClose}
-            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-[13px] font-semibold text-left text-foreground hover:bg-muted transition-colors"
-          >
-            {item}
-          </button>
-        ))}
-      </div>
-    </>
-  );
-}
-
 // ── Card helpers ───────────────────────────────────────────────────────────
 
 function EyebrowLabel({ children }: { children: React.ReactNode }) {
@@ -112,6 +67,13 @@ function EyebrowLabel({ children }: { children: React.ReactNode }) {
       {children}
     </p>
   );
+}
+
+/** Display a scholarship award amount. Bare digits become "$X,XXX"; anything
+ *  already formatted ("$5,000", "Varies", "Up to $10,000") shows as-is. */
+function formatAmount(raw: string): string {
+  const t = raw.trim();
+  return /^\d+$/.test(t) ? `$${Number(t).toLocaleString()}` : t;
 }
 
 /** Icon action card — icon + bold title. */
@@ -191,35 +153,6 @@ function VisualCard({
           </span>
         )}
       </div>
-    </button>
-  );
-}
-
-/** Peer avatar card — round photo + name + program. */
-function PeerCard({
-  name,
-  program,
-  imgUrl,
-  onClick,
-}: {
-  name: string;
-  program: string;
-  imgUrl: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="group flex flex-col items-center rounded-[14px] border border-border bg-card shadow-[0_1px_2px_rgba(10,20,40,.06)] transition-all hover:-translate-y-[3px] hover:shadow-[0_6px_16px_-4px_rgba(10,20,40,.12)] hover:border-border/80 py-4 px-3 text-center"
-    >
-      <img
-        src={imgUrl}
-        alt={name}
-        className="w-14 h-14 rounded-full object-cover mb-2.5"
-        loading="lazy"
-      />
-      <p className="text-[14px] font-bold text-foreground leading-snug">{name}</p>
-      <p className="text-[12px] text-muted-foreground mt-0.5">{program}</p>
     </button>
   );
 }
@@ -398,34 +331,11 @@ const INTL_CARDS = [
   },
 ] as const;
 
-// Peer cards
-const PEER_CARDS = [
-  {
-    id: "p1",
-    name: "Maya Chen",
-    program: "CS · CMU",
-    imgUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&q=80&auto=format&fit=crop",
-  },
-  {
-    id: "p2",
-    name: "Liam Park",
-    program: "CS · Toronto",
-    imgUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&q=80&auto=format&fit=crop",
-  },
-  {
-    id: "p3",
-    name: "Priya N.",
-    program: "ML · UW",
-    imgUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=160&q=80&auto=format&fit=crop",
-  },
-] as const;
-
 // ── Main component ─────────────────────────────────────────────────────────
 
 export default function NewSessionLauncher({ recentSession, onSessionStart }: Props) {
   const [inputValue, setInputValue] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
-  const uploadBtnRef = useRef<HTMLButtonElement>(null);
 
   const { data: templates, isLoading: templatesLoading } = useQuery({
     queryKey: ["chat-templates"],
@@ -434,9 +344,49 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
     retry: 1,
   });
 
+  // Academic — real programs that carry a campus photo (institution_image_url).
+  // Falls back to the representative cards below when none are available.
+  const { data: academicData } = useQuery({
+    queryKey: ["launcher-academic"],
+    queryFn: () => searchPrograms({ page_size: 24 }),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+  // Four DISTINCT institutions that carry a campus photo (dedupe so the row
+  // isn't four programs from the same school).
+  const academicPrograms = (() => {
+    const withPhoto = ((academicData?.items ?? []) as ProgramSummary[]).filter(
+      (p) => p.institution_image_url,
+    );
+    const seen = new Set<string>();
+    const out: ProgramSummary[] = [];
+    for (const p of withPhoto) {
+      if (seen.has(p.institution_name)) continue;
+      seen.add(p.institution_name);
+      out.push(p);
+      if (out.length === 4) break;
+    }
+    return out;
+  })();
+
+  // Financial — real scholarships with a stated award amount (from the
+  // external_scholarships catalog). Falls back to the representative card.
+  const { data: scholarshipData } = useQuery({
+    queryKey: ["launcher-scholarships"],
+    queryFn: () => searchScholarships({ page_size: 8 }),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+  const scholarships = ((scholarshipData?.items ?? []) as Scholarship[])
+    .filter((s) => s.award_amount)
+    .slice(0, 2);
+
+  const qc = useQueryClient();
   const createMut = useMutation({
     mutationFn: createSession,
     onSuccess: (s: ChatSession, vars) => {
+      // Refresh the rail so the newly named + auto-filed session appears.
+      void qc.invalidateQueries({ queryKey: ["chat-tree"] });
       onSessionStart(s.id, vars.origin_kind, vars.origin_ref ?? undefined);
     },
   });
@@ -478,46 +428,75 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
           </h2>
         </div>
 
-        {/* Input bar */}
-        <div className="flex items-center gap-3 border border-border rounded-[14px] bg-card px-4 py-[13px] shadow-[0_1px_2px_rgba(10,20,40,.06),0_1px_1px_rgba(10,20,40,.04)] mb-9">
-          {/* Upload "+" — borderless icon, not a boxed button */}
-          <button
-            ref={uploadBtnRef}
-            aria-label="Upload or attach"
-            onClick={() => setUploadOpen((v) => !v)}
-            className="w-[34px] h-[34px] rounded-[9px] flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-secondary transition-colors shrink-0"
-          >
-            <Plus size={21} strokeWidth={1.8} />
-          </button>
+        {/* Input bar + the "+" upload panel */}
+        <div className="mb-9">
+          <div className="flex items-center gap-3 border border-border rounded-[14px] bg-card px-4 py-[13px] shadow-[0_1px_2px_rgba(10,20,40,.06),0_1px_1px_rgba(10,20,40,.04)]">
+            {/* Upload "+" — borderless icon; toggles the inline file-ingest panel */}
+            <button
+              aria-label="Add a file for Uni to read"
+              aria-expanded={uploadOpen}
+              onClick={() => setUploadOpen((v) => !v)}
+              className={`w-[34px] h-[34px] rounded-[9px] flex items-center justify-center transition-colors shrink-0 ${
+                uploadOpen
+                  ? "bg-muted text-secondary"
+                  : "text-muted-foreground hover:bg-muted hover:text-secondary"
+              }`}
+            >
+              <Plus size={21} strokeWidth={1.8} />
+            </button>
 
-          {uploadOpen && uploadBtnRef.current && (
-            <UploadMenu
-              anchor={uploadBtnRef.current.getBoundingClientRect()}
-              onClose={() => setUploadOpen(false)}
+            <input
+              type="text"
+              placeholder="Ask me anything, or pick something below"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmit();
+              }}
+              className="flex-1 border-none outline-none text-[16px] bg-transparent text-foreground placeholder:text-muted-foreground"
+              aria-label="Start a new session"
             />
+
+            {/* Send button */}
+            <button
+              aria-label="Send"
+              onClick={handleSubmit}
+              disabled={!inputValue.trim() || createMut.isPending}
+              className="w-9 h-9 rounded-[10px] bg-secondary text-white flex items-center justify-center shrink-0 transition-opacity disabled:opacity-40 hover:bg-secondary/90"
+            >
+              <ArrowUp size={18} strokeWidth={2.2} />
+            </button>
+          </div>
+
+          {/* Inline file-ingest — the real material-ingest flow (spec §6): pick a
+              file → Uni reads it → review → confirm → My Space. Reuses the same
+              component as the conversation; never fabricates. */}
+          {uploadOpen && (
+            <div className="mt-2 rounded-[14px] border border-border bg-card p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[13px] font-bold text-foreground">
+                  Add a resume, transcript, or CV — Uni reads it into My Space
+                </p>
+                <button
+                  onClick={() => setUploadOpen(false)}
+                  aria-label="Close upload"
+                  className="text-[12px] font-semibold text-muted-foreground hover:text-foreground"
+                >
+                  Close
+                </button>
+              </div>
+              <MaterialUpload
+                onApplied={(result) => {
+                  const n = Object.values(result.counts || {}).reduce((a, b) => a + b, 0);
+                  void qc.invalidateQueries({ queryKey: ["discovery", "livingProfile"] });
+                  void qc.invalidateQueries({ queryKey: ["goals"] });
+                  void qc.invalidateQueries({ queryKey: ["needs"] });
+                  void qc.invalidateQueries({ queryKey: ["identity"] });
+                  showToast(`Added ${n} items from your file to My Space.`, "success");
+                }}
+              />
+            </div>
           )}
-
-          <input
-            type="text"
-            placeholder="Ask me anything, or pick something below"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSubmit();
-            }}
-            className="flex-1 border-none outline-none text-[16px] bg-transparent text-foreground placeholder:text-muted-foreground"
-            aria-label="Start a new session"
-          />
-
-          {/* Send button */}
-          <button
-            aria-label="Send"
-            onClick={handleSubmit}
-            disabled={!inputValue.trim() || createMut.isPending}
-            className="w-9 h-9 rounded-[10px] bg-secondary text-white flex items-center justify-center shrink-0 transition-opacity disabled:opacity-40 hover:bg-secondary/90"
-          >
-            <ArrowUp size={18} strokeWidth={2.2} />
-          </button>
         </div>
 
         {/* Continue — most-recent session */}
@@ -559,40 +538,57 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
           </div>
         </section>
 
-        {/* Academic — representative visual cards */}
+        {/* Academic — real programs that carry a campus photo; representative
+            cards are the fallback when none are available yet. */}
         <section className="mb-7" aria-label="Academic">
           <EyebrowLabel>Academic</EyebrowLabel>
-          {/* NOTE: Static/representative cards — real school/program/event data
-              from the Discover endpoints will be wired in a later slice. */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {ACADEMIC_CARDS.map((c) => (
-              <VisualCard
-                key={c.id}
-                title={c.title}
-                subtitle={"subtitle" in c ? c.subtitle : undefined}
-                tag={"tag" in c ? c.tag : undefined}
-                imgUrl={c.imgUrl}
-                imgCredit={c.imgCredit}
-                onClick={() =>
-                  startSession(c.title, c.topic ?? undefined)
-                }
-              />
-            ))}
+            {academicPrograms.length >= 2
+              ? academicPrograms.map((p) => (
+                  <VisualCard
+                    key={p.id}
+                    title={p.institution_name}
+                    subtitle={p.program_name}
+                    imgUrl={p.institution_image_url as string}
+                    onClick={() => startSession(p.institution_name, "schools")}
+                  />
+                ))
+              : ACADEMIC_CARDS.map((c) => (
+                  <VisualCard
+                    key={c.id}
+                    title={c.title}
+                    subtitle={"subtitle" in c ? c.subtitle : undefined}
+                    tag={"tag" in c ? c.tag : undefined}
+                    imgUrl={c.imgUrl}
+                    imgCredit={c.imgCredit}
+                    onClick={() => startSession(c.title, c.topic ?? undefined)}
+                  />
+                ))}
           </div>
         </section>
 
-        {/* Financial — scholarship card + action cards */}
+        {/* Financial — real scholarships (name + amount) then funding guides. */}
         <section className="mb-7" aria-label="Financial">
           <EyebrowLabel>Financial</EyebrowLabel>
-          {/* NOTE: Static/representative — real scholarship data from the
-              Discover/Financial endpoint will be wired in a later slice. */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <ScholarshipCard
-              name="Merit award — you may qualify"
-              amount="$5,000/yr"
-              note="Scholarships matched to your profile"
-              onClick={() => startSession("Scholarships you qualify for", "needs")}
-            />
+            {scholarships.length > 0 ? (
+              scholarships.map((s) => (
+                <ScholarshipCard
+                  key={s.id}
+                  name={s.name}
+                  amount={formatAmount(s.award_amount as string)}
+                  note={s.organization ?? s.level_of_study ?? "Scholarship"}
+                  onClick={() => startSession(`Scholarship — ${s.name}`, "needs")}
+                />
+              ))
+            ) : (
+              <ScholarshipCard
+                name="Scholarships for you"
+                amount="Browse"
+                note="Matched to your profile"
+                onClick={() => startSession("Scholarships you qualify for", "needs")}
+              />
+            )}
             <ActionCard
               icon={<BookOpen size={20} strokeWidth={1.7} />}
               title="Find more scholarships"
@@ -604,11 +600,13 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
               title="How funding works"
               onClick={() => startSession("How funding works", "needs")}
             />
-            <ActionCard
-              icon={<Scale size={20} strokeWidth={1.7} />}
-              title="Estimate your net cost"
-              onClick={() => startSession("Estimate your net cost", "needs")}
-            />
+            {scholarships.length < 2 && (
+              <ActionCard
+                icon={<Scale size={20} strokeWidth={1.7} />}
+                title="Estimate your net cost"
+                onClick={() => startSession("Estimate your net cost", "needs")}
+              />
+            )}
           </div>
         </section>
 
@@ -642,25 +640,31 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
           </div>
         </section>
 
-        {/* Peers — peer avatar cards */}
+        {/* Peers — honest action cards. Real peers are privacy-gated and
+            k-anonymized (no photos), so we never fabricate faces here; these
+            open a Connect session that surfaces real, opted-in peers. */}
         <section className="mb-7" aria-label="Peers">
           <EyebrowLabel>Peers</EyebrowLabel>
-          {/* NOTE: Static/representative — real peer data from the Connect
-              endpoints will be wired in a later slice. */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {PEER_CARDS.map((p) => (
-              <PeerCard
-                key={p.id}
-                name={p.name}
-                program={p.program}
-                imgUrl={p.imgUrl}
-                onClick={() => startSession(`Connect with ${p.name}`, "connect")}
-              />
-            ))}
             <ActionCard
               icon={<Users size={20} strokeWidth={1.7} />}
-              title="Find more peers"
-              onClick={() => startSession("Find more peers", "connect")}
+              title="Peers who share your programs"
+              onClick={() => startSession("Peers who share my programs", "connect")}
+            />
+            <ActionCard
+              icon={<Compass size={20} strokeWidth={1.7} />}
+              title="See who's applying where"
+              onClick={() => startSession("See who's applying where", "connect")}
+            />
+            <ActionCard
+              icon={<BookOpen size={20} strokeWidth={1.7} />}
+              title="Ask a current student"
+              onClick={() => startSession("Ask a current student", "connect")}
+            />
+            <ActionCard
+              icon={<Heart size={20} strokeWidth={1.7} />}
+              title="Find your people"
+              onClick={() => startSession("Find peers like me", "connect")}
             />
           </div>
         </section>

@@ -5,7 +5,6 @@
  */
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import clsx from 'clsx'
 import { ArrowUp, Paperclip } from 'lucide-react'
 
 import {
@@ -18,6 +17,7 @@ import {
 } from '../../../api/discovery'
 import { getLivingProfile } from '../../../api/livingProfile'
 import type { LivingProfile } from '../../../api/livingProfile'
+import { updateSession as updateChatSession } from '../../../api/chatSessions'
 import Button from '../../../components/ui/Button'
 import { useAuthStore } from '../../../stores/auth-store'
 import { showToast } from '../../../stores/toast-store'
@@ -30,6 +30,7 @@ import type {
 import MaterialUpload from '../../../components/student/MaterialUpload'
 import EnrichWidget from '../../../components/student/EnrichWidget'
 import AnswerChoices from './AnswerChoices'
+import UniOrb, { type OrbState } from '../../../components/student/UniOrb'
 import FirstLookCard from './FirstLookCard'
 import NoticedCard from './NoticedCard'
 import { attachRefs, noticedItemsFromSignals } from './noticed'
@@ -63,23 +64,31 @@ const QUICK_REPLIES = [
   'You ask me',
 ] as const
 
-function UniBubble({ message }: { message: DiscoveryMessage }) {
+function UniBubble({
+  message,
+  orbState = 'idle',
+}: {
+  message: DiscoveryMessage
+  orbState?: OrbState
+}) {
   const isStudent = message.role === 'student'
-  return (
-    <div className={clsx('flex gap-2.5', isStudent ? 'justify-end' : 'justify-start')}>
-      {!isStudent && (
-        <div className="h-7 w-7 rounded-full bg-secondary text-white flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold">
-          U
+
+  // Student — a soft cobalt-tint bubble, right-aligned (never dark/black). (§5)
+  if (isStudent) {
+    return (
+      <div className="flex justify-end">
+        <div className="rounded-2xl rounded-br-sm bg-secondary/10 border border-secondary/15 px-3.5 py-2 text-sm whitespace-pre-wrap break-words max-w-[80%] leading-relaxed text-foreground">
+          {message.content}
         </div>
-      )}
-      <div
-        className={clsx(
-          'rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words max-w-[80%] leading-relaxed',
-          isStudent
-            ? 'bg-secondary text-white rounded-br-sm'
-            : 'bg-card border border-border text-foreground rounded-bl-sm',
-        )}
-      >
+      </div>
+    )
+  }
+
+  // Advisor — the orb + the message as plain text (no bubble), counselor voice. (§5)
+  return (
+    <div className="flex gap-2.5 justify-start">
+      <UniOrb state={orbState} className="mt-0.5" />
+      <div className="pt-0.5 text-sm whitespace-pre-wrap break-words max-w-[80%] leading-relaxed text-foreground">
         {message.content}
       </div>
     </div>
@@ -92,6 +101,8 @@ export default function UniConversation({
   guided = false,
   onReady,
   prefill,
+  conversationSessionId = null,
+  chatSessionId = null,
 }: {
   /** Living-profile drawer open state (the trigger lives in DiscoverHomePage). */
   profileOpen?: boolean
@@ -102,6 +113,15 @@ export default function UniConversation({
   onReady?: (api: { ask: (text: string) => void }) => void
   /** Cross-sell hand-off question (from /s?prefill=…) — sent as the opening turn. */
   prefill?: string
+  /** Chat-tab resume: the discovery thread bound to the open chat session
+   *  (null until its first turn). When set, this thread loads instead of the
+   *  global most-recent one. The component should be keyed by chat session so a
+   *  switch remounts with the right thread. */
+  conversationSessionId?: string | null
+  /** The open chat session's id. When set, the conversation is bound to it:
+   *  it never grabs the global most-recent thread, and the first turn writes the
+   *  new thread id back onto the chat session (so reload resumes it). */
+  chatSessionId?: string | null
 } = {}) {
   const qc = useQueryClient()
   const user = useAuthStore(s => s.user)
@@ -109,7 +129,11 @@ export default function UniConversation({
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [draft, setDraft] = useState('')
   const [showUpload, setShowUpload] = useState(false)
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  // When bound to a chat session, start on its thread (null for a fresh one).
+  // ChatTabShell keys this component by chat session, so a switch remounts and
+  // re-seeds from the right thread.
+  const boundToChat = chatSessionId != null
+  const [sessionId, setSessionId] = useState<string | null>(conversationSessionId)
   // The student can wave off Uni's handoff offer; it re-surfaces after the next
   // turn (reset in the mutation's onSuccess).
   const [handoffDismissed, setHandoffDismissed] = useState(false)
@@ -144,9 +168,31 @@ export default function UniConversation({
     [sessions],
   )
   useEffect(() => {
+    if (boundToChat) return // bound to a chat session — never grab the global thread
     if (sessionId) return
     if (resolvedSessionId) setSessionId(resolvedSessionId)
-  }, [resolvedSessionId, sessionId])
+  }, [resolvedSessionId, sessionId, boundToChat])
+
+  // The thread a turn should resolve to before creating a new one. When bound to
+  // a chat session we never fall back to the global most-recent thread.
+  const baseSessionId = () => sessionId ?? (boundToChat ? null : resolvedSessionId)
+
+  // Create a fresh discovery thread and, when bound, write its id back onto the
+  // chat session so a later reload resumes this exact thread. Binding is
+  // best-effort — a failure never blocks the turn.
+  const createThread = async (): Promise<string> => {
+    const created = await startUnifiedSession()
+    qc.invalidateQueries({ queryKey: ['discovery', 'sessions', 'unified'] })
+    if (boundToChat && chatSessionId) {
+      try {
+        await updateChatSession(chatSessionId, { conversation_session_id: created.id })
+        qc.invalidateQueries({ queryKey: ['chat-tree'] })
+      } catch {
+        // non-fatal: the turn proceeds; binding will retry on the next thread.
+      }
+    }
+    return created.id
+  }
 
   const { data: detail } = useQuery<DiscoverySessionDetail | null>({
     queryKey: ['discovery', 'session', sessionId],
@@ -204,12 +250,8 @@ export default function UniConversation({
       // Reuse the session already loaded from listSessions before creating a new
       // one — relying solely on `sessionId` state can race the effect that binds
       // it, splitting the conversation across two sessions.
-      let sid = sessionId ?? resolvedSessionId
-      if (!sid) {
-        const created = await startUnifiedSession()
-        sid = created.id
-        qc.invalidateQueries({ queryKey: ['discovery', 'sessions', 'unified'] })
-      }
+      let sid = baseSessionId()
+      if (!sid) sid = await createThread()
       if (sid !== sessionId) setSessionId(sid)
       return appendMessage(sid, { role: 'student', content })
     },
@@ -248,7 +290,7 @@ export default function UniConversation({
   // token-by-token. On any connection failure with no persisted student echo it
   // falls back to the non-streaming mutation (no duplicate turn).
   const sendStreaming = async (text: string) => {
-    let sid = sessionId ?? resolvedSessionId
+    let sid = baseSessionId()
     let studentEchoed = false
     let finished = false
     setStreaming(true)
@@ -274,11 +316,7 @@ export default function UniConversation({
       setStreamText('')
     }
     try {
-      if (!sid) {
-        const created = await startUnifiedSession()
-        sid = created.id
-        qc.invalidateQueries({ queryKey: ['discovery', 'sessions', 'unified'] })
-      }
+      if (!sid) sid = await createThread()
       if (sid !== sessionId) setSessionId(sid)
       await streamDiscoveryMessage(
         sid,
@@ -366,7 +404,7 @@ export default function UniConversation({
   // Uni speaks first — stream the proactive opener (no student bubble). On
   // failure, fall back to the static greeting.
   const sendOpener = async () => {
-    let sid = sessionId ?? resolvedSessionId
+    let sid = baseSessionId()
     let finished = false
     setStreaming(true)
     setStreamText('')
@@ -381,11 +419,7 @@ export default function UniConversation({
       setStreamText('')
     }
     try {
-      if (!sid) {
-        const created = await startUnifiedSession()
-        sid = created.id
-        qc.invalidateQueries({ queryKey: ['discovery', 'sessions', 'unified'] })
-      }
+      if (!sid) sid = await createThread()
       if (sid !== sessionId) setSessionId(sid)
       await streamDiscoveryOpener(
         {
@@ -456,10 +490,8 @@ export default function UniConversation({
           // (reduced motion / no ReadableStream) or it failed. Normally Uni's
           // dynamic opener streams in instead (she speaks first).
           <div className="flex gap-2.5 py-6">
-            <div className="h-7 w-7 rounded-full bg-secondary text-white flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold">
-              U
-            </div>
-            <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-sm leading-relaxed text-foreground max-w-[80%]">
+            <UniOrb className="mt-0.5" />
+            <div className="pt-0.5 text-sm leading-relaxed text-foreground max-w-[80%]">
               {firstName ? `Hi ${firstName} — ` : 'Hi — '}I'm Uni, your counselor for this. My
               job is to help you find where you'll genuinely thrive, not just where you can get
               in. There are no wrong answers here; we're just getting to know you.
@@ -499,10 +531,8 @@ export default function UniConversation({
         {streaming && streamStudent && <UniBubble message={streamStudent} />}
         {streaming && streamText && (
           <div className="flex justify-start gap-2.5">
-            <div className="h-7 w-7 rounded-full bg-secondary text-white flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold">
-              U
-            </div>
-            <div className="rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words max-w-[80%] leading-relaxed bg-card border border-border text-foreground rounded-bl-sm">
+            <UniOrb state="responding" className="mt-0.5" />
+            <div className="pt-0.5 text-sm whitespace-pre-wrap break-words max-w-[80%] leading-relaxed text-foreground">
               {streamText}
               <span className="ml-0.5 inline-block h-3.5 w-px align-middle bg-secondary motion-safe:animate-pulse" />
             </div>
@@ -512,23 +542,19 @@ export default function UniConversation({
         {(turnMut.isPending ||
           (streaming && !streamText) ||
           (isEmpty && canStream && !openerFailed && !streamText)) && (
-          <div className="flex justify-start gap-2.5">
-            <div className="h-7 w-7 rounded-full bg-secondary text-white flex items-center justify-center shrink-0 text-xs font-semibold">
-              U
-            </div>
-            <div className="rounded-2xl px-3.5 py-2 bg-card border border-border rounded-bl-sm">
-              <span className="inline-flex gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse" />
-                <span
-                  className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse"
-                  style={{ animationDelay: '150ms' }}
-                />
-                <span
-                  className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse"
-                  style={{ animationDelay: '300ms' }}
-                />
-              </span>
-            </div>
+          <div className="flex items-center justify-start gap-2.5">
+            <UniOrb state="thinking" />
+            <span className="inline-flex gap-1 pt-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse" />
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse"
+                style={{ animationDelay: '150ms' }}
+              />
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse"
+                style={{ animationDelay: '300ms' }}
+              />
+            </span>
           </div>
         )}
 

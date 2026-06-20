@@ -1044,6 +1044,142 @@ _FIELD_OVERRIDE: dict[str, str] = {
     "bioethics": "Bioethics",
     "epidemiology": "Epidemiology",
     "biostatistics": "Biostatistics",
+    # ── Scrape-restored names (REPAIR_BACKLOG CRITICAL #1) ──────────────────────
+    # The bulletin scrape dropped conjunctions, commas, parentheses, and grade-band
+    # dashes from many multi-field / professional-certification titles, so the slug
+    # derivation produced space-mashed names ("Economics Computer Science", "Teaching
+    # Chemistry 7 12"). Each entry below restores the official NYU Bulletin title,
+    # verified against the program's own bulletin page / first-party description.
+    # CAS joint majors (two departments — a real, distinct degree, not a concentration).
+    "anthropology-classical-civilization": "Anthropology and Classical Civilization",
+    "anthropology-linguistics": "Anthropology and Linguistics",
+    "french-linguistics": "French and Linguistics",
+    "german-linguistics": "German and Linguistics",
+    "italian-linguistics": "Italian and Linguistics",
+    "spanish-linguistics": "Spanish and Linguistics",
+    "classical-civilization-hellenic-studies": "Classical Civilization and Hellenic Studies",
+    "classics-art-history": "Classics and Art History",
+    "dramatic-literature-theatre-history-cinema": "Dramatic Literature, Theatre History, and Cinema",
+    "economics-computer-science": "Economics and Computer Science",
+    "economics-mathematics": "Economics and Mathematics",
+    "language-mind": "Language and Mind",
+    "mathematics-computer-science": "Mathematics and Computer Science",
+    "mathematics-physics": "Mathematics and Physics",
+    "medieval-renaissance-studies": "Medieval and Renaissance Studies",
+    "european-mediterranean-studies": "European and Mediterranean Studies",
+    "asian-pacific-american-studies": "Asian/Pacific/American Studies",
+    "urban-design-architecture-studies": "Urban Design and Architecture Studies",
+    "urban-studies-anthropology": "Urban Studies and Anthropology",
+    "urban-studies-history": "Urban Studies and History",
+    "urban-studies-social-cultural-analysis": "Urban Studies and Social and Cultural Analysis",
+    "urban-studies-sociology": "Urban Studies and Sociology",
+    # CAS / Global Public Health combined majors.
+    "global-public-health-anthropology": "Global Public Health and Anthropology",
+    "global-public-health-history": "Global Public Health and History",
+    "global-public-health-sociology": "Global Public Health and Sociology",
+    "global-public-health-science": "Global Public Health and Science",
+    "global-public-health-applied-psychology": "Global Public Health and Applied Psychology",
+    "global-public-health-communicative-sciences-disorders": "Global Public Health and Communicative Sciences and Disorders",
+    "global-public-health-food-studies": "Global Public Health and Food Studies",
+    "global-public-health-media-culture-communication": "Global Public Health and Media, Culture, and Communication",
+    "global-public-health-nursing": "Global Public Health and Nursing",
+    "global-public-health-nutrition-dietetics": "Global Public Health and Nutrition and Dietetics",
+    "global-public-health-social-work": "Global Public Health and Social Work",
+    # Stern (Business and Political Economy; Business, Technology and Entrepreneurship).
+    "business-political-economy": "Business and Political Economy",
+    "business-technology-entrepreneurship": "Business, Technology and Entrepreneurship",
+    # Stern / cross-school graduate.
+    "computing-entrepreneurship-innovation": "Computing, Entrepreneurship, and Innovation",
+    "cybersecurity-risk-strategy": "Cybersecurity Risk and Strategy",
+    "health-law-strategy": "Health Law and Strategy",
+    "health-wellbeing-studies": "Health and Wellbeing Studies",
+    # CAS / GSAS humanities and social-science master's & doctoral.
+    "archives-public-history": "Archives and Public History",
+    "creative-writing-spanish": "Creative Writing in Spanish",
+    "german-thought-literature": "German Thought and Literature",
+    "historical-sustainable-architecture": "Historical and Sustainable Architecture",
+    "irish-american-studies": "Irish and Irish American Studies",
+    "applied-linguistics-multilingual-education": "Applied Linguistics and Multilingual Education",
+    "psychology-social-intervention": "Psychology and Social Intervention",
+    "statistics-computational-social-science": "Statistics and Computational Social Science",
+    "music-performance-composition": "Music Performance and Composition",
+    "music-performance-piano": "Piano Performance",
+    "research-occupational-therapy": "Research in Occupational Therapy",
+    "research-physical-therapy": "Research in Physical Therapy",
+    # Joint PhDs (Institute of French Studies; Department of History).
+    "french-studies-anthropology": "French Studies and Anthropology",
+    "french-studies-french": "French Studies and French",
+    "french-studies-history": "French Studies and History",
+    "hebrew-judaic-studies-history": "Hebrew and Judaic Studies and History",
+    "history-middle-eastern-studies": "History and Middle Eastern Studies",
+    # Carter Journalism Institute dual-degree master's (Journalism + area studies).
+    "journalism-africana-studies": "Journalism and Africana Studies",
+    "journalism-east-asian-studies": "Journalism and East Asian Studies",
+    "journalism-european-mediterranean-studies": "Journalism and European and Mediterranean Studies",
+    "journalism-french-studies": "Journalism and French Studies",
+    "journalism-international-relations": "Journalism and International Relations",
+    "journalism-latin-american-caribbean-studies": "Journalism and Latin American and Caribbean Studies",
+    "journalism-near-eastern-studies": "Journalism and Near Eastern Studies",
+    "journalism-russian-slavic-studies": "Journalism and Russian and Slavic Studies",
+    # Law (LL.M. specializations).
+    "competition-innovation-information-law": "Competition, Innovation, and Information Law",
+    "environmental-energy-law": "Environmental and Energy Law",
+    "international-business-regulation-litigation-arbitration": "International Business Regulation, Litigation, and Arbitration",
+    # Nursing (Meyers) — restore the parenthetical pathway and the pediatric NP foci.
+    "nursing-accelerated-15-month": "Nursing (Accelerated 15-Month)",
+    "nursing-traditional-4-year": "Nursing (Traditional 4-Year)",
+    "pediatrics-primary-care-nurse-practitioner": "Pediatrics Primary Care Nurse Practitioner",
+    "pediatrics-nurse-practitioner-primary-care-acute": "Pediatrics Nurse Practitioner Primary Care/Acute Care",
+    # Steinhardt education — dual-certification titles verbatim from the NYU Bulletin
+    # headings (the BS pages use a slash title, the MA pages a slash + colon).
+    "childhood-education-childhood-special-education": "Childhood Education/Childhood Special Education",
+    "childhood-education-special-education-childhood": "Childhood Education/Special Education: Childhood",
+    # early-childhood-education-special has BOTH a BS (slash) and an MA (slash + colon) row;
+    # the base override is the BS heading and _DISAMBIG_NAMES sets the MA row's heading.
+    "early-childhood-education-special": "Early Childhood Education/Early Childhood Special Education",
+    "special-education-early-childhood": "Special Education: Early Childhood",
+    "specialized-studies-education": "Specialized Studies in Education",
+    "educational-communications-technology": "Educational Communications and Technology",
+    "english-education-secondary-college": "English Education (Secondary and College)",
+    "bilingual-education-teachers": "Bilingual Education for Teachers",
+    # Steinhardt education — teacher-certification titles (subject + grade band), verbatim
+    # from the NYU Bulletin headings ("Teaching Chemistry 7-12", "Teachers of English 7-12").
+    "teaching-biology-7-12": "Teaching Biology 7-12",
+    "teaching-chemistry-7-12": "Teaching Chemistry 7-12",
+    "teaching-earth-science-7-12": "Teaching Earth Science 7-12",
+    "teaching-english-712": "Teaching English 7-12",
+    "teaching-mathematics-712": "Teaching Mathematics 7-12",
+    "teaching-physics-7-12": "Teaching Physics 7-12",
+    "teaching-social-studies-712": "Teaching Social Studies 7-12",
+    "teaching-world-language-7-12-chinese": "Teaching a World Language 7-12: Chinese",
+    "teaching-world-language-7-12-french": "Teaching a World Language 7-12: French",
+    "teaching-world-language-7-12-italian": "Teaching a World Language 7-12: Italian",
+    "teaching-world-language-7-12-japanese": "Teaching a World Language 7-12: Japanese",
+    "teaching-world-language-7-12-spanish": "Teaching a World Language 7-12: Spanish",
+    "teachers-english-7-12": "Teachers of English 7-12",
+    "teachers-mathematics-7-12": "Teachers of Mathematics 7-12",
+    "teaching-art-all-grades": "Teaching Art, All Grades",
+    "teaching-dance-all-grades": "Teaching Dance, All Grades",
+    "teacher-dance-all-grades": "Teacher of Dance, All Grades",
+    "teaching-dance-professions": "Teaching Dance in the Professions",
+    "teaching-english-7-12-5-6-extension-students-disabilities-7-12-generalist": "Teaching English 7-12 with 5-6 Extension/Students with Disabilities 7-12 Generalist",
+    "teaching-social-studies-7-12-5-6-extension-students-disabilities-7-12-generalist": "Teaching Social Studies 7-12 with 5-6 Extension/Students with Disabilities 7-12 Generalist",
+    "teaching-english-language-literature-college": "Teachers of English Language and Literature in College",
+    "teaching-english-speakers-other-languages": "Teaching English to Speakers of Other Languages (TESOL)",
+    "teaching-english-speakers-other-languages-all-grades": "Teaching English to Speakers of Other Languages, All Grades",
+    "teaching-world-languages-7-12-tesol-all-grades": "Teaching World Languages 7-12/TESOL (All Grades)",
+    "world-language-education": "World Language Education",
+    # Steinhardt educational theatre (dual-certification + colleges/communities).
+    "educational-theatre-all-grades": "Educational Theatre, All Grades",
+    "educational-theatre-all-grades-english-712": "Educational Theatre, All Grades, and English, 7-12",
+    "educational-theatre-all-grades-social-studies-712": "Educational Theatre, All Grades, and Social Studies, 7-12",
+    "educational-theatre-colleges-communities": "Educational Theatre in Colleges and Communities",
+    # Steinhardt MAT (Teacher Residency / Transformational Teaching) field labels.
+    "transformational-teaching-middle-high-schools": "Transformational Teaching in Middle and High Schools",
+    "transformational-teaching-students-disabilities-computer-science": "Transformational Teaching Students with Disabilities and Computer Science",
+    # Tisch / Steinhardt arts.
+    "drama-therapy-alternate-licensure": "Drama Therapy (Alternate Licensure)",
+    "theatre-social-civic-engagement": "Theatre for Social and Civic Engagement",
 }
 
 # Slug → (program_name, degree_type, department) for degrees whose name does not follow the
@@ -1285,6 +1421,9 @@ _DISAMBIG_NAMES: dict[str, str] = {
     "nyu-occupational-therapy-otd": "Doctor of Occupational Therapy",
     "nyu-occupational-therapy-practicing-occupational-therapists-otd": "Doctor of Occupational Therapy (Post-Professional)",
     "nyu-educational-theatre-colleges-communities-phd": "Doctor of Philosophy in Educational Theatre in Colleges and Communities",
+    # early-childhood-education-special has both a BS (slash heading, set via _FIELD_OVERRIDE)
+    # and an MA (slash + colon heading) — the MA row takes its own NYU Bulletin heading here.
+    "nyu-early-childhood-education-special-ma": "Master of Arts in Early Childhood Education/Special Education: Early Childhood",
 }
 
 _LEVEL_SUFFIX: dict[str, str] = {
@@ -1499,6 +1638,11 @@ _RESEARCHED_DESCRIPTIONS: dict[str, str] = {
     "nyu-psychiatric-mental-health-nurse-practitioner-dnp": "This Doctor of Nursing Practice specialization prepares psychiatric-mental health nurse practitioners to deliver care across the lifespan through individual, group, family, and couple psychotherapy and advanced psychopharmacology, supported by extensive practicum hours. At the doctoral level it develops organizational systems leaders in healthcare policy, informatics, ethics, and quality improvement.",
     "nyu-anthropology-classical-civilization-ba": "This joint major combines the Department of Anthropology's four-field training — cultural anthropology, archaeology, linguistic anthropology, and biological anthropology — with the Department of Classics' study of the ancient Greek and Roman worlds, including their languages, literatures, art, history, and religion. Students complete required courses in both departments and apply anthropological and classical methods to the study of ancient societies.",
     "nyu-anthropology-linguistics-ba": "This joint major pairs five courses in the Department of Anthropology with five in the Department of Linguistics, bringing together cultural and linguistic anthropology and the formal study of language. Students examine anthropological and linguistic approaches to language and its role in society while building research skills across both fields.",
+    # The scrape mis-assigned the French Studies/History body to this slug; the joint
+    # PhD in French Studies and French is offered by the Institute of French Studies with
+    # the Department of French Literature, Thought, and Culture (verified at
+    # bulletins.nyu.edu/.../french-studies-french-phd/ and as.nyu.edu/.../ifs).
+    "nyu-french-studies-french-phd": "The joint PhD in French Studies and French, offered by the Institute of French Studies together with the Department of French Literature, Thought, and Culture, prepares students to integrate close literary analysis with the social-scientific study of France, Europe, and the Francophone world from the French Revolution to the present. Doctoral students chart their own course between the two units, marrying a literary research approach with a social-science one, and graduate prepared to teach both literature and civilization in French departments.",
 }
 
 

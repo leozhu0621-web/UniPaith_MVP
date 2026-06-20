@@ -5,7 +5,7 @@
  * (the Uni chat and the My Space profile import card) via the same backend.
  */
 import { useRef, useState } from 'react'
-import { Loader2, Sparkles, Upload } from 'lucide-react'
+import { Upload } from 'lucide-react'
 
 import {
   type ApplyResult,
@@ -20,6 +20,7 @@ import {
 import Button from '../ui/Button'
 import FollowUpCard from './FollowUpCard'
 import MaterialReviewCard from './MaterialReviewCard'
+import UniOrb from './UniOrb'
 
 const ACCEPT = '.pdf,.doc,.docx,.png,.jpg,.jpeg,.txt,.md'
 
@@ -109,9 +110,11 @@ export default function MaterialUpload({
       )}
 
       {phase.t === 'uploading' && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 size={14} className="animate-spin" />
-          <Sparkles size={14} className="text-secondary" /> Uni is reading your file…
+        <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
+          {/* The orb's "reading" state — a light scan sweeps it while Uni
+              ingests the file (chat-tab spec §1). */}
+          <UniOrb state="reading" size={22} />
+          Uni is reading your file…
         </div>
       )}
 

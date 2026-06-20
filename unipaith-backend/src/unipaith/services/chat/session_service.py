@@ -161,6 +161,7 @@ class ChatSessionService:
         title: str | None = None,
         pinned: bool | None = None,
         sort_order: int | None = None,
+        agent_session_id: str | None = None,
     ) -> ChatSession:
         s = await self._get_owned_session(student_id, session_id)
         if title is not None:
@@ -169,6 +170,9 @@ class ChatSessionService:
             s.pinned = pinned
         if sort_order is not None:
             s.sort_order = sort_order
+        # Bind to a conversation thread (set once on first turn; never cleared).
+        if agent_session_id is not None:
+            s.agent_session_id = agent_session_id[:64]
         await self.db.flush()
         return s
 

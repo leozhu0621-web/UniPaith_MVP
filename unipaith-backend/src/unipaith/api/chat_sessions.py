@@ -50,6 +50,9 @@ def _session(s, folder=None) -> dict:
         "folder_id": str(s.folder_id),
         "origin_kind": s.origin_kind,
         "topic_key": folder.topic_key if folder is not None else None,
+        # The discovery/conversation thread bound to this session (null until the
+        # first turn creates one). Lets the chat tab resume the right thread.
+        "conversation_session_id": s.agent_session_id,
     }
 
 
@@ -64,6 +67,9 @@ class SessionPatch(BaseModel):
     title: str | None = None
     pinned: bool | None = None
     sort_order: int | None = None
+    # Bind this session to its discovery/conversation thread (set once, on the
+    # first turn). Only ever set non-null; never cleared.
+    conversation_session_id: str | None = None
 
 
 class FolderCreate(BaseModel):
@@ -186,7 +192,12 @@ async def patch_session(
 ):
     pid = await _pid(db, user)
     s = await ChatSessionService(db).update_session(
-        pid, session_id, title=body.title, pinned=body.pinned, sort_order=body.sort_order
+        pid,
+        session_id,
+        title=body.title,
+        pinned=body.pinned,
+        sort_order=body.sort_order,
+        agent_session_id=body.conversation_session_id,
     )
     return _session(s)
 
