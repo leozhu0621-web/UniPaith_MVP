@@ -2,7 +2,7 @@ import type { ComponentType } from 'react'
 import { Link } from 'react-router-dom'
 import {
   MapPin, Users, Building2, BookOpen, BellPlus, BellRing, ChevronRight, Sprout,
-  Trophy, DollarSign, GraduationCap, Wallet,
+  Trophy, DollarSign, GraduationCap,
 } from 'lucide-react'
 import { classifyInstitution, sizeBucket, formatSetting, SIZE_OPTIONS } from '../shared/classifyInstitution'
 import { cardLinkClick, CARD_LINK_OVERLAY } from '../shared/cardLink'
@@ -75,11 +75,8 @@ export default function UniversityCard({ institution: inst, onClick, following, 
     inst.graduation_rate != null && inst.graduation_rate > 0
       ? Math.round(inst.graduation_rate * (inst.graduation_rate <= 1 ? 100 : 1))
       : null
-  const tuition = inst.tuition_annual != null && inst.tuition_annual > 0 ? inst.tuition_annual : null
-  const tuitionLabel =
-    tuition != null ? (tuition >= 1000 ? `$${Math.round(tuition / 1000)}K/yr` : `$${Math.round(tuition)}/yr`) : null
   const hasStats =
-    rank != null || acceptancePct != null || tuitionLabel != null || gradPct != null || earningsLabel != null
+    rank != null || acceptancePct != null || gradPct != null || earningsLabel != null
 
   return (
     // Stretched-link card (Ship D §4): the title <Link> overlays the whole
@@ -191,7 +188,6 @@ export default function UniversityCard({ institution: inst, onClick, following, 
                 <Badge variant="info">{acceptancePct}% accepted</Badge>
               </span>
             )}
-            {tuitionLabel && <FactPill icon={Wallet}>{tuitionLabel}</FactPill>}
             {gradPct != null && <FactPill icon={GraduationCap}>{gradPct}% grad rate</FactPill>}
             {earningsLabel && <FactPill icon={DollarSign}>{earningsLabel}</FactPill>}
           </div>
