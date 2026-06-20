@@ -16,6 +16,7 @@ import ProgramListRow from '../cards/ProgramListRow'
 import Pagination from '../../../../components/ui/Pagination'
 import ViewToggle from '../../../../components/ui/ViewToggle'
 import useBrowseView from '../../../../hooks/useBrowseView'
+import { useAppliedPrograms } from '../cards/AppStatusPill'
 import ConstraintChips from './ConstraintChips'
 import FiltersPanel from './FiltersPanel'
 import SaveSearchButton from './SaveSearchButton'
@@ -210,6 +211,8 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
   // Grid (cards) vs list (dense rows) — shared with the universities browse.
   const [view, setView] = useBrowseView()
 
+  const appliedMap = useAppliedPrograms()
+
   return (
     <section className="space-y-4" data-testid="discovery-search">
       {/* Search bar (Spec §2/§16). */}
@@ -273,25 +276,26 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
         />
       )}
 
-      {/* Toolbar — Filters (always available) · results count + Sort (when active). Spec §2/§5/§6.
-          Centered until a search is active, then split (filters left · sort right). */}
-      <div ref={resultsTopRef} className={`scroll-mt-4 flex items-center gap-3 flex-wrap ${active ? 'justify-between' : 'justify-center'}`}>
-        <div className="flex items-center gap-3">
-          <FiltersPanel filters={filters} onApply={setFilters} />
-          {active && (
+      {/* Toolbar — only once a search is active: Filters · results count · Sort ·
+          view toggle. When idle there's nothing to filter, sort, or page yet, and
+          a lone centered control read as an orphan AND collided with the
+          university-browse "Filters" below; those browse filters now own the empty
+          state (Discover review 2026-06-19). Spec §2/§5/§6. */}
+      {active && (
+        <div ref={resultsTopRef} className="scroll-mt-4 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <FiltersPanel filters={filters} onApply={setFilters} />
             <p className="text-sm text-muted-foreground" data-testid="results-count" aria-live="polite">
               {loading ? 'Searching…' : `Showing ${total} program${total === 1 ? '' : 's'}`}
             </p>
-          )}
-        </div>
-        {active && (
+          </div>
           <div className="flex items-center gap-2">
             <SaveSearchButton query={urlQuery} chips={chips} filters={filters} sort={sort} />
             <SortMenu value={sort} onChange={setSort} />
             <ViewToggle value={view} onChange={setView} />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {active ? (
         <>
@@ -360,6 +364,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
                       onEventClick={onEventClick}
                       peerCount={peerCohortByProgram?.[p.id]}
                       onPeersClick={onPeersClick}
+                      appStatus={appliedMap.get(p.id)}
                     />
                   ))}
                 </div>
@@ -378,6 +383,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
                       onView={() => navigate(`/s/programs/${p.id}`)}
                       following={followedIds?.has(p.institution_id)}
                       onToggleFollow={onToggleFollow ? () => onToggleFollow(p.institution_id) : undefined}
+                      appStatus={appliedMap.get(p.id)}
                     />
                   ))}
                 </div>

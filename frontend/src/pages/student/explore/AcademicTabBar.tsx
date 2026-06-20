@@ -53,6 +53,7 @@ export default function AcademicTabBar({
             key={s.key}
             role="tab"
             aria-selected={active}
+            aria-label={badge > 0 ? `${s.label}, ${badge} new update${badge === 1 ? '' : 's'}` : undefined}
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(s.key)}
             onKeyDown={e => onKeyDown(e, idx)}

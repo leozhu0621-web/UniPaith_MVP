@@ -11,6 +11,7 @@ import BandBadge from '../../../../components/ui/BandBadge'
 import type { Band } from '../../../../components/ui/BandBadge'
 import DualRing from '../../match/DualRing'
 import { ringFromMatch } from '../../match/ringFill'
+import AppStatusPill, { type AppStatus } from './AppStatusPill'
 import { cardLinkClick, CARD_LINK_OVERLAY } from '../shared/cardLink'
 import { degreeAbbrev, formatDuration, formatFormat, deadlineInfo } from './programFormat'
 
@@ -32,12 +33,14 @@ interface Props {
   /** Discover review 2026-06-14 #5 — k-anonymized count of peers open to connect. */
   peerCount?: number
   onPeersClick?: () => void
+  /** Discover review 2026-06-19 — real application stage for this program, if any. */
+  appStatus?: AppStatus | null
   /** Ship D §4 — real link destination for the card. Defaults to the student
       program route; public-capable callers pass their auth-aware path. */
   viewHref?: string
 }
 
-export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView, following, onToggleFollow, nextEvent, onEventClick, peerCount, onPeersClick, viewHref }: Props) {
+export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView, following, onToggleFollow, nextEvent, onEventClick, peerCount, onPeersClick, appStatus, viewHref }: Props) {
   const abbrev = degreeAbbrev(program.degree_type)
   const href = viewHref ?? `/s/programs/${program.id}`
   // Dual-score migration: prefer fitness_score, fall back to legacy match_score
@@ -122,8 +125,9 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
         {/* Band / match-ring / event row — only when there's something to show.
             The degree is already conveyed by the monogram tile and the full
             program name, so no separate degree chip here. */}
-        {(hasRing || nextEvent || (peerCount != null && peerCount > 0)) && (
+        {(hasRing || nextEvent || (peerCount != null && peerCount > 0) || appStatus) && (
           <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+            <AppStatusPill status={appStatus} />
             {bandLabel && <BandBadge band={bandLabel} />}
             {nextEvent && (
               <button
