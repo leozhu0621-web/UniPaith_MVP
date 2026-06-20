@@ -32,9 +32,17 @@ interface DiscoverHomePageProps {
    * Default: false — all existing routes are unaffected.
    */
   chatTabMode?: boolean
+  /** Chat-tab resume — the open chat session + its bound conversation thread.
+   *  Forwarded to UniConversation only in chatTabMode. */
+  chatSessionId?: string | null
+  conversationSessionId?: string | null
 }
 
-export default function DiscoverHomePage({ chatTabMode = false }: DiscoverHomePageProps) {
+export default function DiscoverHomePage({
+  chatTabMode = false,
+  chatSessionId = null,
+  conversationSessionId = null,
+}: DiscoverHomePageProps) {
   const [profileOpen, setProfileOpen] = useState(false)
   const [journeySheetOpen, setJourneySheetOpen] = useState(false)
   const askRef = useRef<(t: string) => void>(() => {})
@@ -117,6 +125,8 @@ export default function DiscoverHomePage({ chatTabMode = false }: DiscoverHomePa
                 onProfileOpenChange={setProfileOpen}
                 onReady={onReady}
                 prefill={prefill}
+                chatSessionId={chatSessionId}
+                conversationSessionId={conversationSessionId}
               />
             </Card>
           </div>

@@ -53,6 +53,27 @@ async def test_rename_and_pin_session(db_session, mock_student_user):
 
 
 @pytest.mark.asyncio
+async def test_bind_conversation_thread(db_session, mock_student_user):
+    """A session can be bound to its discovery thread via agent_session_id, and
+    a later title-only update never clears the binding (resume needs it stable)."""
+    await ensure_profile(db_session, mock_student_user)
+    pid = await _pid(db_session, mock_student_user)
+    svc = ChatSessionService(db_session)
+    s = await svc.create_session(pid, title="my goals")
+    assert s.agent_session_id is None  # unbound until the first turn
+
+    await svc.update_session(pid, s.id, agent_session_id="disc-sess-123")
+    bound = await svc._get_owned_session(pid, s.id)
+    assert bound.agent_session_id == "disc-sess-123"
+
+    # A later unrelated update (rename) must not clear the binding.
+    await svc.update_session(pid, s.id, title="My goals — v2")
+    after = await svc._get_owned_session(pid, s.id)
+    assert after.agent_session_id == "disc-sess-123"
+    assert after.title == "My goals — v2"
+
+
+@pytest.mark.asyncio
 async def test_delete_preset_folder_rejected_custom_allowed(db_session, mock_student_user):
     await ensure_profile(db_session, mock_student_user)
     pid = await _pid(db_session, mock_student_user)

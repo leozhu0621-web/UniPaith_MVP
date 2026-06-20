@@ -17,6 +17,7 @@ import {
 } from '../../../api/discovery'
 import { getLivingProfile } from '../../../api/livingProfile'
 import type { LivingProfile } from '../../../api/livingProfile'
+import { updateSession as updateChatSession } from '../../../api/chatSessions'
 import Button from '../../../components/ui/Button'
 import { useAuthStore } from '../../../stores/auth-store'
 import { showToast } from '../../../stores/toast-store'
@@ -100,6 +101,8 @@ export default function UniConversation({
   guided = false,
   onReady,
   prefill,
+  conversationSessionId = null,
+  chatSessionId = null,
 }: {
   /** Living-profile drawer open state (the trigger lives in DiscoverHomePage). */
   profileOpen?: boolean
@@ -110,6 +113,15 @@ export default function UniConversation({
   onReady?: (api: { ask: (text: string) => void }) => void
   /** Cross-sell hand-off question (from /s?prefill=…) — sent as the opening turn. */
   prefill?: string
+  /** Chat-tab resume: the discovery thread bound to the open chat session
+   *  (null until its first turn). When set, this thread loads instead of the
+   *  global most-recent one. The component should be keyed by chat session so a
+   *  switch remounts with the right thread. */
+  conversationSessionId?: string | null
+  /** The open chat session's id. When set, the conversation is bound to it:
+   *  it never grabs the global most-recent thread, and the first turn writes the
+   *  new thread id back onto the chat session (so reload resumes it). */
+  chatSessionId?: string | null
 } = {}) {
   const qc = useQueryClient()
   const user = useAuthStore(s => s.user)
@@ -117,7 +129,11 @@ export default function UniConversation({
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [draft, setDraft] = useState('')
   const [showUpload, setShowUpload] = useState(false)
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  // When bound to a chat session, start on its thread (null for a fresh one).
+  // ChatTabShell keys this component by chat session, so a switch remounts and
+  // re-seeds from the right thread.
+  const boundToChat = chatSessionId != null
+  const [sessionId, setSessionId] = useState<string | null>(conversationSessionId)
   // The student can wave off Uni's handoff offer; it re-surfaces after the next
   // turn (reset in the mutation's onSuccess).
   const [handoffDismissed, setHandoffDismissed] = useState(false)
@@ -152,9 +168,31 @@ export default function UniConversation({
     [sessions],
   )
   useEffect(() => {
+    if (boundToChat) return // bound to a chat session — never grab the global thread
     if (sessionId) return
     if (resolvedSessionId) setSessionId(resolvedSessionId)
-  }, [resolvedSessionId, sessionId])
+  }, [resolvedSessionId, sessionId, boundToChat])
+
+  // The thread a turn should resolve to before creating a new one. When bound to
+  // a chat session we never fall back to the global most-recent thread.
+  const baseSessionId = () => sessionId ?? (boundToChat ? null : resolvedSessionId)
+
+  // Create a fresh discovery thread and, when bound, write its id back onto the
+  // chat session so a later reload resumes this exact thread. Binding is
+  // best-effort — a failure never blocks the turn.
+  const createThread = async (): Promise<string> => {
+    const created = await startUnifiedSession()
+    qc.invalidateQueries({ queryKey: ['discovery', 'sessions', 'unified'] })
+    if (boundToChat && chatSessionId) {
+      try {
+        await updateChatSession(chatSessionId, { conversation_session_id: created.id })
+        qc.invalidateQueries({ queryKey: ['chat-tree'] })
+      } catch {
+        // non-fatal: the turn proceeds; binding will retry on the next thread.
+      }
+    }
+    return created.id
+  }
 
   const { data: detail } = useQuery<DiscoverySessionDetail | null>({
     queryKey: ['discovery', 'session', sessionId],
@@ -212,12 +250,8 @@ export default function UniConversation({
       // Reuse the session already loaded from listSessions before creating a new
       // one — relying solely on `sessionId` state can race the effect that binds
       // it, splitting the conversation across two sessions.
-      let sid = sessionId ?? resolvedSessionId
-      if (!sid) {
-        const created = await startUnifiedSession()
-        sid = created.id
-        qc.invalidateQueries({ queryKey: ['discovery', 'sessions', 'unified'] })
-      }
+      let sid = baseSessionId()
+      if (!sid) sid = await createThread()
       if (sid !== sessionId) setSessionId(sid)
       return appendMessage(sid, { role: 'student', content })
     },
@@ -256,7 +290,7 @@ export default function UniConversation({
   // token-by-token. On any connection failure with no persisted student echo it
   // falls back to the non-streaming mutation (no duplicate turn).
   const sendStreaming = async (text: string) => {
-    let sid = sessionId ?? resolvedSessionId
+    let sid = baseSessionId()
     let studentEchoed = false
     let finished = false
     setStreaming(true)
@@ -282,11 +316,7 @@ export default function UniConversation({
       setStreamText('')
     }
     try {
-      if (!sid) {
-        const created = await startUnifiedSession()
-        sid = created.id
-        qc.invalidateQueries({ queryKey: ['discovery', 'sessions', 'unified'] })
-      }
+      if (!sid) sid = await createThread()
       if (sid !== sessionId) setSessionId(sid)
       await streamDiscoveryMessage(
         sid,
@@ -374,7 +404,7 @@ export default function UniConversation({
   // Uni speaks first — stream the proactive opener (no student bubble). On
   // failure, fall back to the static greeting.
   const sendOpener = async () => {
-    let sid = sessionId ?? resolvedSessionId
+    let sid = baseSessionId()
     let finished = false
     setStreaming(true)
     setStreamText('')
@@ -389,11 +419,7 @@ export default function UniConversation({
       setStreamText('')
     }
     try {
-      if (!sid) {
-        const created = await startUnifiedSession()
-        sid = created.id
-        qc.invalidateQueries({ queryKey: ['discovery', 'sessions', 'unified'] })
-      }
+      if (!sid) sid = await createThread()
       if (sid !== sessionId) setSessionId(sid)
       await streamDiscoveryOpener(
         {
