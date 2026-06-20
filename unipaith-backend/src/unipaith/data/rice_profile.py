@@ -56,6 +56,7 @@ from unipaith.data.rice_field_descriptions import FIELD_DESCRIPTIONS
 from unipaith.data.rice_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
 
 INSTITUTION_NAME = "Rice University"
 
@@ -1211,8 +1212,6 @@ if _name_prefix_desc:
     _catalog_errors.append(
         f"name-prefixed descriptions on {_name_prefix_desc} programs"
     )
-from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
-
 _anti = _anti_stub_analyze(PROGRAMS)
 if not _anti.is_clean:
     _catalog_errors.append(f"anti-stub not clean: {_anti.summary()}")
