@@ -1171,6 +1171,12 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
     "bu-academics-eng-mechanical-engineering-phd": (
         "Mechanical engineering Ph.D. research at Boston University spans robotics and autonomous systems, fluid mechanics, and energy in the Department of Mechanical Engineering and the RASTIC robotics center."
     ),
+    "bu-academics-sar-public-health-bs-mph": (
+        "Sargent College and the School of Public Health jointly offer a five-year BS-to-MPH "
+        "pathway: undergraduates complete a Bachelor of Science at Sargent while taking up to "
+        "12 graduate SPH units that count toward both degrees, then finish the 48-unit M.P.H. "
+        "with a functional certificate, practicum, and integrative learning experience."
+    ),
     "bu-academics-eng-materials-science-engineering-meng": (
         "BU's M.Eng. in materials science & engineering builds applied expertise in biomaterials, nanomaterials, and characterization in the cross-departmental Division of Materials Science & Engineering, with fabrication facilities in the Photonics Center."
     ),
