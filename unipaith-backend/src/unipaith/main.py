@@ -223,6 +223,19 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
     except Exception:
         logging.getLogger("unipaith.startup").exception("Saved list schema bootstrap failed")
 
+    # Data-driven Prompt Library (widget spec §6) — materialize any missing
+    # prompts from the in-code CATALOG snapshot (insert-if-absent; a later Airtable
+    # sync owns updates). EnrichmentService falls back to the constant until this
+    # runs, so it is purely a materialization step and safe to no-op on failure.
+    try:
+        from unipaith.services.catalog_service import CatalogService
+
+        async with async_session() as db:
+            await CatalogService(db).ensure_seeded()
+            await db.commit()
+    except Exception:
+        logging.getLogger("unipaith.startup").exception("Prompt catalog seed failed")
+
     # Spec 06 §5.4 — cache-invalidation trigger for prompt/model rolls. After a
     # deploy that bumped RATIONALE_PROMPT_VERSION (also the documented hook for
     # a workhorse-model roll), purge cached rationales generated under an older
