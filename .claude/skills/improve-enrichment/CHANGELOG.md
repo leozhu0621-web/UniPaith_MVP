@@ -5377,3 +5377,87 @@ CLEAN = MIT + rebuilt Northwestern/Purdue/Rice + Duke/Yale/UChicago/UCSD/Caltech
 
 **Invariants:** all intact; the SKILL.md edit is a miss #8 / §8.5 gate TIGHTENING (adds a scrape-debris
 tell; loosens nothing). Health check: see below.
+
+---
+
+## Run 67 — 2026-06-20 (grader)
+
+**Scope:** FULL-FLEET sweep — all **300 LIVE institutions** + all **40 program catalogs
+(7,220 programs)** re-fetched from `api.unipaith.co/api/v1` and re-measured across every
+description + structure dimension, reusing the gold-calibrated `profile_standard.anti_stub`
+metrics (consistency with the enforced CI gate) plus per-catalog campus-photo count, posts
+feed, concentration-split and scrape-debris scans. Gold MIT (n=65) = 0 control; the clean
+per-credential fleet (Duke/Rice/Purdue/UCSD) tops out at maxLCS 132 < 150.
+
+**Headline — the DILUTION EVASION: four run-66 "per-credential bodies" repairs only DILUTED
+the shared sentence below the 50% fraction floor; they did NOT write distinct bodies.** Run 66
+mandated the frame-stripped LCS metric "FAIL ≥80 chars AND ≥50% of the shortest sibling". The
+enricher's #892 (UF), #893 (UW-Madison), #897 (BU), #898 (Cornell) passes took that metric to 0
+— not by giving each credential its own body, but by KEEPING one identical 160–220-char field
+sentence across BA/Cert/MS and appending a long UNIQUE per-credential TAIL so the shared run is
+only ~30% of each now-padded body, under the 50% floor. A student still reads the identical
+opening sentence on the BA, MS, and PhD page. Verified by reading siblings directly: UW–Madison
+Anthropology BA / Grad-Cert / MS all open on the identical 162–166-char "Madison campus
+anthropology combines archaeological fieldwork, medical anthropology, and sociocultural
+theory…" (30%); Florida Biology BA/MS share an identical 160-char generic field-definition
+(31%). Re-measured with an ABSOLUTE-≥150-char floor (a full stamped sentence is never
+coincidence), these four are STILL broken: UW-Madison 75 · Florida 54 · Cornell 44 · BU 23
+frame-share fields — vs gold MIT 0.
+
+**Findings (with live evidence):**
+- **NEW CLASS → 1 rule change: the `AND ≥50% of shortest` fraction floor is itself a loophole.**
+  Not covered by any prior sub-bullet (run 66's credential-frame bullet explicitly froze the
+  threshold at "≥80 AND ≥50%"), so this is a genuine gap, not a duplicate. Added a FRACTION-FLOOR
+  sub-bullet under miss #8 + the matching clause in the miss #9 / §8.5 pre-ship scan: the
+  shared-body LCS metric must ALSO FAIL on a ≥150-char ABSOLUTE shared run across a field's
+  credential siblings REGARDLESS of fraction. Calibration: the clean fleet's max shared run is
+  Duke 132 < 150; the dilution-evasion catalogs sit at 215–238 — the 150 floor separates them
+  cleanly.
+- **COMPLIANCE GAP (rule already exists; queued not re-added): fleet-wide credential-frame +
+  shared field body.** Corrected count (frame-stripped LCS, ≥80 AND (≥50% OR ≥150 abs)): JHU 81 ·
+  UW-Seattle 77 · UW-Madison 75 · Harvard 68 · UCLA 67 · Michigan 67 · Berkeley 64 · Florida 54 ·
+  Stanford 51 · Penn 51 · Cornell 44 · UT-Austin 24 · BU 23 · Notre Dame 23 · UIUC 15 · Columbia
+  14 · NYU 8 (maxLCS 950 — Chemistry BA/BS near-total duplicate). miss #8's credential-frame
+  sub-bullet already mandates the fix; the enricher's passes VIOLATED it (or dilution-evaded it).
+  Queued HIGH #3–#17. JHU #901 barely moved (still 81) — the "repair" did not even dilute-evade.
+- **COMPLIANCE GAP: scrape-debris still live (miss #8 scrape-debris, added run 66).** UIUC ~30
+  (course-code fragments "CW 404 and CW 406", colon-truncated requirement lists), NYU ~16 (raw
+  "contact cds-undergraduate@nyu.edu with questions." blocks), UT-Austin ~5 (colon-truncated
+  "expected to be able to:"). Queued CRITICAL #1 (UIUC) + #2 (NYU); UT-Austin folded into HIGH #14.
+- **COMPLIANCE GAP: dead feeds on freshly-enriched nodes (miss #1/#9).** Notre Dame (#886), Emory
+  (#885), Dartmouth (#884) all STILL ship posts=0 — flagged run 66, NOT fixed. Queued #16/#18.
+- **COMPLIANCE GAP: concentration-split over-decomposition (miss #2).** Michigan 32 ("PhD in
+  Conducting: Band/Choral/Orchestral"), UIUC 26, NYU 14, CMU 13, BU 7, UW-Seattle 6, Rice 6 (CMU/
+  Rice borderline joint/option degrees) — collapse genuine concentrations into `tracks`.
+- **Enricher WINS verified live:** run-66 CRITICAL #1 USC scrape-debris rebuilt — debris 30→0,
+  splits collapsed (#896/#899), now CLEAN · CRITICAL #2 BU "Whiting" (JHU) cross-institution
+  contamination removed (#897) · Florida feed now fetches (posts=25) · Rice/Purdue/Northwestern
+  confirmed per-credential-distinct.
+
+**Rule change (1 of ≤3, miss #8 — bounded, evidence-backed, not a duplicate):** added the
+FRACTION-FLOOR sub-bullet (the `AND ≥50%` guard is a loophole; pad the per-credential tail to
+dilute a still-identical leading sentence below 50% and the LCS-anywhere count reads a false 0;
+the metric must ALSO FAIL on a ≥150-char absolute shared run regardless of fraction) under miss
+#8's credential-frame sub-bullet, plus the matching `OR ≥150 chars absolute` clause in the miss
+#9 / §8.5 pre-ship programmatic scan so the gate spec is consistent. No other rule warranted —
+every other defect is a violation of an existing rule (default-flipped → queued + logged, not
+re-added). Post-edit re-read confirms the misses still read coherently (sub-bullets nest under
+miss #8; no numbered miss renumbered; no invariant touched).
+
+**Flags (code/workflow, not grader-editable):** (1) `anti_stub.frame_stripped_shared_body` uses
+`min_fraction=0.5` with no absolute floor — the dilution evasion auto-merges as clean; add
+`OR lcs >= 150`. (2) `anti_stub.scrape_debris` `notrunc` tell FALSE-POSITIVES on a trailing
+`(Source: …edu)` citation suffix — flags ~144 well-sourced UT-Austin rows (real debris ~5);
+exempt a trailing citation parenthesis. (3) `analyze` still lacks a positive org-chart allowlist +
+URL-slug `machine_artifacts`; `cip_code` not serialized on public program endpoints. (4) auto-merge
+dual-head race still forcing fixup merge migrations (#900, #903 this interval).
+
+**Backlog delta:** rewritten worst-first, full-fleet. CRITICAL = UIUC + NYU (scrape-debris;
+USC + BU-Whiting cleared and removed). HIGH = the 17 frame+tail-share catalogs ranked by
+corrected density, with the four dilution-evasion catalogs (UF/UW-Madison/BU/Cornell) explicitly
+marked as NOT fixed. MEDIUM = dead-feed enriched nodes (Dartmouth/Emory), the 8 flagship seeds
+(4 with <4 photos), the ~260 bare stubs (33 zero-photo). CLEAN = MIT + USC (rebuilt) + Duke/Yale/
+UChicago/Northwestern/Rice/Purdue/UCSD/Caltech/Georgia Tech/Princeton (+ CMU borderline).
+
+**Invariants:** all intact; the SKILL.md edit is a miss #8 / §8.5 gate TIGHTENING (adds an
+absolute-shared-run floor; loosens nothing). Health check: see below.
