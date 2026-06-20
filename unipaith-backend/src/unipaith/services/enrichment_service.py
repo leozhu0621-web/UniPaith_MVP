@@ -18,15 +18,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.core.exceptions import BadRequestException
 from unipaith.models.intake import StudentSignal
 from unipaith.models.student import StudentPreference
+from unipaith.services.catalog_service import CatalogService
 from unipaith.services.enrichment_planner import (
     CATALOG,
     essentials_present,
     plan_next,
 )
 from unipaith.services.intake.intake_engine_service import IntakeEngineService
-
-_CATALOG_KEYS = {f["key"] for f in CATALOG}
-_CATALOG_BY_KEY = {f["key"]: f for f in CATALOG}
 
 
 def _unwrap(v: Any) -> Any:
@@ -68,6 +66,13 @@ class EnrichmentService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
+    async def _catalog(self) -> list[dict[str, Any]]:
+        """The data-driven Prompt Library, in the planner's dict shape. Falls
+        back to the in-code CATALOG when the table is unseeded (fresh DB / tests),
+        so behavior is identical before the startup seed runs."""
+        cat = await CatalogService(self.db).load()
+        return cat or list(CATALOG)
+
     async def build_signal_state(self, student_id: UUID) -> dict[str, Any]:
         rows = (
             (
@@ -91,16 +96,18 @@ class EnrichmentService:
         self, student_id: UUID, *, limit: int = 3, section: str | None = None
     ) -> dict[str, Any]:
         state = await self.build_signal_state(student_id)
+        cat = await self._catalog()
         return {
             # `section` scopes the planner to one tab's fields; an unknown/None
             # section is unscoped (global next). `essentials_present` is always
             # global — it is the match prerequisite, not a per-tab signal.
-            "items": plan_next(state, limit=limit, section=section),
-            "essentials_present": essentials_present(state),
+            "items": plan_next(state, limit=limit, section=section, catalog=cat),
+            "essentials_present": essentials_present(state, catalog=cat),
         }
 
     async def set_value(self, student_id: UUID, field: str, value: Any) -> dict[str, Any]:
-        entry = _CATALOG_BY_KEY.get(field)
+        by_key = {e["key"]: e for e in await self._catalog()}
+        entry = by_key.get(field)
         if entry is None:
             raise BadRequestException(f"Unknown enrichment field '{field}'")
         # Type the value per the CATALOG (the Prompt Library) before it reaches the

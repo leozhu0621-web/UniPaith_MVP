@@ -147,6 +147,7 @@ from unipaith.models.pipeline import (
     PipelineConfig,
     PipelineStageSnapshot,
 )
+from unipaith.models.prompt_catalog import PromptCatalog
 from unipaith.models.prompt_library import (
     BehavioralPrompt,
     StudentBehavioralResponse,
@@ -232,6 +233,7 @@ __all__ = [
     # Uni chat-tab sessions model (2026-06-19 chat-tab redesign)
     "ChatFolder",
     "ChatSession",
+    "PromptCatalog",
     # Adaptive Intake Engine (Spec 44 — four-layer signal pipeline)
     "RawInput",
     "StudentSignal",
