@@ -38,6 +38,7 @@ from unipaith.api.major_specific import router as major_specific_router
 from unipaith.api.materials import router as materials_router
 from unipaith.api.needs import router as needs_router
 from unipaith.api.notifications import router as notifications_router
+from unipaith.api.ops_airtable import router as ops_airtable_router
 from unipaith.api.payments import router as payments_router
 from unipaith.api.programs import router as programs_router
 from unipaith.api.prompt_library import router as prompt_library_router
@@ -153,6 +154,8 @@ api_router.include_router(calendar_router)
 api_router.include_router(connect_router)
 api_router.include_router(feedback_router)
 api_router.include_router(content_ingest_router)
+# Airtable sync — ops-guarded, safe/inert when credentials are absent.
+api_router.include_router(ops_airtable_router)
 
 
 @api_router.post("/webhooks/stripe", tags=["payments"])
