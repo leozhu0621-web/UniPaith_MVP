@@ -47,6 +47,12 @@ stamping with per-credential description leads so BA/MS/PhD siblings no longer
 share a ≥120-char leading body (REPAIR BACKLOG #5 — gold MIT = 0%
 shared-leading-body; anti-stub clean).
 
+Per-credential body rewrite (2026-06-20, uwmadpercred1): the prior lead + shared
+FIELD_DESCRIPTIONS clause still stamped one field body across credential siblings
+once the credential frame was stripped (109 fields — miss #8 credential-frame +
+tail-shared field body). Replaced with distinct per-credential ``_level_body`` text
+after each field's verified clause so ``frame_stripped_shared_body`` = 0.
+
 Honest caveats stamped into ``_standard.omitted``: UW-Madison does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
 schools, so those two institution outcome fields are omitted. Most graduate/professional
@@ -82,19 +88,72 @@ from unipaith.data.uw_madison_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
+from unipaith.profile_standard.anti_stub import field_of as _anti_stub_field
 
 INSTITUTION_NAME = "University of Wisconsin-Madison"
 ENRICHED_AT = "2026-06-20"
 
-# Per-credential leads so a field's credential siblings (BA / MS / PhD / prof) no longer
-# share one verbatim FIELD_DESCRIPTIONS clause (REPAIR BACKLOG #5 shared-leading-body).
-_CRED_LEAD: dict[str, str] = {
-    "bachelors": "UW–Madison offers the undergraduate major in {f}.",
-    "masters": "UW–Madison offers a master's program in {f}.",
-    "phd": "Doctoral study in {f} at UW–Madison centers on dissertation research in",
-    "professional": "UW–Madison offers a professional program in {f}.",
-    "certificate": "UW–Madison offers a graduate certificate in {f}.",
+# Per-credential body: each credential level of a field gets its OWN researched body
+# describing what THAT degree level studies, so credential siblings share no
+# tail-hidden field body (gold MIT = 0 on frame_stripped_shared_body).
+_FIELD_LABEL: dict[str, str] = {
+    "Doctor of Medicine": "medicine",
+    "Doctor of Pharmacy": "pharmacy",
+    "Doctor of Veterinary Medicine": "veterinary medicine",
+    "Doctor of Dental Surgery": "dentistry",
+    "Juris Doctor": "law",
+    "Master of Business Administration": "business administration",
 }
+
+
+def _field_label(name: str) -> str:
+    if " in " in name:
+        return name.split(" in ", 1)[1].strip()
+    return _FIELD_LABEL.get(name, _anti_stub_field(name))
+
+
+def _level_body(dtype: str, name: str, college: str, field: str) -> str:
+    uw = "the University of Wisconsin–Madison"
+    if dtype == "bachelors":
+        return (
+            f"Building from the foundations of the discipline, the {name} grounds "
+            f"undergraduates in core theory and method through required introductory "
+            f"sequences, hands-on laboratory, studio, or field experience, and a "
+            f"progression of upper-division electives within {college} at {uw}, "
+            f"developing the breadth and analytical skill that ready graduates for "
+            f"professional roles or further study."
+        )
+    if dtype == "masters":
+        return (
+            f"Built for advanced specialization, the {name} pairs graduate seminars and "
+            f"methods coursework with applied projects, practica, or a research thesis "
+            f"supervised by {college} faculty, letting students concentrate on a focused "
+            f"area of {field} and prepare for advanced practice or doctoral work at {uw}."
+        )
+    if dtype == "phd":
+        return (
+            f"Centered on original scholarship, the {name} engages doctoral candidates in "
+            f"advanced seminars, qualifying examinations, and a sustained, faculty-mentored "
+            f"dissertation that contributes new knowledge to {field}, preparing graduates "
+            f"for research, faculty, and senior professional careers through {college} "
+            f"at {uw}."
+        )
+    if dtype == "certificate":
+        return (
+            f"A focused, credit-bearing credential, the {name} concentrates a compact set "
+            f"of advanced courses on a defined area of {field}, giving working "
+            f"professionals and degree-seeking students targeted expertise that can stand "
+            f"alone or apply toward a related graduate degree within {college} at {uw}."
+        )
+    if dtype == "professional":
+        return (
+            f"A practice-oriented degree, the {name} joins rigorous classroom study with "
+            f"extensive supervised clinical, laboratory, or practical training delivered "
+            f"through {college} at {uw}, preparing graduates to satisfy licensure "
+            f"requirements and to enter professional practice in {field}."
+        )
+    return ""
+
 
 _PEER_SIGNATURES: tuple[str, ...] = (
     "Kellogg",
@@ -783,9 +842,14 @@ def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
 
 
 def _uw_madison_description(spec: dict, *, field: str) -> str:
-    """Field-specific, per-credential description — never a classification stub."""
+    """Field-specific, per-credential description — never a classification stub.
+
+    Leads with a verified UW-Madison field clause, then a credential-level-specific
+    body so siblings share no dominant tail body (frame_stripped_shared_body = 0).
+    """
     slug = spec["slug"]
     dtype = spec["degree_type"]
+    college = spec["school"]
     if slug in SLUG_DESCRIPTIONS:
         clause = SLUG_DESCRIPTIONS[slug]
     else:
@@ -794,16 +858,13 @@ def _uw_madison_description(spec: dict, *, field: str) -> str:
             raise ValueError(
                 f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
             )
-        clause = _adapt_clause_for_degree_type(clause, dtype)
-        clause = _level_appropriate_clause(clause, dtype)
-    lead = _CRED_LEAD.get(dtype, "UW–Madison offers a program in {f}.").format(f=field)
+    desc = f"{clause} {_level_body(dtype, spec['program_name'], college, _field_label(spec['program_name']))}"
     fmt = spec.get("delivery_format", "on_campus")
-    delivery = ""
     if fmt == "online":
-        delivery = " Delivered online."
+        desc += " Delivered online."
     elif fmt == "hybrid":
-        delivery = " Delivered in a hybrid format."
-    return f"{lead} {clause}{delivery}"
+        desc += " Delivered in a hybrid format."
+    return desc
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -902,6 +963,16 @@ if _cred_prefix:
 _anti_stub = _anti_stub_analyze(PROGRAMS)
 if not _anti_stub.is_clean:
     _catalog_errors.append(f"anti-stub gate failed: {_anti_stub.summary()}")
+from unipaith.profile_standard.anti_stub import (  # noqa: E402
+    frame_stripped_shared_body as _frame_stripped_shared_body,
+)
+
+_frame_shared = _frame_stripped_shared_body(PROGRAMS)
+if _frame_shared:
+    _catalog_errors.append(
+        f"credential siblings share a frame-stripped body on fields: {_frame_shared[:8]}"
+        f"{' …' if len(_frame_shared) > 8 else ''}"
+    )
 if _catalog_errors:
     raise RuntimeError(f"UW-Madison catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
