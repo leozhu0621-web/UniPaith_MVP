@@ -83,6 +83,17 @@ export default function ChatTabShell() {
     setActiveSession(null);
   }, []);
 
+  // The discovery thread bound to the open session (null until its first turn).
+  // Looked up from the tree so opening a session resumes its own conversation.
+  const activeConversationId = (() => {
+    if (!activeSession || !treeData) return null;
+    for (const f of treeData.folders) {
+      const s = f.sessions.find((x) => x.id === activeSession.id);
+      if (s) return s.conversation_session_id ?? null;
+    }
+    return null;
+  })();
+
   return (
     <div className="flex h-full w-full min-h-0 overflow-hidden">
       {/* Left rail — hidden below lg (~860 px). 272 px wide, fixed, scrollable
@@ -125,9 +136,16 @@ export default function ChatTabShell() {
             onClose={() => setActiveSession(null)}
           />
         ) : (
-          /* Free Uni conversation — clean chat-tab mode (no journey rail / dashboard) */
+          /* Free Uni conversation — clean chat-tab mode (no journey rail /
+             dashboard). Keyed by session id so switching sessions remounts on
+             the right thread; resumes via conversationSessionId. */
           <div className="flex-1 min-w-0 overflow-y-auto">
-            <DiscoverHomePage chatTabMode />
+            <DiscoverHomePage
+              key={activeSession.id}
+              chatTabMode
+              chatSessionId={activeSession.id}
+              conversationSessionId={activeConversationId}
+            />
           </div>
         )}
       </div>
