@@ -16,7 +16,11 @@ import importlib
 
 import pytest
 
-from unipaith.profile_standard.anti_stub import analyze, machine_artifacts
+from unipaith.profile_standard.anti_stub import (
+    analyze,
+    frame_stripped_shared_body,
+    machine_artifacts,
+)
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
 # Grow this list as catalogs are genuinely de-fabricated — never weaken the assertions.
@@ -136,6 +140,77 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
     ]
     assert machine_artifacts(junk), "should flag the 'Catalog entry <hex>' junk"
     assert not machine_artifacts(clean), "must not flag a clean field-specific description"
+
+
+@pytest.mark.parametrize("name", ["mit", "rice"])
+def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
+    """A field's credential siblings (BA / MS / PhD) must not share a body once a leading
+    credential frame is stripped — the run-65 evasion the leading-prefix shared-body count
+    in ``analyze`` reads as a false 0 (REPAIR_BACKLOG #3 / miss #8 credential-frame). Gold
+    MIT and the (de-fabricated) Rice catalog both score 0: every credential level carries
+    its own researched body. A non-zero is the per-program-research invariant, not a knob.
+    """
+    shared = frame_stripped_shared_body(_programs(name))
+    assert not shared, (
+        f"{name}: credential siblings share a frame-stripped body on "
+        f"{len(shared)} field(s): {shared[:8]}{' …' if len(shared) > 8 else ''}"
+    )
+
+
+def test_frame_stripped_shared_body_detector_bites_on_the_run65_evasion():
+    """Regression guard: the detector must flag a per-credential frame prepended onto ONE
+    field body shared across the credential levels (the run-65 evasion), while passing
+    distinct per-credential bodies."""
+    body = (
+        "Rice chemistry runs organic, inorganic, physical, and chemical-biology groups "
+        "with shared instrumentation in the Dell Butcher Hall laboratories."
+    )
+    evasive = [
+        {
+            "program_name": "Bachelor of Science in Chemistry",
+            "description": f"Rice offers the undergraduate major in Chemistry. {body}",
+        },
+        {
+            "program_name": "Master of Arts in Chemistry",
+            "description": f"Rice offers a master's program in Chemistry. {body}",
+        },
+        {
+            "program_name": "Doctor of Philosophy in Chemistry",
+            "description": (
+                "Doctoral study in Chemistry at Rice centers on dissertation research in "
+                + body
+            ),
+        },
+    ]
+    clean = [
+        {
+            "program_name": "Bachelor of Science in Chemistry",
+            "description": (
+                "The chemistry B.S. builds a laboratory-intensive foundation across "
+                "organic, inorganic, physical, and analytical chemistry."
+            ),
+        },
+        {
+            "program_name": "Master of Arts in Chemistry",
+            "description": (
+                "The master's combines advanced coursework with supervised laboratory "
+                "research across the chemical sciences."
+            ),
+        },
+        {
+            "program_name": "Doctor of Philosophy in Chemistry",
+            "description": (
+                "Doctoral candidates join research groups for original, funded dissertation "
+                "work using shared instrumentation."
+            ),
+        },
+    ]
+    assert frame_stripped_shared_body(evasive), (
+        "must flag a shared field body hidden behind per-credential frames"
+    )
+    assert not frame_stripped_shared_body(clean), (
+        "must not flag genuinely distinct per-credential bodies"
+    )
 
 
 def test_analyzer_detects_a_school_blurb_stub_catalog():

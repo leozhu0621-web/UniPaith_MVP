@@ -482,3 +482,358 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "practica, and Houston Independent School District partnerships."
     ),
 }
+
+
+# Per-credential bodies for fields Rice offers at more than one degree level. A single
+# field clause (FIELD_DESCRIPTIONS above) stamped behind a swapped credential frame made a
+# field's BA/MS/PhD rows share one body (REPAIR BACKLOG #3 — credential-frame + tail-shared
+# field body, the run-65 evasion). Gold MIT gives every credential level its OWN researched
+# body (what THAT degree studies at THAT level), 0% shared. Each entry below states what the
+# bachelor's / master's / doctoral / professional program at Rice actually studies, grounded
+# in the same authoritative sources as FIELD_DESCRIPTIONS (Rice General Announcements +
+# each department's official site); no two credential siblings share an 80-character run.
+FIELD_CRED_DESCRIPTIONS: dict[str, dict[str, str]] = {
+    "Anthropology": {
+        "bachelors": (
+            "Undergraduates work across the four fields — sociocultural, biological, and "
+            "archaeological anthropology and language — in small seminars, with hands-on "
+            "Houston-area fieldwork."
+        ),
+        "masters": (
+            "The master's deepens ethnographic and archaeological method through graduate "
+            "coursework and a supervised research project drawing on Rice's Latin American "
+            "partnerships."
+        ),
+        "phd": (
+            "Doctoral candidates pursue original dissertation fieldwork in cultural "
+            "anthropology, often through long-term ethnographic projects in the Americas, "
+            "with close faculty mentorship."
+        ),
+    },
+    "Art History": {
+        "bachelors": (
+            "The undergraduate major builds close-looking and object study, anchored by "
+            "Houston museum partnerships including the Menil Collection and the Museum of "
+            "Fine Arts."
+        ),
+        "masters": (
+            "Master's students develop connoisseurship and research method through graduate "
+            "seminars and collection-based projects across Rice's Houston gallery partners."
+        ),
+        "phd": (
+            "Doctoral research culminates in a dissertation in global visual culture, "
+            "supported by Menil Collection access, archival study, and language preparation."
+        ),
+    },
+    "Biochemistry and Cell Biology": {
+        "masters": (
+            "The master's covers protein structure, cell signaling, and molecular mechanisms "
+            "through graduate coursework and supervised laboratory rotations."
+        ),
+        "phd": (
+            "Doctoral candidates conduct dissertation research on molecular and cellular "
+            "mechanisms in faculty labs, with collaborations across the adjacent Texas "
+            "Medical Center."
+        ),
+    },
+    "Bioengineering": {
+        "bachelors": (
+            "Rice's nationally ranked B.S. pairs device design, tissue engineering, and "
+            "imaging coursework with clinical immersion at the neighboring Texas Medical "
+            "Center."
+        ),
+        "phd": (
+            "Bioengineering doctoral students pursue dissertation research in areas such as "
+            "synthetic biology, biomaterials, and medical imaging, often co-mentored by "
+            "Texas Medical Center clinicians."
+        ),
+    },
+    "Business": {
+        "bachelors": (
+            "The Jones School undergraduate major covers finance, accounting, and "
+            "entrepreneurship in small cohorts, using Houston energy-sector cases."
+        ),
+        "phd": (
+            "The Jones School doctoral program trains research scholars in fields such as "
+            "accounting, finance, marketing, and organizational behavior for academic "
+            "careers."
+        ),
+    },
+    "Chemical and Biomolecular Engineering": {
+        "bachelors": (
+            "The ChBE B.S. grounds students in thermodynamics, transport, and reaction "
+            "engineering, with electives in catalysis, soft materials, and bioprocessing "
+            "tied to Gulf Coast industry."
+        ),
+        "phd": (
+            "Doctoral research spans catalysis, soft matter, and bioprocess design, often "
+            "through the Smalley-Curl Institute, culminating in an original dissertation."
+        ),
+    },
+    "Chemistry": {
+        "bachelors": (
+            "The chemistry B.S. builds a laboratory-intensive foundation across organic, "
+            "inorganic, physical, and analytical chemistry, with undergraduate research in "
+            "the Dell Butcher Hall groups."
+        ),
+        "masters": (
+            "The master's combines advanced coursework with supervised laboratory research "
+            "for students deepening expertise across the chemical sciences."
+        ),
+        "phd": (
+            "Doctoral candidates join organic, inorganic, physical, or chemical-biology "
+            "research groups for original, funded dissertation work using shared "
+            "instrumentation."
+        ),
+    },
+    "Civil and Environmental Engineering": {
+        "bachelors": (
+            "Rice's CEE undergraduate degree covers structural engineering, hydrology, and "
+            "environmental systems, with projects in Houston flood resilience and "
+            "sustainable infrastructure."
+        ),
+        "masters": (
+            "The CEE master's offers advanced study in structures, water resources, or "
+            "environmental engineering through graduate coursework and an applied project."
+        ),
+        "phd": (
+            "CEE doctoral research addresses resilient infrastructure, urban hydrology, and "
+            "environmental systems, leading to an original dissertation."
+        ),
+    },
+    "Computer Science": {
+        "bachelors": (
+            "The computer science B.S. spans algorithms, systems, artificial intelligence, "
+            "and programming languages, with project courses and undergraduate research."
+        ),
+        "masters": (
+            "The professional master's deepens specialization in areas such as machine "
+            "learning, systems, and data, drawing on the Ken Kennedy Institute."
+        ),
+        "phd": (
+            "Doctoral candidates conduct dissertation research across algorithms, systems, "
+            "AI, and computational biology, often with Texas Medical Center collaborators."
+        ),
+    },
+    "Earth, Environmental and Planetary Sciences": {
+        "bachelors": (
+            "The EEPS undergraduate degree covers geology, atmospheric science, and "
+            "planetary science, with field camps and lab work across the solid Earth, "
+            "oceans, and climate."
+        ),
+        "masters": (
+            "The EEPS master's supports focused graduate study in earth, environmental, or "
+            "planetary science through coursework and a research thesis."
+        ),
+        "phd": (
+            "Doctoral research ranges from seismology and climate to planetary surfaces — "
+            "including Mars studies tied to the Rice Space Institute — toward a dissertation."
+        ),
+    },
+    "Ecology and Evolutionary Biology": {
+        "masters": (
+            "The master's combines field ecology, evolutionary genetics, and conservation "
+            "biology through graduate coursework and a research project at Gulf Coast or "
+            "tropical sites."
+        ),
+        "phd": (
+            "Doctoral candidates design original dissertation research in ecology and "
+            "evolution, with extended fieldwork at coastal and tropical study sites."
+        ),
+    },
+    "Economics": {
+        "bachelors": (
+            "The economics B.A. emphasizes microeconomics, econometrics, and empirical "
+            "policy analysis, with electives reflecting faculty work in energy and "
+            "development."
+        ),
+        "masters": (
+            "The master's builds advanced microeconomic and econometric training for "
+            "students preparing for doctoral study or applied analytical careers."
+        ),
+        "phd": (
+            "The doctoral program trains research economists in theory, econometrics, and "
+            "applied fields such as energy, development, and behavioral economics."
+        ),
+    },
+    "Electrical and Computer Engineering": {
+        "bachelors": (
+            "The ECE B.S. covers circuits, signals, and embedded systems, with upper-level "
+            "electives in photonics, communications, and computer engineering."
+        ),
+        "masters": (
+            "The ECE master's offers advanced specialization through graduate coursework and "
+            "a project or thesis in photonics, signal processing, or embedded systems."
+        ),
+        "phd": (
+            "Doctoral research spans neuroengineering, wireless communications, and photonic "
+            "systems, leading to an original, funded dissertation."
+        ),
+    },
+    "English": {
+        "bachelors": (
+            "The English B.A. combines literary history, creative writing, and cultural "
+            "criticism in small seminars, with access to Fondren Library special "
+            "collections."
+        ),
+        "masters": (
+            "The master's deepens literary study and critical method through graduate "
+            "seminars and a sustained research or writing project."
+        ),
+        "phd": (
+            "Doctoral candidates pursue specialized research in literary history and theory, "
+            "culminating in a dissertation supported by archival work and small seminars."
+        ),
+    },
+    "History": {
+        "bachelors": (
+            "The history B.A. spans U.S., European, Latin American, and transnational "
+            "histories, emphasizing primary-source research and historical writing."
+        ),
+        "masters": (
+            "The master's advances research skill and historiographical depth in a chosen "
+            "geographic or thematic field through graduate seminars."
+        ),
+        "phd": (
+            "Doctoral candidates produce an original, archive-based dissertation in fields "
+            "ranging from U.S. to Latin American and transnational history, with close "
+            "advising."
+        ),
+    },
+    "Materials Science and NanoEngineering": {
+        "bachelors": (
+            "The MSNE B.S. introduces the structure, properties, and processing of "
+            "materials, with electives in nanomaterials, electronic devices, and energy "
+            "storage."
+        ),
+        "phd": (
+            "Doctoral research spans nanomaterials, devices, and energy storage at the "
+            "Smalley-Curl Institute and shared fabrication facilities, toward a "
+            "dissertation."
+        ),
+    },
+    "Mathematics": {
+        "bachelors": (
+            "The mathematics B.S. covers algebra, analysis, and topology, with applied "
+            "tracks including mathematical finance and undergraduate research."
+        ),
+        "masters": (
+            "The master's offers graduate coursework across pure and applied mathematics for "
+            "students advancing toward doctoral study or quantitative careers."
+        ),
+        "phd": (
+            "Doctoral candidates specialize in algebra, analysis, topology, or applied "
+            "mathematics, completing original dissertation research in small groups."
+        ),
+    },
+    "Mechanical Engineering": {
+        "bachelors": (
+            "The mechanical engineering B.S. grounds students in mechanics, thermodynamics, "
+            "and design, with electives in robotics and energy systems."
+        ),
+        "masters": (
+            "The master's supports advanced study in robotics, fluids, or thermal systems "
+            "through graduate coursework and a research project."
+        ),
+        "phd": (
+            "Doctoral research spans robotics, fluid mechanics, energy systems, and "
+            "biomechanics, culminating in an original dissertation."
+        ),
+    },
+    "Philosophy": {
+        "bachelors": (
+            "The philosophy B.A. covers ethics, metaphysics, philosophy of mind, and logic "
+            "in small seminars, with interdisciplinary ties to the cognitive sciences."
+        ),
+        "masters": (
+            "The master's deepens analytic training across core areas of philosophy through "
+            "graduate seminars and a substantial research paper."
+        ),
+        "phd": (
+            "Doctoral candidates pursue dissertation research in areas such as philosophy of "
+            "mind, ethics, and logic, with cross-disciplinary work in cognitive science."
+        ),
+    },
+    "Physics": {
+        "bachelors": (
+            "The physics B.S. builds a foundation in classical and quantum physics, with "
+            "laboratory work and undergraduate research in Brockman Hall."
+        ),
+        "masters": (
+            "The master's offers advanced physics coursework and supervised research for "
+            "students deepening expertise or transitioning toward doctoral study."
+        ),
+        "phd": (
+            "Doctoral research spans condensed-matter, particle, and biophysics in Brockman "
+            "Hall groups, with ties to the Rice Space Institute, toward a funded "
+            "dissertation."
+        ),
+    },
+    "Political Science": {
+        "masters": (
+            "The master's builds advanced training in American, comparative, and "
+            "international politics, with policy research through the Baker Institute."
+        ),
+        "phd": (
+            "Doctoral candidates conduct original dissertation research in American, "
+            "comparative, or international politics, drawing on Baker Institute programs."
+        ),
+    },
+    "Psychology": {
+        "bachelors": (
+            "The psychology B.A. covers cognitive, social, and developmental psychology, "
+            "with laboratory courses and research assistantships in faculty labs."
+        ),
+        "masters": (
+            "The master's deepens experimental method and statistics through graduate "
+            "coursework and supervised research in psychological science."
+        ),
+        "phd": (
+            "Doctoral research spans cognitive, social, and applied psychology in "
+            "experimental labs, with Texas Medical Center neuroscience collaborations."
+        ),
+    },
+    "Religion": {
+        "bachelors": (
+            "The religion B.A. studies world religious traditions, theology, and religion "
+            "in public life, emphasizing textual analysis and comparative study."
+        ),
+        "masters": (
+            "The master's advances scholarly study of religious texts and traditions through "
+            "graduate seminars and a focused research project."
+        ),
+        "phd": (
+            "Doctoral candidates pursue dissertation research in areas such as religion and "
+            "public life, theology, and the comparative study of traditions."
+        ),
+    },
+    "Sociology": {
+        "bachelors": (
+            "The sociology B.A. examines urban inequality, organizations, and culture, with "
+            "Houston-based field research through the Kinder Institute for Urban Research."
+        ),
+        "masters": (
+            "The master's builds research method and sociological theory through graduate "
+            "coursework and an empirical project."
+        ),
+        "phd": (
+            "Doctoral research addresses urban inequality, immigration, and social "
+            "organization, often through the Kinder Institute, toward an original "
+            "dissertation."
+        ),
+    },
+    "Statistics": {
+        "bachelors": (
+            "The statistics B.S. covers probability, statistical inference, and data "
+            "analysis, with applications drawing on Rice's D2K data-science ecosystem."
+        ),
+        "masters": (
+            "The master's offers advanced training in statistical modeling and data science "
+            "for analytical and pre-doctoral careers."
+        ),
+        "phd": (
+            "Doctoral candidates conduct dissertation research in statistical theory and "
+            "method, with applications in biostatistics, finance, and machine learning."
+        ),
+    },
+}
