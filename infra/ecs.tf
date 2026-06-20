@@ -51,6 +51,7 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
         aws_secretsmanager_secret.anthropic_api_key.arn,
         aws_secretsmanager_secret.voyage_api_key.arn,
         aws_secretsmanager_secret.mcp_api_key.arn,
+        aws_secretsmanager_secret.airtable_api_key.arn,
       ]
     }]
   })
@@ -359,6 +360,10 @@ resource "aws_ecs_task_definition" "backend" {
       # Ops token for programmatic access to internal reporting endpoints
       # (GET /feedback/admin, crawler ops). Internal-only; not a user credential.
       { name = "CRAWLER_OPS_TOKEN", value = "unipaith-ops-fbx-2026" },
+      # Airtable Prompt Library sync — the base id is public (not a secret);
+      # the PAT rides in via the AIRTABLE_API_KEY secret below. With both set,
+      # POST /ops/airtable/sync pulls prompt/template edits into the DB.
+      { name = "AIRTABLE_BASE_ID", value = "appWT0yIT31IJu01R" },
       # AI Structure (Spec 3) — turn the CPEF matcher ON (fused fit+confidence,
       # two-sided M blend). Deterministic; the legacy convex-sum path remains the
       # fallback, so this is reversible by setting it back to "false".
@@ -384,6 +389,13 @@ resource "aws_ecs_task_definition" "backend" {
       {
         name      = "OPENAI_API_KEY"
         valueFrom = aws_secretsmanager_secret.openai_api_key.arn
+      },
+      # Airtable PAT for the Prompt Library sync (POST /ops/airtable/sync).
+      # Placeholder until the real token is set via put-secret-value; the
+      # sync endpoint is manual, so a placeholder never triggers a live call.
+      {
+        name      = "AIRTABLE_API_KEY"
+        valueFrom = aws_secretsmanager_secret.airtable_api_key.arn
       },
       # Claude API — the student-side LLM stack (orchestrator, extractor,
       # validator, feature emitter, rationale, workshop coach, strategy,

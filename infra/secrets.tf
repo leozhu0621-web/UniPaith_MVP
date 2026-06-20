@@ -95,3 +95,24 @@ resource "aws_secretsmanager_secret_version" "voyage_api_key" {
     ignore_changes = [secret_string]
   }
 }
+
+# --- Airtable personal access token (Prompt Library sync) ---
+# Read-only PAT (data.records:read + schema.bases:read) granted to the
+# "UniPaith Prompt Library" base (appWT0yIT31IJu01R). Powers the manual
+# POST /ops/airtable/sync that pulls prompt/template edits into the DB.
+# Bootstrap with a placeholder so apply never fails; the real token is set
+# out-of-band via `aws secretsmanager put-secret-value` (or the AWS console)
+# and ignore_changes keeps Terraform from clobbering it. The sync endpoint is
+# manual + X-Ops-Token-guarded, so the placeholder never triggers a live call.
+resource "aws_secretsmanager_secret" "airtable_api_key" {
+  name                    = "${var.project}/${var.environment}/airtable-api-key"
+  recovery_window_in_days = 7
+}
+
+resource "aws_secretsmanager_secret_version" "airtable_api_key" {
+  secret_id     = aws_secretsmanager_secret.airtable_api_key.id
+  secret_string = "REPLACE_ME_VIA_AWS_CONSOLE" # pragma: allowlist secret
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
+}
