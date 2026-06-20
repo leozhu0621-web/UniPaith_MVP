@@ -5,6 +5,25 @@
 **Parent:** `2026-06-18-reference-data-catalog-design.md` (the catalog this loads from)
 **Slice:** Institution directory — the first ingestion slice. Backend-only.
 
+## REVISION (2026-06-20) — fit the existing Spec 60 reference layer
+
+Current `origin/main` (advanced to #948) already has a **Spec 60 reference/knowledge layer**:
+`models/reference.py` defines `ref_occupations`, `ref_majors`, `ref_tests`, `ref_visas`,
+`ref_geo_cost`, `ref_rankings`, `ref_accreditation`, the generic `reference_entities`, and
+`scholarships` — every one on `UUIDPrimaryKeyMixin + TimestampMixin + ProvenanceMixin` with
+`KNOWLEDGE_SOURCE_CHECK` / `KNOWLEDGE_STATUS_CHECK`. There is **no typed `ref_institutions` table**
+(institutions only land in the generic `reference_entities`), the typed tables are **not bulk-populated
+from authoritative data**, and there is **no public reference read API**.
+
+So this slice is revised: add **`RefInstitution`** (`__tablename__ = "ref_institutions"`) to
+`models/reference.py` following that exact pattern — UUID PK, `unitid` unique natural key,
+`ProvenanceMixin` (`source="seed"`, `status="live"`, `confidence≈0.9`,
+`source_domain="collegescorecard.ed.gov"`) — loaded from the committed Scorecard seed, and served by a
+new public reference router (the first one). Everything below is read with this revision in force:
+"separate table" now means "a new typed `ref_*` table in the Spec 60 family," not a standalone
+Integer-PK table; provenance columns come from `ProvenanceMixin` (replacing the old
+`source`/`source_vintage`/`ingested_at` trio, except `source_vintage` is kept as an extra column).
+
 ## Problem
 
 The reference-data **catalog** (PR #818) made the College Scorecard / FAFSA / BLS / O*NET archive
