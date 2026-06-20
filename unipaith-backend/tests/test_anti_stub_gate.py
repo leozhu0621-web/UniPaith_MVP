@@ -62,6 +62,7 @@ CERTIFIED_CLEAN = [
     #             (shared-leading-body = 0) (uwmaddefab1 — HIGH #5)
     "northwestern",  # per-credential description leads; suffix-diversifier removed
     #               (shared-leading-body = 0) (nwdefab1 — HIGH #6)
+    "uf",         # 314-program real catalog; LiveWhale feeds; 16 colleges (ufprof1/2)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]

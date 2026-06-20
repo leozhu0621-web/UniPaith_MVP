@@ -116,7 +116,7 @@ def test_catalog_breadth_and_shape():
     assert p.RANKING_DATA["ownership_type"] == "public"
     assert "gainesville" in p.DESCRIPTION.lower()
     assert len(p.SCHOOL_OUTCOMES["campus_photos"]) >= 4
-    assert p._INSTITUTION_CONTENT["news_rss"] == "https://www.ufl.edu/feed/"
+    assert p._INSTITUTION_CONTENT["news_rss"] == "https://calendar.ufl.edu/live/rss/events"
 
 
 def test_institution_is_gold_except_recorded_omission():
