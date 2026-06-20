@@ -5911,6 +5911,19 @@ _EXPLICIT_CONCENTRATION_GROUPS: tuple[dict, ...] = (
         "members": ("usc-music-historical-musicology-emphasis-phd",),
         "tracks": ("Historical Musicology",),
     },
+    {
+        # MAARS is one post-professional degree split into two concentrations; the second
+        # row was minted with a wrong `_CODE_PREFIX` ("…Art and Curatorial Practices…").
+        "survivor_slug": "usc-advanced-architectural-research-studies-maars",
+        "program_name": "Master of Advanced Architectural Research Studies",
+        "school_key": "ARCH",
+        "degree_type": "masters",
+        "members": (
+            "usc-advanced-architectural-research-studies-city-design-and-housing-maars",
+            "usc-advanced-architectural-research-studies-performative-design-and-technology-maars",
+        ),
+        "tracks": ("City Design and Housing", "Performative Design and Technology"),
+    },
 )
 
 

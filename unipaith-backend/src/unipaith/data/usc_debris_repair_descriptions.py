@@ -346,6 +346,11 @@ DEBRIS_REPAIR_DESCRIPTIONS: dict[str, str] = {
         "research, with a City Design and Housing concentration examining inclusive, equitable urban "
         "design and housing production."
     ),
+    "usc-advanced-architectural-research-studies-maars": (
+        "This post-professional master's at the USC School of Architecture treats design as focused, "
+        "specialized research, with concentrations in City Design and Housing and in Performative "
+        "Design and Technology."
+    ),
     # ---- USC School of Cinematic Arts -----------------------------------------
     "usc-cinematic-arts-media-arts-games-and-health-ma": (
         "This Master of Arts at the USC School of Cinematic Arts explores media arts, games, and "
