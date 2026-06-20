@@ -37,7 +37,14 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 
-import { getChatTemplates, type ChatTemplate, type TemplateStep } from "../../../api/chatTemplates";
+import {
+  getChatTemplates,
+  dispatchTemplateAction,
+  type ChatTemplate,
+  type TemplateStep,
+  type ActionArtifact,
+  type ActionArtifactItem,
+} from "../../../api/chatTemplates";
 import { setEnrichValue } from "../../../api/enrichment";
 import AnswerChoices from "../discover/AnswerChoices";
 import { KeywordPicker, TypeaheadPicker } from "../../../components/student/EnrichWidget";
@@ -369,26 +376,131 @@ function PromptStepWidget({
   );
 }
 
-// ── Action step placeholder ───────────────────────────────────────────────────
+// ── Action artifact cards ─────────────────────────────────────────────────────
 
-function ActionStepPlaceholder({
+/** Renders a single match/comparison row item. */
+function SchoolItem({ item }: { item: ActionArtifactItem }) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-2.5 border-b border-border last:border-0">
+      <div className="min-w-0">
+        <p className="text-[13.5px] font-semibold text-foreground truncate">{item.name}</p>
+        {item.program && (
+          <p className="text-[12px] text-muted-foreground truncate">{item.program}</p>
+        )}
+      </div>
+      <div className="flex gap-1.5 shrink-0">
+        {item.fit_label && (
+          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-secondary/10 text-secondary">
+            {item.fit_label}
+          </span>
+        )}
+        {item.odds_label && (
+          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+            {item.odds_label}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Renders the artifact returned by the action endpoint. */
+function ActionArtifactCard({
+  artifact,
+  onDone,
+}: {
+  artifact: ActionArtifact;
+  onDone: () => void;
+}) {
+  const isPending = artifact.status === "pending";
+
+  return (
+    <div className="border border-border rounded-[16px] bg-card shadow-[0_1px_2px_rgba(10,20,40,.06)] overflow-hidden max-w-[540px]">
+      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border">
+        <span className="text-secondary text-base font-bold" aria-hidden="true">★</span>
+        <span className="text-[14.5px] font-bold text-foreground">{artifact.title}</span>
+        {isPending && (
+          <span className="ml-auto text-[11px] font-semibold text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">
+            Coming soon
+          </span>
+        )}
+      </div>
+      <div className="px-4 py-4">
+        {/* Summary text (strategy narrative, pending message, or no-match note) */}
+        {artifact.summary && (
+          <p className="text-[13.5px] text-muted-foreground leading-relaxed mb-3">
+            {artifact.summary}
+          </p>
+        )}
+
+        {/* List items for school_list / comparison */}
+        {artifact.items && artifact.items.length > 0 && (
+          <div className="divide-y divide-border rounded-[10px] border border-border overflow-hidden mb-3">
+            {artifact.items.map((item, i) => (
+              <SchoolItem key={i} item={item} />
+            ))}
+          </div>
+        )}
+
+        <div className="flex justify-end">
+          <Button variant="secondary" size="sm" onClick={onDone}>
+            Continue <ArrowRight size={13} className="ml-1" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Action step — calls endpoint, renders artifact ────────────────────────────
+
+function ActionStep({
   step,
   onDone,
 }: {
   step: TemplateStep;
   onDone: () => void;
 }) {
-  const [phase, setPhase] = useState<"working" | "done">("working");
+  const [artifact, setArtifact] = useState<ActionArtifact | null>(null);
+  const [working, setWorking] = useState(true);
 
   useEffect(() => {
-    // Simulate a brief working delay before marking done.
-    const t = setTimeout(() => setPhase("done"), 2000);
-    return () => clearTimeout(t);
-  }, []);
+    let cancelled = false;
+    const actionKey = step.action_key ?? "";
 
-  if (phase === "working") {
+    dispatchTemplateAction(actionKey)
+      .then((result) => {
+        if (!cancelled) {
+          setArtifact(result);
+          setWorking(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          // Network / server error — show an honest pending card.
+          setArtifact({
+            action_key: actionKey,
+            kind: "note",
+            title: step.action_label ?? step.label,
+            summary: "This is coming soon — your inputs are saved.",
+            status: "pending",
+          });
+          setWorking(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [step.action_key, step.action_label, step.label]);
+
+  if (working) {
     return (
-      <div className="inline-flex items-center gap-2 text-[12.5px] font-bold text-muted-foreground bg-muted rounded-full px-3.5 py-2 self-start">
+      <div
+        className="inline-flex items-center gap-2 text-[12.5px] font-bold text-muted-foreground bg-muted rounded-full px-3.5 py-2 self-start"
+        aria-live="polite"
+        aria-label="Uni is working"
+      >
         <span
           className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"
           aria-hidden="true"
@@ -398,27 +510,9 @@ function ActionStepPlaceholder({
     );
   }
 
-  return (
-    <div className="border border-border rounded-[16px] bg-card shadow-[0_1px_2px_rgba(10,20,40,.06)] overflow-hidden max-w-[540px]">
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border">
-        <span className="text-secondary text-base font-bold">★</span>
-        <span className="text-[14.5px] font-bold text-foreground">
-          {step.action_label ?? step.label}
-        </span>
-      </div>
-      <div className="px-4 py-4">
-        <p className="text-[13.5px] text-muted-foreground leading-relaxed">
-          This step runs in the background — Uni will surface results as they become
-          ready. Your answers so far are saved.
-        </p>
-        <div className="mt-4 flex justify-end">
-          <Button variant="secondary" size="sm" onClick={onDone}>
-            Continue <ArrowRight size={13} className="ml-1" />
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+  if (!artifact) return null;
+
+  return <ActionArtifactCard artifact={artifact} onDone={onDone} />;
 }
 
 // ── Artifact / completion card ────────────────────────────────────────────────
@@ -594,7 +688,7 @@ export default function TemplateRunner({ templateKey, onClose }: Props) {
                 {stepFramingText(currentStep, currentStepIndex)}
               </p>
 
-              {/* Widget or action placeholder */}
+              {/* Widget or action */}
               {currentStep.step_type === "prompt" ? (
                 <PromptStepWidget
                   step={currentStep}
@@ -602,7 +696,7 @@ export default function TemplateRunner({ templateKey, onClose }: Props) {
                   disabled={saving}
                 />
               ) : (
-                <ActionStepPlaceholder step={currentStep} onDone={advance} />
+                <ActionStep step={currentStep} onDone={advance} />
               )}
             </UniTurn>
           ) : null}
