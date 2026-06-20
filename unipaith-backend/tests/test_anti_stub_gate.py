@@ -44,7 +44,7 @@ CERTIFIED_CLEAN = [
     "ut_austin",  # catalog.utexas.edu descriptions; school-blurb + synth reviews removed (utaprof2)
     "uw",         # Wikipedia-sourced per-credential descriptions; junk/Westwood removed (uwdefab1)
     "ucla",       # Wikipedia per-credential descriptions; Catalog entry junk removed (uclaprof4)
-    "jhu",        # per-credential field clauses (verbatim-across-levels removed); real reviews kept
+    "jhu",        # per-credential level bodies (frame+tail-share removed); real reviews kept
     "michigan",   # per-credential discipline definitions; build-artifact junk removed (michprof4)
     "stanford",   # per-credential defs; Catalog entry junk removed (stanfordprof11)
     "purdue",     # per-credential discipline defs; peer-copy + rollups removed (purduedefab1)
@@ -148,7 +148,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
     assert not machine_artifacts(clean), "must not flag a clean field-specific description"
 
 
-@pytest.mark.parametrize("name", ["mit", "rice", "uf", "usc", "uw_madison"])
+@pytest.mark.parametrize("name", ["mit", "rice", "uf", "usc", "uw_madison", "jhu"])
 def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
     """A field's credential siblings (BA / MS / PhD) must not share a body once a leading
     credential frame is stripped — the run-65 evasion the leading-prefix shared-body count
