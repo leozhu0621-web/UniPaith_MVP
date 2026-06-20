@@ -798,6 +798,33 @@ Concrete misses observed in the first runs — each broke a real page:
      division frame and the Westwood-campus geography lie), while UT-Austin #768 / NYU #753
      / UIUC #763 in the SAME interval de-fabricated genuinely (0 artifacts) — so this is one
      broken pass's class, not the only repair model.
+   - **A description that is RAW SCRAPED CATALOG DEBRIS — a degree-REQUIREMENTS / course-list
+     fragment, a capstone-options list, a unit-count opening, or a CONTACT/ADDRESS block — is an
+     un-researched stub EVEN THOUGH it is unique per row (so it ZEROES every share metric, like the
+     per-row id nonce) AND field-ish enough to slip past the gold-contrast classification test. This
+     is the live regression this run.** A scrape-built catalog that was never researched can fill
+     `description_text` not with one shared stub but with whatever text sat on the program's catalog
+     page: a degree-requirements excerpt ("28 additional units must be selected from MATH 225, MATH
+     226, or any upper-division course…"; "Four MATH courses at the 400-level or above are required,
+     chosen from the following list:"), a capstone/option list, a total-unit count as the opening
+     clause, or even the department's mailing ADDRESS + phone + email ("… Stonier Hall, Suite 101 …
+     (213) 740-1060 Email: …@….edu"). Because each fragment is unique, the verbatim / shared-body /
+     cross-field counts ALL read 0 (the exact gate-evasion the per-row nonce uses), and because a
+     requirements list is field-ish it also passes the classification / gold-contrast test — yet
+     NONE of it is researched prose about what the program STUDIES, and it routinely (a) TRUNCATES
+     mid-sentence / mid-list / on a trailing colon (no terminal period), proof it was scraped not
+     written, and (b) is MISMATCHED to the WRONG program (an archaeology degree carrying another
+     major's course requirements; a row whose body opens on a DIFFERENT field's name than the
+     program's), which is confidently-WRONG content the student reads. Any one of these is a hard
+     FAIL independent of every share/form metric: a course-code token ("MATH 225"), a unit/credit
+     count as the opening clause, a trailing colon or mid-sentence truncation (no terminal "."), an
+     address / phone / `@…edu`, or a body whose field does not match the `program_name`. Research
+     each description from THIS institution's OWN program page as PROSE about the field; never drop
+     the raw catalog-page text into `description_text`. The pre-ship scan (miss #9 / §8.5) must add
+     this scrape-debris tell — the form/share metrics are blind to it. Evidence: live API this run —
+     the largest scrape-built catalogs ship this on up to ~10% of rows (≥50 on one ~520-program
+     catalog, including a raw contact-address row and requirements fragments mismatched to the wrong
+     program), every one scoring 0 on every existing description metric.
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
@@ -898,7 +925,12 @@ Concrete misses observed in the first runs — each broke a real page:
        division-frame boilerplate (a classification stub — also re-run the miss-#8 geography
        scan on its "{city} campus" tail); (iii) a NAMESAKE-SCRAPE paragraph (a journal /
        Wikipedia-survey / list about a different entity sharing the name, often truncated
-       mid-word like "hly peer-reviewed"). Because the leading id is a per-row nonce, the
+       mid-word like "hly peer-reviewed"); (iv) RAW SCRAPED CATALOG DEBRIS — a degree-requirements /
+       course-code list ("28 additional units must be selected from MATH 225…"), a capstone-options
+       list, a unit-count opening, or a contact/address block ("… Suite 101 … (213) 740-1060 Email:
+       …@….edu"); truncated mid-sentence / on a trailing colon, or MISMATCHED to the wrong program —
+       unique per row, so it reads 0 on every share metric yet is an un-researched stub (miss #8
+       scrape-debris sub-bullet). Because the leading id is a per-row nonce, the
        verbatim / shared-body / cross-field counts read 0 on this form while NOT ONE row was
        researched — so strip a leading `^Catalog entry [0-9a-f]+:\s*` (and any leading id
        token) from every description FIRST, then recompute those counts. Evidence: live API
