@@ -12,7 +12,10 @@ import { showToast } from '../../../../stores/toast-store'
 import type { ConstraintChip, SearchFilters, SortOption } from '../../../../types/search'
 import type { ProgramSummary } from '../../../../types'
 import ProgramCard from '../cards/ProgramCard'
+import ProgramListRow from '../cards/ProgramListRow'
 import Pagination from '../../../../components/ui/Pagination'
+import ViewToggle from '../../../../components/ui/ViewToggle'
+import useBrowseView from '../../../../hooks/useBrowseView'
 import ConstraintChips from './ConstraintChips'
 import FiltersPanel from './FiltersPanel'
 import SaveSearchButton from './SaveSearchButton'
@@ -204,6 +207,8 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
   // Paging keeps the previous results on screen (placeholderData); dim them so a
   // page change reads as "loading" instead of an unresponsive click.
   const paging = active && searchQuery.isFetching && !searchQuery.isLoading
+  // Grid (cards) vs list (dense rows) — shared with the universities browse.
+  const [view, setView] = useBrowseView()
 
   return (
     <section className="space-y-4" data-testid="discovery-search">
@@ -283,6 +288,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
           <div className="flex items-center gap-2">
             <SaveSearchButton query={urlQuery} chips={chips} filters={filters} sort={sort} />
             <SortMenu value={sort} onChange={setSort} />
+            <ViewToggle value={view} onChange={setView} />
           </div>
         )}
       </div>
@@ -324,37 +330,58 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
             </div>
           ) : (
             <>
-              {/* key on the page so the stagger entrance replays as each page flips in */}
-              <div
-                key={page}
-                aria-busy={paging}
-                className={`stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 transition-opacity duration-200 ${paging ? 'opacity-60' : ''}`}
-              >
-                {results.map(p => (
-                  <ProgramCard
-                    key={p.id}
-                    program={p}
-                    saved={savedIds.has(p.id)}
-                    comparing={compare.has(p.id)}
-                    onSave={() => toggleSave(p.id)}
-                    onCompare={() => onCompareToggle(p)}
-                    onAskCounselor={() =>
-                      navigate(
-                        `/s?prefill=${encodeURIComponent(
-                          `Tell me about ${p.program_name} at ${p.institution_name}. Is it a good fit?`,
-                        )}`,
-                      )
-                    }
-                    onView={() => navigate(`/s/programs/${p.id}`)}
-                    following={followedIds?.has(p.institution_id)}
-                    onToggleFollow={onToggleFollow ? () => onToggleFollow(p.institution_id) : undefined}
-                    nextEvent={nextEventByInstitution?.get(p.institution_id) ?? null}
-                    onEventClick={onEventClick}
-                    peerCount={peerCohortByProgram?.[p.id]}
-                    onPeersClick={onPeersClick}
-                  />
-                ))}
-              </div>
+              {/* key on the page so the stagger entrance replays as each page flips in;
+                  aria-busy + opacity dim signal an in-flight page change. */}
+              {view === 'grid' ? (
+                <div
+                  key={page}
+                  aria-busy={paging}
+                  className={`stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 transition-opacity duration-200 ${paging ? 'opacity-60' : ''}`}
+                >
+                  {results.map(p => (
+                    <ProgramCard
+                      key={p.id}
+                      program={p}
+                      saved={savedIds.has(p.id)}
+                      comparing={compare.has(p.id)}
+                      onSave={() => toggleSave(p.id)}
+                      onCompare={() => onCompareToggle(p)}
+                      onAskCounselor={() =>
+                        navigate(
+                          `/s?prefill=${encodeURIComponent(
+                            `Tell me about ${p.program_name} at ${p.institution_name}. Is it a good fit?`,
+                          )}`,
+                        )
+                      }
+                      onView={() => navigate(`/s/programs/${p.id}`)}
+                      following={followedIds?.has(p.institution_id)}
+                      onToggleFollow={onToggleFollow ? () => onToggleFollow(p.institution_id) : undefined}
+                      nextEvent={nextEventByInstitution?.get(p.institution_id) ?? null}
+                      onEventClick={onEventClick}
+                      peerCount={peerCohortByProgram?.[p.id]}
+                      onPeersClick={onPeersClick}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div
+                  key={page}
+                  aria-busy={paging}
+                  className={`stagger-list flex flex-col gap-2 [&>*]:min-w-0 transition-opacity duration-200 ${paging ? 'opacity-60' : ''}`}
+                >
+                  {results.map(p => (
+                    <ProgramListRow
+                      key={p.id}
+                      program={p}
+                      saved={savedIds.has(p.id)}
+                      onSave={() => toggleSave(p.id)}
+                      onView={() => navigate(`/s/programs/${p.id}`)}
+                      following={followedIds?.has(p.institution_id)}
+                      onToggleFollow={onToggleFollow ? () => onToggleFollow(p.institution_id) : undefined}
+                    />
+                  ))}
+                </div>
+              )}
               <Pagination
                 page={page}
                 pageCount={Math.max(1, Math.ceil(total / PAGE_SIZE))}
