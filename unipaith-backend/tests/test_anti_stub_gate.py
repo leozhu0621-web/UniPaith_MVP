@@ -62,6 +62,9 @@ CERTIFIED_CLEAN = [
     #             (shared-leading-body = 0) (uwmaddefab1 — HIGH #5)
     "northwestern",  # per-credential description leads; suffix-diversifier removed
     #               (shared-leading-body = 0) (nwdefab1 — HIGH #6)
+    "dartmouth",  # institution seed → gold + real verified 43-program catalog across the
+    #             five schools; field-specific researched descriptions, real departments,
+    #             no rollup/possessive/stub rows (dartprof1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
