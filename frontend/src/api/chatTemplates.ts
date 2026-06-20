@@ -16,6 +16,12 @@ export interface TemplateStep {
   prompt_key?: string;
   action_key?: string;
   label: string;
+  // Prompt descriptor fields — present when step_type === "prompt"
+  question?: string;
+  ask_kind?: "choice" | "multi" | "scale" | "range" | "date" | "number" | "text" | "keywords" | "typeahead";
+  options?: string[] | null;
+  // Action label from ACTION_CATALOG — present when step_type === "action"
+  action_label?: string;
 }
 
 export interface ChatTemplate {
