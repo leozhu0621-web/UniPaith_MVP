@@ -201,6 +201,9 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
   const results = searchQuery.data?.results ?? []
   const total = searchQuery.data?.total ?? 0
   const loading = active && searchQuery.isLoading
+  // Paging keeps the previous results on screen (placeholderData); dim them so a
+  // page change reads as "loading" instead of an unresponsive click.
+  const paging = active && searchQuery.isFetching && !searchQuery.isLoading
 
   return (
     <section className="space-y-4" data-testid="discovery-search">
@@ -322,7 +325,11 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
           ) : (
             <>
               {/* key on the page so the stagger entrance replays as each page flips in */}
-              <div key={page} className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+              <div
+                key={page}
+                aria-busy={paging}
+                className={`stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 transition-opacity duration-200 ${paging ? 'opacity-60' : ''}`}
+              >
                 {results.map(p => (
                   <ProgramCard
                     key={p.id}
