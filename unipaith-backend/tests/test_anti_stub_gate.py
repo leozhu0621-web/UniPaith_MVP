@@ -168,6 +168,53 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
     )
 
 
+def test_nyu_credential_siblings_no_shared_body_absolute_floor():
+    """NYU's de-duplicated catalog must show no field whose credential siblings share a body
+    even under the run-67 ABSOLUTE floor (REPAIR_BACKLOG CRITICAL #2, miss #8 fraction-floor):
+    a 150+-char run shared across a field's BA/BS or MS/PhD is a stamped department blurb (the
+    Chemistry B.A.==B.S. 950-char duplicate), which the fraction-only default could dilute past.
+    Gold MIT also scores 0 with the absolute floor on. Enforced separately from the fleet-wide
+    default (which still uses fraction-only) until the remaining catalogs are repaired."""
+    for name in ("nyu", "mit"):
+        shared = frame_stripped_shared_body(_programs(name), abs_chars=150)
+        assert not shared, (
+            f"{name}: credential siblings share a 150+-char body on "
+            f"{len(shared)} field(s): {shared[:8]}{' …' if len(shared) > 8 else ''}"
+        )
+
+
+def test_absolute_floor_catches_a_diluted_shared_sentence():
+    """Regression guard: a 150+-char field sentence stamped across credential siblings and then
+    diluted below the fraction floor by a long unique per-credential tail must still flag under
+    ``abs_chars`` (run-67 dilution evasion), while the fraction-only default reads it as clean."""
+    shared = (
+        "Madison campus anthropology combines archaeological fieldwork, medical anthropology, "
+        "and sociocultural theory across a department known for its global reach and methods."
+    )
+    tail_ba = (
+        " The B.A. surveys the four subfields through introductory and intermediate seminars "
+        "and a flexible elective sequence suited to a liberal-arts course of study at the "
+        "college, leaving room for study abroad, a second major, and undergraduate field "
+        "experience in museums, laboratories, and community settings across the city and beyond."
+    )
+    tail_ms = (
+        " The M.S. adds graduate methods training, a research practicum, and a thesis advised "
+        "by faculty, preparing students for doctoral work or applied research in the "
+        "discipline, with coursework spanning quantitative methods, ethnographic technique, "
+        "and a capstone investigation developed in close consultation with a faculty committee."
+    )
+    diluted = [
+        {"program_name": "Bachelor of Arts in Anthropology", "description": shared + tail_ba},
+        {"program_name": "Master of Science in Anthropology", "description": shared + tail_ms},
+    ]
+    assert frame_stripped_shared_body(diluted, abs_chars=150), (
+        "absolute floor must flag a 150+-char stamped sentence even when diluted below 50%"
+    )
+    assert not frame_stripped_shared_body(diluted), (
+        "fraction-only default reads the diluted stamp as clean (the evasion)"
+    )
+
+
 def test_frame_stripped_shared_body_detector_bites_on_the_run65_evasion():
     """Regression guard: the detector must flag a per-credential frame prepended onto ONE
     field body shared across the credential levels (the run-65 evasion), while passing
