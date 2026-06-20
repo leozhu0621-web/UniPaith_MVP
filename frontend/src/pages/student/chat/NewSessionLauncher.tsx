@@ -35,7 +35,7 @@ import { createSession, type ChatSession } from "../../../api/chatSessions";
 import { searchPrograms } from "../../../api/programs";
 import { searchScholarships, type Scholarship } from "../../../api/scholarships";
 import type { ProgramSummary } from "../../../types";
-import UniOrb from "../discover/UniOrb";
+import UniOrb from "../../../components/student/UniOrb";
 import MaterialUpload from "../../../components/student/MaterialUpload";
 import { showToast } from "../../../stores/toast-store";
 
