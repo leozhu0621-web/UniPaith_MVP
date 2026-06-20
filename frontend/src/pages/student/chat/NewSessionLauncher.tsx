@@ -27,7 +27,7 @@
  * pipeline); this slice only provides the affordance.
  */
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, ArrowUp, BookOpen, List, Scale, Compass, Flag, Heart, Calendar, Users } from "lucide-react";
 import { getChatTemplates, type ChatTemplate } from "../../../api/chatTemplates";
@@ -36,6 +36,8 @@ import { searchPrograms } from "../../../api/programs";
 import { searchScholarships, type Scholarship } from "../../../api/scholarships";
 import type { ProgramSummary } from "../../../types";
 import UniOrb from "../discover/UniOrb";
+import MaterialUpload from "../../../components/student/MaterialUpload";
+import { showToast } from "../../../stores/toast-store";
 
 // ── Props ──────────────────────────────────────────────────────────────────
 
@@ -56,39 +58,6 @@ const STAGE_LABELS: Record<string, string> = {
   recommendation: "Recommendation",
   application: "Application Strategy & Support",
 };
-
-// ── Upload stub menu ───────────────────────────────────────────────────────
-
-const UPLOAD_ITEMS = ["Upload a file", "Add a photo", "From My Space"] as const;
-
-function UploadMenu({ anchor, onClose }: { anchor: DOMRect; onClose: () => void }) {
-  return (
-    <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div
-        role="menu"
-        aria-label="Upload options"
-        className="fixed z-50 min-w-[180px] rounded-[10px] border border-border bg-card shadow-[0_6px_16px_-4px_rgba(10,20,40,.14),0_2px_4px_rgba(10,20,40,.07)] py-1 animate-in fade-in zoom-in-95 duration-100"
-        style={{
-          left: Math.max(8, anchor.left),
-          bottom: window.innerHeight - anchor.top + 6,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {UPLOAD_ITEMS.map((item) => (
-          <button
-            key={item}
-            role="menuitem"
-            onClick={onClose}
-            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-[13px] font-semibold text-left text-foreground hover:bg-muted transition-colors"
-          >
-            {item}
-          </button>
-        ))}
-      </div>
-    </>
-  );
-}
 
 // ── Card helpers ───────────────────────────────────────────────────────────
 
@@ -367,7 +336,6 @@ const INTL_CARDS = [
 export default function NewSessionLauncher({ recentSession, onSessionStart }: Props) {
   const [inputValue, setInputValue] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
-  const uploadBtnRef = useRef<HTMLButtonElement>(null);
 
   const { data: templates, isLoading: templatesLoading } = useQuery({
     queryKey: ["chat-templates"],
@@ -460,46 +428,75 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
           </h2>
         </div>
 
-        {/* Input bar */}
-        <div className="flex items-center gap-3 border border-border rounded-[14px] bg-card px-4 py-[13px] shadow-[0_1px_2px_rgba(10,20,40,.06),0_1px_1px_rgba(10,20,40,.04)] mb-9">
-          {/* Upload "+" — borderless icon, not a boxed button */}
-          <button
-            ref={uploadBtnRef}
-            aria-label="Upload or attach"
-            onClick={() => setUploadOpen((v) => !v)}
-            className="w-[34px] h-[34px] rounded-[9px] flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-secondary transition-colors shrink-0"
-          >
-            <Plus size={21} strokeWidth={1.8} />
-          </button>
+        {/* Input bar + the "+" upload panel */}
+        <div className="mb-9">
+          <div className="flex items-center gap-3 border border-border rounded-[14px] bg-card px-4 py-[13px] shadow-[0_1px_2px_rgba(10,20,40,.06),0_1px_1px_rgba(10,20,40,.04)]">
+            {/* Upload "+" — borderless icon; toggles the inline file-ingest panel */}
+            <button
+              aria-label="Add a file for Uni to read"
+              aria-expanded={uploadOpen}
+              onClick={() => setUploadOpen((v) => !v)}
+              className={`w-[34px] h-[34px] rounded-[9px] flex items-center justify-center transition-colors shrink-0 ${
+                uploadOpen
+                  ? "bg-muted text-secondary"
+                  : "text-muted-foreground hover:bg-muted hover:text-secondary"
+              }`}
+            >
+              <Plus size={21} strokeWidth={1.8} />
+            </button>
 
-          {uploadOpen && uploadBtnRef.current && (
-            <UploadMenu
-              anchor={uploadBtnRef.current.getBoundingClientRect()}
-              onClose={() => setUploadOpen(false)}
+            <input
+              type="text"
+              placeholder="Ask me anything, or pick something below"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmit();
+              }}
+              className="flex-1 border-none outline-none text-[16px] bg-transparent text-foreground placeholder:text-muted-foreground"
+              aria-label="Start a new session"
             />
+
+            {/* Send button */}
+            <button
+              aria-label="Send"
+              onClick={handleSubmit}
+              disabled={!inputValue.trim() || createMut.isPending}
+              className="w-9 h-9 rounded-[10px] bg-secondary text-white flex items-center justify-center shrink-0 transition-opacity disabled:opacity-40 hover:bg-secondary/90"
+            >
+              <ArrowUp size={18} strokeWidth={2.2} />
+            </button>
+          </div>
+
+          {/* Inline file-ingest — the real material-ingest flow (spec §6): pick a
+              file → Uni reads it → review → confirm → My Space. Reuses the same
+              component as the conversation; never fabricates. */}
+          {uploadOpen && (
+            <div className="mt-2 rounded-[14px] border border-border bg-card p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[13px] font-bold text-foreground">
+                  Add a resume, transcript, or CV — Uni reads it into My Space
+                </p>
+                <button
+                  onClick={() => setUploadOpen(false)}
+                  aria-label="Close upload"
+                  className="text-[12px] font-semibold text-muted-foreground hover:text-foreground"
+                >
+                  Close
+                </button>
+              </div>
+              <MaterialUpload
+                onApplied={(result) => {
+                  const n = Object.values(result.counts || {}).reduce((a, b) => a + b, 0);
+                  void qc.invalidateQueries({ queryKey: ["discovery", "livingProfile"] });
+                  void qc.invalidateQueries({ queryKey: ["goals"] });
+                  void qc.invalidateQueries({ queryKey: ["needs"] });
+                  void qc.invalidateQueries({ queryKey: ["identity"] });
+                  showToast(`Added ${n} items from your file to My Space.`, "success");
+                }}
+              />
+            </div>
           )}
-
-          <input
-            type="text"
-            placeholder="Ask me anything, or pick something below"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSubmit();
-            }}
-            className="flex-1 border-none outline-none text-[16px] bg-transparent text-foreground placeholder:text-muted-foreground"
-            aria-label="Start a new session"
-          />
-
-          {/* Send button */}
-          <button
-            aria-label="Send"
-            onClick={handleSubmit}
-            disabled={!inputValue.trim() || createMut.isPending}
-            className="w-9 h-9 rounded-[10px] bg-secondary text-white flex items-center justify-center shrink-0 transition-opacity disabled:opacity-40 hover:bg-secondary/90"
-          >
-            <ArrowUp size={18} strokeWidth={2.2} />
-          </button>
         </div>
 
         {/* Continue — most-recent session */}
