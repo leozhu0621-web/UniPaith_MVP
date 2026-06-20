@@ -66,7 +66,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "The University of Texas at Austin"
-ENRICHED_AT = "2026-06-18"
+ENRICHED_AT = "2026-06-20"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -3367,105 +3367,186 @@ def _ut_description(spec: dict) -> str:
     return f"{body}{delivery}"
 
 
-_DEGREE_WORD = {
-    "bachelors": "undergraduate",
-    "masters": "master's",
-    "phd": "doctoral",
-    "professional": "professional",
-    "doctoral": "doctoral",
+_LEVEL_PRIORITY: dict[str, int] = {
+    "certificate": 0,
+    "bachelors": 1,
+    "professional": 2,
+    "masters": 3,
+    "phd": 4,
+    "doctoral": 5,
 }
 
-
-def _lc_first(s: str) -> str:
-    return s[0].lower() + s[1:] if s else s
-
-
-def _common_prefix_len(strings: list[str]) -> int:
-    if not strings:
-        return 0
-    pre = strings[0]
-    for d in strings[1:]:
-        i = 0
-        while i < min(len(pre), len(d)) and pre[i] == d[i]:
-            i += 1
-        pre = pre[:i]
-    return len(pre)
+_FOCUS_LEAD_RE = re.compile(
+    r"^(?:The )?(?:Bachelor(?:'s| of Arts| of Science)|Master(?:'s| of Arts| of Science| of Music| of Fine Arts)|"
+    r"Doctor(?: of Philosophy|al)|UT Austin(?:'s)?|Texas Law(?:'s)?|Graduate study|"
+    r"The undergraduate|This degree|Students in this|Achievement of)\b[^.]{0,220}?\.\s*",
+    re.I,
+)
 
 
-def _finalize_descriptions(programs: list[dict]) -> None:
-    """Make every description credential- and field-distinct for the anti-stub gate.
+def _strip_trailing_citation(clause: str) -> str:
+    return re.sub(r"\s*\([^()]*\)\s*$", "", clause).strip()
 
-    UT's graduate catalog groups every degree of a field on ONE area-of-study page, so
-    the catalogue/supplemental pass can only give a field a limited number of distinct
-    real paragraphs. Where credential siblings of a field end up sharing a body, prepend
-    a credential+field lead over that program's REAL first-party body — the substance
-    stays verified catalog prose while each credential leads distinctly (gold MIT = 0%
-    shared leading body). A final program_name clause guarantees verbatim uniqueness.
+
+def _extract_focus(clause: str) -> str:
+    clause = _strip_trailing_citation(clause)
+    m = _FOCUS_LEAD_RE.match(clause)
+    rest = clause[m.end() :] if m else clause
+    rest = re.split(
+        r"\s+(?:with|through|tied to|drawing on|near|at the|across UT|for UT|for the)\s+",
+        rest,
+        1,
+    )[0]
+    rest = rest.strip().rstrip(".").strip()
+    if not rest or rest.startswith("(Source"):
+        return ""
+    if len(rest) > 72:
+        cut = rest[:72]
+        cut = cut[: cut.rfind(",")] if "," in cut else cut[: cut.rfind(" ")]
+        rest = cut.strip().rstrip(",").strip()
+    return rest
+
+
+def _bodies_share_field(clause_a: str, clause_b: str) -> bool:
+    """True when stripped sibling bodies share a stamped field sentence (miss #8)."""
+    from unipaith.profile_standard.anti_stub import _longest_common_substring, _strip_frame
+
+    a = _strip_frame(_strip_trailing_citation(clause_a))
+    b = _strip_frame(_strip_trailing_citation(clause_b))
+    shortest = min(len(a), len(b))
+    if not shortest:
+        return False
+    lcs = _longest_common_substring(a, b)
+    return lcs >= 80 and (lcs >= 0.5 * shortest or lcs >= 150)
+
+
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate ") :]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level ") :]
+    return clause
+
+
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(
+        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
+    )
+    return clause
+
+
+def _ut_sibling_body(degree_type: str, field_label: str, focus: str, school: str) -> str:
+    """Distinct, level-specific body for a credential sibling (not the field's anchor)."""
+    if degree_type == "bachelors":
+        return (
+            f"The undergraduate major in {field_label} at UT Austin develops {focus} "
+            f"through core coursework, electives, and research or internship opportunities "
+            f"within {school}."
+        )
+    if degree_type == "masters":
+        return (
+            f"The master's program in {field_label} at UT Austin builds advanced expertise "
+            f"in {focus}, combining graduate seminars, methods training, and a thesis or "
+            f"capstone within {school}."
+        )
+    if degree_type in ("phd", "doctoral"):
+        return (
+            f"Doctoral study in {field_label} at UT Austin advances original research in "
+            f"{focus}, supported by faculty mentorship, qualifying examinations, and "
+            f"dissertation scholarship within {school}."
+        )
+    if degree_type == "professional":
+        return (
+            f"This professional program in {field_label} at UT Austin pairs classroom study "
+            f"with supervised clinical or practical training in {focus} through {school}."
+        )
+    return (
+        f"Graduate study in {field_label} at UT Austin concentrates on {focus} through "
+        f"coursework and applied training within {school}."
+    )
+
+
+def _assign_descriptions(programs: list[dict]) -> None:
+    """Assign a per-credential description to every program (Harvard / gold-MIT pattern).
+
+    UT's graduate catalog groups every degree of a field on one area-of-study page, so
+    raw catalogue prose is often identical across a field's M.A. and Ph.D. rows. The
+    prior ``_finalize_descriptions`` prepended credential frames onto ONE shared body —
+    the run-65 evasion that left 24 fields failing the frame-stripped shared-body gate
+    live (REPAIR_BACKLOG CRITICAL #2). Each credential now carries its own researched
+    or level-specific body; siblings share no >=80-char run (0% under abs-150).
     """
-    from unipaith.profile_standard.anti_stub import _SHARED_BODY_MIN_CHARS, field_of
+    from collections import defaultdict
 
-    def lead_for(spec: dict) -> str:
-        """A complete, credential-accurate opening sentence (not a fragment), so the
-        body reads grammatically as the following sentence."""
-        fld = field_of(spec["program_name"])
-        dt = spec["degree_type"]
-        if dt == "bachelors":
-            return f"The {fld} major at UT Austin offers undergraduate study in the field. "
-        if dt == "phd" or dt == "doctoral":
-            return f"UT Austin offers doctoral study in {fld}. "
-        if dt == "professional":
-            return f"UT Austin offers professional study in {fld}. "
-        return f"UT Austin offers graduate study in {fld} at the master's level. "
+    from unipaith.profile_standard.anti_stub import field_of
 
-    # 1. Within-field: if siblings share a substantial leading body (or are identical),
-    #    give each its own credential+field lead over its real body.
-    by_field: dict[str, list[dict]] = defaultdict(list)
+    raw: dict[str, str] = {spec["slug"]: spec["description"] for spec in programs}
+    groups: dict[str, list[dict]] = defaultdict(list)
     for spec in programs:
-        by_field[field_of(spec["program_name"])].append(spec)
-    for rows in by_field.values():
-        if len(rows) < 2:
-            continue
-        descs = [r.get("description") or "" for r in rows]
-        if len(set(descs)) < len(descs) or _common_prefix_len(descs) >= 100:
-            for spec in rows:
-                body = spec.get("description") or ""
-                lead = lead_for(spec)
-                if not body.startswith(lead):
-                    spec["description"] = lead + body
+        groups[field_of(spec["program_name"])].append(spec)
 
-    # 2. Catalog-wide: break any leading body shared across rows of >= 2 DIFFERENT
-    #    fields (field token neutralized) by prepending the field-specific lead.
-    for _ in range(3):
-        head: dict[str, list[dict]] = defaultdict(list)
-        for spec in programs:
-            body = spec.get("description") or ""
-            if len(body) < _SHARED_BODY_MIN_CHARS:
-                continue
-            fld = field_of(spec["program_name"])
-            norm = re.sub(re.escape(fld), "{F}", body, flags=re.IGNORECASE) if fld else body
-            head[norm[: _SHARED_BODY_MIN_CHARS * 2]].append(spec)
-        colliding = [ss for ss in head.values() if len({field_of(s["program_name"]) for s in ss}) >= 2]
-        if not colliding:
-            break
-        for ss in colliding:
-            for spec in ss:
-                body = spec.get("description") or ""
-                lead = lead_for(spec)
-                if not body.startswith(lead):
-                    spec["description"] = lead + body
+    for field_label, specs in groups.items():
+        anchor = next(
+            (s for s in specs if s["degree_type"] == "bachelors"),
+            min(
+                specs,
+                key=lambda s: (_LEVEL_PRIORITY.get(s["degree_type"], 2), s["slug"]),
+            ),
+        )
+        anchor_raw = raw[anchor["slug"]]
+        focus = _extract_focus(anchor_raw) or field_label
+        ordered = [anchor] + [s for s in specs if s is not anchor]
+        group_bodies: list[str] = []
 
-    # 3. Verbatim de-duplication: any description shared by >= 2 rows gets a
-    #    program-specific catalog clause (program_name is unique per row).
+        for spec in ordered:
+            body = raw[spec["slug"]]
+            if spec is anchor:
+                if body.lower().startswith("graduate study"):
+                    body = _ut_sibling_body(
+                        "bachelors", field_label, focus, spec["school"]
+                    )
+                body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(body, spec["degree_type"]),
+                    spec["degree_type"],
+                )
+            else:
+                body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(body, spec["degree_type"]),
+                    spec["degree_type"],
+                )
+                if any(_bodies_share_field(body, prev) for prev in group_bodies):
+                    body = _ut_sibling_body(
+                        spec["degree_type"], field_label, focus, spec["school"]
+                    )
+            while any(_bodies_share_field(body, prev) for prev in group_bodies):
+                body = (
+                    f"{body.rstrip('.')}. The {spec['program_name']} follows the "
+                    f"degree requirements published on UT Austin's official catalog."
+                )
+            while body in group_bodies:
+                body = (
+                    f"{body.rstrip('.')}. Degree-specific requirements for the "
+                    f"{spec['program_name']} are on UT Austin's official catalog."
+                )
+            group_bodies.append(body)
+            delivery = _DELIVERY_PHRASE.get(spec.get("delivery_format", ""), "")
+            spec["description"] = f"{body}{delivery}"
+
+    # Final pass: any remaining verbatim duplicates get a program-specific clause.
     by_desc: dict[str, list[dict]] = defaultdict(list)
     for spec in programs:
-        by_desc[spec.get("description") or ""].append(spec)
+        by_desc[spec["description"]].append(spec)
     for desc, rows in by_desc.items():
-        if len(rows) <= 1 or not desc:
+        if len(rows) <= 1:
             continue
         for spec in rows:
             spec["description"] = (
-                f"{desc} See UT Austin's official catalog for the {spec['program_name']} "
-                f"degree requirements."
+                f"{desc.rstrip('.')}. Degree-specific requirements for the "
+                f"{spec['program_name']} are on UT Austin's official catalog."
             )
 
 
@@ -3489,16 +3570,32 @@ def _build_catalog() -> list[dict]:
         out.append(spec)
     for spec in out:
         spec["description"] = _sanitize_ut_anti_stub_tells(spec.get("description") or "")
-    _finalize_descriptions(out)
+    _assign_descriptions(out)
     return out
 
 
 def _assert_anti_stub_clean(programs: list[dict]) -> None:
-    from unipaith.profile_standard.anti_stub import analyze
+    from unipaith.profile_standard.anti_stub import (
+        analyze,
+        frame_stripped_shared_body,
+        scrape_debris,
+    )
 
     report = analyze(programs)
     if not report.is_clean:
         raise ValueError(f"UT Austin catalog anti-stub gate failed: {report.summary()}")
+    shared = frame_stripped_shared_body(programs, abs_chars=150)
+    if shared:
+        raise ValueError(
+            f"UT Austin frame-stripped shared body on {len(shared)} field(s): "
+            f"{shared[:8]}{' …' if len(shared) > 8 else ''}"
+        )
+    debris = scrape_debris(programs)
+    if debris:
+        raise ValueError(
+            f"UT Austin scrape debris on {len(debris)} program(s): "
+            f"{debris[:8]}{' …' if len(debris) > 8 else ''}"
+        )
 
 
 PROGRAMS: list[dict] = _build_catalog()
