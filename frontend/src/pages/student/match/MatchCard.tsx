@@ -32,6 +32,7 @@ import ProbabilityBands from './ProbabilityBands'
 import RationalePopover from './RationalePopover'
 import { cardLinkClick } from '../explore/shared/cardLink'
 import { ringFromMatch } from './ringFill'
+import AppStatusPill, { type AppStatus } from '../explore/cards/AppStatusPill'
 
 interface MatchCardProps {
   match: MatchResultDual
@@ -46,6 +47,8 @@ interface MatchCardProps {
   /** Discover review 2026-06-14 #5 — k-anonymized count of peers open to connect. */
   peerCount?: number
   onPeersClick?: () => void
+  /** Discover review 2026-06-19 — real application stage for this program, if any. */
+  appStatus?: AppStatus | null
 }
 
 export default function MatchCard({
@@ -59,6 +62,7 @@ export default function MatchCard({
   onEventClick,
   peerCount,
   onPeersClick,
+  appStatus,
 }: MatchCardProps) {
   const [rationaleOpen, setRationaleOpen] = useState(false)
   const [showBands, setShowBands] = useState(false)
@@ -106,6 +110,7 @@ export default function MatchCard({
           </div>
 
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            <AppStatusPill status={appStatus} />
             {match.band_label && <BandBadge band={match.band_label} />}
             {degree && (
               <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md bg-muted text-foreground border border-border/60">

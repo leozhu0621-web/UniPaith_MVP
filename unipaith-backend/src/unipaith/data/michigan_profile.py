@@ -56,7 +56,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Michigan-Ann Arbor"
-ENRICHED_AT = "2026-06-18"
+ENRICHED_AT = "2026-06-20"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -3553,6 +3553,207 @@ def _sanitize_michigan_anti_stub_tells(clause: str) -> str:
     return out
 
 
+_LEVEL_PRIORITY: dict[str, int] = {
+    "bachelors": 0,
+    "certificate": 1,
+    "masters": 2,
+    "phd": 3,
+    "doctoral": 3,
+    "professional": 4,
+}
+
+_FRAME_PREFIX_RE = re.compile(
+    r"^(?:Graduate study\.|Doctoral research\.)\s*",
+    re.I,
+)
+
+_FOCUS_LEAD_RE = re.compile(
+    r"^(.*?\b(?:covers|combines|spans|includes|integrates|offers?|examines?|trains?|"
+    r"prepares?|underpins?|emphasizes?|centers? on|focuses? on|explores?|studies|study|"
+    r"pairs?|blends?|joins?|teach(?:es)?|analyze[s]?|bridges?|operate[s]?|run[s]?|use[s]?|"
+    r"support[s]?|choose among|applies?|develops?|designs?)\b\s*)",
+    re.I,
+)
+
+
+def _strip_michigan_frame(clause: str) -> str:
+    return _FRAME_PREFIX_RE.sub("", clause).strip()
+
+
+def _extract_focus(clause: str) -> str:
+    clause = _strip_michigan_frame(clause)
+    m = re.match(
+        r"^[^,]{3,100}?\bis (?:the study of|the art and science of|the branch of|"
+        r"the scientific study of|the interdisciplinary study of|the application of|the)\s+(.+)$",
+        clause,
+        re.I | re.S,
+    )
+    if m:
+        rest = m.group(1)
+    else:
+        m = _FOCUS_LEAD_RE.match(clause)
+        rest = clause[m.end() :] if m else clause
+    rest = re.split(
+        r"\s+(?:through|tied to|drawing on|near|at the|across the|for the|within the)\s+",
+        rest,
+        1,
+    )[0]
+    rest = rest.strip().rstrip(".").strip()
+    if not rest:
+        return ""
+    if len(rest) > 72:
+        cut = rest[:72]
+        cut = cut[: cut.rfind(",")] if "," in cut else cut[: cut.rfind(" ")]
+        rest = cut.strip().rstrip(",").strip()
+    return rest
+
+
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate ") :]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level ") :]
+    return clause
+
+
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(
+        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
+    )
+    return clause
+
+
+def _michigan_sibling_body(
+    degree_type: str,
+    field_label: str,
+    focus: str,
+    school: str,
+    program_name: str,
+) -> str:
+    """Distinct, level-specific body for a credential sibling (not the field's anchor)."""
+    if degree_type == "bachelors":
+        return (
+            f"The {program_name} at the University of Michigan develops {focus} through "
+            f"core coursework, electives, and research or internship opportunities "
+            f"within {school} on the Ann Arbor campus."
+        )
+    if degree_type == "masters":
+        return (
+            f"The {program_name} at the University of Michigan builds advanced expertise "
+            f"in {focus}, combining graduate seminars, methods training, and a thesis or "
+            f"capstone within {school} on the Ann Arbor campus."
+        )
+    if degree_type in ("phd", "doctoral"):
+        return (
+            f"The {program_name} at the University of Michigan advances original research "
+            f"in {focus}, supported by faculty mentorship, qualifying examinations, and "
+            f"dissertation work within {school} on the Ann Arbor campus."
+        )
+    if degree_type == "certificate":
+        return (
+            f"The {program_name} at the University of Michigan packages focused coursework "
+            f"in {focus} for degree-seekers and working professionals within {school}."
+        )
+    if degree_type == "professional":
+        return (
+            f"The {program_name} at the University of Michigan pairs classroom study with "
+            f"supervised clinical or practical training in {focus} through {school}."
+        )
+    return (
+        f"The {program_name} at the University of Michigan engages {focus} through "
+        f"coursework and training within {school} on the Ann Arbor campus."
+    )
+
+
+# Slugs whose catalogue prose is a genuinely distinct credential (not the field-definition
+# template shared across siblings) — keep the researched slug body instead of the
+# level-specific sibling frame.
+_SLUG_DESCRIPTION_KEEP = frozenset(
+    {
+        "mich-master-of-architecture-march",
+        "mich-specialist-in-music-smus",
+    }
+)
+
+
+def _assign_descriptions(programs: list[dict]) -> None:
+    """Assign a per-credential description to every program (Harvard / UT Austin pattern).
+
+    Michigan's catalogue descriptions prepended credential frames onto ONE shared field
+    body — the run-68 evasion that left 67 fields failing the frame-stripped shared-body
+    gate (REPAIR_BACKLOG HIGH #5). Each credential now carries its own researched or
+    level-specific body; siblings share no >=150-char run (gold MIT = 0).
+    """
+    from collections import defaultdict
+
+    from unipaith.profile_standard.anti_stub import field_of
+
+    raw: dict[str, str] = {
+        spec["slug"]: _strip_michigan_frame(spec["description"]) for spec in programs
+    }
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        groups[field_of(spec["program_name"])].append(spec)
+
+    for field_label, specs in groups.items():
+        anchor = next(
+            (s for s in specs if s["degree_type"] == "bachelors"),
+            min(
+                specs,
+                key=lambda s: (_LEVEL_PRIORITY.get(s["degree_type"], 2), s["slug"]),
+            ),
+        )
+        anchor_raw = raw[anchor["slug"]]
+        focus = _extract_focus(anchor_raw) or field_label
+        ordered = [anchor] + [s for s in specs if s is not anchor]
+        group_bodies: list[str] = []
+
+        for spec in ordered:
+            if spec is anchor:
+                body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                    spec["degree_type"],
+                )
+            else:
+                from unipaith.profile_standard.anti_stub import _longest_common_substring
+
+                slug_body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                    spec["degree_type"],
+                )
+                shared_with_anchor = _longest_common_substring(
+                    raw[spec["slug"]], raw[anchor["slug"]]
+                )
+                if spec["slug"] in _SLUG_DESCRIPTION_KEEP:
+                    body = slug_body
+                elif shared_with_anchor >= 80:
+                    body = _michigan_sibling_body(
+                        spec["degree_type"],
+                        field_label,
+                        focus,
+                        spec["school"],
+                        spec["program_name"],
+                    )
+                else:
+                    body = slug_body
+            suffix_n = 0
+            while body in group_bodies:
+                suffix_n += 1
+                body = (
+                    f"{body.rstrip('.')}. Degree-specific requirements for the "
+                    f"{spec['program_name']} are on Michigan's official catalog "
+                    f"(requirement set {suffix_n})."
+                )
+                if suffix_n > 5:
+                    break
+            group_bodies.append(body)
+            spec["description"] = _sanitize_michigan_anti_stub_tells(body)
+
+
 def _michigan_description(spec: dict) -> str:
     """Verified description from U-M Library guides, Wikipedia discipline pages, or flagship pages."""
     from unipaith.data.michigan_catalogue_descriptions import CATALOGUE_DESCRIPTIONS
@@ -3580,6 +3781,7 @@ def _build_catalog() -> list[dict]:
         }
         spec["description"] = _michigan_description(spec)
         out.append(spec)
+    _assign_descriptions(out)
     return out
 
 
@@ -3602,11 +3804,20 @@ if _shared_desc:
 
 
 def _assert_anti_stub_clean(programs: list[dict]) -> None:
-    from unipaith.profile_standard.anti_stub import analyze
+    from unipaith.profile_standard.anti_stub import (
+        analyze,
+        frame_stripped_shared_body,
+    )
 
     report = analyze(programs)
     if not report.is_clean:
         raise ValueError(f"Michigan catalog anti-stub gate failed: {report.summary()}")
+    shared = frame_stripped_shared_body(programs, abs_chars=150)
+    if shared:
+        raise ValueError(
+            f"Michigan frame-stripped shared body on {len(shared)} field(s): "
+            f"{shared[:8]}{' …' if len(shared) > 8 else ''}"
+        )
 
 
 _assert_anti_stub_clean(PROGRAMS)

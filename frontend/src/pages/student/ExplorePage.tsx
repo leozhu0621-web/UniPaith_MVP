@@ -18,7 +18,7 @@ import UniversityListRow from './explore/cards/UniversityListRow'
 import ViewToggle from '../../components/ui/ViewToggle'
 import useBrowseView from '../../hooks/useBrowseView'
 import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type FilterState } from './explore/shared/ExploreFilters'
-import { Building2, GraduationCap, MapPin } from 'lucide-react'
+import { Building2, GraduationCap, MapPin, Users } from 'lucide-react'
 import StrategyView from './match/StrategyView'
 import MatchesSection from './match/MatchesSection'
 import PromoCard from './explore/cards/PromoCard'
@@ -344,7 +344,8 @@ export default function ExplorePage() {
           id="discover-panel-foryou"
           role="tabpanel"
           aria-labelledby="discover-tab-foryou"
-          className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] gap-6 items-start"
+          tabIndex={0}
+          className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] gap-6 items-start focus-visible:outline-none"
         >
           <div className="min-w-0">
             <div className="mb-4">
@@ -405,12 +406,23 @@ export default function ExplorePage() {
               />
             </div>
 
-            <button
-              onClick={() => setTab('academic')}
-              className="ui-btn inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
-            >
-              <Building2 size={15} className="text-secondary" /> Browse universities &amp; programs
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setTab('academic')}
+                className="ui-btn inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+              >
+                <Building2 size={15} className="text-secondary" /> Browse universities &amp; programs
+              </button>
+              {/* "Manage following" lives in the xl rail; mirror it here below xl
+                  so laptop/tablet students (where the rail never mounts) can still
+                  reach the follow manager (Discover review 2026-06-19 #1). */}
+              <button
+                onClick={() => setManaging(true)}
+                className="ui-btn xl:hidden inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
+              >
+                <Users size={15} className="text-secondary" /> Manage following
+              </button>
+            </div>
           </div>
 
           {/* Live rail (xl+ only) — updates / events / deadline radar / following. */}
