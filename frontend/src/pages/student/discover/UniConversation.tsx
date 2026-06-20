@@ -523,7 +523,7 @@ export default function UniConversation({
         (llmChips.length > 0 ? (
           <AnswerChoices
             options={llmChips}
-            onPick={send}
+            onPick={send as (v: string | string[]) => void}
             kind={answerKind}
             lowLabel={sugInput?.low_label}
             highLabel={sugInput?.high_label}

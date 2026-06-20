@@ -90,8 +90,8 @@ def test_choice_multi_options_surface_in_plan_next():
     items = {i["field"]: i for i in plan_next({}, limit=len(CATALOG))}
     # gender (choice) surfaces its option labels including "Non-binary"
     assert "Non-binary" in items["gender"]["options"]
-    # funding_requirement (choice) surfaces exactly its 4 options
-    assert len(items["funding_requirement"]["options"]) == 4
+    # funding_requirement (choice) surfaces exactly its 6 options
+    assert len(items["funding_requirement"]["options"]) == 6
     # languages (multi) surfaces its option labels
     assert "Mandarin" in items["languages"]["options"]
 

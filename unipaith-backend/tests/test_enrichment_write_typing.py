@@ -81,3 +81,49 @@ async def test_free_text_categorical_not_taxonomy_checked(
     await ensure_profile(db_session, mock_student_user)
     r = await student_client.post(f"{BASE}/nationality/value", json={"value": "Canada"})
     assert r.status_code == 200, r.text
+
+
+# ── keywords ask_kind (Task 2) ────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_keywords_custom_value_accepted(student_client, db_session, mock_student_user):
+    """keywords fields (e.g. strongest_subjects) MUST accept custom values not in the
+    suggestion list — taxonomy validation must NOT fire for ask_kind='keywords'."""
+    await ensure_profile(db_session, mock_student_user)
+    r = await student_client.post(
+        f"{BASE}/strongest_subjects/value",
+        json={"value": ["Math", "Custom topic"]},
+    )
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data.get("value") == ["Math", "Custom topic"]
+
+
+@pytest.mark.asyncio
+async def test_typeahead_free_string_accepted(student_client, db_session, mock_student_user):
+    """typeahead fields (nationality) accept any free string — no taxonomy check."""
+    await ensure_profile(db_session, mock_student_user)
+    r = await student_client.post(f"{BASE}/nationality/value", json={"value": "Canada"})
+    assert r.status_code == 200, r.text
+
+
+@pytest.mark.asyncio
+async def test_multi_not_a_list_rejected(student_client, db_session, mock_student_user):
+    """A multi (choice) field must reject a plain string (needs a list)."""
+    await ensure_profile(db_session, mock_student_user)
+    r = await student_client.post(f"{BASE}/needs/value", json={"value": "not a list"})
+    assert r.status_code == 400, r.text
+
+
+@pytest.mark.asyncio
+async def test_multi_out_of_taxonomy_rejected_with_valid_value(
+    student_client, db_session, mock_student_user
+):
+    """A multi field with a mix of valid + bogus options must still be rejected."""
+    await ensure_profile(db_session, mock_student_user)
+    r = await student_client.post(
+        f"{BASE}/needs/value",
+        json={"value": ["Affordability", "Bogus option"]},
+    )
+    assert r.status_code == 400, r.text

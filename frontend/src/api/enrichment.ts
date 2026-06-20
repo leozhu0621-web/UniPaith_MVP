@@ -6,7 +6,7 @@ import apiClient from "./client";
 
 const BASE = "/students/me/enrichment";
 
-export type AskKind = "choice" | "multi" | "scale" | "range" | "date" | "number" | "text";
+export type AskKind = "choice" | "multi" | "scale" | "range" | "date" | "number" | "text" | "keywords" | "typeahead";
 export type Tier = "essential" | "high_value" | "standard";
 
 export interface EnrichItem {

@@ -120,7 +120,7 @@ class EnrichmentService:
             chosen = _coerce_weight_0_5(field, value)
             await self._project_preference_weight(student_id, field, chosen * 2)
             value = chosen
-        elif options:
+        elif entry["ask_kind"] in ("choice", "multi") and options:
             _validate_taxonomy(field, value, options, is_multi=entry["type"] == "multi")
         # A confirmed widget/ask answer: student-typed, structured, parse OK → the
         # intake engine stamps it at high confidence and writes a change-event.
