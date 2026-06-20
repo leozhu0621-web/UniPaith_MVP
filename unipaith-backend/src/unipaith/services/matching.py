@@ -65,10 +65,12 @@ from .match.params import (
     two_sided_confidence,
 )
 
-# ── Default weights ─────────────────────────────────────────────────────────
-# Hand-tuned for cold start. Phase B1 exit gate: NDCG@10 ≥ 0.65 against
-# 100 internally-rated (student, program) pairs. If NDCG misses, the
-# tuning lever is here — three numbers that must sum to 1.0.
+# ── Default weights (LEGACY convex-sum path only) ────────────────────────────
+# Used only when CPEF is off (the fallback). The CPEF tuning levers live in
+# `match/params.py::DEFAULT_PARAMS`. There is no labeled (student, program)
+# relevance dataset; ranking quality is gauged by the construct-validity NDCG@10
+# benchmark in tests/test_cpef_ndcg_benchmark.py, which confirmed CPEF (~0.916)
+# tracks this legacy path (~0.926) within ~1% on the realistic cohort.
 
 DEFAULT_WEIGHTS = {
     "cosine": 0.45,
