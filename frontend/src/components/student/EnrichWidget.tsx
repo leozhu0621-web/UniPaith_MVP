@@ -64,7 +64,7 @@ function SignalInput({
             type="number"
             value={min}
             onChange={(e) => setMin(e.target.value)}
-            className="mt-1 w-full rounded-md border border-border bg-card px-2 py-1.5 text-sm"
+            className="mt-1 w-full rounded-lg border-[1.5px] border-border bg-card px-3 py-2 text-sm focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
           />
         </label>
         <label className="flex-1 text-sm">
@@ -73,7 +73,7 @@ function SignalInput({
             type="number"
             value={max}
             onChange={(e) => setMax(e.target.value)}
-            className="mt-1 w-full rounded-md border border-border bg-card px-2 py-1.5 text-sm"
+            className="mt-1 w-full rounded-lg border-[1.5px] border-border bg-card px-3 py-2 text-sm focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
           />
         </label>
         <Button
@@ -96,7 +96,7 @@ function SignalInput({
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder={`Your ${humanizeField(item.field).toLowerCase()}`}
-        className="flex-1 rounded-md border border-border bg-card px-2.5 py-1.5 text-sm"
+        className="flex-1 rounded-lg border-[1.5px] border-border bg-card px-3 py-2 text-sm focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/20"
       />
       <Button
         variant="secondary"

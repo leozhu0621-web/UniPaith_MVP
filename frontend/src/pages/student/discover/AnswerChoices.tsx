@@ -1,24 +1,26 @@
 /**
- * Tap-to-answer affordances for the Uni conversation.
+ * Tap-to-answer affordances for the Uni conversation and the enrich widgets.
  *
- * Renders the orchestrator's `suggested_options` as warm answer surfaces so a
- * turn feels interactive, not just a text box. The optional `suggested_input`
- * hint (Phase 2) picks the shape:
- *   - 'choice' (default): single-tap cards — one tap sends that answer.
- *   - 'multi': multi-select cards + a Continue that sends the joined picks.
- *   - 'scale': a 1–5 importance slider (for needs / "how important" questions).
- * Typing is always available below regardless.
+ * The widget language locked in the 2026-06-19 widget-library design:
+ *   - 'choice' (default): option cards — whole card tappable, trailing
+ *     checkmark; one tap sends that answer.
+ *   - 'multi': option cards with a clean checkbox + a Continue that sends the
+ *     joined picks.
+ *   - 'scale': a tap-meter (five segments + a plain word), not a drag slider —
+ *     for "how important" / 0–5 importance questions.
+ * Typing stays available wherever this is used. Shared by the conversation
+ * (`suggested_options`) and `EnrichWidget`; brand tokens (secondary = cobalt).
  */
 import { useState } from 'react'
 import clsx from 'clsx'
-import { ArrowRight, Check, Plus } from 'lucide-react'
+import { ArrowRight, Check } from 'lucide-react'
 
 import Button from '../../../components/ui/Button'
 
 export type AnswerKind = 'choice' | 'multi' | 'scale'
 
 const CARD =
-  'group flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-left text-sm text-foreground transition-all duration-150 ease-out motion-safe:hover:-translate-y-px hover:border-secondary/50 hover:bg-secondary/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 disabled:opacity-50 disabled:pointer-events-none'
+  'group flex items-center gap-2.5 rounded-xl border-[1.5px] border-border bg-card px-3.5 py-3 text-left text-sm font-medium text-foreground transition-all duration-150 ease-out min-h-[2.75rem] motion-safe:hover:-translate-y-px hover:border-secondary/60 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 disabled:opacity-50 disabled:pointer-events-none'
 
 function ChoiceCards({
   options,
@@ -30,13 +32,14 @@ function ChoiceCards({
   disabled?: boolean
 }) {
   return (
-    <div className="mb-2 grid gap-1.5 sm:grid-cols-2 stagger-list" role="group" aria-label="Suggested answers">
+    <div className="mb-2 grid gap-2 sm:grid-cols-2 stagger-list" role="group" aria-label="Suggested answers">
       {options.map(opt => (
         <button key={opt} type="button" disabled={disabled} onClick={() => onPick(opt)} className={CARD}>
-          <span className="text-secondary/60 transition-colors group-hover:text-secondary shrink-0">
-            <Plus size={14} />
-          </span>
           <span className="flex-1">{opt}</span>
+          <Check
+            size={16}
+            className="shrink-0 text-secondary opacity-0 transition-opacity group-hover:opacity-100"
+          />
         </button>
       ))}
     </div>
@@ -62,7 +65,7 @@ function MultiSelect({
   }
   return (
     <div className="mb-2">
-      <div className="grid gap-1.5 sm:grid-cols-2 stagger-list" role="group" aria-label="Pick any that fit">
+      <div className="grid gap-2 sm:grid-cols-2 stagger-list" role="group" aria-label="Pick any that fit">
         {options.map(opt => {
           const on = sel.includes(opt)
           return (
@@ -74,15 +77,20 @@ function MultiSelect({
               onClick={() => toggle(opt)}
               className={clsx(CARD, on && '!border-secondary !bg-secondary/10')}
             >
-              <span className={clsx('shrink-0', on ? 'text-secondary' : 'text-secondary/60')}>
-                {on ? <Check size={14} /> : <Plus size={14} />}
+              <span
+                className={clsx(
+                  'flex h-[1.3rem] w-[1.3rem] shrink-0 items-center justify-center rounded-md border-[1.5px] transition-colors',
+                  on ? 'border-secondary bg-secondary text-secondary-foreground' : 'border-border',
+                )}
+              >
+                {on && <Check size={13} strokeWidth={3} />}
               </span>
               <span className="flex-1">{opt}</span>
             </button>
           )
         })}
       </div>
-      <div className="mt-1.5 flex items-center justify-end gap-2.5">
+      <div className="mt-2 flex items-center justify-end gap-2.5">
         <span className="text-xs text-muted-foreground">
           {sel.length ? `${sel.length} picked` : 'pick any that fit'}
         </span>
@@ -120,24 +128,24 @@ function Scale({
     return 'somewhere in the middle'
   })()
   return (
-    <div className="mb-2 rounded-lg border border-border bg-card px-3.5 py-3">
-      <div className="flex items-center gap-3">
-        <span className="text-xs text-muted-foreground shrink-0">{low}</span>
-        <input
-          type="range"
-          min={1}
-          max={5}
-          step={1}
-          value={v}
-          disabled={disabled}
-          onChange={e => setV(Number(e.target.value))}
-          className="flex-1"
-          style={{ accentColor: 'hsl(var(--secondary))' }}
-          aria-label="How important is this to you, from 1 to 5"
-        />
-        <span className="text-xs text-muted-foreground shrink-0">{high}</span>
+    <div className="mb-2 rounded-xl border-[1.5px] border-border bg-card px-3.5 py-3">
+      <div className="flex gap-1.5" role="group" aria-label="How important is this to you, from 1 to 5">
+        {[1, 2, 3, 4, 5].map(n => (
+          <button
+            key={n}
+            type="button"
+            disabled={disabled}
+            aria-label={`Set importance to ${n}`}
+            aria-pressed={n === v}
+            onClick={() => setV(n)}
+            className={clsx(
+              'h-8 flex-1 rounded-md transition-colors duration-150 motion-safe:hover:-translate-y-px',
+              n <= v ? 'bg-secondary' : 'bg-muted hover:bg-muted/70',
+            )}
+          />
+        ))}
       </div>
-      <div className="mt-2 flex items-center justify-between">
+      <div className="mt-2.5 flex items-center justify-between">
         <span className="text-xs font-medium text-secondary">{phrase}</span>
         <Button
           variant="secondary"
