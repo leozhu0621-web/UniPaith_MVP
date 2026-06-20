@@ -7,6 +7,7 @@ import { formatCurrency } from '../../../../utils/format'
 import type { ProgramSummary } from '../../../../types'
 import { degreeAbbrev, deadlineInfo } from './programFormat'
 import { cardLinkClick, CARD_LINK_OVERLAY } from '../shared/cardLink'
+import AppStatusPill, { type AppStatus } from './AppStatusPill'
 
 interface Props {
   program: ProgramSummary
@@ -15,13 +16,15 @@ interface Props {
   onView: () => void
   following?: boolean
   onToggleFollow?: () => void
+  /** Discover review 2026-06-19 — real application stage for this program, if any. */
+  appStatus?: AppStatus | null
   viewHref?: string
 }
 
 // Dense list-row variant of ProgramCard (browse grid/list toggle) — one line per
 // program for fast scanning. Same stretched-link pattern as the card: the name
 // <Link> overlays the row; Save / Follow stay raised sibling buttons.
-export default function ProgramListRow({ program, saved, onSave, onView, following, onToggleFollow, viewHref }: Props) {
+export default function ProgramListRow({ program, saved, onSave, onView, following, onToggleFollow, appStatus, viewHref }: Props) {
   const href = viewHref ?? `/s/programs/${program.id}`
   const abbrev = degreeAbbrev(program.degree_type)
   const deadline = deadlineInfo(program.application_deadline)
@@ -43,6 +46,7 @@ export default function ProgramListRow({ program, saved, onSave, onView, followi
           </Link>
         </h3>
         <div className="flex items-center gap-1.5 mt-0.5 text-xs text-muted-foreground">
+          <AppStatusPill status={appStatus} />
           <Building size={11} className="flex-shrink-0 text-muted-foreground/70" />
           <span className="truncate">
             {program.institution_name}

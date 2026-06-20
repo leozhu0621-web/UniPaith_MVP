@@ -61,6 +61,7 @@ export default function DiscoverTabBar({ tab, onChange }: Props) {
               role="tab"
               aria-selected={tab === t.key}
               aria-controls={`discover-panel-${t.key}`}
+              aria-label={badge > 0 ? `${t.label}, ${badge} new update${badge === 1 ? '' : 's'}` : undefined}
               tabIndex={tab === t.key ? 0 : -1}
               onClick={() => onChange(t.key)}
               onKeyDown={e => handleTabKeyDown(e, idx)}
