@@ -58,12 +58,17 @@ def _program_target_level(degree_type: str | None) -> str | None:
 
 
 def _gpa_floor(class_profile: dict | None) -> float | None:
-    """A soft minimum-GPA proxy from a REAL academic class profile: the 25th-percentile
-    admitted GPA (a floor), else the median. Omit when absent — never guess a cutoff.
-    Only the academic GPA keys are read (no protected / proxy attribute is touched)."""
+    """A soft GPA target from a REAL academic class profile, best-stat first: 25th-pct
+    (a true floor), then median (typed ``gpa_p50`` or the editorial ``median_gpa``), then
+    mean (``gpa_mean`` / ``avg_gpa``). Omit when absent — never guess a cutoff. The matcher
+    reads this as a SOFT target (``fit_numeric_higher`` with a wide band, shrunk by the
+    derived ``c_program``), so a published median/mean is a fair proxy when no p25 floor
+    exists. Both the typed ``ProgramAdmissionsHistory.class_profile`` (keys ``gpa_p*``) and
+    the editorial ``Program.class_profile`` JSONB (keys ``median_gpa`` / ``avg_gpa``) are
+    academic-only, so no protected / proxy attribute is touched."""
     if not class_profile:
         return None
-    for key in ("gpa_p25", "gpa_p50"):
+    for key in ("gpa_p25", "gpa_p50", "median_gpa", "gpa_mean", "avg_gpa"):
         val = class_profile.get(key)
         if val is None:
             continue
@@ -89,8 +94,8 @@ def derive_program_preference(
       background), grounded via name alias then CIP family; ``[]`` -> omitted.
     - ``pref_levels``  <- the current student levels eligible for this program's target
       level (the same compatibility table the eligibility veto uses).
-    - ``pref_min_gpa`` <- 25th-pct (else median) admitted GPA from a real class profile;
-      omitted when there is none.
+    - ``pref_min_gpa`` <- best published GPA stat (p25 -> median -> mean) from a real
+      class profile (typed table or the editorial JSONB); omitted when there is none.
 
     Returns ``None`` when not one signal grounds (the program stays "no opinion").
     """
@@ -116,17 +121,26 @@ def derive_program_preference(
 
 
 def _latest_class_profile(session: Any, program_id: Any) -> dict | None:
-    """Latest cycle's academic ``class_profile`` for a program (sync session), or None."""
+    """The academic ``class_profile`` for a program (sync session), or None.
+
+    Prefers the typed ``ProgramAdmissionsHistory.class_profile`` (latest cycle); falls back
+    to the editorial ``Program.class_profile`` JSONB, which is what the enrichment data
+    modules actually populate today (the typed table is still unwritten fleet-wide). Both
+    are academic-only by construction, so reading either is allowlist-safe."""
     from sqlalchemy import desc, select
 
+    from unipaith.models.institution import Program
     from unipaith.models.outcomes import ProgramAdmissionsHistory
 
-    return session.scalar(
+    typed = session.scalar(
         select(ProgramAdmissionsHistory.class_profile)
         .where(ProgramAdmissionsHistory.program_id == program_id)
         .order_by(desc(ProgramAdmissionsHistory.cycle_year))
         .limit(1)
     )
+    if typed:
+        return typed
+    return session.scalar(select(Program.class_profile).where(Program.id == program_id))
 
 
 def backfill_program_preferences(session: Any, *, institution_id: Any = None) -> int:
@@ -176,3 +190,42 @@ def backfill_program_preferences(session: Any, *, institution_id: Any = None) ->
 
     session.flush()
     return inserted
+
+
+def refresh_derived_gpa_floors(session: Any, *, institution_id: Any = None) -> int:
+    """One-time refresh: set ``pref_min_gpa`` on existing DERIVED rows that lack it, now
+    that ``_gpa_floor`` reads the editorial ``Program.class_profile`` JSONB.
+
+    ``backfill_program_preferences`` only INSERTS (skips existing rows), so fleet rows
+    derived before this fix carry no GPA target even where the data exists. Authority-safe:
+    touches ONLY ``source='derived'`` rows whose ``pref_min_gpa`` is NULL — never a claimed
+    row, never an already-set value. Sync ``Session``; flushes; caller commits. Returns the
+    number of rows updated."""
+    from decimal import Decimal
+
+    from sqlalchemy import select
+
+    from unipaith.models.institution import Program, ProgramPreference
+
+    stmt = select(ProgramPreference).where(
+        ProgramPreference.source == "derived",
+        ProgramPreference.pref_min_gpa.is_(None),
+    )
+    if institution_id is not None:
+        stmt = stmt.join(Program, Program.id == ProgramPreference.program_id).where(
+            Program.institution_id == institution_id
+        )
+    rows = list(session.scalars(stmt).all())
+    if not rows:
+        return 0
+
+    updated = 0
+    for pref in rows:
+        gpa = _gpa_floor(_latest_class_profile(session, pref.program_id))
+        if gpa is None:
+            continue
+        pref.pref_min_gpa = Decimal(str(gpa))
+        updated += 1
+
+    session.flush()
+    return updated
