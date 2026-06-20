@@ -123,3 +123,61 @@ async def test_create_custom_folder_then_delete(student_client, db_session, mock
     fid = c.json()["id"]
     d = await student_client.delete(f"{BASE}/folders/{fid}")
     assert d.status_code == 200, d.text
+
+
+# ---------------------------------------------------------------------------
+# Template action dispatch endpoint
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_action_unknown_key_returns_400(student_client, db_session, mock_student_user):
+    """Unknown action_key → 400."""
+    await ensure_profile(db_session, mock_student_user)
+    r = await student_client.post(f"{BASE}/templates/action/not_a_real_action")
+    assert r.status_code == 400, r.text
+
+
+@pytest.mark.asyncio
+async def test_action_build_school_list_no_5xx(student_client, db_session, mock_student_user):
+    """build_school_list returns 200 with kind=school_list — never 5xx.
+
+    Under AI_MOCK_MODE with a bare test student (no profile signals), the
+    matcher returns ready=False, so the endpoint gracefully returns pending.
+    """
+    await ensure_profile(db_session, mock_student_user)
+    r = await student_client.post(f"{BASE}/templates/action/build_school_list")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["action_key"] == "build_school_list"
+    assert body["kind"] == "school_list"
+    assert body["status"] in ("ready", "pending")
+    # Shape invariants
+    assert "title" in body
+    assert body.get("items") is None or isinstance(body["items"], list)
+
+
+@pytest.mark.asyncio
+async def test_action_pending_key_returns_pending(student_client, db_session, mock_student_user):
+    """Actions without a real service (e.g. find_events) return status=pending."""
+    await ensure_profile(db_session, mock_student_user)
+    r = await student_client.post(f"{BASE}/templates/action/find_events")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["status"] == "pending"
+    assert body["kind"] == "note"
+    assert body["action_key"] == "find_events"
+    assert "coming soon" in (body.get("summary") or "").lower()
+
+
+@pytest.mark.asyncio
+async def test_action_generate_strategy_no_5xx(student_client, db_session, mock_student_user):
+    """generate_strategy returns 200 — gracefully degrades to pending if not enough signal."""
+    await ensure_profile(db_session, mock_student_user)
+    r = await student_client.post(f"{BASE}/templates/action/generate_strategy")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["action_key"] == "generate_strategy"
+    assert body["kind"] == "strategy"
+    assert body["status"] in ("ready", "pending")
+    assert "title" in body

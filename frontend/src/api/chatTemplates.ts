@@ -46,3 +46,29 @@ export async function getChatTemplates(): Promise<ChatTemplate[]> {
   const { data } = await apiClient.get<ChatTemplate[]>(`${BASE}/templates`);
   return data;
 }
+
+// ── Action dispatch ────────────────────────────────────────────────────────
+
+export interface ActionArtifactItem {
+  name: string;
+  program?: string | null;
+  fit_label?: string | null;
+  odds_label?: string | null;
+}
+
+export interface ActionArtifact {
+  action_key: string;
+  kind: string;
+  title: string;
+  summary?: string | null;
+  items?: ActionArtifactItem[] | null;
+  status: "ready" | "pending";
+}
+
+/** POST /students/me/chat/templates/action/{action_key} */
+export async function dispatchTemplateAction(actionKey: string): Promise<ActionArtifact> {
+  const { data } = await apiClient.post<ActionArtifact>(
+    `${BASE}/templates/action/${encodeURIComponent(actionKey)}`,
+  );
+  return data;
+}
