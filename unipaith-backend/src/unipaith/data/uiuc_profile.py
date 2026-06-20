@@ -3268,6 +3268,15 @@ _SPECIAL_NAMES: dict[str, str] = {
     "uiuc-honors": "Bachelor of Science in Integrative Biology Honors",
     "uiuc-leadership-social-change": "Master of Education in Leadership & Social Change",
     "uiuc-animal-sciences-mansc": "Master of Animal Sciences",
+    # Chemistry and Geology each offer a Specialized Curriculum (the ``-bs`` rows, kept as the
+    # plain conferred name) AND a flexible Sciences & Letters Curriculum (these ``-bslas`` rows).
+    # Both are real, distinct UIUC degrees — disambiguate the BSLAS rows so the field-of-study
+    # rename does not collide with the specialized ``-bs`` program.
+    "uiuc-chemistry-bslas": "Bachelor of Science in Chemistry (Sciences & Letters Curriculum)",
+    "uiuc-geology-bslas": "Bachelor of Science in Geology (Sciences & Letters Curriculum)",
+    # The VMS major in Veterinary Clinical Medicine — name it by its field of study, not the
+    # ``{degree} - {major}`` form (which reads as a concentration split).
+    "uiuc-clinical-medicine-ms": "Master of Science in Veterinary Clinical Medicine",
 }
 
 # Longest suffix first — "fixed:" = complete name; "prefix:" = credential + field.
@@ -3276,8 +3285,8 @@ _SUFFIX_MAP: list[tuple[str, str]] = [
     ("-imsm-ms", "fixed:Master of Science in Management (iMSM, Online)"),
     ("-online-mcs", "fixed:Master of Computer Science (Online)"),
     ("-online-mba", "fixed:Master of Business Administration (iMBA, Online)"),
-    ("-bslas", "prefix:Bachelor of Science in Liberal Arts and Sciences —"),
-    ("-bsag", "prefix:Bachelor of Science in Agricultural Sciences —"),
+    ("-bslas", "prefix:Bachelor of Science in"),
+    ("-bsag", "prefix:Bachelor of Science in"),
     ("-balas", "prefix:Bachelor of Arts in"),
     ("-bfasa", "prefix:Bachelor of Fine Arts in"),
     ("-basa", "prefix:Bachelor of Arts in"),
@@ -4333,6 +4342,38 @@ _RESEARCHED_DESC_OVERRIDES: dict[str, str] = {
         'Veterinary Clinical Medicine, students combine advanced coursework with mentored '
         'research in fields such as surgery, internal medicine, oncology, and diagnostic imaging.'
     ),
+    # Speech & Hearing Science — the MA and PhD shared the department blurb verbatim (abs>=150
+    # shared body, run-67 dilution floor); give each credential level its own researched body.
+    "uiuc-speech-hearing-science-ma": (
+        "The Master of Arts in the Department of Speech and Hearing Science prepares "
+        "speech-language pathologists to assess and treat communication and swallowing "
+        "disorders across the lifespan. Coursework in language, phonology, voice, fluency, and "
+        "dysphagia is paired with supervised clinical practicum leading toward professional "
+        "certification."
+    ),
+    "uiuc-speech-hearing-science-phd": (
+        "The doctoral program in speech and hearing science centers original research into the "
+        "perception and production of spoken, written, signed, and alternative communication, "
+        "communication disorders, and dysphagia. Students join faculty laboratories, complete "
+        "advanced study in their specialization, and prepare for research and university "
+        "teaching careers."
+    ),
+    # Integrative Biology — the BS and MS shared the discipline opening verbatim once the BSLAS
+    # undergrad name was normalized to its field (abs>=150 shared body); differentiate by level.
+    "uiuc-integrative-biology-bslas": (
+        "Integrative biology examines how life works across scales, from molecules and cells to "
+        "whole organisms, ecosystems, and the biosphere. In the College of Liberal Arts and "
+        "Sciences' School of Integrative Biology, this Bachelor of Science gives undergraduates "
+        "broad organismal and ecological training with laboratory and field experience — from "
+        "prairie restoration to genome editing — aimed at challenges in health, biodiversity, "
+        "and sustainability."
+    ),
+    "uiuc-integrative-biology-ms": (
+        "The Master of Science in integrative biology is a one-year, non-thesis, course-based "
+        "degree in the School of Integrative Biology. It offers interdisciplinary advanced "
+        "training across organismal, ecological, and evolutionary biology for students "
+        "preparing for scientific and professional roles or further graduate study."
+    ),
 }
 
 
@@ -4408,6 +4449,15 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
     if shared:
         raise ValueError(
             f"UIUC catalog shares a frame-stripped body on {len(shared)} field(s): {shared[:5]}"
+        )
+    # Run-67 dilution floor: a >=150-char identical run across a field's credential siblings is a
+    # stamped sentence regardless of fraction (a padded per-credential tail otherwise dilutes it
+    # below the 50% floor and the default check reads a false 0). Gold MIT = 0.
+    shared_abs = frame_stripped_shared_body(programs, min_chars=150, min_fraction=0.0)
+    if shared_abs:
+        raise ValueError(
+            f"UIUC catalog shares a >=150-char frame-stripped body on "
+            f"{len(shared_abs)} field(s): {shared_abs[:5]}"
         )
 
 
