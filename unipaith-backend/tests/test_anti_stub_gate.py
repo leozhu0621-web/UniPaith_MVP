@@ -66,6 +66,8 @@ CERTIFIED_CLEAN = [
     "dartmouth",  # institution seed → gold + real verified 43-program catalog across the
     #             five schools; field-specific researched descriptions, real departments,
     #             no rollup/possessive/stub rows (dartprof1)
+    "emory",      # institution seed → gold + 46-program catalog; Trumba events feed;
+    #             4-photo gallery; field-specific descriptions (emoryprof1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
