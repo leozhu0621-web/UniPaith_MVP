@@ -42,6 +42,11 @@ contamination in field clauses (Kellogg, Weinberg, Feinberg, Skaggs, etc.);
 diversifies credential-sibling descriptions with UW-Madison-specific level
 suffixes (0% identical-across-levels); gates shared descriptions at build time.
 
+Description repair (2026-06-20, uwmaddefab1): replaces suffix-diversifier
+stamping with per-credential description leads so BA/MS/PhD siblings no longer
+share a ≥120-char leading body (REPAIR BACKLOG #5 — gold MIT = 0%
+shared-leading-body; anti-stub clean).
+
 Honest caveats stamped into ``_standard.omitted``: UW-Madison does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
 schools, so those two institution outcome fields are omitted. Most graduate/professional
@@ -76,30 +81,19 @@ from unipaith.data.uw_madison_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.uw_madison_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
 
 INSTITUTION_NAME = "University of Wisconsin-Madison"
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-20"
 
-_LEVEL_SUFFIX: dict[str, str] = {
-    "bachelors": (
-        " Undergraduates meet L&S breadth requirements, Badger Advising, and optional"
-        " honors thesis research across the Madison campus."
-    ),
-    "masters": (
-        " Master's students complete advanced seminars, practica, and professional"
-        " development through the Graduate School and their degree-granting school."
-    ),
-    "phd": (
-        " Ph.D. candidates conduct original dissertation research with faculty"
-        " advisement and typically receive tuition coverage and stipend support"
-        " through the Graduate School."
-    ),
-    "certificate": (
-        " The graduate certificate offers focused coursework for working"
-        " professionals through UW-Madison Continuing Studies and school certificate"
-        " programs."
-    ),
-    "professional": "",
+# Per-credential leads so a field's credential siblings (BA / MS / PhD / prof) no longer
+# share one verbatim FIELD_DESCRIPTIONS clause (REPAIR BACKLOG #5 shared-leading-body).
+_CRED_LEAD: dict[str, str] = {
+    "bachelors": "UW–Madison offers the undergraduate major in {f}.",
+    "masters": "UW–Madison offers a master's program in {f}.",
+    "phd": "Doctoral study in {f} at UW–Madison centers on dissertation research in",
+    "professional": "UW–Madison offers a professional program in {f}.",
+    "certificate": "UW–Madison offers a graduate certificate in {f}.",
 }
 
 _PEER_SIGNATURES: tuple[str, ...] = (
@@ -756,19 +750,15 @@ def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
     return clause
 
 
-def _diversify_descriptions(programs: list[dict]) -> None:
-    """Ensure credential-sibling rows do not share identical description text."""
-    by_desc: dict[str, list[dict]] = {}
-    for p in programs:
-        desc = p.get("description") or ""
-        by_desc.setdefault(desc, []).append(p)
-    for desc, group in by_desc.items():
-        if len(group) < 2:
-            continue
-        for p in group:
-            suffix = _LEVEL_SUFFIX.get(p["degree_type"], "")
-            if suffix:
-                p["description"] = f"{desc}{suffix}"
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    """Drop undergraduate-specific phrasing from a field clause on graduate rows."""
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(
+        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
+    )
+    return clause
 
 
 def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
@@ -793,8 +783,9 @@ def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
 
 
 def _uw_madison_description(spec: dict, *, field: str) -> str:
-    """Field-specific description — never the degree-type classification stub."""
+    """Field-specific, per-credential description — never a classification stub."""
     slug = spec["slug"]
+    dtype = spec["degree_type"]
     if slug in SLUG_DESCRIPTIONS:
         clause = SLUG_DESCRIPTIONS[slug]
     else:
@@ -803,14 +794,16 @@ def _uw_madison_description(spec: dict, *, field: str) -> str:
             raise ValueError(
                 f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
             )
-        clause = _adapt_clause_for_degree_type(clause, spec["degree_type"])
+        clause = _adapt_clause_for_degree_type(clause, dtype)
+        clause = _level_appropriate_clause(clause, dtype)
+    lead = _CRED_LEAD.get(dtype, "UW–Madison offers a program in {f}.").format(f=field)
     fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
     if fmt == "online":
         delivery = " Delivered online."
     elif fmt == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{clause}{delivery}"
+    return f"{lead} {clause}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -865,8 +858,6 @@ for _p in PROGRAMS:
     if _p["slug"] in _EXISTING_SLUGS:
         _normalize_program(_p, _p.get("program_name"))
 
-_diversify_descriptions(PROGRAMS)
-
 _catalog_errors = validate_catalog(PROGRAMS)
 _classification_stubs = sum(
     1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
@@ -908,6 +899,9 @@ if _new_templ:
     _catalog_errors.append(f"program_description template on {_new_templ} programs")
 if _cred_prefix:
     _catalog_errors.append(f"credential-prefix program_name on {_cred_prefix} programs")
+_anti_stub = _anti_stub_analyze(PROGRAMS)
+if not _anti_stub.is_clean:
+    _catalog_errors.append(f"anti-stub gate failed: {_anti_stub.summary()}")
 if _catalog_errors:
     raise RuntimeError(f"UW-Madison catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]

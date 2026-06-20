@@ -133,6 +133,14 @@ def test_no_identical_across_credential_levels():
     )
 
 
+def test_catalog_is_anti_stub_clean():
+    """Per-credential description leads — gold MIT = 0% shared-leading-body (REPAIR #5)."""
+    from unipaith.profile_standard.anti_stub import analyze
+
+    report = analyze(p.PROGRAMS)
+    assert report.is_clean, f"anti-stub not clean: {report.summary()}"
+
+
 def test_catalog_breadth_and_shape():
     assert len(p.SCHOOLS) == 15
     assert len(p.PROGRAMS) >= 330
