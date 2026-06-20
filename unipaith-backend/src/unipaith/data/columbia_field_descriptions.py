@@ -322,6 +322,175 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "The Ph.D. in Nursing — doctoral nursing-science research at Columbia School of "
         "Nursing."
     ),
+    # ── Per-credential researched bodies (REPAIR_BACKLOG frame-shared-body fix) ──────
+    # These fields fell through to the shared CORE fallback, so a field's BA/MS/PhD rows
+    # carried one field clause behind a credential-keyed lead (anti-stub
+    # frame_stripped_shared_body). Each entry below is researched per program from
+    # Columbia's own bulletin/department pages and is distinct across credential levels
+    # (what THAT degree studies at THAT level). Verified at bulletin.columbia.edu.
+    "columbia-anthropology-ba": (
+        "Sociocultural anthropology and archaeology in the United States' oldest "
+        "anthropology department — founded by Franz Boas in 1896 — with courses in "
+        "ethnographic interpretation, the archaeology of ancient states, and museum "
+        "and fieldwork training."
+    ),
+    "columbia-anthropology-phd": (
+        "Dissertation fieldwork and theory in sociocultural anthropology and archaeology "
+        "at the Boas-founded department, with strengths in the anthropology of empire, "
+        "colonialism, and cross-cultural interpretation."
+    ),
+    "columbia-physics-ba": (
+        "A rigorous grounding in mechanics, electromagnetism, optics, two semesters of "
+        "quantum mechanics, and statistical physics, where a small student-to-faculty "
+        "ratio places nearly every undergraduate in a faculty research group."
+    ),
+    "columbia-physics-phd": (
+        "Doctoral dissertation work spanning condensed-matter, high-energy and particle, "
+        "atomic-molecular-optical, and theoretical physics, with experiment based at "
+        "Columbia's Nevis Laboratories and collaborations at Brookhaven."
+    ),
+    "columbia-astronomy-ba": (
+        "Stellar physics, galaxies, cosmology, and planetary dynamics built on a calculus "
+        "and introductory-physics foundation, with two tracks combining observation and "
+        "astrophysical theory."
+    ),
+    "columbia-astronomy-phd": (
+        "Doctoral research in galaxy formation, cosmology, exoplanets, and high-energy "
+        "astrophysics, drawing on faculty and resources shared with the Hayden "
+        "Planetarium at the American Museum of Natural History."
+    ),
+    "columbia-religion-ba": (
+        "The comparative, academic study of Christianity, Islam, Judaism, Buddhism, "
+        "Hinduism, Chinese, and Native American traditions at their intersection with "
+        "race, gender, politics, and media — with unlimited cross-registration in "
+        "Barnard's Religion department."
+    ),
+    "columbia-religion-phd": (
+        "Doctoral research in the textual, historical, and theoretical study of religious "
+        "traditions, training scholars in comparative method and the critical analysis of "
+        "religion in culture."
+    ),
+    "columbia-classics-ba": (
+        "Greek and Latin language and literature with ancient history and material "
+        "culture, offered in five tracks from classical languages and literatures to "
+        "ancient civilizations in translation, capped by a senior thesis."
+    ),
+    "columbia-classics-phd": (
+        "Doctoral philology and research in Greek and Latin literature and ancient "
+        "history, preparing scholars for advanced interdisciplinary work on the ancient "
+        "Mediterranean world."
+    ),
+    "columbia-french-ba": (
+        "French and Francophone literature, language, and culture from the medieval era "
+        "to the present, pairing advanced language study with literary and cultural "
+        "analysis in the Department of French and Romance Philology."
+    ),
+    "columbia-french-phd": (
+        "Doctoral research in French and Romance philology — literary history, critical "
+        "theory, and Francophone studies — culminating in an original dissertation."
+    ),
+    "columbia-operations-research-ms": (
+        "A 30-credit professional master's in probability, optimization, stochastic "
+        "models, and simulation, with eight concentrations from machine learning and "
+        "analytics to finance and supply-chain management."
+    ),
+    "columbia-operations-research-phd": (
+        "Doctoral research in optimization, stochastic modeling, and data-driven "
+        "decision-making, sharing a curriculum with the Industrial Engineering doctorate "
+        "and culminating in an original dissertation."
+    ),
+    "columbia-applied-physics-bs": (
+        "Quantum mechanics, electromagnetism, optics, and nuclear science applied to "
+        "engineering problems, bridging fundamental physics and device-oriented work in "
+        "the Department of Applied Physics and Applied Mathematics."
+    ),
+    "columbia-applied-physics-ms": (
+        "Advanced graduate coursework in plasma physics, solid-state and optical physics, "
+        "and applied electromagnetics, with access to the department's Plasma Physics "
+        "Laboratory."
+    ),
+    "columbia-applied-physics-phd": (
+        "Doctoral research in plasma physics and controlled fusion, quantum and "
+        "solid-state science, optical and laser physics, and medical physics."
+    ),
+    "columbia-materials-science-and-engineering-bs": (
+        "Crystal structure, thermodynamics, synthesis and processing, and the mechanical "
+        "and electronic properties of metals, ceramics, polymers, and nanomaterials, "
+        "taught within the Department of Applied Physics and Applied Mathematics."
+    ),
+    "columbia-materials-science-and-engineering-ms": (
+        "Advanced coursework in materials synthesis and characterization and in "
+        "electronic, photonic, and electrochemical materials engineered for devices."
+    ),
+    "columbia-materials-science-and-engineering-phd": (
+        "Doctoral research on nanomaterials, electrochemical and electronic materials, "
+        "and the processing–structure–property relationships of advanced materials."
+    ),
+    "columbia-chemical-engineering-bs": (
+        "Material and energy balances, transport phenomena, thermodynamics, reaction "
+        "kinetics, and separations, with capstone process design and laboratory work in "
+        "the Department of Chemical Engineering."
+    ),
+    "columbia-chemical-engineering-ms": (
+        "Advanced transport, thermodynamics, and reaction engineering plus electives in "
+        "electrochemistry, biopharmaceuticals, soft materials, and machine-learning "
+        "applications, including bridge courses for scientists entering the field."
+    ),
+    "columbia-chemical-engineering-phd": (
+        "Doctoral research in protein and polymer engineering, electrochemistry for "
+        "energy storage, carbon capture and catalysis, soft matter, and computational "
+        "methods, tied to the Columbia Electrochemical Energy Center."
+    ),
+    "columbia-civil-engineering-bs": (
+        "The planning, analysis, and design of the built environment — structures, "
+        "geotechnical and water-resources systems, and construction — on applied-mechanics "
+        "and materials foundations."
+    ),
+    "columbia-civil-engineering-ms": (
+        "Advanced study in structural, geotechnical, construction, and environmental "
+        "engineering, including earthquake and wind engineering and computational "
+        "mechanics."
+    ),
+    "columbia-civil-engineering-phd": (
+        "Doctoral research in structural and computational mechanics, geotechnical and "
+        "earthquake engineering, and sustainable infrastructure in the Department of "
+        "Civil Engineering and Engineering Mechanics."
+    ),
+    "columbia-computer-engineering-bs": (
+        "Core electrical-engineering and computer-science coursework — circuits, digital "
+        "systems, computer architecture, and advanced programming — administered jointly "
+        "by the Electrical Engineering and Computer Science departments through Columbia's "
+        "Computer Engineering Committee."
+    ),
+    "columbia-computer-engineering-ms": (
+        "Graduate study spanning computer architecture, VLSI, and embedded and "
+        "hardware–software systems, jointly administered by the Electrical Engineering "
+        "and Computer Science departments."
+    ),
+    "columbia-earth-and-environmental-engineering-bs": (
+        "The sustainable management of Earth's water, energy, and material resources — "
+        "water treatment, climate-change mitigation, minerals processing, and waste "
+        "prevention — in the Henry Krumb School of Mines."
+    ),
+    "columbia-earth-and-environmental-engineering-ms": (
+        "Advanced engineering of water systems, energy storage, carbon capture and "
+        "utilization, and resource recovery in the Department of Earth and Environmental "
+        "Engineering."
+    ),
+    "columbia-earth-and-environmental-engineering-phd": (
+        "Doctoral research in geomechanics, electrochemical energy storage, carbon "
+        "sequestration, mineral processing, and bioremediation."
+    ),
+    "columbia-industrial-engineering-bs": (
+        "The design and optimization of complex systems across manufacturing, service, "
+        "logistics, and information operations, combining operations research, statistics, "
+        "and human factors."
+    ),
+    "columbia-industrial-engineering-ms": (
+        "A professional master's building advanced skills for service, manufacturing, "
+        "technology, and infrastructure systems, with electives in optimization, "
+        "analytics, and engineering management."
+    ),
 }
 
 # Field-name aliases: map a program-name field to its CORE key when they differ.
