@@ -7,7 +7,7 @@ level-specific body (gold MIT = 0%). Re-applies ``michigan_profile.apply()`` and
 re-derives program-preference rows.
 
 Revision ID: michpercrd1
-Revises: michheadmrg1
+Revises: columbiapercred1
 Create Date: 2026-06-20
 """
 
@@ -22,7 +22,7 @@ from unipaith.models import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "michpercrd1"
-down_revision = "michheadmrg1"
+down_revision = "columbiapercred1"
 branch_labels = None
 depends_on = None
 

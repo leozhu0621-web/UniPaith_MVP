@@ -30,7 +30,8 @@ import type {
 import MaterialUpload from '../../../components/student/MaterialUpload'
 import EnrichWidget from '../../../components/student/EnrichWidget'
 import AnswerChoices from './AnswerChoices'
-import UniOrb, { type OrbState } from './UniOrb'
+import UniOrb, { type OrbState } from '../../../components/student/UniOrb'
+import { deriveComposerOrbState } from './composerOrbState'
 import FirstLookCard from './FirstLookCard'
 import NoticedCard from './NoticedCard'
 import { attachRefs, noticedItemsFromSignals } from './noticed'
@@ -275,6 +276,28 @@ export default function UniConversation({
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
   }, [messages.length, turnMut.isPending, streaming, streamText])
+
+  // The persistent composer orb — Uni's living presence (chat-tab spec §1). A
+  // transient `celebrating` fires once on the false→true edge of matchesUnlocked
+  // (a real milestone); the rest is derived from existing turn state.
+  const [celebrating, setCelebrating] = useState(false)
+  const prevMatchesUnlocked = useRef(journey.matchesUnlocked)
+  useEffect(() => {
+    if (journey.matchesUnlocked && !prevMatchesUnlocked.current) {
+      setCelebrating(true)
+      const t = setTimeout(() => setCelebrating(false), 2000)
+      prevMatchesUnlocked.current = journey.matchesUnlocked
+      return () => clearTimeout(t)
+    }
+    prevMatchesUnlocked.current = journey.matchesUnlocked
+  }, [journey.matchesUnlocked])
+  const composerOrbState = deriveComposerOrbState({
+    streaming,
+    streamText,
+    pending: turnMut.isPending,
+    draft,
+    celebrating,
+  })
 
   const refreshAfterTurn = async (sid: string) => {
     await qc.invalidateQueries({ queryKey: ['discovery', 'session', sid] })
@@ -622,6 +645,9 @@ export default function UniConversation({
         }}
         className="flex items-end gap-2 border-t border-border pt-3"
       >
+        {/* Uni's persistent living presence — reflects listening / thinking /
+            responding / celebrating; still at idle (chat-tab spec §1). */}
+        <UniOrb state={composerOrbState} size={24} className="mb-1.5 shrink-0" />
         <Button
           type="button"
           variant="ghost"
