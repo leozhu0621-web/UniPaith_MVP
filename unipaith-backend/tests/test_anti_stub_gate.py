@@ -60,6 +60,8 @@ CERTIFIED_CLEAN = [
     #             (verbatim/shared-body removed) (ricedefab1 — HIGH #4)
     "uw_madison",  # per-credential description leads; suffix-diversifier removed
     #             (shared-leading-body = 0) (uwmaddefab1 — HIGH #5)
+    "northwestern",  # per-credential description leads; suffix-diversifier removed
+    #               (shared-leading-body = 0) (nwdefab1 — HIGH #6)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
