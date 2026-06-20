@@ -39,8 +39,10 @@ interface Props {
   /** The most-recent active session to show in the "Continue" card.
    *  Null when there are no prior sessions. */
   recentSession?: { id: string; title: string; stage?: string | null } | null;
-  /** Called when a session is started (created or re-opened). */
-  onSessionStart: (sessionId: string) => void;
+  /** Called when a session is started (created or re-opened).
+   *  originKind and originRef are forwarded for template sessions so the shell
+   *  can route to TemplateRunner. */
+  onSessionStart: (sessionId: string, originKind?: string, originRef?: string) => void;
 }
 
 // ── Stage labels for template grouping ────────────────────────────────────
@@ -434,7 +436,9 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
 
   const createMut = useMutation({
     mutationFn: createSession,
-    onSuccess: (s: ChatSession) => onSessionStart(s.id),
+    onSuccess: (s: ChatSession, vars) => {
+      onSessionStart(s.id, vars.origin_kind, vars.origin_ref ?? undefined);
+    },
   });
 
   function startSession(title: string, topicKey?: string) {
@@ -454,7 +458,12 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
 
   function handleTemplatePick(tmpl: ChatTemplate) {
     if (createMut.isPending) return;
-    startSession(tmpl.title, tmpl.topic);
+    createMut.mutate({
+      title: tmpl.title,
+      topic_key: tmpl.topic,
+      origin_kind: "template",
+      origin_ref: tmpl.key,
+    });
   }
 
   return (
@@ -518,7 +527,7 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
             <ContinueCard
               title={recentSession.title}
               stage={recentSession.stage}
-              onClick={() => onSessionStart(recentSession.id)}
+              onClick={() => onSessionStart(recentSession.id, "manual")}
             />
           </section>
         )}

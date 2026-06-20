@@ -4,16 +4,18 @@
  * Spec: docs/superpowers/specs/2026-06-19-uni-chat-tab-redesign-design.md §2
  *
  *   ┌──────────────┬──────────────────────────────────────────────────┐
- *   │ SessionBrowser│  center view (two states):                      │
+ *   │ SessionBrowser│  center view (three states):                    │
  *   │  272px, lg+  │  ── NewSessionLauncher  (no active session /    │
  *   │              │       "+ New session" clicked)                   │
- *   │              │  ── DiscoverHomePage conversation (active sess.) │
+ *   │              │  ── TemplateRunner  (origin_kind === "template") │
+ *   │              │  ── DiscoverHomePage conversation (free session) │
  *   └──────────────┴──────────────────────────────────────────────────┘
  *
  * State:
- *   • activeSessionId — the session currently open in the center.
+ *   • activeSession — the session currently open in the center.
  *     null  → show NewSessionLauncher.
- *     non-null → show DiscoverHomePage (existing Uni conversation).
+ *     { id, originKind: "template", originRef: <key> } → show TemplateRunner.
+ *     { id, originKind: other } → show DiscoverHomePage (free conversation).
  *
  * The left rail (SessionBrowser) is hidden below ~860 px — DiscoverHomePage
  * already handles the mobile layout.  The conversation is rendered EXACTLY
@@ -22,12 +24,19 @@
 import { useCallback, useState } from "react";
 import SessionBrowser from "./SessionBrowser";
 import NewSessionLauncher from "./NewSessionLauncher";
+import TemplateRunner from "./TemplateRunner";
 import DiscoverHomePage from "../DiscoverHomePage";
 import { useQuery } from "@tanstack/react-query";
 import { getChatTree } from "../../../api/chatSessions";
 
+interface ActiveSession {
+  id: string;
+  originKind: string;
+  originRef?: string;
+}
+
 export default function ChatTabShell() {
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
 
   // Fetch tree so we can surface the most-recent session in the launcher.
   const { data: treeData } = useQuery({
@@ -51,21 +60,27 @@ export default function ChatTabShell() {
     return allSessions[0]; // folders/sessions returned in sort_order order
   })();
 
-  const handleSessionStart = useCallback((id: string) => {
-    setActiveSessionId(id);
-  }, []);
+  /** Called by NewSessionLauncher — carries origin metadata for template sessions. */
+  const handleSessionStart = useCallback(
+    (id: string, originKind?: string, originRef?: string) => {
+      setActiveSession({ id, originKind: originKind ?? "manual", originRef });
+    },
+    [],
+  );
 
   const handleSelectSession = useCallback((id: string) => {
-    setActiveSessionId(id);
+    // Sessions opened from the browser don't carry template context (they are
+    // existing sessions). Treat them as free conversations.
+    setActiveSession({ id, originKind: "manual" });
   }, []);
 
   const handleNewSession = useCallback((id: string) => {
-    setActiveSessionId(id);
+    setActiveSession({ id, originKind: "manual" });
   }, []);
 
   const handleNewSessionBlank = useCallback(() => {
     // "New session" from the browser with no id yet → show the launcher
-    setActiveSessionId(null);
+    setActiveSession(null);
   }, []);
 
   return (
@@ -77,7 +92,7 @@ export default function ChatTabShell() {
         aria-label="Session browser"
       >
         <SessionBrowser
-          activeSessionId={activeSessionId}
+          activeSessionId={activeSession?.id ?? null}
           onSelectSession={handleSelectSession}
           onNewSession={(id) => {
             // When the browser creates a session and returns an id, open it.
@@ -93,16 +108,24 @@ export default function ChatTabShell() {
         />
       </aside>
 
-      {/* Center view — launcher or conversation */}
+      {/* Center view — launcher, template runner, or free conversation */}
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        {activeSessionId === null ? (
+        {activeSession === null ? (
           /* New-session launcher */
           <NewSessionLauncher
             recentSession={recentSession}
-            onSessionStart={handleSessionStart}
+            onSessionStart={(id, originKind, originRef) =>
+              handleSessionStart(id, originKind, originRef)
+            }
+          />
+        ) : activeSession.originKind === "template" && activeSession.originRef ? (
+          /* Template runner — step-by-step guided plan */
+          <TemplateRunner
+            templateKey={activeSession.originRef}
+            onClose={() => setActiveSession(null)}
           />
         ) : (
-          /* Existing Uni conversation — unchanged */
+          /* Free Uni conversation — unchanged */
           <div className="flex-1 min-w-0 overflow-y-auto">
             <DiscoverHomePage />
           </div>
