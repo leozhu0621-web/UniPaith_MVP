@@ -91,6 +91,35 @@ def test_catalog_breadth_and_shape():
     assert not validate_catalog(n.PROGRAMS)
 
 
+def test_program_names_are_not_scrape_mangled():
+    """The bulletin scrape dropped conjunctions, commas, and grade-band dashes from
+    multi-field / teacher-certification titles, producing space-mashed names
+    ("Economics Computer Science", "Teaching Chemistry 7 12"). REPAIR_BACKLOG CRITICAL
+    #1: every name must read as the real published NYU Bulletin title. The structural
+    tells are (a) a bare unpunctuated grade-range digit run (" 7 12", " 712", " 5 6 ")
+    and (b) a representative set of joint/combined majors that must carry their
+    restored conjunction."""
+    import re
+
+    mangle_re = re.compile(r"\b\d \d{2}\b|\b[57]12\b|\b\d \d\b")
+    bad = [p["program_name"] for p in n.PROGRAMS if mangle_re.search(p["program_name"])]
+    assert not bad, f"Scrape-mangled grade ranges in names: {bad[:10]}"
+
+    names = {p["program_name"] for p in n.PROGRAMS}
+    must_exist = {
+        "Bachelor of Arts in Economics and Computer Science",
+        "Bachelor of Arts in French and Linguistics",
+        "Bachelor of Arts in Mathematics and Computer Science",
+        "Bachelor of Arts in Global Public Health and Anthropology",
+        "Bachelor of Science in Health and Wellbeing Studies",
+        "Bachelor of Science in Teaching Chemistry, Grades 7–12",
+        "Master of Arts in Journalism and East Asian Studies",
+        "Doctor of Philosophy in French Studies and French",
+    }
+    missing = must_exist - names
+    assert not missing, f"De-mangled joint-major names regressed: {missing}"
+
+
 def test_no_synthesized_reviews_only_handcrafted():
     """Coverable programs without gathered reviews must omit via _standard, not fake reviews."""
     from scripts.fleet_audit import is_coverable
