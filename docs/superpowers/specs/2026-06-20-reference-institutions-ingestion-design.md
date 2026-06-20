@@ -161,5 +161,6 @@ A tiny fixture JSONL (3–5 institutions) seeds the test DB — tests never depe
 ## Verification before "done"
 
 `tsc`/build N/A (backend-only). `ruff` clean · full `pytest` green · `alembic heads` singular ·
-seed runs idempotently locally · API + Uni tool return real records · committed seed ≤ ~4 MB and is
-the only new tracked data file. Then commit → PR → merge → deploy → seed in prod → confirm live URL.
+seed runs idempotently locally · API returns real records · committed seed ~6 MB (6,322 institutions,
+public domain; the only new tracked data file). Then commit → PR → merge → deploy → seed in prod →
+confirm live URL.
