@@ -33,6 +33,12 @@ Description repair (2026-06-17, riceprof5): replaces all name-prefixed
 classification stubs with field-specific clauses from
 ``rice_field_descriptions.py`` (gold MIT/JHU pattern); 0% name-prefixed
 descriptions.
+
+Structural repair (2026-06-20, ricedefab1): undergraduate rows carry conferred
+degree designations (not bare field names); ``department`` names Rice's real
+owning unit (never ``program_name`` echoed verbatim); per-credential description
+leads so credential siblings no longer share a verbatim body (REPAIR BACKLOG #4 —
+gold MIT/JHU = 0% verbatim / shared-leading-body).
 """
 
 # ruff: noqa: E501
@@ -50,11 +56,12 @@ from unipaith.data.rice_field_descriptions import FIELD_DESCRIPTIONS
 from unipaith.data.rice_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
 
 INSTITUTION_NAME = "Rice University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-20"
 
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is an undergraduate .+ major in Rice University's .+\.$"
@@ -1014,6 +1021,14 @@ def _field_from_program_name(name: str) -> str | None:
         return name[len("Master of Arts in ") :]
     if name.startswith("Master of Science in "):
         return name[len("Master of Science in ") :]
+    if name.startswith("Bachelor of Arts in "):
+        return name[len("Bachelor of Arts in ") :]
+    if name.startswith("Bachelor of Science in "):
+        return name[len("Bachelor of Science in ") :]
+    if name.startswith("Bachelor of Music in "):
+        return name[len("Bachelor of Music in ") :]
+    if name == "Bachelor of Architecture":
+        return "Architecture"
     return None
 
 
@@ -1025,21 +1040,109 @@ def _field_from_spec(spec: dict) -> str:
     return name
 
 
+# Per-credential leads so a field's credential siblings (BA / MS / PhD / prof) no longer
+# share one verbatim FIELD_DESCRIPTIONS clause (REPAIR BACKLOG #4 verbatim-across-levels).
+_CRED_LEAD: dict[str, str] = {
+    "bachelors": "Rice offers the undergraduate major in {f}.",
+    "masters": "Rice offers a master's program in {f}.",
+    "phd": "Doctoral study in {f} at Rice centers on dissertation research in",
+    "professional": "Rice offers a professional program in {f}.",
+    "certificate": "Rice offers a graduate certificate in {f}.",
+}
+
+# UG major name → Rice's published owning department (never the bare field echoed as
+# ``program_name``; cf. grad ``_GRAD_EXPLICIT`` dept column + General Announcements).
+_FIELD_TO_DEPT: dict[str, str] = {
+    "Operations Research": "Computational Applied Mathematics and Operations Research",
+    "Computational and Applied Mathematics": (
+        "Computational Applied Mathematics and Operations Research"
+    ),
+    "Chemical Engineering": "Chemical and Biomolecular Engineering",
+    "Civil Engineering": "Civil and Environmental Engineering",
+    "Environmental Engineering": "Civil and Environmental Engineering",
+    "Psychology": "Psychological Sciences",
+    "Biosciences": "BioSciences",
+    "Physics": "Physics and Astronomy",
+    "Astronomy": "Physics and Astronomy",
+    "Astrophysics": "Physics and Astronomy",
+    "Business": "Rice Business",
+    "Sport Analytics": "Sport Management",
+    "Sport Management": "Sport Management",
+    "Art (Studio Art)": "Visual and Dramatic Arts",
+    "Architectural Studies": "Architecture",
+}
+
+
+def _department_for(field: str, school: str) -> str:
+    """Real Rice owning unit for a field — never ``program_name`` echoed verbatim."""
+    if field in _FIELD_TO_DEPT:
+        return _FIELD_TO_DEPT[field]
+    for name, _dtype, _school, dept, *_rest in _GRAD_EXPLICIT:
+        if _field_from_program_name(name) == field:
+            return dept
+    if school == _BIZ:
+        return "Rice Business"
+    if school == _ARCH:
+        return "Architecture"
+    if school == _MUS:
+        return "Music"
+    if school == _GLAS:
+        return "Continuing Studies"
+    return field
+
+
+def _ug_degree_name(major: str, codes: str, school: str) -> str:
+    """Conferred undergraduate designation — never a bare field-of-study name."""
+    if codes == "BA":
+        return f"Bachelor of Arts in {major}"
+    if codes == "BS":
+        return f"Bachelor of Science in {major}"
+    if codes == "BMus":
+        return f"Bachelor of Music in {major}"
+    if codes == "BA/BArch" and major == "Architecture":
+        return "Bachelor of Architecture"
+    if codes == "BA/BArch":
+        return f"Bachelor of Arts in {major}"
+    if codes == "BA/BMus" and major == "Music":
+        return "Bachelor of Arts in Music"
+    if codes == "BA/BMus":
+        return f"Bachelor of Music in {major}"
+    if "BS" in codes and school in (_ENG, _NS):
+        return f"Bachelor of Science in {major}"
+    if "BA" in codes:
+        return f"Bachelor of Arts in {major}"
+    return f"Bachelor of Arts in {major}"
+
+
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    """Drop undergraduate-specific phrasing from a field clause on graduate rows."""
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(
+        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
+    )
+    return clause
+
+
 def _rice_description(spec: dict) -> str:
-    """Field-specific description — never the degree-type classification stub."""
+    """Field-specific, per-credential description — never a classification stub."""
     field = _field_from_spec(spec)
     clause = FIELD_DESCRIPTIONS.get(field)
     if not clause:
         raise ValueError(
             f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({spec.get('slug')})"
         )
+    dtype = spec["degree_type"]
+    lead = _CRED_LEAD.get(dtype, "Rice offers a program in {f}.").format(f=field)
+    clause = _level_appropriate_clause(clause, dtype)
     fmt = spec.get("delivery_format", "in_person")
     delivery = ""
     if fmt == "online":
         delivery = " Delivered online."
     elif fmt == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{clause}{delivery}"
+    return f"{lead} {clause}{delivery}"
 
 
 def _build_catalog() -> list[dict]:
@@ -1057,9 +1160,9 @@ def _build_catalog() -> list[dict]:
             spec = {
                 "slug": f"rice-{_slugify(name)}-ug",
                 "school": school,
-                "program_name": name,
+                "program_name": _ug_degree_name(name, codes, school),
                 "degree_type": "bachelors",
-                "department": name,
+                "department": _department_for(name, school),
                 "duration_months": 48,
                 "delivery_format": "in_person",
             }
@@ -1108,6 +1211,18 @@ _name_prefix_desc = sum(
 if _name_prefix_desc:
     _catalog_errors.append(
         f"name-prefixed descriptions on {_name_prefix_desc} programs"
+    )
+_anti = _anti_stub_analyze(PROGRAMS)
+if not _anti.is_clean:
+    _catalog_errors.append(f"anti-stub not clean: {_anti.summary()}")
+_dept_echo = [
+    p["slug"]
+    for p in PROGRAMS
+    if p.get("department") and p.get("program_name") == p.get("department")
+]
+if _dept_echo:
+    _catalog_errors.append(
+        f"department echoes program_name on {len(_dept_echo)} programs"
     )
 if _catalog_errors:
     raise RuntimeError(f"Rice catalog quality gate failed: {_catalog_errors}")
