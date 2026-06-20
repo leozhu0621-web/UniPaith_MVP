@@ -30,6 +30,11 @@ vi.mock("../pages/student/DiscoverHomePage", () => ({
   default: () => <div data-testid="discover-home-page">Uni conversation</div>,
 }));
 
+// ── Mock chatTemplates so NewSessionLauncher loads without hitting the API ─
+vi.mock("../api/chatTemplates", () => ({
+  getChatTemplates: vi.fn().mockResolvedValue([]),
+}));
+
 // ── Other mocks expected by the module tree ──────────────────────────────
 vi.mock("../api/discovery", () => ({
   listSessions: vi.fn().mockResolvedValue([]),
@@ -256,7 +261,7 @@ describe("ChatTabShell", () => {
     vi.mocked(getChatTree).mockResolvedValue({ folders: [] });
   });
 
-  it("renders the session browser aside and the Uni conversation", async () => {
+  it("renders the session browser aside and the new-session launcher by default", async () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={qc}>
@@ -265,8 +270,12 @@ describe("ChatTabShell", () => {
         </MemoryRouter>
       </QueryClientProvider>,
     );
-    // The conversation placeholder (mocked DiscoverHomePage)
-    expect(await screen.findByTestId("discover-home-page")).toBeInTheDocument();
+    // With no active session, the launcher is shown (not the conversation)
+    expect(
+      await screen.findByRole("heading", { name: /where would you like to start/i }),
+    ).toBeInTheDocument();
+    // The conversation is NOT yet visible
+    expect(screen.queryByTestId("discover-home-page")).not.toBeInTheDocument();
     // Session browser aside (accessible label)
     expect(screen.getByRole("complementary", { name: /session browser/i })).toBeInTheDocument();
   });
