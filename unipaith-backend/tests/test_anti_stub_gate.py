@@ -58,6 +58,8 @@ CERTIFIED_CLEAN = [
     #             bodies (columbiadefab1 — HIGH #1)
     "rice",       # conferred UG names; real depts; per-credential description leads
     #             (verbatim/shared-body removed) (ricedefab1 — HIGH #4)
+    "uw_madison",  # per-credential description leads; suffix-diversifier removed
+    #             (shared-leading-body = 0) (uwmaddefab1 — HIGH #5)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
