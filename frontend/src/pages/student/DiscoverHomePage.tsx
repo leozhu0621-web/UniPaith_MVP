@@ -20,7 +20,21 @@ import LivingProfilePanel from './discover/LivingProfilePanel'
 import UniConversation from './discover/UniConversation'
 import { useJourneyState, type StageKey } from './discover/useJourneyState'
 
-export default function DiscoverHomePage() {
+interface DiscoverHomePageProps {
+  /**
+   * When true the component is rendered inside ChatTabShell, which already
+   * provides a session-browser left rail. In that mode we suppress:
+   *   • JourneyRail  — the session browser is the navigation now.
+   *   • LivingProfilePanel  — the right "What Uni knows about you" dashboard
+   *     (rejected as CRM-feeling; profile lives in My Space).
+   *   • The mobile journey bar / bottom sheet (no journey chrome at all).
+   * The conversation column widens to fill the available center space.
+   * Default: false — all existing routes are unaffected.
+   */
+  chatTabMode?: boolean
+}
+
+export default function DiscoverHomePage({ chatTabMode = false }: DiscoverHomePageProps) {
   const [profileOpen, setProfileOpen] = useState(false)
   const [journeySheetOpen, setJourneySheetOpen] = useState(false)
   const askRef = useRef<(t: string) => void>(() => {})
@@ -83,6 +97,30 @@ export default function DiscoverHomePage() {
             prefill={prefill}
           />
         </Card>
+      </div>
+    )
+  }
+
+  // chatTabMode: suppress all journey/profile chrome — the session browser in
+  // ChatTabShell is the navigation; the profile lives in My Space. The
+  // conversation widens to fill the available center space (still
+  // max-w-[720px] so it reads as a comfortable warm column, not edge-to-edge).
+  if (chatTabMode) {
+    return (
+      <div className="p-4 lg:p-6 w-full animate-page-in">
+        <div className="flex min-w-0 flex-1 justify-center">
+          <div className="w-full max-w-[720px]">
+            <Card pad={false} className="p-4 sm:p-5">
+              <UniConversation
+                guided
+                profileOpen={profileOpen}
+                onProfileOpenChange={setProfileOpen}
+                onReady={onReady}
+                prefill={prefill}
+              />
+            </Card>
+          </div>
+        </div>
       </div>
     )
   }
