@@ -309,3 +309,45 @@ def machine_artifacts(programs: list[dict]) -> list[str]:
         for p in programs
         if any(rx.search(_desc(p)) for rx in _ARTIFACT_RES)
     ]
+
+
+# Raw scraped CATALOGUE DEBRIS left in ``description_text`` instead of researched prose: a
+# degree-requirements / course-list fragment, a unit-count opening, a department contact /
+# address block, or a fragment truncated mid-sentence / on a trailing colon (REPAIR_BACKLOG
+# miss #8 scrape-debris sub-bullet, run 66 — USC shipped ~80 such rows). Each is unique per
+# row, so it scores 0 on every share/form metric in :func:`analyze` yet renders raw catalogue
+# text — a course requirement list, a phone number, a mailing address — to a student. Gold MIT
+# scores 0. Kept separate from ``analyze``/``is_clean`` (like :func:`machine_artifacts`) so it
+# cannot crash an already-broken catalog's import self-check; enforced by
+# ``tests/test_anti_stub_gate.py`` over a debris-clean registry.
+_DEBRIS_COURSE_CODE = re.compile(r"\b[A-Z]{2,4}\s?\d{3}[A-Za-z]?\b")
+_DEBRIS_UNIT_COUNT = re.compile(r"\b\d+\s+(additional\s+)?(units|credits|semester hours)\b", re.I)
+_DEBRIS_CONTACT = re.compile(r"\(\d{3}\)\s?\d{3}-\d{4}|[\w.]+@[\w.]+\.edu")
+_DEBRIS_ADDRESS = re.compile(r"\b(Suite|Room)\s+\d+|\bHall,\s")
+
+
+def scrape_debris(programs: list[dict]) -> list[str]:
+    """Program names whose ``description`` is raw scraped catalogue debris, not researched prose.
+
+    A description FAILS when it carries any of: a course-code token ("MATH 225"), a unit/credit
+    count in its opening clause, a phone number / ``@…edu`` email / department mailing address,
+    or a fragment that ends mid-sentence (no terminal ``.``/``!``/``?``) or on a trailing colon.
+    None of these appear in researched prose about what a program studies; all appeared live on
+    USC's scrape-built catalog (REPAIR_BACKLOG CRITICAL #1, run 66). Gold MIT returns ``[]``.
+    """
+    hits: list[str] = []
+    for p in programs:
+        d = _desc(p)
+        if not d:
+            continue
+        bad = (
+            _DEBRIS_COURSE_CODE.search(d)
+            or _DEBRIS_UNIT_COUNT.search(d[:160])
+            or _DEBRIS_CONTACT.search(d)
+            or _DEBRIS_ADDRESS.search(d)
+            or not re.search(r"[.!?][\"')]?$", d)
+            or d.rstrip().endswith(":")
+        )
+        if bad:
+            hits.append(p.get("program_name") or "")
+    return hits
