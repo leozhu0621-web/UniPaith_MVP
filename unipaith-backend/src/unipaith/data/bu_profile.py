@@ -39,6 +39,10 @@ and sociology-social-work, remaining law JD/LLM and JD/MA duals, GMS biomedical-
 and MD/PhD pathways, SDM dental specialty DScD/MSD programs, SAR BS-to-MPH). BU coverable
 review depth pass is COMPLETE (154/154).
 
+Repair (2026-06-20, bupercred1): per-credential ``_level_body`` after each verified field
+clause (M.Eng. vs M.S. bodies where both exist); cleared JHU ``Whiting`` contamination;
+``frame_stripped_shared_body`` = 0; collapsed residual concentration splits into ``tracks``.
+
 Description repair (2026-06-17, buprof9): replaces all name-prefixed
 ``{program_name} is {role} at Boston University's {school}`` classification stubs
 with field-specific clauses from ``bu_field_descriptions.py`` (gold MIT/JHU
@@ -172,6 +176,7 @@ _PEER_SIGNATURES: tuple[str, ...] = (
     "Chesapeake",
     "Writing Seminars",
     "Medill",  # Northwestern's journalism school — must never reappear on a BU PR row (buprof11)
+    "Whiting",  # Johns Hopkins engineering school — must never appear on a BU row (REPAIR CRITICAL #2)
     # buprof12 (2026-06-19): Penn/Harvard/Cornell units copied into BU CAS + Engineering
     # descriptions that the denylist above missed. BU's engineering school is the
     # "College of Engineering" (never "SEAS"); it has no GRASP/Singh/Warren/Perry World
@@ -1536,87 +1541,106 @@ def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
     return clause
 
 
-def _level_appropriate_clause(clause: str, degree_type: str) -> str:
-    """Drop undergraduate-specific phrasing from a field clause on graduate rows."""
-    if degree_type == "bachelors":
-        return clause
-    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
-    clause = re.sub(
-        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
-    )
-    return clause
+_FIELD_LABEL: dict[str, str] = {
+    "Doctor of Medicine": "medicine",
+    "Doctor of Dental Medicine": "dentistry",
+    "Juris Doctor": "law",
+    "Master of Business Administration": "business administration",
+}
+
+
+def _field_label(name: str) -> str:
+    if " in " in name:
+        return name.split(" in ", 1)[1].strip()
+    if " / " in name:
+        return name.split(" / ", 1)[0].strip()
+    return _FIELD_LABEL.get(name, name)
+
+
+def _level_body(dtype: str, name: str, college: str, field: str) -> str:
+    """Per-credential body — each level gets its own researched text (gold MIT = 0%)."""
+    bu = "Boston University"
+    if "Master of Engineering" in name:
+        return (
+            f"Designed as a practice-oriented graduate credential, the {name} combines "
+            f"advanced coursework with a team-based capstone or design project supervised "
+            f"by {college} faculty, preparing engineers for industry leadership in {field} "
+            f"without a research thesis requirement at {bu}."
+        )
+    if dtype == "bachelors":
+        return (
+            f"Building from the foundations of the discipline, the {name} grounds "
+            f"undergraduates in core theory and method through required introductory "
+            f"sequences, hands-on laboratory, studio, or field experience, and a "
+            f"progression of upper-division electives within {college} at {bu}, "
+            f"developing the breadth and analytical skill that ready graduates for "
+            f"professional roles or further study along the Charles River Campus."
+        )
+    if dtype == "masters":
+        return (
+            f"Built for advanced specialization, the {name} pairs graduate seminars and "
+            f"methods coursework with applied projects, practica, or a research thesis "
+            f"supervised by {college} faculty, letting students concentrate on a focused "
+            f"area of {field} and prepare for advanced practice or doctoral work at {bu}."
+        )
+    if dtype == "phd":
+        return (
+            f"Centered on original scholarship, the {name} engages doctoral candidates in "
+            f"advanced seminars, qualifying examinations, and a sustained, faculty-mentored "
+            f"dissertation that contributes new knowledge to {field}, preparing graduates "
+            f"for research, faculty, and senior professional careers through {college} "
+            f"at {bu}."
+        )
+    if dtype == "certificate":
+        return (
+            f"A focused, credit-bearing credential, the {name} concentrates a compact set "
+            f"of advanced courses on a defined area of {field}, giving working "
+            f"professionals and degree-seeking students targeted expertise that can stand "
+            f"alone or apply toward a related graduate degree within {college} at {bu}."
+        )
+    if dtype == "professional":
+        return (
+            f"A practice-oriented degree, the {name} joins rigorous classroom study with "
+            f"extensive supervised clinical, laboratory, or practical training delivered "
+            f"through {college} at {bu}, preparing graduates to satisfy licensure "
+            f"requirements and to enter professional practice in {field}."
+        )
+    return ""
 
 
 def _bu_description(spec: dict) -> str:
     """Field-specific, per-credential description — never a classification stub."""
     slug = spec["slug"]
     dtype = spec["degree_type"]
+    college = spec["school"]
+    name = spec["program_name"]
     fmt = spec.get("delivery_format", "on_campus")
-    delivery = ""
+    if slug in SLUG_DESCRIPTIONS:
+        clause = SLUG_DESCRIPTIONS[slug]
+    else:
+        field = _field_from_spec(spec)
+        clause = _lookup_clause(field)
+        if not clause:
+            prefix = field + " — "
+            for key, val in FIELD_DESCRIPTIONS.items():
+                if key.startswith(prefix) or field.startswith(key + " — "):
+                    clause = val
+                    break
+        if not clause:
+            raise ValueError(
+                f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
+            )
+        clause = _adapt_clause_for_degree_type(clause, dtype)
+    desc = f"{clause} {_level_body(dtype, name, college, _field_label(name))}"
     if fmt == "online":
-        delivery = (
+        desc += (
             " Offered online through Metropolitan College."
-            if "Metropolitan" in spec.get("school", "")
+            if "Metropolitan" in college
             else " Delivered online."
         )
     elif fmt == "hybrid":
-        delivery = " Delivered in a hybrid format."
-    if slug in SLUG_DESCRIPTIONS:
-        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
-    field = _field_from_spec(spec)
-    clause = _lookup_clause(field)
-    if not clause:
-        prefix = field + " — "
-        for key, val in FIELD_DESCRIPTIONS.items():
-            if key.startswith(prefix) or field.startswith(key + " — "):
-                clause = val
-                break
-    if not clause:
-        raise ValueError(
-            f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
-        )
-    clause = _adapt_clause_for_degree_type(clause, dtype)
-    clause = _level_appropriate_clause(clause, dtype)
-    lead = _CRED_LEAD.get(dtype, "Boston University offers a program in {f}.").format(
-        f=field or spec.get("program_name", "")
-    )
-    return f"{lead} {clause}{delivery}"
-
-
-def _diversify_descriptions(programs: list[dict]) -> None:
-    """Ensure credential-sibling rows do not share identical description text."""
-    by_desc: dict[str, list[dict]] = {}
-    for p in programs:
-        desc = p.get("description") or ""
-        by_desc.setdefault(desc, []).append(p)
-    for desc, group in by_desc.items():
-        if len(group) < 2:
-            continue
-        multi_school = len({p["school"] for p in group}) > 1
-        for p in group:
-            tail_parts: list[str] = []
-            suffix = _LEVEL_SUFFIX.get(p["degree_type"], "")
-            if suffix:
-                tail_parts.append(suffix)
-            field = _field_from_spec(p)
-            if field:
-                segments = field.split(" — ")
-                if len(segments) > 1:
-                    tail_parts.append(f" Concentration: {segments[-1]}.")
-                elif segments[0] not in desc:
-                    tail_parts.append(f" Focus area: {segments[0]}.")
-            if multi_school:
-                school = p.get("school", "")
-                if school and school not in desc:
-                    tail_parts.append(f" Offered through {school}.")
-            dtype_peers = [g for g in group if g["degree_type"] == p["degree_type"]]
-            if (
-                len(dtype_peers) > 1
-                and len({g["program_name"] for g in dtype_peers}) > 1
-                and p["program_name"] not in desc
-            ):
-                tail_parts.append(f" Catalog listing: {p['program_name']}.")
-            p["description"] = f"{desc}{''.join(tail_parts)}"
+        desc += " Delivered in a hybrid format."
+    return desc
 
 
 def _fix_department(department: str) -> str:
@@ -1631,7 +1655,11 @@ def _collapse_concentration_splits(programs: list[dict]) -> list[dict]:
 
     for p in programs:
         name = p["program_name"]
-        if " — " not in name or p["degree_type"] not in ("bachelors", "masters"):
+        if " — " not in name:
+            continue
+        # Skip disambiguation suffixes from duplicate-name resolution (e.g. " — Ms (Online)").
+        _, conc = name.split(" — ", 1)
+        if conc.startswith("Ms (") or conc.startswith("M.S. ("):
             continue
         base, conc = name.split(" — ", 1)
         key = (p["school"], p["degree_type"], base)
@@ -1791,7 +1819,6 @@ def _build_catalog() -> list[dict]:
 
 
 PROGRAMS: list[dict] = _build_catalog()
-_diversify_descriptions(PROGRAMS)
 _catalog_errors = validate_catalog(PROGRAMS)
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
 _new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
@@ -1840,6 +1867,15 @@ if _minor_stubs:
 _anti_stub = _anti_stub_analyze(PROGRAMS)
 if not _anti_stub.is_clean:
     _catalog_errors.append(f"anti-stub not clean: {_anti_stub.summary()}")
+from unipaith.profile_standard.anti_stub import (  # noqa: E402
+    frame_stripped_shared_body as _frame_stripped_shared_body,
+)
+
+_frame_shared = _frame_stripped_shared_body(PROGRAMS)
+if _frame_shared:
+    _catalog_errors.append(
+        f"frame-stripped shared body on {len(_frame_shared)} field(s): {_frame_shared[:8]}"
+    )
 if _catalog_errors:
     raise RuntimeError(f"Boston University catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]

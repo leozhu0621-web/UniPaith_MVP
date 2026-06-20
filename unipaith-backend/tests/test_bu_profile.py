@@ -212,11 +212,16 @@ def test_no_identical_across_credential_levels():
 
 
 def test_catalog_is_anti_stub_clean():
-    """Per-credential description leads — gold MIT = 0% shared-leading-body (REPAIR #10)."""
-    from unipaith.profile_standard.anti_stub import analyze
+    """Per-credential bodies — gold MIT = 0% frame-stripped shared body (REPAIR CRITICAL #2)."""
+    from unipaith.profile_standard.anti_stub import analyze, frame_stripped_shared_body
 
     report = analyze(b.PROGRAMS)
     assert report.is_clean, f"anti-stub not clean: {report.summary()}"
+    shared = frame_stripped_shared_body(b.PROGRAMS)
+    assert not shared, (
+        f"credential siblings share a frame-stripped body on "
+        f"{len(shared)} field(s): {shared[:8]}"
+    )
 
 
 def test_no_credential_combo_names_or_departments():

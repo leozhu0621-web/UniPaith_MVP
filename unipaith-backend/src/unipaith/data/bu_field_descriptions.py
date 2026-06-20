@@ -310,7 +310,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Wheelock curriculum and teaching graduate programs examine instructional design, assessment, and school improvement."
     ),
     "Data Science": (
-        "Whiting's MS in Data Science combines applied mathematics, machine learning, and domain applications in health, engineering, and public-health data."
+        "BU's M.S. in Data Science at the Faculty of Computing & Data Sciences combines applied mathematics, machine learning, and domain applications in health, engineering, and public-health data."
     ),
     "Data Science Ms Bioinformatics": (
         "CDS's B.S./M.S. bioinformatics pathway accelerates undergraduates into graduate computational biology coursework."
@@ -1072,7 +1072,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Sargent speech-language-hearing Ph.D. research spans aphasia, motor speech disorders, and audiology science."
     ),
     "Systems Engineering": (
-        "ENG systems engineering integrates optimization, human factors, and complex systems design for defense and industry applications."
+        "BU's Division of Systems Engineering trains engineers in model-based design, optimization, and lifecycle management for aerospace, defense, healthcare, and technology systems."
     ),
     "Television": (
         "COM television production covers studio operations, field production, and broadcast writing with industry-standard facilities."
@@ -1178,13 +1178,40 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "with a functional certificate, practicum, and integrative learning experience."
     ),
     "bu-academics-eng-materials-science-engineering-meng": (
-        "BU's M.Eng. in materials science & engineering builds applied expertise in biomaterials, nanomaterials, and characterization in the cross-departmental Division of Materials Science & Engineering, with fabrication facilities in the Photonics Center."
+        "BU's one-year M.Eng. in materials science & engineering is a practice-oriented, STEM-eligible degree focused on nanomaterials, polymers, and advanced manufacturing with team projects in the Photonics Center."
     ),
     "bu-academics-eng-materials-science-engineering-ms": (
-        "BU's M.S. in materials science & engineering studies biomaterials, nanomaterials, and characterization in the cross-departmental Division of Materials Science & Engineering, with fabrication and imaging facilities in the Photonics Center."
+        "BU's thesis-based M.S. in materials science & engineering lets graduate students pursue faculty-led research in electronic materials, biomaterials, and characterization within the cross-departmental Division of Materials Science & Engineering."
     ),
     "bu-academics-eng-materials-science-engineering-phd": (
         "Materials science & engineering Ph.D. research at Boston University spans biomaterials, nanomaterials, and electronic materials in the Division of Materials Science & Engineering and the Photonics Center."
+    ),
+    "bu-academics-eng-biomedical-engineering-meng": (
+        "BU's one-year M.Eng. in biomedical engineering combines advanced BME coursework with a team-based design project and clinical ties to the Medical Campus and affiliated hospitals."
+    ),
+    "bu-academics-eng-biomedical-engineering-ms": (
+        "BU's M.S. in biomedical engineering offers thesis and non-thesis tracks with research in neural, cardiac, and imaging systems at the intersection of engineering and medicine."
+    ),
+    "bu-academics-eng-biomedical-engineering-phd": (
+        "BU's Ph.D. in biomedical engineering is a research-intensive doctorate with strengths in neural engineering, cardiac systems, and medical imaging across the Charles River and Medical campuses."
+    ),
+    "bu-academics-eng-systems-engineering-meng": (
+        "BU's M.Eng. in systems engineering emphasizes model-based systems design, optimization, and lifecycle management for complex products in defense, aerospace, and healthcare."
+    ),
+    "bu-academics-eng-systems-engineering-ms": (
+        "BU's M.S. in systems engineering trains engineers in reliability analysis, decision science, and complex-systems modeling within the College of Engineering's Division of Systems Engineering."
+    ),
+    "bu-academics-eng-systems-engineering-phd": (
+        "BU's Ph.D. in systems engineering focuses on complex engineered systems, reliability, and decision analysis with funded research in the Division of Systems Engineering."
+    ),
+    "bu-academics-grs-computer-science-ms-in-artificial-intelligence": (
+        "GRS's M.S. in computer science with an artificial-intelligence focus concentrates electives and thesis work in machine learning, natural-language processing, and computer vision with Hariri Institute faculty."
+    ),
+    "bu-academics-met-computer-science-mscis": (
+        "MET's online M.S. in Computer Information Systems blends database systems, software engineering, and IT management for working professionals advancing into technical leadership roles."
+    ),
+    "bu-academics-met-computer-science-ms": (
+        "MET's online M.S. in computer science delivers evening and remote graduate coursework in algorithms, systems, and applied computing for Boston-area working professionals."
     ),
     "bu-academics-busm-four-year-program": (
         "BU's Chobanian & Avedisian School of Medicine four-year M.D. curriculum combines foundational sciences, clinical clerkships at Boston Medical Center, and longitudinal patient-care experiences on the Medical Campus."
