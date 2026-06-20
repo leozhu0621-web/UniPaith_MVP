@@ -179,6 +179,14 @@ def test_no_identical_across_credential_levels():
     )
 
 
+def test_catalog_is_anti_stub_clean():
+    """Per-credential description leads — gold MIT = 0% shared-leading-body (REPAIR #6)."""
+    from unipaith.profile_standard.anti_stub import analyze
+
+    report = analyze(n.PROGRAMS)
+    assert report.is_clean, f"anti-stub not clean: {report.summary()}"
+
+
 # --- Anti-synthesized-review gate (SKILL.md miss #8: fabrication-by-synthesis) ---
 # A review ships ONLY when it is hand-gathered from program-specific coverage. A
 # batch minted one-per-row from (program_name, school, institution rank) leaves two

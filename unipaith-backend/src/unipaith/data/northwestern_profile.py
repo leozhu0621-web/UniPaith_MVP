@@ -42,6 +42,10 @@ Description repair (2026-06-17, northwesternprof5): drops ``{program_name}:`` pr
 all descriptions (gold MIT/JHU pattern); fixes peer-institution contamination in field
 clauses (Chesapeake, Writing Seminars, Bloomberg, etc.); 0% name-prefixed descriptions.
 
+Description repair (2026-06-20, nwdefab1): replaces suffix-diversifier stamping with
+per-credential description leads so BA/MS/PhD siblings no longer share a ≥120-char
+leading body (REPAIR BACKLOG #6 — gold MIT = 0% shared-leading-body; anti-stub clean).
+
 De-fabrication (2026-06-18, northwesternprof7): REMOVES the ``DEPTH_REVIEWS`` batch (48
 machine-synthesized external_reviews minted one-per-row from program metadata + institution
 rankings — repeated institution-level themes across 11–15 programs, 37 rows citing a bare
@@ -56,11 +60,10 @@ Optimization and Statistical Learning). An enforced anti-synthesis test
 
 KNOWN remaining depth (reported to the grader, not fabricated to fill): the IPEDS breadth
 catalog still carries (a) ~105 (CIP × award-level) certificate rows minted from College
-Scorecard field-of-study completions whose real named programs are unresolved, (b)
-credential-sibling descriptions that share a leading field body diverging only by a generic
-level suffix (SKILL.md miss #8 suffix-diversifier), and (c) a few unresolved rollup names
-(Area Studies → African/Asian/etc. Studies). These need per-program research from
-Northwestern's official catalog and are deferred rather than guessed.
+Scorecard field-of-study completions whose real named programs are unresolved, and
+(b) a few unresolved rollup names (Area Studies → African/Asian/etc. Studies). These
+need per-program research from Northwestern's official catalog and are deferred rather
+than guessed.
 """
 
 # ruff: noqa: E501
@@ -90,30 +93,19 @@ from unipaith.data.northwestern_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
 
 INSTITUTION_NAME = "Northwestern University"
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-20"
 
-_LEVEL_SUFFIX: dict[str, str] = {
-    "bachelors": (
-        " Undergraduates in Northwestern's quarter calendar pursue distribution "
-        "requirements, Weinberg and McCormick advising, and optional honors thesis "
-        "research on the Evanston campus."
-    ),
-    "masters": (
-        " Master's students complete advanced seminars, practica, and professional "
-        "development through Northwestern's graduate schools and The Graduate School."
-    ),
-    "phd": (
-        " Ph.D. candidates conduct original dissertation research with faculty "
-        "advisement and typically receive tuition coverage and stipend support "
-        "through The Graduate School."
-    ),
-    "certificate": (
-        " The graduate certificate offers focused coursework for working "
-        "professionals, often delivered through the School of Professional Studies."
-    ),
-    "professional": "",
+# Per-credential leads so a field's credential siblings (BA / MS / PhD / cert) no longer
+# share one verbatim FIELD_DESCRIPTIONS clause (REPAIR BACKLOG #6 shared-leading-body).
+_CRED_LEAD: dict[str, str] = {
+    "bachelors": "Northwestern offers the undergraduate major in {f}.",
+    "masters": "Northwestern offers a master's program in {f}.",
+    "phd": "Doctoral study in {f} at Northwestern centers on dissertation research in",
+    "professional": "Northwestern offers a professional program in {f}.",
+    "certificate": "Northwestern offers a graduate certificate in {f}.",
 }
 
 _PEER_SIGNATURES: tuple[str, ...] = (
@@ -490,45 +482,36 @@ def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
     return clause
 
 
-def _diversify_descriptions(programs: list[dict]) -> None:
-    """Ensure credential-sibling rows do not share identical description text."""
-    by_desc: dict[str, list[dict]] = {}
-    for p in programs:
-        desc = p.get("description") or ""
-        by_desc.setdefault(desc, []).append(p)
-    for desc, group in by_desc.items():
-        if len(group) < 2:
-            continue
-        for p in group:
-            suffix = _LEVEL_SUFFIX.get(p["degree_type"], "")
-            if suffix:
-                p["description"] = f"{desc}{suffix}"
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    """Drop undergraduate-specific phrasing from a field clause on graduate rows."""
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(
+        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
+    )
+    return clause
 
 
-def _field_from_program_name(program_name: str) -> str | None:
-    for prefix in (
-        "Bachelor of Arts in ",
-        "Bachelor of Science in ",
-        "Bachelor of Music in ",
-        "Master of Science in ",
-        "Doctor of Philosophy in ",
-        "Graduate Certificate in ",
-    ):
-        if program_name.startswith(prefix):
-            return program_name[len(prefix):]
-    specials = {
-        "Master of Business Administration": "Business Administration",
-        "Juris Doctor": "Law",
-        "Doctor of Medicine": "Medicine",
-    }
-    if program_name in specials:
-        return specials[program_name]
-    return None
+def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
+    slug = spec.get("slug", "")
+    if slug in SLUG_DESCRIPTIONS:
+        return ""
+    if slug in SLUG_PROGRAM_NAMES:
+        return _field_from_program_name(SLUG_PROGRAM_NAMES[slug]) or ""
+    if raw_field:
+        return clean_cip_field(raw_field)
+    fn = spec.get("program_name", "")
+    parsed = _field_from_program_name(fn)
+    if parsed:
+        return clean_cip_field(parsed)
+    return clean_cip_field(fn)
 
 
 def _northwestern_description(spec: dict, field: str | None = None) -> str:
-    """Field-specific description — never the degree-type classification stub."""
+    """Field-specific, per-credential description — never a classification stub."""
     slug = spec["slug"]
+    dtype = spec["degree_type"]
     fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
     if fmt == "online":
@@ -552,8 +535,33 @@ def _northwestern_description(spec: dict, field: str | None = None) -> str:
         raise ValueError(
             f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
         )
-    clause = _adapt_clause_for_degree_type(clause, spec["degree_type"])
-    return f"{clause}{delivery}"
+    clause = _adapt_clause_for_degree_type(clause, dtype)
+    clause = _level_appropriate_clause(clause, dtype)
+    lead = _CRED_LEAD.get(dtype, "Northwestern offers a program in {f}.").format(
+        f=field_key
+    )
+    return f"{lead} {clause}{delivery}"
+
+
+def _field_from_program_name(program_name: str) -> str | None:
+    for prefix in (
+        "Bachelor of Arts in ",
+        "Bachelor of Science in ",
+        "Bachelor of Music in ",
+        "Master of Science in ",
+        "Doctor of Philosophy in ",
+        "Graduate Certificate in ",
+    ):
+        if program_name.startswith(prefix):
+            return program_name[len(prefix):]
+    specials = {
+        "Master of Business Administration": "Business Administration",
+        "Juris Doctor": "Law",
+        "Doctor of Medicine": "Medicine",
+    }
+    if program_name in specials:
+        return specials[program_name]
+    return None
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -605,7 +613,6 @@ PROGRAMS += _build_catalog()
 for _p in PROGRAMS:
     if _p["slug"] in _EXISTING_SLUGS:
         _normalize_program(_p, _p.get("program_name"))
-_diversify_descriptions(PROGRAMS)
 
 _catalog_errors = validate_catalog(PROGRAMS)
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
@@ -648,6 +655,9 @@ if _shared_desc:
     _catalog_errors.append(
         f"identical descriptions shared across {_shared_desc} credential-sibling programs"
     )
+_anti_stub = _anti_stub_analyze(PROGRAMS)
+if not _anti_stub.is_clean:
+    _catalog_errors.append(f"anti-stub gate failed: {_anti_stub.summary()}")
 if _catalog_errors:
     raise RuntimeError(f"Northwestern catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
