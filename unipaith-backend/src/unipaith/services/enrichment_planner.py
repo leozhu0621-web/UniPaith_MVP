@@ -302,10 +302,20 @@ def action_for(entry: dict[str, Any] | None) -> str:
     return "ask"  # inferred / weak
 
 
-def essentials_present(signal_state: dict[str, Any]) -> bool:
+def essentials_present(
+    signal_state: dict[str, Any], *, catalog: list[dict[str, Any]] | None = None
+) -> bool:
     """Spec 3 prerequisite: every essential field has a non-null value
-    (any confidence). Direction + basic identity must exist before matching."""
-    for key in ESSENTIAL_KEYS:
+    (any confidence). Direction + basic identity must exist before matching.
+
+    `catalog` defaults to the in-code CATALOG; pass the DB-loaded catalog
+    (CatalogService.load) to drive this from the data-driven Prompt Library."""
+    keys = (
+        ESSENTIAL_KEYS
+        if catalog is None
+        else [f["key"] for f in catalog if f["tier"] == "essential"]
+    )
+    for key in keys:
         entry = signal_state.get(key)
         if not entry or entry.get("value") in (None, "", []):
             return False
@@ -313,7 +323,11 @@ def essentials_present(signal_state: dict[str, Any]) -> bool:
 
 
 def plan_next(
-    signal_state: dict[str, Any], *, limit: int = 3, section: str | None = None
+    signal_state: dict[str, Any],
+    *,
+    limit: int = 3,
+    section: str | None = None,
+    catalog: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Return up to `limit` next signals to enrich, highest priority first.
 
@@ -326,9 +340,11 @@ def plan_next(
     is preserved among them). An unknown or ``None`` section is unscoped — the
     global next over all of ``CATALOG`` — so behavior is unchanged by default.
     """
+    cat = CATALOG if catalog is None else catalog
+    order = _CATALOG_ORDER if catalog is None else {f["key"]: i for i, f in enumerate(cat)}
     allowed = SECTION_FIELDS.get(section) if section is not None else None
     candidates: list[dict[str, Any]] = []
-    for field in CATALOG:
+    for field in cat:
         key = field["key"]
         if allowed is not None and key not in allowed:
             continue
@@ -353,7 +369,7 @@ def plan_next(
         key=lambda c: (
             _TIER_RANK[c["tier"]],
             _ACTION_RANK[c["action"]],
-            _CATALOG_ORDER[c["field"]],
+            order[c["field"]],
         )
     )
     return candidates[: max(0, limit)]
