@@ -62,6 +62,7 @@ CERTIFIED_CLEAN = [
     #             (shared-leading-body = 0) (uwmaddefab1 — HIGH #5)
     "northwestern",  # per-credential description leads; suffix-diversifier removed
     #               (shared-leading-body = 0) (nwdefab1 — HIGH #6)
+    "uf",         # 314-program real catalog; LiveWhale feeds; 16 colleges (ufprof1/2)
     "dartmouth",  # institution seed → gold + real verified 43-program catalog across the
     #             five schools; field-specific researched descriptions, real departments,
     #             no rollup/possessive/stub rows (dartprof1)

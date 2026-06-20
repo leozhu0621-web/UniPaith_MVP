@@ -10,7 +10,7 @@ program-preference rows for the program -> student match — via
 No schema (DDL) changes. Idempotent; no-op when Dartmouth College is absent.
 
 Revision ID: dartprof1
-Revises: ufprof1
+Revises: ufprof2
 Create Date: 2026-06-20
 """
 
@@ -25,7 +25,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "dartprof1"
-down_revision = "ufprof1"
+down_revision = "ufprof2"
 branch_labels = None
 depends_on = None
 

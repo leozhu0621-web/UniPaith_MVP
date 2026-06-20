@@ -391,8 +391,11 @@ def _school_description(m: dict) -> str:
 
 
 # ── Feeds (content_sources) ────────────────────────────────────────────────
-_NEWS_RSS = "https://www.ufl.edu/feed/"
-_EVENTS = {"url": "https://calendar.ufl.edu/live/ical/events/id/1", "type": "ical"}
+# news.ufl.edu exposes no editorial RSS; www.ufl.edu/feed/ is an empty WordPress
+# channel (verified 2026-06-20). The verified LiveWhale events RSS — current and
+# image-carrying — feeds Updates (Rice pattern); iCalendar feeds Events.
+_UF_EVENTS_RSS = "https://calendar.ufl.edu/live/rss/events"
+_UF_EVENTS_ICS = {"url": "https://calendar.ufl.edu/live/ical/events", "type": "ical"}
 _SOCIAL = {
     "instagram": "https://www.instagram.com/uflorida/",
     "linkedin": "https://www.linkedin.com/school/uflorida/",
@@ -401,10 +404,10 @@ _SOCIAL = {
     "facebook": "https://www.facebook.com/uflorida",
 }
 _INSTITUTION_CONTENT: dict = {
-    "news_rss": _NEWS_RSS,
+    "news_rss": _UF_EVENTS_RSS,
     "news_url": "https://news.ufl.edu/",
     "news_curated": True,
-    "events_feed": dict(_EVENTS),
+    "events_feed": dict(_UF_EVENTS_ICS),
     "social": _SOCIAL,
 }
 
@@ -412,10 +415,10 @@ _INSTITUTION_CONTENT: dict = {
 def _school_content(name: str) -> dict:
     m = next(x for x in _SCHOOL_META if x["name"] == name)
     return {
-        "news_rss": _NEWS_RSS,
+        "news_rss": _UF_EVENTS_RSS,
         "news_url": m["website"],
         "news_curated": False,
-        "events_feed": dict(_EVENTS),
+        "events_feed": dict(_UF_EVENTS_ICS),
         "keywords": list(m["keywords"]),
         "social": _SOCIAL,
     }
@@ -1098,7 +1101,7 @@ def apply(session: Session) -> bool:
     inst.founded_year = 1853
     inst.campus_setting = "suburban"
     if not inst.website_url:
-        inst.website_url = "https://www.purdue.edu"
+        inst.website_url = "https://www.ufl.edu/"
     hero = SCHOOL_OUTCOMES["campus_photos"][0]["url"]
     _gallery = [u for u in (inst.media_gallery or []) if u != hero]
     inst.media_gallery = [hero, *_gallery]
