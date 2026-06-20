@@ -17,6 +17,7 @@ from unipaith.database import get_db
 from unipaith.dependencies import require_student
 from unipaith.models.user import User
 from unipaith.services.chat.session_service import ChatSessionService
+from unipaith.services.chat.template_service import TemplateService
 from unipaith.services.intake.intake_engine_service import IntakeEngineService
 
 router = APIRouter(prefix="/students/me/chat", tags=["chat-sessions"])
@@ -72,8 +73,43 @@ class ReorderIn(BaseModel):
     ordered_ids: list[UUID]
 
 
+class TemplateStepOut(BaseModel):
+    step_order: int
+    step_type: str
+    prompt_key: str | None = None
+    action_key: str | None = None
+    label: str
+
+
+class TemplateOut(BaseModel):
+    key: str
+    title: str
+    topic: str
+    stage: str
+    outcome: str
+    icon: str
+    steps: list[TemplateStepOut]
+
+
 async def _pid(db: AsyncSession, user: User) -> UUID:
     return await IntakeEngineService(db).profile_id_for_user(user.id)
+
+
+@router.get("/templates", response_model=list[TemplateOut])
+async def list_templates(
+    user: User = Depends(require_student),  # noqa: ARG001  (auth only)
+    db: AsyncSession = Depends(get_db),
+):
+    """Return all active session templates with their steps.
+
+    Calls ensure_seeded() first so a fresh DB self-populates without a
+    separate migration step. The seed is idempotent so this is safe to
+    call on every request; the real cost is a single SELECT on warm DBs.
+    """
+    svc = TemplateService(db)
+    await svc.ensure_seeded()
+    await db.commit()
+    return await svc.load()
 
 
 @router.get("/folders")

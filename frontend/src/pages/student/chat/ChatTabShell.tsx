@@ -4,26 +4,69 @@
  * Spec: docs/superpowers/specs/2026-06-19-uni-chat-tab-redesign-design.md §2
  *
  *   ┌──────────────┬──────────────────────────────────────────────────┐
- *   │ SessionBrowser│  DiscoverHomePage (existing Uni conversation)   │
- *   │  272px, lg+  │  unchanged, filling the rest of the viewport     │
+ *   │ SessionBrowser│  center view (two states):                      │
+ *   │  272px, lg+  │  ── NewSessionLauncher  (no active session /    │
+ *   │              │       "+ New session" clicked)                   │
+ *   │              │  ── DiscoverHomePage conversation (active sess.) │
  *   └──────────────┴──────────────────────────────────────────────────┘
  *
- * The left rail is hidden below ~860 px (lg breakpoint) — the existing
- * DiscoverHomePage owns the mobile layout (journey bar + bottom sheet).
+ * State:
+ *   • activeSessionId — the session currently open in the center.
+ *     null  → show NewSessionLauncher.
+ *     non-null → show DiscoverHomePage (existing Uni conversation).
  *
- * The conversation (DiscoverHomePage) is rendered EXACTLY as before — this
- * shell only wraps it in a flexbox with the session browser on the left.
- * No props, no state, no logic is changed inside DiscoverHomePage.
+ * The left rail (SessionBrowser) is hidden below ~860 px — DiscoverHomePage
+ * already handles the mobile layout.  The conversation is rendered EXACTLY
+ * as before; this shell only gates which view shows.
  */
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import SessionBrowser from "./SessionBrowser";
+import NewSessionLauncher from "./NewSessionLauncher";
 import DiscoverHomePage from "../DiscoverHomePage";
+import { useQuery } from "@tanstack/react-query";
+import { getChatTree } from "../../../api/chatSessions";
 
 export default function ChatTabShell() {
-  // Track the active session id so the browser can highlight it.
-  // Currently only used for visual feedback; wiring to the conversation
-  // (managed-agent session) is a follow-on slice.
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+
+  // Fetch tree so we can surface the most-recent session in the launcher.
+  const { data: treeData } = useQuery({
+    queryKey: ["chat-tree"],
+    queryFn: getChatTree,
+    retry: 1,
+    staleTime: 30_000,
+  });
+
+  // Most-recent session (first session across any folder, by sort_order asc).
+  const recentSession = (() => {
+    if (!treeData) return null;
+    const allSessions = treeData.folders.flatMap((f) =>
+      f.sessions.map((s) => ({
+        id: s.id,
+        title: s.title,
+        stage: f.stage,
+      })),
+    );
+    if (allSessions.length === 0) return null;
+    return allSessions[0]; // folders/sessions returned in sort_order order
+  })();
+
+  const handleSessionStart = useCallback((id: string) => {
+    setActiveSessionId(id);
+  }, []);
+
+  const handleSelectSession = useCallback((id: string) => {
+    setActiveSessionId(id);
+  }, []);
+
+  const handleNewSession = useCallback((id: string) => {
+    setActiveSessionId(id);
+  }, []);
+
+  const handleNewSessionBlank = useCallback(() => {
+    // "New session" from the browser with no id yet → show the launcher
+    setActiveSessionId(null);
+  }, []);
 
   return (
     <div className="flex h-full w-full min-h-0 overflow-hidden">
@@ -35,14 +78,35 @@ export default function ChatTabShell() {
       >
         <SessionBrowser
           activeSessionId={activeSessionId}
-          onSelectSession={(id) => setActiveSessionId(id)}
-          onNewSession={(id) => setActiveSessionId(id)}
+          onSelectSession={handleSelectSession}
+          onNewSession={(id) => {
+            // When the browser creates a session and returns an id, open it.
+            // When the user clicks "+ New session" from the top button, the
+            // browser calls onNewSession after creating a session; we switch
+            // to the conversation immediately.
+            if (id) {
+              handleNewSession(id);
+            } else {
+              handleNewSessionBlank();
+            }
+          }}
         />
       </aside>
 
-      {/* Center — the existing Uni conversation, UNCHANGED. */}
-      <div className="flex-1 min-w-0 overflow-y-auto">
-        <DiscoverHomePage />
+      {/* Center view — launcher or conversation */}
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+        {activeSessionId === null ? (
+          /* New-session launcher */
+          <NewSessionLauncher
+            recentSession={recentSession}
+            onSessionStart={handleSessionStart}
+          />
+        ) : (
+          /* Existing Uni conversation — unchanged */
+          <div className="flex-1 min-w-0 overflow-y-auto">
+            <DiscoverHomePage />
+          </div>
+        )}
       </div>
     </div>
   );
