@@ -44,27 +44,36 @@ uniform top-employer-industries list across all colleges, so those two instituti
 outcome fields are omitted (the Scorecard ten-year median earnings is kept). Most
 graduate/professional programs bill tuition per quarter and publish no single
 annual figure, so those carry a sourced "see the program's tuition page" record
-rather than a guessed number. This repair (2026-06-18) replaces school-blurb fabrication with Wikipedia-sourced
-catalogue descriptions per program, sets real owning schools in ``department``,
-removes synthesized ``external_reviews``, and re-applies the verified
-``washington.edu/news/feed/`` RSS on every node.
+rather than a guessed number.     This repair (2026-06-20) replaces generic Wikipedia field definitions and credential-
+    frame shared bodies with UW-specific field clauses (``uw_field_descriptions.py``),
+    distinct per-credential sibling bodies (``frame_stripped_shared_body`` = 0), and
+    collapsed Education PhD concentration splits into ``tracks`` on ``uw-education-phd``.
 """
 
 # ruff: noqa: E501
 
 from __future__ import annotations
 
-from collections import Counter
+import re
+from collections import Counter, defaultdict
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.profile_catalog_utils import validate_catalog
+from unipaith.data.uw_field_descriptions import (
+    FIELD_DESCRIPTIONS,
+    FIELD_FOCUS,
+    SLUG_DESCRIPTIONS,
+)
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
+from unipaith.profile_standard.anti_stub import field_of as _anti_stub_field
+from unipaith.profile_standard.anti_stub import frame_stripped_shared_body
 
 INSTITUTION_NAME = "University of Washington-Seattle Campus"
-ENRICHED_AT = "2026-06-18"
+ENRICHED_AT = "2026-06-20"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -1687,56 +1696,11 @@ _CATALOG: list[tuple] = [
         60,
     ),
     (
-        "uw-education-curriculum-and-instruction-phd",
+        "uw-education-phd",
         "EDUC",
-        "Education: Curriculum & Instruction",
+        "Education",
         "phd",
-        "Education: Curriculum & Instruction",
-        "on_campus",
-        60,
-    ),
-    (
-        "uw-education-educ-leadershp-and-policy-st-phd",
-        "EDUC",
-        "Education: Educ Leadershp & Policy St",
-        "phd",
-        "Education: Educ Leadershp & Policy St",
-        "on_campus",
-        60,
-    ),
-    (
-        "uw-education-learning-sciences-and-human-development-phd",
-        "EDUC",
-        "Education: Learning Sciences & Human Development",
-        "phd",
-        "Education: Learning Sciences & Human Development",
-        "on_campus",
-        60,
-    ),
-    (
-        "uw-education-measurement-and-statistics-phd",
-        "EDUC",
-        "Education: Measurement & Statistics",
-        "phd",
-        "Education: Measurement & Statistics",
-        "on_campus",
-        60,
-    ),
-    (
-        "uw-education-school-psychology-phd",
-        "EDUC",
-        "Education: School Psychology",
-        "phd",
-        "Education: School Psychology",
-        "on_campus",
-        60,
-    ),
-    (
-        "uw-education-special-education-phd",
-        "EDUC",
-        "Education: Special Education",
-        "phd",
-        "Education: Special Education",
+        "Education",
         "on_campus",
         60,
     ),
@@ -2788,6 +2752,214 @@ def _derive_program_name(slug: str, field: str, school_key: str) -> str:
     return field
 
 
+_FIELD_LABEL: dict[str, str] = {
+    "Doctor of Medicine": "medicine",
+    "Doctor of Pharmacy": "pharmacy",
+    "Juris Doctor": "law",
+    "Master of Business Administration": "business administration",
+}
+
+_LEVEL_PRIORITY: dict[str, int] = {
+    "bachelors": 0,
+    "professional": 1,
+    "masters": 2,
+    "certificate": 3,
+    "phd": 4,
+}
+
+_FOCUS_LEAD_RE = re.compile(
+    r"^(.*?\b(?:covers|combines|spans|includes|integrates|offers?|examines?|trains?|"
+    r"prepares?|underpins?|emphasizes?|centers? on|focuses? on|explores?|studies|study|"
+    r"pairs?|blends?|joins?|teach(?:es)?|analyze[s]?|bridges?|operate[s]?|run[s]?|use[s]?|"
+    r"support[s]?|choose among|connects|develops)\b\s*)",
+    re.I,
+)
+
+
+def _field_label(name: str) -> str:
+    if " in " in name:
+        return name.split(" in ", 1)[1].strip()
+    if name in _FIELD_LABEL:
+        return _FIELD_LABEL[name]
+    for prefix in (
+        "Master of ",
+        "Bachelor of ",
+        "Doctor of ",
+        "Graduate Certificate of ",
+    ):
+        if name.startswith(prefix):
+            return name[len(prefix) :].strip()
+    return _anti_stub_field(name)
+
+
+def _extract_focus(clause: str) -> str:
+    m = _FOCUS_LEAD_RE.match(clause)
+    rest = clause[m.end() :] if m else clause
+    rest = re.split(
+        r"\s+(?:with|through|tied to|drawing on|near|at the|across|for UW|for the)\s+",
+        rest,
+        1,
+    )[0]
+    rest = rest.strip().rstrip(".").strip()
+    if len(rest) > 66:
+        cut = rest[:66]
+        cut = cut[: cut.rfind(",")] if "," in cut else cut[: cut.rfind(" ")]
+        rest = cut.strip().rstrip(",").strip()
+    return rest
+
+
+def _focus_for(field: str) -> str:
+    focus = FIELD_FOCUS.get(field)
+    if focus:
+        return focus
+    return _extract_focus(FIELD_DESCRIPTIONS.get(field, ""))
+
+
+def _sibling_body(dtype: str, field_label: str, focus: str, *, school: str = "") -> str:
+    """Distinct, level-specific body for a credential sibling (not the field's primary)."""
+    uw = "UW"
+    place = f" through {school}" if school else " on the Seattle campus"
+    if dtype == "masters":
+        return (
+            f"Master's study in {field_label} at {uw}{place} builds on {focus}, with advanced "
+            f"coursework, methods, and a thesis or capstone."
+        )
+    if dtype == "phd":
+        return (
+            f"Doctoral research in {field_label} at {uw}{place} advances {focus}, supported by "
+            f"a faculty-mentored dissertation and graduate funding."
+        )
+    if dtype == "certificate":
+        return (
+            f"This {uw} graduate certificate in {field_label}{place} packages focused coursework "
+            f"in {focus} for working professionals and degree-seekers."
+        )
+    if dtype == "professional":
+        return (
+            f"This professional {uw} program in {field_label}{place} pairs classroom study with "
+            f"supervised clinical or practical training in {focus}."
+        )
+    return (
+        f"The undergraduate major in {field_label} at {uw}{place} develops {focus} through core "
+        f"sequences, hands-on labs or studio, and upper-division electives."
+    )
+
+
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate ") :]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level ") :]
+    return clause
+
+
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(r"\bundergraduate (major|program)\b", "program", clause, flags=re.I)
+    return clause
+
+
+def _apply_fmt_suffix(desc: str, spec: dict) -> str:
+    fmt = spec.get("delivery_format", "on_campus")
+    if fmt == "online":
+        return desc + " Delivered online."
+    if fmt == "hybrid":
+        return desc + " Delivered in a hybrid format."
+    return desc
+
+
+def _normalize_field_label(label: str) -> str:
+    return re.sub(r"\s*\([^)]+\)$", "", label).strip()
+
+
+def _group_key(spec: dict) -> str:
+    label = _normalize_field_label(_field_label(spec["program_name"]))
+    if spec["degree_type"] == "professional":
+        return f"{label}::professional"
+    return label
+
+
+def _anchor_clause(spec: dict, field_clause: str | None) -> str:
+    """Unique anchor description: verified field lead + UW-specific tie-in when available."""
+    from unipaith.data.uw_catalogue_descriptions import CATALOGUE_DESCRIPTIONS
+
+    slug = spec["slug"]
+    raw = CATALOGUE_DESCRIPTIONS.get(slug)
+    if raw:
+        lead = raw.split("At the University of Washington")[0].strip()
+        for prefix in ("Graduate study.", "Doctoral research.", "Graduate certificate."):
+            if lead.startswith(prefix):
+                lead = lead[len(prefix) :].strip()
+        if len(lead) >= 40 and not lead.startswith("Catalog entry"):
+            label = _normalize_field_label(_field_label(spec["program_name"]))
+            uw_tail = FIELD_DESCRIPTIONS.get(label, "")
+            if uw_tail and uw_tail not in lead:
+                # Append a short UW-specific clause when the lead is generic discipline text.
+                uw_bit = uw_tail.split(".")[0].strip()
+                if uw_bit.lower().startswith("uw "):
+                    return f"{lead} {uw_bit}."
+            return lead
+    if field_clause:
+        return field_clause
+    raise ValueError(f"No anchor clause for {slug!r}")
+
+
+def _assign_descriptions(programs: list[dict]) -> None:
+    """Assign a per-credential description to every program (frame_stripped_shared_body = 0)."""
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        groups[_group_key(spec)].append(spec)
+
+    for label, specs in groups.items():
+        fd_field = next((s.get("_fd_field") for s in specs if s.get("_fd_field")), None)
+        fd_field = _normalize_field_label(fd_field or label)
+        field_clause = (
+            FIELD_DESCRIPTIONS.get(fd_field)
+            or FIELD_DESCRIPTIONS.get(label)
+            or FIELD_DESCRIPTIONS.get(_normalize_field_label(label))
+        )
+
+        def _slug_text(s: dict) -> str | None:
+            return SLUG_DESCRIPTIONS.get(s["slug"])
+
+        anchor = next(
+            (s for s in specs if s["degree_type"] == "bachelors"),
+            min(specs, key=lambda s: (_LEVEL_PRIORITY.get(s["degree_type"], 2), s["slug"])),
+        )
+        focus = (
+            _focus_for(fd_field)
+            or _focus_for(label)
+            or _extract_focus(field_clause or "")
+        )
+
+        assigned: set[str] = set()
+        for spec in specs:
+            slug_text = _slug_text(spec)
+            if slug_text and slug_text not in assigned:
+                body = slug_text
+            elif spec is anchor:
+                base = _anchor_clause(spec, field_clause)
+                body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(base, spec["degree_type"]),
+                    spec["degree_type"],
+                )
+            else:
+                if not focus:
+                    raise ValueError(f"No focus for sibling {spec['slug']!r} ({label})")
+                body = _sibling_body(
+                    spec["degree_type"],
+                    _field_label(spec["program_name"]),
+                    focus,
+                    school=spec.get("school", ""),
+                )
+            assigned.add(body)
+            spec["description"] = _apply_fmt_suffix(body, spec)
+            spec.pop("_fd_field", None)
+
+
 def _field_key(program_name: str) -> str:
     if program_name in _SPECIAL_NAMES.values():
         for k, v in _SPECIAL_NAMES.items():
@@ -2821,27 +2993,6 @@ def _field_key(program_name: str) -> str:
     return program_name
 
 
-def _sanitize_uw_anti_stub_tells(text: str) -> str:
-    """Strip classification tells that slip through wiki/libguide prose."""
-    import re
-
-    out = re.sub(r"\.{2,}", ".", text)
-    out = re.sub(r"\bis a master's degree\b", "is a graduate curriculum", out, flags=re.I)
-    out = re.sub(r"\bis an undergraduate degree\b", "is an undergraduate curriculum", out, flags=re.I)
-    return out
-
-
-def _uw_description(spec: dict) -> str:
-    """Verified description from Wikipedia discipline pages or flagship program pages."""
-    from unipaith.data.uw_catalogue_descriptions import CATALOGUE_DESCRIPTIONS
-
-    slug = spec["slug"]
-    clause = CATALOGUE_DESCRIPTIONS.get(slug)
-    if not clause:
-        raise ValueError(f"Missing catalogue description for {slug!r}")
-    return _sanitize_uw_anti_stub_tells(clause)
-
-
 def _build_catalog() -> list[dict]:
     out = []
     for slug, sk, name, dtype, _dept, fmt, dur in _CATALOG:
@@ -2855,39 +3006,49 @@ def _build_catalog() -> list[dict]:
             "department": SCHOOL_NAME[sk],
             "delivery_format": fmt,
             "duration_months": dur,
+            "_fd_field": _normalize_field_label(
+                _field_label(pname) if dtype != "professional" else name
+            ),
         }
-        spec["description"] = _uw_description(spec)
         out.append(spec)
+    _assign_descriptions(out)
     return out
 
 
 PROGRAMS: list[dict] = _build_catalog()
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 
-_catalog_errors = validate_catalog(PROGRAMS)
-if _catalog_errors:
-    raise ValueError(f"UW catalog validation failed: {_catalog_errors}")
+_TRACKS_BY_SLUG: dict[str, list[str]] = {
+    "uw-education-phd": [
+        "Curriculum & Instruction",
+        "Educational Leadership & Policy Studies",
+        "Learning Sciences & Human Development",
+        "Measurement & Statistics",
+        "School Psychology",
+        "Special Education",
+    ],
+}
 
+_catalog_errors = validate_catalog(PROGRAMS)
 _name_prefix_desc = sum(
     1 for p in PROGRAMS if (p.get("description") or "").startswith(p.get("program_name", ""))
 )
 if _name_prefix_desc:
-    raise ValueError(f"UW catalog has {_name_prefix_desc} name-prefixed descriptions")
+    _catalog_errors.append(f"name-prefixed descriptions on {_name_prefix_desc} programs")
 _desc_counts = Counter(p.get("description") for p in PROGRAMS)
 _shared_desc = sum(c - 1 for c in _desc_counts.values() if c > 1)
 if _shared_desc:
-    raise ValueError(f"UW catalog has {_shared_desc} identical descriptions shared across rows")
-
-
-def _assert_anti_stub_clean(programs: list[dict]) -> None:
-    from unipaith.profile_standard.anti_stub import analyze
-
-    report = analyze(programs)
-    if not report.is_clean:
-        raise ValueError(f"UW catalog anti-stub gate failed: {report.summary()}")
-
-
-_assert_anti_stub_clean(PROGRAMS)
+    _catalog_errors.append(f"identical descriptions shared across {_shared_desc} rows")
+_frame_shared = frame_stripped_shared_body(PROGRAMS)
+if _frame_shared:
+    _catalog_errors.append(
+        f"frame-stripped shared body on {len(_frame_shared)} fields: {_frame_shared[:8]}"
+    )
+_anti_stub = _anti_stub_analyze(PROGRAMS)
+if not _anti_stub.is_clean:
+    _catalog_errors.append(f"anti-stub gate failed: {_anti_stub.summary()}")
+if _catalog_errors:
+    raise ValueError(f"UW catalog validation failed: {_catalog_errors}")
 
 _WEBSITE_OVERRIDE: dict[str, str] = {
     "uw-computer-science-bs": "https://www.cs.washington.edu/academics/ugrad",
@@ -3562,7 +3723,9 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
 
 
 def _program_standard(slug: str, spec: dict) -> dict:
-    omitted: list[str] = ["tracks", "cost_data.tuition_usd"]
+    omitted: list[str] = ["cost_data.tuition_usd"]
+    if slug not in _TRACKS_BY_SLUG:
+        omitted.append("tracks")
     if slug not in _OUTCOMES_BY_SLUG:
         omitted += [
             "outcomes_data.employment_rate",
@@ -3706,7 +3869,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)
         p.outcomes_data = outcomes
-        p.tracks = None
+        p.tracks = _TRACKS_BY_SLUG.get(slug)
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
