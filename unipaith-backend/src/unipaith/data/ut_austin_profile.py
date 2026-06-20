@@ -3480,8 +3480,6 @@ def _assign_descriptions(programs: list[dict]) -> None:
     live (REPAIR_BACKLOG CRITICAL #2). Each credential now carries its own researched
     or level-specific body; siblings share no >=80-char run (0% under abs-150).
     """
-    from collections import defaultdict
-
     from unipaith.profile_standard.anti_stub import field_of
 
     raw: dict[str, str] = {spec["slug"]: spec["description"] for spec in programs}
