@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import QueryError from '../../components/ui/QueryError'
@@ -20,6 +20,7 @@ import StrategyView from './match/StrategyView'
 import MatchesSection from './match/MatchesSection'
 import PromoCard from './explore/cards/PromoCard'
 import DiscoverySearch from './explore/discovery/DiscoverySearch'
+import Pagination from '../../components/ui/Pagination'
 import { parseChipsParam } from './explore/discovery/chipUtils'
 import { hasActiveFilters as hasProgramFilters, parseFiltersParam } from './explore/discovery/filterUtils'
 import DiscoverTabBar, { type DiscoverTab } from './explore/DiscoverTabBar'
@@ -314,9 +315,16 @@ export default function ExplorePage() {
       .map(x => ({ ...x.u, _distance_km: Number.isFinite(x.dist) ? Math.round(x.dist) : null }))
   }, [filteredUniList, nearMe])
 
-  // The browse grid renders a window (Show more reveals the rest).
-  const [visibleCount, setVisibleCount] = useState(36)
-  useEffect(() => { setVisibleCount(36) }, [filteredUniList, nearMe])
+  // The browse grid is paginated — 24 per page. Filters / near-me reset to page 1.
+  const BROWSE_PAGE_SIZE = 24
+  const [browsePage, setBrowsePage] = useState(1)
+  const browseTopRef = useRef<HTMLDivElement>(null)
+  useEffect(() => { setBrowsePage(1) }, [filteredUniList, nearMe])
+  const browsePageCount = Math.max(1, Math.ceil(displayUniList.length / BROWSE_PAGE_SIZE))
+  const goToBrowsePage = (p: number) => {
+    setBrowsePage(Math.min(Math.max(1, p), browsePageCount))
+    browseTopRef.current?.scrollIntoView({ block: 'start' })
+  }
 
   return (
     <PageContainer>
@@ -449,7 +457,7 @@ export default function ExplorePage() {
               </div>
 
               {!searchActive && (
-                <div>
+                <div ref={browseTopRef} className="scroll-mt-4">
                   <div className="flex items-center justify-center gap-3 mb-3">
                     <h2 className="text-base font-bold text-foreground">Browse universities</h2>
                     <button
@@ -502,32 +510,36 @@ export default function ExplorePage() {
                       </button>
                     </div>
                   ) : (
-                    <>
-                      <p className="text-[11px] text-muted-foreground mb-3 text-center">
-                        Showing <span className="font-semibold text-foreground">{Math.min(visibleCount, displayUniList.length)}</span> of {hasActiveFilters ? `${filteredUniList.length} filtered` : displayUniList.length} universities
-                      </p>
-                      <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
-                        {displayUniList.slice(0, visibleCount).map((inst: UniversityRow) => (
-                          <UniversityCard
-                            key={inst.id}
-                            institution={inst}
-                            onClick={() => navigate(`/s/institutions/${inst.id}`)}
-                            following={followedIds.has(String(inst.id))}
-                            onToggleFollow={() => toggleFollow(String(inst.id))}
+                    (() => {
+                      const total = displayUniList.length
+                      const from = (browsePage - 1) * BROWSE_PAGE_SIZE
+                      const pageItems = displayUniList.slice(from, from + BROWSE_PAGE_SIZE)
+                      return (
+                        <>
+                          <p className="text-[11px] text-muted-foreground mb-3 text-center">
+                            Showing <span className="font-semibold text-foreground">{from + 1}–{from + pageItems.length}</span> of {total}{hasActiveFilters ? ' matching' : ''} universities
+                          </p>
+                          {/* key on the page so the stagger entrance replays as each page flips in */}
+                          <div key={browsePage} className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
+                            {pageItems.map((inst: UniversityRow) => (
+                              <UniversityCard
+                                key={inst.id}
+                                institution={inst}
+                                onClick={() => navigate(`/s/institutions/${inst.id}`)}
+                                following={followedIds.has(String(inst.id))}
+                                onToggleFollow={() => toggleFollow(String(inst.id))}
+                              />
+                            ))}
+                          </div>
+                          <Pagination
+                            page={browsePage}
+                            pageCount={browsePageCount}
+                            onChange={goToBrowsePage}
+                            className="mt-6"
                           />
-                        ))}
-                      </div>
-                      {displayUniList.length > visibleCount && (
-                        <div className="mt-5 flex justify-center">
-                          <button
-                            onClick={() => setVisibleCount(c => c + 36)}
-                            className="text-sm font-semibold text-secondary border border-border rounded-md px-4 py-2 hover:bg-muted transition-colors"
-                          >
-                            Show more universities ({displayUniList.length - visibleCount} more)
-                          </button>
-                        </div>
-                      )}
-                    </>
+                        </>
+                      )
+                    })()
                   )}
                 </div>
               )}
