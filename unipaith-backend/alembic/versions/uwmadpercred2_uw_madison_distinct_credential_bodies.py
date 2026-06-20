@@ -12,7 +12,7 @@ distinct level frame + the field's real-subarea focus, so no two programs (same 
 cross-field) share a >=80-char body. Idempotent; re-derives target-applicant rows.
 
 Revision ID: uwmadpercred2
-Revises: jhuuscmrg1
+Revises: jhupercred1
 Create Date: 2026-06-20
 """
 
@@ -27,7 +27,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "uwmadpercred2"
-down_revision = "jhuuscmrg1"
+down_revision = "jhupercred1"
 branch_labels = None
 depends_on = None
 
