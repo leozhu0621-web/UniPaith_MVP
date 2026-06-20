@@ -1,17 +1,24 @@
-"""Johns Hopkins per-credential bodies — frame-share repair
+"""JHU per-credential bodies — drop credential-frame + shared field-clause body
 
-Re-applies ``jhu_profile.apply()`` after the data module was repaired:
+Johns Hopkins's catalog descriptions led each credential level with a generic frame
+("Johns Hopkins offers the undergraduate major in {field}.", "Doctoral study in
+{field} … centers on dissertation research.") before ONE shared FIELD_DESCRIPTIONS
+fact, so once the frame was stripped 81/82 multi-credential fields still shared a body
+(REPAIR BACKLOG #5 / miss #8 credential-frame + tail-shared field body). This
+re-applies ``jhu_profile.apply()`` with the verified field fact leading and a distinct
+per-credential ``_level_body`` after it, so each credential level (BA / MS /
+certificate / PhD) carries its own researched body (gold MIT = 0% frame-stripped
+shared body). It also de-roll-ups the residual CIP 05.01 "Area Studies" rows: the BA
+is renamed to its real degree ("Bachelor of Arts in Latin American, Caribbean, and
+Latinx Studies") and the IPEDS-minted MS + certificate rows are dropped (JHU confers
+no master's or certificate in that field). Idempotent; re-derives target-applicant
+rows.
 
-- Replaces credential-frame + one shared field clause (81/82 multi-credential fields)
-  with distinct per-credential ``_level_body`` text after each verified field clause
-  (gold MIT = 0% ``frame_stripped_shared_body``).
-- De-rolls residual "Area Studies" CIP bucket to Latin American, Caribbean, and
-  Latinx Studies (REPAIR_BACKLOG HIGH #5).
-
-Idempotent; re-derives target-applicant rows.
+Follows ``usccornellmrg1`` (the merge of ``uscdebris2`` + ``cornellpercred1``) so
+``main`` stays at exactly one Alembic head.
 
 Revision ID: jhupercred1
-Revises: jhumerge1
+Revises: usccornellmrg1
 Create Date: 2026-06-20
 """
 
@@ -26,7 +33,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "jhupercred1"
-down_revision = "jhumerge1"
+down_revision = "usccornellmrg1"
 branch_labels = None
 depends_on = None
 

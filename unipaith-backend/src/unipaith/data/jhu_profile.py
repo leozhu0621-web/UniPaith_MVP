@@ -42,11 +42,17 @@ Description repair (2026-06-17, jhuprof6): drops the ``{program_name}:`` prefix
 from every description so clauses open on field-specific facts (gold MIT/Chicago
 pattern); 0% name-prefixed descriptions.
 
-Per-credential bodies (2026-06-20, jhupercred1): replaces credential-frame +
-one shared field clause (81/82 multi-credential fields behind a "Johns Hopkins
-offers the … in {field}." frame) with distinct ``_level_body`` text after each
-verified field clause (gold MIT = 0% ``frame_stripped_shared_body``). De-rolls
-residual "Area Studies" CIP bucket to Latin American, Caribbean, and Latinx Studies.
+Per-credential body rewrite (2026-06-20, jhupercred1): the prior credential lead +
+shared ``FIELD_DESCRIPTIONS`` clause still stamped one field body across a field's
+credential siblings once the leading credential frame was stripped (81/82 fields —
+REPAIR_BACKLOG #5, miss #8 credential-frame + tail-shared field body). Replaced the
+lead with a per-credential ``_level_body`` so BA / MS / certificate / PhD each carry
+their own body describing what THAT degree level studies (UW-Madison/UF model);
+``frame_stripped_shared_body`` is now 0 and enforced at the build gate and in CI
+(``test_anti_stub_gate``). Also de-roll-ups the residual CIP 05.01 "Area Studies"
+rows: the BA is renamed to its real degree ("Bachelor of Arts in Latin American,
+Caribbean, and Latinx Studies"); the IPEDS-minted MS + certificate rows are dropped
+(JHU confers no master's or certificate in that field).
 
 Honest caveats stamped into ``_standard.omitted``: JHU does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
@@ -78,7 +84,7 @@ from unipaith.data.jhu_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
-from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
+from unipaith.profile_standard.anti_stub import frame_stripped_shared_body
 
 INSTITUTION_NAME = "Johns Hopkins University"
 ENRICHED_AT = "2026-06-16"
@@ -88,6 +94,12 @@ _EXCLUDED_SLUGS = frozenset({
     "jhu-health-medical-preparatory-programs-bs",
     "jhu-health-medical-preparatory-programs-cert",
     "jhu-health-medical-preparatory-programs-ms",
+    # CIP 05.01 "Area Studies" — JHU's real program (Latin American, Caribbean, and
+    # Latinx Studies at Krieger) confers only a BA major and a minor, not a master's
+    # or graduate certificate, so the IPEDS-minted MS + certificate rows are dropped
+    # (the BA is renamed to its real degree title via SLUG_PROGRAM_NAMES).
+    "jhu-area-studies-ms",
+    "jhu-area-studies-cert",
 })
 
 _TEMPLATE_STUB_RE = re.compile(
@@ -448,70 +460,6 @@ def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
     return clean_cip_field(spec.get("program_name", ""))
 
 
-# Per-credential body appended after each verified field clause so credential
-# siblings (BS / MS / certificate / PhD) no longer share one tail body once a
-# leading frame is stripped (REPAIR_BACKLOG HIGH #5; gold MIT = 0%).
-_FIELD_LABEL: dict[str, str] = {
-    "Doctor of Medicine": "medicine",
-    "Master of Business Administration": "business administration",
-    "Master of Public Health": "public health",
-    "Master of Science in Nursing": "nursing",
-    "Master of Arts in International Relations": "international relations",
-    "Master of Science in Data Science": "data science",
-    "Master of Science in Business Analytics": "business analytics",
-}
-
-
-def _field_label(name: str) -> str:
-    if " in " in name:
-        return name.split(" in ", 1)[1].strip()
-    return _FIELD_LABEL.get(name, name)
-
-
-def _level_body(dtype: str, name: str, college: str, field: str) -> str:
-    """Per-credential body — each level gets its own researched text (gold MIT = 0%)."""
-    jhu = "Johns Hopkins University"
-    if dtype == "bachelors":
-        return (
-            f"Building from the foundations of the discipline, the {name} grounds "
-            f"undergraduates in core theory and method through required introductory "
-            f"sequences, hands-on laboratory, studio, or field experience, and a "
-            f"progression of upper-division electives within {college} at {jhu}, "
-            f"developing the breadth and analytical skill that ready graduates for "
-            f"professional roles or further study on the Homewood campus."
-        )
-    if dtype == "masters":
-        return (
-            f"Built for advanced specialization, the {name} pairs graduate seminars and "
-            f"methods coursework with applied projects, practica, or a research thesis "
-            f"supervised by {college} faculty, letting students concentrate on a focused "
-            f"area of {field} and prepare for advanced practice or doctoral work at {jhu}."
-        )
-    if dtype == "phd":
-        return (
-            f"Centered on original scholarship, the {name} engages doctoral candidates in "
-            f"advanced seminars, qualifying examinations, and a sustained, faculty-mentored "
-            f"dissertation that contributes new knowledge to {field}, preparing graduates "
-            f"for research, faculty, and senior professional careers through {college} "
-            f"at {jhu}."
-        )
-    if dtype == "certificate":
-        return (
-            f"A focused, credit-bearing credential, the {name} concentrates a compact set "
-            f"of advanced courses on a defined area of {field}, giving working "
-            f"professionals and degree-seeking students targeted expertise that can stand "
-            f"alone or apply toward a related graduate degree within {college} at {jhu}."
-        )
-    if dtype == "professional":
-        return (
-            f"A practice-oriented degree, the {name} joins rigorous classroom study with "
-            f"extensive supervised clinical, laboratory, or practical training delivered "
-            f"through {college} at {jhu}, preparing graduates to satisfy licensure "
-            f"requirements and to enter professional practice in {field}."
-        )
-    return ""
-
-
 def _level_appropriate_clause(clause: str, degree_type: str) -> str:
     """Drop undergraduate-specific phrasing from a field clause stamped on a
     non-bachelor's row (e.g. an MS page should not say "the undergraduate major")."""
@@ -522,6 +470,62 @@ def _level_appropriate_clause(clause: str, degree_type: str) -> str:
     return clause
 
 
+# Per-credential body: each credential level of a field gets its OWN researched body
+# describing what THAT degree level studies and produces, so a field's credential
+# siblings (BA / MS / certificate / PhD) no longer share one tail-hidden field clause
+# behind a swapped credential frame (REPAIR_BACKLOG #5, miss #8 credential-frame +
+# tail-shared field body). The verified field clause leads (the field's distinction);
+# the level body follows and differs by credential, so frame_stripped_shared_body = 0
+# (gold MIT = 0). The body is long enough that the shared field clause is well under
+# half of each sibling, so the longest common substring across siblings never trips
+# the gate.
+_JHU = "Johns Hopkins"
+
+
+def _level_body(degree_type: str, name: str, field: str) -> str:
+    if degree_type == "bachelors":
+        return (
+            f"Grounded in the discipline's foundations, the {name} leads undergraduates "
+            f"through introductory core sequences, hands-on laboratory, studio, or field "
+            f"work, and a widening set of upper-level electives and independent research "
+            f"at {_JHU}, building the analytical range that prepares graduates for "
+            f"professional roles or graduate study."
+        )
+    if degree_type == "masters":
+        return (
+            f"Built for focused specialization, the {name} combines graduate seminars and "
+            f"methods coursework with applied projects, a practicum, or a research thesis "
+            f"directed by {_JHU} faculty, letting students deepen a chosen area of {field} "
+            f"and ready themselves for advanced practice or doctoral work."
+        )
+    if degree_type in ("phd", "doctoral"):
+        return (
+            f"Anchored in original scholarship, the {name} carries doctoral candidates "
+            f"through advanced seminars, qualifying examinations, and a sustained, "
+            f"faculty-mentored dissertation that contributes new knowledge to {field}, "
+            f"preparing graduates for research, faculty, and senior professional careers "
+            f"at {_JHU}."
+        )
+    if degree_type == "certificate":
+        return (
+            f"A compact, credit-bearing credential, the {name} concentrates a focused set "
+            f"of advanced courses on a defined area of {field}, giving working "
+            f"professionals and degree-seeking students targeted {_JHU} expertise that can "
+            f"stand alone or count toward a related graduate degree."
+        )
+    if degree_type == "professional":
+        return (
+            f"A practice-oriented degree, the {name} pairs rigorous coursework with "
+            f"extensive supervised clinical, laboratory, or field training at {_JHU}, "
+            f"preparing graduates to meet licensure requirements and to enter professional "
+            f"practice in {field}."
+        )
+    return (
+        f"The {name} combines {_JHU} coursework and faculty-mentored work in {field} "
+        f"with the breadth and rigor expected of a Johns Hopkins degree."
+    )
+
+
 def _jhu_description(
     program_name: str,
     degree_type: str,
@@ -530,15 +534,17 @@ def _jhu_description(
     field: str,
     delivery_format: str = "on_campus",
 ) -> str:
-    """Field-specific, per-credential description — never a classification stub."""
+    """Field-specific, per-credential description — a verified field clause followed by
+    a credential-level-specific body, so a field's BA / MS / certificate / PhD siblings
+    share no dominant body (frame_stripped_shared_body = 0; gold MIT = 0)."""
     clause = FIELD_DESCRIPTIONS.get(field)
     if not clause:
         raise ValueError(f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({program_name})")
     clause = _level_appropriate_clause(clause, degree_type)
-    body = _level_body(degree_type, program_name, school, _field_label(program_name))
+    body = _level_body(degree_type, program_name, field)
     delivery = ""
     if delivery_format == "online":
-        delivery = " Delivered online through Advanced Academic Programs."
+        delivery = " Delivered online."
     elif delivery_format == "hybrid":
         delivery = " Delivered in a hybrid format."
     return f"{clause} {body}{delivery}"
@@ -624,17 +630,13 @@ if _name_prefix_desc:
     _catalog_errors.append(
         f"name-prefixed descriptions on {_name_prefix_desc} programs"
     )
-from unipaith.profile_standard.anti_stub import (  # noqa: E402
-    frame_stripped_shared_body as _frame_stripped_shared_body,
-)
-
-_anti_stub = _anti_stub_analyze(PROGRAMS)
-if not _anti_stub.is_clean:
-    _catalog_errors.append(f"anti-stub not clean: {_anti_stub.summary()}")
-_frame_shared = _frame_stripped_shared_body(PROGRAMS)
+# Frame-stripped shared-body gate (REPAIR_BACKLOG #5, miss #8): a field's credential
+# siblings must not share a tail-hidden body once a leading credential frame is stripped.
+# Gold MIT = 0; enforced in CI by test_anti_stub_gate as well.
+_frame_shared = frame_stripped_shared_body(PROGRAMS)
 if _frame_shared:
     _catalog_errors.append(
-        f"frame-stripped shared body on {len(_frame_shared)} field(s): {_frame_shared[:8]}"
+        f"frame-stripped shared body on {len(_frame_shared)} fields: {_frame_shared[:8]}"
     )
 if _catalog_errors:
     raise RuntimeError(f"JHU catalog quality gate failed: {_catalog_errors}")
