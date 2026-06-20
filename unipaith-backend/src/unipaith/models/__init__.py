@@ -173,6 +173,7 @@ from unipaith.models.reference import (
 )
 from unipaith.models.saved_search import SavedSearch
 from unipaith.models.scholarship import Scholarship as ExternalScholarship
+from unipaith.models.session_template import SessionTemplate, SessionTemplateStep
 from unipaith.models.settings import InstitutionTeamInvite, UserSettings
 from unipaith.models.strategy import StudentStrategy
 from unipaith.models.student import (
@@ -234,6 +235,9 @@ __all__ = [
     "ChatFolder",
     "ChatSession",
     "PromptCatalog",
+    # Session templates — guided work-orders (spec §5/§6, 2026-06-20)
+    "SessionTemplate",
+    "SessionTemplateStep",
     # Adaptive Intake Engine (Spec 44 — four-layer signal pipeline)
     "RawInput",
     "StudentSignal",
