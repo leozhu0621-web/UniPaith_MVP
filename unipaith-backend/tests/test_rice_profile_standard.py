@@ -177,3 +177,30 @@ def test_no_name_prefixed_descriptions():
         if (prog.get("description") or "").startswith(prog.get("program_name", ""))
     )
     assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
+
+
+def test_catalog_is_structurally_real():
+    """Per-row realness + anti-stub gate (REPAIR BACKLOG #4 — gold MIT = 0%)."""
+    import re
+
+    from unipaith.profile_standard.anti_stub import analyze
+
+    report = analyze(r.PROGRAMS)
+    assert report.is_clean, f"anti-stub not clean: {report.summary()}"
+    for spec in r.PROGRAMS:
+        name = spec["program_name"]
+        assert not re.match(r"^(Bachelor's|Master's|Doctorate) in ", name), (
+            f"possessive-mint name: {name}"
+        )
+        assert spec.get("department"), f"{spec['slug']} missing department"
+        assert spec["department"] != name, f"dept-echo name: {spec['slug']}"
+
+
+def test_no_identical_across_credential_levels():
+    from collections import Counter
+
+    desc_counts = Counter(prog.get("description") for prog in r.PROGRAMS)
+    shared = sum(c for c in desc_counts.values() if c >= 2)
+    assert shared == 0, (
+        f"{shared} programs share a description verbatim with a credential sibling"
+    )

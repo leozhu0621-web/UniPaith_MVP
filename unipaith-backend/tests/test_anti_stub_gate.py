@@ -56,6 +56,8 @@ CERTIFIED_CLEAN = [
     #             (harvarddefab1 — HIGH #4)
     "columbia",   # CIP rollup + possessive de-fab; real owning schools; per-credential
     #             bodies (columbiadefab1 — HIGH #1)
+    "rice",       # conferred UG names; real depts; per-credential description leads
+    #             (verbatim/shared-body removed) (ricedefab1 — HIGH #4)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
