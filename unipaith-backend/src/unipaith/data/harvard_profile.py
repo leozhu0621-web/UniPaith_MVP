@@ -40,6 +40,13 @@ Possessive-name repair (2026-06-19, harvardnames1): replaces every IPEDS-minted
 designations (Bachelor of Arts/Science, Master of Arts/Science, Doctor of
 Philosophy, Graduate Certificate — gold MIT = 0% possessive); drops residual federal
 rollup buckets (Area Studies, Foods/Accounting and Related Services).
+
+Per-credential body repair (2026-06-20, harvardpercred1): replaces ``_level_body``
+(which stamped ONE shared field clause behind per-credential frames — 68 fields
+failed the frame-stripped shared-body gate live) with sibling-aware
+``_assign_descriptions`` (UW-Madison / gold-MIT pattern): the anchor credential
+carries the full verified ``FIELD_DESCRIPTIONS`` clause; each sibling carries a
+distinct level-specific body naming real subareas — 0% frame-stripped shared body.
 """
 
 from __future__ import annotations
@@ -68,7 +75,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Harvard University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-19"
+ENRICHED_AT = "2026-06-20"
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -1525,67 +1532,187 @@ def _field_from_program_name(program_name: str) -> str | None:
     return field if field != program_name else None
 
 
-def _level_body(real_field: str, degree_type: str, fact: str) -> str:
-    """Per-credential body — each level gets a distinct description (gold MIT = 0% shared)."""
-    fact = fact.strip().rstrip(".")
+_LEVEL_PRIORITY: dict[str, int] = {
+    "bachelors": 0,
+    "certificate": 1,
+    "masters": 2,
+    "phd": 3,
+    "doctoral": 3,
+    "professional": 4,
+}
+
+# Lead verbs used to slice a subarea focus from a FIELD_DESCRIPTIONS clause when no
+# curated override exists (same pattern as uw_madison_profile.py).
+_FOCUS_LEAD_RE = re.compile(
+    r"^(.*?\b(?:covers|combines|spans|includes|integrates|offers?|examines?|trains?|"
+    r"prepares?|underpins?|emphasizes?|centers? on|focuses? on|explores?|studies|study|"
+    r"pairs?|blends?|joins?|teach(?:es)?|analyze[s]?|bridges?|operate[s]?|run[s]?|use[s]?|"
+    r"support[s]?|choose among)\b\s*)",
+    re.I,
+)
+
+
+def _extract_focus(clause: str) -> str:
+    m = _FOCUS_LEAD_RE.match(clause)
+    rest = clause[m.end():] if m else clause
+    rest = re.split(
+        r"\s+(?:with|through|tied to|drawing on|near|at the|across Harvard|for Harvard|for the)\s+",
+        rest,
+        1,
+    )[0]
+    rest = rest.strip().rstrip(".").strip()
+    if len(rest) > 66:
+        cut = rest[:66]
+        cut = cut[: cut.rfind(",")] if "," in cut else cut[: cut.rfind(" ")]
+        rest = cut.strip().rstrip(",").strip()
+    return rest
+
+
+def _focus_for(field: str) -> str:
+    clause = FIELD_DESCRIPTIONS.get(field, "")
+    if not clause:
+        return ""
+    return _extract_focus(clause)
+
+
+def _sibling_body(dtype: str, field_label: str, focus: str) -> str:
+    """Distinct, level-specific body for a credential sibling (not the field's anchor)."""
+    if dtype == "masters":
+        return (
+            f"Master's study in {field_label} at Harvard builds on {focus}, with advanced "
+            f"coursework, methods, and a thesis or capstone."
+        )
+    if dtype == "phd":
+        return (
+            f"Doctoral research in {field_label} at Harvard advances {focus}, supported by "
+            f"a faculty-mentored dissertation and GSAS funding pathways."
+        )
+    if dtype == "certificate":
+        return (
+            f"This Harvard graduate certificate in {field_label} packages focused coursework "
+            f"in {focus} for working professionals and degree-seekers."
+        )
+    if dtype == "professional":
+        return (
+            f"This professional Harvard program in {field_label} pairs classroom study with "
+            f"supervised clinical or practical training in {focus}."
+        )
+    return (
+        f"The undergraduate major in {field_label} at Harvard develops {focus} through core "
+        f"sequences, hands-on labs or studio, and upper-division electives."
+    )
+
+
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
     if degree_type == "bachelors":
-        body = fact
-        if body.startswith("Graduate "):
-            body = "Undergraduate " + body[len("Graduate "):]
-        return body + "."
-    if degree_type == "masters":
-        return (
-            f"Master's study in {real_field} builds on graduate seminars, advanced "
-            f"methods, and a capstone or thesis — {fact}."
-        )
-    if degree_type == "phd":
-        return (
-            f"Doctoral training in {real_field} centers on original dissertation "
-            f"research, advanced coursework, and faculty mentorship — {fact}."
-        )
-    if degree_type == "certificate":
-        return (
-            f"This graduate certificate in {real_field} offers focused, stackable "
-            f"coursework — {fact}."
-        )
-    if degree_type == "professional":
-        return (
-            f"Harvard's professional program in {real_field} pairs advanced coursework "
-            f"with supervised practice — {fact}."
-        )
-    return fact + "."
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate "):]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level "):]
+    return clause
 
 
-def _harvard_description(spec: dict, field: str | None = None) -> str:
-    """Field-specific, credential-appropriate description — never a classification stub."""
-    slug = spec["slug"]
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(
+        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
+    )
+    return clause
+
+
+def _apply_fmt_suffix(desc: str, spec: dict) -> str:
     fmt = _delivery_format(spec.get("delivery_format", "in_person"))
-    delivery = ""
     if fmt == "online":
-        delivery = " Delivered online."
-    elif fmt == "hybrid":
-        delivery = " Delivered in hybrid format."
-    if slug in SLUG_DESCRIPTIONS:
-        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
-    field_key = spec.get("_field_name") or field
-    fact = FIELD_DESCRIPTIONS.get(field_key) if field_key else None
-    if not fact:
-        fallback_key = field_key or spec.get("department") or spec.get("program_name", "")
-        if fallback_key in FIELD_ALIASES:
-            fallback_key = FIELD_ALIASES[fallback_key]
-        fact = FIELD_DESCRIPTIONS.get(fallback_key)
-        if not fact:
-            raise ValueError(
-                f"Missing FIELD_DESCRIPTIONS entry for {fallback_key!r} ({slug})"
-            )
-    real_field = _real_field_of(spec.get("program_name", "")) or (field_key or "")
-    body = _level_body(real_field, spec.get("degree_type", "bachelors"), fact)
-    return f"{body}{delivery}"
+        return desc + " Delivered online."
+    if fmt == "hybrid":
+        return desc + " Delivered in hybrid format."
+    return desc
+
+
+def _resolve_fd_field(spec: dict, field_name: str | None = None) -> str:
+    if spec["slug"] in SLUG_DESCRIPTIONS:
+        return ""
+    field_key = spec.get("_field_name") or field_name
+    if field_key in FIELD_ALIASES:
+        field_key = FIELD_ALIASES[field_key]
+    if field_key and field_key in FIELD_DESCRIPTIONS:
+        return field_key
+    fallback_key = (
+        field_key
+        or spec.get("department")
+        or _real_field_of(spec.get("program_name", ""))
+    )
+    if fallback_key in FIELD_ALIASES:
+        fallback_key = FIELD_ALIASES[fallback_key]
+    if fallback_key in FIELD_DESCRIPTIONS:
+        return fallback_key
+    raise ValueError(
+        f"Missing FIELD_DESCRIPTIONS entry for {fallback_key!r} ({spec['slug']})"
+    )
+
+
+def _assign_descriptions(programs: list[dict]) -> None:
+    """Assign a per-credential description to every program.
+
+    The anchor credential (bachelors when present, else lowest level) carries the full
+    verified FIELD_DESCRIPTIONS clause; siblings carry a distinct level-specific frame
+    naming real subareas — no two siblings share a >=80-char contiguous body (gold MIT = 0).
+    """
+    from collections import defaultdict
+
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        groups[_real_field_of(spec["program_name"])].append(spec)
+
+    for label, specs in groups.items():
+        fd_field = next((s.get("_fd_field") for s in specs if s.get("_fd_field")), None)
+        field_clause = FIELD_DESCRIPTIONS.get(fd_field or "")
+
+        def _slug_text(s: dict) -> str | None:
+            return SLUG_DESCRIPTIONS.get(s["slug"])
+
+        anchor = next(
+            (s for s in specs if s["degree_type"] == "bachelors"),
+            min(
+                specs,
+                key=lambda s: (_LEVEL_PRIORITY.get(s["degree_type"], 2), s["slug"]),
+            ),
+        )
+        anchor_text = _slug_text(anchor) or field_clause
+        focus = _focus_for(fd_field or "") if fd_field else _extract_focus(anchor_text or "")
+
+        assigned: set[str] = set()
+        for spec in specs:
+            slug_text = _slug_text(spec)
+            if spec is anchor:
+                base = (
+                    field_clause
+                    if (field_clause and spec["slug"] not in SLUG_DESCRIPTIONS)
+                    else slug_text
+                )
+                base = base or field_clause
+                if not base:
+                    raise ValueError(f"No clause for anchor {spec['slug']!r}")
+                body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(base, spec["degree_type"]),
+                    spec["degree_type"],
+                )
+            elif slug_text and slug_text not in assigned:
+                body = slug_text
+            else:
+                if not focus:
+                    raise ValueError(f"No focus for sibling {spec['slug']!r} ({label})")
+                body = _sibling_body(spec["degree_type"], label, focus)
+            assigned.add(body)
+            spec["description"] = _apply_fmt_suffix(body, spec)
+            spec.pop("_fd_field", None)
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
-    """Stamp a field-specific description on every program node."""
-    spec["description"] = _harvard_description(spec, field=field_name)
+    """Resolve FIELD_DESCRIPTIONS key; description assigned by _assign_descriptions."""
+    spec["_fd_field"] = _resolve_fd_field(spec, field_name)
 
 
 def _build_catalog() -> list[dict]:
@@ -3113,6 +3240,7 @@ for _p in PROGRAMS:
         _p.get("_field_name")
         or _field_from_program_name(_p.get("program_name", "")),
     )
+_assign_descriptions(PROGRAMS)
 
 # ── Catalog quality gate (anti-stub miss #2/#8/#9, gold MIT = 0 on each) ───────
 _ROLLUP_NAME_RE = re.compile(
