@@ -20,7 +20,13 @@ from unipaith.profile_standard.anti_stub import (
     analyze,
     frame_stripped_shared_body,
     machine_artifacts,
+    scrape_debris,
 )
+
+# Catalogs verified free of raw scraped-catalogue debris (course-code / requirements /
+# contact-address fragments) in description_text — REPAIR_BACKLOG CRITICAL #1 (USC, run 66).
+# Grow as scrape-built catalogs are researched per-program (UIUC/NYU/UT-Austin still carry it).
+SCRAPE_DEBRIS_CLEAN = ["mit", "usc"]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
 # Grow this list as catalogs are genuinely de-fabricated — never weaken the assertions.
@@ -142,7 +148,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
     assert not machine_artifacts(clean), "must not flag a clean field-specific description"
 
 
-@pytest.mark.parametrize("name", ["mit", "rice", "uf", "uw_madison"])
+@pytest.mark.parametrize("name", ["mit", "rice", "uf", "usc", "uw_madison"])
 def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
     """A field's credential siblings (BA / MS / PhD) must not share a body once a leading
     credential frame is stripped — the run-65 evasion the leading-prefix shared-body count
@@ -310,3 +316,45 @@ def test_nyu_catalog_has_no_slug_leak_prefixes():
     assert not hits, (
         f"NYU catalog has {len(hits)} slug-prefixed descriptions: {hits[:5]}"
     )
+
+
+@pytest.mark.parametrize("name", SCRAPE_DEBRIS_CLEAN)
+def test_catalog_has_no_scraped_debris(name: str):
+    """A debris-clean catalog must carry NO raw scraped catalogue debris in description_text —
+    course-code / requirements fragments, unit-count openings, contact / address blocks, or
+    fragments truncated mid-sentence / on a trailing colon. Each is unique per row, so it scores
+    0 on every share metric in ``analyze`` yet renders raw catalogue text to a student
+    (REPAIR_BACKLOG CRITICAL #1, run 66 — USC shipped ~80 such rows). Gold MIT returns []."""
+    hits = scrape_debris(_programs(name))
+    assert not hits, (
+        f"{name} catalog has {len(hits)} scrape-debris descriptions: "
+        f"{hits[:5]}{' …' if len(hits) > 5 else ''}"
+    )
+
+
+def test_scrape_debris_detector_bites_on_requirements_and_contact_text():
+    """Regression guard: the detector must flag course-code / unit-count / contact-address
+    debris and a colon-truncated fragment, while passing researched field-specific prose."""
+    debris = [
+        {
+            "program_name": "Bachelor of Science in Earth Sciences",
+            "description": (
+                "28 additional units must be selected from MATH 225, MATH 226 (28 units):"
+            ),
+        },
+        {
+            "program_name": "Master of Science in Global Medicine",
+            "description": "1333 San Pablo Street, McKibben Hall (323) 442-3141 msgm@usc.edu",
+        },
+    ]
+    clean = [
+        {
+            "program_name": "Bachelor of Science in Earth Sciences",
+            "description": (
+                "Earth sciences at the college surveys geology, oceans, climate, and natural "
+                "hazards, giving undergraduates a broad foundation in the environmental sciences."
+            ),
+        }
+    ]
+    assert len(scrape_debris(debris)) == 2, "should flag requirements + contact debris"
+    assert not scrape_debris(clean), "must not flag researched field-specific prose"

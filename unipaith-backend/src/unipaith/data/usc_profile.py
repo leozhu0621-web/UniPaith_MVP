@@ -5544,6 +5544,20 @@ _PROGRAM_NAME_OVERRIDES: dict[str, str] = {
     "usc-entry-level-occupational-therapy-otd": "Entry-Level Doctor of Occupational Therapy (O.T.D.)",
     "usc-occupational-therapy-otd": "Doctor of Occupational Therapy (O.T.D.)",
     "usc-doctor-of-nurse-anesthesia-practice-dnap": "Doctor of Nurse Anesthesia Practice",
+    # Wrong-content names from colliding/incorrect `_CODE_PREFIX` codes (REPAIR_BACKLOG
+    # CRITICAL #1) — each previously rendered a DIFFERENT program's credential glued to
+    # this field. Corrected to the institution's real degree names (verified on
+    # catalogue.usc.edu / the owning school's site).
+    "usc-academic-medicine-macm": "Master of Academic Medicine",
+    "usc-advanced-architectural-studies-maas": "Master of Advanced Architectural Studies",
+    "usc-advanced-architectural-research-studies-city-design-and-housing-maars": (
+        "Master of Advanced Architectural Research Studies"
+    ),
+    "usc-aging-biology-msab": "Master of Science in Aging Biology",
+    "usc-nursing-family-nurse-practitioner-msnfnp": (
+        "Master of Science in Nursing, Family Nurse Practitioner"
+    ),
+    "usc-heritage-conservation-mhc": "Master of Heritage Conservation",
 }
 
 
@@ -5815,11 +5829,123 @@ _CROSS_FIELD_DESCRIPTION_FIXES: dict[str, str] = {
     ),
 }
 
+# Merge the run-66 scrape-debris repair overrides (REPAIR_BACKLOG CRITICAL #1): real
+# per-program prose for the ~80 programs whose scraped catalogue entry was a degree-
+# requirements / course-code fragment, a contact / address block, an admin note, or
+# another program's text mismatched by name. Same override precedence (first-party prose
+# over the raw scrape); never overwrites an existing hand-written fix above.
+from unipaith.data.usc_debris_repair_descriptions import (  # noqa: E402
+    DEBRIS_REPAIR_DESCRIPTIONS,
+)
+
+for _slug, _desc in DEBRIS_REPAIR_DESCRIPTIONS.items():
+    _CROSS_FIELD_DESCRIPTION_FIXES.setdefault(_slug, _desc)
+
 # Parenthetical suffixes that are credential designations (or a delivery tag), NOT
 # concentrations — a row carrying one is a whole degree, not a track of another.
 _CREDENTIAL_PARENS = frozenset(
     {"J.D.", "M.D.", "D.D.S.", "Pharm.D.", "O.T.D.", "D.P.T.", "D.S.W.", "Au.D.", "Ed.D."}
 )
+
+
+# Concentration / emphasis split rows the generic splitter misses (mixed delimiters and
+# award-level forms), collapsed explicitly into ONE base degree carrying the variants as
+# ``tracks`` (REPAIR_BACKLOG miss #2 — never one program row per concentration). The DMA
+# "Performance — {instrument}" rows are one degree split by instrument family; the BA in
+# Social Sciences is split by emphasis; the MA in Music and PhD in Music are split by
+# musicology emphasis. Verified on catalogue.usc.edu / music.usc.edu.
+_EXPLICIT_CONCENTRATION_GROUPS: tuple[dict, ...] = (
+    {
+        "survivor_slug": "usc-performance-dma",
+        "program_name": "Doctor of Musical Arts in Performance",
+        "school_key": "THORNTON",
+        "degree_type": "phd",
+        "members": (
+            "usc-performance-organ-percussion-or-winds-dma",
+            "usc-performance-violin-viola-violoncello-double-bass-or-harp-dma",
+            "usc-performance-vocal-arts-dma",
+            "usc-performance-classical-guitar-dma",
+            "usc-performance-early-music-dma",
+            "usc-performance-keyboard-collaborative-arts-dma",
+            "usc-performance-piano-dma",
+            "usc-performance-studio-guitar-dma",
+        ),
+        "tracks": (
+            "Organ, Percussion or Winds",
+            "Violin, Viola, Violoncello, Double Bass or Harp",
+            "Vocal Arts",
+            "Classical Guitar",
+            "Early Music",
+            "Keyboard Collaborative Arts",
+            "Piano",
+            "Studio Guitar",
+        ),
+    },
+    {
+        "survivor_slug": "usc-social-sciences-ba",
+        "program_name": "Bachelor of Arts in Social Sciences",
+        "school_key": "DORNSIFE",
+        "degree_type": "bachelors",
+        "members": (
+            "usc-social-sciences-with-an-emphasis-in-economics-ba",
+            "usc-social-sciences-with-an-emphasis-in-psychology-ba",
+        ),
+        "tracks": ("Economics", "Psychology"),
+    },
+    {
+        "survivor_slug": "usc-music-ma",
+        "program_name": "Master of Arts in Music",
+        "school_key": "THORNTON",
+        "degree_type": "masters",
+        "members": (
+            "usc-early-music-performance-emphasis-ma",
+            "usc-music-history-and-literature-emphasis-ma",
+        ),
+        "tracks": ("Early Music Performance", "Music History and Literature"),
+    },
+    {
+        "survivor_slug": "usc-music-phd",
+        "program_name": "Doctor of Philosophy in Music",
+        "school_key": "THORNTON",
+        "degree_type": "phd",
+        "members": ("usc-music-historical-musicology-emphasis-phd",),
+        "tracks": ("Historical Musicology",),
+    },
+)
+
+
+def _collapse_explicit_groups(specs: list[dict]) -> list[dict]:
+    """Collapse the listed concentration-split rows into a single base-degree survivor that
+    carries the variants as ``tracks`` (REPAIR_BACKLOG miss #2). Members and any pre-existing
+    survivor-slug row are dropped; a fresh survivor is appended only when its members existed,
+    so the pass is idempotent and a no-op once already applied."""
+    drop = {m for g in _EXPLICIT_CONCENTRATION_GROUPS for m in g["members"]}
+    drop.update(g["survivor_slug"] for g in _EXPLICIT_CONCENTRATION_GROUPS)
+    survivors: list[dict] = []
+    for g in _EXPLICIT_CONCENTRATION_GROUPS:
+        members = [s for s in specs if s["slug"] in g["members"]]
+        if not members:
+            continue
+        deliveries = {m.get("delivery_format", "on_campus") for m in members}
+        survivors.append(
+            {
+                "slug": g["survivor_slug"],
+                "school": SCHOOL_NAME[g["school_key"]],
+                "school_key": g["school_key"],
+                "program_name": g["program_name"],
+                "degree_type": g["degree_type"],
+                "department": SCHOOL_NAME[g["school_key"]],
+                "delivery_format": deliveries.pop() if len(deliveries) == 1 else "on_campus",
+                "duration_months": members[0].get("duration_months"),
+                "tracks": {
+                    "concentrations": list(g["tracks"]),
+                    "note": "Concentrations published in the USC Catalogue.",
+                },
+            }
+        )
+    out = [s for s in specs if s["slug"] not in drop]
+    out.extend(survivors)
+    return out
 
 
 def _strip_concentration(program_name: str) -> tuple[str, str | None]:
@@ -6007,6 +6133,7 @@ def _build_catalog() -> list[dict]:
     # Collapse concentration/emphasis/track splits into base degrees BEFORE building
     # descriptions (collapse renames the base program_name and sets delivery), then derive
     # each kept program's description and disambiguate.
+    out = _collapse_explicit_groups(out)
     out = _collapse_concentration_variants(out)
     for spec in out:
         spec["department"] = _normalize_department(spec)
