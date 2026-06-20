@@ -44,7 +44,7 @@ CERTIFIED_CLEAN = [
     "ut_austin",  # catalog.utexas.edu descriptions; school-blurb + synth reviews removed (utaprof2)
     "uw",         # Wikipedia-sourced per-credential descriptions; junk/Westwood removed (uwdefab1)
     "ucla",       # Wikipedia per-credential descriptions; Catalog entry junk removed (uclaprof4)
-    "jhu",        # per-credential field clause + _level_body (frame-stripped shared-body 0); real reviews kept
+    "jhu",        # per-credential field clause + _level_body (frame-stripped 0); reviews kept
     "michigan",   # per-credential discipline definitions; build-artifact junk removed (michprof4)
     "stanford",   # per-credential defs; Catalog entry junk removed (stanfordprof11)
     "purdue",     # per-credential discipline defs; peer-copy + rollups removed (purduedefab1)
