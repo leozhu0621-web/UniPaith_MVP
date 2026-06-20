@@ -270,6 +270,13 @@ SLUG_PROGRAM_NAMES: dict[str, str] = {
     "jhu-management-sciences-and-quantitative-methods-ms": (
         "Master of Science in Business Analytics"
     ),
+    # De-roll-up the CIP 05.01 "Area Studies" title to JHU's real Krieger program
+    # (the BA major; verified at e-catalogue.jhu.edu). The MS + certificate "Area
+    # Studies" rows are dropped — JHU confers no master's or certificate in this
+    # field (only a major and minor), so they are excluded rather than fabricated.
+    "jhu-area-studies-bs": (
+        "Bachelor of Arts in Latin American, Caribbean, and Latinx Studies"
+    ),
 }
 
 SLUG_DEPARTMENTS: dict[str, str] = {
@@ -284,6 +291,7 @@ SLUG_DEPARTMENTS: dict[str, str] = {
     "jhu-economics-bs": "Department of Economics",
     "jhu-mechanical-engineering-bs": "Department of Mechanical Engineering",
     "jhu-management-sciences-and-quantitative-methods-ms": "Carey Business School",
+    "jhu-area-studies-bs": "Program in Latin American, Caribbean, and Latinx Studies",
 }
 
 # Fields that confer a B.A. at JHU Krieger (humanities and social sciences).
