@@ -30,7 +30,7 @@ import type {
 import MaterialUpload from '../../../components/student/MaterialUpload'
 import EnrichWidget from '../../../components/student/EnrichWidget'
 import AnswerChoices from './AnswerChoices'
-import UniOrb, { type OrbState } from './UniOrb'
+import UniOrb, { type OrbState } from '../../../components/student/UniOrb'
 import FirstLookCard from './FirstLookCard'
 import NoticedCard from './NoticedCard'
 import { attachRefs, noticedItemsFromSignals } from './noticed'
