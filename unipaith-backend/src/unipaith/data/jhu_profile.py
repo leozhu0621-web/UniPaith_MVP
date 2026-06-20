@@ -78,6 +78,7 @@ from unipaith.data.jhu_reviews_depth import DEPTH_REVIEWS
 from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
 
 INSTITUTION_NAME = "Johns Hopkins University"
 ENRICHED_AT = "2026-06-16"
@@ -624,7 +625,6 @@ if _name_prefix_desc:
         f"name-prefixed descriptions on {_name_prefix_desc} programs"
     )
 from unipaith.profile_standard.anti_stub import (  # noqa: E402
-    analyze as _anti_stub_analyze,
     frame_stripped_shared_body as _frame_stripped_shared_body,
 )
 
