@@ -26,7 +26,7 @@ from unipaith.profile_standard.anti_stub import (
 # Catalogs verified free of raw scraped-catalogue debris (course-code / requirements /
 # contact-address fragments) in description_text — REPAIR_BACKLOG CRITICAL #1 (USC, run 66).
 # Grow as scrape-built catalogs are researched per-program (UIUC/NYU/UT-Austin still carry it).
-SCRAPE_DEBRIS_CLEAN = ["mit", "usc"]
+SCRAPE_DEBRIS_CLEAN = ["mit", "usc", "uiuc"]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
 # Grow this list as catalogs are genuinely de-fabricated — never weaken the assertions.
@@ -148,7 +148,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
     assert not machine_artifacts(clean), "must not flag a clean field-specific description"
 
 
-@pytest.mark.parametrize("name", ["mit", "rice", "uf", "usc", "uw_madison", "jhu"])
+@pytest.mark.parametrize("name", ["mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc"])
 def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
     """A field's credential siblings (BA / MS / PhD) must not share a body once a leading
     credential frame is stripped — the run-65 evasion the leading-prefix shared-body count
@@ -358,3 +358,30 @@ def test_scrape_debris_detector_bites_on_requirements_and_contact_text():
     ]
     assert len(scrape_debris(debris)) == 2, "should flag requirements + contact debris"
     assert not scrape_debris(clean), "must not flag researched field-specific prose"
+
+
+def test_scrape_debris_exempts_a_trailing_source_citation():
+    """A well-sourced description ends in a parenthetical citation, e.g.
+    "...prepares graduates for government. (Source: ace.illinois.edu)". The
+    terminal-punctuation / trailing-colon tells must run on the text with a trailing
+    "(...)" stripped, or every cited row false-flags as truncated (REPAIR_BACKLOG
+    human-flag #2). The course-code / contact tells still apply inside the parens."""
+    cited = [
+        {
+            "program_name": "Bachelor of Science in Agricultural & Consumer Economics",
+            "description": (
+                "Agricultural and consumer economics builds a foundation in economics, finance, "
+                "and policy with a focus on the agricultural and environmental sectors, preparing "
+                "graduates for industry, nonprofits, and government. (Source: ace.illinois.edu)"
+            ),
+        }
+    ]
+    # A genuine debris row ending on a colon still fails even with a parenthetical present.
+    still_debris = [
+        {
+            "program_name": "Master of Science in Community Health",
+            "description": "Major areas of specialization (master's and doctoral) include:",
+        }
+    ]
+    assert not scrape_debris(cited), "must not flag a row ending in a (Source: ...) citation"
+    assert scrape_debris(still_debris), "a colon-truncated row is still debris"

@@ -340,13 +340,20 @@ def scrape_debris(programs: list[dict]) -> list[str]:
         d = _desc(p)
         if not d:
             continue
+        # A well-sourced description often ENDS in a parenthetical citation —
+        # "...prepares graduates for government. (Source: ace.illinois.edu)" — so the
+        # terminal-punctuation / trailing-colon tells must run on the text with a trailing
+        # "(...)" stripped, or every cited row false-flags as truncated debris (REPAIR_BACKLOG
+        # human-flag #2: the un-stripped tell flagged ~144 well-sourced UT-Austin rows). The
+        # course-code / unit-count / contact / address tells still run on the FULL text.
+        d_term = re.sub(r"\s*\([^()]*\)\s*$", "", d).rstrip()
         bad = (
             _DEBRIS_COURSE_CODE.search(d)
             or _DEBRIS_UNIT_COUNT.search(d[:160])
             or _DEBRIS_CONTACT.search(d)
             or _DEBRIS_ADDRESS.search(d)
-            or not re.search(r"[.!?][\"')]?$", d)
-            or d.rstrip().endswith(":")
+            or not re.search(r"[.!?][\"')]?$", d_term)
+            or d_term.endswith(":")
         )
         if bad:
             hits.append(p.get("program_name") or "")
