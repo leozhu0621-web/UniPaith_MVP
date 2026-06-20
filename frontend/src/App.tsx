@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate, useParams } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useAuthStore } from './stores/auth-store'
@@ -42,8 +42,9 @@ import SearchFeedRecsPage from './pages/public/SearchFeedRecsPage'
 import DiscoverHomePage from './pages/student/DiscoverHomePage'
 import StudentPostsPage from './pages/student/PostsPage'
 import ExplorePage from './pages/student/ExplorePage'
-import ManagementPage from './pages/student/ManagementPage'
 import ProfilePage from './pages/student/ProfilePage'
+import ApplicationsPage from './pages/student/ApplicationsPage'
+import CalendarPage from './pages/student/CalendarPage'
 import StudentProgramDetailPage from './pages/student/ProgramDetailPage'
 import InstitutionDetailPage from './pages/student/InstitutionDetailPage'
 import SchoolSubunitPage from './pages/student/SchoolSubunitPage'
@@ -51,6 +52,11 @@ import ApplicationDetailPage from './pages/student/ApplicationDetailPage'
 import SavedListPage from './pages/student/SavedListPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
 import OnboardingPage from './pages/student/OnboardingPage'
+import MySpaceShell from './pages/student/myspace/MySpaceShell'
+import MySpaceHomePage from './pages/student/myspace/MySpaceHomePage'
+import ImportPage from './pages/student/myspace/ImportPage'
+import PrepPage from './pages/student/myspace/PrepPage'
+import MessagesRoom from './pages/student/myspace/MessagesRoom'
 
 // Institution pages
 import DashboardPage from './pages/institution/DashboardPage'
@@ -96,7 +102,27 @@ function LegacySchoolRedirect() {
 
 function LegacyMessageRedirect() {
   const { convId } = useParams()
-  return <Navigate to={`/s/manage?tab=messages&thread=${convId}`} replace />
+  return <Navigate to={`/s/messages?thread=${convId}`} replace />
+}
+
+function ManageRedirect() {
+  const [params] = useSearchParams()
+  const tab = params.get('tab')
+  const rest = new URLSearchParams(params)
+  rest.delete('tab')
+
+  const targets: Record<string, string> = {
+    applications: '/s/applications',
+    calendar: '/s/calendar',
+    messages: '/s/messages',
+    prompts: '/s/prep?tab=prompts',
+    workshops: '/s/prep?tab=workshops',
+  }
+
+  const base = tab ? targets[tab] ?? '/s/space' : '/s/space'
+  const qs = rest.toString()
+  const sep = base.includes('?') ? '&' : '?'
+  return <Navigate to={qs ? `${base}${sep}${qs}` : base} replace />
 }
 
 const router = createBrowserRouter([
@@ -146,13 +172,24 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorPage />,
     children: [
       // === 4 Main Pages ===
-      { index: true, element: <DiscoverHomePage /> },          // Stage 1 — Discovery
+      { index: true, element: <DiscoverHomePage /> },          // Chat / Uni conversation tab
       { path: 'posts', element: <StudentPostsPage /> },           // Posts (social feed)
       { path: 'explore', element: <ExplorePage /> },            // Explore (database)
-      { path: 'manage', element: <ManagementPage /> },          // Management (apps/cal/msg)
+      { path: 'messages', element: <MessagesRoom /> },
+      // === My Space rooms ===
+      {
+        element: <MySpaceShell />,
+        children: [
+          { path: 'space', element: <MySpaceHomePage /> },
+          { path: 'import', element: <ImportPage /> },
+          { path: 'profile', element: <ProfilePage /> },
+          { path: 'saved', element: <SavedListPage /> },
+          { path: 'prep', element: <PrepPage /> },
+          { path: 'applications', element: <ApplicationsPage /> },
+          { path: 'calendar', element: <CalendarPage /> },
+        ],
+      },
       // === Avatar dropdown pages ===
-      { path: 'profile', element: <ProfilePage /> },
-      { path: 'saved', element: <SavedListPage /> },
       { path: 'settings', element: <StudentSettingsPage /> },
       // === Drill-down pages ===
       { path: 'programs/:programId', element: <StudentProgramDetailPage /> },
@@ -163,24 +200,22 @@ const router = createBrowserRouter([
       { path: 'institutions/:institutionId/schools/:schoolId', element: <SchoolSubunitPage /> },
       { path: 'applications/:appId', element: <ApplicationDetailPage /> },
       // === Redirects (all old routes still work) ===
-      { path: 'dashboard', element: <Navigate to="/s" replace /> },
+      { path: 'manage', element: <ManageRedirect /> },
+      { path: 'dashboard', element: <Navigate to="/s/space" replace /> },
       { path: 'chat', element: <Navigate to="/s" replace /> },
       { path: 'discover', element: <Navigate to="/s/explore" replace /> },
       { path: 'match', element: <Navigate to="/s" replace /> },
-      { path: 'applications', element: <Navigate to="/s/manage" replace /> },
-      { path: 'calendar', element: <Navigate to="/s/manage?tab=calendar" replace /> },
-      { path: 'deadlines', element: <Navigate to="/s/manage?tab=calendar" replace /> },
-      { path: 'messages', element: <Navigate to="/s/manage?tab=messages" replace /> },
+      { path: 'deadlines', element: <Navigate to="/s/calendar" replace /> },
       { path: 'messages/:convId', element: <LegacyMessageRedirect /> },
       { path: 'financial-aid', element: <Navigate to="/s/profile?tab=financial" replace /> },
-      { path: 'recommendations', element: <Navigate to="/s/profile?tab=preparation&section=recommenders" replace /> },
+      { path: 'recommendations', element: <Navigate to="/s/prep?tab=recommenders" replace /> },
       // Phase D — Workshops moved from Profile to Apply > Workshops (feedback-only).
-      { path: 'resume-workshop', element: <Navigate to="/s/manage?tab=workshops" replace /> },
-      { path: 'essay-workshop', element: <Navigate to="/s/manage?tab=workshops" replace /> },
-      // Spec 42 — Prompt Library deep-link → Apply > Prompts tab.
-      { path: 'prompts', element: <Navigate to="/s/manage?tab=prompts" replace /> },
+      { path: 'resume-workshop', element: <Navigate to="/s/prep?tab=workshops" replace /> },
+      { path: 'essay-workshop', element: <Navigate to="/s/prep?tab=workshops" replace /> },
+      // Spec 42 — Prompt Library deep-link → My Space > Prep > Prompts.
+      { path: 'prompts', element: <Navigate to="/s/prep?tab=prompts" replace /> },
       { path: 'test-scores', element: <Navigate to="/s/profile?tab=academics" replace /> },
-      { path: 'decisions', element: <Navigate to="/s/manage" replace /> },
+      { path: 'decisions', element: <Navigate to="/s/applications?tab=offers" replace /> },
       { path: 'intake', element: <Navigate to="/s" replace /> },
       { path: 'intelligence', element: <Navigate to="/s" replace /> },
     ],

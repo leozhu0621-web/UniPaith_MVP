@@ -15,7 +15,7 @@ import ThreadView from './inbox/ThreadView'
 import { AI_REPLY_LABELS } from './inbox/actionLabels'
 
 // Spec 17 — Inbox. Two-pane: thread list + thread view. Lives at
-// /s/manage?tab=messages (+&thread=:id). 30s poll (spec §14).
+// /s/messages?thread=:id. 30s poll (spec §14).
 
 const DEFAULT_FILTERS: InboxFilters = {
   type: 'all',
@@ -112,11 +112,11 @@ export default function MessagesPage({ initialThreadId }: { initialThreadId?: st
 
   const openThread = (id: string) => {
     setSelectedId(id)
-    navigate(`/s/manage?tab=messages&thread=${id}`, { replace: true })
+    navigate(`/s/messages?thread=${id}`, { replace: true })
   }
   const closeThread = () => {
     setSelectedId(null)
-    navigate('/s/manage?tab=messages', { replace: true })
+    navigate('/s/messages', { replace: true })
   }
 
   const sendMut = useMutation({

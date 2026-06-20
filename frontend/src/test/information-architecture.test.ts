@@ -18,8 +18,8 @@ describe('Spec/04 information architecture', () => {
   })
 
   it('maps legacy profile tab aliases', () => {
-    expect(PROFILE_TAB_ALIASES.essays).toBe('/s/manage?tab=workshops')
-    expect(PROFILE_TAB_ALIASES.recommenders).toContain('tab=preparation')
+    expect(PROFILE_TAB_ALIASES.essays).toBe('/s/prep?tab=workshops')
+    expect(PROFILE_TAB_ALIASES.recommenders).toBe('/s/prep?tab=recommenders')
   })
 
   it('normalizes deprecated tab keys', () => {
@@ -30,8 +30,8 @@ describe('Spec/04 information architecture', () => {
 
   it('lists student legacy redirects from §4.4', () => {
     expect(STUDENT_LEGACY_REDIRECTS['/s/discover']).toBe('/s/explore')
-    expect(STUDENT_LEGACY_REDIRECTS['/s/messages']).toBe('/s/manage?tab=messages')
-    expect(STUDENT_LEGACY_REDIRECTS['/s/recommendations']).toContain('preparation')
+    expect(STUDENT_LEGACY_REDIRECTS['/s/manage']).toBe('/s/space')
+    expect(STUDENT_LEGACY_REDIRECTS['/s/recommendations']).toBe('/s/prep?tab=recommenders')
     expect(STUDENT_LEGACY_REDIRECTS['/s/test-scores']).toBe('/s/profile?tab=academics')
   })
 

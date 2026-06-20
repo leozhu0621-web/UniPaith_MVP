@@ -4,28 +4,27 @@
  */
 
 export const STUDENT_LEGACY_REDIRECTS: Record<string, string> = {
-  '/s/dashboard': '/s',
+  '/s/dashboard': '/s/space',
   '/s/chat': '/s',
   '/s/discover': '/s/explore',
   '/s/match': '/s',
-  '/s/applications': '/s/manage',
-  '/s/calendar': '/s/manage?tab=calendar',
-  '/s/deadlines': '/s/manage?tab=calendar',
-  '/s/messages': '/s/manage?tab=messages',
+  '/s/manage': '/s/space',
+  '/s/deadlines': '/s/calendar',
   '/s/financial-aid': '/s/profile?tab=financial',
-  '/s/recommendations': '/s/profile?tab=preparation&section=recommenders',
-  '/s/resume-workshop': '/s/manage?tab=workshops',
-  '/s/essay-workshop': '/s/manage?tab=workshops',
+  '/s/recommendations': '/s/prep?tab=recommenders',
+  '/s/resume-workshop': '/s/prep?tab=workshops',
+  '/s/essay-workshop': '/s/prep?tab=workshops',
+  '/s/prompts': '/s/prep?tab=prompts',
   '/s/test-scores': '/s/profile?tab=academics',
-  '/s/decisions': '/s/manage',
+  '/s/decisions': '/s/applications?tab=offers',
   '/s/intake': '/s',
   '/s/intelligence': '/s',
 }
 
 /** Map deprecated profile tab keys to the §4.6 tab structure. */
 export const PROFILE_TAB_ALIASES: Record<string, string> = {
-  essays: '/s/manage?tab=workshops',
-  recommenders: '/s/profile?tab=preparation&section=recommenders',
+  essays: '/s/prep?tab=workshops',
+  recommenders: '/s/prep?tab=recommenders',
 }
 
 export const PROFILE_TABS_SPEC = [
