@@ -254,6 +254,64 @@ html {
 .stagger-list > *:nth-child(n+13) { animation-delay: 770ms; }
 
 /* ----------------------------------------------------------------
+   Uni aura orb — the AI identity (chat-tab spec §1). The ONE sanctioned
+   gradient (the brand "no gradients" rule is waived only for Uni). No name
+   label, no monogram — the orb IS Uni. Motion = meaning: idle is COMPLETELY
+   still; each activity state is a distinct, brand-faithful animation. The
+   global prefers-reduced-motion:reduce block above neutralizes the loops.
+   ---------------------------------------------------------------- */
+.uni-orb { position: relative; display: inline-flex; flex: none; border-radius: 9999px; }
+.uni-orb__core {
+  position: absolute; inset: 0; border-radius: 9999px;
+  background: radial-gradient(circle at 38% 34%, hsl(var(--primary)), hsl(var(--secondary)) 80%);
+  box-shadow: 0 1px 3px hsl(var(--secondary) / 0.35);
+}
+/* idle → no animation (still). */
+.uni-orb--listening  .uni-orb__core { animation: uni-orb-pulse   2.4s var(--ease-in-out) infinite; }
+.uni-orb--thinking   .uni-orb__core { animation: uni-orb-breathe 1s   var(--ease-in-out) infinite; }
+.uni-orb--responding .uni-orb__core { animation: uni-orb-breathe 1.8s var(--ease-in-out) infinite; }
+.uni-orb--clarifying .uni-orb__core { animation: uni-orb-wobble  1.2s var(--ease-in-out) 2; }
+.uni-orb--saved      .uni-orb__core { animation: uni-orb-saved   0.7s var(--ease-out)    1; }
+.uni-orb--celebrating .uni-orb__core { animation: uni-orb-breathe 0.9s var(--ease-spring) 2; }
+.uni-orb--error      .uni-orb__core { filter: grayscale(0.7) brightness(0.97); }
+
+/* thinking — a gold pulse-ring radiating out */
+.uni-orb__ring {
+  position: absolute; inset: 0; border-radius: 9999px;
+  animation: uni-orb-ring 1.4s var(--ease-out) infinite;
+}
+/* reading — a light scan sweeps across (ingesting an upload) */
+.uni-orb__scan {
+  position: absolute; inset: 0; border-radius: 9999px; overflow: hidden;
+  background: linear-gradient(120deg, transparent 42%, hsl(var(--background) / 0.75) 50%, transparent 58%);
+  background-size: 250% 100%; mix-blend-mode: screen;
+  animation: uni-orb-scan 1.3s linear infinite;
+}
+/* celebrating — gold sparkles (real milestones only) */
+.uni-orb__sparkle {
+  position: absolute; inset: -3px; border-radius: 9999px;
+  background:
+    radial-gradient(2px 2px at 82% 16%, hsl(var(--primary)) 50%, transparent 56%),
+    radial-gradient(1.5px 1.5px at 16% 80%, hsl(var(--primary)) 50%, transparent 56%);
+  animation: uni-orb-sparkle 0.9s var(--ease-out) 2;
+}
+
+@keyframes uni-orb-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+@keyframes uni-orb-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.04); opacity: 0.92; } }
+@keyframes uni-orb-wobble { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+@keyframes uni-orb-ring {
+  0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.5); }
+  100% { box-shadow: 0 0 0 6px hsl(var(--primary) / 0); }
+}
+@keyframes uni-orb-scan { 0% { background-position: 130% 0; } 100% { background-position: -130% 0; } }
+@keyframes uni-orb-saved {
+  0% { box-shadow: 0 0 0 0 hsl(var(--success) / 0.65); }
+  70% { box-shadow: 0 0 0 5px hsl(var(--success) / 0); }
+  100% { box-shadow: 0 1px 3px hsl(var(--secondary) / 0.35); }
+}
+@keyframes uni-orb-sparkle { 0%, 100% { opacity: 0; } 30%, 70% { opacity: 1; } }
+
+/* ----------------------------------------------------------------
    Accessibility — honor prefers-reduced-motion (Spec/02b §9).
    Disable the artifact-rail pulse, sheet springs, and decorative loops.
    ---------------------------------------------------------------- */
