@@ -1477,7 +1477,7 @@ _GRAD_EXPLICIT: list[tuple] = [
         "or online.",
     ),
     (
-        "Master's in Biomedical Engineering",
+        "Master of Science in Biomedical Engineering",
         "masters",
         _PRATT,
         18,
@@ -1499,7 +1499,7 @@ _GRAD_EXPLICIT: list[tuple] = [
         "A professional MEng in civil engineering.",
     ),
     (
-        "Master's in Electrical & Computer Engineering",
+        "Master of Science in Electrical & Computer Engineering",
         "masters",
         _PRATT,
         18,
@@ -1544,7 +1544,7 @@ _GRAD_EXPLICIT: list[tuple] = [
         "A professional MEng in financial technology, offered on campus or online.",
     ),
     (
-        "Master's in Mechanical Engineering & Materials Science",
+        "Master of Science in Mechanical Engineering & Materials Science",
         "masters",
         _PRATT,
         18,
@@ -1632,13 +1632,13 @@ _PROFESSIONAL_SCHOOLS = frozenset({
 # Pratt professional master's → real engineering department (masters.pratt.duke.edu).
 _PRATT_GRAD_DEPARTMENT: dict[str, str] = {
     "Master of Engineering in AI for Product Innovation": "Electrical & Computer Engineering",
-    "Master's in Biomedical Engineering": "Biomedical Engineering",
+    "Master of Science in Biomedical Engineering": "Biomedical Engineering",
     "Master of Engineering in Civil Engineering": "Civil Engineering",
-    "Master's in Electrical & Computer Engineering": "Electrical & Computer Engineering",
+    "Master of Science in Electrical & Computer Engineering": "Electrical & Computer Engineering",
     "Master of Engineering Management": "Engineering Management",
     "Master of Engineering in Cybersecurity": "Electrical & Computer Engineering",
     "Master of Engineering in Financial Technology": "Electrical & Computer Engineering",
-    "Master's in Mechanical Engineering & Materials Science": "Mechanical Engineering",
+    "Master of Science in Mechanical Engineering & Materials Science": "Mechanical Engineering",
 }
 
 # Duke School of Medicine sub-departments (medschool.duke.edu program pages).
@@ -1664,7 +1664,12 @@ def _department_for(field_name: str, school: str) -> str:
 def _ug_program_name(field_name: str, school: str) -> str:
     if school == _PRATT:
         return f"Bachelor of Science in Engineering in {field_name}"
-    return disambiguate_program_name(field_name, "bachelors")
+    # Trinity College confers the A.B. (Bachelor of Arts) — offered across all its
+    # majors, with the B.S. as an alternative in many science/quantitative fields
+    # (trinity.duke.edu/undergraduate/degrees-credentials + majors-minors). Use the
+    # conferred designation, not the possessive "Bachelor's in" mint form (REPAIR
+    # BACKLOG #9 / SKILL miss #2: gold MIT = 0% possessive names).
+    return f"Bachelor of Arts in {field_name}"
 
 
 def _grad_explicit_department(name: str, school: str) -> str:

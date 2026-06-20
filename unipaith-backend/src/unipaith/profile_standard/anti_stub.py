@@ -71,6 +71,20 @@ _CLASSIFICATION_RES: tuple[re.Pattern[str], ...] = (
 _SHARED_BODY_MIN_CHARS = 120
 _SHARED_BODY_MIN_FRACTION = 0.5
 
+# Machine-build artifacts that a description-generation script left in the prose. These
+# pass every metric above (no "..", no shared body, no classification phrase) yet render
+# raw junk to students — observed live on three "certified-clean" catalogs (UW/Michigan/
+# UCLA shipped 350-374 rows each opening "Catalog entry <hex>: Catalog entry <hex>: …",
+# UW additionally said "Westwood campus" — UCLA's neighborhood — on a Seattle university).
+# No real catalog prints an internal entry id, a commit/UUID-style hex token, or the same
+# clause twice in a row, so any of these is an automatic FAIL (gold MIT scores 0).
+_ARTIFACT_RES: tuple[re.Pattern[str], ...] = (
+    re.compile(r"\bCatalog entry\b", re.I),  # "Catalog entry 5686776b4e64: …"
+    # raw hex id (UUID/commit fragment) — requires both a digit and an a-f letter so plain
+    # numbers (years) and ordinary words never match
+    re.compile(r"\b(?=[0-9a-f]*[0-9])(?=[0-9a-f]*[a-f])[0-9a-f]{8,}\b"),
+)
+
 
 def field_of(program_name: str) -> str:
     """The field-of-study part of a program name (credential designation stripped)."""
@@ -88,6 +102,86 @@ def _common_prefix(a: str, b: str) -> str:
             break
         i += 1
     return a[:i]
+
+
+# A leading per-credential FRAME / degree-classification / field-definition sentence. When
+# a still-shared field body is prepended with such a frame ("Rice offers the undergraduate
+# major in {field}.", "Doctoral study in {field} … centers on dissertation research in",
+# "Master's students in {field} complete …", "{Field} is the study of …"), the frame
+# differs by credential while the body stays identical across a field's BA / MS / PhD rows —
+# so the leading-PREFIX shared-body count in :func:`analyze` reads a false 0 (REPAIR_BACKLOG
+# miss #8 credential-frame sub-bullet). Strip the frame, then measure the shared body
+# ANYWHERE in the siblings (longest common substring), not only as a leading prefix.
+_FRAME_LEAD_RES: tuple[re.Pattern[str], ...] = (
+    re.compile(r"^Doctoral study in .{0,140}?dissertation research in\s+", re.I),
+    re.compile(r"^Doctoral study\b.{0,200}?(?:—|\.)\s+", re.I),
+    re.compile(r"^Master'?s students\b.{0,200}?(?:—|\.)\s+", re.I),
+    re.compile(r"^.{0,160}?\boffers?\b.{0,160}?\.\s+", re.I),
+    re.compile(r"^Graduate (?:study|certificate)\.\s+", re.I),
+    re.compile(r"^[A-Z][a-z]+(?: [a-z]+){0,3} is the (?:study|science) of .{0,160}?\.\s+"),
+)
+
+
+def _strip_frame(description: str) -> str:
+    """Remove a leading credential-frame / classification / field-definition sentence."""
+    for rx in _FRAME_LEAD_RES:
+        m = rx.match(description)
+        if m and m.end() < len(description):
+            return description[m.end():]
+    return description
+
+
+def _longest_common_substring(a: str, b: str) -> int:
+    if not a or not b:
+        return 0
+    prev = [0] * (len(b) + 1)
+    best = 0
+    for i in range(1, len(a) + 1):
+        cur = [0] * (len(b) + 1)
+        ai = a[i - 1]
+        for j in range(1, len(b) + 1):
+            if ai == b[j - 1]:
+                cur[j] = prev[j - 1] + 1
+                if cur[j] > best:
+                    best = cur[j]
+        prev = cur
+    return best
+
+
+def frame_stripped_shared_body(
+    programs: list[dict],
+    min_chars: int = 80,
+    min_fraction: float = 0.5,
+) -> list[str]:
+    """Fields whose credential siblings share a body once a leading frame is stripped.
+
+    For each field (program name minus its credential designation) with >= 2 rows, strip a
+    leading credential-frame sentence from every sibling description and compute the longest
+    common substring of each pair. A field is flagged when any sibling pair shares a run of
+    >= ``min_chars`` characters that is also >= ``min_fraction`` of the shorter stripped
+    body — the run-65 credential-frame + tail-shared field body (miss #8). Gold MIT scores
+    0 (every credential level has its own researched body); a non-zero is the
+    no-fabrication / per-program-research invariant, not a tunable knob.
+    """
+    by_field: dict[str, list[str]] = defaultdict(list)
+    for p in programs:
+        by_field[field_of(p.get("program_name") or "")].append(_strip_frame(_desc(p)))
+    flagged: list[str] = []
+    for field, bodies in by_field.items():
+        if len(bodies) < 2:
+            continue
+        hit = False
+        for i in range(len(bodies)):
+            for j in range(i + 1, len(bodies)):
+                shortest = min(len(bodies[i]), len(bodies[j]))
+                if not shortest:
+                    continue
+                lcs = _longest_common_substring(bodies[i], bodies[j])
+                if lcs >= min_chars and lcs >= min_fraction * shortest:
+                    hit = True
+        if hit:
+            flagged.append(field)
+    return flagged
 
 
 @dataclass(frozen=True)
@@ -199,3 +293,68 @@ def analyze(programs: list[dict]) -> AntiStubReport:
         shared_leading_body=shared_leading_body,
         cross_field_clause=cross_field_clause,
     )
+
+
+def machine_artifacts(programs: list[dict]) -> list[str]:
+    """Program names whose description carries a description-generation build artifact.
+
+    Separate from :func:`analyze` (and ``AntiStubReport.is_clean``) so that adding it
+    cannot crash an already-broken catalog's import-time self-check — it is enforced by
+    ``tests/test_anti_stub_gate.py`` over the certified-clean registry instead. Catches
+    the live "Catalog entry <hex>:" / raw-hex-id junk that three certified catalogs
+    shipped while scoring 0 on every description-quality metric above.
+    """
+    return [
+        (p.get("program_name") or "")
+        for p in programs
+        if any(rx.search(_desc(p)) for rx in _ARTIFACT_RES)
+    ]
+
+
+# Raw scraped CATALOGUE DEBRIS left in ``description_text`` instead of researched prose: a
+# degree-requirements / course-list fragment, a unit-count opening, a department contact /
+# address block, or a fragment truncated mid-sentence / on a trailing colon (REPAIR_BACKLOG
+# miss #8 scrape-debris sub-bullet, run 66 — USC shipped ~80 such rows). Each is unique per
+# row, so it scores 0 on every share/form metric in :func:`analyze` yet renders raw catalogue
+# text — a course requirement list, a phone number, a mailing address — to a student. Gold MIT
+# scores 0. Kept separate from ``analyze``/``is_clean`` (like :func:`machine_artifacts`) so it
+# cannot crash an already-broken catalog's import self-check; enforced by
+# ``tests/test_anti_stub_gate.py`` over a debris-clean registry.
+_DEBRIS_COURSE_CODE = re.compile(r"\b[A-Z]{2,4}\s?\d{3}[A-Za-z]?\b")
+_DEBRIS_UNIT_COUNT = re.compile(r"\b\d+\s+(additional\s+)?(units|credits|semester hours)\b", re.I)
+_DEBRIS_CONTACT = re.compile(r"\(\d{3}\)\s?\d{3}-\d{4}|[\w.]+@[\w.]+\.edu")
+_DEBRIS_ADDRESS = re.compile(r"\b(Suite|Room)\s+\d+|\bHall,\s")
+
+
+def scrape_debris(programs: list[dict]) -> list[str]:
+    """Program names whose ``description`` is raw scraped catalogue debris, not researched prose.
+
+    A description FAILS when it carries any of: a course-code token ("MATH 225"), a unit/credit
+    count in its opening clause, a phone number / ``@…edu`` email / department mailing address,
+    or a fragment that ends mid-sentence (no terminal ``.``/``!``/``?``) or on a trailing colon.
+    None of these appear in researched prose about what a program studies; all appeared live on
+    USC's scrape-built catalog (REPAIR_BACKLOG CRITICAL #1, run 66). Gold MIT returns ``[]``.
+    """
+    hits: list[str] = []
+    for p in programs:
+        d = _desc(p)
+        if not d:
+            continue
+        # A well-sourced description often ENDS in a parenthetical citation —
+        # "...prepares graduates for government. (Source: ace.illinois.edu)" — so the
+        # terminal-punctuation / trailing-colon tells must run on the text with a trailing
+        # "(...)" stripped, or every cited row false-flags as truncated debris (REPAIR_BACKLOG
+        # human-flag #2: the un-stripped tell flagged ~144 well-sourced UT-Austin rows). The
+        # course-code / unit-count / contact / address tells still run on the FULL text.
+        d_term = re.sub(r"\s*\([^()]*\)\s*$", "", d).rstrip()
+        bad = (
+            _DEBRIS_COURSE_CODE.search(d)
+            or _DEBRIS_UNIT_COUNT.search(d[:160])
+            or _DEBRIS_CONTACT.search(d)
+            or _DEBRIS_ADDRESS.search(d)
+            or not re.search(r"[.!?][\"')]?$", d_term)
+            or d_term.endswith(":")
+        )
+        if bad:
+            hits.append(p.get("program_name") or "")
+    return hits

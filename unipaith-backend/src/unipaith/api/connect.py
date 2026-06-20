@@ -16,7 +16,7 @@ from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.config import settings
@@ -291,6 +291,26 @@ async def discover_peers(
     _require_peers_enabled()
     pid = await _profile_id(user, db)
     return await PeerService(db).discover(pid, program_id=program_id)
+
+
+class CohortCountsRequest(BaseModel):
+    program_ids: list[UUID] = Field(default_factory=list, max_length=120)
+
+
+@router.post("/peers/cohort-counts")
+async def peers_cohort_counts(
+    body: CohortCountsRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """k-anonymized "N peers open to connect" counts per program (Discover
+    review 2026-06-14 #5). Batch (one request per card grid). Empty for a viewer
+    who isn't opted in; counts below the k-floor are suppressed (omitted).
+    Never returns identities."""
+    _require_peers_enabled()
+    pid = await _profile_id(user, db)
+    counts = await PeerService(db).cohort_counts(pid, body.program_ids)
+    return {"counts": {str(k): v for k, v in counts.items()}}
 
 
 @router.post("/peers/{peer_id}/request", status_code=status.HTTP_201_CREATED)

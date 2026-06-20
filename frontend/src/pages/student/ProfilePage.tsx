@@ -12,6 +12,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 
 
 import { PageContainer } from '../../components/student/density'
+import EnrichPanel from '../../components/student/EnrichPanel'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import usePageTitle from '../../hooks/usePageTitle'
 import { PROFILE_TAB_ALIASES, normalizeProfileTab, type ProfileTabSpec } from '../../utils/information-architecture'
@@ -26,18 +27,17 @@ const NeedsTab = lazy(() => import('./profile/NeedsTab'))
 // retired chronological view) redirects to ?tab=strategy.
 const StrategyTab = lazy(() => import('./profile/StrategyTab'))
 const PreferencesTab = lazy(() => import('./profile/PreferencesTab'))
-const AnalyticsTab = lazy(() => import('./profile/AnalyticsTab'))
 
 const TABS: { key: ProfileTabSpec; label: string }[] = [
   { key: 'overview', label: 'Basic info' },
-  { key: 'identity', label: 'Identity' },
-  { key: 'academics', label: 'Academics' },
-  { key: 'experience', label: 'Experience' },
+  { key: 'identity', label: 'Personality' },
+  // Academics + Experience are one tab now (2026-06-18); the merged panel
+  // stacks both under the `academics` key, ?tab=experience aliases here.
+  { key: 'academics', label: 'Academics & experience' },
   { key: 'goals', label: 'Goals' },
   { key: 'needs', label: 'Needs' },
   { key: 'preferences', label: 'Preferences' },
   { key: 'strategy', label: 'Strategy' },
-  { key: 'analytics', label: 'Analytics' },
 ]
 
 export default function ProfilePage() {
@@ -154,15 +154,50 @@ export default function ProfilePage() {
         className="stagger-list focus-visible:outline-none"
       >
         <Suspense fallback={<div className="space-y-3"><SkeletonCard /><SkeletonCard /></div>}>
+          {/* Basic info (overview) gets NO enrich panel; every other tab leads
+              with its section-scoped "Enrich with Uni" card (Profile v2 Ship 2).
+              The panel hides itself when the section has no pending signal. */}
           {activeTab === 'overview' && <OverviewTab />}
-          {activeTab === 'identity' && <IdentityTab />}
-          {activeTab === 'academics' && <AcademicsTab />}
-          {activeTab === 'experience' && <ExperienceTab />}
-          {activeTab === 'goals' && <GoalsTab />}
-          {activeTab === 'needs' && <NeedsTab />}
-          {activeTab === 'preferences' && <PreferencesTab />}
-          {activeTab === 'strategy' && <StrategyTab />}
-          {activeTab === 'analytics' && <AnalyticsTab />}
+          {activeTab === 'identity' && (
+            <>
+              <EnrichPanel section="identity" />
+              <IdentityTab />
+            </>
+          )}
+          {/* Academics & experience — one tab; the two panels stack. */}
+          {activeTab === 'academics' && (
+            <>
+              <EnrichPanel section="academics" />
+              <div className="space-y-10">
+                <AcademicsTab />
+                <ExperienceTab />
+              </div>
+            </>
+          )}
+          {activeTab === 'goals' && (
+            <>
+              <EnrichPanel section="goals" />
+              <GoalsTab />
+            </>
+          )}
+          {activeTab === 'needs' && (
+            <>
+              <EnrichPanel section="needs" />
+              <NeedsTab />
+            </>
+          )}
+          {activeTab === 'preferences' && (
+            <>
+              <EnrichPanel section="preferences" />
+              <PreferencesTab />
+            </>
+          )}
+          {activeTab === 'strategy' && (
+            <>
+              <EnrichPanel section="strategy" />
+              <StrategyTab />
+            </>
+          )}
         </Suspense>
       </div>
     </PageContainer>

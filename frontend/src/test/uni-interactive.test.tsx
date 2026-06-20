@@ -48,7 +48,7 @@ describe('Uni interactive UX — Phase 1', () => {
     expect(onPick).toHaveBeenCalledWith('Research and Industry')
   })
 
-  it('AnswerChoices scale renders a slider and sends an importance phrase', () => {
+  it('AnswerChoices scale renders a tap-meter and sends an importance phrase', () => {
     const onPick = vi.fn()
     render(
       <AnswerChoices
@@ -59,8 +59,7 @@ describe('Uni interactive UX — Phase 1', () => {
         highLabel="must have"
       />,
     )
-    const slider = screen.getByRole('slider', { name: /how important/i })
-    fireEvent.change(slider, { target: { value: '5' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Set importance to 5' }))
     fireEvent.click(screen.getByRole('button', { name: /^set$/i }))
     expect(onPick).toHaveBeenCalledWith('must have')
   })

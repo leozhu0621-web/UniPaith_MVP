@@ -7,9 +7,33 @@ exactly as ``apply()`` writes it, and runs ``check_conformance``. A node passes 
 is gold OR every remaining required gap is recorded in that node's ``_standard.omitted``.
 """
 
+import re
+
 from unipaith.data import cornell_profile as cu
 from unipaith.profile_standard import STANDARD_VERSION, check_conformance
+from unipaith.profile_standard.anti_stub import field_of
 from unipaith.profile_standard.manifest import MANIFEST
+
+# CIP-taxonomy rollup tells that must never appear in a real program_name or department
+# (enrich-profile miss #2). Anchored to federal taxonomy endings so real Oxford-comma
+# majors are not false-flagged.
+_ROLLUP_TELL = re.compile(
+    r", (General|Other)\b"
+    r"|, and (Group Studies|Linguistics|Administration|Technicians)\b"
+    r"|, Literatures, and\b"
+    r"|, Pharmaceutical Sciences, and\b"
+    r"|[A-Za-z]/[A-Za-z]"
+)
+
+
+def _assert_no_cip_rollup_names(programs: list[dict]) -> None:
+    bad = [
+        p["program_name"]
+        for p in programs
+        if _ROLLUP_TELL.search(field_of(p["program_name"]))
+        or _ROLLUP_TELL.search(p.get("department") or "")
+    ]
+    assert not bad, f"{len(bad)} programs still carry a CIP-rollup name/department: {bad[:5]}"
 
 
 def _required_fields_of_section(level: str, section_id: str) -> set[str]:
@@ -100,6 +124,14 @@ def test_catalog_quality_gate():
 
     errors = validate_catalog(cu.PROGRAMS)
     assert not errors, f"Catalog quality gate failed: {errors}"
+    possessive = [
+        p["program_name"]
+        for p in cu.PROGRAMS
+        if cu._POSSESSIVE_NAME_RE.match(p.get("program_name", ""))
+    ]
+    assert not possessive, (
+        f"{len(possessive)} programs still carry possessive-mint names: {possessive[:5]}"
+    )
     classif = sum(
         1
         for prog in cu.PROGRAMS
@@ -114,9 +146,26 @@ def test_catalog_quality_gate():
     assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
 
 
+def test_catalog_has_no_peer_institution_signatures():
+    """Regression guard: descriptions must not carry foreign-university unit names."""
+    contaminated = [
+        p["slug"]
+        for p in cu.PROGRAMS
+        if any(sig in (p.get("description") or "") for sig in cu._PEER_SIGNATURES)
+    ]
+    assert not contaminated, (
+        f"{len(contaminated)} programs still carry peer-institution signatures: "
+        f"{contaminated[:5]}"
+    )
+
+
 def test_catalog_breadth_and_shape():
     assert len(cu.SCHOOLS) == 14
-    assert len(cu.PROGRAMS) >= 260
+    # Breadth is a REALNESS gate, not a frozen count: de-fabricating the Scorecard rollup
+    # buckets (federal "Other"/"General" CIP titles → real Cornell degrees or dropped)
+    # legitimately shrinks the catalog below the old padded 260 (enrich-profile miss #2).
+    assert len(cu.PROGRAMS) >= 235
+    _assert_no_cip_rollup_names(cu.PROGRAMS)
     assert len(set(cu.PROGRAM_SLUGS)) == len(cu.PROGRAM_SLUGS)
     assert cu.RANKING_DATA["ownership_type"] == "private"
     desc = cu.DESCRIPTION.lower()
@@ -188,7 +237,7 @@ def test_structure_integrity():
     # Slugs are unique.
     assert len(cu.PROGRAM_SLUGS) == len(set(cu.PROGRAM_SLUGS)), "duplicate program slug"
     # Full catalog breadth: College Scorecard Field-of-Study list for UNITID 190415.
-    assert len(cu.PROGRAMS) >= 250, "Cornell catalog should cover the federal program list"
+    assert len(cu.PROGRAMS) >= 235, "verified real Cornell catalog breadth (de-padded)"
     # Every program sets a delivery_format, and at least one online + one hybrid exist.
     fmts = {p.get("delivery_format") for p in cu.PROGRAMS}
     assert None not in fmts

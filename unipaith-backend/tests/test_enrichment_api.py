@@ -24,13 +24,13 @@ async def test_next_returns_plan_and_essentials_flag(student_client, db_session,
 @pytest.mark.asyncio
 async def test_set_value_round_trips(student_client, db_session, mock_student_user):
     await ensure_profile(db_session, mock_student_user)
-    first = (await student_client.get(f"{BASE}/next")).json()["items"][0]
-    field = first["field"]
-    s = await student_client.post(f"{BASE}/{field}/value", json={"value": "female"})
+    # gender is the first essential; use an in-taxonomy value (out-of-taxonomy is
+    # rejected — see test_enrichment_write_typing).
+    s = await student_client.post(f"{BASE}/gender/value", json={"value": "Woman"})
     assert s.status_code == 200, s.text
-    # after setting it, the same field is no longer the top "ask" (it now has a value)
+    # after setting it, the same field is no longer an "ask" (it now has a value)
     after = (await student_client.get(f"{BASE}/next?limit=20")).json()
-    asked_now = [i for i in after["items"] if i["field"] == field and i["action"] == "ask"]
+    asked_now = [i for i in after["items"] if i["field"] == "gender" and i["action"] == "ask"]
     assert not asked_now, "a field with a stored value must not still be an ASK"
 
 

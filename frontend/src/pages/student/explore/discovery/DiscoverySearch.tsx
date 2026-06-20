@@ -14,8 +14,6 @@ import type { ProgramSummary } from '../../../../types'
 import ProgramCard from '../cards/ProgramCard'
 import ConstraintChips from './ConstraintChips'
 import FiltersPanel from './FiltersPanel'
-import GenreTiles from './GenreTiles'
-import OutcomeTiles from './OutcomeTiles'
 import SaveSearchButton from './SaveSearchButton'
 import SortMenu from './SortMenu'
 import { encodeChipsParam, parseChipsParam, withChipId } from './chipUtils'
@@ -33,9 +31,12 @@ interface DiscoverySearchProps {
   onToggleFollow?: (institutionId: string) => void
   nextEventByInstitution?: Map<string, { event_name: string; start_time: string }>
   onEventClick?: () => void
+  /** Discover review 2026-06-14 #5 — k-anon peer-cohort count per program_id. */
+  peerCohortByProgram?: Record<string, number>
+  onPeersClick?: () => void
 }
 
-export default function DiscoverySearch({ followedIds, onToggleFollow, nextEventByInstitution, onEventClick }: DiscoverySearchProps = {}) {
+export default function DiscoverySearch({ followedIds, onToggleFollow, nextEventByInstitution, onEventClick, peerCohortByProgram, onPeersClick }: DiscoverySearchProps = {}) {
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -253,8 +254,9 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
         />
       )}
 
-      {/* Toolbar — Filters (always available) · results count + Sort (when active). Spec §2/§5/§6. */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      {/* Toolbar — Filters (always available) · results count + Sort (when active). Spec §2/§5/§6.
+          Centered until a search is active, then split (filters left · sort right). */}
+      <div className={`flex items-center gap-3 flex-wrap ${active ? 'justify-between' : 'justify-center'}`}>
         <div className="flex items-center gap-3">
           <FiltersPanel filters={filters} onApply={setFilters} />
           {active && (
@@ -334,30 +336,15 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
                     onToggleFollow={onToggleFollow ? () => onToggleFollow(p.institution_id) : undefined}
                     nextEvent={nextEventByInstitution?.get(p.institution_id) ?? null}
                     onEventClick={onEventClick}
+                    peerCount={peerCohortByProgram?.[p.id]}
+                    onPeersClick={onPeersClick}
                   />
                 ))}
               </div>
             </>
           )}
         </>
-      ) : (
-        <>
-          {/* Outcome-first browse (Discover review #2) — each tile writes the ROI
-              filters + sort so only programs with real outcome data surface. */}
-          <OutcomeTiles onPick={p => writeUrl({ q: urlQuery, chips, sort: p.sort, filters: p.filters })} />
-          <GenreTiles
-            onPick={tile =>
-              addChip({
-                category: 'major',
-                value: tile.value,
-                display: tile.label,
-                confidence: 100,
-                user_confirmed: true,
-              })
-            }
-          />
-        </>
-      )}
+      ) : null}
     </section>
   )
 }

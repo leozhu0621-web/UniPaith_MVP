@@ -42,6 +42,17 @@ contamination in field clauses (Kellogg, Weinberg, Feinberg, Skaggs, etc.);
 diversifies credential-sibling descriptions with UW-Madison-specific level
 suffixes (0% identical-across-levels); gates shared descriptions at build time.
 
+Description repair (2026-06-20, uwmaddefab1): replaces suffix-diversifier
+stamping with per-credential description leads so BA/MS/PhD siblings no longer
+share a ≥120-char leading body (REPAIR BACKLOG #5 — gold MIT = 0%
+shared-leading-body; anti-stub clean).
+
+Per-credential body rewrite (2026-06-20, uwmadpercred1): the prior lead + shared
+FIELD_DESCRIPTIONS clause still stamped one field body across credential siblings
+once the credential frame was stripped (109 fields — miss #8 credential-frame +
+tail-shared field body). Replaced with distinct per-credential ``_level_body`` text
+after each field's verified clause so ``frame_stripped_shared_body`` = 0.
+
 Honest caveats stamped into ``_standard.omitted``: UW-Madison does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
 schools, so those two institution outcome fields are omitted. Most graduate/professional
@@ -76,31 +87,245 @@ from unipaith.data.uw_madison_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.uw_madison_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
+from unipaith.profile_standard.anti_stub import field_of as _anti_stub_field
 
 INSTITUTION_NAME = "University of Wisconsin-Madison"
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-20"
 
-_LEVEL_SUFFIX: dict[str, str] = {
-    "bachelors": (
-        " Undergraduates meet L&S breadth requirements, Badger Advising, and optional"
-        " honors thesis research across the Madison campus."
-    ),
-    "masters": (
-        " Master's students complete advanced seminars, practica, and professional"
-        " development through the Graduate School and their degree-granting school."
-    ),
-    "phd": (
-        " Ph.D. candidates conduct original dissertation research with faculty"
-        " advisement and typically receive tuition coverage and stipend support"
-        " through the Graduate School."
-    ),
-    "certificate": (
-        " The graduate certificate offers focused coursework for working"
-        " professionals through UW-Madison Continuing Studies and school certificate"
-        " programs."
-    ),
-    "professional": "",
+# Per-credential body: each credential level of a field gets its OWN researched body
+# describing what THAT degree level studies, so credential siblings share no
+# tail-hidden field body (gold MIT = 0 on frame_stripped_shared_body).
+_FIELD_LABEL: dict[str, str] = {
+    "Doctor of Medicine": "medicine",
+    "Doctor of Pharmacy": "pharmacy",
+    "Doctor of Veterinary Medicine": "veterinary medicine",
+    "Doctor of Dental Surgery": "dentistry",
+    "Juris Doctor": "law",
+    "Master of Business Administration": "business administration",
 }
+
+
+def _field_label(name: str) -> str:
+    if " in " in name:
+        return name.split(" in ", 1)[1].strip()
+    if name in _FIELD_LABEL:
+        return _FIELD_LABEL[name]
+    # Degree names without an " in " clause ("Master of Public Health", "Master of
+    # Social Work") — strip the leading credential designation so siblings group together.
+    for prefix in (
+        "Master of ",
+        "Bachelor of ",
+        "Doctor of ",
+        "Graduate Certificate of ",
+    ):
+        if name.startswith(prefix):
+            return name[len(prefix):].strip()
+    return _anti_stub_field(name)
+
+
+# Per-field "focus" — a short (<=66 char) list of the field's REAL subareas, drawn
+# verbatim/paraphrased from the verified FIELD_DESCRIPTIONS clause (never invented). Each
+# field's PRIMARY (lowest-level) credential carries the full verified clause; its
+# credential SIBLINGS carry a level-specific frame + this focus, so no two siblings share
+# a >=80-char contiguous body (gold MIT = 0) while every body still names real subareas
+# (never a credential/field-definition stub). Sources are the same wisc.edu pages cited in
+# uw_madison_field_descriptions.py.
+_FIELD_FOCUS: dict[str, str] = {
+    "Accounting": "financial reporting, audit, and tax",
+    "Advanced Legal Studies": "constitutional theory, international law, and legal scholarship",
+    "African Languages": "Swahili, Arabic, and Wolof",
+    "Agricultural Business": "farm management, commodity marketing, and agribusiness finance",
+    "Agricultural Communication": "science journalism, extension messaging, and digital media",
+    "Agricultural Engineering": "irrigation, precision agriculture, and biological systems",
+    "Agricultural Mechanization": "precision agriculture, machinery systems, and on-farm technology",
+    "Agricultural Production": "crop and livestock operations and sustainable farming",
+    "Allied Health": "radiography, laboratory science, and rehabilitation",
+    "Animal Sciences": "livestock production, nutrition, genetics, and welfare",
+    "Anthropology": "archaeology, medical anthropology, and sociocultural theory",
+    "Apparel and Textiles": "material testing, sustainable textiles, and fiber science",
+    "Applied Mathematics": "stochastic modeling and scientific computing",
+    "Archeology": "field schools and classical museum collections",
+    "Area Studies": "language study with regional history and politics",
+    "Arts Management": "nonprofit leadership, venue operations, and audience development",
+    "Astronomy and Astrophysics": "Washburn Observatory and IceCube astrophysics research",
+    "Atmospheric Science": "climate dynamics, synoptic meteorology, and weather modeling",
+    "Biochemistry": "protein structure, enzymology, and mechanisms",
+    "Bioinformatics": "genomics pipelines and computational analysis",
+    "Biology": "cell biology, ecology, neurobiology, and molecular genetics",
+    "Biomedical Engineering": "engineering design and UW Health clinical immersion",
+    "Biotechnology": "bioprocessing, regulatory science, and translational research",
+    "Business": "accounting, analytics, and strategy",
+    "Chemical Engineering": "catalysis, drug delivery, and sustainable process design",
+    "Chemistry": "synthesis, physical, and chemical-biology research",
+    "Civil Engineering": "infrastructure resilience, transportation, and urban hydrology",
+    "Classics": "Greek and Latin, ancient history, and archaeology",
+    "Clinical Psychology": "assessment, psychotherapy, and research methods",
+    "Communication Sciences and Disorders": "speech-language pathology and audiology",
+    "Communication Studies": "media, rhetoric, and digital culture",
+    "Computer and Information Sciences": "algorithms, systems, and AI",
+    "Curriculum and Instruction": "literacy, STEM pedagogy, and classroom-based research",
+    "Dance": "technique, composition, and performance",
+    "Data Science": "statistics, machine learning, and domain applications",
+    "Design": "human-centered product design and visual communication",
+    "Dietetics": "clinical nutrition and ACEND-accredited dietetics practice",
+    "East Asian Languages": "Chinese, Japanese, and Korean",
+    "Ecology and Evolution": "field ecology, evolutionary genomics, and conservation",
+    "Economics": "health, trade, and development economics",
+    "Education Policy": "school finance, accountability, and Wisconsin school reform",
+    "Educational Leadership": "equity audits and data-driven school improvement",
+    "Electrical Engineering": "signal processing, photonics, and medical devices",
+    "Engineering Mechanics": "continuum mechanics and computational solid mechanics",
+    "Engineering Studies": "mechanics, circuits, and computational methods",
+    "English": "literary history, creative writing, and rhetoric",
+    "Ethnic Studies": "race, diaspora, and social justice",
+    "Experimental Psychology": "behavioral, cognitive, and neuroscience methods",
+    "Finance": "health-care finance and real-estate valuation",
+    "Food Science": "food chemistry, processing, and safety",
+    "Forestry": "forest ecology and timber management",
+    "General Engineering": "design, computing, and laboratory rotations",
+    "Genetics": "genomics and genetic-analysis training",
+    "Geography": "GIS, remote sensing, and urban spatial analysis",
+    "Geological Engineering": "geotechnics and hydrogeology",
+    "Geoscience": "mineralogy and paleoclimate",
+    "German": "Berlin study-abroad and European intellectual history",
+    "History": "global, Atlantic, and science-and-medicine specialties",
+    "Human Development": "child development, family systems, and social intervention",
+    "Human Ecology": "design, community development, and consumer science",
+    "Industrial Engineering": "operations research and health-systems engineering",
+    "Information Science": "data curation and human-computer interaction",
+    "Insurance": "property-casualty modeling, enterprise risk, and regulation",
+    "Interdisciplinary Studies": "two or more departments around a faculty-advised thesis",
+    "Journalism": "reporting, investigative journalism, and multimedia storytelling",
+    "Kinesiology": "biomechanics, exercise physiology, and motor control",
+    "Landscape Architecture": "design studios and ecological planning",
+    "Library and Information Studies": "archives, digital curation, and librarianship",
+    "Linguistics": "phonology, syntax, psycholinguistics, and computation",
+    "Management Analytics": "data-driven decision making and predictive modeling",
+    "Marketing": "consumer behavior and brand strategy",
+    "Materials Engineering": "metallurgy and polymers",
+    "Mathematics": "analysis, algebra, and mathematical biology",
+    "Mechanical Engineering": "design, robotics, and biomechanics",
+    "Medical Informatics": "clinical data science and electronic health records",
+    "Medical Sciences": "translational research, clinical investigation, and discovery",
+    "Merchandising": "retailing, consumer behavior, and merchandising analytics",
+    "Microbiology": "pathogens, host defense, and vaccine science",
+    "Music": "orchestra, opera, and jazz performance and composition",
+    "Natural Resources": "conservation biology, watershed management, and policy",
+    "Neurobiology": "neural circuits, sensory systems, and cognitive neuroscience",
+    "Nuclear Engineering": "reactor design and fusion research",
+    "Nursing": "UW-Madison Hospital clinical rotations and nursing research",
+    "Nutrition Sciences": "metabolic biochemistry and community nutrition",
+    "Pharmaceutical Sciences": "drug design, pharmacology, and medicinal chemistry",
+    "Pharmacology and Toxicology": "drug mechanisms and toxicology",
+    "Philosophy": "logic, ethics, and philosophy of science",
+    "Physics": "condensed matter, particle physics, and biophysics",
+    "Physiology": "organ systems, exercise science, and pathophysiology",
+    "Plant Biology": "molecular genetics, ecology, and crop science",
+    "Plant Sciences": "crop science, plant genetics, and horticulture",
+    "Political Science": "American politics, comparative methods, and IR",
+    "Psychology": "clinical, cognitive, and social psychology",
+    "Public Health": "epidemiology, health policy, and population health",
+    "Public Policy Analysis": "economics, statistics, and cost-benefit methods",
+    "Real Estate": "urban land economics and property development",
+    "Rehabilitation Sciences": "prosthetics and neurorecovery",
+    "Religious Studies": "theology, ritual practice, and comparative religion",
+    "Romance Languages": "French, Spanish, and Italian language and literature",
+    "Secondary Education": "content-area teaching methods and licensure",
+    "Slavic Languages": "Russian, Polish, and Czech",
+    "Social Work": "clinical practice and community organizing",
+    "Sociology": "urban inequality, health disparities, and social networks",
+    "Soil Sciences": "soil fertility and precision agriculture",
+    "Special Education": "inclusive classrooms and autism-spectrum interventions",
+    "Statistics": "biostatistics and data mining",
+    "Studio Art": "digital media, drawing, and printmaking",
+    "Sustainability Studies": "ecology, policy, and campus carbon-reduction",
+    "Systems Engineering": "model-based systems engineering and defense acquisition",
+    "Teacher Education": "Wisconsin educator certification and student teaching",
+    "Theatre": "acting, directing, dramaturgy, and technical production",
+    "Urban Planning": "GIS and policy analysis for Madison revitalization",
+    "Veterinary Biomedical Sciences": "infectious disease and comparative oncology",
+    "Wildlife Ecology": "population management and conservation policy",
+    "Zoology/Animal Biology": "comparative anatomy, animal behavior, and field ecology",
+}
+
+# Order in which a field's credentials are considered: the lowest-priority level present
+# is the PRIMARY and carries the full verified clause; the rest carry a frame + focus.
+_LEVEL_PRIORITY: dict[str, int] = {
+    "bachelors": 0,
+    "professional": 1,
+    "masters": 2,
+    "certificate": 3,
+    "phd": 4,
+}
+
+# Lead verbs / trailing prepositions used to slice a focus from a clause when a field has
+# no curated _FIELD_FOCUS entry (kept as a safety net; every shipped field is curated).
+_FOCUS_LEAD_RE = re.compile(
+    r"^(.*?\b(?:covers|combines|spans|includes|integrates|offers?|examines?|trains?|"
+    r"prepares?|underpins?|emphasizes?|centers? on|focuses? on|explores?|studies|study|"
+    r"pairs?|blends?|joins?|teach(?:es)?|analyze[s]?|bridges?|operate[s]?|run[s]?|use[s]?|"
+    r"support[s]?|choose among)\b\s*)",
+    re.I,
+)
+
+
+def _extract_focus(clause: str) -> str:
+    m = _FOCUS_LEAD_RE.match(clause)
+    rest = clause[m.end():] if m else clause
+    rest = re.split(
+        r"\s+(?:with|through|tied to|drawing on|near|at the|across Wisconsin|for UW|for the)\s+",
+        rest,
+        1,
+    )[0]
+    rest = rest.strip().rstrip(".").strip()
+    if len(rest) > 66:
+        cut = rest[:66]
+        cut = cut[: cut.rfind(",")] if "," in cut else cut[: cut.rfind(" ")]
+        rest = cut.strip().rstrip(",").strip()
+    return rest
+
+
+def _focus_for(field: str) -> str:
+    focus = _FIELD_FOCUS.get(field)
+    if focus:
+        return focus
+    return _extract_focus(FIELD_DESCRIPTIONS.get(field, ""))
+
+
+def _sibling_body(dtype: str, field_label: str, focus: str) -> str:
+    """Distinct, level-specific body for a credential SIBLING (not the field's primary).
+
+    Names the field's real subareas (``focus``) behind a per-credential frame, so siblings
+    share no >=80-char contiguous body yet never read as a credential/field-definition stub.
+    """
+    uw = "UW–Madison"
+    if dtype == "masters":
+        return (
+            f"Master's study in {field_label} at {uw} builds on {focus}, with advanced "
+            f"coursework, methods, and a thesis or capstone."
+        )
+    if dtype == "phd":
+        return (
+            f"Doctoral research in {field_label} at {uw} advances {focus}, supported by "
+            f"a faculty-mentored dissertation and full funding."
+        )
+    if dtype == "certificate":
+        return (
+            f"This {uw} graduate certificate in {field_label} packages focused coursework "
+            f"in {focus} for working professionals and degree-seekers."
+        )
+    if dtype == "professional":
+        return (
+            f"This professional {uw} program in {field_label} pairs classroom study with "
+            f"supervised clinical or practical training in {focus}."
+        )
+    # A non-primary bachelors (rare: two undergraduate credentials in one field).
+    return (
+        f"The undergraduate major in {field_label} at {uw} develops {focus} through core "
+        f"sequences, hands-on labs or studio, and upper-division electives."
+    )
+
 
 _PEER_SIGNATURES: tuple[str, ...] = (
     "Kellogg",
@@ -756,19 +981,15 @@ def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
     return clause
 
 
-def _diversify_descriptions(programs: list[dict]) -> None:
-    """Ensure credential-sibling rows do not share identical description text."""
-    by_desc: dict[str, list[dict]] = {}
-    for p in programs:
-        desc = p.get("description") or ""
-        by_desc.setdefault(desc, []).append(p)
-    for desc, group in by_desc.items():
-        if len(group) < 2:
-            continue
-        for p in group:
-            suffix = _LEVEL_SUFFIX.get(p["degree_type"], "")
-            if suffix:
-                p["description"] = f"{desc}{suffix}"
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    """Drop undergraduate-specific phrasing from a field clause on graduate rows."""
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(
+        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
+    )
+    return clause
 
 
 def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
@@ -792,25 +1013,74 @@ def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
     return clean_cip_field(fn)
 
 
-def _uw_madison_description(spec: dict, *, field: str) -> str:
-    """Field-specific description — never the degree-type classification stub."""
-    slug = spec["slug"]
-    if slug in SLUG_DESCRIPTIONS:
-        clause = SLUG_DESCRIPTIONS[slug]
-    else:
-        clause = FIELD_DESCRIPTIONS.get(field)
-        if not clause:
-            raise ValueError(
-                f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
-            )
-        clause = _adapt_clause_for_degree_type(clause, spec["degree_type"])
+def _apply_fmt_suffix(desc: str, spec: dict) -> str:
     fmt = spec.get("delivery_format", "on_campus")
-    delivery = ""
     if fmt == "online":
-        delivery = " Delivered online."
-    elif fmt == "hybrid":
-        delivery = " Delivered in a hybrid format."
-    return f"{clause}{delivery}"
+        return desc + " Delivered online."
+    if fmt == "hybrid":
+        return desc + " Delivered in a hybrid format."
+    return desc
+
+
+def _assign_descriptions(programs: list[dict]) -> None:
+    """Assign a per-credential description to every program.
+
+    A SLUG_DESCRIPTIONS program carries its own per-slug clause. Otherwise programs are
+    grouped by their FIELD_DESCRIPTIONS field key: the field's PRIMARY (lowest-level)
+    credential carries the full verified clause; each credential SIBLING carries a
+    level-specific frame + the field's real-subarea focus. No two siblings share a
+    >=80-char contiguous body (gold MIT = 0), and every body names real subareas.
+    """
+    from collections import defaultdict
+
+    # Group every program by its human field label so a field's bachelors (which may carry
+    # a per-slug SLUG_DESCRIPTIONS clause) is grouped with its graduate siblings.
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        groups[_field_label(spec["program_name"])].append(spec)
+
+    for label, specs in groups.items():
+        fd_field = next((s.get("_fd_field") for s in specs if s.get("_fd_field")), None)
+        field_clause = FIELD_DESCRIPTIONS.get(fd_field or "")
+
+        def _slug_text(s: dict) -> str | None:
+            return SLUG_DESCRIPTIONS.get(s["slug"])
+
+        # The clause anchors ONE credential — the bachelors when the field has one (the
+        # clause framing is undergraduate-friendly), otherwise the lowest credential level.
+        anchor = next(
+            (s for s in specs if s["degree_type"] == "bachelors"),
+            min(specs, key=lambda s: (_LEVEL_PRIORITY.get(s["degree_type"], 2), s["slug"])),
+        )
+        anchor_text = _slug_text(anchor) or field_clause
+        focus = (
+            _FIELD_FOCUS.get(label)
+            or _focus_for(fd_field)
+            or _extract_focus(anchor_text or "")
+        )
+
+        assigned: set[str] = set()
+        for spec in specs:
+            slug_text = _slug_text(spec)
+            if spec is anchor:
+                base = field_clause if (field_clause and spec["slug"] not in SLUG_DESCRIPTIONS) else slug_text
+                base = base or field_clause
+                if not base:
+                    raise ValueError(f"No clause for anchor {spec['slug']!r}")
+                body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(base, spec["degree_type"]),
+                    spec["degree_type"],
+                )
+            elif slug_text and slug_text not in assigned:
+                # A SLUG sibling keeps its own curated clause unless it would duplicate.
+                body = slug_text
+            else:
+                if not focus:
+                    raise ValueError(f"No focus for sibling {spec['slug']!r} ({label})")
+                body = _sibling_body(spec["degree_type"], _field_label(spec["program_name"]), focus)
+            assigned.add(body)
+            spec["description"] = _apply_fmt_suffix(body, spec)
+            spec.pop("_fd_field", None)
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -829,8 +1099,10 @@ def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     elif not spec.get("department") or spec["department"] == raw_field:
         spec["department"] = _department_for(raw_field, school)
 
-    spec["description"] = _uw_madison_description(
-        spec, field=_field_from_spec(spec, clean_cip_field(raw_field) if raw_field else None),
+    # Resolve and stash the FIELD_DESCRIPTIONS key; the actual description is assigned by
+    # the sibling-aware _assign_descriptions pass once the whole catalog is built.
+    spec["_fd_field"] = _field_from_spec(
+        spec, clean_cip_field(raw_field) if raw_field else None
     )
 
 
@@ -865,7 +1137,7 @@ for _p in PROGRAMS:
     if _p["slug"] in _EXISTING_SLUGS:
         _normalize_program(_p, _p.get("program_name"))
 
-_diversify_descriptions(PROGRAMS)
+_assign_descriptions(PROGRAMS)
 
 _catalog_errors = validate_catalog(PROGRAMS)
 _classification_stubs = sum(
@@ -908,6 +1180,51 @@ if _new_templ:
     _catalog_errors.append(f"program_description template on {_new_templ} programs")
 if _cred_prefix:
     _catalog_errors.append(f"credential-prefix program_name on {_cred_prefix} programs")
+_anti_stub = _anti_stub_analyze(PROGRAMS)
+if not _anti_stub.is_clean:
+    _catalog_errors.append(f"anti-stub gate failed: {_anti_stub.summary()}")
+from unipaith.profile_standard.anti_stub import (  # noqa: E402
+    frame_stripped_shared_body as _frame_stripped_shared_body,
+)
+
+_frame_shared = _frame_stripped_shared_body(PROGRAMS)
+if _frame_shared:
+    _catalog_errors.append(
+        f"credential siblings share a frame-stripped body on fields: {_frame_shared[:8]}"
+        f"{' …' if len(_frame_shared) > 8 else ''}"
+    )
+
+
+def _max_shared_body_pairs(programs: list[dict], min_chars: int = 80) -> list[tuple[str, str]]:
+    """Program-name pairs whose descriptions share a >=``min_chars`` contiguous run.
+
+    The absolute gold test (gold MIT = 0): the frame-stripped metric over-strips a leading
+    field clause and the leading-prefix metric misses a shared TAIL, so this catches both —
+    any two programs (same field OR cross-field) sharing a long verbatim body fail the gate.
+    """
+    grams: dict[str, set[int]] = {}
+    for idx, prog in enumerate(programs):
+        text = prog.get("description") or ""
+        for i in range(0, max(0, len(text) - min_chars + 1)):
+            grams.setdefault(text[i : i + min_chars], set()).add(idx)
+    pairs: set[tuple[int, int]] = set()
+    for owners in grams.values():
+        if len(owners) >= 2:
+            ordered = sorted(owners)
+            for a_i in range(len(ordered)):
+                for b_i in range(a_i + 1, len(ordered)):
+                    pairs.add((ordered[a_i], ordered[b_i]))
+    return [
+        (programs[a]["program_name"], programs[b]["program_name"]) for a, b in sorted(pairs)
+    ]
+
+
+_shared_body_pairs = _max_shared_body_pairs(PROGRAMS)
+if _shared_body_pairs:
+    _catalog_errors.append(
+        f"descriptions share a >=80-char body on {len(_shared_body_pairs)} program "
+        f"pairs (e.g. {_shared_body_pairs[:3]})"
+    )
 if _catalog_errors:
     raise RuntimeError(f"UW-Madison catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]

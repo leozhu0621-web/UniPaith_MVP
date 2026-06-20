@@ -14,6 +14,7 @@ from unipaith.api.auth import router as auth_router
 from unipaith.api.billing import router as billing_router
 from unipaith.api.build import router as build_router
 from unipaith.api.calendar import router as calendar_router
+from unipaith.api.chat_sessions import router as chat_sessions_router
 from unipaith.api.checklists import router as checklists_router
 from unipaith.api.claims import router as claims_router
 from unipaith.api.connect import router as connect_router
@@ -37,6 +38,7 @@ from unipaith.api.major_specific import router as major_specific_router
 from unipaith.api.materials import router as materials_router
 from unipaith.api.needs import router as needs_router
 from unipaith.api.notifications import router as notifications_router
+from unipaith.api.ops_airtable import router as ops_airtable_router
 from unipaith.api.payments import router as payments_router
 from unipaith.api.programs import router as programs_router
 from unipaith.api.prompt_library import router as prompt_library_router
@@ -46,6 +48,7 @@ from unipaith.api.recruitment import router as recruitment_router
 from unipaith.api.reviews import router as reviews_router
 from unipaith.api.saved_lists import router as saved_lists_router
 from unipaith.api.saved_search import router as saved_search_router
+from unipaith.api.scholarships import router as scholarships_router
 from unipaith.api.search import router as search_router
 from unipaith.api.settings import router as settings_router
 from unipaith.api.strategy import router as strategy_router
@@ -89,6 +92,9 @@ api_router.include_router(intake_router)
 # AI Structure (Spec 1) — enrichment loop under `/students/me/enrichment/*`;
 # before students_router for the same literal-path-precedence reason.
 api_router.include_router(enrichment_router)
+# Uni chat-tab sessions model — folders + sessions under `/students/me/chat/*`;
+# before students_router for the same literal-path-precedence reason.
+api_router.include_router(chat_sessions_router)
 api_router.include_router(students_router)
 api_router.include_router(discovery_router)
 api_router.include_router(goals_router)
@@ -124,6 +130,8 @@ api_router.include_router(documents_router)
 api_router.include_router(materials_router)
 api_router.include_router(saved_lists_router)
 api_router.include_router(saved_search_router)
+# Spec 2026-06-14 — external scholarships catalog (Resources › Financial).
+api_router.include_router(scholarships_router)
 api_router.include_router(search_router)
 # Phase E (Spec 2026-06-10 §7): the deprecated essay/resume drafting router
 # (api/workshops.py) and the orphaned /messages conversations router are gone —
@@ -146,6 +154,8 @@ api_router.include_router(calendar_router)
 api_router.include_router(connect_router)
 api_router.include_router(feedback_router)
 api_router.include_router(content_ingest_router)
+# Airtable sync — ops-guarded, safe/inert when credentials are absent.
+api_router.include_router(ops_airtable_router)
 
 
 @api_router.post("/webhooks/stripe", tags=["payments"])

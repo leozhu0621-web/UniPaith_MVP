@@ -77,6 +77,26 @@ looks wrong even if it is NOT on the checklist — odd numbers, empty/awkward
 sections, broken links, mismatched data. **This is how you discover genuinely NEW
 problem classes.** A new class becomes a new checklist item AND a new skill rule.
 
+**(c) Matcher-side pass (AI Structure — the profile is the program side of the shared
+Prompt Library the CPEF matcher scores, not just an editorial page).** The enricher owes
+the matcher typed, provenanced data; audit that it delivered — note the channel, because
+the score itself is backend-only and most of this is NOT on the public API:
+- **Live public API (`GET /programs/{id}`)** — flag programs the matcher reads *blind*:
+  empty `cip_code`, or a generic / name-prefixed `description_text` (no field-specific
+  substance for the embedding). Confirm any US News / QS / THE **ranking surfaces only in
+  display fields** (`ranking_data` / `ref_rankings`, the card eyebrow) — never as a scored
+  value (Spec 2 §7: rankings are display-only · never scored).
+- **`program_preferences` coverage (read via `git` / DB — not on the public API)** —
+  the fleet was backfilled once (migration `progprefbf1`) and the enricher now calls
+  `backfill_program_preferences(session, institution_id=inst.id)` in each data-module
+  migration, so **every program should carry a derived target-applicant row** (`source=
+  "derived"`, `confidence=0.4`). Flag a program that has NONE — that means the enricher
+  skipped the helper call in its migration (a **compliance gap**: the rule already exists
+  in `enrich-profile` "Also enrich for the MATCH" + §8.5 — do NOT re-add it; queue the
+  repair + log it). `field_provenance` is encouraged-not-gated (not matcher-consumed yet),
+  so its absence is a note, not a miss. (Never pressure the enricher to fabricate — an
+  honestly-omitted field with a reason is correct.)
+
 ### 3. Diagnose each finding
 Confirm via the API whether the **data** is wrong or the page just **renders** it
 wrong (do not guess). Classify:
@@ -122,7 +142,9 @@ or **"no new gaps found"** if the fleet is clean.
 ## Safety rails (you edit the rules that govern ALL enrichment — non-negotiable)
 
 - **IMMUTABLE INVARIANTS** — never weaken or remove, only ADD to or TIGHTEN:
-  no-fabrication (verify or omit); repair-first → then-grow; verify-rendered-output;
+  no-fabrication (verify or omit); enrichment-only (the routine NEVER adds
+  universities — seeding is external; repair-first → then-deepen the next
+  not-yet-gold stub); verify-rendered-output;
   workshop-feedback-only; the manifest's required fields; merging-is-mandatory. If a
   finding seems to argue for LOOSENING an invariant, **log it for human review and
   do not act.**
@@ -150,3 +172,7 @@ the live fleet, tightens the rulebook by at most a few precise rules backed by r
 evidence, refreshes the repair backlog, and logs what it did — or cleanly records
 "no new gaps." Over time the recurring problem classes drop, the backlog shrinks,
 and no invariant ever weakens. Full design: `docs/superpowers/specs/2026-06-13-enrichment-self-improvement-routine-design.md`.
+Program-side matcher contracts you must also audit the enricher against (claim hinge ·
+ProgramPreference · authority→`c_program` · rankings-display-only):
+`docs/superpowers/specs/2026-06-17-ai-structure-2-school-program-profile-design.md` +
+`docs/superpowers/specs/2026-06-17-ai-structure-3-match-engine-design.md`.

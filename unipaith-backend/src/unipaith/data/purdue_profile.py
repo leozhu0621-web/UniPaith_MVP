@@ -44,6 +44,34 @@ Description repair (2026-06-17, purdueprof5): replaces all name-prefixed
 ``{program_name} is {role} at Purdue University's {school}`` classification stubs
 with field-specific clauses from ``purdue_field_descriptions.py`` (gold MIT/JHU
 pattern); 0% name-prefixed descriptions.
+
+Description de-fabrication (2026-06-19, purduedefab1): the prior FIELD_DESCRIPTIONS
+carried cross-institution-copy fabrications find-replaced from peer catalogs (Penn's
+SAS/Wharton/Perelman, JHU's Chesapeake/Writing Seminars, Northwestern's McCormick,
+Cornell's Weill) AND stamped one field clause verbatim across every credential level
+(82% verbatim-across-levels). Replaced with verified per-credential descriptions
+(``DISCIPLINE_DEFS`` general field knowledge + Purdue's real owning college on the
+West Lafayette, Indiana campus + the credential level — the gold MIT / Michigan model).
+Also de-rolls-up the remaining CIP rollup names/departments: resolved to real Purdue
+degrees/units (verified against admissions.purdue.edu + the Purdue catalog) or dropped
+(``DROP_SLUGS``) when no single real name is verifiable or the row duplicates an
+existing one. The catalog legitimately shrinks 310 → 286 real, de-padded rows. The
+build now self-enforces the gold-MIT-0% anti-stub gate (anti_stub.analyze +
+machine_artifacts).
+
+FULL CATALOG REBUILD (2026-06-20, purduerebuild1): the ``DISCIPLINE_DEFS`` per-credential
+model was still a generic encyclopedia field DEFINITION shared verbatim across a field's
+credential siblings behind a per-credential frame ("Graduate study. " / "Doctoral
+research. ") — the run-65 credential-FRAME + tail-shared-body evasion (REPAIR BACKLOG #2,
+miss #8): the leading-prefix anti-stub metric reads 0 while every BA/MS/PhD of one field
+shares the same definition. Replaced the whole generated machinery with an explicit,
+researched catalog (``purdue_catalog.CATALOG``) of Purdue's 172 REAL degree programs across
+all 10 colleges, each with a per-program, field-specific description grounded only in
+verified Purdue units (no generic definition, no shared body, no classification frame, zero
+peer signatures). Dropped the 95 CIP×award-level certificate mints and ~16 CIP-rollup /
+duplicate degree rows (286 → 172 real rows). The three generated helper modules
+(``purdue_ipeds_catalog`` / ``purdue_catalog_maps`` / ``purdue_field_descriptions``) are
+deleted and no longer imported. Hand-gathered flagship + depth reviews retained.
 """
 
 # ruff: noqa: E501
@@ -57,21 +85,13 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from unipaith.data.profile_catalog_utils import validate_catalog
-from unipaith.data.purdue_catalog_maps import (
-    BA_FIELDS,
-    DEPARTMENT_BY_FIELD,
-    SLUG_DEPARTMENTS,
-    SLUG_PROGRAM_NAMES,
-    clean_cip_field,
-)
-from unipaith.data.purdue_field_descriptions import FIELD_DESCRIPTIONS, SLUG_DESCRIPTIONS
-from unipaith.data.purdue_ipeds_catalog import _IPEDS_CATALOG
+from unipaith.data.purdue_catalog import CATALOG
 from unipaith.data.purdue_reviews_depth import DEPTH_REVIEWS
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Purdue University-Main Campus"
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-20"
 
 _TEMPLATE_STUB_RE = re.compile(
     r" — a .+ (undergraduate|graduate|doctoral|certificate|professional|"
@@ -432,216 +452,12 @@ def _program_content(school_name: str, keywords: list[str]) -> dict:
     base["keywords"] = list(keywords)
     return base
 
-# ── Explicit flagship programs (take precedence over IPEDS breadth rows) ────
-PROGRAMS: list[dict] = [
-    {
-        "slug": "purdue-computer-science-bs", "school": SCIENCE,
-        "program_name": "Computer Science", "degree_type": "bachelors",
-        "duration_months": 48, "delivery_format": "on_campus",
-        "description": "Bachelor of Science in Computer Science through the College of Science.",
-        "department": "Department of Computer Science", "cip": "11.07",
-    },
-    {
-        "slug": "purdue-aerospace-engineering-bs", "school": ENGINEERING,
-        "program_name": "Aerospace Engineering", "degree_type": "bachelors",
-        "duration_months": 48, "delivery_format": "on_campus",
-        "description": "Bachelor of Science in Aerospace Engineering through the College of Engineering — home of the Cradle of Astronauts.",
-        "department": "School of Aeronautics and Astronautics", "cip": "14.02",
-    },
-    {
-        "slug": "purdue-mechanical-engineering-bs", "school": ENGINEERING,
-        "program_name": "Mechanical Engineering", "degree_type": "bachelors",
-        "duration_months": 48, "delivery_format": "on_campus",
-        "description": "Bachelor of Science in Mechanical Engineering through the College of Engineering.",
-        "department": "School of Mechanical Engineering", "cip": "14.19",
-    },
-    {
-        "slug": "purdue-electrical-engineering-bs", "school": ENGINEERING,
-        "program_name": "Electrical, Electronics, and Communications Engineering", "degree_type": "bachelors",
-        "duration_months": 48, "delivery_format": "on_campus",
-        "description": "Bachelor of Science in Electrical, Electronics, and Communications Engineering through the Elmore Family School of Electrical and Computer Engineering.",
-        "department": "Elmore Family School of Electrical and Computer Engineering", "cip": "14.10",
-    },
-    {
-        "slug": "purdue-nursing-bs", "school": HHS,
-        "program_name": "Registered Nursing", "degree_type": "bachelors",
-        "duration_months": 48, "delivery_format": "on_campus",
-        "description": "Bachelor of Science in Nursing (BSN) through the Purdue University School of Nursing in the College of Health and Human Sciences.",
-        "department": "School of Nursing", "cip": "51.38",
-    },
-    {
-        "slug": "purdue-pharmacy-prof", "school": PHARMACY,
-        "program_name": "Doctor of Pharmacy", "degree_type": "professional",
-        "duration_months": 48, "delivery_format": "on_campus",
-        "description": "Doctor of Pharmacy (Pharm.D.) at the Purdue University College of Pharmacy — one of the oldest pharmacy schools in the United States.",
-        "department": "College of Pharmacy", "cip": "51.20",
-    },
-    {
-        "slug": "purdue-veterinary-medicine-prof", "school": VETERINARY,
-        "program_name": "Doctor of Veterinary Medicine", "degree_type": "professional",
-        "duration_months": 48, "delivery_format": "on_campus",
-        "description": "Doctor of Veterinary Medicine (D.V.M.) at the Purdue University College of Veterinary Medicine.",
-        "department": "College of Veterinary Medicine", "cip": "51.24",
-    },
-    {
-        "slug": "purdue-business-administration-bs", "school": BUSINESS,
-        "program_name": "Business Administration and Management", "degree_type": "bachelors",
-        "duration_months": 48, "delivery_format": "on_campus",
-        "description": "Bachelor of Science in Management through the Mitch Daniels School of Business (formerly Krannert School of Management).",
-        "department": "Mitch Daniels School of Business", "cip": "52.02",
-    },
-    {
-        "slug": "purdue-agricultural-economics-bs", "school": AGRICULTURE,
-        "program_name": "Agricultural Economics", "degree_type": "bachelors",
-        "duration_months": 48, "delivery_format": "on_campus",
-        "description": "Bachelor of Science in Agricultural Economics through the College of Agriculture.",
-        "department": "Department of Agricultural Economics", "cip": "01.01",
-    },
-    {
-        "slug": "purdue-psychology-bs", "school": LIBERAL_ARTS,
-        "program_name": "Psychology, General", "degree_type": "bachelors",
-        "duration_months": 48, "delivery_format": "on_campus",
-        "description": "Bachelor of Science in Psychology through the College of Liberal Arts.",
-        "department": "Department of Psychological Sciences", "cip": "42.01",
-    },
-]
-
-_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
-_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
-
-
-def _department_for(field_name: str, school: str) -> str:
-    """Owning department — map CIP titles to Purdue's published unit names."""
-    field = clean_cip_field(field_name)
-    if field in DEPARTMENT_BY_FIELD:
-        return DEPARTMENT_BY_FIELD[field]
-    if field.lower() in school.lower() or school.lower().startswith(f"College of {field.split()[0]}"):
-        return school
-    if school == POLYTECHNIC:
-        return "Purdue Polytechnic Institute"
-    if school in (ENGINEERING, SCIENCE, LIBERAL_ARTS, AGRICULTURE, HHS, EDUCATION, BUSINESS):
-        return f"Department of {field}"
-    return school
-
-
-def _ug_degree_prefix(school: str, field: str) -> str:
-    if school == LIBERAL_ARTS and field in BA_FIELDS:
-        return "Bachelor of Arts in"
-    if school == BUSINESS:
-        return "Bachelor of Science in"
-    return "Bachelor of Science in"
-
-
-def _purdue_program_name(field_name: str, degree_type: str, school: str) -> str:
-    """Real credential-specific name — never a bare CIP title or credential-prefix stub."""
-    field = clean_cip_field(field_name)
-    if degree_type == "bachelors":
-        return f"{_ug_degree_prefix(school, field)} {field}"
-    if degree_type == "masters":
-        return f"Master of Science in {field}"
-    if degree_type == "phd":
-        return f"Doctor of Philosophy in {field}"
-    if degree_type == "certificate":
-        return f"Graduate Certificate in {field}"
-    return field
-
-
-def _field_from_program_name(name: str) -> str:
-    if name in ("Doctor of Pharmacy", "Doctor of Veterinary Medicine"):
-        return name
-    for prefix in (
-        "Bachelor of Arts in ",
-        "Bachelor of Science in ",
-        "Master of Science in ",
-        "Doctor of Philosophy in ",
-        "Graduate Certificate in ",
-    ):
-        if name.startswith(prefix):
-            return name[len(prefix) :].strip()
-    return clean_cip_field(name)
-
-
-def _field_from_spec(spec: dict, raw_field: str | None = None) -> str:
-    slug = spec.get("slug", "")
-    if slug in SLUG_DESCRIPTIONS:
-        return ""  # slug override handles description
-    if slug in SLUG_PROGRAM_NAMES:
-        return _field_from_program_name(SLUG_PROGRAM_NAMES[slug])
-    if raw_field:
-        return clean_cip_field(raw_field)
-    return clean_cip_field(spec.get("program_name", ""))
-
-
-def _purdue_description(spec: dict, *, field: str) -> str:
-    """Field-specific description — never the degree-type classification stub."""
-    slug = spec["slug"]
-    if slug in SLUG_DESCRIPTIONS:
-        clause = SLUG_DESCRIPTIONS[slug]
-    else:
-        clause = FIELD_DESCRIPTIONS.get(field)
-        if not clause:
-            raise ValueError(
-                f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({slug})"
-            )
-    fmt = spec.get("delivery_format", "on_campus")
-    delivery = ""
-    if fmt == "online":
-        delivery = " Delivered online."
-    elif fmt == "hybrid":
-        delivery = " Delivered in a hybrid format."
-    return f"{clause}{delivery}"
-
-
-def _normalize_program(spec: dict, field_name: str | None = None) -> None:
-    slug = spec["slug"]
-    school = spec["school"]
-    dtype = spec["degree_type"]
-    raw_field = field_name or spec.get("_field_name") or spec.get("program_name", "")
-
-    if slug in SLUG_PROGRAM_NAMES:
-        spec["program_name"] = SLUG_PROGRAM_NAMES[slug]
-    elif dtype != "professional":
-        spec["program_name"] = _purdue_program_name(raw_field, dtype, school)
-
-    if slug in SLUG_DEPARTMENTS:
-        spec["department"] = SLUG_DEPARTMENTS[slug]
-    elif not spec.get("department") or spec["department"] == raw_field:
-        spec["department"] = _department_for(raw_field, school)
-
-    field = _field_from_spec(spec, clean_cip_field(raw_field) if raw_field else None)
-    spec["description"] = _purdue_description(spec, field=field)
-
-
-def _build_catalog() -> list[dict]:
-    out: list[dict] = []
-    seen = set(_EXISTING_SLUGS)
-    for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
-        if slug in seen:
-            continue
-        if (cip, dtype) in _EXISTING_CIP_KEYS:
-            continue
-        seen.add(slug)
-        spec = {
-            "slug": slug,
-            "school": school,
-            "program_name": field_name,
-            "degree_type": dtype,
-            "department": _department_for(field_name, school),
-            "cip": cip,
-            "duration_months": dur,
-            "delivery_format": fmt,
-            "_field_name": field_name,
-        }
-        _normalize_program(spec, field_name)
-        spec.pop("_field_name", None)
-        out.append(spec)
-    return out
-
-
-PROGRAMS += _build_catalog()
-for _p in PROGRAMS:
-    if _p["slug"] in _EXISTING_SLUGS:
-        _normalize_program(_p, _p.get("program_name"))
+# ── Real program catalog (explicit; de-fabricated rebuild) ──────────────────
+# Replaces the prior IPEDS×award-level generated catalog whose descriptions were generic
+# field definitions shared across a field's credential siblings behind a per-credential
+# frame (REPAIR BACKLOG #2 / miss #8). Every row is one of Purdue's REAL degree programs
+# with a real owning department and a per-program, field-specific, peer-clean description.
+PROGRAMS: list[dict] = [dict(p) for p in CATALOG]
 
 _catalog_errors = validate_catalog(PROGRAMS)
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
@@ -667,6 +483,21 @@ if _name_prefix_desc:
     _catalog_errors.append(
         f"name-prefixed descriptions on {_name_prefix_desc} programs"
     )
+# Enforce the gold-MIT-0% anti-stub gate at build time (enrich-profile §8.5): a stub /
+# verbatim-across-levels / school-blurb / build-artifact catalog raises before it can ship.
+from unipaith.profile_standard.anti_stub import (  # noqa: E402
+    analyze as _anti_stub_analyze,
+)
+from unipaith.profile_standard.anti_stub import (  # noqa: E402
+    machine_artifacts as _machine_artifacts,
+)
+
+_anti_report = _anti_stub_analyze(PROGRAMS)
+if not _anti_report.is_clean:
+    _catalog_errors.append(f"anti-stub gate: {_anti_report.summary()}")
+_artifacts = _machine_artifacts(PROGRAMS)
+if _artifacts:
+    _catalog_errors.append(f"machine-build artifacts in {len(_artifacts)} descriptions")
 if _catalog_errors:
     raise RuntimeError(f"Purdue catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]

@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from unipaith.core.exceptions import ForbiddenException, NotFoundException
+from unipaith.core.exceptions import (
+    ForbiddenException,
+    NotFoundException,
+    UnprocessableEntityException,
+)
 from unipaith.models.application import Application
 from unipaith.models.engagement import StudentEngagementSignal
 from unipaith.models.goals import StudentGoal
@@ -147,11 +151,37 @@ class StudentService:
             "completion": {k: float(v) for k, v in completion.items()},
         }
 
+    # Gender (a basic demographic) may be changed only once every 3 months.
+    GENDER_CHANGE_LOCK = timedelta(days=90)
+
     async def update_profile(self, user_id: UUID, data: UpdateProfileRequest) -> StudentProfile:
         profile = await self._get_student_profile(user_id)
         update_data = data.model_dump(exclude_unset=True)
+
+        # 3-month gender change-lock. "gender_identity" in update_data means the
+        # client explicitly sent the field (model_dump(exclude_unset=True)). A
+        # change is allowed on first set (timestamp null) or >= 90 days since the
+        # last change; otherwise reject with 422. Unchanged gender — or editing
+        # any other field — never blocks and never re-stamps. The server owns the
+        # timestamp; the client never sends gender_identity_updated_at.
+        gender_changed = (
+            "gender_identity" in update_data
+            and update_data["gender_identity"] != profile.gender_identity
+        )
+        if gender_changed:
+            last = profile.gender_identity_updated_at
+            if last is not None and (datetime.now(UTC) - last) < self.GENDER_CHANGE_LOCK:
+                unlock = (last + self.GENDER_CHANGE_LOCK).date().isoformat()
+                raise UnprocessableEntityException(
+                    "Gender can be changed once every 3 months. "
+                    f"You can update it again on {unlock}."
+                )
+
         for key, value in update_data.items():
             setattr(profile, key, value)
+        if gender_changed:
+            profile.gender_identity_updated_at = datetime.now(UTC)
+
         await self.db.flush()
         await self._update_onboarding(profile.id)
         # Re-fetch with all relationships eagerly loaded for serialization

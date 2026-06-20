@@ -101,11 +101,57 @@ def _program_snapshot(spec: dict) -> dict:
 
 def test_catalog_breadth_and_shape():
     assert len(n.SCHOOLS) == 11
-    assert len(n.PROGRAMS) >= 300
+    # Breadth is gated by per-row REALNESS, NOT a frozen padded count (SKILL.md miss #2).
+    # The catalog was de-fabricated from a 306-row IPEDS×award-level mint to Northwestern's
+    # REAL published degree programs, so the count legitimately SHRANK toward the real
+    # catalog; a substantive real catalog spans every school at a peer-appropriate count.
+    assert len(n.PROGRAMS) >= 100
     assert len(set(n.PROGRAM_SLUGS)) == len(n.PROGRAM_SLUGS)
+    # every one of the 11 real schools actually owns programs (no orphan school)
+    schools_with_programs = {p["school"] for p in n.PROGRAMS}
+    assert len(schools_with_programs) >= 8
     assert n.RANKING_DATA["ownership_type"] == "private"
     assert "private research university in evanston" in n.DESCRIPTION.lower()
     assert len(n.SCHOOL_OUTCOMES["campus_photos"]) >= 4
+
+
+# Federal CIP-taxonomy rollup endings that no real degree name or department prints
+# (anchored to taxonomy endings, NOT any Oxford-comma list — "Spanish and Portuguese",
+# "Radio/Television/Film" are REAL Northwestern units, so a bare slash / " and " is NOT a
+# tell). SKILL.md miss #2 realness gate.
+_ROLLUP_TELLS = (
+    ", General",
+    ", Other",
+    ", and Linguistics",
+    ", and Administration",
+    ", and Group Studies",
+    "Multi/Interdisciplinary",
+    " Other",
+)
+
+
+def test_no_cip_rollup_names_or_departments():
+    """No program_name or department carries a federal CIP-rollup taxonomy tell."""
+    import re
+
+    bad = []
+    for p in n.PROGRAMS:
+        for field in (p.get("program_name", ""), p.get("department", "")):
+            if any(t in field for t in _ROLLUP_TELLS):
+                bad.append(field)
+            if re.search(r"\(CIP\s*\d", field):  # literal CIP code left in the name
+                bad.append(field)
+    assert not bad, f"CIP-rollup / CIP-code tells survive in names/departments: {bad[:8]}"
+
+
+def test_every_program_has_field_specific_description():
+    """No description may be a bare classification/template stub (gold-contrast)."""
+    from unipaith.data.profile_catalog_utils import validate_catalog
+
+    assert not validate_catalog(n.PROGRAMS)
+    # every row carries a real cip_code (matcher core field) and a delivery format
+    assert all(p.get("cip") for p in n.PROGRAMS), "every program needs a cip_code"
+    assert all(p.get("delivery_format") for p in n.PROGRAMS)
 
 
 def test_institution_is_gold_except_recorded_omission():
@@ -177,6 +223,14 @@ def test_no_identical_across_credential_levels():
     assert shared == 0, (
         f"{shared} programs share a description verbatim with a credential sibling"
     )
+
+
+def test_catalog_is_anti_stub_clean():
+    """Per-credential description leads — gold MIT = 0% shared-leading-body (REPAIR #6)."""
+    from unipaith.profile_standard.anti_stub import analyze
+
+    report = analyze(n.PROGRAMS)
+    assert report.is_clean, f"anti-stub not clean: {report.summary()}"
 
 
 # --- Anti-synthesized-review gate (SKILL.md miss #8: fabrication-by-synthesis) ---

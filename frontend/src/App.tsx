@@ -59,7 +59,10 @@ const EvalHarnessPage = lazy(() => import('./pages/public/EvalHarnessPage'))
 
 // Student pages — Discover (Stage 1) is the student home; My Space rooms render
 // inside the eager MySpaceShell.
-const DiscoverHomePage = lazy(() => import('./pages/student/DiscoverHomePage'))
+// ChatTabShell wraps DiscoverHomePage with the left session browser (2026-06-19
+// chat-tab redesign §2). DiscoverHomePage is rendered unchanged inside the shell;
+// it is imported by ChatTabShell directly — not needed here any more.
+const ChatTabShell = lazy(() => import('./pages/student/chat/ChatTabShell'))
 const ExplorePage = lazy(() => import('./pages/student/ExplorePage'))
 const MySpaceHomePage = lazy(() => import('./pages/student/myspace/MySpaceHomePage'))
 const ImportPage = lazy(() => import('./pages/student/myspace/ImportPage'))
@@ -225,7 +228,7 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorPage />,
     children: [
       // === 4 Main Pages ===
-      { index: true, element: page(<DiscoverHomePage />) },          // Stage 1 — Discovery
+      { index: true, element: page(<ChatTabShell />) },               // Stage 1 — Discovery (chat-tab shell wraps Uni conversation)
       // /s/posts retired (Spec 2026-06-12) — Connect lives in the Discover hub tabs.
       { path: 'posts', element: <PostsRedirect /> },
       { path: 'explore', element: page(<ExplorePage />) },            // Discover hub (match + connect)

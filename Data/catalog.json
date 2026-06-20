@@ -1,0 +1,1099 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-06-18T22:10:07Z",
+  "source_root": "Data/sources/",
+  "note": "Machine-readable catalog of local reference data. Raw files are git-ignored; this catalog + dictionaries are committed. status=downloaded means the file is present in the local archive; status=available means catalog-only (fetch via download_url).",
+  "datasets": [
+    {
+      "id": "college-scorecard-institution-latest",
+      "title": "College Scorecard — Most Recent Cohorts, Institution",
+      "publisher": "U.S. Department of Education",
+      "source_url": "https://collegescorecard.ed.gov/data/",
+      "download_url": "https://collegescorecard.ed.gov/data/  (bulk: College_Scorecard_Raw_Data_*.zip)",
+      "api_url": "https://api.data.gov/ed/collegescorecard/v1/schools",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "institution",
+      "entity": "institution",
+      "join_keys": [
+        "UNITID",
+        "OPEID",
+        "OPEID6"
+      ],
+      "coverage": {
+        "latest_cohort": "most-recent",
+        "panel_years": "1996-2025"
+      },
+      "path": "sources/college-scorecard/institution/Most-Recent-Cohorts-Institution.csv",
+      "format": "csv",
+      "dictionary": "dictionaries/college-scorecard.fields.json",
+      "key_fields": [
+        "INSTNM",
+        "CITY",
+        "STABBR",
+        "ZIP",
+        "INSTURL",
+        "CONTROL",
+        "PREDDEG",
+        "HIGHDEG",
+        "CCBASIC",
+        "ADM_RATE",
+        "SAT_AVG",
+        "ACTCMMID",
+        "UGDS",
+        "COSTT4_A",
+        "TUITIONFEE_IN",
+        "TUITIONFEE_OUT",
+        "AVGFACSAL",
+        "PCTPELL",
+        "C150_4",
+        "RET_FT4",
+        "MD_EARN_WNE_P10",
+        "GRAD_DEBT_MDN",
+        "FTFTPCTPELL"
+      ],
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "report-card key stats",
+          "admissions funnel",
+          "outcomes/cost",
+          "quick facts"
+        ]
+      },
+      "size_bytes": 100817953,
+      "rows": 6322,
+      "columns": 3308,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "college-scorecard-field-of-study-latest",
+      "title": "College Scorecard — Most Recent Cohorts, Field of Study",
+      "publisher": "U.S. Department of Education",
+      "source_url": "https://collegescorecard.ed.gov/data/",
+      "download_url": "https://collegescorecard.ed.gov/data/  (bulk: College_Scorecard_Raw_Data_*.zip)",
+      "api_url": "https://api.data.gov/ed/collegescorecard/v1/fos",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "program",
+      "entity": "program",
+      "join_keys": [
+        "UNITID",
+        "CIPCODE",
+        "CREDLEV"
+      ],
+      "coverage": {
+        "latest_cohort": "most-recent",
+        "panel_years": "2015-2023"
+      },
+      "path": "sources/college-scorecard/field-of-study/Most-Recent-Cohorts-Field-of-Study.csv",
+      "format": "csv",
+      "dictionary": "dictionaries/college-scorecard-field-of-study.fields.json",
+      "key_fields": [
+        "UNITID",
+        "INSTNM",
+        "CIPCODE",
+        "CIPDESC",
+        "CREDLEV",
+        "CREDDESC",
+        "IPEDSCOUNT1",
+        "IPEDSCOUNT2",
+        "DEBT_ALL_STGP_EVAL_MDN",
+        "EARN_MDN_HI_1YR",
+        "EARN_MDN_HI_2YR",
+        "EARN_COUNT_WNE_HI_1YR"
+      ],
+      "maps_to": {
+        "unipaith_entity": "program",
+        "sections": [
+          "program outcomes: earnings/debt/completion by CIP + credential level"
+        ]
+      },
+      "size_bytes": 153476644,
+      "rows": 227980,
+      "columns": 178,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "college-scorecard-panels",
+      "title": "College Scorecard — Yearly Panels (institution + field-of-study)",
+      "publisher": "U.S. Department of Education",
+      "source_url": "https://collegescorecard.ed.gov/data/",
+      "download_url": "https://collegescorecard.ed.gov/data/  (bulk archive)",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "institution+program time series",
+      "entity": "institution",
+      "join_keys": [
+        "UNITID",
+        "OPEID6",
+        "CIPCODE",
+        "CREDLEV"
+      ],
+      "coverage": {
+        "panel_years": "1996-2025"
+      },
+      "path": "sources/college-scorecard/panels/",
+      "format": "csv (directory)",
+      "dictionary": "dictionaries/college-scorecard.fields.json",
+      "key_fields": [],
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "historical trends (future)"
+        ]
+      },
+      "size_bytes": 3541883851,
+      "files": 37,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "college-scorecard-crosswalks",
+      "title": "College Scorecard — CIP/UNITID/OPEID Crosswalks",
+      "publisher": "U.S. Department of Education",
+      "source_url": "https://collegescorecard.ed.gov/data/",
+      "download_url": "https://collegescorecard.ed.gov/data/  (bulk archive)",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "crosswalk",
+      "entity": "institution",
+      "join_keys": [
+        "UNITID",
+        "OPEID",
+        "CIPCODE"
+      ],
+      "coverage": {
+        "panel_years": "2000-2023"
+      },
+      "path": "sources/college-scorecard/crosswalks/",
+      "format": "xlsx (directory)",
+      "dictionary": null,
+      "key_fields": [],
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "id reconciliation across sources"
+        ]
+      },
+      "size_bytes": 60900151,
+      "files": 24,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "fafsa-application-demographics",
+      "title": "FAFSA — Application Data by Demographic Characteristics (2023-24)",
+      "publisher": "U.S. Department of Education — Federal Student Aid",
+      "source_url": "https://studentaid.gov/data-center/student/application-volume/fafsa-school-state",
+      "download_url": "https://studentaid.gov/data-center/student/application-volume",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "national demographic",
+      "entity": "aid",
+      "join_keys": [],
+      "coverage": {
+        "latest_cohort": "2023-2024"
+      },
+      "path": "sources/fafsa/2023-2024-application-demographics.xls",
+      "format": "xls",
+      "dictionary": "dictionaries/fafsa.fields.json",
+      "key_fields": [
+        "Gender",
+        "Age",
+        "Grade Level",
+        "Dependency Status",
+        "Pell Eligibility"
+      ],
+      "maps_to": {
+        "unipaith_entity": "aid",
+        "sections": [
+          "financial-need context"
+        ]
+      },
+      "size_bytes": 57344,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "fafsa-apps-by-state",
+      "title": "FAFSA — Application Data by State (2026-27, quarterly)",
+      "publisher": "U.S. Department of Education — Federal Student Aid",
+      "source_url": "https://studentaid.gov/data-center/student/application-volume/fafsa-school-state",
+      "download_url": "https://studentaid.gov/data-center/student/application-volume",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "state",
+      "entity": "aid",
+      "join_keys": [
+        "STATE"
+      ],
+      "coverage": {
+        "latest_cohort": "2026-2027"
+      },
+      "path": "sources/fafsa/2026-2027-app-data-by-state-q1.xlsx",
+      "format": "xlsx",
+      "dictionary": "dictionaries/fafsa.fields.json",
+      "key_fields": [
+        "State",
+        "Applications Submitted",
+        "Applications Completed"
+      ],
+      "maps_to": {
+        "unipaith_entity": "aid",
+        "sections": [
+          "application-volume context by state"
+        ]
+      },
+      "size_bytes": 116489,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "fafsa-federal-school-codes",
+      "title": "FAFSA — Federal School Code List (2026-27, Q3)",
+      "publisher": "U.S. Department of Education — Federal Student Aid",
+      "source_url": "https://fsapartners.ed.gov/knowledge-center/library/federal-school-code-lists",
+      "download_url": "https://fsapartners.ed.gov/knowledge-center/library/federal-school-code-lists",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "institution",
+      "entity": "institution",
+      "join_keys": [
+        "FederalSchoolCode",
+        "OPEID"
+      ],
+      "coverage": {
+        "latest_cohort": "2026-2027"
+      },
+      "path": "sources/fafsa/2627FederalSchoolCodeList3rdQuarter.xlsx",
+      "format": "xlsx",
+      "dictionary": "dictionaries/fafsa.fields.json",
+      "key_fields": [
+        "FederalSchoolCode",
+        "SchoolName",
+        "State"
+      ],
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "aid-eligible school reference / id crosswalk"
+        ]
+      },
+      "size_bytes": 534796,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "fafsa-portfolio-summary",
+      "title": "Federal Student Aid — Portfolio Summary",
+      "publisher": "U.S. Department of Education — Federal Student Aid",
+      "source_url": "https://studentaid.gov/data-center/student/portfolio",
+      "download_url": "https://studentaid.gov/data-center/student/portfolio",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "national",
+      "entity": "aid",
+      "join_keys": [],
+      "coverage": {},
+      "path": "sources/fafsa/PortfolioSummary.xls",
+      "format": "xls",
+      "dictionary": "dictionaries/fafsa.fields.json",
+      "key_fields": [
+        "Outstanding Balance",
+        "Recipients"
+      ],
+      "maps_to": {
+        "unipaith_entity": "aid",
+        "sections": [
+          "national debt context"
+        ]
+      },
+      "size_bytes": 64000,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "fafsa-portfolio-by-loan-type",
+      "title": "Federal Student Aid — Portfolio by Loan Type",
+      "publisher": "U.S. Department of Education — Federal Student Aid",
+      "source_url": "https://studentaid.gov/data-center/student/portfolio",
+      "download_url": "https://studentaid.gov/data-center/student/portfolio",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "grain": "national",
+      "entity": "aid",
+      "join_keys": [],
+      "coverage": {},
+      "path": "sources/fafsa/PortfoliobyLoanType.xls",
+      "format": "xls",
+      "dictionary": "dictionaries/fafsa.fields.json",
+      "key_fields": [
+        "Loan Type",
+        "Outstanding Balance"
+      ],
+      "maps_to": {
+        "unipaith_entity": "aid",
+        "sections": [
+          "national debt context"
+        ]
+      },
+      "size_bytes": 58880,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "bls-oews-wages-employment",
+      "title": "BLS Occupational Employment and Wage Statistics (OEWS), May 2024",
+      "publisher": "U.S. Bureau of Labor Statistics (DOL)",
+      "category": "career-outcomes",
+      "source_url": "https://www.bls.gov/oes/tables.htm",
+      "download_url": "https://www.bls.gov/oes/special.requests/oesm24nat.zip  (national; all-areas: oesm24all.zip)",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "license_open": true,
+      "grain": "occupation (SOC) x geography",
+      "entity": "occupation",
+      "join_keys": [
+        "soc_code",
+        "area_fips",
+        "naics"
+      ],
+      "coverage": {
+        "latest": "May 2024",
+        "panel_years": "1997-2024"
+      },
+      "dictionary": "https://www.bls.gov/oes/current/oes_tec.htm",
+      "format": "zip of xlsx",
+      "est_size": "national ~5-10 MB; all-areas ~76 MB",
+      "maps_to": {
+        "unipaith_entity": "program/occupation",
+        "sections": [
+          "program outcomes: typical wages by field",
+          "career-alignment earnings"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "bls-employment-projections",
+      "title": "BLS Employment Projections — Occupational Matrix 2024-2034",
+      "publisher": "U.S. Bureau of Labor Statistics (DOL)",
+      "category": "career-outcomes",
+      "source_url": "https://www.bls.gov/emp/data/occupational-data.htm",
+      "download_url": "https://www.bls.gov/emp/ind-occ-matrix/occupation.xlsx",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "license_open": true,
+      "grain": "occupation (SOC)",
+      "entity": "occupation",
+      "join_keys": [
+        "soc_code"
+      ],
+      "coverage": {
+        "latest": "2024-2034 projection"
+      },
+      "dictionary": "https://www.bls.gov/emp/documentation/",
+      "format": "xlsx",
+      "path": "sources/bls-onet/EmploymentProjections_occupation_2024-34.xlsx",
+      "maps_to": {
+        "unipaith_entity": "program/occupation",
+        "sections": [
+          "career-alignment job outlook (projected growth, openings, typical entry education)"
+        ]
+      },
+      "size_bytes": 407365,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "onet-database",
+      "title": "O*NET Database 30.3 — occupations, skills, knowledge, abilities, tasks",
+      "publisher": "O*NET Resource Center (DOL/ETA)",
+      "category": "career-outcomes",
+      "source_url": "https://www.onetcenter.org/database.html",
+      "download_url": "https://www.onetcenter.org/dl_files/database/db_30_3_text.zip",
+      "license": "Creative Commons Attribution 4.0 (CC BY 4.0)",
+      "license_open": true,
+      "grain": "occupation (O*NET-SOC), relational (~45 files)",
+      "entity": "occupation",
+      "join_keys": [
+        "onet_soc_code",
+        "soc_code"
+      ],
+      "coverage": {
+        "latest": "v30.3"
+      },
+      "dictionary": "https://www.onetcenter.org/dictionary/30.3/text/",
+      "format": "zip of tab-delimited text",
+      "path": "sources/bls-onet/onet_db_30_3_text.zip",
+      "maps_to": {
+        "unipaith_entity": "program/occupation",
+        "sections": [
+          "career-alignment 'skills you build'",
+          "major -> occupation profiles"
+        ]
+      },
+      "size_bytes": 13222549,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "onet-web-services-api",
+      "title": "O*NET Web Services API (v2.0)",
+      "publisher": "O*NET Resource Center (DOL/ETA)",
+      "category": "career-outcomes",
+      "source_url": "https://services.onetcenter.org/",
+      "download_url": "https://services.onetcenter.org/  (free API key; REST JSON/XML)",
+      "license": "Creative Commons Attribution 4.0 (CC BY 4.0) for returned data",
+      "license_open": true,
+      "grain": "occupation (O*NET-SOC)",
+      "entity": "occupation",
+      "join_keys": [
+        "onet_soc_code"
+      ],
+      "coverage": {
+        "latest": "live"
+      },
+      "dictionary": "https://services.onetcenter.org/reference/",
+      "format": "REST API",
+      "est_size": "API",
+      "maps_to": {
+        "unipaith_entity": "occupation",
+        "sections": [
+          "live career-alignment enrichment"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "bls-occupational-outlook-handbook",
+      "title": "BLS Occupational Outlook Handbook (OOH) — narrative career profiles",
+      "publisher": "U.S. Bureau of Labor Statistics (DOL)",
+      "category": "career-outcomes",
+      "source_url": "https://www.bls.gov/ooh/",
+      "download_url": "https://www.bls.gov/ooh/  (bulk XML feed via OOH developer info)",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "license_open": true,
+      "grain": "occupation",
+      "entity": "occupation",
+      "join_keys": [
+        "soc_code"
+      ],
+      "coverage": {
+        "latest": "current"
+      },
+      "dictionary": "https://www.bls.gov/ooh/about/ooh-developer-info.htm",
+      "format": "XML/JSON feed",
+      "est_size": "~10-30 MB",
+      "maps_to": {
+        "unipaith_entity": "occupation",
+        "sections": [
+          "career-alignment 'how to enter / day-to-day' editorial"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "nces-cip2020-soc2018-crosswalk",
+      "title": "NCES CIP 2020 -> SOC 2018 Crosswalk",
+      "publisher": "U.S. Dept of Education — NCES",
+      "category": "career-outcomes",
+      "source_url": "https://nces.ed.gov/ipeds/cipcode/resources.aspx",
+      "download_url": "https://nces.ed.gov/ipeds/cipcode/Files/CIP2020_SOC2018_Crosswalk.xlsx",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "license_open": true,
+      "grain": "CIP <-> SOC pair",
+      "entity": "crosswalk",
+      "join_keys": [
+        "cip_code",
+        "soc_code"
+      ],
+      "coverage": {
+        "latest": "2020/2018"
+      },
+      "dictionary": "https://nces.ed.gov/ipeds/cipcode/",
+      "format": "xlsx",
+      "path": "sources/ipeds/CIP2020_SOC2018_Crosswalk.xlsx",
+      "maps_to": {
+        "unipaith_entity": "crosswalk",
+        "sections": [
+          "the join glue: 'careers this major leads to' (CIP -> SOC -> wages/outlook)"
+        ]
+      },
+      "size_bytes": 428901,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "nces-cip2020-dictionary",
+      "title": "NCES Classification of Instructional Programs (CIP) 2020 — codes, titles, definitions",
+      "publisher": "U.S. Dept of Education — NCES",
+      "category": "career-outcomes",
+      "source_url": "https://nces.ed.gov/ipeds/cipcode/",
+      "download_url": "https://nces.ed.gov/ipeds/cipcode/Files/CIPCode2020.csv",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "license_open": true,
+      "grain": "CIP code",
+      "entity": "major",
+      "join_keys": [
+        "cip_code"
+      ],
+      "coverage": {
+        "latest": "2020"
+      },
+      "dictionary": "https://nces.ed.gov/ipeds/cipcode/",
+      "format": "csv",
+      "path": "sources/ipeds/CIPCode2020.csv",
+      "maps_to": {
+        "unipaith_entity": "major",
+        "sections": [
+          "canonical major taxonomy + human-readable field names/definitions"
+        ]
+      },
+      "size_bytes": 1099448,
+      "rows": 2848,
+      "columns": 8,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "ipeds-complete-data-files",
+      "title": "IPEDS Complete Data Files (Directory, Admissions, Enrollment, Completions, Finance, HR)",
+      "publisher": "U.S. Dept of Education — NCES",
+      "category": "ipeds",
+      "source_url": "https://nces.ed.gov/ipeds/use-the-data/download-access-database",
+      "download_url": "https://nces.ed.gov/ipeds/datacenter/  (per-survey CSV zips; full-year Access DB: tablefiles/zipfiles/IPEDS_YYYY-YY_Final.zip)",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "license_open": true,
+      "grain": "institution (per-survey)",
+      "entity": "institution",
+      "join_keys": [
+        "UNITID"
+      ],
+      "coverage": {
+        "panel_years": "1980-2024"
+      },
+      "dictionary": "embedded varlist/Frequencies tables per survey file",
+      "format": "zipped CSV / MS Access",
+      "est_size": "per-survey ~1-30 MB; full year ~150-400 MB",
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "admissions funnel (applied/admitted/enrolled, test bands)",
+          "report-card stats (selectivity, retention)",
+          "quick facts (enrollment, faculty, finance)"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "urban-education-data-portal-ipeds",
+      "title": "Urban Institute Education Data Portal — IPEDS (clean REST API)",
+      "publisher": "Urban Institute",
+      "category": "ipeds",
+      "source_url": "https://educationdata.urban.org/documentation/colleges.html",
+      "download_url": "https://educationdata.urban.org/api/v1/college-university/ipeds/  (paginated JSON; CSV export)",
+      "license": "Open / free for non-commercial + commercial use with attribution (Urban Institute terms)",
+      "license_open": true,
+      "grain": "institution / program (harmonized IPEDS)",
+      "entity": "institution",
+      "join_keys": [
+        "unitid"
+      ],
+      "coverage": {
+        "panel_years": "1980-2022"
+      },
+      "dictionary": "https://educationdata.urban.org/documentation/colleges.html",
+      "format": "REST API + CSV",
+      "est_size": "API (per-slice KB-MB)",
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "developer-friendly IPEDS ingestion path for admissions/enrollment/completions"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "carnegie-classification-2025",
+      "title": "Carnegie Classifications 2025 — Institutional Classification + Student Access & Earnings",
+      "publisher": "American Council on Education (ACE) + Carnegie Foundation",
+      "category": "rankings",
+      "source_url": "https://carnegieclassifications.acenet.edu/",
+      "download_url": "https://carnegieclassifications.acenet.edu/wp-content/uploads/2025/04/2025-Public-Data-File.xlsx",
+      "license": "Free public data file; attribution requested (verify reuse terms before redistribution)",
+      "license_open": true,
+      "grain": "institution",
+      "entity": "institution",
+      "join_keys": [
+        "UNITID"
+      ],
+      "coverage": {
+        "latest": "2025"
+      },
+      "dictionary": "https://carnegieclassifications.acenet.edu/",
+      "format": "xlsx",
+      "path": "sources/rankings/Carnegie2025_Public_Data_File.xlsx",
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "distinction (Carnegie type, e.g. 'R1: very high research')",
+          "quick facts"
+        ]
+      },
+      "size_bytes": 2296979,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "carnegie-2025-research-activity-designation",
+      "title": "Carnegie 2025 Research Activity Designation (RAD)",
+      "publisher": "American Council on Education (ACE) + Carnegie Foundation",
+      "category": "rankings",
+      "source_url": "https://carnegieclassifications.acenet.edu/",
+      "download_url": "https://carnegieclassifications.acenet.edu/wp-content/uploads/2025/02/2025-RAD-Public-Data-File.xlsx",
+      "license": "Public data file; redistribution terms unclear — treat as reference (verify before storing)",
+      "license_open": false,
+      "grain": "institution",
+      "entity": "institution",
+      "join_keys": [
+        "UNITID"
+      ],
+      "coverage": {
+        "latest": "2025"
+      },
+      "dictionary": "https://carnegieclassifications.acenet.edu/",
+      "format": "xlsx",
+      "est_size": "~1-2 MB",
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "distinction (research-intensity badge)"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "cwur-world-university-rankings",
+      "title": "CWUR — Center for World University Rankings (Global 2000)",
+      "publisher": "Center for World University Rankings",
+      "category": "rankings",
+      "source_url": "https://cwur.org/",
+      "download_url": "https://cwur.org/2025.php  (HTML table; no official file/API)",
+      "license": "Proprietary — display permitted, redistribution NOT permitted without license",
+      "license_open": false,
+      "grain": "institution (world/national rank)",
+      "entity": "institution",
+      "join_keys": [
+        "institution_name"
+      ],
+      "coverage": {
+        "latest": "2025"
+      },
+      "dictionary": null,
+      "format": "HTML table",
+      "est_size": "~2000 rows",
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "rankings section — ONLY under a negotiated license"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "grants-gov-opportunities-api",
+      "title": "Grants.gov Opportunities (Search2 + fetchOpportunity REST API)",
+      "publisher": "U.S. Grants.gov (HHS)",
+      "category": "scholarships",
+      "source_url": "https://www.grants.gov/web/grants/s2s/grantor/web-services.html",
+      "download_url": "https://api.grants.gov/v1/api/search2  (REST POST; paginated JSON)",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "license_open": true,
+      "grain": "grant opportunity",
+      "entity": "grant",
+      "join_keys": [
+        "opportunity_id",
+        "cfda_number"
+      ],
+      "coverage": {
+        "latest": "live"
+      },
+      "dictionary": "https://www.grants.gov/system-to-system/grantor-system-to-system/web-services",
+      "format": "REST API",
+      "est_size": "API",
+      "maps_to": {
+        "unipaith_entity": "aid",
+        "sections": [
+          "funding catalog (eligibility/award fields)"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "usaspending-assistance-awards",
+      "title": "USAspending.gov Federal Financial Assistance Awards",
+      "publisher": "U.S. Treasury (USAspending.gov)",
+      "category": "scholarships",
+      "source_url": "https://www.usaspending.gov/",
+      "download_url": "https://api.usaspending.gov/api/v2/search/spending_by_award/  (REST; bulk CSV archive available)",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "license_open": true,
+      "grain": "award (CFDA x recipient)",
+      "entity": "grant",
+      "join_keys": [
+        "cfda_number",
+        "recipient_uei"
+      ],
+      "coverage": {
+        "panel_years": "2008-present"
+      },
+      "dictionary": "https://api.usaspending.gov/docs/endpoints",
+      "format": "REST API + CSV",
+      "est_size": "filtered by CFDA family = tractable; full = multi-GB",
+      "maps_to": {
+        "unipaith_entity": "aid",
+        "sections": [
+          "who-funds-what evidence by institution"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "fsa-title-iv-program-volume",
+      "title": "Title IV Program Volume by School (Pell, TEACH, Direct Loan)",
+      "publisher": "U.S. Dept of Education — Federal Student Aid",
+      "category": "scholarships",
+      "source_url": "https://studentaid.gov/data-center/student/title-iv",
+      "download_url": "https://studentaid.gov/data-center/student/title-iv  (quarterly XLS/XLSX)",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "license_open": true,
+      "grain": "institution",
+      "entity": "institution",
+      "join_keys": [
+        "OPEID"
+      ],
+      "coverage": {
+        "latest": "quarterly"
+      },
+      "dictionary": null,
+      "format": "xls/xlsx",
+      "est_size": "few MB per quarter",
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "affordability/aid context (Pell volume) — joins on OPEID"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "nassgap-state-aid-survey",
+      "title": "NASSGAP Annual Survey of State-Sponsored Student Financial Aid",
+      "publisher": "NASSGAP",
+      "category": "scholarships",
+      "source_url": "https://www.nassgapsurvey.com/",
+      "download_url": "https://www.nassgapsurvey.com/survey_reports/  (XLSX history tables + annual PDF)",
+      "license": "Public survey reports; attribution requested",
+      "license_open": true,
+      "grain": "state x program",
+      "entity": "aid",
+      "join_keys": [
+        "state"
+      ],
+      "coverage": {
+        "latest": "2023-2024 (55th)"
+      },
+      "dictionary": null,
+      "format": "xlsx + pdf",
+      "est_size": "<5 MB",
+      "maps_to": {
+        "unipaith_entity": "aid",
+        "sections": [
+          "per-state need/merit grant context"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "sam-gov-assistance-listings-cfda",
+      "title": "SAM.gov Assistance Listings (formerly CFDA) — federal program catalog",
+      "publisher": "U.S. GSA (SAM.gov)",
+      "category": "scholarships",
+      "source_url": "https://sam.gov/content/assistance-listings",
+      "download_url": "https://s3.amazonaws.com/falextracts/Assistance%20Listings/datagov/AssistanceListings_DataGov_PUBLIC_CURRENT.csv",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "license_open": true,
+      "grain": "federal assistance program (CFDA)",
+      "entity": "grant",
+      "join_keys": [
+        "cfda_number"
+      ],
+      "coverage": {
+        "latest": "current (~2,300 programs)"
+      },
+      "dictionary": "https://sam.gov/content/assistance-listings",
+      "format": "csv",
+      "path": "sources/scholarships/SAM_AssistanceListings_CFDA.csv",
+      "maps_to": {
+        "unipaith_entity": "aid",
+        "sections": [
+          "the CFDA join dictionary: human-readable program objectives/eligibility"
+        ]
+      },
+      "size_bytes": 8946084,
+      "rows": 8157,
+      "columns": 40,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "ice-sevis-data-mapping-tool",
+      "title": "SEVIS by the Numbers — Data Mapping Tool (international student counts)",
+      "publisher": "U.S. ICE / DHS (Study in the States)",
+      "category": "international",
+      "source_url": "https://studyinthestates.dhs.gov/sevis-data-mapping-tool",
+      "download_url": "https://studyinthestates.dhs.gov/sevis-data-mapping-tool  (CSV/Excel export per view)",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "license_open": true,
+      "grain": "country x state / field aggregate",
+      "entity": "international_flow",
+      "join_keys": [
+        "origin_country",
+        "state"
+      ],
+      "coverage": {
+        "latest": "2025"
+      },
+      "dictionary": null,
+      "format": "csv/xlsx + pdf",
+      "est_size": "KB-low MB (aggregates)",
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "international/diversity context"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "iie-open-doors",
+      "title": "IIE Open Doors — international educational exchange",
+      "publisher": "Institute of International Education (IIE)",
+      "category": "international",
+      "source_url": "https://opendoorsdata.org/",
+      "download_url": "https://opendoorsdata.org/data/  (XLSX per table)",
+      "license": "Proprietary — display/citation permitted; redistribution restricted (verify)",
+      "license_open": false,
+      "grain": "country / field aggregate",
+      "entity": "international_flow",
+      "join_keys": [
+        "origin_country",
+        "field_of_study"
+      ],
+      "coverage": {
+        "panel_years": "~25 years"
+      },
+      "dictionary": null,
+      "format": "xlsx",
+      "est_size": "KB-low MB",
+      "maps_to": {
+        "unipaith_entity": "program",
+        "sections": [
+          "international students by field — reference under license"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "unesco-uis-education",
+      "title": "UNESCO Institute for Statistics (UIS) — Education Bulk Data (SDG4 + OPRI)",
+      "publisher": "UNESCO Institute for Statistics",
+      "category": "international",
+      "source_url": "https://uis.unesco.org/bdds",
+      "download_url": "https://download.uis.unesco.org/bdds/  (SDG.zip etc.; also REST + SDMX API)",
+      "license": "CC BY-SA 3.0 IGO",
+      "license_open": true,
+      "grain": "country x year x indicator",
+      "entity": "country",
+      "join_keys": [
+        "iso3_country",
+        "year"
+      ],
+      "coverage": {
+        "panel_years": "1970-present"
+      },
+      "dictionary": "https://uis.unesco.org/",
+      "format": "csv bulk + API",
+      "est_size": "tens-hundreds MB bulk",
+      "maps_to": {
+        "unipaith_entity": "country",
+        "sections": [
+          "home-country education context for international students"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "worldbank-edstats",
+      "title": "World Bank Education Statistics (EdStats) — Data360",
+      "publisher": "World Bank",
+      "category": "international",
+      "source_url": "https://datatopics.worldbank.org/education/",
+      "download_url": "https://data360api.worldbank.org/data360/data?DATABASE_ID=WB_EDSTATS  (also api.worldbank.org/v2 source 12)",
+      "license": "Creative Commons Attribution 4.0 (CC BY 4.0)",
+      "license_open": true,
+      "grain": "country x year x indicator",
+      "entity": "country",
+      "join_keys": [
+        "iso3_country",
+        "year"
+      ],
+      "coverage": {
+        "panel_years": "1970-present"
+      },
+      "dictionary": "https://datacatalog.worldbank.org/search/dataset/0038480",
+      "format": "REST API + CSV",
+      "est_size": "indicator CSV tens of MB",
+      "maps_to": {
+        "unipaith_entity": "country",
+        "sections": [
+          "home-country education context (preferred open source)"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "world-universities-and-domains",
+      "title": "World Universities and Domains List (Hipolabs)",
+      "publisher": "Hipolabs (open-source community)",
+      "category": "international",
+      "source_url": "https://github.com/Hipo/university-domains-list",
+      "download_url": "https://raw.githubusercontent.com/Hipo/university-domains-list/master/world_universities_and_domains.json",
+      "license": "MIT (open)",
+      "license_open": true,
+      "grain": "institution (global)",
+      "entity": "institution",
+      "join_keys": [
+        "domain",
+        "name",
+        "alpha_two_code"
+      ],
+      "coverage": {
+        "latest": "rolling (~10k institutions, 200+ countries)"
+      },
+      "dictionary": "https://github.com/Hipo/university-domains-list",
+      "format": "json",
+      "path": "sources/international/world_universities_and_domains.json",
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "global institution registry; detect prior school/country from email domain"
+        ]
+      },
+      "size_bytes": 2248412,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "wikidata-universities",
+      "title": "Wikidata — Global University Registry (SPARQL, IPEDS-keyed)",
+      "publisher": "Wikimedia Foundation (Wikidata)",
+      "category": "international",
+      "source_url": "https://query.wikidata.org/",
+      "download_url": "https://query.wikidata.org/sparql  (scoped SPARQL; JSON/CSV)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "license_open": true,
+      "grain": "institution (global)",
+      "entity": "institution",
+      "join_keys": [
+        "wikidata_qid",
+        "ipeds_unitid",
+        "ror_id"
+      ],
+      "coverage": {
+        "latest": "live (~13k university items)"
+      },
+      "dictionary": "https://www.wikidata.org/wiki/Wikidata:List_of_properties",
+      "format": "SPARQL (JSON/CSV)",
+      "est_size": "scoped query ~few MB",
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "non-US institution backbone; UNITID/ROR crosswalk; quick facts (founded, website, logo)"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    },
+    {
+      "id": "opportunity-insights-mobility-report-cards",
+      "title": "Opportunity Insights — College Mobility Report Cards",
+      "publisher": "Opportunity Insights (Harvard)",
+      "category": "outcomes",
+      "source_url": "https://opportunityinsights.org/data/",
+      "download_url": "https://opportunityinsights.org/wp-content/uploads/2018/03/mrc_table1.csv",
+      "license": "Open for research use with citation (Opportunity Insights terms)",
+      "license_open": true,
+      "grain": "institution (~2,200 colleges)",
+      "entity": "institution",
+      "join_keys": [
+        "super_opeid",
+        "name"
+      ],
+      "coverage": {
+        "latest": "cohorts ~1980-1991 births"
+      },
+      "dictionary": "https://opportunityinsights.org/wp-content/uploads/2018/03/Codebook-MRC-Table-1.pdf",
+      "format": "csv",
+      "path": "sources/outcomes/OpportunityInsights_mrc_table1.csv",
+      "maps_to": {
+        "unipaith_entity": "institution",
+        "sections": [
+          "outcomes/ROI: economic-mobility metric (value-add)"
+        ]
+      },
+      "size_bytes": 328417,
+      "rows": 2202,
+      "columns": 15,
+      "status": "downloaded",
+      "committed": false
+    },
+    {
+      "id": "census-acs-s1501-educational-attainment",
+      "title": "Census ACS Subject Table S1501 — Educational Attainment by geography",
+      "publisher": "U.S. Census Bureau",
+      "category": "geo",
+      "source_url": "https://data.census.gov/",
+      "download_url": "https://api.census.gov/data/2022/acs/acs5/subject?get=group(S1501)&for=county:*  (free key)",
+      "license": "U.S. Government work — public domain (17 U.S.C. 105)",
+      "license_open": true,
+      "grain": "geography (state/county/place) x year",
+      "entity": "geo",
+      "join_keys": [
+        "fips"
+      ],
+      "coverage": {
+        "latest": "ACS 5-year 2022"
+      },
+      "dictionary": "https://api.census.gov/data/2022/acs/acs5/subject/groups/S1501.html",
+      "format": "REST API + flat files",
+      "est_size": "API (per-slice KB-MB)",
+      "maps_to": {
+        "unipaith_entity": "geo",
+        "sections": [
+          "institution locale/context; geographic-fit grounding (FIPS join)"
+        ]
+      },
+      "status": "available",
+      "size_bytes": null
+    }
+  ]
+}

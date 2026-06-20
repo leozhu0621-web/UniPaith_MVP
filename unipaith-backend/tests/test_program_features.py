@@ -27,6 +27,11 @@ class _StubProgram:
     description_text: str | None = None
     degree_type: str | None = None
     tuition: int | None = None
+    # AI Structure round-3 typed-fit attributes (real Program columns).
+    duration_months: int | None = None
+    delivery_format: str | None = None
+    cip_code: str | None = None
+    is_claimed: bool = False
     feature_vector_sparse: dict | None = None
     institution: Any = None
 
@@ -67,6 +72,39 @@ def test_education_level_mapping_phd_to_doctoral() -> None:
     row = ProgramRow(id="p1", degree="PhD-CS")
     f = features_from_row(row)
     assert f.sparse["target_education_level"] == "doctoral"
+
+
+# ── full-word degree_type (the enrichment fleet writes words, not BS/MS/PhD) ──
+# Backend-alignment audit gap #3: features_from_row must resolve full words so the
+# s→p degree fit + veto fire on live enriched programs (mirrors derive_preferences).
+def test_education_level_full_word_bachelors() -> None:
+    assert (
+        features_from_row(ProgramRow(id="p", degree="bachelors")).sparse["target_education_level"]
+        == "bachelors"
+    )
+
+
+def test_education_level_full_word_masters() -> None:
+    assert (
+        features_from_row(ProgramRow(id="p", degree="masters")).sparse["target_education_level"]
+        == "masters"
+    )
+
+
+def test_education_level_full_word_phd() -> None:
+    assert (
+        features_from_row(ProgramRow(id="p", degree="phd")).sparse["target_education_level"]
+        == "doctoral"
+    )
+
+
+def test_education_level_full_word_professional() -> None:
+    assert (
+        features_from_row(ProgramRow(id="p", degree="professional")).sparse[
+            "target_education_level"
+        ]
+        == "professional"
+    )
 
 
 def test_education_level_mapping_bfa_to_bachelors() -> None:
@@ -201,3 +239,88 @@ def test_program_row_from_orm_handles_missing_optional_attrs() -> None:
     row = program_row_from_orm(_MinimalProgram())
     assert row.name == "minimal"
     assert row.data_completeness == 0.5
+
+
+# ── AI Structure round-3: typed-fit program-side projection (Spec 3 §3) ──────
+# These assert the dormant s→p signal keys now get populated FROM REAL ORM
+# COLUMNS, and stay gated (absent column → omitted key → no phantom signal).
+
+
+def test_features_from_row_emits_round3_keys_when_present() -> None:
+    row = ProgramRow(
+        id="p",
+        name="MS Data Science",
+        duration_months=24,
+        online_available=True,
+        fields_offered=["data_science"],
+        support_signals={"career_services": 0.6},
+    )
+    f = features_from_row(row)
+    assert f.sparse["duration_months"] == 24
+    assert f.sparse["online_available"] is True
+    assert f.sparse["fields_offered"] == ["data_science"]
+    # career_services derived from the evidence-based support_signals.
+    assert f.sparse["career_services"] is True
+
+
+def test_features_from_row_omits_round3_keys_when_absent() -> None:
+    """A bare row injects NO phantom dimension — each gated key stays absent."""
+    row = ProgramRow(id="p", name="Mystery Program")
+    f = features_from_row(row)
+    assert "duration_months" not in f.sparse
+    assert "online_available" not in f.sparse
+    assert "career_services" not in f.sparse
+    # 'Mystery Program' classifies to no canonical field and there is no CIP.
+    assert "fields_offered" not in f.sparse
+
+
+def test_features_from_row_derives_fields_offered_from_name() -> None:
+    row = ProgramRow(id="p", name="Master of Public Health")
+    f = features_from_row(row)
+    assert f.sparse["fields_offered"] == ["public_health"]
+
+
+def test_program_row_from_orm_reads_duration_delivery_cip() -> None:
+    p = _StubProgram(
+        id=uuid4(),
+        program_name="MS in Data Science",
+        degree_type="masters",
+        duration_months=24,
+        delivery_format="online",
+        cip_code="11.07",
+    )
+    row = program_row_from_orm(p)
+    assert row.duration_months == 24
+    assert row.online_available is True  # online delivery → available
+    assert row.cip_code == "11.07"
+
+
+def test_program_row_from_orm_in_person_delivery_is_not_online() -> None:
+    p = _StubProgram(id=uuid4(), program_name="x", delivery_format="in_person")
+    row = program_row_from_orm(p)
+    assert row.online_available is False
+
+
+def test_program_row_from_orm_missing_delivery_leaves_online_none() -> None:
+    """No delivery_format → online_available stays None (no fabricated False that
+    would falsely fail a student's online want)."""
+    p = _StubProgram(id=uuid4(), program_name="x")
+    row = program_row_from_orm(p)
+    assert row.online_available is None
+
+
+def test_program_row_from_orm_claimed_program_lifts_completeness() -> None:
+    """A claimed (first-party) program gets a higher c_program floor than an
+    identical unclaimed one (Spec 2 claim hinge)."""
+    claimed = _StubProgram(id=uuid4(), program_name="x", is_claimed=True)
+    unclaimed = _StubProgram(id=uuid4(), program_name="x", is_claimed=False)
+    assert program_row_from_orm(claimed).data_completeness >= 0.9
+    assert program_row_from_orm(unclaimed).data_completeness < 0.9
+
+
+def test_program_row_from_orm_fields_offered_from_cip_when_name_unclassified() -> None:
+    p = _StubProgram(id=uuid4(), program_name="Program 7", cip_code="11.01")
+    row = program_row_from_orm(p)
+    f = features_from_row(row)
+    # name doesn't classify; CIP family 11 → computer_science fallback.
+    assert f.sparse["fields_offered"] == ["computer_science"]

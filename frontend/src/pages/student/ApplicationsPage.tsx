@@ -83,76 +83,96 @@ function bucketOf(app: Application): Bucket {
   }
 }
 
-/** Human "Next: <action>" string for a row (spec 15 §2). */
-function nextAction(app: Application): string {
-  const b = bucketOf(app)
+type RowModel = {
+  bucket: Bucket
+  label: string
+  action: { label: string; href: string } | null
+  href: string
+  score: number
+}
+
+/** ONE source of truth per row — bucket + offer state derived once, then the
+ *  human "Next:" label, the single inline action, the card-click destination,
+ *  and the ★ Next-actions priority score all read from the same derivation.
+ *
+ *  The `href` (card-click) now follows `action`: it lands on the Offer tab when
+ *  there's an offer to read, the checklist tab when there's a checklist action,
+ *  else the detail page — so a row's card-click and its inline button can no
+ *  longer disagree.
+ *
+ *  Every action target is one UniPaith owns: Resume + Submit open the checklist
+ *  tab where those gated flows live (submit blockers, the fee-clear gate, and
+ *  the Spec 39 checkout); View offer is inform-only — the school owns
+ *  accept/decline, so the row only routes you to READ the terms. `action` is
+ *  null when the next move isn't ours (under review, a final decision with no
+ *  offer to read). */
+function rowModel(app: Application): RowModel {
+  const bucket = bucketOf(app)
   const pct = app.readiness_pct ?? 0
-  switch (b) {
+
+  // label — human "Next: <action>" string (spec 15 §2).
+  let label: string
+  switch (bucket) {
     case 'ready':
-      return 'Ready now — submit your application'
+      label = 'Ready now — submit your application'
+      break
     case 'in_progress':
-      return `Finish your checklist (${pct}%)`
+      label = `Finish your checklist (${pct}%)`
+      break
     case 'not_started':
-      return 'Start your checklist'
+      label = 'Start your checklist'
+      break
     case 'submitted':
-      return 'Submitted — awaiting review'
+      label = 'Submitted — awaiting review'
+      break
     case 'under_review':
-      return app.status === 'interview' ? 'Prepare for your interview' : 'Under review'
+      label = app.status === 'interview' ? 'Prepare for your interview' : 'Under review'
+      break
     case 'decided':
       if (hasPendingOfferResponse(app)) {
         const school = app.program?.institution_name
-        return school ? `Respond to ${school}'s offer` : 'Respond to the offer'
+        label = school ? `Respond to ${school}'s offer` : 'Respond to the offer'
+      } else {
+        label = `Decision: ${app.decision ?? app.decision_state ?? 'received'}`
       }
-      return `Decision: ${app.decision ?? app.decision_state ?? 'received'}`
+      break
   }
-}
 
-function appHref(app: Application): string {
-  if (hasPendingOfferResponse(app) || app.offer) return `/s/applications/${app.id}?tab=offer`
-  return `/s/applications/${app.id}`
-}
-
-/** The one inline action a row offers — derived from the same bucket/offer
- *  logic as nextAction, mapped to a real owned destination. Every target is an
- *  action UniPaith owns: Resume + Submit + Pay fee open the checklist tab where
- *  those gated flows live (submit blockers, the fee-clear gate, and the Spec 39
- *  checkout); View offer is inform-only — the school owns accept/decline, so the
- *  row only routes you to read the terms. Returns null when the next move isn't
- *  ours (under review, a final decision with no offer to read). */
-function rowAction(app: Application): { label: string; href: string } | null {
-  if (hasPendingOfferResponse(app) || (bucketOf(app) === 'decided' && app.offer))
-    return { label: 'View offer', href: `/s/applications/${app.id}?tab=offer` }
-  switch (bucketOf(app)) {
-    case 'ready':
-      // Submit + any outstanding fee both resolve on the checklist tab.
-      return { label: 'Submit', href: `/s/applications/${app.id}?tab=checklist` }
-    case 'in_progress':
-      return { label: 'Resume', href: `/s/applications/${app.id}?tab=checklist` }
-    case 'not_started':
-      return { label: 'Start', href: `/s/applications/${app.id}?tab=checklist` }
-    default:
-      return null
+  // action — the one inline affordance a row offers.
+  const hasOfferToRead = hasPendingOfferResponse(app) || (bucket === 'decided' && !!app.offer)
+  let action: { label: string; href: string } | null
+  if (hasOfferToRead) {
+    action = { label: 'View offer', href: `/s/applications/${app.id}?tab=offer` }
+  } else if (bucket === 'ready') {
+    action = { label: 'Submit', href: `/s/applications/${app.id}?tab=checklist` }
+  } else if (bucket === 'in_progress') {
+    action = { label: 'Resume', href: `/s/applications/${app.id}?tab=checklist` }
+  } else if (bucket === 'not_started') {
+    action = { label: 'Start', href: `/s/applications/${app.id}?tab=checklist` }
+  } else {
+    action = null
   }
-}
 
-/** Priority score for the ★ Next actions rail — higher = more urgent. */
-function actionScore(app: Application): number {
-  const b = bucketOf(app)
+  // href — card-click follows the action so the two can never diverge.
+  const href = action ? action.href : `/s/applications/${app.id}`
+
+  // score — priority for the ★ Next actions rail; higher = more urgent.
   const d = daysUntil(app.program?.application_deadline)
   const offerDays = daysUntil(app.offer?.response_deadline)
   let score = 0
-  if (b === 'ready') score += 100
+  if (bucket === 'ready') score += 100
   if (hasPendingOfferResponse(app)) {
     score += 95
     if (offerDays != null && offerDays >= 0 && offerDays <= 14) score += 40 - offerDays
-  } else if (b === 'decided' && app.decision === 'admitted' && app.offer?.status !== 'accepted')
+  } else if (bucket === 'decided' && app.decision === 'admitted' && app.offer?.status !== 'accepted')
     score += 90
   if (app.status === 'interview') score += 80
-  if (b === 'in_progress') score += 40
+  if (bucket === 'in_progress') score += 40
   if (d != null && d >= 0 && d <= 14) score += 30 - d // deadline pressure
-  if (d != null && d < 0 && (b === 'not_started' || b === 'in_progress' || b === 'ready'))
+  if (d != null && d < 0 && (bucket === 'not_started' || bucket === 'in_progress' || bucket === 'ready'))
     score += 25 // overdue & not yet submitted
-  return score
+
+  return { bucket, label, action, href, score }
 }
 
 export default function ApplicationsPage() {
@@ -233,7 +253,13 @@ export default function ApplicationsPage() {
   }, [apps])
 
   const topActions = useMemo(
-    () => [...apps].sort((a, b) => actionScore(b) - actionScore(a)).filter(a => actionScore(a) > 0).slice(0, 3),
+    () =>
+      apps
+        .map(a => ({ app: a, score: rowModel(a).score }))
+        .filter(x => x.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3)
+        .map(x => x.app),
     [apps],
   )
 
@@ -490,16 +516,17 @@ export default function ApplicationsPage() {
           <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground mb-3">Next actions</h2>
           <div className="space-y-2">
             {topActions.map(a => {
+              const rm = rowModel(a)
               const d = daysUntil(a.program?.application_deadline)
               return (
                 <button
                   key={a.id}
-                  onClick={() => navigate(appHref(a))}
+                  onClick={() => navigate(rm.href)}
                   className="w-full flex items-center gap-2 text-left text-sm hover:bg-muted rounded-lg px-2 py-1.5"
                 >
                   <Star size={14} className="text-secondary flex-shrink-0" fill="currentColor" />
                   <span className="flex-1 min-w-0 truncate text-foreground">
-                    {nextAction(a)} — <span className="text-foreground">{a.program?.program_name}</span>
+                    {rm.label} — <span className="text-foreground">{a.program?.program_name}</span>
                   </span>
                   {d != null && d >= 0 && d <= 30 && (
                     <span className={`text-xs flex-shrink-0 ${DEADLINE_TONE_CLASS[deadlineTone(d)]}`}>
@@ -586,11 +613,11 @@ export default function ApplicationsPage() {
             const offerTone = deadlineTone(offerDays)
             const isDraft = app.status === 'draft'
             const pendingOffer = hasPendingOfferResponse(app)
-            const action = rowAction(app)
+            const rm = rowModel(app)
             return (
               <Card pad={false}
                 key={app.id}
-                onClick={() => navigate(appHref(app))}
+                onClick={() => navigate(rm.href)}
                 className="p-4 hover:shadow-sm transition-shadow cursor-pointer"
               >
                 <div className="flex justify-between items-start gap-3">
@@ -603,7 +630,7 @@ export default function ApplicationsPage() {
                     )}
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
                       <Badge variant={(STATUS_COLORS[app.status] || 'neutral') as never}>
-                        {BUCKET_LABELS[bucketOf(app)]}
+                        {BUCKET_LABELS[rm.bucket]}
                       </Badge>
                       {app.submission_mode === 'external' && (
                         <Badge variant="neutral">External</Badge>
@@ -637,21 +664,21 @@ export default function ApplicationsPage() {
                     {/* The next step is the button now; keep the prose line only
                         where the next move isn't ours to act on (under review, a
                         final decision with no offer to read). */}
-                    {!action && (
-                      <p className="text-xs text-muted-foreground mt-2">Next: {nextAction(app)}</p>
+                    {!rm.action && (
+                      <p className="text-xs text-muted-foreground mt-2">Next: {rm.label}</p>
                     )}
                     {app.submitted_at && (
                       <p className="text-[11px] text-muted-foreground mt-1">Submitted {formatDate(app.submitted_at)}</p>
                     )}
                   </div>
-                  {action ? (
+                  {rm.action ? (
                     <Button
                       size="sm"
                       variant="secondary"
                       className="flex-shrink-0"
-                      onClick={e => { e.stopPropagation(); navigate(action.href) }}
+                      onClick={e => { e.stopPropagation(); navigate(rm.action!.href) }}
                     >
-                      {action.label}
+                      {rm.action.label}
                     </Button>
                   ) : (
                     <span className="text-xs text-secondary font-medium flex-shrink-0 inline-flex items-center gap-0.5">

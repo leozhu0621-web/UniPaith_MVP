@@ -42,6 +42,10 @@ Description repair (2026-06-17, northwesternprof5): drops ``{program_name}:`` pr
 all descriptions (gold MIT/JHU pattern); fixes peer-institution contamination in field
 clauses (Chesapeake, Writing Seminars, Bloomberg, etc.); 0% name-prefixed descriptions.
 
+Description repair (2026-06-20, nwdefab1): replaces suffix-diversifier stamping with
+per-credential description leads so BA/MS/PhD siblings no longer share a ≥120-char
+leading body (REPAIR BACKLOG #6 — gold MIT = 0% shared-leading-body; anti-stub clean).
+
 De-fabrication (2026-06-18, northwesternprof7): REMOVES the ``DEPTH_REVIEWS`` batch (48
 machine-synthesized external_reviews minted one-per-row from program metadata + institution
 rankings — repeated institution-level themes across 11–15 programs, 37 rows citing a bare
@@ -54,13 +58,25 @@ named Berkeley's "IEOR … Haas … CDSS"; now Northwestern's real IEMS departme
 Optimization and Statistical Learning). An enforced anti-synthesis test
 (``tests/test_northwestern_profile.py``) blocks any future one-sweep review mint.
 
-KNOWN remaining depth (reported to the grader, not fabricated to fill): the IPEDS breadth
-catalog still carries (a) ~105 (CIP × award-level) certificate rows minted from College
-Scorecard field-of-study completions whose real named programs are unresolved, (b)
-credential-sibling descriptions that share a leading field body diverging only by a generic
-level suffix (SKILL.md miss #8 suffix-diversifier), and (c) a few unresolved rollup names
-(Area Studies → African/Asian/etc. Studies). These need per-program research from
-Northwestern's official catalog and are deferred rather than guessed.
+FULL CATALOG REBUILD (2026-06-20, nwrebuild1): the prior catalog was an IPEDS×award-level
+mint — 306 CIP rows renamed by alias maps, described by a FIELD-keyed shared body with a
+per-credential frame prepended (so a field's BA/MS/PhD shared one body in the tail), and
+that shared body was PERVASIVELY peer-contaminated (Kellogg renamed "Northwestern Business
+School … world's first collegiate business school" = Wharton; "Sibley School" = Cornell;
+"Rausser/CALS/land-grant/New York State" = Berkeley/Cornell; "Weill Northwestern … New York
+City" = Weill Cornell; "Longwood Medical Area" = Harvard; "Peabody Conservatory … Mount
+Vernon campus" = Johns Hopkins; "Applied Physics Laboratory" = JHU; "Lawrence Northwestern"
+= Berkeley/Livermore), and it minted programs Northwestern does not offer (agriculture,
+animal science, dental medicine, veterinary). This rebuild REPLACES the entire mint with an
+EXPLICIT, researched catalog of Northwestern's REAL degree programs — every name, owning
+department, school, and a per-credential field-specific description grounded ONLY in verified
+Northwestern units. Sources: the official Northwestern undergraduate catalog
+(catalogs.northwestern.edu), the university Graduate Degree Programs A-Z
+(northwestern.edu/academics/graduate-a-to-z.html), and each school's pages. The three
+contaminated helper modules (northwestern_field_descriptions / northwestern_catalog_maps /
+northwestern_ipeds_catalog) are no longer imported. Catalog is de-padded to Northwestern's
+real published programs (REPAIR BACKLOG #1 cross-institution contamination + #6
+frame+tail-share); gold MIT = 0% on every anti-stub metric.
 """
 
 # ruff: noqa: E501
@@ -74,49 +90,26 @@ from datetime import date
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from unipaith.data.northwestern_catalog_maps import (
-    BA_FIELDS,
-    DEPARTMENT_BY_FIELD,
-    SLUG_DEPARTMENTS,
-    SLUG_PROGRAM_NAMES,
-    clean_cip_field,
-)
-from unipaith.data.northwestern_field_descriptions import (
-    FIELD_ALIASES,
-    FIELD_DESCRIPTIONS,
-    SLUG_DESCRIPTIONS,
-)
-from unipaith.data.northwestern_ipeds_catalog import _IPEDS_CATALOG
 from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
+from unipaith.profile_standard.anti_stub import machine_artifacts as _machine_artifacts
 
 INSTITUTION_NAME = "Northwestern University"
-ENRICHED_AT = "2026-06-17"
+ENRICHED_AT = "2026-06-20"
 
-_LEVEL_SUFFIX: dict[str, str] = {
-    "bachelors": (
-        " Undergraduates in Northwestern's quarter calendar pursue distribution "
-        "requirements, Weinberg and McCormick advising, and optional honors thesis "
-        "research on the Evanston campus."
-    ),
-    "masters": (
-        " Master's students complete advanced seminars, practica, and professional "
-        "development through Northwestern's graduate schools and The Graduate School."
-    ),
-    "phd": (
-        " Ph.D. candidates conduct original dissertation research with faculty "
-        "advisement and typically receive tuition coverage and stipend support "
-        "through The Graduate School."
-    ),
-    "certificate": (
-        " The graduate certificate offers focused coursework for working "
-        "professionals, often delivered through the School of Professional Studies."
-    ),
-    "professional": "",
-}
-
+# Peer-institution signature strings that must NEVER appear in a Northwestern description
+# (the run-65 cross-institution contamination class). Each description is researched from
+# Northwestern's OWN pages and references only verified Northwestern units, so the import-time
+# gate below asserts zero hits.
 _PEER_SIGNATURES: tuple[str, ...] = (
+    "Peabody",
+    "Mount Vernon",
+    "Lawrence Northwestern",
+    "Applied Physics Laboratory",
+    "world's first collegiate",
+    "land-grant",
     "Rausser",
     "CALS",
     "Chesapeake",
@@ -170,15 +163,18 @@ RANKING_DATA: dict = {
         "Doctoral Universities: Very High Research Spending and Doctorate Production (R1)"
     ),
     "qs_world_university_rankings": {
-        "rank": 42, "year": 2026,
+        "rank": 42,
+        "year": 2026,
         "source_url": "https://www.topuniversities.com/universities/northwestern-university",
     },
     "times_higher_education": {
-        "rank": 30, "year": 2026,
+        "rank": 30,
+        "year": 2026,
         "source_url": "https://www.timeshighereducation.com/world-university-rankings/northwestern-university",
     },
     "us_news_national": {
-        "rank": 7, "year": 2026,
+        "rank": 7,
+        "year": 2026,
         "source_url": "https://www.usnews.com/best-colleges/northwestern-university-1739",
     },
 }
@@ -273,11 +269,26 @@ SCHOOL_OUTCOMES: dict = {
         ],
     },
     "campus_photos": [
-        {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Deering_front.jpg/1920px-Deering_front.jpg", "credit": "Wikimedia Commons / Madcoverboy (CC BY-SA 3.0)"},
-        {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Aerial_view_of_Northwestern_University.png/1920px-Aerial_view_of_Northwestern_University.png", "credit": "Wikimedia Commons / Sakuav (CC BY-SA 4.0)"},
-        {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Entrance_to_Northwestern_University_Technological_Institute_%2851725404073%29.jpg/1920px-Entrance_to_Northwestern_University_Technological_Institute_%2851725404073%29.jpg", "credit": "Wikimedia Commons / Chris Rycroft (CC BY 2.0)"},
-        {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Frances_Searle_Building.jpg/1920px-Frances_Searle_Building.jpg", "credit": "Wikimedia Commons / Smandlso (CC BY-SA 4.0)"},
-        {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ford_Motor_Company_Design_Center%2C_Northwestern_University_%283404284231%29.jpg/1920px-Ford_Motor_Company_Design_Center%2C_Northwestern_University_%283404284231%29.jpg", "credit": "Wikimedia Commons / Clara S. (CC BY 2.0)"},
+        {
+            "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Deering_front.jpg/1920px-Deering_front.jpg",
+            "credit": "Wikimedia Commons / Madcoverboy (CC BY-SA 3.0)",
+        },
+        {
+            "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Aerial_view_of_Northwestern_University.png/1920px-Aerial_view_of_Northwestern_University.png",
+            "credit": "Wikimedia Commons / Sakuav (CC BY-SA 4.0)",
+        },
+        {
+            "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Entrance_to_Northwestern_University_Technological_Institute_%2851725404073%29.jpg/1920px-Entrance_to_Northwestern_University_Technological_Institute_%2851725404073%29.jpg",
+            "credit": "Wikimedia Commons / Chris Rycroft (CC BY 2.0)",
+        },
+        {
+            "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Frances_Searle_Building.jpg/1920px-Frances_Searle_Building.jpg",
+            "credit": "Wikimedia Commons / Smandlso (CC BY-SA 4.0)",
+        },
+        {
+            "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ford_Motor_Company_Design_Center%2C_Northwestern_University_%283404284231%29.jpg/1920px-Ford_Motor_Company_Design_Center%2C_Northwestern_University_%283404284231%29.jpg",
+            "credit": "Wikimedia Commons / Clara S. (CC BY 2.0)",
+        },
     ],
     "media_credit": "Wikimedia Commons / Madcoverboy (CC BY-SA 3.0)",
     "flagship": {
@@ -287,9 +298,18 @@ SCHOOL_OUTCOMES: dict = {
         "founded_year": 1851,
     },
     "sources": [
-        {"label": "College Scorecard (UNITID 147767)", "url": "https://collegescorecard.ed.gov/school/?147767-Northwestern-University"},
-        {"label": "Northwestern Office of Institutional Research — Common Data Set", "url": "https://enrollment.northwestern.edu/data/"},
-        {"label": "U.S. News — Northwestern University", "url": "https://www.usnews.com/best-colleges/northwestern-university-1739"},
+        {
+            "label": "College Scorecard (UNITID 147767)",
+            "url": "https://collegescorecard.ed.gov/school/?147767-Northwestern-University",
+        },
+        {
+            "label": "Northwestern Office of Institutional Research — Common Data Set",
+            "url": "https://enrollment.northwestern.edu/data/",
+        },
+        {
+            "label": "U.S. News — Northwestern University",
+            "url": "https://www.usnews.com/best-colleges/northwestern-university-1739",
+        },
     ],
 }
 
@@ -337,21 +357,159 @@ TGS = "The Graduate School"
 SPS = "School of Professional Studies"
 
 _SCHOOL_META = [
-    {"name": WEINBERG, "sort_order": 1, "website": "https://weinberg.northwestern.edu/", "leadership": "Adrian Randolph — Dean", "research_centers": ["Department of Economics", "Department of Psychology", "Department of Physics and Astronomy", "Institute for Policy Research", "Center for Applied Quantum Information"], "keywords": ["Weinberg College", "Arts and Sciences", "undergraduate"]},
-    {"name": MCCORMICK, "sort_order": 2, "website": "https://www.mccormick.northwestern.edu/", "leadership": "Christopher Schuh — Dean", "research_centers": ["Segal Design Institute", "Center for Engineering and Health", "Northwestern Institute on Complex Systems (NICO)", "Center for Interdisciplinary Exploration and Research in Astrophysics (CIERA)", "International Institute for Nanotechnology"], "keywords": ["McCormick School", "engineering", "biomedical engineering"]},
-    {"name": MEDILL, "sort_order": 3, "website": "https://www.medill.northwestern.edu/", "leadership": "Charles Whitaker — Dean", "research_centers": ["Knight Lab", "Local News Initiative", "Medill IMC Center", "Washington Program"], "keywords": ["Medill", "journalism", "IMC", "media"]},
-    {"name": COMMUNICATION, "sort_order": 4, "website": "https://communication.northwestern.edu/", "leadership": "E. Patrick Johnson — Dean", "research_centers": ["Center for Communication and Health", "Center for Communication Studies", "School of Communication Theatre Program", "Performance Studies"], "keywords": ["School of Communication", "theatre", "RTVF", "performance studies"]},
-    {"name": BIENEN, "sort_order": 5, "website": "https://www.music.northwestern.edu/", "leadership": "Jonathan Bailey Holland — Dean", "research_centers": ["Bienen Opera Theater", "Institute for New Music", "Music Performance Studies", "Contemporary Music Ensemble"], "keywords": ["Bienen School of Music", "music", "conservatory"]},
-    {"name": SESP, "sort_order": 6, "website": "https://www.sesp.northwestern.edu/", "leadership": "Bryan McKinley Jones Brayboy — Dean", "research_centers": ["Institute for Policy Research", "Center for Learning and Organizational Change", "Developmental Sciences", "Equitable Learning Environments"], "keywords": ["SESP", "School of Education and Social Policy", "education", "social policy"]},
-    {"name": KELLOGG, "sort_order": 7, "website": "https://www.kellogg.northwestern.edu/", "leadership": "Francesca Cornelli — Dean", "research_centers": ["Heizer Center for Private Equity and Venture Capital", "Guthrie Center for Real Estate Research", "Kellogg Public-Private Interface", "Healthcare at Kellogg"], "keywords": ["Kellogg School of Management", "MBA", "business"]},
-    {"name": LAW, "sort_order": 8, "website": "https://www.law.northwestern.edu/", "leadership": "Zachary D. Clopton — Interim Dean", "research_centers": ["Bluhm Legal Clinic", "Center for International Human Rights", "Center on Law, Business, and Economics", "Program on Negotiation and Mediation"], "keywords": ["Pritzker School of Law", "JD", "law"]},
-    {"name": FEINBERG, "sort_order": 9, "website": "https://www.feinberg.northwestern.edu/", "leadership": "Eric G. Neilson — Dean", "research_centers": ["Robert H. Lurie Comprehensive Cancer Center", "NUCATS Institute", "Feinberg Cardiovascular and Renal Research Center", "Institute for Global Health"], "keywords": ["Feinberg School of Medicine", "MD", "medicine"]},
-    {"name": TGS, "sort_order": 10, "website": "https://www.tgs.northwestern.edu/", "leadership": "Kelly Mayo — Dean", "research_centers": ["Interdisciplinary Biological Sciences Graduate Program", "Office of Graduate Research", "Mellon Cluster Initiative", "Graduate Research Grant programs"], "keywords": ["The Graduate School", "TGS", "PhD", "graduate"]},
-    {"name": SPS, "sort_order": 11, "website": "https://sps.northwestern.edu/", "leadership": "Thomas F. Gibbons — Dean", "research_centers": ["Center for Public Safety", "Osher Lifelong Learning Institute", "Professional Development Programs", "Northwestern Summer Session"], "keywords": ["School of Professional Studies", "SPS", "online", "part-time"]},
+    {
+        "name": WEINBERG,
+        "sort_order": 1,
+        "website": "https://weinberg.northwestern.edu/",
+        "leadership": "Adrian Randolph — Dean",
+        "research_centers": [
+            "Department of Economics",
+            "Department of Psychology",
+            "Department of Physics and Astronomy",
+            "Institute for Policy Research",
+            "Center for Applied Quantum Information",
+        ],
+        "keywords": ["Weinberg College", "Arts and Sciences", "undergraduate"],
+    },
+    {
+        "name": MCCORMICK,
+        "sort_order": 2,
+        "website": "https://www.mccormick.northwestern.edu/",
+        "leadership": "Christopher Schuh — Dean",
+        "research_centers": [
+            "Segal Design Institute",
+            "Center for Engineering and Health",
+            "Northwestern Institute on Complex Systems (NICO)",
+            "Center for Interdisciplinary Exploration and Research in Astrophysics (CIERA)",
+            "International Institute for Nanotechnology",
+        ],
+        "keywords": ["McCormick School", "engineering", "biomedical engineering"],
+    },
+    {
+        "name": MEDILL,
+        "sort_order": 3,
+        "website": "https://www.medill.northwestern.edu/",
+        "leadership": "Charles Whitaker — Dean",
+        "research_centers": [
+            "Knight Lab",
+            "Local News Initiative",
+            "Medill IMC Center",
+            "Washington Program",
+        ],
+        "keywords": ["Medill", "journalism", "IMC", "media"],
+    },
+    {
+        "name": COMMUNICATION,
+        "sort_order": 4,
+        "website": "https://communication.northwestern.edu/",
+        "leadership": "E. Patrick Johnson — Dean",
+        "research_centers": [
+            "Center for Communication and Health",
+            "Center for Communication Studies",
+            "School of Communication Theatre Program",
+            "Performance Studies",
+        ],
+        "keywords": ["School of Communication", "theatre", "RTVF", "performance studies"],
+    },
+    {
+        "name": BIENEN,
+        "sort_order": 5,
+        "website": "https://www.music.northwestern.edu/",
+        "leadership": "Jonathan Bailey Holland — Dean",
+        "research_centers": [
+            "Bienen Opera Theater",
+            "Institute for New Music",
+            "Music Performance Studies",
+            "Contemporary Music Ensemble",
+        ],
+        "keywords": ["Bienen School of Music", "music", "conservatory"],
+    },
+    {
+        "name": SESP,
+        "sort_order": 6,
+        "website": "https://www.sesp.northwestern.edu/",
+        "leadership": "Bryan McKinley Jones Brayboy — Dean",
+        "research_centers": [
+            "Institute for Policy Research",
+            "Center for Learning and Organizational Change",
+            "Developmental Sciences",
+            "Equitable Learning Environments",
+        ],
+        "keywords": ["SESP", "School of Education and Social Policy", "education", "social policy"],
+    },
+    {
+        "name": KELLOGG,
+        "sort_order": 7,
+        "website": "https://www.kellogg.northwestern.edu/",
+        "leadership": "Francesca Cornelli — Dean",
+        "research_centers": [
+            "Heizer Center for Private Equity and Venture Capital",
+            "Guthrie Center for Real Estate Research",
+            "Kellogg Public-Private Interface",
+            "Healthcare at Kellogg",
+        ],
+        "keywords": ["Kellogg School of Management", "MBA", "business"],
+    },
+    {
+        "name": LAW,
+        "sort_order": 8,
+        "website": "https://www.law.northwestern.edu/",
+        "leadership": "Zachary D. Clopton — Interim Dean",
+        "research_centers": [
+            "Bluhm Legal Clinic",
+            "Center for International Human Rights",
+            "Center on Law, Business, and Economics",
+            "Program on Negotiation and Mediation",
+        ],
+        "keywords": ["Pritzker School of Law", "JD", "law"],
+    },
+    {
+        "name": FEINBERG,
+        "sort_order": 9,
+        "website": "https://www.feinberg.northwestern.edu/",
+        "leadership": "Eric G. Neilson — Dean",
+        "research_centers": [
+            "Robert H. Lurie Comprehensive Cancer Center",
+            "NUCATS Institute",
+            "Feinberg Cardiovascular and Renal Research Center",
+            "Institute for Global Health",
+        ],
+        "keywords": ["Feinberg School of Medicine", "MD", "medicine"],
+    },
+    {
+        "name": TGS,
+        "sort_order": 10,
+        "website": "https://www.tgs.northwestern.edu/",
+        "leadership": "Kelly Mayo — Dean",
+        "research_centers": [
+            "Interdisciplinary Biological Sciences Graduate Program",
+            "Office of Graduate Research",
+            "Mellon Cluster Initiative",
+            "Graduate Research Grant programs",
+        ],
+        "keywords": ["The Graduate School", "TGS", "PhD", "graduate"],
+    },
+    {
+        "name": SPS,
+        "sort_order": 11,
+        "website": "https://sps.northwestern.edu/",
+        "leadership": "Thomas F. Gibbons — Dean",
+        "research_centers": [
+            "Center for Public Safety",
+            "Osher Lifelong Learning Institute",
+            "Professional Development Programs",
+            "Northwestern Summer Session",
+        ],
+        "keywords": ["School of Professional Studies", "SPS", "online", "part-time"],
+    },
 ]
 
 SCHOOLS: list[dict] = [
-    {"name": m["name"], "sort_order": m["sort_order"], "description": f"The {m['name']} is one of the eleven schools of Northwestern University."}
+    {
+        "name": m["name"],
+        "sort_order": m["sort_order"],
+        "description": f"The {m['name']} is one of the eleven schools of Northwestern University.",
+    }
     for m in _SCHOOL_META
 ]
 SCHOOL_WEBSITE = {m["name"]: m["website"] for m in _SCHOOL_META}
@@ -362,7 +520,10 @@ def _about_for(m: dict) -> dict:
     return {
         "leadership": m["leadership"],
         "research_centers": m["research_centers"],
-        "source": {"label": "Northwestern University — Schools and Colleges", "url": "https://www.northwestern.edu/academics/"},
+        "source": {
+            "label": "Northwestern University — Schools and Colleges",
+            "url": "https://www.northwestern.edu/academics/",
+        },
     }
 
 
@@ -410,202 +571,1200 @@ def _program_content(school_name: str, keywords: list[str]) -> dict:
     base["keywords"] = list(keywords)
     return base
 
-# ── Explicit flagship programs (take precedence over IPEDS breadth rows) ────
+
+# ── Real program catalog (researched; replaces the IPEDS×award-level mint) ──
+# Every row is a real Northwestern degree program with its own per-credential,
+# field-specific description researched from the official Northwestern undergraduate
+# catalog (catalogs.northwestern.edu), the university Graduate Degree Programs A-Z
+# (northwestern.edu/academics/graduate-a-to-z.html), and each school's pages. Named
+# units are ONLY verified Northwestern units — zero peer-institution signatures.
+_DUR: dict[str, int] = {
+    "bachelors": 48,
+    "masters": 24,
+    "phd": 60,
+    "professional": 36,
+    "certificate": 12,
+}
+
+
+def _p(slug, school, name, degree, cip, dept, desc, *, dur=None, fmt="on_campus"):
+    return {
+        "slug": slug,
+        "school": school,
+        "program_name": name,
+        "degree_type": degree,
+        "duration_months": dur or _DUR.get(degree, 24),
+        "delivery_format": fmt,
+        "cip": cip,
+        "department": dept,
+        "description": desc,
+    }
+
+
 PROGRAMS: list[dict] = [
-    {"slug": "northwestern-mba-ms", "school": KELLOGG, "program_name": "Master of Business Administration", "degree_type": "masters", "duration_months": 24, "delivery_format": "on_campus", "description": "Full-time MBA at the Kellogg School of Management.", "department": "Kellogg School of Management", "cip": "52.02"},
-    {"slug": "northwestern-law-prof", "school": LAW, "program_name": "Juris Doctor", "degree_type": "professional", "duration_months": 36, "delivery_format": "on_campus", "description": "Juris Doctor at the Northwestern Pritzker School of Law.", "department": "Pritzker School of Law", "cip": "22.01"},
-    {"slug": "northwestern-medicine-prof", "school": FEINBERG, "program_name": "Doctor of Medicine", "degree_type": "professional", "duration_months": 48, "delivery_format": "on_campus", "description": "Doctor of Medicine at the Feinberg School of Medicine.", "department": "Feinberg School of Medicine", "cip": "51.12"},
-    {"slug": "northwestern-computer-science-bs", "school": MCCORMICK, "program_name": "Computer Science", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Science in Computer Science through McCormick.", "department": "Department of Computer Science", "cip": "11.07"},
-    {"slug": "northwestern-economics-bs", "school": WEINBERG, "program_name": "Economics", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Arts in Economics through Weinberg.", "department": "Department of Economics", "cip": "45.06"},
-    {"slug": "northwestern-journalism-bs", "school": MEDILL, "program_name": "Journalism", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Science in Journalism through Medill.", "department": "Medill School of Journalism, Media, Integrated Marketing Communications", "cip": "09.04"},
-    {"slug": "northwestern-biomedical-medical-engineering-bs", "school": MCCORMICK, "program_name": "Biomedical Engineering", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Science in Biomedical Engineering through McCormick.", "department": "Department of Biomedical Engineering", "cip": "14.05"},
-    {"slug": "northwestern-psychology-general-bs", "school": WEINBERG, "program_name": "Psychology", "degree_type": "bachelors", "duration_months": 48, "delivery_format": "on_campus", "description": "Bachelor of Arts in Psychology through Weinberg.", "department": "Department of Psychology", "cip": "42.01"},
-    {"slug": "northwestern-radio-television-and-digital-communication-ms", "school": COMMUNICATION, "program_name": "Radio/Television/Film", "degree_type": "masters", "duration_months": 24, "delivery_format": "on_campus", "description": "Master of Science in Radio/Television/Film through the School of Communication.", "department": "Department of Radio/Television/Film", "cip": "09.07"},
-    {"slug": "northwestern-management-sciences-and-quantitative-methods-ms", "school": KELLOGG, "program_name": "Management Analytics", "degree_type": "masters", "duration_months": 24, "delivery_format": "on_campus", "description": "Master of Science in Management Studies at Kellogg.", "department": "Kellogg School of Management", "cip": "52.13"},
+    # ── Weinberg College of Arts and Sciences — undergraduate majors ──
+    _p(
+        "northwestern-african-american-studies-ba",
+        WEINBERG,
+        "Bachelor of Arts in African American Studies",
+        "bachelors",
+        "05.02",
+        "Department of African American Studies",
+        "Weinberg majors in African American Studies examine the history, politics, literature, and social movements of the Black diaspora through the Department of African American Studies.",
+    ),
+    _p(
+        "northwestern-american-studies-ba",
+        WEINBERG,
+        "Bachelor of Arts in American Studies",
+        "bachelors",
+        "05.01",
+        "Program in American Studies",
+        "American Studies majors read U.S. culture, politics, and identity across literature, history, art, and media in an interdisciplinary Weinberg program.",
+    ),
+    _p(
+        "northwestern-anthropology-ba",
+        WEINBERG,
+        "Bachelor of Arts in Anthropology",
+        "bachelors",
+        "45.02",
+        "Department of Anthropology",
+        "Anthropology majors train in archaeology, biological anthropology, and sociocultural fieldwork, with Chicago-area ethnography and global field study.",
+    ),
+    _p(
+        "northwestern-art-history-ba",
+        WEINBERG,
+        "Bachelor of Arts in Art History",
+        "bachelors",
+        "50.07",
+        "Department of Art History",
+        "Art History majors study visual cultures from antiquity to the present, using the Block Museum of Art and Chicago collections for object-based research.",
+    ),
+    _p(
+        "northwestern-art-theory-practice-ba",
+        WEINBERG,
+        "Bachelor of Arts in Art Theory and Practice",
+        "bachelors",
+        "50.07",
+        "Department of Art Theory and Practice",
+        "Art Theory and Practice majors combine studio work in painting, sculpture, and new media with critical theory in Weinberg's studio art department.",
+    ),
+    _p(
+        "northwestern-asian-american-studies-ba",
+        WEINBERG,
+        "Bachelor of Arts in Asian American Studies",
+        "bachelors",
+        "05.02",
+        "Asian American Studies Program",
+        "Asian American Studies majors examine migration, race, labor, and community across Asian American histories and cultures.",
+    ),
+    _p(
+        "northwestern-asian-languages-cultures-ba",
+        WEINBERG,
+        "Bachelor of Arts in Asian Languages and Cultures",
+        "bachelors",
+        "16.03",
+        "Department of Asian Languages and Cultures",
+        "Majors study Chinese, Japanese, and South Asian languages alongside the literature, religion, and history of Asia.",
+    ),
+    _p(
+        "northwestern-biological-sciences-bs",
+        WEINBERG,
+        "Bachelor of Science in Biological Sciences",
+        "bachelors",
+        "26.01",
+        "Program in Biological Sciences",
+        "Biological Sciences majors study genetics, cell and molecular biology, physiology, and ecology, joining faculty labs across Weinberg and Feinberg.",
+    ),
+    _p(
+        "northwestern-chemistry-bs",
+        WEINBERG,
+        "Bachelor of Science in Chemistry",
+        "bachelors",
+        "40.05",
+        "Department of Chemistry",
+        "Chemistry majors cover organic, inorganic, physical, and analytical chemistry, with undergraduate research in catalysis, materials, and chemical biology.",
+    ),
+    _p(
+        "northwestern-classics-ba",
+        WEINBERG,
+        "Bachelor of Arts in Classics",
+        "bachelors",
+        "16.12",
+        "Department of Classics",
+        "Classics majors read Greek and Latin literature, ancient history, and philosophy, with archaeology and the reception of the ancient world.",
+    ),
+    _p(
+        "northwestern-cognitive-science-ba",
+        WEINBERG,
+        "Bachelor of Arts in Cognitive Science",
+        "bachelors",
+        "30.25",
+        "Cognitive Science Program",
+        "Cognitive Science majors integrate psychology, linguistics, philosophy, computer science, and neuroscience to study the mind and intelligent behavior.",
+    ),
+    _p(
+        "northwestern-comparative-literary-studies-ba",
+        WEINBERG,
+        "Bachelor of Arts in Comparative Literary Studies",
+        "bachelors",
+        "16.01",
+        "Program in Comparative Literary Studies",
+        "Comparative Literary Studies majors read literature across languages and national traditions alongside critical and translation theory.",
+    ),
+    _p(
+        "northwestern-earth-planetary-sciences-bs",
+        WEINBERG,
+        "Bachelor of Science in Earth and Planetary Sciences",
+        "bachelors",
+        "40.06",
+        "Department of Earth and Planetary Sciences",
+        "Earth and Planetary Sciences majors study geology, climate, geophysics, and planetary science through field work and laboratory analysis of Earth systems.",
+    ),
+    _p(
+        "northwestern-economics-bs",
+        WEINBERG,
+        "Bachelor of Arts in Economics",
+        "bachelors",
+        "45.06",
+        "Department of Economics",
+        "Weinberg economics majors build a quantitative foundation in microeconomics, macroeconomics, and econometrics, with electives in finance, labor, and development.",
+    ),
+    _p(
+        "northwestern-english-ba",
+        WEINBERG,
+        "Bachelor of Arts in English",
+        "bachelors",
+        "23.01",
+        "Department of English",
+        "English majors study literature in English and creative writing, with tracks in poetry, fiction, and literary history.",
+    ),
+    _p(
+        "northwestern-environmental-sciences-bs",
+        WEINBERG,
+        "Bachelor of Science in Environmental Sciences",
+        "bachelors",
+        "03.01",
+        "Program in Environmental Sciences",
+        "Environmental Sciences majors combine earth science, ecology, and chemistry to study climate, ecosystems, and environmental change.",
+    ),
+    _p(
+        "northwestern-environmental-policy-culture-ba",
+        WEINBERG,
+        "Bachelor of Arts in Environmental Policy and Culture",
+        "bachelors",
+        "03.01",
+        "Environmental Policy and Culture Program",
+        "This major examines the politics, ethics, and humanities of environmental issues across the social sciences and humanities.",
+    ),
+    _p(
+        "northwestern-french-ba",
+        WEINBERG,
+        "Bachelor of Arts in French",
+        "bachelors",
+        "16.09",
+        "Department of French and Italian",
+        "French majors develop advanced proficiency and study French and Francophone literature, film, and culture.",
+    ),
+    _p(
+        "northwestern-gender-sexuality-studies-ba",
+        WEINBERG,
+        "Bachelor of Arts in Gender and Sexuality Studies",
+        "bachelors",
+        "05.02",
+        "Gender and Sexuality Studies Program",
+        "Majors analyze gender, sexuality, and feminist theory across the humanities and social sciences.",
+    ),
+    _p(
+        "northwestern-german-ba",
+        WEINBERG,
+        "Bachelor of Arts in German",
+        "bachelors",
+        "16.05",
+        "Department of German",
+        "German majors gain advanced language skills and study German literature, philosophy, and intellectual history.",
+    ),
+    _p(
+        "northwestern-global-health-studies-ba",
+        WEINBERG,
+        "Bachelor of Arts in Global Health Studies",
+        "bachelors",
+        "51.22",
+        "Program in Global Health Studies",
+        "Global Health Studies majors examine health systems, epidemiology, and global health policy across disciplines, with fieldwork and a research practicum.",
+    ),
+    _p(
+        "northwestern-history-ba",
+        WEINBERG,
+        "Bachelor of Arts in History",
+        "bachelors",
+        "54.01",
+        "Department of History",
+        "History majors investigate political, social, and cultural change across regions and eras, building research skills through archival seminars.",
+    ),
+    _p(
+        "northwestern-integrated-science-bs",
+        WEINBERG,
+        "Bachelor of Science in Integrated Science",
+        "bachelors",
+        "30.01",
+        "Integrated Science Program",
+        "The Integrated Science Program is a selective honors track combining advanced biology, chemistry, physics, and mathematics for research-bound students.",
+    ),
+    _p(
+        "northwestern-international-studies-ba",
+        WEINBERG,
+        "Bachelor of Arts in International Studies",
+        "bachelors",
+        "45.09",
+        "International Studies Program",
+        "International Studies majors study global politics, economics, and culture with a regional concentration and language study.",
+    ),
+    _p(
+        "northwestern-italian-ba",
+        WEINBERG,
+        "Bachelor of Arts in Italian",
+        "bachelors",
+        "16.09",
+        "Department of French and Italian",
+        "Italian majors build proficiency and study Italian literature, cinema, and cultural history.",
+    ),
+    _p(
+        "northwestern-jewish-studies-ba",
+        WEINBERG,
+        "Bachelor of Arts in Jewish Studies",
+        "bachelors",
+        "05.01",
+        "Crown Family Center for Jewish and Israel Studies",
+        "Jewish Studies majors study Hebrew, Jewish history, religion, and literature through the Crown Family Center for Jewish and Israel Studies.",
+    ),
+    _p(
+        "northwestern-latina-latino-studies-ba",
+        WEINBERG,
+        "Bachelor of Arts in Latina and Latino Studies",
+        "bachelors",
+        "05.02",
+        "Latina and Latino Studies Program",
+        "Majors examine the histories, politics, and cultural production of Latinx communities in the United States.",
+    ),
+    _p(
+        "northwestern-legal-studies-ba",
+        WEINBERG,
+        "Bachelor of Arts in Legal Studies",
+        "bachelors",
+        "22.00",
+        "Legal Studies Program",
+        "Legal Studies majors explore law, society, and justice through political science, philosophy, and history.",
+    ),
+    _p(
+        "northwestern-linguistics-ba",
+        WEINBERG,
+        "Bachelor of Arts in Linguistics",
+        "bachelors",
+        "16.01",
+        "Department of Linguistics",
+        "Linguistics majors study phonology, syntax, semantics, and psycholinguistics, with computational and field methods.",
+    ),
+    _p(
+        "northwestern-mathematics-bs",
+        WEINBERG,
+        "Bachelor of Science in Mathematics",
+        "bachelors",
+        "27.01",
+        "Department of Mathematics",
+        "Mathematics majors cover analysis, algebra, topology, and applied mathematics, with paths toward pure theory or applications.",
+    ),
+    _p(
+        "northwestern-mmss-ba",
+        WEINBERG,
+        "Bachelor of Arts in Mathematical Methods in the Social Sciences",
+        "bachelors",
+        "45.01",
+        "Mathematical Methods in the Social Sciences Program",
+        "MMSS is a selective adjunct major pairing rigorous mathematical modeling, statistics, and economics with a social-science major.",
+    ),
+    _p(
+        "northwestern-mena-studies-ba",
+        WEINBERG,
+        "Bachelor of Arts in Middle East and North African Studies",
+        "bachelors",
+        "05.01",
+        "Middle East and North African Studies Program",
+        "Majors study the languages, history, politics, and cultures of the Middle East and North Africa.",
+    ),
+    _p(
+        "northwestern-neuroscience-bs",
+        WEINBERG,
+        "Bachelor of Science in Neuroscience",
+        "bachelors",
+        "26.15",
+        "Department of Neurobiology",
+        "Neuroscience majors study molecular, cellular, and systems neuroscience and behavior, joining labs across Weinberg and Feinberg.",
+    ),
+    _p(
+        "northwestern-philosophy-ba",
+        WEINBERG,
+        "Bachelor of Arts in Philosophy",
+        "bachelors",
+        "38.01",
+        "Department of Philosophy",
+        "Philosophy majors work in metaphysics, epistemology, ethics, and logic, with strengths in moral and political philosophy.",
+    ),
+    _p(
+        "northwestern-physics-bs",
+        WEINBERG,
+        "Bachelor of Science in Physics",
+        "bachelors",
+        "40.08",
+        "Department of Physics and Astronomy",
+        "Physics majors study classical and quantum mechanics, electromagnetism, and astrophysics, with research access to the CIERA astrophysics community.",
+    ),
+    _p(
+        "northwestern-political-science-ba",
+        WEINBERG,
+        "Bachelor of Arts in Political Science",
+        "bachelors",
+        "45.10",
+        "Department of Political Science",
+        "Political Science majors study American politics, international relations, comparative politics, and political theory, supported by the Institute for Policy Research.",
+    ),
+    _p(
+        "northwestern-psychology-general-bs",
+        WEINBERG,
+        "Bachelor of Arts in Psychology",
+        "bachelors",
+        "42.01",
+        "Department of Psychology",
+        "Weinberg psychology majors study cognitive, clinical, developmental, and social psychology, joining faculty research labs across the department.",
+    ),
+    _p(
+        "northwestern-religious-studies-ba",
+        WEINBERG,
+        "Bachelor of Arts in Religious Studies",
+        "bachelors",
+        "38.02",
+        "Department of Religious Studies",
+        "Religious Studies majors examine the texts, histories, and practices of world religious traditions through comparative and critical study.",
+    ),
+    _p(
+        "northwestern-slavic-ba",
+        WEINBERG,
+        "Bachelor of Arts in Slavic Languages and Literatures",
+        "bachelors",
+        "16.04",
+        "Department of Slavic Languages and Literatures",
+        "Slavic majors study Russian and other Slavic languages, literatures, and the cultural history of Eastern Europe.",
+    ),
+    _p(
+        "northwestern-sociology-ba",
+        WEINBERG,
+        "Bachelor of Arts in Sociology",
+        "bachelors",
+        "45.11",
+        "Department of Sociology",
+        "Sociology majors study social inequality, organizations, and culture using quantitative and qualitative research methods.",
+    ),
+    _p(
+        "northwestern-spanish-portuguese-ba",
+        WEINBERG,
+        "Bachelor of Arts in Spanish and Portuguese",
+        "bachelors",
+        "16.09",
+        "Department of Spanish and Portuguese",
+        "Majors gain advanced proficiency and study Iberian and Latin American literature, linguistics, and culture.",
+    ),
+    _p(
+        "northwestern-statistics-data-science-bs",
+        WEINBERG,
+        "Bachelor of Science in Statistics and Data Science",
+        "bachelors",
+        "27.05",
+        "Department of Statistics and Data Science",
+        "Statistics and Data Science majors study probability, statistical inference, and machine learning, applying data analysis across scientific and social domains.",
+    ),
+    # ── McCormick School of Engineering and Applied Science — undergraduate ──
+    _p(
+        "northwestern-biomedical-medical-engineering-bs",
+        MCCORMICK,
+        "Bachelor of Science in Biomedical Engineering",
+        "bachelors",
+        "14.05",
+        "Department of Biomedical Engineering",
+        "McCormick biomedical engineering majors work across biomaterials, neural engineering, imaging, and biomechanics, with senior design and ties to the Querrey Simpson Institute for Bioelectronics.",
+    ),
+    _p(
+        "northwestern-chemical-engineering-bs",
+        MCCORMICK,
+        "Bachelor of Science in Chemical Engineering",
+        "bachelors",
+        "14.07",
+        "Department of Chemical and Biological Engineering",
+        "Chemical engineering majors study reaction engineering, thermodynamics, transport, and process design, with research in catalysis, energy, and biotechnology.",
+    ),
+    _p(
+        "northwestern-civil-engineering-bs",
+        MCCORMICK,
+        "Bachelor of Science in Civil Engineering",
+        "bachelors",
+        "14.08",
+        "Department of Civil and Environmental Engineering",
+        "Civil engineering majors study structures, geotechnics, transportation, and construction, with project-based design of the built environment.",
+    ),
+    _p(
+        "northwestern-environmental-engineering-bs",
+        MCCORMICK,
+        "Bachelor of Science in Environmental Engineering",
+        "bachelors",
+        "14.14",
+        "Department of Civil and Environmental Engineering",
+        "Environmental engineering majors study water resources, environmental chemistry, and sustainable infrastructure to address pollution and climate challenges.",
+    ),
+    _p(
+        "northwestern-computer-engineering-bs",
+        MCCORMICK,
+        "Bachelor of Science in Computer Engineering",
+        "bachelors",
+        "14.09",
+        "Department of Electrical and Computer Engineering",
+        "Computer engineering majors bridge hardware and software, studying digital systems, embedded computing, and computer architecture.",
+    ),
+    _p(
+        "northwestern-electrical-engineering-bs",
+        MCCORMICK,
+        "Bachelor of Science in Electrical Engineering",
+        "bachelors",
+        "14.10",
+        "Department of Electrical and Computer Engineering",
+        "Electrical engineering majors study circuits, signals, electromagnetics, and photonics, with research in devices, communications, and control.",
+    ),
+    _p(
+        "northwestern-computer-science-bs",
+        MCCORMICK,
+        "Bachelor of Science in Computer Science",
+        "bachelors",
+        "11.07",
+        "Department of Computer Science",
+        "Northwestern's computer science majors study algorithms, systems, AI, and theory in McCormick, with the CS+X joint majors linking computing to design, journalism, and the arts.",
+    ),
+    _p(
+        "northwestern-materials-science-engineering-bs",
+        MCCORMICK,
+        "Bachelor of Science in Materials Science and Engineering",
+        "bachelors",
+        "14.18",
+        "Department of Materials Science and Engineering",
+        "Materials science majors study the structure, properties, and processing of metals, ceramics, polymers, and nanomaterials, drawing on the International Institute for Nanotechnology.",
+    ),
+    _p(
+        "northwestern-mechanical-engineering-bs",
+        MCCORMICK,
+        "Bachelor of Science in Mechanical Engineering",
+        "bachelors",
+        "14.19",
+        "Department of Mechanical Engineering",
+        "Mechanical engineering majors study solid and fluid mechanics, thermodynamics, dynamics, and design, with tracks in robotics, energy, and manufacturing.",
+    ),
+    _p(
+        "northwestern-industrial-engineering-bs",
+        MCCORMICK,
+        "Bachelor of Science in Industrial Engineering and Management Sciences",
+        "bachelors",
+        "14.35",
+        "Department of Industrial Engineering and Management Sciences",
+        "Industrial engineering majors study optimization, stochastic models, and analytics for operations, supply chains, and decision systems.",
+    ),
+    _p(
+        "northwestern-applied-mathematics-bs",
+        MCCORMICK,
+        "Bachelor of Science in Applied Mathematics",
+        "bachelors",
+        "14.03",
+        "Department of Engineering Sciences and Applied Mathematics",
+        "Applied mathematics majors model physical and biological systems using differential equations, numerical methods, and dynamical-systems theory.",
+    ),
+    _p(
+        "northwestern-manufacturing-design-engineering-bs",
+        MCCORMICK,
+        "Bachelor of Science in Manufacturing and Design Engineering",
+        "bachelors",
+        "14.36",
+        "Segal Design Institute",
+        "This major combines mechanical engineering with human-centered design through the Segal Design Institute.",
+    ),
+    # ── Medill — undergraduate ──
+    _p(
+        "northwestern-journalism-bs",
+        MEDILL,
+        "Bachelor of Science in Journalism",
+        "bachelors",
+        "09.04",
+        "Medill School of Journalism, Media, Integrated Marketing Communications",
+        "Medill journalism majors learn reporting, writing, audio, video, and data journalism, with the Journalism Residency placing students in newsrooms nationwide.",
+    ),
+    # ── School of Communication — undergraduate ──
+    _p(
+        "northwestern-communication-studies-ba",
+        COMMUNICATION,
+        "Bachelor of Arts in Communication Studies",
+        "bachelors",
+        "09.01",
+        "Department of Communication Studies",
+        "Communication Studies majors examine rhetoric, interpersonal and organizational communication, and media, with research and analytics methods.",
+    ),
+    _p(
+        "northwestern-communication-sciences-disorders-bs",
+        COMMUNICATION,
+        "Bachelor of Science in Communication Sciences and Disorders",
+        "bachelors",
+        "51.02",
+        "Roxelyn and Richard Pepper Department of Communication Sciences and Disorders",
+        "Majors study the science of speech, language, and hearing, preparing for graduate work in audiology and speech-language pathology.",
+    ),
+    _p(
+        "northwestern-performance-studies-ba",
+        COMMUNICATION,
+        "Bachelor of Arts in Performance Studies",
+        "bachelors",
+        "50.05",
+        "Department of Performance Studies",
+        "Performance Studies majors analyze performance as culture and art, combining critical theory with adaptation and embodied practice.",
+    ),
+    _p(
+        "northwestern-radio-television-and-digital-communication-bs",
+        COMMUNICATION,
+        "Bachelor of Arts in Radio/Television/Film",
+        "bachelors",
+        "50.06",
+        "Department of Radio/Television/Film",
+        "RTVF majors study screenwriting, directing, producing, and media studies, with hands-on film, television, and documentary production.",
+    ),
+    _p(
+        "northwestern-theatre-ba",
+        COMMUNICATION,
+        "Bachelor of Arts in Theatre",
+        "bachelors",
+        "50.05",
+        "Department of Theatre",
+        "Theatre majors train in acting, directing, design, and dramatic literature within the School of Communication's nationally known theatre program.",
+    ),
+    _p(
+        "northwestern-dance-ba",
+        COMMUNICATION,
+        "Bachelor of Arts in Dance",
+        "bachelors",
+        "50.03",
+        "Dance Program",
+        "Dance majors combine technique and choreography with dance history and the science of movement in the School of Communication.",
+    ),
+    # ── Bienen School of Music — undergraduate ──
+    _p(
+        "northwestern-music-performance-bm",
+        BIENEN,
+        "Bachelor of Music in Performance",
+        "bachelors",
+        "50.09",
+        "Department of Music Performance",
+        "Bienen performance majors study applied music in strings, winds, brass, percussion, piano, or voice, with orchestra, chamber, and recital performance.",
+    ),
+    _p(
+        "northwestern-music-composition-bm",
+        BIENEN,
+        "Bachelor of Music in Composition",
+        "bachelors",
+        "50.09",
+        "Department of Composition and Music Technology",
+        "Composition majors write for instrumental, vocal, and electronic media, studying orchestration, music technology, and contemporary practice.",
+    ),
+    _p(
+        "northwestern-jazz-studies-bm",
+        BIENEN,
+        "Bachelor of Music in Jazz Studies",
+        "bachelors",
+        "50.09",
+        "Jazz Studies Program",
+        "Jazz Studies majors develop improvisation, composition, and ensemble performance in the jazz idiom alongside the broader Bienen curriculum.",
+    ),
+    _p(
+        "northwestern-music-education-bm",
+        BIENEN,
+        "Bachelor of Music in Music Education",
+        "bachelors",
+        "13.13",
+        "Department of Music Studies",
+        "Music Education majors combine performance with pedagogy and a teaching practicum toward Illinois K-12 music licensure.",
+    ),
+    _p(
+        "northwestern-music-theory-cognition-ba",
+        BIENEN,
+        "Bachelor of Arts in Music Theory and Cognition",
+        "bachelors",
+        "50.09",
+        "Department of Music Studies",
+        "This major analyzes musical structure and studies the psychology of music perception and cognition.",
+    ),
+    # ── School of Education and Social Policy — undergraduate ──
+    _p(
+        "northwestern-learning-organizational-change-bs",
+        SESP,
+        "Bachelor of Science in Learning and Organizational Change",
+        "bachelors",
+        "13.03",
+        "School of Education and Social Policy",
+        "This major studies how people and organizations learn and change, applying social science to design, leadership, and consulting.",
+    ),
+    _p(
+        "northwestern-human-development-context-bs",
+        SESP,
+        "Bachelor of Science in Human Development in Context",
+        "bachelors",
+        "19.07",
+        "School of Education and Social Policy",
+        "Majors study psychology, sociology, and policy across the lifespan, with field work in schools, clinics, and community organizations.",
+    ),
+    _p(
+        "northwestern-social-policy-bs",
+        SESP,
+        "Bachelor of Science in Social Policy",
+        "bachelors",
+        "44.05",
+        "School of Education and Social Policy",
+        "Social Policy majors analyze education, health, and economic policy using social science research and a field practicum.",
+    ),
+    _p(
+        "northwestern-learning-sciences-bs",
+        SESP,
+        "Bachelor of Science in Learning Sciences",
+        "bachelors",
+        "13.01",
+        "School of Education and Social Policy",
+        "Learning Sciences majors study how people learn and how to design learning environments, technologies, and curricula.",
+    ),
+    _p(
+        "northwestern-secondary-teaching-bs",
+        SESP,
+        "Bachelor of Science in Secondary Teaching",
+        "bachelors",
+        "13.12",
+        "School of Education and Social Policy",
+        "This major pairs a disciplinary subject with education coursework and supervised student teaching toward secondary licensure.",
+    ),
+    # ── Kellogg School of Management — graduate ──
+    _p(
+        "northwestern-mba-ms",
+        KELLOGG,
+        "Master of Business Administration",
+        "masters",
+        "52.02",
+        "Kellogg School of Management",
+        "Kellogg's full-time MBA builds general-management leadership across marketing, finance, strategy, and entrepreneurship, with a collaborative team-based culture and majors in over a dozen areas.",
+        dur=24,
+    ),
+    _p(
+        "northwestern-management-sciences-and-quantitative-methods-ms",
+        KELLOGG,
+        "Master of Science in Management Studies",
+        "masters",
+        "52.13",
+        "Kellogg School of Management",
+        "Kellogg's MS in Management Studies gives recent graduates a one-year quantitative business foundation in accounting, finance, marketing, and analytics.",
+        dur=12,
+    ),
+    _p(
+        "northwestern-master-in-management-ms",
+        KELLOGG,
+        "Master in Management",
+        "masters",
+        "52.02",
+        "Kellogg School of Management",
+        "The Kellogg Master in Management is a pre-experience program covering core business disciplines and data-driven decision making for early-career professionals.",
+        dur=12,
+    ),
+    _p(
+        "northwestern-marketing-phd",
+        KELLOGG,
+        "Doctor of Philosophy in Marketing",
+        "phd",
+        "52.14",
+        "Kellogg School of Management",
+        "Kellogg's marketing doctoral program trains researchers in consumer behavior, quantitative modeling, and marketing strategy for academic careers.",
+    ),
+    _p(
+        "northwestern-managerial-economics-strategy-phd",
+        KELLOGG,
+        "Doctor of Philosophy in Managerial Economics and Strategy",
+        "phd",
+        "52.06",
+        "Kellogg School of Management",
+        "This doctoral program applies microeconomics and game theory to strategy, industrial organization, and competition for research careers.",
+    ),
+    _p(
+        "northwestern-finance-phd",
+        KELLOGG,
+        "Doctor of Philosophy in Finance",
+        "phd",
+        "52.08",
+        "Kellogg School of Management",
+        "Kellogg's finance doctoral program develops research in asset pricing, corporate finance, and financial economics.",
+    ),
+    # ── Pritzker School of Law — graduate / professional ──
+    _p(
+        "northwestern-law-prof",
+        LAW,
+        "Juris Doctor",
+        "professional",
+        "22.01",
+        "Pritzker School of Law",
+        "Northwestern Pritzker's JD trains lawyers across doctrine, legal writing, and practice, with the Bluhm Legal Clinic and an accelerated two-year option.",
+        dur=36,
+    ),
+    _p(
+        "northwestern-llm",
+        LAW,
+        "Master of Laws",
+        "masters",
+        "22.02",
+        "Pritzker School of Law",
+        "The Pritzker LLM offers internationally trained lawyers advanced study in U.S. law, business, and human rights.",
+        dur=12,
+    ),
+    _p(
+        "northwestern-master-science-law-ms",
+        LAW,
+        "Master of Science in Law",
+        "masters",
+        "22.00",
+        "Pritzker School of Law",
+        "The Master of Science in Law equips STEM and business professionals with legal knowledge in regulation, intellectual property, and compliance.",
+        dur=12,
+    ),
+    # ── Feinberg School of Medicine — graduate / professional ──
+    _p(
+        "northwestern-medicine-prof",
+        FEINBERG,
+        "Doctor of Medicine",
+        "professional",
+        "51.12",
+        "Feinberg School of Medicine",
+        "Feinberg's MD program integrates the Health & Society curriculum with early clinical immersion at Northwestern Memorial and affiliated Chicago hospitals.",
+        dur=48,
+    ),
+    _p(
+        "northwestern-public-health-mph",
+        FEINBERG,
+        "Master of Public Health",
+        "masters",
+        "51.22",
+        "Department of Preventive Medicine",
+        "Feinberg's MPH trains practitioners in epidemiology, biostatistics, and health policy for careers in public health practice and research.",
+    ),
+    _p(
+        "northwestern-physical-therapy-dpt",
+        FEINBERG,
+        "Doctor of Physical Therapy",
+        "professional",
+        "51.23",
+        "Department of Physical Therapy and Human Movement Sciences",
+        "Feinberg's DPT prepares physical therapists through anatomy, neuroscience, and supervised clinical rotations.",
+        dur=36,
+    ),
+    _p(
+        "northwestern-driskill-life-sciences-phd",
+        FEINBERG,
+        "Doctor of Philosophy in the Life Sciences",
+        "phd",
+        "26.01",
+        "Driskill Graduate Program in the Life Sciences",
+        "The Driskill Graduate Program trains biomedical scientists in molecular, cellular, and translational research toward the PhD.",
+    ),
+    _p(
+        "northwestern-genetic-counseling-ms",
+        FEINBERG,
+        "Master of Science in Genetic Counseling",
+        "masters",
+        "51.15",
+        "Department of Preventive Medicine",
+        "This program prepares genetic counselors through medical genetics, counseling practica, and clinical rotations.",
+    ),
+    _p(
+        "northwestern-prosthetics-orthotics-ms",
+        FEINBERG,
+        "Master of Science in Prosthetics-Orthotics",
+        "masters",
+        "51.23",
+        "Northwestern University Prosthetics-Orthotics Center",
+        "Northwestern's prosthetics-orthotics program trains clinicians to design and fit prosthetic and orthotic devices through its long-established center.",
+    ),
+    _p(
+        "northwestern-physician-assistant-ms",
+        FEINBERG,
+        "Master of Science in Physician Assistant Studies",
+        "masters",
+        "51.09",
+        "Feinberg School of Medicine",
+        "Feinberg's physician assistant program prepares PAs through medical-science coursework and supervised clinical rotations.",
+    ),
+    # ── McCormick — graduate ──
+    _p(
+        "northwestern-computer-science-ms",
+        MCCORMICK,
+        "Master of Science in Computer Science",
+        "masters",
+        "11.07",
+        "Department of Computer Science",
+        "McCormick's MS in Computer Science offers advanced coursework and research in artificial intelligence, systems, theory, and human-computer interaction.",
+    ),
+    _p(
+        "northwestern-computer-science-phd",
+        MCCORMICK,
+        "Doctor of Philosophy in Computer Science",
+        "phd",
+        "11.07",
+        "Department of Computer Science",
+        "The computer science doctoral program supports dissertation research in artificial intelligence, systems, theory, and human-computer interaction.",
+    ),
+    _p(
+        "northwestern-machine-learning-data-science-ms",
+        MCCORMICK,
+        "Master of Science in Machine Learning and Data Science",
+        "masters",
+        "11.07",
+        "Department of Computer Science",
+        "This professional master's develops applied machine learning, statistics, and data engineering for analytics and AI roles.",
+    ),
+    _p(
+        "northwestern-artificial-intelligence-ms",
+        MCCORMICK,
+        "Master of Science in Artificial Intelligence",
+        "masters",
+        "11.01",
+        "McCormick School of Engineering and Applied Science",
+        "The MS in Artificial Intelligence covers machine learning, deep learning, and AI systems through an applied, project-based curriculum.",
+    ),
+    _p(
+        "northwestern-robotics-ms",
+        MCCORMICK,
+        "Master of Science in Robotics",
+        "masters",
+        "14.42",
+        "McCormick School of Engineering and Applied Science",
+        "Northwestern's MS in Robotics integrates mechanical design, controls, perception, and machine learning for autonomous systems.",
+    ),
+    _p(
+        "northwestern-biomedical-engineering-phd",
+        MCCORMICK,
+        "Doctor of Philosophy in Biomedical Engineering",
+        "phd",
+        "14.05",
+        "Department of Biomedical Engineering",
+        "The biomedical engineering doctoral program supports research in bioelectronics, regenerative engineering, imaging, and neural engineering.",
+    ),
+    _p(
+        "northwestern-mechanical-engineering-phd",
+        MCCORMICK,
+        "Doctor of Philosophy in Mechanical Engineering",
+        "phd",
+        "14.19",
+        "Department of Mechanical Engineering",
+        "Mechanical engineering doctoral research spans robotics, fluid dynamics, manufacturing, and energy systems.",
+    ),
+    _p(
+        "northwestern-materials-science-engineering-phd",
+        MCCORMICK,
+        "Doctor of Philosophy in Materials Science and Engineering",
+        "phd",
+        "14.18",
+        "Department of Materials Science and Engineering",
+        "Materials science doctoral research spans nanomaterials, soft materials, and computational materials design through the International Institute for Nanotechnology.",
+    ),
+    _p(
+        "northwestern-chemical-biological-engineering-phd",
+        MCCORMICK,
+        "Doctor of Philosophy in Chemical and Biological Engineering",
+        "phd",
+        "14.07",
+        "Department of Chemical and Biological Engineering",
+        "This doctoral program supports research in catalysis, energy, soft materials, and synthetic biology.",
+    ),
+    _p(
+        "northwestern-engineering-management-mem",
+        MCCORMICK,
+        "Master of Engineering Management",
+        "masters",
+        "14.27",
+        "McCormick School of Engineering and Applied Science",
+        "The Master of Engineering Management develops technical leaders through engineering, analytics, and management coursework.",
+        dur=15,
+    ),
+    _p(
+        "northwestern-engineering-design-innovation-ms",
+        MCCORMICK,
+        "Master of Science in Engineering Design Innovation",
+        "masters",
+        "14.01",
+        "Segal Design Institute",
+        "Through the Segal Design Institute, this master's trains designers in human-centered product design and innovation.",
+    ),
+    # ── Weinberg / The Graduate School — doctoral and MFA ──
+    _p(
+        "northwestern-economics-phd",
+        WEINBERG,
+        "Doctor of Philosophy in Economics",
+        "phd",
+        "45.06",
+        "Department of Economics",
+        "Northwestern's economics doctoral program trains research economists in microeconomics, macroeconomics, and econometrics, with strong theory and applied fields.",
+    ),
+    _p(
+        "northwestern-chemistry-phd",
+        WEINBERG,
+        "Doctor of Philosophy in Chemistry",
+        "phd",
+        "40.05",
+        "Department of Chemistry",
+        "Chemistry doctoral research spans organic, inorganic, physical, and biological chemistry, with strengths in catalysis and materials.",
+    ),
+    _p(
+        "northwestern-physics-phd",
+        WEINBERG,
+        "Doctor of Philosophy in Physics",
+        "phd",
+        "40.08",
+        "Department of Physics and Astronomy",
+        "Physics doctoral research covers condensed matter, astrophysics, high-energy, and biological physics.",
+    ),
+    _p(
+        "northwestern-mathematics-phd",
+        WEINBERG,
+        "Doctor of Philosophy in Mathematics",
+        "phd",
+        "27.01",
+        "Department of Mathematics",
+        "The mathematics doctoral program supports research in geometry, analysis, algebra, and applied mathematics.",
+    ),
+    _p(
+        "northwestern-statistics-data-science-phd",
+        WEINBERG,
+        "Doctor of Philosophy in Statistics and Data Science",
+        "phd",
+        "27.05",
+        "Department of Statistics and Data Science",
+        "This doctoral program develops research in statistical theory, machine learning, and data-driven inference.",
+    ),
+    _p(
+        "northwestern-psychology-phd",
+        WEINBERG,
+        "Doctor of Philosophy in Psychology",
+        "phd",
+        "42.01",
+        "Department of Psychology",
+        "Psychology doctoral research spans cognitive, clinical, developmental, social, and brain-and-behavior areas.",
+    ),
+    _p(
+        "northwestern-political-science-phd",
+        WEINBERG,
+        "Doctor of Philosophy in Political Science",
+        "phd",
+        "45.10",
+        "Department of Political Science",
+        "Political science doctoral research covers American politics, international relations, comparative politics, and theory, with the Institute for Policy Research.",
+    ),
+    _p(
+        "northwestern-sociology-phd",
+        WEINBERG,
+        "Doctor of Philosophy in Sociology",
+        "phd",
+        "45.11",
+        "Department of Sociology",
+        "Sociology doctoral research addresses inequality, organizations, culture, and social methods.",
+    ),
+    _p(
+        "northwestern-history-phd",
+        WEINBERG,
+        "Doctor of Philosophy in History",
+        "phd",
+        "54.01",
+        "Department of History",
+        "History doctoral research spans U.S., European, and global fields with archival and transnational methods.",
+    ),
+    _p(
+        "northwestern-anthropology-phd",
+        WEINBERG,
+        "Doctor of Philosophy in Anthropology",
+        "phd",
+        "45.02",
+        "Department of Anthropology",
+        "Anthropology doctoral research integrates sociocultural, archaeological, and medical anthropology.",
+    ),
+    _p(
+        "northwestern-english-phd",
+        WEINBERG,
+        "Doctor of Philosophy in English",
+        "phd",
+        "23.01",
+        "Department of English",
+        "English doctoral research covers literary history, theory, and creative writing across periods and genres.",
+    ),
+    _p(
+        "northwestern-creative-writing-mfa",
+        WEINBERG,
+        "Master of Fine Arts in Creative Writing",
+        "masters",
+        "23.13",
+        "Department of English",
+        "The Litowitz MFA+MA program trains poets and fiction writers alongside graduate literary study.",
+        dur=24,
+    ),
+    _p(
+        "northwestern-earth-planetary-sciences-phd",
+        WEINBERG,
+        "Doctor of Philosophy in Earth and Planetary Sciences",
+        "phd",
+        "40.06",
+        "Department of Earth and Planetary Sciences",
+        "Doctoral research covers climate, geophysics, geobiology, and planetary science.",
+    ),
+    _p(
+        "northwestern-neuroscience-phd",
+        WEINBERG,
+        "Doctor of Philosophy in Neuroscience",
+        "phd",
+        "26.15",
+        "Northwestern University Interdepartmental Neuroscience Program",
+        "The Northwestern University Interdepartmental Neuroscience program trains doctoral researchers across molecular, systems, and cognitive neuroscience.",
+    ),
+    # ── Medill — graduate ──
+    _p(
+        "northwestern-journalism-ms",
+        MEDILL,
+        "Master of Science in Journalism",
+        "masters",
+        "09.04",
+        "Medill School of Journalism, Media, Integrated Marketing Communications",
+        "Medill's MSJ is an intensive professional master's in reporting, multimedia, and data journalism, anchored by the Journalism Residency.",
+        dur=12,
+    ),
+    _p(
+        "northwestern-imc-ms",
+        MEDILL,
+        "Master of Science in Integrated Marketing Communications",
+        "masters",
+        "09.09",
+        "Medill School of Journalism, Media, Integrated Marketing Communications",
+        "Medill's IMC master's trains marketers in data analytics, consumer insight, and brand strategy.",
+        dur=15,
+    ),
+    # ── School of Communication — graduate ──
+    _p(
+        "northwestern-radio-television-and-digital-communication-ms",
+        COMMUNICATION,
+        "Master of Fine Arts in Documentary Media",
+        "masters",
+        "50.06",
+        "Department of Radio/Television/Film",
+        "This MFA trains documentary filmmakers in directing, producing, and editing nonfiction film through the RTVF department.",
+        dur=24,
+    ),
+    _p(
+        "northwestern-audiology-aud",
+        COMMUNICATION,
+        "Doctor of Audiology",
+        "professional",
+        "51.02",
+        "Roxelyn and Richard Pepper Department of Communication Sciences and Disorders",
+        "Northwestern's AuD prepares audiologists through hearing science, diagnostics, and clinical practicum.",
+        dur=48,
+    ),
+    _p(
+        "northwestern-speech-language-pathology-ms",
+        COMMUNICATION,
+        "Master of Science in Speech-Language Pathology",
+        "masters",
+        "51.02",
+        "Roxelyn and Richard Pepper Department of Communication Sciences and Disorders",
+        "This master's prepares speech-language pathologists through coursework and supervised clinical practica.",
+    ),
+    # ── School of Education and Social Policy — graduate ──
+    _p(
+        "northwestern-human-development-social-policy-phd",
+        SESP,
+        "Doctor of Philosophy in Human Development and Social Policy",
+        "phd",
+        "19.07",
+        "School of Education and Social Policy",
+        "This doctoral program integrates developmental science and policy analysis to study human development across contexts.",
+    ),
+    _p(
+        "northwestern-learning-sciences-phd",
+        SESP,
+        "Doctor of Philosophy in Learning Sciences",
+        "phd",
+        "13.01",
+        "School of Education and Social Policy",
+        "The Learning Sciences doctoral program studies cognition, instruction, and the design of learning environments and technologies.",
+    ),
+    _p(
+        "northwestern-learning-organizational-change-ms",
+        SESP,
+        "Master of Science in Learning and Organizational Change",
+        "masters",
+        "30.99",
+        "School of Education and Social Policy",
+        "MSLOC develops professionals in organizational learning, change management, and design through an evening format.",
+        fmt="hybrid",
+    ),
+    # ── School of Professional Studies — online / professional ──
+    _p(
+        "northwestern-data-science-ms",
+        SPS,
+        "Master of Science in Data Science",
+        "masters",
+        "30.70",
+        "School of Professional Studies",
+        "Northwestern's MS in Data Science covers analytics, machine learning, and data engineering in a flexible online and part-time format.",
+        fmt="online",
+    ),
+    _p(
+        "northwestern-public-administration-ma",
+        SPS,
+        "Master of Arts in Public Administration",
+        "masters",
+        "44.04",
+        "School of Professional Studies",
+        "The SPS MPA prepares public-sector leaders in policy analysis, management, and governance, offered online and on campus.",
+        fmt="online",
+    ),
+    _p(
+        "northwestern-information-systems-ms",
+        SPS,
+        "Master of Science in Information Systems",
+        "masters",
+        "11.04",
+        "School of Professional Studies",
+        "This SPS master's covers data management, systems analysis, and IT strategy for working professionals.",
+        fmt="hybrid",
+    ),
+    _p(
+        "northwestern-sports-administration-ma",
+        SPS,
+        "Master of Arts in Sports Administration",
+        "masters",
+        "31.05",
+        "School of Professional Studies",
+        "Northwestern's sports administration master's covers league operations, analytics, and sport business, offered online.",
+        fmt="online",
+    ),
+    _p(
+        "northwestern-prose-poetry-mfa",
+        SPS,
+        "Master of Fine Arts in Prose and Poetry",
+        "masters",
+        "23.13",
+        "School of Professional Studies",
+        "The SPS MFA in Prose and Poetry trains writers through workshops and craft seminars in a low-residency format.",
+        fmt="hybrid",
+        dur=24,
+    ),
 ]
 
-_EXISTING_SLUGS = {p["slug"] for p in PROGRAMS}
-_EXISTING_CIP_KEYS = {(p.get("cip"), p["degree_type"]) for p in PROGRAMS if p.get("cip")}
-
-
-def _department_for(field_name: str, school: str) -> str:
-    """Owning department — map CIP titles to Northwestern's published unit names."""
-    field = clean_cip_field(field_name)
-    if field in DEPARTMENT_BY_FIELD:
-        return DEPARTMENT_BY_FIELD[field]
-    if field.lower() in school.lower() or school.lower() in field.lower():
-        return school
-    if school == MCCORMICK:
-        return f"Department of {field}"
-    if school == WEINBERG:
-        return f"Department of {field}"
-    if school == COMMUNICATION:
-        return f"Department of {field}"
-    return school
-
-
-def _ug_degree_prefix(school: str, field: str) -> str:
-    if school == WEINBERG and field in BA_FIELDS:
-        return "Bachelor of Arts in"
-    if school == MEDILL:
-        return "Bachelor of Science in"
-    if school == BIENEN:
-        return "Bachelor of Music in"
-    return "Bachelor of Science in"
-
-
-def _northwestern_program_name(field_name: str, degree_type: str, school: str) -> str:
-    """Real credential-specific name — never a bare CIP title or credential-prefix stub."""
-    field = clean_cip_field(field_name)
-    if degree_type == "bachelors":
-        return f"{_ug_degree_prefix(school, field)} {field}"
-    if degree_type == "masters":
-        if field == "Business Administration" and school == KELLOGG:
-            return "Master of Business Administration"
-        if field == "Journalism" and school == MEDILL:
-            return "Master of Science in Journalism"
-        if field == "Management Analytics" and school == KELLOGG:
-            return "Master of Science in Management Studies"
-        if field == "Public Policy":
-            return "Master of Public Policy"
-        if field == "Public Health":
-            return "Master of Public Health"
-        return f"Master of Science in {field}"
-    if degree_type == "phd":
-        return f"Doctor of Philosophy in {field}"
-    if degree_type == "certificate":
-        return f"Graduate Certificate in {field}"
-    if degree_type == "professional" and field == "Law":
-        return "Juris Doctor"
-    return field
-
-
-def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
-    """Fix credential-level lies (e.g. 'Graduate …' on a bachelor's row)."""
-    if degree_type == "bachelors":
-        if clause.startswith("Graduate "):
-            return "Undergraduate " + clause[len("Graduate "):]
-        if clause.startswith("Graduate-level "):
-            return "Undergraduate-level " + clause[len("Graduate-level "):]
-    return clause
-
-
-def _diversify_descriptions(programs: list[dict]) -> None:
-    """Ensure credential-sibling rows do not share identical description text."""
-    by_desc: dict[str, list[dict]] = {}
-    for p in programs:
-        desc = p.get("description") or ""
-        by_desc.setdefault(desc, []).append(p)
-    for desc, group in by_desc.items():
-        if len(group) < 2:
-            continue
-        for p in group:
-            suffix = _LEVEL_SUFFIX.get(p["degree_type"], "")
-            if suffix:
-                p["description"] = f"{desc}{suffix}"
-
-
-def _field_from_program_name(program_name: str) -> str | None:
-    for prefix in (
-        "Bachelor of Arts in ",
-        "Bachelor of Science in ",
-        "Bachelor of Music in ",
-        "Master of Science in ",
-        "Doctor of Philosophy in ",
-        "Graduate Certificate in ",
-    ):
-        if program_name.startswith(prefix):
-            return program_name[len(prefix):]
-    specials = {
-        "Master of Business Administration": "Business Administration",
-        "Juris Doctor": "Law",
-        "Doctor of Medicine": "Medicine",
-    }
-    if program_name in specials:
-        return specials[program_name]
-    return None
-
-
-def _northwestern_description(spec: dict, field: str | None = None) -> str:
-    """Field-specific description — never the degree-type classification stub."""
-    slug = spec["slug"]
-    fmt = spec.get("delivery_format", "on_campus")
-    delivery = ""
-    if fmt == "online":
-        delivery = " Delivered online."
-    elif fmt == "hybrid":
-        delivery = " Delivered in a hybrid format."
-    if slug in SLUG_DESCRIPTIONS:
-        return f"{SLUG_DESCRIPTIONS[slug]}{delivery}"
-    field_key = (
-        field
-        or spec.get("_field_name")
-        or _field_from_program_name(spec.get("program_name", ""))
-        or spec.get("department")
-        or spec.get("program_name", "")
-    )
-    field_key = clean_cip_field(field_key)
-    if field_key in FIELD_ALIASES:
-        field_key = FIELD_ALIASES[field_key]
-    clause = FIELD_DESCRIPTIONS.get(field_key)
-    if not clause:
-        raise ValueError(
-            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
-        )
-    clause = _adapt_clause_for_degree_type(clause, spec["degree_type"])
-    return f"{clause}{delivery}"
-
-
-def _normalize_program(spec: dict, field_name: str | None = None) -> None:
-    slug = spec["slug"]
-    school = spec["school"]
-    dtype = spec["degree_type"]
-    raw_field = field_name or spec.get("_field_name") or spec.get("program_name", "")
-
-    if slug in SLUG_PROGRAM_NAMES:
-        spec["program_name"] = SLUG_PROGRAM_NAMES[slug]
-    elif dtype != "professional":
-        spec["program_name"] = _northwestern_program_name(raw_field, dtype, school)
-
-    if slug in SLUG_DEPARTMENTS:
-        spec["department"] = SLUG_DEPARTMENTS[slug]
-    elif not spec.get("department") or spec["department"] == raw_field:
-        spec["department"] = _department_for(raw_field, school)
-
-    spec["description"] = _northwestern_description(spec, field=field_name or raw_field)
-
-
-def _build_catalog() -> list[dict]:
-    out: list[dict] = []
-    seen = set(_EXISTING_SLUGS)
-    for slug, school, field_name, dtype, cip, dur, fmt, _legacy_desc in _IPEDS_CATALOG:
-        if slug in seen:
-            continue
-        if (cip, dtype) in _EXISTING_CIP_KEYS:
-            continue
-        seen.add(slug)
-        spec = {
-            "slug": slug,
-            "school": school,
-            "program_name": field_name,
-            "degree_type": dtype,
-            "department": _department_for(field_name, school),
-            "cip": cip,
-            "duration_months": dur,
-            "delivery_format": fmt,
-            "_field_name": field_name,
-        }
-        _normalize_program(spec, field_name)
-        spec.pop("_field_name", None)
-        out.append(spec)
-    return out
-
-
-PROGRAMS += _build_catalog()
-for _p in PROGRAMS:
-    if _p["slug"] in _EXISTING_SLUGS:
-        _normalize_program(_p, _p.get("program_name"))
-_diversify_descriptions(PROGRAMS)
 
 _catalog_errors = validate_catalog(PROGRAMS)
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
@@ -621,33 +1780,29 @@ _classification_stubs = sum(
     1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
 )
 if _classification_stubs:
-    _catalog_errors.append(
-        f"classification-only descriptions on {_classification_stubs} programs"
-    )
+    _catalog_errors.append(f"classification-only descriptions on {_classification_stubs} programs")
 _name_prefix_desc = sum(
-    1
-    for p in PROGRAMS
-    if (p.get("description") or "").startswith(p.get("program_name", ""))
+    1 for p in PROGRAMS if (p.get("description") or "").startswith(p.get("program_name", ""))
 )
 if _name_prefix_desc:
-    _catalog_errors.append(
-        f"name-prefixed descriptions on {_name_prefix_desc} programs"
-    )
+    _catalog_errors.append(f"name-prefixed descriptions on {_name_prefix_desc} programs")
 _peer_contamination = sum(
-    1
-    for p in PROGRAMS
-    if any(sig in (p.get("description") or "") for sig in _PEER_SIGNATURES)
+    1 for p in PROGRAMS if any(sig in (p.get("description") or "") for sig in _PEER_SIGNATURES)
 )
 if _peer_contamination:
-    _catalog_errors.append(
-        f"peer-contaminated descriptions on {_peer_contamination} programs"
-    )
+    _catalog_errors.append(f"peer-contaminated descriptions on {_peer_contamination} programs")
 _desc_counts = Counter(p.get("description") for p in PROGRAMS)
 _shared_desc = sum(c for c in _desc_counts.values() if c >= 2)
 if _shared_desc:
     _catalog_errors.append(
         f"identical descriptions shared across {_shared_desc} credential-sibling programs"
     )
+_anti_stub = _anti_stub_analyze(PROGRAMS)
+if not _anti_stub.is_clean:
+    _catalog_errors.append(f"anti-stub gate failed: {_anti_stub.summary()}")
+_artifacts = _machine_artifacts(PROGRAMS)
+if _artifacts:
+    _catalog_errors.append(f"machine-artifact descriptions on {len(_artifacts)} programs")
 if _catalog_errors:
     raise RuntimeError(f"Northwestern catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
@@ -656,7 +1811,10 @@ _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 _TUITION_UG = 68322
 _UNDERGRAD_COA = 91250
 _AVG_NET_PRICE = 29167
-_COST_SRC = ("U.S. Dept. of Education College Scorecard (UNITID 147767)", "https://collegescorecard.ed.gov/school/?147767-Northwestern-University")
+_COST_SRC = (
+    "U.S. Dept. of Education College Scorecard (UNITID 147767)",
+    "https://collegescorecard.ed.gov/school/?147767-Northwestern-University",
+)
 
 _REQ_UNDERGRAD = {
     "materials": [
@@ -664,8 +1822,11 @@ _REQ_UNDERGRAD = {
         {"name": "Required essays", "required": True},
         {"name": "Official high school transcript", "required": True},
         {"name": "$75 application fee (fee waivers available)", "required": True},
-        {"name": "SAT/ACT scores", "required": False,
-         "note": "Northwestern is test-optional; the middle 50% of enrolled students who submitted scored SAT 1510–1560 / ACT 34–35 (CDS 2024-25)."},
+        {
+            "name": "SAT/ACT scores",
+            "required": False,
+            "note": "Northwestern is test-optional; the middle 50% of enrolled students who submitted scored SAT 1510–1560 / ACT 34–35 (CDS 2024-25).",
+        },
     ],
     "deadlines": [
         {"round": "Early Decision I", "date": "November 1"},
@@ -673,10 +1834,21 @@ _REQ_UNDERGRAD = {
         {"round": "Regular Decision", "date": "January 2"},
     ],
     "international": {
-        "english": {"tests": ["TOEFL", "IELTS", "Duolingo English Test"], "required": True,
-                    "note": "Required for applicants whose native language is not English."},
-        "visa": {"types": ["F-1", "J-1"], "note": "International students receive an I-20 after admission."},
-        "sources": [{"label": "Northwestern Undergraduate Admissions", "url": "https://admissions.northwestern.edu/apply/"}],
+        "english": {
+            "tests": ["TOEFL", "IELTS", "Duolingo English Test"],
+            "required": True,
+            "note": "Required for applicants whose native language is not English.",
+        },
+        "visa": {
+            "types": ["F-1", "J-1"],
+            "note": "International students receive an I-20 after admission.",
+        },
+        "sources": [
+            {
+                "label": "Northwestern Undergraduate Admissions",
+                "url": "https://admissions.northwestern.edu/apply/",
+            }
+        ],
     },
     "source": "Northwestern Undergraduate Admissions",
     "source_url": "https://admissions.northwestern.edu/apply/",
@@ -687,17 +1859,39 @@ _REQ_GRAD = {
         {"name": "Transcripts from all post-secondary institutions", "required": True},
         {"name": "Statement of purpose", "required": True},
         {"name": "Résumé / CV", "required": True},
-        {"name": "Letters of recommendation", "required": True,
-         "note": "Most Northwestern graduate programs require two or three letters; check the program's page."},
-        {"name": "GRE/GMAT scores", "required": False,
-         "note": "Test requirements vary by program; many Northwestern graduate programs are test-optional."},
+        {
+            "name": "Letters of recommendation",
+            "required": True,
+            "note": "Most Northwestern graduate programs require two or three letters; check the program's page.",
+        },
+        {
+            "name": "GRE/GMAT scores",
+            "required": False,
+            "note": "Test requirements vary by program; many Northwestern graduate programs are test-optional.",
+        },
     ],
-    "deadlines": [{"round": "Fall admission", "date": "Deadlines vary by program (typically December–January)"}],
+    "deadlines": [
+        {
+            "round": "Fall admission",
+            "date": "Deadlines vary by program (typically December–January)",
+        }
+    ],
     "international": {
-        "english": {"tests": ["TOEFL", "IELTS"], "required": True,
-                    "note": "Required for applicants whose native language is not English."},
-        "visa": {"types": ["F-1", "J-1"], "note": "International students receive an I-20 after admission."},
-        "sources": [{"label": "The Graduate School — Admissions", "url": "https://www.tgs.northwestern.edu/admission/"}],
+        "english": {
+            "tests": ["TOEFL", "IELTS"],
+            "required": True,
+            "note": "Required for applicants whose native language is not English.",
+        },
+        "visa": {
+            "types": ["F-1", "J-1"],
+            "note": "International students receive an I-20 after admission.",
+        },
+        "sources": [
+            {
+                "label": "The Graduate School — Admissions",
+                "url": "https://www.tgs.northwestern.edu/admission/",
+            }
+        ],
     },
     "source": "The Graduate School — Admissions",
     "source_url": "https://www.tgs.northwestern.edu/admission/",
@@ -725,14 +1919,36 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "industry-facing project courses than peer programs offer."
         ),
         "themes": [
-            {"label": "Interdisciplinary breadth", "sentiment": "positive", "detail": "CS+X majors and NICO partnerships connect computing to journalism, music, and design."},
-            {"label": "Theory-heavy core", "sentiment": "mixed", "detail": "Strong mathematical foundations; fewer applied-software electives than some peers."},
-            {"label": "Research access", "sentiment": "positive", "detail": "Undergraduates join labs in AI, HCI, and computational social science."},
-            {"label": "Chicago recruiting", "sentiment": "positive", "detail": "Graduates land at major tech firms, startups, and PhD programs nationwide."},
+            {
+                "label": "Interdisciplinary breadth",
+                "sentiment": "positive",
+                "detail": "CS+X majors and NICO partnerships connect computing to journalism, music, and design.",
+            },
+            {
+                "label": "Theory-heavy core",
+                "sentiment": "mixed",
+                "detail": "Strong mathematical foundations; fewer applied-software electives than some peers.",
+            },
+            {
+                "label": "Research access",
+                "sentiment": "positive",
+                "detail": "Undergraduates join labs in AI, HCI, and computational social science.",
+            },
+            {
+                "label": "Chicago recruiting",
+                "sentiment": "positive",
+                "detail": "Graduates land at major tech firms, startups, and PhD programs nationwide.",
+            },
         ],
         "sources": [
-            {"label": "Niche — Northwestern University", "url": "https://www.niche.com/colleges/northwestern-university/"},
-            {"label": "U.S. News — Best Undergraduate Computer Science Programs", "url": "https://www.usnews.com/best-colleges/rankings/computer-science-overall"},
+            {
+                "label": "Niche — Northwestern University",
+                "url": "https://www.niche.com/colleges/northwestern-university/",
+            },
+            {
+                "label": "U.S. News — Best Undergraduate Computer Science Programs",
+                "url": "https://www.usnews.com/best-colleges/rankings/computer-science-overall",
+            },
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
@@ -744,14 +1960,36 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "be large and competitive grading is common."
         ),
         "themes": [
-            {"label": "Quantitative training", "sentiment": "positive", "detail": "Math-intensive core prepares students for grad school and analytics roles."},
-            {"label": "Research access", "sentiment": "positive", "detail": "Undergraduates join faculty labs in applied micro, macro, and econometrics."},
-            {"label": "Large intro courses", "sentiment": "mixed", "detail": "Popular major means big lectures in introductory sequences."},
-            {"label": "Career outcomes", "sentiment": "positive", "detail": "Strong placement in consulting, finance, and PhD programs."},
+            {
+                "label": "Quantitative training",
+                "sentiment": "positive",
+                "detail": "Math-intensive core prepares students for grad school and analytics roles.",
+            },
+            {
+                "label": "Research access",
+                "sentiment": "positive",
+                "detail": "Undergraduates join faculty labs in applied micro, macro, and econometrics.",
+            },
+            {
+                "label": "Large intro courses",
+                "sentiment": "mixed",
+                "detail": "Popular major means big lectures in introductory sequences.",
+            },
+            {
+                "label": "Career outcomes",
+                "sentiment": "positive",
+                "detail": "Strong placement in consulting, finance, and PhD programs.",
+            },
         ],
         "sources": [
-            {"label": "Niche — Northwestern University", "url": "https://www.niche.com/colleges/northwestern-university/"},
-            {"label": "Weinberg — Department of Economics", "url": "https://economics.northwestern.edu/"},
+            {
+                "label": "Niche — Northwestern University",
+                "url": "https://www.niche.com/colleges/northwestern-university/",
+            },
+            {
+                "label": "Weinberg — Department of Economics",
+                "url": "https://economics.northwestern.edu/",
+            },
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
@@ -763,14 +2001,36 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "and tuition is among the highest nationally."
         ),
         "themes": [
-            {"label": "Collaborative culture", "sentiment": "positive", "detail": "Team-based learning and a non-cutthroat cohort culture are program hallmarks."},
-            {"label": "Marketing strength", "sentiment": "positive", "detail": "Kellogg is perennially ranked among the top marketing MBA programs."},
-            {"label": "Fast pace", "sentiment": "caution", "detail": "The quarter system compresses coursework; time management is essential."},
-            {"label": "Tuition cost", "sentiment": "caution", "detail": "Private MBA tuition is steep; merit aid is limited compared to some peers."},
+            {
+                "label": "Collaborative culture",
+                "sentiment": "positive",
+                "detail": "Team-based learning and a non-cutthroat cohort culture are program hallmarks.",
+            },
+            {
+                "label": "Marketing strength",
+                "sentiment": "positive",
+                "detail": "Kellogg is perennially ranked among the top marketing MBA programs.",
+            },
+            {
+                "label": "Fast pace",
+                "sentiment": "caution",
+                "detail": "The quarter system compresses coursework; time management is essential.",
+            },
+            {
+                "label": "Tuition cost",
+                "sentiment": "caution",
+                "detail": "Private MBA tuition is steep; merit aid is limited compared to some peers.",
+            },
         ],
         "sources": [
-            {"label": "Poets&Quants — Kellogg School of Management", "url": "https://poetsandquants.com/schools/kellogg-school-of-management-northwestern-university/"},
-            {"label": "U.S. News — Best Business Schools", "url": "https://www.usnews.com/best-graduate-schools/top-business-schools/northwestern-university-01027"},
+            {
+                "label": "Poets&Quants — Kellogg School of Management",
+                "url": "https://poetsandquants.com/schools/kellogg-school-of-management-northwestern-university/",
+            },
+            {
+                "label": "U.S. News — Best Business Schools",
+                "url": "https://www.usnews.com/best-graduate-schools/top-business-schools/northwestern-university-01027",
+            },
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
@@ -782,14 +2042,36 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "is intense and Big Law placement is competitive at the very top firms."
         ),
         "themes": [
-            {"label": "Clinical training", "sentiment": "positive", "detail": "Bluhm Legal Clinic offers extensive hands-on litigation and advocacy experience."},
-            {"label": "Chicago placement", "sentiment": "positive", "detail": "Strong pipelines to Chicago Big Law, corporate counsel, and federal clerkships."},
-            {"label": "Accelerated option", "sentiment": "positive", "detail": "Two-year J.D. track attracts experienced professionals and career changers."},
-            {"label": "Intense workload", "sentiment": "caution", "detail": "Quarter system and competitive grading demand strong time management."},
+            {
+                "label": "Clinical training",
+                "sentiment": "positive",
+                "detail": "Bluhm Legal Clinic offers extensive hands-on litigation and advocacy experience.",
+            },
+            {
+                "label": "Chicago placement",
+                "sentiment": "positive",
+                "detail": "Strong pipelines to Chicago Big Law, corporate counsel, and federal clerkships.",
+            },
+            {
+                "label": "Accelerated option",
+                "sentiment": "positive",
+                "detail": "Two-year J.D. track attracts experienced professionals and career changers.",
+            },
+            {
+                "label": "Intense workload",
+                "sentiment": "caution",
+                "detail": "Quarter system and competitive grading demand strong time management.",
+            },
         ],
         "sources": [
-            {"label": "U.S. News — Best Law Schools", "url": "https://www.usnews.com/best-graduate-schools/top-law-schools/northwestern-university-03058"},
-            {"label": "Pritzker School of Law — About", "url": "https://www.law.northwestern.edu/about/"},
+            {
+                "label": "U.S. News — Best Law Schools",
+                "url": "https://www.usnews.com/best-graduate-schools/top-law-schools/northwestern-university-03058",
+            },
+            {
+                "label": "Pritzker School of Law — About",
+                "url": "https://www.law.northwestern.edu/about/",
+            },
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
@@ -801,14 +2083,36 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "demanding, though Chicago clinical exposure is exceptional."
         ),
         "themes": [
-            {"label": "Research excellence", "sentiment": "positive", "detail": "Feinberg ranks among the top NIH-funded medical schools nationally."},
-            {"label": "Clinical training", "sentiment": "positive", "detail": "Northwestern Memorial and affiliated hospitals provide diverse patient-care exposure."},
-            {"label": "Extreme selectivity", "sentiment": "caution", "detail": "Acceptance rate below 3% with exceptional MCAT/GPA profiles expected."},
-            {"label": "Demanding environment", "sentiment": "mixed", "detail": "High expectations and workload; support systems exist but stress is real."},
+            {
+                "label": "Research excellence",
+                "sentiment": "positive",
+                "detail": "Feinberg ranks among the top NIH-funded medical schools nationally.",
+            },
+            {
+                "label": "Clinical training",
+                "sentiment": "positive",
+                "detail": "Northwestern Memorial and affiliated hospitals provide diverse patient-care exposure.",
+            },
+            {
+                "label": "Extreme selectivity",
+                "sentiment": "caution",
+                "detail": "Acceptance rate below 3% with exceptional MCAT/GPA profiles expected.",
+            },
+            {
+                "label": "Demanding environment",
+                "sentiment": "mixed",
+                "detail": "High expectations and workload; support systems exist but stress is real.",
+            },
         ],
         "sources": [
-            {"label": "U.S. News — Best Medical Schools: Research", "url": "https://www.usnews.com/best-graduate-schools/top-medical-schools/northwestern-university-feinberg-school-of-medicine-040101"},
-            {"label": "Feinberg School of Medicine — About", "url": "https://www.feinberg.northwestern.edu/about/"},
+            {
+                "label": "U.S. News — Best Medical Schools: Research",
+                "url": "https://www.usnews.com/best-graduate-schools/top-medical-schools/northwestern-university-feinberg-school-of-medicine-040101",
+            },
+            {
+                "label": "Feinberg School of Medicine — About",
+                "url": "https://www.feinberg.northwestern.edu/about/",
+            },
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
@@ -820,14 +2124,36 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "industry's contraction makes career planning essential early."
         ),
         "themes": [
-            {"label": "Industry reputation", "sentiment": "positive", "detail": "Medill is perennially ranked among the top journalism schools nationally."},
-            {"label": "Digital innovation", "sentiment": "positive", "detail": "Knight Lab and data-journalism courses keep the curriculum current."},
-            {"label": "Practitioner faculty", "sentiment": "positive", "detail": "Working journalists and editors teach core reporting courses."},
-            {"label": "Industry headwinds", "sentiment": "caution", "detail": "Traditional newsroom jobs are scarce; students must build versatile skill sets."},
+            {
+                "label": "Industry reputation",
+                "sentiment": "positive",
+                "detail": "Medill is perennially ranked among the top journalism schools nationally.",
+            },
+            {
+                "label": "Digital innovation",
+                "sentiment": "positive",
+                "detail": "Knight Lab and data-journalism courses keep the curriculum current.",
+            },
+            {
+                "label": "Practitioner faculty",
+                "sentiment": "positive",
+                "detail": "Working journalists and editors teach core reporting courses.",
+            },
+            {
+                "label": "Industry headwinds",
+                "sentiment": "caution",
+                "detail": "Traditional newsroom jobs are scarce; students must build versatile skill sets.",
+            },
         ],
         "sources": [
-            {"label": "U.S. News — Best Undergraduate Journalism Programs", "url": "https://www.usnews.com/best-colleges/rankings/journalism"},
-            {"label": "Medill — Undergraduate Journalism", "url": "https://www.medill.northwestern.edu/journalism/undergraduate/"},
+            {
+                "label": "U.S. News — Best Undergraduate Journalism Programs",
+                "url": "https://www.usnews.com/best-colleges/rankings/journalism",
+            },
+            {
+                "label": "Medill — Undergraduate Journalism",
+                "url": "https://www.medill.northwestern.edu/journalism/undergraduate/",
+            },
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
@@ -839,14 +2165,36 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "course sequencing requires careful planning."
         ),
         "themes": [
-            {"label": "Interdisciplinary research", "sentiment": "positive", "detail": "Querrey Simpson Institute for Bioelectronics and Feinberg partnerships enrich the major."},
-            {"label": "Pre-med pathway", "sentiment": "positive", "detail": "Many BME graduates pursue medical school or industry med-device roles."},
-            {"label": "Heavy workload", "sentiment": "caution", "detail": "Engineering core plus biology prerequisites demand strong time management."},
-            {"label": "Graduate outcomes", "sentiment": "positive", "detail": "Strong placement in med school, biotech, and PhD programs."},
+            {
+                "label": "Interdisciplinary research",
+                "sentiment": "positive",
+                "detail": "Querrey Simpson Institute for Bioelectronics and Feinberg partnerships enrich the major.",
+            },
+            {
+                "label": "Pre-med pathway",
+                "sentiment": "positive",
+                "detail": "Many BME graduates pursue medical school or industry med-device roles.",
+            },
+            {
+                "label": "Heavy workload",
+                "sentiment": "caution",
+                "detail": "Engineering core plus biology prerequisites demand strong time management.",
+            },
+            {
+                "label": "Graduate outcomes",
+                "sentiment": "positive",
+                "detail": "Strong placement in med school, biotech, and PhD programs.",
+            },
         ],
         "sources": [
-            {"label": "U.S. News — Best Undergraduate Biomedical Engineering Programs", "url": "https://www.usnews.com/best-colleges/rankings/biological-engineering-overall"},
-            {"label": "McCormick — Biomedical Engineering", "url": "https://www.mccormick.northwestern.edu/biomedical/"},
+            {
+                "label": "U.S. News — Best Undergraduate Biomedical Engineering Programs",
+                "url": "https://www.usnews.com/best-colleges/rankings/biological-engineering-overall",
+            },
+            {
+                "label": "McCormick — Biomedical Engineering",
+                "url": "https://www.mccormick.northwestern.edu/biomedical/",
+            },
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
@@ -858,14 +2206,36 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "assistant placements are common."
         ),
         "themes": [
-            {"label": "Research opportunities", "sentiment": "positive", "detail": "Undergraduates join faculty labs across clinical, cognitive, and social areas."},
-            {"label": "Graduate preparation", "sentiment": "positive", "detail": "Strong track record for PhD and clinical psychology program admission."},
-            {"label": "Large intro courses", "sentiment": "mixed", "detail": "High enrollment means big lectures in introductory psychology sequences."},
-            {"label": "Competitive RA spots", "sentiment": "caution", "detail": "Research assistant positions are sought-after and require early outreach."},
+            {
+                "label": "Research opportunities",
+                "sentiment": "positive",
+                "detail": "Undergraduates join faculty labs across clinical, cognitive, and social areas.",
+            },
+            {
+                "label": "Graduate preparation",
+                "sentiment": "positive",
+                "detail": "Strong track record for PhD and clinical psychology program admission.",
+            },
+            {
+                "label": "Large intro courses",
+                "sentiment": "mixed",
+                "detail": "High enrollment means big lectures in introductory psychology sequences.",
+            },
+            {
+                "label": "Competitive RA spots",
+                "sentiment": "caution",
+                "detail": "Research assistant positions are sought-after and require early outreach.",
+            },
         ],
         "sources": [
-            {"label": "Niche — Northwestern University", "url": "https://www.niche.com/colleges/northwestern-university/"},
-            {"label": "Weinberg — Department of Psychology", "url": "https://psychology.northwestern.edu/"},
+            {
+                "label": "Niche — Northwestern University",
+                "url": "https://www.niche.com/colleges/northwestern-university/",
+            },
+            {
+                "label": "Weinberg — Department of Psychology",
+                "url": "https://psychology.northwestern.edu/",
+            },
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
@@ -877,14 +2247,36 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "limited and career outcomes vary by concentration."
         ),
         "themes": [
-            {"label": "Production training", "sentiment": "positive", "detail": "Hands-on film, TV, and digital media production courses are program strengths."},
-            {"label": "Industry networks", "sentiment": "positive", "detail": "Alumni work across Hollywood, Chicago media, and streaming platforms."},
-            {"label": "Limited funding", "sentiment": "caution", "detail": "Graduate funding is scarcer than in STEM PhD programs."},
-            {"label": "Career variability", "sentiment": "mixed", "detail": "Outcomes depend heavily on portfolio quality and industry connections."},
+            {
+                "label": "Production training",
+                "sentiment": "positive",
+                "detail": "Hands-on film, TV, and digital media production courses are program strengths.",
+            },
+            {
+                "label": "Industry networks",
+                "sentiment": "positive",
+                "detail": "Alumni work across Hollywood, Chicago media, and streaming platforms.",
+            },
+            {
+                "label": "Limited funding",
+                "sentiment": "caution",
+                "detail": "Graduate funding is scarcer than in STEM PhD programs.",
+            },
+            {
+                "label": "Career variability",
+                "sentiment": "mixed",
+                "detail": "Outcomes depend heavily on portfolio quality and industry connections.",
+            },
         ],
         "sources": [
-            {"label": "U.S. News — Best Fine Arts Programs", "url": "https://www.usnews.com/best-graduate-schools/top-fine-arts-schools/northwestern-university-03058"},
-            {"label": "School of Communication — RTVF", "url": "https://communication.northwestern.edu/departments/rtvf/"},
+            {
+                "label": "U.S. News — Best Fine Arts Programs",
+                "url": "https://www.usnews.com/best-graduate-schools/top-fine-arts-schools/northwestern-university-03058",
+            },
+            {
+                "label": "School of Communication — RTVF",
+                "url": "https://communication.northwestern.edu/departments/rtvf/",
+            },
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
@@ -896,14 +2288,36 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "than dedicated M.S. in Business Analytics peers and career services are MBA-centric."
         ),
         "themes": [
-            {"label": "Quantitative curriculum", "sentiment": "positive", "detail": "Analytics, statistics, and decision-science courses anchor the program."},
-            {"label": "Kellogg brand", "sentiment": "positive", "detail": "Access to Kellogg recruiting events and alumni network."},
-            {"label": "Program maturity", "sentiment": "mixed", "detail": "Younger than dedicated MSBA programs at MIT Sloan or USC Marshall."},
-            {"label": "MBA-centric services", "sentiment": "caution", "detail": "Career services are primarily oriented toward full-time MBA students."},
+            {
+                "label": "Quantitative curriculum",
+                "sentiment": "positive",
+                "detail": "Analytics, statistics, and decision-science courses anchor the program.",
+            },
+            {
+                "label": "Kellogg brand",
+                "sentiment": "positive",
+                "detail": "Access to Kellogg recruiting events and alumni network.",
+            },
+            {
+                "label": "Program maturity",
+                "sentiment": "mixed",
+                "detail": "Younger than dedicated MSBA programs at MIT Sloan or USC Marshall.",
+            },
+            {
+                "label": "MBA-centric services",
+                "sentiment": "caution",
+                "detail": "Career services are primarily oriented toward full-time MBA students.",
+            },
         ],
         "sources": [
-            {"label": "Poets&Quants — Kellogg School of Management", "url": "https://poetsandquants.com/schools/kellogg-school-of-management-northwestern-university/"},
-            {"label": "Kellogg — MS in Management Studies", "url": "https://www.kellogg.northwestern.edu/programs/msms.aspx"},
+            {
+                "label": "Poets&Quants — Kellogg School of Management",
+                "url": "https://poetsandquants.com/schools/kellogg-school-of-management-northwestern-university/",
+            },
+            {
+                "label": "Kellogg — MS in Management Studies",
+                "url": "https://www.kellogg.northwestern.edu/programs/msms.aspx",
+            },
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
@@ -915,33 +2329,36 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             "opportunities, though equipment access can be competitive and career outcomes vary by concentration."
         ),
         "themes": [
-            {"label": "Production training", "sentiment": "positive", "detail": "Hands-on film, TV, and digital media courses anchor the undergraduate curriculum."},
-            {"label": "Industry pipelines", "sentiment": "positive", "detail": "Alumni work across Hollywood, Chicago media, and streaming platforms."},
-            {"label": "Creative community", "sentiment": "positive", "detail": "Collaborative cohort culture supports portfolio development and peer filmmaking."},
-            {"label": "Resource competition", "sentiment": "mixed", "detail": "Studio equipment and editing suites are sought-after among production students."},
+            {
+                "label": "Production training",
+                "sentiment": "positive",
+                "detail": "Hands-on film, TV, and digital media courses anchor the undergraduate curriculum.",
+            },
+            {
+                "label": "Industry pipelines",
+                "sentiment": "positive",
+                "detail": "Alumni work across Hollywood, Chicago media, and streaming platforms.",
+            },
+            {
+                "label": "Creative community",
+                "sentiment": "positive",
+                "detail": "Collaborative cohort culture supports portfolio development and peer filmmaking.",
+            },
+            {
+                "label": "Resource competition",
+                "sentiment": "mixed",
+                "detail": "Studio equipment and editing suites are sought-after among production students.",
+            },
         ],
         "sources": [
-            {"label": "U.S. News — Best Fine Arts Programs", "url": "https://www.usnews.com/best-graduate-schools/top-fine-arts-schools/northwestern-university-03058"},
-            {"label": "School of Communication — RTVF", "url": "https://communication.northwestern.edu/departments/rtvf/"},
-        ],
-        "disclaimer": _REVIEWS_DISCLAIMER,
-    },
-    "northwestern-health-medical-preparatory-programs-bs": {
-        "summary": (
-            "Northwestern's pre-medical track through Weinberg provides rigorous science preparation "
-            "with Health Professions Advising, Feinberg research access, and strong medical-school "
-            "placement rates. Students value the advising infrastructure and research opportunities, "
-            "though science coursework is demanding and pre-med culture can feel competitive."
-        ),
-        "themes": [
-            {"label": "Science preparation", "sentiment": "positive", "detail": "Rigorous biology, chemistry, and physics foundation for medical school admission."},
-            {"label": "Advising support", "sentiment": "positive", "detail": "Health Professions Advising guides MCAT prep, clinical experiences, and application strategy."},
-            {"label": "Research access", "sentiment": "positive", "detail": "Undergraduates join Feinberg and campus biomedical labs before medical school."},
-            {"label": "Competitive culture", "sentiment": "mixed", "detail": "Pre-med cohort is large and science grading can be intense at Northwestern."},
-        ],
-        "sources": [
-            {"label": "Niche — Northwestern University", "url": "https://www.niche.com/colleges/northwestern-university/"},
-            {"label": "Weinberg — Health Professions Advising", "url": "https://weinberg.northwestern.edu/undergraduate/advising-student-support/health-professions-advising.html"},
+            {
+                "label": "U.S. News — Best Fine Arts Programs",
+                "url": "https://www.usnews.com/best-graduate-schools/top-fine-arts-schools/northwestern-university-03058",
+            },
+            {
+                "label": "School of Communication — RTVF",
+                "url": "https://communication.northwestern.edu/departments/rtvf/",
+            },
         ],
         "disclaimer": _REVIEWS_DISCLAIMER,
     },
@@ -962,7 +2379,11 @@ _PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
     "northwestern-biomedical-medical-engineering-bs": ["biomedical engineering", "BME"],
     "northwestern-psychology-general-bs": ["psychology", "Weinberg"],
     "northwestern-radio-television-and-digital-communication-ms": ["RTVF", "film", "television"],
-    "northwestern-management-sciences-and-quantitative-methods-ms": ["MSMS", "analytics", "Kellogg"],
+    "northwestern-management-sciences-and-quantitative-methods-ms": [
+        "MSMS",
+        "analytics",
+        "Kellogg",
+    ],
 }
 
 
@@ -1024,7 +2445,9 @@ def apply(session: Session) -> bool:
 
 
 def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
-    existing = {s.name: s for s in session.scalars(select(School).where(School.institution_id == inst.id))}
+    existing = {
+        s.name: s for s in session.scalars(select(School).where(School.institution_id == inst.id))
+    }
     canonical_names = {s["name"] for s in SCHOOLS}
     by_name: dict[str, School] = {}
     for spec in SCHOOLS:
@@ -1050,27 +2473,40 @@ def _apply_schools(session: Session, inst: Institution) -> dict[str, School]:
 
 
 def _program_has_dependents(session: Session, program_id) -> bool:
-    fks = session.execute(text("""
+    fks = session.execute(
+        text("""
         SELECT tc.table_name, kcu.column_name
         FROM information_schema.table_constraints tc
         JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
         JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name AND tc.table_schema = ccu.table_schema
         WHERE tc.constraint_type = 'FOREIGN KEY' AND ccu.table_name = 'programs' AND ccu.column_name = 'id' AND tc.table_name <> 'programs'
-    """)).fetchall()
+    """)
+    ).fetchall()
     for table, col in fks:
-        if session.execute(text(f'SELECT 1 FROM "{table}" WHERE "{col}" = :pid LIMIT 1'), {"pid": program_id}).first():
+        if session.execute(
+            text(f'SELECT 1 FROM "{table}" WHERE "{col}" = :pid LIMIT 1'), {"pid": program_id}
+        ).first():
             return True
     return False
 
 
 def _apply_programs(session: Session, inst: Institution, school_by_name: dict[str, School]) -> None:
-    existing = {p.slug: p for p in session.scalars(select(Program).where(Program.institution_id == inst.id)) if p.slug}
+    existing = {
+        p.slug: p
+        for p in session.scalars(select(Program).where(Program.institution_id == inst.id))
+        if p.slug
+    }
     canonical = set(PROGRAM_SLUGS)
     for spec in PROGRAMS:
         slug = spec["slug"]
         p = existing.get(slug)
         if p is None:
-            p = Program(institution_id=inst.id, program_name=spec["program_name"], degree_type=spec["degree_type"], slug=slug)
+            p = Program(
+                institution_id=inst.id,
+                program_name=spec["program_name"],
+                degree_type=spec["degree_type"],
+                slug=slug,
+            )
             session.add(p)
         p.program_name = spec["program_name"]
         p.degree_type = spec["degree_type"]
@@ -1087,14 +2523,19 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         if spec["degree_type"] == "bachelors":
             p.tuition = _TUITION_UG
             p.cost_data = {
-                "tuition_usd": _TUITION_UG, "total_cost_of_attendance": _UNDERGRAD_COA,
-                "avg_net_price": _AVG_NET_PRICE, "funded": False,
-                "source": _COST_SRC[0], "source_url": _COST_SRC[1], "year": "2024-25",
+                "tuition_usd": _TUITION_UG,
+                "total_cost_of_attendance": _UNDERGRAD_COA,
+                "avg_net_price": _AVG_NET_PRICE,
+                "funded": False,
+                "source": _COST_SRC[0],
+                "source_url": _COST_SRC[1],
+                "year": "2024-25",
             }
         elif spec["degree_type"] == "phd":
             p.tuition = 0
             p.cost_data = {
-                "tuition_usd": 0, "funded": True,
+                "tuition_usd": 0,
+                "funded": True,
                 "note": "Northwestern PhD students typically receive full tuition plus a stipend.",
                 "source": "The Graduate School — Funding",
                 "source_url": "https://www.tgs.northwestern.edu/funding/",

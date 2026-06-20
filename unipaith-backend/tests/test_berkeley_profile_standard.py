@@ -123,7 +123,7 @@ def test_catalog_quality_gate():
 
 
 def test_catalog_breadth_and_shape():
-    assert len(b.PROGRAMS) >= 250, "full Scorecard catalog breadth (UNITID 110635)"
+    assert len(b.PROGRAMS) >= 220, "verified real Berkeley catalog breadth (de-padded)"
     assert len(set(b.PROGRAM_SLUGS)) == len(b.PROGRAM_SLUGS)
     assert b.RANKING_DATA["ownership_type"] == "public"
     assert (
@@ -159,7 +159,7 @@ def test_every_school_is_gold_except_recorded_omissions():
 
 
 def test_every_program_is_gold_except_recorded_omissions():
-    assert len(b.PROGRAMS) >= 250, "full Scorecard catalog breadth (UNITID 110635)"
+    assert len(b.PROGRAMS) >= 220, "verified real Berkeley catalog breadth (de-padded)"
     for spec in b.PROGRAMS:
         slug = spec["slug"]
         res = check_conformance(

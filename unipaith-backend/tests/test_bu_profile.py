@@ -171,3 +171,70 @@ def test_catalog_has_no_padding_stubs():
 
     errors = validate_catalog(b.PROGRAMS)
     assert not errors, f"Catalog padding detected: {errors}"
+
+
+def _field_of(name: str) -> str:
+    """The field-of-study portion of a program name (strip the credential designation)."""
+    import re
+
+    head = name.split(" / ")[0]
+    return re.sub(r"^.*? in ", "", head).strip() if " in " in head else head
+
+
+def test_no_department_is_a_bare_field_echo():
+    """The department must be the real owning school/college, NEVER the field echoed
+    verbatim from the program name (miss #2 dept-echo — the BU CRITICAL #1 defect: 216
+    rows once set department == the field, e.g. 'Bachelor of Arts in Anthropology' ->
+    'Anthropology', while the real owning College of Arts & Sciences was known). Gold MIT
+    scores 0 here; so must BU."""
+    echoes = [
+        (p["program_name"], p["department"])
+        for p in b.PROGRAMS
+        if p.get("department") and p["department"] == _field_of(p["program_name"])
+    ]
+    assert not echoes, f"department echoes the name's field on {len(echoes)} rows: {echoes[:8]}"
+
+
+def test_no_literal_minor_stub_names():
+    """No program may ship the literal stub name 'minor' (REPAIR BACKLOG #10)."""
+    stubs = [p["slug"] for p in b.PROGRAMS if (p.get("program_name") or "").lower() == "minor"]
+    assert not stubs, f"literal 'minor' stub names: {stubs}"
+
+
+def test_no_identical_across_credential_levels():
+    from collections import Counter
+
+    desc_counts = Counter(prog.get("description") for prog in b.PROGRAMS)
+    shared = sum(c for c in desc_counts.values() if c >= 2)
+    assert shared == 0, (
+        f"{shared} programs share a description verbatim with a credential sibling"
+    )
+
+
+def test_catalog_is_anti_stub_clean():
+    """Per-credential bodies — gold MIT = 0% frame-stripped shared body (REPAIR CRITICAL #2)."""
+    from unipaith.profile_standard.anti_stub import analyze, frame_stripped_shared_body
+
+    report = analyze(b.PROGRAMS)
+    assert report.is_clean, f"anti-stub not clean: {report.summary()}"
+    shared = frame_stripped_shared_body(b.PROGRAMS)
+    assert not shared, (
+        f"credential siblings share a frame-stripped body on "
+        f"{len(shared)} field(s): {shared[:8]}"
+    )
+
+
+def test_no_credential_combo_names_or_departments():
+    """No program_name or department may be a bare/mechanical credential-combo token —
+    'Jdma English', 'Jdllm In Finance', 'PhD, MD/PhD' (miss #2). Real joint degrees carry
+    their full designation ('Juris Doctor / Master of Arts in English')."""
+    import re
+
+    bad_token = re.compile(r"^(Jd|Jdma|Jdllm|Mdjd|Mdphd|Md|Mph|Phd|PhD,|Llm|Ba|Bs|Ma|Ms)\b")
+    bad = [
+        (p["program_name"], p.get("department"))
+        for p in b.PROGRAMS
+        if bad_token.match(p["program_name"])
+        or (p.get("department") and bad_token.match(p["department"]))
+    ]
+    assert not bad, f"credential-combo stub names/departments: {bad}"

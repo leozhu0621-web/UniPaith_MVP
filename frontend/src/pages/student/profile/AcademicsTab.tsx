@@ -62,7 +62,7 @@ import {
   ResearchForm,
   TestScoreForm,
 } from '../components/ProfileForms'
-import { SectionHeader } from './shared'
+import { TabSectionHeader } from './TabSectionHeader'
 import FileDropzone from './FileDropzone'
 
 const courseLevelLabel = (v: string) => COURSE_LEVELS.find(o => o.value === v)?.label || v
@@ -294,10 +294,10 @@ export default function AcademicsTab() {
   const transcripts: any[] = (Array.isArray(documents) ? documents : []).filter((d: any) => d.document_type === 'transcript')
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       {/* 6.1 Academics */}
       <section>
-        <SectionHeader
+        <TabSectionHeader
           title="Academics"
           action={
             <Button size="sm" onClick={() => open('academic')}>
@@ -404,7 +404,7 @@ export default function AcademicsTab() {
 
       {/* 6.2 Test Scores */}
       <section>
-        <SectionHeader
+        <TabSectionHeader
           title="Test scores"
           action={
             <Button size="sm" onClick={() => open('test')}>
@@ -469,7 +469,7 @@ export default function AcademicsTab() {
 
       {/* 6.3 Languages */}
       <section>
-        <SectionHeader
+        <TabSectionHeader
           title="Languages"
           action={
             <Button size="sm" onClick={() => open('language')}>
@@ -523,7 +523,7 @@ export default function AcademicsTab() {
 
       {/* 6.4 Research */}
       <section>
-        <SectionHeader
+        <TabSectionHeader
           title="Research"
           action={
             <Button size="sm" onClick={() => open('research')}>

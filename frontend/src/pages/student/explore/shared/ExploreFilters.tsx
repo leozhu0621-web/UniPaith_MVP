@@ -194,11 +194,11 @@ export default function ExploreFilters({ universities, filters, onChange }: Prop
 
   return (
     <div className="mb-4">
-      {/* Row 1: dropdown filters */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground/70 uppercase tracking-wider mr-1">
-          <Filter size={11} />
-          Filter
+      {/* Row 1: filters (larger controls — Spec 2026-06-14; centered 2026-06-19). */}
+      <div className="flex items-center justify-center gap-2 flex-wrap">
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground/70 uppercase tracking-wider mr-1">
+          <Filter size={13} />
+          Filters
         </span>
 
         <FilterDropdown
@@ -284,7 +284,7 @@ export default function ExploreFilters({ universities, filters, onChange }: Prop
         {activeCount > 0 && (
           <button
             onClick={clearAll}
-            className="inline-flex items-center gap-1 text-[11px] text-foreground/70 hover:text-foreground ml-auto"
+            className="inline-flex items-center gap-1 text-[11px] text-foreground/70 hover:text-foreground"
           >
             <X size={12} /> Clear all
           </button>
@@ -292,7 +292,7 @@ export default function ExploreFilters({ universities, filters, onChange }: Prop
       </div>
 
       {/* Row 2: boolean toggle pills */}
-      <div className="flex flex-wrap items-center gap-2 mt-2">
+      <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
         <TogglePill label="Open for applications" active={filters.appOpen} onClick={() => toggleBool('appOpen')} />
         <TogglePill label="International friendly" active={filters.international} onClick={() => toggleBool('international')} />
         <TogglePill label="Study abroad" active={filters.studyAbroad} onClick={() => toggleBool('studyAbroad')} />
@@ -301,7 +301,7 @@ export default function ExploreFilters({ universities, filters, onChange }: Prop
 
       {/* Active filter chip review */}
       {activeCount > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2">
           {(['country', 'setting', 'type', 'degreeLevel', 'deliveryFormat',
              'subjects', 'industries', 'satTier', 'tuitionTier'] as const).flatMap(key =>
             (filters[key] as string[]).map(value => (
@@ -352,7 +352,7 @@ function FilterDropdown({ label, active, options, selected, onToggle }: Dropdown
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-full border transition-colors ${
+        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[13px] font-medium rounded-full border transition-colors ${
           hasActive
             ? 'bg-secondary text-secondary-foreground border-secondary'
             : 'bg-card text-foreground border-border hover:border-secondary hover:text-secondary'
@@ -415,7 +415,7 @@ function TogglePill({ label, active, onClick }: { label: string; active: boolean
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-full border transition-colors ${
+      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[13px] font-medium rounded-full border transition-colors ${
         active
           ? 'bg-secondary text-secondary-foreground border-secondary'
           : 'bg-card text-foreground border-border hover:border-secondary hover:text-secondary'

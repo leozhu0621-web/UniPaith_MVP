@@ -1,49 +1,37 @@
-// Discover hub sub-tabs (Spec 2026-06-12 §2). For you = the Match surface;
-// Updates / Events / Peers are the absorbed Connect tabs. Badges: Updates =
-// posts since last visit (server count); Events = recommended upcoming events.
+// Discover hub top tabs (Spec 2026-06-14 restructure). For you = the Match
+// surface; Academic = universities + school updates + events (sub-tabbed);
+// Financial + International = the Resources guides, promoted to top tabs. The
+// Academic badge counts school updates since the last visit.
 import { useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Calendar, ChevronDown, Newspaper, Sparkles, Users } from 'lucide-react'
-import { getConnectEvents, getFollowing, getUnseenCount } from '../../../api/connect'
+import { Banknote, Globe2, GraduationCap, Newspaper, Sparkles } from 'lucide-react'
+import { getUnseenCount } from '../../../api/connect'
 import { getConnectSeenAt } from '../../../utils/connectSeen'
 
-export type DiscoverTab = 'foryou' | 'updates' | 'events' | 'peers'
-export const DISCOVER_TABS: readonly DiscoverTab[] = ['foryou', 'updates', 'events', 'peers'] as const
+export type DiscoverTab = 'foryou' | 'academic' | 'financial' | 'international'
+export const DISCOVER_TABS: readonly DiscoverTab[] = ['foryou', 'academic', 'financial', 'international'] as const
 
 const TABS: { key: DiscoverTab; label: string; icon: typeof Newspaper }[] = [
   { key: 'foryou', label: 'For you', icon: Sparkles },
-  { key: 'updates', label: 'Updates', icon: Newspaper },
-  { key: 'events', label: 'Events', icon: Calendar },
-  { key: 'peers', label: 'Peers', icon: Users },
+  { key: 'academic', label: 'Academic', icon: GraduationCap },
+  { key: 'financial', label: 'Financial', icon: Banknote },
+  { key: 'international', label: 'International', icon: Globe2 },
 ]
 
 interface Props {
   tab: DiscoverTab
   onChange: (t: DiscoverTab) => void
-  onManageFollowing: () => void
-  /** Hide the Peers tab when its flag is off so it never dead-ends (Discover review 2026-06-14). */
-  peersEnabled?: boolean
 }
 
-export default function DiscoverTabBar({ tab, onChange, onManageFollowing, peersEnabled = true }: Props) {
+export default function DiscoverTabBar({ tab, onChange }: Props) {
   const tablistRef = useRef<HTMLDivElement>(null)
-  const visibleTabs = TABS.filter(t => t.key !== 'peers' || peersEnabled)
-  const { data: follows } = useQuery({ queryKey: ['connect-follows'], queryFn: getFollowing, retry: false })
   const { data: unseen = 0 } = useQuery({
     queryKey: ['connect-unseen'],
     queryFn: () => getUnseenCount(getConnectSeenAt()),
     staleTime: 5 * 60 * 1000,
     retry: false,
   })
-  const { data: eventsData } = useQuery({
-    queryKey: ['connect-events', 'upcoming'],
-    queryFn: () => getConnectEvents('upcoming'),
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  })
-  const recommended = (eventsData?.events ?? []).filter(e => e.recommended).length
-  const badges: Partial<Record<DiscoverTab, number>> = { updates: unseen, events: recommended }
-  const followCount = follows?.length ?? 0
+  const badges: Partial<Record<DiscoverTab, number>> = { academic: unseen }
 
   // Arrow-key / Home / End keyboard navigation on the tablist (ARIA tabs pattern).
   const handleTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
@@ -57,14 +45,14 @@ export default function DiscoverTabBar({ tab, onChange, onManageFollowing, peers
     if (next >= 0) {
       e.preventDefault()
       buttons[next].focus()
-      onChange(visibleTabs[next].key)
+      onChange(TABS[next].key)
     }
   }
 
   return (
-    <div className="flex items-end justify-between border-b border-border mb-5">
-      <div ref={tablistRef} role="tablist" aria-label="Discover sections" className="flex gap-1 overflow-x-auto no-scrollbar">
-        {visibleTabs.map((t, idx) => {
+    <div className="border-b border-border mb-5">
+      <div ref={tablistRef} role="tablist" aria-label="Discover sections" className="flex justify-center gap-1 overflow-x-auto no-scrollbar">
+        {TABS.map((t, idx) => {
           const badge = badges[t.key] ?? 0
           return (
             <button
@@ -93,18 +81,6 @@ export default function DiscoverTabBar({ tab, onChange, onManageFollowing, peers
           )
         })}
       </div>
-      <button
-        onClick={onManageFollowing}
-        className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 mb-1 text-xs font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors flex-shrink-0"
-      >
-        Manage following ({followCount}) <ChevronDown size={13} />
-      </button>
-      <button
-        onClick={onManageFollowing}
-        className="inline-flex sm:hidden items-center gap-1 px-3 py-1.5 mb-1 text-xs font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors flex-shrink-0"
-      >
-        Following ({followCount}) <ChevronDown size={13} />
-      </button>
     </div>
   )
 }

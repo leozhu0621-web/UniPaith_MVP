@@ -5,6 +5,7 @@ mirroring the MIT/Sloan/MBAn reference certification.
 
 from unipaith.data import uw_madison_profile as p
 from unipaith.profile_standard import STANDARD_VERSION, check_conformance
+from unipaith.profile_standard.anti_stub import analyze
 from unipaith.profile_standard.manifest import MANIFEST
 
 
@@ -133,6 +134,19 @@ def test_no_identical_across_credential_levels():
     )
 
 
+def test_catalog_is_anti_stub_clean():
+    """Per-credential bodies — gold MIT = 0% frame-stripped shared body (REPAIR #5)."""
+    from unipaith.profile_standard.anti_stub import analyze, frame_stripped_shared_body
+
+    report = analyze(p.PROGRAMS)
+    assert report.is_clean, f"anti-stub not clean: {report.summary()}"
+    shared = frame_stripped_shared_body(p.PROGRAMS)
+    assert not shared, (
+        f"credential siblings share a frame-stripped body on "
+        f"{len(shared)} field(s): {shared[:8]}"
+    )
+
+
 def test_catalog_breadth_and_shape():
     assert len(p.SCHOOLS) == 15
     assert len(p.PROGRAMS) >= 330
@@ -172,3 +186,20 @@ def test_every_program_is_conformant_or_omitted():
 def test_flagship_programs_have_reviews():
     reviewed = [s for s in p._REVIEWS_BY_SLUG if s in p.PROGRAM_SLUGS]
     assert len(reviewed) >= 10
+
+
+def test_no_credential_siblings_share_a_body():
+    """Gold MIT = 0: no two programs (same field OR cross-field) share a >=80-char body.
+
+    Guards against the credential-frame + one-shared-field-body regression — the prior
+    build stamped one verified field clause across every credential sibling behind a
+    generic level tail. Every credential now carries a distinct researched body, so the
+    absolute shared-body gate (which the frame-stripped / leading-prefix metrics miss)
+    must stay empty.
+    """
+    progs = [
+        {"program_name": x["program_name"], "description": x["description"]}
+        for x in p.PROGRAMS
+    ]
+    assert p._max_shared_body_pairs(p.PROGRAMS) == []
+    assert analyze(progs).is_clean

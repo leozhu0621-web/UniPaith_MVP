@@ -37,6 +37,11 @@ class StudentProfile(Base):
     preferred_pronouns: Mapped[str | None] = mapped_column(String(50))
     date_of_birth: Mapped[date | None] = mapped_column(Date)
     gender_identity: Mapped[str | None] = mapped_column(String(50))
+    # Stamped on every applied change to gender_identity. Drives the 3-month
+    # (90-day) change-lock enforced in StudentService.update_profile: a gender
+    # change is allowed only on first set (this is null) or >= 90 days after the
+    # last change. Null = never set, so the first change is always allowed.
+    gender_identity_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     legal_sex: Mapped[str | None] = mapped_column(String(20))
     place_of_birth: Mapped[str | None] = mapped_column(String(255))
     nationality: Mapped[str | None] = mapped_column(String(100))
@@ -342,6 +347,8 @@ class StudentPreference(Base):
     weight_flexibility: Mapped[int | None] = mapped_column(Integer)
     weight_support: Mapped[int | None] = mapped_column(Integer)
     weight_time_to_degree: Mapped[int | None] = mapped_column(Integer)
+    weight_research: Mapped[int | None] = mapped_column(Integer)
+    weight_campus_life: Mapped[int | None] = mapped_column(Integer)
     application_intensity: Mapped[str | None] = mapped_column(String(30))
     preferred_learning_style: Mapped[str | None] = mapped_column(String(30))
     preferred_program_style: Mapped[str | None] = mapped_column(String(30))

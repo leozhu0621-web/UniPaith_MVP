@@ -24,6 +24,7 @@ from unipaith.models.attribution import AttributionEvent
 from unipaith.models.audit import AdmissionsAuditLog
 from unipaith.models.base import Base
 from unipaith.models.billing import StudentSubscription
+from unipaith.models.chat_session import ChatFolder, ChatSession
 from unipaith.models.confidence_outcome import ConfidenceOutcomePair
 from unipaith.models.crawler import (
     ChangeEvent,
@@ -146,6 +147,7 @@ from unipaith.models.pipeline import (
     PipelineConfig,
     PipelineStageSnapshot,
 )
+from unipaith.models.prompt_catalog import PromptCatalog
 from unipaith.models.prompt_library import (
     BehavioralPrompt,
     StudentBehavioralResponse,
@@ -170,6 +172,8 @@ from unipaith.models.reference import (
     Scholarship,
 )
 from unipaith.models.saved_search import SavedSearch
+from unipaith.models.scholarship import Scholarship as ExternalScholarship
+from unipaith.models.session_template import SessionTemplate, SessionTemplateStep
 from unipaith.models.settings import InstitutionTeamInvite, UserSettings
 from unipaith.models.strategy import StudentStrategy
 from unipaith.models.student import (
@@ -227,6 +231,13 @@ __all__ = [
     # Discovery (Phase A — parallel session, merged in #111)
     "DiscoverySession",
     "DiscoveryMessage",
+    # Uni chat-tab sessions model (2026-06-19 chat-tab redesign)
+    "ChatFolder",
+    "ChatSession",
+    "PromptCatalog",
+    # Session templates — guided work-orders (spec §5/§6, 2026-06-20)
+    "SessionTemplate",
+    "SessionTemplateStep",
     # Adaptive Intake Engine (Spec 44 — four-layer signal pipeline)
     "RawInput",
     "StudentSignal",
@@ -347,6 +358,8 @@ __all__ = [
     "EntityEnrichment",
     "ChangeEvent",
     "Scholarship",
+    # External scholarships catalog (Spec 2026-06-14 — CareerOneStop)
+    "ExternalScholarship",
     "RefOccupation",
     "RefTest",
     "RefVisa",

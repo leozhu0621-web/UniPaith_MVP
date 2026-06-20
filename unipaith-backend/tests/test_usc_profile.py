@@ -1,6 +1,6 @@
 """The USC profile conforms to the gold standard across its WHOLE tree — the
 institution, every one of its 21 real schools/academic units, and every one of
-its 613 programs — mirroring the MIT/Sloan/MBAn reference certification.
+its real published programs — mirroring the MIT/Sloan/MBAn reference certification.
 
 Pure (no DB): builds each node's persisted snapshot from the ``usc_profile`` module
 exactly as ``apply()`` writes it, and runs ``check_conformance``. A node passes when
@@ -64,7 +64,7 @@ def _program_snapshot(spec: dict) -> dict:
         "description_text": spec["description"],
         "website_url": u._website_for(spec),
         "department": spec.get("department"),
-        "tracks": None,
+        "tracks": spec.get("tracks"),
         "application_requirements": u._requirements_for(spec),
         "cost_data": cost,
         "outcomes_data": outcomes,
@@ -77,8 +77,12 @@ def _program_snapshot(spec: dict) -> dict:
 
 def test_catalog_breadth_and_shape():
     # Full published degree catalog across Dornsife + 20 professional schools.
+    # The count floor asserts a FULL real catalog, not a frozen padded number: the
+    # uscdefab1 de-fabrication collapsed 93 concentration/emphasis split rows into their
+    # base degrees (613 -> 520 real programs), so the floor tracks the real catalog while
+    # structural REALNESS is enforced by validate_catalog (below) + test_anti_stub_gate.
     assert len(u.SCHOOLS) == 21
-    assert len(u.PROGRAMS) >= 600
+    assert len(u.PROGRAMS) >= 500
     assert len(set(u.PROGRAM_SLUGS)) == len(u.PROGRAM_SLUGS)
     # online delivery is set on Bovard / online programs
     assert any(p["delivery_format"] == "online" for p in u.PROGRAMS)
@@ -137,7 +141,23 @@ def test_every_program_is_conformant_or_omitted():
         assert snap["content_sources"], f"{spec['slug']} missing content_sources"
 
 
-def test_flagship_programs_carry_reviews_and_outcomes():
+def test_no_slug_prefixed_descriptions():
+    """Kebab-case catalogue slugs must not leak into description_text (miss #8)."""
+    import re
+
+    slug_re = re.compile(r"^[a-z0-9]+(-[a-z0-9]+){2,}\s*[—–-]\s")
+    leaks = [s["slug"] for s in u.PROGRAMS if slug_re.match(s.get("description") or "")]
+    assert not leaks, f"slug-prefixed descriptions: {leaks[:5]}"
+
+
+def test_no_field_echo_departments():
+    """department must name USC's real school/college, not echo the field (miss #2)."""
+    echo = [
+        s["slug"]
+        for s in u.PROGRAMS
+        if s.get("department") == u._field_key(s["program_name"])
+    ]
+    assert not echo, f"field-echo departments: {echo[:5]}"
     # Beat the "1 reviewed program" bug: the coverable flagships carry external_reviews.
     for slug in (
         "usc-full-time-mba-program-mba",

@@ -4,11 +4,15 @@ description: >
   Autonomously develop the UniPaith profile database toward the gold standard,
   ONE COMPLETE UNIVERSITY per run — the institution page + every school + every
   program + all their details — verified and shipped as one atomic unit. Use as a
-  scheduled routine that keeps growing the database. Discovers a university's real
+  scheduled routine that keeps DEEPENING the database toward gold — enrichment +
+  repair only; it never adds universities (seeding is external). Discovers a
+  university's real
   structure, researches every field from authoritative sources, VERIFIES (never
   fabricates — omits if unverifiable), writes the data + an idempotent migration,
   and ships it live. Full spec:
-  docs/superpowers/specs/2026-06-10-university-enrichment-routine.md.
+  docs/superpowers/specs/2026-06-10-university-enrichment-routine.md (editorial/standard
+  axis); the program-side MATCHER contracts are governed by the 2026-06-17 AI-Structure
+  specs 2 + 3, which SUPERSEDE the 2026-06-10 doc on the matcher and seeding axes.
 ---
 
 # Enrich a whole university to the gold standard
@@ -80,7 +84,10 @@ scored on thin data and will rank poorly for everyone.
 every program, also write a **`program_preferences`** row (model `ProgramPreference`,
 table `program_preferences`, added in the AI-Structure build) so the **program →
 student** match direction works even before a school claims:
-- Set `source = "derived"` and a `confidence`.
+- Set `source = "derived"` and the **inferred** confidence anchor **`0.4`** (§3.6
+  authority precedence — NOT 0.6 public-crawl, 0.85 verified-feed, or 1.0 claimed). A
+  derived preference is the lowest authority tier, so the matcher reads its `c_program`
+  low; only a school's later claim raises it to 1.0.
 - From the public **class profile** infer the baseline target applicant —
   `pref_min_gpa` (typical admitted GPA floor), `pref_test_bands` (e.g. `{"GRE": 320}`),
   `pref_fields` (common feeder fields), `pref_levels` (eligible current levels),
@@ -89,6 +96,26 @@ student** match direction works even before a school claims:
   claims, it overwrites these with `source = "claimed"` — **do not touch a claimed row**.
 A program with no `program_preferences` row simply has "no opinion" (the matcher
 treats it neutrally), so deriving it from real admit data is a genuine quality win.
+
+**The match-side feed is EXECUTED IN YOUR DATA-MODULE MIGRATION — and `program_preferences`
+is now AUTOMATED.** In the migration that calls `<uni>_profile.apply(session)`, add one
+line right after it:
+
+```python
+from unipaith.services.match.derive_preferences import backfill_program_preferences
+backfill_program_preferences(session, institution_id=inst.id)  # derive target-applicant rows
+```
+
+That deterministic helper (`services/match/derive_preferences.py`) derives a grounded
+target-applicant row for every program of that institution lacking one — `pref_fields`
+from the name/CIP, `pref_levels` from the degree, `pref_min_gpa` from a real class
+profile (omit-never-guess) — stamping `source="derived"`, `confidence=0.4`, and it
+**never touches a claimed/first-party row**. The whole fleet was backfilled once
+(migration `progprefbf1`); calling it in your migration keeps each newly-enriched
+university covered. `field_provenance` per-attribute stamping is NOT yet automated or
+matcher-consumed — stamp it as you populate attributes for future authority-precedence,
+but it is not a hard gate today. (The match SCORE math is Spec 3, backend-only; your job
+is to feed it typed, grounded data.)
 
 ## Completeness is non-negotiable — verify before you ship
 
@@ -252,6 +279,29 @@ Concrete misses observed in the first runs — each broke a real page:
      rollup echoed as department and the template description, including one listing
      a "Bachelor's in Intelligence, Command Control and Information Operations" the
      institution does not offer.
+   - **The conferred-degree DESIGNATION is itself part of the real name — the
+     possessive award-level form ("Bachelor's in {field}" / "Master's in {field}" /
+     "Doctorate in {field}") is the IPEDS-mint fingerprint and is a name-realness
+     defect EVEN WHEN the field is genuine, not only when the field is a CIP rollup.**
+     The prior bullet's tells (", General", federal comma-lists, slashes) catch rollup
+     FIELDS; this catches the mint FORM on a legitimate field. Gold MIT and the clean
+     fleet name every row with the institution's conferred designation ("Bachelor of
+     Science in Biology", "Bachelor of Arts in Anthropology", "Master of Engineering in
+     …"); the possessive "Bachelor's in {field}" form is fleet-anomalous — it survives
+     only in catalogs minted straight off the IPEDS award-level taxonomy, so its
+     presence at ANY density is a tell the rows were never resolved to the real degree.
+     A "structural de-fabrication" / "per-credential descriptions" pass that resolves
+     the rollup FIELDS and rewrites descriptions but leaves the bachelor's/master's rows
+     in possessive form has NOT finished the NAME dimension — most self-evidently when
+     the SAME field's doctoral row already ships the conferred form ("Doctor of
+     Philosophy in Anthropology" beside "Bachelor's in Anthropology"), which proves the
+     enricher knew the real designation and applied it inconsistently across credential
+     levels of one field. A de-fab is done only when, per field, every credential row
+     uses the institution's conferred designation under ONE convention and the
+     possessive award-level form is 0% (gold MIT = 0%). Evidence: live API this run —
+     freshly de-fabbed, already-DEPLOYED catalogs ship 53–55% possessive "Bachelor's in
+     {field}" rows beside conferred doctoral siblings, with federal CIP titles ("Area
+     Studies", "… and Related Services") still riding the surviving bachelor's rows.
    - **Do NOT mint one program row per concentration / track / specialization of a
      single degree (count-padding by over-decomposition).** A degree's
      concentrations belong in that program's `tracks` field (step 6), not as
@@ -636,6 +686,62 @@ Concrete misses observed in the first runs — each broke a real page:
        "diversify + gate" passes graded "0% identical-across-levels" by the verbatim count (Columbia #684,
        Stanford #681, Harvard #679) actually share their full researched opening across 81% / 89% / 82%
        of their multi-credential fields, vs gold MIT 0%.
+     - **A leading per-CREDENTIAL FRAME sentence prepended onto a shared field body RELOCATES the run-38
+       per-field stamp into the description TAIL, where the leading-PREFIX shared-body count (the prior
+       sub-bullet) reads 0 — the live evasion this run, manufactured by the very "per-credential
+       descriptions" passes meant to FIX the leading-body stamp.** The dominant "repair" pass now OPENS
+       each row with a credential-keyed frame generated from `(degree_type, field)` —
+       `"{Univ} offers the undergraduate major in {field}."` / `"{Univ} offers a master's program in
+       {field}."` / `"Master's students in {field} complete graduate seminars, research methods, and a
+       thesis project —"` / `"Doctoral study in {field} at {Univ} centers on dissertation research in"` / a
+       bare `"Graduate study."` / `"Graduate certificate."` tag, or a generic textbook DEFINITION of the
+       field (`"{Field} is the study/science of …"`) — and then appends ONE field body STILL identical
+       across that field's credential siblings (the BA, MS, and PhD in one field share the same researched
+       sentence). Because the frames DIFFER by credential, the common LEADING prefix across the siblings is
+       tiny, so the prior sub-bullet's prefix count reads 0 and the catalog looks fixed — while a student
+       still reads the SAME field paragraph on the bachelor's AND the master's AND the PhD page (gold MIT
+       gives every credential level its OWN body, 0% shared even after frame-strip). The frame is the
+       run-30 prefix-strip / run-38 suffix-diversifier mechanism wearing a credential-FRAME costume: it is
+       field-agnostic boilerplate, not per-program research. So the shared-body count must (a) STRIP a
+       leading credential-frame / degree-classification / field-definition sentence from every description
+       FIRST, then (b) measure the shared body across a field's credential siblings ANYWHERE in the
+       description (longest common substring, NOT only the leading prefix), and FAIL when it is ≥80 chars
+       AND ≥50% of the shortest sibling. A "per-credential descriptions" pass is done only when each
+       credential level carries its OWN researched body (what THAT degree studies at THAT level), not one
+       field body behind a swapped credential frame; a generic field DEFINITION (true of the field at every
+       institution, derivable from the field name) is itself a gold-contrast STUB even when paired with a
+       real classification clause. Evidence: live API this run — freshly-shipped, already-deployed
+       "per-credential descriptions" repair passes that took the run-64 shared-LEADING-body to 0 (and so
+       read "fixed") still stamp ONE field body across 88–100% of their multi-credential fields once the
+       leading credential frame is stripped (one field's "{field} spans/combines/covers …" sentence on its
+       bachelor's AND master's AND PhD), vs gold MIT 0%; the broken splice the frame leaves ("…centers on
+       dissertation research in {field} spans …", a bare "{College} foundations in … with …" fragment) is
+       the corroborating tell.
+     - **The `AND ≥50% of the shortest sibling` FRACTION FLOOR on the shared-body count is ITSELF the next
+       loophole — PADDING each credential row with a long UNIQUE per-credential TAIL dilutes a still-IDENTICAL
+       leading SENTENCE below 50% of the now-long description, so the LCS-anywhere count reads a false 0 again.
+       This is the live evasion this run, manufactured by the very "per-credential bodies" passes meant to FIX
+       the frame+tail-share.** A 150+ character identical run across a field's BA / MS / PhD is a STAMPED
+       SENTENCE — never a coincidence — so the fraction floor (an anti-coincidence guard meant to spare a short
+       shared clause) must NOT exempt it: the "repair" keeps one researched field sentence verbatim across the
+       credential siblings and simply appends enough distinct per-credential filler that the shared run, though
+       160–220 chars in ABSOLUTE terms, is only ~30% of each padded body — under the 50% floor — and the
+       grader/CI metric clears it. A student STILL reads the identical opening sentence on the bachelor's AND
+       the master's AND the PhD page (gold MIT 0% — every credential level its OWN body). So the frame-stripped
+       shared-body count must FAIL when the longest common substring across a field's credential siblings is
+       **≥80 chars AND ≥50% of the shortest sibling, OR ≥150 chars in ABSOLUTE terms regardless of fraction**
+       (a full stamped sentence); the clean fleet's per-credential-distinct catalogs top out well below this
+       (gold MIT, Duke, Rice, Purdue, UCSD all <150-char max shared run), so the absolute floor separates them
+       from the diluted-tail evasion cleanly. A "per-credential bodies" pass is done only when each credential
+       level's researched body shares NO sentence with its siblings — not when a padded tail drops the shared
+       sentence under an arbitrary fraction. Evidence: live API this run — four freshly-shipped, already-deployed
+       "per-credential bodies" repair passes (UW-Madison, Florida, Cornell, Boston U) that took the run-66
+       LCS-anywhere ≥50%-floor metric to 0 (and so read "fixed") still stamp ONE field sentence across their
+       credential siblings — UW–Madison's Anthropology BA / Graduate Certificate / MS all open on the identical
+       162–166-char "Madison campus anthropology combines archaeological fieldwork, medical anthropology, and
+       sociocultural theory…" (30% of each ~540–617-char body); Florida's Biology BA / MS share an identical
+       160-char generic field-definition sentence (31%) — vs gold MIT 0%, where re-measuring with the absolute
+       floor restores 75 / 54 / 44 / 23 flagged fields respectively.
    - **ONE SCHOOL's blurb STAMPED across MANY DIFFERENT FIELDS is the SCHOOL-LEVEL analog of the
      per-field stamping above — and it EVADES the field-keyed shared-body count (which compares only a
      field's credential siblings, NEVER two DIFFERENT fields). This is the live regression this run.**
@@ -673,10 +779,21 @@ Concrete misses observed in the first runs — each broke a real page:
      "uniquely described" while not one was researched). Any of these three tells is a
      hard FAIL, independent of every form/share metric:
      (a) a LEADING INTERNAL TOKEN — `"Catalog entry <hex/uuid>:"` (frequently DOUBLED:
-       `"Catalog entry 5686…: Catalog entry 5686…:"`), a bare UUID/hash, or any
-       ingest/database id. No real catalog prints a row id in a degree description; a
-       leading id is a build artifact leaked to the live page, and (being a per-row
-       nonce) it is ALSO the gate-evasion that hides parts (b)/(c) from the share count.
+       `"Catalog entry 5686…: Catalog entry 5686…:"`), a bare UUID/hash, **a leading
+       kebab-case URL SLUG** (`"usc-american-studies-and-ethnicity-ba — …"`,
+       `"anthropology-classical-civilization — …"`, `"uiuc-agricultural-biological-
+       engineering-bs — …"`), or any ingest/database id. No real catalog prints a row
+       id — or its catalog/URL slug — in a degree description; a leading id/slug is a
+       build artifact leaked to the live page, and (being a per-row token) it is ALSO
+       the gate-evasion that hides parts (b)/(c) from the share count. **The URL-slug
+       form is the live tell THIS run, and it is MORE dangerous than the hex nonce
+       because it is human-readable and passes the hex-keyed `machine_artifacts` gate
+       untouched: it carries no "Catalog entry" string and no a-f+digit hex run, so the
+       built `_ARTIFACT_RES` returns 0 on it while it ships live — observed on
+       CERTIFIED_CLEAN catalogs (a 19%-of-rows / 8% / 8% slug-prefix leak across three
+       certified catalogs, 0 of them caught by `machine_artifacts`). Treat a leading
+       kebab slug exactly like the hex nonce: STRIP it before the share counts and FAIL
+       on it.**
      (b) a SCHOOL/DIVISION TEMPLATE FRAME — `"{Univ}'s {School} draws on {Department/
        Division of X} for coursework and research on the {city} campus. Published through
        {Univ}'s {School} on the {city} campus."` — pure classification boilerplate (the
@@ -706,6 +823,33 @@ Concrete misses observed in the first runs — each broke a real page:
      division frame and the Westwood-campus geography lie), while UT-Austin #768 / NYU #753
      / UIUC #763 in the SAME interval de-fabricated genuinely (0 artifacts) — so this is one
      broken pass's class, not the only repair model.
+   - **A description that is RAW SCRAPED CATALOG DEBRIS — a degree-REQUIREMENTS / course-list
+     fragment, a capstone-options list, a unit-count opening, or a CONTACT/ADDRESS block — is an
+     un-researched stub EVEN THOUGH it is unique per row (so it ZEROES every share metric, like the
+     per-row id nonce) AND field-ish enough to slip past the gold-contrast classification test. This
+     is the live regression this run.** A scrape-built catalog that was never researched can fill
+     `description_text` not with one shared stub but with whatever text sat on the program's catalog
+     page: a degree-requirements excerpt ("28 additional units must be selected from MATH 225, MATH
+     226, or any upper-division course…"; "Four MATH courses at the 400-level or above are required,
+     chosen from the following list:"), a capstone/option list, a total-unit count as the opening
+     clause, or even the department's mailing ADDRESS + phone + email ("… Stonier Hall, Suite 101 …
+     (213) 740-1060 Email: …@….edu"). Because each fragment is unique, the verbatim / shared-body /
+     cross-field counts ALL read 0 (the exact gate-evasion the per-row nonce uses), and because a
+     requirements list is field-ish it also passes the classification / gold-contrast test — yet
+     NONE of it is researched prose about what the program STUDIES, and it routinely (a) TRUNCATES
+     mid-sentence / mid-list / on a trailing colon (no terminal period), proof it was scraped not
+     written, and (b) is MISMATCHED to the WRONG program (an archaeology degree carrying another
+     major's course requirements; a row whose body opens on a DIFFERENT field's name than the
+     program's), which is confidently-WRONG content the student reads. Any one of these is a hard
+     FAIL independent of every share/form metric: a course-code token ("MATH 225"), a unit/credit
+     count as the opening clause, a trailing colon or mid-sentence truncation (no terminal "."), an
+     address / phone / `@…edu`, or a body whose field does not match the `program_name`. Research
+     each description from THIS institution's OWN program page as PROSE about the field; never drop
+     the raw catalog-page text into `description_text`. The pre-ship scan (miss #9 / §8.5) must add
+     this scrape-debris tell — the form/share metrics are blind to it. Evidence: live API this run —
+     the largest scrape-built catalogs ship this on up to ~10% of rows (≥50 on one ~520-program
+     catalog, including a raw contact-address row and requirements fragments mismatched to the wrong
+     program), every one scoring 0 on every existing description metric.
    - **Coverage bar — by program TYPE, not a token count.** Reviews are REQUIRED
      for every program a real applicant would research: MBA / MBAn / MS in
      CS·DS·Analytics·Finance·Engineering / MEng / MPH / MPP / JD / MD / MArch /
@@ -770,7 +914,18 @@ Concrete misses observed in the first runs — each broke a real page:
      per-credential SUFFIX appended onto a shared body evades it (verbatim-shared reads 0%
      while the researched opening is still stamped identically across the levels): for each
      field with ≥2 rows, compute the common description prefix and FAIL when it is ≥120 chars
-     AND ≥50% of the shortest sibling (miss #8 suffix-diversifier sub-bullet); **AND run that
+     AND ≥50% of the shortest sibling (miss #8 suffix-diversifier sub-bullet) — **but FIRST strip a
+     leading per-credential FRAME / degree-classification / field-definition sentence ("{Univ} offers
+     the {undergraduate major/master's program} in {field}.", "Master's students in {field} complete
+     graduate seminars, research methods, and a thesis project —", "Doctoral study in {field} at {Univ}
+     centers on dissertation research in", a bare "Graduate study."/"Graduate certificate." tag, "{Field}
+     is the study of …") and measure the shared body ANYWHERE in the siblings (longest common substring,
+     FAIL at ≥80 chars AND ≥50% of the shortest, OR ≥150 chars in ABSOLUTE terms regardless of fraction — a
+     padded unique per-credential TAIL otherwise dilutes a still-identical leading sentence below the 50%
+     floor and the count reads a false 0 (miss #8 fraction-floor sub-bullet)), NOT only as a leading prefix —
+     or a prepended credential frame pushes the still-shared field body into the TAIL and the prefix count
+     reads 0 (miss #8
+     credential-frame sub-bullet)**; **AND run that
      shared-body count CATALOG-WIDE across ALL programs, not only within a field — extract each
      description's substantive clause and FAIL when one clause is shared verbatim across rows of
      ≥2 DIFFERENT fields, the SCHOOL-level-blurb stamp that the field-keyed count misses (miss #8
@@ -790,13 +945,20 @@ Concrete misses observed in the first runs — each broke a real page:
      - **Also FAIL the BUILD-ARTIFACT ASSEMBLY form (miss #8 build-artifact sub-bullet) —
        and STRIP its per-row id NONCE before the verbatim/shared-body counts above, or the
        nonce zeroes them.** Scan every `description_text` and FAIL on (i) a LEADING internal
-       token — `"Catalog entry <hex/uuid>:"` (often DOUBLED), a bare UUID/hash, any ingest
-       id; (ii) the `"{Univ}'s {School} draws on {Dept/Division} for coursework and research
+       token — `"Catalog entry <hex/uuid>:"` (often DOUBLED), a bare UUID/hash, **a leading
+       kebab-case URL slug (`^[a-z0-9]+(-[a-z0-9]+){2,}\s*[—–-]\s` — e.g.
+       `"usc-american-studies-and-ethnicity-ba — …"`), which the hex-keyed gate MISSES**,
+       any ingest id; (ii) the `"{Univ}'s {School} draws on {Dept/Division} for coursework and research
        on the {city} campus. Published through {Univ}'s {School} on the {city} campus."`
        division-frame boilerplate (a classification stub — also re-run the miss-#8 geography
        scan on its "{city} campus" tail); (iii) a NAMESAKE-SCRAPE paragraph (a journal /
        Wikipedia-survey / list about a different entity sharing the name, often truncated
-       mid-word like "hly peer-reviewed"). Because the leading id is a per-row nonce, the
+       mid-word like "hly peer-reviewed"); (iv) RAW SCRAPED CATALOG DEBRIS — a degree-requirements /
+       course-code list ("28 additional units must be selected from MATH 225…"), a capstone-options
+       list, a unit-count opening, or a contact/address block ("… Suite 101 … (213) 740-1060 Email:
+       …@….edu"); truncated mid-sentence / on a trailing colon, or MISMATCHED to the wrong program —
+       unique per row, so it reads 0 on every share metric yet is an un-researched stub (miss #8
+       scrape-debris sub-bullet). Because the leading id is a per-row nonce, the
        verbatim / shared-body / cross-field counts read 0 on this form while NOT ONE row was
        researched — so strip a leading `^Catalog entry [0-9a-f]+:\s*` (and any leading id
        token) from every description FIRST, then recompute those counts. Evidence: live API
@@ -869,8 +1031,15 @@ Concrete misses observed in the first runs — each broke a real page:
 - **`services/profile_enrichment/gate.py`** — the deterministic verify rules.
 - **`unipaith-backend/src/unipaith/data/mit_profile.py`** — the gold reference and the
   data-module template (copy its *shape*, never its values).
-- **Full routine spec:** `docs/superpowers/specs/2026-06-10-university-enrichment-routine.md`.
-  Parent design: `docs/superpowers/specs/2026-06-09-profile-standard-and-enrichment-design.md`.
+- **Full routine spec (editorial/standard axis):**
+  `docs/superpowers/specs/2026-06-10-university-enrichment-routine.md` — note its
+  "add a brand-new university" step is **SUPERSEDED** (this routine never adds
+  universities; seeding is external). Parent design:
+  `docs/superpowers/specs/2026-06-09-profile-standard-and-enrichment-design.md`.
+- **Program-side MATCHER contracts (co-authoritative — read for claim hinge, ProgramPreference,
+  authority→`c_program`, rankings-display-only):**
+  `docs/superpowers/specs/2026-06-17-ai-structure-2-school-program-profile-design.md` +
+  `docs/superpowers/specs/2026-06-17-ai-structure-3-match-engine-design.md`.
 
 A node is **gold** when `check_conformance` returns no missing required fields
 (except fields legitimately in its `_standard.omitted`). A **university is gold**
@@ -1109,6 +1278,16 @@ Events & Updates aren't empty), `research`/`campus_life` (with links), the FULL
 program catalog (cross-checked against the IPEDS/Scorecard count), and program
 `delivery_format` are all populated. Stamp `_standard` on every node.
 
+**Match-side gate (AI Structure — `check_conformance` does NOT cover this, so enforce it
+by hand).** Confirm your migration called `backfill_program_preferences(session,
+institution_id=inst.id)` after `apply` — that derives a grounded `program_preferences`
+row for every program (skipping claimed rows), so the program -> student match fires.
+Verify it ran: each program should have a row (`SELECT count(*) FROM program_preferences
+pp JOIN programs p ON p.id=pp.program_id WHERE p.institution_id=...`). `field_provenance`
+stamping is encouraged-not-gated today (not matcher-consumed yet; the tier anchors are
+claimed 1.0 · verified-feed 0.85 · public-crawl 0.6 · derived/inferred 0.4). (See "Also
+enrich for the MATCH" above.)
+
 **Conformance is PRESENCE-only — it does NOT catch stubs, so it must be PAIRED with an
 ENFORCED anti-stub gate.** `check_conformance` reports `conformant` from `not
 missing_fields and not missing_sections and not stale` — a catalog whose every required
@@ -1122,8 +1301,12 @@ quantitative checks are today only a MANUAL "run it before shipping" pledge that
 enforces, so they have been skipped on every one of those PRs. Fix the enforcement, not
 the wording: a catalog ships only when, IN ADDITION to `check_conformance`, it PASSES the
 miss #9 anti-stub gates computed programmatically over the FULL catalog and baselined to
-gold MIT's 0% — **verbatim-shared `description_text` = 0%, per-field shared-leading-body
-(≥120 chars AND ≥50% of the shortest sibling) = 0% of multi-credential fields, catalog-wide
+gold MIT's 0% — **verbatim-shared `description_text` = 0%, per-field shared body
+(≥120 chars AND ≥50% of the shortest sibling) = 0% of multi-credential fields — computed AFTER
+stripping a leading per-credential FRAME / degree-classification / field-definition sentence and
+measured ANYWHERE in the siblings (longest common substring, not only the leading prefix), or a
+prepended credential frame relocates the still-shared body into the tail and the count reads a false 0
+(miss #8 credential-frame sub-bullet) — catalog-wide
 cross-field shared clause = 0%, pure-classification-description share = 0%, double-period
 ".." / universal field-agnostic closing = 0%, `"{program_name}:"`/`" is "` prefix-double =
 0%, `department` echoing the name's field = 0%**. ANY non-zero is a conformance FAIL, not a
@@ -1154,7 +1337,14 @@ department / a `school_key` or the row's own description names the real school �
 naive `dept == field`, which would false-flag a genuinely shared real "Department of
 Economics"); (b) **CIP-rollup tells** in `program_name` AND `department` (trailing
 ", General"/", Other", a federal comma-and list, an embedded slash, a bare CIP rollup
-title); (c) a **literal CIP code** (`(CIP NN.NN)` or a bare trailing code) in name or
+title) — but the **comma-and tell must be ANCHORED to a federal-TAXONOMY ENDING**
+(", Literatures, and Linguistics" · ", Pharmaceutical Sciences, and Administration" ·
+", and Group Studies" · ", and Technicians/Services") and **NOT any Oxford-comma
+"X, Y, and Z" list, which REAL degrees carry** ("Media, Culture, and Communication";
+"Hospitality, Travel, and Tourism Management" are real published majors, NOT rollups) —
+the same precision caveat (b) needs that (a) already states for `dept == field`, or the
+gate FALSE-FLAGS a clean catalog and blocks a correct enrichment from `CERTIFIED_CLEAN`;
+(c) a **literal CIP code** (`(CIP NN.NN)` or a bare trailing code) in name or
 department; (d) **concentration-split rows** — a base field repeated across rows that
 differ only by a trailing "— {concentration}" / ", {emphasis}" (collapse into `tracks`,
 keep only genuine separate credentials). ANY non-zero blocks certification, same as a

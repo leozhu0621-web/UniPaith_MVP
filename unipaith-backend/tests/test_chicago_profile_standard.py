@@ -150,7 +150,12 @@ def test_every_school_is_gold_except_recorded_omissions():
 
 
 def test_every_program_is_gold_except_recorded_omissions():
-    assert len(c.PROGRAMS) >= 100, "full IPEDS catalog breadth (UNITID 144050)"
+    # Breadth is asserted by per-row REALNESS, not a frozen padded count: the federal
+    # certificate padding (one minted per CIP×award-level) was dropped, so the real
+    # published catalog legitimately SHRINKS (enrich-profile miss #2). No certificate
+    # padding remains, and every master's row has its own graduate description.
+    assert len(c.PROGRAMS) >= 80, "real published degree catalog (UNITID 144050)"
+    assert not [s for s in c.PROGRAMS if s["degree_type"] == "certificate"]
     for spec in c.PROGRAMS:
         slug = spec["slug"]
         res = check_conformance(

@@ -7,12 +7,14 @@ import Button from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
 import Input from '../../components/ui/Input'
 import Textarea from '../../components/ui/Textarea'
+import Select from '../../components/ui/Select'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
+import QueryError from '../../components/ui/QueryError'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { confirmDialog } from '../../stores/confirm-store'
-import { formatDate } from '../../utils/format'
+import { daysUntil, DeadlinePill } from '../../utils/deadline'
 import { UserCheck, Plus, Pencil, Trash2, Send, Mail } from 'lucide-react'
 import type { RecommendationRequest } from '../../types'
 
@@ -27,6 +29,18 @@ const RELATIONSHIP_OPTIONS = [
   'Professor', 'Academic Advisor', 'Research Supervisor',
   'Employer', 'Mentor', 'Colleague', 'Other',
 ]
+
+/**
+ * A request is "at risk" when the letter is still out (asked, not yet in) AND
+ * its deadline lands within a week — or has already passed. A nudge is the
+ * counselor move here, so these surface first.
+ */
+function isAtRisk(rec: RecommendationRequest): boolean {
+  if (rec.status !== 'requested' && rec.status !== 'submitted') return false
+  if (!rec.due_date) return false
+  const days = daysUntil(rec.due_date)
+  return days != null && days <= 7
+}
 
 export default function RecommendationsPage() {
   const queryClient = useQueryClient()
@@ -64,14 +78,13 @@ export default function RecommendationsPage() {
 
   if (isLoading) return <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
   if (isError) {
-    const message = error instanceof Error ? error.message : "We couldn't load your recommendation requests."
+    const message = error instanceof Error ? error.message : undefined
     return (
-      <Card pad={false} className="p-5">
-        <p className="text-sm text-error">{message}</p>
-        <Button size="sm" className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['recommendations'] })}>
-          Retry
-        </Button>
-      </Card>
+      <QueryError
+        title="We couldn't load your recommendation requests."
+        detail={message}
+        onRetry={() => queryClient.invalidateQueries({ queryKey: ['recommendations'] })}
+      />
     )
   }
 
@@ -81,13 +94,31 @@ export default function RecommendationsPage() {
       ? (recommendations as any).items
       : []
 
-  // Group by status
+  // Group by status (summary badges — counts only, original grouping)
   const byStatus = { draft: [] as RecommendationRequest[], requested: [] as RecommendationRequest[], submitted: [] as RecommendationRequest[], received: [] as RecommendationRequest[] }
   recs.forEach(r => {
     if (byStatus[r.status as keyof typeof byStatus]) {
       byStatus[r.status as keyof typeof byStatus].push(r)
     }
   })
+
+  // At-risk requests come first (soonest / most-overdue first), then everything
+  // else in the existing visual order. Stable: index keeps the original order.
+  const sortedRecs = recs
+    .map((rec, index) => ({ rec, index }))
+    .sort((a, b) => {
+      const aRisk = isAtRisk(a.rec)
+      const bRisk = isAtRisk(b.rec)
+      if (aRisk && bRisk) {
+        const aDays = daysUntil(a.rec.due_date) ?? 0
+        const bDays = daysUntil(b.rec.due_date) ?? 0
+        if (aDays !== bDays) return aDays - bDays
+        return a.index - b.index
+      }
+      if (aRisk !== bRisk) return aRisk ? -1 : 1
+      return a.index - b.index
+    })
+    .map(({ rec }) => rec)
 
   return (
     <div>
@@ -117,14 +148,17 @@ export default function RecommendationsPage() {
         <EmptyState
           icon={<UserCheck size={48} />}
           title="No recommenders yet"
-          action={{ label: 'Add Recommender', onClick: () => setShowModal(true) }}
+          action={{ label: 'Add a recommender', onClick: () => setShowModal(true) }}
         />
       ) : (
         <div className="space-y-3">
-          {recs.map(rec => {
+          {sortedRecs.map(rec => {
             const config = STATUS_CONFIG[rec.status] || STATUS_CONFIG.draft
+            const atRisk = isAtRisk(rec)
+            const days = rec.due_date ? daysUntil(rec.due_date) : null
+            const isOut = rec.status === 'requested' || rec.status === 'submitted'
             return (
-              <Card pad={false} key={rec.id} className="p-4">
+              <Card pad={false} key={rec.id} className={`p-4 ${atRisk ? 'border-warning/40' : ''}`}>
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
@@ -145,7 +179,15 @@ export default function RecommendationsPage() {
                         </p>
                       )}
                       {rec.due_date && (
-                        <p className="text-xs text-muted-foreground mt-0.5">Due: {formatDate(rec.due_date)}</p>
+                        <p className="text-xs mt-0.5 flex items-center gap-1.5">
+                          <span className="text-muted-foreground">Due</span>
+                          <DeadlinePill date={rec.due_date} days={days} />
+                          {atRisk && (
+                            <span className="text-xs font-medium text-warning">
+                              {days != null && days < 0 ? 'Overdue' : 'Due soon'}
+                            </span>
+                          )}
+                        </p>
                       )}
                       {rec.notes && <p className="text-xs text-muted-foreground mt-1 italic">"{rec.notes}"</p>}
                     </div>
@@ -167,6 +209,25 @@ export default function RecommendationsPage() {
                         loading={sendMut.isPending}
                       >
                         <Send size={12} className="mr-1" /> Send
+                      </Button>
+                    )}
+                    {isOut && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        aria-label={`Send a reminder to ${rec.recommender_name}`}
+                        onClick={async () => {
+                          const ok = await confirmDialog({
+                            title: 'Send a reminder?',
+                            body: `This emails ${rec.recommender_name}${rec.recommender_email ? ` at ${rec.recommender_email}` : ''} a reminder about their recommendation.`,
+                            confirmLabel: 'Send reminder',
+                          })
+                          if (!ok) return
+                          sendMut.mutate(rec.id)
+                        }}
+                        loading={sendMut.isPending}
+                      >
+                        <Send size={12} className="mr-1" /> Nudge
                       </Button>
                     )}
                     <Button size="sm" variant="ghost" aria-label={`Edit request for ${rec.recommender_name}`} onClick={() => { setEditItem(rec); setShowModal(true) }}><Pencil size={12} /></Button>
@@ -196,7 +257,7 @@ export default function RecommendationsPage() {
       )}
 
       {/* Create/Edit Modal */}
-      <Modal isOpen={showModal} onClose={() => { setShowModal(false); setEditItem(null) }} title={editItem ? 'Edit Recommendation Request' : 'New Recommendation Request'}>
+      <Modal isOpen={showModal} onClose={() => { setShowModal(false); setEditItem(null) }} title={editItem ? 'Edit request' : 'New request'}>
         <RecommendationForm
           defaultValues={editItem}
           onSubmit={data => {
@@ -228,20 +289,17 @@ function RecommendationForm({ defaultValues, onSubmit, loading }: { defaultValue
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-      <Input label="Recommender Name" {...register('recommender_name')} required />
+      <Input label="Recommender name" {...register('recommender_name')} required />
       <Input label="Email" type="email" {...register('recommender_email')} />
-      <Input label="Title / Position" {...register('recommender_title')} />
-      <Input label="Institution / Organization" {...register('recommender_institution')} />
-      <div>
-        <label className="text-[13px] font-semibold text-muted-foreground mb-1.5 block">Relationship</label>
-        <select {...register('relationship')} className="w-full text-sm border border-border rounded-md px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary">
-          <option value="">Select...</option>
-          {RELATIONSHIP_OPTIONS.map(r => (
-            <option key={r} value={r}>{r}</option>
-          ))}
-        </select>
-      </div>
-      <Input label="Due Date" type="date" {...register('due_date')} />
+      <Input label="Title or position" {...register('recommender_title')} />
+      <Input label="Institution" {...register('recommender_institution')} />
+      <Select
+        label="Relationship"
+        placeholder="Select..."
+        options={RELATIONSHIP_OPTIONS.map(r => ({ value: r, label: r }))}
+        {...register('relationship')}
+      />
+      <Input label="Due date" type="date" {...register('due_date')} />
       <Textarea label="Notes" {...register('notes')} placeholder="Any special instructions or context..." />
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
