@@ -23,6 +23,11 @@ resident data instead of searching the web.
 
 ## Non-goals (later slices)
 
+- **Uni LLM tool** (`lookup_institution`) — deferred to slice 1b. CLAUDE.md documents the managed-agent
+  tool wiring at `services/uni_tools.py` / `services/uni_agent_host.py`, but those files do **not**
+  exist in current `main` (the agent layer changed). Building a tool now means coding against an
+  undocumented, moving target. The read API already makes the data queryable; the tool is a thin
+  fast-follow once the live agent-host dispatch is mapped.
 - Matching-engine wiring (CPEF scoring off reference data).
 - Crosswalk that links a *claimed* `Institution` account to its reference row.
 - Frontend browse / detail-page rendering (the immediate next slice).
@@ -45,7 +50,7 @@ unipaith-backend/data/reference/reference_institutions.jsonl   (~3-4 MB, COMMITT
         │  alembic migration (create table)  +  scripts/seed_reference_institutions.py (upsert by unitid)
         ▼
 reference_institutions ──► GET /reference/institutions[/{unitid}]   (public read API)
-                       └─► Uni host tool  lookup_institution(name | unitid)
+                       └─► (slice 1b) Uni host tool  lookup_institution(name | unitid)
 ```
 
 **Why a committed distilled seed** (not download-at-seed / S3): the bulk Scorecard download is a
@@ -114,24 +119,17 @@ New thin router `api/reference.py`, registered in `api/router.py`:
 - `GET /reference/institutions/{unitid}` — the full record.
 Pydantic response schemas inline. Read-only `ReferenceService` (constructor takes `AsyncSession`).
 
-## Uni LLM tool — `lookup_institution`
+## Uni LLM tool — deferred to slice 1b
 
-Add a host tool to the agent tool dispatch (`services/uni_tools.py::dispatch_tool`) that takes
-`{name_or_unitid}`, resolves it against `reference_institutions` (exact unitid, else case-insensitive
-name match, top 1–3), and returns the structured record. Lets Uni answer "what's UCLA's admit rate /
-median earnings / cost" from resident data. Follows the existing dispatch contract (host ignores any
-agent-passed identifiers it shouldn't trust; this tool reads public data so no auth concern). Behind
-the same managed-agent path; degrades gracefully if the table is empty (returns "not found", never
-5xx).
+`lookup_institution` against `reference_institutions` is a thin fast-follow once the live managed-agent
+tool dispatch is located (see Non-goals). Not part of this slice.
 
 ## Testing (backend pytest, `AI_MOCK_MODE=true`)
 
 1. **Loader idempotency** — seed twice → row count stable, values updated not duplicated.
-2. **Sentinel decoding** — `PrivacySuppressed`/`NULL`/`PS` rows load as `None`, not literals.
+2. **Sentinel decoding** — `PrivacySuppressed`/`NULL`/`PS` values load as `None`, not literals.
 3. **Control decoding** — code 1/2/3 → correct labels.
 4. **API** — search by `q`, filter by `state`+`control`, `{unitid}` detail, 404 for unknown unitid.
-5. **Uni tool** — `lookup_institution` returns a real record by name and by unitid; empty-table path
-   returns not-found (no 5xx).
 A tiny fixture JSONL (3–5 institutions) seeds the test DB — tests never depend on the full file.
 
 ## Prod / deploy
