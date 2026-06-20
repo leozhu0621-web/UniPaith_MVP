@@ -686,6 +686,37 @@ Concrete misses observed in the first runs — each broke a real page:
        "diversify + gate" passes graded "0% identical-across-levels" by the verbatim count (Columbia #684,
        Stanford #681, Harvard #679) actually share their full researched opening across 81% / 89% / 82%
        of their multi-credential fields, vs gold MIT 0%.
+     - **A leading per-CREDENTIAL FRAME sentence prepended onto a shared field body RELOCATES the run-38
+       per-field stamp into the description TAIL, where the leading-PREFIX shared-body count (the prior
+       sub-bullet) reads 0 — the live evasion this run, manufactured by the very "per-credential
+       descriptions" passes meant to FIX the leading-body stamp.** The dominant "repair" pass now OPENS
+       each row with a credential-keyed frame generated from `(degree_type, field)` —
+       `"{Univ} offers the undergraduate major in {field}."` / `"{Univ} offers a master's program in
+       {field}."` / `"Master's students in {field} complete graduate seminars, research methods, and a
+       thesis project —"` / `"Doctoral study in {field} at {Univ} centers on dissertation research in"` / a
+       bare `"Graduate study."` / `"Graduate certificate."` tag, or a generic textbook DEFINITION of the
+       field (`"{Field} is the study/science of …"`) — and then appends ONE field body STILL identical
+       across that field's credential siblings (the BA, MS, and PhD in one field share the same researched
+       sentence). Because the frames DIFFER by credential, the common LEADING prefix across the siblings is
+       tiny, so the prior sub-bullet's prefix count reads 0 and the catalog looks fixed — while a student
+       still reads the SAME field paragraph on the bachelor's AND the master's AND the PhD page (gold MIT
+       gives every credential level its OWN body, 0% shared even after frame-strip). The frame is the
+       run-30 prefix-strip / run-38 suffix-diversifier mechanism wearing a credential-FRAME costume: it is
+       field-agnostic boilerplate, not per-program research. So the shared-body count must (a) STRIP a
+       leading credential-frame / degree-classification / field-definition sentence from every description
+       FIRST, then (b) measure the shared body across a field's credential siblings ANYWHERE in the
+       description (longest common substring, NOT only the leading prefix), and FAIL when it is ≥80 chars
+       AND ≥50% of the shortest sibling. A "per-credential descriptions" pass is done only when each
+       credential level carries its OWN researched body (what THAT degree studies at THAT level), not one
+       field body behind a swapped credential frame; a generic field DEFINITION (true of the field at every
+       institution, derivable from the field name) is itself a gold-contrast STUB even when paired with a
+       real classification clause. Evidence: live API this run — freshly-shipped, already-deployed
+       "per-credential descriptions" repair passes that took the run-64 shared-LEADING-body to 0 (and so
+       read "fixed") still stamp ONE field body across 88–100% of their multi-credential fields once the
+       leading credential frame is stripped (one field's "{field} spans/combines/covers …" sentence on its
+       bachelor's AND master's AND PhD), vs gold MIT 0%; the broken splice the frame leaves ("…centers on
+       dissertation research in {field} spans …", a bare "{College} foundations in … with …" fragment) is
+       the corroborating tell.
    - **ONE SCHOOL's blurb STAMPED across MANY DIFFERENT FIELDS is the SCHOOL-LEVEL analog of the
      per-field stamping above — and it EVADES the field-keyed shared-body count (which compares only a
      field's credential siblings, NEVER two DIFFERENT fields). This is the live regression this run.**
@@ -831,7 +862,15 @@ Concrete misses observed in the first runs — each broke a real page:
      per-credential SUFFIX appended onto a shared body evades it (verbatim-shared reads 0%
      while the researched opening is still stamped identically across the levels): for each
      field with ≥2 rows, compute the common description prefix and FAIL when it is ≥120 chars
-     AND ≥50% of the shortest sibling (miss #8 suffix-diversifier sub-bullet); **AND run that
+     AND ≥50% of the shortest sibling (miss #8 suffix-diversifier sub-bullet) — **but FIRST strip a
+     leading per-credential FRAME / degree-classification / field-definition sentence ("{Univ} offers
+     the {undergraduate major/master's program} in {field}.", "Master's students in {field} complete
+     graduate seminars, research methods, and a thesis project —", "Doctoral study in {field} at {Univ}
+     centers on dissertation research in", a bare "Graduate study."/"Graduate certificate." tag, "{Field}
+     is the study of …") and measure the shared body ANYWHERE in the siblings (longest common substring,
+     FAIL at ≥80 chars AND ≥50% of the shortest), NOT only as a leading prefix — or a prepended credential
+     frame pushes the still-shared field body into the TAIL and the prefix count reads 0 (miss #8
+     credential-frame sub-bullet)**; **AND run that
      shared-body count CATALOG-WIDE across ALL programs, not only within a field — extract each
      description's substantive clause and FAIL when one clause is shared verbatim across rows of
      ≥2 DIFFERENT fields, the SCHOOL-level-blurb stamp that the field-keyed count misses (miss #8
@@ -1202,8 +1241,12 @@ quantitative checks are today only a MANUAL "run it before shipping" pledge that
 enforces, so they have been skipped on every one of those PRs. Fix the enforcement, not
 the wording: a catalog ships only when, IN ADDITION to `check_conformance`, it PASSES the
 miss #9 anti-stub gates computed programmatically over the FULL catalog and baselined to
-gold MIT's 0% — **verbatim-shared `description_text` = 0%, per-field shared-leading-body
-(≥120 chars AND ≥50% of the shortest sibling) = 0% of multi-credential fields, catalog-wide
+gold MIT's 0% — **verbatim-shared `description_text` = 0%, per-field shared body
+(≥120 chars AND ≥50% of the shortest sibling) = 0% of multi-credential fields — computed AFTER
+stripping a leading per-credential FRAME / degree-classification / field-definition sentence and
+measured ANYWHERE in the siblings (longest common substring, not only the leading prefix), or a
+prepended credential frame relocates the still-shared body into the tail and the count reads a false 0
+(miss #8 credential-frame sub-bullet) — catalog-wide
 cross-field shared clause = 0%, pure-classification-description share = 0%, double-period
 ".." / universal field-agnostic closing = 0%, `"{program_name}:"`/`" is "` prefix-double =
 0%, `department` echoing the name's field = 0%**. ANY non-zero is a conformance FAIL, not a
