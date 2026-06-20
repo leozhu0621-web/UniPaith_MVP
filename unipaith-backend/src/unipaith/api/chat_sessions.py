@@ -17,8 +17,13 @@ from unipaith.database import get_db
 from unipaith.dependencies import require_student
 from unipaith.models.user import User
 from unipaith.services.chat.session_service import ChatSessionService
+from unipaith.services.chat.template_actions import ACTION_CATALOG
 from unipaith.services.chat.template_service import TemplateService
+from unipaith.services.enrichment_planner import CATALOG
 from unipaith.services.intake.intake_engine_service import IntakeEngineService
+
+# Build a lookup from CATALOG by key for fast descriptor embedding.
+_CATALOG_BY_KEY: dict[str, dict] = {f["key"]: f for f in CATALOG}
 
 router = APIRouter(prefix="/students/me/chat", tags=["chat-sessions"])
 
@@ -79,6 +84,12 @@ class TemplateStepOut(BaseModel):
     prompt_key: str | None = None
     action_key: str | None = None
     label: str
+    # Prompt descriptor fields — only set when step_type == "prompt"
+    question: str | None = None
+    ask_kind: str | None = None
+    options: list[str] | None = None
+    # Action label from ACTION_CATALOG — only set when step_type == "action"
+    action_label: str | None = None
 
 
 class TemplateOut(BaseModel):
@@ -105,11 +116,30 @@ async def list_templates(
     Calls ensure_seeded() first so a fresh DB self-populates without a
     separate migration step. The seed is idempotent so this is safe to
     call on every request; the real cost is a single SELECT on warm DBs.
+
+    Each prompt step is enriched with the catalog descriptor fields
+    (question, ask_kind, options) so the frontend runner can render the
+    widget without a separate per-key lookup.  Action steps include the
+    action_label from ACTION_CATALOG.
     """
     svc = TemplateService(db)
     await svc.ensure_seeded()
     await db.commit()
-    return await svc.load()
+    raw = await svc.load()
+
+    # Embed catalog descriptors into each step.
+    for tmpl in raw:
+        for step in tmpl["steps"]:
+            if step["step_type"] == "prompt":
+                descriptor = _CATALOG_BY_KEY.get(step.get("prompt_key", ""), {})
+                step["question"] = descriptor.get("question")
+                step["ask_kind"] = descriptor.get("ask_kind")
+                step["options"] = descriptor.get("options")  # list[str] or None
+            elif step["step_type"] == "action":
+                action_def = ACTION_CATALOG.get(step.get("action_key", ""), {})
+                step["action_label"] = action_def.get("label")
+
+    return raw
 
 
 @router.get("/folders")
