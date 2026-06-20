@@ -1357,6 +1357,33 @@ own program, `department` = the emphasis) — none caught, because the enforced 
 structure metric and the PR shipped under an "anti-stub clean" claim that covered the
 descriptions only.
 
+**`CERTIFIED_CLEAN` membership gates a catalog ONLY on the metrics whose test actually
+parametrizes over it — and the frame-stripped shared-body metric is NOT one of them, so a
+catalog joins `CERTIFIED_CLEAN`, passes green CI, and ships the fleet's DOMINANT defect (a
+per-credential FRAME + ONE shared field body across BA/MS/PhD, miss #8) completely un-gated.
+This is the dominant live ENFORCEMENT hole this run, and it is distinct from the abs-150
+threshold gap.** The threshold gap (FLAG: the metric UNDERCOUNTS under dilution) is about how
+HIGH the bar is; this is about WHICH catalogs the bar is even applied to. `test_certified_
+catalog_is_anti_stub_clean` asserts only `analyze().is_clean`, and `analyze` computes the
+leading-PREFIX shared-body count — which a prepended credential frame zeroes BY CONSTRUCTION
+(miss #8 credential-frame). The LCS-anywhere `frame_stripped_shared_body` lives in a SEPARATE
+test (`test_credential_siblings_have_no_frame_stripped_shared_body`) whose `@parametrize` list
+is a HAND-MAINTAINED subset, NOT `CERTIFIED_CLEAN`. When those two lists DRIFT apart — and they
+have — every certified catalog absent from the frame-stripped list is ungated on the
+frame-shared-body defect: "anti-stub clean / `CERTIFIED_CLEAN`" then certifies only the
+frame-BLIND `analyze` metric, never the frame-stripped one, so frame-shared bodies the EXISTING
+(un-floored) metric would catch ship live as "certified." Therefore, when you certify a catalog
+at §8.5/§9 you MUST add it to **EVERY** anti-stub parametrize list — `frame_stripped_shared_body`,
+`scrape_debris`, `machine_artifacts` — not only `CERTIFIED_CLEAN`; and the durable fix is to make
+those tests parametrize over `CERTIFIED_CLEAN` ITSELF so the lists CANNOT drift (that change lives
+in `test_anti_stub_gate.py` — app/test code; FLAG it for a human). A catalog in `CERTIFIED_CLEAN`
+but absent from the frame-stripped parametrize list is NOT actually gated and must not be trusted
+as clean. Evidence: live API this run — NINE `CERTIFIED_CLEAN` catalogs ship credential-frame +
+shared-body fields the EXISTING un-floored metric flags yet were never run through it (Harvard 68 ·
+UCLA 67 · Michigan 67 · Berkeley 64 · Stanford 51 · Penn 51 · Notre Dame 23 · Columbia 14 · NYU 5
+multi-credential fields share a body, vs gold MIT 0) — all green-CI certified, all absent from the
+frame-stripped `@parametrize` list (which holds only mit/rice/uf/usc/uw_madison/jhu/uiuc/uw).
+
 ### 9. Ship — and MERGING IS MANDATORY (a run is not done until the work is on `main`)
 `ruff check src/<changed> tests/<changed>` (NOT `ruff check .`) + the profile tests +
 `npm run build`; branch off `origin/main` → commit → PR → **`gh pr merge --squash`** →

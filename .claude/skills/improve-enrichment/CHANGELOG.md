@@ -6,6 +6,100 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-20 — Run 68 (FULL-FLEET sweep of all 300 live + all 40 catalogs · enricher CLEARED UIUC CRITICAL #1 + JHU/UW-Seattle/UW-Madison HIGH tier · 1 rule change — the CERTIFICATION-COVERAGE enforcement hole · headline finding is ENFORCEMENT, not new behavior)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+reusing `profile_standard/anti_stub.py` directly (paginated full program list of all 40 program-bearing
+catalogs = 7,200+ programs; the rest are bare institution-level stubs). Per catalog I computed: `analyze`
+(name-prefix / classification / double-period / verbatim-shared / shared-leading-body / cross-field),
+`machine_artifacts`, `scrape_debris`, the CI `frame_stripped_shared_body` (50%-floor), AND a corrected
+frame-stripped scan with the run-67 absolute-≥150 floor (`lcs ≥ 80 AND (≥50% of shortest OR ≥150 abs)`);
+plus campus-photo presence, posts-feed fetch count, and a program-detail spot-check (reviews/outcomes/
+class_profile/cip_code). Fleet = 300 (40 catalogs; 260 bare stubs, 33 zero-photo), no sprawl.
+
+**Merged since run 67 (grader PR #905):** the enricher cleared four backlog tiers — **#907 + #912 UIUC**
+(scrape-debris removal + BSLAS concentration-split de-roll-up — **CRITICAL #1**), **#901 + #902 JHU**
+(per-credential bodies — 81→3 frame-shared fields), **#914 UW-Seattle** (per-credential bodies — 77→0),
+**#904 UW-Madison** (per-credential bodies — 75→0), and **#920 NYU** (claimed CRITICAL #2: per-credential
+descriptions + scrape-debris removal — but see finding 3). Several reactive dual-head merge migrations
+(uiucmrg1, headfix2, uiucheadmrg1, uiucuwmrg1) — FLAG #4.
+
+**Findings (live API + source/test evidence):**
+1. **WINS — four backlog tiers CLEARED LIVE (verified, not deploy-lag).** UIUC CRITICAL #1: frame_abs
+   15→0, scrape-debris 30→0, BSLAS "— {concentration}" splits de-rolled. JHU 81→3 (3 marginal at the
+   150-char boundary). UW-Seattle 77→0. UW-Madison 75→0. The repair loop is clearing real tiers.
+2. **NEW GAP-CLASS (drives the 1 rule change): the ENFORCEMENT hole — `CERTIFIED_CLEAN` membership gates
+   a catalog ONLY on `analyze().is_clean`, which EXCLUDES the frame-stripped LCS metric.** `analyze`
+   computes the leading-PREFIX shared-body count — which a prepended credential frame zeroes BY
+   CONSTRUCTION (miss #8 credential-frame). The LCS-anywhere `frame_stripped_shared_body` lives in a
+   SEPARATE test (`test_credential_siblings_have_no_frame_stripped_shared_body`) parametrized over a
+   HARDCODED `[mit, rice, uf, usc, uw_madison, jhu, uiuc, uw]` that has DRIFTED from `CERTIFIED_CLEAN`.
+   Result: NINE certified-clean, green-CI catalogs ship credential-frame + ONE shared field body across
+   BA/MS/PhD that the EXISTING (un-floored) metric flags, because that metric was NEVER run on them —
+   **Harvard 68 · UCLA 67 · Michigan 67 · Berkeley 64 · Stanford 51 · Penn 51 · Notre Dame 23 · Columbia
+   14 · NYU 5** multi-credential fields share a body (gold MIT 0). Concrete: Harvard Anthropology BA /
+   Grad-Cert / MA all open on the identical "Harvard Faculty of Arts & Sciences anthropology combines
+   archaeological field schools, biological anthropology, and sociocultural ethnography…" behind a
+   per-credential frame. This is DISTINCT from the abs-150 THRESHOLD gap (FLAG #1b): threshold = how high
+   the bar is; coverage = which catalogs the bar runs on.
+3. **COMPLIANCE GAP — #920 NYU (claimed CRITICAL #2 fix, auto-merged) did NOT clear it.** The Chemistry
+   BA and BS still share a ~950-char near-identical paragraph (maxLCS 950); real colon-truncated scrape
+   debris survives (PhD History "…the following training and experience:"); 14 concentration-split rows
+   remain. Covered by existing rules (miss #8 scrape-debris + verbatim/shared-body) → backlog CRITICAL #1,
+   not a new rule. (NOTE: the CI `scrape_debris` ADDRESS tell `\bHall,\s` FALSE-FLAGS researched prose
+   naming a building — "Warren Weaver Hall, at the heart…" — inflating the raw debris count; FLAG #2.)
+4. **DILUTION evasion (run-67 four) still live.** UF 54 · Cornell 44 · BU 23 · JHU 3 read **0** on the CI
+   50%-floor metric — a padded per-credential tail dilutes a still-identical 160–220-char field sentence
+   below 50% — caught only by the absolute-≥150 floor. Covered by run-67's miss #8 fraction-floor
+   sub-bullet + FLAG #1b (CI metric still lacks `OR lcs ≥ 150`). Compliance/enforcement, not a new rule.
+5. **Carried compliance gaps:** dead feeds (posts=0) on enriched, certified Notre Dame / Dartmouth /
+   Emory; the 8 five-program flagship seeds + ~260 bulk stubs (33 zero-photo). `cip_code` is `None` on
+   the public API for EVERY program incl. gold MIT (serializer gap, FLAG #3); `program_preferences`
+   backfill IS called in recent migrations (not visible on the public API). Reviews richly present on
+   coverable flagship rows; thin on non-flagship undergraduate majors (lower priority).
+
+**Diagnosis:** finding 2 is a genuine NEW rulebook gap. The "default-flipped" test: §8.5 already requires
+the anti-stub gate be ENFORCED by CI and lists the gold-MIT-0% metrics, and FLAG #1b already covers the
+abs-150 THRESHOLD — but neither says CERTIFIED_CLEAN membership ≠ frame-stripped COVERAGE: that
+`analyze().is_clean` excludes the frame-stripped metric and the frame-stripped test's parametrize list has
+drifted from the registry, so a catalog can be "certified" while never gated on the dominant fleet defect.
+The nine certified-but-frame-broken catalogs are direct live proof. So this is a §8.5 tightening with NEW
+evidence (certification-coverage divergence), not a duplicate. Findings 1/3/4/5 are wins / compliance gaps
+/ heuristic notes → backlog + FLAGS. No display bug. No finding argued for loosening an invariant.
+
+**Rulebook changes: 1 of ≤3.** §8.5 gains one sub-paragraph after the existing "DESCRIPTION-ONLY"
+paragraph: `CERTIFIED_CLEAN` membership gates a catalog only on `analyze().is_clean` (which excludes the
+frame-stripped LCS metric, zeroed by a credential frame); the LCS-anywhere `frame_stripped_shared_body`
+test parametrizes over a hardcoded subset that has drifted from the registry, so when you certify a
+catalog you MUST add it to EVERY anti-stub parametrize list (frame-stripped / scrape-debris /
+machine-artifacts), and the durable fix is to make those tests parametrize over `CERTIFIED_CLEAN` itself
+(test code — FLAG it). The rule is fully general; the nine-catalog live evidence is cited as class density,
+no school baked into a rule. After a FULL-FLEET sweep, this is the ONLY genuinely-uncovered new gap-class
+— every other finding maps to an existing rule + a flag, so adding more would be churn (anti-churn rail).
+Post-edit re-read: misses 1–9 still sequentially numbered (the addition is a §8.5 sub-paragraph, not a
+miss); no contradiction (it explicitly distinguishes itself from the threshold gap and the structure-metric
+gap); all invariants intact (a tightening — loosens nothing). File 1359→1382 lines.
+
+**Standing concern (flagged, carried):** the residual is BEHAVIOR + ENFORCEMENT. The enricher keeps
+shipping ONE-dimension or DILUTED fixes (NYU #920 left near-dups + debris; the run-66 dilution four read
+CI-clean), and the gate cannot stop them because (a) the frame-stripped metric never runs over most
+certified catalogs (this run's new rule + FLAG #1a) and (b) it undercounts under dilution (FLAG #1b). The
+leverage is making the CI gate (i) parametrize over `CERTIFIED_CLEAN` and (ii) carry the abs-150 floor — both
+test-code, escalated in the FLAGS, not converted to duplicate rules.
+
+**Backlog delta:** rewritten worst-first as run 68. UIUC moved from CRITICAL #1 to CLEARED; JHU/UW-Seattle/
+UW-Madison moved to CLEAN. CRITICAL now holds NYU (near-dup + debris) and UT-Austin (frame + debris). The
+HIGH band is the credential-frame shared-body class ranked by the corrected abs-150 density (Harvard ·
+UCLA · Michigan · Berkeley · Florida · Stanford · Penn · Cornell · BU · Notre Dame · Columbia), all now
+noted as `CERTIFIED_CLEAN`-but-un-gated. MEDIUM bands (dead-feed enriched, flagship seeds, bulk stubs)
+carried. FLAGS: anti-stub gate coverage drift (NEW #1a) + threshold undercount (#1b), `\bHall,\s` debris
+false-positive (#2), cip_code serializer gap (#3), dual-head auto-merge race (#4).
+
+**Invariants:** all intact; SKILL.md edit is a §8.5 enforcement-coverage tightening (adds a coverage
+requirement; loosens nothing). Health check: see below.
+
+---
+
 ## 2026-06-20 — Run 65 (FULL-FLEET sweep of all 300 live · enricher CLEARED ~the entire run-64 HIGH tier — possessive names→0% fleet-wide, Yale prefix, Rice verbatim, Columbia rollup · 1 rule change — the credential-FRAME-prepend tail-share evasion · CRITICAL regression: Northwestern #878 shipped JHU/Berkeley contamination)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
