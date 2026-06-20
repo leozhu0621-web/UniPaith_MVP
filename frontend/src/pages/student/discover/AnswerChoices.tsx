@@ -50,15 +50,24 @@ function MultiSelect({
   options,
   onPick,
   disabled,
+  asList,
 }: {
   options: string[]
-  onPick: (v: string) => void
+  onPick: (v: string | string[]) => void
   disabled?: boolean
+  /** When true, submits an array of selected strings instead of a joined phrase.
+   *  Used by EnrichWidget so the backend receives a proper list. The conversation
+   *  path (no asList) keeps the natural-language joined string. */
+  asList?: boolean
 }) {
   const [sel, setSel] = useState<string[]>([])
   const toggle = (o: string) => setSel(s => (s.includes(o) ? s.filter(x => x !== o) : [...s, o]))
   const send = () => {
     if (sel.length === 0) return
+    if (asList) {
+      onPick(sel)
+      return
+    }
     const joined =
       sel.length === 1 ? sel[0] : `${sel.slice(0, -1).join(', ')} and ${sel[sel.length - 1]}`
     onPick(joined)
@@ -168,19 +177,22 @@ export default function AnswerChoices({
   lowLabel,
   highLabel,
   numeric = false,
+  asList = false,
 }: {
   options: string[]
-  onPick: (value: string) => void
+  onPick: (value: string | string[]) => void
   disabled?: boolean
   kind?: AnswerKind
   lowLabel?: string
   highLabel?: string
   numeric?: boolean
+  /** multi only: submit a string[] instead of the joined phrase (for EnrichWidget). */
+  asList?: boolean
 }) {
   if (kind === 'scale') {
     return (
       <Scale
-        onPick={onPick}
+        onPick={onPick as (v: string) => void}
         disabled={disabled}
         lowLabel={lowLabel}
         highLabel={highLabel}
@@ -190,7 +202,7 @@ export default function AnswerChoices({
   }
   if (options.length === 0) return null
   if (kind === 'multi') {
-    return <MultiSelect options={options} onPick={onPick} disabled={disabled} />
+    return <MultiSelect options={options} onPick={onPick} disabled={disabled} asList={asList} />
   }
-  return <ChoiceCards options={options} onPick={onPick} disabled={disabled} />
+  return <ChoiceCards options={options} onPick={onPick as (v: string) => void} disabled={disabled} />
 }
