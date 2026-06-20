@@ -159,10 +159,92 @@ _INVALID_STEP_BAD_PROMPT_KEY = {
     },
 }
 
+# ---------------------------------------------------------------------------
+# Title-Case header fixtures — what the REAL Airtable REST API returns. Columns
+# are labelled "Key", "Ask Kind", "Saves To", "Step Order", etc. and options
+# are stored one-per-line (newline-separated), with commas INSIDE some options
+# (e.g. "Small (under 5,000)"). The sync must normalize headers + split options
+# on newlines, not commas.
+# ---------------------------------------------------------------------------
+
+_VALID_PROMPT_TITLECASE = {
+    "id": "rec_prompt_tc",
+    "fields": {
+        "Key": "school_size",
+        "Section": "Where & how",
+        "Question": "What size of school suits you?",
+        "Ask Kind": "choice",
+        "Value Type": "categorical",
+        "Options": "Small (under 5,000)\nMedium (5,000–15,000)\nLarge (over 15,000)\nNo preference",
+        "Tier": "standard",
+        "Saves To": "school_size",
+        "Sort Order": 26,
+        "Active": True,
+    },
+}
+
+_VALID_TEMPLATE_TITLECASE = {
+    "id": "rec_tmpl_tc",
+    "fields": {
+        "Key": "airtable_tc_template",
+        "Title": "TC Template",
+        "Topic": "schools",
+        "Stage": "recommendation",
+        "Outcome": "A ranked list",
+        "Icon": "list",
+        "Sort Order": 4,
+        "Active": True,
+    },
+}
+
+_VALID_STEP_TITLECASE = {
+    "id": "rec_step_tc",
+    "fields": {
+        # Real Airtable linked-record field, Title-Case header.
+        "Template": ["rec_tmpl_tc"],
+        "Step Type": "prompt",
+        "Prompt Key": "gender",  # always in seed catalog
+        "Label": "Gender",
+        "Step Order": 0,
+    },
+}
+
 
 # ---------------------------------------------------------------------------
 # Unit tests (no DB needed)
 # ---------------------------------------------------------------------------
+
+
+def test_coerce_options_newline_separated():
+    """Options stored one-per-line split on newlines, preserving commas inside."""
+    from unipaith.services.airtable.sync_service import _coerce_options
+
+    assert _coerce_options("A\nB\nC") == ["A", "B", "C"]
+    # Commas inside an option must NOT split it (newline is the delimiter).
+    assert _coerce_options("Small (under 5,000)\nLarge (over 15,000)") == [
+        "Small (under 5,000)",
+        "Large (over 15,000)",
+    ]
+    # Backward-compat: single-line comma list still splits on commas.
+    assert _coerce_options("X, Y, Z") == ["X", "Y", "Z"]
+    # Backward-compat: a JSON array still parses.
+    assert _coerce_options('["P", "Q"]') == ["P", "Q"]
+    # Blank / None → None.
+    assert _coerce_options("") is None
+    assert _coerce_options(None) is None
+
+
+def test_normalize_fields_titlecase_to_snake():
+    """Airtable Title-Case headers map to the snake_case keys the sync uses."""
+    from unipaith.services.airtable.sync_service import _normalize_fields
+
+    out = _normalize_fields({"Ask Kind": "choice", "Saves To": "x", "Key": "k"})
+    assert out["ask_kind"] == "choice"
+    assert out["saves_to"] == "x"
+    assert out["key"] == "k"
+    # Already-snake_case keys pass through unchanged.
+    passthrough = _normalize_fields({"ask_kind": "text", "saves_to": "y"})
+    assert passthrough == {"ask_kind": "text", "saves_to": "y"}
 
 
 def test_validate_prompt_row_valid():
@@ -451,3 +533,68 @@ async def test_sync_templates_linked_record_pattern(db_session):
     )
     assert len(steps) == 1
     assert steps[0].action_key == "build_school_list"
+
+
+@pytest.mark.asyncio
+async def test_sync_prompts_titlecase_headers(db_session):
+    """Real Airtable Title-Case headers + newline options are read correctly."""
+    client = FakeClient(prompts=[_VALID_PROMPT_TITLECASE])
+    svc = AirtableSyncService(db_session, client)
+    result = await svc.sync_prompts()
+    await db_session.commit()
+
+    assert result["rejected"] == []
+    assert result["upserted"] == 1
+
+    row = await db_session.scalar(select(PromptCatalog).where(PromptCatalog.key == "school_size"))
+    assert row is not None
+    assert row.airtable_record_id == "rec_prompt_tc"
+    assert row.ask_kind == "choice"
+    assert row.value_type == "categorical"
+    assert row.saves_to == "school_size"
+    assert row.sort_order == 26
+    # Options split on newlines — commas inside an option are preserved.
+    assert row.options == [
+        "Small (under 5,000)",
+        "Medium (5,000–15,000)",
+        "Large (over 15,000)",
+        "No preference",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_sync_templates_titlecase_headers(db_session):
+    """Real Airtable Title-Case template + linked-step headers resolve + upsert."""
+    client = FakeClient(
+        templates=[_VALID_TEMPLATE_TITLECASE],
+        steps=[_VALID_STEP_TITLECASE],
+    )
+    svc = AirtableSyncService(db_session, client)
+    result = await svc.sync_templates(
+        templates_table="Templates",
+        steps_table="Template Steps",
+    )
+    await db_session.commit()
+
+    assert result["rejected"] == []
+    assert result["upserted"] == 1
+
+    tmpl = await db_session.scalar(
+        select(SessionTemplate).where(SessionTemplate.key == "airtable_tc_template")
+    )
+    assert tmpl is not None
+    assert tmpl.topic == "schools"
+    assert tmpl.stage == "recommendation"
+
+    steps = (
+        (
+            await db_session.execute(
+                select(SessionTemplateStep).where(SessionTemplateStep.template_id == tmpl.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert len(steps) == 1
+    assert steps[0].step_type == "prompt"
+    assert steps[0].prompt_key == "gender"

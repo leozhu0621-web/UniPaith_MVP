@@ -83,10 +83,29 @@ def validate_prompt_row(fields: dict[str, Any]) -> str | None:
     return None
 
 
+def _normalize_fields(fields: dict[str, Any]) -> dict[str, Any]:
+    """Map Airtable column headers to the snake_case keys the sync expects.
+
+    Airtable returns each record's fields keyed by the column's DISPLAY name
+    (e.g. "Ask Kind", "Saves To", "Step Order"), while the sync logic reads
+    snake_case keys (ask_kind, saves_to, step_order). Normalizing here lets
+    editors keep friendly Title-Case headers in Airtable while the sync stays
+    stable. Already-snake_case keys (lower-case, no spaces) pass through
+    unchanged, so hand-authored fixtures keep working. First writer wins when
+    two headers collapse to the same key.
+    """
+    out: dict[str, Any] = {}
+    for key, value in fields.items():
+        norm = key.strip().lower().replace(" ", "_")
+        out.setdefault(norm, value)
+    return out
+
+
 def _coerce_options(raw: Any) -> list | None:
     """Coerce Airtable options to a Python list (or None).
 
-    Airtable may return a list directly, a JSON string, or None/missing.
+    Airtable may return a list directly, a JSON string, a newline-separated
+    multiline string (the canonical, editor-friendly form), or None/missing.
     """
     if raw is None:
         return None
@@ -102,8 +121,13 @@ def _coerce_options(raw: Any) -> list | None:
                 return parsed if parsed else None
         except (json.JSONDecodeError, ValueError):
             pass
-        # Treat as a comma-separated fallback.
-        items = [s.strip() for s in raw.split(",") if s.strip()]
+        # Newline-separated (one option per line) is the canonical Airtable form.
+        # Split on newlines so commas INSIDE an option (e.g. "Small (under 5,000)")
+        # are preserved. Fall back to comma-splitting for single-line lists.
+        if "\n" in raw:
+            items = [s.strip() for s in raw.splitlines() if s.strip()]
+        else:
+            items = [s.strip() for s in raw.split(",") if s.strip()]
         return items if items else None
     return None
 
@@ -182,7 +206,7 @@ class AirtableSyncService:
         # Not strictly needed for prompts but useful for consistency.
         for record in records:
             airtable_id: str = record.get("id", "")
-            fields: dict[str, Any] = record.get("fields", {})
+            fields: dict[str, Any] = _normalize_fields(record.get("fields", {}))
 
             reason = validate_prompt_row(fields)
             if reason:
@@ -266,7 +290,7 @@ class AirtableSyncService:
 
         for record in template_records:
             airtable_id: str = record.get("id", "")
-            fields: dict[str, Any] = record.get("fields", {})
+            fields: dict[str, Any] = _normalize_fields(record.get("fields", {}))
             key = (fields.get("key") or "").strip()
 
             reason = _validate_template_row(fields)
@@ -287,14 +311,14 @@ class AirtableSyncService:
 
         for record in step_records:
             airtable_id: str = record.get("id", "")
-            fields: dict[str, Any] = record.get("fields", {})
+            fields: dict[str, Any] = _normalize_fields(record.get("fields", {}))
 
             # Resolve which template this step belongs to.
             tmpl_airtable_id = _resolve_step_template_id(fields, key_to_airtable_id)
             if tmpl_airtable_id is None or tmpl_airtable_id not in valid_templates:
                 rejected.append(
                     {
-                        "key": fields.get("template_key") or fields.get("Template") or "",
+                        "key": fields.get("template_key") or fields.get("template") or "",
                         "reason": "step references unknown or invalid template",
                     }
                 )
@@ -463,17 +487,19 @@ def _resolve_step_template_id(
 ) -> str | None:
     """Resolve which template airtable-id this step belongs to.
 
-    Supports two Airtable schema patterns:
+    Expects *fields* already normalized (snake_case headers). Supports two
+    Airtable schema patterns:
     1. A ``template_key`` plain-text field matching template.key.
-    2. A ``Template`` linked-record field (list of airtable record ids).
+    2. A ``Template`` linked-record field (normalized to ``template``; a list
+       of airtable record ids).
     """
     # Pattern 1: plain text key
     template_key = (fields.get("template_key") or "").strip()
     if template_key:
         return key_to_airtable_id.get(template_key)
 
-    # Pattern 2: Airtable linked record (list of ids)
-    linked = fields.get("Template")
+    # Pattern 2: Airtable linked record (list of ids) — "Template" → "template".
+    linked = fields.get("template")
     if isinstance(linked, list) and linked:
         return linked[0]  # first link wins
     if isinstance(linked, str) and linked.strip():
