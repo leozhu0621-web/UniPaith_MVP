@@ -28,7 +28,7 @@
  */
 
 import { useRef, useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, ArrowUp, BookOpen, List, Scale, Compass, Flag, Heart, Calendar, Users } from "lucide-react";
 import { getChatTemplates, type ChatTemplate } from "../../../api/chatTemplates";
 import { createSession, type ChatSession } from "../../../api/chatSessions";
@@ -413,9 +413,12 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
     .filter((s) => s.award_amount)
     .slice(0, 2);
 
+  const qc = useQueryClient();
   const createMut = useMutation({
     mutationFn: createSession,
     onSuccess: (s: ChatSession, vars) => {
+      // Refresh the rail so the newly named + auto-filed session appears.
+      void qc.invalidateQueries({ queryKey: ["chat-tree"] });
       onSessionStart(s.id, vars.origin_kind, vars.origin_ref ?? undefined);
     },
   });

@@ -65,7 +65,10 @@ interface Props {
   /** Called when the user picks a session. */
   onSelectSession?: (sessionId: string) => void;
   /** Called when a brand-new session is created (so the parent can wire it). */
-  onNewSession?: (sessionId: string) => void;
+  /** Called when the user starts a new session. With a sessionId, open it.
+   *  With no id (the top "+ New session"), the shell shows the launcher so the
+   *  session is named + auto-filed from real content (no blank "New session"). */
+  onNewSession?: (sessionId?: string) => void;
 }
 
 // ── Inline-rename helper ───────────────────────────────────────────────────
@@ -525,9 +528,8 @@ export default function SessionBrowser({
         {/* Buttons row */}
         <div className="flex gap-2 mb-4">
           <button
-            onClick={() => handleNewSession()}
-            disabled={createSessionMut.isPending}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-[10px] bg-secondary text-secondary-foreground text-[13px] font-bold hover:bg-secondary/90 transition-colors disabled:opacity-60"
+            onClick={() => onNewSession?.()}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-[10px] bg-secondary text-secondary-foreground text-[13px] font-bold hover:bg-secondary/90 transition-colors"
           >
             <Plus size={14} strokeWidth={2.5} />
             New session
