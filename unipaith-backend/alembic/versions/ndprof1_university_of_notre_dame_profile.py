@@ -9,8 +9,12 @@ and external_reviews on flagship coverable programs — via
 
 No schema (DDL) changes. Idempotent; no-op when University of Notre Dame is absent.
 
+This revision ALSO merges the live dual head left by the #884 (dartprof1) auto-merge
+race — ``down_revision`` is the (dartprof1, promptcat2) pair — so ``main`` returns to a
+single head (ndprof1) without a separate merge migration.
+
 Revision ID: ndprof1
-Revises: promptcat2
+Revises: dartprof1, promptcat2
 Create Date: 2026-06-20
 """
 
@@ -25,7 +29,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "ndprof1"
-down_revision = "promptcat2"
+down_revision = ("dartprof1", "promptcat2")
 branch_labels = None
 depends_on = None
 
