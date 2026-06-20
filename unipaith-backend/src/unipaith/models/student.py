@@ -347,6 +347,8 @@ class StudentPreference(Base):
     weight_flexibility: Mapped[int | None] = mapped_column(Integer)
     weight_support: Mapped[int | None] = mapped_column(Integer)
     weight_time_to_degree: Mapped[int | None] = mapped_column(Integer)
+    weight_research: Mapped[int | None] = mapped_column(Integer)
+    weight_campus_life: Mapped[int | None] = mapped_column(Integer)
     application_intensity: Mapped[str | None] = mapped_column(String(30))
     preferred_learning_style: Mapped[str | None] = mapped_column(String(30))
     preferred_program_style: Mapped[str | None] = mapped_column(String(30))

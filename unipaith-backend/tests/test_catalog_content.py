@@ -1,8 +1,8 @@
-"""Catalog content expansion — asserts the 23→40 prompt catalog growth.
+"""Catalog content expansion — asserts the 23→42 prompt catalog growth.
 
 TDD step 1: WRITE FAILING TEST first.
 Verifies:
-- After ensure_seeded, load() returns >= 40 entries
+- After ensure_seeded, load() returns exactly len(CATALOG) entries
 - New keys present with correct ask_kind
 - Changed keys reflect their new ask_kind
 - Essentials list is exactly the original 6 keys
@@ -15,12 +15,14 @@ from unipaith.services.enrichment_planner import CATALOG
 
 
 @pytest.mark.asyncio
-async def test_catalog_has_exactly_40_entries(db_session):
-    """After seeding, the catalog must have exactly 40 active entries."""
+async def test_catalog_has_exactly_catalog_size_entries(db_session):
+    """After seeding, the DB catalog must match the in-code CATALOG constant."""
     svc = CatalogService(db_session)
     await svc.ensure_seeded()
     loaded = await svc.load()
-    assert len(loaded) == 40, f"Expected exactly 40 entries, got {len(loaded)}"
+    assert len(loaded) == len(CATALOG), (
+        f"Expected exactly {len(CATALOG)} entries (matching CATALOG constant), got {len(loaded)}"
+    )
 
 
 @pytest.mark.asyncio

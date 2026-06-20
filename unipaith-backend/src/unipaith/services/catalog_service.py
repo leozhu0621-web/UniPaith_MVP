@@ -60,6 +60,8 @@ _SECTION_BY_KEY: dict[str, str] = {
     "weight_flexibility": "What matters most",
     "weight_support": "What matters most",
     "weight_time_to_degree": "What matters most",
+    "weight_research": "What matters most",
+    "weight_campus_life": "What matters most",
     "needs": "What matters most",
     "identity": "What matters most",
 }
