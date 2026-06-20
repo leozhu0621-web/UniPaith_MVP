@@ -1128,51 +1128,55 @@ _FIELD_OVERRIDE: dict[str, str] = {
     # Nursing (Meyers) — restore the parenthetical pathway and the pediatric NP foci.
     "nursing-accelerated-15-month": "Nursing (Accelerated 15-Month)",
     "nursing-traditional-4-year": "Nursing (Traditional 4-Year)",
-    "pediatrics-primary-care-nurse-practitioner": "Pediatric Primary Care Nurse Practitioner",
-    "pediatrics-nurse-practitioner-primary-care-acute": "Pediatric Primary Care/Acute Care Nurse Practitioner",
-    # Steinhardt education — dual-certification and specialization titles.
-    "childhood-education-childhood-special-education": "Childhood Education and Childhood Special Education",
-    "childhood-education-special-education-childhood": "Childhood Education and Childhood Special Education",
-    "early-childhood-education-special": "Early Childhood Education and Early Childhood Special Education",
-    "special-education-early-childhood": "Early Childhood Special Education",
+    "pediatrics-primary-care-nurse-practitioner": "Pediatrics Primary Care Nurse Practitioner",
+    "pediatrics-nurse-practitioner-primary-care-acute": "Pediatrics Nurse Practitioner Primary Care/Acute Care",
+    # Steinhardt education — dual-certification titles verbatim from the NYU Bulletin
+    # headings (the BS pages use a slash title, the MA pages a slash + colon).
+    "childhood-education-childhood-special-education": "Childhood Education/Childhood Special Education",
+    "childhood-education-special-education-childhood": "Childhood Education/Special Education: Childhood",
+    # early-childhood-education-special has BOTH a BS (slash) and an MA (slash + colon) row;
+    # the base override is the BS heading and _DISAMBIG_NAMES sets the MA row's heading.
+    "early-childhood-education-special": "Early Childhood Education/Early Childhood Special Education",
+    "special-education-early-childhood": "Special Education: Early Childhood",
     "specialized-studies-education": "Specialized Studies in Education",
-    "educational-communications-technology": "Educational Communication and Technology",
+    "educational-communications-technology": "Educational Communications and Technology",
     "english-education-secondary-college": "English Education (Secondary and College)",
     "bilingual-education-teachers": "Bilingual Education for Teachers",
-    # Steinhardt education — teacher-certification titles (subject + grade band).
-    "teaching-biology-7-12": "Teaching Biology, Grades 7–12",
-    "teaching-chemistry-7-12": "Teaching Chemistry, Grades 7–12",
-    "teaching-earth-science-7-12": "Teaching Earth Science, Grades 7–12",
-    "teaching-english-712": "Teaching English, Grades 7–12",
-    "teaching-mathematics-712": "Teaching Mathematics, Grades 7–12",
-    "teaching-physics-7-12": "Teaching Physics, Grades 7–12",
-    "teaching-social-studies-712": "Teaching Social Studies, Grades 7–12",
-    "teaching-world-language-7-12-chinese": "Teaching World Language (Chinese), Grades 7–12",
-    "teaching-world-language-7-12-french": "Teaching World Language (French), Grades 7–12",
-    "teaching-world-language-7-12-italian": "Teaching World Language (Italian), Grades 7–12",
-    "teaching-world-language-7-12-japanese": "Teaching World Language (Japanese), Grades 7–12",
-    "teaching-world-language-7-12-spanish": "Teaching World Language (Spanish), Grades 7–12",
-    "teachers-english-7-12": "Teachers of English, Grades 7–12",
-    "teachers-mathematics-7-12": "Teachers of Mathematics, Grades 7–12",
+    # Steinhardt education — teacher-certification titles (subject + grade band), verbatim
+    # from the NYU Bulletin headings ("Teaching Chemistry 7-12", "Teachers of English 7-12").
+    "teaching-biology-7-12": "Teaching Biology 7-12",
+    "teaching-chemistry-7-12": "Teaching Chemistry 7-12",
+    "teaching-earth-science-7-12": "Teaching Earth Science 7-12",
+    "teaching-english-712": "Teaching English 7-12",
+    "teaching-mathematics-712": "Teaching Mathematics 7-12",
+    "teaching-physics-7-12": "Teaching Physics 7-12",
+    "teaching-social-studies-712": "Teaching Social Studies 7-12",
+    "teaching-world-language-7-12-chinese": "Teaching a World Language 7-12: Chinese",
+    "teaching-world-language-7-12-french": "Teaching a World Language 7-12: French",
+    "teaching-world-language-7-12-italian": "Teaching a World Language 7-12: Italian",
+    "teaching-world-language-7-12-japanese": "Teaching a World Language 7-12: Japanese",
+    "teaching-world-language-7-12-spanish": "Teaching a World Language 7-12: Spanish",
+    "teachers-english-7-12": "Teachers of English 7-12",
+    "teachers-mathematics-7-12": "Teachers of Mathematics 7-12",
     "teaching-art-all-grades": "Teaching Art, All Grades",
     "teaching-dance-all-grades": "Teaching Dance, All Grades",
     "teacher-dance-all-grades": "Teacher of Dance, All Grades",
     "teaching-dance-professions": "Teaching Dance in the Professions",
-    "teaching-english-7-12-5-6-extension-students-disabilities-7-12-generalist": "Teaching English, Grades 7–12 (with 5–6 Extension and Students with Disabilities Generalist)",
-    "teaching-social-studies-7-12-5-6-extension-students-disabilities-7-12-generalist": "Teaching Social Studies, Grades 7–12 (with 5–6 Extension and Students with Disabilities Generalist)",
-    "teaching-english-language-literature-college": "Teaching English Language and Literature, College",
+    "teaching-english-7-12-5-6-extension-students-disabilities-7-12-generalist": "Teaching English 7-12 with 5-6 Extension/Students with Disabilities 7-12 Generalist",
+    "teaching-social-studies-7-12-5-6-extension-students-disabilities-7-12-generalist": "Teaching Social Studies 7-12 with 5-6 Extension/Students with Disabilities 7-12 Generalist",
+    "teaching-english-language-literature-college": "Teachers of English Language and Literature in College",
     "teaching-english-speakers-other-languages": "Teaching English to Speakers of Other Languages (TESOL)",
     "teaching-english-speakers-other-languages-all-grades": "Teaching English to Speakers of Other Languages, All Grades",
-    "teaching-world-languages-7-12-tesol-all-grades": "Teaching World Languages, Grades 7–12, and TESOL, All Grades",
+    "teaching-world-languages-7-12-tesol-all-grades": "Teaching World Languages 7-12/TESOL (All Grades)",
     "world-language-education": "World Language Education",
     # Steinhardt educational theatre (dual-certification + colleges/communities).
     "educational-theatre-all-grades": "Educational Theatre, All Grades",
-    "educational-theatre-all-grades-english-712": "Educational Theatre, All Grades, and English, Grades 7–12",
-    "educational-theatre-all-grades-social-studies-712": "Educational Theatre, All Grades, and Social Studies, Grades 7–12",
+    "educational-theatre-all-grades-english-712": "Educational Theatre, All Grades, and English, 7-12",
+    "educational-theatre-all-grades-social-studies-712": "Educational Theatre, All Grades, and Social Studies, 7-12",
     "educational-theatre-colleges-communities": "Educational Theatre in Colleges and Communities",
     # Steinhardt MAT (Teacher Residency / Transformational Teaching) field labels.
-    "transformational-teaching-middle-high-schools": "Transformational Teaching, Middle and High Schools",
-    "transformational-teaching-students-disabilities-computer-science": "Transformational Teaching for Students with Disabilities and Computer Science",
+    "transformational-teaching-middle-high-schools": "Transformational Teaching in Middle and High Schools",
+    "transformational-teaching-students-disabilities-computer-science": "Transformational Teaching Students with Disabilities and Computer Science",
     # Tisch / Steinhardt arts.
     "drama-therapy-alternate-licensure": "Drama Therapy (Alternate Licensure)",
     "theatre-social-civic-engagement": "Theatre for Social and Civic Engagement",
@@ -1417,6 +1421,9 @@ _DISAMBIG_NAMES: dict[str, str] = {
     "nyu-occupational-therapy-otd": "Doctor of Occupational Therapy",
     "nyu-occupational-therapy-practicing-occupational-therapists-otd": "Doctor of Occupational Therapy (Post-Professional)",
     "nyu-educational-theatre-colleges-communities-phd": "Doctor of Philosophy in Educational Theatre in Colleges and Communities",
+    # early-childhood-education-special has both a BS (slash heading, set via _FIELD_OVERRIDE)
+    # and an MA (slash + colon heading) — the MA row takes its own NYU Bulletin heading here.
+    "nyu-early-childhood-education-special-ma": "Master of Arts in Early Childhood Education/Special Education: Early Childhood",
 }
 
 _LEVEL_SUFFIX: dict[str, str] = {

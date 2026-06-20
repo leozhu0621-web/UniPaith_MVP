@@ -112,7 +112,7 @@ def test_program_names_are_not_scrape_mangled():
         "Bachelor of Arts in Mathematics and Computer Science",
         "Bachelor of Arts in Global Public Health and Anthropology",
         "Bachelor of Science in Health and Wellbeing Studies",
-        "Bachelor of Science in Teaching Chemistry, Grades 7–12",
+        "Bachelor of Science in Teaching Chemistry 7-12",
         "Master of Arts in Journalism and East Asian Studies",
         "Doctor of Philosophy in French Studies and French",
     }
