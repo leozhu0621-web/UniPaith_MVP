@@ -5,7 +5,7 @@ Rows with an airtable_record_id are NOT touched (they came from Airtable,
 not from the seed, so we preserve any operator edits).
 
 Revision ID: promptcat2
-Revises: ufprof1
+Revises: ufprof2
 Create Date: 2026-06-20
 
 """
@@ -17,7 +17,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "promptcat2"  # pragma: allowlist secret
-down_revision: str | None = "ufprof1"  # pragma: allowlist secret
+down_revision: str | None = "ufprof2"  # pragma: allowlist secret
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
