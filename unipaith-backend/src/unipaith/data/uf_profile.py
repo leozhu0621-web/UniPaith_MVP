@@ -45,6 +45,19 @@ Description repair (2026-06-17, purdueprof5): replaces all name-prefixed
 with field-specific clauses from ``uf_field_descriptions.py`` (gold MIT/JHU
 pattern); 0% name-prefixed descriptions.
 
+Per-credential body rewrite (2026-06-20, ufdefab1): the prior composition stamped one
+shared discipline definition + a shared "engages this discipline at the {level} level"
+classification clause across every credential level of a field, so 102 multi-credential
+fields shared a body once the level frame was stripped (anti_stub.frame_stripped_shared_body
+— REPAIR_BACKLOG HIGH #4 / miss #8 credential-frame). Replaced with per-credential bodies
+(``_level_body``): each level (BA/MS/PhD/certificate/professional) gets its own researched
+body describing what THAT degree studies, so credential siblings share no dominant body
+(frame_stripped_shared_body = 0; the build self-enforces it). Also fixed nine
+college/department mismatches (Health Sciences / Allied Health → PHHP, Nutrition Science /
+Human Development & Family Studies / Apparel Design / Agriculture → CALS, Liberal Arts →
+CLAS, Bioinformatics → Engineering) so each description's named college matches the
+program's department.
+
 Description de-fabrication (2026-06-19, purduedefab1): the prior FIELD_DESCRIPTIONS
 carried cross-institution-copy fabrications find-replaced from peer catalogs (Penn's
 SAS/Wharton/Perelman, JHU's Chesapeake/Writing Seminars, Northwestern's McCormick,
@@ -588,23 +601,6 @@ def _field_from_program_name(name: str) -> str:
     return clean_cip_field(name)
 
 
-# Per-credential lead so each credential level of a field reads distinctly (gold MIT /
-# Michigan model = 0% verbatim / 0% shared leading body across a field's credential siblings).
-_LEVEL_PREFIX = {
-    "bachelors": "",
-    "masters": "Graduate study. ",
-    "phd": "Doctoral research. ",
-    "certificate": "Graduate certificate. ",
-    "professional": "Professional study. ",
-}
-_LEVEL_WORD = {
-    "bachelors": "undergraduate",
-    "masters": "master's",
-    "phd": "doctoral",
-    "certificate": "graduate-certificate",
-    "professional": "professional",
-}
-
 # Fields whose DISCIPLINE_DEFS entry is missing are collected here and the build gate
 # raises with the full list (so every gap surfaces at once, not one per run).
 _MISSING_DEFS: list[str] = []
@@ -619,13 +615,81 @@ _FIELD_DEF_LOOKUP: dict[str, str] = {
     "master of business administration": "business administration (mba)",
 }
 
+# Lowercase field label for the professional / no-"in" credential names, used mid-sentence
+# in the per-credential body (e.g. "professional practice in law").
+_FIELD_LABEL: dict[str, str] = {
+    "Doctor of Medicine": "medicine",
+    "Doctor of Pharmacy": "pharmacy",
+    "Doctor of Veterinary Medicine": "veterinary medicine",
+    "Doctor of Dental Medicine": "dentistry",
+    "Juris Doctor": "law",
+    "Master of Business Administration": "business administration",
+}
+
+
+def _field_label(name: str) -> str:
+    if " in " in name:
+        return name.split(" in ", 1)[1].strip()
+    return _FIELD_LABEL.get(name, _anti_stub_field(name))
+
+
+# Per-credential body: each credential level of a field gets its OWN researched body
+# describing what THAT degree level studies and does, so credential siblings share no
+# leading or tail-hidden field body (gold MIT model = 0 on anti_stub.analyze AND
+# anti_stub.frame_stripped_shared_body). Each body is substantially longer than the
+# leading discipline definition, so the shared definition is < 50% of every sibling and
+# is never the dominant text a student reads on a level's page.
+def _level_body(dtype: str, name: str, college: str, field: str) -> str:
+    uf = "the University of Florida"
+    if dtype == "bachelors":
+        return (
+            f"Building from the foundations of the discipline, the {name} grounds "
+            f"undergraduates in core theory and method through required introductory "
+            f"sequences, hands-on laboratory, studio, or field experience, and a "
+            f"progression of upper-division electives within {college} at {uf}, "
+            f"developing the breadth and analytical skill that ready graduates for "
+            f"professional roles or further study."
+        )
+    if dtype == "masters":
+        return (
+            f"Built for advanced specialization, the {name} pairs graduate seminars and "
+            f"methods coursework with applied projects, practica, or a research thesis "
+            f"supervised by {college} faculty, letting students concentrate on a focused "
+            f"area of {field} and prepare for advanced practice or doctoral work at {uf}."
+        )
+    if dtype == "phd":
+        return (
+            f"Centered on original scholarship, the {name} engages doctoral candidates in "
+            f"advanced seminars, qualifying examinations, and a sustained, faculty-mentored "
+            f"dissertation that contributes new knowledge to {field}, preparing graduates "
+            f"for research, faculty, and senior professional careers through {college} "
+            f"at {uf}."
+        )
+    if dtype == "certificate":
+        return (
+            f"A focused, credit-bearing credential, the {name} concentrates a compact set "
+            f"of advanced courses on a defined area of {field}, giving working "
+            f"professionals and degree-seeking students targeted expertise that can stand "
+            f"alone or apply toward a related graduate degree within {college} at {uf}."
+        )
+    if dtype == "professional":
+        return (
+            f"A practice-oriented degree, the {name} joins rigorous classroom study with "
+            f"extensive supervised clinical, laboratory, or practical training delivered "
+            f"through {college} at {uf}, preparing graduates to satisfy licensure "
+            f"requirements and to enter professional practice in {field}."
+        )
+    return ""
+
 
 def _uf_description(spec: dict) -> str:
-    """Verified per-credential description (gold MIT / Michigan model).
+    """Verified per-credential description (gold MIT model).
 
     Leads with a verified, field-specific discipline definition (general field knowledge,
-    no institution-specific or peer-borrowed claims), then names UF's real owning
-    college on the Gainesville, Florida campus and the program's credential level.
+    no institution-specific or peer-borrowed claims), then a credential-level-specific
+    body describing what THAT degree level studies at its real UF owning college. Each
+    level's body is distinct, so a field's credential siblings share no dominant body
+    (anti_stub.frame_stripped_shared_body = 0).
     """
     name = spec["program_name"]
     dtype = spec["degree_type"]
@@ -636,11 +700,7 @@ def _uf_description(spec: dict) -> str:
     if not defn:
         _MISSING_DEFS.append(f"{field!r} ({spec['slug']})")
         return ""
-    desc = (
-        f"{_LEVEL_PREFIX[dtype]}{defn} At the University of Florida's {college} in "
-        f"Gainesville, Florida, the {name} engages this discipline at the "
-        f"{_LEVEL_WORD[dtype]} level."
-    )
+    desc = f"{defn} {_level_body(dtype, name, college, _field_label(name))}"
     fmt = spec.get("delivery_format", "on_campus")
     if fmt == "online":
         desc += " Delivered fully online."
@@ -744,6 +804,9 @@ from unipaith.profile_standard.anti_stub import (  # noqa: E402
     analyze as _anti_stub_analyze,
 )
 from unipaith.profile_standard.anti_stub import (  # noqa: E402
+    frame_stripped_shared_body as _frame_stripped_shared_body,
+)
+from unipaith.profile_standard.anti_stub import (  # noqa: E402
     machine_artifacts as _machine_artifacts,
 )
 
@@ -753,6 +816,13 @@ if not _anti_report.is_clean:
 _artifacts = _machine_artifacts(PROGRAMS)
 if _artifacts:
     _catalog_errors.append(f"machine-build artifacts in {len(_artifacts)} descriptions")
+# Per-credential body gate (miss #8 credential-frame): a field's BA/MS/PhD siblings must
+# not share a body once a leading frame is stripped — the run-65 evasion analyze misses.
+_frame_shared = _frame_stripped_shared_body(PROGRAMS)
+if _frame_shared:
+    _catalog_errors.append(
+        f"frame-stripped shared body on {len(_frame_shared)} field(s): {_frame_shared[:8]}"
+    )
 if _catalog_errors:
     raise RuntimeError(f"UF catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]

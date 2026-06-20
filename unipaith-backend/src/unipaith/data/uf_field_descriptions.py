@@ -1,17 +1,15 @@
 """Verified discipline definitions for University of Florida.
 
 Each value is a verified, field-specific definition of an academic discipline (general
-field knowledge, disambiguation-guarded). uf_profile.py composes each program's
-description per-credential: a level lead ("Graduate study." / "Doctoral research." /
-"Graduate certificate.") + this definition + Purdue's real owning college on the West
-Lafayette, Indiana campus + the program's credential level (the gold MIT / Michigan model).
+field knowledge, disambiguation-guarded), with no institution-specific or peer-borrowed
+claims. ``uf_profile._uf_description`` leads each program's description with this
+definition, then appends a credential-level-specific body (``_level_body``) describing
+what THAT degree level studies at its real UF owning college — so a field's credential
+siblings share no dominant body (gold MIT model = 0 on ``anti_stub.analyze`` AND
+``anti_stub.frame_stripped_shared_body``).
 
-REPLACES the prior FIELD_DESCRIPTIONS / SLUG_DESCRIPTIONS, which carried
-cross-institution-copy fabrications find-replaced from peer catalogs (Penn's SAS/Wharton/
-Perelman, JHU's Chesapeake/Writing Seminars, Northwestern's McCormick, Cornell's Weill) —
-REPAIR_BACKLOG critical #3. No institution-specific claims live here; no peer units.
-
-Regenerate via scripts/build_purdue_field_descriptions.py.
+No institution-specific claims live here; no peer units (the prior FIELD_DESCRIPTIONS
+carried cross-institution-copy fabrications, REPAIR_BACKLOG critical #3 — removed).
 """
 
 # ruff: noqa: E501

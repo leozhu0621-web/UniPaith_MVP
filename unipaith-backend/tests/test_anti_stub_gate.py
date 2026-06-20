@@ -142,7 +142,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
     assert not machine_artifacts(clean), "must not flag a clean field-specific description"
 
 
-@pytest.mark.parametrize("name", ["mit", "rice"])
+@pytest.mark.parametrize("name", ["mit", "rice", "uf"])
 def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
     """A field's credential siblings (BA / MS / PhD) must not share a body once a leading
     credential frame is stripped — the run-65 evasion the leading-prefix shared-body count
