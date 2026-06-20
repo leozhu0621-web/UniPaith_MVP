@@ -15,12 +15,12 @@ from unipaith.services.enrichment_planner import CATALOG
 
 
 @pytest.mark.asyncio
-async def test_catalog_has_at_least_40_entries(db_session):
-    """After seeding, the catalog must have at least 40 active entries."""
+async def test_catalog_has_exactly_40_entries(db_session):
+    """After seeding, the catalog must have exactly 40 active entries."""
     svc = CatalogService(db_session)
     await svc.ensure_seeded()
     loaded = await svc.load()
-    assert len(loaded) >= 40, f"Expected >=40 entries, got {len(loaded)}"
+    assert len(loaded) == 40, f"Expected exactly 40 entries, got {len(loaded)}"
 
 
 @pytest.mark.asyncio
@@ -83,9 +83,8 @@ async def test_changed_fields_reflect_new_ask_kind(db_session):
     )
 
 
-@pytest.mark.asyncio
-async def test_essentials_are_exactly_original_six(db_session):
-    """The 6 essential keys must remain exactly the original 6, in order."""
+def test_catalog_essentials_constant():
+    """Fast sync check: CATALOG constant has exactly the 6 essential keys, in order."""
     expected_essentials = [
         "gender",
         "nationality",
@@ -94,13 +93,24 @@ async def test_essentials_are_exactly_original_six(db_session):
         "target_degree_level",
         "field_of_interest",
     ]
-    # Check CATALOG constant
     actual_essentials = [f["key"] for f in CATALOG if f["tier"] == "essential"]
     assert actual_essentials == expected_essentials, (
         f"CATALOG essentials changed: {actual_essentials}"
     )
 
-    # Also check DB-loaded catalog preserves the same essential set
+
+@pytest.mark.asyncio
+async def test_essentials_are_exactly_original_six(db_session):
+    """The 6 essential keys must be preserved in the DB-loaded catalog."""
+    expected_essentials = [
+        "gender",
+        "nationality",
+        "date_of_birth",
+        "country_of_residence",
+        "target_degree_level",
+        "field_of_interest",
+    ]
+    # Check DB-loaded catalog preserves the same essential set
     svc = CatalogService(db_session)
     await svc.ensure_seeded()
     loaded = await svc.load()

@@ -33,4 +33,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # intentional no-op: seed-managed rows are re-materialized from CATALOG on next
+    # startup by ensure_seeded; nothing to reverse.
     pass
