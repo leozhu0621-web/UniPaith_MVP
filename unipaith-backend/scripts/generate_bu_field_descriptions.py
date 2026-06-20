@@ -1433,6 +1433,7 @@ _ADAPT_RE: list[tuple[str, str]] = [
     (r"\bHarvard Faculty of Arts and Sciences\b", "College of Arts & Sciences"),
     (r"\bWharton\b", "Questrom School of Business"),
     (r"\bWhiting School of Engineering\b", "College of Engineering"),
+    (r"\bWhiting\b", "College of Engineering"),
     (r"\bKrieger School of Arts and Sciences\b", "College of Arts & Sciences"),
     (r"\bCarey School of Business\b", "Questrom School of Business"),
     (r"\bBloomberg School of Public Health\b", "School of Public Health"),
