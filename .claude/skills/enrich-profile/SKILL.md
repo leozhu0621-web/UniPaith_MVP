@@ -717,6 +717,31 @@ Concrete misses observed in the first runs — each broke a real page:
        bachelor's AND master's AND PhD), vs gold MIT 0%; the broken splice the frame leaves ("…centers on
        dissertation research in {field} spans …", a bare "{College} foundations in … with …" fragment) is
        the corroborating tell.
+     - **The `AND ≥50% of the shortest sibling` FRACTION FLOOR on the shared-body count is ITSELF the next
+       loophole — PADDING each credential row with a long UNIQUE per-credential TAIL dilutes a still-IDENTICAL
+       leading SENTENCE below 50% of the now-long description, so the LCS-anywhere count reads a false 0 again.
+       This is the live evasion this run, manufactured by the very "per-credential bodies" passes meant to FIX
+       the frame+tail-share.** A 150+ character identical run across a field's BA / MS / PhD is a STAMPED
+       SENTENCE — never a coincidence — so the fraction floor (an anti-coincidence guard meant to spare a short
+       shared clause) must NOT exempt it: the "repair" keeps one researched field sentence verbatim across the
+       credential siblings and simply appends enough distinct per-credential filler that the shared run, though
+       160–220 chars in ABSOLUTE terms, is only ~30% of each padded body — under the 50% floor — and the
+       grader/CI metric clears it. A student STILL reads the identical opening sentence on the bachelor's AND
+       the master's AND the PhD page (gold MIT 0% — every credential level its OWN body). So the frame-stripped
+       shared-body count must FAIL when the longest common substring across a field's credential siblings is
+       **≥80 chars AND ≥50% of the shortest sibling, OR ≥150 chars in ABSOLUTE terms regardless of fraction**
+       (a full stamped sentence); the clean fleet's per-credential-distinct catalogs top out well below this
+       (gold MIT, Duke, Rice, Purdue, UCSD all <150-char max shared run), so the absolute floor separates them
+       from the diluted-tail evasion cleanly. A "per-credential bodies" pass is done only when each credential
+       level's researched body shares NO sentence with its siblings — not when a padded tail drops the shared
+       sentence under an arbitrary fraction. Evidence: live API this run — four freshly-shipped, already-deployed
+       "per-credential bodies" repair passes (UW-Madison, Florida, Cornell, Boston U) that took the run-66
+       LCS-anywhere ≥50%-floor metric to 0 (and so read "fixed") still stamp ONE field sentence across their
+       credential siblings — UW–Madison's Anthropology BA / Graduate Certificate / MS all open on the identical
+       162–166-char "Madison campus anthropology combines archaeological fieldwork, medical anthropology, and
+       sociocultural theory…" (30% of each ~540–617-char body); Florida's Biology BA / MS share an identical
+       160-char generic field-definition sentence (31%) — vs gold MIT 0%, where re-measuring with the absolute
+       floor restores 75 / 54 / 44 / 23 flagged fields respectively.
    - **ONE SCHOOL's blurb STAMPED across MANY DIFFERENT FIELDS is the SCHOOL-LEVEL analog of the
      per-field stamping above — and it EVADES the field-keyed shared-body count (which compares only a
      field's credential siblings, NEVER two DIFFERENT fields). This is the live regression this run.**
@@ -895,8 +920,11 @@ Concrete misses observed in the first runs — each broke a real page:
      graduate seminars, research methods, and a thesis project —", "Doctoral study in {field} at {Univ}
      centers on dissertation research in", a bare "Graduate study."/"Graduate certificate." tag, "{Field}
      is the study of …") and measure the shared body ANYWHERE in the siblings (longest common substring,
-     FAIL at ≥80 chars AND ≥50% of the shortest), NOT only as a leading prefix — or a prepended credential
-     frame pushes the still-shared field body into the TAIL and the prefix count reads 0 (miss #8
+     FAIL at ≥80 chars AND ≥50% of the shortest, OR ≥150 chars in ABSOLUTE terms regardless of fraction — a
+     padded unique per-credential TAIL otherwise dilutes a still-identical leading sentence below the 50%
+     floor and the count reads a false 0 (miss #8 fraction-floor sub-bullet)), NOT only as a leading prefix —
+     or a prepended credential frame pushes the still-shared field body into the TAIL and the prefix count
+     reads 0 (miss #8
      credential-frame sub-bullet)**; **AND run that
      shared-body count CATALOG-WIDE across ALL programs, not only within a field — extract each
      description's substantive clause and FAIL when one clause is shared verbatim across rows of
