@@ -14,13 +14,11 @@ Latinx Studies") and the IPEDS-minted MS + certificate rows are dropped (JHU con
 no master's or certificate in that field). Idempotent; re-derives target-applicant
 rows.
 
-This migration also unifies the two concurrent heads on ``main`` —
-``cornellpercred1`` (#898) and ``uscdebris2`` (#899) both branched off
-``bupercred1`` and auto-merged, leaving a dual head — by descending from both, so
-``main`` is left with exactly one head.
+Follows ``usccornellmrg1`` (the merge of ``uscdebris2`` + ``cornellpercred1``) so
+``main`` stays at exactly one Alembic head.
 
 Revision ID: jhupercred1
-Revises: cornellpercred1, uscdebris2
+Revises: usccornellmrg1
 Create Date: 2026-06-20
 """
 
@@ -35,7 +33,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "jhupercred1"
-down_revision = ("cornellpercred1", "uscdebris2")
+down_revision = "usccornellmrg1"
 branch_labels = None
 depends_on = None
 

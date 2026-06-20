@@ -34,10 +34,6 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Near Eastern and Mediterranean archaeology at Krieger includes field schools and "
         "museum collections tied to the Archaeological Museum."
     ),
-    "Area Studies": (
-        "Latin American, Caribbean, and Latinx studies at Krieger integrate language "
-        "immersion with policy and diaspora scholarship."
-    ),
     "Latin American, Caribbean, and Latinx Studies": (
         "Krieger's Program in Latin American, Caribbean, and Latinx Studies examines the "
         "histories, cultures, societies, and political systems of Latin America, the "

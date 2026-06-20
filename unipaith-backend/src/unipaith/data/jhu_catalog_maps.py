@@ -13,7 +13,7 @@ import re
 # Verbatim CIP rollup titles → JHU's published field-of-study name.
 FIELD_ALIASES: dict[str, str] = {
     "Natural Resources Conservation and Research": "Environmental Sciences",
-    "Area Studies": "Area Studies",
+    "Area Studies": "Latin American, Caribbean, and Latinx Studies",
     "Ethnic, Cultural Minority, Gender, and Group Studies": "Ethnic Studies",
     "Communication and Media Studies": "Communication Studies",
     "Germanic Languages, Literatures, and Linguistics": "German",
@@ -196,7 +196,9 @@ DEPARTMENT_BY_FIELD: dict[str, str] = {
     "Classics": "Department of Classics",
     "German": "Department of German and Romance Languages and Literatures",
     "Romance Languages": "Department of German and Romance Languages and Literatures",
-    "Area Studies": "Program in Latin American, Caribbean, and Latinx Studies",
+    "Latin American, Caribbean, and Latinx Studies": (
+        "Program in Latin American, Caribbean, and Latinx Studies"
+    ),
     "Ethnic Studies": "Center for Africana Studies",
     "Geography": "Department of Earth and Planetary Sciences",
     "Social Sciences": "Zanvyl Krieger School of Arts and Sciences",
@@ -296,7 +298,8 @@ SLUG_DEPARTMENTS: dict[str, str] = {
 
 # Fields that confer a B.A. at JHU Krieger (humanities and social sciences).
 BA_FIELDS = frozenset({
-    "Anthropology", "Archaeology", "Area Studies", "Classics", "Communication Studies",
+    "Anthropology", "Archaeology", "Latin American, Caribbean, and Latinx Studies",
+    "Classics", "Communication Studies",
     "Economics", "English", "Ethnic Studies", "Film and Media", "Geography", "German",
     "History", "Interdisciplinary Studies", "International Relations", "Liberal Arts",
     "Philosophy", "Political Science", "Romance Languages", "Social Sciences", "Sociology",
