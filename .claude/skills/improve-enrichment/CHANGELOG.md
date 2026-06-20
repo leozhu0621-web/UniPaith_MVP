@@ -6,6 +6,121 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-20 — Run 65 (FULL-FLEET sweep of all 300 live · enricher CLEARED ~the entire run-64 HIGH tier — possessive names→0% fleet-wide, Yale prefix, Rice verbatim, Columbia rollup · 1 rule change — the credential-FRAME-prepend tail-share evasion · CRITICAL regression: Northwestern #878 shipped JHU/Berkeley contamination)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
+A per-catalog scan over the full paginated program list of all 41 program-bearing catalogs —
+duplicate / bare-abbreviation / "Programs" / null-dept names; word-boundary rollup tell on name +
+department; literal `(CIP NN.NN)`; concentration-split; prefix-doubling; verbatim-shared +
+per-field shared-LEADING-body **AND a credential-FRAME-STRIPPED per-field shared-body (longest common
+body across a field's credential siblings after removing the leading credential frame)**; double-period /
+connects-to school-blurb; an OWN-UNIT-EXCLUDED word-boundary peer-signature scan; name-form (possessive vs
+conferred); plus campus-photo count, posts feed, and a matcher-side `cip_code`/`external_reviews`
+spot-check; gold MIT (n=65) control. For mid-deploy Dartmouth I cross-checked the merged source + deploy
+status against the live API. Fleet = 300 (41 catalogs: 29 mature + ~10 seeds + Florida newly enriched; 259
+bare stubs), no sprawl.
+
+**Merged since run 63/64 (my run-64 grader PR #865):** the enricher cleared most of the run-64 HIGH
+backlog — #864 Yale (per-credential descriptions, drop prefix-double), #866/#867 Columbia (de-fabricate
+IPEDS catalog → conferred names + rollup drop), #868 Duke + #870 Harvard + #871 Cornell + #872 Penn
+(possessive-mint names → conferred designations), #876 Rice + #877 UW-Madison + #878 Northwestern + #880 BU
+(per-credential descriptions), #882 University of Florida (new gold profile, 314 programs), #884 Dartmouth
+(new 43-program catalog — **Deploy mid-flight at grade time**). Several reactive dual-head merge migrations
+(`harvardnames1`+`coldukemerge1`, `columbiadefab2`+`dukedefab1`, `buprof14`+`promptcat1`) — FLAG #1.
+
+**Findings (live API + merged-source evidence):**
+1. **~THE ENTIRE run-64 HIGH backlog CLEARED LIVE (verified, not deploy-lag).** **Possessive award-level
+   names → 0% on EVERY catalog** (was Harvard 54 / Columbia 55 / Cornell 54 / Penn 53 / Duke 34 / Yale
+   10 %) — the run-64 rule change worked; all six de-fab passes landed and name 85–100% of rows with the
+   conferred designation. **Yale prefix-doubling 70%→0** (#864). **Rice verbatim-across-levels 43%→0**
+   (#876). **Columbia rollup 25%→0** (#866/#867). **UW-Madison + Northwestern shared-LEADING-body → 0**
+   (#877/#878). Columbia · Harvard · Penn · Duke · Yale now measure clean on possessive/rollup/prefix/
+   verbatim/leading-body. The repair loop is clearing real tiers, not shipping single-dimension stub-swaps.
+2. **CRITICAL REGRESSION — Northwestern #878 (a "per-credential descriptions" repair) shipped
+   CROSS-INSTITUTION CONTAMINATION live.** 4 Music/Dance rows carry "Peabody Conservatory … on Chicago's
+   **Mount Vernon** campus" (Peabody + Mount Vernon = **Johns Hopkins**, not Northwestern's Bienen School)
+   and Materials Sciences carries "**Lawrence** Northwestern facilities" (Lawrence = Berkeley/Livermore
+   relabeled). Boston U carries **1** such row ("**Whiting**'s MS in Data Science" — Whiting = JHU). This
+   is miss #8 cross-institution-copy / re-labeled-peer-landmark / geography-lie — a COMPLIANCE GAP +
+   enforcement gap (FLAG #2), NOT a new rule.
+3. **NEW GAP-CLASS (drives the 1 rule change): credential-FRAME-prepend relocates a still-shared field
+   body into the description TAIL.** The #876/#877/#878 + Purdue/Florida "per-credential descriptions"
+   passes open each row with a credential-keyed frame generated from `(degree_type, field)` ("{Univ} offers
+   the undergraduate major in {field}.", "Master's students in {field} complete graduate seminars, research
+   methods, and a thesis project —", "Doctoral study in {field} at {Univ} centers on dissertation research
+   in", a bare "Graduate study."/"Graduate certificate." tag, or a generic "{Field} is the study of …"
+   definition) and then append ONE field body STILL identical across the field's BA/MS/PhD. Because the
+   frames differ by credential, the leading-PREFIX shared-body count (the run-38 / suffix-diversifier
+   detector) reads 0 and the catalog looks fixed — while a student still reads the SAME field paragraph on
+   every credential level (gold MIT 0% even after frame-strip). After frame-strip: **Purdue 51/51 · Rice
+   14/14 · Florida 59/62 · Wisconsin 57/62 · Northwestern 37/42 · Stanford 28/43 · Michigan 16/20 · BU
+   11/44** multi-credential fields share an ≥80-char body. This is the run-30/run-38 mechanism wearing a
+   credential-FRAME costume — the exact INVERSE of run 30's suffix-diversifier (shared body now in front of
+   a generic tag becomes shared body BEHIND a generic frame). The broken splice the frame leaves ("…centers
+   on dissertation research in {field} spans …", "{College} foundations in … with …") is the corroborating
+   tell. Florida #882 adds the generic-encyclopedia-field-DEFINITION variant + dept/college mismatches.
+4. **Substring heuristics OVER-count — corrected (run-62 caveat re-confirmed).** "BU rollup 8% (~33 rows)"
+   from run 64 = joint-degree SLASHES ("JD / LL.M. in Finance", "MD / PhD in Biochemistry") — real dual
+   degrees, NOT CIP rollups. The peer-signature scan over-counts on OWN units (Cornell CALS/Weill, Penn
+   Wharton/Perelman, JHU Peabody/Whiting, NYU Tandon, Berkeley Lawrence-Berkeley); the real contamination
+   is only where a peer's mark lands on a DIFFERENT institution (finding 2). CMU dept-echo (23) = real
+   "Physics"/"Chemistry" departments.
+5. **Residual documented classes (no new rule):** a likely-fabricated INTERNAL owning unit (Cornell "David
+   A. Duffield College of Engineering" on 31 rows — Cornell's college is "College of Engineering"; Duffield
+   is a building donor — miss #8 exact-name org-chart, persists from run 64); one literal stub name (BU
+   "minor"); residual ~1% aggregate rollup (UIUC/Columbia). Checklist GREEN on the 29 mature catalogs (≥4
+   photos + live feed) EXCEPT Florida (#882, posts=0 dead feed — LiveWhale RSS not yet producing). Reviews
+   richly present on coverable flagship rows (Cornell AEM, Penn Wharton = YES). The ~10 five-program seeds
+   remain half-built (5 with <4 photos, dead feeds); 259 bare stubs (~33 zero-photo). Dartmouth #884
+   mid-deploy. `cip_code` is `None` on the public API for EVERY program (serializer gap, FLAG #3).
+   `program_preferences` backfill IS called in the recent migrations (coverage maintained).
+
+**Diagnosis:** finding 3 is a genuine NEW rulebook gap. The "default-flipped" test: miss #8 already forbids
+per-field stamping and prescribes a detector — but the detector it prescribes (common LEADING prefix across
+a field's credential siblings, suffix-diversifier sub-bullet) is DEFEATED by a prepended credential frame,
+which pushes the still-shared body into the tail so the prefix count reads a false 0. The #877/#878 passes
+are direct live proof: they took the run-64 shared-LEADING-body to 0 (read "fixed") while the body is still
+stamped across credential siblings, just relocated. So this is a TIGHTENING of the miss-#8 detector with
+NEW evidence (strip the frame + measure shared body anywhere, LCS not only the leading prefix), not a
+duplicate. Findings 1/2/4/5 are wins / a compliance-gap regression / heuristic corrections / documented
+classes → backlog + FLAGS. No display bug. No finding argued for loosening an invariant.
+
+**Rulebook changes: 1 of ≤3.** Miss #8 gains one sub-bullet (nested under the suffix-diversifier
+sub-bullet, mirroring the existing prefix-strip sub-sub-bullet): a per-credential FRAME prepended onto a
+shared field body relocates the run-38 stamp into the description TAIL, where the leading-PREFIX count
+reads 0; the shared-body count must (a) strip a leading credential-frame / degree-classification /
+field-definition sentence FIRST, then (b) measure the shared body across a field's credential siblings
+ANYWHERE (longest common substring, ≥80 chars AND ≥50% of the shortest), and a generic field DEFINITION is
+itself a gold-contrast stub. Threaded the same frame-strip requirement into the miss-#9 pre-ship checklist
+and the §8.5 enforced-gate metric list (one logical change, mirrored where every detection rule is
+mirrored). The rule text is fully general; the live Purdue/Rice/Florida/Wisconsin/Northwestern evidence is
+cited as the class density (88–100% of multi-credential fields), no school named in the rule. Post-edit
+re-read: misses 1–9 still sequentially numbered; the addition is a sub-bullet within miss #8; no
+contradiction; all invariants intact (a tightening — loosens nothing). File 1319→1359 lines.
+
+**Standing concern (flagged for human review, carried):** the dominant residual is enricher BEHAVIOR +
+ENFORCEMENT — the de-fab passes keep finishing ONE dimension and shipping (possessive→conferred this
+interval) while manufacturing the NEXT evasion (frame+tail-share) and, worse, RE-INTRODUCING contamination
+(Northwestern #878, like Cornell #856 in run 63). The leverage is (a) the enricher clearing the WHOLE class
+per catalog AND verifying its own output for peer/landmark/geography truth, and (b) the missing gate
+enforcement (FLAG #2): `anti_stub.analyze` has no peer-contamination positive allowlist, no
+credential-frame-strip in its shared-body metric, and no exact-name org-chart allowlist — so Northwestern
+#878, the frame+tail-share passes, and the Cornell Duffield unit all cleared green CI. Escalated in the
+FLAGS, not converted to duplicate rules.
+
+**Backlog delta:** rewritten worst-first as run 65. CRITICAL tier now holds Northwestern (contamination).
+The entire run-64 HIGH possessive/prefix/verbatim/rollup tier moved to CLEARED (with live-verified zeros).
+NEW HIGH band is the credential-frame tail-share class ranked by density (Purdue · Rice · Florida ·
+Wisconsin · Stanford · Michigan · BU · Cornell). Florida added (newly enriched, structure-incomplete +
+dead feed). Dartmouth added as MID-DEPLOY verify. Seed/stub MEDIUM bands carried. FLAGS: dual-head
+auto-merge race (re-escalated with this interval's three merge migrations), anti-stub gate gaps (now with
+Northwestern #878 + Cornell Duffield + the frame+tail-share passes as live proof), cip_code serializer gap.
+
+**Invariants:** all intact; SKILL.md edit is a miss-#8 detector tightening (adds a frame-strip shared-body
+sub-bullet; loosens nothing). Health check: see below.
+
+---
+
 ## 2026-06-19 — Run 64 (FULL-FLEET sweep of all 300 live · enricher CLEARED 3 tiers + the run-63 Cornell regression — Cornell peer-copy, BU field-echo, Penn descriptions · 1 rule change — the possessive award-level NAME form is a realness defect on REAL fields, not only rollups)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`.**
