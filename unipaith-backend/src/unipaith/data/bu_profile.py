@@ -107,6 +107,7 @@ from unipaith.data.profile_catalog_utils import (
 )
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
+from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
 
 INSTITUTION_NAME = "Boston University"
 ENRICHED_AT = "2026-06-20"
@@ -1835,7 +1836,6 @@ if _shared_desc:
 _minor_stubs = [p["slug"] for p in PROGRAMS if (p.get("program_name") or "").lower() == "minor"]
 if _minor_stubs:
     _catalog_errors.append(f"literal 'minor' stub program names: {_minor_stubs}")
-from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
 
 _anti_stub = _anti_stub_analyze(PROGRAMS)
 if not _anti_stub.is_clean:
