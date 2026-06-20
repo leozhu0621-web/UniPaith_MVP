@@ -735,6 +735,15 @@ class Settings(BaseSettings):
     # Notifications
     notification_retention_days: int = 90
 
+    # --- Airtable sync (Prompt Library + Session Templates) ---
+    # Set AIRTABLE_API_KEY + AIRTABLE_BASE_ID to activate. When empty the sync
+    # endpoint returns {"skipped": "airtable not configured"} and writes nothing.
+    airtable_api_key: str = ""
+    airtable_base_id: str = ""
+    airtable_prompts_table: str = "Prompts"
+    airtable_templates_table: str = "Templates"
+    airtable_steps_table: str = "Template Steps"
+
     # --- Billing / monetization (Spec 07 §4, 21 §2.7/§3.6) ---
     # Student subscription: $15/mo after a 7-day full-access trial
     # (card-on-file auto-convert), + optional $5/mo ad-free upgrade.
