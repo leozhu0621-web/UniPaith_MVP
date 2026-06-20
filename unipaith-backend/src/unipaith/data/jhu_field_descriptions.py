@@ -34,7 +34,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Near Eastern and Mediterranean archaeology at Krieger includes field schools and "
         "museum collections tied to the Archaeological Museum."
     ),
-    "Area Studies": (
+    "Latin American, Caribbean, and Latinx Studies": (
         "Latin American, Caribbean, and Latinx studies at Krieger integrate language "
         "immersion with policy and diaspora scholarship."
     ),

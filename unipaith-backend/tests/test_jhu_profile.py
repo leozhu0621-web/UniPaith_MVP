@@ -162,3 +162,16 @@ def test_catalog_has_no_padding_stubs():
         if (prog.get("description") or "").startswith(prog.get("program_name", ""))
     )
     assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
+
+
+def test_catalog_is_anti_stub_clean():
+    """Per-credential bodies — gold MIT = 0% frame-stripped shared body (REPAIR HIGH #5)."""
+    from unipaith.profile_standard.anti_stub import analyze, frame_stripped_shared_body
+
+    report = analyze(j.PROGRAMS)
+    assert report.is_clean, f"anti-stub not clean: {report.summary()}"
+    shared = frame_stripped_shared_body(j.PROGRAMS)
+    assert not shared, (
+        f"credential siblings share a frame-stripped body on "
+        f"{len(shared)} field(s): {shared[:8]}"
+    )
