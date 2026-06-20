@@ -10,7 +10,7 @@ import {
 import { getUnseenCount } from '../../api/connect'
 import { getThreads } from '../../api/inbox'
 import { getConnectSeenAt } from '../../utils/connectSeen'
-import { MY_SPACE_ROUTES } from '../../pages/student/myspace/MySpaceShell'
+import { isMySpacePath } from '../../pages/student/myspace/routes'
 import Avatar from '../ui/Avatar'
 import Dropdown from '../ui/Dropdown'
 import NotificationBell from '../notifications/NotificationBell'
@@ -35,9 +35,6 @@ const NAV_ITEMS = [
   { to: '/s/messages', icon: MessageSquare, label: 'Messages', end: false },
   { to: '/s/space', icon: Backpack, label: 'My Space', end: false },
 ]
-
-const isMySpacePath = (pathname: string) =>
-  MY_SPACE_ROUTES.some(p => pathname === p || pathname.startsWith(`${p}/`))
 
 export default function StudentLayout() {
   const { user, logout } = useAuthStore()

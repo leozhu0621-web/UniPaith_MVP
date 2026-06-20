@@ -19,7 +19,6 @@ import { getThreads } from '../../../api/inbox'
 import { listClarifications } from '../../../api/intake'
 import { getProfile, getOnboarding } from '../../../api/students'
 import { useAuthStore } from '../../../stores/auth-store'
-import Coachmark from '../../../components/ui/Coachmark'
 import { buildUpNext } from './home/upNext'
 import TodaysFocus from './home/TodaysFocus'
 import MomentumBand from './home/MomentumBand'
@@ -27,7 +26,7 @@ import StrategySnapshot from './home/StrategySnapshot'
 import TopMatchesPeek from './home/TopMatchesPeek'
 import ScholarshipsPeek from './home/ScholarshipsPeek'
 import { freshWinIds, markCelebrated } from './home/celebrate'
-import type { Application, WorkshopFeedbackRun, OnboardingStatus } from '../../../types'
+import type { Application, InboxThreadSummary, OnboardingStatus, RecommendationRequest, SavedProgram, WorkshopFeedbackRun } from '../../../types'
 
 // My Space · Home — mission control (Spec 2026-06-10 §4, redesigned 2026-06-14).
 // Focus → momentum → density: a Today's-focus hero, a momentum band (journey
@@ -35,6 +34,7 @@ import type { Application, WorkshopFeedbackRun, OnboardingStatus } from '../../.
 // client-side composition of endpoints that already exist; no aggregate backend.
 
 const STALE = 60_000
+type MySpaceThreadSummary = InboxThreadSummary & { unread_count?: number }
 
 function daysUntil(iso: string): number {
   return Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000)
@@ -62,11 +62,11 @@ export default function MySpaceHomePage() {
   const clarifications = useQuery({ queryKey: ['intake-clarifications'], queryFn: listClarifications, staleTime: STALE })
 
   const appList: Application[] = Array.isArray(apps.data) ? apps.data : []
-  const savedList: any[] = Array.isArray(saved.data) ? saved.data : []
+  const savedList: SavedProgram[] = Array.isArray(saved.data) ? saved.data : []
   const calItems: CalendarItem[] = Array.isArray(calendar.data) ? calendar.data : []
-  const recList: any[] = Array.isArray(recs.data) ? recs.data : []
+  const recList: RecommendationRequest[] = Array.isArray(recs.data) ? recs.data : []
   const runList: WorkshopFeedbackRun[] = (Array.isArray(runs.data) ? runs.data : []).slice().sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
-  const threadList: any[] = Array.isArray(threads.data) ? threads.data : []
+  const threadList: MySpaceThreadSummary[] = Array.isArray(threads.data) ? threads.data : []
   const pendingClarifications = clarifications.data?.clarifications?.length ?? 0
   const unreadThreads = threadList.filter(t => t.unread || (t.unread_count ?? 0) > 0).length
 
@@ -104,14 +104,7 @@ export default function MySpaceHomePage() {
 
   return (
     <PageContainer>
-      <Coachmark
-        id="myspace-home"
-        title="Your new home base"
-        body="Everything personal lives here — applications, prep, calendar, messages, saved programs, and your profile. The rail on the left follows your journey, top to bottom."
-        placement="bottom"
-      >
-        <PageHeader eyebrow="My Space" title={`${greeting}${firstName ? `, ${firstName}` : ''}`} sub="Everything about your applications, in one place" />
-      </Coachmark>
+      <PageHeader eyebrow="My Space" title={`${greeting}${firstName ? `, ${firstName}` : ''}`} sub="Everything about your applications, in one place" />
 
       {anyLoading ? (
         <div className="mt-4 space-y-3">

@@ -44,7 +44,7 @@ export default function FeedbackWidget() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2.5 text-sm font-medium text-secondary-foreground elev-raised hover:brightness-95 transition-all"
+        className="fixed bottom-[calc(72px+env(safe-area-inset-bottom))] right-4 z-40 inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-2 text-xs font-medium text-secondary-foreground elev-raised transition-all hover:brightness-95 sm:px-4 sm:py-2.5 sm:text-sm lg:bottom-5 lg:right-5"
         aria-label="Send feedback"
       >
         <MessageSquarePlus size={16} /> Feedback

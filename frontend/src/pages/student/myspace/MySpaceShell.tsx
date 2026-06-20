@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   Backpack, Bookmark, PenLine, FolderKanban, Calendar, User, Briefcase,
   SlidersHorizontal, ChevronRight, ChevronDown, Upload,
 } from 'lucide-react'
 import { listMyApplications } from '../../../api/applications'
-import Coachmark from '../../../components/ui/Coachmark'
 
 // My Space shell (Spec 2026-06-10 §3; rail tree 2026-06-15) — one personal
 // surface. The desktop rail is an EXPANDABLE TREE: a single Overview link plus
@@ -81,10 +80,6 @@ const WORKSPACE: Item = {
 
 const ITEMS: Item[] = [OVERVIEW, IMPORT, PROFILE, PLANNING, SAVED, WORKSPACE]
 
-// Flat list of room landing routes — drives the top-nav My Space active state.
-// Messages is intentionally absent (it is its own nav tab now).
-export const MY_SPACE_ROUTES = ['/s/space', '/s/profile', '/s/saved', '/s/prep', '/s/applications', '/s/calendar']
-
 // Mobile pill row — flat top-level rooms (no nesting).
 const MOBILE_PILLS: { label: string; to: string; icon: typeof Backpack; end?: boolean }[] = [
   { label: 'Overview', to: '/s/space', icon: Backpack, end: true },
@@ -116,7 +111,6 @@ function subActive(to: string, pathname: string, search: string): boolean {
 
 export default function MySpaceShell() {
   const location = useLocation()
-  const navigate = useNavigate()
   const { pathname, search } = location
 
   // Application count badge on the Workspace group (cache shared with the home
@@ -154,7 +148,6 @@ export default function MySpaceShell() {
       {/* Desktop rail (lg+) — expandable tree. */}
       <aside className="hidden lg:block w-48 flex-shrink-0 border-r border-border" aria-label="My Space">
         <div className="sticky top-0">
-        <Coachmark id="myspace-rail-tree" title="Everything, one click away" body="Overview pulls it all together. Profile, Saved, and Workspace each open to reveal what's inside." placement="right" minViewport="lg">
         <nav className="max-h-[calc(100dvh-4rem)] overflow-y-auto px-3 py-4">
           {ITEMS.map(item => {
             if (item.kind === 'link') {
@@ -184,29 +177,31 @@ export default function MySpaceShell() {
                 : null
             return (
               <div key={item.label} className="mt-1">
-                {/* Group header: navigates to the landing view AND opens the group. */}
-                <button
-                  type="button"
-                  aria-expanded={isOpen}
-                  onClick={() => { setOpen(prev => new Set(prev).add(item.label)); navigate(item.to) }}
-                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
+                <div
+                  className={`flex items-center rounded-md text-sm transition-colors ${
                     owns ? 'font-medium text-foreground' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                   }`}
                 >
-                  <item.icon size={15} strokeWidth={1.75} />
-                  {item.label}
-                  {badge}
-                  <span
-                    role="button"
-                    tabIndex={0}
+                  <NavLink
+                    to={item.to}
+                    onClick={() => { setOpen(prev => new Set(prev).add(item.label)) }}
+                    className="flex min-w-0 flex-1 items-center gap-2 px-2 py-1.5"
+                    aria-current={owns ? 'page' : undefined}
+                  >
+                    <item.icon size={15} strokeWidth={1.75} />
+                    <span className="truncate">{item.label}</span>
+                    {badge}
+                  </NavLink>
+                  <button
+                    type="button"
+                    aria-expanded={isOpen}
                     aria-label={isOpen ? `Collapse ${item.label}` : `Expand ${item.label}`}
-                    onClick={e => { e.stopPropagation(); toggle(item.label) }}
-                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggle(item.label) } }}
-                    className="ml-auto -mr-1 inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                    onClick={() => toggle(item.label)}
+                    className="mr-1 inline-flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-background hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   >
                     {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  </span>
-                </button>
+                  </button>
+                </div>
                 {isOpen && (
                   <div className="mt-0.5 ml-[18px] border-l border-border pl-2">
                     {item.children.map(sub => {
@@ -229,7 +224,6 @@ export default function MySpaceShell() {
             )
           })}
         </nav>
-        </Coachmark>
         </div>
       </aside>
 
