@@ -198,3 +198,44 @@ def test_no_name_prefixed_descriptions():
         if (spec.get("description") or "").startswith(spec.get("program_name", ""))
     )
     assert name_prefix == 0, f"{name_prefix} programs still prefix description with program_name"
+
+
+def test_no_credential_tail_shared_body():
+    """After frame-strip, multi-credential fields must not share an ≥80-char body (run-65 gate)."""
+    from unipaith.profile_standard.anti_stub import field_of
+
+    def _lcs_len(a: str, b: str) -> int:
+        best = 0
+        for i in range(len(a)):
+            for j in range(len(b)):
+                m = 0
+                while i + m < len(a) and j + m < len(b) and a[i + m] == b[j + m]:
+                    m += 1
+                best = max(best, m)
+        return best
+
+    by_field: dict[str, list[str]] = {}
+    for spec in p.PROGRAMS:
+        field = field_of(spec["program_name"])
+        by_field.setdefault(field, []).append(spec["description"] or "")
+
+    offenders = []
+    for field, bodies in by_field.items():
+        if len(bodies) < 2:
+            continue
+        for i in range(len(bodies)):
+            for j in range(i + 1, len(bodies)):
+                if _lcs_len(bodies[i], bodies[j]) >= 80:
+                    offenders.append(field)
+                    break
+            if field in offenders:
+                break
+    assert not offenders, f"credential tail-share on: {offenders[:8]}"
+
+
+def test_catalog_is_anti_stub_clean():
+    """Per-credential description leads — gold MIT = 0% shared-leading-body."""
+    from unipaith.profile_standard.anti_stub import analyze
+
+    report = analyze(p.PROGRAMS)
+    assert report.is_clean, f"anti-stub not clean: {report.summary()}"
