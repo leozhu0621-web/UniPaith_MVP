@@ -63,7 +63,7 @@ CERTIFIED_CLEAN = [
     #             rows take a distinct doctoral/master's clause (GRADUATE_FIELD_DESCRIPTIONS),
     #             so credential siblings no longer share a leading body (yaledefab1)
     "harvard",    # CIP rollup de-fab; suffix-diversifier removed; per-credential bodies
-    #             (harvarddefab1 — HIGH #4)
+    #             (harvarddefab1 — HIGH #4; harvardpercred1 clears frame-stripped shared body)
     "columbia",   # CIP rollup + possessive de-fab; real owning schools; per-credential
     #             bodies (columbiadefab1 — HIGH #1)
     "rice",       # conferred UG names; real depts; per-credential description leads
@@ -148,7 +148,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
     assert not machine_artifacts(clean), "must not flag a clean field-specific description"
 
 
-@pytest.mark.parametrize("name", ["mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw"])
+@pytest.mark.parametrize("name", ["mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard"])
 def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
     """A field's credential siblings (BA / MS / PhD) must not share a body once a leading
     credential frame is stripped — the run-65 evasion the leading-prefix shared-body count
