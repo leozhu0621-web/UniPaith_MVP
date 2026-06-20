@@ -14,7 +14,7 @@ No schema (DDL) changes. Idempotent; no-op when Northwestern University is absen
 no longer in the canonical catalog are unpublished (if referenced) or deleted.
 
 Revision ID: nwrebuild1
-Revises: emoryprof1
+Revises: ndprof1
 Create Date: 2026-06-20
 """
 
@@ -29,7 +29,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "nwrebuild1"
-down_revision = "emoryprof1"
+down_revision = "ndprof1"
 branch_labels = None
 depends_on = None
 
