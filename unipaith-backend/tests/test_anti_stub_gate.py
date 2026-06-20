@@ -25,7 +25,7 @@ from unipaith.profile_standard.anti_stub import (
 
 # Catalogs verified free of raw scraped-catalogue debris (course-code / requirements /
 # contact-address fragments) in description_text — REPAIR_BACKLOG CRITICAL #1 (USC, run 66).
-# Grow as scrape-built catalogs are researched per-program (UIUC/NYU/UT-Austin still carry it).
+# Grow as scrape-built catalogs are researched per-program (UT-Austin still carries it).
 SCRAPE_DEBRIS_CLEAN = ["mit", "usc", "uiuc", "nyu"]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
@@ -149,7 +149,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
 
 
 _FRAME_STRIPPED_CLEAN = [
-    "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard",
+    "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
 ]
 
 
