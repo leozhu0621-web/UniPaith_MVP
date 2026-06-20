@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Search, Sparkles, X } from 'lucide-react'
@@ -12,6 +12,7 @@ import { showToast } from '../../../../stores/toast-store'
 import type { ConstraintChip, SearchFilters, SortOption } from '../../../../types/search'
 import type { ProgramSummary } from '../../../../types'
 import ProgramCard from '../cards/ProgramCard'
+import Pagination from '../../../../components/ui/Pagination'
 import ConstraintChips from './ConstraintChips'
 import FiltersPanel from './FiltersPanel'
 import SaveSearchButton from './SaveSearchButton'
@@ -100,16 +101,26 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft])
 
+  // Pagination — server-side (the API takes page/page_size). Reset to page 1
+  // whenever the query, chips, filters, or sort change.
+  const [page, setPage] = useState(1)
+  const resultsTopRef = useRef<HTMLDivElement>(null)
+  useEffect(() => { setPage(1) }, [chipsKey, filtersKey, sort, urlQuery])
+  const goToPage = (p: number) => {
+    setPage(p)
+    resultsTopRef.current?.scrollIntoView({ block: 'start' })
+  }
+
   // ── Search execution ──
   const searchQuery = useQuery({
-    queryKey: ['discovery-search', chipsKey, filtersKey, sort],
+    queryKey: ['discovery-search', chipsKey, filtersKey, sort, page],
     queryFn: () =>
       searchProgramsTyped({
         query: urlQuery || null,
         chips,
         filters,
         sort,
-        page: 1,
+        page,
         page_size: PAGE_SIZE,
       }),
     enabled: active,
@@ -256,7 +267,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
 
       {/* Toolbar — Filters (always available) · results count + Sort (when active). Spec §2/§5/§6.
           Centered until a search is active, then split (filters left · sort right). */}
-      <div className={`flex items-center gap-3 flex-wrap ${active ? 'justify-between' : 'justify-center'}`}>
+      <div ref={resultsTopRef} className={`scroll-mt-4 flex items-center gap-3 flex-wrap ${active ? 'justify-between' : 'justify-center'}`}>
         <div className="flex items-center gap-3">
           <FiltersPanel filters={filters} onApply={setFilters} />
           {active && (
@@ -310,12 +321,8 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
             </div>
           ) : (
             <>
-              {total > 100 && (
-                <p className="text-xs text-muted-foreground">
-                  Showing the top matches.
-                </p>
-              )}
-              <div className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+              {/* key on the page so the stagger entrance replays as each page flips in */}
+              <div key={page} className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
                 {results.map(p => (
                   <ProgramCard
                     key={p.id}
@@ -341,6 +348,12 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
                   />
                 ))}
               </div>
+              <Pagination
+                page={page}
+                pageCount={Math.max(1, Math.ceil(total / PAGE_SIZE))}
+                onChange={goToPage}
+                className="mt-6"
+              />
             </>
           )}
         </>
