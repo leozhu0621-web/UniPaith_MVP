@@ -40,7 +40,6 @@ import {
 import type { FolderNode, ChatSession, ChatTreeResponse } from "../../../api/chatSessions";
 import {
   getChatTree,
-  createSession,
   updateSession,
   deleteSession,
   createFolder,
@@ -382,11 +381,6 @@ function FolderBlock({
         role="button"
         aria-expanded={open}
       >
-        {/* grip handle (fades in on hover for drag-reorder of folder within group) */}
-        <span className="absolute left-1 top-0 bottom-0 flex items-center opacity-0 group-hover:opacity-40 transition-opacity text-muted-foreground">
-          <GripVertical size={13} />
-        </span>
-
         {/* expand chevron */}
         <ChevronRight
           size={12}
@@ -490,11 +484,6 @@ export default function SessionBrowser({
   // ── mutations ────────────────────────────────────────────────────────────
   const invalidate = () => qc.invalidateQueries({ queryKey: CHAT_TREE_KEY });
 
-  const createSessionMut = useMutation({
-    mutationFn: createSession,
-    onSuccess: (s) => { invalidate(); onNewSession?.(s.id); },
-  });
-
   const updateSessionMut = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: Parameters<typeof updateSession>[1] }) =>
       updateSession(id, patch),
@@ -583,14 +572,6 @@ export default function SessionBrowser({
   );
 
   // ── actions ───────────────────────────────────────────────────────────────
-  function handleNewSession(topicKey?: string | null) {
-    createSessionMut.mutate({
-      title: "New session",
-      topic_key: topicKey ?? undefined,
-      origin_kind: "manual",
-    });
-  }
-
   function handleNewFolder() {
     const name = newFolderName.trim();
     if (!name) return;
@@ -719,7 +700,7 @@ export default function SessionBrowser({
                   updateSessionMut.mutate({ id, patch: { pinned } })
                 }
                 onDeleteSession={(id) => deleteSessionMut.mutate(id)}
-                onNewSessionHere={(_fid, topicKey) => handleNewSession(topicKey)}
+                onNewSessionHere={() => onNewSession?.()}
                 onRenameFolder={(id, name) =>
                   updateFolderMut.mutate({ id, patch: { name } })
                 }
@@ -757,7 +738,7 @@ export default function SessionBrowser({
                       updateSessionMut.mutate({ id, patch: { pinned } })
                     }
                     onDeleteSession={(id) => deleteSessionMut.mutate(id)}
-                    onNewSessionHere={(_fid, topicKey) => handleNewSession(topicKey)}
+                    onNewSessionHere={() => onNewSession?.()}
                     onRenameFolder={() => {}} // preset: no rename
                     onDeleteFolder={() => {}} // preset: no delete
                     onReorder={onReorder}
