@@ -4,7 +4,7 @@ import { formatCurrency } from '../../../../utils/format'
 import type { ProgramSummary, MatchResult } from '../../../../types'
 import {
   BellPlus, BellRing, Bookmark, BookmarkCheck, CalendarDays, DollarSign, GraduationCap,
-  TrendingUp, Percent, ArrowRightLeft,
+  TrendingUp, Percent, ArrowRightLeft, Briefcase,
   Clock, Building, Calendar, ArrowRight, Sparkles, Users,
 } from 'lucide-react'
 import BandBadge from '../../../../components/ui/BandBadge'
@@ -64,7 +64,7 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
   const deadline = deadlineInfo(program.application_deadline)
 
   const acceptPct = program.acceptance_rate != null ? Math.round(program.acceptance_rate * 100) : null
-  const gradPct = program.employment_rate != null ? Math.round(program.employment_rate * 100) : null
+  const employedPct = program.employment_rate != null ? Math.round(program.employment_rate * 100) : null
 
   return (
     <div className="h-full bg-card rounded-xl border border-border elev-subtle hover-lift hover:elev-raised overflow-hidden flex flex-col group/card">
@@ -181,7 +181,7 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
           tiles.push({ label: 'Tuition / yr', value: program.tuition === 0 ? 'Funded' : formatCurrency(program.tuition), icon: DollarSign })
         if (program.median_salary != null)
           tiles.push({ label: 'Avg salary', value: formatCurrency(program.median_salary), icon: TrendingUp })
-        if (gradPct != null) tiles.push({ label: 'Grad rate', value: `${gradPct}%`, icon: GraduationCap })
+        if (employedPct != null) tiles.push({ label: 'Employed', value: `${employedPct}%`, icon: Briefcase })
         if (!tiles.length) return null
         return (
           <div className="px-4 pt-3 grid grid-cols-2 gap-1.5">
