@@ -7,45 +7,12 @@ import {
   TrendingUp, Percent, ArrowRightLeft,
   Clock, Building, Calendar, ArrowRight, Sparkles, Users,
 } from 'lucide-react'
-import { differenceInDays } from 'date-fns'
 import BandBadge from '../../../../components/ui/BandBadge'
 import type { Band } from '../../../../components/ui/BandBadge'
 import DualRing from '../../match/DualRing'
 import { ringFromMatch } from '../../match/ringFill'
 import { cardLinkClick, CARD_LINK_OVERLAY } from '../shared/cardLink'
-
-function degreeAbbrev(degree: string): string {
-  const map: Record<string, string> = {
-    bachelors: 'BS', masters: 'MS', phd: 'PhD',
-    certificate: 'CERT', doctorate: 'DOC', associate: 'AA',
-  }
-  return map[degree] || degree.slice(0, 3).toUpperCase()
-}
-
-function formatDuration(months?: number | null): string | null {
-  if (!months) return null
-  if (months < 12) return `${months} mo`
-  const years = months / 12
-  return Number.isInteger(years) ? `${years} yr${years > 1 ? 's' : ''}` : `${years.toFixed(1)} yrs`
-}
-
-function formatFormat(f?: string | null): string | null {
-  if (!f) return null
-  const map: Record<string, string> = {
-    on_campus: 'On campus', online: 'Online',
-    hybrid: 'Hybrid', in_person: 'In-person',
-  }
-  return map[f] || f.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-}
-
-function deadlineInfo(deadline?: string | null) {
-  if (!deadline) return null
-  const days = differenceInDays(new Date(deadline), new Date())
-  const date = new Date(deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  if (days < 0) return { text: date, urgent: false, closed: true }
-  if (days <= 30) return { text: `${days}d left`, urgent: true, closed: false, date }
-  return { text: date, urgent: false, closed: false }
-}
+import { degreeAbbrev, formatDuration, formatFormat, deadlineInfo } from './programFormat'
 
 interface Props {
   program: ProgramSummary
