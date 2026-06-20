@@ -44,6 +44,36 @@ async def test_templates_shape(student_client, db_session, mock_student_user):
 
 
 @pytest.mark.asyncio
+async def test_templates_prompt_steps_carry_descriptor(
+    student_client, db_session, mock_student_user
+):
+    """Prompt steps expose ask_kind + question so the runner can render widgets."""
+    await ensure_profile(db_session, mock_student_user)
+    r = await student_client.get(f"{BASE}/templates")
+    assert r.status_code == 200, r.text
+    found_prompt = False
+    for tmpl in r.json():
+        for step in tmpl["steps"]:
+            if step["step_type"] == "prompt":
+                found_prompt = True
+                pkey = step.get("prompt_key")
+                tkey = tmpl["key"]
+                assert step.get("ask_kind") is not None, (
+                    f"prompt step {pkey!r} in {tkey!r} missing ask_kind"
+                )
+                assert step.get("question") is not None, (
+                    f"prompt step {pkey!r} in {tkey!r} missing question"
+                )
+            elif step["step_type"] == "action":
+                akey = step.get("action_key")
+                tkey = tmpl["key"]
+                assert step.get("action_label") is not None, (
+                    f"action step {akey!r} in {tkey!r} missing action_label"
+                )
+    assert found_prompt, "No prompt steps found in any template"
+
+
+@pytest.mark.asyncio
 async def test_templates_idempotent(student_client, db_session, mock_student_user):
     """Calling GET /templates twice does not duplicate rows."""
     await ensure_profile(db_session, mock_student_user)

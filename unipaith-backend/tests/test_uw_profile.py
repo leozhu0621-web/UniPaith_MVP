@@ -65,7 +65,7 @@ def _program_snapshot(spec: dict) -> dict:
         "description_text": spec["description"],
         "website_url": u._website_for(spec),
         "department": spec.get("department"),
-        "tracks": None,
+        "tracks": u._TRACKS_BY_SLUG.get(slug),
         "application_requirements": u._requirements_for(spec),
         "cost_data": cost,
         "outcomes_data": outcomes,
@@ -79,7 +79,7 @@ def _program_snapshot(spec: dict) -> dict:
 def test_catalog_breadth_and_shape():
     # Full published degree catalog across UW's 16 colleges/schools + Graduate School.
     assert len(u.SCHOOLS) == 16
-    assert len(u.PROGRAMS) >= 350
+    assert len(u.PROGRAMS) >= 355
     assert len(set(u.PROGRAM_SLUGS)) == len(u.PROGRAM_SLUGS)
     # online delivery is set on UW's PCE online degrees
     assert sum(1 for p in u.PROGRAMS if p["delivery_format"] == "online") >= 4
