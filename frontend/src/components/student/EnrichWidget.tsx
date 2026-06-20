@@ -355,7 +355,18 @@ function SignalInput({
 
 // ── EnrichWidget ────────────────────────────────────────────────────────────
 
-export default function EnrichWidget({ section }: { section?: string }) {
+export default function EnrichWidget({
+  section,
+  inline = false,
+}: {
+  section?: string
+  /**
+   * When true, suppress the "Enrich your profile" eyebrow header so the card
+   * embeds cleanly in a context that already provides its own framing (e.g. the
+   * Uni conversation thread). The tier badge and question are still shown.
+   */
+  inline?: boolean
+}) {
   const qc = useQueryClient()
   // limit 1 for a section-scoped per-tab panel; the unscoped home usage keeps 3.
   const limit = section ? 1 : 3
@@ -372,16 +383,25 @@ export default function EnrichWidget({ section }: { section?: string }) {
 
   return (
     <div className="rounded-lg border border-border bg-card p-4">
-      <div className="mb-1 flex items-center justify-between gap-2">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Enrich your profile
-        </span>
-        {item.tier === 'essential' && (
+      {!inline && (
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Enrich your profile
+          </span>
+          {item.tier === 'essential' && (
+            <span className="rounded-full bg-secondary/10 px-2 py-0.5 text-[10px] font-medium text-secondary">
+              needed to match
+            </span>
+          )}
+        </div>
+      )}
+      {inline && item.tier === 'essential' && (
+        <div className="mb-1">
           <span className="rounded-full bg-secondary/10 px-2 py-0.5 text-[10px] font-medium text-secondary">
             needed to match
           </span>
-        )}
-      </div>
+        </div>
+      )}
       <p className="mb-3 text-sm font-medium text-foreground">
         {item.question ? (
           item.question

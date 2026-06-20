@@ -38,6 +38,10 @@ vi.mock('../stores/auth-store', () => ({
     sel({ user: { email: 'leo@unipaith.co', uni_guided: true } }),
 }))
 vi.mock('../stores/toast-store', () => ({ showToast: vi.fn() }))
+vi.mock('../api/enrichment', () => ({
+  getEnrichNext: vi.fn().mockResolvedValue({ items: [], essentials_present: true }),
+  setEnrichValue: vi.fn().mockResolvedValue({}),
+}))
 
 import DiscoverHomePage from '../pages/student/DiscoverHomePage'
 

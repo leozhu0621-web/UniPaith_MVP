@@ -28,12 +28,32 @@ import type {
   DiscoverySessionDetail,
 } from '../../../types'
 import MaterialUpload from '../../../components/student/MaterialUpload'
+import EnrichWidget from '../../../components/student/EnrichWidget'
 import AnswerChoices from './AnswerChoices'
 import FirstLookCard from './FirstLookCard'
 import NoticedCard from './NoticedCard'
 import { attachRefs, noticedItemsFromSignals } from './noticed'
 import ProfileDrawer from './ProfileDrawer'
 import { useJourneyState } from './useJourneyState'
+
+/**
+ * Inline enrich widget — a structured Prompt-Library card that appears in the
+ * Uni thread after the most recent assistant message.  It lets the student fill
+ * the next missing profile signal without leaving the chat. Renders nothing
+ * when the profile is complete (getEnrichNext returns no items) or when Uni is
+ * still streaming (avoids flickering in the middle of a reply).
+ *
+ * Sits in Uni's column (left-aligned, indented past the orb) to read as part
+ * of the assistant's turn, matching the chat-with-widgets.html mockup.
+ */
+function InlineChatEnrichCard() {
+  return (
+    // Indent past the 28px orb + 10px gap so the card aligns with Uni's bubbles.
+    <div className="pl-[38px]">
+      <EnrichWidget inline />
+    </div>
+  )
+}
 
 // Counselor-style ways-in for a stuck student — gentle fallbacks, not the
 // primary interaction (Uni leads the conversation).
@@ -402,7 +422,7 @@ export default function UniConversation({
     if (!canStream) return // reduced-motion / no-stream → static greeting stands
     openerFired.current = true
     void sendOpenerRef.current()
-  }, [prefill, sessionsLoading, resolvedSessionId, detail, isEmpty, streaming, canStream])
+  }, [prefill, sessionsLoading, resolvedSessionId, detail, isEmpty, streaming, turnMut.isPending, canStream])
 
   return (
     <div className="flex flex-col h-full min-h-[520px] max-w-[640px] mx-auto w-full">
@@ -465,6 +485,16 @@ export default function UniConversation({
             )
           })
         )}
+        {/* Inline enrich widget — surfaces the next Prompt-Library prompt as a
+            structured card in the thread. Only shown when the conversation has
+            at least one message, Uni is idle (not streaming), and the profile
+            still has signals to fill (EnrichWidget self-renders null otherwise).
+            Placed before the streaming bubbles so it scrolls out of view
+            naturally as new messages arrive. */}
+        {!isEmpty && !streaming && !turnMut.isPending && (
+          <InlineChatEnrichCard />
+        )}
+
         {/* In-flight streaming turn (Spec 77 §6) — optimistic student + live reply. */}
         {streaming && streamStudent && <UniBubble message={streamStudent} />}
         {streaming && streamText && (
