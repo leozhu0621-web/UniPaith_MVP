@@ -152,6 +152,7 @@ def frame_stripped_shared_body(
     programs: list[dict],
     min_chars: int = 80,
     min_fraction: float = 0.5,
+    abs_chars: int | None = None,
 ) -> list[str]:
     """Fields whose credential siblings share a body once a leading frame is stripped.
 
@@ -162,6 +163,14 @@ def frame_stripped_shared_body(
     body — the run-65 credential-frame + tail-shared field body (miss #8). Gold MIT scores
     0 (every credential level has its own researched body); a non-zero is the
     no-fabrication / per-program-research invariant, not a tunable knob.
+
+    ``abs_chars`` adds the run-67 absolute floor (miss #8 fraction-floor sub-bullet): the
+    ``min_fraction`` guard is itself a loophole — PADDING the per-credential tail dilutes a
+    still-identical 150+-char leading SENTENCE below ``min_fraction`` of the now-long body,
+    so the fraction-only count reads a false 0. When ``abs_chars`` is set, a shared run of
+    >= ``abs_chars`` characters flags the field REGARDLESS of fraction (a full stamped
+    sentence is never a coincidence). Default ``None`` preserves the prior fraction-only
+    behavior so the fleet-wide default gate is unchanged until each catalog is repaired.
     """
     by_field: dict[str, list[str]] = defaultdict(list)
     for p in programs:
@@ -177,7 +186,10 @@ def frame_stripped_shared_body(
                 if not shortest:
                     continue
                 lcs = _longest_common_substring(bodies[i], bodies[j])
-                if lcs >= min_chars and lcs >= min_fraction * shortest:
+                if lcs >= min_chars and (
+                    lcs >= min_fraction * shortest
+                    or (abs_chars is not None and lcs >= abs_chars)
+                ):
                     hit = True
         if hit:
             flagged.append(field)
