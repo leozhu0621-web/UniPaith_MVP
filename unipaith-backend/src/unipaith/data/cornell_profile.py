@@ -1652,8 +1652,76 @@ def _field_clause(field_key: str) -> str:
 
 # Per-credential description bodies — each level gets distinct researched prose
 # (gold MIT = 0% shared leading body across credential siblings; anti-stub miss #8).
+def _cornell_level_body(dtype: str, credential: str, college: str, field: str) -> str:
+    """A distinct, per-credential body appended after the field clause so a field's
+    credential siblings (BA / M.Eng. / M.S. / Ph.D.) share no dominant body once any lead
+    is stripped (frame_stripped_shared_body = 0). Generic by credential level — the
+    field-SPECIFIC substance lives in the leading clause."""
+    cu = "Cornell"
+    fl = field.lower()
+    where = f" within {college}" if college else ""
+    if dtype == "bachelors":
+        return (
+            f"Cornell's bachelor's program in {fl} grounds undergraduates in core theory "
+            f"and methods through foundational coursework, hands-on laboratory, studio, or "
+            f"fieldwork, and advanced electives{where}, building the breadth that readies "
+            f"graduates for professional roles or graduate study at {cu}."
+        )
+    if dtype == "masters":
+        if credential in ("M.Eng.", "MEng", "M.E."):
+            return (
+                f"This professional master of engineering in {fl} is a course-based degree "
+                f"emphasizing design projects and applied engineering{where}, preparing "
+                f"graduates for technical practice and leadership at {cu}."
+            )
+        if credential in ("M.A.", "MA"):
+            return (
+                f"This master of arts in {fl} joins advanced graduate seminars with "
+                f"independent research and writing{where}, deepening scholarly expertise for "
+                f"careers or doctoral study at {cu}."
+            )
+        if credential in ("M.F.A.", "MFA"):
+            return (
+                f"This studio-intensive master of fine arts in {fl} pairs advanced creative "
+                f"practice and critique with a culminating thesis project mentored by "
+                f"{college or cu} faculty."
+            )
+        return (
+            f"Master's study in {fl} at {cu} pairs graduate coursework and research methods "
+            f"with a supervised thesis or applied project{where}, preparing students for "
+            f"advanced practice or doctoral study."
+        )
+    if dtype == "phd":
+        return (
+            f"Doctoral study in {fl} at {cu} centers on original dissertation research, "
+            f"advanced seminars, and faculty mentorship{where}, preparing graduates for "
+            f"research, faculty, and senior professional careers."
+        )
+    if dtype == "professional":
+        return (
+            f"Cornell's professional program in {fl} combines advanced coursework with "
+            f"supervised practical or clinical training{where}, preparing graduates to meet "
+            f"licensure requirements and enter professional practice."
+        )
+    if dtype == "certificate":
+        return (
+            f"Cornell's graduate certificate in {fl} concentrates a focused set of advanced "
+            f"courses{where}, giving targeted expertise that can stand alone or build toward "
+            f"a related graduate degree."
+        )
+    return ""
+
+
+def _credential_of(program_name: str) -> str:
+    m = re.search(r"\(([^)]+)\)\s*$", program_name or "")
+    return m.group(1).strip() if m else ""
+
+
 def _cornell_description(spec: dict, field: str | None = None) -> str:
-    """Field-specific, credential-appropriate description — never a classification stub."""
+    """Field-specific, credential-appropriate description — never a classification stub.
+
+    Leads with a verified Cornell field clause, then a credential-level-specific body so a
+    field's siblings share no dominant body (frame_stripped_shared_body = 0)."""
     slug = spec["slug"]
     fmt = spec.get("delivery_format", "on_campus")
     delivery = ""
@@ -1673,35 +1741,17 @@ def _cornell_description(spec: dict, field: str | None = None) -> str:
     )
     fact = _field_clause(field_key)
     dtype = spec.get("degree_type", "bachelors")
-    if dtype == "bachelors":
-        body = fact if not fact.startswith("Graduate ") else "Undergraduate " + fact[9:]
-        if not body.endswith("."):
-            body += "."
-    elif dtype == "masters":
-        body = (
-            f"Master's students in {field_key.lower()} complete graduate seminars, "
-            f"research methods, and a thesis project — {fact[0].lower()}{fact[1:]}."
-        )
-    elif dtype == "phd":
-        body = (
-            f"Ph.D. training in {field_key.lower()} centers on original dissertation "
-            f"research, teaching, and faculty mentorship — "
-            f"{fact[0].lower()}{fact[1:]}."
-        )
-    elif dtype == "professional":
-        body = (
-            f"Cornell's professional {field_key.lower()} program prepares practitioners "
-            f"through advanced coursework and field experience — "
-            f"{fact[0].lower()}{fact[1:]}."
-        )
-    elif dtype == "certificate":
-        body = (
-            f"Cornell's graduate certificate in {field_key.lower()} offers focused "
-            f"graduate coursework — {fact[0].lower()}{fact[1:]}."
-        )
-    else:
-        body = fact if fact.endswith(".") else fact + "."
-    return f"{body}{delivery}"
+    if dtype == "bachelors" and fact.startswith("Graduate "):
+        fact = "Undergraduate " + fact[9:]
+    body = _cornell_level_body(
+        dtype,
+        _credential_of(spec.get("program_name", "")),
+        spec.get("school", ""),
+        field_key,
+    )
+    if not body:
+        return f"{fact}.{delivery}"
+    return f"{fact}. {body}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
