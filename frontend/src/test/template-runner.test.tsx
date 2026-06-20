@@ -19,6 +19,7 @@ import { MemoryRouter } from "react-router-dom";
 
 vi.mock("../api/chatTemplates", () => ({
   getChatTemplates: vi.fn(),
+  dispatchTemplateAction: vi.fn(),
 }));
 
 vi.mock("../api/enrichment", () => ({
@@ -36,7 +37,7 @@ vi.mock("../components/student/EnrichWidget", () => ({
   ),
 }));
 
-import { getChatTemplates } from "../api/chatTemplates";
+import { getChatTemplates, dispatchTemplateAction } from "../api/chatTemplates";
 import { setEnrichValue } from "../api/enrichment";
 import TemplateRunner from "../pages/student/chat/TemplateRunner";
 
@@ -108,6 +109,14 @@ describe("TemplateRunner", () => {
   beforeEach(() => {
     vi.mocked(getChatTemplates).mockResolvedValue([SAMPLE_TEMPLATE]);
     vi.mocked(setEnrichValue).mockResolvedValue({});
+    // Default: pending artifact (safe for tests that don't care about the specific result)
+    vi.mocked(dispatchTemplateAction).mockResolvedValue({
+      action_key: "generate_goal_stack",
+      kind: "note",
+      title: "Generate goal stack",
+      summary: "This is coming soon — your inputs are saved.",
+      status: "pending",
+    });
   });
 
   it("renders the template title and step count", async () => {
@@ -181,7 +190,7 @@ describe("TemplateRunner", () => {
     renderRunner();
     await advanceThroughPromptSteps();
 
-    // Now on the action step — "generate goal stack" appears in framing + placeholder
+    // Now on the action step — "generate goal stack" appears in framing
     await waitFor(() => {
       expect(screen.getAllByText(/generate goal stack/i).length).toBeGreaterThan(0);
     });
@@ -190,14 +199,72 @@ describe("TemplateRunner", () => {
     expect(screen.queryByText(/carnegie mellon/i)).not.toBeInTheDocument();
   });
 
+  it("shows the action artifact card after the API call resolves", async () => {
+    renderRunner();
+    await advanceThroughPromptSteps();
+
+    // Artifact card resolves after API call — "Continue" button appears
+    await waitFor(
+      () => screen.getByRole("button", { name: /continue/i }),
+      { timeout: 3000 },
+    );
+    expect(vi.mocked(dispatchTemplateAction)).toHaveBeenCalledWith("generate_goal_stack");
+    // The artifact card title should be visible (it appears in the card header)
+    expect(screen.getByText("Generate goal stack")).toBeInTheDocument();
+    // Pending artifact shows "Coming soon" badge (there may be one or more in the DOM)
+    expect(screen.getAllByText(/coming soon/i).length).toBeGreaterThan(0);
+  });
+
+  it("renders a school_list artifact with items when status=ready", async () => {
+    // Override: return a school_list artifact with items
+    vi.mocked(dispatchTemplateAction).mockResolvedValue({
+      action_key: "build_school_list",
+      kind: "school_list",
+      title: "Your starter list",
+      items: [
+        { name: "MIT", program: "Computer Science", fit_label: "Great fit", odds_label: "Reach" },
+        { name: "Stanford", program: "CS", fit_label: "Good fit", odds_label: "Competitive" },
+      ],
+      status: "ready",
+    });
+
+    // Use a template with only a build_school_list action step
+    vi.mocked(getChatTemplates).mockResolvedValue([
+      {
+        ...SAMPLE_TEMPLATE,
+        steps: [
+          {
+            step_order: 0,
+            step_type: "action" as const,
+            action_key: "build_school_list",
+            label: "School list",
+            action_label: "Build school list",
+          },
+        ],
+      },
+    ]);
+
+    renderRunner();
+    // The artifact title appears once the API call resolves
+    await waitFor(
+      () => screen.getByText("Your starter list"),
+      { timeout: 3000 },
+    );
+
+    // Artifact items should appear
+    expect(screen.getByText("MIT")).toBeInTheDocument();
+    expect(screen.getByText("Great fit")).toBeInTheDocument();
+    expect(screen.getByText("Reach")).toBeInTheDocument();
+  });
+
   it("shows the completion card after all steps finish", async () => {
     renderRunner();
     await advanceThroughPromptSteps();
 
-    // Wait for the action step's 2-second timer to fire (real timers)
+    // Wait for the action artifact card (API resolves immediately in tests)
     await waitFor(
       () => screen.getByRole("button", { name: /continue/i }),
-      { timeout: 4000 },
+      { timeout: 3000 },
     );
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
@@ -217,7 +284,7 @@ describe("TemplateRunner", () => {
 
     await waitFor(
       () => screen.getByRole("button", { name: /continue/i }),
-      { timeout: 4000 },
+      { timeout: 3000 },
     );
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
