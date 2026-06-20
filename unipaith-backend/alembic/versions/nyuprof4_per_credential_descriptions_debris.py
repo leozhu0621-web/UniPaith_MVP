@@ -19,7 +19,7 @@ Also derives ``program_preferences`` for every NYU program (skips claimed rows) 
 program -> student match direction fires.
 
 Revision ID: nyuprof4
-Revises: uiucheadmrg1
+Revises: runnermrg1
 Create Date: 2026-06-20
 """
 
@@ -34,7 +34,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "nyuprof4"
-down_revision = "uiucheadmrg1"
+down_revision = "runnermrg1"
 branch_labels = None
 depends_on = None
 
