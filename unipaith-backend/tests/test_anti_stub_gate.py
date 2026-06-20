@@ -150,6 +150,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
 
 _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
+    "ut_austin",
 ]
 
 
