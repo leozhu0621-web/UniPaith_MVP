@@ -264,6 +264,7 @@ class MatchRationale(Base):
         Integer, primary_key=True, default=1, server_default="1"
     )
     rationale_text: Mapped[str] = mapped_column(Text, nullable=False)
+    decision_brief: Mapped[dict | None] = mapped_column(JSONB)
     cited_student_fields: Mapped[dict | None] = mapped_column(JSONB)
     cited_program_fields: Mapped[dict | None] = mapped_column(JSONB)
     generated_at: Mapped[datetime] = mapped_column(

@@ -12,6 +12,7 @@ import { showToast } from '../../stores/toast-store'
 import ProgramCard from './explore/cards/ProgramCard'
 import NewsGrid from '../../components/NewsGrid'
 import SocialLinks from '../../components/SocialLinks'
+import ProfileIntelligenceSections from '../../components/profile/ProfileIntelligenceSections'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import QueryError from '../../components/ui/QueryError'
@@ -277,6 +278,10 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
           <p className="text-sm text-muted-foreground">No details published yet for this school. Explore programs below.</p>
         )}
       </Card>
+
+      <div className="mb-5">
+        <ProfileIntelligenceSections intelligence={school.profile_intelligence ?? null} />
+      </div>
 
       {school.about_detail && (
         <>

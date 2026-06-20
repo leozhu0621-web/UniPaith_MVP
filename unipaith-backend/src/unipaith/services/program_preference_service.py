@@ -26,6 +26,9 @@ _EDITABLE = {
     "weight_outcomes_alignment",
     "weight_funding_need",
     "weight_geographic",
+    "target_profile",
+    "preference_weights",
+    "provenance",
 }
 
 
@@ -61,9 +64,14 @@ class ProgramPreferenceService:
             self.db.add(pref)
         for key, value in data.items():
             if key in _EDITABLE:
+                if key == "target_profile" and value is not None:
+                    from unipaith.schemas.profile_intelligence import validate_target_profile
+
+                    value = validate_target_profile(value)
                 setattr(pref, key, value)
         # A school user setting this is first-party — never overwritten by the routine.
         pref.source = "claimed"
         pref.confidence = Decimal("1.00")
+        pref.standard_version = 1
         await self.db.flush()
         return pref

@@ -19,6 +19,7 @@ import Tabs from '../../components/ui/Tabs'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
 import QueryError from '../../components/ui/QueryError'
+import ProfileIntelligenceSections from '../../components/profile/ProfileIntelligenceSections'
 import { showToast } from '../../stores/toast-store'
 import { useAuthStore } from '../../stores/auth-store'
 import { formatCurrency, formatDate, formatPercent } from '../../utils/format'
@@ -162,11 +163,6 @@ export default function ProgramDetailPage() {
     (odn.top_industries?.length ?? 0) > 0 ||
     salaryBands.length > 0
 
-  // ── Hero (mirrors InstitutionDetail / SchoolSubunitPage) ──────────────────
-  // A program has no photo of its own — inherit the parent institution's campus
-  // photo (first raster image in the gallery; logos are SVG → skipped). Falls
-  // back to a clean gradient. No logo, no geo.
-  const heroPhoto = (inst?.media_gallery ?? []).find(u => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) ?? null
   // Eyebrow: a full degree label ("Master's program"), else the institution name.
   const degreeEyebrow = DEGREE_EYEBROW[p.degree_type] ?? (inst?.name ? inst.name : null)
   // Median earnings: prefer a 10-yr earnings figure if the program published one,
@@ -223,29 +219,10 @@ export default function ProgramDetailPage() {
           <span className="text-foreground font-medium truncate max-w-[32ch]" aria-current="page">{p.program_name}</span>
         </nav>
 
-        {/* Hero — parent campus photo fading into the cream page background. No logo, no geo. */}
-        <div className="relative rounded-xl overflow-hidden border border-border mb-5 bg-background">
-          {/* Photo banner */}
-          <div className="relative h-44 sm:h-56 md:h-64">
-            {heroPhoto ? (
-              <img src={heroPhoto} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-secondary/15 via-muted to-background" />
-            )}
-            {/* Fade to the cream page background at the bottom; soft top scrim for glare. */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  'linear-gradient(to bottom, rgba(10,18,36,0.30) 0%, rgba(10,18,36,0.04) 24%, rgba(10,18,36,0) 44%, hsl(var(--background)) 97%)',
-              }}
-            />
-          </div>
-
-          {/* Identity — overlaps onto the cream gradient base; dark text reads cleanly. */}
-          <div className="relative -mt-16 px-5 sm:px-7 pb-6">
-            {degreeEyebrow && <p className="text-eyebrow uppercase text-secondary mb-1.5">{degreeEyebrow}</p>}
-            <h1 className="text-2xl sm:text-3xl md:text-[2.5rem] font-bold text-foreground leading-[1.08] tracking-tight max-w-[24ch]">
+        <div className="rounded-lg border border-border mb-5 bg-background px-5 sm:px-7 py-6">
+          <div>
+            {degreeEyebrow && <p className="text-xs uppercase font-semibold text-muted-foreground mb-1.5">{degreeEyebrow}</p>}
+            <h1 className="text-2xl sm:text-3xl md:text-[2.5rem] font-bold text-foreground leading-[1.08] max-w-[24ch]">
               {p.program_name}
             </h1>
             {p.department && <p className="text-[13px] text-muted-foreground mt-1">{p.department}</p>}
@@ -339,6 +316,8 @@ export default function ProgramDetailPage() {
                   <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{p.description_text}</p>
                 </Card>
               )}
+
+              <ProfileIntelligenceSections intelligence={p.profile_intelligence ?? null} />
 
               {p.who_its_for && (
                 <Card pad={false} className="p-5">

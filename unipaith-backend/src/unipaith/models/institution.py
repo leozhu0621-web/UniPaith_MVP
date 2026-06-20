@@ -56,6 +56,20 @@ class Institution(Base):
     policies: Mapped[dict | None] = mapped_column(JSONB)
     international_info: Mapped[dict | None] = mapped_column(JSONB)
     school_outcomes: Mapped[dict | None] = mapped_column(JSONB)
+    profile_intelligence: Mapped[dict | None] = mapped_column(JSONB)
+    profile_intelligence_version: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    profile_intelligence_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    is_claimed: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
+    claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    claimed_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
     claimed_from_source: Mapped[str | None] = mapped_column(String(50))
     claimed_extracted_ids: Mapped[dict | None] = mapped_column(JSONB)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -108,7 +122,9 @@ class Institution(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    admin_user: Mapped[User] = relationship("User", back_populates="institution")  # type: ignore[name-defined]  # noqa: F821
+    admin_user: Mapped[User] = relationship(  # type: ignore[name-defined]  # noqa: F821
+        "User", back_populates="institution", foreign_keys=[admin_user_id]
+    )
     programs: Mapped[list[Program]] = relationship(
         back_populates="institution", cascade="all, delete-orphan"
     )
@@ -181,6 +197,13 @@ class School(Base):
     # Rich About-tab content (real, sourced): founded / named_for / leadership /
     # faculty[{name,title,focus}] / research_centers[] / source{label,url}.
     about_detail: Mapped[dict | None] = mapped_column(JSONB)
+    profile_intelligence: Mapped[dict | None] = mapped_column(JSONB)
+    profile_intelligence_version: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    profile_intelligence_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
     # AI Structure (Spec 2) — claim hinge. Unclaimed (default) → the crawler /
     # enrichment routine owns it; claimed → a verified institution user owns it
     # and first-party fields are never overwritten by the routine.
@@ -332,6 +355,13 @@ class Program(Base):
     # Channel feeds + official social links for keyword-relevant Events/Updates
     # (mirrors Institution.content_sources); program-scoped, tagged on ingest.
     content_sources: Mapped[dict | None] = mapped_column(JSONB)
+    profile_intelligence: Mapped[dict | None] = mapped_column(JSONB)
+    profile_intelligence_version: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    profile_intelligence_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
     # AI Structure (Spec 2) — claim hinge (see School). Unclaimed → crawler owns
     # it; claimed → first-party, never overwritten by the enrichment routine.
     is_claimed: Mapped[bool] = mapped_column(
@@ -1245,6 +1275,17 @@ class ProgramPreference(Base):
     pref_fields: Mapped[list[str] | None] = mapped_column(ARRAY(String))
     pref_levels: Mapped[list[str] | None] = mapped_column(ARRAY(String))
     pref_countries: Mapped[list[str] | None] = mapped_column(ARRAY(String))
+    # Typed three-layer target applicant profile:
+    # background/academic preparation; goals/behaviors/learning/working style;
+    # values/motivations/community expectations. Evidence-grounded and
+    # protected-trait guarded in schemas.profile_intelligence.
+    target_profile: Mapped[dict | None] = mapped_column(JSONB)
+    preference_weights: Mapped[dict | None] = mapped_column(JSONB)
+    provenance: Mapped[dict | None] = mapped_column(JSONB)
+    standard_version: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1"
+    )
+    derived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Recruiting importance weights (0–10) — the program-side analogue of the
     # student preference weights.
     weight_academic: Mapped[int | None] = mapped_column(Integer)

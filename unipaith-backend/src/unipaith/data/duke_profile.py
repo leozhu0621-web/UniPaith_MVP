@@ -223,7 +223,10 @@ SCHOOL_OUTCOMES: dict = {
             {"label": "Duke University Libraries", "url": "https://library.duke.edu/"},
             {"label": "Duke Student Affairs", "url": "https://students.duke.edu/"},
             {"label": "Duke Career Hub", "url": "https://careerhub.students.duke.edu/"},
-            {"label": "Duke Recreation & Physical Education", "url": "https://recreation.duke.edu/"},
+            {
+                "label": "Duke Recreation & Physical Education",
+                "url": "https://recreation.duke.edu/",
+            },
             {"label": "Nasher Museum of Art", "url": "https://nasher.duke.edu/"},
             {"label": "DukeEngage", "url": "https://dukeengage.duke.edu/"},
             {"label": "Duke Arts", "url": "https://arts.duke.edu/"},
@@ -527,8 +530,7 @@ _ABOUT_DETAIL: dict[str, dict] = {
         "founded": 1924,
         "leadership": "Jerome P. Lynch — Vinik Dean of the Pratt School of Engineering",
         "faculty": [
-            "Ashutosh Chilkoti — Alan L. Kaganov Distinguished Professor of Biomedical "
-            "Engineering",
+            "Ashutosh Chilkoti — Alan L. Kaganov Distinguished Professor of Biomedical Engineering",
             "Hai 'Helen' Li — Clare Boothe Luce Professor of Electrical & Computer "
             "Engineering; 2025 AAAS Fellow",
         ],
@@ -546,8 +548,7 @@ _ABOUT_DETAIL: dict[str, dict] = {
     _FUQUA: {
         "founded": 1969,
         "leadership": (
-            "Mary Frances Luce — Robert A. Ingram Professor of Business Administration "
-            "and Dean"
+            "Mary Frances Luce — Robert A. Ingram Professor of Business Administration and Dean"
         ),
         "faculty": [
             "Dan Ariely — James B. Duke Distinguished Professor of Behavioral Economics",
@@ -608,8 +609,7 @@ _ABOUT_DETAIL: dict[str, dict] = {
     _NURSING: {
         "founded": 1931,
         "leadership": (
-            "Michael V. Relf — Dean and Mary T. Champagne Distinguished Professor of "
-            "Nursing"
+            "Michael V. Relf — Dean and Mary T. Champagne Distinguished Professor of Nursing"
         ),
         "research_centers": [
             "Center for Nursing Research",
@@ -1094,8 +1094,7 @@ _GRAD_EXPLICIT: list[tuple] = [
         "https://law.duke.edu/llmle/jd",
         None,
         None,
-        "A three-year dual degree pairing the J.D. with an LL.M. in law and "
-        "entrepreneurship.",
+        "A three-year dual degree pairing the J.D. with an LL.M. in law and entrepreneurship.",
     ),
     (
         "Doctor of Juridical Science (SJD)",
@@ -1143,8 +1142,7 @@ _GRAD_EXPLICIT: list[tuple] = [
         "https://medschool.duke.edu/education/health-professions-education-programs/medical-scientist-training-program",
         None,
         None,
-        "An NIH-funded, fully supported dual M.D.-Ph.D. program training physician-"
-        "scientists.",
+        "An NIH-funded, fully supported dual M.D.-Ph.D. program training physician-scientists.",
     ),
     (
         "Doctor of Physical Therapy (DPT)",
@@ -1177,8 +1175,7 @@ _GRAD_EXPLICIT: list[tuple] = [
         "https://medschool.duke.edu/education/health-professions-education-programs/physician-assistant-program",
         None,
         None,
-        "The nation's first physician assistant program, awarding the Master of Health "
-        "Sciences.",
+        "The nation's first physician assistant program, awarding the Master of Health Sciences.",
     ),
     (
         "Master of Biomedical Sciences (MBS)",
@@ -1308,8 +1305,7 @@ _GRAD_EXPLICIT: list[tuple] = [
         "https://nursing.duke.edu/academic-programs/phd-program-nursing",
         None,
         None,
-        "A research doctorate preparing nurse scientists for academic and research "
-        "careers.",
+        "A research doctorate preparing nurse scientists for academic and research careers.",
     ),
     # ── Nicholas School of the Environment ──
     (
@@ -1620,14 +1616,16 @@ _SLUG_REPL = {
 }
 
 # Professional schools where the owning unit for a degree is the school itself.
-_PROFESSIONAL_SCHOOLS = frozenset({
-    _FUQUA,
-    _LAW,
-    _NURSING,
-    _NICHOLAS,
-    _SANFORD,
-    _DIVINITY,
-})
+_PROFESSIONAL_SCHOOLS = frozenset(
+    {
+        _FUQUA,
+        _LAW,
+        _NURSING,
+        _NICHOLAS,
+        _SANFORD,
+        _DIVINITY,
+    }
+)
 
 # Pratt professional master's → real engineering department (masters.pratt.duke.edu).
 _PRATT_GRAD_DEPARTMENT: dict[str, str] = {
@@ -1702,7 +1700,7 @@ def _field_from_program_name(program_name: str) -> str | None:
         "Professional program in ",
     ):
         if program_name.startswith(prefix):
-            return program_name[len(prefix):]
+            return program_name[len(prefix) :]
     return None
 
 
@@ -1739,11 +1737,16 @@ def _duke_description(spec: dict, field: str | None = None) -> str:
     )
     if field_key in FIELD_ALIASES:
         field_key = FIELD_ALIASES[field_key]
+    if field_key == "Computer Science" and spec.get("degree_type") == "phd":
+        return (
+            "The Computer Science Ph.D. at Duke trains doctoral researchers through "
+            "seminars, qualifying milestones, faculty lab work, and an original "
+            "dissertation in areas such as AI, theory, systems, security, and "
+            f"interdisciplinary computing.{delivery}"
+        )
     clause = FIELD_DESCRIPTIONS.get(field_key)
     if not clause:
-        raise ValueError(
-            f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})"
-        )
+        raise ValueError(f"Missing FIELD_DESCRIPTIONS entry for {field_key!r} ({slug})")
     # The program_name is already the page heading; prefixing it here doubled the
     # heading (anti-stub `name_prefixed`). Open on the field fact instead.
     return f"{clause}{delivery}"
@@ -1812,19 +1815,21 @@ def _build_catalog() -> list[dict]:
     ) in _GRAD_EXPLICIT:
         suffix = {"phd": "phd", "professional": "prof"}.get(dtype, "ms")
         dept = _grad_explicit_department(name, school)
-        _add({
-            "slug": f"duke-{_slugify(name)}-{suffix}",
-            "school": school,
-            "program_name": name,
-            "degree_type": dtype,
-            "department": dept,
-            "duration_months": dur,
-            "delivery_format": fmt,
-            "website": website,
-            "tuition": tuition,
-            "tuition_kind": tkind,
-            "description": desc,
-        })
+        _add(
+            {
+                "slug": f"duke-{_slugify(name)}-{suffix}",
+                "school": school,
+                "program_name": name,
+                "degree_type": dtype,
+                "department": dept,
+                "duration_months": dur,
+                "delivery_format": fmt,
+                "website": website,
+                "tuition": tuition,
+                "tuition_kind": tkind,
+                "description": desc,
+            }
+        )
     for name in _PHD_PROGRAMS:
         dept = _department_for(name, _GRAD)
         pname = disambiguate_program_name(name, "phd")
@@ -1859,9 +1864,7 @@ _classification_stubs = sum(
     1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
 )
 if _classification_stubs:
-    _catalog_errors.append(
-        f"classification-only descriptions on {_classification_stubs} programs"
-    )
+    _catalog_errors.append(f"classification-only descriptions on {_classification_stubs} programs")
 if _catalog_errors:
     raise RuntimeError(f"Duke catalog quality gate failed: {_catalog_errors}")
 # Normalize residential delivery to the fleet-wide "in_person" value (the catalog tuples
@@ -1872,9 +1875,7 @@ for _p in PROGRAMS:
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
 _SPEC_BY_SLUG: dict[str, dict] = {p["slug"]: p for p in PROGRAMS}
 _FULL_NAME_BY_SLUG: dict[str, str] = {p["slug"]: p["program_name"] for p in PROGRAMS}
-_WEBSITE_BY_SLUG: dict[str, str] = {
-    p["slug"]: p["website"] for p in PROGRAMS if p.get("website")
-}
+_WEBSITE_BY_SLUG: dict[str, str] = {p["slug"]: p["website"] for p in PROGRAMS if p.get("website")}
 
 # Per-program keyword overrides (department/program-naming terms). Programs without an
 # entry inherit their school's keywords (still school-scoped).
@@ -1978,7 +1979,10 @@ _REQ_UNDERGRAD = {
         },
         "visa": _INTL_VISA,
         "sources": [
-            {"label": "Duke Undergraduate Admissions — Apply", "url": "https://admissions.duke.edu/apply/"}
+            {
+                "label": "Duke Undergraduate Admissions — Apply",
+                "url": "https://admissions.duke.edu/apply/",
+            }
         ],
     },
     "source": "Duke Undergraduate Admissions",
@@ -2019,7 +2023,10 @@ _REQ_MBA = {
         },
         "visa": _INTL_VISA,
         "sources": [
-            {"label": "Fuqua — Daytime MBA Admissions", "url": "https://www.fuqua.duke.edu/programs/daytime-mba/admissions"}
+            {
+                "label": "Fuqua — Daytime MBA Admissions",
+                "url": "https://www.fuqua.duke.edu/programs/daytime-mba/admissions",
+            }
         ],
     },
     "source": "The Fuqua School of Business — Daytime MBA Admissions",
@@ -2213,8 +2220,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {
                 "label": "Poets&Quants — Meet Duke Fuqua's MBA Class Of 2027",
                 "url": (
-                    "https://poetsandquants.com/2025/12/06/"
-                    "meet-duke-fuquas-mba-class-of-2027/"
+                    "https://poetsandquants.com/2025/12/06/meet-duke-fuquas-mba-class-of-2027/"
                 ),
             },
         ],
@@ -2245,24 +2251,21 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Flexible degree paths",
                 "sentiment": "positive",
                 "detail": (
-                    "B.S., B.A., and interdepartmental majors plus AI/data-science "
-                    "concentrations."
+                    "B.S., B.A., and interdepartmental majors plus AI/data-science concentrations."
                 ),
             },
             {
                 "label": "National CS standing",
                 "sentiment": "positive",
                 "detail": (
-                    "Niche #15 for undergraduate CS; graduate program ranked #20 "
-                    "by U.S. News."
+                    "Niche #15 for undergraduate CS; graduate program ranked #20 by U.S. News."
                 ),
             },
             {
                 "label": "Competitive atmosphere",
                 "sentiment": "caution",
                 "detail": (
-                    "Selective major with demanding coursework and pre-professional "
-                    "pressure."
+                    "Selective major with demanding coursework and pre-professional pressure."
                 ),
             },
         ],
@@ -2365,9 +2368,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {
                 "label": "Innovative curriculum",
                 "sentiment": "positive",
-                "detail": (
-                    "Patient-first, team-based curriculum with early clinical exposure."
-                ),
+                "detail": ("Patient-first, team-based curriculum with early clinical exposure."),
             },
             {
                 "label": "Selectivity & cost",
@@ -2407,8 +2408,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Quantitative policy training",
                 "sentiment": "positive",
                 "detail": (
-                    "Econometrics and data-driven policy analysis are core to the "
-                    "two-year MPP."
+                    "Econometrics and data-driven policy analysis are core to the two-year MPP."
                 ),
             },
             {
@@ -2473,8 +2473,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Career placement",
                 "sentiment": "positive",
                 "detail": (
-                    "Graduates enter investment banking, consulting, and top Ph.D. "
-                    "programs."
+                    "Graduates enter investment banking, consulting, and top Ph.D. programs."
                 ),
             },
             {
@@ -2531,8 +2530,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Tech placement",
                 "sentiment": "positive",
                 "detail": (
-                    "Graduates enter semiconductor, software, and consulting roles at "
-                    "major firms."
+                    "Graduates enter semiconductor, software, and consulting roles at major firms."
                 ),
             },
             {
@@ -2546,10 +2544,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
             {
                 "label": "Curriculum rigidity",
                 "sentiment": "caution",
-                "detail": (
-                    "Structured core limits early electives; prerequisites are "
-                    "demanding."
-                ),
+                "detail": ("Structured core limits early electives; prerequisites are demanding."),
             },
         ],
         "sources": [
@@ -2582,32 +2577,26 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
                 "label": "Interdisciplinary breadth",
                 "sentiment": "positive",
                 "detail": (
-                    "Combines economics, politics, and ethics for policy analysis "
-                    "across sectors."
+                    "Combines economics, politics, and ethics for policy analysis across sectors."
                 ),
             },
             {
                 "label": "Sanford connection",
                 "sentiment": "positive",
-                "detail": (
-                    "Access to Sanford faculty, research centers, and policy "
-                    "internships."
-                ),
+                "detail": ("Access to Sanford faculty, research centers, and policy internships."),
             },
             {
                 "label": "Internship placement",
                 "sentiment": "positive",
                 "detail": (
-                    "Students intern in federal/state government, NGOs, and research "
-                    "organizations."
+                    "Students intern in federal/state government, NGOs, and research organizations."
                 ),
             },
             {
                 "label": "Program scale",
                 "sentiment": "mixed",
                 "detail": (
-                    "Smaller major with fewer specialized electives than standalone "
-                    "departments."
+                    "Smaller major with fewer specialized electives than standalone departments."
                 ),
             },
         ],
@@ -2850,9 +2839,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
         p.who_its_for = None
         p.highlights = None
-        p.application_deadline = (
-            date(2027, 1, 5) if spec["degree_type"] == "bachelors" else None
-        )
+        p.application_deadline = date(2027, 1, 5) if spec["degree_type"] == "bachelors" else None
         if slug == _FLAGSHIP:
             p.application_deadline = date(2027, 1, 5)
     session.flush()

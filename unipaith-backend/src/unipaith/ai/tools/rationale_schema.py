@@ -16,7 +16,7 @@ The validator in `unipaith.ai.rationale.is_grounded` walks each path
 and asserts the value is non-empty.
 """
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 SUBMIT_RATIONALE_TOOL = {
@@ -37,6 +37,7 @@ SUBMIT_RATIONALE_TOOL = {
             "para_confidence",
             "cited_student_fields",
             "cited_program_fields",
+            "decision_brief",
         ],
         "properties": {
             "para_fit": {
@@ -80,10 +81,74 @@ SUBMIT_RATIONALE_TOOL = {
                 "items": {"type": "string", "maxLength": 200},
                 "description": "Dot-notation paths into the program input.",
             },
+            "decision_brief": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["sections"],
+                "properties": {
+                    "sections": {
+                        "type": "object",
+                        "description": (
+                            "Structured student-safe decision brief. Keys should include "
+                            "fit, conflicts, academic_gaps, career_alignment, cost_aid, "
+                            "feasibility, support_compatibility, timeline, next_actions "
+                            "when evidence exists."
+                        ),
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "required": ["statement", "confidence", "evidence"],
+                                "properties": {
+                                    "statement": {
+                                        "type": "string",
+                                        "minLength": 10,
+                                        "maxLength": 800,
+                                    },
+                                    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                                    "uncertainty": {"type": ["string", "null"], "maxLength": 600},
+                                    "evidence": {
+                                        "type": "array",
+                                        "minItems": 1,
+                                        "items": {
+                                            "type": "object",
+                                            "additionalProperties": False,
+                                            "required": ["side", "path", "label"],
+                                            "properties": {
+                                                "side": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "student",
+                                                        "program",
+                                                        "institution",
+                                                        "system",
+                                                    ],
+                                                },
+                                                "path": {"type": "string", "maxLength": 240},
+                                                "label": {"type": "string", "maxLength": 240},
+                                                "url": {
+                                                    "type": ["string", "null"],
+                                                    "maxLength": 2000,
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    "omissions": {
+                        "type": "array",
+                        "items": {"type": "object"},
+                    },
+                },
+            },
         },
     },
 }
 
 
 # ── Changelog ──────────────────────────────────────────────────────────────
+# v2 (2026-06-20): add structured decision_brief.
 # v1 (2026-05-10): initial schema for Phase B2.
