@@ -8,23 +8,14 @@
  *   ─ Hero: orb + "Where would you like to start?"
  *   ─ Input bar (free text) + + upload affordance + cobalt send
  *   ─ Continue    — most-recent session (if any; prop-injected)
- *   ─ For you     — 4 action cards (representative, non-personalized this slice)
- *   ─ Academic    — 2 campus photo cards + 2 event/program cards (representative)
- *   ─ Financial   — 1 scholarship card + 3 action cards (representative)
- *   ─ International — 2 guide cards + 2 country cards (representative)
- *   ─ Peers       — 3 peer avatar cards + 1 "Find more" card (representative)
+ *   ─ For you     — release-ready action cards
+ *   ─ Academic    — live program cards when data exists, otherwise search actions
+ *   ─ Financial   — live scholarship cards when data exists, otherwise funding actions
+ *   ─ International / Peers — action cards that open real sessions
  *   ─ Start from a template — live chips from getChatTemplates(), grouped by stage
- *
- * NOTE: "Academic", "Financial", "International", "Peers" cards are static/
- * representative this slice. Real data endpoints exist (universities, scholarships,
- * events, peers) but wiring them up is a follow-on slice after the launcher ships.
  *
  * Picking a card/chip OR submitting the input calls createSession() and signals
  * the parent shell via onSessionStart(sessionId).
- *
- * The upload "+" opens a stub menu (Upload a file / Add a photo / From My Space).
- * The full ingest pipeline is wired in the conversation (existing material-ingest
- * pipeline); this slice only provides the affordance.
  */
 
 import { useRef, useState } from "react";
@@ -57,11 +48,37 @@ const STAGE_LABELS: Record<string, string> = {
   application: "Application Strategy & Support",
 };
 
-// ── Upload stub menu ───────────────────────────────────────────────────────
+// ── Upload menu ────────────────────────────────────────────────────────────
 
-const UPLOAD_ITEMS = ["Upload a file", "Add a photo", "From My Space"] as const;
+const UPLOAD_ITEMS = [
+  {
+    label: "Upload a file",
+    title: "Upload a file for Uni to review",
+    topic: "prepare",
+  },
+  {
+    label: "Add a photo",
+    title: "Review an image with Uni",
+    topic: "prepare",
+  },
+  {
+    label: "From My Space",
+    title: "Review materials from My Space",
+    topic: "profile",
+  },
+] as const;
 
-function UploadMenu({ anchor, onClose }: { anchor: DOMRect; onClose: () => void }) {
+type UploadItem = (typeof UPLOAD_ITEMS)[number];
+
+function UploadMenu({
+  anchor,
+  onClose,
+  onPick,
+}: {
+  anchor: DOMRect;
+  onClose: () => void;
+  onPick: (item: UploadItem) => void;
+}) {
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
@@ -77,12 +94,15 @@ function UploadMenu({ anchor, onClose }: { anchor: DOMRect; onClose: () => void 
       >
         {UPLOAD_ITEMS.map((item) => (
           <button
-            key={item}
+            key={item.label}
             role="menuitem"
-            onClick={onClose}
+            onClick={() => {
+              onPick(item);
+              onClose();
+            }}
             className="flex w-full items-center gap-2.5 px-3 py-2.5 text-[13px] font-semibold text-left text-foreground hover:bg-muted transition-colors"
           >
-            {item}
+            {item.label}
           </button>
         ))}
       </div>
@@ -312,55 +332,11 @@ function TemplatesSection({
   );
 }
 
-// ── Static card data (representative — real data wired in a later slice) ──
-
-// Academic — campus/program/event cards
-// Images: Unsplash open license, credited inline as required.
-const ACADEMIC_CARDS = [
-  {
-    id: "cmu",
-    title: "Carnegie Mellon",
-    tag: "Target",
-    imgUrl: "https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?w=480&q=80&auto=format&fit=crop",
-    imgCredit: "Unsplash",
-    topic: null,
-  },
-  {
-    id: "uoft",
-    title: "U of Toronto",
-    tag: "Target",
-    imgUrl: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=480&q=80&auto=format&fit=crop",
-    imgCredit: "Unsplash",
-    topic: null,
-  },
-  {
-    id: "prog",
-    title: "MS Computer Science",
-    subtitle: "Carnegie Mellon",
-    imgUrl: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=480&q=80&auto=format&fit=crop",
-    imgCredit: "Unsplash",
-    topic: "schools",
-  },
-  {
-    id: "evt",
-    title: "CMU info session",
-    subtitle: "Dec 2 · virtual",
-    imgUrl: "https://images.unsplash.com/photo-1591115765373-5207764f72e7?w=480&q=80&auto=format&fit=crop",
-    imgCredit: "Unsplash",
-    topic: "connect",
-  },
-] as const;
-
-// International cards
-const INTL_CARDS = [
-  {
-    id: "canada",
-    title: "Studying in Canada",
-    subtitle: "Country guide",
-    imgUrl: "https://images.unsplash.com/photo-1517935706615-2717063c2225?w=480&q=80&auto=format&fit=crop",
-    imgCredit: "Unsplash",
-  },
-] as const;
+function templateIsRunnable(template: ChatTemplate): boolean {
+  return template.steps.every(
+    (step) => step.step_type !== "action" || step.action_available !== false,
+  );
+}
 
 // ── Main component ─────────────────────────────────────────────────────────
 
@@ -412,6 +388,7 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
   const scholarships = ((scholarshipData?.items ?? []) as Scholarship[])
     .filter((s) => s.award_amount)
     .slice(0, 2);
+  const runnableTemplates = (templates ?? []).filter(templateIsRunnable);
 
   const qc = useQueryClient();
   const createMut = useMutation({
@@ -476,6 +453,7 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
             <UploadMenu
               anchor={uploadBtnRef.current.getBoundingClientRect()}
               onClose={() => setUploadOpen(false)}
+              onPick={(item) => startSession(item.title, item.topic)}
             />
           )}
 
@@ -541,8 +519,7 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
           </div>
         </section>
 
-        {/* Academic — real programs that carry a campus photo; representative
-            cards are the fallback when none are available yet. */}
+        {/* Academic */}
         <section className="mb-7" aria-label="Academic">
           <EyebrowLabel>Academic</EyebrowLabel>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -556,17 +533,30 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
                     onClick={() => startSession(p.institution_name, "schools")}
                   />
                 ))
-              : ACADEMIC_CARDS.map((c) => (
-                  <VisualCard
-                    key={c.id}
-                    title={c.title}
-                    subtitle={"subtitle" in c ? c.subtitle : undefined}
-                    tag={"tag" in c ? c.tag : undefined}
-                    imgUrl={c.imgUrl}
-                    imgCredit={c.imgCredit}
-                    onClick={() => startSession(c.title, c.topic ?? undefined)}
+              : (
+                <>
+                  <ActionCard
+                    icon={<List size={20} strokeWidth={1.7} />}
+                    title="Search programs"
+                    onClick={() => startSession("Search programs", "schools")}
                   />
-                ))}
+                  <ActionCard
+                    icon={<Scale size={20} strokeWidth={1.7} />}
+                    title="Compare school types"
+                    onClick={() => startSession("Compare school types", "schools")}
+                  />
+                  <ActionCard
+                    icon={<BookOpen size={20} strokeWidth={1.7} />}
+                    title="Explore fields"
+                    onClick={() => startSession("Explore fields", "strategy")}
+                  />
+                  <ActionCard
+                    icon={<Compass size={20} strokeWidth={1.7} />}
+                    title="Set location preferences"
+                    onClick={() => startSession("Set location preferences", "schools")}
+                  />
+                </>
+              )}
           </div>
         </section>
 
@@ -613,22 +603,19 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
           </div>
         </section>
 
-        {/* International — guide + country cards */}
+        {/* International */}
         <section className="mb-7" aria-label="International">
           <EyebrowLabel>International</EyebrowLabel>
-          {/* NOTE: Static/representative. */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <ActionCard
               icon={<Compass size={20} strokeWidth={1.7} />}
               title="Student visa basics"
               onClick={() => startSession("Student visa basics", "prepare")}
             />
-            <VisualCard
-              title="Studying in Canada"
-              subtitle="Country guide"
-              imgUrl={INTL_CARDS[0].imgUrl}
-              imgCredit={INTL_CARDS[0].imgCredit}
-              onClick={() => startSession("Studying in Canada", "strategy")}
+            <ActionCard
+              icon={<Flag size={20} strokeWidth={1.7} />}
+              title="Compare study countries"
+              onClick={() => startSession("Compare study countries", "strategy")}
             />
             <ActionCard
               icon={<BookOpen size={20} strokeWidth={1.7} />}
@@ -681,8 +668,8 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
                 <div key={i} className="h-9 rounded-full bg-muted" style={{ width: w }} />
               ))}
             </div>
-          ) : templates && templates.length > 0 ? (
-            <TemplatesSection templates={templates} onPick={handleTemplatePick} />
+          ) : runnableTemplates.length > 0 ? (
+            <TemplatesSection templates={runnableTemplates} onPick={handleTemplatePick} />
           ) : (
             <p className="text-[13px] text-muted-foreground">No templates available.</p>
           )}

@@ -17,17 +17,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.database import get_db
 from unipaith.dependencies import require_student
 from unipaith.models.user import User
+from unipaith.services.catalog_service import CatalogService
 from unipaith.services.chat.session_service import ChatSessionService
 from unipaith.services.chat.template_actions import ACTION_CATALOG, ACTION_KEYS
 from unipaith.services.chat.template_service import TemplateService
-from unipaith.services.enrichment_planner import CATALOG
 from unipaith.services.intake.intake_engine_service import IntakeEngineService
 from unipaith.services.uni_tools import tool_generate_strategy, tool_get_matches
 
-# Build a lookup from CATALOG by key for fast descriptor embedding.
-_CATALOG_BY_KEY: dict[str, dict] = {f["key"]: f for f in CATALOG}
-
 router = APIRouter(prefix="/students/me/chat", tags=["chat-sessions"])
+
+# Action keys that have real service implementations today. Other cataloged
+# actions are hidden from launch and rejected if called directly so release
+# builds never expose a "coming soon" path.
+_REAL_ACTIONS = frozenset({"build_school_list", "generate_strategy", "compare_schools"})
+_UNAVAILABLE_ACTION_REASON = "This guided action is not enabled for release yet."
 
 
 def _folder(f) -> dict:
@@ -98,6 +101,8 @@ class TemplateStepOut(BaseModel):
     options: list[str] | None = None
     # Action label from ACTION_CATALOG — only set when step_type == "action"
     action_label: str | None = None
+    action_available: bool | None = None
+    availability_reason: str | None = None
 
 
 class TemplateOut(BaseModel):
@@ -125,27 +130,34 @@ async def list_templates(
     separate migration step. The seed is idempotent so this is safe to
     call on every request; the real cost is a single SELECT on warm DBs.
 
-    Each prompt step is enriched with the catalog descriptor fields
+    Each prompt step is enriched with the runtime prompt-catalog descriptor fields
     (question, ask_kind, options) so the frontend runner can render the
-    widget without a separate per-key lookup.  Action steps include the
-    action_label from ACTION_CATALOG.
+    widget without a separate per-key lookup. Action steps include the
+    action_label and release availability from ACTION_CATALOG.
     """
-    svc = TemplateService(db)
-    await svc.ensure_seeded()
+    catalog_svc = CatalogService(db)
+    template_svc = TemplateService(db)
+    await catalog_svc.ensure_seeded()
+    await template_svc.ensure_seeded()
     await db.commit()
-    raw = await svc.load()
+    raw = await template_svc.load()
+    catalog_by_key = {field["key"]: field for field in await catalog_svc.load()}
 
     # Embed catalog descriptors into each step.
     for tmpl in raw:
         for step in tmpl["steps"]:
             if step["step_type"] == "prompt":
-                descriptor = _CATALOG_BY_KEY.get(step.get("prompt_key", ""), {})
+                descriptor = catalog_by_key.get(step.get("prompt_key", ""), {})
                 step["question"] = descriptor.get("question")
                 step["ask_kind"] = descriptor.get("ask_kind")
                 step["options"] = descriptor.get("options")  # list[str] or None
             elif step["step_type"] == "action":
-                action_def = ACTION_CATALOG.get(step.get("action_key", ""), {})
+                action_key = step.get("action_key", "")
+                action_def = ACTION_CATALOG.get(action_key, {})
+                is_available = action_key in _REAL_ACTIONS
                 step["action_label"] = action_def.get("label")
+                step["action_available"] = is_available
+                step["availability_reason"] = None if is_available else _UNAVAILABLE_ACTION_REASON
 
     return raw
 
@@ -296,12 +308,6 @@ class ActionArtifactOut(BaseModel):
     status: str  # "ready" | "pending"
 
 
-_PENDING_SUMMARY = "This is coming soon — your inputs are saved."
-
-# Action keys that have real service implementations today.
-_REAL_ACTIONS = frozenset({"build_school_list", "generate_strategy", "compare_schools"})
-
-
 @router.post("/templates/action/{action_key}", response_model=ActionArtifactOut)
 async def dispatch_template_action(
     action_key: str,
@@ -311,20 +317,15 @@ async def dispatch_template_action(
     """Run a template action step and return a normalized artifact.
 
     Real implementations (build_school_list, generate_strategy, compare_schools)
-    delegate to existing uni_tools functions.  All other action keys return a
-    pending artifact — never fabricated data.  Never raises 5xx.
+    delegate to existing uni_tools functions. All other cataloged action keys are
+    unavailable in release builds; callers get 409 instead of product-visible
+    placeholder artifacts. Real actions degrade to pending rather than 5xx.
     """
     if action_key not in ACTION_KEYS:
         raise HTTPException(status_code=400, detail=f"Unknown action key: {action_key!r}")
 
     if action_key not in _REAL_ACTIONS:
-        return ActionArtifactOut(
-            action_key=action_key,
-            kind="note",
-            title=ACTION_CATALOG.get(action_key, {}).get("label", action_key),
-            summary=_PENDING_SUMMARY,
-            status="pending",
-        )
+        raise HTTPException(status_code=409, detail=_UNAVAILABLE_ACTION_REASON)
 
     # ── build_school_list / compare_schools → tool_get_matches ────────────────
     if action_key in ("build_school_list", "compare_schools"):

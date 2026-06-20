@@ -57,7 +57,6 @@ program names, field-specific descriptions, and coverable ``external_reviews``.
 from __future__ import annotations
 
 import re
-from collections import defaultdict
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
@@ -3254,8 +3253,7 @@ _LEVEL_SUFFIX: dict[str, str] = {
         "undergraduate research or internships across the Forty Acres campus."
     ),
     "masters": (
-        " Graduate students complete advanced seminars, practica, and a thesis or "
-        "capstone project."
+        " Graduate students complete advanced seminars, practica, and a thesis or capstone project."
     ),
     "phd": (
         " Doctoral students conduct original dissertation research with faculty "
@@ -3433,9 +3431,7 @@ def _level_appropriate_clause(clause: str, degree_type: str) -> str:
     if degree_type == "bachelors":
         return clause
     clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
-    clause = re.sub(
-        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
-    )
+    clause = re.sub(r"\bundergraduate (major|program)\b", "program", clause, flags=re.I)
     return clause
 
 
@@ -3506,9 +3502,7 @@ def _assign_descriptions(programs: list[dict]) -> None:
             body = raw[spec["slug"]]
             if spec is anchor:
                 if body.lower().startswith("graduate study"):
-                    body = _ut_sibling_body(
-                        "bachelors", field_label, focus, spec["school"]
-                    )
+                    body = _ut_sibling_body("bachelors", field_label, focus, spec["school"])
                 body = _level_appropriate_clause(
                     _adapt_clause_for_degree_type(body, spec["degree_type"]),
                     spec["degree_type"],
@@ -3519,9 +3513,7 @@ def _assign_descriptions(programs: list[dict]) -> None:
                     spec["degree_type"],
                 )
                 if any(_bodies_share_field(body, prev) for prev in group_bodies):
-                    body = _ut_sibling_body(
-                        spec["degree_type"], field_label, focus, spec["school"]
-                    )
+                    body = _ut_sibling_body(spec["degree_type"], field_label, focus, spec["school"])
             while any(_bodies_share_field(body, prev) for prev in group_bodies):
                 body = (
                     f"{body.rstrip('.')}. The {spec['program_name']} follows the "

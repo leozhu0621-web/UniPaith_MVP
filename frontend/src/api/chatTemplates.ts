@@ -22,6 +22,8 @@ export interface TemplateStep {
   options?: string[] | null;
   // Action label from ACTION_CATALOG — present when step_type === "action"
   action_label?: string;
+  action_available?: boolean | null;
+  availability_reason?: string | null;
 }
 
 export interface ChatTemplate {

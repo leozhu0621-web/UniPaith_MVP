@@ -12,9 +12,8 @@
  *   ─ Completion: artifact card when all steps are done
  *
  * Prompt steps write to the enrichment layer (setEnrichValue) — real, live.
- * Action steps show a placeholder "Uni is building…" then auto-advance after a
- * short delay and reveal a completion card.  These are explicitly a placeholder;
- * no fake school / data results are shown.
+ * Action steps call the template action endpoint. Unavailable action keys are
+ * hidden before launch and defensively rendered as non-runnable if encountered.
  *
  * Sub-renders step widgets using AnswerChoices (choice/multi/scale) and
  * KeywordPicker / TypeaheadPicker from EnrichWidget for those ask_kinds.
@@ -421,7 +420,7 @@ function ActionArtifactCard({
         <span className="text-[14.5px] font-bold text-foreground">{artifact.title}</span>
         {isPending && (
           <span className="ml-auto text-[11px] font-semibold text-muted-foreground bg-muted rounded-full px-2.5 py-0.5">
-            Coming soon
+            Saved
           </span>
         )}
       </div>
@@ -468,6 +467,20 @@ function ActionStep({
     let cancelled = false;
     const actionKey = step.action_key ?? "";
 
+    if (step.action_available === false) {
+      setArtifact({
+        action_key: actionKey,
+        kind: "note",
+        title: step.action_label ?? step.label,
+        summary: step.availability_reason ?? "This guided action is not enabled for release yet.",
+        status: "pending",
+      });
+      setWorking(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
     dispatchTemplateAction(actionKey)
       .then((result) => {
         if (!cancelled) {
@@ -482,7 +495,8 @@ function ActionStep({
             action_key: actionKey,
             kind: "note",
             title: step.action_label ?? step.label,
-            summary: "This is coming soon — your inputs are saved.",
+            summary:
+              "I couldn't finish this action. Your answers are saved; try again from the related workspace.",
             status: "pending",
           });
           setWorking(false);
@@ -492,7 +506,13 @@ function ActionStep({
     return () => {
       cancelled = true;
     };
-  }, [step.action_key, step.action_label, step.label]);
+  }, [
+    step.action_available,
+    step.action_key,
+    step.action_label,
+    step.availability_reason,
+    step.label,
+  ]);
 
   if (working) {
     return (

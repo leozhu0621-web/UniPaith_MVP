@@ -57,6 +57,7 @@ vi.mock("../api/connect", () => ({ getUnseenCount: vi.fn().mockResolvedValue(0) 
 vi.mock("../api/inbox", () => ({ getThreads: vi.fn().mockResolvedValue([]) }));
 
 import { getChatTree } from "../api/chatSessions";
+import { getChatTemplates } from "../api/chatTemplates";
 import SessionBrowser from "../pages/student/chat/SessionBrowser";
 import ChatTabShell from "../pages/student/chat/ChatTabShell";
 
@@ -259,6 +260,7 @@ describe("SessionBrowser", () => {
 describe("ChatTabShell", () => {
   beforeEach(() => {
     vi.mocked(getChatTree).mockResolvedValue({ folders: [] });
+    vi.mocked(getChatTemplates).mockResolvedValue([]);
   });
 
   it("renders the session browser aside and the new-session launcher by default", async () => {
@@ -278,5 +280,59 @@ describe("ChatTabShell", () => {
     expect(screen.queryByTestId("discover-home-page")).not.toBeInTheDocument();
     // Session browser aside (accessible label)
     expect(screen.getByRole("complementary", { name: /session browser/i })).toBeInTheDocument();
+  });
+
+  it("hides templates that include unavailable action steps", async () => {
+    vi.mocked(getChatTemplates).mockResolvedValue([
+      {
+        key: "build_school_list",
+        title: "Build my school list",
+        topic: "schools",
+        stage: "recommendation",
+        outcome: "A ranked list",
+        icon: "list",
+        steps: [
+          {
+            step_order: 0,
+            step_type: "action",
+            action_key: "build_school_list",
+            label: "List",
+            action_label: "Build school list",
+            action_available: true,
+          },
+        ],
+      },
+      {
+        key: "find_events",
+        title: "Find events",
+        topic: "connect",
+        stage: "application",
+        outcome: "Events to attend",
+        icon: "calendar",
+        steps: [
+          {
+            step_order: 0,
+            step_type: "action",
+            action_key: "find_events",
+            label: "Events",
+            action_label: "Find events",
+            action_available: false,
+            availability_reason: "This guided action is not enabled for release yet.",
+          },
+        ],
+      },
+    ]);
+
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <ChatTabShell />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText("Build my school list")).toBeInTheDocument();
+    expect(screen.queryByText("Find events")).not.toBeInTheDocument();
   });
 });

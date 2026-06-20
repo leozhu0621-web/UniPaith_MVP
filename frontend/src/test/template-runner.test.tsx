@@ -75,6 +75,7 @@ const SAMPLE_TEMPLATE = {
       action_key: "generate_goal_stack",
       label: "Your stack",
       action_label: "Generate goal stack",
+      action_available: true,
     },
   ],
 };
@@ -107,6 +108,7 @@ async function advanceThroughPromptSteps() {
 
 describe("TemplateRunner", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(getChatTemplates).mockResolvedValue([SAMPLE_TEMPLATE]);
     vi.mocked(setEnrichValue).mockResolvedValue({});
     // Default: pending artifact (safe for tests that don't care about the specific result)
@@ -114,7 +116,7 @@ describe("TemplateRunner", () => {
       action_key: "generate_goal_stack",
       kind: "note",
       title: "Generate goal stack",
-      summary: "This is coming soon — your inputs are saved.",
+      summary: "Your profile needs a bit more information before we can generate a goal stack.",
       status: "pending",
     });
   });
@@ -211,8 +213,37 @@ describe("TemplateRunner", () => {
     expect(vi.mocked(dispatchTemplateAction)).toHaveBeenCalledWith("generate_goal_stack");
     // The artifact card title should be visible (it appears in the card header)
     expect(screen.getByText("Generate goal stack")).toBeInTheDocument();
-    // Pending artifact shows "Coming soon" badge (there may be one or more in the DOM)
-    expect(screen.getAllByText(/coming soon/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/needs a bit more information/i)).toBeInTheDocument();
+    expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
+  });
+
+  it("does not dispatch unavailable action steps", async () => {
+    vi.mocked(getChatTemplates).mockResolvedValue([
+      {
+        ...SAMPLE_TEMPLATE,
+        steps: [
+          {
+            step_order: 0,
+            step_type: "action" as const,
+            action_key: "find_events",
+            label: "Events",
+            action_label: "Find events",
+            action_available: false,
+            availability_reason: "This guided action is not enabled for release yet.",
+          },
+        ],
+      },
+    ]);
+
+    renderRunner();
+
+    await waitFor(
+      () => screen.getByText("This guided action is not enabled for release yet."),
+      { timeout: 3000 },
+    );
+    expect(vi.mocked(dispatchTemplateAction)).not.toHaveBeenCalled();
+    expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
   });
 
   it("renders a school_list artifact with items when status=ready", async () => {
@@ -239,6 +270,7 @@ describe("TemplateRunner", () => {
             action_key: "build_school_list",
             label: "School list",
             action_label: "Build school list",
+            action_available: true,
           },
         ],
       },

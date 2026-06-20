@@ -1,8 +1,10 @@
 """Chat sessions API — /students/me/chat/* (sessions data model + templates)."""
 
 import pytest
+from sqlalchemy import select
 
 from tests._uni_helpers import ensure_profile
+from unipaith.models.prompt_catalog import PromptCatalog
 
 BASE = "/api/v1/students/me/chat"
 
@@ -70,7 +72,40 @@ async def test_templates_prompt_steps_carry_descriptor(
                 assert step.get("action_label") is not None, (
                     f"action step {akey!r} in {tkey!r} missing action_label"
                 )
+                assert isinstance(step.get("action_available"), bool), (
+                    f"action step {akey!r} in {tkey!r} missing action availability"
+                )
+                if step.get("action_available") is False:
+                    assert step.get("availability_reason") is not None, (
+                        f"action step {akey!r} in {tkey!r} missing unavailable reason"
+                    )
     assert found_prompt, "No prompt steps found in any template"
+
+
+@pytest.mark.asyncio
+async def test_templates_use_runtime_prompt_catalog(student_client, db_session, mock_student_user):
+    """Template prompt descriptors come from prompt_catalog, not the seed constant."""
+    await ensure_profile(db_session, mock_student_user)
+    first = await student_client.get(f"{BASE}/templates")
+    assert first.status_code == 200, first.text
+
+    result = await db_session.execute(
+        select(PromptCatalog).where(PromptCatalog.key == "career_goal")
+    )
+    row = result.scalar_one()
+    row.question = "Which career direction should Uni plan around?"
+    await db_session.commit()
+
+    r = await student_client.get(f"{BASE}/templates")
+    assert r.status_code == 200, r.text
+    career_steps = [
+        step
+        for tmpl in r.json()
+        for step in tmpl["steps"]
+        if step.get("prompt_key") == "career_goal"
+    ]
+    assert career_steps
+    assert career_steps[0]["question"] == "Which career direction should Uni plan around?"
 
 
 @pytest.mark.asyncio
@@ -158,16 +193,13 @@ async def test_action_build_school_list_no_5xx(student_client, db_session, mock_
 
 
 @pytest.mark.asyncio
-async def test_action_pending_key_returns_pending(student_client, db_session, mock_student_user):
-    """Actions without a real service (e.g. find_events) return status=pending."""
+async def test_action_unavailable_key_returns_409(student_client, db_session, mock_student_user):
+    """Actions without a real service are unavailable rather than shown as stubs."""
     await ensure_profile(db_session, mock_student_user)
     r = await student_client.post(f"{BASE}/templates/action/find_events")
-    assert r.status_code == 200, r.text
-    body = r.json()
-    assert body["status"] == "pending"
-    assert body["kind"] == "note"
-    assert body["action_key"] == "find_events"
-    assert "coming soon" in (body.get("summary") or "").lower()
+    assert r.status_code == 409, r.text
+    assert "not enabled" in r.json()["detail"].lower()
+    assert "coming soon" not in r.text.lower()
 
 
 @pytest.mark.asyncio
