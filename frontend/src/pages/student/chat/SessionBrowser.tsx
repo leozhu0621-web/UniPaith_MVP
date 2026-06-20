@@ -37,7 +37,7 @@ import {
   Pencil,
   CheckCheck,
 } from "lucide-react";
-import type { FolderNode, ChatSession } from "../../../api/chatSessions";
+import type { FolderNode, ChatSession, ChatTreeResponse } from "../../../api/chatSessions";
 import {
   getChatTree,
   createSession,
@@ -46,6 +46,7 @@ import {
   createFolder,
   updateFolder,
   deleteFolder,
+  reorderSessions,
 } from "../../../api/chatSessions";
 
 // ── Query key ──────────────────────────────────────────────────────────────
@@ -160,6 +161,12 @@ function SessionRow({
   onRename,
   onPin,
   onDelete,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  dragging = false,
+  dropTarget = false,
 }: {
   session: ChatSession;
   isActive: boolean;
@@ -167,6 +174,14 @@ function SessionRow({
   onRename: (title: string) => void;
   onPin: () => void;
   onDelete: () => void;
+  // Drag-reorder (within a folder only). When onDragStart is set the row is
+  // draggable; pinned rows omit these and stay non-draggable.
+  onDragStart?: () => void;
+  onDragOver?: () => void;
+  onDrop?: () => void;
+  onDragEnd?: () => void;
+  dragging?: boolean;
+  dropTarget?: boolean;
 }) {
   const [menu, setMenu] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -194,7 +209,25 @@ function SessionRow({
 
   return (
     <div
-      draggable
+      draggable={!!onDragStart && !renaming}
+      onDragStart={onDragStart}
+      onDragOver={
+        onDragOver
+          ? (e) => {
+              e.preventDefault();
+              onDragOver();
+            }
+          : undefined
+      }
+      onDrop={
+        onDrop
+          ? (e) => {
+              e.preventDefault();
+              onDrop();
+            }
+          : undefined
+      }
+      onDragEnd={onDragEnd}
       role="option"
       aria-selected={isActive}
       onClick={() => !renaming && onSelect()}
@@ -202,12 +235,16 @@ function SessionRow({
         isActive
           ? "border-l-primary bg-[hsl(var(--primary)/0.12)] text-foreground font-semibold"
           : "border-l-border hover:bg-muted hover:text-foreground text-muted-foreground"
+      } ${dragging ? "opacity-40" : ""} ${
+        dropTarget ? "ring-2 ring-secondary ring-inset" : ""
       }`}
     >
-      {/* drag grip — fades in on hover */}
-      <span className="absolute left-1.5 top-0 bottom-0 flex items-center opacity-0 group-hover:opacity-50 transition-opacity text-muted-foreground">
-        <GripVertical size={13} />
-      </span>
+      {/* drag grip — fades in on hover (only when the row is reorderable) */}
+      {onDragStart && (
+        <span className="absolute left-1.5 top-0 bottom-0 flex items-center opacity-0 group-hover:opacity-50 transition-opacity text-muted-foreground cursor-grab active:cursor-grabbing">
+          <GripVertical size={13} />
+        </span>
+      )}
 
       {/* pinned indicator */}
       {session.pinned && (
@@ -265,6 +302,7 @@ function FolderBlock({
   onNewSessionHere,
   onRenameFolder,
   onDeleteFolder,
+  onReorder,
 }: {
   node: FolderNode;
   activeSessionId?: string | null;
@@ -275,12 +313,29 @@ function FolderBlock({
   onNewSessionHere: (folderId: string, topicKey: string | null) => void;
   onRenameFolder: (id: string, name: string) => void;
   onDeleteFolder: (id: string) => void;
+  /** Persist a new within-folder session order (auto-categorization still owns
+   *  which folder a session lives in — a session is never dragged across folders). */
+  onReorder: (folderId: string, orderedIds: string[]) => void;
 }) {
   const [open, setOpen] = useState(node.sessions.length > 0);
   const [menu, setMenu] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const isPreset = node.kind === "preset";
+
+  // Within-folder drag-reorder state (spec §3.3 — constrained to this folder).
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const dropOnto = (targetId: string) => {
+    const ids = node.sessions.map((s) => s.id);
+    const from = ids.indexOf(dragId ?? "");
+    const to = ids.indexOf(targetId);
+    setDragId(null);
+    setOverId(null);
+    if (from < 0 || to < 0 || from === to) return;
+    ids.splice(to, 0, ids.splice(from, 1)[0]);
+    onReorder(node.id, ids);
+  };
 
   const presetMenuItems: MenuItem[] = [
     {
@@ -398,6 +453,15 @@ function FolderBlock({
               onRename={(title) => onRenameSession(s.id, title)}
               onPin={() => onPinSession(s.id, !s.pinned)}
               onDelete={() => onDeleteSession(s.id)}
+              onDragStart={() => setDragId(s.id)}
+              onDragOver={() => setOverId(s.id)}
+              onDrop={() => dropOnto(s.id)}
+              onDragEnd={() => {
+                setDragId(null);
+                setOverId(null);
+              }}
+              dragging={dragId === s.id}
+              dropTarget={overId === s.id && dragId !== null && dragId !== s.id}
             />
           ))}
         </div>
@@ -457,6 +521,37 @@ export default function SessionBrowser({
     mutationFn: deleteFolder,
     onSuccess: invalidate,
   });
+
+  // Within-folder reorder — optimistic (reorder the cache immediately) so the
+  // drop feels instant, then reconcile with the server.
+  const reorderMut = useMutation({
+    mutationFn: ({ folderId, orderedIds }: { folderId: string; orderedIds: string[] }) =>
+      reorderSessions(folderId, orderedIds),
+    onMutate: ({ folderId, orderedIds }) => {
+      qc.setQueryData<ChatTreeResponse>(CHAT_TREE_KEY, (old) =>
+        old
+          ? {
+              folders: old.folders.map((f) =>
+                f.id === folderId
+                  ? {
+                      ...f,
+                      sessions: orderedIds
+                        .map((id, i) => {
+                          const s = f.sessions.find((x) => x.id === id);
+                          return s ? { ...s, sort_order: i } : null;
+                        })
+                        .filter((s): s is ChatSession => s !== null),
+                    }
+                  : f,
+              ),
+            }
+          : old,
+      );
+    },
+    onSettled: invalidate,
+  });
+  const onReorder = (folderId: string, orderedIds: string[]) =>
+    reorderMut.mutate({ folderId, orderedIds });
 
   // ── derived data ─────────────────────────────────────────────────────────
   const folders = data?.folders ?? [];
@@ -629,6 +724,7 @@ export default function SessionBrowser({
                   updateFolderMut.mutate({ id, patch: { name } })
                 }
                 onDeleteFolder={(id) => deleteFolderMut.mutate(id)}
+                onReorder={onReorder}
               />
             ))}
           </section>
@@ -664,6 +760,7 @@ export default function SessionBrowser({
                     onNewSessionHere={(_fid, topicKey) => handleNewSession(topicKey)}
                     onRenameFolder={() => {}} // preset: no rename
                     onDeleteFolder={() => {}} // preset: no delete
+                    onReorder={onReorder}
                   />
                 ))}
               </section>
