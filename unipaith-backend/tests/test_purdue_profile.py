@@ -107,9 +107,12 @@ def test_catalog_breadth_and_shape():
     assert len(p.SCHOOLS) == 10
     # Breadth is asserted by per-row REALNESS, NOT a frozen padded count: when a
     # de-fabrication drops CIP-rollup / unverifiable rows the real catalog legitimately
-    # SHRINKS (enrich-profile miss #2). The bar is a large, real, peer-leading catalog
-    # (cf. MIT's 65) — every row a single real, distinctly-named degree.
-    assert len(p.PROGRAMS) >= 250
+    # SHRINKS (enrich-profile miss #2). The full rebuild (purdue_catalog.CATALOG) dropped
+    # the 95 CIP×award-level certificate mints + ~16 CIP-rollup/duplicate degree rows,
+    # shrinking the catalog to Purdue's real degree programs. The bar is a large, real,
+    # peer-leading catalog (cf. MIT's 65) — every row a single real, distinctly-named
+    # degree, enforced by the realness gates below.
+    assert len(p.PROGRAMS) >= 150
     assert len(set(p.PROGRAM_SLUGS)) == len(p.PROGRAM_SLUGS)
     assert p.RANKING_DATA["ownership_type"] == "public"
     assert "public land-grant research university in west lafayette" in p.DESCRIPTION.lower()
