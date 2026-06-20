@@ -9,7 +9,7 @@ concentration splits into ``tracks`` on ``uw-education-phd``, and idempotent
 ``backfill_program_preferences``. Gold MIT = 0% frame-stripped shared body.
 
 Revision ID: uwpercred1
-Revises: headfix1
+Revises: uiucbslas1
 Create Date: 2026-06-20
 """
 
@@ -24,7 +24,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "uwpercred1"
-down_revision = "headfix1"
+down_revision = "uiucbslas1"
 branch_labels = None
 depends_on = None
 
