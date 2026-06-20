@@ -10,6 +10,15 @@
 
 **Spec:** `docs/superpowers/specs/2026-06-20-reference-institutions-ingestion-design.md`
 
+> **AS-BUILT REVISION (2026-06-20):** discovered current `main` already has the Spec 60 reference
+> layer (`models/reference.py`, `ref_*` tables, `ProvenanceMixin`). So the as-built deviates from the
+> from-scratch tasks below: `RefInstitution` was **added to `models/reference.py`** (not a new file),
+> follows the **`UUIDPrimaryKeyMixin + ProvenanceMixin`** pattern (UUID PK, `unitid` unique, `source='seed'`
+> — *not* an Integer PK with bespoke provenance columns), and the migration is **hand-written** (the dev
+> DB is `create_all`-polluted so autogenerate is unusable) and also **merges main's pre-existing dual head**
+> (`aivisamerge1` + `utaustpercrd1`). The Uni tool stays deferred (slice 1b). Helper/service/API/test
+> shapes match the tasks below; the model + migration are the deviations. See the spec's REVISION section.
+
 **Env note (Pre-Work):** the run commands below assume `DATABASE_URL` is exported to the dev Postgres string documented in CLAUDE.md (Testing → "Required env vars"). Before coding, confirm Postgres is up and the suite is green: `make dev-db`, export `DATABASE_URL`, then `cd unipaith-backend && PYTHONPATH=src AI_MOCK_MODE=true .venv/bin/pytest tests/test_health.py -q`. Current single alembic head: `s56a1b2c3d4e`.
 
 ---
