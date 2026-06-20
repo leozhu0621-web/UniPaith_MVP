@@ -5,7 +5,6 @@
  */
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import clsx from 'clsx'
 import { ArrowUp, Paperclip } from 'lucide-react'
 
 import {
@@ -30,6 +29,7 @@ import type {
 import MaterialUpload from '../../../components/student/MaterialUpload'
 import EnrichWidget from '../../../components/student/EnrichWidget'
 import AnswerChoices from './AnswerChoices'
+import UniOrb, { type OrbState } from './UniOrb'
 import FirstLookCard from './FirstLookCard'
 import NoticedCard from './NoticedCard'
 import { attachRefs, noticedItemsFromSignals } from './noticed'
@@ -63,23 +63,31 @@ const QUICK_REPLIES = [
   'You ask me',
 ] as const
 
-function UniBubble({ message }: { message: DiscoveryMessage }) {
+function UniBubble({
+  message,
+  orbState = 'idle',
+}: {
+  message: DiscoveryMessage
+  orbState?: OrbState
+}) {
   const isStudent = message.role === 'student'
-  return (
-    <div className={clsx('flex gap-2.5', isStudent ? 'justify-end' : 'justify-start')}>
-      {!isStudent && (
-        <div className="h-7 w-7 rounded-full bg-secondary text-white flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold">
-          U
+
+  // Student — a soft cobalt-tint bubble, right-aligned (never dark/black). (§5)
+  if (isStudent) {
+    return (
+      <div className="flex justify-end">
+        <div className="rounded-2xl rounded-br-sm bg-secondary/10 border border-secondary/15 px-3.5 py-2 text-sm whitespace-pre-wrap break-words max-w-[80%] leading-relaxed text-foreground">
+          {message.content}
         </div>
-      )}
-      <div
-        className={clsx(
-          'rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words max-w-[80%] leading-relaxed',
-          isStudent
-            ? 'bg-secondary text-white rounded-br-sm'
-            : 'bg-card border border-border text-foreground rounded-bl-sm',
-        )}
-      >
+      </div>
+    )
+  }
+
+  // Advisor — the orb + the message as plain text (no bubble), counselor voice. (§5)
+  return (
+    <div className="flex gap-2.5 justify-start">
+      <UniOrb state={orbState} className="mt-0.5" />
+      <div className="pt-0.5 text-sm whitespace-pre-wrap break-words max-w-[80%] leading-relaxed text-foreground">
         {message.content}
       </div>
     </div>
@@ -456,10 +464,8 @@ export default function UniConversation({
           // (reduced motion / no ReadableStream) or it failed. Normally Uni's
           // dynamic opener streams in instead (she speaks first).
           <div className="flex gap-2.5 py-6">
-            <div className="h-7 w-7 rounded-full bg-secondary text-white flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold">
-              U
-            </div>
-            <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-sm leading-relaxed text-foreground max-w-[80%]">
+            <UniOrb className="mt-0.5" />
+            <div className="pt-0.5 text-sm leading-relaxed text-foreground max-w-[80%]">
               {firstName ? `Hi ${firstName} — ` : 'Hi — '}I'm Uni, your counselor for this. My
               job is to help you find where you'll genuinely thrive, not just where you can get
               in. There are no wrong answers here; we're just getting to know you.
@@ -499,10 +505,8 @@ export default function UniConversation({
         {streaming && streamStudent && <UniBubble message={streamStudent} />}
         {streaming && streamText && (
           <div className="flex justify-start gap-2.5">
-            <div className="h-7 w-7 rounded-full bg-secondary text-white flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold">
-              U
-            </div>
-            <div className="rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words max-w-[80%] leading-relaxed bg-card border border-border text-foreground rounded-bl-sm">
+            <UniOrb state="responding" className="mt-0.5" />
+            <div className="pt-0.5 text-sm whitespace-pre-wrap break-words max-w-[80%] leading-relaxed text-foreground">
               {streamText}
               <span className="ml-0.5 inline-block h-3.5 w-px align-middle bg-secondary motion-safe:animate-pulse" />
             </div>
@@ -512,23 +516,19 @@ export default function UniConversation({
         {(turnMut.isPending ||
           (streaming && !streamText) ||
           (isEmpty && canStream && !openerFailed && !streamText)) && (
-          <div className="flex justify-start gap-2.5">
-            <div className="h-7 w-7 rounded-full bg-secondary text-white flex items-center justify-center shrink-0 text-xs font-semibold">
-              U
-            </div>
-            <div className="rounded-2xl px-3.5 py-2 bg-card border border-border rounded-bl-sm">
-              <span className="inline-flex gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse" />
-                <span
-                  className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse"
-                  style={{ animationDelay: '150ms' }}
-                />
-                <span
-                  className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse"
-                  style={{ animationDelay: '300ms' }}
-                />
-              </span>
-            </div>
+          <div className="flex items-center justify-start gap-2.5">
+            <UniOrb state="thinking" />
+            <span className="inline-flex gap-1 pt-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse" />
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse"
+                style={{ animationDelay: '150ms' }}
+              />
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-pulse"
+                style={{ animationDelay: '300ms' }}
+              />
+            </span>
           </div>
         )}
 
