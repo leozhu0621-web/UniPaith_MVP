@@ -21,6 +21,7 @@ import MySpaceShell from './pages/student/myspace/MySpaceShell'
 // Redirect components — eager (tiny, and a redirect must never wait on a chunk).
 import { LegacyApplicantRedirect, LegacyPipelineRedirect } from './pages/institution/LegacyPipelineRedirect'
 import { POSTS_TAB_REDIRECTS } from './utils/information-architecture'
+import { resolveManageRedirect } from './lib/student-routes'
 
 // Route error element — eager so it can render even when a page chunk fails to load.
 import RouteErrorPage from './pages/system/RouteErrorPage'
@@ -132,20 +133,7 @@ function LegacyMessageRedirect() {
 // their remaining params (?thread, ?program, ?view…).
 function ManageRedirect() {
   const [params] = useSearchParams()
-  const tab = params.get('tab')
-  const rest = new URLSearchParams(params)
-  rest.delete('tab')
-  const TARGETS: Record<string, string> = {
-    applications: '/s/applications',
-    calendar: '/s/calendar',
-    messages: '/s/messages',
-    prompts: '/s/prep?tab=prompts',
-    workshops: '/s/prep?tab=workshops',
-  }
-  const base = tab ? TARGETS[tab] ?? '/s/space' : '/s/space'
-  const qs = rest.toString()
-  const sep = base.includes('?') ? '&' : '?'
-  return <Navigate to={qs ? `${base}${sep}${qs}` : base} replace />
+  return <Navigate to={resolveManageRedirect(params)} replace />
 }
 
 // /s/posts retired (Spec 2026-06-12) — Connect merged into the Discover hub.

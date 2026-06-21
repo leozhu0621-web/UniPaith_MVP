@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from httpx import AsyncClient
@@ -103,6 +104,14 @@ async def test_my_space_overview_composes_release_ready_tasks(
     rec_task = next(t for t in data["tasks"] if t["key"].startswith("recommender:"))
     assert rec_task["owner"] == "recommender"
     assert rec_task["urgency"] == "focus_now"
+    strategy_task = tasks["strategy:create"]
+    strategy_route = urlsplit(strategy_task["cta_route"])
+    strategy_params = parse_qs(strategy_route.query)
+    assert strategy_route.path == "/s"
+    assert strategy_params["intent"] == ["strategy"]
+    assert strategy_params["source_task"] == ["strategy:create"]
+    assert strategy_params["return_to"] == ["/s/space"]
+    assert strategy_params["artifact_destination"] == ["strategy_draft"]
     assert data["import_status"]["route"] == "/s/import"
     assert all(t["provenance"] for t in data["tasks"])
 

@@ -168,11 +168,48 @@ describe('MySpaceHomePage', () => {
   it('persists dismiss state for computed tasks', async () => {
     renderHome()
 
-    const dismiss = await screen.findAllByText('Dismiss')
-    fireEvent.click(dismiss[0])
+    fireEvent.click(await screen.findByLabelText('Dismiss Complete MS Computer Science application'))
 
     await waitFor(() => {
       expect(patchMySpaceTask).toHaveBeenCalledWith('application:app-1:missing', { dismissed: true })
+    })
+  })
+
+  it('tracks Uni handoffs with decoded contract fields', async () => {
+    vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
+      ...overview,
+      tasks: [
+        {
+          key: 'strategy:create',
+          title: 'Create your admissions strategy',
+          description: 'Turn profile signals into a career, degree, academic, financial, and geographic plan.',
+          owner: 'student',
+          urgency: 'gentle_attention',
+          category: 'strategy',
+          cta_label: 'Draft with Uni',
+          cta_route: '/s?intent=strategy&source_task=strategy%3Acreate&return_to=%2Fs%2Fspace&artifact_destination=strategy_draft',
+          blocker: 'No active strategy',
+          missing_field: null,
+          due_at: null,
+          provenance: [{ source: 'strategy', label: 'No active living document', href: null, confidence: 80, updated_at: null }],
+          dismissed: false,
+          snoozed_until: null,
+          active: true,
+          dismissible: true,
+        },
+      ],
+      strategy: null,
+    })
+
+    renderHome()
+    fireEvent.click(await screen.findByLabelText('Draft with Uni: Create your admissions strategy'))
+
+    expect(track).toHaveBeenCalledWith('uni_chat_handoff_started', {
+      route: '/s?intent=strategy&source_task=strategy%3Acreate&return_to=%2Fs%2Fspace&artifact_destination=strategy_draft',
+      intent: 'strategy',
+      source_task: 'strategy:create',
+      return_to: '/s/space',
+      artifact_destination: 'strategy_draft',
     })
   })
 })

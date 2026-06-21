@@ -60,8 +60,18 @@ function ownerLabel(owner: string | null | undefined) {
   return 'tracked'
 }
 
-function isUniHandoff(route: string) {
-  return route.startsWith('/s?') && route.includes('intent=')
+function uniHandoffProps(route: string) {
+  if (!route.startsWith('/s?')) return null
+  const params = new URLSearchParams(route.slice(route.indexOf('?') + 1))
+  const intent = params.get('intent')
+  if (!intent) return null
+  return {
+    route,
+    intent,
+    source_task: params.get('source_task'),
+    return_to: params.get('return_to'),
+    artifact_destination: params.get('artifact_destination'),
+  }
 }
 
 export default function MySpaceHomePage() {
@@ -99,7 +109,8 @@ export default function MySpaceHomePage() {
 
   const go = (route: string, event: string, props: Record<string, string | number | boolean | null | undefined> = {}) => {
     track(event, { route, ...props })
-    if (isUniHandoff(route)) track('uni_chat_handoff_started', { route })
+    const handoff = uniHandoffProps(route)
+    if (handoff) track('uni_chat_handoff_started', handoff)
     navigate(route)
   }
 
@@ -169,6 +180,7 @@ export default function MySpaceHomePage() {
               emptyTitle="Evidence is clear for now."
               emptyText="New gaps appear when Uni extracts uncertain data or an application needs more evidence."
               emptyRoute="/s/import"
+              emptyCtaLabel="Review imports"
               onGo={(task) => go(task.cta_route, 'my_space_task_clicked', { task_key: task.key, category: task.category })}
               onEmpty={() => go('/s/import', 'my_space_empty_cta_clicked', { module: 'evidence_gaps' })}
               onDismiss={dismissTask}
@@ -182,6 +194,7 @@ export default function MySpaceHomePage() {
               emptyTitle="No near deadlines."
               emptyText="Calendar items appear from applications, interviews, recommenders, offers, and your reminders."
               emptyRoute="/s/calendar"
+              emptyCtaLabel="Open calendar"
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'deadlines', key: item.key })}
               onEmpty={() => go('/s/calendar', 'my_space_empty_cta_clicked', { module: 'deadlines' })}
             />
@@ -192,6 +205,7 @@ export default function MySpaceHomePage() {
               emptyTitle="No one is blocking you."
               emptyText="Recommender requests and admissions-office replies will appear here."
               emptyRoute="/s/prep?tab=recommenders"
+              emptyCtaLabel="Review recommenders"
               onGo={(item) => go(item.route, item.owner === 'recommender' ? 'recommender_nudge_clicked' : 'my_space_task_clicked', { module: 'waiting_on', key: item.key })}
               onEmpty={() => go('/s/prep?tab=recommenders', 'my_space_empty_cta_clicked', { module: 'waiting_on' })}
             />
@@ -202,6 +216,7 @@ export default function MySpaceHomePage() {
               emptyTitle="No workshop feedback yet."
               emptyText="Use Prep to get feedback on essays, interviews, and test plans."
               emptyRoute="/s/prep?tab=workshops"
+              emptyCtaLabel="Open Prep"
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'feedback', key: item.key })}
               onEmpty={() => go('/s/prep?tab=workshops', 'my_space_empty_cta_clicked', { module: 'feedback' })}
             />
@@ -217,6 +232,7 @@ export default function MySpaceHomePage() {
               emptyTitle="No active offers."
               emptyText="Admits, deposits, conditions, and external offers will become compare rows here."
               emptyRoute="/s/applications?tab=offers"
+              emptyCtaLabel="Compare offers"
               onGo={(item) => go(item.route, 'offer_compare_opened', { key: item.key })}
               onEmpty={() => go('/s/applications?tab=offers', 'my_space_empty_cta_clicked', { module: 'offers' })}
             />
@@ -230,6 +246,7 @@ export default function MySpaceHomePage() {
               emptyTitle="No saved programs yet."
               emptyText="Save programs from Discover to build a shortlist, compare fit, and start applications."
               emptyRoute="/s/explore"
+              emptyCtaLabel="Open Discover"
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'saved_targets', key: item.key })}
               onEmpty={() => go('/s/explore', 'my_space_empty_cta_clicked', { module: 'saved_targets' })}
             />
@@ -240,6 +257,7 @@ export default function MySpaceHomePage() {
               emptyTitle="No recent movement."
               emptyText="Updates appear after imports, saved programs, application edits, feedback, and offer changes."
               emptyRoute="/s"
+              emptyCtaLabel="Open Uni"
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'recent_changes', key: item.key })}
               onEmpty={() => go('/s', 'my_space_empty_cta_clicked', { module: 'recent_changes' })}
             />
@@ -312,6 +330,7 @@ function FocusPanel({
           <button
             type="button"
             onClick={() => onGo(task)}
+            aria-label={`${task.cta_label}: ${task.title}`}
             className="ui-btn inline-flex items-center gap-1.5 rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground"
           >
             {task.cta_label} <ArrowRight size={14} />
@@ -322,6 +341,7 @@ function FocusPanel({
                 type="button"
                 disabled={busy}
                 onClick={() => onSnooze(task)}
+                aria-label={`Snooze ${task.title}`}
                 className="ui-btn rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
               >
                 Snooze
@@ -330,6 +350,7 @@ function FocusPanel({
                 type="button"
                 disabled={busy}
                 onClick={() => onDismiss(task)}
+                aria-label={`Dismiss ${task.title}`}
                 className="ui-btn rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
               >
                 Dismiss
@@ -375,7 +396,14 @@ function ReadinessLedger({ readiness, onGo }: { readiness: MySpaceReadiness[]; o
               <span className="text-sm font-medium text-foreground">{row.label}</span>
               <Badge variant={readinessTone(row.status)}>{row.status.replace('_', ' ')}</Badge>
             </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+            <div
+              role="progressbar"
+              aria-label={`${row.label} readiness`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={row.pct ?? 0}
+              className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
+            >
               <div className="h-full rounded-full bg-secondary" style={{ width: `${row.pct ?? 0}%` }} />
             </div>
             <p className="mt-2 text-xs text-muted-foreground">{row.detail}</p>
@@ -423,6 +451,7 @@ function TaskModule({
   emptyTitle,
   emptyText,
   emptyRoute,
+  emptyCtaLabel,
   onGo,
   onEmpty,
   onDismiss,
@@ -434,6 +463,7 @@ function TaskModule({
   emptyTitle: string
   emptyText: string
   emptyRoute: string
+  emptyCtaLabel: string
   onGo: (task: MySpaceTask) => void
   onEmpty: () => void
   onDismiss: (task: MySpaceTask) => void
@@ -444,7 +474,7 @@ function TaskModule({
     <Card pad={false} className="p-5">
       <SectionHeader count={tasks.length}>{title}</SectionHeader>
       {tasks.length === 0 ? (
-        <EmptyAction title={emptyTitle} text={emptyText} route={emptyRoute} onClick={onEmpty} />
+        <EmptyAction title={emptyTitle} text={emptyText} route={emptyRoute} ctaLabel={emptyCtaLabel} onClick={onEmpty} />
       ) : (
         <div className="divide-y divide-border">
           {tasks.slice(0, 5).map(task => (
@@ -472,7 +502,12 @@ function TaskRow({
   const due = formatDate(task.due_at)
   return (
     <div className="flex items-start gap-3 py-3">
-      <button type="button" onClick={() => onGo(task)} className="min-w-0 flex-1 text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+      <button
+        type="button"
+        onClick={() => onGo(task)}
+        aria-label={`${task.cta_label}: ${task.title}`}
+        className="min-w-0 flex-1 text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+      >
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-foreground">{task.title}</span>
           <Badge variant={urgencyTone[task.urgency]}>{urgencyLabel[task.urgency]}</Badge>
@@ -484,8 +519,8 @@ function TaskRow({
       </button>
       {task.dismissible && (
         <div className="flex shrink-0 gap-1">
-          <button type="button" disabled={busy} onClick={() => onSnooze(task)} className="ui-btn rounded border border-border px-2 py-1 text-xs hover:bg-muted disabled:opacity-50">Snooze</button>
-          <button type="button" disabled={busy} onClick={() => onDismiss(task)} className="ui-btn rounded border border-border px-2 py-1 text-xs hover:bg-muted disabled:opacity-50">Dismiss</button>
+          <button type="button" disabled={busy} onClick={() => onSnooze(task)} aria-label={`Snooze ${task.title}`} className="ui-btn rounded border border-border px-2 py-1 text-xs hover:bg-muted disabled:opacity-50">Snooze</button>
+          <button type="button" disabled={busy} onClick={() => onDismiss(task)} aria-label={`Dismiss ${task.title}`} className="ui-btn rounded border border-border px-2 py-1 text-xs hover:bg-muted disabled:opacity-50">Dismiss</button>
         </div>
       )}
     </div>
@@ -499,6 +534,7 @@ function ItemModule({
   emptyTitle,
   emptyText,
   emptyRoute,
+  emptyCtaLabel,
   onGo,
   onEmpty,
 }: {
@@ -508,6 +544,7 @@ function ItemModule({
   emptyTitle: string
   emptyText: string
   emptyRoute: string
+  emptyCtaLabel: string
   onGo: (item: MySpaceModuleItem) => void
   onEmpty: () => void
 }) {
@@ -515,7 +552,7 @@ function ItemModule({
     <Card pad={false} className="p-5">
       <SectionHeader count={items.length}>{title}</SectionHeader>
       {items.length === 0 ? (
-        <EmptyAction title={emptyTitle} text={emptyText} route={emptyRoute} onClick={onEmpty} />
+        <EmptyAction title={emptyTitle} text={emptyText} route={emptyRoute} ctaLabel={emptyCtaLabel} onClick={onEmpty} />
       ) : (
         <div className="divide-y divide-border">
           {items.slice(0, 5).map(item => (
@@ -542,7 +579,19 @@ function ItemModule({
   )
 }
 
-function EmptyAction({ title, text, route, onClick }: { title: string; text: string; route: string; onClick: () => void }) {
+function EmptyAction({
+  title,
+  text,
+  route,
+  ctaLabel,
+  onClick,
+}: {
+  title: string
+  text: string
+  route: string
+  ctaLabel: string
+  onClick: () => void
+}) {
   return (
     <div className="rounded-md border border-dashed border-border px-3 py-4">
       <p className="text-sm font-medium text-foreground">{title}</p>
@@ -550,9 +599,10 @@ function EmptyAction({ title, text, route, onClick }: { title: string; text: str
       <button
         type="button"
         onClick={onClick}
+        aria-label={`${ctaLabel}: ${title}`}
         className="ui-btn mt-3 inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
       >
-        Open <span className="sr-only">{route}</span><ArrowRight size={12} />
+        {ctaLabel} <span className="sr-only">{route}</span><ArrowRight size={12} />
       </button>
     </div>
   )
@@ -580,6 +630,7 @@ function StrategyCard({ strategy, onGo }: { strategy: MySpaceModuleItem | null; 
           title="No active strategy yet."
           text="Create the career, degree, academic, financial, and geographic plan before applications branch too far."
           route="/s/profile?tab=strategy"
+          ctaLabel="Create strategy"
           onClick={() => onGo('/s/profile?tab=strategy')}
         />
       )}
@@ -593,7 +644,13 @@ function PrepCard({ readiness, onGo }: { readiness: MySpaceReadiness[]; onGo: (r
       <SectionHeader>Prep readiness</SectionHeader>
       <div className="space-y-3">
         {readiness.map(row => (
-          <button key={row.key} type="button" onClick={() => onGo(row)} className="w-full rounded-md py-2 text-left hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+          <button
+            key={row.key}
+            type="button"
+            onClick={() => onGo(row)}
+            aria-label={`Open ${row.label}`}
+            className="w-full rounded-md py-2 text-left hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
             <div className="flex items-center justify-between gap-3">
               <span className="text-sm font-medium text-foreground">{row.label}</span>
               <Badge variant={readinessTone(row.status)}>{row.pct ?? 0}%</Badge>
