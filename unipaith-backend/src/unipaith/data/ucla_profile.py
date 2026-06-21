@@ -3881,12 +3881,11 @@ def _website_for(spec: dict) -> str:
 
 
 # ── Costs ──────────────────────────────────────────────────────────────────
-_UNDERGRAD_COA = 38614
+# UCLA undergraduate total cost of attendance, CA resident living on campus, 2024-25
+# ($42,639 = tuition/fees $15,202 + housing, food, books, transit) — UCLA Financial Aid.
+_UNDERGRAD_COA = 42639
+# Average net price after grant aid (College Scorecard, UNITID 110662, latest reported year).
 _AVG_NET_PRICE = 12548
-_COST_SRC = "U.S. Dept. of Education — College Scorecard (UCLA, UNITID 110662)"
-_COST_SRC_URL = (
-    "https://collegescorecard.ed.gov/school/?110662-University-of-California-Los-Angeles"
-)
 
 # Matcher-core budget-fit signal (enrich-profile §"Also enrich for the MATCH"): tuition is
 # institution-published, so a whole-catalog null is matcher STARVATION, not an honest omission.
@@ -3924,13 +3923,14 @@ def _undergrad_cost() -> dict:
         },
         "funded": False,
         "note": (
-            "UCLA's published 2024-25 undergraduate University Fees (tuition + campus-based fees) "
-            "are about $15,202 for California residents; nonresidents pay an additional nonresident "
-            "supplemental tuition of $34,200 (about $49,402 total). The full cost of attendance is "
-            "about $38,614 and the average net price after grant aid is about $12,548 (College "
-            "Scorecard, UNITID 110662). Through the UC Blue and Gold Opportunity Plan, UCLA covers "
-            "system-wide tuition and fees for eligible California families below a published income "
-            "threshold."
+            "UCLA's published 2024-25 undergraduate University Fees (UC systemwide tuition plus "
+            "campus-based fees) are about $15,202 for California residents; nonresidents pay an "
+            "additional nonresident supplemental tuition of $34,200 (about $49,402 total). The "
+            "2024-25 total cost of attendance for a California resident living on campus is about "
+            "$42,639 (UCLA Financial Aid); the average net price after grant aid is about $12,548 "
+            "(College Scorecard, UNITID 110662). Through the UC Blue and Gold Opportunity Plan, "
+            "UCLA covers system-wide tuition and fees for eligible California families below a "
+            "published income threshold."
         ),
         "source": _UG_COST_SRC,
         "source_url": _UG_COST_SRC_URL,
@@ -3998,6 +3998,23 @@ _PROFESSIONAL_MASTER_RE = re.compile(
 
 def _is_professional_master(spec: dict) -> bool:
     return bool(_PROFESSIONAL_MASTER_RE.search(spec.get("program_name") or ""))
+
+
+# Self-supporting master's degrees bill on a distinct (often per-course) schedule, NOT the
+# academic systemwide graduate rate — UCLA's online MSOL tracks ($4,400/course) and named
+# self-supporting on-campus degrees (Quantum Science & Technology, Social Science, Data Science
+# in Biomedicine). Stamping the $21,115 academic rate on these would be a wrong fact, so they
+# are omitted-with-reason like the professional master's (Codex review on PR #1027).
+_SELF_SUPPORTING_MASTER_RE = re.compile(
+    r"Master of Quantum|Master of Social Science|Data Science in Biomedicine",
+    re.I,
+)
+
+
+def _is_self_supporting_master(spec: dict) -> bool:
+    return spec.get("delivery_format") == "online" or bool(
+        _SELF_SUPPORTING_MASTER_RE.search(spec.get("program_name") or "")
+    )
 
 
 def _grad_cost_fallback(spec: dict) -> dict:
@@ -4460,8 +4477,17 @@ def _cost_for(spec: dict) -> tuple[int | None, dict]:
     if dt == "bachelors":
         return _TUITION_UG_IN_STATE, _undergrad_cost()
     if dt in ("phd", "doctoral"):
-        return 0, _phd_funded_cost()
-    if dt == "certificate" or (dt == "masters" and not _is_professional_master(spec)):
+        # Only research Doctor of Philosophy degrees carry the standard funded tuition
+        # remission. Professional / self-supporting doctorates encoded as "phd" — Ed.D.,
+        # S.J.D., D.Env., D.M.A. — publish distinct, often nonzero schedules and are
+        # omitted-with-reason rather than zeroed (Codex review on PR #1027).
+        name = spec.get("program_name") or ""
+        if name.startswith("Doctor of Philosophy") or "(Ph.D.)" in name:
+            return 0, _phd_funded_cost()
+        return None, _grad_cost_fallback(spec)
+    if dt == "masters" and not _is_professional_master(spec) and not _is_self_supporting_master(spec):
+        return _TUITION_GRAD, _grad_academic_cost()
+    if dt == "certificate" and spec.get("delivery_format") != "online":
         return _TUITION_GRAD, _grad_academic_cost()
     return None, _grad_cost_fallback(spec)
 
