@@ -244,9 +244,9 @@ export default function SavedListPage() {
       onSaveTags={tags => patchMut.mutate({ programId: sp.program_id, body: { tags } })}
       onView={() => navigate(`/s/programs/${sp.program_id}`)}
       tagSuggestions={allTags}
-      priorityPending={patchMut.isPending}
-      startAppPending={startAppMut.isPending}
-      removePending={removeMut.isPending}
+      priorityPending={patchMut.isPending && patchMut.variables?.programId === sp.program_id}
+      startAppPending={startAppMut.isPending && startAppMut.variables === sp.program_id}
+      removePending={removeMut.isPending && removeMut.variables === sp.program_id}
     />
   )
 
@@ -492,7 +492,7 @@ export default function SavedListPage() {
       {tab === 'programs' && compareStore.items.length >= 1 && (
         <div className="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] lg:bottom-0 z-30 flex justify-center px-4 pb-3 pointer-events-none">
           <div className="pointer-events-auto bg-card border border-border elev-raised rounded-xl px-4 py-3 flex items-center gap-3 max-w-lg w-full">
-            <span className="text-xs text-muted-foreground flex-1">
+            <span role="status" aria-live="polite" className="text-xs text-muted-foreground flex-1">
               {compareStore.items.length} selected for compare
             </span>
             <Button
