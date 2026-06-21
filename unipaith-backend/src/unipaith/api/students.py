@@ -990,6 +990,32 @@ async def _invalidate_matches(db: AsyncSession, user_id: UUID) -> None:
     await invalidate_matches_for_user(db, user_id)
 
 
+async def _reemit_feature_vector_if_stale(db: AsyncSession, student_id: UUID) -> None:
+    """Re-derive the student's feature vector from the structured tables when their
+    matches are stale (a profile edit flagged them) and they're matchable. Best-
+    effort + read-time (no edit-path latency), fires once per edit (the recompute it
+    precedes clears staleness). No-op when nothing changed. persist_features upserts
+    + bumps profile_version, so the rationale cache also invalidates."""
+    if not await _has_stale_matches(db, student_id):
+        return
+    if not await _can_match(db, student_id):
+        return
+    try:
+        from unipaith.ai.artifacts import snapshot_from_structured_tables
+        from unipaith.ai.feature_emitter import get_feature_emitter, persist_features
+
+        snapshot = await snapshot_from_structured_tables(db, student_id)
+        features = await get_feature_emitter().emit(snapshot=snapshot, student_id=student_id, db=db)
+        if features.is_valid():
+            await persist_features(db=db, student_id=student_id, features=features)
+    except Exception:  # pragma: no cover — degraded path; keep serving the old vector
+        import logging
+
+        logging.getLogger(__name__).exception(
+            "reemit_feature_vector_if_stale failed for student=%s", student_id
+        )
+
+
 async def _has_stale_matches(db: AsyncSession, student_id: UUID) -> bool:
     """True when the student has at least one match row marked stale by a profile
     change — the cheap EXISTS gate for the lazy auto-refresh on read."""
@@ -1037,6 +1063,13 @@ async def _recompute_catalog_matches(db: AsyncSession, student_id: UUID) -> None
     from unipaith.services.match_banding import weights_from_preferences
     from unipaith.services.match_service import MatchService
     from unipaith.services.program_features import program_row_from_orm
+
+    # Re-derive the feature vector from the structured tables when the student's
+    # matches are stale (a profile/goals/needs/strategy edit flagged them) — so we
+    # score against the CURRENT profile. invalidate_for_profile_change only bumps the
+    # vector's version, not its content, so without this a recompute scores against a
+    # FROZEN vector and edits never change matches.
+    await _reemit_feature_vector_if_stale(db, student_id)
 
     pref = await _svc(db).get_preferences(student_id)
     weights = weights_from_preferences(pref)
