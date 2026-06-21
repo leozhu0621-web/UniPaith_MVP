@@ -3,19 +3,21 @@
  *
  * The white-paper model: a strategy isn't just an angle, it's a balanced LIST
  * of programs. Each row shows two SEPARATE signals — Fitness (how well the
- * program suits you, `fitness_score`) and Odds (how likely you are to get in,
- * `confidence_score` as the admission-likelihood proxy). Keeping them apart is
+ * program suits you, `fitness_score`) and Odds (the admission band, `band_label`)
+ * — plus the same one-line counselor read Discover shows (`matchStoryline`, #969),
+ * so a school reads identically on both surfaces. Keeping fit and odds apart is
  * the point: a reach can still be an excellent fit.
  *
  * Reads the same `getMatches()` (`['matches']`) the Discover hub uses, so the
  * list here always lines up with the full matches view it links to. No bars,
- * no tables — just plain cards with word tags. Self-hides to a calm empty line
- * when there are no matches yet.
+ * no tables — just plain cards with word tags + the storyline. Self-hides to a
+ * calm empty line when there are no matches yet.
  */
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
 import { getMatches } from '../../../../api/matching'
+import { matchStoryline } from '../../match/matchStoryline'
 import type { MatchResultDual } from '../../../../types'
 import { fitWord, oddsWord } from './scoreWords'
 
@@ -54,7 +56,11 @@ function WordTag({
 function SchoolRow({ match }: { match: MatchResultDual }) {
   const fit = fitWord(match.fitness_score)
   const odds = oddsWord(match.band_label)
-  const reason = matchReason(match)
+  // The same plain-language counselor read Discover shows (#969). It encodes fit
+  // vs odds in prose; fall back to any stored rationale when no band is served.
+  const fitness = Number(match.fitness_score)
+  const hasFitness = match.fitness_score != null && Number.isFinite(fitness) && fitness > 0
+  const reason = matchStoryline(match.band_label, hasFitness ? fitness : 0, hasFitness) || matchReason(match)
 
   return (
     <div className="rounded-md border border-border bg-card p-3">
