@@ -8,11 +8,12 @@ certificates and school-specific professional degrees keep an honest documented
 omission. Re-applies ``stanford_profile.apply()`` (idempotent) + re-derives
 program-preference rows.
 
-Chains off ``uftuitionmerge1`` (#1023), which already unified the
-ufpercrd2/stanfordpercrd1 dual head — so this stays single-head.
+Chains off ``berkeleytpl2`` (#1026, the current head after the ufpercrd2/
+stanfordpercrd1 merge and the Berkeley template-slot repair) — so this stays
+single-head.
 
 Revision ID: stanfordtuit1
-Revises: uftuitionmerge1
+Revises: berkeleytpl2
 Create Date: 2026-06-21
 """
 
@@ -27,7 +28,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "stanfordtuit1"
-down_revision = "uftuitionmerge1"
+down_revision = "berkeleytpl2"
 branch_labels = None
 depends_on = None
 
