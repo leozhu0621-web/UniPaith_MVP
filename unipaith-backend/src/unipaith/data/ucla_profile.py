@@ -3334,6 +3334,9 @@ def _ucla_sibling_body(
 def _valid_focus(focus: str) -> bool:
     if not focus or len(focus) < 24:
         return False
+    stripped = focus.lstrip()
+    if not stripped or not stripped[0].isalpha():
+        return False
     junk = ("should be of", "catalog entry", "requirement set", "brochure on the major")
     return not any(marker in focus.lower() for marker in junk)
 
