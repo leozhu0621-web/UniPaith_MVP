@@ -11,6 +11,7 @@ import {
   FileText,
   FileUp,
   Mail,
+  MessageCircle,
   RotateCcw,
   ShieldCheck,
   Target,
@@ -227,6 +228,17 @@ export default function MySpaceHomePage() {
               emptyCtaLabel="Review recommenders"
               onGo={(item) => go(item.route, item.owner === 'recommender' ? 'recommender_nudge_clicked' : 'my_space_task_clicked', { module: 'waiting_on', key: item.key })}
               onEmpty={() => go('/s/prep?tab=recommenders', 'my_space_empty_cta_clicked', { module: 'waiting_on' })}
+            />
+            <ItemModule
+              title="Messages"
+              items={data.messages}
+              icon={<MessageCircle size={15} />}
+              emptyTitle="No admissions messages need review."
+              emptyText="Threads from schools, recommenders, and support teams will appear here with who owns the next reply."
+              emptyRoute="/s/messages"
+              emptyCtaLabel="Open messages"
+              onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'messages', key: item.key })}
+              onEmpty={() => go('/s/messages', 'my_space_empty_cta_clicked', { module: 'messages' })}
             />
             <ItemModule
               title="Latest feedback"

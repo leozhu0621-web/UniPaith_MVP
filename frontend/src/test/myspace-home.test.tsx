@@ -91,7 +91,19 @@ const overview: MySpaceOverview = {
       provenance: [{ source: 'applications', label: 'in_progress', href: '/s/applications/app-1', confidence: 85, updated_at: null }],
     },
   ],
-  messages: [],
+  messages: [
+    {
+      key: 'message:thread-1',
+      title: 'Admissions follow-up',
+      description: 'Admissions office asked for an updated transcript.',
+      route: '/s/messages?thread=thread-1',
+      owner: 'student',
+      urgency: 'priority_window',
+      status: 'unread',
+      due_at: '2026-06-23T12:00:00Z',
+      provenance: [{ source: 'messages', label: 'unread', href: '/s/messages?thread=thread-1', confidence: 85, updated_at: null }],
+    },
+  ],
   feedback: [],
   strategy: {
     key: 'strategy:s1',
@@ -177,6 +189,8 @@ describe('MySpaceHomePage', () => {
     expect(screen.getByText('Application portfolio')).toBeTruthy()
     expect(screen.getByText('MS Data Science application')).toBeTruthy()
     expect(screen.getByText('Evidence gaps')).toBeTruthy()
+    expect(screen.getByText('Messages')).toBeTruthy()
+    expect(screen.getByText('Admissions follow-up')).toBeTruthy()
     expect(screen.getByText('Offers & costs')).toBeTruthy()
     expect(screen.getByText('Import & clarification')).toBeTruthy()
     expect(screen.getByText('Application readiness · applications · 80% confidence')).toBeTruthy()
@@ -262,6 +276,21 @@ describe('MySpaceHomePage', () => {
       route: '/s/prep?tab=recommenders',
       module: 'waiting_on',
       key: 'recommender:r1',
+    })
+  })
+
+  it('surfaces admissions messages and routes to the owning thread', async () => {
+    renderHome()
+
+    expect(await screen.findByText('Admissions follow-up')).toBeTruthy()
+    expect(screen.getByText('Admissions office asked for an updated transcript.')).toBeTruthy()
+    expect(screen.getByText('unread')).toBeTruthy()
+
+    fireEvent.click(screen.getByText('Admissions follow-up'))
+    expect(track).toHaveBeenCalledWith('my_space_task_clicked', {
+      route: '/s/messages?thread=thread-1',
+      module: 'messages',
+      key: 'message:thread-1',
     })
   })
 
