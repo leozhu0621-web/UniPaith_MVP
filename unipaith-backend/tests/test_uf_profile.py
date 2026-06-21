@@ -44,8 +44,13 @@ def _school_snapshot(name: str) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    cost = (
-        {
+    dtype = spec["degree_type"]
+    # Mirror uf_profile._apply_programs cost assignment so the snapshot validates the
+    # data actually written. Every credential level now carries a published tuition_usd
+    # (REPAIR_BACKLOG #7): undergrad sticker / graduate annual / certificate per-credit
+    # estimate / professional per-term×2 / funded PhD (0).
+    if dtype == "bachelors":
+        cost = {
             "tuition_usd": p._TUITION_UG_INSTATE,
             "total_cost_of_attendance": p._UNDERGRAD_COA,
             "avg_net_price": p._AVG_NET_PRICE,
@@ -57,22 +62,28 @@ def _program_snapshot(spec: dict) -> dict:
             "source": p._COST_SRC[0],
             "source_url": p._COST_SRC[1],
         }
-        if spec["degree_type"] == "bachelors"
-        else (
-            {
-                "tuition_usd": 0,
-                "funded": True,
-                "source": "UF Graduate School — Funding",
-                "source_url": "https://graduateschool.ufl.edu/funding/",
-            }
-            if spec["degree_type"] == "phd"
-            else {
-                "note": "see program page",
-                "source": "UF program tuition page",
-                "source_url": p._website_for(spec),
-            }
-        )
-    )
+    elif dtype == "phd":
+        cost = {
+            "tuition_usd": 0,
+            "funded": True,
+            "source": "UF Graduate School — Funding",
+            "source_url": "https://graduateschool.ufl.edu/admissions/financing/",
+        }
+    elif dtype == "professional" and spec["program_name"] in p._PROFESSIONAL_TUITION:
+        cost = {
+            "tuition_usd": p._PROFESSIONAL_TUITION[spec["program_name"]]["in_state"],
+            "funded": False, "source": p._GRAD_COST_SRC[0], "source_url": p._GRAD_COST_SRC[1],
+        }
+    elif dtype == "certificate":
+        cost = {
+            "tuition_usd": p._TUITION_CERT_INSTATE,
+            "funded": False, "source": p._GRAD_COST_SRC[0], "source_url": p._GRAD_COST_SRC[1],
+        }
+    else:  # masters
+        cost = {
+            "tuition_usd": p._TUITION_GRAD_INSTATE,
+            "funded": False, "source": p._GRAD_COST_SRC[0], "source_url": p._GRAD_COST_SRC[1],
+        }
     outcomes = dict(p._OUTCOMES_INSTITUTION)
     outcomes["_standard"] = p._program_standard(slug, spec)
     kw = p._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(p._KEYWORDS_BY_SCHOOL[spec["school"]])

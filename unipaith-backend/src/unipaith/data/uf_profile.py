@@ -1217,6 +1217,33 @@ _COST_SRC = (
     "https://collegescorecard.ed.gov/school/?134130-University-of-Florida",
 )
 
+# Graduate + professional tuition (matcher-core budget signal — REPAIR_BACKLOG #7).
+# All figures are UF-PUBLISHED, first-party, 2025-26. The graduate annual is UF Student
+# Financial Aid's published graduate tuition & fees estimate; the per-credit rates and the
+# professional per-term rates are from the UF CFO 2025-26 tuition schedule. Nothing here is
+# inferred except the graduate-certificate total, which is the published per-credit rate
+# applied to the standard 12-credit UF graduate-certificate length (labeled as such).
+_TUITION_GRAD_INSTATE = 12740  # UF SFA published graduate tuition & fees, FL resident, 2025-26
+_TUITION_GRAD_OOS = 31872  # UF SFA published graduate tuition & fees, non-resident, 2025-26
+_GRAD_PER_CREDIT_INSTATE = 530.69  # UF CFO 2025-26 graduate per-credit, FL resident
+_GRAD_PER_CREDIT_OOS = 1327.88  # UF CFO 2025-26 graduate per-credit, non-resident
+_CERT_CREDITS = 12  # standard UF graduate-certificate length used for the per-credit estimate
+_TUITION_CERT_INSTATE = round(_GRAD_PER_CREDIT_INSTATE * _CERT_CREDITS)  # 6368
+_TUITION_CERT_OOS = round(_GRAD_PER_CREDIT_OOS * _CERT_CREDITS)  # 15935
+_GRAD_COST_SRC = (
+    "UF Chief Financial Officer — 2025-26 Tuition & Fees + UF Student Financial Aid — Graduate Cost",
+    "https://cfo.ufl.edu/student-financial-resources/current-and-former-students/2025-26-academic-year-tuition-and-fees/",
+)
+
+# Professional-school annual tuition = UF CFO 2025-26 per-term rate × 2 installments
+# (Fall + Spring, UF's own published billing structure), FL resident / non-resident.
+_PROFESSIONAL_TUITION: dict[str, dict] = {
+    "Doctor of Medicine": {"in_state": 36657, "out_of_state": 68821, "per_term_in_state": 18328.59},
+    "Doctor of Pharmacy": {"in_state": 28787, "out_of_state": 51860, "per_term_in_state": 14393.43},
+    "Doctor of Veterinary Medicine": {"in_state": 22722, "out_of_state": 32886, "per_term_in_state": 11360.86},
+    "Juris Doctor": {"in_state": 41718, "out_of_state": 70847, "per_term_in_state": 20858.99},
+}
+
 _REQ_UNDERGRAD = {
     "materials": [
         {"name": "Common Application or Coalition Application", "required": True},
@@ -1514,8 +1541,9 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
         "outcomes_data.top_industries",
         "outcomes_data.conditions",
     ]
-    if spec.get("degree_type") != "bachelors" and slug not in _COST_BY_SLUG:
-        omitted.append("cost_data.tuition_usd")
+    # Every credential level now carries a UF-published tuition figure (REPAIR_BACKLOG #7):
+    # undergrad sticker, graduate annual / per-credit, certificate per-credit estimate,
+    # professional per-term×2, or PhD funded (tuition 0). So tuition is no longer omitted.
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
     if slug not in _CLASS_PROFILE_BY_SLUG:
@@ -1649,12 +1677,60 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source": "UF Graduate School — Funding",
                 "source_url": "https://graduateschool.ufl.edu/admissions/financing/",
             }
-        else:
-            p.tuition = None
+        elif spec["degree_type"] == "professional" and spec["program_name"] in _PROFESSIONAL_TUITION:
+            pr = _PROFESSIONAL_TUITION[spec["program_name"]]
+            p.tuition = pr["in_state"]
             p.cost_data = {
-                "note": "Tuition varies by program; see the official program tuition page.",
-                "source": "UF program tuition page",
-                "source_url": _website_for(spec),
+                "tuition_usd": pr["in_state"],
+                "breakdown": {
+                    "tuition_in_state": pr["in_state"],
+                    "tuition_out_of_state": pr["out_of_state"],
+                    "tuition_per_term_in_state": pr["per_term_in_state"],
+                },
+                "funded": False,
+                "note": (
+                    "Annual professional-program tuition (FL resident); UF bills this in two "
+                    "per-term installments in the Fall and Spring. Non-residents pay the "
+                    "out-of-state rate shown in the breakdown."
+                ),
+                "source": _GRAD_COST_SRC[0], "source_url": _GRAD_COST_SRC[1], "year": "2025-26",
+            }
+        elif spec["degree_type"] == "certificate":
+            p.tuition = _TUITION_CERT_INSTATE
+            p.cost_data = {
+                "tuition_usd": _TUITION_CERT_INSTATE,
+                "breakdown": {
+                    "tuition_in_state": _TUITION_CERT_INSTATE,
+                    "tuition_out_of_state": _TUITION_CERT_OOS,
+                    "per_credit_in_state": _GRAD_PER_CREDIT_INSTATE,
+                    "per_credit_out_of_state": _GRAD_PER_CREDIT_OOS,
+                },
+                "funded": False,
+                "note": (
+                    f"Graduate certificates are billed at UF's published graduate per-credit "
+                    f"rate (${_GRAD_PER_CREDIT_INSTATE:.2f} in-state / ${_GRAD_PER_CREDIT_OOS:.2f} "
+                    f"non-resident). The figure shown estimates a standard {_CERT_CREDITS}-credit "
+                    "certificate; the actual total scales with the certificate's required credits."
+                ),
+                "source": _GRAD_COST_SRC[0], "source_url": _GRAD_COST_SRC[1], "year": "2025-26",
+            }
+        else:  # masters
+            p.tuition = _TUITION_GRAD_INSTATE
+            p.cost_data = {
+                "tuition_usd": _TUITION_GRAD_INSTATE,
+                "breakdown": {
+                    "tuition_in_state": _TUITION_GRAD_INSTATE,
+                    "tuition_out_of_state": _TUITION_GRAD_OOS,
+                    "per_credit_in_state": _GRAD_PER_CREDIT_INSTATE,
+                    "per_credit_out_of_state": _GRAD_PER_CREDIT_OOS,
+                },
+                "funded": False,
+                "note": (
+                    "UF published graduate tuition & fees (FL resident, full-time, first-year "
+                    "estimate); non-residents pay the out-of-state rate shown in the breakdown. "
+                    "Programs that publish a distinct per-credit or cohort rate may differ."
+                ),
+                "source": _GRAD_COST_SRC[0], "source_url": _GRAD_COST_SRC[1], "year": "2025-26",
             }
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_INSTITUTION)
