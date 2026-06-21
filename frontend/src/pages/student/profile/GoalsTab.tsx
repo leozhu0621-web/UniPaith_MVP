@@ -18,11 +18,13 @@ import {
   listGoals,
   updateGoal,
 } from '../../../api/goals'
+import { qk } from '../../../api/queryKeys'
 import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import Modal from '../../../components/ui/Modal'
 import QueryError from '../../../components/ui/QueryError'
+import Select from '../../../components/ui/Select'
 import { SkeletonCard } from '../../../components/ui/Skeleton'
 import { showToast } from '../../../stores/toast-store'
 import { formatDate } from '../../../utils/format'
@@ -41,6 +43,13 @@ const STATUS_VARIANTS: Record<GoalStatus, 'success' | 'info' | 'warning' | 'neut
   revised: 'warning',
   dropped: 'neutral',
 }
+
+const STATUS_OPTIONS: { value: GoalStatus; label: string }[] = [
+  { value: 'active', label: 'Active' },
+  { value: 'met', label: 'Met' },
+  { value: 'revised', label: 'Revised' },
+  { value: 'dropped', label: 'Dropped' },
+]
 
 const EMPTY_FORM: CreateGoalBody = {
   category: 'academic',
@@ -92,21 +101,13 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
 
   return (
     <form onSubmit={handle} className="space-y-4">
-      <div>
-        <label htmlFor="goal-category" className="block text-sm font-medium text-foreground mb-1">Category</label>
-        <select
-          id="goal-category"
-          className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
-          value={form.category}
-          onChange={e => setForm(f => ({ ...f, category: e.target.value as GoalCategory }))}
-        >
-          {CATEGORIES.map(c => (
-            <option key={c.key} value={c.key}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Select
+        id="goal-category"
+        label="Category"
+        options={CATEGORIES.map(c => ({ value: c.key, label: c.label }))}
+        value={form.category}
+        onChange={e => setForm(f => ({ ...f, category: e.target.value as GoalCategory }))}
+      />
 
       <div>
         <label htmlFor="goal-specific" className="block text-sm font-medium text-foreground mb-1">
@@ -170,20 +171,13 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
           />
         </div>
         {isEdit && (
-          <div>
-            <label htmlFor="goal-status" className="block text-sm font-medium text-foreground mb-1">Status</label>
-            <select
-              id="goal-status"
-              className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
-              value={form.status}
-              onChange={e => setForm(f => ({ ...f, status: e.target.value as GoalStatus }))}
-            >
-              <option value="active">Active</option>
-              <option value="met">Met</option>
-              <option value="revised">Revised</option>
-              <option value="dropped">Dropped</option>
-            </select>
-          </div>
+          <Select
+            id="goal-status"
+            label="Status"
+            options={STATUS_OPTIONS}
+            value={form.status}
+            onChange={e => setForm(f => ({ ...f, status: e.target.value as GoalStatus }))}
+          />
         )}
       </div>
 
@@ -202,14 +196,14 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
 export default function GoalsTab() {
   const qc = useQueryClient()
   const { data: goals = [], isLoading, isError, refetch } = useQuery<StudentGoal[]>({
-    queryKey: ['goals'],
+    queryKey: qk.goals(),
     queryFn: () => listGoals(),
   })
 
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<StudentGoal | null>(null)
 
-  const onSettled = () => qc.invalidateQueries({ queryKey: ['goals'] })
+  const onSettled = () => qc.invalidateQueries({ queryKey: qk.goals() })
 
   const createMut = useMutation({
     mutationFn: (body: CreateGoalBody) => createGoal(body),

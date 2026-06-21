@@ -17,11 +17,13 @@ import {
   listNeeds,
   updateNeed,
 } from '../../../api/needs'
+import { qk } from '../../../api/queryKeys'
 import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import Modal from '../../../components/ui/Modal'
 import QueryError from '../../../components/ui/QueryError'
+import Select from '../../../components/ui/Select'
 import { SkeletonCard } from '../../../components/ui/Skeleton'
 import { showToast } from '../../../stores/toast-store'
 import type { MaslowLevel, NeedSeverity, StudentNeed } from '../../../types'
@@ -48,6 +50,12 @@ const SEVERITY_LABELS: Record<NeedSeverity, string> = {
   strong_preference: 'strong preference',
   nice_to_have: 'nice to have',
 }
+
+const SEVERITY_OPTIONS: { value: NeedSeverity; label: string }[] = [
+  { value: 'must_have', label: 'Must have' },
+  { value: 'strong_preference', label: 'Strong preference' },
+  { value: 'nice_to_have', label: 'Nice to have' },
+]
 
 const EMPTY_FORM: CreateNeedBody = {
   maslow_level: 'safety',
@@ -96,34 +104,20 @@ function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormP
   return (
     <form onSubmit={handle} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label htmlFor="need-maslow-level" className="block text-sm font-medium text-foreground mb-1">Maslow tier</label>
-          <select
-            id="need-maslow-level"
-            className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
-            value={form.maslow_level}
-            onChange={e => setForm(f => ({ ...f, maslow_level: e.target.value as MaslowLevel }))}
-          >
-            {MASLOW_TIERS.map(t => (
-              <option key={t.key} value={t.key}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="need-severity" className="block text-sm font-medium text-foreground mb-1">Severity</label>
-          <select
-            id="need-severity"
-            className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
-            value={form.severity}
-            onChange={e => setForm(f => ({ ...f, severity: e.target.value as NeedSeverity }))}
-          >
-            <option value="must_have">Must have</option>
-            <option value="strong_preference">Strong preference</option>
-            <option value="nice_to_have">Nice to have</option>
-          </select>
-        </div>
+        <Select
+          id="need-maslow-level"
+          label="Maslow tier"
+          options={MASLOW_TIERS.map(t => ({ value: t.key, label: t.label }))}
+          value={form.maslow_level}
+          onChange={e => setForm(f => ({ ...f, maslow_level: e.target.value as MaslowLevel }))}
+        />
+        <Select
+          id="need-severity"
+          label="Severity"
+          options={SEVERITY_OPTIONS}
+          value={form.severity}
+          onChange={e => setForm(f => ({ ...f, severity: e.target.value as NeedSeverity }))}
+        />
       </div>
 
       <div>
@@ -183,14 +177,14 @@ function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormP
 export default function NeedsTab() {
   const qc = useQueryClient()
   const { data: needs = [], isLoading, isError, refetch } = useQuery<StudentNeed[]>({
-    queryKey: ['needs'],
+    queryKey: qk.needs(),
     queryFn: () => listNeeds(),
   })
 
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<StudentNeed | null>(null)
 
-  const onSettled = () => qc.invalidateQueries({ queryKey: ['needs'] })
+  const onSettled = () => qc.invalidateQueries({ queryKey: qk.needs() })
 
   const createMut = useMutation({
     mutationFn: (body: CreateNeedBody) => createNeed(body),
