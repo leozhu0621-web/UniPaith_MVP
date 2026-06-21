@@ -236,6 +236,29 @@ def test_matcher_core_tuition_is_published_catalog_wide():
     assert covered >= len(b.PROGRAMS) * 0.95
 
 
+def test_no_concentration_split_rows():
+    """No program_name may carry a '{degree} — {concentration}' tail (miss #2): a degree's
+    concentrations belong in its ``tracks``, not as separate name-suffixed rows. The two true
+    concentration splits (GRS M.S. in CS — Artificial Intelligence; JD/MBA — Health Sector
+    Management) are collapsed into the keeper's tracks; the rest were renamed to clean,
+    school/delivery-distinguished names. Gold MIT scores 0 here."""
+    split = [p["program_name"] for p in b.PROGRAMS if " — " in p["program_name"]]
+    assert not split, f"concentration-split / em-dash names remain: {split}"
+
+
+def test_force_collapsed_rows_dropped_and_tracks_merged():
+    """The two collapsed concentration rows are dropped and their concentration lands on the
+    keeper's tracks (miss #2)."""
+    slugs = {p["slug"] for p in b.PROGRAMS}
+    for dropped, (keeper, track) in b._FORCE_COLLAPSE.items():
+        assert dropped not in slugs, f"{dropped} should be collapsed away"
+        krow = next((p for p in b.PROGRAMS if p["slug"] == keeper), None)
+        assert krow is not None, f"keeper {keeper} missing"
+        assert track in (krow.get("tracks") or []), (
+            f"{track!r} not merged into {keeper} tracks {krow.get('tracks')!r}"
+        )
+
+
 def test_no_credential_combo_names_or_departments():
     """No program_name or department may be a bare/mechanical credential-combo token —
     'Jdma English', 'Jdllm In Finance', 'PhD, MD/PhD' (miss #2). Real joint degrees carry

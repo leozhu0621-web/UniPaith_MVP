@@ -1511,7 +1511,9 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "CFA's B.F.A. in theatre arts with a design-and-production focus builds sets, costumes, and lighting through collaborative production seasons."
     ),
     "bu-academics-cfa-school-of-theatre-theatre-arts-bfa-performance": (
-        "CFA's B.F.A. in theatre arts with a performance focus develops acting, voice, and movement with extensive mainstage stage experience."
+        "CFA's B.F.A. in theatre arts trains conservatory actors and theatre artists across "
+        "performance (acting, voice, and movement) and design & production, with extensive "
+        "mainstage and studio production experience in the School of Theatre."
     ),
     # School of Music
     "bu-academics-cfa-school-of-music-music": (
