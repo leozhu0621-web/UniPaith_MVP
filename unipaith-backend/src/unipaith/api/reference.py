@@ -126,3 +126,47 @@ async def get_major(cip_code: str, db: AsyncSession = Depends(get_db)) -> Major:
     if row is None:
         raise HTTPException(status_code=404, detail="Major not found")
     return Major.model_validate(row)
+
+
+class Occupation(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    soc_code: str
+    title: str
+    median_salary: float | None = None
+    employment: int | None = None
+    projected_growth_pct: float | None = None
+    education_typical: str | None = None
+    outlook: str | None = None
+    related_majors: list | None = None
+
+
+class OccupationList(BaseModel):
+    items: list[Occupation]
+
+
+@router.get(
+    "/occupations",
+    response_model=OccupationList,
+    summary="Search BLS occupations (wages, growth, education by SOC)",
+)
+async def list_occupations(
+    q: str | None = None,
+    limit: int = Query(25, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+) -> OccupationList:
+    rows = await ReferenceService(db).search_occupations(q=q, limit=limit, offset=offset)
+    return OccupationList(items=[Occupation.model_validate(r) for r in rows])
+
+
+@router.get(
+    "/occupations/{soc_code}",
+    response_model=Occupation,
+    summary="One occupation by SOC code",
+)
+async def get_occupation(soc_code: str, db: AsyncSession = Depends(get_db)) -> Occupation:
+    row = await ReferenceService(db).get_occupation(soc_code)
+    if row is None:
+        raise HTTPException(status_code=404, detail="Occupation not found")
+    return Occupation.model_validate(row)
