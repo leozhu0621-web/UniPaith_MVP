@@ -145,8 +145,39 @@ jobs:
 
       - name: Wait for deployment
         run: |
-          aws ecs wait services-stable \
-            --cluster $ECS_CLUSTER \
-            --services $ECS_SERVICE \
-            --region $AWS_REGION
-          echo "Deployment complete!"
+          # The default AWS CLI services-stable waiter stops after ~10 minutes.
+          # ECS can legitimately need slightly longer when the first replacement
+          # task misses ALB health checks and the second task stabilizes. Poll
+          # explicitly so successful-but-slow deployments do not false-fail.
+          deadline=$((SECONDS + 1800))
+          attempt=1
+
+          while (( SECONDS < deadline )); do
+            read -r DEPLOYMENTS ROLLOUT_STATE DESIRED RUNNING PENDING < <(
+              aws ecs describe-services \
+                --cluster "$ECS_CLUSTER" \
+                --services "$ECS_SERVICE" \
+                --region "$AWS_REGION" \
+                --query 'services[0].[length(deployments),deployments[?status==`PRIMARY`]|[0].rolloutState,desiredCount,runningCount,pendingCount]' \
+                --output text
+            )
+
+            echo "ECS wait attempt ${attempt}: deployments=${DEPLOYMENTS} primary=${ROLLOUT_STATE} desired=${DESIRED} running=${RUNNING} pending=${PENDING}"
+
+            if [[ "$DEPLOYMENTS" == "1" && "$ROLLOUT_STATE" == "COMPLETED" && "$DESIRED" == "$RUNNING" && "$PENDING" == "0" ]]; then
+              echo "Deployment complete!"
+              exit 0
+            fi
+
+            attempt=$((attempt + 1))
+            sleep 30
+          done
+
+          echo "::error::ECS service did not stabilize within 30 minutes"
+          aws ecs describe-services \
+            --cluster "$ECS_CLUSTER" \
+            --services "$ECS_SERVICE" \
+            --region "$AWS_REGION" \
+            --query 'services[0].{deployments:deployments[*].{status:status,rolloutState:rolloutState,desired:desiredCount,running:runningCount,pending:pendingCount,failed:failedTasks,taskDefinition:taskDefinition},events:events[0:20].message}' \
+            --output json
+          exit 1
