@@ -635,6 +635,14 @@ def _build_cpef_signals(
     if s.get("needs_visa_sponsorship") is True and pr.get("sponsors_international") is False:
         dealbreakers.append({"key": "visa_feasibility", "v": p["epsilon"], "rho": veto_rho})
 
+    # Per-signal importance from the student's priority sliders. Each signal's
+    # weight defaults to the uniform ``w_base``; ``params["w_<key>"]`` (set by
+    # match_banding.cpef_params_from_preferences from the sliders) tilts it so a
+    # cost-/location-/flexibility-/support-heavy student genuinely re-ranks. Absent
+    # override → w_base, so the tuned default behaviour is unchanged.
+    for sig in signals:
+        sig["w"] = p.get(f"w_{sig['key']}", w_base)
+
     full_w = _CANONICAL_N * (w_base / 10.0)
     return signals, dealbreakers, full_w
 
@@ -874,17 +882,20 @@ def score(
     program: ProgramFeatures,
     *,
     weights: dict[str, float] | None = None,
+    params: dict[str, float] | None = None,
     cpef_enabled: bool | None = None,
 ) -> Score:
     """Return a fully-explainable Score for one (student, program) pair.
 
     When CPEF is enabled (flag or explicit `cpef_enabled=True`) the fused
     Spec-3 score is used; otherwise the legacy convex-sum + hard-filter path.
+    `params` carries the CPEF tuning (incl. slider-derived per-signal weights);
+    None → DEFAULT_PARAMS. (The legacy `weights` only apply to the non-CPEF path.)
     """
     if cpef_enabled is None:
         cpef_enabled = _cpef_flag()
     if cpef_enabled:
-        return _score_cpef(student, program)
+        return _score_cpef(student, program, params=params)
 
     weights = weights or DEFAULT_WEIGHTS
     rp, reason = rule_pass(student, program)
@@ -955,6 +966,7 @@ def rank_programs(
     programs: list[ProgramFeatures],
     *,
     weights: dict[str, float] | None = None,
+    params: dict[str, float] | None = None,
     include_eliminated: bool = False,
     cpef_enabled: bool | None = None,
 ) -> list[tuple[ProgramFeatures, Score]]:
@@ -965,7 +977,10 @@ def rank_programs(
     agent, which may explain why something was filtered). Under CPEF
     nothing is eliminated — vetoed programs simply sink to the bottom.
     """
-    scored = [(p, score(student, p, weights=weights, cpef_enabled=cpef_enabled)) for p in programs]
+    scored = [
+        (p, score(student, p, weights=weights, params=params, cpef_enabled=cpef_enabled))
+        for p in programs
+    ]
     if not include_eliminated:
         scored = [(p, s) for p, s in scored if not s.eliminated]
 
