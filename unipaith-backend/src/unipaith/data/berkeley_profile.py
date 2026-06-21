@@ -1605,6 +1605,66 @@ for _p in PROGRAMS:
 
 _assign_descriptions(PROGRAMS)
 
+# Repair truncated CIP-rollup field labels left in a few program NAMES (the field portion
+# was cut to its first comma — "…in Ethnic", "…in Slavic" — by ``_display_field``). These
+# are real Berkeley degree designations. Applied AFTER ``_assign_descriptions`` (so field
+# resolution is untouched); the sibling bodies embed the program_name verbatim, so the old
+# label is also replaced inside each affected description.
+_NAME_OVERRIDES: dict[str, str] = {
+    "berkeley-ethnic-cultural-minority-gender-and-group-studies-bs": (
+        "Bachelor of Arts in Ethnic Studies"
+    ),
+    "berkeley-ethnic-cultural-minority-gender-and-group-studies-ms": (
+        "Master of Arts in Ethnic Studies"
+    ),
+    "berkeley-ethnic-cultural-minority-gender-and-group-studies-phd": (
+        "Doctor of Philosophy in Ethnic Studies"
+    ),
+    "berkeley-electrical-electronics-and-communications-engineering-ms": (
+        "Master of Science in Electrical Engineering"
+    ),
+    "berkeley-electrical-electronics-and-communications-engineering-phd": (
+        "Doctor of Philosophy in Electrical Engineering"
+    ),
+    "berkeley-electrical-electronics-and-communications-engineering-prof": (
+        "Master of Engineering in Electrical Engineering"
+    ),
+    "berkeley-linguistic-comparative-and-related-language-studies-and-services-bs": (
+        "Bachelor of Arts in Linguistics"
+    ),
+    "berkeley-linguistic-comparative-and-related-language-studies-and-services-ms": (
+        "Master of Arts in Linguistics"
+    ),
+    "berkeley-linguistic-comparative-and-related-language-studies-and-services-phd": (
+        "Doctor of Philosophy in Linguistics"
+    ),
+    "berkeley-east-asian-languages-literatures-and-linguistics-bs": (
+        "Bachelor of Arts in East Asian Languages and Cultures"
+    ),
+    "berkeley-east-asian-languages-literatures-and-linguistics-ms": (
+        "Master of Arts in East Asian Languages and Cultures"
+    ),
+    "berkeley-east-asian-languages-literatures-and-linguistics-phd": (
+        "Doctor of Philosophy in East Asian Languages and Cultures"
+    ),
+    "berkeley-slavic-baltic-and-albanian-languages-literatures-and-linguistics-bs": (
+        "Bachelor of Arts in Slavic Languages and Literatures"
+    ),
+    "berkeley-slavic-baltic-and-albanian-languages-literatures-and-linguistics-ms": (
+        "Master of Arts in Slavic Languages and Literatures"
+    ),
+    "berkeley-slavic-baltic-and-albanian-languages-literatures-and-linguistics-phd": (
+        "Doctor of Philosophy in Slavic Languages and Literatures"
+    ),
+}
+for _p in PROGRAMS:
+    _new_name = _NAME_OVERRIDES.get(_p["slug"])
+    if _new_name:
+        _old_name = _p["program_name"]
+        if _p.get("description"):
+            _p["description"] = _p["description"].replace(_old_name, _new_name)
+        _p["program_name"] = _new_name
+
 _catalog_errors = validate_catalog(PROGRAMS)
 _classification_stubs = sum(
     1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")

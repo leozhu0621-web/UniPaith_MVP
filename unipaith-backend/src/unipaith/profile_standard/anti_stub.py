@@ -337,6 +337,61 @@ _DEBRIS_ADDRESS = re.compile(
 )
 
 
+# Template-SLOT machine grammar (REPAIR_BACKLOG run 71, FLAG #1c). The successor evasion
+# to the credential-frame + shared-body gates: a per-credential "repair" that gives each
+# credential its OWN frame but SLOTS a field phrase into a fixed grammatical template,
+# producing prose that DIFFERS per row (so :func:`analyze` and
+# :func:`frame_stripped_shared_body` read 0) yet renders machine junk a student reads —
+# Berkeley auto-merged 107 such rows + UCLA 6, all green and in ``CERTIFIED_CLEAN``. The
+# two unambiguous, zero-false-positive tells (gold MIT and the clean fleet score 0):
+#   (i)  the CREDENTIAL DOUBLED inside the body — the degree designation is already the
+#        program_name heading, so re-stating it ("...coursework in the Master of Science
+#        in …", "Doctoral training in the Doctor of Philosophy in …") is a template
+#        artifact the :func:`analyze` ``startswith(program_name)`` check MISSES (the body
+#        opens on a level-word, not the verbatim name).
+#   (ii) a DOUBLE / DANGLING preposition from an empty or mis-typed slot — a template verb
+#        ("research/study/coursework/training in", "builds on", "advances", "emphasizes")
+#        followed immediately by a redundant preposition ("research in of farm…",
+#        "research in for students…") or by a comma / period (the slot came back empty).
+# Anchored to the template verbs so natural prose ("research in international relations")
+# never matches.
+_TEMPLATE_SLOT_RES: tuple[re.Pattern[str], ...] = (
+    re.compile(
+        r"\b(?:training|study|coursework|research|seminars?|expertise|specialization)\s+in\s+"
+        r"(?:the\s+)?(?:Doctor of Philosophy|Doctor of|Master of|Master'?s|Bachelor of|"
+        r"Bachelor'?s|Doctorate|Graduate Certificate|Certificate)\b",
+        re.I,
+    ),
+    re.compile(
+        r"\b(?:research|study|coursework|training|builds on|advances|emphasizes|"
+        r"centers? on|focused on)\s+in\s+(?:of|for|on|in)\b",
+        re.I,
+    ),
+    re.compile(
+        r"\b(?:research|study|coursework|training)\s+in\s*[.,;:]",
+        re.I,
+    ),
+)
+
+
+def template_slot_artifacts(programs: list[dict]) -> list[str]:
+    """Program names whose ``description`` is a field phrase slotted into a fixed template.
+
+    Catches the run-71 template-slot evasion (see ``_TEMPLATE_SLOT_RES``): a per-credential
+    body that DIFFERS per row — so every share/form metric reads 0 — yet carries a doubled
+    credential or a double/dangling preposition that proves it was machine-assembled, not
+    researched. Kept separate from :func:`analyze` / ``is_clean`` (like
+    :func:`machine_artifacts`) so it cannot crash an already-broken catalog's import
+    self-check; enforced by ``tests/test_anti_stub_gate.py`` over ``CERTIFIED_CLEAN``. Gold
+    MIT returns ``[]``.
+    """
+    return [
+        (p.get("program_name") or "")
+        for p in programs
+        if any(rx.search(_desc(p)) for rx in _TEMPLATE_SLOT_RES)
+    ]
+
+
 def scrape_debris(programs: list[dict]) -> list[str]:
     """Program names whose ``description`` is raw scraped catalogue debris, not researched prose.
 
