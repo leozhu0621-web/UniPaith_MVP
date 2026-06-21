@@ -238,6 +238,37 @@ describe('MySpaceHomePage', () => {
     })
   })
 
+  it('surfaces offer decision pressure in offers and costs', async () => {
+    vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
+      ...overview,
+      offers: [
+        {
+          key: 'offer:o1',
+          title: 'MS Data Science offer',
+          description: 'Offer response is due soon. Compare cost, conditions, and fit now. Aid: $12,000.',
+          route: '/s/applications?tab=offers',
+          owner: 'student',
+          urgency: 'focus_now',
+          status: 'due_soon',
+          due_at: '2026-06-22T23:59:00Z',
+          provenance: [{ source: 'offer_letters', label: 'due_soon', href: null, confidence: 90, updated_at: null }],
+        },
+      ],
+    })
+
+    renderHome()
+
+    expect(await screen.findByText('MS Data Science offer')).toBeTruthy()
+    expect(screen.getByText('Offer response is due soon. Compare cost, conditions, and fit now. Aid: $12,000.')).toBeTruthy()
+    expect(screen.getByText('due soon')).toBeTruthy()
+
+    fireEvent.click(screen.getByText('MS Data Science offer'))
+    expect(track).toHaveBeenCalledWith('offer_compare_opened', {
+      route: '/s/applications?tab=offers',
+      key: 'offer:o1',
+    })
+  })
+
   it('tracks Uni handoffs with decoded contract fields', async () => {
     vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
       ...overview,

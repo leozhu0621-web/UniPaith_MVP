@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.models.application import Application
+from unipaith.models.application import Application, OfferLetter
 from unipaith.models.institution import Institution, Program
 from unipaith.models.my_space import MySpaceTaskState
 from unipaith.models.student import RecommendationRequest, StudentProfile
@@ -78,6 +78,14 @@ async def test_my_space_overview_composes_release_ready_tasks(
             due_date=(datetime.now(UTC) + timedelta(days=1)).date(),
         )
     )
+    db_session.add(
+        OfferLetter(
+            application_id=app.id,
+            status="extended",
+            scholarship_amount=12000,
+            response_deadline=(datetime.now(UTC) + timedelta(days=2)).date(),
+        )
+    )
     await db_session.flush()
 
     resp = await student_client.get(f"{BASE}/overview")
@@ -110,6 +118,14 @@ async def test_my_space_overview_composes_release_ready_tasks(
     waiting = next(i for i in data["waiting_on"] if i["key"].startswith("recommender:"))
     assert waiting["status"] == "due_soon"
     assert waiting["description"] == due_soon_copy
+    offer_task = next(t for t in data["tasks"] if t["key"].startswith("offer:"))
+    assert offer_task["urgency"] == "focus_now"
+    assert offer_task["blocker"] == "Offer response due soon"
+    assert offer_task["provenance"][0]["label"] == "due_soon"
+    offer_item = next(i for i in data["offers"] if i["key"].startswith("offer:"))
+    assert offer_item["status"] == "due_soon"
+    assert "Offer response is due soon" in offer_item["description"]
+    assert "Aid: $12,000." in offer_item["description"]
     strategy_task = tasks["strategy:create"]
     strategy_route = urlsplit(strategy_task["cta_route"])
     strategy_params = parse_qs(strategy_route.query)

@@ -104,6 +104,74 @@ def _recommender_risk(due_at: datetime | None, *, now: datetime) -> tuple[str, s
     )
 
 
+def _offer_decision_state(
+    *,
+    response: str | None,
+    status: str | None,
+    due_at: datetime | None,
+    received_externally: bool,
+    now: datetime,
+) -> tuple[str, str, str | None, str]:
+    external = "External offer recorded. " if received_externally else ""
+    if status == "rescinded":
+        return (
+            "rescinded",
+            f"{external}Offer was rescinded; keep the record for comparison history.",
+            None,
+            "neutral",
+        )
+    if response == "accepted":
+        return (
+            "accepted",
+            f"{external}Offer accepted. Track deposit, conditions, and enrollment steps.",
+            None,
+            "neutral",
+        )
+    if response == "declined":
+        return (
+            "declined",
+            f"{external}Offer declined. Keep cost and condition notes for your record.",
+            None,
+            "neutral",
+        )
+    if due_at is None:
+        return (
+            "needs_deadline",
+            f"{external}Offer needs comparison; add a response deadline before you decide.",
+            "Response deadline missing",
+            "priority_window",
+        )
+
+    days = (due_at - now).total_seconds() / 86_400
+    if days < 0:
+        return (
+            "overdue",
+            f"{external}Response deadline has passed. Confirm whether the offer is still open.",
+            "Offer response overdue",
+            "focus_now",
+        )
+    if days <= 3:
+        return (
+            "due_soon",
+            f"{external}Offer response is due soon. Compare cost, conditions, and fit now.",
+            "Offer response due soon",
+            "focus_now",
+        )
+    if days <= 14:
+        return (
+            "priority_window",
+            f"{external}Offer is inside the decision window. Compare cost, conditions, and fit.",
+            "Offer response window",
+            "priority_window",
+        )
+    return (
+        "compare_needed",
+        f"{external}Offer needs comparison before response.",
+        None,
+        "gentle_attention",
+    )
+
+
 def _program_label(app: Application) -> str:
     program = getattr(app, "program", None)
     return getattr(program, "program_name", None) or "Application"
@@ -520,24 +588,31 @@ class MySpaceService:
             offer = getattr(app, "offer", None)
             if offer is not None and not getattr(offer, "student_response", None):
                 due_at = _due_date_to_datetime(getattr(offer, "response_deadline", None))
+                offer_status, offer_description, offer_blocker, offer_urgency = (
+                    _offer_decision_state(
+                        response=getattr(offer, "student_response", None),
+                        status=getattr(offer, "status", None),
+                        due_at=due_at,
+                        received_externally=bool(getattr(offer, "received_externally", False)),
+                        now=now,
+                    )
+                )
                 key = f"offer:{offer.id}:respond"
                 tasks.append(
                     MySpaceTask(
                         key=key,
                         title=f"Review offer from {_program_label(app)}",
-                        description=(
-                            "Compare cost, conditions, deadlines, and next steps before responding."
-                        ),
+                        description=offer_description,
                         owner="student",
-                        urgency=_urgency_for_due(due_at, now=now),
+                        urgency=offer_urgency,
                         category="offer",
                         cta_label="Compare offers",
                         cta_route="/s/applications?tab=offers",
                         due_at=due_at,
-                        blocker="Response deadline" if due_at else None,
+                        blocker=offer_blocker,
                         provenance=_provenance(
                             "offer_letters",
-                            "Offer terms and deadline",
+                            offer_status,
                             href=_application_route(app.id, "offer"),
                             confidence=90,
                         ),
@@ -965,19 +1040,26 @@ class MySpaceService:
             due_at = _due_date_to_datetime(offer.response_deadline)
             amount = offer.scholarship_amount or offer.financial_package_total
             amount_text = f" Aid: ${amount:,}." if amount else ""
+            offer_status, offer_description, _offer_blocker, offer_urgency = _offer_decision_state(
+                response=offer.student_response,
+                status=offer.status,
+                due_at=due_at,
+                received_externally=bool(offer.received_externally),
+                now=now,
+            )
             rows.append(
                 MySpaceModuleItem(
                     key=f"offer:{offer.id}",
                     title=_program_label(app),
-                    description=f"Offer needs comparison before response.{amount_text}",
+                    description=f"{offer_description}{amount_text}",
                     route="/s/applications?tab=offers",
                     owner="student",
-                    urgency=_urgency_for_due(due_at, now=now) if due_at else "priority_window",
-                    status=offer.status or "extended",
+                    urgency=offer_urgency,
+                    status=offer_status,
                     due_at=due_at,
                     provenance=_provenance(
                         "offer_letters",
-                        "Offer letter",
+                        offer_status,
                         confidence=90,
                         updated_at=offer.updated_at,
                     ),
