@@ -13,6 +13,7 @@ import {
 import Skeleton from '../../components/ui/Skeleton'
 import type { InboxAttachment, InboxThreadSummary } from '../../types'
 import { useMessageStream } from '../../hooks/useMessageStream'
+import { showToast } from '../../stores/toast-store'
 import usePageTitle from '../../hooks/usePageTitle'
 import InboxList, { type InboxFilters } from './inbox/InboxList'
 import ThreadView from './inbox/ThreadView'
@@ -163,10 +164,13 @@ export default function MessagesPage({ initialThreadId }: { initialThreadId?: st
       return { prev }
     },
     onError: (_err, _vars, ctx) => {
-      // Roll back the optimistic message on failure.
+      // Roll back the optimistic message on failure AND tell the student — a
+      // silent rollback (the bubble just vanishes) reads as "it sent" when it
+      // didn't. mutateAsync rejects so the composer keeps the draft to retry.
       if (ctx?.prev !== undefined) {
         qc.setQueryData(['inbox-thread', selectedId], ctx.prev)
       }
+      showToast("We couldn't send that message. Your draft is kept — please try again.", 'error')
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inbox-thread', selectedId] })
@@ -232,7 +236,7 @@ export default function MessagesPage({ initialThreadId }: { initialThreadId?: st
             thread={thread}
             onBack={closeThread}
             onSend={(body, attachments, ai) =>
-              sendMut.mutate({ body, attachments, aiDraftUsed: ai })
+              sendMut.mutateAsync({ body, attachments, aiDraftUsed: ai })
             }
             sending={sendMut.isPending}
             onMarkComplete={() => completeMut.mutate()}
