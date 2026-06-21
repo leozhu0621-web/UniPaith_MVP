@@ -301,9 +301,11 @@ export default function SavedListPage() {
       {/* Hidden on lg+ where the My Space rail's Saved group lists these views
           (Spec 2026-06-15 §A follow-up); kept below lg where the rail collapses
           to flat pills. */}
-      <div className="lg:hidden flex gap-1 border-b border-border mb-5">
+      <div role="tablist" aria-label="Saved views" className="lg:hidden flex gap-1 border-b border-border mb-5">
         <button
           type="button"
+          role="tab"
+          aria-selected={tab === 'programs'}
           onClick={() => selectTab('programs')}
           className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
             tab === 'programs'
@@ -315,6 +317,8 @@ export default function SavedListPage() {
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={tab === 'schools'}
           onClick={() => selectTab('schools')}
           className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
             tab === 'schools'
@@ -326,6 +330,8 @@ export default function SavedListPage() {
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={tab === 'searches'}
           onClick={() => selectTab('searches')}
           className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
             tab === 'searches'

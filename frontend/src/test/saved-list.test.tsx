@@ -59,8 +59,8 @@ describe('SavedListPage', () => {
 
   it('renders Programs and Schools tabs', async () => {
     renderPage()
-    expect(await screen.findByRole('button', { name: /Programs \(0\)/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /Schools \(0\)/i })).toBeTruthy()
+    expect(await screen.findByRole('tab', { name: /Programs \(0\)/i })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: /Schools \(0\)/i })).toBeTruthy()
   })
 
   it('shows the saved header', async () => {

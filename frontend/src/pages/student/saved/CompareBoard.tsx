@@ -2,7 +2,7 @@
 // matrix of the saved shortlist, with a balance summary that flags a
 // reach-heavy list. Reads only fields on the saved row (no fabrication).
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { ArrowUp, ArrowDown } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import BandBadge from '../../../components/ui/BandBadge'
@@ -40,7 +40,6 @@ function fmtDeadline(iso?: string | null): string {
 }
 
 export default function CompareBoard({ programs }: { programs: SavedProgram[] }) {
-  const navigate = useNavigate()
   const [sort, setSort] = useState<{ key: CompareColumn; dir: SortDir }>({ key: 'band', dir: 'asc' })
   const rows = sortRows(programs, sort.key, sort.dir)
   const balance = bandCounts(programs)
@@ -65,31 +64,42 @@ export default function CompareBoard({ programs }: { programs: SavedProgram[] })
 
       <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-left text-sm">
+          <caption className="sr-only">Saved programs compared by match band, acceptance, tuition, duration, and deadline. Sortable by column.</caption>
           <thead>
             <tr className="border-b border-border bg-muted/30">
-              {COMPARE_COLUMNS.map(col => (
-                <th key={col.key} className="px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">
-                  <button
-                    onClick={() => onHeader(col.key)}
-                    className="inline-flex items-center gap-1 hover:text-foreground"
-                    aria-label={`Sort by ${col.label}`}
+              {COMPARE_COLUMNS.map(col => {
+                const active = sort.key === col.key
+                return (
+                  <th
+                    key={col.key}
+                    scope="col"
+                    aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                    className="px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap"
                   >
-                    {col.label}
-                    {sort.key === col.key &&
-                      (sort.dir === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />)}
-                  </button>
-                </th>
-              ))}
+                    <button
+                      onClick={() => onHeader(col.key)}
+                      className="inline-flex items-center gap-1 hover:text-foreground"
+                      aria-label={`Sort by ${col.label}${active ? (sort.dir === 'asc' ? ', ascending' : ', descending') : ''}`}
+                    >
+                      {col.label}
+                      {active && (sort.dir === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />)}
+                    </button>
+                  </th>
+                )
+              })}
             </tr>
           </thead>
           <tbody>
             {rows.map(sp => (
               <tr
                 key={sp.program_id}
-                onClick={() => navigate(`/s/programs/${sp.program_id}`)}
-                className="cursor-pointer border-b border-border last:border-0 hover:bg-muted/40"
+                className="border-b border-border last:border-0 hover:bg-muted/40"
               >
-                <td className="px-3 py-2 font-medium text-foreground max-w-[16rem] truncate">{sp.program_name ?? 'Program'}</td>
+                <td className="px-3 py-2 font-medium max-w-[16rem] truncate">
+                  <Link to={`/s/programs/${sp.program_id}`} className="text-foreground hover:text-secondary hover:underline">
+                    {sp.program_name ?? 'Program'}
+                  </Link>
+                </td>
                 <td className="px-3 py-2 text-muted-foreground max-w-[12rem] truncate">{sp.institution_name ?? '—'}</td>
                 <td className="px-3 py-2">{sp.band_label ? <BandBadge band={sp.band_label as MatchBand} /> : <span className="text-muted-foreground">—</span>}</td>
                 <td className="px-3 py-2 text-foreground tabular-nums">{fmtAcceptance(sp.acceptance_rate)}</td>
