@@ -496,6 +496,128 @@ async def _upsert_identity(
 # ── Snapshot reconstruction (used by the validator) ─────────────────────────
 
 
+async def snapshot_from_structured_tables(db: AsyncSession, student_id: UUID) -> StudentSnapshot:
+    """Build a StudentSnapshot from the persisted STRUCTURED TABLES (StudentGoal /
+    StudentNeed / StudentIdentity + the current AcademicRecord + StudentProfile
+    basics), for the feature emitter.
+
+    The live managed-agent Discovery path persists to these tables (via
+    ``persist_extraction``) but NEVER to ``discovery_messages.extracted_signals``,
+    so ``snapshot_from_extracted_signals_history`` can't be reused — without this
+    builder the managed path emits no feature vector and the matcher returns ``[]``
+    for every student onboarded through the live Uni agent.
+
+    Conservative + safe: only high-confidence fields are mapped; uncertain or
+    lossy-to-recover fields (e.g. ``education_level``, which is stored transformed
+    onto ``AcademicRecord.degree_type``) are left ``None``. A ``None`` snapshot
+    field is permissive in the matcher (an unknown attribute never wrongly filters),
+    so an incomplete-but-correct snapshot is strictly safer than a guessed one. The
+    rich content fields (goals / needs / identity / gpa) give the emitter ample
+    signal to produce a usable feature vector."""
+    snap = StudentSnapshot()
+
+    profile = await db.scalar(select(StudentProfile).where(StudentProfile.id == student_id))
+    if profile is not None:
+        gi = getattr(profile, "gender_identity", None)
+        if gi:
+            snap.gender = str(gi)
+        fg = getattr(profile, "first_generation_status", None)
+        if fg is not None:
+            snap.first_gen = bool(fg)
+
+    acad = await db.scalar(
+        select(AcademicRecord).where(
+            AcademicRecord.student_id == student_id,
+            AcademicRecord.is_current.is_(True),
+        )
+    )
+    if acad is not None:
+        gpa = getattr(acad, "normalized_gpa", None) or getattr(acad, "gpa", None)
+        if gpa is not None:
+            try:
+                snap.gpa = float(gpa)
+            except (TypeError, ValueError):
+                pass
+
+    goal_rows = (
+        (
+            await db.execute(
+                select(StudentGoal).where(
+                    StudentGoal.student_id == student_id, StudentGoal.status == "active"
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    for g in goal_rows:
+        if not g.specific:
+            continue
+        snap.goals.append(
+            GoalEntry(
+                category=g.category or "personal",
+                specific=g.specific,
+                measurable=g.measurable,
+                achievable=g.achievable_notes,
+                relevant=g.relevant_notes,
+                time_bound=g.time_bound.isoformat() if g.time_bound else None,
+            )
+        )
+
+    need_rows = (
+        (await db.execute(select(StudentNeed).where(StudentNeed.student_id == student_id)))
+        .scalars()
+        .all()
+    )
+    for n in need_rows:
+        # NeedEntry.signal is the controlled-vocab TAG (model.need_type); the
+        # free description is model.signal; the verbatim quote is model.source_quote.
+        # severity is a model string band (must_have/...) ≠ NeedEntry's int → leave None.
+        snap.needs.append(
+            NeedEntry(
+                maslow_level=n.maslow_level or "",
+                signal=n.need_type or "",
+                free_text=n.signal or "",
+                evidence=n.source_quote or "",
+            )
+        )
+
+    ident = await db.scalar(select(StudentIdentity).where(StudentIdentity.student_id == student_id))
+    if ident is not None:
+        for cv in ident.core_values or []:
+            claim = isinstance(cv, dict) and cv.get("value")
+            if claim:
+                snap.identity_claims.append(
+                    IdentityClaim(
+                        facet="value",
+                        claim=str(claim),
+                        evidence=str(cv.get("source_quote") or cv.get("evidence") or ""),
+                    )
+                )
+        for wv in ident.worldview or []:
+            claim = isinstance(wv, dict) and wv.get("belief")
+            if claim:
+                snap.identity_claims.append(
+                    IdentityClaim(
+                        facet="belief",
+                        claim=str(claim),
+                        evidence=str(wv.get("source_quote") or wv.get("context") or ""),
+                    )
+                )
+        for sa in ident.self_awareness or []:
+            claim = isinstance(sa, dict) and (sa.get("insight") or sa.get("claim"))
+            if claim:
+                snap.identity_claims.append(
+                    IdentityClaim(
+                        facet="self_awareness",
+                        claim=str(claim),
+                        evidence=str(sa.get("source_quote") or sa.get("evidence") or ""),
+                    )
+                )
+
+    return snap
+
+
 def snapshot_from_extracted_signals_history(
     extracted_signals: list[dict[str, Any] | None],
 ) -> StudentSnapshot:
