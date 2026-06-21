@@ -179,7 +179,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 # REPAIR_BACKLOG miss #8 fraction-floor; the dilution-evasion catalogs UF / Cornell / BU
 # are NOT here yet on purpose).
 _ABS_FLOOR_CLEAN = [
-    "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley",
+    "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf",
 ]
 
 

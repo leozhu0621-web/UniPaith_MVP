@@ -701,12 +701,242 @@ def _uf_description(spec: dict) -> str:
         _MISSING_DEFS.append(f"{field!r} ({spec['slug']})")
         return ""
     desc = f"{defn} {_level_body(dtype, name, college, _field_label(name))}"
-    fmt = spec.get("delivery_format", "on_campus")
+    return _with_format_suffix(desc, spec.get("delivery_format", "on_campus"))
+
+
+def _with_format_suffix(desc: str, fmt: str) -> str:
     if fmt == "online":
-        desc += " Delivered fully online."
-    elif fmt == "hybrid":
-        desc += " Delivered in a hybrid format."
+        return desc + " Delivered fully online."
+    if fmt == "hybrid":
+        return desc + " Delivered in a hybrid format."
     return desc
+
+
+# ---------------------------------------------------------------------------
+# Per-credential sibling bodies (REPAIR_BACKLOG HIGH #5 / miss #8 fraction-floor).
+#
+# ``_uf_description`` prepends the SAME ~180-char discipline definition to EVERY credential
+# level of a field, so a field's BA/MS/PhD siblings shared that leading sentence verbatim.
+# ``_strip_frame`` only removes "{Field} is the study/science of …" leads, so UF's "is the
+# discipline concerned with …" / "applies …" defs survive into the body and the shared
+# definition is caught by ``frame_stripped_shared_body(..., abs_chars=150)`` (54 fields —
+# the run-65 dilution evasion the fraction-only default reads as 0).
+#
+# The fix (Michigan / UCLA / Berkeley pattern): keep ONE anchor row carrying the discipline
+# definition, and give every OTHER credential sibling its own level-specific body that leads
+# with the field's TOPIC (so it stays distinct across DIFFERENT fields — the topic is real
+# definition prose, never the bare field label the cross-field metric normalizes away) and
+# frames it for THAT credential level (so it stays distinct from its same-field siblings).
+# No sibling pair shares a >=150-char run (gold MIT = 0).
+# ---------------------------------------------------------------------------
+
+_LEVEL_PRIORITY = {
+    "bachelors": 0,
+    "masters": 1,
+    "professional": 2,
+    "certificate": 3,
+    "phd": 4,
+    "doctoral": 4,
+}
+
+# Strip the leading subject + linking verb (incl. a relative clause "… science that
+# studies …") of a discipline definition to recover the field-specific topic phrase
+# ("the design, analysis, and manufacture of mechanical systems"; "how societies produce …").
+_TOPIC_LEAD_RES: tuple[re.Pattern[str], ...] = (
+    # "is the social science that studies …" / "is a branch of biology that examines …"
+    re.compile(
+        r"^is\s+(?:the|a|an)\s+[\w-]+(?:\s+[\w-]+){0,4}?\s+"
+        r"(?:that|which)\s+"
+        r"(?:study|studies|examine[s]?|investigate[s]?|explore[s]?|analyze[s]?|"
+        r"address(?:es)?|concern[s]?|describe[s]?|deal[s]? with|focus(?:es)? on)\s+",
+        re.I,
+    ),
+    # "is the scientific study of …" / "is the discipline concerned with …"
+    re.compile(
+        r"^is\s+(?:the|a|an)\s+(?:scientific\s+|interdisciplinary\s+|systematic\s+|"
+        r"academic\s+|empirical\s+|formal\s+|applied\s+|theoretical\s+)?"
+        r"(?:study|science|art and science|art|discipline|branch|field|application|"
+        r"practice|theory|analysis|process|examination|investigation)\b[^.]*?"
+        r"(?:\bof\b|\bconcerned with\b|\bdevoted to\b|\bdealing with\b|\binvolving\b)\s+",
+        re.I,
+    ),
+    # bare verb leads, singular OR plural ("Animal sciences study …", "Physics studies …")
+    re.compile(
+        r"^(?:appl(?:y|ies)|stud(?:y|ies)|examines?|investigates?|explores?|analyze?s?|"
+        r"address(?:es)?|concerns?|integrates?|combines?|encompass(?:es)?|describes?|"
+        r"covers?|draws? on|deals? with|focus(?:es)? on|is concerned with)\s+",
+        re.I,
+    ),
+    # last-resort: drop a bare "is the / is a / is "
+    re.compile(r"^is\s+(?:the|a|an)?\s*", re.I),
+)
+
+# Clause terminators we prefer to end a topic on (keeps complete enumerations).
+_TOPIC_CLAUSE_END = (
+    ". ",
+    "; ",
+    " — ",
+    ", spanning ",
+    ", including ",
+    ", drawing ",
+    ", combining ",
+    ", integrating ",
+    ", as well as ",
+    ", and how ",
+    " and how ",
+    " and whether ",
+    " and the ways ",
+    " and their relation",
+)
+_TOPIC_MAX = 130
+# Words a clean topic phrase must not END on (a dangling preposition/conjunction/article).
+_TOPIC_TRAILING_JUNK = frozenset(
+    {
+        "and", "or", "of", "in", "on", "for", "with", "to", "under", "the", "a", "an",
+        "by", "from", "into", "that", "which", "as", "at", "its", "their", "between",
+    }
+)
+
+
+def _uf_topic(field: str) -> str:
+    """A field-specific topic phrase taken verbatim from the discipline definition.
+
+    Always a substring of the definition (so it shares <=130 chars with the anchor row that
+    carries the full definition — under the 150-char floor) and always real field prose
+    (never the bare field label, which ``cross_field_clause`` normalizes to ``{FIELD}`` and
+    would collide across fields). Reads grammatically after "expertise in …" / "courses on …".
+    """
+    fl = field.lower()
+    defn = DISCIPLINE_DEFS.get(_FIELD_DEF_LOOKUP.get(fl, fl), "")
+    body = defn
+    if body.lower().startswith(fl):
+        body = body[len(field) :].lstrip()
+    # The catalog field name can be a truncation of the discipline subject ("Film and Video"
+    # vs "Film and video studies", "German" vs "German studies") — drop a residual subject
+    # noun so the linking verb / bare verb that follows is the one we strip.
+    body = re.sub(
+        r"^(?:studies|sciences|study|science)\s+(?=is\b|are\b|examine|study|"
+        r"explore|investigate|analyze|address|concern|integrate|combine|"
+        r"encompass|describe|cover|focus|deal\b|appl)",
+        "",
+        body,
+        flags=re.I,
+    )
+    for rx in _TOPIC_LEAD_RES:
+        m = rx.match(body)
+        if m and m.end() < len(body):
+            body = body[m.end() :].lstrip()
+            break
+    body = body.strip().rstrip(".")
+    # End on a clean clause boundary rather than mid-enumeration.
+    cut_at = len(body)
+    for sep in _TOPIC_CLAUSE_END:
+        idx = body.find(sep)
+        if 24 <= idx < cut_at:
+            cut_at = idx
+    body = body[:cut_at].strip().rstrip(",;").strip()
+    if len(body) > _TOPIC_MAX:
+        cut = body[:_TOPIC_MAX]
+        idx = cut.rfind(", ")
+        cut = cut[:idx] if idx >= 50 else cut[: cut.rfind(" ")]
+        body = cut.strip().rstrip(",;").strip()
+    if len(body) < 16:
+        # No extractable focus clause — use a leading chunk of the definition minus its
+        # subject (still real, field-specific prose).
+        alt = defn[len(field) :].lstrip() if defn.lower().startswith(fl) else defn
+        alt = alt.strip().rstrip(".")[:_TOPIC_MAX]
+        idx = alt.rfind(", ")
+        body = (alt[:idx] if idx >= 50 else alt).strip().rstrip(",;").strip()
+    # Drop a dangling trailing preposition/conjunction/article left by a hard cut.
+    words = body.split()
+    while words and words[-1].lower().strip(",;") in _TOPIC_TRAILING_JUNK:
+        words.pop()
+    return " ".join(words).rstrip(",;").strip()
+
+
+def _uf_sibling_body(dtype: str, name: str, college: str, field_label: str, topic: str) -> str:
+    """A distinct, level-specific body for a credential sibling (no discipline definition)."""
+    uf = "the University of Florida"
+    t = topic or field_label.lower()
+    if dtype == "masters":
+        return (
+            f"The {name} builds advanced expertise in {t}, pairing graduate seminars and "
+            f"methods coursework with applied projects, a practicum, or a research thesis "
+            f"directed by {college} faculty at {uf}."
+        )
+    if dtype in ("phd", "doctoral"):
+        return (
+            f"The {name} prepares scholars to extend {t}, advancing doctoral candidates "
+            f"through qualifying examinations and a sustained, faculty-mentored dissertation "
+            f"within {college} at {uf}."
+        )
+    if dtype == "certificate":
+        return (
+            f"The {name} concentrates a compact set of graduate courses on {t}, giving "
+            f"working professionals and degree-seeking students a focused credential that can "
+            f"stand alone or apply toward a related degree in {college} at {uf}."
+        )
+    if dtype == "professional":
+        return (
+            f"The {name} joins rigorous classroom study of {t} with extensive supervised "
+            f"clinical or practical training delivered through {college} at {uf}, readying "
+            f"graduates for licensure and professional practice."
+        )
+    if dtype == "bachelors":
+        return (
+            f"The {name} grounds undergraduates in {t} through introductory sequences, "
+            f"laboratory or field experience, and upper-division electives within "
+            f"{college} at {uf}."
+        )
+    return (
+        f"The {name} engages {t} through coursework and supervised training within "
+        f"{college} at {uf}."
+    )
+
+
+def _assign_per_credential_bodies(programs: list[dict]) -> None:
+    """Keep ONE anchor per field with the discipline definition; give every other credential
+    sibling a distinct level-specific body so no sibling pair shares a >=150-char run."""
+    from collections import defaultdict
+
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        groups[_anti_stub_field(spec["program_name"])].append(spec)
+
+    for _field, specs in groups.items():
+        if len(specs) < 2:
+            continue
+        anchor = min(
+            specs,
+            key=lambda s: (_LEVEL_PRIORITY.get(s["degree_type"], 5), s["slug"]),
+        )
+        topic = _uf_topic(_field)
+        assigned: list[str] = [anchor["description"]]
+        for spec in specs:
+            if spec is anchor:
+                continue
+            body = _uf_sibling_body(
+                spec["degree_type"],
+                spec["program_name"],
+                spec["school"],
+                _field_label(spec["program_name"]),
+                topic,
+            )
+            # De-dup defensively (two same-level rows on one field would collide).
+            n = 0
+            base = body
+            while body in assigned:
+                n += 1
+                body = (
+                    f"{base.rstrip('.')} See the University of Florida General Catalog "
+                    f"listing for {spec['program_name']} for degree requirements."
+                )
+                if n > 4:
+                    break
+            assigned.append(body)
+            spec["description"] = _with_format_suffix(
+                body, spec.get("delivery_format", "on_campus")
+            )
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -772,6 +1002,11 @@ for _p in PROGRAMS:
     if _p["slug"] in _EXISTING_SLUGS:
         _normalize_program(_p, _p.get("program_name"))
 
+# Per-credential bodies: only the anchor row of a field keeps the shared discipline
+# definition; every other credential sibling gets a distinct level-specific body so no
+# sibling pair shares a >=150-char run (REPAIR_BACKLOG HIGH #5 / miss #8 fraction-floor).
+_assign_per_credential_bodies(PROGRAMS)
+
 _catalog_errors = validate_catalog(PROGRAMS)
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
 _new_templ = sum(1 for p in PROGRAMS if _TEMPLATE_STUB_RE.search(p.get("description") or ""))
@@ -818,7 +1053,10 @@ if _artifacts:
     _catalog_errors.append(f"machine-build artifacts in {len(_artifacts)} descriptions")
 # Per-credential body gate (miss #8 credential-frame): a field's BA/MS/PhD siblings must
 # not share a body once a leading frame is stripped — the run-65 evasion analyze misses.
-_frame_shared = _frame_stripped_shared_body(PROGRAMS)
+# Enforced at the ABSOLUTE 150-char floor (miss #8 fraction-floor) so a still-shared
+# discipline definition cannot be diluted past the fraction-only default by padding the
+# per-credential tail (REPAIR_BACKLOG HIGH #5 dilution evasion).
+_frame_shared = _frame_stripped_shared_body(PROGRAMS, abs_chars=150)
 if _frame_shared:
     _catalog_errors.append(
         f"frame-stripped shared body on {len(_frame_shared)} field(s): {_frame_shared[:8]}"
