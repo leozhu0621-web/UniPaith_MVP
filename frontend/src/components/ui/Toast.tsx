@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useToastStore, type Toast, type ToastType } from '../../stores/toast-store'
 import { X, CheckCircle, AlertTriangle, AlertCircle, Info } from 'lucide-react'
 import clsx from 'clsx'
@@ -10,7 +10,7 @@ import { usePresence } from './usePresence'
 // toasts for one exit beat (slide/fade out) before dropping them — the store's
 // dismiss timing is untouched.
 
-const ICON_MAP: Record<ToastType, React.ReactNode> = {
+const ICON_MAP: Record<ToastType, ReactNode> = {
   success: <CheckCircle size={18} className="text-success" />,
   error: <AlertCircle size={18} className="text-error" />,
   warning: <AlertTriangle size={18} className="text-warning" />,
@@ -22,6 +22,13 @@ const ACCENT_MAP: Record<ToastType, string> = {
   error: 'border-l-error',
   warning: 'border-l-warning',
   info: 'border-l-secondary',
+}
+
+const LIVE_REGION_MAP: Record<ToastType, { role: 'status' | 'alert'; live: 'polite' | 'assertive' }> = {
+  success: { role: 'status', live: 'polite' },
+  info: { role: 'status', live: 'polite' },
+  warning: { role: 'alert', live: 'assertive' },
+  error: { role: 'alert', live: 'assertive' },
 }
 
 function ToastItem({
@@ -43,23 +50,26 @@ function ToastItem({
   }, [present, mounted, onExited, toast.id])
 
   if (!mounted) return null
+  const liveRegion = LIVE_REGION_MAP[toast.type]
 
   return (
     <div
-      role="status"
-      aria-live="polite"
+      role={liveRegion.role}
+      aria-live={liveRegion.live}
+      aria-atomic="true"
       className={clsx(
         'flex items-start gap-3 px-4 py-3 rounded-lg border border-border border-l-4 bg-card elev-raised',
         closing ? 'animate-slide-out-right pointer-events-none' : 'animate-slide-in-right',
         ACCENT_MAP[toast.type]
       )}
     >
-      <span className="mt-0.5 shrink-0">{ICON_MAP[toast.type]}</span>
+      <span className="mt-0.5 shrink-0" aria-hidden="true">{ICON_MAP[toast.type]}</span>
       <p className="flex-1 text-sm text-foreground">{toast.message}</p>
       <button
+        type="button"
         onClick={onDismiss}
-        aria-label="Dismiss"
-        className="p-0.5 -mr-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+        aria-label="Dismiss notification"
+        className="p-0.5 -mr-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
       >
         <X size={14} />
       </button>
@@ -95,7 +105,11 @@ export default function ToastContainer() {
   return (
     // Below lg the stack clears the fixed 56px mobile bottom tab bar (+ safe
     // area); at lg+ there is no tab bar, so it sits at the normal offset.
-    <div className="fixed right-4 z-[100] flex flex-col gap-4 w-[min(360px,calc(100vw-2rem))] bottom-[calc(56px+env(safe-area-inset-bottom)+0.5rem)] lg:bottom-4 lg:pb-safe">
+    <div
+      role="region"
+      aria-label="Notifications"
+      className="fixed right-4 z-[100] flex flex-col gap-4 w-[min(360px,calc(100vw-2rem))] bottom-[calc(56px+env(safe-area-inset-bottom)+0.5rem)] lg:bottom-4 lg:pb-safe"
+    >
       {rendered.map(toast => (
         <ToastItem
           key={toast.id}
