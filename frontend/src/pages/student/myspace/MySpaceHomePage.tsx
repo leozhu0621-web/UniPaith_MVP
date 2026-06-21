@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -26,6 +26,28 @@ import { track } from '../../../lib/analytics'
 import { useAuthStore } from '../../../stores/auth-store'
 
 const STALE = 60_000
+
+type TaskActionType = 'dismiss' | 'snooze' | 'restore'
+
+interface TaskActionState {
+  key: string
+  title: string
+  action: TaskActionType
+}
+
+interface TaskMutationVariables {
+  key: string
+  title: string
+  action: TaskActionType
+  dismissed?: boolean
+  snoozed_until?: string | null
+}
+
+const taskActionVerb: Record<TaskActionType, string> = {
+  dismiss: 'dismiss',
+  snooze: 'snooze',
+  restore: 'restore',
+}
 
 const urgencyLabel: Record<MySpaceUrgency, string> = {
   focus_now: 'focus now',
@@ -96,6 +118,8 @@ export default function MySpaceHomePage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { user } = useAuthStore()
+  const [taskAction, setTaskAction] = useState<TaskActionState | null>(null)
+  const [taskActionError, setTaskActionError] = useState<TaskActionState | null>(null)
 
   const overview = useQuery({
     queryKey: qk.mySpaceOverview(),
@@ -104,9 +128,21 @@ export default function MySpaceHomePage() {
   })
 
   const taskMutation = useMutation({
-    mutationFn: ({ key, dismissed, snoozed_until }: { key: string; dismissed?: boolean; snoozed_until?: string | null }) =>
+    mutationFn: ({ key, dismissed, snoozed_until }: TaskMutationVariables) =>
       patchMySpaceTask(key, { dismissed, snoozed_until }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.mySpaceOverview() }),
+    onMutate: variables => {
+      setTaskActionError(null)
+      setTaskAction({ key: variables.key, title: variables.title, action: variables.action })
+    },
+    onSuccess: () => {
+      setTaskAction(null)
+      setTaskActionError(null)
+      qc.invalidateQueries({ queryKey: qk.mySpaceOverview() })
+    },
+    onError: (_error, variables) => {
+      setTaskAction(null)
+      setTaskActionError({ key: variables.key, title: variables.title, action: variables.action })
+    },
   })
 
   useEffect(() => {
@@ -122,6 +158,7 @@ export default function MySpaceHomePage() {
   const activeTasks = useMemo(() => data?.tasks.filter(t => t.active) ?? [], [data])
   const hiddenTasks = useMemo(() => data?.tasks.filter(t => !t.active) ?? [], [data])
   const focus = activeTasks[0] ?? null
+  const pendingTaskKey = taskMutation.isPending ? taskAction?.key ?? null : null
   const firstName = data?.student.first_name || user?.email?.split('@')[0] || ''
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
@@ -134,17 +171,17 @@ export default function MySpaceHomePage() {
   }
 
   const dismissTask = (task: MySpaceTask) => {
-    taskMutation.mutate({ key: task.key, dismissed: true })
+    taskMutation.mutate({ key: task.key, title: task.title, action: 'dismiss', dismissed: true })
   }
 
   const snoozeTask = (task: MySpaceTask) => {
     const snoozed = new Date(Date.now() + 7 * 86_400_000).toISOString()
-    taskMutation.mutate({ key: task.key, snoozed_until: snoozed })
+    taskMutation.mutate({ key: task.key, title: task.title, action: 'snooze', snoozed_until: snoozed })
   }
 
   const restoreTask = (task: MySpaceTask) => {
     track('my_space_task_restored', { task_key: task.key, category: task.category })
-    taskMutation.mutate({ key: task.key, dismissed: false, snoozed_until: null })
+    taskMutation.mutate({ key: task.key, title: task.title, action: 'restore', dismissed: false, snoozed_until: null })
   }
 
   return (
@@ -180,13 +217,15 @@ export default function MySpaceHomePage() {
 
           <OverviewMeta generatedAt={data.generated_at} activeCount={activeTasks.length} hiddenCount={hiddenTasks.length} />
 
+          <TaskMutationNotice pending={taskMutation.isPending} action={taskAction} error={taskActionError} />
+
           <FocusPanel
             task={focus}
             onGo={(task) => go(task.cta_route, 'my_space_task_clicked', { task_key: task.key, category: task.category })}
             onReviewSource={(task, route) => go(route, 'readiness_explanation_opened', { task_key: task.key, category: task.category, source: 'provenance' })}
             onDismiss={dismissTask}
             onSnooze={snoozeTask}
-            busy={taskMutation.isPending}
+            pendingTaskKey={pendingTaskKey}
           />
 
           <PipelineStrip items={data.pipeline} onGo={(route, key) => go(route, key === 'offers' ? 'offer_compare_opened' : 'my_space_task_clicked', { module: 'pipeline', key })} />
@@ -225,7 +264,7 @@ export default function MySpaceHomePage() {
               onEmpty={() => go('/s/import', 'my_space_empty_cta_clicked', { module: 'evidence_gaps' })}
               onDismiss={dismissTask}
               onSnooze={snoozeTask}
-              busy={taskMutation.isPending}
+              pendingTaskKey={pendingTaskKey}
             />
             <ItemModule
               title="Deadlines"
@@ -329,7 +368,7 @@ export default function MySpaceHomePage() {
             />
           </div>
 
-          <HiddenTasksPanel tasks={hiddenTasks} onRestore={restoreTask} busy={taskMutation.isPending} />
+          <HiddenTasksPanel tasks={hiddenTasks} onRestore={restoreTask} pendingTaskKey={pendingTaskKey} />
         </div>
       )}
     </PageContainer>
@@ -381,6 +420,34 @@ function OverviewMeta({
   )
 }
 
+function TaskMutationNotice({
+  pending,
+  action,
+  error,
+}: {
+  pending: boolean
+  action: TaskActionState | null
+  error: TaskActionState | null
+}) {
+  if (pending && action) {
+    return (
+      <div role="status" aria-live="polite" className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-foreground">
+        Updating task state for "{action.title}".
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div role="alert" className="rounded-md border border-error/30 bg-error/10 px-3 py-2 text-xs text-foreground">
+        Could not {taskActionVerb[error.action]} "{error.title}". Try again from the task row.
+      </div>
+    )
+  }
+
+  return null
+}
+
 function LoadingState() {
   return (
     <div className="mt-4 space-y-4">
@@ -400,14 +467,14 @@ function FocusPanel({
   onReviewSource,
   onDismiss,
   onSnooze,
-  busy,
+  pendingTaskKey,
 }: {
   task: MySpaceTask | null
   onGo: (task: MySpaceTask) => void
   onReviewSource: (task: MySpaceTask, route: string) => void
   onDismiss: (task: MySpaceTask) => void
   onSnooze: (task: MySpaceTask) => void
-  busy: boolean
+  pendingTaskKey: string | null
 }) {
   if (!task) {
     return (
@@ -423,6 +490,7 @@ function FocusPanel({
     )
   }
   const due = formatDate(task.due_at)
+  const taskBusy = pendingTaskKey === task.key
   return (
     <Card pad={false} className="p-5">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
@@ -455,7 +523,7 @@ function FocusPanel({
             <>
               <button
                 type="button"
-                disabled={busy}
+                disabled={taskBusy}
                 onClick={() => onSnooze(task)}
                 aria-label={`Snooze ${task.title}`}
                 className="ui-btn rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
@@ -464,7 +532,7 @@ function FocusPanel({
               </button>
               <button
                 type="button"
-                disabled={busy}
+                disabled={taskBusy}
                 onClick={() => onDismiss(task)}
                 aria-label={`Dismiss ${task.title}`}
                 className="ui-btn rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
@@ -587,7 +655,7 @@ function TaskModule({
   onEmpty,
   onDismiss,
   onSnooze,
-  busy,
+  pendingTaskKey,
 }: {
   title: string
   tasks: MySpaceTask[]
@@ -600,7 +668,7 @@ function TaskModule({
   onEmpty: () => void
   onDismiss: (task: MySpaceTask) => void
   onSnooze: (task: MySpaceTask) => void
-  busy: boolean
+  pendingTaskKey: string | null
 }) {
   return (
     <Card pad={false} className="p-5">
@@ -610,7 +678,7 @@ function TaskModule({
       ) : (
         <div className="divide-y divide-border">
           {tasks.slice(0, 5).map(task => (
-            <TaskRow key={task.key} task={task} onGo={onGo} onReviewSource={onReviewSource} onDismiss={onDismiss} onSnooze={onSnooze} busy={busy} />
+            <TaskRow key={task.key} task={task} onGo={onGo} onReviewSource={onReviewSource} onDismiss={onDismiss} onSnooze={onSnooze} pendingTaskKey={pendingTaskKey} />
           ))}
         </div>
       )}
@@ -624,17 +692,18 @@ function TaskRow({
   onReviewSource,
   onDismiss,
   onSnooze,
-  busy,
+  pendingTaskKey,
 }: {
   task: MySpaceTask
   onGo: (task: MySpaceTask) => void
   onReviewSource: (task: MySpaceTask, route: string) => void
   onDismiss: (task: MySpaceTask) => void
   onSnooze: (task: MySpaceTask) => void
-  busy: boolean
+  pendingTaskKey: string | null
 }) {
   const due = formatDate(task.due_at)
   const blockerLine = [task.blocker, task.missing_field].filter(Boolean).join(' · ')
+  const taskBusy = pendingTaskKey === task.key
   return (
     <div className="flex items-start gap-3 py-3" data-task-key={task.key}>
       <div className="min-w-0 flex-1">
@@ -658,8 +727,8 @@ function TaskRow({
       </div>
       {task.dismissible && (
         <div className="flex shrink-0 gap-1">
-          <button type="button" disabled={busy} onClick={() => onSnooze(task)} aria-label={`Snooze ${task.title}`} className="ui-btn rounded border border-border px-2 py-1 text-xs hover:bg-muted disabled:opacity-50">Snooze</button>
-          <button type="button" disabled={busy} onClick={() => onDismiss(task)} aria-label={`Dismiss ${task.title}`} className="ui-btn rounded border border-border px-2 py-1 text-xs hover:bg-muted disabled:opacity-50">Dismiss</button>
+          <button type="button" disabled={taskBusy} onClick={() => onSnooze(task)} aria-label={`Snooze ${task.title}`} className="ui-btn rounded border border-border px-2 py-1 text-xs hover:bg-muted disabled:opacity-50">Snooze</button>
+          <button type="button" disabled={taskBusy} onClick={() => onDismiss(task)} aria-label={`Dismiss ${task.title}`} className="ui-btn rounded border border-border px-2 py-1 text-xs hover:bg-muted disabled:opacity-50">Dismiss</button>
         </div>
       )}
     </div>
@@ -678,11 +747,11 @@ function hiddenReason(task: MySpaceTask) {
 function HiddenTasksPanel({
   tasks,
   onRestore,
-  busy,
+  pendingTaskKey,
 }: {
   tasks: MySpaceTask[]
   onRestore: (task: MySpaceTask) => void
-  busy: boolean
+  pendingTaskKey: string | null
 }) {
   if (tasks.length === 0) return null
 
@@ -692,27 +761,30 @@ function HiddenTasksPanel({
         Hidden tasks <span className="ml-1 text-xs font-normal text-muted-foreground">({tasks.length})</span>
       </summary>
       <div className="mt-3 divide-y divide-border">
-        {tasks.map(task => (
-          <div key={task.key} className="flex items-start justify-between gap-3 py-3">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-medium text-foreground">{task.title}</p>
-                <Badge variant="neutral">{hiddenReason(task)}</Badge>
+        {tasks.map(task => {
+          const taskBusy = pendingTaskKey === task.key
+          return (
+            <div key={task.key} className="flex items-start justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-medium text-foreground">{task.title}</p>
+                  <Badge variant="neutral">{hiddenReason(task)}</Badge>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{sourceLine(task)}</p>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{sourceLine(task)}</p>
+              <button
+                type="button"
+                disabled={taskBusy}
+                onClick={() => onRestore(task)}
+                aria-label={`Restore ${task.title}`}
+                className="ui-btn inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
+              >
+                <RotateCcw size={12} /> Restore
+              </button>
             </div>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => onRestore(task)}
-              aria-label={`Restore ${task.title}`}
-              className="ui-btn inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
-            >
-              <RotateCcw size={12} /> Restore
-            </button>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </details>
   )

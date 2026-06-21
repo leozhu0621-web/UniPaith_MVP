@@ -220,6 +220,42 @@ describe('MySpaceHomePage', () => {
     })
   })
 
+  it('shows which task state is being updated', async () => {
+    let resolvePatch!: (value: { task_key: string; dismissed: boolean; snoozed_until: string | null }) => void
+    vi.mocked(patchMySpaceTask).mockReturnValueOnce(new Promise(resolve => {
+      resolvePatch = resolve
+    }))
+
+    renderHome()
+
+    const snoozeButton = await screen.findByLabelText('Snooze Complete MS Computer Science application')
+    fireEvent.click(snoozeButton)
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Updating task state for "Complete MS Computer Science application".')
+    expect(snoozeButton).toBeDisabled()
+    expect(screen.getByLabelText('Dismiss Complete MS Computer Science application')).toBeDisabled()
+
+    resolvePatch({
+      task_key: 'application:app-1:missing',
+      dismissed: false,
+      snoozed_until: '2026-06-29T12:00:00.000Z',
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByRole('status')).toBeNull()
+    })
+  })
+
+  it('shows a recoverable error when task state cannot be saved', async () => {
+    vi.mocked(patchMySpaceTask).mockRejectedValueOnce(new Error('network failed'))
+
+    renderHome()
+
+    fireEvent.click(await screen.findByLabelText('Dismiss Complete MS Computer Science application'))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not dismiss "Complete MS Computer Science application". Try again from the task row.')
+  })
+
   it('lets students restore dismissed or snoozed tasks from the hidden task panel', async () => {
     vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
       ...overview,
