@@ -31,6 +31,7 @@ import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import Modal from '../../../components/ui/Modal'
 import { SkeletonCard } from '../../../components/ui/Skeleton'
+import { track } from '../../../lib/analytics'
 import { showToast } from '../../../stores/toast-store'
 import type { StrategyStatus, StudentStrategy } from '../../../types'
 
@@ -38,6 +39,194 @@ const STATUS_VARIANTS: Record<StrategyStatus, 'success' | 'info' | 'neutral'> = 
   active: 'success',
   draft: 'info',
   archived: 'neutral',
+}
+
+const STRATEGY_HANDOFF_ROUTE =
+  '/s?intent=strategy&source_task=strategy%3Arefine&return_to=%2Fs%2Fprofile%3Ftab%3Dstrategy&artifact_destination=strategy_draft'
+
+type LedgerTone = 'success' | 'warning' | 'neutral'
+
+const LEDGER_TONE_CLASS: Record<LedgerTone, string> = {
+  success: 'text-success',
+  warning: 'text-warning',
+  neutral: 'text-muted-foreground',
+}
+
+function validDate(value?: string | null): Date | null {
+  if (!value) return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function strategyTimestamp(strategy: StudentStrategy | null): Date | null {
+  if (!strategy) return null
+  return validDate(strategy.updated_at) ?? validDate(strategy.generated_at) ?? validDate(strategy.created_at)
+}
+
+function formatDate(value?: string | null): string | null {
+  const date = validDate(value)
+  if (!date) return null
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date)
+}
+
+function daysSince(date: Date | null): number | null {
+  if (!date) return null
+  return Math.max(0, Math.floor((Date.now() - date.getTime()) / 86_400_000))
+}
+
+function ageLabel(date: Date | null): string {
+  const days = daysSince(date)
+  if (days == null) return 'No timestamp'
+  if (days === 0) return 'Updated today'
+  if (days === 1) return 'Updated yesterday'
+  return `Updated ${days}d ago`
+}
+
+function pathCount(strategy: StudentStrategy | null): number {
+  if (!strategy) return 0
+  return [
+    strategy.academic_path.length > 0,
+    strategy.financial_path.length > 0,
+    strategy.geographic_path.length > 0,
+  ].filter(Boolean).length
+}
+
+function anchorCount(strategy: StudentStrategy | null): number {
+  if (!strategy) return 0
+  return [
+    Boolean(strategy.career_target),
+    Boolean(strategy.target_degree),
+    Boolean(strategy.narrative),
+    strategy.academic_path.length > 0,
+    strategy.financial_path.length > 0,
+    strategy.geographic_path.length > 0,
+  ].filter(Boolean).length
+}
+
+function missingAnchor(strategy: StudentStrategy | null): string {
+  if (!strategy) return 'No active strategy'
+  if (!strategy.career_target) return 'Career target missing'
+  if (!strategy.target_degree) return 'Degree target missing'
+  if (!strategy.narrative) return 'Narrative missing'
+  if (strategy.academic_path.length === 0) return 'Academic path missing'
+  if (strategy.financial_path.length === 0) return 'Financial path missing'
+  if (strategy.geographic_path.length === 0) return 'Geographic path missing'
+  return 'All core anchors present'
+}
+
+function sourceSummary(strategy: StudentStrategy): string {
+  const sessionCount = strategy.generated_from_session_ids.length
+  const source = sessionCount === 0
+    ? 'student profile record'
+    : `${sessionCount} discovery session${sessionCount === 1 ? '' : 's'}`
+  const generated = formatDate(strategy.generated_at) ?? formatDate(strategy.created_at)
+  return generated ? `Generated from ${source} on ${generated}.` : `Generated from ${source}.`
+}
+
+function StrategyLivingHeader({
+  active,
+  draftCount,
+  onDevelop,
+  onGenerate,
+  onEditActive,
+  isGenerating,
+}: {
+  active: StudentStrategy | null
+  draftCount: number
+  onDevelop: () => void
+  onGenerate: () => void
+  onEditActive?: () => void
+  isGenerating: boolean
+}) {
+  const timestamp = strategyTimestamp(active)
+  const days = daysSince(timestamp)
+  const stale = days != null && days > 45
+  const anchors = anchorCount(active)
+  const paths = pathCount(active)
+  const sourceText = active ? sourceSummary(active) : 'Create a draft before using strategy-driven recommendations.'
+  const headline = active?.career_target
+    ? `${active.career_target}${active.target_degree ? ` -> ${active.target_degree}` : ''}`
+    : 'No active strategy'
+
+  const ledger: { label: string; value: string; detail: string; tone: LedgerTone }[] = [
+    {
+      label: 'Direction',
+      value: active?.career_target && active?.target_degree ? 'Clear' : 'Needs target',
+      detail: active?.career_target && active?.target_degree ? 'Career and degree are both set.' : 'Add the career and degree target.',
+      tone: active?.career_target && active?.target_degree ? 'success' : 'warning',
+    },
+    {
+      label: 'Evidence depth',
+      value: `${anchors}/6 anchors`,
+      detail: missingAnchor(active),
+      tone: anchors >= 5 ? 'success' : anchors >= 3 ? 'warning' : 'neutral',
+    },
+    {
+      label: 'Freshness',
+      value: !active ? 'Not started' : stale ? 'Review freshness' : 'Current',
+      detail: active ? ageLabel(timestamp) : 'No active version yet.',
+      tone: !active || stale ? 'warning' : 'success',
+    },
+    {
+      label: 'Version control',
+      value: draftCount > 0 ? `${draftCount} draft waiting` : active ? 'Active only' : 'No versions',
+      detail: draftCount > 0 ? 'Activate the draft that should drive matches.' : 'No inactive draft is waiting.',
+      tone: draftCount > 0 ? 'warning' : active ? 'success' : 'neutral',
+    },
+  ]
+
+  return (
+    <section
+      role="region"
+      aria-label="Strategy living document"
+      className="border-y border-border bg-muted/30 px-4 py-4"
+    >
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-eyebrow uppercase text-muted-foreground">Living strategy</p>
+            {active && <Badge variant="success" size="sm">Active v{active.version}</Badge>}
+            {active?.is_stub && <Badge variant="warning" size="sm">Preview</Badge>}
+            {draftCount > 0 && <Badge variant="warning" size="sm">Draft waiting</Badge>}
+          </div>
+          <h2 className="mt-1 text-lg font-semibold text-foreground">{headline}</h2>
+          <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+            {sourceText} {paths}/3 path tracks are grounded; use drafts for exploration and activate only the version that should drive recommendations.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button size="sm" variant="secondary" onClick={onDevelop}>
+            <MessageCircle size={14} />
+            Develop with Uni
+          </Button>
+          {active && onEditActive && (
+            <Button size="sm" variant="tertiary" onClick={onEditActive}>
+              <Pencil size={14} />
+              Refine active
+            </Button>
+          )}
+          <Button size="sm" onClick={onGenerate} loading={isGenerating}>
+            <Sparkles size={14} />
+            {active ? 'Generate new draft' : 'Generate first draft'}
+          </Button>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-2 md:grid-cols-4">
+        {ledger.map(item => (
+          <div key={item.label} className="rounded-lg border border-border bg-card p-3">
+            <p className="text-xs font-medium text-muted-foreground">{item.label}</p>
+            <p className={`mt-1 text-sm font-semibold ${LEDGER_TONE_CLASS[item.tone]}`}>{item.value}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{item.detail}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
 }
 
 function StrategyCard({
@@ -143,6 +332,10 @@ function StrategyCard({
           ))}
         </PathSection>
       )}
+
+      <div className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+        Why this appears: {strategy.status} version {strategy.version}. {sourceSummary(strategy)}
+      </div>
     </Card>
   )
 }
@@ -217,24 +410,34 @@ export default function StrategyTab() {
   const drafts = versions.filter(v => v.status === 'draft')
   const archived = versions.filter(v => v.status === 'archived')
   const isLoading = activeLoading || versionsLoading
+  const developWithUni = () => {
+    track('strategy_refine_clicked', {
+      route: STRATEGY_HANDOFF_ROUTE,
+      surface: 'profile_strategy',
+      active_strategy_id: active?.id ?? null,
+    })
+    track('uni_chat_handoff_started', {
+      intent: 'strategy',
+      source_task: 'strategy:refine',
+      return_to: '/s/profile?tab=strategy',
+      artifact_destination: 'strategy_draft',
+      route: STRATEGY_HANDOFF_ROUTE,
+    })
+    navigate(STRATEGY_HANDOFF_ROUTE)
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-end">
-        <div className="flex shrink-0 items-center gap-2">
-          {/* Job-3 hook (Spec 2026-06-15) — develop the strategy with Uni. The
-              guided builder is a future Uni skill; for now this opens Uni with a
-              strategy intent so the entry point is discoverable. */}
-          <Button variant="secondary" onClick={() => navigate('/s?intent=strategy')}>
-            <MessageCircle size={14} className="mr-1" />
-            Develop with Uni
-          </Button>
-          <Button onClick={() => generateMut.mutate()} loading={generateMut.isPending}>
-            <Sparkles size={14} className="mr-1" />
-            Generate new draft
-          </Button>
-        </div>
-      </div>
+      {!isLoading && (
+        <StrategyLivingHeader
+          active={active ?? null}
+          draftCount={drafts.length}
+          onDevelop={developWithUni}
+          onGenerate={() => generateMut.mutate()}
+          onEditActive={active ? () => setEditing(active) : undefined}
+          isGenerating={generateMut.isPending}
+        />
+      )}
 
       {isLoading && <div className="space-y-3"><SkeletonCard /><SkeletonCard /></div>}
 
@@ -281,7 +484,7 @@ export default function StrategyTab() {
       )}
 
       {drafts.length > 0 && (
-        <div>
+        <div id="strategy-drafts">
           <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Drafts</div>
           <div className="space-y-3">
             {drafts.map(d => (
