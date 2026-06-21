@@ -57,7 +57,8 @@ CERTIFIED_CLEAN = [
     #             (berkeleyprof9 — frame-stripped shared body cleared berkeleypercrd1)
     "cornell",  # CIP-rollup buckets → real Cornell degrees or dropped; field-echo
     #             departments → real owning college; per-credential description leads
-    #             (verbatim/shared-body removed) (cornelldefab1)
+    #             (verbatim/shared-body removed) (cornelldefab1); sibling-aware bodies
+    #             (frame_abs150 44→0, cornellpercrd2)
     "penn",  # CIP-rollup buckets → real Penn degrees or dropped; dept = real owning
     #             school (field-echo removed); per-credential description leads with the
     #             resolved real name, no rollup leak (verbatim/shared-body removed) (penndefab1)
@@ -153,7 +154,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
 _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
-    "stanford",
+    "stanford", "penn", "cornell",
 ]
 
 
@@ -182,7 +183,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 # are NOT here yet on purpose).
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
-    "ut_austin",
+    "penn", "cornell", "ut_austin",
 ]
 
 

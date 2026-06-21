@@ -24,11 +24,12 @@ Two matcher-and-editorial repairs, applied as one atomic re-apply of ``ut_austin
    their ``cost_data.tuition_usd`` is honestly recorded in ``_standard.omitted`` rather than
    guessed (335/338 = 99% covered).
 
-Re-applies ``ut_austin_profile.apply()`` and re-derives program-preference rows. Chains off the
-single head ``stanfordpercrd2``.
+Re-applies ``ut_austin_profile.apply()`` and re-derives program-preference rows. Chains off
+``cornellpercrd2`` (a concurrent session, #1037, landed it as the new single head while this
+PR's CI ran), so ``main`` carries exactly one head.
 
 Revision ID: utaustintuition1
-Revises: stanfordpercrd2
+Revises: cornellpercrd2
 Create Date: 2026-06-21
 """
 
@@ -43,7 +44,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "utaustintuition1"
-down_revision = "stanfordpercrd2"
+down_revision = "cornellpercrd2"
 branch_labels = None
 depends_on = None
 
