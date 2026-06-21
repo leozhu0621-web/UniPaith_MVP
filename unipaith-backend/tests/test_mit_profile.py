@@ -260,6 +260,60 @@ async def test_apply_builds_real_program_catalog_idempotently(db_session):
     )
 
 
+async def test_mit_sloan_mban_profile_intelligence_and_target_profile(db_session):
+    from unipaith.models.institution import ProgramPreference
+    from unipaith.services.match.derive_preferences import backfill_program_preferences
+    from unipaith.services.profile_enrichment.intelligence import backfill_profile_intelligence_sync
+
+    inst = await _make_mit(db_session)
+    await db_session.run_sync(mit_profile.apply)
+    await db_session.run_sync(backfill_profile_intelligence_sync)
+    await db_session.run_sync(lambda s: backfill_program_preferences(s, institution_id=inst.id))
+
+    mban = (
+        await db_session.execute(
+            select(Program).where(
+                Program.institution_id == inst.id,
+                Program.slug == "mit-sloan-mban",
+            )
+        )
+    ).scalar_one()
+    pref = (
+        await db_session.execute(
+            select(ProgramPreference).where(ProgramPreference.program_id == mban.id)
+        )
+    ).scalar_one()
+    school = await db_session.get(School, mban.school_id)
+
+    assert school is not None
+    assert school.profile_intelligence is not None
+    assert mban.profile_intelligence is not None
+    sections = mban.profile_intelligence["sections"]
+    for key in (
+        "academic_orientation",
+        "learning_experience",
+        "experiential_learning",
+        "career_pathways",
+        "who_thrives",
+        "student_employer_evidence",
+    ):
+        assert sections[key]["findings"], key
+        for finding in sections[key]["findings"]:
+            assert finding["evidence"], finding
+            assert finding["source_type"] in {"fact", "inferred"}
+
+    assert pref.target_profile is not None
+    assert set(pref.target_profile["layers"]) == {
+        "background_academic",
+        "goals_behaviors_learning_working_style",
+        "values_motivations_community",
+    }
+    for signals in pref.target_profile["layers"].values():
+        assert signals
+        assert all(signal["evidence"] for signal in signals)
+    assert pref.preference_weights["career_alignment"] > 0
+
+
 async def test_program_has_dependents_false_for_unreferenced_program(db_session):
     """The FK-introspection guard runs cleanly and reports no dependents for a
     fresh program (the negative path that lets the reconcile delete it)."""

@@ -20,8 +20,6 @@ interface ProgramLink {
 interface Props {
   sameSchoolPrograms?: ProgramLink[]
   similarPrograms?: ProgramLink[]
-  /** Campus photo revealed as a gradient backdrop on hover of a fit card. */
-  bgPhoto?: string | null
   /** Spec 11 §4 — back to Discovery with this program's attributes pre-applied. */
   discoveryBackHref?: string
 }
@@ -49,7 +47,6 @@ function fmtDuration(m?: number | null): string | null {
 export default function RelatedSidebar({
   sameSchoolPrograms = [],
   similarPrograms = [],
-  bgPhoto,
   discoveryBackHref,
 }: Props) {
   // "Programs that fit you" — semantically-recommended programs first; fall back
@@ -87,22 +84,15 @@ export default function RelatedSidebar({
 
           <Link
             to={`/s/programs/${current.id}`}
-            className="group relative block rounded-xl border border-border overflow-hidden hover:border-secondary/40 hover:shadow-sm transition-all"
+            className="group relative block rounded-lg border border-border overflow-hidden hover:border-foreground/30 transition-colors"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary/15 to-muted" />
-            {bgPhoto && (
-              <div
-                className="absolute inset-0 bg-cover bg-center opacity-0 group-hover:opacity-25 transition-opacity duration-300"
-                style={{ backgroundImage: `url(${bgPhoto})` }}
-              />
-            )}
             <div className="relative p-5 min-h-[156px] flex flex-col justify-end">
               {current.degree_type && (
-                <p className="text-[10px] uppercase tracking-wider font-semibold text-secondary mb-1">
+                <p className="text-[10px] uppercase font-semibold text-muted-foreground mb-1">
                   {DEGREE_LABELS[current.degree_type] || current.degree_type}
                 </p>
               )}
-              <p className="text-base font-bold text-foreground leading-snug group-hover:text-secondary line-clamp-2">{current.program_name}</p>
+              <p className="text-base font-bold text-foreground leading-snug line-clamp-2">{current.program_name}</p>
               {subtitle && (
                 <p className="text-[11px] text-muted-foreground mt-1 truncate">{subtitle}</p>
               )}
@@ -118,7 +108,7 @@ export default function RelatedSidebar({
               )}
               {/* Always visible at reduced prominence — hover-only reveal is
                   unreachable on touch (Ship D §4 affordances). */}
-              <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-secondary opacity-70 group-hover:opacity-100 transition-opacity">
+              <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-foreground opacity-70 group-hover:opacity-100 transition-opacity">
                 View program <ChevronRight size={12} />
               </span>
             </div>

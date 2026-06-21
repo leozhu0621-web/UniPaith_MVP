@@ -707,6 +707,26 @@ def cpef_program_to_student(
     s_lvl = s.get("education_level")
     if pref_levels and s_lvl:
         fits_present.append(1.0 if s_lvl in pref_levels else 0.0)
+    pref_careers = set(pr.get("pref_career_arcs") or [])
+    s_careers = set(s.get("career_arcs") or [])
+    if pref_careers and s_careers:
+        fits_present.append(1.0 if pref_careers & s_careers else 0.0)
+    pref_values = set(pr.get("pref_values") or [])
+    s_values = set(s.get("values") or [])
+    if pref_values and s_values:
+        fits_present.append(1.0 if pref_values & s_values else 0.0)
+    pref_style = set(pr.get("pref_learning_working_style") or [])
+    social = s.get("social_prefs") or {}
+    if pref_style and isinstance(social, dict):
+        style_score = None
+        if {"collaborative", "peer_collab"} & pref_style:
+            style_score = float(social.get("peer_collab", 0.0))
+        elif "independent" in pref_style:
+            style_score = float(social.get("independent", 0.0))
+        elif "applied_project_work" in pref_style:
+            style_score = max(float(social.get("peer_collab", 0.0)), 0.5)
+        if style_score is not None:
+            fits_present.append(max(0.0, min(1.0, style_score)))
 
     if not fits_present:
         return 1.0, {"no_prefs": True}

@@ -6,7 +6,7 @@ import usePageTitle from '../../hooks/usePageTitle'
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
   format, addMonths, subMonths, addWeeks, subWeeks, isSameDay, isToday, parseISO,
-  setHours, setMinutes, differenceInMinutes, addMinutes, differenceInDays,
+  setHours, setMinutes, differenceInMinutes, addMinutes,
 } from 'date-fns'
 import {
   ChevronLeft, ChevronRight, Clock, FileText, Mic, Video,
@@ -19,7 +19,7 @@ import {
 } from '../../api/calendar'
 import { declineInterview, getMyInterviews } from '../../api/interviews'
 import InterviewRespondPanel from './interviews/InterviewRespondPanel'
-import { deadlineTone } from '../../utils/deadline'
+import { deadlineTone, daysUntil } from '../../utils/deadline'
 import type { Interview } from '../../types'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -109,8 +109,10 @@ function itemColor(item: CalendarItem): DotColor {
   const base = TYPE_META[item.type].color
   if (base !== 'error') return base
   // deadline items: escalate by the canonical shared 7/21 table (utils/deadline)
-  // so the calendar matches every other room. Past-due → red.
-  const daysLeft = differenceInDays(parseISO(item.start_at), new Date())
+  // so the calendar matches every other room. Use the SAME daysUntil() the rest of
+  // the app uses (Math.ceil) — date-fns differenceInDays truncates, which made a
+  // ~7.5-day deadline read red here but amber elsewhere. Past-due → red.
+  const daysLeft = daysUntil(item.start_at) ?? 0
   if (daysLeft < 0) return 'error'
   return TONE_DOT[deadlineTone(daysLeft)]
 }
@@ -316,6 +318,7 @@ export default function CalendarPage() {
       {view === 'month' && (
         <>
           <div className="flex items-center justify-end gap-3 mb-4">
+            <button onClick={() => setCurrentMonth(new Date())} className="px-2.5 py-1 text-xs font-semibold rounded-md border border-border text-foreground hover:bg-muted transition-colors" aria-label="Jump to this month">Today</button>
             <button onClick={() => setCurrentMonth(m => subMonths(m, 1))} className="p-1.5 hover:bg-muted rounded transition-colors" aria-label="Previous month"><ChevronLeft size={18} /></button>
             <span className="text-sm font-semibold w-36 text-center text-foreground">{format(currentMonth, 'MMMM yyyy')}</span>
             <button onClick={() => setCurrentMonth(m => addMonths(m, 1))} className="p-1.5 hover:bg-muted rounded transition-colors" aria-label="Next month"><ChevronRight size={18} /></button>
@@ -371,6 +374,7 @@ export default function CalendarPage() {
       {view === 'week' && (
         <>
           <div className="flex items-center justify-end gap-3 mb-4">
+            <button onClick={() => setCurrentWeek(new Date())} className="px-2.5 py-1 text-xs font-semibold rounded-md border border-border text-foreground hover:bg-muted transition-colors" aria-label="Jump to this week">Today</button>
             <button onClick={() => setCurrentWeek(w => subWeeks(w, 1))} className="p-1.5 hover:bg-muted rounded transition-colors" aria-label="Previous week"><ChevronLeft size={18} /></button>
             <span className="text-sm font-semibold text-center text-foreground">{format(weekStart, 'MMM d')} — {format(weekEnd, 'MMM d, yyyy')}</span>
             <button onClick={() => setCurrentWeek(w => addWeeks(w, 1))} className="p-1.5 hover:bg-muted rounded transition-colors" aria-label="Next week"><ChevronRight size={18} /></button>

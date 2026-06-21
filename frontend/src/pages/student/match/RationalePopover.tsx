@@ -13,26 +13,20 @@ import { Sparkles, X, RefreshCw } from 'lucide-react'
 
 import { explainMatch } from '../../../api/matching'
 import { AIBadge } from '../../../components/ui/AIRationalePopover'
-import ConfidenceDots from '../../../components/ui/ConfidenceDots'
 import QueryError from '../../../components/ui/QueryError'
 import { showToast } from '../../../stores/toast-store'
-import type { ExplainMatchResponse } from '../../../types'
+import type { DecisionBrief, ExplainMatchResponse } from '../../../types'
 
 export interface RationalePopoverProps {
   programId: string
   fitnessBreakdown?: Record<string, unknown> | null
   confidenceBreakdown?: Record<string, unknown> | null
-  /** 0–1 model confidence in the fitness number — renders the §6 5-dot meter. */
-  confidenceScore?: number
   cachedRationale?: string | null
   onClose: () => void
 }
 
 export default function RationalePopover({
   programId,
-  fitnessBreakdown,
-  confidenceBreakdown,
-  confidenceScore,
   cachedRationale,
   onClose,
 }: RationalePopoverProps) {
@@ -55,15 +49,11 @@ export default function RationalePopover({
     },
   })
 
-  // Prefer the server's redacted breakdowns/citations; fall back to props
-  // (passed from the match list) only until the call returns.
-  const fitness = (resp?.fitness_breakdown as Record<string, unknown> | null) ?? fitnessBreakdown
-  const confidence =
-    (resp?.confidence_breakdown as Record<string, unknown> | null) ?? confidenceBreakdown
   const studentCitations = resp?.cited_student_fields ?? []
+  const decisionBrief = resp?.decision_brief ?? null
 
   useEffect(() => {
-    if (!cachedRationale) explainMut.mutate()
+    explainMut.mutate()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -101,13 +91,7 @@ export default function RationalePopover({
             rationale && <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{rationale}</p>
           )}
 
-          {/* Spec 02 §6 / 09 §4 — inline 5-dot confidence meter for the score. */}
-          {typeof confidenceScore === 'number' && (
-            <div className="flex items-center gap-2 border-t border-border pt-3">
-              <span className="text-xs font-semibold text-muted-foreground">Confidence</span>
-              <ConfidenceDots value={Math.round(confidenceScore * 100)} />
-            </div>
-          )}
+          {decisionBrief && <DecisionBriefBlock brief={decisionBrief} />}
 
           {studentCitations.length > 0 && (
             <div className="border-t border-border pt-3">
@@ -116,20 +100,13 @@ export default function RationalePopover({
                 {studentCitations.map(path => (
                   <span
                     key={path}
-                    className="inline-flex items-center gap-1 rounded-pill border border-secondary bg-secondary/10 px-2 py-0.5 text-xs text-foreground"
+                    className="inline-flex items-center gap-1 rounded-pill border border-border px-2 py-0.5 text-xs text-foreground"
                   >
                     {prettyField(path)}
                   </span>
                 ))}
               </div>
             </div>
-          )}
-
-          {fitness && Object.keys(fitness).length > 0 && (
-            <BreakdownBlock title="Based on — fitness drivers" data={fitness} />
-          )}
-          {confidence && Object.keys(confidence).length > 0 && (
-            <BreakdownBlock title="Based on — confidence drivers" data={confidence} />
           )}
 
           {isStub && <p className="text-xs text-muted-foreground italic">Showing rule-based result.</p>}
@@ -151,43 +128,97 @@ export default function RationalePopover({
   )
 }
 
+const BRIEF_ORDER = [
+  'fit',
+  'conflicts',
+  'academic_gaps',
+  'career_alignment',
+  'cost_aid',
+  'feasibility',
+  'timeline',
+  'support_compatibility',
+  'application_readiness',
+  'alternatives',
+  'next_actions',
+]
+
+const BRIEF_LABELS: Record<string, string> = {
+  fit: 'Fit',
+  conflicts: 'Conflicts',
+  academic_gaps: 'Academic gaps',
+  career_alignment: 'Career alignment',
+  cost_aid: 'Cost and aid',
+  feasibility: 'Feasibility',
+  timeline: 'Timeline',
+  support_compatibility: 'Support fit',
+  application_readiness: 'Application readiness',
+  alternatives: 'Comparable alternatives',
+  next_actions: 'Next actions',
+}
+
+function DecisionBriefBlock({ brief }: { brief: DecisionBrief }) {
+  const keys = [
+    ...BRIEF_ORDER.filter((key) => brief.sections[key]?.length),
+    ...Object.keys(brief.sections).filter((key) => !BRIEF_ORDER.includes(key) && brief.sections[key]?.length),
+  ]
+  if (keys.length === 0) return null
+  return (
+    <div className="border-t border-border pt-4 space-y-4">
+      {keys.map((key) => (
+        <section key={key} className="space-y-2">
+          <h4 className="text-xs font-semibold uppercase text-muted-foreground">
+            {BRIEF_LABELS[key] ?? prettyField(key)}
+          </h4>
+          <div className="space-y-3">
+            {brief.sections[key].map((item, index) => (
+              <article key={`${key}-${index}`} className="space-y-1">
+                <p className="text-sm leading-6 text-foreground">{item.statement}</p>
+                {item.uncertainty && (
+                  <p className="text-xs leading-5 text-muted-foreground">{item.uncertainty}</p>
+                )}
+                {item.evidence.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 text-xs text-muted-foreground">
+                    {item.evidence.slice(0, 3).map((evidence) => (
+                      evidence.url ? (
+                        <a
+                          key={`${evidence.side}-${evidence.path}-${evidence.label}`}
+                          href={evidence.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline underline-offset-2 hover:text-foreground"
+                        >
+                          {evidence.label}
+                        </a>
+                      ) : (
+                        <span key={`${evidence.side}-${evidence.path}-${evidence.label}`}>
+                          {evidence.label}
+                        </span>
+                      )
+                    ))}
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
+      {Boolean(brief.omissions?.length) && (
+        <section className="space-y-2">
+          <h4 className="text-xs font-semibold uppercase text-muted-foreground">Unknowns</h4>
+          <ul className="space-y-1 text-xs leading-5 text-muted-foreground">
+            {brief.omissions?.slice(0, 4).map((item) => (
+              <li key={`${item.section}-${item.reason}`}>{item.reason}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
+  )
+}
+
 // "sparse.research_experience" → "Research experience"
 function prettyField(path: string): string {
   const last = path.split('.').pop() ?? path
   const words = last.replace(/_/g, ' ').trim()
   return words.charAt(0).toUpperCase() + words.slice(1)
-}
-
-// Format a breakdown value for display; returns null for nested objects/arrays
-// (e.g. the matcher's internal `weights` map) so we never render "[object Object]".
-function formatBreakdownValue(v: unknown): string | null {
-  if (v == null) return null
-  if (typeof v === 'number') return Number.isInteger(v) ? String(v) : v.toFixed(2)
-  if (typeof v === 'boolean') return v ? 'yes' : 'no'
-  if (typeof v === 'string') return v
-  return null
-}
-
-function BreakdownBlock({ title, data }: { title: string; data: Record<string, unknown> }) {
-  const entries = Object.entries(data)
-    .map(([k, v]) => [k, formatBreakdownValue(v)] as const)
-    .filter((e): e is readonly [string, string] => e[1] !== null)
-  if (entries.length === 0) return null
-  return (
-    <div className="border-t border-border pt-3">
-      <div className="text-eyebrow text-muted-foreground mb-2">{title}</div>
-      <div className="flex flex-wrap gap-1.5">
-        {entries.map(([k, v]) => (
-          <span
-            key={k}
-            className="inline-flex items-center gap-1 rounded-pill border border-secondary px-2 py-0.5 text-xs text-secondary"
-          >
-            <span className="font-semibold">{prettyField(k)}</span>
-            <span className="text-secondary/60">·</span>
-            <span>{v}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  )
 }

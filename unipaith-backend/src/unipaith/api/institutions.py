@@ -289,11 +289,16 @@ class ProgramPreferenceBody(BaseModel):
     weight_outcomes_alignment: int | None = None
     weight_funding_need: int | None = None
     weight_geographic: int | None = None
+    target_profile: dict | None = None
+    preference_weights: dict | None = None
+    provenance: dict | None = None
 
 
 class ProgramPreferenceResponse(ProgramPreferenceBody):
     program_id: UUID
     source: str
+    standard_version: int = 1
+    derived_at: datetime | None = None
 
 
 def _pref_response(pref) -> ProgramPreferenceResponse:
@@ -310,6 +315,11 @@ def _pref_response(pref) -> ProgramPreferenceResponse:
         weight_outcomes_alignment=pref.weight_outcomes_alignment,
         weight_funding_need=pref.weight_funding_need,
         weight_geographic=pref.weight_geographic,
+        target_profile=pref.target_profile,
+        preference_weights=pref.preference_weights,
+        provenance=pref.provenance,
+        standard_version=pref.standard_version,
+        derived_at=pref.derived_at,
     )
 
 
@@ -1500,6 +1510,14 @@ async def search_institutions(
         # Prefer out-of-state as the universal published price.
         tuition_annual = rd.get("tuition_out_of_state") or rd.get("tuition_in_state")
 
+        # US News rank: bulk seeds store a flat `us_news_2025`; hand-authored
+        # profiles store `us_news_national` as {"rank", "year"} — surface either
+        # so the gold-standard profiles' ranks show on the browse card too.
+        _natl_rank = rd.get("us_news_national")
+        us_news_rank = rd.get("us_news_2025") or (
+            _natl_rank.get("rank") if isinstance(_natl_rank, dict) else _natl_rank
+        )
+
         next_dl = next_deadline_map.get(inst.id)
 
         items.append(
@@ -1543,7 +1561,7 @@ async def search_institutions(
                 "description_text": ((inst.description_text or "")[:200]),
                 "acceptance_rate": rd.get("acceptance_rate"),
                 "sat_avg": rd.get("sat_avg"),
-                "us_news_rank": rd.get("us_news_2025"),
+                "us_news_rank": us_news_rank,
                 "median_earnings": rd.get("earnings_10yr_median"),
                 "graduation_rate": rd.get("graduation_rate"),
                 "region": inst.region,
@@ -1626,6 +1644,15 @@ async def get_institution_schools(
             "website_url": s.website_url,
             "content_sources": s.content_sources,
             "about_detail": s.about_detail,
+            "field_provenance": s.field_provenance,
+            "profile_intelligence": s.profile_intelligence,
+            "profile_intelligence_version": s.profile_intelligence_version,
+            "profile_intelligence_updated_at": (
+                s.profile_intelligence_updated_at.isoformat()
+                if s.profile_intelligence_updated_at
+                else None
+            ),
+            "is_claimed": s.is_claimed,
             "program_count": pc_map.get(s.id, (0, []))[0],
             "program_names": sorted(pc_map.get(s.id, (0, []))[1] or []),
         }

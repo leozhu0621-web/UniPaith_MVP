@@ -15,6 +15,7 @@ import { showToast } from '../../../stores/toast-store'
 import ProgramCard from '../explore/cards/ProgramCard'
 import SchoolCard from '../explore/cards/SchoolCard'
 import NewsGrid from '../../../components/NewsGrid'
+import ProfileIntelligenceSections from '../../../components/profile/ProfileIntelligenceSections'
 import Card from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
 import Skeleton from '../../../components/ui/Skeleton'
@@ -675,6 +676,8 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
           <IntroSourceLine outcomes={outcomes} />
         </Card>
       )}
+
+      <ProfileIntelligenceSections intelligence={inst.profile_intelligence ?? null} />
 
       {/* Rankings — badge row; the #1 earns the gold beat */}
       {rankings.length > 0 && (

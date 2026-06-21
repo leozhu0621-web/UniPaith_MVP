@@ -6,7 +6,7 @@ import {
   getProgram, getProgramReviews, getEmployerFeedback, getNetPrice,
   searchPrograms, semanticSearch,
 } from '../../api/programs'
-import { getPublicInstitution, getPublicPosts } from '../../api/institutions'
+import { getPublicPosts } from '../../api/institutions'
 import { getProfile } from '../../api/students'
 import SocialLinks from '../../components/SocialLinks'
 import { pushRecentProgram } from '../../lib/recentPrograms'
@@ -22,7 +22,7 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
 import { formatCurrency, formatDate } from '../../utils/format'
-import { differenceInDays } from 'date-fns'
+import { daysUntil } from '../../utils/deadline'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare, Megaphone,
   Briefcase, Building2, Users, Clock, Sparkles, Mail, Archive,
@@ -43,11 +43,8 @@ import {
   extractSalaryBands,
 } from '../../utils/programNormalize'
 
-// Redesigned components
-import DualRing from './match/DualRing'
 import RationalePopover from './match/RationalePopover'
 import ProbabilityBands from './match/ProbabilityBands'
-import BandBadge from '../../components/ui/BandBadge'
 import StatGroup from './program/StatGroup'
 import WhereYouStand from './program/WhereYouStand'
 import AboutCard from './program/AboutCard'
@@ -56,6 +53,7 @@ import InsightsPanel from './program/InsightsPanel'
 // (NextStepsCard removed — applications start from the saved list.)
 import NetPriceEstimator from './program/NetPriceEstimator'
 import NewsGrid from '../../components/NewsGrid'
+import ProfileIntelligenceSections from '../../components/profile/ProfileIntelligenceSections'
 
 // Spec 11 §3 — tabs; Insights merges student reviews + employer feedback (§3.6).
 type Tab = 'overview' | 'admissions' | 'costs' | 'outcomes' | 'insights' | 'events'
@@ -74,15 +72,6 @@ const TABS: { id: Tab; label: string; icon: typeof BookOpen }[] = [
 function normalizeTab(raw: string | null): Tab {
   if (raw === 'reviews') return 'insights'
   return TAB_IDS.includes(raw as Tab) ? (raw as Tab) : 'overview'
-}
-
-// Match scores arrive as Decimal/number in either 0..1 or 0..100; the rings
-// want 0..1. Coerce defensively so the UI is robust to either convention.
-function toUnit(v: number | string | null | undefined): number {
-  const n = typeof v === 'string' ? parseFloat(v) : (v ?? 0)
-  if (!Number.isFinite(n)) return 0
-  const unit = n > 1 ? n / 100 : n
-  return Math.max(0, Math.min(1, unit))
 }
 
 export default function ProgramDetailPage() {
@@ -140,14 +129,6 @@ export default function ProgramDetailPage() {
   // Track the visit for the global command palette's "Recently viewed".
   useEffect(() => { if (program) pushRecentProgram(program) }, [program])
   const { data: matchResult } = useQuery({ queryKey: ['match', programId], queryFn: () => getMatchDetail(programId!), retry: false })
-  // Parent institution — a program has no photo of its own, so the hero inherits
-  // the institution's campus photo (gradient fallback). Mirrors the school pages.
-  const { data: institution } = useQuery({
-    queryKey: ['institution', (program as any)?.institution_id],
-    queryFn: () => getPublicInstitution((program as any).institution_id),
-    enabled: !!(program as any)?.institution_id,
-    retry: false,
-  })
   const { data: netPrice } = useQuery({ queryKey: ['net-price', programId], queryFn: () => getNetPrice(programId!), enabled: !!programId, retry: false })
   const { data: events } = useQuery({ queryKey: ['events', { program_id: programId }], queryFn: () => listEvents({ program_id: programId, limit: 5 }) })
   // Channel-sourced program Updates (news tagged to this program).
@@ -321,23 +302,12 @@ export default function ProgramDetailPage() {
     ...(p.program_name ? { q: p.program_name } : {}),
   }).toString()}`
 
-  /* ── Hero (campus-photo, no logo/geo) — mirrors the institution/school pages.
-     The program owns no photo; inherit the parent institution's campus photo
-     (first raster image in its gallery; logos are SVG → skipped). Fall back to a
-     clean gradient when the school has no photo. ── */
-  const inst: any = institution ?? null
-  const heroPhoto: string | null =
-    (inst?.media_gallery ?? []).find((u: string) => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) ?? null
   const degreeLabel = DEGREE_LABELS[p.degree_type] || p.degree_type || ''
   // Eyebrow = degree label when we have one, else the institution name.
   const heroEyebrow = degreeLabel || instName || null
 
   // Stat strip — real fields only, NO location. Omit anything absent.
   const heroStats: { value: string; label: string }[] = []
-  if (hasMatch) {
-    const fit = toUnit(match.fitness_score ?? match.match_score)
-    if (fit > 0) heroStats.push({ value: `${Math.round(fit * 100)}%`, label: 'fitness' })
-  }
   const heroAcceptance = p.acceptance_rate ?? rd.acceptance_rate
   if (heroAcceptance != null && Number.isFinite(Number(heroAcceptance))) {
     const ar = Number(heroAcceptance)
@@ -380,33 +350,12 @@ export default function ProgramDetailPage() {
         <span className="text-foreground font-medium truncate max-w-[40ch]" aria-current="page">{p.program_name}</span>
       </nav>
 
-      {/* ── Hero — campus photo (inherited from the parent institution) fading
-            into the cream page background. No logo, no geo. ── */}
-      <div className="relative rounded-xl overflow-hidden border border-border mb-5 bg-background">
-        {/* Photo banner (raster image) or gradient fallback */}
-        <div className="relative h-52 sm:h-64 md:h-72">
-          {heroPhoto ? (
-            <img src={heroPhoto} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 to-background" />
-          )}
-          {/* Fade to the cream page background at the bottom; soft top scrim for glare. */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(to bottom, rgba(10,18,36,0.30) 0%, rgba(10,18,36,0.04) 24%, rgba(10,18,36,0) 44%, hsl(var(--background)) 97%)',
-            }}
-          />
-        </div>
-
-        {/* Identity — overlaps onto the cream gradient base; dark text reads cleanly. */}
-        <div className="relative -mt-20 px-5 sm:px-7 pb-6">
-          {heroEyebrow && <p className="text-eyebrow uppercase text-secondary mb-1.5">{heroEyebrow}</p>}
+      <div className="rounded-lg border border-border mb-5 bg-background px-5 sm:px-7 py-6">
+          {heroEyebrow && <p className="text-xs uppercase font-semibold text-muted-foreground mb-1.5">{heroEyebrow}</p>}
 
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="text-2xl sm:text-3xl md:text-[2.5rem] font-bold text-foreground leading-[1.08] tracking-tight max-w-[24ch]">
+              <h1 className="text-2xl sm:text-3xl md:text-[2.5rem] font-bold text-foreground leading-[1.08] max-w-[24ch]">
                 {p.program_name}
               </h1>
 
@@ -436,27 +385,19 @@ export default function ProgramDetailPage() {
               )}
             </div>
 
-            {/* Match ring — integrated beside the title (the sole gold accent, §2). */}
             {hasMatch && (
-              <div
-                className="flex items-center gap-2.5 flex-shrink-0"
-                title="Fitness is how well this program matches your strategy; confidence is how sure we are given your profile depth."
-              >
-                <DualRing
-                  fitness={toUnit(match.fitness_score ?? match.match_score)}
-                  confidence={toUnit(match.confidence_score ?? match.match_score)}
-                  size={64}
+              <div className="flex flex-col items-start gap-2 flex-shrink-0 rounded-lg border border-border px-3 py-2">
+                {match.band_label && (
+                  <p className="text-xs text-muted-foreground">
+                    Match view: <span className="font-semibold text-foreground">{match.band_label}</span>
+                  </p>
+                )}
+                <button
                   onClick={() => setRationaleOpen(true)}
-                />
-                <div className="flex flex-col items-start gap-1">
-                  {match.band_label && <BandBadge band={match.band_label} />}
-                  <button
-                    onClick={() => setRationaleOpen(true)}
-                    className="inline-flex items-center gap-1 text-[11px] font-medium text-secondary hover:underline"
-                  >
-                    <Sparkles size={11} /> Why this match?
-                  </button>
-                </div>
+                  className="inline-flex items-center gap-1 text-[12px] font-medium text-foreground hover:underline"
+                >
+                  <Sparkles size={12} /> Decision brief
+                </button>
               </div>
             )}
           </div>
@@ -492,7 +433,6 @@ export default function ProgramDetailPage() {
               {compareStore.has(p.id) ? 'Comparing' : 'Compare'}
             </Button>
           </div>
-        </div>
       </div>
 
       {/* ── Basic-info strip — the program's defining facts (length / degree /
@@ -527,8 +467,7 @@ export default function ProgramDetailPage() {
         )
       })()}
 
-      {/* ── Your realistic shot — probability bands (Spec 09 §4A).
-            The DualRing + redacted "why this match" now lead the fact strip (§2). ── */}
+      {/* ── Your realistic shot — probability bands (Spec 09 §4A). ── */}
       {hasMatch && (
         <Card pad={false} className="mb-5 p-4">
           <ProbabilityBands
@@ -580,6 +519,7 @@ export default function ProgramDetailPage() {
                 programName={p.program_name}
                 websiteUrl={p.website_url}
               />
+              <ProfileIntelligenceSections intelligence={p.profile_intelligence ?? null} />
               {/* Social links + channel-sourced Updates/Events now live in the
                   dedicated "Events & Updates" tab (NewsGrid). */}
 
@@ -930,7 +870,7 @@ export default function ProgramDetailPage() {
                     </div>
                     <div className="space-y-2">
                       {admissionTimeline.rounds.map((r: any, i: number) => {
-                        const days = differenceInDays(new Date(r.deadline), new Date())
+                        const days = daysUntil(r.deadline) ?? 0
                         const isPast = days < 0
                         const isUrgent = !isPast && days <= 30
                         return (
@@ -1594,7 +1534,6 @@ export default function ProgramDetailPage() {
           <RelatedSidebar
             sameSchoolPrograms={sameSchool}
             similarPrograms={similar}
-            bgPhoto={heroPhoto}
             discoveryBackHref={discoveryBackHref}
           />
         </div>

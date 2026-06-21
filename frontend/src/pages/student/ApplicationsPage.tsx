@@ -678,9 +678,11 @@ export default function ApplicationsPage() {
                       )}
                     </div>
                     {/* The next step is the button now; keep the prose line only
-                        where the next move isn't ours to act on (under review, a
-                        final decision with no offer to read). */}
-                    {!rm.action && (
+                        where the next move isn't ours to act on (under review /
+                        awaiting a school). A FINAL decision is a terminal status,
+                        not a "Next:" — the decision badge already shows it, so don't
+                        dress a dead-end up as a pending action (review 2026-06-21 #3). */}
+                    {!rm.action && app.status !== 'decision_made' && (
                       <p className="text-xs text-muted-foreground mt-2">Next: {rm.label}</p>
                     )}
                     {app.submitted_at && (

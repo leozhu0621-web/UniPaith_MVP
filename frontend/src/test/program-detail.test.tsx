@@ -277,10 +277,12 @@ describe('Spec 11 §10 — ProgramDetailPage integration', () => {
     h.createApplicationMock.mockClear()
   })
 
-  it('renders the program and shows the DualRing match for an authenticated student', async () => {
+  it('renders the program and shows a qualitative decision brief trigger for an authenticated student', async () => {
     renderPage('/s/programs/prog-1?tab=overview')
     expect(await screen.findByRole('heading', { name: 'Computer Science, M.S.' })).toBeInTheDocument()
-    await waitFor(() => expect(screen.getByText(/Fitness · 82%/)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/Match view:/)).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: /decision brief/i })).toBeInTheDocument()
+    expect(screen.queryByText(/Fitness · 82%/)).not.toBeInTheDocument()
   })
 
   it('redirects legacy ?tab=reviews to the Insights tab', async () => {

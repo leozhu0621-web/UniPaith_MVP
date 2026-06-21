@@ -1455,6 +1455,7 @@ async def explain_match(
                         rationale_text=out.rationale_text,
                         rationale_generated_at=match.rationale_generated_at,
                         is_stub=False,
+                        decision_brief=out.decision_brief,
                         fitness_breakdown=proj.fitness_breakdown,
                         confidence_breakdown=proj.confidence_breakdown,
                         cited_student_fields=proj.cited_student_fields,
@@ -1501,11 +1502,33 @@ async def explain_match(
         confidence_breakdown=match.confidence_breakdown or {},
         grounded=False,
     )
+    decision_brief = None
+    try:
+        from unipaith.models.ai_artifacts import StudentFeatureVector
+        from unipaith.models.institution import Program
+        from unipaith.services.decision_brief import build_decision_brief
+        from unipaith.services.match_service import build_program_view
+
+        program = await db.scalar(select(Program).where(Program.id == program_id))
+        sfv = await db.scalar(
+            select(StudentFeatureVector).where(StudentFeatureVector.student_id == profile.id)
+        )
+        if program is not None:
+            decision_brief = build_decision_brief(
+                student_sparse=dict((sfv.sparse_features if sfv else {}) or {}),
+                program=build_program_view(program),
+                fitness_breakdown=match.fitness_breakdown or {},
+                confidence_breakdown=match.confidence_breakdown or {},
+                student_profile_version=int((sfv.profile_version if sfv else 1) or 1),
+            )
+    except Exception:
+        decision_brief = None
     return ExplainMatchResponse(
         program_id=program_id,
         rationale_text=match.rationale_text,
         rationale_generated_at=match.rationale_generated_at,
         is_stub=True,
+        decision_brief=decision_brief,
         fitness_breakdown=stub_proj.fitness_breakdown,
         confidence_breakdown=stub_proj.confidence_breakdown,
         cited_student_fields=stub_proj.cited_student_fields,
@@ -1520,6 +1543,7 @@ async def explain_match(
 class RationaleResponse(BaseModel):
     program_id: UUID
     rationale_text: str
+    decision_brief: dict | None = None
     cited_student_fields: list[str]
     cited_program_fields: list[str]
     cache_hit: bool
@@ -1578,6 +1602,7 @@ async def generate_match_rationale(
     return RationaleResponse(
         program_id=program_id,
         rationale_text=proj.rationale_text,
+        decision_brief=out.decision_brief,
         cited_student_fields=proj.cited_student_fields,
         cited_program_fields=proj.cited_program_fields,
         cache_hit=out.cache_hit,

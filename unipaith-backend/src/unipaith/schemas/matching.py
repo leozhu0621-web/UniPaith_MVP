@@ -122,6 +122,7 @@ class ExplainMatchResponse(BaseModel):
     rationale_text: str
     rationale_generated_at: datetime
     is_stub: bool = True
+    decision_brief: dict | None = None
     # Redacted (student-safe) signal views — single source the popover renders.
     fitness_breakdown: dict | None = None
     confidence_breakdown: dict | None = None

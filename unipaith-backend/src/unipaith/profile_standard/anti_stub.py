@@ -90,7 +90,7 @@ def field_of(program_name: str) -> str:
     """The field-of-study part of a program name (credential designation stripped)."""
     for pre in _CRED_PREFIXES:
         if program_name.startswith(pre):
-            rest = program_name[len(pre):].strip()
+            rest = program_name[len(pre) :].strip()
             return rest or program_name
     return program_name
 
@@ -127,7 +127,7 @@ def _strip_frame(description: str) -> str:
     for rx in _FRAME_LEAD_RES:
         m = rx.match(description)
         if m and m.end() < len(description):
-            return description[m.end():]
+            return description[m.end() :]
     return description
 
 
@@ -187,8 +187,7 @@ def frame_stripped_shared_body(
                     continue
                 lcs = _longest_common_substring(bodies[i], bodies[j])
                 if lcs >= min_chars and (
-                    lcs >= min_fraction * shortest
-                    or (abs_chars is not None and lcs >= abs_chars)
+                    lcs >= min_fraction * shortest or (abs_chars is not None and lcs >= abs_chars)
                 ):
                     hit = True
         if hit:
@@ -201,12 +200,12 @@ class AntiStubReport:
     """Per-metric violation lists. A gold-equal catalog has every list empty."""
 
     n: int
-    name_prefixed: list[str]        # description restates the program_name (heading doubled)
-    classification: list[str]       # pure-classification / template stub descriptions
-    double_period: list[str]        # ".." splice (school-blurb-into-frame breakage)
-    verbatim_shared: list[str]      # description_text identical across >= 2 programs
+    name_prefixed: list[str]  # description restates the program_name (heading doubled)
+    classification: list[str]  # pure-classification / template stub descriptions
+    double_period: list[str]  # ".." splice (school-blurb-into-frame breakage)
+    verbatim_shared: list[str]  # description_text identical across >= 2 programs
     shared_leading_body: list[str]  # field's credential siblings share a >=120ch leading body
-    cross_field_clause: list[str]   # one body stamped across rows of >= 2 DIFFERENT fields
+    cross_field_clause: list[str]  # one body stamped across rows of >= 2 DIFFERENT fields
 
     @property
     def violations(self) -> dict[str, list[str]]:
@@ -242,9 +241,7 @@ def analyze(programs: list[dict]) -> AntiStubReport:
     descs = [_desc(p) for p in programs]
     names = [p.get("program_name") or "" for p in programs]
 
-    name_prefixed = [
-        names[i] for i, d in enumerate(descs) if names[i] and d.startswith(names[i])
-    ]
+    name_prefixed = [names[i] for i, d in enumerate(descs) if names[i] and d.startswith(names[i])]
     classification = [
         names[i]
         for i, d in enumerate(descs)
@@ -292,9 +289,7 @@ def analyze(programs: list[dict]) -> AntiStubReport:
         field = field_of(n)
         normalized = re.sub(re.escape(field), "{FIELD}", d, flags=re.IGNORECASE) if field else d
         head_to_fields[normalized[: _SHARED_BODY_MIN_CHARS * 2]].add(field)
-    cross_field_clause = [
-        head for head, fields in head_to_fields.items() if len(fields) >= 2
-    ]
+    cross_field_clause = [head for head, fields in head_to_fields.items() if len(fields) >= 2]
 
     return AntiStubReport(
         n=len(programs),
@@ -335,7 +330,11 @@ def machine_artifacts(programs: list[dict]) -> list[str]:
 _DEBRIS_COURSE_CODE = re.compile(r"\b[A-Z]{2,4}\s?\d{3}[A-Za-z]?\b")
 _DEBRIS_UNIT_COUNT = re.compile(r"\b\d+\s+(additional\s+)?(units|credits|semester hours)\b", re.I)
 _DEBRIS_CONTACT = re.compile(r"\(\d{3}\)\s?\d{3}-\d{4}|[\w.]+@[\w.]+\.edu")
-_DEBRIS_ADDRESS = re.compile(r"\b(Suite|Room)\s+\d+|\bHall,\s")
+_DEBRIS_ADDRESS = re.compile(
+    r"\b(Suite|Room)\s+\d+|"
+    r"\b[A-Z][A-Za-z0-9&' -]{2,}\s+Hall\s+\d+\b|"
+    r"\b[A-Z][A-Za-z0-9&' -]{2,}\s+Hall,\s+\(\d{3}\)"
+)
 
 
 def scrape_debris(programs: list[dict]) -> list[str]:

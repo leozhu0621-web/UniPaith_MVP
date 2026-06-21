@@ -40,8 +40,8 @@ def _mock_client() -> AIClient:
 # ── Schema sanity ──────────────────────────────────────────────────────────
 
 
-def test_schema_version_is_v1() -> None:
-    assert SCHEMA_VERSION == 1
+def test_schema_version_is_v2() -> None:
+    assert SCHEMA_VERSION == 2
 
 
 def test_submit_rationale_tool_required_keys() -> None:
@@ -50,6 +50,7 @@ def test_submit_rationale_tool_required_keys() -> None:
         "para_fit",
         "para_tradeoffs",
         "para_confidence",
+        "decision_brief",
         "cited_student_fields",
         "cited_program_fields",
     }
@@ -82,9 +83,7 @@ def test_resolve_path_sparse_dict_value() -> None:
 
 
 def test_resolve_path_nested_sparse_dict() -> None:
-    student = StudentView(
-        sparse={"social_prefs": {"small_cohort": 0.9}}
-    )
+    student = StudentView(sparse={"social_prefs": {"small_cohort": 0.9}})
     assert resolve_path(student, "sparse.social_prefs.small_cohort") == 0.9
 
 
@@ -171,9 +170,7 @@ def test_is_grounded_empty_lists_pass() -> None:
     """No citations at all is technically grounded (vacuously true).
     The agent's prompt forbids this, but the validator doesn't enforce
     'at least one citation' — that's a separate quality check."""
-    grounded, bad = is_grounded(
-        StudentView(), ProgramView(), cited_student=[], cited_program=[]
-    )
+    grounded, bad = is_grounded(StudentView(), ProgramView(), cited_student=[], cited_program=[])
     assert grounded is True
     assert bad == []
 
@@ -181,9 +178,7 @@ def test_is_grounded_empty_lists_pass() -> None:
 def test_is_grounded_mixed_resolves_partially() -> None:
     """If some paths resolve and some don't, grounded=False with the
     failing paths in the bad list."""
-    student = StudentView(
-        applicant_summary="real summary", sparse={"values": ["rigor"]}
-    )
+    student = StudentView(applicant_summary="real summary", sparse={"values": ["rigor"]})
     program = ProgramView(name="MS-CS")
     grounded, bad = is_grounded(
         student,
@@ -244,9 +239,7 @@ def test_parse_response_ignores_wrong_tool_name() -> None:
 
 
 def test_joined_text_concatenates_three_paragraphs() -> None:
-    result = RationaleResult(
-        para_fit="fit", para_tradeoffs="trade", para_confidence="conf"
-    )
+    result = RationaleResult(para_fit="fit", para_tradeoffs="trade", para_confidence="conf")
     text = result.joined_text()
     assert "fit" in text
     assert "trade" in text
