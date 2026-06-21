@@ -5890,3 +5890,83 @@ and ran the substantive gate directly — imported every `CERTIFIED_CLEAN` catal
 currently passes (the gate's blind spots — Stanford/UCLA/UT-Austin/Michigan excluded from `_TEMPLATE_SLOT_CLEAN`,
 Penn/Cornell/ND/BU absent from the abs-floor list — are exactly why those defects ship green, FLAG #1). This grader
 PR changes only the three skill markdown files — backend CI is unaffected.
+
+---
+
+## Run 73 — 2026-06-21
+
+**Audited:** FULL-FLEET sweep — all **300 LIVE institutions** + all **40 catalogs** re-measured via the live
+API (`api.unipaith.co/api/v1`) with `profile_standard/anti_stub.py` (`analyze`, `template_slot_artifacts`,
+`scrape_debris`, `machine_artifacts`, `frame_stripped_shared_body` default + `abs_chars=150`) over the
+fully-paginated `/programs` list of every catalog (≈8,900 programs), plus campus-photo / posts-feed counts on
+the flagship seeds + a bare-stub photo census. Merged since run 72: #1027 (UCLA), #1028/#1034 (dual-head
+merges), #1029 (Penn frame), #1031 (UCLA/JHU relay), #1035 (Stanford template-slot), #1037 (Cornell frame).
+
+**HEADLINE — the run-72 CRITICAL/HIGH tier largely CLEARED + deployed; ONE new regression appeared:**
+- 🟢 **Stanford (run-72 C1) LIVE-CLEAN** — `template_slot_artifacts` 51→0, frame 0 (#1035 deployed), tuition 66%.
+- 🟢 **UCLA (run-72 C2) LIVE-CLEAN** — template_slot 13→0 + tuition 0%→64% (#1027 deploy landed).
+- 🟢 **Penn (run-72 #5) LIVE-CLEAN** — frame 51→0 (#1029 deployed).
+- 🟢 **JHU (run-72 #10) LIVE-CLEAN** — frame 3→0; the #1031 relay migration re-asserted the rows idempotently,
+  RESOLVING the run-71/72 non-self-healing deploy-strand (FLAG #4 downgraded — no new strand this run).
+- 🔴 **NEW REGRESSION — Cornell.** The #1037 "sibling-aware per-credential bodies" repair cleared 44 frame-share
+  fields → 0 AND `template_slot_artifacts` → 0, but shipped **115 of 237 rows (49%) with NO terminal punctuation**,
+  tripping the `scrape_debris` TRUNCATION tell. The bodies are genuinely researched + field-specific (e.g. "…the
+  Dyson School's AACSB-accredited undergraduate business degree, grounded in applied economics" — no period), so
+  it is REAL content un-terminated, not fabrication/scraped junk — HIGH, not critical. Shipped live because Cornell
+  is absent from the gate's debris-clean `@parametrize` list (FLAG #1c coverage drift, again).
+
+**The 1 rule change (bounded; the ONLY genuinely-new gap-class after a full-fleet sweep):**
+- **The post-repair re-scan checklist (miss #9 template-slot sub-bullet) enumerated only `frame_abs150` +
+  `template_slot_artifacts` → now ALSO requires `scrape_debris == 0` (re-run the FULL `anti_stub` suite after ANY
+  body rewrite).** Not a duplicate: `scrape_debris` is wrongly assumed to fire only on SCRAPED text, but its
+  terminal-punctuation tell fires on ANY un-terminated description — INCLUDING a freshly hand-AUTHORED per-credential
+  body the enricher forgot to terminate / truncated mid-clause. So the dimension-agnostic-and-simultaneous rule
+  (miss #8) extends to debris: the SAME "per-credential bodies" pass that takes frame_abs150 → 0 and template_slot →
+  0 must ALSO leave `scrape_debris` → 0; re-run `analyze` + `frame_stripped(abs150)` + `template_slot_artifacts` +
+  `scrape_debris` + `machine_artifacts` and require EVERY one at 0 before graduating the catalog. Added as a sibling
+  sub-bullet under miss #9 + a clause in the existing template-slot re-scan requirement. Evidence: Cornell #1037
+  (referenced generally as "a just-merged 'sibling-aware per-credential bodies' repair" / "a 237-program catalog",
+  no school name in the rule). Why only 1 change: the full-fleet sweep found NO other new defect CLASS — every other
+  live defect (UT-Austin/Michigan template-slot, Notre Dame/BU frame-share, the zero-tuition catalogs) maps to an
+  existing rule, so the bounded/anti-churn rail forbids inventing more; that work is repair-queueing + compliance logging.
+
+**Compliance gaps logged (existing rules the enricher disobeyed — queued, NOT re-added):**
+- **template-slot machine grammar still LIVE (miss #9):** UT-Austin 3 (PhD row slotting a *bachelor's* fragment into
+  "research in ___"), Michigan 1 ("research in ,"). Both `CERTIFIED_CLEAN` but excluded from `_TEMPLATE_SLOT_CLEAN`.
+- **credential-FRAME + shared body (miss #8 fraction-floor), LIVE:** Notre Dame 23 (frame_frac>0 on CI yet ungated —
+  absent from abs-floor list), BU 23 (DILUTION — frame_frac=0, caught only by abs-≥150). Gold MIT 0.
+- **matcher-core TUITION null catalog-wide (run-70 rule):** 7 large (NYU/UIUC/USC/UW-Seattle/UT-Austin/Michigan/BU) +
+  8 flagship seeds at 0%. The 16-catalog set SHRANK to 15 — UCLA cleared. Peers prove knowable (Princeton 100%, etc.).
+- **flagship seeds:** all 8 still EMPTY descriptions + null dept + 0% tuition + dead feed; 4 at <4 photos (unchanged).
+- **NEW workflow finding (FLAG #5): concurrent-run PR collision.** UT-Austin has TWO open repair PRs (#1038
+  tuition+template-slot, #1036 template-slot-only) + Notre Dame one open DRAFT (#1039) — repairs OPENED but never
+  MERGED, so the live defect persists. Two enricher instances appear to race the same backlog entry. An unmerged
+  repair PR is stranded work (SKILL §2 / merge-mandatory); flagged for the founder to schedule one firing per window
+  and dedupe before merge. (Out of grader scope to merge — the grader touches only the 3 skill files.)
+
+**Flags (code/workflow, not grader-editable):** (1) the anti-stub gate's `@parametrize` lists DRIFT from
+`CERTIFIED_CLEAN` on THREE axes now — template-slot (a), abs-floor (b), and debris (c, NEW: Cornell) — every interval
+a repair clears its targeted metric but ships a different un-checked metric live; the drift-proof fix is to
+parametrize all of them over `CERTIFIED_CLEAN` itself + add `OR lcs>=150` to the frame-stripped DEFAULT. (2)
+`cip_code` not serialized on public program endpoints. (3) `scrape_debris` `\bHall,\s` address tell can false-flag a
+building named in prose. (4) deploy-stranding RESOLVED this interval (#1031 relay). (5) concurrent-run PR collision
+(above).
+
+**Backlog delta:** complete worst-first rewrite. MOVED Stanford/UCLA/Penn/JHU into CLEAN (verified live). PROMOTED
+UT-Austin→CRITICAL #1, Michigan→#2 (only remaining template-slot). NEW HIGH #3 = Cornell un-terminated bodies.
+Notre Dame→#4, BU→#5 (frame-share). Zero-tuition→#6 (shrunk to 7 large + 8 seeds). Flagship seeds→#7, bare seeds→#8.
+Updated FLAG #1 (added debris-list drift #1c + Cornell), FLAG #4 (strand resolved), FLAG #5 (NEW — PR collision).
+
+**Invariants:** all intact. The SKILL.md edit is a miss #9 / §8.5 gate TIGHTENING (adds a `scrape_debris == 0`
+post-rewrite re-scan requirement + a sibling sub-bullet; loosens nothing). No school name added to SKILL.md (Cornell
+appears only as a live EVIDENCE pointer — "a 237-program catalog" — the same convention as the existing sub-bullets).
+Post-edit re-read: misses still numbered sequentially, no contradictions, the no-fabrication / merge-mandatory /
+workshop-feedback-only / omit-never-guess invariants and the run-70 tuition rule untouched.
+
+**Health check:** the full `pytest` suite needs a live Postgres + httpx/asyncpg the conftest imports (unavailable
+here — no `.venv`, no DB), so the mandated `test_profile_standard.py` / `test_profile_enrichment.py` could not run in
+this environment (same constraint as runs 70–72). Substantive DB-free check instead: imported
+`profile_standard/anti_stub.py` and confirmed `analyze` / `frame_stripped_shared_body`(default+abs150) /
+`template_slot_artifacts` / `scrape_debris` / `machine_artifacts` all compute cleanly, and verified against LIVE prod
+that gold MIT scores 0 on every quality metric (the 0 control). This grader PR changes only the three skill markdown
+files (no code, no data, no migration), so backend CI is unaffected.
