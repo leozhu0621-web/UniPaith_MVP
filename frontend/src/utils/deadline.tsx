@@ -7,16 +7,22 @@
 //   else        → 'normal' (text-foreground)
 // `--destructive` and `--error` resolve to the same value in both light and
 // dark; we standardize on `text-destructive` so the token matches app-wide.
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, differenceInCalendarDays } from 'date-fns'
 
 /** Compact near-term date for a deadline pill — "Mar 5", no year. */
 function shortDate(iso: string): string {
   return format(parseISO(iso), 'MMM d')
 }
 
-/** Days from today to an ISO date (UTC-safe enough for deadline display). */
+/** Days from today to an ISO date. Date-only strings ("2026-03-05") are parsed
+ *  as LOCAL midnight and compared by calendar day, so a deadline never reads a
+ *  day early/late in negative-UTC timezones (native `new Date` parses date-only
+ *  as UTC midnight). Strings carrying a time keep the original instant math. */
 export function daysUntil(iso?: string | null): number | null {
   if (!iso) return null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    return differenceInCalendarDays(parseISO(iso), new Date())
+  }
   return Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000)
 }
 

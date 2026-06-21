@@ -2,6 +2,7 @@
 // side-by-side matrix of ALL saved programs (distinct from the transient 4-item
 // CompareTray). Pure sort logic, tested. No fabrication: only fields present on
 // the saved row become columns (salary/employment aren't on it, so they're out).
+import { parseISO } from 'date-fns'
 import type { MatchBand, SavedProgram } from '../../../types'
 
 export type CompareColumn =
@@ -44,7 +45,7 @@ function cellValue(sp: SavedProgram, key: CompareColumn): string | number | null
     case 'duration':
       return sp.duration_months ?? null
     case 'deadline':
-      return sp.application_deadline ? new Date(sp.application_deadline).getTime() : null
+      return sp.application_deadline ? parseISO(sp.application_deadline).getTime() : null
   }
 }
 

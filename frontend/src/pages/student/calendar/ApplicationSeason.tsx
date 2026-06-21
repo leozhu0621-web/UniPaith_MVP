@@ -8,8 +8,21 @@ import { CalendarClock, BellPlus } from 'lucide-react'
 import { getConnectFeed, type ConnectFeedItem } from '../../../api/connect'
 import { createReminder } from '../../../api/calendar'
 import { showToast } from '../../../stores/toast-store'
+import { parseISO } from 'date-fns'
 import { groupByMonth } from './seasonGroups'
 import { deadlineTone } from '../../../utils/deadline'
+
+/** Reminder instant for a deadline. Date-only strings ("2026-03-05") become
+ *  9am LOCAL on that calendar day — native `new Date` would read them as UTC
+ *  midnight, firing the reminder the previous evening in the Americas. */
+function reminderStart(deadline: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(deadline)) {
+    const d = parseISO(deadline)
+    d.setHours(9, 0, 0, 0)
+    return d.toISOString()
+  }
+  return new Date(deadline).toISOString()
+}
 
 function urgencyText(soonest: number): string {
   // Canonical 7/21 threshold (utils/deadline) so a deadline reads the same urgency
@@ -37,7 +50,7 @@ export default function ApplicationSeason() {
           .map(it =>
             createReminder({
               title: `${it.program_name || 'Program'} — application deadline`,
-              start_at: new Date(it.deadline as string).toISOString(),
+              start_at: reminderStart(it.deadline as string),
               notes: it.institution_name ? `From ${it.institution_name}` : null,
             }),
           ),
