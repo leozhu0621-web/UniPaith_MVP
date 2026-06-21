@@ -73,7 +73,12 @@ export default function SavedListPage() {
     queryKey: ['saved-tags'],
     queryFn: listSavedTagSuggestions,
   })
-  const { data: follows = [] } = useQuery({ queryKey: ['my-follows'], queryFn: getMyFollows })
+  const {
+    data: follows = [],
+    isLoading: followsLoading,
+    isError: followsError,
+    refetch: refetchFollows,
+  } = useQuery({ queryKey: ['my-follows'], queryFn: getMyFollows, retry: 1 })
   const { data: savedSearches = [] } = useQuery({
     queryKey: ['saved-searches'],
     queryFn: listSavedSearches,
@@ -95,7 +100,7 @@ export default function SavedListPage() {
       showToast('Removed from your shortlist', 'success')
     },
     onError: (err: unknown) =>
-      showToast((err as Error).message ?? 'Could not remove this program', 'error'),
+      showToast((err as Error).message ?? "We couldn't remove that program. Please try again.", 'error'),
   })
 
   const patchMut = useMutation({
@@ -114,7 +119,7 @@ export default function SavedListPage() {
       if (vars.body.tags) showToast('Tags updated', 'success')
     },
     onError: (err: unknown) =>
-      showToast((err as Error).message ?? 'Could not update saved program', 'error'),
+      showToast((err as Error).message ?? "We couldn't update that saved program. Please try again.", 'error'),
   })
 
   const unfollowMut = useMutation({
@@ -134,7 +139,7 @@ export default function SavedListPage() {
       navigate(`/s/applications/${data.app_id}`)
     },
     onError: (err: unknown) =>
-      showToast((err as Error).message ?? 'Could not start application', 'error'),
+      showToast((err as Error).message ?? "We couldn't start that application. Please try again.", 'error'),
   })
 
   const filtered = useMemo(() => {
@@ -335,7 +340,13 @@ export default function SavedListPage() {
       {tab === 'searches' ? (
         <SavedSearchesPanel />
       ) : tab === 'schools' ? (
-        follows.length === 0 ? (
+        followsLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : followsError ? (
+          <QueryError detail="We couldn't load your saved schools." onRetry={() => refetchFollows()} />
+        ) : follows.length === 0 ? (
           <EmptyState
             icon={<GraduationCap size={48} />}
             title="No saved schools yet"
@@ -357,7 +368,7 @@ export default function SavedListPage() {
       ) : programs.length === 0 ? (
         <EmptyState
           icon={<Bookmark size={48} />}
-          title="Your shortlist is empty"
+          title="No saved programs yet"
           action={{ label: 'Open Discover', onClick: () => navigate('/s/explore') }}
         />
       ) : (

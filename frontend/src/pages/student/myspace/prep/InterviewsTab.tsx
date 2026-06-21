@@ -75,12 +75,12 @@ export default function InterviewsTab() {
   const accommMut = useMutation({
     mutationFn: upsertAccommodations,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['accommodations'] }); setModal(null); showToast('Saved', 'success') },
-    onError: () => showToast("Something didn't work. Try again.", 'error'),
+    onError: () => showToast("We couldn't save that. Please try again.", 'error'),
   })
   const schedMut = useMutation({
     mutationFn: upsertScheduling,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['scheduling'] }); setModal(null); showToast('Saved', 'success') },
-    onError: () => showToast("Something didn't work. Try again.", 'error'),
+    onError: () => showToast("We couldn't save that. Please try again.", 'error'),
   })
 
   const list: Interview[] = Array.isArray(interviews) ? interviews : []
