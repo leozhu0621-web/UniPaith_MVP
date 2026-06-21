@@ -27,7 +27,7 @@ from unipaith.profile_standard.anti_stub import (
 # Catalogs verified free of raw scraped-catalogue debris (course-code / requirements /
 # contact-address fragments) in description_text — REPAIR_BACKLOG CRITICAL #1 (USC, run 66).
 # Grow as scrape-built catalogs are researched per-program (UT-Austin still carries it).
-SCRAPE_DEBRIS_CLEAN = ["mit", "usc", "uiuc", "nyu", "columbia"]
+SCRAPE_DEBRIS_CLEAN = ["mit", "usc", "uiuc", "nyu", "columbia", "michigan"]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
 # Grow this list as catalogs are genuinely de-fabricated — never weaken the assertions.
@@ -207,19 +207,16 @@ def test_credential_siblings_no_shared_body_absolute_floor(name: str):
 # into a fixed per-credential frame: a DOUBLED credential heading or a DOUBLE/DANGLING
 # preposition from an empty slot — REPAIR_BACKLOG CRITICAL C1/C2, FLAG #1c). These score 0
 # on every share/form metric (the body differs per row) yet render machine junk, so they
-# need their own gate. This is intentionally a SUBSET of CERTIFIED_CLEAN — the whole-fleet
-# sweep found template-slot rows still in repo on michigan (1); it stays OUT until repaired,
-# and the durable fix is to parametrize this over CERTIFIED_CLEAN itself once it clears
-# (FLAG for the grader). Stanford GRADUATED here (run 72 CRITICAL #1): its 51 slotted-template
+# need their own gate. Stanford GRADUATED here (run 72 CRITICAL #1): its 51 slotted-template
 # graduate rows were rewritten as researched per-credential prose (stanfordpercred2). UT Austin
 # GRADUATED here (run 72 CRITICAL #3): its 3 slotted-template doctoral rows (Anthropology,
-# History, Computer Science) were rewritten as researched per-credential prose, so
-# template_slot_artifacts == 0 (utaustintuition1).
-_TEMPLATE_SLOT_CLEAN = [
-    n
-    for n in CERTIFIED_CLEAN
-    if n not in {"michigan"}
-]
+# History, Computer Science) were rewritten as researched per-credential prose. Michigan
+# GRADUATED here (run 73 CRITICAL #2): its 1 slotted-template doctoral row (Industrial &
+# Operations Engineering, plus the sibling master's) was rewritten as researched per-credential
+# prose, so template_slot_artifacts == 0 (michtuition1). With michigan cleared the exclusion set
+# is now empty, so this is parametrized over CERTIFIED_CLEAN itself (the drift-proof fix the
+# prior FLAG asked for) — a catalog cannot be certified clean while shipping template-slot junk.
+_TEMPLATE_SLOT_CLEAN = list(CERTIFIED_CLEAN)
 
 
 @pytest.mark.parametrize("name", _TEMPLATE_SLOT_CLEAN)

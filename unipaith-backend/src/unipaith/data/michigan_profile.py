@@ -3679,6 +3679,29 @@ _SLUG_DESCRIPTION_KEEP = frozenset(
     }
 )
 
+# Researched, credential-distinct bodies for rows whose field-definition anchor uses a
+# verb-LIST lead ("…engineering designs, analyzes, and improves…") that ``_extract_focus``
+# mis-parses into a comma-leading empty focus, producing the machine-broken "research in ,"
+# / "expertise in ," template-slot grammar (REPAIR BACKLOG entry #2). Source: U-M College
+# of Engineering, Industrial & Operations Engineering department. Each sibling carries its
+# own level-specific body (no >=80-char shared run with the BS anchor or each other).
+_SLUG_BODY_OVERRIDE: dict[str, str] = {
+    "mich-industrial-and-operations-engineering-ms": (
+        "The Master of Science in Industrial and Operations Engineering at the University of "
+        "Michigan builds advanced expertise in optimization, applied statistics, and operations "
+        "research, applied to manufacturing, healthcare, logistics, and service systems, through "
+        "graduate coursework, methods training, and a thesis or capstone within the College of "
+        "Engineering on the Ann Arbor campus."
+    ),
+    "mich-industrial-and-operations-engineering-phd": (
+        "The Doctor of Philosophy in Industrial and Operations Engineering at the University of "
+        "Michigan advances original research in operations research, large-scale optimization, "
+        "stochastic systems, and the design of complex human and engineered systems, supported "
+        "by faculty mentorship, qualifying examinations, and dissertation work within the College "
+        "of Engineering on the Ann Arbor campus."
+    ),
+}
+
 
 def _assign_descriptions(programs: list[dict]) -> None:
     """Assign a per-credential description to every program (Harvard / UT Austin pattern).
@@ -3713,7 +3736,9 @@ def _assign_descriptions(programs: list[dict]) -> None:
         group_bodies: list[str] = []
 
         for spec in ordered:
-            if spec is anchor:
+            if spec["slug"] in _SLUG_BODY_OVERRIDE:
+                body = _SLUG_BODY_OVERRIDE[spec["slug"]]
+            elif spec is anchor:
                 body = _level_appropriate_clause(
                     _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
                     spec["degree_type"],
@@ -3858,17 +3883,71 @@ _COST_SRC = (
 _COST_SRC_URL = "https://collegescorecard.ed.gov/school/?170976-University-of-Michigan-Ann-Arbor"
 
 
+# ── Tuition (matcher-core budget signal — REPAIR BACKLOG entry #6) ──────────
+# ``program.tuition`` is consumed as an ANNUAL figure and carries the Michigan-resident
+# rate (the public-peer convention: UT Austin / UCLA store the in-state scalar with the
+# out-of-state rate in ``cost_data.breakdown``). Undergraduate uses the single College
+# Scorecard sticker (one university-wide rate across all majors); graduate / professional
+# uses U-M's PUBLISHED per-term Fee Bulletin rate for the owning school, doubled (Fall +
+# Winter = two full terms = the academic year). Tuition is institution-published, so a
+# whole-catalog null is matcher STARVATION, not an honest omission — every program now
+# carries the real cited published rate.
+_TUITION_UG_INSTATE = 17736  # College Scorecard in-state UG tuition, UNITID 170976
+_TUITION_UG_OOS = 60946  # College Scorecard out-of-state UG tuition, UNITID 170976
+
+_REGISTRAR_SRC = (
+    "University of Michigan Office of the Registrar — Student Fees, 2024-25 Fee Bulletin "
+    "(published full-term rate × 2 terms = academic year)"
+)
+_REGISTRAR_URL = "https://ro.umich.edu/tuition-residency/tuition-fees"
+
+# (resident_annual, non_resident_annual) standard full-time GRADUATE tuition by owning
+# school, from the 2024-25 Fee Bulletin per-term rate doubled. Schools whose distinct
+# rate is not separately verified default to the Rackham LSA standard rate.
+_GRAD_TUITION_BY_SCHOOL: dict[str, tuple[int, int]] = {
+    "LSA": (28554, 57444),  # 14,277 / 28,722 per term (LSA Rackham pre-candidate)
+    "ENG": (32486, 60916),  # 16,243 / 30,458 (Engineering Rackham pre-candidate)
+    "ROSS": (29758, 59232),  # 14,879 / 29,616 (Ross Rackham pre-candidate; MBA below)
+    "MED": (28606, 57562),  # 14,303 / 28,781 (Medicine Rackham pre-candidate)
+    "LAW": (72552, 75552),  # Law full-time professional rate (the LL.M. bills the same)
+    "INFO": (28554, 57444),  # 14,277 / 28,722
+    "SMTD": (29102, 58604),  # 14,551 / 29,302 (Music, Theatre & Dance Rackham)
+    "EDU": (29102, 58604),  # 14,551 / 29,302 (Education Rackham)
+    "NURS": (29432, 59270),  # 14,716 / 29,635 (Nursing Rackham)
+    "KIN": (30984, 62790),  # 15,492 / 31,395 (Kinesiology Rackham)
+    "TAUB": (37156, 54296),  # 18,578 / 27,148 (Architecture & Urban Planning)
+    "STAMPS": (29102, 58604),  # 14,551 / 29,302 (Stamps Art & Design Rackham)
+    "SEAS": (28176, 55620),  # 14,088 / 27,810 (Environment & Sustainability Rackham)
+}
+_GRAD_TUITION_DEFAULT = (28554, 57444)  # Rackham LSA standard full-time rate
+
+# Professional-degree annual tuition (resident, non_resident) — distinct published flat
+# rates from the 2024-25 Fee Bulletin per-term rate doubled.
+_PROF_TUITION_BY_SLUG: dict[str, tuple[int, int]] = {
+    "mich-master-of-business-administration-mba": (73030, 78030),  # 36,515 / 39,015
+    "mich-doctor-of-dental-surgery-dds": (39232, 53724),  # 19,616 / 26,862
+    "mich-juris-doctor-jd": (72552, 75552),  # 36,276 / 37,776
+    "mich-doctor-of-medicine-md": (36980, 50216),  # 18,490 / 25,108
+    "mich-doctor-of-pharmacy-pharmd": (37446, 44040),  # 18,723 / 22,020
+}
+
+
 def _undergrad_cost() -> dict:
     return {
+        "tuition_usd": _TUITION_UG_INSTATE,
+        "breakdown": {
+            "tuition_in_state": _TUITION_UG_INSTATE,
+            "tuition_out_of_state": _TUITION_UG_OOS,
+        },
         "total_cost_of_attendance": _UNDERGRAD_COA,
         "avg_net_price": _AVG_NET_PRICE,
         "funded": False,
         "note": (
-            "Michigan's published academic-year cost of attendance is about $34,654 and the average "
-            "net price after grant aid is about $13,138 (College Scorecard, UNITID 170976). The Go "
-            "Blue Guarantee provides free tuition for eligible in-state undergraduates, and Michigan "
-            "meets the full demonstrated need of in-state students. In-state and out-of-state tuition "
-            "differ and are set by the U-M Office of Financial Aid — see the program's tuition page."
+            "Annual in-state tuition is about $17,736 and out-of-state about $60,946 "
+            "(College Scorecard, UNITID 170976); the published academic-year cost of attendance "
+            "is about $34,654 and the average net price after grant aid about $13,138. The Go "
+            "Blue Guarantee provides free tuition for eligible in-state undergraduates, and "
+            "Michigan meets the full demonstrated need of in-state students."
         ),
         "source": _COST_SRC,
         "source_url": _COST_SRC_URL,
@@ -3876,17 +3955,39 @@ def _undergrad_cost() -> dict:
     }
 
 
-def _grad_cost_fallback(spec: dict) -> dict:
+def _grad_tuition_cost(resident: int, non_resident: int, degree_type: str) -> dict:
+    funded = (
+        "Most doctoral students are funded through assistantships or fellowships that waive "
+        "tuition and provide a stipend; the figure is the published full-time sticker rate."
+        if degree_type == "phd"
+        else "U-M bills graduate tuition per term, so the published full-time rate is shown."
+    )
     return {
+        "tuition_usd": resident,
+        "breakdown": {"tuition_in_state": resident, "tuition_out_of_state": non_resident},
+        "funded": False,
         "note": (
-            "Tuition for this graduate/professional program is set by the University of Michigan and "
-            "varies by school, residency (in-state vs. out-of-state), and enrollment; most programs "
-            "bill per term or per credit hour, so a single verified annual figure is not published "
-            "here. Many research doctoral students are funded through assistantships and fellowships."
+            "Annual tuition & fees for a standard full-time graduate load (Michigan resident); "
+            "non-residents pay the out-of-state rate in the breakdown. U-M publishes per-term "
+            "rates by school for AY 2024-25 (academic year = two full terms), so rates vary by "
+            f"program. {funded}"
         ),
-        "source": "U-M Office of Financial Aid / program tuition page",
-        "source_url": _website_for(spec),
+        "source": _REGISTRAR_SRC,
+        "source_url": _REGISTRAR_URL,
+        "year": "2024-25",
     }
+
+
+def _program_tuition(spec: dict) -> tuple[int, dict]:
+    """Return ``(tuition_usd, cost_data)`` for a program from U-M's published rates."""
+    dt = spec["degree_type"]
+    if dt == "bachelors":
+        return _TUITION_UG_INSTATE, _undergrad_cost()
+    if spec["slug"] in _PROF_TUITION_BY_SLUG:
+        res, oos = _PROF_TUITION_BY_SLUG[spec["slug"]]
+        return res, _grad_tuition_cost(res, oos, dt)
+    res, oos = _GRAD_TUITION_BY_SCHOOL.get(spec["school_key"], _GRAD_TUITION_DEFAULT)
+    return res, _grad_tuition_cost(res, oos, dt)
 
 
 # ── Flagship outcomes / class profile / faculty / reviews ──────────────────
@@ -4248,7 +4349,7 @@ def _requirements_for(spec: dict) -> dict:
 
 
 def _program_standard(slug: str, spec: dict) -> dict:
-    omitted: list[str] = ["tracks", "cost_data.tuition_usd"]
+    omitted: list[str] = ["tracks"]
     if slug not in _OUTCOMES_BY_SLUG:
         omitted += [
             "outcomes_data.employment_rate",
@@ -4380,12 +4481,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.delivery_format = spec.get("delivery_format", "on_campus")
         _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], _kw)
-        if spec["degree_type"] == "bachelors":
-            p.tuition = None
-            p.cost_data = _undergrad_cost()
-        else:
-            p.tuition = None
-            p.cost_data = _grad_cost_fallback(spec)
+        p.tuition, p.cost_data = _program_tuition(spec)
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)

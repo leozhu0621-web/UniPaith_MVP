@@ -52,8 +52,7 @@ def _school_snapshot(spec: dict) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    is_ug = spec["degree_type"] == "bachelors"
-    cost = m._undergrad_cost() if is_ug else m._grad_cost_fallback(spec)
+    _tuition, cost = m._program_tuition(spec)
     outcomes = dict(m._OUTCOMES_BY_SLUG.get(slug, {}))
     outcomes["_standard"] = m._program_standard(slug, spec)
     kw = m._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(m._KEYWORDS_BY_SCHOOL[spec["school"]])
@@ -86,6 +85,37 @@ def test_catalog_breadth_and_shape():
     from unipaith.data.profile_catalog_utils import validate_catalog
 
     assert not validate_catalog(m.PROGRAMS)
+
+
+def test_every_program_has_published_tuition():
+    """Tuition is a matcher-core, institution-PUBLISHED field — a whole-catalog null is
+    matcher starvation, not an honest omission (REPAIR BACKLOG entry #6). Every program
+    must carry a positive resident annual tuition with a higher out-of-state breakdown."""
+    for spec in m.PROGRAMS:
+        tuition, cost = m._program_tuition(spec)
+        assert isinstance(tuition, int) and tuition > 0, spec["slug"]
+        assert cost["tuition_usd"] == tuition, spec["slug"]
+        oos = cost["breakdown"]["tuition_out_of_state"]
+        assert oos >= tuition, spec["slug"]
+        assert cost.get("source_url"), spec["slug"]
+        # tuition is provided, so it must NOT be recorded as omitted
+        assert "cost_data.tuition_usd" not in m._program_standard(spec["slug"], spec)["omitted"]
+
+
+def test_ioe_descriptions_are_researched_not_template_slot():
+    """The IOE master's/PhD rows previously shipped machine-broken 'research in ,' /
+    'expertise in ,' grammar from a mis-parsed verb-list focus (REPAIR BACKLOG entry #2)."""
+    from unipaith.profile_standard.anti_stub import template_slot_artifacts
+
+    assert template_slot_artifacts(m.PROGRAMS) == []
+    by_slug = {p["slug"]: p["description"] for p in m.PROGRAMS}
+    for slug in (
+        "mich-industrial-and-operations-engineering-ms",
+        "mich-industrial-and-operations-engineering-phd",
+    ):
+        d = by_slug[slug]
+        assert "in ," not in d and "in  " not in d, slug
+        assert d.rstrip().endswith("."), slug
 
 
 def test_coverable_programs_have_reviews():
