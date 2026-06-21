@@ -94,6 +94,17 @@ const DEADLINE_TYPES: CalendarItemType[] = [
   'interview_submission_deadline', 'deposit_deadline',
 ]
 
+/** Whether `item` belongs on the local calendar day `day`. Deadlines are stored
+ *  as 23:59 UTC on their date, so bucket those by that UTC date (the date the
+ *  student set) — comparing the local-converted instant slips them onto the next
+ *  day east of UTC. Timed events bucket by the local instant as usual. */
+function itemOnDay(item: CalendarItem, day: Date): boolean {
+  if (DEADLINE_TYPES.includes(item.type)) {
+    return item.start_at.slice(0, 10) === format(day, 'yyyy-MM-dd')
+  }
+  return isSameDay(parseISO(item.start_at), day)
+}
+
 const isOverdue = (i: CalendarItem) => i.status === 'overdue'
 const isDone = (i: CalendarItem) => i.status === 'completed' || i.status === 'cancelled'
 
@@ -238,7 +249,7 @@ export default function CalendarPage() {
   const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 })
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
 
-  const itemsOn = (day: Date) => filtered.filter(i => isSameDay(parseISO(i.start_at), day))
+  const itemsOn = (day: Date) => filtered.filter(i => itemOnDay(i, day))
 
   return (
     <PageContainer>
@@ -418,21 +429,20 @@ export default function CalendarPage() {
 
 // ── Week hour grid (Spec 16 §3: 7am–9pm) ─────────────────────────────────
 function weekItemLayout(item: CalendarItem, day: Date): { top: number; height: number } | 'allday' | null {
-  const start = parseISO(item.start_at)
-  if (!isSameDay(start, day)) return null
+  if (!itemOnDay(item, day)) return null
+  // Deadlines are date markers (stored 23:59 UTC) — always all-day, never a bogus
+  // timed slot derived from the local-converted instant.
+  if (DEADLINE_TYPES.includes(item.type)) return 'allday'
 
+  const start = parseISO(item.start_at)
   const gridStart = setMinutes(setHours(day, WEEK_GRID_START_HOUR), 0)
   const defaultEnd = item.end_at
     ? parseISO(item.end_at)
-    : addMinutes(start, item.type === 'work_block' ? 60 : DEADLINE_TYPES.includes(item.type) ? 30 : 45)
+    : addMinutes(start, item.type === 'work_block' ? 60 : 45)
 
   const startMins = differenceInMinutes(start, gridStart)
   const endMins = differenceInMinutes(defaultEnd, gridStart)
 
-  // Deadlines stored as end-of-day UTC often fall outside the visible grid in local time.
-  if (DEADLINE_TYPES.includes(item.type) && (startMins >= WEEK_GRID_MINUTES || startMins < 0)) {
-    return 'allday'
-  }
   if (startMins >= WEEK_GRID_MINUTES || endMins <= 0) return 'allday'
 
   const clampedStart = Math.max(0, startMins)
@@ -567,7 +577,13 @@ function AgendaView({ items, hasActiveFilter, onClearFilters, onOpen, onDiscover
   const grouped = useMemo(() => {
     const g: Record<string, CalendarItem[]> = {}
     items.forEach(i => {
-      const key = format(parseISO(i.start_at), 'EEEE, MMMM d, yyyy')
+      // Group deadlines by their stored UTC date (23:59 UTC) read as local
+      // midnight, so they share a heading with same-day events and never slip
+      // onto the next day east of UTC.
+      const basis = DEADLINE_TYPES.includes(i.type)
+        ? parseISO(i.start_at.slice(0, 10))
+        : parseISO(i.start_at)
+      const key = format(basis, 'EEEE, MMMM d, yyyy')
       ;(g[key] ||= []).push(i)
     })
     return g

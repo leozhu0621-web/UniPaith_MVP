@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowUp, ArrowDown } from 'lucide-react'
+import { format, parseISO } from 'date-fns'
 import BandBadge from '../../../components/ui/BandBadge'
 import { formatCurrency } from '../../../utils/format'
 import type { MatchBand, SavedProgram } from '../../../types'
@@ -33,7 +34,9 @@ function fmtDuration(m?: number | null): string {
   return m < 12 ? `${m} mo` : `${(m / 12) % 1 === 0 ? m / 12 : (m / 12).toFixed(1)} yr`
 }
 function fmtDeadline(iso?: string | null): string {
-  return iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
+  // parseISO reads a date-only string as LOCAL midnight; native `new Date`
+  // would parse it as UTC and render a day early in the Americas.
+  return iso ? format(parseISO(iso), 'MMM d, yyyy') : '—'
 }
 
 export default function CompareBoard({ programs }: { programs: SavedProgram[] }) {
