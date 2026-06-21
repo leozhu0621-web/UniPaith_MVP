@@ -315,13 +315,23 @@ def _target_profile(
             evidence=program_ev,
         )
 
-    if not all(layers[layer] for layer in layers):
+    if not any(layers[layer] for layer in layers):
         return None
+    omissions = [
+        {
+            "layer": layer,
+            "reason": ("No eligible public evidence was available for this target-profile layer."),
+            "source": DERIVED_SOURCE,
+        }
+        for layer in layers
+        if not layers[layer]
+    ]
     return validate_target_profile(
         {
             "standard_version": 1,
             "derived_at": datetime.now(UTC).isoformat(),
             "layers": layers,
+            "omissions": omissions,
         }
     )
 
