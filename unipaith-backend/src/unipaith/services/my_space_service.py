@@ -228,11 +228,11 @@ class MySpaceService:
             state = MySpaceTaskState(student_id=profile.id, task_key=task_key)
             self.db.add(state)
             await self.db.flush()
-        if body.dismissed is not None:
+        if "dismissed" in body.model_fields_set:
             state.dismissed = body.dismissed
-        if body.snoozed_until is not None:
+        if "snoozed_until" in body.model_fields_set:
             state.snoozed_until = body.snoozed_until
-            if body.snoozed_until <= _utcnow():
+            if body.snoozed_until is not None and body.snoozed_until <= _utcnow():
                 state.snoozed_until = None
         await self.db.flush()
         return MySpaceTaskStateResponse.model_validate(state)

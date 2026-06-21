@@ -10,6 +10,7 @@ import {
   Clock3,
   FileUp,
   Mail,
+  RotateCcw,
   ShieldCheck,
   Target,
 } from 'lucide-react'
@@ -102,6 +103,7 @@ export default function MySpaceHomePage() {
 
   const data = overview.data
   const activeTasks = useMemo(() => data?.tasks.filter(t => t.active) ?? [], [data])
+  const hiddenTasks = useMemo(() => data?.tasks.filter(t => !t.active) ?? [], [data])
   const focus = activeTasks[0] ?? null
   const firstName = data?.student.first_name || user?.email?.split('@')[0] || ''
   const hour = new Date().getHours()
@@ -121,6 +123,11 @@ export default function MySpaceHomePage() {
   const snoozeTask = (task: MySpaceTask) => {
     const snoozed = new Date(Date.now() + 7 * 86_400_000).toISOString()
     taskMutation.mutate({ key: task.key, snoozed_until: snoozed })
+  }
+
+  const restoreTask = (task: MySpaceTask) => {
+    track('my_space_task_restored', { task_key: task.key, category: task.category })
+    taskMutation.mutate({ key: task.key, dismissed: false, snoozed_until: null })
   }
 
   return (
@@ -262,6 +269,8 @@ export default function MySpaceHomePage() {
               onEmpty={() => go('/s', 'my_space_empty_cta_clicked', { module: 'recent_changes' })}
             />
           </div>
+
+          <HiddenTasksPanel tasks={hiddenTasks} onRestore={restoreTask} busy={taskMutation.isPending} />
         </div>
       )}
     </PageContainer>
@@ -524,6 +533,58 @@ function TaskRow({
         </div>
       )}
     </div>
+  )
+}
+
+function hiddenReason(task: MySpaceTask) {
+  if (task.dismissed) return 'Dismissed'
+  if (task.snoozed_until) {
+    const until = formatDate(task.snoozed_until)
+    return until ? `Snoozed until ${until}` : 'Snoozed'
+  }
+  return 'Hidden'
+}
+
+function HiddenTasksPanel({
+  tasks,
+  onRestore,
+  busy,
+}: {
+  tasks: MySpaceTask[]
+  onRestore: (task: MySpaceTask) => void
+  busy: boolean
+}) {
+  if (tasks.length === 0) return null
+
+  return (
+    <details className="rounded-lg border border-border bg-card px-4 py-3">
+      <summary className="cursor-pointer list-none text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+        Hidden tasks <span className="ml-1 text-xs font-normal text-muted-foreground">({tasks.length})</span>
+      </summary>
+      <div className="mt-3 divide-y divide-border">
+        {tasks.map(task => (
+          <div key={task.key} className="flex items-start justify-between gap-3 py-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-medium text-foreground">{task.title}</p>
+                <Badge variant="neutral">{hiddenReason(task)}</Badge>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{sourceLine(task)}</p>
+            </div>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onRestore(task)}
+              aria-label={`Restore ${task.title}`}
+              className="ui-btn inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
+            >
+              <RotateCcw size={12} /> Restore
+            </button>
+          </div>
+        ))}
+      </div>
+    </details>
   )
 }
 

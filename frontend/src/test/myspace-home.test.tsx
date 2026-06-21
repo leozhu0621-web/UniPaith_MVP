@@ -132,6 +132,8 @@ const overview: MySpaceOverview = {
 }
 
 beforeEach(() => {
+  vi.mocked(getMySpaceOverview).mockClear()
+  vi.mocked(patchMySpaceTask).mockClear()
   vi.mocked(getMySpaceOverview).mockResolvedValue(overview)
   vi.mocked(patchMySpaceTask).mockResolvedValue({
     task_key: 'application:app-1:missing',
@@ -172,6 +174,35 @@ describe('MySpaceHomePage', () => {
 
     await waitFor(() => {
       expect(patchMySpaceTask).toHaveBeenCalledWith('application:app-1:missing', { dismissed: true })
+    })
+  })
+
+  it('lets students restore dismissed or snoozed tasks from the hidden task panel', async () => {
+    vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
+      ...overview,
+      tasks: [
+        {
+          ...overview.tasks[0],
+          dismissed: true,
+          active: false,
+        },
+      ],
+      evidence_gaps: [],
+    })
+
+    renderHome()
+    fireEvent.click(await screen.findByText('Hidden tasks'))
+    fireEvent.click(await screen.findByLabelText('Restore Complete MS Computer Science application'))
+
+    expect(track).toHaveBeenCalledWith('my_space_task_restored', {
+      task_key: 'application:app-1:missing',
+      category: 'application',
+    })
+    await waitFor(() => {
+      expect(patchMySpaceTask).toHaveBeenCalledWith('application:app-1:missing', {
+        dismissed: false,
+        snoozed_until: null,
+      })
     })
   })
 

@@ -142,6 +142,25 @@ async def test_my_space_task_patch_persists_only_presentation_state(
     )
     assert state is not None
     assert state.dismissed is True
+    assert state.snoozed_until is not None
+
+    restored = await student_client.patch(
+        f"{BASE}/tasks/strategy:create",
+        json={"dismissed": False, "snoozed_until": None},
+    )
+
+    assert restored.status_code == 200, restored.text
+    restored_data = restored.json()
+    assert restored_data["dismissed"] is False
+    assert restored_data["snoozed_until"] is None
+    await db_session.refresh(state)
+    assert state.dismissed is False
+    assert state.snoozed_until is None
+
+    overview = await student_client.get(f"{BASE}/overview")
+    assert overview.status_code == 200, overview.text
+    strategy_task = next(t for t in overview.json()["tasks"] if t["key"] == "strategy:create")
+    assert strategy_task["active"] is True
 
 
 @pytest.mark.asyncio
