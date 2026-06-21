@@ -75,6 +75,7 @@ from unipaith.data.jhu_catalog_maps import (
     BA_FIELDS,
     DEPARTMENT_BY_FIELD,
     SLUG_DEPARTMENTS,
+    SLUG_DESCRIPTIONS,
     SLUG_PROGRAM_NAMES,
     clean_cip_field,
 )
@@ -533,21 +534,32 @@ def _jhu_description(
     *,
     field: str,
     delivery_format: str = "on_campus",
+    slug: str | None = None,
 ) -> str:
     """Field-specific, per-credential description — a verified field clause followed by
     a credential-level-specific body, so a field's BA / MS / certificate / PhD siblings
-    share no dominant body (frame_stripped_shared_body = 0; gold MIT = 0)."""
-    clause = FIELD_DESCRIPTIONS.get(field)
-    if not clause:
-        raise ValueError(f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({program_name})")
-    clause = _level_appropriate_clause(clause, degree_type)
-    body = _level_body(degree_type, program_name, field)
+    share no dominant body (frame_stripped_shared_body = 0; gold MIT = 0).
+
+    A handful of fields carry a verified clause long enough (>= ~150 chars) that the
+    shared clause alone trips the absolute-150 floor across credential siblings; those
+    rows carry a per-slug researched override in ``SLUG_DESCRIPTIONS`` (REPAIR_BACKLOG
+    #11, miss #8 fraction-floor) so each credential level has its OWN distinct body."""
+    override = SLUG_DESCRIPTIONS.get(slug) if slug else None
+    if override:
+        base = override
+    else:
+        clause = FIELD_DESCRIPTIONS.get(field)
+        if not clause:
+            raise ValueError(f"Missing FIELD_DESCRIPTIONS entry for {field!r} ({program_name})")
+        clause = _level_appropriate_clause(clause, degree_type)
+        body = _level_body(degree_type, program_name, field)
+        base = f"{clause} {body}"
     delivery = ""
     if delivery_format == "online":
         delivery = " Delivered online."
     elif delivery_format == "hybrid":
         delivery = " Delivered in a hybrid format."
-    return f"{clause} {body}{delivery}"
+    return f"{base}{delivery}"
 
 
 def _normalize_program(spec: dict, field_name: str | None = None) -> None:
@@ -569,7 +581,7 @@ def _normalize_program(spec: dict, field_name: str | None = None) -> None:
 
     field = _field_from_spec(spec, clean_cip_field(raw_field) if raw_field else None)
     spec["description"] = _jhu_description(
-        spec["program_name"], dtype, school, field=field, delivery_format=fmt,
+        spec["program_name"], dtype, school, field=field, delivery_format=fmt, slug=slug,
     )
 
 
