@@ -53,11 +53,14 @@ once the credential frame was stripped (109 fields — miss #8 credential-frame 
 tail-shared field body). Replaced with distinct per-credential ``_level_body`` text
 after each field's verified clause so ``frame_stripped_shared_body`` = 0.
 
+Tuition backfill (2026-06-21, uwmadtuition1): every program carries a UW-published
+2025-26 tuition & fees figure from the Office of Student Financial Aid cost-of-attendance
+tables (matcher-core budget signal — REPAIR_BACKLOG run 74 HIGH #2); funded research
+doctorates at tuition 0.
+
 Honest caveats stamped into ``_standard.omitted``: UW-Madison does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
-schools, so those two institution outcome fields are omitted. Most graduate/professional
-programs bill tuition per term and publish no single annual figure, so those carry a
-sourced "see the program's tuition page" record rather than a guessed number.
+schools, so those two institution outcome fields are omitted.
 
 Depth pass (2026-06-15, uwmadisonprof3): merged ``DEPTH_REVIEWS`` for 47 coverable
 programs (57/57 total external_reviews on coverable programs).
@@ -1239,6 +1242,142 @@ _COST_SRC = (
     "https://www.wisc.edu/about/facts/",
 )
 
+# Published tuition & fees (matcher-core budget signal — REPAIR_BACKLOG run 74 HIGH #2).
+# Rates are the UW–Madison Office of Student Financial Aid 2025-26 cost-of-attendance
+# tuition & fees lines (resident annual; breakdown carries non-resident). The matcher
+# number ``p.tuition`` is the Wisconsin-resident annual; funding is a separate signal.
+_TUITION_SRC = "UW–Madison Office of Student Financial Aid — 2025-26 Cost of Attendance"
+_TUITION_SRC_URL = "https://financialaid.wisc.edu/cost-of-attendance/"
+_PHD_FUNDING_SRC = "UW–Madison Graduate School — Funding"
+_PHD_FUNDING_URL = "https://grad.wisc.edu/funding/"
+
+# Undergraduate tuition & fees (general L&S); school differentials per the FA notes.
+_UG_TUITION_DIFFERENTIAL: dict[str, int] = {
+    BUSINESS: 3000,
+    ENGINEERING: 3200,
+    NURSING: 1500,
+}
+
+# Graduate tuition & fees (most master's + capstone certificates).
+_GRAD_TUITION = (12404, 25732)
+
+# Wisconsin School of Business graduate master's (incl. the Full-Time MBA).
+_BUSINESS_GRAD_TUITION = (29442, 53090)
+
+# Professional-degree tuition & fees by flagship program name (FA 2025-26 tables).
+_PROFESSIONAL_TUITION: dict[str, tuple[int, int]] = {
+    "Law": (38204, 55318),
+    "Medicine": (44410, 62533),  # non-res = $44,410 + $18,123 add-on
+    "Pharmacy": (30548, 49624),
+    "Veterinary Medicine": (37758, 60424),  # non-res = $37,758 + $22,666 extra
+}
+
+
+def _pub_tuition_cost(res: int, oos: int, note: str, *, funded: bool = False) -> dict:
+    return {
+        "tuition_usd": res,
+        "breakdown": {"tuition_in_state": res, "tuition_out_of_state": oos},
+        "funded": funded,
+        "note": note,
+        "source": _TUITION_SRC,
+        "source_url": _TUITION_SRC_URL,
+        "year": "2025-26",
+    }
+
+
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return (matcher_tuition, cost_data) from UW-published 2025-26 rates."""
+    school = spec["school"]
+    dtype = spec["degree_type"]
+    name = spec["program_name"]
+
+    if dtype == "bachelors":
+        diff = _UG_TUITION_DIFFERENTIAL.get(school, 0)
+        res = _TUITION_UG_INSTATE + diff
+        oos = _TUITION_UG_OOS + diff
+        cost = _pub_tuition_cost(
+            res,
+            oos,
+            "Published annual undergraduate tuition & fees, Wisconsin resident; "
+            "nonresidents pay the out-of-state rate shown in the breakdown. School "
+            "differentials (Business, Engineering, Nursing) are included when applicable.",
+        )
+        cost["total_cost_of_attendance"] = _UNDERGRAD_COA
+        cost["avg_net_price"] = _AVG_NET_PRICE
+        cost["source"] = _COST_SRC[0]
+        cost["source_url"] = _COST_SRC[1]
+        return res, cost
+
+    if dtype == "phd":
+        return 0, {
+            "tuition_usd": 0,
+            "funded": True,
+            "note": (
+                "UW–Madison PhD students typically receive full tuition plus a stipend "
+                "through fellowship and assistantship programs; the published full-time "
+                f"graduate tuition & fees sticker is ${_GRAD_TUITION[0]:,} per year "
+                "before aid."
+            ),
+            "source": _PHD_FUNDING_SRC,
+            "source_url": _PHD_FUNDING_URL,
+            "year": "2025-26",
+        }
+
+    if dtype == "professional":
+        rates = _PROFESSIONAL_TUITION.get(name)
+        if rates is None:
+            rates = {
+                LAW: _PROFESSIONAL_TUITION["Law"],
+                MEDICINE: _PROFESSIONAL_TUITION["Medicine"],
+                PHARMACY: _PROFESSIONAL_TUITION["Pharmacy"],
+                VET: _PROFESSIONAL_TUITION["Veterinary Medicine"],
+            }.get(school)
+        if rates is None:
+            return None, {
+                "note": "Tuition varies by program; see the official program tuition page.",
+                "source": "UW–Madison Bursar's Office — Tuition Rates",
+                "source_url": "https://bursar.wisc.edu/tuition-and-fees/tuition-rates",
+            }
+        res, oos = rates
+        return res, _pub_tuition_cost(
+            res,
+            oos,
+            f"Published annual {name} tuition & fees, Wisconsin resident; nonresidents "
+            "pay the out-of-state rate shown in the breakdown.",
+        )
+
+    if dtype == "masters":
+        if school == BUSINESS or name == "Master of Business Administration":
+            res, oos = _BUSINESS_GRAD_TUITION
+            note = (
+                "Published annual Wisconsin School of Business graduate tuition & fees, "
+                "Wisconsin resident; nonresidents pay the out-of-state rate shown in the "
+                "breakdown."
+            )
+        else:
+            res, oos = _GRAD_TUITION
+            note = (
+                "Published annual graduate tuition & fees, Wisconsin resident (full-time); "
+                "nonresidents pay the out-of-state rate shown in the breakdown."
+            )
+        return res, _pub_tuition_cost(res, oos, note)
+
+    if dtype == "certificate":
+        res, oos = _GRAD_TUITION
+        return res, _pub_tuition_cost(
+            res,
+            oos,
+            "Published annual graduate tuition & fees for capstone certificate programs, "
+            "Wisconsin resident; nonresidents pay the out-of-state rate shown in the "
+            "breakdown.",
+        )
+
+    return None, {
+        "note": "Tuition varies by program; see the official program tuition page.",
+        "source": "UW–Madison Bursar's Office — Tuition Rates",
+        "source_url": "https://bursar.wisc.edu/tuition-and-fees/tuition-rates",
+    }
+
 _REQ_UNDERGRAD = {
     "materials": [
         {"name": "UW System Application for Admission", "required": True},
@@ -1570,8 +1709,6 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
         "outcomes_data.top_industries",
         "outcomes_data.conditions",
     ]
-    if spec.get("degree_type") != "bachelors" and slug not in _COST_BY_SLUG:
-        omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
     if slug not in _CLASS_PROFILE_BY_SLUG:
@@ -1680,38 +1817,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.department = spec.get("department")
         kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], kw)
-        if spec["degree_type"] == "bachelors":
-            p.tuition = _TUITION_UG_INSTATE
-            p.cost_data = {
-                "tuition_usd": _TUITION_UG_INSTATE,
-                "total_cost_of_attendance": _UNDERGRAD_COA,
-                "avg_net_price": _AVG_NET_PRICE,
-                "breakdown": {
-                    "tuition_in_state": _TUITION_UG_INSTATE,
-                    "tuition_out_of_state": _TUITION_UG_OOS,
-                },
-                "funded": False,
-                "note": (
-                    "In-state tuition and cost of attendance; nonresidents pay the "
-                    "out-of-state tuition rate shown in the breakdown."
-                ),
-                "source": _COST_SRC[0], "source_url": _COST_SRC[1], "year": "2025-26",
-            }
-        elif spec["degree_type"] == "phd":
-            p.tuition = 0
-            p.cost_data = {
-                "tuition_usd": 0, "funded": True,
-                "note": "UW–Madison PhD students typically receive full tuition plus a stipend through fellowship and assistantship programs.",
-                "source": "UW–Madison Graduate School — Funding",
-                "source_url": "https://grad.wisc.edu/funding/",
-            }
-        else:
-            p.tuition = None
-            p.cost_data = {
-                "note": "Tuition varies by program; see the official program tuition page.",
-                "source": "UW–Madison program tuition page",
-                "source_url": _website_for(spec),
-            }
+        tuition, cost = _program_tuition(spec)
+        p.tuition = tuition
+        p.cost_data = cost
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_INSTITUTION)
         outcomes["_standard"] = _program_standard(slug, spec)
