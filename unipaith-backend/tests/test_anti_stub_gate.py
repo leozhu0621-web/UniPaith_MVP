@@ -82,7 +82,7 @@ CERTIFIED_CLEAN = [
     "emory",  # institution seed → gold + 46-program catalog; Trumba events feed;
     #             4-photo gallery; field-specific descriptions (emoryprof1)
     "notre_dame",  # 113-program real catalog; conferred names; per-credential discipline
-    #             defs (verbatim/shared-body/cross-field = 0); events feeds (ndprof1)
+    #             defs; sibling-aware bodies (frame_abs150 23→0, ndpercrd1)
     # NOTE: stanford was REMOVED briefly (2026-06-18, uwdefab1) while it still shipped build-script
     # junk; re-added after stanfordprof11 regeneration matching Michigan/UW repair model.
 ]
@@ -154,7 +154,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
 _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
-    "stanford", "penn", "cornell",
+    "stanford", "penn", "cornell", "notre_dame",
 ]
 
 
@@ -183,7 +183,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 # are NOT here yet on purpose).
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
-    "penn", "cornell", "ut_austin",
+    "penn", "cornell", "ut_austin", "notre_dame",
 ]
 
 

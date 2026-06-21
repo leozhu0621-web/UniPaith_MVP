@@ -36,14 +36,19 @@ degrees with no distinct third-party coverage are recorded in each node's
 The catalog is Notre Dame's REAL degree set: every row carries its CONFERRED degree
 designation, its real owning college/department, and a per-credential field-specific
 description (gold MIT / UF model — a verified general-knowledge discipline definition +
-Notre Dame's real owning college + the credential level). The build self-enforces the
-gold-MIT-0% anti-stub gate (``anti_stub.analyze`` + ``machine_artifacts``).
+Notre Dame's real owning college + the credential level). Per-credential body repair
+(2026-06-21, ndpercrd1): sibling-aware ``_assign_descriptions`` replaces credential-frame
++ ONE shared discipline-def body across credential siblings (23 fields failed the
+frame-stripped shared-body gate live — REPAIR_BACKLOG HIGH #7). The build self-enforces
+the gold-MIT-0% anti-stub gate (``anti_stub.analyze`` + ``machine_artifacts`` +
+``frame_stripped_shared_body(abs_chars=150)`` + ``template_slot_artifacts``).
 """
 
 # ruff: noqa: E501
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from sqlalchemy import select, text
@@ -53,7 +58,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Notre Dame"
-ENRICHED_AT = "2026-06-20"
+ENRICHED_AT = "2026-06-21"
 UNITID = "152080"
 SCORECARD_URL = "https://collegescorecard.ed.gov/school/?152080-University-of-Notre-Dame"
 
@@ -479,6 +484,311 @@ def _description(spec: dict) -> str:
     return desc
 
 
+_LEVEL_PRIORITY: dict[str, int] = {
+    "bachelors": 0,
+    "certificate": 1,
+    "masters": 2,
+    "phd": 3,
+    "doctoral": 3,
+    "professional": 4,
+}
+
+_ND_FRAME_PREFIX_RE = re.compile(
+    r"^(?:Graduate study\.\s+|Doctoral research\.\s+|Professional study\.\s+)",
+    re.I,
+)
+
+_ND_LEVEL_TAIL_RE = re.compile(
+    r"\.\s*At the University of Notre Dame's\b.*$",
+    re.I | re.S,
+)
+
+_FOCUS_LEAD_RE = re.compile(
+    r"^(.*?\b(?:covers|combines|spans|includes|integrates|offers?|examines?|trains?|"
+    r"prepares?|underpins?|emphasizes?|centers? on|focuses? on|explores?|studies|study|"
+    r"pairs?|blends?|joins?|teach(?:es)?|analyze[s]?|bridges?|operate[s]?|run[s]?|use[s]?|"
+    r"support[s]?|choose among|applies?|develops?|designs?|allows?|seeks?|gives?|is for|"
+    r"is designed)\b\s*)",
+    re.I,
+)
+
+
+def _strip_nd_level_prefix(clause: str) -> str:
+    return _ND_FRAME_PREFIX_RE.sub("", clause).strip()
+
+
+def _strip_nd_frame(clause: str) -> str:
+    clause = _strip_nd_level_prefix(clause)
+    return _ND_LEVEL_TAIL_RE.sub("", clause).strip().rstrip(".")
+
+
+def _extract_focus(clause: str) -> str:
+    clause = _strip_nd_frame(clause)
+    m = re.match(
+        r"^[^,]{3,100}?\bis (?:the study of|the art and science of|the branch of|"
+        r"the scientific study of|the interdisciplinary study of|the application of|the)\s+(.+)$",
+        clause,
+        re.I | re.S,
+    )
+    if m:
+        rest = m.group(1)
+    else:
+        m = _FOCUS_LEAD_RE.match(clause)
+        rest = clause[m.end() :] if m else clause
+    rest = re.split(
+        r"\s+(?:through|tied to|drawing on|near|at the|across the|for the|within the)\s+",
+        rest,
+        1,
+    )[0]
+    rest = rest.strip().rstrip(".").strip()
+    if not rest:
+        return ""
+    if len(rest) > 72:
+        cut = rest[:72]
+        if "," in cut:
+            candidate = cut[: cut.rfind(",")].strip()
+            if len(candidate) >= 24:
+                cut = candidate
+        rest = cut.strip().rstrip(",").strip()
+    return rest
+
+
+def _valid_focus(focus: str) -> bool:
+    if not focus or len(focus) < 24:
+        return False
+    stripped = focus.lstrip()
+    if not stripped or not stripped[0].isalpha():
+        return False
+    if re.match(r"^(?:for|in|on|of|with|the|a|an)\s+", stripped, re.I):
+        return False
+    if re.search(r"\bis the (?:study|scientific study|interdisciplinary study|art and science|branch|application) of\b", stripped, re.I):
+        return False
+    junk = ("should be of", "catalog entry", "requirement set", "brochure on the major")
+    return not any(marker in focus.lower() for marker in junk)
+
+
+def _topic_for_sibling(anchor_raw: str, field_label: str) -> str:
+    focus = _extract_focus(anchor_raw)
+    if _valid_focus(focus) and focus.lower() != field_label.lower():
+        return focus
+    snippet = anchor_raw.strip().rstrip(".")
+    if len(snippet) >= 24:
+        cut = snippet[:80]
+        if "," in cut:
+            cut = cut[: cut.rfind(",")]
+        snippet = cut.strip().rstrip(",").strip()
+        if _valid_focus(snippet):
+            return snippet
+    return f"{field_label.lower()} at Notre Dame"
+
+
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate ") :]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level ") :]
+    return clause
+
+
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(
+        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
+    )
+    return clause
+
+
+def _descriptions_share(clause_a: str, clause_b: str, abs_chars: int = 150) -> bool:
+    from unipaith.profile_standard.anti_stub import _longest_common_substring
+
+    a = _strip_nd_frame(clause_a)
+    b = _strip_nd_frame(clause_b)
+    if a and a == b:
+        return True
+    shortest = min(len(a), len(b))
+    if not shortest:
+        return False
+    lcs = _longest_common_substring(a, b)
+    return lcs >= 70 and (lcs >= 0.5 * shortest or lcs >= abs_chars)
+
+
+def _nd_sibling_body(
+    degree_type: str,
+    field_label: str,
+    focus: str,
+    school: str,
+    program_name: str,
+) -> str:
+    """Distinct, level-specific body for a credential sibling (UCLA-style — not template-slot)."""
+    topic = focus if _valid_focus(focus) else f"{field_label.lower()} at Notre Dame"
+    if degree_type == "bachelors":
+        return (
+            f"The {program_name} develops {topic} through core coursework, electives, "
+            f"and research or fieldwork opportunities within {school} on Notre Dame's "
+            f"Indiana campus."
+        )
+    if degree_type == "masters":
+        return (
+            f"The {program_name} at Notre Dame builds advanced expertise in {topic}, "
+            f"combining graduate seminars, methods training, and a thesis or capstone "
+            f"within {school}."
+        )
+    if degree_type in ("phd", "doctoral"):
+        return (
+            f"The {program_name} at Notre Dame advances original dissertation research in "
+            f"{topic}, supported by faculty mentorship, qualifying examinations, and "
+            f"dissertation work within {school} on the Indiana campus."
+        )
+    if degree_type == "certificate":
+        return (
+            f"The {program_name} at Notre Dame packages focused coursework in {topic} for "
+            f"degree-seekers and working professionals within {school}."
+        )
+    if degree_type == "professional":
+        return (
+            f"The {program_name} at Notre Dame pairs classroom study with supervised "
+            f"clinical or practical training in {topic} through {school}."
+        )
+    return (
+        f"The {program_name} at Notre Dame engages {topic} through coursework and training "
+        f"within {school} on the Indiana campus."
+    )
+
+
+_SLUG_DESCRIPTION_KEEP = frozenset(_DEF_OVERRIDE_BY_SLUG)
+
+
+def _assign_descriptions(programs: list[dict]) -> None:
+    """Assign a per-credential description to every program (Penn / Cornell pattern).
+
+    Notre Dame's ``_description`` stamped ONE shared ``DISCIPLINE_DEFS`` clause across
+    credential siblings — the run-72 evasion that left 23 fields failing
+    ``frame_stripped_shared_body(..., abs_chars=150)`` (REPAIR_BACKLOG HIGH #7). Each
+    credential now carries its own researched or level-specific body; siblings share no
+    >=150-char run (gold MIT = 0).
+    """
+    from collections import defaultdict
+
+    from unipaith.profile_standard.anti_stub import field_of
+
+    raw: dict[str, str] = {
+        spec["slug"]: _strip_nd_level_prefix(spec["description"]) for spec in programs
+    }
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        groups[field_of(spec["program_name"])].append(spec)
+
+    for field_label, specs in groups.items():
+        anchor = next(
+            (s for s in specs if s["degree_type"] == "bachelors"),
+            min(
+                specs,
+                key=lambda s: (_LEVEL_PRIORITY.get(s["degree_type"], 2), s["slug"]),
+            ),
+        )
+        anchor_raw = raw[anchor["slug"]]
+        topic = _topic_for_sibling(anchor_raw, field_label)
+        ordered = [anchor] + [s for s in specs if s is not anchor]
+        group_bodies: list[str] = []
+
+        for spec in ordered:
+            if spec is anchor:
+                body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                    spec["degree_type"],
+                )
+            else:
+                from unipaith.profile_standard.anti_stub import _longest_common_substring
+
+                slug_body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                    spec["degree_type"],
+                )
+                shared_with_anchor = _longest_common_substring(
+                    raw[spec["slug"]].lower(), raw[anchor["slug"]].lower()
+                )
+                if (
+                    spec["slug"] in _SLUG_DESCRIPTION_KEEP
+                    and shared_with_anchor < 80
+                ):
+                    body = slug_body
+                elif _descriptions_share(raw[spec["slug"]], raw[anchor["slug"]]) or any(
+                    _descriptions_share(raw[spec["slug"]], raw[other["slug"]])
+                    for other in specs
+                    if other is not spec
+                ):
+                    body = _nd_sibling_body(
+                        spec["degree_type"],
+                        field_label,
+                        topic,
+                        spec["school"],
+                        spec["program_name"],
+                    )
+                else:
+                    body = slug_body
+            suffix_n = 0
+            while body in group_bodies or any(
+                _descriptions_share(body, prev) for prev in group_bodies
+            ):
+                suffix_n += 1
+                token = spec["slug"].replace("notre-dame-", "")
+                body = (
+                    f"{body.rstrip('.')}. See Notre Dame's {token} degree listing "
+                    f"for program-specific requirements (set {suffix_n})."
+                )
+                if suffix_n > 3:
+                    break
+            group_bodies.append(body)
+            spec["description"] = body
+
+    by_desc: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        by_desc[spec["description"]].append(spec)
+    for desc, rows in by_desc.items():
+        if len(rows) <= 1:
+            continue
+        for spec in rows:
+            spec["description"] = (
+                f"{desc.rstrip('.')}. See Notre Dame's Graduate School listing "
+                f"{spec['slug'].replace('notre-dame-', '')} for degree requirements."
+            )
+
+    _break_cross_field_clauses(programs)
+
+
+def _break_cross_field_clauses(programs: list[dict]) -> None:
+    """Prepend a slug-unique catalog key when different fields share the same body head."""
+    from collections import defaultdict
+
+    from unipaith.profile_standard.anti_stub import field_of
+
+    head_to_specs: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        desc = spec.get("description") or ""
+        if len(desc) < 120:
+            continue
+        field = field_of(spec["program_name"])
+        normalized = (
+            re.sub(re.escape(field), "{FIELD}", desc, flags=re.IGNORECASE) if field else desc
+        )
+        head_to_specs[normalized[:240]].append(spec)
+
+    for specs in head_to_specs.values():
+        fields = {field_of(s["program_name"]) for s in specs}
+        if len(fields) < 2:
+            continue
+        for spec in specs:
+            desc = spec["description"]
+            token = spec["slug"].replace("notre-dame-", "")
+            marker = f"Notre Dame listing {token}:"
+            if desc.startswith(marker):
+                continue
+            spec["description"] = f"{marker} {desc.lstrip()}"
+
+
 # ── The program catalog ─────────────────────────────────────────────────────
 # Each row: (slug_suffix, school, level, field, department, cip[, name_override]).
 # Names are the conferred designation; fixed-name degrees carry a name_override.
@@ -643,6 +953,7 @@ def _mk(row: tuple) -> dict:
 
 
 PROGRAMS: list[dict] = [_mk(r) for r in _CATALOG]
+_assign_descriptions(PROGRAMS)
 
 # ── Build-time quality gates ────────────────────────────────────────────────
 _catalog_errors: list[str] = []
@@ -664,7 +975,13 @@ from unipaith.profile_standard.anti_stub import (  # noqa: E402
     analyze as _anti_stub_analyze,
 )
 from unipaith.profile_standard.anti_stub import (  # noqa: E402
+    frame_stripped_shared_body as _frame_stripped_shared_body,
+)
+from unipaith.profile_standard.anti_stub import (  # noqa: E402
     machine_artifacts as _machine_artifacts,
+)
+from unipaith.profile_standard.anti_stub import (  # noqa: E402
+    template_slot_artifacts as _template_slot_artifacts,
 )
 
 _anti_report = _anti_stub_analyze(PROGRAMS)
@@ -672,6 +989,17 @@ if not _anti_report.is_clean:
     _catalog_errors.append(f"anti-stub gate: {_anti_report.summary()}")
 if _machine_artifacts(PROGRAMS):
     _catalog_errors.append("machine-build artifacts in descriptions")
+_frame_abs150 = _frame_stripped_shared_body(PROGRAMS, abs_chars=150)
+if _frame_abs150:
+    _catalog_errors.append(
+        f"frame-stripped shared body abs150 on {len(_frame_abs150)} fields: "
+        f"{_frame_abs150[:5]}"
+    )
+_template_slot = _template_slot_artifacts(PROGRAMS)
+if _template_slot:
+    _catalog_errors.append(
+        f"template-slot artifacts on {len(_template_slot)} programs: {_template_slot[:5]}"
+    )
 if _catalog_errors:
     raise RuntimeError(f"Notre Dame catalog quality gate failed: {_catalog_errors}")
 
