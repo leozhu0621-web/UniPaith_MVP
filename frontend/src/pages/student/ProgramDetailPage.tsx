@@ -589,7 +589,13 @@ export default function ProgramDetailPage() {
                 const cp = p.class_profile && typeof p.class_profile === 'object'
                   ? p.class_profile as Record<string, any> : null
                 if (!cp) return null
-                const pct = (v: any) => `${Math.round(Number(v) * 100)}%`
+                const pct = (v: any) => {
+                  const n = Number(v)
+                  if (!Number.isFinite(n)) return '—'
+                  // Tolerate values already expressed as a percentage (51, not 0.51)
+                  // so a stray int doesn't render as "5100%".
+                  return `${n > 1 ? Math.round(n) : Math.round(n * 100)}%`
+                }
                 const rows: Array<{ label: string; value: string }> = []
                 if (cp.cohort_size) rows.push({ label: 'Cohort size', value: String(cp.cohort_size) })
                 if (cp.international_pct != null) rows.push({ label: 'International', value: pct(cp.international_pct) })
