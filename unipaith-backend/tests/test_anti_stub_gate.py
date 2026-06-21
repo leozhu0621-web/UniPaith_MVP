@@ -27,7 +27,7 @@ from unipaith.profile_standard.anti_stub import (
 # Catalogs verified free of raw scraped-catalogue debris (course-code / requirements /
 # contact-address fragments) in description_text — REPAIR_BACKLOG CRITICAL #1 (USC, run 66).
 # Grow as scrape-built catalogs are researched per-program (UT-Austin still carries it).
-SCRAPE_DEBRIS_CLEAN = ["mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell"]
+SCRAPE_DEBRIS_CLEAN = ["mit", "usc", "uiuc", "nyu", "columbia", "michigan", "cornell", "bu"]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
 # Grow this list as catalogs are genuinely de-fabricated — never weaken the assertions.
@@ -51,8 +51,8 @@ CERTIFIED_CLEAN = [
     "purdue",  # per-credential discipline defs; peer-copy + rollups removed (purduedefab1)
     "chicago",  # per-credential graduate descriptions; cert padding dropped (chicagodefab1)
     "bu",  # Medill peer-copy removed; real dual-degree/MPH/CFA/math/world-lang
-    #             names + depts; per-credential bodies; school-as-field fixes (budefab1,
-    #             supersedes buprof11's narrower description-only repair)
+    #             names + depts; sibling-aware per-credential bodies (frame_abs150 23→0,
+    #             bupercred2) + published 2025-26 tuition backfill; supersedes budefab1
     "berkeley",  # CIP rollup de-fab; real dept names; per-credential descriptions
     #             (berkeleyprof9 — frame-stripped shared body cleared berkeleypercrd1)
     "cornell",  # CIP-rollup buckets → real Cornell degrees or dropped; field-echo
@@ -154,7 +154,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
 _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
-    "stanford", "penn", "cornell", "notre_dame",
+    "stanford",     "penn", "cornell", "notre_dame", "bu",
 ]
 
 
@@ -183,7 +183,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 # are NOT here yet on purpose).
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
-    "penn", "cornell", "ut_austin", "notre_dame",
+    "penn", "cornell", "ut_austin", "notre_dame", "bu",
 ]
 
 

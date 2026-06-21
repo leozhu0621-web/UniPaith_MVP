@@ -352,7 +352,9 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Wheelock early childhood education trains pre-K through grade-2 teachers with play-based pedagogy and family engagement."
     ),
     "Early Childhood Education — Leadership Policy Advocacy For Early Childhood Well Being": (
-        "Wheelock early childhood education trains pre-K through grade-2 teachers with play-based pedagogy and family engagement."
+        "Wheelock's M.A. in early childhood education with a leadership, policy, and advocacy focus "
+        "prepares educators and administrators to shape programs, family partnerships, and equity "
+        "policy for young children."
     ),
     "Earth Environment — Bama Energy Environment": (
         "CAS/GRS energy and environment B.A./M.A. combines earth science with renewable energy and environmental economics."
@@ -508,16 +510,19 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "MET interdisciplinary studies lets part-time students design cross-field curricula combining liberal arts and professional coursework."
     ),
     "International Relations": (
-        "SAIS graduate programs in Washington, D.C. and Bologna combine economics, security studies, and language requirements for policy careers."
+        "BU's Pardee School international relations major combines political economy, security studies, "
+        "and regional specialization with language study and Boston's policy and NGO internship network."
     ),
     "International Relations — International Affairs Ma": (
-        "SAIS graduate programs in Washington, D.C. and Bologna combine economics, security studies, and language requirements for policy careers."
+        "Pardee's M.A. in International Affairs deepens policy analysis, quantitative methods, and "
+        "regional expertise for careers in diplomacy, development, and global business."
     ),
     "International Relations — International Relations Ma Mba": (
         "Pardee/Questrom M.A./M.B.A. dual degree trains global business leaders in international policy and management."
     ),
     "International Relations — International Relationsma In International Affairs": (
-        "SAIS graduate programs in Washington, D.C. and Bologna combine economics, security studies, and language requirements for policy careers."
+        "Pardee's M.S. in International Relations emphasizes applied policy research, security studies, "
+        "and global governance for mid-career professionals and recent graduates."
     ),
     "Jd Llm In International Commercial And Investment Arbitration At Paris2": (
         "BU Law's J.D./LL.M. with Université Paris 2 trains students in cross-border commercial arbitration and investment treaty disputes."
@@ -1639,6 +1644,33 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
     ),
     "bu-academics-gms-pathology-laboratory-medicine-phd": (
         "Doctoral candidates in pathology and laboratory medicine at GMS pursue dissertation research in disease mechanisms, transfusion medicine, and molecular diagnostics on the Medical Campus."
+    ),
+    # Astronomy: distinct per-credential bodies (Perkins Observatory / IAR).
+    "bu-academics-cas-astronomy-ba-ma-astrophysics": (
+        "BU's combined B.A./M.S. in astronomy and astrophysics accelerates students from "
+        "undergraduate observational coursework at the Perkins Telescope Observatory to "
+        "graduate research with the Institute for Astrophysical Research."
+    ),
+    "bu-academics-grs-astronomy-ma": (
+        "GRS master's students in astronomy take graduate courses in astrophysics and "
+        "observation while using BU's Perkins Telescope Observatory and the Institute for "
+        "Astrophysical Research on the Charles River Campus."
+    ),
+    "bu-academics-grs-astronomy-phd": (
+        "Doctoral candidates in astronomy at GRS conduct dissertation research in observational "
+        "and theoretical astrophysics with faculty at the Institute for Astrophysical Research "
+        "and remote observing at the Perkins Telescope Observatory in Arizona."
+    ),
+    # Wheelock early childhood: distinct certificate vs master's bodies.
+    "bu-academics-wheelock-early-childhood-education-cags": (
+        "Wheelock's Certificate of Advanced Graduate Study in early childhood education offers "
+        "licensed educators stackable graduate coursework in play-based pedagogy, family "
+        "engagement, and inclusive pre-K–grade-2 practice."
+    ),
+    "bu-academics-wheelock-early-childhood-education-ma-in-leadership-policy-advocacy-for-early-childhood-well-being": (
+        "Wheelock's M.A. in early childhood education with a leadership, policy, and advocacy "
+        "focus prepares educators to lead programs, partner with families, and advance equity "
+        "policy for young children's well-being."
     ),
 }
 

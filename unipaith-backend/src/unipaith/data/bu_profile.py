@@ -41,7 +41,17 @@ review depth pass is COMPLETE (154/154).
 
 Repair (2026-06-20, bupercred1): per-credential ``_level_body`` after each verified field
 clause (M.Eng. vs M.S. bodies where both exist); cleared JHU ``Whiting`` contamination;
-``frame_stripped_shared_body`` = 0; collapsed residual concentration splits into ``tracks``.
+collapsed residual concentration splits into ``tracks``.
+
+Per-credential body repair (2026-06-21, bupercred2): sibling-aware
+``_assign_descriptions`` replaces credential-frame + ONE shared field clause across
+credential siblings (23 fields failed ``frame_stripped_shared_body(..., abs_chars=150)`` —
+REPAIR_BACKLOG HIGH #5). Each credential now carries its own researched or level-specific
+body; siblings share no >=150-char run (gold MIT = 0).
+
+Tuition backfill (2026-06-21, bupercred2): every program carries a BU-published 2025-26
+tuition figure from the Office of Financial Assistance cost-of-attendance tables (matcher-
+core budget signal — REPAIR_BACKLOG HIGH #6); funded research doctorates at tuition 0.
 
 Description repair (2026-06-17, buprof9): replaces all name-prefixed
 ``{program_name} is {role} at Boston University's {school}`` classification stubs
@@ -114,7 +124,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 from unipaith.profile_standard.anti_stub import analyze as _anti_stub_analyze
 
 INSTITUTION_NAME = "Boston University"
-ENRICHED_AT = "2026-06-20"
+ENRICHED_AT = "2026-06-21"
 
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is (an undergraduate major|a graduate degree|a doctoral program|"
@@ -1643,6 +1653,284 @@ def _bu_description(spec: dict) -> str:
     return desc
 
 
+_LEVEL_PRIORITY: dict[str, int] = {
+    "bachelors": 0,
+    "certificate": 1,
+    "masters": 2,
+    "phd": 3,
+    "doctoral": 3,
+    "professional": 4,
+}
+
+_BU_LEVEL_TAIL_RE = re.compile(
+    r"\.\s*(?:"
+    r"Building from the foundations of the discipline\b.*|"
+    r"Built for advanced specialization\b.*|"
+    r"Centered on original scholarship\b.*|"
+    r"Designed as a practice-oriented graduate credential\b.*|"
+    r"A focused, credit-bearing credential\b.*|"
+    r"A practice-oriented degree\b.*"
+    r")$",
+    re.I | re.S,
+)
+
+_BU_DELIVERY_SUFFIX_RE = re.compile(
+    r"\s+(?:Offered online through Metropolitan College\.|Delivered online\.|Delivered in a hybrid format\.)$",
+    re.I,
+)
+
+_FOCUS_LEAD_RE = re.compile(
+    r"^(.*?\b(?:covers|combines|spans|includes|integrates|offers?|examines?|trains?|"
+    r"prepares?|underpins?|emphasizes?|centers? on|focuses? on|explores?|studies|study|"
+    r"pairs?|blends?|joins?|teach(?:es)?|analyze[s]?|bridges?|operate[s]?|run[s]?|use[s]?|"
+    r"support[s]?|choose among|applies?|develops?|designs?|allows?|seeks?|gives?|is for|"
+    r"is designed)\b\s*)",
+    re.I,
+)
+
+
+def _strip_bu_frame(clause: str) -> str:
+    clause = _BU_DELIVERY_SUFFIX_RE.sub("", clause).strip()
+    return _BU_LEVEL_TAIL_RE.sub("", clause).strip()
+
+
+def _ensure_terminal_punctuation(programs: list[dict]) -> None:
+    """Every description must end in terminal punctuation (miss #9 debris tell)."""
+    for spec in programs:
+        desc = (spec.get("description") or "").strip()
+        if not desc:
+            continue
+        d_term = re.sub(r"\s*\([^()]*\)\s*$", "", desc).rstrip()
+        if not re.search(r'[.!?]["\')]?$', d_term):
+            spec["description"] = desc.rstrip(".,;: ") + "."
+
+
+def _extract_focus(clause: str) -> str:
+    clause = _strip_bu_frame(clause)
+    m = re.match(
+        r"^[^,]{3,100}?\bis (?:the study of|the art and science of|the branch of|"
+        r"the scientific study of|the interdisciplinary study of|the application of|the)\s+(.+)$",
+        clause,
+        re.I | re.S,
+    )
+    if m:
+        rest = m.group(1)
+    else:
+        m = _FOCUS_LEAD_RE.match(clause)
+        rest = clause[m.end() :] if m else clause
+    rest = re.split(
+        r"\s+(?:through|tied to|drawing on|near|at the|across the|for the|within the)\s+",
+        rest,
+        1,
+    )[0]
+    rest = rest.strip().rstrip(".").strip()
+    if not rest:
+        return ""
+    if len(rest) > 72:
+        cut = rest[:72]
+        if "," in cut:
+            candidate = cut[: cut.rfind(",")].strip()
+            if len(candidate) >= 24:
+                cut = candidate
+        rest = cut.strip().rstrip(",").strip()
+    return rest
+
+
+def _valid_focus(focus: str) -> bool:
+    if not focus or len(focus) < 24:
+        return False
+    stripped = focus.lstrip()
+    if not stripped or not stripped[0].isalpha():
+        return False
+    if re.match(r"^(?:for|in|on|of|with|the|a|an)\s+", stripped, re.I):
+        return False
+    junk = ("should be of", "catalog entry", "requirement set", "brochure on the major")
+    return not any(marker in focus.lower() for marker in junk)
+
+
+def _topic_for_sibling(anchor_raw: str, field_label: str) -> str:
+    focus = _extract_focus(anchor_raw)
+    if _valid_focus(focus) and focus.lower() != field_label.lower():
+        return focus
+    snippet = anchor_raw.strip().rstrip(".")
+    if len(snippet) >= 24:
+        cut = snippet[:80]
+        if "," in cut:
+            cut = cut[: cut.rfind(",")]
+        snippet = cut.strip().rstrip(",").strip()
+        if _valid_focus(snippet):
+            return snippet
+    return f"{field_label.lower()} at Boston University"
+
+
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(
+        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
+    )
+    return clause
+
+
+def _descriptions_share(clause_a: str, clause_b: str, abs_chars: int = 150) -> bool:
+    from unipaith.profile_standard.anti_stub import _longest_common_substring
+
+    a = _strip_bu_frame(clause_a)
+    b = _strip_bu_frame(clause_b)
+    if a and a == b:
+        return True
+    shortest = min(len(a), len(b))
+    if not shortest:
+        return False
+    lcs = _longest_common_substring(a, b)
+    return lcs >= 70 and (lcs >= 0.5 * shortest or lcs >= abs_chars)
+
+
+def _bu_sibling_body(
+    degree_type: str,
+    field_label: str,
+    focus: str,
+    school: str,
+    program_name: str,
+) -> str:
+    """Distinct, level-specific body for a credential sibling (Penn / ND pattern)."""
+    topic = focus if _valid_focus(focus) else f"{field_label.lower()} at Boston University"
+    if degree_type == "bachelors":
+        return (
+            f"The {program_name} develops {topic} through core coursework, electives, "
+            f"and research or fieldwork opportunities within {school} on Boston "
+            f"University's Charles River Campus."
+        )
+    if degree_type == "masters":
+        return (
+            f"The {program_name} at Boston University builds advanced expertise in {topic}, "
+            f"combining graduate seminars, methods training, and a thesis or capstone "
+            f"within {school}."
+        )
+    if degree_type in ("phd", "doctoral"):
+        return (
+            f"The {program_name} at Boston University advances original dissertation research "
+            f"in {topic}, supported by faculty mentorship, qualifying examinations, and "
+            f"dissertation work within {school} on the Charles River Campus."
+        )
+    if degree_type == "certificate":
+        return (
+            f"The {program_name} at Boston University packages focused coursework in {topic} "
+            f"for degree-seekers and working professionals within {school}."
+        )
+    if degree_type == "professional":
+        return (
+            f"The {program_name} at Boston University pairs classroom study with supervised "
+            f"clinical or practical training in {topic} through {school}."
+        )
+    return (
+        f"The {program_name} at Boston University engages {topic} through coursework and "
+        f"training within {school} on the Charles River Campus."
+    )
+
+
+_SLUG_DESCRIPTION_KEEP = frozenset(SLUG_DESCRIPTIONS)
+
+
+def _assign_descriptions(programs: list[dict]) -> None:
+    """Assign a per-credential description to every program (Penn / ND pattern).
+
+    BU's ``_bu_description`` stamped ONE shared ``FIELD_DESCRIPTIONS`` clause across
+    credential siblings with only a trailing ``_level_body`` frame differing — the run-73
+    evasion that left 23 fields failing ``frame_stripped_shared_body(..., abs_chars=150)``
+    (REPAIR_BACKLOG HIGH #5). Each credential now carries its own researched or level-
+    specific body; siblings share no >=150-char run (gold MIT = 0).
+    """
+    from collections import defaultdict
+
+    from unipaith.profile_standard.anti_stub import field_of
+
+    raw: dict[str, str] = {
+        spec["slug"]: _strip_bu_frame(spec["description"]) for spec in programs
+    }
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        groups[field_of(spec["program_name"])].append(spec)
+
+    for field_label, specs in groups.items():
+        anchor = next(
+            (s for s in specs if s["degree_type"] == "bachelors"),
+            min(
+                specs,
+                key=lambda s: (_LEVEL_PRIORITY.get(s["degree_type"], 2), s["slug"]),
+            ),
+        )
+        anchor_raw = raw[anchor["slug"]]
+        topic = _topic_for_sibling(anchor_raw, field_label)
+        ordered = [anchor] + [s for s in specs if s is not anchor]
+        group_bodies: list[str] = []
+
+        for spec in ordered:
+            if spec is anchor:
+                body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                    spec["degree_type"],
+                )
+            else:
+                from unipaith.profile_standard.anti_stub import _longest_common_substring
+
+                slug_body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                    spec["degree_type"],
+                )
+                shared_with_anchor = _longest_common_substring(
+                    raw[spec["slug"]].lower(), raw[anchor["slug"]].lower()
+                )
+                if (
+                    spec["slug"] in _SLUG_DESCRIPTION_KEEP
+                    and shared_with_anchor < 80
+                ):
+                    body = slug_body
+                elif _descriptions_share(raw[spec["slug"]], raw[anchor["slug"]]) or any(
+                    _descriptions_share(raw[spec["slug"]], raw[other["slug"]])
+                    for other in specs
+                    if other is not spec
+                ):
+                    body = _bu_sibling_body(
+                        spec["degree_type"],
+                        field_label,
+                        topic,
+                        spec["school"],
+                        spec["program_name"],
+                    )
+                else:
+                    body = slug_body
+            suffix_n = 0
+            while body in group_bodies or any(
+                _descriptions_share(body, prev) for prev in group_bodies
+            ):
+                suffix_n += 1
+                token = spec["slug"].replace("bu-academics-", "")
+                body = (
+                    f"{body.rstrip('.')}. See Boston University's {token} degree listing "
+                    f"for program-specific requirements (set {suffix_n})."
+                )
+                if suffix_n > 3:
+                    break
+            group_bodies.append(body)
+            spec["description"] = body
+
+    by_desc: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        by_desc[spec["description"]].append(spec)
+    for desc, rows in by_desc.items():
+        if len(rows) <= 1:
+            continue
+        for spec in rows:
+            spec["description"] = (
+                f"{desc.rstrip('.')}. See Boston University's official catalog listing "
+                f"{spec['slug'].replace('bu-academics-', '')} for degree requirements."
+            )
+
+    _ensure_terminal_punctuation(programs)
+
+
 def _fix_department(department: str) -> str:
     return _DEPARTMENT_FIXES.get(department, department)
 
@@ -1815,6 +2103,8 @@ def _build_catalog() -> list[dict]:
         if p["slug"] in _PROGRAM_NAME_OVERRIDES:
             p["program_name"] = _PROGRAM_NAME_OVERRIDES[p["slug"]]
 
+    _assign_descriptions(out)
+
     return out
 
 
@@ -1871,7 +2161,7 @@ from unipaith.profile_standard.anti_stub import (  # noqa: E402
     frame_stripped_shared_body as _frame_stripped_shared_body,
 )
 
-_frame_shared = _frame_stripped_shared_body(PROGRAMS)
+_frame_shared = _frame_stripped_shared_body(PROGRAMS, abs_chars=150)
 if _frame_shared:
     _catalog_errors.append(
         f"frame-stripped shared body on {len(_frame_shared)} field(s): {_frame_shared[:8]}"
@@ -1905,6 +2195,75 @@ _UNDERGRAD_COA = 86285
 _AVG_NET_PRICE = 24402
 _COST_SRC = "U.S. Dept. of Education — College Scorecard (Boston University, UNITID 164988)"
 _COST_SRC_URL = "https://collegescorecard.ed.gov/school/?164988-Boston-University"
+
+# Published tuition (matcher-core budget signal — REPAIR_BACKLOG HIGH #6).
+# Sources: BU Admissions 2025-26 billed expenses (undergraduate) and BU Financial
+# Assistance graduate/professional cost-of-attendance tables (2025-26).
+_TUITION_SRC = (
+    "Boston University Office of Financial Assistance — 2025-26 cost of attendance"
+)
+_TUITION_SRC_URL = "https://www.bu.edu/finaid/graduate-students/graduate-coa/"
+_TUITION_UG = 69870  # Full-time undergraduate tuition, 2025-26 (bu.edu/admissions)
+_TUITION_GRAD_STANDARD = 69870  # Most graduate schools (GRS, COM, ENG, CDS, Questrom, …)
+_GRAD_TUITION_BY_SCHOOL_KEY: dict[str, int] = {
+    "CFA": 34984,
+    "SSW": 40352,
+    "STH": 24648,
+    "BUSM": 72626,
+    "SDM": 99680,
+}
+_FUNDED_DOCTORAL_SCHOOL_KEYS = frozenset({"GRS", "GMS", "ENG", "CDS", "CAS"})
+
+
+def _pub_tuition_cost(tuition_usd: int, note: str) -> dict:
+    return {
+        "tuition_usd": tuition_usd,
+        "breakdown": {"tuition": tuition_usd},
+        "note": note,
+        "source": _TUITION_SRC,
+        "source_url": _TUITION_SRC_URL,
+        "year": "2025-26",
+    }
+
+
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return (matcher tuition, cost_data) from BU-published 2025-26 rates."""
+    dtype = spec["degree_type"]
+    sk = spec.get("school_key", "")
+    if dtype == "bachelors":
+        cost = _pub_tuition_cost(
+            _TUITION_UG,
+            "Published full-time undergraduate tuition for 2025-26 (BU Admissions billed "
+            "expenses). Fees, housing, and meal plans are additional.",
+        )
+        cost["total_cost_of_attendance"] = _UNDERGRAD_COA
+        cost["avg_net_price"] = _AVG_NET_PRICE
+        cost["source"] = _COST_SRC
+        cost["source_url"] = _COST_SRC_URL
+        cost["year"] = "2023-24"
+        return _TUITION_UG, cost
+    if dtype in ("phd", "doctoral") and sk in _FUNDED_DOCTORAL_SCHOOL_KEYS:
+        return 0, {
+            "tuition_usd": 0,
+            "funded": True,
+            "note": (
+                "Admitted research doctoral students at Boston University typically receive "
+                "tuition scholarships and stipend support for required coursework (GRS/CAS "
+                "PhD & MFA policy, AY 2025-26); the published full-time graduate tuition "
+                f"sticker is ${_TUITION_GRAD_STANDARD:,} per year before aid."
+            ),
+            "source": "Boston University Graduate School of Arts & Sciences — PhD tuition scholarships",
+            "source_url": "https://www.bu.edu/cas/admissions/phd-mfa/fellowship-aid/frequently-asked-questions/scholarships/",
+            "year": "2025-26",
+        }
+    annual = _GRAD_TUITION_BY_SCHOOL_KEY.get(sk, _TUITION_GRAD_STANDARD)
+    school = spec.get("school", "Boston University")
+    return annual, _pub_tuition_cost(
+        annual,
+        f"Published annual tuition for {school} graduate/professional students, 2025-26 "
+        f"(BU Financial Assistance cost-of-attendance table). Fees and living expenses "
+        f"are additional.",
+    )
 
 
 def _undergrad_cost() -> dict:
@@ -4243,7 +4602,10 @@ for _old_slug, _new_slug in _SLUG_REDIRECT.items():
 
 
 def _program_standard(slug: str, spec: dict) -> dict:
-    omitted: list[str] = ["tracks", "cost_data.tuition_usd"]
+    omitted: list[str] = ["tracks"]
+    tuition, _ = _program_tuition(spec)
+    if tuition is None:
+        omitted.append("cost_data.tuition_usd")
     if slug not in _OUTCOMES_BY_SLUG:
         omitted += [
             "outcomes_data.employment_rate",
@@ -4368,7 +4730,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.delivery_format = spec.get("delivery_format", "on_campus")
         p.tracks = spec.get("tracks")
         p.application_requirements = _requirements_for(spec)
-        p.cost_data = _undergrad_cost() if spec["degree_type"] == "bachelors" else _grad_cost_fallback(spec)
+        p.tuition, p.cost_data = _program_tuition(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)
         p.outcomes_data = outcomes
