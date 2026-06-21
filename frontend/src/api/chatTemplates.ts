@@ -63,6 +63,9 @@ export interface ActionArtifact {
   summary?: string | null;
   items?: ActionArtifactItem[] | null;
   status: "ready" | "pending";
+  /** Deep link back to the My Space surface that owns this artifact (e.g.
+   *  "/s/profile?tab=strategy"). Set only on a real, ready result. */
+  link?: string | null;
 }
 
 /** POST /students/me/chat/templates/action/{action_key} */
