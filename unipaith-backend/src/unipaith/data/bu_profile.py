@@ -4674,7 +4674,10 @@ for _old_slug, _new_slug in _SLUG_REDIRECT.items():
 
 
 def _program_standard(slug: str, spec: dict) -> dict:
-    omitted: list[str] = ["tracks"]
+    # ``tracks`` is only an honest omission when the program genuinely has none — a keeper
+    # that absorbed a collapsed concentration (or any program with real tracks) carries them,
+    # so it must NOT be reported as omitted (consumers down-rank "omitted" data).
+    omitted: list[str] = [] if spec.get("tracks") else ["tracks"]
     tuition, _ = _program_tuition(spec)
     if tuition is None:
         omitted.append("cost_data.tuition_usd")
