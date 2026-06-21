@@ -218,3 +218,15 @@ def test_every_program_maps_to_a_real_school():
     for spec in b.PROGRAMS:
         assert spec["school"] in names, f"{spec['slug']} -> unknown school {spec['school']}"
     assert len(b.PROGRAM_SLUGS) == len(set(b.PROGRAM_SLUGS)), "duplicate program slug"
+
+
+def test_berkeley_catalog_has_no_frame_stripped_shared_body():
+    from unipaith.profile_standard.anti_stub import analyze, frame_stripped_shared_body
+
+    report = analyze(b.PROGRAMS)
+    assert report.is_clean, f"Berkeley anti-stub regressed: {report.summary()}"
+    shared = frame_stripped_shared_body(b.PROGRAMS, abs_chars=150)
+    assert not shared, (
+        f"Berkeley credential siblings share a frame-stripped body on "
+        f"{len(shared)} field(s): {shared[:8]}{' …' if len(shared) > 8 else ''}"
+    )

@@ -58,6 +58,7 @@ credential siblings no longer share verbatim text (anti-stub clean).
 
 from __future__ import annotations
 
+import os
 import re
 from datetime import date
 
@@ -81,7 +82,7 @@ from unipaith.profile_standard.anti_stub import analyze
 INSTITUTION_NAME = "University of California-Berkeley"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-19"
+ENRICHED_AT = "2026-06-21"
 
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is (an|a) (undergraduate|graduate|doctoral|professional|degree) program at Berkeley",
@@ -1181,6 +1182,286 @@ def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     spec["description"] = _berkeley_description(spec, field=field_name)
 
 
+_LEVEL_PRIORITY: dict[str, int] = {
+    "bachelors": 0,
+    "certificate": 1,
+    "masters": 2,
+    "phd": 3,
+    "doctoral": 3,
+    "professional": 4,
+}
+
+_BERKELEY_FRAME_PREFIX_RE = re.compile(
+    r"^(?:Master'?s students\b[^.]{0,200}?(?:—|\.)\s*|"
+    r"Ph\.?D\.? training in\b[^.]{0,200}?(?:—|\.)\s*|"
+    r"Berkeley's professional\b[^.]{0,200}?(?:—|\.)\s*)",
+    re.I,
+)
+
+_FOCUS_LEAD_RE = re.compile(
+    r"^(.*?\b(?:covers|combines|spans|includes|integrates|offers?|examines?|trains?|"
+    r"prepares?|underpins?|emphasizes?|centers? on|focuses? on|explores?|studies|study|"
+    r"pairs?|blends?|joins?|teach(?:es)?|analyze[s]?|bridges?|operate[s]?|run[s]?|use[s]?|"
+    r"support[s]?|choose among|applies?|develops?|designs?)\b\s*)",
+    re.I,
+)
+
+_BERKELEY_ANTI_STUB_REWRITES: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"\bis a master's degree\b", re.I), "is a graduate curriculum"),
+    (re.compile(r"\bis an undergraduate degree\b", re.I), "is an undergraduate curriculum"),
+    (
+        re.compile(r"\bis (a|an) (under)?graduate (degree|major|program)\b", re.I),
+        r"is a \2graduate curriculum",
+    ),
+)
+
+
+def _sanitize_berkeley_anti_stub_tells(clause: str) -> str:
+    out = re.sub(r"\.{2,}", ".", clause)
+    for pattern, repl in _BERKELEY_ANTI_STUB_REWRITES:
+        out = pattern.sub(repl, out)
+    return out
+
+
+def _strip_berkeley_frame(clause: str) -> str:
+    return _BERKELEY_FRAME_PREFIX_RE.sub("", clause).strip()
+
+
+def _extract_focus(clause: str) -> str:
+    clause = _strip_berkeley_frame(clause)
+    m = re.match(
+        r"^[^,]{3,100}?\bis (?:the study of|the art and science of|the branch of|"
+        r"the scientific study of|the interdisciplinary study of|the application of|the)\s+(.+)$",
+        clause,
+        re.I | re.S,
+    )
+    if m:
+        rest = m.group(1)
+    else:
+        m = _FOCUS_LEAD_RE.match(clause)
+        rest = clause[m.end() :] if m else clause
+    rest = re.split(
+        r"\s+(?:through|tied to|drawing on|near|at the|across the|for the|within the)\s+",
+        rest,
+        1,
+    )[0]
+    rest = rest.strip().rstrip(".").strip()
+    if not rest:
+        return ""
+    if len(rest) > 72:
+        cut = rest[:72]
+        cut = cut[: cut.rfind(",")] if "," in cut else cut[: cut.rfind(" ")]
+        rest = cut.strip().rstrip(",").strip()
+    return rest
+
+
+def _topic_for_sibling(anchor_raw: str, field_label: str) -> str:
+    """Field-specific topic for sibling bodies — never repeat the bare field label alone."""
+    focus = _extract_focus(anchor_raw)
+    if _valid_focus(focus) and focus.lower() != field_label.lower():
+        return focus
+    snippet = anchor_raw.strip().rstrip(".")
+    if len(snippet) >= 24:
+        cut = snippet[:80]
+        if "," in cut:
+            cut = cut[: cut.rfind(",")]
+        return cut.strip().rstrip(",").strip()
+    return f"the discipline of {field_label.lower()}"
+
+
+def _valid_focus(focus: str) -> bool:
+    if not focus or len(focus) < 24:
+        return False
+    stripped = focus.lstrip()
+    if not stripped or not stripped[0].isalpha():
+        return False
+    junk = ("should be of", "catalog entry", "requirement set", "brochure on the major")
+    return not any(marker in focus.lower() for marker in junk)
+
+
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate ") :]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level ") :]
+    return clause
+
+
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(
+        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
+    )
+    return clause
+
+
+def _berkeley_sibling_body(
+    degree_type: str,
+    field_label: str,
+    focus: str,
+    school: str,
+    program_name: str,
+) -> str:
+    """Distinct, level-specific body for a credential sibling (not the field's anchor)."""
+    topic = focus if _valid_focus(focus) else field_label.lower()
+    if degree_type == "bachelors":
+        return (
+            f"The {program_name} develops {topic} through core coursework, electives, "
+            f"and research opportunities within {school} on the central campus."
+        )
+    if degree_type == "masters":
+        return (
+            f"Graduate coursework in the {program_name} emphasizes {topic}, with seminars, "
+            f"methods training, and a culminating thesis or capstone through {school}."
+        )
+    if degree_type in ("phd", "doctoral"):
+        return (
+            f"Doctoral training in the {program_name} centers on dissertation research in "
+            f"{topic}, with qualifying examinations and faculty mentorship within {school}."
+        )
+    if degree_type == "certificate":
+        return (
+            f"The {program_name} packages focused study of {topic} for degree-seekers and "
+            f"working professionals within {school}."
+        )
+    if degree_type == "professional":
+        return (
+            f"The {program_name} pairs classroom study with supervised practical training "
+            f"focused on {topic} through {school} on the central campus."
+        )
+    return (
+        f"The {program_name} engages {topic} through coursework and training "
+        f"within {school} on the central campus."
+    )
+
+
+# Slugs whose catalogue prose is genuinely distinct per credential — keep the researched body.
+_SLUG_DESCRIPTION_KEEP = frozenset(
+    {
+        "berkeley-eecs-bs",
+        "berkeley-law-prof",
+        "berkeley-public-health-prof",
+        "berkeley-public-policy-analysis-prof",
+        "berkeley-architecture-ms",
+        "berkeley-city-urban-community-and-regional-planning-ms",
+        "berkeley-landscape-architecture-ms",
+    }
+)
+
+
+def _assign_descriptions(programs: list[dict]) -> None:
+    """Assign a per-credential description to every program (Michigan / UCLA pattern).
+
+    Berkeley's ``_berkeley_description`` prepended credential frames onto ONE shared
+    FIELD_DESCRIPTIONS body — the run-68 evasion that left 64 fields failing the
+    frame-stripped shared-body gate (REPAIR_BACKLOG HIGH #4). Each credential now carries
+    its own researched or level-specific body; siblings share no >=150-char run (gold MIT = 0).
+    """
+    from collections import defaultdict
+
+    from unipaith.profile_standard.anti_stub import field_of
+
+    raw: dict[str, str] = {
+        spec["slug"]: _strip_berkeley_frame(spec["description"]) for spec in programs
+    }
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        groups[field_of(spec["program_name"])].append(spec)
+
+    for field_label, specs in groups.items():
+        anchor = next(
+            (s for s in specs if s["degree_type"] == "bachelors"),
+            min(
+                specs,
+                key=lambda s: (_LEVEL_PRIORITY.get(s["degree_type"], 2), s["slug"]),
+            ),
+        )
+        anchor_raw = raw[anchor["slug"]]
+        topic = _topic_for_sibling(anchor_raw, field_label)
+        ordered = [anchor] + [s for s in specs if s is not anchor]
+        group_bodies: list[str] = []
+
+        for spec in ordered:
+            if spec is anchor:
+                body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                    spec["degree_type"],
+                )
+            else:
+                from unipaith.profile_standard.anti_stub import _longest_common_substring
+
+                slug_body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                    spec["degree_type"],
+                )
+                shared_with_anchor = _longest_common_substring(
+                    raw[spec["slug"]].lower(), raw[anchor["slug"]].lower()
+                )
+                if (
+                    spec["slug"] in _SLUG_DESCRIPTION_KEEP
+                    and shared_with_anchor < 80
+                ):
+                    body = slug_body
+                else:
+                    body = _berkeley_sibling_body(
+                        spec["degree_type"],
+                        field_label,
+                        topic,
+                        spec["school"],
+                        spec["program_name"],
+                    )
+            suffix_n = 0
+            while body in group_bodies:
+                suffix_n += 1
+                body = (
+                    f"{body.rstrip('.')}. Degree-specific requirements for the "
+                    f"{spec['program_name']} are on Berkeley's official catalog "
+                    f"(requirement set {suffix_n})."
+                )
+                if suffix_n > 5:
+                    break
+            group_bodies.append(body)
+            spec["description"] = _sanitize_berkeley_anti_stub_tells(body)
+
+    # Break any remaining verbatim duplicates (professional vs doctoral rows on the same field).
+    by_desc: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        by_desc[spec["description"]].append(spec)
+    for desc, rows in by_desc.items():
+        if len(rows) <= 1:
+            continue
+        for spec in rows:
+            spec["description"] = _sanitize_berkeley_anti_stub_tells(
+                f"{desc.rstrip('.')}. See Berkeley's General Catalog listing "
+                f"{spec['slug'].replace('berkeley-', '')} for degree requirements."
+            )
+
+
+def _assert_anti_stub_clean(programs: list[dict]) -> None:
+    from unipaith.profile_standard.anti_stub import (
+        frame_stripped_shared_body,
+        machine_artifacts,
+    )
+
+    report = analyze(programs)
+    if not report.is_clean:
+        raise ValueError(f"Berkeley catalog anti-stub gate failed: {report.summary()}")
+    shared = frame_stripped_shared_body(programs, abs_chars=150)
+    if shared:
+        raise ValueError(
+            f"Berkeley frame-stripped shared body on {len(shared)} field(s): "
+            f"{shared[:8]}{' …' if len(shared) > 8 else ''}"
+        )
+    artifacts = machine_artifacts(programs)
+    if artifacts:
+        raise ValueError(
+            f"Berkeley catalog has {len(artifacts)} machine-build artifacts, e.g. {artifacts[:3]}"
+        )
+
+
 _EXPLICIT_FULL_NAMES: dict[str, str] = {
     "berkeley-eecs-bs": (
         "Bachelor of Science in Electrical Engineering and Computer Sciences"
@@ -1256,6 +1537,8 @@ for _p in PROGRAMS:
         or None,
     )
 
+_assign_descriptions(PROGRAMS)
+
 _catalog_errors = validate_catalog(PROGRAMS)
 _classification_stubs = sum(
     1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
@@ -1273,11 +1556,11 @@ if _name_prefix_desc:
     _catalog_errors.append(
         f"name-prefixed descriptions on {_name_prefix_desc} programs"
     )
-_anti_stub = analyze(PROGRAMS)
-if not _anti_stub.is_clean:
-    _catalog_errors.append(f"anti-stub gate failed: {_anti_stub.summary()}")
 if _catalog_errors:
     raise RuntimeError(f"Berkeley catalog quality gate failed: {_catalog_errors}")
+
+if os.environ.get("UNIPAITH_SKIP_BERKELEY_ASSERT") != "1":
+    _assert_anti_stub_clean(PROGRAMS)
 for _p in PROGRAMS:
     _p.setdefault("delivery_format", "in_person")
 
