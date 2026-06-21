@@ -318,6 +318,7 @@ export default function CalendarPage() {
       {view === 'month' && (
         <>
           <div className="flex items-center justify-end gap-3 mb-4">
+            <button onClick={() => setCurrentMonth(new Date())} className="px-2.5 py-1 text-xs font-semibold rounded-md border border-border text-foreground hover:bg-muted transition-colors" aria-label="Jump to this month">Today</button>
             <button onClick={() => setCurrentMonth(m => subMonths(m, 1))} className="p-1.5 hover:bg-muted rounded transition-colors" aria-label="Previous month"><ChevronLeft size={18} /></button>
             <span className="text-sm font-semibold w-36 text-center text-foreground">{format(currentMonth, 'MMMM yyyy')}</span>
             <button onClick={() => setCurrentMonth(m => addMonths(m, 1))} className="p-1.5 hover:bg-muted rounded transition-colors" aria-label="Next month"><ChevronRight size={18} /></button>
@@ -373,6 +374,7 @@ export default function CalendarPage() {
       {view === 'week' && (
         <>
           <div className="flex items-center justify-end gap-3 mb-4">
+            <button onClick={() => setCurrentWeek(new Date())} className="px-2.5 py-1 text-xs font-semibold rounded-md border border-border text-foreground hover:bg-muted transition-colors" aria-label="Jump to this week">Today</button>
             <button onClick={() => setCurrentWeek(w => subWeeks(w, 1))} className="p-1.5 hover:bg-muted rounded transition-colors" aria-label="Previous week"><ChevronLeft size={18} /></button>
             <span className="text-sm font-semibold text-center text-foreground">{format(weekStart, 'MMM d')} — {format(weekEnd, 'MMM d, yyyy')}</span>
             <button onClick={() => setCurrentWeek(w => addWeeks(w, 1))} className="p-1.5 hover:bg-muted rounded transition-colors" aria-label="Next week"><ChevronRight size={18} /></button>
