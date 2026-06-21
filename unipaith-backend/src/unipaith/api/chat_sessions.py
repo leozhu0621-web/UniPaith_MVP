@@ -294,6 +294,9 @@ class ActionArtifactOut(BaseModel):
     summary: str | None = None
     items: list[ActionArtifactItem] | None = None
     status: str  # "ready" | "pending"
+    # Deep link back to the My Space surface that owns this artifact, set only
+    # when the action produced a real, ready result. None for pending/not-real.
+    link: str | None = None
 
 
 _PENDING_SUMMARY = "This is coming soon — your inputs are saved."
@@ -362,6 +365,7 @@ async def dispatch_template_action(
                 items=items if items else None,
                 status="ready" if items else "pending",
                 summary=None if items else _no_match_list,
+                link="/s/explore" if items else None,
             )
         else:
             return ActionArtifactOut(
@@ -371,6 +375,7 @@ async def dispatch_template_action(
                 items=items if items else None,
                 status="ready" if items else "pending",
                 summary=None if items else _no_match_compare,
+                link="/s/explore" if items else None,
             )
 
     # ── generate_strategy → tool_generate_strategy ────────────────────────────
@@ -402,6 +407,7 @@ async def dispatch_template_action(
             title="Your strategy",
             summary=narrative,
             status="ready",
+            link="/s/profile?tab=strategy",
         )
 
     # Unreachable but satisfies type checker

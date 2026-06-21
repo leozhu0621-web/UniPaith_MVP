@@ -13,12 +13,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, CheckCircle2, ChevronRight, Pencil, Sparkles, MessageCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Pencil, Sparkles, MessageCircle } from 'lucide-react'
 
 import AIBadge from '../../../components/ui/AIBadge'
 import StrategyEditor from './strategy/StrategyEditor'
 import ApplicationGamePlan from './strategy/ApplicationGamePlan'
 import PlanOverview from './strategy/PlanOverview'
+import SchoolList from './strategy/SchoolList'
+import { createSession } from '../../../api/chatSessions'
 import {
   type UpdateStrategyBody,
   activateStrategy,
@@ -99,6 +101,17 @@ function StrategyCard({
         </div>
       )}
 
+      <PathDetails strategy={strategy} />
+    </Card>
+  )
+}
+
+/** The academic / financial / geographic paths — the supporting detail of a
+ *  strategy. Rendered inline on drafts/archived; tucked into a collapsible on
+ *  the lead "Your angle" card so the angle stays the headline. */
+function PathDetails({ strategy }: { strategy: StudentStrategy }) {
+  return (
+    <>
       {strategy.academic_path.length > 0 && (
         <PathSection title="Academic path">
           {strategy.academic_path.map((step, i) => (
@@ -143,6 +156,72 @@ function StrategyCard({
             </PathRow>
           ))}
         </PathSection>
+      )}
+    </>
+  )
+}
+
+/** Lead presentation of the ACTIVE strategy — "Your angle". Leads with the
+ *  career → degree headline + the narrative; demotes the three paths to a
+ *  collapsible "Plan details" so the angle is what the student reads first. */
+function AngleCard({ strategy, onEdit }: { strategy: StudentStrategy; onEdit: () => void }) {
+  const [showPaths, setShowPaths] = useState(false)
+  const hasPaths =
+    strategy.academic_path.length > 0 ||
+    strategy.financial_path.length > 0 ||
+    strategy.geographic_path.length > 0
+
+  return (
+    <Card pad={false} className="p-5 space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">
+              Your angle
+            </span>
+            <AIBadge />
+            {strategy.is_stub && (
+              <Badge variant="warning" size="sm">
+                preview
+              </Badge>
+            )}
+          </div>
+          {strategy.career_target && (
+            <div className="text-lg font-medium text-foreground">{strategy.career_target}</div>
+          )}
+          {strategy.target_degree && (
+            <div className="text-sm text-muted-foreground">→ {strategy.target_degree}</div>
+          )}
+        </div>
+        <Button size="sm" variant="ghost" onClick={onEdit}>
+          <Pencil size={14} className="mr-1" />
+          Edit
+        </Button>
+      </div>
+
+      {strategy.narrative && (
+        <div className="text-sm text-foreground whitespace-pre-line border-l-2 border-border pl-3">
+          {strategy.narrative}
+        </div>
+      )}
+
+      {hasPaths && (
+        <div className="border-t border-border pt-3">
+          <button
+            type="button"
+            onClick={() => setShowPaths(v => !v)}
+            aria-expanded={showPaths}
+            className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {showPaths ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            Plan details — academic, financial, geographic
+          </button>
+          {showPaths && (
+            <div className="mt-3 space-y-3">
+              <PathDetails strategy={strategy} />
+            </div>
+          )}
+        </div>
       )}
     </Card>
   )
@@ -215,6 +294,28 @@ export default function StrategyTab() {
     onSettled,
   })
 
+  // "Develop with Uni" — open the real Sharpen-your-strategy chat template.
+  // Creates a template-origin session, then deep-links the chat tab to it
+  // (?session=<id>) so it opens straight into the guided TemplateRunner. On any
+  // failure we still drop the student into the chat tab so the action never dead-ends.
+  const developMut = useMutation({
+    mutationFn: () =>
+      createSession({
+        title: 'Sharpen your strategy',
+        topic_key: 'strategy',
+        origin_kind: 'template',
+        origin_ref: 'sharpen_strategy',
+      }),
+    onSuccess: session =>
+      navigate(`/s?session=${session.id}`, {
+        state: { originKind: 'template', originRef: 'sharpen_strategy' },
+      }),
+    onError: (err: unknown) => {
+      showToast((err as Error).message ?? 'Could not open Uni.', 'error')
+      navigate('/s')
+    },
+  })
+
   const drafts = versions.filter(v => v.status === 'draft')
   const archived = versions.filter(v => v.status === 'archived')
   const isLoading = activeLoading || versionsLoading
@@ -227,10 +328,14 @@ export default function StrategyTab() {
 
       <div className="flex items-start justify-end">
         <div className="flex shrink-0 items-center gap-2">
-          {/* Job-3 hook (Spec 2026-06-15) — develop the strategy with Uni. The
-              guided builder is a future Uni skill; for now this opens Uni with a
-              strategy intent so the entry point is discoverable. */}
-          <Button variant="secondary" onClick={() => navigate('/s?intent=strategy')}>
+          {/* Develop the strategy with Uni — opens the real "Sharpen your
+              strategy" chat template (createSession → deep-link the chat tab),
+              not a bare intent. */}
+          <Button
+            variant="secondary"
+            onClick={() => developMut.mutate()}
+            loading={developMut.isPending}
+          >
             <MessageCircle size={14} className="mr-1" />
             Develop with Uni
           </Button>
@@ -276,11 +381,13 @@ export default function StrategyTab() {
       <ApplicationGamePlan />
 
       {active && (
-        <div>
-          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
-            Active strategy
-          </div>
-          <StrategyCard strategy={active} onEdit={() => setEditing(active)} />
+        <div className="space-y-4">
+          {/* Lead with the angle (career → degree + narrative); paths demoted
+              to a collapsible inside the card. */}
+          <AngleCard strategy={active} onEdit={() => setEditing(active)} />
+          {/* The school list — the second half of the white-paper strategy:
+              a balanced lineup with separate fit + odds reads. */}
+          <SchoolList />
         </div>
       )}
 

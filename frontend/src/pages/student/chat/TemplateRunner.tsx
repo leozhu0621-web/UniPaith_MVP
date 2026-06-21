@@ -22,6 +22,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Check,
@@ -412,6 +413,7 @@ function ActionArtifactCard({
   artifact: ActionArtifact;
   onDone: () => void;
 }) {
+  const navigate = useNavigate();
   const isPending = artifact.status === "pending";
 
   return (
@@ -442,7 +444,16 @@ function ActionArtifactCard({
           </div>
         )}
 
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-3">
+          {artifact.link && (
+            <button
+              type="button"
+              onClick={() => navigate(artifact.link as string)}
+              className="text-[12.5px] font-bold text-secondary hover:text-secondary/80 transition-colors"
+            >
+              Open in My Space <ArrowRight size={13} className="inline-block ml-0.5 -mt-0.5" />
+            </button>
+          )}
           <Button variant="secondary" size="sm" onClick={onDone}>
             Continue <ArrowRight size={13} className="ml-1" />
           </Button>

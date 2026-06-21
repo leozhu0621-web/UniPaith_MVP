@@ -21,7 +21,8 @@
  * already handles the mobile layout.  The conversation is rendered EXACTLY
  * as before; this shell only gates which view shows.
  */
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import SessionBrowser from "./SessionBrowser";
 import NewSessionLauncher from "./NewSessionLauncher";
 import TemplateRunner from "./TemplateRunner";
@@ -38,13 +39,48 @@ interface ActiveSession {
 export default function ChatTabShell() {
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
 
-  // Fetch tree so we can surface the most-recent session in the launcher.
+  // Deep-link support: /s?session=<id> opens that session active. Template
+  // handoffs (e.g. "Develop with Uni") also pass {originKind, originRef} via
+  // router state so the session opens straight into its TemplateRunner — the
+  // chat tree doesn't carry origin_ref, so state is how we know the template key.
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const deepLinkSessionId = searchParams.get("session");
+
+  // Fetch tree so we can surface the most-recent session in the launcher and
+  // resolve a deep-linked session's origin metadata.
   const { data: treeData } = useQuery({
     queryKey: ["chat-tree"],
     queryFn: getChatTree,
     retry: 1,
     staleTime: 30_000,
   });
+
+  // Apply the ?session deep link once, after the tree loads (so we can confirm
+  // the session exists and read its origin_kind). Re-applies if the param
+  // changes to a different id. A guard ref keeps a manual close/select from
+  // being clobbered by a re-render with the same param still in the URL.
+  const appliedDeepLink = useRef<string | null>(null);
+  useEffect(() => {
+    if (!deepLinkSessionId || !treeData) return;
+    if (appliedDeepLink.current === deepLinkSessionId) return;
+
+    const session = treeData.folders
+      .flatMap((f) => f.sessions)
+      .find((s) => s.id === deepLinkSessionId);
+    if (!session) return; // not ours / not yet in the tree — leave state alone
+
+    appliedDeepLink.current = deepLinkSessionId;
+
+    // Prefer the template metadata passed via router state (the tree omits
+    // origin_ref); fall back to the session's own origin_kind for a cold link.
+    const navState = location.state as
+      | { originKind?: string; originRef?: string }
+      | null;
+    const originKind = navState?.originKind ?? session.origin_kind;
+    const originRef = navState?.originRef;
+    setActiveSession({ id: session.id, originKind, originRef });
+  }, [deepLinkSessionId, treeData, location.state]);
 
   // Most-recent session (first session across any folder, by sort_order asc).
   const recentSession = (() => {
