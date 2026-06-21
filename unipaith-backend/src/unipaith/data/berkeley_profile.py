@@ -1227,6 +1227,23 @@ def _strip_berkeley_frame(clause: str) -> str:
     return _BERKELEY_FRAME_PREFIX_RE.sub("", clause).strip()
 
 
+_TOPIC_CLAUSE_END = (". ", "; ", " — ", " – ", " with ", " through ", " near ", " at the ")
+_TOPIC_TRAILING_JUNK = frozenset(
+    {"and", "or", "of", "in", "on", "for", "with", "to", "by", "from", "the", "a", "an"}
+)
+_TOPIC_BAD_LEAD = frozenset(
+    {
+        "is", "are", "and", "or", "but", "of", "in", "on", "for", "with", "to", "by",
+        "from", "under", "as", "at", "this", "these", "those", "that", "which",
+        "study", "studies", "science", "sciences", "discipline", "branch", "field",
+        "area", "form", "body", "way", "set", "system", "framework", "process", "method",
+        "theory", "application", "analysis", "examination", "investigation", "art",
+        "practice", "applies", "apply", "develops", "develop", "prepares", "prepare",
+        "examines", "provides", "operates", "encompass", "encompasses",
+    }
+)
+
+
 def _extract_focus(clause: str) -> str:
     clause = _strip_berkeley_frame(clause)
     m = re.match(
@@ -1240,6 +1257,7 @@ def _extract_focus(clause: str) -> str:
     else:
         m = _FOCUS_LEAD_RE.match(clause)
         rest = clause[m.end() :] if m else clause
+    rest = re.sub(r"^(?:of|for|in|on|to|with)\s+", "", rest.strip(), flags=re.I)
     rest = re.split(
         r"\s+(?:through|tied to|drawing on|near|at the|across the|for the|within the)\s+",
         rest,
@@ -1248,35 +1266,58 @@ def _extract_focus(clause: str) -> str:
     rest = rest.strip().rstrip(".").strip()
     if not rest:
         return ""
+    cut_at = len(rest)
+    for sep in _TOPIC_CLAUSE_END:
+        idx = rest.find(sep)
+        if 24 <= idx < cut_at:
+            cut_at = idx
+    rest = rest[:cut_at].strip().rstrip(",;").strip()
     if len(rest) > 72:
         cut = rest[:72]
         cut = cut[: cut.rfind(",")] if "," in cut else cut[: cut.rfind(" ")]
         rest = cut.strip().rstrip(",").strip()
-    return rest
+    words = rest.split()
+    while words and words[-1].lower().strip(",;") in _TOPIC_TRAILING_JUNK:
+        words.pop()
+    return " ".join(words).rstrip(",;").strip()
+
+
+def _topic_is_clean(topic: str) -> bool:
+    if not topic or len(topic) < 12:
+        return False
+    words = topic.split()
+    if words[0].lower() in _TOPIC_BAD_LEAD:
+        return False
+    if words[-1].lower().strip(",;") in _TOPIC_TRAILING_JUNK or topic.rstrip().endswith(","):
+        return False
+    if re.search(
+        r"\sand\s+(?:develops|applies|operates|provides|creates|manages|delivers|builds|"
+        r"examines|explores|designs|produces|trains)\s",
+        topic,
+        re.I,
+    ):
+        return False
+    return True
 
 
 def _topic_for_sibling(anchor_raw: str, field_label: str) -> str:
     """Field-specific topic for sibling bodies — never repeat the bare field label alone."""
     focus = _extract_focus(anchor_raw)
-    if _valid_focus(focus) and focus.lower() != field_label.lower():
+    if _topic_is_clean(focus) and focus.lower() != field_label.lower():
         return focus
     snippet = anchor_raw.strip().rstrip(".")
     if len(snippet) >= 24:
         cut = snippet[:80]
         if "," in cut:
             cut = cut[: cut.rfind(",")]
-        return cut.strip().rstrip(",").strip()
+        candidate = cut.strip().rstrip(",").strip()
+        if _topic_is_clean(candidate):
+            return candidate
     return f"the discipline of {field_label.lower()}"
 
 
 def _valid_focus(focus: str) -> bool:
-    if not focus or len(focus) < 24:
-        return False
-    stripped = focus.lstrip()
-    if not stripped or not stripped[0].isalpha():
-        return False
-    junk = ("should be of", "catalog entry", "requirement set", "brochure on the major")
-    return not any(marker in focus.lower() for marker in junk)
+    return _topic_is_clean(focus)
 
 
 def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
@@ -1306,35 +1347,40 @@ def _berkeley_sibling_body(
     program_name: str,
 ) -> str:
     """Distinct, level-specific body for a credential sibling (not the field's anchor)."""
-    topic = focus if _valid_focus(focus) else field_label.lower()
+    topic = focus if _topic_is_clean(focus) else field_label.lower()
+    campus = "UC Berkeley"
     if degree_type == "bachelors":
         return (
-            f"The {program_name} develops {topic} through core coursework, electives, "
-            f"and research opportunities within {school} on the central campus."
+            f"The {program_name} grounds undergraduates in {topic} through introductory "
+            f"sequences, laboratory or field experience, and upper-division electives "
+            f"within {school} at {campus}."
         )
     if degree_type == "masters":
         return (
-            f"Graduate coursework in the {program_name} emphasizes {topic}, with seminars, "
-            f"methods training, and a culminating thesis or capstone through {school}."
+            f"The {program_name} builds advanced expertise in {topic}, pairing graduate "
+            f"seminars and methods coursework with a culminating thesis or capstone "
+            f"through {school} at {campus}."
         )
     if degree_type in ("phd", "doctoral"):
         return (
-            f"Doctoral training in the {program_name} centers on dissertation research in "
-            f"{topic}, with qualifying examinations and faculty mentorship within {school}."
+            f"The {program_name} centers doctoral research on {topic}, advancing "
+            f"candidates through qualifying examinations and a sustained, "
+            f"faculty-mentored dissertation within {school} at {campus}."
         )
     if degree_type == "certificate":
         return (
-            f"The {program_name} packages focused study of {topic} for degree-seekers and "
-            f"working professionals within {school}."
+            f"The {program_name} concentrates a compact set of graduate courses on {topic}, "
+            f"giving working professionals and degree-seeking students a focused credential "
+            f"within {school} at {campus}."
         )
     if degree_type == "professional":
         return (
-            f"The {program_name} pairs classroom study with supervised practical training "
-            f"focused on {topic} through {school} on the central campus."
+            f"The {program_name} joins rigorous classroom study of {topic} with extensive "
+            f"supervised practical training delivered through {school} at {campus}."
         )
     return (
-        f"The {program_name} engages {topic} through coursework and training "
-        f"within {school} on the central campus."
+        f"The {program_name} engages {topic} through coursework and supervised training "
+        f"within {school} at {campus}."
     )
 
 
@@ -1440,6 +1486,21 @@ def _assign_descriptions(programs: list[dict]) -> None:
             )
 
 
+def _template_slot_artifacts(programs: list[dict]) -> list[str]:
+    """Machine-broken slotted grammar (REPAIR_BACKLOG CRITICAL C1 — gold MIT = 0)."""
+    hits: list[str] = []
+    for p in programs:
+        d = p.get("description") or ""
+        name = p.get("program_name") or p.get("slug") or ""
+        if re.search(r"Doctoral training in the Doctor of Philosophy in", d, re.I):
+            hits.append(name)
+        elif re.search(r"dissertation research in (?:of|for)\b", d, re.I):
+            hits.append(name)
+        elif re.search(r"Graduate coursework in the Master of ", d, re.I):
+            hits.append(name)
+    return hits
+
+
 def _assert_anti_stub_clean(programs: list[dict]) -> None:
     from unipaith.profile_standard.anti_stub import (
         frame_stripped_shared_body,
@@ -1459,6 +1520,11 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
     if artifacts:
         raise ValueError(
             f"Berkeley catalog has {len(artifacts)} machine-build artifacts, e.g. {artifacts[:3]}"
+        )
+    slots = _template_slot_artifacts(programs)
+    if slots:
+        raise ValueError(
+            f"Berkeley catalog has {len(slots)} template-slot grammar artifacts, e.g. {slots[:3]}"
         )
 
 
@@ -1643,6 +1709,14 @@ _TRACKS_BY_SLUG: dict[str, dict] = {
 # UNITID 110635). Nonresidents pay an additional nonresident supplemental tuition.
 _TUITION_IN_STATE = 16347
 _TUITION_OUT_OF_STATE = 50547
+# UC systemwide mandatory graduate tuition, 2024-25 (UCOP fee schedule); Berkeley
+# graduate academic students pay this uniform tuition plus campus-based fees.
+_TUITION_GRAD = 12762
+_TUITION_GRAD_OOS = _TUITION_GRAD + 15102  # + nonresident supplemental tuition (graduate academic)
+_GRAD_COST_SRC = (
+    "University of California Office of the President — 2024-25 Tuition and Fee Levels",
+    "https://www.ucop.edu/operating-budget/_files/fees/202425/2024-25.pdf",
+)
 _UNDERGRAD_COA = 45619
 _ROOM_BOARD = 23750
 _BOOKS_SUPPLIES = 1131
@@ -2816,18 +2890,50 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                     "source_url": "https://collegescorecard.ed.gov/school/?110635",
                     "year": "2024-25",
                 }
+        elif spec["degree_type"] == "phd":
+            p.tuition = 0
+            p.cost_data = {
+                "tuition_usd": 0,
+                "funded": True,
+                "note": (
+                    "Berkeley doctoral students admitted with funding typically receive "
+                    "tuition remission plus a stipend; see the Graduate Division for "
+                    "program-specific funding details."
+                ),
+                "source": "Berkeley Graduate Division",
+                "source_url": "https://grad.berkeley.edu/admissions/application-process/cost/",
+                "year": "2024-25",
+            }
+        elif spec["degree_type"] in ("masters", "certificate"):
+            p.tuition = _TUITION_GRAD
+            p.cost_data = {
+                "tuition_usd": _TUITION_GRAD,
+                "breakdown": {
+                    "tuition_in_state": _TUITION_GRAD,
+                    "tuition_out_of_state": _TUITION_GRAD_OOS,
+                },
+                "funded": False,
+                "note": (
+                    "UC systemwide mandatory graduate tuition (California resident); "
+                    "non-residents pay an additional nonresident supplemental tuition "
+                    "shown in the breakdown. Professional-degree programs may carry "
+                    "separate supplemental tuition."
+                ),
+                "source": _GRAD_COST_SRC[0],
+                "source_url": _GRAD_COST_SRC[1],
+                "year": "2024-25",
+            }
         else:
             p.tuition = None
             p.cost_data = {
                 "funded": spec["degree_type"] == "phd",
                 "note": (
-                    "Berkeley does not publish a single citable per-program tuition for this "
-                    "degree on a public page; see the program website for current tuition."
-                    + (" Doctoral students are typically funded via fellowships or "
-                       "assistantships when admitted." if spec["degree_type"] == "phd" else "")
+                    "Berkeley professional-degree programs publish distinct tuition "
+                    "schedules; see the program website or the Office of the Registrar "
+                    "fee schedule for current charges."
                 ),
-                "source": "UC Berkeley program / Graduate Division",
-                "source_url": _WEBSITE_BY_SLUG.get(slug) or _SCHOOL_WEBSITE.get(spec["school"]),
+                "source": "UC Berkeley Office of the Registrar — Fee Schedule",
+                "source_url": "https://registrar.berkeley.edu/tuition-fees/fee-schedule/",
             }
         p.application_requirements = _requirements_for(spec)
         # Outcomes precedence: Scorecard FOS (program) → institution median.
