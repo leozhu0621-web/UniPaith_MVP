@@ -987,6 +987,35 @@ Concrete misses observed in the first runs — each broke a real page:
        token) from every description FIRST, then recompute those counts. Evidence: live API
        this run — UCLA/UW/Michigan ship this on ~98% of rows yet scored 0 on every existing
        metric and auto-merged into CERTIFIED_CLEAN.
+     - **Also FAIL the TEMPLATE-SLOTTED per-credential body (miss #8 template-slot sub-bullet)
+       — a per-credential "repair" that CLEARS the shared-body / frame / fraction-floor gate by
+       giving each credential its OWN frame but SLOTTING the same field phrase into a fixed
+       grammatical template, producing mechanically-assembled, broken prose.** Once siblings stop
+       sharing a body, the next evasion is a fixed per-credential TEMPLATE with a variable
+       slotted in ("{level-word} in {credential} in {field} centers on dissertation research in
+       {field-phrase}, with qualifying examinations …", "Graduate coursework in {credential} in
+       {field} emphasizes {field-phrase} …") — each body now DIFFERS, so it scores 0 on every
+       share / frame / classification metric, yet renders machine junk. Scan every
+       `description_text` and FAIL on the assembly tells, baselined to gold MIT 0: **(i)** the
+       CREDENTIAL DOUBLED in the body — `"{level-word} in (the )?(Doctor of Philosophy|Master of
+       …|Bachelor of …|Doctorate|Master's) (in|of) {field}"` — the degree designation is already
+       the program_name heading, so re-naming it is a template artifact the
+       `startswith(program_name)` doubling check (item 9) MISSES, because the body opens on the
+       level-word, not the verbatim name; **(ii)** a DOUBLE / DANGLING preposition from an empty
+       or mis-typed slot — `"research in of "`, `"research in for "`, `"\bin\s+(of|for|on|in)\s"`,
+       `"\b(in|on|of)\s*\."` (preposition then period / comma — the slot came back empty);
+       **(iii)** a CAPITALIZED field-FRAGMENT or method list jammed mid-sentence into a singular
+       slot — a `[A-Z]`-initial noun phrase / comma list dropped after "research in {topic}"
+       ("…research in Archaeological field schools, sociocultural ethnography, with qualifying…"),
+       a capitalized phrase lifted from a field list reading ungrammatically where a topic noun
+       belongs. A clean per-credential body is RESEARCHED prose about what THAT degree studies at
+       THAT level (gold MIT), never a field phrase slotted into a frame. Evidence: live API +
+       in-repo `PROGRAMS` this run — two just-merged "per-credential bodies" repairs cleared the
+       shared-body count to 0 (the gate read them clean and they auto-merged, and a CONCURRENT
+       grader graded them as clean wins) but shipped these tells on ~45% / a handful of rows — the
+       natural successor evasion to the credential-frame + fraction-floor sub-bullets, gated the
+       same way. (NOTE the enforced `anti_stub` gate has no metric for this yet — see the
+       REPAIR_BACKLOG human-flag; until it does, run this scan by hand before re-certifying.)
    - **Named units — scan EVERY description for a unit that doesn't belong, and a
      REPAIR must clear the WHOLE class, not just the cited row.** The miss-#8
      named-unit-truth defect (a description naming a school/college/department/
