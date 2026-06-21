@@ -1194,7 +1194,7 @@ export default function ProgramDetailPage() {
                               <div>
                                 <p className="text-[11px] font-semibold text-foreground" title={r.range}>{r.label}</p>
                               </div>
-                              <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
+                              <div className="relative h-2 rounded-pill bg-muted overflow-hidden" aria-hidden="true">
                                 <div className="h-full rounded-pill bg-secondary" style={{ width: `${widthPct}%` }} />
                               </div>
                               <p className="text-xs font-bold text-foreground text-right tabular-nums">
@@ -1252,7 +1252,7 @@ export default function ProgramDetailPage() {
                               <p className={`text-[11px] font-semibold ${isMiddle ? 'text-foreground' : 'text-foreground'}`}>
                                 {r.pct} %ile
                               </p>
-                              <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
+                              <div className="relative h-2 rounded-pill bg-muted overflow-hidden" aria-hidden="true">
                                 <div
                                   className={`h-full rounded-pill ${isMiddle ? 'bg-secondary' : 'bg-secondary/30'}`}
                                   style={{ width: `${w}%` }}
@@ -1397,7 +1397,7 @@ export default function ProgramDetailPage() {
                         {salaryBands.map(b => (
                           <div key={b.band_label} className="grid grid-cols-[1fr_48px_40px] gap-3 items-center">
                             <p className="text-sm text-foreground">{b.band_label}</p>
-                            <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
+                            <div className="relative h-2 rounded-pill bg-muted overflow-hidden" aria-hidden="true">
                               <div className="h-full rounded-pill bg-secondary" style={{ width: `${Math.min(100, b.percent)}%` }} />
                             </div>
                             <p className="text-xs font-semibold text-foreground text-right tabular-nums">{b.percent}%</p>
@@ -1420,7 +1420,7 @@ export default function ProgramDetailPage() {
                             <p className="text-sm font-medium text-foreground">{salaryHigh ? formatCurrency(salaryHigh) : '—'}</p>
                           </div>
                         </div>
-                        <div className="relative h-2 bg-muted rounded-pill mt-3">
+                        <div className="relative h-2 bg-muted rounded-pill mt-3" aria-hidden="true">
                           <div className="absolute h-full bg-secondary/30 rounded-pill" style={{ left: '15%', width: '70%' }} />
                           <div className="absolute h-full bg-secondary rounded-pill" style={{ left: '40%', width: '20%' }} />
                         </div>
