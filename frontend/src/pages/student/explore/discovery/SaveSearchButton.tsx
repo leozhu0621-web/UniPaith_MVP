@@ -31,6 +31,7 @@ export default function SaveSearchButton({ query, chips, filters, sort }: Props)
   const [name, setName] = useState('')
   const [alertEnabled, setAlertEnabled] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open) {
@@ -39,6 +40,20 @@ export default function SaveSearchButton({ query, chips, filters, sort }: Props)
       requestAnimationFrame(() => inputRef.current?.focus())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  // Escape from anywhere in the dialog closes it; focus returns to the trigger.
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      const ae = document.activeElement
+      if (!ae || ae === document.body || wrapRef.current?.contains(ae)) {
+        wrapRef.current?.querySelector('button')?.focus()
+      }
+    }
   }, [open])
 
   const createMut = useMutation({
@@ -63,7 +78,7 @@ export default function SaveSearchButton({ query, chips, filters, sort }: Props)
   })
 
   return (
-    <div className="relative">
+    <div className="relative" ref={wrapRef}>
       <Button
         size="sm"
         variant="secondary"
@@ -113,7 +128,6 @@ export default function SaveSearchButton({ query, chips, filters, sort }: Props)
               onChange={e => setName(e.target.value)}
               onKeyDown={e => {
                 if (e.key === 'Enter' && name.trim()) createMut.mutate()
-                if (e.key === 'Escape') setOpen(false)
               }}
               className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-secondary focus:outline-none focus:ring-2 focus:ring-ring"
             />

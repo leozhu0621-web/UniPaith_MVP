@@ -57,8 +57,10 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
   const [degraded, setDegraded] = useState(false)
   const [serviceDown, setServiceDown] = useState(false)
 
-  // A search is "active" once any constraint exists — a chip OR a panel filter.
-  const active = chips.length > 0 || hasActiveFilters(filters)
+  // A search is "active" once any constraint exists — a chip, a panel filter,
+  // OR a raw typed query (the backend runs a chip-less full-text query, so a
+  // generic phrase that yields no chips must still search, not silently stall).
+  const active = chips.length > 0 || hasActiveFilters(filters) || urlQuery.trim().length > 0
 
   const writeUrl = (next: {
     q: string
@@ -87,7 +89,12 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
       setServiceDown(false)
       writeUrl({ q: draft, chips: res.chips, sort, filters })
     },
-    onError: () => setServiceDown(true),
+    onError: () => {
+      // Interpreter down → still run the raw typed query as a keyword search
+      // instead of silently doing nothing.
+      setServiceDown(true)
+      writeUrl({ q: draft, chips, sort, filters })
+    },
   })
 
   const runInterpret = (text: string) => {
@@ -117,7 +124,7 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
 
   // ── Search execution ──
   const searchQuery = useQuery({
-    queryKey: ['discovery-search', chipsKey, filtersKey, sort, page],
+    queryKey: ['discovery-search', chipsKey, filtersKey, sort, page, urlQuery],
     queryFn: () =>
       searchProgramsTyped({
         query: urlQuery || null,
@@ -379,7 +386,16 @@ export default function DiscoverySearch({ followedIds, onToggleFollow, nextEvent
                       key={p.id}
                       program={p}
                       saved={savedIds.has(p.id)}
+                      comparing={compare.has(p.id)}
                       onSave={() => toggleSave(p.id)}
+                      onCompare={() => onCompareToggle(p)}
+                      onAskCounselor={() =>
+                        navigate(
+                          `/s?prefill=${encodeURIComponent(
+                            `Tell me about ${p.program_name} at ${p.institution_name}. Is it a good fit?`,
+                          )}`,
+                        )
+                      }
                       onView={() => navigate(`/s/programs/${p.id}`)}
                       following={followedIds?.has(p.institution_id)}
                       onToggleFollow={onToggleFollow ? () => onToggleFollow(p.institution_id) : undefined}
