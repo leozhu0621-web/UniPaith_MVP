@@ -5651,3 +5651,92 @@ catalog module and re-computed `anti_stub.analyze` / `machine_artifacts` / `fram
 5 debris-clean catalogs** (Michigan + Columbia included → their repo data IS correct; the defect is
 deploy-only). This grader PR changes only the three skill markdown files (no code, no data, no migration),
 so backend CI is unaffected.
+
+---
+
+## Run 70 — 2026-06-21 — FULL-FLEET sweep (300 institutions / 40 catalogs / ≈9,600 programs)
+
+**Method.** Re-measured EVERY live institution via `api.unipaith.co/api/v1` (not a sample):
+all 300 from `/institutions/search` (program_count, image_url, school_count), all 40
+program-bearing catalogs fully paginated through `/programs`, plus `/institutions/{id}/posts`
+(dead-feed) and `school_outcomes.campus_photos` per node. Every description/structure metric
+was computed by reusing `profile_standard/anti_stub.py` itself (`analyze`,
+`frame_stripped_shared_body` default + `abs_chars=150`, `scrape_debris`, `machine_artifacts`)
+so the grading matches the enforced CI gate exactly. Added a matcher-side dimension this run:
+per-catalog `tuition` / `delivery_format` coverage + a per-program "bulletin-template" stub scan.
+Audit script + raw results kept under `.claude/skills/improve-enrichment/` (gitignored helper).
+
+**Institutions audited:** all 300 LIVE. 40 carry programs; 260 are bare institution-level seeds.
+
+**Findings (live API evidence):**
+- **🟢 Last run's two deploy-stranded CRITICALs are now LIVE + clean.** Michigan (`michpercrd1`
+  re-applied via #1012) and Columbia both verify anti-stub-clean on prod (frame_abs150 = 0). The
+  run-69 §9 "a merge is not a deploy / drive the deploy" rule did its job. UCLA (#975/#1012, 67→0)
+  and Berkeley (#1015, 64→0) also cleared + deployed. The run-69 dual-head deploy race appears
+  resolved this interval (FLAG #4 downgraded to "watch").
+- **🟢 Dead feeds RECOVERED** on the three enriched catalogs flagged runs 65–69: Notre Dame
+  (posts=13), Dartmouth (24), Emory (1319). Removed from the dead-feed backlog. Debris +
+  machine-artifacts remain **0 across all 40 catalogs**; 0 duplicate / bare-abbrev / "Programs"-dept
+  on the 32 mature catalogs.
+- **🔴 Frame-share + ONE shared field body across BA/MS/PhD still LIVE** on UF 54, Stanford 51,
+  Penn 51, Cornell 44, BU 23, Notre Dame 23 (gold MIT 0). UF additionally opens every field with a
+  GENERIC ENCYCLOPEDIA DEFINITION ("Anthropology is the scientific study of humanity…") identical
+  across credential levels — a gold-contrast stub on top of the shared body. Verified data (not
+  render) by reading the sibling descriptions directly. All are VIOLATIONS of existing miss #8 →
+  queued (backlog #1–#6), not new rules. Stanford/Penn/Notre Dame read frame_frac=51/51/23 on the CI
+  DEFAULT metric yet ship live because they are `CERTIFIED_CLEAN` but absent from the frame-stripped
+  `@parametrize` list (FLAG #1a coverage drift, re-escalated). UF/Cornell/BU/JHU read a FALSE 0 on
+  the CI 50%-floor metric (dilution evasion — FLAG #1b, the missing `OR lcs>=150` default).
+- **🟡 NEW gap-class — matcher-core `tuition` null CATALOG-WIDE on 16 of 40 catalogs** (NYU 507,
+  UCLA 373, Michigan 379, UIUC 419, UW-Seattle 360, USC 511, BU 396, UT-Austin 338, + 8 flagship
+  seeds). `tuition` IS serialized (Columbia 70170, Princeton 100%, Cornell 92%, MIT 69% prove it),
+  so this is a real DATA gap, not the `cip_code` serializer gap — the matcher scores budget-fit
+  BLIND on 40% of the enriched fleet. The matcher pass surfaced it; the existing core-field list
+  was too soft to prevent it.
+- **🟡 Per-program "follow the {program} curriculum published on the bulletin" template stub** —
+  passes the anti-stub metric (unique per row) but fails the gold contrast: USC 20, NYU 2, UT-Austin
+  1. Covered by miss #8 gold-contrast (not a new rule); queued into those catalogs' depth passes.
+
+**Rule changed (1 — anti-churn ceiling respected; this was the only genuinely-new gap-class):**
+- **"Also enrich for the MATCH" gains a matcher-core-field-COVERAGE rule.** An institution-PUBLISHED
+  matcher-core field (`tuition` above all, also location/country, `degree_type`) shipped null
+  CATALOG-WIDE is matcher STARVATION an editorially-"done" page hides — NOT an honest per-field
+  omission. The matcher pass must measure per-catalog coverage; a whole-catalog null is a structural
+  FAILURE on the same bar as a missing description. Resolution: stamp the institution's real, cited
+  PUBLISHED rate per credential level; record `_standard.omitted` with a reason only for the rare
+  genuinely-unpublished program (e.g. a fully-funded PhD). Explicitly does NOT weaken omit-never-guess
+  (fill from the published number, never a guess). Evidence: the 16 zero-tuition catalogs above vs the
+  correctly-stamped peers. This TIGHTENS the existing per-program "MUST carry … tuition" line, which
+  was soft enough to be violated on 40% of catalogs including freshly-cleared ones.
+
+**Compliance gaps logged (existing rules the enricher disobeyed — NOT re-added):** frame-share /
+dilution (miss #8) on UF/Stanford/Penn/Cornell/BU/Notre Dame/JHU; generic field-definition openers
+(miss #8 gold-contrast) on UF; bulletin-template stubs (miss #8 gold-contrast) on USC/NYU/UT-Austin;
+null department + dead feed on the 8 flagship seeds (miss #2 + miss #1/#9). All queued in the backlog.
+
+**Flagged for human (out of grader scope, code/CI):** (1a) make `test_anti_stub_gate.py` parametrize
+the frame-stripped / debris / artifact checks over `CERTIFIED_CLEAN` itself so the lists cannot drift
+(would FAIL Stanford/Penn/Notre Dame and force the repair). (1b) add `OR lcs>=150` to the
+`frame_stripped_shared_body` DEFAULT so the dilution evasion can't read a false 0 fleet-wide. (2)
+`cip_code` not serialized on public program endpoints — matcher-side public-API channel unusable. (3)
+`scrape_debris` `\bHall,\s` address tell can false-positive on researched prose naming a building.
+
+**Backlog delta:** rewritten worst-first, full-fleet. HIGH = the 6 un-repaired frame/field-definition
+catalogs (#1–#6) + the NEW 16-zero-tuition matcher-starvation entry (#7) + JHU dilution residual (#8).
+MEDIUM = the 8 flagship dead-feed seeds (#9) + the ~260 bare seeds / 33 zero-photo (#10). CLEAN =
+gold MIT + Michigan/Columbia/UCLA/Berkeley (newly deployed) + Duke/Yale/Chicago/Northwestern/Rice/
+Purdue/UCSD/Caltech/Princeton/Harvard/NYU/UT-Austin/UIUC/UW-Seattle/UW-Madison/USC/Dartmouth/Emory/
+CMU/Georgia Tech (NYU/UT-Austin/UIUC/UW-Seattle/USC/UCLA/Michigan carry the tuition flag, entry #7).
+
+**Invariants:** all intact; the SKILL.md edit is a matcher-core-field-list / matcher-pass TIGHTENING
+(adds a catalog-level coverage gate + a published-rate resolution recipe; loosens nothing, and
+explicitly reaffirms omit-never-guess). Misses still numbered 1–9, no contradictions.
+
+**Health check (run 70):** the container has NO test stack (no pytest/asyncpg/httpx, no `.venv`), so the
+mandated `test_profile_standard.py` / `test_profile_enrichment.py` (live-Postgres) could not run here —
+same constraint as run 69. Substantive DB-free check instead: imported `profile_standard/anti_stub.py`
+and confirmed `analyze`/`frame_stripped_shared_body`(default+abs150)/`scrape_debris`/`machine_artifacts`
+all compute cleanly, and verified against LIVE prod data (stronger than the repo fixtures) that gold MIT
+scores 0 on every quality metric (frame_abs150 0, debris 0, artifacts 0; the single benign name_prefixed=1
+is a real-described MIT row). This grader PR changes only the three skill markdown files (no code, no data,
+no migration), so backend CI is unaffected.

@@ -80,6 +80,29 @@ that becomes the program-side confidence the matcher trusts (a crawler fact is
 believed less than a school-confirmed one). A program missing these core fields is
 scored on thin data and will rank poorly for everyone.
 
+**A matcher-core field the institution PUBLISHES (so it is knowable for nearly every
+program) is NOT an honest per-field omission when it is null CATALOG-WIDE — that is
+matcher STARVATION the editorially-"done" page hides, and `tuition` is the live fleet's
+dominant instance.** `tuition` is the budget-fit signal, and it is institution-PUBLISHED —
+one uniform undergraduate sticker across all majors, plus a published per-program /
+per-credit rate for most graduate programs — so it is knowable for essentially every
+program. A catalog that ships 0% (or near-0%) `tuition` has therefore SKIPPED a knowable
+matcher-core field, not honestly omitted it; the editorial detail page does not foreground
+tuition, so a complete-looking page MASKS the gap and the matcher then scores every
+program's budget fit blind. So the matcher pass must measure tuition COVERAGE per catalog
+and treat a whole-catalog null as a structural FAILURE (the same bar as a missing
+description): stamp the institution's real, cited published rate per credential level (the
+undergrad sticker / the graduate tuition), and record `tuition` in `_standard.omitted` with
+a reason ONLY for the rare genuinely-unpublished program (e.g. a fully-funded PhD whose
+tuition is waived) — never leave the entire catalog null. This TIGHTENS the per-program
+"MUST carry" core-field list above; it does NOT weaken omit-never-guess — fill from the
+PUBLISHED number, never a guess. The same logic applies to any institution-published
+matcher-core field (location/country, `degree_type`) shipped null fleet-wide. Evidence:
+live API this run — 16 of the 40 enriched catalogs ship 0% tuition, including editorially-
+complete large catalogs (NYU 507 programs, UCLA 373, Michigan 379, UIUC 419, UW-Seattle
+360, USC 511, BU 396, UT-Austin 338), while peer catalogs correctly stamp it (Princeton
+100%, Cornell 92%, MIT 69%, Columbia 44%).
+
 **NEW per-program step — derive the target applicant (`ProgramPreference`).** For
 every program, also write a **`program_preferences`** row (model `ProgramPreference`,
 table `program_preferences`, added in the AI-Structure build) so the **program →
