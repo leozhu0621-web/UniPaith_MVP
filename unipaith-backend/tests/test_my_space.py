@@ -115,11 +115,15 @@ async def test_my_space_overview_composes_release_ready_tasks(
     assert app_task["missing_field"] == "Transcript"
     assert app_task["cta_route"] == f"/s/applications/{app.id}"
     assert app_task["provenance"][0]["source"] == "applications"
+    assert app_task["priority_reason"] == ("Priority window: Missing application item. Owner: you.")
 
     rec_task = next(t for t in data["tasks"] if t["key"].startswith("recommender:"))
     assert rec_task["owner"] == "recommender"
     assert rec_task["urgency"] == "focus_now"
     assert rec_task["blocker"] == "Recommendation due soon"
+    assert rec_task["priority_reason"] == (
+        "Focus now: Recommendation due soon. Owner: recommender."
+    )
     due_soon_copy = "Letter is due soon. Nudge the recommender or confirm a backup."
     assert rec_task["description"] == due_soon_copy
     waiting = next(i for i in data["waiting_on"] if i["key"].startswith("recommender:"))

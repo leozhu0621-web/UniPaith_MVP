@@ -47,6 +47,20 @@ URGENCY_RANK = {
     "neutral": 3,
 }
 
+URGENCY_REASON_LABEL = {
+    "focus_now": "Focus now",
+    "priority_window": "Priority window",
+    "gentle_attention": "Needs attention",
+    "neutral": "Tracked",
+}
+
+OWNER_REASON_LABEL = {
+    "student": "you",
+    "recommender": "recommender",
+    "institution": "school",
+    "system": "system",
+}
+
 
 def _utcnow() -> datetime:
     return datetime.now(UTC)
@@ -69,6 +83,19 @@ def _urgency_for_due(due_at: datetime | None, *, now: datetime) -> str:
     if days <= 14:
         return "priority_window"
     return "gentle_attention"
+
+
+def _priority_reason(task: MySpaceTask) -> str:
+    urgency = URGENCY_REASON_LABEL.get(task.urgency, "Tracked")
+    reason = task.blocker
+    if reason is None and task.missing_field:
+        reason = f"Missing {task.missing_field}"
+    if reason is None and task.due_at:
+        reason = "Deadline is on the calendar"
+    if reason is None:
+        reason = "Source-backed next step"
+    owner = OWNER_REASON_LABEL.get(task.owner, "tracked")
+    return f"{urgency}: {reason}. Owner: {owner}."
 
 
 def _recommender_risk(due_at: datetime | None, *, now: datetime) -> tuple[str, str, str]:
@@ -862,6 +889,7 @@ class MySpaceService:
             task.active = not task.dismissed and (
                 task.snoozed_until is None or task.snoozed_until <= now
             )
+            task.priority_reason = _priority_reason(task)
         far = datetime.max.replace(tzinfo=UTC)
         return sorted(
             tasks,

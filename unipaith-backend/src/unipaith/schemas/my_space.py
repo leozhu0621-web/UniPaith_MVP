@@ -25,6 +25,7 @@ class MySpaceTask(BaseModel):
     description: str
     owner: MySpaceOwner
     urgency: MySpaceUrgency
+    priority_reason: str = "Tracked source-backed next step."
     category: str
     cta_label: str
     cta_route: str

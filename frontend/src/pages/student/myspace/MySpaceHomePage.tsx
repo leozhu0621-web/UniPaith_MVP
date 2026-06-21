@@ -526,6 +526,7 @@ function FocusPanel({
           </div>
           <p className="text-base font-semibold text-foreground">{task.title}</p>
           <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{task.description}</p>
+          <p className="mt-2 text-xs font-medium text-foreground">{task.priority_reason}</p>
           <p className="mt-2 text-xs text-muted-foreground">{sourceLine(task)}</p>
           {(task.blocker || task.missing_field) && (
             <p className="mt-2 text-xs text-foreground">
@@ -757,6 +758,7 @@ function TaskRow({
           </div>
           <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
           {blockerLine && <p className="mt-1 text-xs text-foreground">{blockerLine}</p>}
+          <p className="mt-1 text-xs font-medium text-foreground">{task.priority_reason}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {ownerLabel(task.owner)}{due ? ` · due ${due}` : ''} · {sourceLine(task)}
           </p>

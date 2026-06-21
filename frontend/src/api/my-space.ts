@@ -18,6 +18,7 @@ export interface MySpaceTask {
   description: string
   owner: MySpaceOwner
   urgency: MySpaceUrgency
+  priority_reason: string
   category: string
   cta_label: string
   cta_route: string

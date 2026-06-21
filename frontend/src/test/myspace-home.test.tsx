@@ -55,6 +55,7 @@ const overview: MySpaceOverview = {
       snoozed_until: null,
       active: true,
       dismissible: true,
+      priority_reason: 'Focus now: Missing application item. Owner: you.',
     },
   ],
   pipeline: [
@@ -187,6 +188,7 @@ describe('MySpaceHomePage', () => {
     expect(screen.getByText(/Updated .*1 active task.*0 hidden tasks/)).toBeTruthy()
     expect(screen.getByText('source-backed')).toBeTruthy()
     expect(screen.getByText('Complete MS Computer Science application')).toBeTruthy()
+    expect(screen.getAllByText('Focus now: Missing application item. Owner: you.').length).toBeGreaterThan(0)
     expect(screen.getByText('Readiness ledger')).toBeTruthy()
     expect(screen.getByText('Application portfolio')).toBeTruthy()
     expect(screen.getByText('MS Data Science application')).toBeTruthy()
@@ -391,6 +393,7 @@ describe('MySpaceHomePage', () => {
           snoozed_until: null,
           active: true,
           dismissible: true,
+          priority_reason: 'Priority window: Low-confidence extracted signal. Owner: you.',
         },
       ],
     })
@@ -399,6 +402,7 @@ describe('MySpaceHomePage', () => {
 
     expect(await screen.findByText('Confirm GPA')).toBeTruthy()
     expect(screen.getByText('Low-confidence extracted signal · GPA')).toBeTruthy()
+    expect(screen.getByText('Priority window: Low-confidence extracted signal. Owner: you.')).toBeTruthy()
     expect(screen.getAllByText(/Clarification .* adaptive intake .* 55% confidence/).length).toBeGreaterThan(0)
   })
 
@@ -412,6 +416,9 @@ describe('MySpaceHomePage', () => {
         category: 'clarification',
         cta_label: 'Clarify in Uni',
         cta_route: `/s?intent=clarification&source_task=clarification%3A${index + 1}&return_to=%2Fs%2Fspace&artifact_destination=clarification`,
+        blocker: 'Low-confidence extracted signal',
+        missing_field: `Signal ${index + 1}`,
+        priority_reason: 'Priority window: Low-confidence extracted signal. Owner: you.',
       })),
     })
 
@@ -450,6 +457,7 @@ describe('MySpaceHomePage', () => {
           snoozed_until: null,
           active: true,
           dismissible: true,
+          priority_reason: 'Priority window: Low-confidence extracted signal. Owner: you.',
         },
       ],
     })
@@ -548,6 +556,7 @@ describe('MySpaceHomePage', () => {
           description: 'Turn profile signals into a career, degree, academic, financial, and geographic plan.',
           owner: 'student',
           urgency: 'gentle_attention',
+          priority_reason: 'Needs attention: No active strategy. Owner: you.',
           category: 'strategy',
           cta_label: 'Draft with Uni',
           cta_route: '/s?intent=strategy&source_task=strategy%3Acreate&return_to=%2Fs%2Fspace&artifact_destination=strategy_draft',
