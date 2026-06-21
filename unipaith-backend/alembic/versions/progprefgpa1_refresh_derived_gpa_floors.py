@@ -1,12 +1,6 @@
-"""Merge the dual head AND refresh derived ProgramPreference GPA floors.
+"""Refresh derived ProgramPreference GPA floors.
 
-Two jobs in one migration:
-
-1. **Merge heads** — unifies the concurrent ``aivisamerge1`` + ``columbiapercred1``
-   heads into a single head (concurrent enrichment PRs left two heads; the deploy
-   tolerates them via ``alembic upgrade heads`` but a single head is the standard).
-
-2. **Refresh derived GPA floors** — the derived ``ProgramPreference`` rows backfilled
+The derived ``ProgramPreference`` rows backfilled
    fleet-wide by ``progprefbf1`` carried no ``pref_min_gpa`` because the derivation read
    the (empty) typed ``ProgramAdmissionsHistory.class_profile`` and probed only the
    ``gpa_p25``/``gpa_p50`` keys, while the populated data lives in the editorial
@@ -24,7 +18,7 @@ claimed/first-party rows and already-set values are never overwritten; re-runnin
 no-op.
 
 Revision ID: progprefgpa1
-Revises: aivisamerge1, columbiapercred1
+Revises: colmichmrg1
 Create Date: 2026-06-20
 
 """
@@ -37,7 +31,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "progprefgpa1"  # pragma: allowlist secret
-down_revision = ("aivisamerge1", "columbiapercred1")  # pragma: allowlist secret
+down_revision = "colmichmrg1"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 
