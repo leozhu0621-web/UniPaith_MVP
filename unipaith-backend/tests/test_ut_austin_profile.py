@@ -51,8 +51,9 @@ def _school_snapshot(m: dict) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    is_ug = spec["degree_type"] == "bachelors"
-    cost = u._undergrad_cost() if is_ug else u._grad_cost_fallback(spec)
+    # cost_data mirrors what apply() writes (per-credential published tuition, or the
+    # grad fallback for the three professional doctorates whose rate is omitted).
+    _tuition, cost = u._program_tuition(spec)
     outcomes = dict(u._OUTCOMES_BY_SLUG.get(slug, {}))
     outcomes["_standard"] = u._program_standard(slug, spec)
     kw = u._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(u._KEYWORDS_BY_SCHOOL[spec["school"]])

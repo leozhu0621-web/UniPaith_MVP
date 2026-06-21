@@ -3467,6 +3467,42 @@ def _ut_sibling_body(degree_type: str, field_label: str, focus: str, school: str
     )
 
 
+# Hand-authored, researched doctoral descriptions for the three Ph.D. rows whose
+# field anchor's leading clause defeated ``_extract_focus`` — the focus heuristic
+# slotted a sibling's *bachelor's* sentence fragment ("...advances original research
+# in The Bachelor of Arts in Anthropology ... introduces the four ...") into the
+# doctoral frame, producing template-slot machine grammar that shipped live
+# (REPAIR_BACKLOG run 72 CRITICAL #3). Each opens on the subject (never the credential
+# heading), states the field's real UT Austin doctoral research areas (grounded in the
+# field's own UT Austin Graduate Catalog area list), names the real owning department,
+# and shares no >=80-char body with its bachelor's/master's siblings. Sourced from the
+# UT Austin Graduate Catalog (catalog.utexas.edu/graduate) for each department.
+_DOCTORAL_DESCRIPTION_BY_SLUG: dict[str, str] = {
+    "ut-austin-anthropology-phd": (
+        "UT Austin's doctoral program in anthropology spans the discipline's four "
+        "subfields — archaeology, biological, linguistic, and sociocultural anthropology "
+        "— with sustained regional research across the Americas; doctoral candidates "
+        "complete advanced seminars, qualifying examinations, and original "
+        "fieldwork-based dissertation research in the Department of Anthropology."
+    ),
+    "ut-austin-history-phd": (
+        "Doctoral training in history at UT Austin supports dissertation research across "
+        "major fields that include United States, Latin American, European, East Asian, "
+        "South Asian, Middle Eastern, and African history, along with the history of "
+        "science, technology, and medicine; students complete graduate seminars, "
+        "comprehensive examinations, and an original dissertation in the Department of "
+        "History."
+    ),
+    "ut-austin-computer-science-phd": (
+        "UT Austin's computer science doctoral program advances original research across "
+        "areas such as artificial intelligence, systems, theory and algorithms, computer "
+        "architecture, programming languages, and computational biology; doctoral "
+        "students complete advanced coursework, a candidacy process, and a dissertation "
+        "in the Department of Computer Science within the College of Natural Sciences."
+    ),
+}
+
+
 def _assign_descriptions(programs: list[dict]) -> None:
     """Assign a per-credential description to every program (Harvard / gold-MIT pattern).
 
@@ -3498,6 +3534,12 @@ def _assign_descriptions(programs: list[dict]) -> None:
         group_bodies: list[str] = []
 
         for spec in ordered:
+            if spec["slug"] in _DOCTORAL_DESCRIPTION_BY_SLUG:
+                body = _DOCTORAL_DESCRIPTION_BY_SLUG[spec["slug"]]
+                group_bodies.append(body)
+                delivery = _DELIVERY_PHRASE.get(spec.get("delivery_format", ""), "")
+                spec["description"] = f"{body}{delivery}"
+                continue
             body = raw[spec["slug"]]
             if spec is anchor:
                 if body.lower().startswith("graduate study"):
@@ -3570,11 +3612,18 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
         analyze,
         frame_stripped_shared_body,
         scrape_debris,
+        template_slot_artifacts,
     )
 
     report = analyze(programs)
     if not report.is_clean:
         raise ValueError(f"UT Austin catalog anti-stub gate failed: {report.summary()}")
+    slotted = template_slot_artifacts(programs)
+    if slotted:
+        raise ValueError(
+            f"UT Austin template-slot machine grammar on {len(slotted)} program(s): "
+            f"{slotted[:8]}{' …' if len(slotted) > 8 else ''}"
+        )
     shared = frame_stripped_shared_body(programs, abs_chars=150)
     if shared:
         raise ValueError(
@@ -3663,6 +3712,129 @@ def _grad_cost_fallback(spec: dict) -> dict:
         ),
         "source": "UT Austin Texas One Stop / program tuition page",
         "source_url": _website_for(spec),
+    }
+
+
+# ── Per-credential tuition (matcher-core budget signal — REPAIR_BACKLOG #3/#9) ──
+# Every figure is published and cited; nothing is guessed. Undergraduate tuition is the
+# federal College Scorecard published figure (UNITID 228778). Graduate per-credit rates
+# are UT Austin Texas One Stop published rates; the graduate annual is UT's published
+# graduate tuition-&-fees estimate for a standard full-time load (labeled as such). The
+# professional annual rates (Law J.D., Dell Med M.D.) are the schools' published 2025-26
+# figures. The three remaining professional doctorates (PharmD/AuD/DNP) bill at their own
+# school schedules with no separately-verified single annual figure here, so their
+# ``cost_data.tuition_usd`` is honestly omitted (recorded in ``_standard.omitted``) rather
+# than guessed.
+_TUITION_UG_INSTATE = 11688  # College Scorecard in-state undergraduate tuition, UNITID 228778
+_TUITION_UG_OOS = 44908  # College Scorecard out-of-state undergraduate tuition, UNITID 228778
+_GRAD_PER_CREDIT_INSTATE = 659  # UT Austin Texas One Stop graduate per-credit-hour, TX resident
+_GRAD_PER_CREDIT_OOS = 1245  # UT Austin Texas One Stop graduate per-credit-hour, non-resident
+_TUITION_GRAD_INSTATE = 12006  # UT Austin published graduate tuition & fees, TX resident, AY 2024-25
+_TUITION_GRAD_OOS = 22954  # UT Austin published graduate tuition & fees, non-resident, AY 2024-25
+_GRAD_COST_SRC = "UT Austin Texas One Stop — Tuition Rates"
+_GRAD_COST_SRC_URL = "https://onestop.utexas.edu/managing-costs/cost-tuition-rates/tuition-rates/"
+
+# UT's online CDSO master's (MSCS / MSDS / MSAI) publish a single low total program tuition
+# (~$10,000) rather than the standard per-credit graduate rate — use the published total.
+_ONLINE_MASTERS_TOTAL_TUITION = {
+    "ut-austin-computer-science-online-ms": 10000,
+    "ut-austin-data-science-ms": 10000,
+    "ut-austin-artificial-intelligence-ms": 10000,
+}
+
+# Professional-program annual tuition — each school's published 2025-26 figure.
+_PROFESSIONAL_TUITION: dict[str, dict] = {
+    "ut-austin-law-jd": {
+        "in_state": 38236,
+        "out_of_state": 56822,
+        "source": "UT Austin Texas One Stop — School of Law Tuition (2025-26)",
+        "source_url": "https://onestop.utexas.edu/managing-costs/cost-tuition-rates/tuition-rates/",
+    },
+    "ut-austin-medicine-md": {
+        "in_state": 22074,
+        "out_of_state": 37138,
+        "source": "UT Austin Texas One Stop — Dell Medical School Tuition (2025-26)",
+        "source_url": "https://onestop.utexas.edu/managing-costs/cost-tuition-rates/tuition-rates/",
+    },
+}
+# Professional doctorates with no separately-verified annual figure here → tuition omitted.
+_TUITION_OMIT_SLUGS = {
+    "ut-austin-pharmacy-pharmd",
+    "ut-austin-audiology-aud",
+    "ut-austin-nursing-dnp",
+}
+
+
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return ``(tuition_usd, cost_data)`` for a program from UT's published rates."""
+    dt = spec["degree_type"]
+    slug = spec["slug"]
+    if dt == "bachelors":
+        cost = _undergrad_cost()
+        cost["tuition_usd"] = _TUITION_UG_INSTATE
+        cost["breakdown"] = {
+            "tuition_in_state": _TUITION_UG_INSTATE,
+            "tuition_out_of_state": _TUITION_UG_OOS,
+        }
+        return _TUITION_UG_INSTATE, cost
+    if dt == "professional" and slug in _PROFESSIONAL_TUITION:
+        pr = _PROFESSIONAL_TUITION[slug]
+        return pr["in_state"], {
+            "tuition_usd": pr["in_state"],
+            "breakdown": {
+                "tuition_in_state": pr["in_state"],
+                "tuition_out_of_state": pr["out_of_state"],
+            },
+            "funded": False,
+            "note": (
+                "Annual professional-program tuition (Texas resident), billed by the school "
+                "per semester; non-residents pay the out-of-state rate shown in the breakdown."
+            ),
+            "source": pr["source"],
+            "source_url": pr["source_url"],
+            "year": "2025-26",
+        }
+    if dt == "professional":  # PharmD / AuD / DNP — rate not separately verified here
+        return None, _grad_cost_fallback(spec)
+    if slug in _ONLINE_MASTERS_TOTAL_TUITION:
+        total = _ONLINE_MASTERS_TOTAL_TUITION[slug]
+        return total, {
+            "tuition_usd": total,
+            "funded": False,
+            "note": (
+                "UT Austin's online Computer & Data Science Online master's degrees publish a "
+                "single low total program tuition of approximately $10,000 (not the standard "
+                "per-credit graduate rate)."
+            ),
+            "source": "UT Austin Computer & Data Science Online",
+            "source_url": _website_for(spec),
+            "year": "2024-25",
+        }
+    funded_note = (
+        "Published graduate tuition rate that applies to doctoral study; most UT Austin "
+        "doctoral students are funded through teaching/research assistantships or "
+        "fellowships that cover tuition and provide a stipend. The annual figure estimates "
+        "a standard full-time graduate load at UT's published per-credit rate."
+        if dt == "phd"
+        else (
+            "UT Austin's published graduate tuition & fees for a standard full-time load "
+            "(Texas resident); non-residents pay the out-of-state rate shown in the "
+            "breakdown. The annual figure applies UT's published graduate per-credit rate."
+        )
+    )
+    return _TUITION_GRAD_INSTATE, {
+        "tuition_usd": _TUITION_GRAD_INSTATE,
+        "breakdown": {
+            "tuition_in_state": _TUITION_GRAD_INSTATE,
+            "tuition_out_of_state": _TUITION_GRAD_OOS,
+            "per_credit_in_state": _GRAD_PER_CREDIT_INSTATE,
+            "per_credit_out_of_state": _GRAD_PER_CREDIT_OOS,
+        },
+        "funded": False,
+        "note": funded_note,
+        "source": _GRAD_COST_SRC,
+        "source_url": _GRAD_COST_SRC_URL,
+        "year": "2024-25",
     }
 
 
@@ -4317,7 +4489,9 @@ def _requirements_for(spec: dict) -> dict:
 
 
 def _program_standard(slug: str, spec: dict) -> dict:
-    omitted: list[str] = ["tracks", "cost_data.tuition_usd"]
+    omitted: list[str] = ["tracks"]
+    if slug in _TUITION_OMIT_SLUGS:
+        omitted.append("cost_data.tuition_usd")
     if slug not in _OUTCOMES_BY_SLUG:
         omitted += [
             "outcomes_data.employment_rate",
@@ -4451,12 +4625,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.delivery_format = spec.get("delivery_format", "on_campus")
         _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], _kw)
-        if spec["degree_type"] == "bachelors":
-            p.tuition = None
-            p.cost_data = _undergrad_cost()
-        else:
-            p.tuition = None
-            p.cost_data = _grad_cost_fallback(spec)
+        p.tuition, p.cost_data = _program_tuition(spec)
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)
