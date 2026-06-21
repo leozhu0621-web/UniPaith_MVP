@@ -2,12 +2,13 @@
  * Spec 18 · Decisions & Offers — UI smoke for offer panel + comparison table.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ReactElement } from 'react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import OfferPanel from '../pages/student/apply/offer/OfferPanel'
 import DecisionComparison from '../pages/student/apply/offer/DecisionComparison'
+import ApplicationsPage from '../pages/student/ApplicationsPage'
 import type { Application } from '../types'
 
 vi.mock('../api/offers', () => ({
@@ -44,7 +45,14 @@ vi.mock('../api/offers', () => ({
     advisor_summary: 'MS CS has the lowest net cost ($76,000). MS CS scores highest on fit (82%).',
   }),
   respondToOfferV2: vi.fn(),
+  recordExternalOffer: vi.fn(),
 }))
+
+vi.mock('../api/applications', () => ({
+  listMyApplications: vi.fn(),
+}))
+
+import { listMyApplications } from '../api/applications'
 
 const baseApp = (overrides: Partial<Application> = {}): Application =>
   ({
@@ -85,6 +93,23 @@ function wrap(ui: ReactElement) {
   return render(
     <MemoryRouter>
       <QueryClientProvider client={client}>{ui}</QueryClientProvider>
+    </MemoryRouter>,
+  )
+}
+
+function LocationProbe() {
+  const location = useLocation()
+  return <output data-testid="location">{location.pathname + location.search}</output>
+}
+
+function wrapAt(ui: ReactElement, initialEntry: string) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <QueryClientProvider client={client}>
+        {ui}
+        <LocationProbe />
+      </QueryClientProvider>
     </MemoryRouter>,
   )
 }
@@ -130,6 +155,15 @@ describe('Spec 18 · OfferPanel', () => {
     expect(screen.getByRole('button', { name: 'Decline offer' })).toBeTruthy()
     expect(screen.getByText(/Compare with my other offers/i)).toBeTruthy()
   })
+
+  it('opens the external-offer recorder from the deep link', async () => {
+    wrapAt(
+      <OfferPanel application={baseApp({ status: 'submitted', decision: null, offer: null })} />,
+      '/s/applications/app-1?tab=offer&recordOffer=1',
+    )
+
+    expect(await screen.findByText('Record an offer you received')).toBeTruthy()
+  })
 })
 
 describe('Spec 18 · DecisionComparison', () => {
@@ -141,5 +175,82 @@ describe('Spec 18 · DecisionComparison', () => {
     expect(await screen.findByText('Most affordable')).toBeTruthy()
     expect(await screen.findByText(/lowest net cost/i)).toBeTruthy()
     expect(await screen.findByText(/Your must-haves/i)).toBeTruthy()
+  })
+})
+
+describe('Spec 18 · Applications offers view', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  const offer = {
+    id: 'o1',
+    application_id: 'a1',
+    offer_type: 'full_admission',
+    tuition_amount: 48000,
+    scholarship_amount: 20000,
+    financial_package_total: null,
+    conditions: null,
+    response_deadline: '2027-04-15',
+    status: 'sent',
+    student_response: null,
+    response_at: null,
+    brief: null,
+    plain_language_brief: null,
+  }
+
+  it('promotes comparison and external-offer entry from the Offers room', async () => {
+    vi.mocked(listMyApplications).mockResolvedValue([
+      baseApp({ id: 'a1', offer: { ...offer, application_id: 'a1' } }),
+      baseApp({
+        id: 'a2',
+        program_id: 'p2',
+        program: { id: 'p2', program_name: 'MS Data Science', institution_name: 'University of Bar', degree_type: 'masters' } as Application['program'],
+        offer: { ...offer, id: 'o2', application_id: 'a2', response_deadline: '2027-05-01' },
+      }),
+      baseApp({
+        id: 'a3',
+        program_id: 'p3',
+        status: 'submitted',
+        decision: null,
+        decision_state: 'pending',
+        offer: null,
+        submission_mode: 'external',
+        program: { id: 'p3', program_name: 'MEng Robotics', institution_name: 'University of Baz', degree_type: 'masters' } as Application['program'],
+      }),
+    ])
+
+    wrapAt(<ApplicationsPage />, '/s/applications?tab=offers')
+
+    expect(await screen.findByText('Offer decision center')).toBeTruthy()
+    expect(screen.getByText('Compare cost, fit, terms, and response deadlines before deciding')).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Compare offers/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Record external offer/i })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: /Compare offers/i }))
+    expect(await screen.findByText('Compare your offers')).toBeTruthy()
+  })
+
+  it('routes external-offer entry to the chosen application Offer tab', async () => {
+    vi.mocked(listMyApplications).mockResolvedValue([
+      baseApp({ id: 'a1', offer: { ...offer, application_id: 'a1' } }),
+      baseApp({
+        id: 'a3',
+        program_id: 'p3',
+        status: 'submitted',
+        decision: null,
+        decision_state: 'pending',
+        offer: null,
+        submission_mode: 'external',
+        program: { id: 'p3', program_name: 'MEng Robotics', institution_name: 'University of Baz', degree_type: 'masters' } as Application['program'],
+      }),
+    ])
+
+    wrapAt(<ApplicationsPage />, '/s/applications?tab=offers')
+
+    await screen.findByText('Offer decision center')
+    fireEvent.click(screen.getByRole('button', { name: /Record external offer/i }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location').textContent).toBe('/s/applications/a3?tab=offer&recordOffer=1')
+    })
   })
 })

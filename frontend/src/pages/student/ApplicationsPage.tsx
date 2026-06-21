@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { listMyApplications } from '../../api/applications'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
+import Button from '../../components/ui/Button'
 import Select from '../../components/ui/Select'
 import EmptyState from '../../components/ui/EmptyState'
 import QueryError from '../../components/ui/QueryError'
@@ -11,6 +12,11 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { PageContainer, PageHeader } from '../../components/student/density'
 import { useCountUp } from '../../hooks/useCountUp'
 import { formatDate } from '../../utils/format'
+import { STATUS_COLORS } from '../../utils/constants'
+import { FileText, Star, ChevronRight, CalendarClock, PartyPopper, ArrowRight, Mail, PlusCircle } from 'lucide-react'
+import DecisionComparison from './apply/offer/DecisionComparison'
+import { deadlineTone, DEADLINE_TONE_CLASS, formatTermDate, hasPendingOfferResponse } from './apply/offer/offerFormat'
+import type { Application } from '../../types'
 
 /** Bucket counter numeral — counts up on mount, consistent with the My Space
  *  home pipeline tiles (reduced-motion → instant via useCountUp). */
@@ -18,11 +24,6 @@ function BucketCount({ value }: { value: number }) {
   const n = useCountUp(value)
   return <div className="text-lg font-semibold text-foreground">{n}</div>
 }
-import { STATUS_COLORS } from '../../utils/constants'
-import { FileText, Star, ChevronRight, CalendarClock, PartyPopper, ArrowRight, Mail } from 'lucide-react'
-import DecisionComparison from './apply/offer/DecisionComparison'
-import { deadlineTone, DEADLINE_TONE_CLASS, hasPendingOfferResponse } from './apply/offer/offerFormat'
-import type { Application } from '../../types'
 
 // My Space › Applications views (Spec 2026-06-10 §5): All · Offers · Costs & aid.
 const CostsAidTab = lazy(() => import('./myspace/applications/CostsAidTab'))
@@ -129,6 +130,115 @@ function actionScore(app: Application): number {
   return score
 }
 
+function recordExternalTarget(apps: Application[]): Application | null {
+  return (
+    apps.find(a => !a.offer && a.submission_mode === 'external' && a.status !== 'draft') ??
+    apps.find(a => !a.offer && a.status !== 'draft') ??
+    apps.find(a => !a.offer) ??
+    null
+  )
+}
+
+function nextOfferDeadline(apps: Application[]): { days: number | null; label: string } {
+  const deadlines = apps
+    .map(app => ({ days: daysUntil(app.offer?.response_deadline), raw: app.offer?.response_deadline }))
+    .filter(item => item.raw && item.days != null && item.days >= 0)
+    .sort((a, b) => (a.days ?? 0) - (b.days ?? 0))
+  const next = deadlines[0]
+  if (!next?.raw) return { days: null, label: 'No response deadline' }
+  const label = next.days === 0 ? 'Due today' : `${next.days}d left`
+  return { days: next.days, label: `${label} · ${formatTermDate(next.raw)}` }
+}
+
+function OfferDecisionHeader({
+  offerApps,
+  pendingOfferApps,
+  awaitingDecisionApps,
+  externalTarget,
+  onPrimary,
+  onRecordExternal,
+}: {
+  offerApps: Application[]
+  pendingOfferApps: Application[]
+  awaitingDecisionApps: Application[]
+  externalTarget: Application | null
+  onPrimary: () => void
+  onRecordExternal: () => void
+}) {
+  const deadline = nextOfferDeadline(pendingOfferApps)
+  const deadlineClass = DEADLINE_TONE_CLASS[deadlineTone(deadline.days)]
+  const canCompare = offerApps.length >= 2
+  const canReview = offerApps.length === 1
+  const primaryLabel = canCompare ? 'Compare offers' : canReview ? 'Review offer' : 'No offers to compare'
+  const externalLabel = externalTarget?.program?.program_name ?? externalTarget?.program?.institution_name ?? null
+
+  return (
+    <section aria-label="Offer decision center" className="mb-5 border-y border-border bg-muted/30 px-4 py-4">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-eyebrow uppercase text-muted-foreground">Offer decision center</p>
+            {pendingOfferApps.length > 0 && <Badge variant="warning">Response needed</Badge>}
+          </div>
+          <h2 className="mt-1 text-lg font-semibold text-foreground">
+            Compare cost, fit, terms, and response deadlines before deciding
+          </h2>
+          <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+            Bring external offers into the same table so scholarships, conditions, deposits, and fit are not judged from memory.
+            {awaitingDecisionApps.length > 0 &&
+              ` ${awaitingDecisionApps.length} submitted application${awaitingDecisionApps.length === 1 ? ' is' : 's are'} still awaiting a decision.`}
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          {(canCompare || canReview) && (
+            <Button size="sm" variant="secondary" onClick={onPrimary}>
+              {primaryLabel}
+              <ArrowRight size={14} />
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="tertiary"
+            onClick={onRecordExternal}
+            disabled={!externalTarget}
+            title={externalTarget ? undefined : 'Start or open an application before recording an external offer.'}
+          >
+            <PlusCircle size={14} />
+            Record external offer
+          </Button>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-2 md:grid-cols-4">
+        <div className="rounded-lg border border-border bg-card p-3">
+          <p className="text-xs font-medium text-muted-foreground">Offers</p>
+          <p className="mt-1 text-xl font-semibold text-foreground">{offerApps.length}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {canCompare ? 'Ready to compare side by side.' : canReview ? 'Open the offer before responding.' : 'Recorded offers appear here.'}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-3">
+          <p className="text-xs font-medium text-muted-foreground">Pending response</p>
+          <p className="mt-1 text-xl font-semibold text-foreground">{pendingOfferApps.length}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Requires a student accept or decline decision.</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-3">
+          <p className="text-xs font-medium text-muted-foreground">Next response deadline</p>
+          <p className={`mt-1 text-sm font-semibold ${deadline.days == null ? 'text-foreground' : deadlineClass}`}>
+            {deadline.label}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">Deposits and response dates should drive urgency.</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-3">
+          <p className="text-xs font-medium text-muted-foreground">External offer entry</p>
+          <p className="mt-1 truncate text-sm font-semibold text-foreground">{externalLabel ?? 'No eligible application'}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Use this when an admit arrives outside UniPaith.</p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function ApplicationsPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -158,6 +268,7 @@ export default function ApplicationsPage() {
     () => offerApps.filter(a => !a.offer?.student_response && a.student_decision == null),
     [offerApps],
   )
+  const externalOfferTarget = useMemo(() => recordExternalTarget(apps), [apps])
   const awaitingDecisionApps = useMemo(
     () =>
       apps.filter(
@@ -293,11 +404,29 @@ export default function ApplicationsPage() {
           sub="Every admission offer across your portfolio"
         />
         {viewSwitcher}
+        <OfferDecisionHeader
+          offerApps={offerApps}
+          pendingOfferApps={pendingOfferApps}
+          awaitingDecisionApps={awaitingDecisionApps}
+          externalTarget={externalOfferTarget}
+          onPrimary={() => {
+            if (offerApps.length >= 2) setShowCompare(true)
+            else if (offerApps.length === 1) navigate(`/s/applications/${offerApps[0].id}?tab=offer`)
+          }}
+          onRecordExternal={() => {
+            if (!externalOfferTarget) return
+            navigate(`/s/applications/${externalOfferTarget.id}?tab=offer&recordOffer=1`)
+          }}
+        />
         {offerApps.length === 0 ? (
           <EmptyState
             icon={<Mail size={48} />}
             title="No offers yet"
-            description="Offers land here the moment a program admits you."
+            description={
+              externalOfferTarget
+                ? 'Offers land here the moment a program admits you. If an off-platform admit arrives first, record it above.'
+                : 'Offers land here the moment a program admits you.'
+            }
           />
         ) : (
           <div className="stagger-list space-y-2">

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Card from '../../../../components/ui/Card'
 import Button from '../../../../components/ui/Button'
@@ -127,12 +128,25 @@ function graduateFunding(app: Application): GraduateFundingPackageSummary | null
 
 export default function OfferPanel({ application }: { application: Application }) {
   const queryClient = useQueryClient()
+  const [searchParams, setSearchParams] = useSearchParams()
   const offer = application.offer
   const [showDecline, setShowDecline] = useState(false)
   const [declineReason, setDeclineReason] = useState('')
   const [showAccept, setShowAccept] = useState(false)
   const [showCompare, setShowCompare] = useState(false)
   const [showRecord, setShowRecord] = useState(false)
+
+  useEffect(() => {
+    if (!offer && searchParams.get('recordOffer') === '1') setShowRecord(true)
+  }, [offer, searchParams])
+
+  const closeRecordModal = () => {
+    setShowRecord(false)
+    if (searchParams.get('recordOffer') !== '1') return
+    const next = new URLSearchParams(searchParams)
+    next.delete('recordOffer')
+    setSearchParams(next, { replace: true })
+  }
 
   const institutionName = application.program?.institution_name || 'this institution'
   const respondedState =
@@ -177,7 +191,7 @@ export default function OfferPanel({ application }: { application: Application }
         <RecordExternalOfferModal
           appId={application.id}
           isOpen={showRecord}
-          onClose={() => setShowRecord(false)}
+          onClose={closeRecordModal}
         />
       </>
     )
