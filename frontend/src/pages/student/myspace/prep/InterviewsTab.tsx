@@ -146,7 +146,7 @@ export default function InterviewsTab() {
       <section>
         <SectionHeader
           title="Scheduling"
-          action={<Button size="sm" variant="tertiary" onClick={() => setModal('scheduling')}><Pencil size={14} /> Edit</Button>}
+          action={<Button size="sm" variant="tertiary" aria-label="Edit scheduling" onClick={() => setModal('scheduling')}><Pencil size={14} /> Edit</Button>}
         />
         <Card pad={false} className="p-5">
           {!scheduling ? (
@@ -167,7 +167,7 @@ export default function InterviewsTab() {
       <section>
         <SectionHeader
           title="Accommodations"
-          action={<Button size="sm" variant="tertiary" onClick={() => setModal('accommodations')}><Pencil size={14} /> Edit</Button>}
+          action={<Button size="sm" variant="tertiary" aria-label="Edit accommodations" onClick={() => setModal('accommodations')}><Pencil size={14} /> Edit</Button>}
         />
         <Card pad={false} className="p-5">
           {!accommodations?.accommodations_needed ? (

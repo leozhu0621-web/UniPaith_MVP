@@ -111,7 +111,9 @@ export default function PrepPage() {
       <div
         role="tabpanel"
         id={`prep-panel-${tab}`}
-        aria-labelledby={`prep-tab-${tab}`}
+        // The tablist is lg:hidden, so aria-labelledby would point at a
+        // display:none tab on desktop — name the panel directly instead.
+        aria-label={TABS.find(t => t.key === tab)?.label}
         tabIndex={0}
         className="min-h-0 flex-1 overflow-y-auto focus-visible:outline-none"
       >
