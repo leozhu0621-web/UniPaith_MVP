@@ -4,6 +4,7 @@ import { Bell } from 'lucide-react'
 import { confirmDialog } from '../../../stores/confirm-store'
 
 import EmptyState from '../../../components/ui/EmptyState'
+import QueryError from '../../../components/ui/QueryError'
 import { SkeletonCard } from '../../../components/ui/Skeleton'
 import { showToast } from '../../../stores/toast-store'
 import {
@@ -23,7 +24,7 @@ export default function SavedSearchesPanel() {
   const navigate = useNavigate()
   const qc = useQueryClient()
 
-  const { data: searches = [], isLoading } = useQuery({
+  const { data: searches = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['saved-searches'],
     queryFn: listSavedSearches,
   })
@@ -76,6 +77,11 @@ export default function SavedSearchesPanel() {
         ))}
       </div>
     )
+  }
+
+  if (isError) {
+    // Don't misreport a failed load as "No saved searches yet" (data honesty).
+    return <QueryError detail="We couldn't load your saved searches." onRetry={() => refetch()} />
   }
 
   if (searches.length === 0) {
