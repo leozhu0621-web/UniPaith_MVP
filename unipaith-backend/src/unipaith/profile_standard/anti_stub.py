@@ -371,6 +371,15 @@ _TEMPLATE_SLOT_RES: tuple[re.Pattern[str], ...] = (
         r"\b(?:research|study|coursework|training)\s+in\s*[.,;:]",
         re.I,
     ),
+    # A DOUBLED preposition from an empty slot, independent of the connector the template
+    # used — "centers … research on of farm…", "builds … expertise in of farm…" (the slot
+    # leaked a leading "of"/"for"). The first preposition is the template's own connector
+    # ("research on", "expertise in", "study of"), so keying only on "… in {prep}" (above)
+    # misses the "on"/"of"/"with"-connector templates. The stray prep must be a standalone
+    # word (followed by a lowercase letter) so hyphenated adjectives ("on-campus",
+    # "in-person") and noun phrases ("advances of neuroscience") never match — verified 0
+    # false positives across the certified-clean fleet.
+    re.compile(r"\b(?:in|on|of|for|with)\s+(?:of|for)\s+[a-z]"),
 )
 
 

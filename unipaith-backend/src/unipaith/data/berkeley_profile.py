@@ -1777,6 +1777,17 @@ _GRAD_COST_SRC = (
     "University of California Office of the President — 2024-25 Tuition and Fee Levels",
     "https://www.ucop.edu/operating-budget/_files/fees/202425/2024-25.pdf",
 )
+# Professional master's degrees that are typed ``masters`` but carry a program-specific
+# Professional Degree Supplemental Tuition (Graduate: Professional on the registrar fee
+# schedule), NOT the uniform Graduate: Academic rate — so they must NOT be priced at
+# ``_TUITION_GRAD`` (that underprices them). They follow the professional omission path.
+_PROFESSIONAL_MASTERS_SLUGS: frozenset[str] = frozenset(
+    {
+        "berkeley-architecture-ms",  # Master of Architecture (M.Arch.)
+        "berkeley-city-urban-community-and-regional-planning-ms",  # M.C.P.
+        "berkeley-landscape-architecture-ms",  # M.L.A.
+    }
+)
 _UNDERGRAD_COA = 45619
 _ROOM_BOARD = 23750
 _BOOKS_SUPPLIES = 1131
@@ -2964,7 +2975,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source_url": "https://grad.berkeley.edu/admissions/application-process/cost/",
                 "year": "2024-25",
             }
-        elif spec["degree_type"] in ("masters", "certificate"):
+        elif (
+            spec["degree_type"] in ("masters", "certificate")
+            and slug not in _PROFESSIONAL_MASTERS_SLUGS
+        ):
             p.tuition = _TUITION_GRAD
             p.cost_data = {
                 "tuition_usd": _TUITION_GRAD,
