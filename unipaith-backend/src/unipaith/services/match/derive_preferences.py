@@ -19,7 +19,10 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from unipaith.schemas.profile_intelligence import validate_target_profile
+from unipaith.schemas.profile_intelligence import (
+    assert_no_protected_traits,
+    validate_target_profile,
+)
 from unipaith.services.match.field_canon import fields_offered_for_program
 from unipaith.services.matching import eligible_current_levels
 from unipaith.services.program_features import target_education_level
@@ -93,6 +96,23 @@ def _evidence(label: str, url: str | None, *, field_path: str) -> list[dict[str,
     ]
 
 
+def _safe_preferred_values(values: list[str]) -> list[str]:
+    """Drop public labels that cannot legally become matching preference values.
+
+    Program names and CIP labels may legitimately discuss protected-trait fields
+    of study on public catalog pages. They must not become target-applicant
+    attributes, preference values, or private decision reasoning.
+    """
+    safe: list[str] = []
+    for value in values:
+        try:
+            assert_no_protected_traits(value)
+        except ValueError:
+            continue
+        safe.append(value)
+    return safe
+
+
 def _add_signal(
     layers: dict[str, list[dict[str, Any]]],
     layer: str,
@@ -104,6 +124,7 @@ def _add_signal(
     confidence: float,
     evidence: list[dict[str, Any]],
 ) -> None:
+    preferred_values = _safe_preferred_values(preferred_values)
     if not preferred_values or not evidence:
         return
     layers[layer].append(
@@ -145,7 +166,7 @@ def _target_profile(
         "background_academic",
         attribute="field_preparation",
         preferred_values=pref_fields,
-        statement=f"{program_name} is best grounded for students prepared in related fields.",
+        statement="The program is best grounded for students prepared in related fields.",
         weight=0.28,
         confidence=0.74,
         evidence=program_ev,
@@ -329,7 +350,9 @@ def derive_program_preference(
     """
     pref: dict[str, Any] = {}
 
-    fields = fields_offered_for_program(cip_code=cip_code, program_name=program_name or "")
+    fields = _safe_preferred_values(
+        fields_offered_for_program(cip_code=cip_code, program_name=program_name or "")
+    )
     if fields:
         pref["pref_fields"] = fields
 
