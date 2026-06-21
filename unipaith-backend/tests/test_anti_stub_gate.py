@@ -152,6 +152,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
 _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
     "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
+    "stanford",
 ]
 
 
@@ -179,7 +180,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 # REPAIR_BACKLOG miss #8 fraction-floor; the dilution-evasion catalogs UF / Cornell / BU
 # are NOT here yet on purpose).
 _ABS_FLOOR_CLEAN = [
-    "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf",
+    "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
 ]
 
 
