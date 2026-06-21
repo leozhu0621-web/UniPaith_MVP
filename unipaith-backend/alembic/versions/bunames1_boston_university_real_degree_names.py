@@ -26,7 +26,7 @@ Re-applies ``bu_profile.apply()`` (idempotent — ``_apply_programs`` deletes th
 collapsed concentration rows) and re-derives program-preference rows.
 
 Revision ID: bunames1
-Revises: buconc1
+Revises: uwmadtuition1
 Create Date: 2026-06-21
 """
 
@@ -41,7 +41,7 @@ from unipaith.models.institution import Institution, Program, ProgramPreference
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "bunames1"
-down_revision = "buconc1"
+down_revision = "uwmadtuition1"
 branch_labels = None
 depends_on = None
 
