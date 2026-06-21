@@ -53,6 +53,7 @@ vi.mock('../api/applications', () => ({
 }))
 
 import { listMyApplications } from '../api/applications'
+import { recordExternalOffer } from '../api/offers'
 
 const baseApp = (overrides: Partial<Application> = {}): Application =>
   ({
@@ -163,6 +164,73 @@ describe('Spec 18 · OfferPanel', () => {
     )
 
     expect(await screen.findByText('Record an offer you received')).toBeTruthy()
+  })
+
+  it('validates external-offer fields before saving', async () => {
+    wrapAt(
+      <OfferPanel application={baseApp({ status: 'submitted', decision: null, offer: null })} />,
+      '/s/applications/app-1?tab=offer&recordOffer=1',
+    )
+
+    expect(await screen.findByText('Record an offer you received')).toBeTruthy()
+    const currency = screen.getByLabelText('Currency')
+    fireEvent.change(currency, { target: { value: 'US1' } })
+    fireEvent.blur(currency)
+    expect(await screen.findByText('Use a 3-letter currency code such as USD.')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: /Save offer/i }))
+    expect(recordExternalOffer).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert').textContent).toContain('Fix the highlighted fields')
+
+    fireEvent.change(currency, { target: { value: 'USD' } })
+    expect(screen.queryByText('Use a 3-letter currency code such as USD.')).toBeNull()
+
+    const deadline = screen.getByLabelText('Respond by')
+    fireEvent.change(deadline, { target: { value: '2000-01-01' } })
+    fireEvent.blur(deadline)
+    expect(await screen.findByText('Use today or a future response deadline.')).toBeTruthy()
+  })
+
+  it('saves formatted external-offer money as numeric payload fields', async () => {
+    vi.mocked(recordExternalOffer).mockResolvedValueOnce({} as Awaited<ReturnType<typeof recordExternalOffer>>)
+    wrapAt(
+      <OfferPanel application={baseApp({ status: 'submitted', decision: null, offer: null })} />,
+      '/s/applications/app-1?tab=offer&recordOffer=1',
+    )
+
+    expect(await screen.findByText('Record an offer you received')).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('Scholarship amount'), { target: { value: '$20,000' } })
+    fireEvent.change(screen.getByLabelText('Tuition estimate (/yr)'), { target: { value: '48,000' } })
+    fireEvent.change(screen.getByLabelText('Total cost estimate'), { target: { value: '$96,000' } })
+    fireEvent.click(screen.getByRole('button', { name: /Save offer/i }))
+
+    await waitFor(() => {
+      expect(recordExternalOffer).toHaveBeenCalledWith(
+        'app-1',
+        expect.objectContaining({
+          scholarship_amount: 20000,
+          tuition_estimate: 48000,
+          total_cost_estimate: 96000,
+          scholarship_currency: 'USD',
+        }),
+      )
+    })
+  })
+
+  it('adapts backend external-offer errors into actionable copy', async () => {
+    vi.mocked(recordExternalOffer).mockRejectedValueOnce({ response: { data: { detail: 'currency not supported' } } })
+    wrapAt(
+      <OfferPanel application={baseApp({ status: 'submitted', decision: null, offer: null })} />,
+      '/s/applications/app-1?tab=offer&recordOffer=1',
+    )
+
+    expect(await screen.findByText('Record an offer you received')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Save offer/i }))
+
+    await waitFor(() => {
+      expect(recordExternalOffer).toHaveBeenCalledTimes(1)
+    })
+    expect(await screen.findByRole('alert')).toHaveTextContent('Check the currency code and try again.')
   })
 })
 
