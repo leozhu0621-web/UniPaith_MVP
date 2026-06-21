@@ -177,7 +177,11 @@ async def create_academic(
 ):
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
-    return await svc.create_academic_record(profile.id, body)
+    created = await svc.create_academic_record(profile.id, body)
+    # GPA / field feed the matcher's deal-breaker veto + s→p GPA grade — a record
+    # edit must invalidate derived matches (the lazy GET recompute rescoring once).
+    await _invalidate_matches(db, user.id)
+    return created
 
 
 @router.put("/me/academics/{record_id}", response_model=AcademicRecordResponse)
@@ -189,7 +193,9 @@ async def update_academic(
 ):
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
-    return await svc.update_academic_record(profile.id, record_id, body)
+    updated = await svc.update_academic_record(profile.id, record_id, body)
+    await _invalidate_matches(db, user.id)
+    return updated
 
 
 @router.delete("/me/academics/{record_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -201,6 +207,7 @@ async def delete_academic(
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
     await svc.delete_academic_record(profile.id, record_id)
+    await _invalidate_matches(db, user.id)
 
 
 # --- Courses (nested under AcademicRecord) ---
@@ -777,7 +784,10 @@ async def upsert_visa_info(
 ):
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
-    return await svc.upsert_visa_info(profile.id, body)
+    saved = await svc.upsert_visa_info(profile.id, body)
+    # Visa need feeds the s→p visa-feasibility veto — re-score on next read.
+    await _invalidate_matches(db, user.id)
+    return saved
 
 
 # --- Timeline ---
@@ -926,7 +936,12 @@ async def upsert_preferences(
 ):
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
-    return await svc.upsert_preferences(profile.id, body)
+    saved = await svc.upsert_preferences(profile.id, body)
+    # Priority weights + typed-fit wants + degree-target feed the matcher; this is
+    # the single server-side choke point for all preference-editing FE surfaces
+    # (PrioritySheet / PreferencesTab / CostsAidTab), regardless of which refreshes.
+    await _invalidate_matches(db, user.id)
+    return saved
 
 
 # --- AI Matches ---
@@ -963,6 +978,16 @@ async def get_my_matches(
         # edit — the read right after the edit, where she expects fresh matches.
         await _recompute_catalog_matches(db, profile.id)
     return await _list_enriched_matches(db, profile.id, limit=limit)
+
+
+async def _invalidate_matches(db: AsyncSession, user_id: UUID) -> None:
+    """Flag the student's derived match artifacts stale after a matcher-feeding
+    edit (preferences / academics / visa). Mirrors the update_profile hook
+    (Spec 06 §5.1) — bumps profile_version (rationale cache miss) + is_stale=True;
+    the lazy GET /me/matches recompute then rescoring once."""
+    from unipaith.services.match_service import invalidate_matches_for_user
+
+    await invalidate_matches_for_user(db, user_id)
 
 
 async def _has_stale_matches(db: AsyncSession, student_id: UUID) -> bool:
@@ -1070,13 +1095,17 @@ async def _list_enriched_matches(
     prog_by_id = {p.id: p for p in programs}
     inst_ids = {p.institution_id for p in programs}
     inst_name_by_id: dict = {}
+    inst_ranking_by_id: dict = {}
     if inst_ids:
         inst_rows = (
             await db.execute(
-                select(Institution.id, Institution.name).where(Institution.id.in_(inst_ids))
+                select(Institution.id, Institution.name, Institution.ranking_data).where(
+                    Institution.id.in_(inst_ids)
+                )
             )
         ).all()
-        inst_name_by_id = {iid: name for iid, name in inst_rows}
+        inst_name_by_id = {iid: name for iid, name, _rk in inst_rows}
+        inst_ranking_by_id = {iid: rk for iid, _n, rk in inst_rows}
 
     pref = await _svc(db).get_preferences(student_id)
     weight_ranking = getattr(pref, "weight_ranking", None)
@@ -1089,11 +1118,13 @@ async def _list_enriched_matches(
             continue
         program = prog_by_id.get(m.program_id)
         inst_name = inst_name_by_id.get(program.institution_id) if program else None
+        inst_ranking = inst_ranking_by_id.get(program.institution_id) if program else None
         out.append(
             _enrich_match_for_student(
                 row,
                 program=program,
                 institution_name=inst_name,
+                institution_ranking=inst_ranking,
                 weight_ranking=weight_ranking,
                 bands_enabled=bands_enabled,
             )
@@ -1238,11 +1269,28 @@ def _redact_match_for_student(match: MatchResult) -> StudentMatchResponse:
     return resp
 
 
+def _institution_acceptance_rate(institution_ranking: object) -> float | None:
+    """The institution's published admit rate from its ranking_data, clamped to
+    [0,1], or None. A read-path fallback so a program with no own acceptance_rate
+    still gets selectivity bands from EXISTING institution-level data — without it
+    probability bands + selectivity banding are dead for ~every program."""
+    if not isinstance(institution_ranking, dict):
+        return None
+    raw = institution_ranking.get("acceptance_rate")
+    if raw is None:
+        return None
+    try:
+        return max(0.0, min(1.0, float(raw)))
+    except (TypeError, ValueError):
+        return None
+
+
 def _enrich_match_for_student(
     match: MatchResult,
     *,
     program=None,
     institution_name: str | None = None,
+    institution_ranking: object = None,
     weight_ranking: int | None = None,
     bands_enabled: bool = True,
 ) -> StudentMatchResponse:
@@ -1265,6 +1313,10 @@ def _enrich_match_for_student(
         resp.tuition = getattr(program, "tuition", None)
         ar = getattr(program, "acceptance_rate", None)
         acceptance_rate = float(ar) if ar is not None else None
+        # Fall back to the institution's published admit rate when the program has
+        # none of its own — otherwise bands/selectivity are dead for ~all programs.
+        if acceptance_rate is None:
+            acceptance_rate = _institution_acceptance_rate(institution_ranking)
         resp.acceptance_rate = acceptance_rate
     if institution_name is not None:
         resp.institution_name = institution_name
@@ -1309,15 +1361,23 @@ async def get_match_detail(
 
     program = await db.scalar(select(Program).where(Program.id == program_id))
     inst_name = None
+    inst_ranking = None
     if program is not None:
-        inst_name = await db.scalar(
-            select(Institution.name).where(Institution.id == program.institution_id)
-        )
+        inst_row = (
+            await db.execute(
+                select(Institution.name, Institution.ranking_data).where(
+                    Institution.id == program.institution_id
+                )
+            )
+        ).first()
+        if inst_row is not None:
+            inst_name, inst_ranking = inst_row
     pref = await _svc(db).get_preferences(profile.id)
     return _enrich_match_for_student(
         match,
         program=program,
         institution_name=inst_name,
+        institution_ranking=inst_ranking,
         weight_ranking=getattr(pref, "weight_ranking", None),
         bands_enabled=_cfg.ai_probability_bands_enabled,
     )
@@ -1454,7 +1514,7 @@ async def get_match_probability(
     student isn't match-ready."""
     from unipaith.ai.probability import estimate_probability_bands, is_match_ready
     from unipaith.config import settings as _cfg
-    from unipaith.models.institution import Program
+    from unipaith.models.institution import Institution, Program
 
     profile = await _svc(db)._get_student_profile(user.id)
     match = (
@@ -1474,6 +1534,13 @@ async def get_match_probability(
         if program is not None and program.acceptance_rate is not None
         else None
     )
+    # Fall back to the institution's published admit rate (same as the list/detail
+    # enrich path) so a program with no own rate still gets honest bands.
+    if ar is None and program is not None:
+        inst_ranking = await db.scalar(
+            select(Institution.ranking_data).where(Institution.id == program.institution_id)
+        )
+        ar = _institution_acceptance_rate(inst_ranking)
     # Band on the student-direction fit (s2p_value), not the alpha-inflated blend
     # M; gate readiness on c_student (band WIDTH still uses the product below).
     fitness = _band_fitness(match)

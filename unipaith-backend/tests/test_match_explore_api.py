@@ -183,6 +183,52 @@ async def test_probability_null_when_not_match_ready(
 
 
 @pytest.mark.asyncio
+async def test_band_falls_back_to_institution_acceptance_rate(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    """A program with no acceptance_rate of its own must still get selectivity +
+    probability bands from the institution's published ranking_data.acceptance_rate —
+    without this fallback bands are dead for ~every program (most lack a program rate)."""
+    profile = await _ensure_profile(db_session, mock_student_user)
+    program = await _seed_program(db_session, acceptance_rate=None)
+    inst = await db_session.get(Institution, program.institution_id)
+    inst.ranking_data = {"acceptance_rate": 0.12}
+    await db_session.commit()
+    await _seed_match(db_session, profile, program)
+
+    item = (await student_client.get(MATCHES)).json()[0]
+    assert item["acceptance_rate"] == 0.12  # institution fallback applied
+    assert item["band_label"] in {"reach", "target", "safer"}
+    assert item["probability_bands"] is not None
+
+
+@pytest.mark.asyncio
+async def test_preference_edit_invalidates_matches(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    """Editing preferences (matcher-feeding fields) must flag the student's matches
+    stale server-side, so the next read rescoring — independent of which FE surface
+    saved and whether it called refresh."""
+    profile = await _ensure_profile(db_session, mock_student_user)
+    program = await _seed_program(db_session)
+    await _seed_match(db_session, profile, program)  # is_stale defaults False
+
+    resp = await student_client.put("/api/v1/students/me/preferences", json={"budget_max": 50000})
+    assert resp.status_code in (200, 201), resp.text
+
+    stale = (
+        (
+            await db_session.execute(
+                select(MatchResult.is_stale).where(MatchResult.student_id == profile.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert any(s is True for s in stale), "preference edit must flag matches stale"
+
+
+@pytest.mark.asyncio
 async def test_get_matches_lazy_recomputes_stale_rows(
     student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
 ):
