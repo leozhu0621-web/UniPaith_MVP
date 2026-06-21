@@ -104,6 +104,12 @@ async def test_my_space_overview_composes_release_ready_tasks(
     rec_task = next(t for t in data["tasks"] if t["key"].startswith("recommender:"))
     assert rec_task["owner"] == "recommender"
     assert rec_task["urgency"] == "focus_now"
+    assert rec_task["blocker"] == "Recommendation due soon"
+    due_soon_copy = "Letter is due soon. Nudge the recommender or confirm a backup."
+    assert rec_task["description"] == due_soon_copy
+    waiting = next(i for i in data["waiting_on"] if i["key"].startswith("recommender:"))
+    assert waiting["status"] == "due_soon"
+    assert waiting["description"] == due_soon_copy
     strategy_task = tasks["strategy:create"]
     strategy_route = urlsplit(strategy_task["cta_route"])
     strategy_params = parse_qs(strategy_route.query)

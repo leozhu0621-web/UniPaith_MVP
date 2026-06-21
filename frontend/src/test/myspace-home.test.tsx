@@ -206,6 +206,38 @@ describe('MySpaceHomePage', () => {
     })
   })
 
+  it('surfaces recommender risk nudges in waiting on others', async () => {
+    vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
+      ...overview,
+      waiting_on: [
+        {
+          key: 'recommender:r1',
+          title: 'Prof. Lee recommendation',
+          description: 'Letter is due soon. Nudge the recommender or confirm a backup.',
+          route: '/s/prep?tab=recommenders',
+          owner: 'recommender',
+          urgency: 'focus_now',
+          status: 'due_soon',
+          due_at: '2026-06-22T23:59:00Z',
+          provenance: [{ source: 'recommendation_requests', label: 'due_soon', href: null, confidence: 90, updated_at: null }],
+        },
+      ],
+    })
+
+    renderHome()
+
+    expect(await screen.findByText('Prof. Lee recommendation')).toBeTruthy()
+    expect(screen.getByText('Letter is due soon. Nudge the recommender or confirm a backup.')).toBeTruthy()
+    expect(screen.getByText('due soon')).toBeTruthy()
+
+    fireEvent.click(screen.getByText('Prof. Lee recommendation'))
+    expect(track).toHaveBeenCalledWith('recommender_nudge_clicked', {
+      route: '/s/prep?tab=recommenders',
+      module: 'waiting_on',
+      key: 'recommender:r1',
+    })
+  })
+
   it('tracks Uni handoffs with decoded contract fields', async () => {
     vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
       ...overview,

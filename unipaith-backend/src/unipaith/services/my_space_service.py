@@ -71,6 +71,39 @@ def _urgency_for_due(due_at: datetime | None, *, now: datetime) -> str:
     return "gentle_attention"
 
 
+def _recommender_risk(due_at: datetime | None, *, now: datetime) -> tuple[str, str, str]:
+    if due_at is None:
+        return (
+            "needs_deadline",
+            "Letter requested; add a deadline so My Space can track risk.",
+            "Recommendation deadline missing",
+        )
+    days = (due_at - now).total_seconds() / 86_400
+    if days < 0:
+        return (
+            "overdue",
+            "Letter is overdue. Nudge the recommender or prepare a backup.",
+            "Recommendation overdue",
+        )
+    if days <= 3:
+        return (
+            "due_soon",
+            "Letter is due soon. Nudge the recommender or confirm a backup.",
+            "Recommendation due soon",
+        )
+    if days <= 14:
+        return (
+            "priority_window",
+            "Letter is inside the priority window. Confirm they have what they need.",
+            "Recommendation in priority window",
+        )
+    return (
+        "requested",
+        "Letter requested and not yet received.",
+        "Letter not received",
+    )
+
+
 def _program_label(app: Application) -> str:
     program = getattr(app, "program", None)
     return getattr(program, "program_name", None) or "Application"
@@ -542,12 +575,13 @@ class MySpaceService:
             due_at = _due_date_to_datetime(rec.due_date)
             key = f"recommender:{rec.id}"
             requested = rec.status == "requested"
+            risk_status, risk_description, risk_blocker = _recommender_risk(due_at, now=now)
             tasks.append(
                 MySpaceTask(
                     key=key,
                     title=f"Recommendation from {rec.recommender_name}",
                     description=(
-                        "Waiting for the recommender to send the letter."
+                        risk_description
                         if requested
                         else "Draft a request before this application needs it."
                     ),
@@ -557,10 +591,10 @@ class MySpaceService:
                     cta_label="Open recommenders",
                     cta_route="/s/prep?tab=recommenders",
                     due_at=due_at,
-                    blocker="Letter not received" if requested else "Request not sent",
+                    blocker=risk_blocker if requested else "Request not sent",
                     provenance=_provenance(
                         "recommendation_requests",
-                        rec.status,
+                        risk_status if requested else rec.status,
                         href="/s/prep?tab=recommenders",
                         confidence=90,
                         updated_at=rec.updated_at,
@@ -781,18 +815,19 @@ class MySpaceService:
         for rec in recs:
             if rec.status == "requested":
                 due_at = _due_date_to_datetime(rec.due_date)
+                risk_status, risk_description, _risk_blocker = _recommender_risk(due_at, now=now)
                 rows.append(
                     MySpaceModuleItem(
                         key=f"recommender:{rec.id}",
                         title=f"{rec.recommender_name} recommendation",
-                        description="Letter requested and not yet received.",
+                        description=risk_description,
                         route="/s/prep?tab=recommenders",
                         owner="recommender",
                         urgency=_urgency_for_due(due_at, now=now) if due_at else "gentle_attention",
-                        status=rec.status,
+                        status=risk_status,
                         due_at=due_at,
                         provenance=_provenance(
-                            "recommendation_requests", rec.status, confidence=90
+                            "recommendation_requests", risk_status, confidence=90
                         ),
                     )
                 )
