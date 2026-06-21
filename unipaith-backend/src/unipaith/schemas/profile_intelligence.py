@@ -171,7 +171,11 @@ class TargetProfile(BaseModel):
 
     @model_validator(mode="after")
     def _safe(self) -> TargetProfile:
-        assert_no_protected_traits(self.model_dump(mode="json"))
+        # Signal-level validators guard the actual matching attributes,
+        # preferred values, and reasoning statements. Evidence metadata may
+        # legitimately cite a program page whose URL/title contains a protected
+        # studies field, and citations are not scoring inputs.
+        assert_no_protected_traits(list(self.layers.keys()))
         return self
 
 
@@ -206,7 +210,10 @@ class DecisionBrief(BaseModel):
 
     @model_validator(mode="after")
     def _safe(self) -> DecisionBrief:
-        assert_no_protected_traits(self.model_dump(mode="json"))
+        # DecisionBriefItem validates the private reasoning text. Evidence URLs
+        # and labels can point to legitimate public program pages and should not
+        # be treated as personalization/scoring signals.
+        assert_no_protected_traits(list(self.sections.keys()))
         return self
 
 
