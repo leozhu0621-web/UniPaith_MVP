@@ -152,6 +152,7 @@ def _target_profile(
     pref_fields: list[str],
     pref_levels: list[str],
     pref_min_gpa: float | None,
+    allow_omission_only: bool = False,
 ) -> dict[str, Any] | None:
     layers: dict[str, list[dict[str, Any]]] = {
         "background_academic": [],
@@ -315,7 +316,7 @@ def _target_profile(
             evidence=program_ev,
         )
 
-    if not any(layers[layer] for layer in layers):
+    if not any(layers[layer] for layer in layers) and not allow_omission_only:
         return None
     omissions = [
         {
@@ -346,6 +347,7 @@ def derive_program_preference(
     outcomes_data: dict | None = None,
     application_requirements: dict | None = None,
     source_url: str | None = None,
+    allow_omission_only_target_profile: bool = False,
 ) -> dict[str, Any] | None:
     """Baseline target-applicant preference from real attributes, or None to omit.
 
@@ -386,21 +388,31 @@ def derive_program_preference(
         pref_fields=fields,
         pref_levels=levels,
         pref_min_gpa=gpa,
+        allow_omission_only=allow_omission_only_target_profile,
     )
     if target is not None:
+        target_has_signals = any(target["layers"][layer] for layer in target["layers"])
         pref["target_profile"] = target
-        pref["preference_weights"] = {
-            "academic_preparation": 0.3,
-            "field_fit": 0.22,
-            "career_alignment": 0.2,
-            "learning_working_style": 0.16,
-            "values_community": 0.12,
-        }
+        pref["preference_weights"] = (
+            {
+                "academic_preparation": 0.3,
+                "field_fit": 0.22,
+                "career_alignment": 0.2,
+                "learning_working_style": 0.16,
+                "values_community": 0.12,
+            }
+            if target_has_signals
+            else {}
+        )
         pref["provenance"] = {
             "source": DERIVED_SOURCE,
             "standard_version": 1,
             "derived_at": datetime.now(UTC).isoformat(),
-            "method": "public_evidence_target_profile_v1",
+            "method": (
+                "public_evidence_target_profile_v1"
+                if target_has_signals
+                else "public_evidence_target_profile_omissions_v1"
+            ),
         }
         pref["standard_version"] = 1
         pref["derived_at"] = datetime.now(UTC)
@@ -459,6 +471,7 @@ def backfill_program_preferences(session: Any, *, institution_id: Any = None) ->
     for prog in programs:
         if getattr(prog, "is_claimed", False):
             continue  # claimed programs are first-party; crawler never writes them
+        existing = existing_rows.get(prog.id)
         pref = derive_program_preference(
             cip_code=getattr(prog, "cip_code", None),
             program_name=getattr(prog, "program_name", "") or "",
@@ -468,10 +481,12 @@ def backfill_program_preferences(session: Any, *, institution_id: Any = None) ->
             outcomes_data=getattr(prog, "outcomes_data", None),
             application_requirements=getattr(prog, "application_requirements", None),
             source_url=getattr(prog, "website_url", None) or getattr(prog, "source_url", None),
+            allow_omission_only_target_profile=(
+                existing is not None and existing.source != "claimed"
+            ),
         )
         if pref is None:
             continue
-        existing = existing_rows.get(prog.id)
         if existing is not None:
             if existing.source == "claimed":
                 continue
