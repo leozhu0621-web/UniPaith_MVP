@@ -5,12 +5,12 @@ Spec 60 ``ref_*`` family. The table is guarded by ``_has_table`` so this is a sa
 no-op against a dev/test DB built from the models via ``create_all`` (the conftest
 path) and runs incrementally in production.
 
-Chains off ``michaimrg1`` (the current single head after merging origin/main, which
-already unified the aivisa + michigan/columbia/ut-austin chains) so history stays
-single-headed (``test_alembic_has_single_head``).
+Chains off ``colmichmrg1`` (the current single head after merging origin/main, which
+unified the columbia/aivisa/michigan/ut-austin chains) so history stays single-headed
+(``test_alembic_has_single_head``).
 
 Revision ID: refinst01institutions
-Revises: michaimrg1
+Revises: colmichmrg1
 Create Date: 2026-06-20
 
 """
@@ -24,7 +24,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "refinst01institutions"  # pragma: allowlist secret
-down_revision = "michaimrg1"  # pragma: allowlist secret
+down_revision = "colmichmrg1"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 
