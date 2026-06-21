@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import clsx from 'clsx'
 import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react'
+import EmptyState from './EmptyState'
 import Skeleton from './Skeleton'
 import QueryError from './QueryError'
 
@@ -47,7 +48,7 @@ export default function Table({ columns, data, onRowClick, isLoading, isError, o
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-2" role="status" aria-busy="true" aria-label="Loading table">
         {Array.from({ length: 5 }).map((_, i) => (
           <Skeleton key={i} className="h-12 w-full" />
         ))}
@@ -60,7 +61,7 @@ export default function Table({ columns, data, onRowClick, isLoading, isError, o
   }
 
   if (data.length === 0) {
-    return <div className="text-center py-12 text-sm text-muted-foreground">{emptyMessage}</div>
+    return <EmptyState title={emptyMessage} />
   }
 
   const sortCol = sort ? columns.find(c => c.key === sort.key) : undefined
@@ -187,6 +188,7 @@ export default function Table({ columns, data, onRowClick, isLoading, isError, o
           <div className="flex items-center gap-1">
             <button
               type="button"
+              aria-label="Previous page"
               disabled={safePage === 0}
               onClick={() => setPage(safePage - 1)}
               className="rounded-md border border-border px-2.5 py-1 font-medium hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
@@ -195,6 +197,7 @@ export default function Table({ columns, data, onRowClick, isLoading, isError, o
             </button>
             <button
               type="button"
+              aria-label="Next page"
               disabled={safePage >= pageCount - 1}
               onClick={() => setPage(safePage + 1)}
               className="rounded-md border border-border px-2.5 py-1 font-medium hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
