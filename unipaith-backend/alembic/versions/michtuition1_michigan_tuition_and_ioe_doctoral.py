@@ -13,7 +13,7 @@ Clears Michigan's two acute defects (REPAIR_BACKLOG run 73 CRITICAL #2 / HIGH #6
 Re-applies ``michigan_profile.apply()`` (idempotent) and re-derives program-preference rows.
 
 Revision ID: michtuition1
-Revises: ndpercrd1
+Revises: ndllmmerge1
 Create Date: 2026-06-21
 """
 
@@ -28,7 +28,7 @@ from unipaith.models import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "michtuition1"
-down_revision = "ndpercrd1"
+down_revision = "ndllmmerge1"
 branch_labels = None
 depends_on = None
 
