@@ -5740,3 +5740,74 @@ all compute cleanly, and verified against LIVE prod data (stronger than the repo
 scores 0 on every quality metric (frame_abs150 0, debris 0, artifacts 0; the single benign name_prefixed=1
 is a real-described MIT row). This grader PR changes only the three skill markdown files (no code, no data,
 no migration), so backend CI is unaffected.
+
+---
+
+## Run 71 — 2026-06-21 (grader) — builds on the concurrent run 70 (#1019)
+
+**Concurrency note:** while this run was auditing, a CONCURRENT firing of the same routine merged #1019
+("run 70": the matcher-core TUITION-coverage rule + full-fleet backlog). This run REBASED onto that main
+and BUILDS ON it — #1019's tuition rule (SKILL.md) + tuition entry #7 are KEPT verbatim; this run adds ONE
+new rule, two corrections, and the new critical entries. (Flagged to the founder: two grader instances
+running concurrently race on the same three files — schedule them so only one fires per window.)
+
+**Scope:** FULL-FLEET sweep — all 300 LIVE institutions + 40 catalogs re-measured via the live API, PLUS a
+**REPO-vs-LIVE diff**: the backend deps were installable here (`pip install sqlalchemy pgvector pydantic`),
+so `anti_stub` (+ a template-slot scan) ran over the in-repo `PROGRAMS` AND live — the only reliable way to
+separate a genuine repo defect (rewrite) from a deploy-stranded repair (drive the deploy). Gold MIT = 0.
+
+**Headline — run 70 (#1019) graded UCLA/Berkeley as CLEAN WINS; the repo-vs-live pass shows they ship
+MACHINE-BROKEN GRAMMAR (the successor evasion).** Runs 65–70 closed the shared-body / credential-frame /
+fraction-floor holes; the enricher's next move is a fixed per-credential TEMPLATE with a field phrase
+SLOTTED in — each body now differs (so `frame_stripped_shared_body` reads 0 and `analyze` is clean), yet
+the result is ungrammatical. Verified in the REPO data: **Berkeley `PROGRAMS` carry 107 rows** of "Doctoral
+training in **the Doctor of Philosophy in** {field} centers on dissertation research **in of** farm…"
+(credential DOUBLED + double-preposition empty slot + capitalized field-fragment jammed into a singular
+slot); **UCLA carries 6** ("…research **in for** students interested in an anthropological understanding of
+**human**."). Both are `CERTIFIED_CLEAN`, pass `analyze`+`frame_stripped`+abs-150, auto-merged green — and a
+concurrent grader scored them as wins. Gold MIT = 0.
+
+**Findings (with API + repo evidence):**
+- **NEW CLASS → 1 rule change: template-slot per-credential body.** Not covered by any prior sub-bullet (the
+  credential-frame + fraction-floor bullets target a SHARED body; here the bodies DIFFER but are slotted).
+  Added the **TEMPLATE-SLOT sub-bullet** under miss #9's pre-ship scan (sibling of the build-artifact
+  sub-bullet) with the tells: (i) credential DOUBLED in the body — which `startswith(program_name)` MISSES
+  because the body opens on the level-word, not the verbatim name; (ii) double/dangling preposition from an
+  empty slot ("research in of", "research in for", "{prep} ."); (iii) a capitalized field-fragment jammed
+  into a singular "research in {topic}" slot. Gold MIT 0.
+- **CORRECTION to run 70 (repo-vs-live): UF + JHU are DEPLOY-STRANDED, not repo defects.** Their in-repo
+  `PROGRAMS` score frameABS150=0 with zero template tells (the #1016 / #984 repairs ARE genuine fixes); prod
+  serves the old data only because the deploys never landed (UF pending #1017; JHU #984 CANCELLED). Re-classed
+  backlog #1 (UF) and #8 (JHU) from repo-defect to deploy-stranded — DRIVE THE DEPLOY, don't rewrite.
+- **NEW infra finding: deploy-stranding is NOT always self-healing.** Run 70 declared the dual-head race
+  "appears RESOLVED". But JHU #984 was cancelled and SEVERAL later successful deploys (on a main including its
+  migration) did NOT catch it up — a deploy cancelled mid-migration appears to leave the alembic revision
+  marked-applied while the data write never completed, so every later deploy SKIPS it permanently; a fresh
+  fixup migration is then required. Strengthened FLAG #4.
+- **COMPLIANCE GAPS (rules exist; queued not re-added):** credential-FRAME + shared / generic-definition body
+  still LIVE on Stanford 51 · Penn 51 · Notre Dame 23 (fail even the CI 50% floor) · Cornell 44 · BU 23
+  (dilution). KEPT from run 70: 16/40 catalogs ship 0% tuition (entry #7).
+- **Confirmed WINS (verified live):** run-69's Michigan/Columbia now live-clean; Notre Dame/Dartmouth/Emory
+  feeds fetch (13/24/1319). Photos/feeds: only the 8 flagship 5-program seeds remain dead-feed; 4 of them <4
+  photos; 33 bare stubs 0 photos. `cip_code` None on the public program endpoints (FLAG #2).
+
+**Rule change (1 of ≤3, miss #9 pre-ship scan — bounded, evidence-backed, not a duplicate):** the
+template-slot sub-bullet (general, no school name; evidence cited as "two just-merged per-credential
+repairs"). Post-edit re-read confirms coherence — nests under miss #9 as a sibling of the build-artifact
+sub-bullet, no numbered miss renumbered, no invariant touched, #1019's tuition rule untouched.
+
+**Backlog delta:** built on #1019's. ADDED CRITICAL C1 (Berkeley) + C2 (UCLA) template-slot — clear before
+#1. CORRECTED #1 (UF) + #8 (JHU) to deploy-stranded; moved UCLA/Berkeley OUT of the CLEAN "wins" list.
+Updated FLAG #1 (+template-slot metric) + FLAG #4 (not self-healing). KEPT all of #1019's HIGH/tuition/MEDIUM
+entries and the tuition rule.
+
+**Invariants:** all intact; the SKILL.md edit is a miss #9 / §8.5 gate TIGHTENING (adds a template-slot FAIL
+tell; loosens nothing). No school name added to SKILL.md.
+
+**Health check (run 71):** the full `pytest` suite needs a live Postgres + httpx/asyncpg the conftest imports
+(unavailable here), so the mandated tests could not run. Installed the DB-free deps and ran the substantive
+gate directly — imported every `CERTIFIED_CLEAN` catalog and re-computed `analyze` / `machine_artifacts` /
+`frame_stripped_shared_body` (default) / `scrape_debris` over the registries `tests/test_anti_stub_gate.py`
+enforces: **0 failures across all 32 CERTIFIED_CLEAN + 17 frame-stripped + 5 debris-clean catalogs** (CI gate
+currently passes; the Berkeley/UCLA template-slot defect confirms the gate's blind spot, FLAG #1c). This
+grader PR changes only the three skill markdown files — backend CI is unaffected.
