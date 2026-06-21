@@ -140,7 +140,9 @@ export function buildStandComparisons({ classProfile, academicRecords, testScore
       const scalesComparable =
         studentGpa.scale == null || cohortScale == null || Math.abs(studentGpa.scale - cohortScale) < 1e-9
       if (scalesComparable) {
-        const scaleMax = studentGpa.scale ?? cohortScale ?? 4.0
+        // First POSITIVE scale wins — a 0/negative scale (?? only catches null)
+        // would zero scaleMax and divide-by-zero the bar fill.
+        const scaleMax = [studentGpa.scale, cohortScale].find(s => s != null && s > 0) ?? 4.0
         const placement = placementOf(studentGpa.value, cohortGpa)
         const yourDisplay = trimDisplay(studentGpa.value)
         const cohortDisplay = trimDisplay(cohortGpa)
