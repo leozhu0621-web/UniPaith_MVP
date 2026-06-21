@@ -259,6 +259,13 @@ def test_catalog_is_anti_stub_clean():
     report = anti_stub.analyze(rows)
     assert report.is_clean, report.summary()
     assert not anti_stub.machine_artifacts(rows), "machine-artifact descriptions"
+    shared = anti_stub.frame_stripped_shared_body(rows, abs_chars=150)
+    assert not shared, (
+        f"Penn credential siblings share a frame-stripped body on "
+        f"{len(shared)} field(s): {shared[:8]}"
+    )
+    template = anti_stub.template_slot_artifacts(rows)
+    assert not template, f"template-slot artifacts on {len(template)} programs"
     possessive = [
         x["program_name"]
         for x in p.PROGRAMS
