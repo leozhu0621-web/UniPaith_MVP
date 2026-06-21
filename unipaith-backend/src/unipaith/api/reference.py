@@ -49,6 +49,7 @@ class InstitutionDetail(InstitutionCard):
     carnegie_basic: int | None = None
     program_pct: dict | None = None
     carnegie: dict | None = None
+    ipeds_admissions: dict | None = None
     source: str | None = None
     source_vintage: str | None = None
 
@@ -87,7 +88,9 @@ async def get_institution(unitid: int, db: AsyncSession = Depends(get_db)) -> In
     if row is None:
         raise HTTPException(status_code=404, detail="Institution not found")
     detail = InstitutionDetail.model_validate(row)
-    detail.carnegie = (row.extra or {}).get("carnegie")
+    extra = row.extra or {}
+    detail.carnegie = extra.get("carnegie")
+    detail.ipeds_admissions = extra.get("ipeds_admissions")
     return detail
 
 
