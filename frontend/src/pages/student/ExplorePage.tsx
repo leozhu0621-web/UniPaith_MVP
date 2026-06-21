@@ -499,7 +499,7 @@ export default function ExplorePage() {
                   {uniError ? (
                     <QueryError detail="We couldn't load universities." onRetry={() => refetchUni()} />
                   ) : uniLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 [&>*]:min-w-0">
                       {[1, 2, 3].map(i => (
                         <div key={i} className="bg-card rounded-lg border border-border overflow-hidden">
                           <div className="up-skeleton h-36" />
@@ -530,19 +530,22 @@ export default function ExplorePage() {
                   ) : (
                     (() => {
                       const total = displayUniList.length
-                      const from = (browsePage - 1) * BROWSE_PAGE_SIZE
+                      // Clamp to the last page so a filter that shrinks the set
+                      // never flashes a negative/out-of-range range for a frame.
+                      const safePage = Math.min(browsePage, Math.max(1, Math.ceil(total / BROWSE_PAGE_SIZE)))
+                      const from = (safePage - 1) * BROWSE_PAGE_SIZE
                       const pageItems = displayUniList.slice(from, from + BROWSE_PAGE_SIZE)
                       return (
                         <>
                           <div className="flex items-center justify-between gap-3 mb-3">
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-[11px] text-muted-foreground" aria-live="polite" aria-atomic="true">
                               Showing <span className="font-semibold text-foreground">{from + 1}–{from + pageItems.length}</span> of {total}{hasActiveFilters ? ' matching' : ''} universities
                             </p>
                             <ViewToggle value={browseView} onChange={setBrowseView} />
                           </div>
                           {/* key on the page so the stagger entrance replays as each page flips in */}
                           {browseView === 'grid' ? (
-                            <div key={browsePage} className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [&>*]:min-w-0">
+                            <div key={browsePage} className="stagger-list grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 [&>*]:min-w-0">
                               {pageItems.map((inst: UniversityRow) => (
                                 <UniversityCard
                                   key={inst.id}
