@@ -305,14 +305,20 @@ export default function ExplorePage() {
       setNearMe(null)
       return
     }
-    if (!navigator.geolocation) return
+    if (!navigator.geolocation) {
+      showToast("Location isn't available in this browser.", 'error')
+      return
+    }
     setGeoBusy(true)
     navigator.geolocation.getCurrentPosition(
       pos => {
         setNearMe({ lat: pos.coords.latitude, lng: pos.coords.longitude })
         setGeoBusy(false)
       },
-      () => setGeoBusy(false),
+      () => {
+        setGeoBusy(false)
+        showToast("We couldn't get your location. Please check your browser's location permission.", 'error')
+      },
       { timeout: 10000 },
     )
   }
@@ -534,6 +540,7 @@ export default function ExplorePage() {
                     <button
                       onClick={requestNearMe}
                       aria-pressed={!!nearMe}
+                      aria-busy={geoBusy}
                       className={`inline-flex items-center gap-1.5 text-xs font-semibold rounded-md px-2.5 py-1.5 border transition-colors ${
                         nearMe
                           ? 'bg-secondary text-secondary-foreground border-secondary'
