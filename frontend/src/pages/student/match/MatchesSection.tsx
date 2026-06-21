@@ -21,6 +21,7 @@ import { useCompareStore } from '../../../stores/compare-store'
 import { showToast } from '../../../stores/toast-store'
 import type { MatchBand, MatchResultDual } from '../../../types'
 import MatchCard from './MatchCard'
+import { shortlistDigest } from './shortlistDigest'
 import { useAppliedPrograms } from '../explore/cards/AppStatusPill'
 import PrioritySheet from './PrioritySheet'
 
@@ -38,6 +39,12 @@ interface MatchesSectionProps {
   /** True when the student has an active strategy — drives the strategy→matches
    *  bridge line (the matches are banded off the strategy; refine it to update them). */
   strategyActive?: boolean
+}
+
+const BALANCE_COPY: Record<'balanced' | 'reach_heavy' | 'safe_heavy', string> = {
+  balanced: 'A balanced shortlist.',
+  reach_heavy: "It's reach-heavy — consider adding a few safer options.",
+  safe_heavy: "It's on the safe side — you could stretch for a reach.",
 }
 
 function relativeTime(iso?: string | null): string {
@@ -92,6 +99,9 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
     }
     return by
   }, [matches])
+
+  // A counselor's read of the whole shortlist (shape + balance + standout).
+  const digest = useMemo(() => shortlistDigest(matches), [matches])
 
   const firstId = matches[0]?.program_id
   const appliedMap = useAppliedPrograms()
@@ -221,6 +231,31 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
         <div className="mb-3 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-foreground">
           We couldn&apos;t reach the matching service. Showing cached matches from{' '}
           {relativeTime(dataUpdatedAt ? new Date(dataUpdatedAt).toISOString() : null)}.
+        </div>
+      )}
+
+      {/* Shortlist digest — the counselor's read of the whole list (shown once
+          there are enough programs to have a shape worth reading). */}
+      {digest && digest.total >= 3 && (
+        <div className="mb-4 rounded-xl border border-border bg-muted/40 px-4 py-3">
+          <p className="text-sm leading-relaxed text-foreground">
+            <span className="font-semibold">{digest.total} programs on your list</span> —{' '}
+            {digest.counts.reach} reach · {digest.counts.target} target · {digest.counts.safer} safer.{' '}
+            {BALANCE_COPY[digest.balance]}
+            {digest.standout?.program_name && (
+              <>
+                {' '}Your strongest fit is{' '}
+                <button
+                  onClick={() => navigate(`/s/programs/${digest.standout!.program_id}`)}
+                  className="font-semibold text-secondary hover:underline"
+                >
+                  {digest.standout.program_name}
+                  {digest.standout.institution_name ? ` at ${digest.standout.institution_name}` : ''}
+                </button>
+                .
+              </>
+            )}
+          </p>
         </div>
       )}
 
