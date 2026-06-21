@@ -479,7 +479,7 @@ export default function ProgramDetailPage() {
 
       {/* ── Tabs (underline in --accent) ── */}
       <div className="border-b border-border mb-5">
-        <div className="flex gap-1 overflow-x-auto">
+        <div role="tablist" aria-label="Program sections" className="flex gap-1 overflow-x-auto">
           {TABS.map(t => {
             const isActive = tab === t.id
             let badge: string | null = null
@@ -487,6 +487,10 @@ export default function ProgramDetailPage() {
             return (
               <button
                 key={t.id}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls="program-tabpanel"
+                id={`program-tab-${t.id}`}
                 onClick={() => setTab(t.id)}
                 className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   isActive
@@ -509,8 +513,14 @@ export default function ProgramDetailPage() {
 
       {/* ── Two-column body ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-        {/* Main column */}
-        <div className="min-w-0 space-y-4">
+        {/* Main column — the active tab's panel (single panel re-labeled per tab). */}
+        <div
+          role="tabpanel"
+          id="program-tabpanel"
+          aria-labelledby={`program-tab-${tab}`}
+          tabIndex={0}
+          className="min-w-0 space-y-4 focus-visible:outline-none"
+        >
           {tab === 'overview' && (
             <>
               <AboutCard
