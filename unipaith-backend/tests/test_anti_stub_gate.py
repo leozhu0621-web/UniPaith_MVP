@@ -183,7 +183,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 # are NOT here yet on purpose).
 _ABS_FLOOR_CLEAN = [
     "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley", "uf", "stanford",
-    "penn", "cornell",
+    "penn", "cornell", "ut_austin",
 ]
 
 
@@ -208,15 +208,17 @@ def test_credential_siblings_no_shared_body_absolute_floor(name: str):
 # preposition from an empty slot — REPAIR_BACKLOG CRITICAL C1/C2, FLAG #1c). These score 0
 # on every share/form metric (the body differs per row) yet render machine junk, so they
 # need their own gate. This is intentionally a SUBSET of CERTIFIED_CLEAN — the whole-fleet
-# sweep found template-slot rows still in repo on ut_austin (3) and michigan (1); they stay
-# OUT until repaired, and the durable fix is to parametrize this over CERTIFIED_CLEAN itself
-# once those clear (FLAG for the grader). Stanford GRADUATED here (run 72 CRITICAL #1): its
-# 51 slotted-template graduate rows were rewritten as researched per-credential prose, so
-# template_slot_artifacts == 0 (stanfordpercred2).
+# sweep found template-slot rows still in repo on michigan (1); it stays OUT until repaired,
+# and the durable fix is to parametrize this over CERTIFIED_CLEAN itself once it clears
+# (FLAG for the grader). Stanford GRADUATED here (run 72 CRITICAL #1): its 51 slotted-template
+# graduate rows were rewritten as researched per-credential prose (stanfordpercred2). UT Austin
+# GRADUATED here (run 72 CRITICAL #3): its 3 slotted-template doctoral rows (Anthropology,
+# History, Computer Science) were rewritten as researched per-credential prose, so
+# template_slot_artifacts == 0 (utaustintuition1).
 _TEMPLATE_SLOT_CLEAN = [
     n
     for n in CERTIFIED_CLEAN
-    if n not in {"ut_austin", "michigan"}
+    if n not in {"michigan"}
 ]
 
 
