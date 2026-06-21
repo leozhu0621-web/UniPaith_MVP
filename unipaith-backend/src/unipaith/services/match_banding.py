@@ -18,6 +18,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from unipaith.services.match.params import DEFAULT_PARAMS
+
 
 def _clamp(value: float, low: float, high: float) -> float:
     return max(low, min(high, value))
@@ -136,9 +138,49 @@ def weights_from_preferences(pref: Any | None) -> dict[str, float] | None:
     }
 
 
+# Priority slider → CPEF signal. The legacy ``weights_from_preferences`` above folds
+# the sliders into the convex-sum levers, but those are DROPPED under CPEF — so under
+# the live path the sliders must instead tilt per-signal CPEF weights. Five sliders
+# map onto an existing s→p signal; ``weight_outcomes`` has no CPEF signal yet, and
+# ``weight_ranking`` drives banding tolerance (``tolerance_from_preferences``), not a fit.
+_SLIDER_TO_CPEF_SIGNAL: dict[str, str] = {
+    "weight_cost": "budget",
+    "weight_location": "geo",
+    "weight_flexibility": "flexibility",
+    "weight_support": "support",
+    "weight_time_to_degree": "time",
+}
+
+
+def cpef_params_from_preferences(pref: Any | None) -> dict[str, float] | None:
+    """Map the priority sliders (0–10) to CPEF per-signal weights so they actually
+    re-rank under the live (CPEF) path.
+
+    Each set slider tilts its signal's importance around the uniform ``w_base``
+    (slider 5 ≈ neutral ``w_base``; 0 → 0.5×; 10 → 1.5×). Returns the full params
+    dict (``DEFAULT_PARAMS`` + the ``w_<signal>`` overrides) so every other tuning
+    key stays present, or ``None`` when no mappable slider is set (caller then uses
+    ``DEFAULT_PARAMS`` unchanged). Threaded through rank_programs → score →
+    _score_cpef → _build_cpef_signals, which reads ``params["w_<signal>"]``."""
+    if pref is None:
+        return None
+    w_base = float(DEFAULT_PARAMS["w_base"])
+    overrides: dict[str, float] = {}
+    for slider_attr, sig_key in _SLIDER_TO_CPEF_SIGNAL.items():
+        val = getattr(pref, slider_attr, None)
+        if val is None:
+            continue
+        v = max(0.0, min(10.0, float(val)))
+        overrides[f"w_{sig_key}"] = round(w_base * (0.5 + v / 10.0), 4)
+    if not overrides:
+        return None
+    return {**DEFAULT_PARAMS, **overrides}
+
+
 __all__ = [
     "band_for_acceptance",
     "classify_band",
+    "cpef_params_from_preferences",
     "selectivity_from_acceptance",
     "tolerance_from_preferences",
     "weights_from_preferences",
