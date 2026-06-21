@@ -3900,7 +3900,9 @@ _GRAD_TUITION_BY_SCHOOL: dict[str, tuple[int, int]] = {
     "TAUB": (38860, 56850),   # Architecture & Urban Planning Rackham — $19,430 / $28,425
     "SEAS": (29436, 58238),   # Environment & Sustainability — $14,718 / $29,119
     "SSW": (35778, 57280),    # Social Work professional master — $17,889 / $28,640
-    "DENT": (28738, 57974),   # Oral Health Sciences Rackham — $14,369 / $28,987
+    "MED": (29888, 60276),    # Medicine Master Pre-candidate (Rackham) — $14,944 / $30,138
+    "DENT": (33638, 55756),   # Dentistry Pre-candidate (Rackham), the clinical-specialty
+    #                           residency master's default — $16,819 / $27,878
 }
 
 # Professional-degree annual (resident, non-resident), by program name (Fee Bulletin professional rates).
@@ -3912,40 +3914,80 @@ _PROFESSIONAL_TUITION: dict[str, tuple[int, int]] = {
     "Doctor of Pharmacy": (39164, 46086),                 # PharmD — $19,582 / $23,043
 }
 
+# Programs whose own published Fee-Bulletin rate differs from their school's default
+# (resident annual, non-resident annual), keyed by program name. Checked BEFORE the
+# school-level graduate default AND before Ph.D. funding, so a non-research doctorate
+# (Doctor of Engineering) billed at a published rate is never treated as a funded Ph.D.
+_TUITION_OVERRIDE_BY_NAME: dict[str, tuple[int, int]] = {
+    "Master of Engineering": (34894, 64850),       # Engineering MEng/DEng line — $17,447 / $32,425
+    "Doctor of Engineering": (34894, 64850),       # billed with MEng/DEng — a professional doctorate, not a funded Ph.D.
+    "Master of Health Informatics": (37100, 61264),  # SI+SPH Joined Degree — $18,550 / $30,632
+    "Master of Science in Dental Hygiene": (22570, 23786),  # Dental Hygiene (Rackham) — $11,285 / $11,893
+    "Master of Science in Oral Health Sciences": (28738, 57974),  # Oral Health Sciences (Rackham) — $14,369 / $28,987
+}
+
 # Programs whose published tuition is set per-program by the school (not in the general Fee
-# Bulletin) and so is honestly omitted rather than guessed. The Law School's LL.M. is billed at
-# a Law-specific rate the School publishes separately (not the general Rackham graduate rate),
-# so guessing it would be wrong.
-_TUITION_OMIT_SLUGS: frozenset[str] = frozenset({"mich-master-of-laws-llm"})
+# Bulletin) and so is honestly omitted rather than guessed: the Law School's LL.M. (a
+# Law-specific rate the School publishes separately) and the Doctor of Public Health (no
+# separately-published DrPH rate; not a funded research Ph.D., so it is not zeroed either).
+_TUITION_OMIT_SLUGS: frozenset[str] = frozenset(
+    {"mich-master-of-laws-llm", "mich-doctor-of-public-health-drph"}
+)
+
+
+def _pub_tuition_cost(res: int, oos: int, note: str) -> dict:
+    return {
+        "tuition_usd": res,
+        "breakdown": {"tuition_in_state": res, "tuition_out_of_state": oos},
+        "funded": False,
+        "note": note,
+        "source": _TUITION_SRC, "source_url": _TUITION_SRC_URL, "year": "2025-26",
+    }
+
+
+_GRAD_NOTE = (
+    "Published annual graduate tuition and fees, Michigan resident (full-time, pre-candidate); "
+    "nonresidents pay the out-of-state rate shown in the breakdown. Many master's students "
+    "receive partial funding through assistantships or fellowships."
+)
+_PROF_NOTE = (
+    "Published annual professional-program tuition and fees, Michigan resident; nonresidents "
+    "pay the out-of-state rate shown in the breakdown."
+)
 
 
 def _program_tuition(spec: dict) -> tuple[int | None, dict]:
     """Return (matcher_tuition, cost_data) for a program from U-M-published rates.
 
-    ``matcher_tuition`` is the Michigan-resident annual figure (or 0 for a funded PhD);
-    ``cost_data`` carries both residencies, the source, and a note. Returns (None, fallback)
-    only for the rare program whose rate the school publishes separately (``_TUITION_OMIT_SLUGS``).
+    ``matcher_tuition`` is the Michigan-resident annual figure (0 only for a funded research
+    Ph.D.); ``cost_data`` carries both residencies, the source, and a note. Returns
+    (None, fallback) only for a program whose rate the school publishes separately
+    (``_TUITION_OMIT_SLUGS``).
     """
     sk = spec["school_key"]
     dtype = spec["degree_type"]
+    name = spec["program_name"]
     if spec["slug"] in _TUITION_OMIT_SLUGS:
         return None, _grad_cost_fallback(spec)
     if dtype == "bachelors":
         res, oos = _UG_TUITION_BY_SCHOOL.get(sk, _UG_TUITION_GENERAL)
-        return res, {
-            "tuition_usd": res,
-            "total_cost_of_attendance": _UNDERGRAD_COA,
-            "avg_net_price": _AVG_NET_PRICE,
-            "breakdown": {"tuition_in_state": res, "tuition_out_of_state": oos},
-            "funded": False,
-            "note": (
-                "Published annual tuition and fees, Michigan resident (lower division); "
-                "nonresidents pay the out-of-state rate shown in the breakdown. The Go Blue "
-                "Guarantee covers tuition for eligible in-state undergraduates."
-            ),
-            "source": _TUITION_SRC, "source_url": _TUITION_SRC_URL, "year": "2025-26",
-        }
+        cost = _pub_tuition_cost(
+            res, oos,
+            "Published annual tuition and fees, Michigan resident (lower division); nonresidents "
+            "pay the out-of-state rate shown in the breakdown. The Go Blue Guarantee covers "
+            "tuition for eligible in-state undergraduates.",
+        )
+        cost["total_cost_of_attendance"] = _UNDERGRAD_COA
+        cost["avg_net_price"] = _AVG_NET_PRICE
+        return res, cost
+    # A distinct published per-program rate (overrides the school default AND Ph.D. funding,
+    # so a professional doctorate billed at a real rate is never zeroed as a research Ph.D.).
+    if name in _TUITION_OVERRIDE_BY_NAME:
+        res, oos = _TUITION_OVERRIDE_BY_NAME[name]
+        note = _PROF_NOTE if dtype in ("phd", "professional") else _GRAD_NOTE
+        return res, _pub_tuition_cost(res, oos, note)
     if dtype == "phd":
+        # Only research Ph.D.s are funded; non-research doctorates are overridden or omitted above.
         return 0, {
             "tuition_usd": 0,
             "funded": True,
@@ -3956,31 +3998,12 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             ),
             "source": _PHD_FUNDING_SRC, "source_url": _PHD_FUNDING_URL, "year": "2025-26",
         }
-    if dtype == "professional" and spec["program_name"] in _PROFESSIONAL_TUITION:
-        res, oos = _PROFESSIONAL_TUITION[spec["program_name"]]
-        return res, {
-            "tuition_usd": res,
-            "breakdown": {"tuition_in_state": res, "tuition_out_of_state": oos},
-            "funded": False,
-            "note": (
-                "Published annual professional-program tuition and fees, Michigan resident; "
-                "nonresidents pay the out-of-state rate shown in the breakdown."
-            ),
-            "source": _TUITION_SRC, "source_url": _TUITION_SRC_URL, "year": "2025-26",
-        }
+    if dtype == "professional" and name in _PROFESSIONAL_TUITION:
+        res, oos = _PROFESSIONAL_TUITION[name]
+        return res, _pub_tuition_cost(res, oos, _PROF_NOTE)
     # masters (and any other graduate level)
     res, oos = _GRAD_TUITION_BY_SCHOOL.get(sk, _GRAD_TUITION_LSA)
-    return res, {
-        "tuition_usd": res,
-        "breakdown": {"tuition_in_state": res, "tuition_out_of_state": oos},
-        "funded": False,
-        "note": (
-            "Published annual graduate tuition and fees, Michigan resident (full-time, "
-            "pre-candidate); nonresidents pay the out-of-state rate shown in the breakdown. "
-            "Many master's students receive partial funding through assistantships or fellowships."
-        ),
-        "source": _TUITION_SRC, "source_url": _TUITION_SRC_URL, "year": "2025-26",
-    }
+    return res, _pub_tuition_cost(res, oos, _GRAD_NOTE)
 
 
 def _undergrad_cost() -> dict:
