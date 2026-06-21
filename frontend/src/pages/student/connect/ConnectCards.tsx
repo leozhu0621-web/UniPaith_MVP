@@ -9,6 +9,7 @@ import {
 import type { ConnectFeedItem } from '../../../api/connect'
 import { trackEngagement } from '../../../api/institutions'
 import { renderInlineMarkdown } from '../../../utils/inlineMarkdown'
+import { deadlineTone } from '../../../utils/deadline'
 
 // Spec 27 §5 — best-effort per-post engagement tracking (fire-and-forget).
 function trackPost(
@@ -243,12 +244,10 @@ function PostCardLarge({ item, onViewProgram, onAddToCalendar, onStartApplicatio
 
 function DeadlineCard({ item, onViewProgram, onAddToCalendar }: Props) {
   const days = item.days_until ?? 0
-  // ≤7d → error (red), 8–30d → warning (amber), >30d → neutral
-  const urgencyClass = days <= 7
-    ? 'text-error'
-    : days <= 30
-      ? 'text-warning'
-      : 'text-secondary'
+  // Canonical 7/21 tone (utils/deadline) — same urgency everywhere, not an ad-hoc
+  // 8–30d amber band. ≤7d → error (red), ≤21d → warning (amber), else neutral.
+  const tone = deadlineTone(days)
+  const urgencyClass = tone === 'error' ? 'text-error' : tone === 'warning' ? 'text-warning' : 'text-secondary'
   return (
     <CardShell>
       <div className="p-4">

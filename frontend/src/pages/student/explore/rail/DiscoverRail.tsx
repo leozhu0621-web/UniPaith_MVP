@@ -10,6 +10,7 @@ import { getMatches } from '../../../../api/matching'
 import { listSaved } from '../../../../api/saved-lists'
 import { qk } from '../../../../api/queryKeys'
 import { createReminder } from '../../../../api/calendar'
+import { deadlineTone } from '../../../../utils/deadline'
 import { showToast } from '../../../../stores/toast-store'
 
 function relTime(iso: string): string {
@@ -166,9 +167,9 @@ export default function DiscoverRail({ followedIds, onToggleFollow, onOpenTab, o
                 <p className="text-xs font-semibold text-foreground line-clamp-1">{it.program_name}</p>
                 <p
                   className={`text-[10px] truncate ${
-                    (it.days_until ?? 99) <= 7
+                    deadlineTone(it.days_until ?? 99) === 'error'
                       ? 'text-error font-semibold'
-                      : (it.days_until ?? 99) <= 30
+                      : deadlineTone(it.days_until ?? 99) === 'warning'
                         ? 'text-warning'
                         : 'text-muted-foreground'
                   }`}

@@ -22,7 +22,7 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
 import { formatCurrency, formatDate } from '../../utils/format'
-import { daysUntil } from '../../utils/deadline'
+import { daysUntil, deadlineTone } from '../../utils/deadline'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare, Megaphone,
   Briefcase, Building2, Users, Clock, Sparkles, Mail, Archive,
@@ -872,7 +872,8 @@ export default function ProgramDetailPage() {
                       {admissionTimeline.rounds.map((r: any, i: number) => {
                         const days = daysUntil(r.deadline) ?? 0
                         const isPast = days < 0
-                        const isUrgent = !isPast && days <= 30
+                        // Canonical 7/21 tone (utils/deadline), not an ad-hoc 30-day band.
+                        const isUrgent = !isPast && deadlineTone(days) !== 'normal'
                         return (
                           <div
                             key={i}
