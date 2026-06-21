@@ -434,16 +434,22 @@ def _build_cpef_signals(
                 "prior": prior_for("semantic", p),
             }
         )
-    # themes (interest/career/value tag overlap) — always defined via fallbacks
-    signals.append(
-        {
-            "key": "themes",
-            "f": soft_align(student, program),
-            "c": c,
-            "w": w_base,
-            "prior": prior_for("themes", p),
-        }
-    )
+    # themes (interest/career/value tag overlap + social prefs). GATED like the
+    # other optional signals: emit only when the student expressed at least one
+    # soft preference. A student with no soft tags would otherwise get a phantom
+    # themes≈0 dimension on EVERY program — depressing fitness and counting a
+    # dimension she never expressed as known-and-failed in coverage. Absent
+    # attribute → no phantom dimension (the rule field/time/flexibility follow).
+    if s.get("interest_themes") or s.get("career_arcs") or s.get("values") or s.get("social_prefs"):
+        signals.append(
+            {
+                "key": "themes",
+                "f": soft_align(student, program),
+                "c": c,
+                "w": w_base,
+                "prior": prior_for("themes", p),
+            }
+        )
     # needs coverage — neutral 0.5 when the student expressed no needs
     signals.append(
         {

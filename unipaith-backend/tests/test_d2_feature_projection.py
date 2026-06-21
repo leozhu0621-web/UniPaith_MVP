@@ -237,6 +237,54 @@ async def test_student_preference_absent_typed_fit_attrs_emit_no_signal(
 
 
 @pytest.mark.asyncio
+async def test_student_preference_degree_target_overlaid_and_fires(db_session, mock_student_user):
+    """StudentPreference.target_degree_level must project into the student sparse
+    vector as a canonicalized `degree_level_target` and drive the degree_level
+    CPEF signal — previously a dead signal (the key was read by the matcher but
+    never written by any production code path)."""
+    from unipaith.models.student import StudentPreference
+    from unipaith.services.match.params import DEFAULT_PARAMS
+    from unipaith.services.matching import _build_cpef_signals
+
+    profile = await ensure_profile(db_session, mock_student_user)
+    db_session.add(StudentPreference(student_id=profile.id, target_degree_level="masters"))
+    db_session.add(StudentFeatureVector(student_id=profile.id, sparse_features={}))
+    await db_session.flush()
+
+    feats = await MatchService(db_session)._student_features(profile.id)
+    assert feats is not None
+    # the onboarding value ("masters") is canonicalized to the matcher's vocab
+    assert feats.sparse["degree_level_target"] == "masters"
+
+    program = ProgramFeatures(program_id="p", sparse={"target_education_level": "masters"})
+    signals, _db, _w = _build_cpef_signals(feats, program, DEFAULT_PARAMS)
+    assert "degree_level" in {s["key"] for s in signals}
+
+
+@pytest.mark.asyncio
+async def test_student_preference_absent_degree_target_emits_no_degree_signal(
+    db_session, mock_student_user
+):
+    """Gated: a StudentPreference with target_degree_level NULL injects no
+    degree_level_target key and fires no degree_level signal (no phantom)."""
+    from unipaith.models.student import StudentPreference
+    from unipaith.services.match.params import DEFAULT_PARAMS
+    from unipaith.services.matching import _build_cpef_signals
+
+    profile = await ensure_profile(db_session, mock_student_user)
+    db_session.add(StudentPreference(student_id=profile.id))  # target_degree_level null
+    db_session.add(StudentFeatureVector(student_id=profile.id, sparse_features={}))
+    await db_session.flush()
+
+    feats = await MatchService(db_session)._student_features(profile.id)
+    assert feats is not None
+    assert "degree_level_target" not in feats.sparse
+    program = ProgramFeatures(program_id="p", sparse={"target_education_level": "masters"})
+    signals, _db, _w = _build_cpef_signals(feats, program, DEFAULT_PARAMS)
+    assert "degree_level" not in {s["key"] for s in signals}
+
+
+@pytest.mark.asyncio
 async def test_program_part_time_available_projects_and_fires_flexibility(
     institution_client, db_session, mock_institution_user
 ):
