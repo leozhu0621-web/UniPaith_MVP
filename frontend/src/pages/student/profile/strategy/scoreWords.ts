@@ -1,15 +1,16 @@
 /**
- * Strategy school-list word scales — turn the dual match scores into plain words.
+ * Strategy school-list word tags — the SAME fit/odds language Discover uses
+ * (`pages/student/match/matchStoryline.ts`, #969), so a program reads the same
+ * on both surfaces. Two separate scales by design — a reach can still be a
+ * strong fit, so we never collapse them into one number.
  *
- * The white-paper model keeps two things separate: how well a program FITS you
- * (`fitness_score`) and how likely you are to GET IN (`confidence_score`, used
- * here as the admission-likelihood proxy). A reach can still be an excellent fit,
- * so we never collapse the two into one number.
- *
- * Scores arrive on `MatchResultDual` as 0..1 — and sometimes as strings (the
- * student match payload types them `string | null`), so we coerce with Number()
- * and guard NaN. A null / undefined / 0 score yields `null` (no tag at all).
+ * - Fit comes from `fitness_score` (how well a program suits you), tiered at the
+ *   same 0.7 / 0.45 boundaries Discover uses.
+ * - Odds come from the `band_label` (reach / target / safer) — the reliable
+ *   admission-odds signal present on every match row — NOT `confidence_score`,
+ *   which the student match payload usually omits.
  */
+import type { MatchBand } from '../../../../types'
 
 /** Coerce a possibly-string, possibly-null score into a finite number, or null. */
 function toScore(score: number | string | null | undefined): number | null {
@@ -19,24 +20,19 @@ function toScore(score: number | string | null | undefined): number | null {
   return n
 }
 
-/** Fit word from `fitness_score` (0..1). Null when the score is absent / zero. */
+/** Fit word from `fitness_score` (0..1) — mirrors Discover's tiers. Null when absent. */
 export function fitWord(score: number | string | null | undefined): string | null {
   const n = toScore(score)
   if (n === null) return null
-  if (n >= 0.85) return 'Excellent fit'
   if (n >= 0.7) return 'Strong fit'
-  if (n >= 0.55) return 'Good fit'
-  if (n >= 0.4) return 'Moderate fit'
-  return 'Low fit'
+  if (n >= 0.45) return 'Solid fit'
+  return 'Fair fit'
 }
 
-/** Odds word from `confidence_score` (admission-likelihood proxy, 0..1). Null when absent / zero. */
-export function oddsWord(score: number | string | null | undefined): string | null {
-  const n = toScore(score)
-  if (n === null) return null
-  if (n >= 0.8) return 'Safe'
-  if (n >= 0.6) return 'Likely'
-  if (n >= 0.4) return 'Toss-up'
-  if (n >= 0.2) return 'Reach'
-  return 'Long shot'
+/** Odds word from the admission band (Discover's reliable signal). Null when absent. */
+export function oddsWord(band: MatchBand | null | undefined): string | null {
+  if (band === 'reach') return 'Reach'
+  if (band === 'target') return 'Target'
+  if (band === 'safer') return 'Safer'
+  return null
 }
