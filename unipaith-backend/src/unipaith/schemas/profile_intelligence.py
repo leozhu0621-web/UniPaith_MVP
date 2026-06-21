@@ -156,10 +156,26 @@ class TargetProfileSignal(BaseModel):
         return self
 
 
+class TargetProfileOmission(BaseModel):
+    layer: Literal[
+        "background_academic",
+        "goals_behaviors_learning_working_style",
+        "values_motivations_community",
+    ]
+    reason: str = Field(min_length=1, max_length=400)
+    source: Literal["derived", "official"] = "derived"
+
+    @model_validator(mode="after")
+    def _safe(self) -> TargetProfileOmission:
+        assert_no_protected_traits({"layer": self.layer, "reason": self.reason})
+        return self
+
+
 class TargetProfile(BaseModel):
     standard_version: int = PROFILE_INTELLIGENCE_STANDARD_VERSION
     derived_at: str = Field(default_factory=utc_now_iso)
     layers: dict[str, list[TargetProfileSignal]]
+    omissions: list[TargetProfileOmission] = Field(default_factory=list)
 
     @field_validator("layers")
     @classmethod
@@ -176,6 +192,13 @@ class TargetProfile(BaseModel):
         # legitimately cite a program page whose URL/title contains a protected
         # studies field, and citations are not scoring inputs.
         assert_no_protected_traits(list(self.layers.keys()))
+        omitted_layers = {omission.layer for omission in self.omissions}
+        for layer in TARGET_PROFILE_LAYERS:
+            has_signals = bool(self.layers.get(layer))
+            if has_signals and layer in omitted_layers:
+                raise ValueError(f"populated target profile layer cannot be omitted: {layer}")
+            if not has_signals and layer not in omitted_layers:
+                raise ValueError(f"empty target profile layer must be explicitly omitted: {layer}")
         return self
 
 

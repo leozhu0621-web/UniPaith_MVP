@@ -98,6 +98,31 @@ def test_target_profile_rejects_protected_trait_scoring():
         )
 
 
+def test_target_profile_rejects_protected_trait_omissions():
+    from pydantic import ValidationError
+
+    from unipaith.schemas.profile_intelligence import TargetProfile
+
+    with pytest.raises(ValidationError):
+        TargetProfile.model_validate(
+            {
+                "standard_version": 1,
+                "layers": {
+                    "background_academic": [],
+                    "goals_behaviors_learning_working_style": [],
+                    "values_motivations_community": [],
+                },
+                "omissions": [
+                    {
+                        "layer": "values_motivations_community",
+                        "reason": "No gender-specific target evidence.",
+                        "source": "derived",
+                    }
+                ],
+            }
+        )
+
+
 def test_builds_program_intelligence_with_cited_sections():
     from unipaith.models.institution import Program
     from unipaith.services.profile_enrichment.intelligence import (
@@ -181,6 +206,33 @@ def test_derived_target_profile_has_three_layers_and_no_protected_traits():
         "values_motivations_community",
     }
     assert all(target["layers"][name] for name in target["layers"])
+    assert target["omissions"] == []
+    assert_no_protected_traits(target)
+
+
+def test_partial_derived_target_profile_records_layer_omissions():
+    from unipaith.schemas.profile_intelligence import assert_no_protected_traits
+    from unipaith.services.match.derive_preferences import derive_program_preference
+
+    pref = derive_program_preference(
+        cip_code="23.0101",
+        program_name="MA in English",
+        degree_type="masters",
+        source_url="https://example.edu/english",
+    )
+
+    assert pref is not None
+    target = pref["target_profile"]
+    assert target["layers"]["background_academic"]
+    assert target["layers"]["goals_behaviors_learning_working_style"]
+    assert target["layers"]["values_motivations_community"] == []
+    assert target["omissions"] == [
+        {
+            "layer": "values_motivations_community",
+            "reason": "No eligible public evidence was available for this target-profile layer.",
+            "source": "derived",
+        }
+    ]
     assert_no_protected_traits(target)
 
 
@@ -303,3 +355,73 @@ async def test_backfill_skips_claimed_program_without_preference_row(db_session)
 
     assert inserted == 0
     assert rows == []
+
+
+async def test_backfill_fills_missing_target_profile_on_existing_derived_row(db_session):
+    from decimal import Decimal
+
+    from sqlalchemy import select
+
+    from unipaith.models.institution import Institution, Program, ProgramPreference
+    from unipaith.models.user import User, UserRole
+    from unipaith.services.match.derive_preferences import backfill_program_preferences
+
+    admin = User(email="pref-retrofit@example.com", role=UserRole.institution_admin)
+    db_session.add(admin)
+    await db_session.flush()
+    inst = Institution(
+        admin_user_id=admin.id,
+        name="Preference Retrofit U",
+        type="university",
+        country="US",
+    )
+    db_session.add(inst)
+    await db_session.flush()
+    program = Program(
+        institution_id=inst.id,
+        program_name="MA in English",
+        cip_code="23.0101",
+        degree_type="masters",
+        website_url="https://example.edu/english",
+        slug="retrofit-english",
+    )
+    db_session.add(program)
+    await db_session.flush()
+    db_session.add(
+        ProgramPreference(
+            program_id=program.id,
+            source="derived",
+            confidence=Decimal("0.40"),
+            pref_fields=["english"],
+            target_profile=None,
+        )
+    )
+    await db_session.flush()
+
+    inst_id = inst.id
+    program_id = program.id
+    sync_conn = await db_session.connection()
+
+    def _run(conn):
+        from sqlalchemy.orm import Session
+
+        with Session(bind=conn) as s:
+            return backfill_program_preferences(s, institution_id=inst_id)
+
+    inserted = await sync_conn.run_sync(_run)
+    row = (
+        await db_session.execute(
+            select(ProgramPreference).where(ProgramPreference.program_id == program_id)
+        )
+    ).scalar_one()
+
+    assert inserted == 0
+    assert row.target_profile is not None
+    assert row.target_profile["layers"]["background_academic"]
+    assert row.target_profile["omissions"] == [
+        {
+            "layer": "values_motivations_community",
+            "reason": "No eligible public evidence was available for this target-profile layer.",
+            "source": "derived",
+        }
+    ]
