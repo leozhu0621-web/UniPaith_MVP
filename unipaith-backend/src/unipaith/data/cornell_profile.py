@@ -56,9 +56,10 @@ programs — completes Cornell coverable external_reviews (73/73).
 Description depth (2026-06-16, cornellprof6): field-specific descriptions for all
 274 programs via ``cornell_field_descriptions.py`` (0% classification stubs).
 
-Description repair (2026-06-17, cornellprof7): drops the ``{program_name}:`` prefix
-from every description so clauses open on field-specific facts (gold MIT/Chicago
-pattern); 0% name-prefixed descriptions.
+Per-credential body repair (2026-06-21, cornellpercrd2): sibling-aware
+``_assign_descriptions`` replaces credential-frame + ONE shared field-clause body across
+credential siblings (44 fields failed the frame-stripped shared-body gate live — dilution
+evasion; siblings share no >=150-char run (gold MIT = 0).
 
 Possessive-name repair (2026-06-19, cornellnames1): replaces every IPEDS-minted
 ``Bachelor's in {field}`` / ``Master's in {field}`` name with Cornell's conferred
@@ -90,7 +91,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "Cornell University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-19"
+ENRICHED_AT = "2026-06-21"
 
 _PEER_SIGNATURES: tuple[str, ...] = (
     " SAS",
@@ -1759,6 +1760,280 @@ def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     spec["description"] = _cornell_description(spec, field=field_name)
 
 
+_LEVEL_PRIORITY: dict[str, int] = {
+    "bachelors": 0,
+    "certificate": 1,
+    "masters": 2,
+    "phd": 3,
+    "doctoral": 3,
+    "professional": 4,
+}
+
+_CORNELL_LEVEL_TAIL_RE = re.compile(
+    r"\.\s*(?:"
+    r"Cornell's bachelor's program in\b|"
+    r"This professional master of engineering in\b|"
+    r"This master of arts in\b|"
+    r"This studio-intensive master of fine arts in\b|"
+    r"Master's study in\b|"
+    r"Doctoral study in\b|"
+    r"Cornell's professional program in\b|"
+    r"Cornell's graduate certificate in\b"
+    r").*$",
+    re.I | re.S,
+)
+
+_FOCUS_LEAD_RE = re.compile(
+    r"^(.*?\b(?:covers|combines|spans|includes|integrates|offers?|examines?|trains?|"
+    r"prepares?|underpins?|emphasizes?|centers? on|focuses? on|explores?|studies|study|"
+    r"pairs?|blends?|joins?|teach(?:es)?|analyze[s]?|bridges?|operate[s]?|run[s]?|use[s]?|"
+    r"support[s]?|choose among|applies?|develops?|designs?|allows?|seeks?|gives?|is for|"
+    r"is designed)\b\s*)",
+    re.I,
+)
+
+
+def _strip_cornell_frame(clause: str) -> str:
+    """Drop the generic per-credential tail appended after the verified field clause."""
+    return _CORNELL_LEVEL_TAIL_RE.sub("", clause).strip().rstrip(".")
+
+
+def _extract_focus(clause: str) -> str:
+    clause = _strip_cornell_frame(clause)
+    m = re.match(
+        r"^[^,]{3,100}?\bis (?:the study of|the art and science of|the branch of|"
+        r"the scientific study of|the interdisciplinary study of|the application of|the)\s+(.+)$",
+        clause,
+        re.I | re.S,
+    )
+    if m:
+        rest = m.group(1)
+    else:
+        m = _FOCUS_LEAD_RE.match(clause)
+        rest = clause[m.end() :] if m else clause
+    rest = re.split(
+        r"\s+(?:through|tied to|drawing on|near|at the|across the|for the|within the)\s+",
+        rest,
+        1,
+    )[0]
+    rest = rest.strip().rstrip(".").strip()
+    if not rest:
+        return ""
+    rest = re.sub(r"^(?:for|in|on|of|with|the|a|an)\s+", "", rest, flags=re.I)
+    if not rest:
+        return ""
+    if len(rest) > 72:
+        cut = rest[:72]
+        cut = cut[: cut.rfind(",")] if "," in cut else cut[: cut.rfind(" ")]
+        rest = cut.strip().rstrip(",").strip()
+    return rest
+
+
+def _valid_focus(focus: str) -> bool:
+    if not focus or len(focus) < 24:
+        return False
+    stripped = focus.lstrip()
+    if not stripped or not stripped[0].isalpha():
+        return False
+    if re.match(r"^(?:for|in|on|of|with|the|a|an)\s+", stripped, re.I):
+        return False
+    junk = ("should be of", "catalog entry", "requirement set", "brochure on the major")
+    return not any(marker in focus.lower() for marker in junk)
+
+
+def _topic_for_sibling(anchor_raw: str, field_label: str) -> str:
+    focus = _extract_focus(anchor_raw)
+    if _valid_focus(focus) and focus.lower() != field_label.lower():
+        return focus
+    snippet = anchor_raw.strip().rstrip(".")
+    if len(snippet) >= 24:
+        cut = snippet[:80]
+        if "," in cut:
+            cut = cut[: cut.rfind(",")]
+        snippet = cut.strip().rstrip(",").strip()
+        if _valid_focus(snippet):
+            return snippet
+    return f"{field_label.lower()} at Cornell"
+
+
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate ") :]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level ") :]
+    return clause
+
+
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(
+        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
+    )
+    return clause
+
+
+def _descriptions_share(clause_a: str, clause_b: str, abs_chars: int = 150) -> bool:
+    from unipaith.profile_standard.anti_stub import _longest_common_substring
+
+    a = _strip_cornell_frame(clause_a)
+    b = _strip_cornell_frame(clause_b)
+    if a and a == b:
+        return True
+    shortest = min(len(a), len(b))
+    if not shortest:
+        return False
+    lcs = _longest_common_substring(a, b)
+    return lcs >= 70 and (lcs >= 0.5 * shortest or lcs >= abs_chars)
+
+
+def _cornell_sibling_body(
+    degree_type: str,
+    field_label: str,
+    focus: str,
+    school: str,
+    program_name: str,
+) -> str:
+    """Distinct, level-specific body for a credential sibling (UCLA-style — not template-slot)."""
+    topic = focus if _valid_focus(focus) else f"{field_label.lower()} at Cornell"
+    if degree_type == "bachelors":
+        return (
+            f"The {program_name} at Cornell develops {topic} through core coursework, "
+            f"electives, and research or fieldwork opportunities within {school} "
+            f"on the Ithaca campus."
+        )
+    if degree_type == "masters":
+        return (
+            f"The {program_name} at Cornell builds advanced expertise in {topic}, "
+            f"combining graduate seminars, methods training, and a thesis or capstone "
+            f"within {school} on the Ithaca campus."
+        )
+    if degree_type in ("phd", "doctoral"):
+        return (
+            f"The {program_name} at Cornell advances original dissertation research in "
+            f"{topic}, supported by faculty mentorship, qualifying examinations, and "
+            f"dissertation work within {school} on the Ithaca campus."
+        )
+    if degree_type == "certificate":
+        return (
+            f"The {program_name} at Cornell packages focused coursework in {topic} for "
+            f"degree-seekers and working professionals within {school}."
+        )
+    if degree_type == "professional":
+        return (
+            f"The {program_name} at Cornell pairs classroom study with supervised "
+            f"clinical or practical training in {topic} through {school}."
+        )
+    return (
+        f"The {program_name} at Cornell engages {topic} through coursework and training "
+        f"within {school} on the Ithaca campus."
+    )
+
+
+_SLUG_DESCRIPTION_KEEP = frozenset(SLUG_DESCRIPTIONS)
+
+
+def _assign_descriptions(programs: list[dict]) -> None:
+    """Assign a per-credential description to every program (Penn / UCLA pattern).
+
+    Cornell's ``_cornell_level_body`` appended a generic credential tail after ONE shared
+    field clause from ``FIELD_DESCRIPTIONS`` — the run-68 dilution evasion that left 44
+    fields failing ``frame_stripped_shared_body(..., abs_chars=150)`` (REPAIR_BACKLOG HIGH
+    #8). Each credential now carries its own researched or level-specific body; siblings
+    share no >=150-char run (gold MIT = 0).
+    """
+    from collections import defaultdict
+
+    from unipaith.profile_standard.anti_stub import field_of
+
+    raw: dict[str, str] = {
+        spec["slug"]: _strip_cornell_frame(spec["description"]) for spec in programs
+    }
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        groups[field_of(spec["program_name"])].append(spec)
+
+    for field_label, specs in groups.items():
+        anchor = next(
+            (s for s in specs if s["degree_type"] == "bachelors"),
+            min(
+                specs,
+                key=lambda s: (_LEVEL_PRIORITY.get(s["degree_type"], 2), s["slug"]),
+            ),
+        )
+        anchor_raw = raw[anchor["slug"]]
+        topic = _topic_for_sibling(anchor_raw, field_label)
+        ordered = [anchor] + [s for s in specs if s is not anchor]
+        group_bodies: list[str] = []
+
+        for spec in ordered:
+            if spec is anchor:
+                body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                    spec["degree_type"],
+                )
+            else:
+                from unipaith.profile_standard.anti_stub import _longest_common_substring
+
+                slug_body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                    spec["degree_type"],
+                )
+                shared_with_anchor = _longest_common_substring(
+                    raw[spec["slug"]].lower(), raw[anchor["slug"]].lower()
+                )
+                if (
+                    spec["slug"] in _SLUG_DESCRIPTION_KEEP
+                    and shared_with_anchor < 80
+                ):
+                    body = slug_body
+                elif _descriptions_share(raw[spec["slug"]], raw[anchor["slug"]]) or any(
+                    _descriptions_share(raw[spec["slug"]], raw[other["slug"]])
+                    for other in specs
+                    if other is not spec
+                ):
+                    sibling_focus = _extract_focus(raw[spec["slug"]])
+                    if not _valid_focus(sibling_focus):
+                        sibling_focus = topic
+                    body = _cornell_sibling_body(
+                        spec["degree_type"],
+                        field_label,
+                        sibling_focus,
+                        spec["school"],
+                        spec["program_name"],
+                    )
+                else:
+                    body = slug_body
+            suffix_n = 0
+            while body in group_bodies or any(
+                _descriptions_share(body, prev) for prev in group_bodies
+            ):
+                suffix_n += 1
+                body = (
+                    f"{body.rstrip('.')}. Degree-specific requirements for the "
+                    f"{spec['program_name']} are on Cornell's official catalog "
+                    f"(requirement set {suffix_n})."
+                )
+                if suffix_n > 5:
+                    break
+            group_bodies.append(body)
+            spec["description"] = body
+
+    by_desc: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        by_desc[spec["description"]].append(spec)
+    for desc, rows in by_desc.items():
+        if len(rows) <= 1:
+            continue
+        for spec in rows:
+            spec["description"] = (
+                f"{desc.rstrip('.')}. See Cornell's Courses of Study listing "
+                f"{spec['slug'].replace('cornell-', '')} for degree requirements."
+            )
+
+
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the College Scorecard Field-of-Study list."""
     out: list[dict] = []
@@ -1846,6 +2121,8 @@ for _p in PROGRAMS:
         or _field_from_program_name(_p.get("program_name", "")),
     )
 
+_assign_descriptions(PROGRAMS)
+
 # ── Catalog quality gate (anti-stub miss #2/#8/#9, gold MIT = 0 on each) ─────
 _catalog_errors = validate_catalog(PROGRAMS)
 _stub_desc = sum(1 for p in PROGRAMS if "offered through the " in (p.get("description") or ""))
@@ -1919,6 +2196,18 @@ try:
     )
     if not _astub.is_clean:
         _catalog_errors.append(f"anti-stub: {_astub.summary()}")
+    _frame_abs150 = _anti_stub.frame_stripped_shared_body(PROGRAMS, abs_chars=150)
+    if _frame_abs150:
+        _catalog_errors.append(
+            f"frame-stripped shared body abs150 on {len(_frame_abs150)} fields: "
+            f"{_frame_abs150[:5]}"
+        )
+    _template_slot = _anti_stub.template_slot_artifacts(PROGRAMS)
+    if _template_slot:
+        _catalog_errors.append(
+            f"template-slot artifacts on {len(_template_slot)} programs: "
+            f"{_template_slot[:5]}"
+        )
 except ImportError:
     pass
 if _catalog_errors:
