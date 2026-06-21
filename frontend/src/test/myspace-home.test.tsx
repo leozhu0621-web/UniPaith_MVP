@@ -184,6 +184,8 @@ describe('MySpaceHomePage', () => {
     renderHome()
 
     expect(await screen.findByText(/Good (morning|afternoon|evening), Ada/)).toBeTruthy()
+    expect(screen.getByText(/Updated .*1 active task.*0 hidden tasks/)).toBeTruthy()
+    expect(screen.getByText('source-backed')).toBeTruthy()
     expect(screen.getByText('Complete MS Computer Science application')).toBeTruthy()
     expect(screen.getByText('Readiness ledger')).toBeTruthy()
     expect(screen.getByText('Application portfolio')).toBeTruthy()

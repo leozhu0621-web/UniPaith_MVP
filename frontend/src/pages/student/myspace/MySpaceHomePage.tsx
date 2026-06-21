@@ -48,6 +48,17 @@ function formatDate(iso: string | null): string | null {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
+function formatDateTime(iso: string | null): string {
+  if (!iso) return 'recently'
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return 'recently'
+  return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+}
+
+function countLabel(count: number, singular: string) {
+  return `${count} ${singular}${count === 1 ? '' : 's'}`
+}
+
 function sourceLine(item: { provenance?: { source: string; label: string; confidence: number | null }[] }) {
   const source = item.provenance?.[0]
   if (!source) return 'Source unavailable'
@@ -170,6 +181,8 @@ export default function MySpaceHomePage() {
               Some My Space modules are using fallback data. {data.access_issues[0].label}.
             </div>
           )}
+
+          <OverviewMeta generatedAt={data.generated_at} activeCount={activeTasks.length} hiddenCount={hiddenTasks.length} />
 
           <FocusPanel
             task={focus}
@@ -316,6 +329,25 @@ export default function MySpaceHomePage() {
         </div>
       )}
     </PageContainer>
+  )
+}
+
+function OverviewMeta({
+  generatedAt,
+  activeCount,
+  hiddenCount,
+}: {
+  generatedAt: string
+  activeCount: number
+  hiddenCount: number
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <p>
+        Updated {formatDateTime(generatedAt)} · {countLabel(activeCount, 'active task')} · {countLabel(hiddenCount, 'hidden task')}
+      </p>
+      <Badge variant="neutral">source-backed</Badge>
+    </div>
   )
 }
 
