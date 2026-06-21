@@ -22,6 +22,16 @@ describe('deadlineInfo — canonical daysUntil countdown', () => {
     expect(info.urgent).toBe(false)
   })
 
+  it('drives `urgent` (amber) by the canonical 7/21 tone, not the 30-day text window', () => {
+    // 25 days: still shows the countdown (≤30 window) but is NOT urgent/amber — it
+    // is amber on no surface that uses the canonical tone, so it must not be here.
+    const far = deadlineInfo(inDays(25))!
+    expect(far.text).toBe('25d left')
+    expect(far.urgent).toBe(false)
+    // 15 days: within the 21-day canonical warning band → urgent.
+    expect(deadlineInfo(inDays(15))!.urgent).toBe(true)
+  })
+
   it('shows the date (not a relative pill) beyond 30 days', () => {
     const info = deadlineInfo(inDays(45))!
     expect(info.closed).toBe(false)

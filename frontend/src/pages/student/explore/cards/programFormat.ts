@@ -1,4 +1,4 @@
-import { daysUntil } from '../../../../utils/deadline'
+import { daysUntil, deadlineTone } from '../../../../utils/deadline'
 
 // Shared program field formatters — used by ProgramCard and ProgramListRow so
 // the card and the dense row never disagree on how a value reads.
@@ -39,6 +39,9 @@ export function deadlineInfo(deadline?: string | null): DeadlineInfo | null {
   const days = daysUntil(deadline) ?? 0
   const date = new Date(deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   if (days < 0) return { text: date, urgent: false, closed: true }
-  if (days <= 30) return { text: `${days}d left`, urgent: true, closed: false, date }
+  // Show the "Xd left" countdown for up to a month, but drive `urgent` (the amber
+  // tone) by the canonical 7/21 table so a 25-day deadline isn't amber here while
+  // it's neutral on the calendar dot and every other surface.
+  if (days <= 30) return { text: `${days}d left`, urgent: deadlineTone(days) !== 'normal', closed: false, date }
   return { text: date, urgent: false, closed: false }
 }

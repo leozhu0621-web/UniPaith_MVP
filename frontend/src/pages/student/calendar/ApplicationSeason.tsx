@@ -9,9 +9,13 @@ import { getConnectFeed, type ConnectFeedItem } from '../../../api/connect'
 import { createReminder } from '../../../api/calendar'
 import { showToast } from '../../../stores/toast-store'
 import { groupByMonth } from './seasonGroups'
+import { deadlineTone } from '../../../utils/deadline'
 
 function urgencyText(soonest: number): string {
-  return soonest <= 7 ? 'text-error' : soonest <= 30 ? 'text-warning' : 'text-muted-foreground'
+  // Canonical 7/21 threshold (utils/deadline) so a deadline reads the same urgency
+  // here, in the calendar dot, and on every card — not an ad-hoc 30-day amber.
+  const tone = deadlineTone(soonest)
+  return tone === 'error' ? 'text-error' : tone === 'warning' ? 'text-warning' : 'text-muted-foreground'
 }
 
 export default function ApplicationSeason() {
