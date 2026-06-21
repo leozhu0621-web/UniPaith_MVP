@@ -48,6 +48,7 @@ class InstitutionDetail(InstitutionCard):
     median_debt: int | None = None
     carnegie_basic: int | None = None
     program_pct: dict | None = None
+    carnegie: dict | None = None
     source: str | None = None
     source_vintage: str | None = None
 
@@ -85,7 +86,9 @@ async def get_institution(unitid: int, db: AsyncSession = Depends(get_db)) -> In
     row = await ReferenceService(db).get_institution(unitid)
     if row is None:
         raise HTTPException(status_code=404, detail="Institution not found")
-    return InstitutionDetail.model_validate(row)
+    detail = InstitutionDetail.model_validate(row)
+    detail.carnegie = (row.extra or {}).get("carnegie")
+    return detail
 
 
 class Major(BaseModel):

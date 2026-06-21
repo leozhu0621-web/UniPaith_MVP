@@ -1096,6 +1096,58 @@ def _qualitative_confidence_word(confidence: float) -> str:
     return "still building as your profile fills in"
 
 
+# Plain, student-facing labels for fitness drivers. CPEF breakdowns expose only
+# internal keys (model/value/inner/coverage/veto/mean_rho/signals/...), so the
+# stub rationale must map the per-SIGNAL keys to these phrases and never surface a
+# raw breakdown key. Legacy convex-sum component keys map too.
+_FITNESS_DRIVER_LABELS: dict[str, str] = {
+    "semantic": "academic interests",
+    "themes": "interests & goals",
+    "needs": "your priorities",
+    "field": "field of study",
+    "budget": "affordability",
+    "geo": "location",
+    "time": "program length",
+    "flexibility": "format flexibility",
+    "support": "career support",
+    "degree_level": "degree level",
+    # legacy convex-sum components
+    "cosine": "academic interests",
+    "soft_align": "interests & goals",
+    "needs_match": "your priorities",
+}
+
+
+def _humanize_fitness_drivers(breakdown: dict, *, top_n: int = 3) -> list[str]:
+    """Friendly, student-facing driver phrases from a fitness breakdown.
+
+    For a CPEF breakdown the raw keys are internal, so we read the per-signal
+    ``signals`` list, take the strongest-fitting signals, and map them to plain
+    labels. For the legacy convex-sum breakdown we map its component keys. Either
+    way an internal/meta key (weights, mean_rho, coverage, ...) is never leaked.
+    """
+    if not isinstance(breakdown, dict):
+        return []
+    labels: list[str] = []
+    if breakdown.get("model") == "cpef":
+        signals = breakdown.get("signals") or []
+        ranked = sorted(
+            (s for s in signals if isinstance(s, dict) and s.get("key")),
+            key=lambda s: s.get("f", 0.0),
+            reverse=True,
+        )
+        candidates = [s["key"] for s in ranked]
+    else:
+        candidates = list(breakdown.keys())
+    for key in candidates:
+        label = _FITNESS_DRIVER_LABELS.get(key)
+        if label and label not in labels:
+            labels.append(label)
+        if len(labels) >= top_n:
+            break
+    return labels
+
+
 def _strip_numbers(obj: object) -> object:
     """Recursively remove every numeric scalar from a breakdown so the student
     never sees a number (AI-Structure-3 §14). Qualitative driver names, boolean
@@ -1480,7 +1532,7 @@ async def explain_match(
     from unipaith.ai.rationale_redaction import project_for_student as _proj_student
     from unipaith.ai.rationale_redaction import scrub_numbers_from_text
 
-    fitness_drivers = list((match.fitness_breakdown or {}).keys())
+    fitness_drivers = _humanize_fitness_drivers(match.fitness_breakdown or {})
     fit_word = _qualitative_fit_word(float(match.fitness_score))
     conf_word = _qualitative_confidence_word(float(match.confidence_score))
     drivers_phrase = ", ".join(fitness_drivers) if fitness_drivers else "your overall profile"

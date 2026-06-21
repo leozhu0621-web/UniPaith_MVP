@@ -406,7 +406,9 @@ export default function InsightsPanel({
             {/* Job-readiness sentiment — single cobalt-intensity series (§8) */}
             {sentTotal > 0 && (
               <div className="mb-4">
-                <div className="flex h-3 rounded-pill overflow-hidden bg-muted" title="Job-readiness sentiment">
+                {/* The legend below states each count as text, so the bar itself
+                    is decorative for assistive tech. */}
+                <div className="flex h-3 rounded-pill overflow-hidden bg-muted" title="Job-readiness sentiment" aria-hidden="true">
                   {([
                     ['positive', 'bg-secondary'],
                     ['neutral', 'bg-secondary/40'],

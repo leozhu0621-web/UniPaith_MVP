@@ -75,3 +75,49 @@ def test_mutual_breakdown_has_both_directions():
     m, bd = mutual_match(_student(), _GOOD)
     assert "p2s" in bd and "m" in bd and "alpha" in bd
     assert bd["model"] == "cpef"  # inherited from the s→p breakdown
+
+
+# ── p→s grading correctness (audit batch B) ──────────────────────────────────
+
+
+def test_gpa_at_floor_scores_high_not_neutral():
+    # pref_min_gpa is an admit FLOOR — a student exactly AT it should read as a
+    # strong fit (~0.85), not the cohort-mean 0.5 the old higher-is-better form
+    # gave (which buried qualified applicants in the program's own direction).
+    student = StudentFeatures(sparse={"gpa": 3.5})
+    program = ProgramFeatures(program_id="floor", sparse={"pref_min_gpa": 3.5})
+    _, bd = cpef_program_to_student(student, program)
+    assert bd["satisfaction"] >= 0.8
+
+
+def test_gpa_well_below_floor_still_scores_low():
+    student = StudentFeatures(sparse={"gpa": 3.0})
+    program = ProgramFeatures(program_id="floor", sparse={"pref_min_gpa": 3.8})
+    _, bd = cpef_program_to_student(student, program)
+    assert bd["satisfaction"] < 0.3
+
+
+def test_career_arcs_graded_by_program_pref_coverage():
+    # Program asks "how many of the arcs we prefer does this applicant carry"
+    # → graded coverage, not the old binary any-overlap=1.0.
+    prog = ProgramFeatures(program_id="careers", sparse={"pref_career_arcs": ["a", "b", "c", "d"]})
+
+    def _sat(arcs: list[str]) -> float:
+        _, bd = cpef_program_to_student(StudentFeatures(sparse={"career_arcs": arcs}), prog)
+        return bd["satisfaction"]
+
+    full = {"satisfaction": _sat(["a", "b", "c", "d"])}
+    half = {"satisfaction": _sat(["a", "b"])}
+    none = {"satisfaction": _sat(["x", "y"])}
+    assert full["satisfaction"] == 1.0
+    assert none["satisfaction"] == 0.0
+    assert 0.4 < half["satisfaction"] < 0.6  # graded — old binary gave 1.0
+
+
+def test_values_graded_by_program_pref_coverage():
+    prog = ProgramFeatures(
+        program_id="vals",
+        sparse={"pref_values": ["impact", "rigor", "service", "curiosity"]},
+    )
+    half = cpef_program_to_student(StudentFeatures(sparse={"values": ["impact", "rigor"]}), prog)[1]
+    assert 0.4 < half["satisfaction"] < 0.6

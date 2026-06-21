@@ -23,6 +23,18 @@ def test_categorical_best_over_a_list():
     assert fits.fit_categorical_best(None, ["ds"], table) == 0.5
 
 
+def test_categorical_best_ignores_falsy_options():
+    # A None/"" element in the program's option list must NOT win the max and
+    # inflate a true mismatch to the neutral 0.5 (fit_categorical(x, None) == 0.5).
+    table = {("ds", "stats"): 0.8}
+    # "ds" vs ["art", None] is a real 0.0 mismatch — the None must be ignored.
+    assert fits.fit_categorical_best("ds", ["art", None], table) == 0.0
+    # falsy elements don't change a clean result.
+    assert fits.fit_categorical_best("ds", ["stats", None, ""], table) == 0.8
+    # a list of only falsy options is effectively empty → neutral 0.5.
+    assert fits.fit_categorical_best("ds", [None, ""], table) == 0.5
+
+
 def test_numeric_higher_midpoint_and_tails():
     assert abs(fits.fit_numeric_higher(3.5, 3.5, 0.3) - 0.5) < 1e-6
     assert fits.fit_numeric_higher(4.5, 3.5, 0.3) > 0.95
