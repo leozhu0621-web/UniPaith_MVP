@@ -55,6 +55,15 @@ import re
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from unipaith.data.nyu_gold_descriptions import (
+    DNP_DEPARTMENT,
+    DNP_DESCRIPTION,
+    DNP_NAME,
+    DNP_SLUG,
+    DNP_TRACKS,
+    DNP_WEBSITE,
+    GOLD_DESCRIPTIONS,
+)
 from unipaith.data.profile_catalog_utils import validate_catalog
 from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
@@ -62,7 +71,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 INSTITUTION_NAME = "New York University"
 
 # Date this profile was researched + verified; stamped into every node's _standard.
-ENRICHED_AT = "2026-06-19"
+ENRICHED_AT = "2026-06-20"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -5654,7 +5663,39 @@ def _build_catalog() -> list[dict]:
         spec["description"] = _nyu_description(spec)
         out.append(spec)
     _disambiguate_catalog_descriptions(out)
+    out = _apply_gold_repairs(out)
     return out
+
+
+def _apply_gold_repairs(programs: list[dict]) -> list[dict]:
+    """Gold repair (nyugold1): collapse the DNP concentration-split rows and override the
+    joint/dual/specialization descriptions that reused a base department blurb verbatim.
+
+    See ``nyu_gold_descriptions`` for the rationale. Applied last so it wins over the
+    generated bodies; the build self-check below asserts no two programs share a
+    >=150-character run after this step.
+    """
+    # 1) Collapse the six "Doctor of Nursing Practice — {specialty}" rows (miss #2) into one
+    #    DNP carrying the specialties as tracks; ``apply`` deletes/unpublishes the dropped slugs.
+    dnp = [p for p in programs if p["program_name"].startswith("Doctor of Nursing Practice —")]
+    if dnp:
+        keep = dnp[0]
+        keep["slug"] = DNP_SLUG
+        keep["bulletin_slug"] = "doctor-of-nursing-practice"
+        keep["program_name"] = DNP_NAME
+        keep["degree_type"] = "professional"
+        keep["department"] = DNP_DEPARTMENT
+        keep["website"] = DNP_WEBSITE
+        keep["description"] = DNP_DESCRIPTION
+        keep["tracks"] = DNP_TRACKS
+        dropped = {id(p) for p in dnp[1:]}
+        programs = [p for p in programs if id(p) not in dropped]
+    # 2) Per-program researched descriptions that break the cross-field department-blurb stamps.
+    for spec in programs:
+        repl = GOLD_DESCRIPTIONS.get(spec["slug"])
+        if repl:
+            spec["description"] = repl
+    return programs
 
 
 PROGRAMS: list[dict] = _build_catalog()
@@ -6328,7 +6369,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)
         p.outcomes_data = outcomes
-        p.tracks = None
+        p.tracks = spec.get("tracks")
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
         p.faculty_contacts = _FACULTY_BY_SLUG.get(slug)
         p.external_reviews = _REVIEWS_BY_SLUG.get(slug)
