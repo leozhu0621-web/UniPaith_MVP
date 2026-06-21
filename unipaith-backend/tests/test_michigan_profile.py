@@ -87,19 +87,50 @@ def test_catalog_breadth_and_shape():
     assert not validate_catalog(m.PROGRAMS)
 
 
-def test_every_program_has_published_tuition():
+def test_tuition_is_published_per_school_or_honestly_omitted():
     """Tuition is a matcher-core, institution-PUBLISHED field — a whole-catalog null is
-    matcher starvation, not an honest omission (REPAIR BACKLOG entry #6). Every program
-    must carry a positive resident annual tuition with a higher out-of-state breakdown."""
+    matcher starvation (REPAIR BACKLOG entry #6). Each program EITHER carries a positive
+    resident annual tuition (the owning school's OWN verified rate, with a higher
+    out-of-state breakdown) OR records cost_data.tuition_usd as omitted with a real reason —
+    never a silent cross-school default and never a wrong budget signal. The vast majority
+    must carry a figure (only the credits-toward-program / clinical-residency schools omit)."""
+    covered = 0
     for spec in m.PROGRAMS:
         tuition, cost = m._program_tuition(spec)
-        assert isinstance(tuition, int) and tuition > 0, spec["slug"]
-        assert cost["tuition_usd"] == tuition, spec["slug"]
-        oos = cost["breakdown"]["tuition_out_of_state"]
-        assert oos >= tuition, spec["slug"]
-        assert cost.get("source_url"), spec["slug"]
-        # tuition is provided, so it must NOT be recorded as omitted
-        assert "cost_data.tuition_usd" not in m._program_standard(spec["slug"], spec)["omitted"]
+        omitted = m._program_standard(spec["slug"], spec)["omitted"]
+        if tuition is None:
+            assert "cost_data.tuition_usd" in omitted, spec["slug"]
+            assert cost.get("note") and cost.get("source_url"), spec["slug"]
+            assert spec["school_key"] in m._GRAD_TUITION_OMIT_SCHOOLS, spec["slug"]
+        else:
+            assert isinstance(tuition, int) and tuition > 0, spec["slug"]
+            assert cost["tuition_usd"] == tuition, spec["slug"]
+            assert cost["breakdown"]["tuition_out_of_state"] >= tuition, spec["slug"]
+            assert cost.get("source_url"), spec["slug"]
+            assert "cost_data.tuition_usd" not in omitted, spec["slug"]
+            covered += 1
+    # the published majority must be filled — not a token few (matcher starvation guard)
+    assert covered >= int(0.85 * len(m.PROGRAMS)), covered
+
+
+def test_no_grad_program_silently_defaults_to_another_schools_rate():
+    """Every non-bachelor figure must come from the program's OWN school/level/slug rate or
+    be omitted — there is no cross-school fallback (Codex review P1)."""
+    assert not hasattr(m, "_GRAD_TUITION_DEFAULT")
+    for spec in m.PROGRAMS:
+        if spec["degree_type"] == "bachelors":
+            continue
+        sk, slug, dt = spec["school_key"], spec["slug"], spec["degree_type"]
+        tuition, _ = m._program_tuition(spec)
+        if tuition is None:
+            continue
+        source = (
+            slug in m._PROF_TUITION_BY_SLUG
+            or slug in m._GRAD_TUITION_BY_SLUG
+            or (sk, dt) in m._GRAD_TUITION_BY_SCHOOL_LEVEL
+            or sk in m._GRAD_TUITION_BY_SCHOOL
+        )
+        assert source, f"{slug}: tuition not tied to a verified own-school rate"
 
 
 def test_ioe_descriptions_are_researched_not_template_slot():

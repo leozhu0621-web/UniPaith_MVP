@@ -3902,15 +3902,18 @@ _REGISTRAR_SRC = (
 _REGISTRAR_URL = "https://ro.umich.edu/tuition-residency/tuition-fees"
 
 # (resident_annual, non_resident_annual) standard full-time GRADUATE tuition by owning
-# school, from the 2024-25 Fee Bulletin per-term rate doubled. Schools whose distinct
-# rate is not separately verified default to the Rackham LSA standard rate.
+# school, each from the 2024-25 Fee Bulletin per-term rate doubled — the school's OWN
+# verified rate, never a cross-school default. A school whose programs bill on a
+# credits-toward-program or clinical/residency basis with NO clean published full-time
+# annual rate is in ``_GRAD_TUITION_OMIT_SCHOOLS`` instead (the scalar is omitted, not
+# guessed) — there is no silent fallback to another school's rate.
 _GRAD_TUITION_BY_SCHOOL: dict[str, tuple[int, int]] = {
-    "LSA": (28554, 57444),  # 14,277 / 28,722 per term (LSA Rackham pre-candidate)
+    "LSA": (28554, 57444),  # 14,277 / 28,722 (LSA Rackham pre-candidate)
     "ENG": (32486, 60916),  # 16,243 / 30,458 (Engineering Rackham pre-candidate)
     "ROSS": (29758, 59232),  # 14,879 / 29,616 (Ross Rackham pre-candidate; MBA below)
     "MED": (28606, 57562),  # 14,303 / 28,781 (Medicine Rackham pre-candidate)
     "LAW": (72552, 75552),  # Law full-time professional rate (the LL.M. bills the same)
-    "INFO": (28554, 57444),  # 14,277 / 28,722
+    "INFO": (28554, 57444),  # 14,277 / 28,722 (Information Master pre-candidate)
     "SMTD": (29102, 58604),  # 14,551 / 29,302 (Music, Theatre & Dance Rackham)
     "EDU": (29102, 58604),  # 14,551 / 29,302 (Education Rackham)
     "NURS": (29432, 59270),  # 14,716 / 29,635 (Nursing Rackham)
@@ -3918,8 +3921,28 @@ _GRAD_TUITION_BY_SCHOOL: dict[str, tuple[int, int]] = {
     "TAUB": (37156, 54296),  # 18,578 / 27,148 (Architecture & Urban Planning)
     "STAMPS": (29102, 58604),  # 14,551 / 29,302 (Stamps Art & Design Rackham)
     "SEAS": (28176, 55620),  # 14,088 / 27,810 (Environment & Sustainability Rackham)
+    "SPH": (35478, 58502),  # 17,739 / 29,251 (Public Health Master pre-candidate)
+    "PHARM": (28554, 57444),  # 14,277 / 28,722 (Pharmacy Master pre-candidate, Rackham)
+    "SSW": (28554, 57444),  # 14,277 / 28,722 (Social Work Rackham pre-candidate, PhD)
+    "RACK": (28554, 57444),  # 14,277 / 28,722 (Rackham interdepartmental)
 }
-_GRAD_TUITION_DEFAULT = (28554, 57444)  # Rackham LSA standard full-time rate
+
+# (school_key, degree_type) exceptions where one credential level bills a distinct
+# verified rate that differs from the school's default above.
+_GRAD_TUITION_BY_SCHOOL_LEVEL: dict[tuple[str, str], tuple[int, int]] = {
+    ("SSW", "masters"): (34218, 54706),  # 17,109 / 27,353 (M.S.W. professional master's)
+}
+
+# Per-slug exceptions — an online variant bills its own published (lower) rate.
+_GRAD_TUITION_BY_SLUG: dict[str, tuple[int, int]] = {
+    # 14,018 / 28,490 (Medicine HILS Online; distinct from the on-campus MED rate)
+    "mich-health-infrastructures-and-learning-systems-online-ms": (28036, 56980),
+}
+
+# Schools whose graduate programs bill on a credits-toward-program basis (Ford) or a
+# clinical/residency basis (Dentistry) with no single published full-time annual rate, so
+# the annual scalar is OMITTED (recorded in _standard.omitted) rather than estimated.
+_GRAD_TUITION_OMIT_SCHOOLS: frozenset[str] = frozenset({"FORD", "DENT"})
 
 # Professional-degree annual tuition (resident, non_resident) — distinct published flat
 # rates from the 2024-25 Fee Bulletin per-term rate doubled.
@@ -3978,15 +4001,49 @@ def _grad_tuition_cost(resident: int, non_resident: int, degree_type: str) -> di
     }
 
 
-def _program_tuition(spec: dict) -> tuple[int, dict]:
-    """Return ``(tuition_usd, cost_data)`` for a program from U-M's published rates."""
+def _grad_tuition_omitted_cost(spec: dict) -> dict:
+    """cost_data for a graduate program whose annual rate is honestly omitted."""
+    return {
+        "funded": False,
+        "note": (
+            "This program bills tuition on a credits-toward-program or clinical/residency "
+            "basis with no single published full-time annual rate, so the annual figure is "
+            "omitted rather than estimated — see the school's tuition page for the per-term "
+            "or per-credit rate (Michigan resident vs. non-resident)."
+        ),
+        "source": _REGISTRAR_SRC,
+        "source_url": _website_for(spec),
+        "year": "2024-25",
+    }
+
+
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return ``(tuition_usd, cost_data)`` for a program from U-M's published rates.
+
+    Each non-bachelor figure is the owning SCHOOL's own verified Fee Bulletin rate (with
+    per-credential and per-slug online exceptions) — never another school's rate. A school
+    that bills on a credits-toward-program / clinical-residency basis with no clean
+    full-time annual rate returns ``None`` (the scalar is omitted, recorded in
+    ``_standard.omitted``), so the matcher never sees a wrong budget signal.
+    """
     dt = spec["degree_type"]
+    slug = spec["slug"]
+    sk = spec["school_key"]
     if dt == "bachelors":
         return _TUITION_UG_INSTATE, _undergrad_cost()
-    if spec["slug"] in _PROF_TUITION_BY_SLUG:
-        res, oos = _PROF_TUITION_BY_SLUG[spec["slug"]]
+    if slug in _PROF_TUITION_BY_SLUG:
+        res, oos = _PROF_TUITION_BY_SLUG[slug]
         return res, _grad_tuition_cost(res, oos, dt)
-    res, oos = _GRAD_TUITION_BY_SCHOOL.get(spec["school_key"], _GRAD_TUITION_DEFAULT)
+    if slug in _GRAD_TUITION_BY_SLUG:
+        res, oos = _GRAD_TUITION_BY_SLUG[slug]
+        return res, _grad_tuition_cost(res, oos, dt)
+    if (sk, dt) in _GRAD_TUITION_BY_SCHOOL_LEVEL:
+        res, oos = _GRAD_TUITION_BY_SCHOOL_LEVEL[(sk, dt)]
+        return res, _grad_tuition_cost(res, oos, dt)
+    rate = _GRAD_TUITION_BY_SCHOOL.get(sk)
+    if sk in _GRAD_TUITION_OMIT_SCHOOLS or rate is None:
+        return None, _grad_tuition_omitted_cost(spec)
+    res, oos = rate
     return res, _grad_tuition_cost(res, oos, dt)
 
 
@@ -4350,6 +4407,8 @@ def _requirements_for(spec: dict) -> dict:
 
 def _program_standard(slug: str, spec: dict) -> dict:
     omitted: list[str] = ["tracks"]
+    if _program_tuition(spec)[0] is None:
+        omitted.append("cost_data.tuition_usd")
     if slug not in _OUTCOMES_BY_SLUG:
         omitted += [
             "outcomes_data.employment_rate",
