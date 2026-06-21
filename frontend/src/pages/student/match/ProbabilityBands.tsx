@@ -133,12 +133,13 @@ export default function ProbabilityBands({
           {bands.drivers.map(d => (
             <span
               key={d.signal}
+              aria-label={`${d.signal} — ${d.direction === 'up' ? 'raises your odds' : 'lowers your odds'}`}
               className="inline-flex items-center gap-1 rounded-pill border border-border bg-card px-2 py-0.5 text-[11px] text-foreground"
             >
               {d.direction === 'up' ? (
-                <ArrowUpRight size={11} className="text-success" />
+                <ArrowUpRight size={11} className="text-success" aria-hidden="true" />
               ) : (
-                <ArrowDownRight size={11} className="text-foreground/60" />
+                <ArrowDownRight size={11} className="text-foreground/60" aria-hidden="true" />
               )}
               {d.signal}
             </span>
