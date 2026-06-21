@@ -953,7 +953,36 @@ async def get_my_matches(
     profile = await _svc(db)._get_student_profile(user.id)
     if refresh:
         await _recompute_catalog_matches(db, profile.id)
+    elif await _has_stale_matches(db, profile.id) and await _can_match(db, profile.id):
+        # Lazy auto-refresh. A profile/goals/needs/identity edit marks the
+        # student's matches stale (match_service.invalidate_for_profile_change);
+        # the institution/segment read paths already filter is_stale, but the
+        # student's own read did not — so she saw fitness/bands scored against an
+        # OLD profile until a manual refresh. Recompute once when stale rows exist
+        # (delete+insert resets is_stale=False), so this fires at most once per
+        # edit — the read right after the edit, where she expects fresh matches.
+        await _recompute_catalog_matches(db, profile.id)
     return await _list_enriched_matches(db, profile.id, limit=limit)
+
+
+async def _has_stale_matches(db: AsyncSession, student_id: UUID) -> bool:
+    """True when the student has at least one match row marked stale by a profile
+    change — the cheap EXISTS gate for the lazy auto-refresh on read."""
+    return (
+        await db.scalar(
+            select(MatchResult.id)
+            .where(MatchResult.student_id == student_id, MatchResult.is_stale.is_(True))
+            .limit(1)
+        )
+    ) is not None
+
+
+async def _can_match(db: AsyncSession, student_id: UUID) -> bool:
+    """Matching consent granted AND a feature vector exists (Discovery done).
+    Gates the lazy recompute so a not-yet-matchable student's read is a cheap no-op."""
+    from unipaith.services.match_service import MatchService
+
+    return await MatchService(db).can_match(student_id)
 
 
 @router.post("/me/matches/refresh", response_model=list[StudentMatchResponse])

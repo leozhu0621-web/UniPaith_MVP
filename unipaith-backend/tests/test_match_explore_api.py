@@ -14,7 +14,7 @@ from uuid import uuid4
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.models.ai_artifacts import StudentFeatureVector
@@ -180,6 +180,50 @@ async def test_probability_null_when_not_match_ready(
 
 
 # ── refresh applies priority weights (§5.2) ────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_get_matches_lazy_recomputes_stale_rows(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    """A profile/goals/needs edit marks the student's matches stale (match_service);
+    the institution/segment read paths already filter is_stale, but the student's own
+    GET /me/matches did not — so a student saw fitness/bands computed against an OLD
+    profile until a manual refresh. A plain read must now lazily recompute when stale
+    rows exist, clearing staleness (bounded: fires at most once per edit)."""
+    profile = await _ensure_profile(db_session, mock_student_user)
+    program = await _seed_program(db_session, acceptance_rate="0.3", published=True)
+    db_session.add(
+        StudentFeatureVector(
+            student_id=profile.id,
+            profile_version=1,
+            sparse_features={"feature_completeness": 0.6, "interest_themes": ["cs"]},
+            applicant_summary="A CS-focused applicant.",
+            embedding=None,
+        )
+    )
+    await _seed_match(db_session, profile, program)
+    await db_session.execute(
+        update(MatchResult).where(MatchResult.student_id == profile.id).values(is_stale=True)
+    )
+    await db_session.commit()
+
+    # Plain read — NO explicit refresh.
+    resp = await student_client.get(MATCHES)
+    assert resp.status_code == 200, resp.text
+
+    # Re-read the is_stale column directly (avoids ORM lazy-load in async).
+    stale_flags = (
+        (
+            await db_session.execute(
+                select(MatchResult.is_stale).where(MatchResult.student_id == profile.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert stale_flags, "lazy recompute should have produced fresh matches"
+    assert all(s is False for s in stale_flags), "stale rows must be cleared on a plain read"
 
 
 @pytest.mark.asyncio
