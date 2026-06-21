@@ -103,6 +103,29 @@ complete large catalogs (NYU 507 programs, UCLA 373, Michigan 379, UIUC 419, UW-
 360, USC 511, BU 396, UT-Austin 338), while peer catalogs correctly stamp it (Princeton
 100%, Cornell 92%, MIT 69%, Columbia 44%).
 
+**Measure tuition coverage PER CREDENTIAL LEVEL — a whole credential TIER shipped 0% is the SAME
+matcher-starvation as a catalog-wide null, MASKED by a healthy AGGREGATE %.** The catalog-aggregate
+bar above (0%/near-0% catalog-wide) is necessary but no longer sufficient: it is BEATEN by a catalog
+that fills its cheap-to-cover tiers and skips an expensive one. The undergrad sticker is uniform
+across all majors, so bachelor's rows fill to ~100% almost everywhere; the residual null is therefore
+concentrated in the GRADUATE tiers, and the catalog AGGREGATE HIDES it — a catalog reads "60% covered,
+off the zero-tuition list" while its ENTIRE master's / certificate / PhD tier is matcher-blind on
+budget. So the tuition pass must GROUP coverage by `degree_type` and treat any whole tier at 0% (beside
+a filled tier in the same catalog, or a peer that fills that tier) as a FAILURE the aggregate cannot
+excuse — never declare a catalog's budget signal done off the aggregate alone. Master's / professional /
+certificate programs publish a per-program or per-credit rate and are rarely fully funded, so a whole
+such tier at 0% is unambiguous starvation: stamp the published rate. A PhD tier publishes a sticker that
+is commonly WAIVED by funding, so the genuinely-funded per-program omit-with-reason (above) still applies
+— BUT a blanket tier-wide PhD null beside a PEER that fills it is not the "rare funded-waiver" omission;
+stamp the published sticker (the matcher's budget input — funding is a SEPARATE signal) or record
+`tuition` in that program's `_standard.omitted` with a reason, never a silent blanket tier null. This
+TIGHTENS the catalog-aggregate measurement above to a per-credential one; it loosens nothing (the
+funded-PhD-waiver exemption is preserved, now per-program-explicit, not tier-wide-silent). Evidence: live
+API this run — Michigan reads 61% aggregate yet ships PhD 1/148 (1%); Carnegie Mellon 22% hides master's
+1/99 + PhD 0/41; Johns Hopkins 25% hides ALL ~180 graduate programs (master's 0/95, certificate 0/84,
+PhD 0/4) at 0% — while a peer (UT-Austin) fills PhD 86/86 and master's 90% and EVERY catalog's bachelor's
+tier is already 100%.
+
 **NEW per-program step — derive the target applicant (`ProgramPreference`).** For
 every program, also write a **`program_preferences`** row (model `ProgramPreference`,
 table `program_preferences`, added in the AI-Structure build) so the **program →
