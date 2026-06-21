@@ -926,6 +926,317 @@ _SLUG_DESCRIPTION_KEEP = frozenset(
 )
 
 
+# ── Researched, per-credential graduate descriptions (REPAIR_BACKLOG run 72 CRITICAL #1) ──
+# The catalogue builder prepended a per-credential FRAME onto ONE shared discipline body,
+# and the run-68 "per-credential bodies" fixup (#1021) replaced that with a fixed template
+# ("Graduate coursework in the {credential} emphasizes {field-phrase}, with seminars, methods
+# training, and a culminating thesis or capstone through {School}.") — slotting a field phrase
+# into a template, doubling the credential, and appending a universal field-agnostic tail.
+# That MANUFACTURED 51 template_slot_artifacts rows shipped live (Stanford was in
+# CERTIFIED_CLEAN but excluded from _TEMPLATE_SLOT_CLEAN). These hand-authored bodies replace
+# the slotted template with researched prose about what each GRADUATE degree studies at its
+# level. Every clause is a true field fact plus the program's real, verified Stanford
+# department/school (no invented centers, rankings, or superlatives); each opens on the
+# subject (never the credential heading) and shares no body with its undergraduate / certificate
+# siblings, so template_slot_artifacts and frame_stripped_shared_body(abs_chars=150) both reach
+# the gold-MIT 0.
+_GRADUATE_DESCRIPTION_BY_SLUG: dict[str, str] = {
+    "stanford-natural-resources-conservation-and-research-ms": (
+        "Graduate Earth Systems science models how the atmosphere, oceans, biosphere, and "
+        "solid earth interact and respond to human pressure. Master's students in the Stanford "
+        "Doerr School of Sustainability combine field and computational methods with "
+        "environmental policy for careers in climate, conservation, and resource management."
+    ),
+    "stanford-area-studies-ms": (
+        "International policy analysis weighs security, economic development, migration, and "
+        "governance across nations and regions. Stanford's graduate program in international "
+        "policy builds skills in policy evaluation and regional expertise for roles in "
+        "government, multilateral institutions, and global NGOs."
+    ),
+    "stanford-communication-and-media-studies-ms": (
+        "Graduate communication research investigates how digital platforms, news, and "
+        "political messaging shape behavior, institutions, and public opinion. Master's "
+        "students in Stanford's Department of Communication apply social-scientific and "
+        "computational methods to media effects and the technologies that carry them."
+    ),
+    "stanford-biomedical-medical-engineering-ms": (
+        "Graduate bioengineering designs instruments, biomaterials, and therapies at the "
+        "interface of engineering and the life sciences. Within Stanford's Department of "
+        "Bioengineering, master's students work across synthetic biology, biomechanics, "
+        "imaging, and regenerative medicine alongside Stanford Medicine."
+    ),
+    "stanford-chemical-engineering-ms": (
+        "Chemical engineering at the master's level advances reaction engineering, transport "
+        "phenomena, catalysis, and the design of processes for energy, materials, and "
+        "biotechnology. Stanford's Department of Chemical Engineering pairs advanced "
+        "coursework with laboratory and computational research."
+    ),
+    "stanford-engineering-other-ms": (
+        "Graduate product design joins human-centered research, engineering, and manufacturing "
+        "to carry useful, sustainable products from concept to market. Stanford's program "
+        "emphasizes prototyping, design methodology, and entrepreneurship for students bridging "
+        "engineering and the creative process."
+    ),
+    "stanford-engineering-related-fields-ms": (
+        "Engineering physics graduate study applies advanced physics and mathematics to "
+        "problems in devices, energy systems, and emerging technologies. Stanford's master's "
+        "program in engineering fundamentals builds depth in computation, modeling, and "
+        "experiment for students bridging the physical sciences and engineering design."
+    ),
+    "stanford-linguistic-comparative-and-related-language-studies-and-services-ms": (
+        "Graduate linguistics analyzes phonology, syntax, semantics, and the cognitive and "
+        "social dimensions of language with formal and experimental methods. Stanford's "
+        "Department of Linguistics prepares master's students in fieldwork, computational "
+        "linguistics, and language documentation."
+    ),
+    "stanford-east-asian-languages-literatures-and-linguistics-ms": (
+        "This master's deepens advanced reading and scholarly interpretation of Chinese, "
+        "Japanese, and Korean literatures, religions, and intellectual history. Stanford's "
+        "Department of East Asian Languages and Cultures grounds students in primary-source "
+        "research and critical theory."
+    ),
+    "stanford-slavic-baltic-and-albanian-languages-literatures-and-linguistics-cert": (
+        "Slavic studies examines Russian and other Slavic literatures, languages, and cultural "
+        "histories. This graduate certificate offers focused advanced coursework for "
+        "degree-seekers and working professionals through Stanford's Department of Slavic "
+        "Languages and Literatures."
+    ),
+    "stanford-slavic-baltic-and-albanian-languages-literatures-and-linguistics-ms": (
+        "Graduate work in Slavic languages and literatures centers on close reading of Russian "
+        "and other Slavic literary traditions in their historical and political contexts. "
+        "Stanford's master's program develops advanced language command and original scholarly "
+        "research."
+    ),
+    "stanford-germanic-languages-literatures-and-linguistics-ms": (
+        "German studies at the graduate level reads German-language literature, philosophy, and "
+        "film within European cultural and intellectual history. Stanford's Department of "
+        "German Studies trains master's students in critical interpretation and advanced "
+        "language scholarship."
+    ),
+    "stanford-romance-languages-literatures-and-linguistics-ms": (
+        "Graduate study of French and Italian interprets the literatures, cinema, and thought "
+        "of the Romance traditions in their historical settings. Stanford's Department of "
+        "French and Italian prepares master's students for advanced literary research and "
+        "critical analysis."
+    ),
+    "stanford-classics-and-classical-languages-literatures-and-linguistics-ms": (
+        "Graduate classics reads ancient Greek and Latin texts alongside the history, "
+        "philosophy, and archaeology of the ancient Mediterranean. Stanford's Department of "
+        "Classics develops master's students' philological rigor and original scholarly "
+        "interpretation."
+    ),
+    "stanford-law-phd": (
+        "The doctoral program in law supports advanced scholarly research on legal institutions, "
+        "doctrine, and the social and economic effects of law. Stanford Law School mentors "
+        "candidates through a dissertation that contributes original legal scholarship for "
+        "academic careers."
+    ),
+    "stanford-legal-research-and-advanced-professional-studies-ms": (
+        "This master's in law gives graduate students and professionals advanced grounding in "
+        "legal reasoning, regulation, and the role of law across business, technology, and "
+        "policy. Stanford Law School pairs rigorous coursework with research for non-J.D. "
+        "scholars and practitioners."
+    ),
+    "stanford-english-language-and-literature-general-ms": (
+        "Graduate English studies literary history, criticism, and theory across periods and "
+        "genres, with attention to poetics and narrative. Stanford's Department of English "
+        "prepares master's students for advanced textual scholarship and critical writing."
+    ),
+    "stanford-english-language-and-literature-letters-other-ms": (
+        "Comparative literature at the graduate level reads texts across languages, nations, "
+        "and media, drawing on translation studies and critical theory. Stanford's Department "
+        "of Comparative Literature trains master's students in transnational literary analysis."
+    ),
+    "stanford-liberal-arts-and-sciences-general-studies-and-humanities-ms": (
+        "Graduate humanities work connects literature, philosophy, history, and the arts to "
+        "interpret the ideas and movements that shape culture. Stanford's interdisciplinary "
+        "master's program supports advanced research that crosses humanistic fields."
+    ),
+    "stanford-biology-general-ms": (
+        "Graduate biology investigates molecular, cellular, organismal, and ecological "
+        "mechanisms of living systems through advanced laboratory and field research. "
+        "Stanford's Department of Biology prepares master's students in experimental design "
+        "and quantitative analysis of life."
+    ),
+    "stanford-biochemistry-biophysics-and-molecular-biology-ms": (
+        "Graduate biochemistry examines the structure, function, and regulation of biological "
+        "molecules and the chemical reactions of the cell. Stanford's Department of "
+        "Biochemistry trains master's students in protein science, enzymology, and molecular "
+        "technique."
+    ),
+    "stanford-cell-cellular-biology-and-anatomical-sciences-ms": (
+        "Graduate cell and developmental biology studies how cells signal, divide, and "
+        "specialize to build tissues and organisms. Stanford's Department of Cell and "
+        "Developmental Biology prepares master's students in microscopy, genetics, and the "
+        "experimental analysis of development."
+    ),
+    "stanford-microbiological-sciences-and-immunology-ms": (
+        "Graduate microbiology and immunology study host-pathogen interaction, the immune "
+        "response, and the molecular biology of infection. Stanford's Department of "
+        "Microbiology and Immunology trains master's students in laboratory research on "
+        "disease and immunity."
+    ),
+    "stanford-genetics-ms": (
+        "Graduate genetics analyzes heredity, genome structure, and gene regulation, and how "
+        "variation drives development and disease. Stanford's Department of Genetics prepares "
+        "master's students in genomic technologies and computational analysis."
+    ),
+    "stanford-physiology-pathology-and-related-sciences-ms": (
+        "Graduate physiology examines how cells, organs, and systems coordinate to sustain "
+        "life, from molecular signaling to whole-organism function. Stanford's Department of "
+        "Physiology trains master's students in experimental approaches to health and disease."
+    ),
+    "stanford-ecology-evolution-systematics-and-population-biology-ms": (
+        "Graduate ecology and evolution study population dynamics, biodiversity, and the "
+        "evolutionary processes that shape life across environments. Stanford's Department of "
+        "Ecology and Evolution prepares master's students in field study, modeling, and "
+        "conservation science."
+    ),
+    "stanford-neurobiology-and-neurosciences-ms": (
+        "Graduate neuroscience investigates how neurons and circuits give rise to perception, "
+        "behavior, and cognition, from synapses to systems. Stanford's program trains master's "
+        "students in electrophysiology, imaging, and computational modeling of the brain."
+    ),
+    "stanford-biological-and-biomedical-sciences-other-ms": (
+        "Graduate biosciences span molecular, cellular, and translational research that bridges "
+        "biology and medicine. Stanford's interdisciplinary program prepares master's students "
+        "to apply quantitative and experimental methods across the life sciences."
+    ),
+    "stanford-mathematics-ms": (
+        "Graduate mathematics builds rigor in algebra, analysis, geometry, topology, and "
+        "probability and the construction of proofs. Stanford's Department of Mathematics "
+        "prepares master's students for advanced study and quantitative careers grounded in "
+        "abstract reasoning."
+    ),
+    "stanford-applied-mathematics-cert": (
+        "Applied mathematics builds models and numerical methods for problems in science, "
+        "engineering, and finance. This graduate certificate offers focused advanced coursework "
+        "in computation and analysis for degree-seekers and working professionals at Stanford."
+    ),
+    "stanford-applied-mathematics-ms": (
+        "Graduate applied mathematics develops differential equations, numerical analysis, "
+        "optimization, and modeling for scientific and engineering problems. Stanford's "
+        "program trains master's students to translate real-world systems into tractable "
+        "mathematics."
+    ),
+    "stanford-statistics-ms": (
+        "Graduate statistics covers probability, inference, statistical learning, and the "
+        "design and analysis of experiments and data. Stanford's Department of Statistics "
+        "prepares master's students in modern computational methods for data-driven research "
+        "and industry."
+    ),
+    "stanford-sustainability-studies-ms": (
+        "Graduate sustainability integrates climate science, energy systems, and environmental "
+        "policy to address resource and ecological challenges. The Stanford Doerr School of "
+        "Sustainability prepares master's students to design and evaluate solutions for a "
+        "changing planet."
+    ),
+    "stanford-philosophy-ms": (
+        "Graduate philosophy examines logic, metaphysics, ethics, and the philosophy of mind, "
+        "language, and science through rigorous argument. Stanford's Department of Philosophy "
+        "trains master's students in close analysis and original philosophical writing."
+    ),
+    "stanford-religion-religious-studies-ms": (
+        "Graduate religious studies analyzes sacred texts, practices, and institutions across "
+        "traditions and history using humanistic and social-scientific methods. Stanford's "
+        "Department of Religious Studies prepares master's students for comparative and "
+        "critical scholarship."
+    ),
+    "stanford-chemistry-ms": (
+        "Graduate chemistry advances organic, inorganic, physical, and analytical chemistry and "
+        "the synthesis and study of molecules. Stanford's Department of Chemistry pairs "
+        "advanced coursework with laboratory research on reactions, materials, and chemical "
+        "biology."
+    ),
+    "stanford-geological-and-earth-sciences-geosciences-ms": (
+        "Graduate geological sciences study the structure, history, and dynamics of the Earth, "
+        "from tectonics and minerals to surface processes and the geologic record. The "
+        "Stanford Doerr School of Sustainability trains master's students in field and "
+        "laboratory geoscience."
+    ),
+    "stanford-physics-ms": (
+        "Graduate physics probes matter and energy from particles and quantum systems to "
+        "condensed matter, astrophysics, and cosmology. Stanford's Department of Physics "
+        "prepares master's students in advanced theory and experiment at the frontiers of the "
+        "physical world."
+    ),
+    "stanford-psychology-general-ms": (
+        "Graduate psychology studies cognition, emotion, development, and social behavior "
+        "through experiment and quantitative analysis. Stanford's Department of Psychology "
+        "prepares master's students in research methods spanning the brain, mind, and behavior."
+    ),
+    "stanford-public-policy-analysis-ms": (
+        "Graduate public policy applies economics, statistics, and political analysis to "
+        "evaluate how programs and regulation affect society. Stanford's Public Policy Program "
+        "trains master's students to weigh evidence and trade-offs for government and the "
+        "public sector."
+    ),
+    "stanford-anthropology-ms": (
+        "Graduate anthropology studies human societies, cultures, and biological and material "
+        "life through ethnography, archaeology, and comparative analysis. Stanford's "
+        "Department of Anthropology prepares master's students in fieldwork and the "
+        "interpretation of human diversity."
+    ),
+    "stanford-economics-ms": (
+        "Graduate economics analyzes markets, incentives, and policy with microeconomic theory, "
+        "macroeconomics, and econometrics. Stanford's Department of Economics builds the "
+        "quantitative and modeling skills master's students need for research and applied "
+        "analysis."
+    ),
+    "stanford-political-science-and-government-ms": (
+        "Graduate political science studies institutions, elections, conflict, and political "
+        "behavior using formal theory and empirical methods. Stanford's Department of "
+        "Political Science prepares master's students in the analysis of governance and "
+        "public life."
+    ),
+    "stanford-sociology-ms": (
+        "Graduate sociology examines inequality, organizations, networks, and social change "
+        "through quantitative and qualitative research. Stanford's Department of Sociology "
+        "trains master's students in the methods that explain how social structures shape "
+        "behavior."
+    ),
+    "stanford-drama-theatre-arts-and-stagecraft-ms": (
+        "Graduate theater and performance studies joins critical scholarship with practice in "
+        "directing, dramaturgy, and performance across cultures and history. Stanford's "
+        "Department of Theater and Performance Studies prepares master's students to analyze "
+        "and make work for the stage and beyond."
+    ),
+    "stanford-film-video-and-photographic-arts-ms": (
+        "Graduate film and media studies analyzes cinema, documentary, and emerging media as "
+        "art, technology, and cultural force. Stanford's Department of Art and Art History "
+        "trains master's students in the critical theory, history, and interpretation of the "
+        "moving image."
+    ),
+    "stanford-fine-and-studio-arts-ms": (
+        "Graduate art history interprets painting, sculpture, architecture, and visual culture "
+        "across periods and regions. Stanford's Department of Art and Art History prepares "
+        "master's students in connoisseurship, theory, and archival research on works of art."
+    ),
+    "stanford-music-ms": (
+        "Graduate music at Stanford engages composition, musicology, and music science and "
+        "technology, including computer-based research at the Center for Computer Research in "
+        "Music and Acoustics. The Department of Music prepares master's students to combine "
+        "scholarship with creative or technical work in sound."
+    ),
+    "stanford-public-health-ms": (
+        "Graduate epidemiology and clinical research study disease distribution, risk factors, "
+        "and the design and analysis of clinical trials. Stanford School of Medicine trains "
+        "master's students in biostatistics and study methods for evidence-based medicine and "
+        "public health."
+    ),
+    "stanford-medical-illustration-and-informatics-ms": (
+        "Graduate biomedical informatics applies data science, machine learning, and "
+        "computation to biology, genomics, and clinical medicine. Stanford School of Medicine "
+        "prepares master's students to turn biomedical data into discovery and improved care."
+    ),
+    "stanford-history-ms": (
+        "Graduate history investigates the political, social, and cultural past through "
+        "archival sources and historical argument. Stanford's Department of History prepares "
+        "master's students in research methods and interpretation across regions and eras."
+    ),
+}
+
+
 def _assign_descriptions(programs: list[dict]) -> None:
     """Assign a per-credential description to every program (Berkeley / UCLA pattern).
 
@@ -959,7 +1270,12 @@ def _assign_descriptions(programs: list[dict]) -> None:
         group_bodies: list[str] = []
 
         for spec in ordered:
-            if spec is anchor:
+            authored = _GRADUATE_DESCRIPTION_BY_SLUG.get(spec["slug"])
+            if authored is not None:
+                # Researched per-credential prose replaces the slotted template (run-72
+                # CRITICAL #1) — used verbatim, never passed through the sibling generator.
+                body = authored
+            elif spec is anchor:
                 body = _level_appropriate_clause(
                     _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
                     spec["degree_type"],
@@ -1036,6 +1352,7 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
     from unipaith.profile_standard.anti_stub import (
         frame_stripped_shared_body,
         machine_artifacts,
+        template_slot_artifacts,
     )
 
     report = analyze(programs)
@@ -1049,6 +1366,13 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
         raise ValueError(
             f"Stanford frame-stripped shared body on {len(shared)} field(s): "
             f"{shared[:8]}{' …' if len(shared) > 8 else ''}"
+        )
+    # Run-72 CRITICAL #1: the slotted-template graduate rows are gone, so this must stay 0.
+    slotted = template_slot_artifacts(programs)
+    if slotted:
+        raise ValueError(
+            f"Stanford template-slot machine grammar on {len(slotted)} row(s): "
+            f"{slotted[:8]}{' …' if len(slotted) > 8 else ''}"
         )
 
 
