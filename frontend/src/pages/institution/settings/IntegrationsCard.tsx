@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Plug, Database, ChevronRight, Mail } from 'lucide-react'
 import Badge from '../../../components/ui/Badge'
-import Button from '../../../components/ui/Button'
 import SettingsSection from '../../student/settings/SettingsSection'
 
 // Spec 21 §3.4 — credentials for SIS/CRM + webhooks are Phase-2 (Spec 49);
@@ -46,11 +45,24 @@ export default function IntegrationsCard({ primaryDomain }: { primaryDomain: str
         <ChevronRight size={16} className="text-muted-foreground group-hover:text-foreground transition-colors" />
       </Link>
 
-      {/* SIS / CRM connectors — Phase 2 */}
+      {/* SIS / CRM connectors */}
       <div className="pt-3">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-          SIS &amp; CRM connectors
-        </p>
+        <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              SIS &amp; CRM connectors
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Use CSV upload and exports for this release. Connector credentials are configured by UniPaith support.
+            </p>
+          </div>
+          <Link
+            to="/i/data"
+            className="self-start text-xs font-semibold text-secondary underline-offset-4 hover:underline sm:self-auto"
+          >
+            Open data upload
+          </Link>
+        </div>
         <div className="grid gap-2 sm:grid-cols-2">
           {CONNECTORS.map(c => (
             <div
@@ -61,9 +73,7 @@ export default function IntegrationsCard({ primaryDomain }: { primaryDomain: str
                 <p className="text-sm font-medium text-foreground">{c.name}</p>
                 <p className="text-xs text-muted-foreground">{c.kind}</p>
               </div>
-              <Button variant="tertiary" size="sm" disabled>
-                Coming soon
-              </Button>
+              <Badge variant="neutral">Not connected</Badge>
             </div>
           ))}
         </div>
