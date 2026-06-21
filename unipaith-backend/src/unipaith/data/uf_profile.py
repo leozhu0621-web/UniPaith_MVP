@@ -739,36 +739,73 @@ _LEVEL_PRIORITY = {
     "doctoral": 4,
 }
 
-# Strip the leading subject + linking verb (incl. a relative clause "… science that
-# studies …") of a discipline definition to recover the field-specific topic phrase
-# ("the design, analysis, and manufacture of mechanical systems"; "how societies produce …").
-_TOPIC_LEAD_RES: tuple[re.Pattern[str], ...] = (
-    # "is the social science that studies …" / "is a branch of biology that examines …"
-    re.compile(
-        r"^is\s+(?:the|a|an)\s+[\w-]+(?:\s+[\w-]+){0,4}?\s+"
-        r"(?:that|which)\s+"
-        r"(?:study|studies|examine[s]?|investigate[s]?|explore[s]?|analyze[s]?|"
-        r"address(?:es)?|concern[s]?|describe[s]?|deal[s]? with|focus(?:es)? on)\s+",
-        re.I,
+# Recover the field-specific topic phrase from a discipline definition. The definition is
+# "{Subject} {verb} {predicate}" — we anchor on the SUBJECT (the field-ish noun phrase at the
+# very start, NOT a peer clause) and its MAIN verb, then take the predicate's focus. This is
+# robust to definitions that lead with an article/alias ("The biological sciences study …",
+# "Astronomy is …" for field "Astronomy and Astrophysics") or a "branch of {X} concerned
+# with …" form where a naive "… of" cut stops too early (Codex review on PR #1016).
+
+# The subject + its main verb. ``{0,5}?`` keeps the subject short so we stop at the FIRST
+# verb (the main one), not a verb buried in a later "while/whereas" clause.
+_TOPIC_SUBJECT_VERB_RE = re.compile(
+    r"^(?:the|an?|this|these|those)?\s*"
+    r"[A-Za-z][\w&/\-(),']*(?:\s+[\w&/\-(),']+){0,5}?\s+"
+    r"(?P<verb>is|are|applies|apply|prepares|prepare|study|studies|encompass|encompasses|"
+    r"examines?|explores?|investigates?|analyzes?|addresses?|concerns?|describes?|covers?|"
+    r"develops?|provides?|trains?|integrates?|combines?|involves?|seeks?)\s+",
+    re.I,
+)
+
+# A few discipline definitions use an irregular "{Subject} {verb}s and {verb}s …" shape with
+# no clean linking verb / connector to anchor on; give them a verified, field-specific topic
+# drawn from the definition by hand (still real prose, never the bare field label).
+_TOPIC_OVERRIDES: dict[str, str] = {
+    "Special Education": (
+        "instruction and support for students with disabilities and exceptional learning needs"
     ),
-    # "is the scientific study of …" / "is the discipline concerned with …"
-    re.compile(
-        r"^is\s+(?:the|a|an)\s+(?:scientific\s+|interdisciplinary\s+|systematic\s+|"
-        r"academic\s+|empirical\s+|formal\s+|applied\s+|theoretical\s+)?"
-        r"(?:study|science|art and science|art|discipline|branch|field|application|"
-        r"practice|theory|analysis|process|examination|investigation)\b[^.]*?"
-        r"(?:\bof\b|\bconcerned with\b|\bdevoted to\b|\bdealing with\b|\binvolving\b)\s+",
-        re.I,
+    "Recreation Management": (
+        "parks, leisure programs, and recreational facilities and the promotion of "
+        "health and community"
     ),
-    # bare verb leads, singular OR plural ("Animal sciences study …", "Physics studies …")
-    re.compile(
-        r"^(?:appl(?:y|ies)|stud(?:y|ies)|examines?|investigates?|explores?|analyze?s?|"
-        r"address(?:es)?|concerns?|integrates?|combines?|encompass(?:es)?|describes?|"
-        r"covers?|draws? on|deals? with|focus(?:es)? on|is concerned with)\s+",
-        re.I,
-    ),
-    # last-resort: drop a bare "is the / is a / is "
-    re.compile(r"^is\s+(?:the|a|an)?\s*", re.I),
+}
+
+# Highest-priority focus introducer in an "is/are" predicate. Checked FIRST so
+# "branch of engineering concerned with the design" yields "the design …", never the
+# false "engineering concerned with …" a leftmost descriptor-of cut would produce.
+_TOPIC_FOCUS_RE = re.compile(r"\b(?:concerned with|devoted to|dealing with|focused on)\s+", re.I)
+
+# Second priority: a "{descriptor} study/science … of …" or "… that/which {verb}s …" form.
+_TOPIC_CONNECTOR_RE = re.compile(
+    r"\b(?:(?:scientific\s+|interdisciplinary\s+|systematic\s+|academic\s+|empirical\s+|"
+    r"formal\s+|applied\s+|theoretical\s+|social\s+|natural\s+|physical\s+|"
+    r"professional\s+)*"
+    r"(?:study|studies|science|sciences|application|analysis|examination|investigation)\s+of|"
+    r"that\s+(?:study|studies|examines?|explores?|investigates?|analyzes?|addresses?|"
+    r"concerns?|describes?|deals? with|focus(?:es)? on)|"
+    r"which\s+(?:study|studies|examines?|explores?|investigates?|analyzes?))\s+",
+    re.I,
+)
+
+# Lowest priority: a bare descriptor noun + "of" ("the discipline of conserving …", "the art
+# form of structured human movement …"). Only consulted when no concerned-with / study-of
+# connector matched, so it never pre-empts the higher-priority forms above.
+_TOPIC_DESCRIPTOR_RE = re.compile(
+    r"\b(?:discipline|art form|art|field|branch|area|body|form|way|set|system|framework|"
+    r"process|method|theory|practice|study|studies|science|sciences)\s+of\s+",
+    re.I,
+)
+
+# A coordinated SECOND main verb (finite "-s" form) begins a new clause that does not belong
+# in the topic ("prepares teachers … and develops the pedagogical methods"); cut before it.
+# Bare infinitives ("to design and operate processes") are intentionally NOT listed.
+_TOPIC_COORD_VERB_ENDS = tuple(
+    f" and {v} "
+    for v in (
+        "develops", "applies", "operates", "provides", "creates", "manages", "delivers",
+        "builds", "examines", "explores", "designs", "integrates", "combines", "studies",
+        "analyzes", "addresses", "produces", "trains", "investigates",
+    )
 )
 
 # Clause terminators we prefer to end a topic on (keeps complete enumerations).
@@ -787,8 +824,21 @@ _TOPIC_CLAUSE_END = (
     " and whether ",
     " and the ways ",
     " and their relation",
+    " while ",
+    " whereas ",
+    ", developing ",
+    ", supporting ",
+    ", providing ",
+    ", applying ",
+    ", using ",
+    ", with applications ",
+    *_TOPIC_COORD_VERB_ENDS,
 )
-_TOPIC_MAX = 130
+# A hard cap that keeps every credential sibling's shared body under the 150-char abs-floor
+# (the per-credential framing around the interpolated topic adds ~4-6 shared chars, so the
+# topic itself must stay safely below 150 — the build's frame_stripped_shared_body gate
+# enforces it). 140 keeps complete enumerations whole for nearly every field.
+_TOPIC_MAX = 140
 # Words a clean topic phrase must not END on (a dangling preposition/conjunction/article).
 _TOPIC_TRAILING_JUNK = frozenset(
     {
@@ -799,34 +849,79 @@ _TOPIC_TRAILING_JUNK = frozenset(
 
 
 def _uf_topic(field: str) -> str:
-    """A field-specific topic phrase taken verbatim from the discipline definition.
+    """A field-specific topic phrase recovered from the discipline definition.
 
-    Always a substring of the definition (so it shares <=130 chars with the anchor row that
-    carries the full definition — under the 150-char floor) and always real field prose
-    (never the bare field label, which ``cross_field_clause`` normalizes to ``{FIELD}`` and
-    would collide across fields). Reads grammatically after "expertise in …" / "courses on …".
+    Reads grammatically as the object of "expertise in …" / "courses on …" / "research on …",
+    and is always real field prose (never the bare field label, which ``cross_field_clause``
+    normalizes to ``{FIELD}`` and would collide across fields). Shares <=130 chars with the
+    anchor row that carries the full definition — under the 150-char floor.
     """
+    if field in _TOPIC_OVERRIDES:
+        return _TOPIC_OVERRIDES[field]
     fl = field.lower()
-    defn = DISCIPLINE_DEFS.get(_FIELD_DEF_LOOKUP.get(fl, fl), "")
-    body = defn
-    if body.lower().startswith(fl):
-        body = body[len(field) :].lstrip()
-    # The catalog field name can be a truncation of the discipline subject ("Film and Video"
-    # vs "Film and video studies", "German" vs "German studies") — drop a residual subject
-    # noun so the linking verb / bare verb that follows is the one we strip.
-    body = re.sub(
-        r"^(?:studies|sciences|study|science)\s+(?=is\b|are\b|examine|study|"
-        r"explore|investigate|analyze|address|concern|integrate|combine|"
-        r"encompass|describe|cover|focus|deal\b|appl)",
+    defn = DISCIPLINE_DEFS.get(_FIELD_DEF_LOOKUP.get(fl, fl), "").strip()
+    if not defn:
+        return ""
+    # A discipline whose name ends in "studies"/"sciences" (the catalog field is the shorter
+    # form — "German" vs "German studies", "Film and Video" vs "Film and video studies")
+    # leaves that noun in the subject; drop it so the FOLLOWING verb is taken as the main
+    # verb, not the subject noun "studies"/"sciences" itself.
+    work = re.sub(
+        r"\b(?:studies|sciences|study|science)\s+"
+        r"(?=(?:is|are|study|studies|examines?|explores?|investigates?|analyzes?|"
+        r"addresses?|concerns?|describes?|covers?|develops?|integrates?|combines?|"
+        r"involves?|seeks?|encompass(?:es)?)\b)",
         "",
-        body,
+        defn,
+        count=1,
         flags=re.I,
     )
-    for rx in _TOPIC_LEAD_RES:
-        m = rx.match(body)
-        if m and m.end() < len(body):
-            body = body[m.end() :].lstrip()
-            break
+    m = _TOPIC_SUBJECT_VERB_RE.match(work)
+    if m:
+        verb = m.group("verb").lower()
+        predicate = work[m.end() :].lstrip()
+    else:
+        verb, predicate = "is", work
+    # Consume a coordinated leading verb ("develops AND applies computational methods …")
+    # so the object — not the second verb — leads the topic.
+    cv = re.match(
+        r"^and\s+(?:applies|apply|develops?|provides?|examines?|explores?|integrates?|"
+        r"combines?|studies|study|analyzes?|designs?|operates?|creates?|produces?|"
+        r"manages?|delivers?|builds?|uses?)\s+",
+        predicate,
+        re.I,
+    )
+    if cv:
+        predicate = predicate[cv.end() :].lstrip()
+    if verb.startswith("appl"):
+        body = "the application of " + predicate
+    elif verb.startswith("prepare"):
+        body = "the preparation of " + predicate
+    elif verb in ("is", "are"):
+        # 1) "concerned with / devoted to / …" wins regardless of position, so a preceding
+        #    "branch of {parent field}" is skipped ("branch of engineering concerned with
+        #    the design" → "the design …"). 2) otherwise take the EARLIEST study-of /
+        #    descriptor-of / that-{verb} introducer ("art of dramatic performance …", not a
+        #    later "the analysis of plays").
+        fm = _TOPIC_FOCUS_RE.search(predicate)
+        if fm:
+            body = predicate[fm.end() :]
+        else:
+            cands = [
+                x
+                for x in (
+                    _TOPIC_CONNECTOR_RE.search(predicate),
+                    _TOPIC_DESCRIPTOR_RE.search(predicate),
+                )
+                if x
+            ]
+            if cands:
+                body = predicate[min(cands, key=lambda x: x.start()).end() :]
+            else:
+                body = re.sub(r"^(?:the|a|an)\s+", "", predicate, flags=re.I)
+    else:
+        # bare main verb ("study/studies/encompass/examines/…") — predicate is the object
+        body = predicate
     body = body.strip().rstrip(".")
     # End on a clean clause boundary rather than mid-enumeration.
     cut_at = len(body)
@@ -840,18 +935,50 @@ def _uf_topic(field: str) -> str:
         idx = cut.rfind(", ")
         cut = cut[:idx] if idx >= 50 else cut[: cut.rfind(" ")]
         body = cut.strip().rstrip(",;").strip()
-    if len(body) < 16:
-        # No extractable focus clause — use a leading chunk of the definition minus its
-        # subject (still real, field-specific prose).
-        alt = defn[len(field) :].lstrip() if defn.lower().startswith(fl) else defn
-        alt = alt.strip().rstrip(".")[:_TOPIC_MAX]
-        idx = alt.rfind(", ")
-        body = (alt[:idx] if idx >= 50 else alt).strip().rstrip(",;").strip()
     # Drop a dangling trailing preposition/conjunction/article left by a hard cut.
     words = body.split()
     while words and words[-1].lower().strip(",;") in _TOPIC_TRAILING_JUNK:
         words.pop()
     return " ".join(words).rstrip(",;").strip()
+
+
+# A topic must read grammatically as the object of "expertise in …" / "courses on …". A
+# topic that leads with a verb / conjunction / preposition / bare descriptor noun, ends on a
+# dangling word, or carries a coordinated second main verb is malformed; the build gate below
+# FAILS on any such field so it is fixed (heuristic or _TOPIC_OVERRIDES) before it can ship —
+# closing the whack-a-mole the first extractor invited (Codex review on PR #1016/#1018).
+_TOPIC_BAD_LEAD = frozenset(
+    {
+        "is", "are", "and", "or", "but", "of", "in", "on", "for", "with", "to", "by",
+        "from", "under", "as", "at", "this", "these", "those", "that", "which",
+        "study", "studies", "science", "sciences", "discipline", "branch", "field",
+        "area", "form", "body", "way", "set", "system", "framework", "process", "method",
+        "theory", "application", "analysis", "examination", "investigation", "art",
+        "practice", "applies", "apply", "develops", "develop", "prepares", "prepare",
+        "examines", "provides", "operates", "encompass", "encompasses",
+    }
+)
+
+
+def _topic_is_clean(topic: str) -> bool:
+    if not topic or len(topic) < 12:
+        return False
+    words = topic.split()
+    if words[0].lower() in _TOPIC_BAD_LEAD:
+        return False
+    if words[-1].lower().strip(",;") in _TOPIC_TRAILING_JUNK or topic.rstrip().endswith(","):
+        return False
+    # A coordinated finite second MAIN clause ("… and develops the methods") — only the -s
+    # form, so it does not false-flag a verb LIST ("raise, allocate, and manage") or an
+    # infinitive coordination ("to design and operate"), both of which are grammatical.
+    if re.search(
+        r"\sand\s+(?:develops|applies|operates|provides|creates|manages|delivers|builds|"
+        r"examines|explores|designs|produces|trains)\s",
+        topic,
+        re.I,
+    ):
+        return False
+    return True
 
 
 def _uf_sibling_body(dtype: str, name: str, college: str, field_label: str, topic: str) -> str:
@@ -865,10 +992,12 @@ def _uf_sibling_body(dtype: str, name: str, college: str, field_label: str, topi
             f"directed by {college} faculty at {uf}."
         )
     if dtype in ("phd", "doctoral"):
+        # "centers doctoral research on {t}" reads cleanly whether {t} is a noun phrase
+        # ("the design of …") or a how/what/whether clause ("how schools are led …").
         return (
-            f"The {name} prepares scholars to extend {t}, advancing doctoral candidates "
-            f"through qualifying examinations and a sustained, faculty-mentored dissertation "
-            f"within {college} at {uf}."
+            f"The {name} centers doctoral research on {t}, advancing candidates through "
+            f"qualifying examinations and a sustained, faculty-mentored dissertation within "
+            f"{college} at {uf}."
         )
     if dtype == "certificate":
         return (
@@ -1033,6 +1162,19 @@ if _name_prefix_desc:
     )
 if _MISSING_DEFS:
     _catalog_errors.append(f"missing DISCIPLINE_DEFS for: {sorted(set(_MISSING_DEFS))}")
+# Every multi-sibling field interpolates its topic into a sibling body — a malformed topic
+# (verb/conjunction/preposition/descriptor lead, dangling tail, coordinated second verb)
+# renders bad catalog copy. Fail the build so it is fixed (heuristic or _TOPIC_OVERRIDES)
+# before it can ship (Codex review on PR #1016/#1018).
+_field_counts: dict[str, int] = {}
+for _p in PROGRAMS:
+    _k = _anti_stub_field(_p["program_name"])
+    _field_counts[_k] = _field_counts.get(_k, 0) + 1
+_bad_topics = sorted(
+    _f for _f, _n in _field_counts.items() if _n >= 2 and not _topic_is_clean(_uf_topic(_f))
+)
+if _bad_topics:
+    _catalog_errors.append(f"malformed sibling topics for: {_bad_topics}")
 # Enforce the gold-MIT-0% anti-stub gate at build time (enrich-profile §8.5): a stub /
 # verbatim-across-levels / school-blurb / build-artifact catalog raises before it can ship.
 from unipaith.profile_standard.anti_stub import (  # noqa: E402
