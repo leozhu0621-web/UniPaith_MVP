@@ -229,6 +229,65 @@ async def test_preference_edit_invalidates_matches(
 
 
 @pytest.mark.asyncio
+async def test_reemit_feature_vector_is_noop_when_not_stale(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    """#9 cost-control gate: the feature-vector re-emit must NOT fire on a read where
+    nothing changed (no stale matches) — only a profile edit (is_stale) triggers it.
+    A no-op read leaves the vector's profile_version untouched."""
+    from unipaith.models.ai_artifacts import StudentFeatureVector
+
+    profile = await _ensure_profile(db_session, mock_student_user)
+    program = await _seed_program(db_session)
+    db_session.add(
+        StudentFeatureVector(
+            student_id=profile.id,
+            profile_version=3,
+            sparse_features={"interest_themes": ["cs"], "feature_completeness": 0.6},
+            applicant_summary="x",
+        )
+    )
+    await _seed_match(db_session, profile, program)  # is_stale defaults False
+    await db_session.commit()
+
+    resp = await student_client.get(MATCHES)  # not stale → no recompute, no re-emit
+    assert resp.status_code == 200, resp.text
+
+    pv = (
+        await db_session.execute(
+            select(StudentFeatureVector.profile_version).where(
+                StudentFeatureVector.student_id == profile.id
+            )
+        )
+    ).scalar_one()
+    assert pv == 3, "no-op when not stale — no re-emit, no version bump"
+
+
+@pytest.mark.asyncio
+async def test_reemit_helper_is_gated_and_best_effort(db_session, mock_student_user):
+    """The re-emit helper is a clean no-op when there are no stale matches (the gate)
+    and never raises — exercising it directly avoids the LLM-mocked emit path."""
+    from unipaith.api.students import _reemit_feature_vector_if_stale
+    from unipaith.models.ai_artifacts import StudentFeatureVector
+
+    profile = await _ensure_profile(db_session, mock_student_user)
+    db_session.add(
+        StudentFeatureVector(student_id=profile.id, profile_version=5, sparse_features={"a": 1})
+    )
+    await db_session.flush()
+    # No stale matches → must be a no-op (no emit, no version change, no raise).
+    await _reemit_feature_vector_if_stale(db_session, profile.id)
+    pv = (
+        await db_session.execute(
+            select(StudentFeatureVector.profile_version).where(
+                StudentFeatureVector.student_id == profile.id
+            )
+        )
+    ).scalar_one()
+    assert pv == 5
+
+
+@pytest.mark.asyncio
 async def test_get_matches_lazy_recomputes_stale_rows(
     student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
 ):
