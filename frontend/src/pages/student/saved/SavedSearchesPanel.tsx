@@ -41,7 +41,7 @@ export default function SavedSearchesPanel() {
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(['saved-searches'], ctx.prev)
-      showToast('Could not update alerts', 'error')
+      showToast("We couldn't update alerts. Please try again.", 'error')
     },
     onSuccess: (_data, vars) =>
       showToast(vars.alert_enabled ? 'Alerts on for this search' : 'Alerts off', 'success'),
@@ -54,7 +54,7 @@ export default function SavedSearchesPanel() {
       qc.invalidateQueries({ queryKey: ['saved-searches'] })
       showToast(`${res.count} program${res.count === 1 ? '' : 's'} match this search`, 'success')
     },
-    onError: () => showToast('Could not run that search', 'error'),
+    onError: () => showToast("We couldn't run that search. Please try again.", 'error'),
   })
 
   const deleteMut = useMutation({
@@ -63,7 +63,7 @@ export default function SavedSearchesPanel() {
       qc.invalidateQueries({ queryKey: ['saved-searches'] })
       showToast('Saved search removed', 'success')
     },
-    onError: () => showToast('Could not delete that search', 'error'),
+    onError: () => showToast("We couldn't remove that search. Please try again.", 'error'),
   })
 
   const openInMatch = (s: SavedSearch) => navigate(exploreUrlFromSavedQuery(s.query))

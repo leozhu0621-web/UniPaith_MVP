@@ -53,7 +53,7 @@ describe('SavedListPage', () => {
   it('shows spec empty state copy and Open Discover CTA', async () => {
     renderPage()
     expect(await screen.findByText('Saved')).toBeTruthy()
-    expect(screen.getByText(/Your shortlist is empty/)).toBeTruthy()
+    expect(screen.getByText(/No saved programs yet/)).toBeTruthy()
     expect(screen.getByRole('button', { name: /Open Discover/i })).toBeTruthy()
   })
 

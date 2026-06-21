@@ -18,12 +18,12 @@ export default function SavedSchoolCard({ school, onOpen, onUnfollow, unfollowin
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-[15px] font-bold text-foreground leading-snug truncate">{school.name}</h3>
-          <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
-            <MapPin size={10} className="flex-shrink-0" />
-            {school.city && school.country
-              ? `${school.city}, ${school.country}`
-              : 'Saved school · updates in Connect'}
-          </p>
+          {school.city && school.country && (
+            <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
+              <MapPin size={10} className="flex-shrink-0" />
+              {school.city}, {school.country}
+            </p>
+          )}
         </div>
       </button>
       {onUnfollow && (
