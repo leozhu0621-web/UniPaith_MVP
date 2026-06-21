@@ -254,6 +254,18 @@ def test_no_identical_across_credential_levels():
     )
 
 
+def test_stanford_catalog_has_no_frame_stripped_shared_body():
+    from unipaith.profile_standard.anti_stub import analyze, frame_stripped_shared_body
+
+    report = analyze(s.PROGRAMS)
+    assert report.is_clean
+    shared = frame_stripped_shared_body(s.PROGRAMS, abs_chars=150)
+    assert not shared, (
+        f"Stanford credential siblings share a 150+-char body on "
+        f"{len(shared)} field(s): {shared[:8]}{' …' if len(shared) > 8 else ''}"
+    )
+
+
 def test_no_peer_contaminated_descriptions():
     peer_signatures = (
         "Kelly Writers House",
