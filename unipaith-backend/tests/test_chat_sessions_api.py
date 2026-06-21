@@ -158,16 +158,18 @@ async def test_action_build_school_list_no_5xx(student_client, db_session, mock_
 
 
 @pytest.mark.asyncio
-async def test_action_pending_key_returns_pending(student_client, db_session, mock_student_user):
-    """Actions without a real service (e.g. find_events) return status=pending."""
+async def test_action_handoff_key_links_to_my_space(student_client, db_session, mock_student_user):
+    """Actions without a one-shot service (e.g. find_events) hand off to their
+    My Space / Discover home — status=ready, kind=handoff, with a real link."""
     await ensure_profile(db_session, mock_student_user)
     r = await student_client.post(f"{BASE}/templates/action/find_events")
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["status"] == "pending"
-    assert body["kind"] == "note"
+    assert body["status"] == "ready"
+    assert body["kind"] == "handoff"
     assert body["action_key"] == "find_events"
-    assert "coming soon" in (body.get("summary") or "").lower()
+    assert body["link"] == "/s/explore?tab=events"
+    assert body.get("summary")
 
 
 @pytest.mark.asyncio
