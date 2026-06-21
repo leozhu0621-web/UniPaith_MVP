@@ -206,6 +206,35 @@ def test_derived_target_profile_does_not_echo_protected_terms_from_program_name(
     assert "gender" not in str(target).lower()
 
 
+def test_target_profile_allows_protected_terms_in_citation_urls_only():
+    from unipaith.schemas.profile_intelligence import assert_no_protected_traits
+    from unipaith.services.match.derive_preferences import derive_program_preference
+
+    pref = derive_program_preference(
+        cip_code="23.0101",
+        program_name="PhD in English and Women's and Gender Studies",
+        degree_type="phd",
+        description=(
+            "A rigorous applied literature research program with collaborative "
+            "project work and capstone-style scholarly practice."
+        ),
+        source_url="https://example.edu/english-and-gender-studies",
+    )
+
+    assert pref is not None
+    target = pref["target_profile"]
+    for signals in target["layers"].values():
+        for signal in signals:
+            assert_no_protected_traits(
+                {
+                    "attribute": signal["attribute"],
+                    "preferred_values": signal["preferred_values"],
+                    "statement": signal["statement"],
+                }
+            )
+    assert "english-and-gender-studies" in str(target).lower()
+
+
 async def test_profile_intelligence_skips_claimed_program(db_session):
     from unipaith.models.institution import Institution, Program
     from unipaith.models.user import User, UserRole
