@@ -26,7 +26,7 @@ from unipaith.profile_standard.anti_stub import (
 # Catalogs verified free of raw scraped-catalogue debris (course-code / requirements /
 # contact-address fragments) in description_text — REPAIR_BACKLOG CRITICAL #1 (USC, run 66).
 # Grow as scrape-built catalogs are researched per-program (UT-Austin still carries it).
-SCRAPE_DEBRIS_CLEAN = ["mit", "usc", "uiuc", "nyu"]
+SCRAPE_DEBRIS_CLEAN = ["mit", "usc", "uiuc", "nyu", "columbia"]
 
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
 # Grow this list as catalogs are genuinely de-fabricated — never weaken the assertions.
@@ -150,7 +150,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
 
 _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
-    "ut_austin",
+    "ut_austin", "columbia", "michigan",
 ]
 
 
@@ -175,8 +175,10 @@ def test_nyu_credential_siblings_no_shared_body_absolute_floor():
     a 150+-char run shared across a field's BA/BS or MS/PhD is a stamped department blurb (the
     Chemistry B.A.==B.S. 950-char duplicate), which the fraction-only default could dilute past.
     Gold MIT also scores 0 with the absolute floor on. Enforced separately from the fleet-wide
-    default (which still uses fraction-only) until the remaining catalogs are repaired."""
-    for name in ("nyu", "mit"):
+    default (which still uses fraction-only) until the remaining catalogs are repaired.
+    Columbia joins the absolute-floor set after its 14 frame-shared fields were rewritten to
+    per-credential researched bodies (columbiapercred1)."""
+    for name in ("nyu", "mit", "columbia"):
         shared = frame_stripped_shared_body(_programs(name), abs_chars=150)
         assert not shared, (
             f"{name}: credential siblings share a 150+-char body on "

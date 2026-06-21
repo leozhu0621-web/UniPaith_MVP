@@ -6,6 +6,92 @@ and re-ranks the repair backlog. One squash PR per run.
 
 ---
 
+## 2026-06-21 — Run 69 (FULL-FLEET sweep of all 300 live + all 40 catalogs · enricher CLEARED Harvard/NYU/UT-Austin LIVE · headline = TWO correct repairs merged-but-NOT-DEPLOYED · 1 rule change — A-MERGE-IS-NOT-A-DEPLOY)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+reusing `profile_standard/anti_stub.py` directly (paginated full program list of all 40 program-bearing
+catalogs ≈ 7,200 programs; the other 260 are bare institution-level stubs). Per catalog I computed `analyze`
+(name-prefix / classification / double-period / verbatim-shared / shared-leading-body / cross-field),
+`machine_artifacts`, `scrape_debris`, the CI `frame_stripped_shared_body` (50%-floor) AND the run-67
+absolute-≥150 floor (`lcs ≥ 80 AND (≥50% OR ≥150 abs)`), a concentration-split heuristic, plus campus-photo
+count and posts-feed fetch count; for every bare stub I counted campus photos. Where the metric and the live
+data disagreed I went direct — read sibling descriptions, ran `anti_stub` on the REPO data module, and
+checked Deploy Backend run status via the GitHub Actions API.
+
+**Merged since run 68 (grader PR #933):** the enricher cleared three backlog tiers and they DEPLOYED —
+**#931 Harvard** (frame 68→0, verified live) · **#938 NYU** (scrape-debris 16→0, the 950-char Chemistry
+BA/BS near-duplicate gone, frame 8→0) · **#943 UT-Austin** (frame 24→0, debris→0). Debris + machine-artifacts
+are now **0 across ALL 40 catalogs**. It ALSO merged **#942 Columbia** + **#953 Michigan** per-credential
+repairs (both anti-stub-CLEAN in the repo) — but see the headline.
+
+**HEADLINE — TWO correct repairs are merged + CI-green but NOT LIVE (a NEW gap-class: a merge is not a
+deploy).** Running `anti_stub.frame_stripped_shared_body` on the REPO modules, `michigan_profile.PROGRAMS`
+and `columbia_profile.PROGRAMS` both score frac 0 · abs150 0 · `analyze` clean — the per-credential bodies
+are genuinely distinct (Michigan Chemistry: BA "Chemistry is the scientific study of matter…" / PhD "The
+Doctor of Philosophy in Chemistry … advances original research in …" / MS "… builds advanced expertise …").
+Yet the LIVE API still serves the OLD shared-body data: Michigan **67** · Columbia **14** frame-share fields,
+unchanged from run 68. Diagnosing via the Actions API: **Columbia (5792b73) Deploy Backend = FAILURE,
+Michigan (339b1df) = CANCELLED, and the #951 dual-head fixup (2b983e2) deploy ALSO = FAILURE** — the
+auto-merge dual-head race (FLAG #4) failed the prod migration, so the verified data never reached students
+while the repo + CI show it fixed. This is the durable infra bug now silently REVERTING enrichment at the
+deploy step.
+
+**Findings (with live evidence):**
+- **NEW CLASS → 1 rule change: a merge that passes CI is NOT a deploy; the live re-query is the gate.** §9
+  already says "watch Deploy Backend → verify live," and step 5/§8 already covers PREVENTING the dual head,
+  but NOTHING told the enricher what a FAILED/CANCELLED Deploy Backend means for a CI-green repair, nor that
+  the fix is to drive the deploy (not rewrite the clean data). Genuine gap (not a duplicate of step 5, which
+  is about preventing the race; this is about the merged-but-stranded aftermath). Added the **A-MERGE-IS-NOT-
+  A-DEPLOY** sub-paragraph under §9: a repair can pass CI + squash-merge yet never reach students when its
+  Deploy Backend run fails/cancels; treat the live re-query as the real gate; a deploy-stranded clean repair
+  is fixed by DRIVING THE DEPLOY GREEN (land/reland the merge migration, clear the dual head, re-trigger),
+  and you must NOT rewrite the already-correct data (that only risks a fresh dual head + a second failed
+  deploy). Evidence: Michigan #953 + Columbia #942 this run.
+- **COMPLIANCE GAP (rule exists; queued not re-added): un-repaired credential-frame + shared body still
+  LIVE.** UCLA 67 · Berkeley 64 · Stanford 51 · Penn 51 · Notre Dame 23 — all `CERTIFIED_CLEAN`, all absent
+  from the frame-stripped `@parametrize` list (the run-68 enforcement hole; FLAG #1a). miss #8's
+  credential-frame sub-bullet already mandates the fix. Queued HIGH #3–#9.
+- **COMPLIANCE GAP: dilution evasion still LIVE (miss #8 fraction-floor).** UF 54 · Cornell 44 · BU 23 · JHU
+  3 read 0 on the CI 50%-floor metric but are flagged by the absolute-≥150 floor. Queued HIGH #5/#8/#10/#11.
+- **COMPLIANCE GAP: dead feeds on freshly-enriched FULL catalogs (miss #1/#9).** Notre Dame (113), Dartmouth
+  (43), Emory (46) STILL ship posts=0 — flagged runs 65–69, NOT fixed. Queued #9/#12. (Harvard 81 · Purdue
+  10 · UW-Madison 21 · UT-Austin 17 all fetch ✓.)
+- **COMPLIANCE GAP: concentration-split over-decomposition (miss #2).** Michigan 33 ("Conducting: Band/Wind
+  Ensemble / Choral / Orchestral") is the clearest. NYU 22 and CMU 17 are MOSTLY legit-distinct (school
+  suffixes, language-specific NY certs, joint degrees) — VERIFY before collapsing; do not blanket-collapse.
+- **MEASUREMENT CAVEAT (logged so the enricher does NOT over-prioritize): the abs-150 floor flags a shared
+  factual SUBFIELD-ENUMERATION / department name across credential levels even when each lead is distinct
+  and substantive** — Georgia Tech 5 (Aero/BME/Civil/MSE/ECE), Duke/Yale/Chicago/Northwestern 1 each. Read
+  directly: these are NOT stubs, just mild cross-level redundancy. Kept in CLEAN, not queued as HIGH.
+- **Enricher WINS verified LIVE:** Harvard 68→0 (deployed) · NYU scrape-debris + 950-char Chemistry dup → 0 ·
+  UT-Austin 24 frame + debris → 0 · fleet-wide debris/machine-artifacts = 0.
+
+**Rule change (1 of ≤3, §9 — bounded, evidence-backed, not a duplicate):** the A-MERGE-IS-NOT-A-DEPLOY
+sub-paragraph (above). No other rule warranted — every other defect this run is a VIOLATION of an existing
+rule (default-flipped → queued + logged, not re-added). Post-edit re-read confirms §9 reads coherently (the
+new paragraph sits between the verify-live instruction and the opened-but-unmerged paragraph; no numbered
+miss renumbered; no invariant touched — it TIGHTENS the ship gate, loosens nothing).
+
+**Flags (code/workflow, not grader-editable):** (1a) frame-stripped/scrape/artifact tests still parametrize
+over hardcoded lists that DRIFT from `CERTIFIED_CLEAN` — parametrize over `CERTIFIED_CLEAN` itself; (1b)
+`frame_stripped_shared_body` default still lacks the `OR lcs ≥ 150` absolute floor fleet-wide (only the
+NYU/MIT/Columbia test passes `abs_chars`); (2) `scrape_debris` `\bHall,\s` address tell can false-flag a
+building named in prose; (3) `cip_code` not serialized on public program endpoints; (4) **auto-merge
+dual-head race FAILED the prod deploy and stranded TWO correct repairs this run (Columbia FAILURE / Michigan
+CANCELLED / #951 fixup FAILURE)** — now the highest-impact infra bug, silently reverting verified enrichment.
+
+**Backlog delta:** rewritten worst-first, full-fleet. CRITICAL = Michigan + Columbia (correct in repo,
+DEPLOY-STRANDED — drive the deploy, do NOT rewrite). HIGH = the un-repaired frame-share + dilution catalogs
+(UCLA/Berkeley/UF/Stanford/Penn/Cornell/Notre Dame/BU/JHU). MEDIUM = dead-feed enriched catalogs
+(Dartmouth/Emory), the 8 five-program seeds (4 with <4 photos), the ~260 bare stubs (33 zero-photo). CLEAN =
+MIT + the deployed Harvard/NYU/UT-Austin + the genuinely-distinct fleet (Duke/Yale/Chicago/Northwestern/Rice/
+Purdue/UCSD/Caltech/Princeton/USC/UIUC/UW-Seattle/UW-Madison/CMU/Georgia-Tech).
+
+**Invariants:** all intact; the SKILL.md edit is a §9 ship-gate TIGHTENING (adds a deploy-verification
+requirement; loosens nothing). Health check: see below.
+
+---
+
 ## 2026-06-20 — Run 68 (FULL-FLEET sweep of all 300 live + all 40 catalogs · enricher CLEARED UIUC CRITICAL #1 + JHU/UW-Seattle/UW-Madison HIGH tier · 1 rule change — the CERTIFICATION-COVERAGE enforcement hole · headline finding is ENFORCEMENT, not new behavior)
 
 **Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
@@ -5555,3 +5641,13 @@ UChicago/Northwestern/Rice/Purdue/UCSD/Caltech/Georgia Tech/Princeton (+ CMU bor
 
 **Invariants:** all intact; the SKILL.md edit is a miss #8 / §8.5 gate TIGHTENING (adds an
 absolute-shared-run floor; loosens nothing). Health check: see below.
+
+**Health check (run 69):** the full `pytest` suite needs a live Postgres + the httpx/asyncpg stack the
+ephemeral container lacks, so the mandated `test_profile_standard.py` / `test_profile_enrichment.py` could
+not run here. Instead I ran the substantive (DB-free) gate directly: imported every `CERTIFIED_CLEAN`
+catalog module and re-computed `anti_stub.analyze` / `machine_artifacts` / `frame_stripped_shared_body`
+(default + the NYU/MIT/Columbia `abs_chars=150`) / `scrape_debris` over the same registries
+`tests/test_anti_stub_gate.py` enforces — **0 failures across all 32 CERTIFIED_CLEAN + 13 frame-stripped +
+5 debris-clean catalogs** (Michigan + Columbia included → their repo data IS correct; the defect is
+deploy-only). This grader PR changes only the three skill markdown files (no code, no data, no migration),
+so backend CI is unaffected.

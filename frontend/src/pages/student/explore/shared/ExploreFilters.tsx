@@ -88,17 +88,23 @@ function deriveOptions(universities: UniversityForFilters[]) {
   const countries = new Set<string>()
   const subjects = new Set<string>()
   const industries = new Set<string>()
+  let hasSat = false
+  let hasTuition = false
 
   for (const u of universities) {
     if (u.country) countries.add(u.country)
     if (Array.isArray(u.subjects_offered)) u.subjects_offered.forEach(s => s && subjects.add(s))
     if (Array.isArray(u.top_industries)) u.top_industries.forEach(i => i && industries.add(i))
+    if (u.sat_avg != null && u.sat_avg > 0) hasSat = true
+    if (u.tuition_annual != null && u.tuition_annual > 0) hasTuition = true
   }
 
   return {
     countries: Array.from(countries).sort(),
     subjects: Array.from(subjects).sort(),
     industries: Array.from(industries).sort(),
+    hasSat,
+    hasTuition,
   }
 }
 
@@ -176,7 +182,7 @@ export function countActiveFilters(f: FilterState): number {
 }
 
 export default function ExploreFilters({ universities, filters, onChange }: Props) {
-  const { countries, subjects, industries } = deriveOptions(universities)
+  const { countries, subjects, industries, hasSat, hasTuition } = deriveOptions(universities)
   const activeCount = countActiveFilters(filters)
   const clearAll = () => onChange(EMPTY_FILTERS)
 
@@ -265,21 +271,28 @@ export default function ExploreFilters({ universities, filters, onChange }: Prop
           />
         )}
 
-        <FilterDropdown
-          label="SAT"
-          active={filters.satTier.length}
-          options={SAT_OPTIONS.map(s => ({ value: s.code, label: s.label }))}
-          selected={filters.satTier}
-          onToggle={v => toggleList('satTier', v)}
-        />
+        {/* SAT / Tuition only appear when the data can actually fill them —
+            most browse universities carry neither, so a static dropdown would
+            silently zero out the grid. */}
+        {hasSat && (
+          <FilterDropdown
+            label="SAT"
+            active={filters.satTier.length}
+            options={SAT_OPTIONS.map(s => ({ value: s.code, label: s.label }))}
+            selected={filters.satTier}
+            onToggle={v => toggleList('satTier', v)}
+          />
+        )}
 
-        <FilterDropdown
-          label="Tuition"
-          active={filters.tuitionTier.length}
-          options={TUITION_OPTIONS.map(t => ({ value: t.code, label: t.label }))}
-          selected={filters.tuitionTier}
-          onToggle={v => toggleList('tuitionTier', v)}
-        />
+        {hasTuition && (
+          <FilterDropdown
+            label="Tuition"
+            active={filters.tuitionTier.length}
+            options={TUITION_OPTIONS.map(t => ({ value: t.code, label: t.label }))}
+            selected={filters.tuitionTier}
+            onToggle={v => toggleList('tuitionTier', v)}
+          />
+        )}
 
         {activeCount > 0 && (
           <button
@@ -335,14 +348,23 @@ interface DropdownProps {
 function FilterDropdown({ label, active, options, selected, onToggle }: DropdownProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!open) return
     const onClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('mousedown', onClick)
-    return () => document.removeEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onKey)
+      // Return focus to the trigger if it would otherwise be lost.
+      const ae = document.activeElement
+      if (!ae || ae === document.body || ref.current?.contains(ae)) triggerRef.current?.focus()
+    }
   }, [open])
 
   const hasActive = active > 0
@@ -350,7 +372,10 @@ function FilterDropdown({ label, active, options, selected, onToggle }: Dropdown
   return (
     <div className="relative" ref={ref}>
       <button
+        ref={triggerRef}
         type="button"
+        aria-expanded={open}
+        aria-haspopup="listbox"
         onClick={() => setOpen(o => !o)}
         className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[13px] font-medium rounded-full border transition-colors ${
           hasActive
@@ -368,17 +393,24 @@ function FilterDropdown({ label, active, options, selected, onToggle }: Dropdown
       </button>
 
       {open && (
-        <div className="absolute z-40 top-full left-0 mt-1 min-w-[200px] max-h-80 overflow-y-auto rounded-lg border border-border bg-card elev-raised">
+        <div
+          role="listbox"
+          aria-multiselectable="true"
+          aria-label={`${label} options`}
+          className="absolute z-40 top-full left-0 mt-1 min-w-[200px] max-h-80 overflow-y-auto rounded-lg border border-border bg-card elev-raised"
+        >
           {options.length === 0 ? (
             <p className="text-[11px] text-foreground/60 italic px-3 py-2">No options available</p>
           ) : (
-            <ul className="py-1">
+            <ul className="py-1" role="presentation">
               {options.map(opt => {
                 const isSelected = selected.includes(opt.value)
                 return (
                   <li key={opt.value}>
                     <button
                       type="button"
+                      role="option"
+                      aria-selected={isSelected}
                       onClick={() => onToggle(opt.value)}
                       className={`w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-left transition-colors ${
                         isSelected

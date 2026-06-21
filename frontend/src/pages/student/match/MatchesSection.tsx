@@ -21,6 +21,7 @@ import { useCompareStore } from '../../../stores/compare-store'
 import { showToast } from '../../../stores/toast-store'
 import type { MatchBand, MatchResultDual } from '../../../types'
 import MatchCard from './MatchCard'
+import { useAppliedPrograms } from '../explore/cards/AppStatusPill'
 import PrioritySheet from './PrioritySheet'
 
 const BAND_ORDER: MatchBand[] = ['reach', 'target', 'safer']
@@ -93,6 +94,7 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
   }, [matches])
 
   const firstId = matches[0]?.program_id
+  const appliedMap = useAppliedPrograms()
   const renderCard = (m: MatchResultDual) => {
     const card = (
       <MatchCard
@@ -115,6 +117,7 @@ export default function MatchesSection({ savedIds, onToggleSave, nextEventByInst
         onEventClick={onEventClick}
         peerCount={peerCohortByProgram?.[m.program_id]}
         onPeersClick={onPeersClick}
+        appStatus={appliedMap.get(m.program_id)}
       />
     )
     // First-run coachmark on the top match's dual ring (Spec 81 §3.3).

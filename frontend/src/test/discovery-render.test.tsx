@@ -34,17 +34,19 @@ function renderDS() {
 }
 
 describe('DiscoverySearch (render smoke)', () => {
-  it('renders the search box with no browse-by tiles in the empty state', () => {
+  it('renders only the search box in the empty state (toolbar gated until active)', () => {
     renderDS()
     expect(
       screen.getByPlaceholderText('What kind of program are you looking for?'),
     ).toBeInTheDocument()
-    // 2026-06-19: "no browse by, just filters" — both the outcome tiles and the
-    // subject quick-tiles are gone; the empty state is the search box + Filters.
+    // 2026-06-19: "no browse by, just filters" — the outcome tiles and subject
+    // quick-tiles are gone, and the program Filters/Sort toolbar is gated until a
+    // search is active, so it no longer collides with the university-browse
+    // "Filters" nor sits orphaned. The empty state is just the search box.
     expect(screen.queryByTestId('outcome-tiles')).not.toBeInTheDocument()
     expect(screen.queryByText('High earning potential')).not.toBeInTheDocument()
     expect(screen.queryByText('Or browse')).not.toBeInTheDocument()
-    // Empty state shows no results count (that appears only once a search runs).
+    expect(screen.queryByText('Filters')).not.toBeInTheDocument()
     expect(screen.queryByTestId('results-count')).not.toBeInTheDocument()
   })
 })

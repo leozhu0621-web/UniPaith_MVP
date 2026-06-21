@@ -28,10 +28,12 @@ import { formatCurrency } from '../../../utils/format'
 import BandBadge from '../../../components/ui/BandBadge'
 import type { MatchResultDual } from '../../../types'
 import DualRing from './DualRing'
+import { matchStoryline } from './matchStoryline'
 import ProbabilityBands from './ProbabilityBands'
 import RationalePopover from './RationalePopover'
 import { cardLinkClick } from '../explore/shared/cardLink'
 import { ringFromMatch } from './ringFill'
+import AppStatusPill, { type AppStatus } from '../explore/cards/AppStatusPill'
 
 interface MatchCardProps {
   match: MatchResultDual
@@ -46,6 +48,8 @@ interface MatchCardProps {
   /** Discover review 2026-06-14 #5 — k-anonymized count of peers open to connect. */
   peerCount?: number
   onPeersClick?: () => void
+  /** Discover review 2026-06-19 — real application stage for this program, if any. */
+  appStatus?: AppStatus | null
 }
 
 export default function MatchCard({
@@ -59,6 +63,7 @@ export default function MatchCard({
   onEventClick,
   peerCount,
   onPeersClick,
+  appStatus,
 }: MatchCardProps) {
   const [rationaleOpen, setRationaleOpen] = useState(false)
   const [showBands, setShowBands] = useState(false)
@@ -73,6 +78,9 @@ export default function MatchCard({
   const confidence = confRing.value
   // Hide the precise numeral when the ring is band-derived (no raw score served).
   const hideNumeral = fitRing.fromBand
+  // Strategy→matches storytelling: a one-line counselor read of this band, framed
+  // as fit-for-you + admission odds (turns the two rings into plain language).
+  const storyline = matchStoryline(match.band_label, fitness, !hideNumeral)
   const acceptPct =
     match.acceptance_rate != null ? Math.round(match.acceptance_rate * 100) : null
   // Without an explicit reason on the list payload, derive the right "not
@@ -106,6 +114,7 @@ export default function MatchCard({
           </div>
 
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            <AppStatusPill status={appStatus} />
             {match.band_label && <BandBadge band={match.band_label} />}
             {degree && (
               <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md bg-muted text-foreground border border-border/60">
@@ -142,6 +151,13 @@ export default function MatchCard({
           </div>
         </div>
       </div>
+
+      {/* ── Band storyline — the counselor's one-line read (fit + odds) ── */}
+      {storyline && (
+        <p className="px-4 -mt-0.5 pb-1.5 text-[12.5px] leading-snug text-foreground/85">
+          {storyline}
+        </p>
+      )}
 
       {/* ── Why this match + realistic-shot expander ── */}
       <div className="px-4 pb-2 flex items-center gap-3">
