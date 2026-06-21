@@ -237,7 +237,7 @@ def soft_align(student: StudentFeatures, program: ProgramFeatures) -> float:
 
     tag_score = 0.4 * interest_score + 0.4 * career_score + 0.2 * value_score
 
-    social_score = _vec_align(s.get("social_prefs") or {}, p.get("social_features") or {})
+    social_score = _pref_satisfaction(s.get("social_prefs") or {}, p.get("social_features") or {})
 
     # 70/30 split: tag overlap dominates; social prefs polish the result.
     return 0.7 * tag_score + 0.3 * social_score
@@ -275,15 +275,24 @@ def _jaccard(a: list[str], b: list[str]) -> float:
     return len(sa & sb) / max(1, len(sa | sb))
 
 
-def _vec_align(a: dict[str, float], b: dict[str, float]) -> float:
-    """Aligned-key dot product for two [0,1]-valued sparse vectors,
-    normalized so identical vectors return 1.0 and disjoint return 0.0.
+def _pref_satisfaction(prefs: dict[str, float], features: dict[str, float]) -> float:
+    """How well a program's [0,1] ``features`` satisfy a student's [0,1]
+    ``prefs``: the preference-weighted coverage of the student's preferences,
+    normalized by total preference weight.
+
+    A met preference is NOT diluted by the program's *unrelated* features (the
+    prior union-normalized form was — a single met preference at a feature-rich
+    program scored ~1/n). A fully met preference returns 1.0; an unmet or absent
+    one returns 0.0; no preferences (empty ``prefs``) is a neutral 0.0 (no
+    positive signal). Values are clamped to [0, 1].
     """
-    keys = set(a.keys()) | set(b.keys())
-    if not keys:
+    total = sum(max(0.0, min(1.0, v)) for v in prefs.values())
+    if total == 0:
         return 0.0
-    dot = sum(max(0.0, min(1.0, a.get(k, 0.0))) * max(0.0, min(1.0, b.get(k, 0.0))) for k in keys)
-    return min(1.0, dot / len(keys))
+    met = sum(
+        max(0.0, min(1.0, av)) * max(0.0, min(1.0, features.get(k, 0.0))) for k, av in prefs.items()
+    )
+    return min(1.0, met / total)
 
 
 # ── Top-level scoring ──────────────────────────────────────────────────────
