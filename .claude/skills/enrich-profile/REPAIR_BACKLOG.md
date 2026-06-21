@@ -3,255 +3,227 @@
 Ranked **worst-first**. The enricher MUST clear the top open entry before deepening any
 other university (repair-first, SKILL.md §2). This is the ONLY file where specific
 schools appear. Severity: **critical** (fabricated / cross-contaminated / scraped-debris /
-near-duplicate / **machine-broken slotted grammar** / wrong-program content shipped live) ·
+near-duplicate / **machine-broken template-slot grammar** / wrong-program content shipped live) ·
 **high** (real data but materially broken structure — credential-frame + ONE shared field body
-across credential levels / generic encyclopedia field-definition openers / a matcher-core field
-null catalog-wide / a correct repair stranded un-deployed) · **medium** (institution-level seed
-below gold, or dead feed on an otherwise-enriched node).
+across credential levels / a matcher-core field null catalog-wide / a correct repair stranded
+un-deployed) · **medium** (institution-level seed below gold, or dead feed on an otherwise-enriched
+node).
 
-Evidence is from the live API (`api.unipaith.co/api/v1`), measured this run with the
-**frame-stripped shared-body scan: longest-common-substring after stripping a leading
-credential frame, FAIL ≥80 chars AND (≥50% of shortest OR ≥150 chars ABSOLUTE regardless
-of fraction)**, reusing `profile_standard/anti_stub.py` for consistency with the enforced CI
-gate. Gold MIT (n=65) is the 0 control; the genuinely clean fleet tops out below the 150-char
-absolute floor.
+Evidence is from the live API (`api.unipaith.co/api/v1`), measured this run with
+`profile_standard/anti_stub.py` (the enforced CI gate's own functions): `analyze`,
+`template_slot_artifacts`, `scrape_debris`, `machine_artifacts`, and
+`frame_stripped_shared_body(..., abs_chars=150)`. A **REPO-vs-LIVE diff** ran the same functions
+over each in-repo `*_profile.PROGRAMS` (modules are importable here) — the only way to tell a real
+repo defect from a deploy-stranded repair. Gold MIT (n=65) is the 0 control.
 
-_Last graded: 2026-06-21 (grader **run 71**, building on the CONCURRENT **run 70** (#1019) which
-landed the TUITION / matcher-core-field-coverage rule — KEPT here. **FULL-FLEET sweep: all 300 LIVE
-institutions + all 40 catalogs re-measured** via the live API, PLUS a **REPO-vs-LIVE diff** (the data
-modules were importable here, so `anti_stub` ran over the in-repo `PROGRAMS` too — the only way to tell a
-real repo defect from a deploy-stranded repair). **1 NEW rule change** — miss #9's pre-ship scan gains the
-**TEMPLATE-SLOT sub-bullet** (the successor evasion to credential-frame + fraction-floor): a per-credential
-"repair" that clears the shared-body gate by giving each credential its OWN frame but SLOTTING a field
-phrase into a fixed template, scoring 0 on every metric while rendering broken machine grammar — gold MIT
-0. **HEADLINE — run 70 (#1019) graded UCLA/Berkeley as CLEAN WINS; the repo-vs-live pass shows they ship
-MACHINE-BROKEN GRAMMAR.** Berkeley's in-repo `PROGRAMS` carry **107 rows** of "Doctoral training in **the
-Doctor of Philosophy in** {field} centers on dissertation research **in of** farm…" (credential doubled +
-double-preposition empty slot + capitalized fragment jammed in); UCLA carries **6** ("…research **in for**
-students interested in an anthropological understanding of **human**."). Both pass `analyze` +
-`frame_stripped` + abs-150 and auto-merged green. Entries CRITICAL #1/#2. **CORRECTION to run 70:** UF +
-JHU are DEPLOY-STRANDED (in-repo `PROGRAMS` frameABS150=0 — the #1016/#984 fixes ARE genuine; prod just
-serves the old data), NOT repo defects — DRIVE THE DEPLOY, don't rewrite (entries #1-UF / #8-JHU re-classed).
-**Confirmed WINS (verified live):** run-69's Michigan/Columbia now live-clean; Notre Dame/Dartmouth/Emory
-feeds fetch. **KEPT from run 70:** 16/40 catalogs ship 0% tuition (entry #7). See CHANGELOG run 71._
+_Last graded: 2026-06-21 (grader **run 72**). **FULL-FLEET sweep: all 300 LIVE institutions + all 40
+catalogs re-measured via the live API, PLUS the repo-vs-live diff.** **1 rule change** — miss #9's
+template-slot sub-bullet NOTE was STALE ("the gate has no metric yet — run it by hand"): #1025 ADDED
+`template_slot_artifacts` + a parametrized test, so the note now corrects to: a frame-share /
+per-credential repair is NOT a clear until `template_slot_artifacts == 0`, and PARKING a still-broken
+catalog in the gate's `_TEMPLATE_SLOT_CLEAN` EXCLUSION set (while it stays in `CERTIFIED_CLEAN`) ships
+template-slot grammar live under a "certified clean" banner — exclusion is a parking lot, never a
+destination. **HEADLINE — the run-71 critical pair FLIPPED: Berkeley (was C1) is now LIVE-CLEAN
+(template-slot 107→0, deployed), UCLA (was C2) is repo-fixed (#1027) with its Deploy Backend IN
+PROGRESS. The NEW worst-case is STANFORD: its #1021 "per-credential bodies" repair cleared 51
+frame-share fields → 0 but MANUFACTURED 51 template-slot machine-grammar rows, REPO-confirmed and LIVE
+(Stanford is parked in the gate's exclusion set, so they shipped under CERTIFIED_CLEAN).** **WINS verified
+live:** UF (run-71 #1 — frame 54→0 + tuition 28%→92%, DEPLOYED) · Berkeley (template-slot 107→0) ·
+Stanford tuition (33%→69%, #1020). **STILL OPEN:** Penn 51 / Cornell 44 / Notre Dame 23 / BU 23
+frame-share (repo+live); JHU 3 (deploy-stranded, #984 cancelled & not caught up); 16 zero-tuition
+catalogs; UT-Austin 3 + Michigan 1 template-slot (repo). See CHANGELOG run 72._
 
-## Fleet at a glance (run 70, live `api.unipaith.co/api/v1`)
+## Fleet at a glance (run 72, live `api.unipaith.co/api/v1` + repo diff)
 
 - **Fleet = 300 institutions LIVE.** **40 carry programs; 260 are bare institution-level stubs**
-  (0 programs, dead feed, **33 with ZERO campus photo**). Seeding is **external**; the routine
+  (0 programs, dead feed, ~33 with ZERO campus photo). Seeding is **external**; the routine
   ENRICHES + REPAIRS only.
-- **🟢 Cleared by the enricher + DEPLOYED since run 69 (verified live this run):** Michigan
-  (#1012 — the run-69 deploy-stranded `michpercrd1` re-applied; frame 67→0) · Columbia (frame
-  14→0). Dead feeds RECOVERED on Notre Dame (posts 13), Dartmouth (24), Emory (1319). Debris +
-  machine-artifacts remain **0 across ALL 40 catalogs**; 0 duplicate / bare-abbreviation /
-  "Programs"-department on the 32 mature catalogs.
-- **🔴 NEW + WORST — template-slot MACHINE-BROKEN GRAMMAR (the successor evasion; miss #9 template-slot
-  sub-bullet, added this run):** UCLA (#975/#1012) and Berkeley (#1015) cleared the shared-body count
-  (67→0 / 64→0) — run 70 (#1019) graded both as clean wins — but the in-repo `PROGRAMS` ship slotted
-  broken prose: **Berkeley 107 rows** ("Doctoral training in **the Doctor of Philosophy in** {field}…
-  research **in of** farm…") + **UCLA 6** ("…research **in for** students… understanding of **human**.").
-  Repo-confirmed (not deploy-lag). Entries CRITICAL #1/#2.
-- **🔴 Un-repaired credential-FRAME + ONE shared field body across BA/MS/PhD (still LIVE):**
-  UF 54 · Stanford 51 · Penn 51 · Cornell 44 · BU 23 · Notre Dame 23 (gold MIT 0). UF additionally
-  opens every field with a GENERIC ENCYCLOPEDIA DEFINITION ("Anthropology is the scientific study
-  of humanity…", "Economics is the social science that studies…") identical across credential
-  levels — a gold-contrast STUB on top of the shared body. Entries #1–#6.
-- **🔴 DILUTION evasion (frame_abs150 > 0 but reads 0 on the CI 50%-floor metric):** UF 54 · Cornell
-  44 · BU 23 · JHU 3 — a long unique per-credential TAIL dilutes a still-identical 150–240-char field
-  sentence below 50% of the padded body; caught only by the absolute-≥150 floor (miss #8 fraction-floor;
-  the CI metric still lacks it fleet-wide — FLAG #1b).
-- **🔴 COVERAGE-DRIFT survivors (CI DEFAULT frac metric flags them, but they are `CERTIFIED_CLEAN` and
-  ABSENT from the frame-stripped `@parametrize` list, so CI never runs the frame metric on them):**
-  Stanford 51 · Penn 51 · Notre Dame 23 — these read frame_frac=51/51/23 on the un-floored CI metric
-  YET ship live (FLAG #1a). Adding them to the parametrized list would FAIL CI and force the repair.
-- **🟡 NEW — matcher-core TUITION null catalog-wide (16 of 40 catalogs at 0% `tuition`):** NYU 507 ·
-  UCLA 373 · Michigan 379 · UIUC 419 · UW-Seattle 360 · USC 511 · BU 396 · UT-Austin 338 (+8 of the
-  5-program flagship seeds). The matcher scores budget-fit BLIND on these. Peers stamp it correctly
-  (Princeton 100% · Cornell 92% · MIT 69% · Columbia 44%). New rule + entry #7.
-- **🟡 Per-program "follow the {program} curriculum published on the bulletin" template stub** (passes
-  the anti-stub metric — unique per row — but FAILS the gold contrast; covered by miss #8 gold-contrast,
-  NOT a new rule): USC 20 rows · NYU 2 · UT-Austin 1. Low density; fold into those catalogs' depth passes.
-- **Concentration-split over-decomposition (miss #2):** BU 9 ("Master of Science in Computer Science —
-  Artificial Intelligence" — collapse into `tracks`). NYU/CMU "— {x}" rows are mostly legit-distinct
-  (school suffix / joint-option degrees) — VERIFY before collapsing.
-- **Marginal abs-150 over-counts to IGNORE (NOT stubs — distinct per-credential leads that merely repeat
-  a factual SUBFIELD-ENUMERATION / department name across levels):** Georgia Tech 5 · Duke 1 · Yale 1 ·
-  Chicago 1 · Northwestern 1. Mild redundancy, low priority — deepen if touched, do not prioritize.
+- **🔴 WORST — template-slot MACHINE-BROKEN GRAMMAR shipped LIVE (miss #9 template-slot sub-bullet):**
+  **Stanford 51** (REPO+LIVE — the #1021 regression, NEW), UCLA 13 (repo-fixed #1027, deploy in
+  progress — verify), UT-Austin 3 (repo+live), Michigan 1 (repo+live). All four are in `CERTIFIED_CLEAN`
+  but EXCLUDED from the gate's `_TEMPLATE_SLOT_CLEAN`, so CI never fails them — they ship live (FLAG #1a).
+- **🟢 Cleared + verified LIVE since run 71:** **Berkeley** (template-slot 107→0; was run-71 C1) ·
+  **UF** (frame 54→0 + generic-definition openers gone + tuition 28%→92%; was run-71 HIGH #1, deploy
+  landed) · **Stanford tuition** 33%→69% (#1020). Debris + machine-artifacts remain **0 across ALL 40
+  catalogs**; 0 duplicate / bare-abbreviation / "Programs"-department on the mature catalogs.
+- **🔴 Un-repaired credential-FRAME + ONE shared field body across BA/MS/PhD (frame_abs150 > 0, LIVE+REPO):**
+  Penn 51 · Cornell 44 · Notre Dame 23 · Boston U 23 (gold MIT 0). Penn/Notre Dame read frame_frac>0 on the
+  CI DEFAULT metric YET ship live (CERTIFIED_CLEAN, absent from the abs-floor `@parametrize` list, FLAG #1a/#1b);
+  Cornell/BU read 0 on the fraction-only CI metric (DILUTION evasion) and are caught only by the absolute-≥150
+  floor (FLAG #1b).
+- **🟡 matcher-core TUITION null catalog-wide (16 of 40 catalogs at 0% `tuition` LIVE):** NYU 507 · UIUC 419 ·
+  USC 511 · UW-Seattle 360 · UT-Austin 338 · Michigan 379 · BU 396 · UCLA 373 (pending #1027 deploy) + the 8
+  flagship 5-program seeds. The matcher scores budget-fit BLIND on these. Tuition is set in `apply()` by
+  credential level (NOT in the `PROGRAMS` dict — repo-side tuition reads 0 for everyone and is meaningless;
+  the LIVE API is the sole truth). Peers prove it is knowable: Princeton 100% · Cornell 92% · UF 92% · MIT 69%.
+- **Per-program "follow the {program} curriculum published on the bulletin" template stub** (unique per row so
+  it passes anti-stub, but FAILS the gold contrast — miss #8, NOT a new rule): USC ~20 · NYU 2 · UT-Austin 1.
+  Low density; fold into those catalogs' depth passes.
+- **Concentration-split over-decomposition (miss #2):** BU 9 ("Master of Science in Computer Science — Artificial
+  Intelligence" — collapse into `tracks`). CMU/NYU "— {x}" rows are mostly legit (joint/option degrees) — VERIFY
+  before collapsing.
+- **Marginal abs-150 over-counts to IGNORE (NOT stubs — distinct per-credential leads that merely repeat a factual
+  SUBFIELD-ENUMERATION / department name across levels):** Georgia Tech 5 · Duke 1 · Yale 1 · Chicago 1 ·
+  Northwestern 1. Mild redundancy, low priority.
 
-⚠️ **FLAG FOR HUMAN (code/workflow, out of grader scope):**
-1. **Two compounding gaps in the enforced anti-stub gate (`anti_stub.py` + `test_anti_stub_gate.py`,
-   app/test code — not grader-editable):**
-   (a) **COVERAGE drift.** `test_certified_catalog_is_anti_stub_clean` asserts only `analyze().is_clean`,
-   which has NO frame-stripped metric; `frame_stripped_shared_body` is asserted by a SEPARATE test over a
-   hardcoded `_FRAME_STRIPPED_CLEAN` list that DRIFTS from `CERTIFIED_CLEAN`. Make that test (and
-   `scrape_debris` / `machine_artifacts`) parametrize over `CERTIFIED_CLEAN` ITSELF so the lists cannot
-   drift — then Stanford/Penn/Notre Dame (frame_frac=51/51/23, all `CERTIFIED_CLEAN`) FAIL CI and
-   certification means something.
-   (b) **THRESHOLD undercount.** `frame_stripped_shared_body` defaults to `min_chars=80 AND min_fraction=0.5`;
-   add `OR lcs >= 150` to the DEFAULT so the dilution evasion (UF/Cornell/BU/JHU) cannot read a false 0
-   fleet-wide. (Only the NYU/MIT/Columbia tests pass `abs_chars=150` today.)
-   (c) **NO TEMPLATE-SLOT metric (new this run).** The gate has nothing for the template-slot evasion — a
-   per-credential body that DIFFERS per row (so `analyze` + `frame_stripped` read 0) but is a field phrase
-   slotted into a fixed frame, with telltale machine grammar: a doubled credential ("{level-word} in the
-   {Doctor of Philosophy|Master of…} (in|of) {field}"), a double/dangling preposition from an empty slot
-   ("research in of", "research in for", "{prep} ."), or a capitalized field-fragment jammed into a singular
-   slot. Berkeley auto-merged 107 such rows + UCLA 6, all green + in `CERTIFIED_CLEAN`. Add a
-   `template_slot_artifacts(programs)` metric (gold MIT 0) and parametrize it over `CERTIFIED_CLEAN`.
-2. **`cip_code` is NOT serialized on `/programs/{id}` or the list endpoint** — absent on EVERY program incl.
-   gold MIT, so the matcher-side "flag empty `cip_code` via public API" channel is UNUSABLE; audit via
-   DB/git or expose it. A serializer gap, not necessarily a data gap. (`tuition` IS serialized — the 16
-   zero-tuition catalogs in entry #7 are a real DATA gap, not a serializer gap.)
-3. **`anti_stub.scrape_debris` ADDRESS tell `\bHall,\s` can FALSE-POSITIVE on researched prose naming a
-   building** ("Warren Weaver Hall, at the heart of NYU's…"); anchor it to a real address context (a
-   number / Suite nearby) or drop it. In `anti_stub.py`. (Debris reads 0 fleet-wide this run, so latent.)
-4. **Deploy-stranding is NOT resolved (run 70's "appears RESOLVED" was premature) — and is NOT always
-   self-healing.** Run-69's Michigan/Columbia DID land, but the repo-vs-live diff this run shows TWO MORE
-   repairs stranded: **UF (#1016)** pending the in-progress #1017 deploy, and **JHU (#984)** which was
-   CANCELLED and — unlike Michigan/Columbia — NO later successful deploy caught it up despite several
-   running on a `main` that includes its migration. The likely mechanism: a deploy cancelled mid-migration
-   leaves the alembic revision marked-applied while its data write never completed, so every later deploy
-   SKIPS it and the old data persists permanently — a fresh fixup migration (new revision id) or a
-   re-stamp+re-run is then required, not "wait for the next deploy". Durable fixes (merge gate evaluates the
-   rebased-onto-`main` single-head MERGE RESULT; enrichment deploys QUEUE instead of cancel; data-write
-   migrations re-assert rows idempotently) live in the automerge/CI/migration workflow — not grader-editable.
+⚠️ **FLAG FOR HUMAN (code/workflow, out of grader scope — the grader edits only the 3 skill files):**
+1. **The enforced anti-stub gate has THREE compounding coverage/threshold gaps (`anti_stub.py` +
+   `test_anti_stub_gate.py`):**
+   (a) **`_TEMPLATE_SLOT_CLEAN` is a SUBSET of `CERTIFIED_CLEAN`** (excludes stanford/ucla/ut_austin/michigan),
+   so a catalog can be `CERTIFIED_CLEAN` AND ship template-slot grammar live. Once those four clear, parametrize
+   `test_certified_catalog_has_no_template_slot_grammar` over `CERTIFIED_CLEAN` ITSELF so the lists cannot drift.
+   (b) **`_ABS_FLOOR_CLEAN` / `_FRAME_STRIPPED_CLEAN` DRIFT from `CERTIFIED_CLEAN`** — Penn / Cornell / Notre Dame /
+   BU are `CERTIFIED_CLEAN` but ABSENT from the abs-floor list, so CI never runs `frame_stripped_shared_body(abs_chars=150)`
+   on them and they ship frame-share live. Parametrize the abs-floor test over `CERTIFIED_CLEAN` too.
+   (c) **THRESHOLD undercount:** `frame_stripped_shared_body` defaults to `min_chars=80 AND min_fraction=0.5`; add
+   `OR lcs >= 150` to the DEFAULT so the dilution evasion (Cornell/BU) cannot read a false 0 fleet-wide.
+2. **`cip_code` is NOT serialized on `/programs/{id}` or the list endpoint** — absent on EVERY program incl. gold
+   MIT, so the matcher-side "flag empty `cip_code` via public API" channel is UNUSABLE. The in-repo `PROGRAMS`
+   carry a `cip` key, so it is a serializer gap, not necessarily a data gap — expose it or audit via DB/git.
+   (`tuition` IS serialized — the 16 zero-tuition catalogs in entry #7 are a real DATA gap.)
+3. **`anti_stub.scrape_debris` ADDRESS tell can FALSE-POSITIVE on researched prose naming a building**
+   ("Warren Weaver Hall, at the heart of NYU's…"); anchor it to a real address context or drop it. Debris reads
+   0 fleet-wide this run, so latent.
+4. **Deploy reliability — NOT resolved.** The LATEST `Deploy Backend` (Berkeley #1025, 11:35Z) **FAILED**; #1026
+   (Berkeley) was **CANCELLED**; UCLA #1027's deploy is **IN PROGRESS** (11:51Z) — UCLA's template-slot + tuition
+   fix is pending it. **JHU #984** was CANCELLED and, unlike Michigan/Columbia (which self-healed), NO later deploy
+   caught it up, so prod permanently serves the old 3 shared-body fields — the non-self-healing stranding from run
+   71 FLAG #4 (a deploy cancelled mid-migration leaves the alembic revision marked-applied while its data write
+   never completed, so every later deploy SKIPS it; a fresh fixup migration or re-stamp+re-run is then required).
+   Durable fixes (deploys QUEUE instead of cancel; data-write migrations re-assert rows idempotently) live in the
+   workflow — not grader-editable.
 
 ---
 
-# CRITICAL — machine-broken slotted grammar shipped LIVE (the NEW template-slot evasion) — clear these BEFORE entry #1
+# CRITICAL — machine-broken template-slot grammar shipped LIVE — clear FIRST
 
-These two are the absolute top of the worst-first order (visibly broken machine prose a student reads,
-worse than a grammatical shared body). The shared-body count was cleared, so they read CLEAN on every
-`anti_stub` metric and a concurrent grader scored them as wins — but the per-credential "repair" SLOTTED a
-field phrase into a fixed template and shipped broken grammar (miss #9 template-slot sub-bullet, added this
-run). Both are REPO-confirmed (ran `anti_stub` + the template scan over the in-repo `PROGRAMS`), so the fix
-is to REWRITE each affected row as researched per-credential prose — not a deploy.
+These render visibly broken machine prose a student reads. They cleared the shared-body count, so they
+read CLEAN on `analyze` + `frame_stripped` and a prior grader scored them as wins — but the per-credential
+"repair" SLOTTED a field phrase into a fixed template (miss #9 template-slot sub-bullet). REPO-confirmed
+(`template_slot_artifacts` over the in-repo `PROGRAMS`), so the fix is to REWRITE each row as researched
+per-credential prose — not a deploy.
 
-## C1. University of California-Berkeley — template-slot machine-broken grammar — severity: critical — first seen run 71 · 2026-06-21
-233 programs. #1015 cleared the frame-shared body (64→0) but the in-repo `PROGRAMS` carry **107 rows** of
-slotted broken grammar: "Doctoral training in **the Doctor of Philosophy in** Agricultural Business and
-Management centers on dissertation research **in of** farm and agribusiness economics…" (credential DOUBLED
-+ double-preposition empty slot), "…centers on dissertation research **in** Architectural studios, history
-and theory, with qualifying examinations…" (capitalized field-fragment jammed into a singular slot). Rewrite
-each credential level with RESEARCHED prose about what THAT degree studies at THAT level (gold MIT); re-scan
-the WHOLE catalog for the template tells → 0 before re-certifying. (Also 32% tuition — backfill, entry #7.)
+## 1. Stanford University — template-slot machine-broken grammar (the #1021 regression) — severity: critical — first seen run 72 · 2026-06-21
+178 programs. `#1021` "per-credential description bodies" cleared the 51 frame-share fields (frame_abs150 51→0)
+but MANUFACTURED **51 `template_slot_artifacts` rows**, REPO-confirmed and LIVE (Stanford is in `CERTIFIED_CLEAN`
+but EXCLUDED from `_TEMPLATE_SLOT_CLEAN`, so the gate never failed it). Every one is the fixed template
+"Graduate coursework in **the Master of Science in {field}** emphasizes {field-blurb}, with seminars, methods
+training, and a culminating thesis or capstone through {School}." — the credential is DOUBLED, a field blurb is
+slotted (sometimes broken: "…emphasizes Chemical engineering applies chemistry, physics, with seminars…"), and a
+UNIVERSAL field-agnostic tail is appended to every row. Rewrite each credential level as RESEARCHED prose about
+what THAT degree studies at THAT level (gold MIT 0); re-scan the WHOLE catalog → `template_slot_artifacts == 0`
+AND `frame_stripped(abs_chars=150) == 0`, then GRADUATE Stanford into `_TEMPLATE_SLOT_CLEAN` (do not leave it
+parked).
 
-## C2. University of California-Los Angeles — template-slot machine-broken grammar + 0% tuition — severity: critical — first seen run 71 · 2026-06-21
-373 programs. #975/#1012 cleared the frame-shared body (67→0) but the in-repo `PROGRAMS` carry **6 rows** of
-slotted broken grammar: "The Doctor of Philosophy in Anthropology at UCLA advances original dissertation
-research **in for** students interested in an anthropological understanding of **human**." (empty "research
-in for" slot + truncated "understanding of human.") / "…research **in of** artistic production…". Rewrite the
-affected rows as researched per-credential prose; re-scan → 0. UCLA ALSO ships **0% tuition** (entry #7) —
-fix in the same pass.
+## 2. University of California-Los Angeles — template-slot + 0% tuition — DEPLOY IN PROGRESS (verify) — severity: critical — first seen run 71 · 2026-06-21
+373 programs. The in-repo `ucla` `PROGRAMS` are FIXED (`template_slot_artifacts == 0`, tuition backfilled by #1027),
+but prod still serves **13 template-slot rows** ("The Doctor of Philosophy in Anthropology at UCLA advances original
+research **in for** students interested in an anthropological understanding of **human**.") and **0% tuition**. `#1027`'s
+`Deploy Backend` is IN PROGRESS — **DO NOT rewrite; DRIVE/VERIFY THE DEPLOY** (§9), then re-query live for 0
+template-slot + non-zero tuition. If #1027's deploy FAILS (the prior Deploy Backend #1025 failed), it is stranded —
+a fresh fixup migration is then needed (FLAG #4).
 
----
+## 3. The University of Texas at Austin — 3 template-slot rows + 0% tuition — severity: critical — first seen run 71 · 2026-06-21
+338 programs. REPO+LIVE carry **3 `template_slot_artifacts` rows** where a PhD row slotted a *different credential's*
+description into "research in ___": "Doctoral study in Anthropology at UT Austin advances original research in **The
+Bachelor of Arts in Anthropology at UT Austin introduces the four**, supported by…" (also History, Computer Science).
+Rewrite those 3 PhD rows as researched doctoral prose; re-scan → 0; graduate into `_TEMPLATE_SLOT_CLEAN`. Also 0%
+tuition (entry #7) — fix in the same pass.
 
-# HIGH — credential-FRAME / generic field-definition + ONE shared field body across BA/MS/PhD — NOT repaired
-
-Each: strip the per-credential frame and give EVERY credential level its OWN researched body (what THAT
-degree studies at THAT level), gold MIT = 0%. **The dilution evasion (miss #8 fraction-floor):** a
-"repair" that keeps one identical 150+-char field sentence and pads each credential's tail to drop it
-under 50% is NOT a fix — the shared sentence must be GONE, not diluted. ALL of these are in
-`CERTIFIED_CLEAN` but ABSENT from the frame-stripped `@parametrize` list (FLAG #1a) — add each to that
-list (and to `scrape_debris` / `machine_artifacts`) when re-certifying, and re-measure with the
-absolute-≥150 floor.
-
-## 1. University of Florida — DEPLOY-STRANDED (repo fixed; prod serves old generic-definitions) — severity: high — first seen run 65 · 2026-06-20
-314 programs (feed fetches, posts=25 ✓). **CORRECTION to run 70:** the in-repo `uf` `PROGRAMS` score
-frameABS150=0 with ZERO template tells — the #1016 per-credential repair IS a genuine fix. But prod STILL
-serves 54 generic-encyclopedia-definition fields ("Anthropology is the scientific study of humanity…" on
-the BA + Graduate Certificate + MS; "Economics is the social science that studies…") because the deploy
-never landed — pending the in-progress #1017 Deploy Backend that carries current main. **DO NOT rewrite —
-the repo data is correct. DRIVE THE DEPLOY** (§9 A-MERGE-IS-NOT-A-DEPLOY), then re-query live for 0. (Also
-backfill tuition, 28% → entry #7.)
-
-## 2. Stanford University — frame-share (CI-flagged yet un-gated, FLAG #1a) — severity: high — first seen run 65 · 2026-06-20
-178 programs. **51 fields share a body** (maxLCS 243) behind a per-credential frame ("Graduate study." /
-"Graduate certificate study." + an identical "{Field} is the … study of …" body across the BA/MS). Reads
-frame_frac=51 on the CI DEFAULT metric yet ships live (CERTIFIED_CLEAN, absent from the @parametrize list).
-Per-credential researched bodies.
-
-## 3. University of Pennsylvania — frame-share (CI-flagged yet un-gated, FLAG #1a) — severity: high — first seen run 66 · 2026-06-20
-186 programs. **51 fields share a body** (maxLCS 202) behind a credential frame; frame_frac=51 on CI yet
-CERTIFIED_CLEAN. Per-credential bodies. Tuition 33%.
-
-## 4. Cornell University — DILUTION EVASION + likely-fabricated owning unit — severity: high — first seen run 64 · 2026-06-19
-237 programs. The "per-credential bodies" pass DILUTED below the 50% floor (reads 0 on CI) but **44 fields
-still share a body** (maxLCS 215). Residual: verify/correct **"Cornell David A. Duffield College of
-Engineering"** — Cornell's college is "College of Engineering" (Duffield is a building donor; miss #8
-exact-name org-chart). Fold both into one per-credential-body repair.
-
-## 5. Boston University — DILUTION EVASION + splits + 0% tuition — severity: high — first seen run 32 · 2026-06-16
-396 programs. **23 fields still share a body** (maxLCS 238, DILUTION — reads 0 on CI) behind a credential
-frame + **9 concentration-split rows** ("Master of Science in Computer Science — Artificial Intelligence" —
-collapse into `tracks`, miss #2) + **0% tuition** (entry #7). Per-credential bodies + tuition backfill.
-
-## 6. University of Notre Dame — frame-share (CI-flagged yet un-gated, FLAG #1a) — severity: high — first seen run 66 · 2026-06-20
-113 programs (feed RECOVERED, posts=13 ✓). **23 fields share a body** (maxLCS 263) behind a credential
-frame; frame_frac=23 on the CI metric yet CERTIFIED_CLEAN. Per-credential bodies.
+## 4. University of Michigan-Ann Arbor — 1 template-slot row + 0% tuition — severity: critical — first seen run 71 · 2026-06-21
+379 programs (description-clean otherwise). REPO+LIVE carry **1 `template_slot_artifacts` row**: "The Doctor of
+Philosophy in Industrial and Operations Engineering at the University of Michigan advances original research **in ,**
+analyzes, and improves complex systems…" (empty slot → dangling "research in ,"). Rewrite that one PhD row; re-scan →
+0; graduate into `_TEMPLATE_SLOT_CLEAN`. Also 0% tuition (entry #7).
 
 ---
 
-# HIGH — matcher-core field null catalog-wide (the matcher scores budget-fit BLIND) — NEW this run
+# HIGH — credential-FRAME + ONE shared field body across BA/MS/PhD — NOT repaired (LIVE+REPO)
 
-## 7. The 16 zero-tuition catalogs — matcher STARVATION — severity: high — first seen run 70 · 2026-06-21
-**16 of 40 enriched catalogs ship 0% `tuition`** so the CPEF matcher scores budget-fit blind on every
-program: **NYU 507 · UCLA 373 · Michigan 379 · UIUC 419 · UW-Seattle 360 · USC 511 · BU 396 · UT-Austin
-338** (+ the 8 flagship 5-program seeds in #9). Tuition is institution-PUBLISHED (uniform undergrad sticker /
-published graduate rate), so a whole-catalog null is a SKIPPED knowable field, not an honest omission (new
-rule, "Also enrich for the MATCH"). Stamp the real cited published rate per credential level on each program;
-record `_standard.omitted` only for a genuinely-unpublished program (e.g. a fully-funded PhD). Several of
-these (UCLA/Michigan/BU/UT-Austin) overlap the frame-share entries — fix tuition in the SAME per-credential
-depth pass. Peers prove it is knowable: Princeton 100% · Cornell 92% · MIT 69% · Columbia 44%.
+Each: strip the per-credential frame and give EVERY credential level its OWN researched body (what THAT degree
+studies at THAT level), gold MIT = 0%. The dilution evasion (miss #8 fraction-floor): a "repair" that keeps one
+identical 150+-char field sentence and pads each credential's tail to drop it under 50% is NOT a fix — the shared
+sentence must be GONE, not diluted. ALL of these are in `CERTIFIED_CLEAN` but ABSENT from the abs-floor
+`@parametrize` list (FLAG #1a/#1b) — add each when re-certifying and re-measure with the absolute-≥150 floor. And
+the SAME pass must take `template_slot_artifacts` → 0 (do not trade frame-share for template-slot — entry #1's lesson).
 
-## 8. Johns Hopkins University — DEPLOY-STRANDED (repo fixed; prod serves 3 old shared-body fields) — severity: medium — first seen run 67 · 2026-06-20
-244 programs. **CORRECTION to run 70:** the in-repo `jhu` `PROGRAMS` score frameABS150=0 — the #984 "clear
-the last 3" repair IS a genuine fix. But prod still serves 3 shared-body fields (Anthropology, Chemical
-Engineering, +1) because the #984 Deploy Backend was CANCELLED and (unlike Michigan/Columbia) NO later
-deploy caught it up — see FLAG #4 (non-self-healing). **DO NOT rewrite — DRIVE THE DEPLOY** (§9), likely via
-a fresh fixup migration; re-query live for 0. Low effort, finishes JHU.
+## 5. University of Pennsylvania — frame-share (CI-flagged yet un-gated) — severity: high — first seen run 66 · 2026-06-20
+186 programs. **51 fields share a body** (frame_abs150=51, frame_frac=51) behind a per-credential frame. Reads
+frame_frac=51 on the CI DEFAULT metric yet ships live (CERTIFIED_CLEAN, absent from the abs-floor list). Per-credential
+researched bodies. Tuition 34%.
 
----
+## 6. Cornell University — DILUTION EVASION + verify owning unit — severity: high — first seen run 64 · 2026-06-19
+237 programs (tuition 92% ✓). The "per-credential bodies" pass DILUTED below the 50% floor (frame_frac=0 on CI) but
+**44 fields still share a body** (frame_abs150=44). Residual: verify/correct **"Cornell David A. Duffield College of
+Engineering"** — Cornell's college is "College of Engineering" (Duffield is a building donor; miss #8 exact-name
+org-chart). Fold both into one per-credential-body repair.
 
-# MEDIUM — dead-feed flagship seeds · institution-level seeds (seeding is external)
+## 7. University of Notre Dame — frame-share (CI-flagged yet un-gated) — severity: high — first seen run 66 · 2026-06-20
+113 programs (feed fetches, posts=13 ✓). **23 fields share a body** (frame_abs150=23, frame_frac=23) behind a credential
+frame; frame_frac=23 on the CI metric yet CERTIFIED_CLEAN. Per-credential researched bodies.
 
-## 9. The flagship seeds (5 programs each) — DEAD FEED + null department + 0% tuition — severity: medium — first seen run 57 · 2026-06-18
-Brown · Georgetown · UC-Davis · UC-Irvine · UNC-Chapel Hill · UVA · Vanderbilt · Washington U-St Louis each
-ship 5 flagship rows with **null department**, **0% tuition**, a **DEAD FEED** (posts=0), and Brown's 5 rows
-have **EMPTY descriptions**; **UC-Davis / UNC / Vanderbilt / Washington U-St Louis ship only 3 campus photos
-(<4)**. **Enrich (per university, one PR):** a full real-named catalog + per-credential researched
-descriptions + real departments + published tuition + a working feed + a ≥4-photo verified gallery, then
-deepen toward the full real catalog.
-
-## 10. The ~260 bulk institution-level seeds (0 programs) — severity: medium — first seen run 59/60
-Each entered at institution level with **0 programs, a dead feed**, and **33 with ZERO campus photos**
-(broken explore-card gradient header + detail hero — the acute sub-set to clear first; e.g. Air Force
-Institute of Technology, Arizona State (Campus & Digital Immersion), Azusa Pacific, Colorado State-Fort
-Collins, James Madison, Keiser-Ft Lauderdale, Loyola Marymount, Loyola-Chicago, Miami U-Oxford, Michigan
-Tech, Montclair State, Oakland, Oregon State, SUNY-ESF, Sacred Heart). **Enrich (per university, one PR):**
-a full real-named catalog + per-credential field-specific descriptions + real departments + published
-tuition · a working feed · a ≥4-photo verified gallery · reviews on coverable programs · `_standard`. Pick
-a 0-photo seed once the HIGH tier clears.
+## 8. Boston University — DILUTION EVASION + splits + 0% tuition — severity: high — first seen run 32 · 2026-06-16
+396 programs. **23 fields still share a body** (frame_abs150=23, DILUTION — frame_frac=0 on CI) behind a credential frame
++ **9 concentration-split rows** ("Master of Science in Computer Science — Artificial Intelligence" — collapse into
+`tracks`, miss #2) + **0% tuition** (entry #7). Per-credential bodies + collapse splits + tuition backfill.
 
 ---
 
-# CLEAN (desc + structure; no action) — verified LIVE run 70
+# HIGH — matcher-core field null catalog-wide (the matcher scores budget-fit BLIND)
+
+## 9. The 16 zero-tuition catalogs — matcher STARVATION — severity: high — first seen run 70 · 2026-06-21
+**16 of 40 enriched catalogs ship 0% `tuition`** so the CPEF matcher scores budget-fit blind on every program:
+**NYU 507 · UIUC 419 · USC 511 · UW-Seattle 360 · UT-Austin 338 · Michigan 379 · BU 396 · UCLA 373** (UCLA pending
+#1027 deploy) + the **8 flagship 5-program seeds** (entry #11). Tuition is institution-PUBLISHED (uniform undergrad
+sticker / published graduate rate), so a whole-catalog null is a SKIPPED knowable field, not an honest omission ("Also
+enrich for the MATCH" tuition rule). Stamp the real cited published rate per credential level in `apply()` for each
+program; record `_standard.omitted` only for a genuinely-unpublished program (e.g. a fully-funded PhD). Several
+(UCLA/Michigan/BU/UT-Austin) overlap entries #2/#4/#8 — fix tuition in the SAME depth pass. Peers prove it is knowable:
+Princeton 100% · Cornell 92% · UF 92% · MIT 69%.
+
+## 10. Johns Hopkins University — DEPLOY-STRANDED (repo fixed; prod serves 3 old shared-body fields) — severity: high — first seen run 67 · 2026-06-20
+244 programs. The in-repo `jhu` `PROGRAMS` score frame_abs150=0 — the #984 "clear the last 3" repair IS a genuine fix.
+But prod still serves **3 shared-body fields** (Anthropology, Chemical Engineering, +1) because #984's `Deploy Backend`
+was CANCELLED and (unlike Michigan/Columbia) NO later deploy caught it up — see FLAG #4 (non-self-healing). **DO NOT
+rewrite — DRIVE THE DEPLOY** (§9), likely via a fresh fixup migration; re-query live for 0. Low effort, finishes JHU.
+
+---
+
+# MEDIUM — flagship seeds · institution-level seeds (seeding is external)
+
+## 11. The flagship seeds (5 programs each) — EMPTY descriptions + null department + 0% tuition + DEAD FEED — severity: medium — first seen run 57 · 2026-06-18
+**Brown · Georgetown · UC-Davis · UC-Irvine · UNC-Chapel Hill · UVA · Vanderbilt · Washington U-St Louis** each ship 5
+flagship rows with **EMPTY `description_text`** (all 8, not just Brown — confirmed live this run), **null department**,
+**0% tuition**, and a **DEAD FEED** (posts=0). **UC-Davis / UNC / Vanderbilt / Washington U-St Louis ship only 3 campus
+photos (<4)** (Brown/Georgetown/UC-Irvine 4, UVA 5). **Enrich (per university, one PR):** a full real-named catalog +
+per-credential researched descriptions + real departments + published tuition + a working feed + a ≥4-photo verified
+gallery, then deepen toward the full real catalog.
+
+## 12. The ~260 bulk institution-level seeds (0 programs) — severity: medium — first seen run 59/60
+Each entered at institution level with **0 programs, a dead feed**, and **~33 with ZERO campus photos** (broken
+explore-card gradient header + detail hero — the acute sub-set to clear first; e.g. Air Force Institute of Technology,
+Arizona State (Campus & Digital Immersion), Azusa Pacific, Colorado State-Fort Collins, James Madison, Keiser-Ft
+Lauderdale, Loyola Marymount, Loyola-Chicago, Miami U-Oxford, Michigan Tech, Montclair State, Oakland, Oregon State,
+SUNY-ESF, Sacred Heart). **Enrich (per university, one PR):** a full real-named catalog + per-credential field-specific
+descriptions + real departments + published tuition · a working feed · a ≥4-photo verified gallery · reviews on
+coverable programs · `_standard`. Pick a 0-photo seed once the HIGH tier clears.
+
+---
+
+# CLEAN (desc + structure; no action) — verified LIVE run 72
 - **Gold:** MIT (n=65, 0 on every metric, tuition 69%).
-- **Cleared + DEPLOYED since run 69 (verified live this run):** Michigan (#1012 — frame 67→0; **0% tuition,
-  entry #7**) · Columbia (frame 14→0, tuition 44%). (Michigan is description-clean but tuition-starved — see
-  #7.) **NOTE: UCLA (#975/#1012) + Berkeley (#1015) cleared the shared-body count but are NOT clean — they
-  ship template-slot machine-broken grammar (CRITICAL C1/C2); run 70 mis-graded them as wins.**
-- **Genuinely clean (per-credential-distinct bodies, frame_abs ≤ 1 marginal, no debris/artifacts):**
+- **Cleared + verified LIVE since run 71:** **Berkeley** (n=233 — template-slot 107→0; was run-71 C1) · **UF**
+  (n=314 — frame 54→0 + generic-definition openers gone + tuition 28%→92%; was run-71 HIGH #1).
+- **Genuinely clean (per-credential-distinct bodies, frame_abs ≤ 1 marginal, no debris/artifacts/template-slot):**
   Duke (1/154) · Yale (1/189) · Chicago (1/91) · Northwestern (1/125) · Rice (0/159) · Purdue (0/172) ·
-  UC-San Diego (0/137) · Caltech (0/43) · Princeton (0/43, tuition 100%) · Harvard (0/279) · NYU (0/507 —
-  but **0% tuition** #7 + 2 bulletin-stub rows) · UT-Austin (0/338 — **0% tuition** #7) · UIUC (0/419 —
-  **0% tuition** #7) · UW-Seattle (0/360 — **0% tuition** #7) · UW-Madison (0/348) · USC (0/511 — **0%
-  tuition** #7 + 20 bulletin-stub rows) · Dartmouth (0/43, feed recovered) · Emory (0/46, feed recovered) ·
-  CMU (0/180 — 17 "— {x}" rows are joint/option degrees, verify) · Georgia Tech (5/143 — 5 fields share a
+  UC-San Diego (0/137) · Caltech (0/43) · Princeton (0/43, tuition 100%) · Harvard (0/279) · Columbia (0/167) ·
+  Carnegie Mellon (0/180) · UW-Madison (0/348) · Dartmouth (0/43, feed ok) · Emory (0/46, feed ok) ·
+  NYU (0/507 — but **0% tuition** #9 + 2 bulletin-stub rows) · USC (0/511 — **0% tuition** #9 + ~20 bulletin-stub rows) ·
+  UIUC (0/419 — **0% tuition** #9) · UW-Seattle (0/360 — **0% tuition** #9) · Georgia Tech (5/143 — 5 fields share a
   SUBFIELD ENUMERATION across levels, each lead distinct; mild redundancy, not a stub).
-- **Heuristic over-counts to IGNORE (not defects):** Princeton/Duke/Rice dept-echo (those ARE their real
-  departments); own-unit peer-substring hits (Cornell CALS/Weill, Penn Wharton/Perelman, JHU Peabody/Whiting,
-  Berkeley Lawrence-Berkeley); a trailing `(Source: …edu)` citation (GOOD sourcing); a building named in
-  prose ("Warren Weaver Hall, …" — `\bHall,\s` false-flags it, FLAG #3); a shared SUBFIELD ENUMERATION /
-  department name across credential levels when each lead is distinct (the abs-150 marginal over-count —
-  GT/Duke/Yale/Chicago/Northwestern). Treat all as artifacts UNLESS a row names a unit / landmark / place
-  the institution provably does NOT have.
+- **Heuristic over-counts to IGNORE (not defects):** Princeton/Duke/Rice dept-echo (those ARE their real departments);
+  own-unit peer-substring hits (Cornell CALS/Weill, Penn Wharton/Perelman, JHU Peabody/Whiting, Berkeley
+  Lawrence-Berkeley); a trailing `(Source: …edu)` citation (GOOD sourcing); a building named in prose ("Warren Weaver
+  Hall, …" — `\bHall,\s` false-flags it, FLAG #3); a shared SUBFIELD ENUMERATION / department name across credential
+  levels when each lead is distinct (the abs-150 marginal over-count — GT/Duke/Yale/Chicago/Northwestern). Treat all as
+  artifacts UNLESS a row names a unit / landmark / place the institution provably does NOT have.
