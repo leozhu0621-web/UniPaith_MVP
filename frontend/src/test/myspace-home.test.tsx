@@ -388,6 +388,23 @@ describe('MySpaceHomePage', () => {
     })
   })
 
+  it('shows all partial dependency access issues', async () => {
+    vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
+      ...overview,
+      access_issues: [
+        { source: 'applications', label: 'Applications temporarily unavailable', href: null, confidence: null, updated_at: null },
+        { source: 'messages', label: 'Messages temporarily unavailable', href: null, confidence: null, updated_at: null },
+      ],
+    })
+
+    renderHome()
+
+    expect(await screen.findByText('2 My Space data sources are using fallback data.')).toBeTruthy()
+    fireEvent.click(screen.getByText('View affected sources'))
+    expect(screen.getByText('Applications temporarily unavailable · applications')).toBeTruthy()
+    expect(screen.getByText('Messages temporarily unavailable · messages')).toBeTruthy()
+  })
+
   it('surfaces offer decision pressure in offers and costs', async () => {
     vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
       ...overview,

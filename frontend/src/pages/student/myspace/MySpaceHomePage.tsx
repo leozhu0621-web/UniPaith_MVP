@@ -176,11 +176,7 @@ export default function MySpaceHomePage() {
         </Card>
       ) : (
         <div className="stagger-list mt-4 space-y-5">
-          {data.access_issues.length > 0 && (
-            <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-foreground">
-              Some My Space modules are using fallback data. {data.access_issues[0].label}.
-            </div>
-          )}
+          <AccessIssuesNotice issues={data.access_issues} />
 
           <OverviewMeta generatedAt={data.generated_at} activeCount={activeTasks.length} hiddenCount={hiddenTasks.length} />
 
@@ -337,6 +333,32 @@ export default function MySpaceHomePage() {
         </div>
       )}
     </PageContainer>
+  )
+}
+
+function AccessIssuesNotice({ issues }: { issues: MySpaceProvenance[] }) {
+  if (issues.length === 0) return null
+
+  const summary = issues.length === 1
+    ? `Some My Space modules are using fallback data. ${issues[0].label}.`
+    : `${issues.length} My Space data sources are using fallback data.`
+
+  return (
+    <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-foreground">
+      <p>{summary}</p>
+      {issues.length > 1 && (
+        <details className="mt-2">
+          <summary className="cursor-pointer list-none font-medium underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+            View affected sources
+          </summary>
+          <ul className="mt-2 space-y-1 text-muted-foreground">
+            {issues.map(issue => (
+              <li key={`${issue.source}:${issue.label}`}>{sourceLine({ provenance: [issue] })}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </div>
   )
 }
 
