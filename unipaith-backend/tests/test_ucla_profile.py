@@ -50,8 +50,7 @@ def _school_snapshot(m: dict) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    is_ug = spec["degree_type"] == "bachelors"
-    cost = u._undergrad_cost() if is_ug else u._grad_cost_fallback(spec)
+    cost = u._cost_for(spec)[1]
     outcomes = dict(u._OUTCOMES_BY_SLUG.get(slug, {}))
     outcomes["_standard"] = u._program_standard(slug, spec)
     kw = u._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(u._KEYWORDS_BY_SCHOOL[spec["school"]])
@@ -108,6 +107,54 @@ def test_catalog_descriptions_are_field_specific_and_real():
 
     report = analyze(u.PROGRAMS)
     assert report.is_clean, f"UCLA catalog is not anti-stub clean: {report.summary()}"
+
+
+def test_no_template_slot_machine_broken_grammar():
+    """REPAIR_BACKLOG CRITICAL C2: per-credential slot frames must not ship broken grammar.
+
+    The run-71 defect slotted a raw fragment into a sentence frame ("research in of
+    artistic production…", "…understanding of human."). Gold MIT scores 0.
+    """
+    hits = u._template_slot_artifacts(u.PROGRAMS)
+    assert not hits, f"UCLA has {len(hits)} template-slot grammar rows: {hits[:5]}"
+
+
+def test_machine_artifacts_clean():
+    from unipaith.profile_standard.anti_stub import machine_artifacts, scrape_debris
+
+    assert not machine_artifacts(u.PROGRAMS)
+    assert not scrape_debris(u.PROGRAMS)
+
+
+def test_matcher_core_tuition_is_published_catalog_wide():
+    """REPAIR_BACKLOG #7: tuition is institution-published, so it is filled for every
+    knowable credential level — only professional/self-supporting degrees omit-with-reason."""
+    assert u._TUITION_UG_IN_STATE > 0
+    assert u._TUITION_GRAD > 0
+    have = [p for p in u.PROGRAMS if u._cost_for(p)[0] is not None]
+    # Undergrad sticker + academic graduate rate + funded research-doctoral $0 cover ~85% of
+    # the catalog; professional & self-supporting master's / doctorates (MBA, MFE, MPH, MEng,
+    # MFA, online MSOL, MQST, Ed.D., S.J.D., D.M.A., …) omit-with-reason rather than guess.
+    assert len(have) / len(u.PROGRAMS) >= 0.83
+    # A self-supporting online master's is omitted, never stamped with the academic rate.
+    msol = next(p for p in u.PROGRAMS if p["slug"] == "ucla-engineering-ms")
+    assert u._cost_for(msol)[0] is None
+    # A professional doctorate (Ed.D.) is omitted, never zeroed as funded.
+    edd = next(p for p in u.PROGRAMS if p["slug"] == "ucla-doctor-of-education-phd")
+    assert u._cost_for(edd)[0] is None
+    # A research Doctor of Philosophy is funded $0 (present budget-fit signal).
+    research_phd = next(
+        p for p in u.PROGRAMS if p["program_name"].startswith("Doctor of Philosophy")
+    )
+    assert u._cost_for(research_phd) == (0, u._phd_funded_cost())
+    # The funded-PhD $0 is a present value (budget-fit signal), not a null.
+    phd = next(p for p in u.PROGRAMS if p["degree_type"] == "phd")
+    tuition, cost = u._cost_for(phd)
+    assert tuition == 0 and cost["funded"] is True
+    # A professional master's is omitted-with-reason, never stamped with the academic rate.
+    mba = next(p for p in u.PROGRAMS if "Master of Business Administration" in p["program_name"])
+    assert u._cost_for(mba)[0] is None
+    assert "cost_data.tuition_usd" in u._program_standard(mba["slug"], mba)["omitted"]
 
 
 def test_institution_is_gold_except_recorded_omission():
