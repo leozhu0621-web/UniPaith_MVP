@@ -51,8 +51,7 @@ def _school_snapshot(m: dict) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    is_ug = spec["degree_type"] == "bachelors"
-    cost = u._undergrad_cost() if is_ug else u._grad_cost_fallback(spec)
+    _, cost = u._program_tuition(spec)
     outcomes = dict(u._OUTCOMES_BY_SLUG.get(slug, {}))
     outcomes["_standard"] = u._program_standard(slug, spec)
     kw = u._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(u._KEYWORDS_BY_SCHOOL[spec["school"]])
@@ -134,6 +133,26 @@ def test_every_program_is_conformant_or_omitted():
         bad = _gaps("program", res, omitted)
         assert not bad, f"{spec['slug']} has un-omitted gaps: {bad}"
         assert snap["content_sources"], f"{spec['slug']} missing content_sources"
+
+
+def test_every_program_carries_published_tuition():
+    # Matcher-core budget signal (REPAIR_BACKLOG run 74 HIGH #3): UIUC shipped tuition null
+    # across the whole catalog, so the CPEF matcher scored budget-fit blind. Every program
+    # must now carry a UIUC-published tuition figure (PhD funded rows stamp 0; funding is a
+    # separate signal). A regression back to null fails CI.
+    for spec in u.PROGRAMS:
+        tuition, cost = u._program_tuition(spec)
+        assert cost.get("tuition_usd") is not None, f"{spec['slug']} has null tuition_usd"
+        assert cost.get("source") and cost.get("source_url"), f"{spec['slug']} tuition uncited"
+        if spec["degree_type"] == "phd":
+            assert cost["tuition_usd"] == 0 and cost.get("funded") is True, (
+                f"{spec['slug']} PhD should be funded (0) with the sticker in the note"
+            )
+        else:
+            assert tuition and tuition > 0, f"{spec['slug']} non-PhD tuition should be > 0"
+    # No program may record cost_data.tuition_usd as an omission any longer.
+    for spec in u.PROGRAMS:
+        assert "cost_data.tuition_usd" not in u._program_standard(spec["slug"], spec)["omitted"]
 
 
 def test_flagship_programs_carry_reviews():

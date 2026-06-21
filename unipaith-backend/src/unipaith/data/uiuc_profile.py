@@ -41,10 +41,13 @@ top-employer-industries list across all colleges, so those two institution outco
 fields are omitted with reason (the College Scorecard institution-wide ten-year
 median earnings, $81,054, is kept). UIUC reports total employees rather than a
 single consistent instructional-faculty headcount, so ``scale.faculty_count`` is
-omitted (the 18:1 student-faculty ratio is kept). Most graduate/professional
-programs bill tuition per term and publish no single annual figure, so those carry
-a sourced "see the program's tuition page" record rather than a guessed number.
-External reviews are attached to the flagship coverable programs; remaining
+omitted (the 18:1 student-faculty ratio is kept). Every program now carries a
+UIUC-published 2025-26 tuition figure (matcher-core budget signal): the resident
+base undergraduate tuition, the published graduate base / Grainger-engineering /
+Gies-program rates, the online flat-tuition totals (iMBA, iMSM, iMSA, online MCS),
+and the professional-school rates (Law, Medicine, Veterinary Medicine); PhD rows
+stamp 0 with the published sticker recorded in the note (funding is a separate
+signal). External reviews are attached to the flagship coverable programs; remaining
 programs record ``external_reviews`` in their ``_standard.omitted`` pending
 program-specific third-party coverage (synthesized institution-level reviews were
 removed in this repair).
@@ -4512,37 +4515,195 @@ _COST_SRC_URL = (
 )
 
 
-def _undergrad_cost() -> dict:
-    return {
-        "total_cost_of_attendance": _UNDERGRAD_COA,
-        "avg_net_price": _AVG_NET_PRICE,
+# == Published tuition (matcher-core budget signal — REPAIR_BACKLOG run 74 HIGH #3) ==
+# Every figure below is UIUC-PUBLISHED for 2025-26 and carries a first-party citation; the
+# matcher number ``p.tuition`` is the Illinois-resident annual TUITION (campus fees excluded,
+# kept consistent across tiers) and the breakdown carries the non-resident rate. The
+# undergraduate note documents the published tuition-&-fees totals and the college differentials
+# (the catalog stores the resident BASE tuition, which is the rate published for majors not in a
+# differential college; differential majors pay toward the documented top of the range). Funding
+# is a SEPARATE signal — PhD rows stamp 0 with the published sticker recorded in the note.
+_TUI_SRC_UG = "UIUC Undergraduate Admissions — Tuition & Fees 2025-26 (resident base tuition per U of I Board of Trustees, Fall 2025)"
+_TUI_SRC_UG_URL = "https://www.admissions.illinois.edu/invest/tuition"
+_TUI_SRC_GRAD = "UIUC Office of the Registrar — 2025-26 Graduate & Professional Tuition Rates"
+_TUI_SRC_GRAD_URL = "https://registrar.illinois.edu/tuition-fees/tuition-fee-rates/tf-rates-academic-year/g-tuition-rates-2526/"
+_TUI_SRC_GIES = "Gies College of Business — Online Programs Tuition & Costs (2025-26)"
+_TUI_SRC_GIES_URL = "https://giesonline.illinois.edu/tuition-costs"
+_TUI_SRC_MCS = "University of Illinois Master of Computer Science (Coursera) — Tuition & Financing"
+_TUI_SRC_MCS_URL = "https://www.coursera.org/degrees/master-of-computer-science-illinois/tuition-financing"
+_PHD_FUNDING_SRC = "UIUC Graduate College — Funding"
+_PHD_FUNDING_URL = "https://grad.illinois.edu/funding"
+
+# Undergraduate resident BASE annual tuition (new-student cohort, fees excluded).
+_TUITION_UG_RES = 12992
+# Published full undergraduate tuition & fees (admissions): resident / non-resident / intl
+# ranges from the base rate up to the highest differential college.
+_UG_TF_RES = (18046, 23426)
+_UG_TF_NONRES = (38398, 46498)
+_UG_TF_INTL = (39392, 49742)
+
+# Graduate annual tuition (resident, non-resident); fees excluded.
+_GRAD_RES, _GRAD_NONRES = 14474, 31266
+# Grainger Engineering graduate tuition differential.
+_GRAD_ENGR_RES, _GRAD_ENGR_NONRES = 20714, 39344
+_ENGINEERING = "The Grainger College of Engineering"
+
+# Named on-campus Gies graduate programs (resident, non-resident/international).
+_GIES_GRAD: dict[str, tuple[int, int]] = {
+    "Master of Science in Business Analytics": (37324, 51188),
+    "Master of Science in Financial Engineering": (34400, 47100),
+}
+
+# Online flat-tuition degrees — published TOTAL program tuition (resident; non-resident where it
+# differs). Keyed by slug because the rate is program-specific, not tier- or school-uniform.
+_ONLINE_TUITION: dict[str, dict] = {
+    "uiuc-business-administration-online-mba": {
+        "res": 27288,
+        "note": "Published total program tuition for the online Gies iMBA (identical degree and diploma to the on-campus MBA).",
+        "source": _TUI_SRC_GIES, "source_url": "https://giesonline.illinois.edu/programs/imba",
+    },
+    "uiuc-management-imsm-ms": {
+        "res": 13068,
+        "note": "Published total program tuition for the online Gies iMSM (36 credit hours at the published $363 per-credit-hour rate).",
+        "source": _TUI_SRC_GIES, "source_url": _TUI_SRC_GIES_URL,
+    },
+    "uiuc-accountancy-imsa-ms": {
+        "res": 21916,
+        "note": "Published total program tuition for the online Gies iMSA; the total ranges about $21,916–$28,096 depending on the accounting/elective credit mix ($878 per accounting credit, $363 per non-accounting credit).",
+        "source": _TUI_SRC_GIES, "source_url": _TUI_SRC_GIES_URL,
+    },
+    "uiuc-computer-science-online-mcs": {
+        "res": 19840, "nonres": 25376,
+        "note": "Published total program tuition for the online Grainger Master of Computer Science via Coursera (32 credit hours at $620 per credit for residents / $793 for non-residents).",
+        "source": _TUI_SRC_MCS, "source_url": _TUI_SRC_MCS_URL,
+    },
+}
+
+# Professional-degree annual tuition (resident, non-resident).
+_PROF_TUITION: dict[str, tuple[int, int]] = {
+    "Juris Doctor": (36500, 46500),
+    "Doctor of Medicine": (37558, 47396),
+    "Doctor of Veterinary Medicine": (32464, 58146),
+}
+
+
+def _grad_pub_cost(res: int, nonres: int, note: str) -> tuple[int, dict]:
+    return res, {
+        "tuition_usd": res,
+        "breakdown": {"tuition_in_state": res, "tuition_out_of_state": nonres},
         "funded": False,
-        "note": (
-            "UIUC's published academic-year cost of attendance is about $33,642 and the average net "
-            "price after grant aid is about $14,355 (College Scorecard, UNITID 145637). In-state "
-            "students pay public tuition; out-of-state and international tuition is higher, and "
-            "tuition varies by program (e.g., engineering and business differential tuition). See "
-            "the UIUC Office of Student Financial Aid for current figures."
-        ),
-        "source": _COST_SRC,
-        "source_url": _COST_SRC_URL,
-        "year": "2023-24",
+        "note": note,
+        "source": _TUI_SRC_GRAD,
+        "source_url": _TUI_SRC_GRAD_URL,
+        "year": "2025-26",
     }
 
 
-def _grad_cost_fallback(spec: dict) -> dict:
-    return {
-        "note": (
-            "Tuition for this graduate/professional program is set by UIUC and is typically billed "
-            "per term (and varies by residency, program, and online vs. on-campus delivery), so a "
-            "single verified annual figure is not published here. Many doctoral students are funded "
-            "through assistantships and fellowships. UIUC's Coursera online degrees publish flat "
-            "total tuition (e.g., the iMBA is about $27,288). See the program's tuition page for "
-            "current figures."
-        ),
-        "source": "UIUC Office of the Registrar / program tuition page",
-        "source_url": _website_for(spec),
-    }
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return (matcher_tuition, cost_data) from UIUC-published 2025-26 rates.
+
+    The matcher number is the Illinois-resident annual tuition; the breakdown carries the
+    non-resident rate. PhD rows are stamped 0 (funded) with the published sticker in the note;
+    funding is a separate signal. Online degrees use their published flat total tuition.
+    """
+    dtype = spec["degree_type"]
+    school = spec["school"]
+    name = spec["program_name"]
+    slug = spec["slug"]
+
+    # Online flat-tuition degrees (Gies iMBA/iMSM/iMSA, Grainger MCS) — slug-specific.
+    onl = _ONLINE_TUITION.get(slug)
+    if onl is not None:
+        res = onl["res"]
+        bd: dict = {"total_program_tuition_in_state": res}
+        if onl.get("nonres"):
+            bd["total_program_tuition_out_of_state"] = onl["nonres"]
+        return res, {
+            "tuition_usd": res,
+            "breakdown": bd,
+            "funded": False,
+            "note": onl["note"],
+            "source": onl["source"],
+            "source_url": onl["source_url"],
+            "year": "2025-26",
+        }
+
+    if dtype == "bachelors":
+        note = (
+            f"Published Illinois-resident base undergraduate tuition (new-student cohort, fees "
+            f"excluded). Full published tuition & fees run about ${_UG_TF_RES[0]:,}–${_UG_TF_RES[1]:,} "
+            f"for residents, ${_UG_TF_NONRES[0]:,}–${_UG_TF_NONRES[1]:,} for non-residents, and "
+            f"${_UG_TF_INTL[0]:,}–${_UG_TF_INTL[1]:,} for international students per year; majors in "
+            "differential-tuition colleges (Grainger Engineering, Gies Business, computer science, "
+            "and others) pay toward the top of that range."
+        )
+        return _TUITION_UG_RES, {
+            "tuition_usd": _TUITION_UG_RES,
+            "breakdown": {
+                "tuition_in_state": _TUITION_UG_RES,
+                "tuition_and_fees_in_state_range": list(_UG_TF_RES),
+                "tuition_and_fees_out_of_state_range": list(_UG_TF_NONRES),
+                "tuition_and_fees_international_range": list(_UG_TF_INTL),
+            },
+            "total_cost_of_attendance": _UNDERGRAD_COA,
+            "avg_net_price": _AVG_NET_PRICE,
+            "funded": False,
+            "note": note,
+            "source": _TUI_SRC_UG,
+            "source_url": _TUI_SRC_UG_URL,
+            "year": "2025-26",
+        }
+
+    if dtype == "phd":
+        sticker = _GRAD_ENGR_RES if school == _ENGINEERING else _GRAD_RES
+        return 0, {
+            "tuition_usd": 0,
+            "funded": True,
+            "note": (
+                "UIUC PhD students are typically funded through assistantships and fellowships that "
+                "waive tuition and pay a stipend; the published full-time graduate tuition sticker is "
+                f"about ${sticker:,} per year (Illinois resident) before aid."
+            ),
+            "source": _PHD_FUNDING_SRC,
+            "source_url": _PHD_FUNDING_URL,
+            "year": "2025-26",
+        }
+
+    if dtype == "professional":
+        rates = _PROF_TUITION.get(name)
+        if rates is not None:
+            res, nonres = rates
+            return _grad_pub_cost(
+                res, nonres,
+                f"Published annual {name} tuition (Illinois resident); non-residents pay the rate in "
+                "the breakdown.",
+            )
+        # e.g. Doctor of Audiology — billed at the published graduate tuition rate.
+        return _grad_pub_cost(
+            _GRAD_RES, _GRAD_NONRES,
+            "Billed at UIUC's published graduate tuition rate (Illinois resident, full-time); "
+            "non-residents pay the rate in the breakdown.",
+        )
+
+    # masters + diploma (Artist Diploma) — graduate tuition, with school/program differentials.
+    if name in _GIES_GRAD:
+        res, nonres = _GIES_GRAD[name]
+        return _grad_pub_cost(
+            res, nonres,
+            f"Published annual Gies College of Business {name} tuition (Illinois resident); "
+            "non-residents/international pay the rate in the breakdown.",
+        )
+    if school == _ENGINEERING:
+        return _grad_pub_cost(
+            _GRAD_ENGR_RES, _GRAD_ENGR_NONRES,
+            "Published annual Grainger Engineering graduate tuition (Illinois resident, includes the "
+            "engineering differential); non-residents pay the rate in the breakdown.",
+        )
+    return _grad_pub_cost(
+        _GRAD_RES, _GRAD_NONRES,
+        "Published annual graduate base tuition (Illinois resident, full-time); non-residents pay "
+        "the rate in the breakdown. Some programs carry a college or program differential.",
+    )
 
 
 # == Admissions requirement sets ==
@@ -5323,7 +5484,7 @@ _REVIEWS_BY_SLUG: dict[str, dict] = {
 }
 
 def _program_standard(slug: str, spec: dict) -> dict:
-    omitted: list[str] = ["tracks", "cost_data.tuition_usd"]
+    omitted: list[str] = ["tracks"]
     if slug not in _OUTCOMES_BY_SLUG:
         omitted += [
             "outcomes_data.employment_rate",
@@ -5457,12 +5618,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.delivery_format = spec.get("delivery_format", "on_campus")
         _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], _kw)
-        if spec["degree_type"] == "bachelors":
-            p.tuition = None
-            p.cost_data = _undergrad_cost()
-        else:
-            p.tuition = None
-            p.cost_data = _grad_cost_fallback(spec)
+        p.tuition, p.cost_data = _program_tuition(spec)
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)
