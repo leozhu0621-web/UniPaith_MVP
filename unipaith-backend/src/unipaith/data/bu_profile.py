@@ -1616,7 +1616,7 @@ def _level_body(dtype: str, name: str, college: str, field: str) -> str:
 _FULL_DESC_BY_SLUG: dict[str, str] = {
 # ===== Anthropology =====
 "bu-academics-cas-anthropology-biological-anthropology":
- "The Bachelor of Arts in Anthropology at Boston University's College of Arts & Sciences grounds undergraduates in biological anthropology — human evolution, primatology, and skeletal biology — taught with laboratory and field methods alongside archaeology and sociocultural study. Students advance from introductory sequences to upper-division electives and hands-on research with the department's collections.",
+ "The Bachelor of Arts in Anthropology at Boston University's College of Arts & Sciences spans the discipline's breadth — biological anthropology, sociocultural anthropology, and archaeology — with concentrations in the anthropology of health and medicine and of religion. Undergraduates build theory and laboratory or field method through introductory sequences and upper-division electives, advancing toward graduate study or applied careers.",
 "bu-academics-grs-anthropology-ma":
  "Master's students in the Graduate School of Arts & Sciences specialize across archaeological field schools, human biology, and sociocultural ethnography, working with the Boston University Museum collections and the program's global research sites. The degree pairs graduate seminars and methods coursework with a supervised research thesis or applied project.",
 "bu-academics-grs-anthropology-phd":

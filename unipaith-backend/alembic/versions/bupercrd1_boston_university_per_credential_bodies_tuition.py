@@ -32,12 +32,12 @@ Create Date: 2026-06-21
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from alembic import op
 from unipaith.data import bu_profile
-from unipaith.models.institution import Institution
+from unipaith.models.institution import Institution, Program, ProgramPreference
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "bupercrd1"
@@ -54,6 +54,21 @@ def upgrade() -> None:
         select(Institution).where(Institution.name == bu_profile.INSTITUTION_NAME)
     )
     if inst is not None:
+        # The fleet-wide backfill (progprefbf1) already derived a ProgramPreference for every
+        # BU program from the OLD shared-description prose, and backfill_program_preferences
+        # only fills EMPTY fields on an existing derived row — so the 75 rewritten descriptions
+        # would never reach the program->student target_profile (description feeds the academic-
+        # interest signal). Drop the DERIVED rows for this institution (NEVER the claimed/
+        # first-party ones) so the backfill recomputes them from the current descriptions.
+        session.execute(
+            delete(ProgramPreference).where(
+                ProgramPreference.source == "derived",
+                ProgramPreference.program_id.in_(
+                    select(Program.id).where(Program.institution_id == inst.id)
+                ),
+            )
+        )
+        session.flush()
         backfill_program_preferences(session, institution_id=inst.id)
     session.flush()
 
