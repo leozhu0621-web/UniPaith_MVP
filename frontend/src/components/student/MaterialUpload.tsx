@@ -5,7 +5,8 @@
  * (the Uni chat and the My Space profile import card) via the same backend.
  */
 import { useRef, useState } from 'react'
-import { Upload } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { FileText, Upload } from 'lucide-react'
 
 import {
   type ApplyResult,
@@ -15,6 +16,7 @@ import {
   answerFollowup,
   applyMaterial,
   getFollowups,
+  listMaterials,
   uploadMaterial,
 } from '../../api/materials'
 import Button from '../ui/Button'
@@ -42,6 +44,20 @@ export default function MaterialUpload({
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [phase, setPhase] = useState<Phase>({ t: 'idle' })
+
+  // "From My Space" (spec §6) — files you uploaded before but didn't finish
+  // reviewing. Reopen one's review without re-uploading. (Only mounted while the
+  // upload panel is open, so this is fetched on demand.)
+  const { data: priorMaterials } = useQuery({
+    queryKey: ['materials', 'list'],
+    queryFn: listMaterials,
+    staleTime: 60_000,
+    retry: 1,
+  })
+  const resumable = (priorMaterials ?? []).filter(
+    (m): m is MaterialIngest & { proposed: ProposedProfile } =>
+      m.status === 'parsed' && m.proposed != null,
+  )
 
   const pick = () => inputRef.current?.click()
 
@@ -106,6 +122,29 @@ export default function MaterialUpload({
             </span>
           )}
           {phase.t === 'error' && <span className="text-xs text-destructive">{phase.message}</span>}
+        </div>
+      )}
+
+      {/* From My Space — reopen a file you uploaded but didn't finish reviewing. */}
+      {phase.t === 'idle' && resumable.length > 0 && (
+        <div className="mt-1">
+          <p className="text-xs font-semibold text-muted-foreground mb-1.5">
+            Or finish a file you started
+          </p>
+          <div className="flex flex-col gap-1">
+            {resumable.map(m => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setPhase({ t: 'review', ingest: m })}
+                className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-left text-sm text-foreground transition-colors hover:border-secondary"
+              >
+                <FileText size={14} className="shrink-0 text-muted-foreground" />
+                <span className="truncate">{m.filename || 'Uploaded file'}</span>
+                <span className="ml-auto shrink-0 text-xs font-semibold text-secondary">Review</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
