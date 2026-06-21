@@ -788,6 +788,17 @@ class MatchService:
                 sparse["wants_online"] = bool(pref.wants_online)
             if pref.wants_career_support is not None and "wants_career_support" not in sparse:
                 sparse["wants_career_support"] = bool(pref.wants_career_support)
+            # degree-level TARGET → the s→p "degree_level" graded fit. Previously a
+            # dead signal: matching.py reads `degree_level_target` but no code path
+            # wrote it. Canonicalize via the SAME degree→{bachelors/masters/doctoral/
+            # professional} map the program side uses (target_education_level), so
+            # s→p and p→s agree. Gated + set-only-if-absent (no phantom dimension).
+            if pref.target_degree_level and "degree_level_target" not in sparse:
+                from unipaith.services.program_features import target_education_level
+
+                canon = target_education_level(pref.target_degree_level)
+                if canon:
+                    sparse["degree_level_target"] = canon
 
         # Founder governance (2026-06-18) — the visa FEASIBILITY signal, in the
         # STUDENT's direction ONLY. A study-visa-needing student cannot attend a
