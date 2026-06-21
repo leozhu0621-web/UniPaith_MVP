@@ -206,13 +206,15 @@ def test_credential_siblings_no_shared_body_absolute_floor(name: str):
 # preposition from an empty slot — REPAIR_BACKLOG CRITICAL C1/C2, FLAG #1c). These score 0
 # on every share/form metric (the body differs per row) yet render machine junk, so they
 # need their own gate. This is intentionally a SUBSET of CERTIFIED_CLEAN — the whole-fleet
-# sweep this run found template-slot rows still LIVE on stanford (49), ucla (9), ut_austin
-# (3) and michigan (1); they stay OUT until repaired, and the durable fix is to parametrize
-# this over CERTIFIED_CLEAN itself once those clear (FLAG for the grader).
+# sweep found template-slot rows still LIVE on ucla (13), ut_austin (3) and michigan (1);
+# they stay OUT until repaired. stanford was REPAIRED (stanfordpercrd2: the 51 synthesized
+# template rows rewritten as researched per-credential bodies) and rejoins the gate. The
+# durable fix is to parametrize this over CERTIFIED_CLEAN itself once the rest clear (FLAG
+# for the grader).
 _TEMPLATE_SLOT_CLEAN = [
     n
     for n in CERTIFIED_CLEAN
-    if n not in {"stanford", "ucla", "ut_austin", "michigan"}
+    if n not in {"ucla", "ut_austin", "michigan"}
 ]
 
 

@@ -926,6 +926,281 @@ _SLUG_DESCRIPTION_KEEP = frozenset(
 )
 
 
+# Researched per-credential bodies for the 51 graduate rows whose siblings shared a body
+# (REPAIR_BACKLOG run-72 CRITICAL #1): the run-68 "per-credential" builder fell back to a
+# fixed template that DOUBLED the credential and slotted a field blurb ("Graduate coursework
+# in the Master of Science in Chemistry emphasizes ..."), which renders machine grammar a
+# student reads (template_slot_artifacts). Each entry below is distinct, level-specific prose
+# about the discipline's real subfields (verifiable general disciplinary knowledge) anchored
+# to the program's real Stanford school — no credential restated in the body, no universal
+# field-agnostic tail, no body shared with a sibling. Gold MIT scores 0 on every gate.
+_GRADUATE_DESCRIPTIONS: dict[str, str] = {
+    # ── School of Engineering ──────────────────────────────────────────────
+    "stanford-biomedical-medical-engineering-ms": (
+        "Graduate bioengineering at Stanford applies engineering principles to biology and "
+        "medicine, spanning biomolecular and cellular engineering, biomechanics, imaging, and "
+        "synthetic biology, with advanced coursework and laboratory rotations across the School "
+        "of Engineering and the School of Medicine."
+    ),
+    "stanford-chemical-engineering-ms": (
+        "The master's-level chemical engineering curriculum extends thermodynamics, transport "
+        "phenomena, and reaction kinetics into catalysis, energy systems, and biotechnology, "
+        "pairing advanced electives with research in the School of Engineering."
+    ),
+    "stanford-engineering-other-ms": (
+        "Stanford's graduate product design work blends mechanical engineering, human-centered "
+        "design, and prototyping, training designers to create useful, usable, and desirable "
+        "objects through studio projects and engineering coursework in the School of Engineering."
+    ),
+    "stanford-engineering-related-fields-ms": (
+        "This graduate engineering-fundamentals track grounds students in the mechanics, "
+        "mathematics, and physics common to the engineering disciplines, building a quantitative "
+        "foundation through coursework and project work in the School of Engineering."
+    ),
+    # ── Stanford Doerr School of Sustainability ────────────────────────────
+    "stanford-natural-resources-conservation-and-research-ms": (
+        "Graduate Earth-systems study integrates the physical, chemical, and biological "
+        "processes that link land, ocean, atmosphere, and the biosphere, joining environmental "
+        "science with policy and field research in the Stanford Doerr School of Sustainability."
+    ),
+    "stanford-sustainability-studies-ms": (
+        "The master's in sustainability examines climate, energy, water, and ecosystems through "
+        "the lens of science, engineering, and policy, equipping graduates to design and assess "
+        "sustainable systems within the Stanford Doerr School of Sustainability."
+    ),
+    "stanford-geological-and-earth-sciences-geosciences-ms": (
+        "Graduate geological sciences cover tectonics, sedimentology, geochemistry, and "
+        "geophysics, combining field study with laboratory and computational analysis of the "
+        "Earth's structure and history in the Stanford Doerr School of Sustainability."
+    ),
+    # ── School of Humanities and Sciences — natural sciences ───────────────
+    "stanford-biology-general-ms": (
+        "Graduate biology surveys molecular, cellular, organismal, and ecological scales of "
+        "life, advancing students through specialized coursework and laboratory research in the "
+        "Department of Biology."
+    ),
+    "stanford-biochemistry-biophysics-and-molecular-biology-ms": (
+        "Master's-level biochemistry investigates the chemistry of living systems — enzyme "
+        "mechanisms, macromolecular structure, and metabolism — linking biology and chemistry "
+        "through laboratory research at Stanford."
+    ),
+    "stanford-cell-cellular-biology-and-anatomical-sciences-ms": (
+        "Graduate cell and developmental biology examines how cells divide, differentiate, and "
+        "organize into tissues, using imaging, genetics, and molecular techniques to study "
+        "development at Stanford."
+    ),
+    "stanford-microbiological-sciences-and-immunology-ms": (
+        "Graduate microbiology and immunology explore bacteria, viruses, and the immune system, "
+        "covering host-pathogen interaction, infectious disease, and immune regulation through "
+        "laboratory research at Stanford."
+    ),
+    "stanford-genetics-ms": (
+        "Master's-level genetics studies heredity and genome function across molecular, "
+        "developmental, and population scales, applying sequencing and genetic analysis to gene "
+        "regulation, trait variation, and disease at Stanford."
+    ),
+    "stanford-physiology-pathology-and-related-sciences-ms": (
+        "Graduate physiology investigates how organs and systems function and fail, spanning "
+        "cardiovascular, neural, and metabolic regulation with experimental and quantitative "
+        "approaches to disease at Stanford."
+    ),
+    "stanford-ecology-evolution-systematics-and-population-biology-ms": (
+        "Graduate ecology and evolution analyze population dynamics, biodiversity, and "
+        "evolutionary processes through field study, modeling, and genomic methods in the "
+        "School of Humanities and Sciences."
+    ),
+    "stanford-neurobiology-and-neurosciences-ms": (
+        "Master's-level neuroscience studies the nervous system from molecules to behavior, "
+        "covering neural circuits, systems neuroscience, and computation through laboratory and "
+        "imaging research at Stanford."
+    ),
+    "stanford-biological-and-biomedical-sciences-other-ms": (
+        "This graduate biosciences track offers interdisciplinary study across the molecular, "
+        "cellular, and systems life sciences, letting students combine coursework and research "
+        "spanning several biology programs at Stanford."
+    ),
+    "stanford-chemistry-ms": (
+        "Graduate chemistry advances organic, inorganic, physical, and chemical-biology "
+        "research, joining advanced coursework with laboratory work on synthesis, spectroscopy, "
+        "and reaction mechanisms in the Department of Chemistry."
+    ),
+    "stanford-physics-ms": (
+        "Master's-level physics deepens study of quantum mechanics, statistical and condensed-"
+        "matter physics, and particle and astrophysics, supporting graduate coursework and "
+        "research in the Department of Physics."
+    ),
+    "stanford-mathematics-ms": (
+        "Graduate mathematics develops analysis, algebra, geometry, and topology at depth, "
+        "preparing students for advanced theoretical work and research in the Department of "
+        "Mathematics."
+    ),
+    "stanford-applied-mathematics-ms": (
+        "The applied-mathematics master's centers on differential equations, numerical analysis, "
+        "optimization, and mathematical modeling, applying rigorous methods to problems in "
+        "science and engineering at Stanford."
+    ),
+    "stanford-applied-mathematics-cert": (
+        "This graduate certificate gives degree-seekers and working professionals a focused "
+        "grounding in numerical analysis, optimization, and mathematical modeling, strengthening "
+        "the quantitative tools used across science and engineering at Stanford."
+    ),
+    "stanford-statistics-ms": (
+        "Graduate statistics covers probability, statistical inference, and machine learning, "
+        "training students to design studies and analyze data with theory and computation in "
+        "the Department of Statistics."
+    ),
+    "stanford-music-ms": (
+        "Graduate music study at Stanford pairs composition, musicology, and music technology, "
+        "letting students pursue advanced work in performance practice, theory, and "
+        "computer-based music in the Department of Music."
+    ),
+    # ── School of Humanities and Sciences — social sciences ────────────────
+    "stanford-anthropology-ms": (
+        "Graduate anthropology investigates human societies, cultures, and the deep past through "
+        "ethnographic, archaeological, and biological approaches, advancing students through "
+        "seminars and field research in the Department of Anthropology."
+    ),
+    "stanford-economics-ms": (
+        "Master's-level economics builds rigorous training in microeconomics, macroeconomics, "
+        "and econometrics, applying formal theory and data analysis to markets, policy, and "
+        "decision-making in the Department of Economics."
+    ),
+    "stanford-political-science-and-government-ms": (
+        "Graduate political science examines institutions, political behavior, and international "
+        "relations through formal theory and empirical methods, advancing students through "
+        "seminars in the Department of Political Science."
+    ),
+    "stanford-sociology-ms": (
+        "Graduate sociology analyzes social structure, inequality, organizations, and "
+        "demography, training students in quantitative and qualitative methods to study how "
+        "societies are organized in the Department of Sociology."
+    ),
+    "stanford-psychology-general-ms": (
+        "Master's-level psychology studies cognition, development, social behavior, and "
+        "affective science, combining experimental design and statistical analysis with "
+        "research in the Department of Psychology."
+    ),
+    "stanford-public-policy-analysis-ms": (
+        "The public-policy master's applies economics, statistics, and political analysis to "
+        "policy design and evaluation, preparing graduates for analytic roles in government, "
+        "nonprofits, and the private sector through Stanford's Public Policy Program."
+    ),
+    "stanford-communication-and-media-studies-ms": (
+        "Graduate communication studies how media, technology, and messages shape individuals, "
+        "institutions, and public life, drawing on social-scientific methods and data analysis "
+        "in the Department of Communication."
+    ),
+    "stanford-area-studies-ms": (
+        "Stanford's international-policy master's examines security, governance, development, "
+        "energy, and cyber policy across world regions, joining policy analysis and economics "
+        "with regional expertise for careers in diplomacy and global organizations."
+    ),
+    # ── School of Humanities and Sciences — humanities & arts ──────────────
+    "stanford-history-ms": (
+        "Graduate history develops research and interpretation across periods and world regions, "
+        "training students in archival methods and historiography through seminars in the "
+        "Department of History."
+    ),
+    "stanford-philosophy-ms": (
+        "Master's-level philosophy engages logic, ethics, metaphysics, and the philosophy of "
+        "mind and language, sharpening rigorous argument and analysis through seminars in the "
+        "Department of Philosophy."
+    ),
+    "stanford-religion-religious-studies-ms": (
+        "Graduate religious studies analyzes religious traditions, texts, and practices across "
+        "cultures and history, combining textual, historical, and theoretical approaches in the "
+        "Department of Religious Studies."
+    ),
+    "stanford-english-language-and-literature-general-ms": (
+        "Graduate study of English literature spans poetry, fiction, and drama across periods, "
+        "developing close reading, literary history, and critical theory through seminars in "
+        "the Department of English."
+    ),
+    "stanford-english-language-and-literature-letters-other-ms": (
+        "Graduate comparative literature reads literary and cultural texts across languages and "
+        "traditions, combining translation, theory, and transnational study in the Department of "
+        "Comparative Literature."
+    ),
+    "stanford-liberal-arts-and-sciences-general-studies-and-humanities-ms": (
+        "This interdisciplinary humanities master's lets students draw across literature, "
+        "history, philosophy, and the arts, building an individualized program of advanced "
+        "humanistic study in the School of Humanities and Sciences."
+    ),
+    "stanford-linguistic-comparative-and-related-language-studies-and-services-ms": (
+        "Graduate linguistics analyzes the sound, structure, meaning, and use of language, "
+        "covering phonology, syntax, semantics, and computational and field methods in the "
+        "Department of Linguistics."
+    ),
+    "stanford-east-asian-languages-literatures-and-linguistics-ms": (
+        "Graduate East Asian languages and cultures study the literatures, languages, and "
+        "histories of China, Japan, and Korea, combining advanced language work with literary "
+        "and historical analysis at Stanford."
+    ),
+    "stanford-germanic-languages-literatures-and-linguistics-ms": (
+        "Graduate German studies read German-language literature, thought, and culture from the "
+        "early modern period to the present, pairing advanced language work with critical "
+        "scholarship at Stanford."
+    ),
+    "stanford-romance-languages-literatures-and-linguistics-ms": (
+        "Graduate study of French and Italian explores the literatures and cultures of the "
+        "Romance traditions, combining advanced language, literary history, and critical theory "
+        "in the Department of French and Italian."
+    ),
+    "stanford-classics-and-classical-languages-literatures-and-linguistics-ms": (
+        "Graduate classics study the languages, literature, history, and archaeology of ancient "
+        "Greece and Rome, building command of Greek and Latin alongside historical and material "
+        "analysis in the Department of Classics."
+    ),
+    "stanford-slavic-baltic-and-albanian-languages-literatures-and-linguistics-ms": (
+        "Graduate Slavic study focuses on Russian and other Slavic literatures, languages, and "
+        "cultures, combining advanced language work with literary and cultural scholarship in "
+        "the Department of Slavic Languages and Literatures."
+    ),
+    "stanford-slavic-baltic-and-albanian-languages-literatures-and-linguistics-cert": (
+        "This graduate certificate offers focused study of Russian and other Slavic literary "
+        "traditions, language, and culture, drawing on faculty-guided reading in the Department "
+        "of Slavic Languages and Literatures."
+    ),
+    "stanford-drama-theatre-arts-and-stagecraft-ms": (
+        "Graduate theater and performance studies combine practice and scholarship, examining "
+        "dramatic literature, performance theory, and stagecraft through studio work and "
+        "research in the Department of Theater and Performance Studies."
+    ),
+    "stanford-film-video-and-photographic-arts-ms": (
+        "Graduate film and media studies analyze the history, theory, and aesthetics of cinema "
+        "and visual media, pairing critical study with production and screening practice in the "
+        "Department of Art and Art History."
+    ),
+    "stanford-fine-and-studio-arts-ms": (
+        "Graduate art history studies the visual arts and architecture across periods and "
+        "cultures, developing connoisseurship, theory, and archival research in the Department "
+        "of Art and Art History."
+    ),
+    # ── School of Medicine ─────────────────────────────────────────────────
+    "stanford-public-health-ms": (
+        "This master's trains students in epidemiology and clinical research, covering study "
+        "design, biostatistics, and population health to investigate disease and evaluate "
+        "interventions in the Stanford School of Medicine."
+    ),
+    "stanford-medical-illustration-and-informatics-ms": (
+        "Graduate biomedical informatics applies data science, machine learning, and "
+        "computation to biology and clinical medicine, analyzing genomic, imaging, and health "
+        "records data in the Stanford School of Medicine."
+    ),
+    # ── Stanford Law School ────────────────────────────────────────────────
+    "stanford-law-phd": (
+        "Doctoral legal scholarship at Stanford Law School centers on original research at the "
+        "intersection of law with economics, political science, history, and philosophy, "
+        "preparing candidates for academic careers through advanced study and a dissertation."
+    ),
+    "stanford-legal-research-and-advanced-professional-studies-ms": (
+        "This master's-level program at Stanford Law School serves graduates and professionals "
+        "seeking advanced grounding in legal research, doctrine, and policy across corporate, "
+        "international, and regulatory law for careers in practice, government, and scholarship."
+    ),
+}
+
+
 def _assign_descriptions(programs: list[dict]) -> None:
     """Assign a per-credential description to every program (Berkeley / UCLA pattern).
 
@@ -959,7 +1234,9 @@ def _assign_descriptions(programs: list[dict]) -> None:
         group_bodies: list[str] = []
 
         for spec in ordered:
-            if spec is anchor:
+            if spec["slug"] in _GRADUATE_DESCRIPTIONS:
+                body = _GRADUATE_DESCRIPTIONS[spec["slug"]]
+            elif spec is anchor:
                 body = _level_appropriate_clause(
                     _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
                     spec["degree_type"],
@@ -1036,6 +1313,7 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
     from unipaith.profile_standard.anti_stub import (
         frame_stripped_shared_body,
         machine_artifacts,
+        template_slot_artifacts,
     )
 
     report = analyze(programs)
@@ -1049,6 +1327,12 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
         raise ValueError(
             f"Stanford frame-stripped shared body on {len(shared)} field(s): "
             f"{shared[:8]}{' …' if len(shared) > 8 else ''}"
+        )
+    slot = template_slot_artifacts(programs)
+    if slot:
+        raise ValueError(
+            f"Stanford template-slot machine grammar on {len(slot)} row(s): "
+            f"{slot[:8]}{' …' if len(slot) > 8 else ''}"
         )
 
 
