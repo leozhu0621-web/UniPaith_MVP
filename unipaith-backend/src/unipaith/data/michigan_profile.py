@@ -32,9 +32,11 @@ table the way a single-college school does, so the institution's combined placem
 top-employer-industries list are omitted with reason, and individual programs omit the
 outcomes/class-profile deep fields unless a verified program-specific figure exists (the College
 Scorecard institution-wide median earnings, $83,648 ten years after entry, is kept at the
-institution level). Most graduate programs bill tuition per term or per credit hour and publish no
-single annual figure, so those carry a sourced "see the program's tuition page" record rather than
-a guessed number. External reviews are attached to the flagship coverable programs with substantial
+institution level). Every program carries a U-M-published 2025-26 tuition figure (the matcher-core
+budget signal): the resident annual = the Office of the Registrar full-term rate × 2 standard terms,
+by school and credential level (Fee Bulletin); funded research doctoral programs carry tuition 0 under
+Rackham's continuous-enrollment tuition-support plans, and the non-resident annual is in each program's
+cost-data breakdown. External reviews are attached to the flagship coverable programs with substantial
 third-party coverage; this is a genuinely large catalog (379 programs, NYU/Columbia scale), so the
 remaining programs record ``external_reviews`` (and their deep fields) in their ``_standard.omitted``
 pending a depth pass on a future repair-first run. ``content_sources`` carries the verified ``news.umich.edu/feed/`` RSS on every node plus official
@@ -3857,6 +3859,152 @@ _COST_SRC = (
 )
 _COST_SRC_URL = "https://collegescorecard.ed.gov/school/?170976-University-of-Michigan-Ann-Arbor"
 
+# ── Published tuition (matcher-core budget signal — REPAIR_BACKLOG #6) ────────
+# Every figure is the U-M-PUBLISHED, first-party annual rate for 2025-26, computed as the
+# Office of the Registrar full-term (per-term) tuition-and-fees × 2 standard terms (Fall +
+# Winter) from the official Fee Bulletin. tuition is institution-published and therefore a
+# KNOWABLE matcher-core field, so a whole-catalog null is matcher starvation, not an honest
+# omission. The matcher number ``p.tuition`` is the Michigan-resident annual; the breakdown
+# carries the non-resident annual. Research doctoral (PhD) students are funded under Rackham's
+# continuous-enrollment tuition-support plans (tuition waived), so they carry tuition 0.
+_TUITION_SRC = "University of Michigan Office of the Registrar — 2025-26 Fee Bulletin (Ann Arbor)"
+_TUITION_SRC_URL = "https://ro.umich.edu/sites/default/files/attachments/tuition/FeeBulletin-2025-2026.pdf"
+_PHD_FUNDING_SRC = "Rackham Graduate School — Ph.D. Tuition Support Plans Under Continuous Enrollment"
+_PHD_FUNDING_URL = "https://rackham.umich.edu/navigating-your-degree/plans-for-schools-and-colleges/"
+
+# Undergraduate annual (resident, non-resident), lower-division (first-year sticker) by school.
+# Schools not listed bill the "General" Ann Arbor rate (LSA and the schools grouped with it in
+# the Fee Bulletin: Architecture, Art & Design, Education, Environment, Information, Medicine,
+# Nursing, Pharmacy, Public Health, Public Policy).
+_UG_TUITION_GENERAL = (17864, 63480)  # $8,932 / $31,740 per term
+_UG_TUITION_BY_SCHOOL: dict[str, tuple[int, int]] = {
+    "ENG": (19132, 63854),    # Engineering & Computer Science — $9,566 / $31,927
+    "ROSS": (18962, 64556),   # Business — $9,481 / $32,278
+    "KIN": (18862, 67504),    # Kinesiology — $9,431 / $33,752
+    "SMTD": (18590, 64328),   # Music, Theatre & Dance — $9,295 / $32,164
+    "DENT": (17728, 60970),   # Dental Hygiene — $8,864 / $30,485
+}
+
+# Graduate (Rackham master pre-candidate, full-time) annual (resident, non-resident) by school.
+# Schools not listed bill the LSA/Rackham rate.
+_GRAD_TUITION_LSA = (29832, 60152)  # $14,916 / $30,076 per term
+_GRAD_TUITION_BY_SCHOOL: dict[str, tuple[int, int]] = {
+    "ENG": (33960, 63796),    # Engineering Rackham master pre-candidate — $16,980 / $31,898
+    "SMTD": (31204, 62168),   # Music, Theatre & Dance master — $15,602 / $31,084
+    "KIN": (32384, 65764),    # Kinesiology Rackham — $16,192 / $32,882
+    "SPH": (37100, 61264),    # Public Health — $18,550 / $30,632
+    "EDU": (30408, 61370),    # Education Rackham — $15,204 / $30,685
+    "STAMPS": (30408, 61370), # Art & Design Rackham — $15,204 / $30,685
+    "NURS": (30754, 62070),   # Nursing Rackham — $15,377 / $31,035
+    "FORD": (36290, 61922),   # Public Policy master — $18,145 / $30,961
+    "TAUB": (38860, 56850),   # Architecture & Urban Planning Rackham — $19,430 / $28,425
+    "SEAS": (29436, 58238),   # Environment & Sustainability — $14,718 / $29,119
+    "SSW": (35778, 57280),    # Social Work professional master — $17,889 / $28,640
+    "MED": (29888, 60276),    # Medicine Master Pre-candidate (Rackham) — $14,944 / $30,138
+    "DENT": (33638, 55756),   # Dentistry Pre-candidate (Rackham), the clinical-specialty
+    #                           residency master's default — $16,819 / $27,878
+}
+
+# Professional-degree annual (resident, non-resident), by program name (Fee Bulletin professional rates).
+_PROFESSIONAL_TUITION: dict[str, tuple[int, int]] = {
+    "Master of Business Administration": (76152, 81152),  # Ross MBA — $38,076 / $40,576
+    "Doctor of Dental Surgery": (41040, 56248),           # DDS — $20,520 / $28,124
+    "Juris Doctor": (76108, 79108),                       # JD — $38,054 / $39,554
+    "Doctor of Medicine": (38676, 52568),                 # MD — $19,338 / $26,284
+    "Doctor of Pharmacy": (39164, 46086),                 # PharmD — $19,582 / $23,043
+}
+
+# Programs whose own published Fee-Bulletin rate differs from their school's default
+# (resident annual, non-resident annual), keyed by program name. Checked BEFORE the
+# school-level graduate default AND before Ph.D. funding, so a non-research doctorate
+# (Doctor of Engineering) billed at a published rate is never treated as a funded Ph.D.
+_TUITION_OVERRIDE_BY_NAME: dict[str, tuple[int, int]] = {
+    "Master of Engineering": (34894, 64850),       # Engineering MEng/DEng line — $17,447 / $32,425
+    "Doctor of Engineering": (34894, 64850),       # billed with MEng/DEng — a professional doctorate, not a funded Ph.D.
+    "Master of Health Informatics": (37100, 61264),  # SI+SPH Joined Degree — $18,550 / $30,632
+    "Master of Science in Dental Hygiene": (22570, 23786),  # Dental Hygiene (Rackham) — $11,285 / $11,893
+    "Master of Science in Oral Health Sciences": (28738, 57974),  # Oral Health Sciences (Rackham) — $14,369 / $28,987
+}
+
+# Programs whose published tuition is set per-program by the school (not in the general Fee
+# Bulletin) and so is honestly omitted rather than guessed: the Law School's LL.M. (a
+# Law-specific rate the School publishes separately) and the Doctor of Public Health (no
+# separately-published DrPH rate; not a funded research Ph.D., so it is not zeroed either).
+_TUITION_OMIT_SLUGS: frozenset[str] = frozenset(
+    {"mich-master-of-laws-llm", "mich-doctor-of-public-health-drph"}
+)
+
+
+def _pub_tuition_cost(res: int, oos: int, note: str) -> dict:
+    return {
+        "tuition_usd": res,
+        "breakdown": {"tuition_in_state": res, "tuition_out_of_state": oos},
+        "funded": False,
+        "note": note,
+        "source": _TUITION_SRC, "source_url": _TUITION_SRC_URL, "year": "2025-26",
+    }
+
+
+_GRAD_NOTE = (
+    "Published annual graduate tuition and fees, Michigan resident (full-time, pre-candidate); "
+    "nonresidents pay the out-of-state rate shown in the breakdown. Many master's students "
+    "receive partial funding through assistantships or fellowships."
+)
+_PROF_NOTE = (
+    "Published annual professional-program tuition and fees, Michigan resident; nonresidents "
+    "pay the out-of-state rate shown in the breakdown."
+)
+
+
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return (matcher_tuition, cost_data) for a program from U-M-published rates.
+
+    ``matcher_tuition`` is the Michigan-resident annual figure (0 only for a funded research
+    Ph.D.); ``cost_data`` carries both residencies, the source, and a note. Returns
+    (None, fallback) only for a program whose rate the school publishes separately
+    (``_TUITION_OMIT_SLUGS``).
+    """
+    sk = spec["school_key"]
+    dtype = spec["degree_type"]
+    name = spec["program_name"]
+    if spec["slug"] in _TUITION_OMIT_SLUGS:
+        return None, _grad_cost_fallback(spec)
+    if dtype == "bachelors":
+        res, oos = _UG_TUITION_BY_SCHOOL.get(sk, _UG_TUITION_GENERAL)
+        cost = _pub_tuition_cost(
+            res, oos,
+            "Published annual tuition and fees, Michigan resident (lower division); nonresidents "
+            "pay the out-of-state rate shown in the breakdown. The Go Blue Guarantee covers "
+            "tuition for eligible in-state undergraduates.",
+        )
+        cost["total_cost_of_attendance"] = _UNDERGRAD_COA
+        cost["avg_net_price"] = _AVG_NET_PRICE
+        return res, cost
+    # A distinct published per-program rate (overrides the school default AND Ph.D. funding,
+    # so a professional doctorate billed at a real rate is never zeroed as a research Ph.D.).
+    if name in _TUITION_OVERRIDE_BY_NAME:
+        res, oos = _TUITION_OVERRIDE_BY_NAME[name]
+        note = _PROF_NOTE if dtype in ("phd", "professional") else _GRAD_NOTE
+        return res, _pub_tuition_cost(res, oos, note)
+    if dtype == "phd":
+        # Only research Ph.D.s are funded; non-research doctorates are overridden or omitted above.
+        return 0, {
+            "tuition_usd": 0,
+            "funded": True,
+            "note": (
+                "University of Michigan research doctoral students are funded under Rackham's "
+                "continuous-enrollment tuition-support plans (tuition is waived) and typically "
+                "receive a stipend and health coverage through fellowships and assistantships."
+            ),
+            "source": _PHD_FUNDING_SRC, "source_url": _PHD_FUNDING_URL, "year": "2025-26",
+        }
+    if dtype == "professional" and name in _PROFESSIONAL_TUITION:
+        res, oos = _PROFESSIONAL_TUITION[name]
+        return res, _pub_tuition_cost(res, oos, _PROF_NOTE)
+    # masters (and any other graduate level)
+    res, oos = _GRAD_TUITION_BY_SCHOOL.get(sk, _GRAD_TUITION_LSA)
+    return res, _pub_tuition_cost(res, oos, _GRAD_NOTE)
+
 
 def _undergrad_cost() -> dict:
     return {
@@ -4248,7 +4396,9 @@ def _requirements_for(spec: dict) -> dict:
 
 
 def _program_standard(slug: str, spec: dict) -> dict:
-    omitted: list[str] = ["tracks", "cost_data.tuition_usd"]
+    omitted: list[str] = ["tracks"]
+    if slug in _TUITION_OMIT_SLUGS:
+        omitted.append("cost_data.tuition_usd")
     if slug not in _OUTCOMES_BY_SLUG:
         omitted += [
             "outcomes_data.employment_rate",
@@ -4380,12 +4530,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.delivery_format = spec.get("delivery_format", "on_campus")
         _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], _kw)
-        if spec["degree_type"] == "bachelors":
-            p.tuition = None
-            p.cost_data = _undergrad_cost()
-        else:
-            p.tuition = None
-            p.cost_data = _grad_cost_fallback(spec)
+        p.tuition, p.cost_data = _program_tuition(spec)
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)
