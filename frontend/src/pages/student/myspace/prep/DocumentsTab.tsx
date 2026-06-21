@@ -119,6 +119,7 @@ export default function DocumentsTab() {
                 <Button
                   size="sm"
                   variant="ghost"
+                  aria-label={`Delete ${doc.file_name}`}
                   onClick={async () => {
                     const ok = await confirmDialog({
                       title: 'Delete document?',

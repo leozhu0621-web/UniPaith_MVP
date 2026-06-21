@@ -128,7 +128,7 @@ export default function SavedProgramRow({
             value={sp.priority}
             onChange={e => onPriorityChange(e.target.value as SavedPriority)}
             disabled={priorityPending}
-            aria-label="Priority"
+            aria-label={`Priority for ${sp.program_name ?? 'program'}`}
             className={`appearance-none text-xs font-medium rounded-full pl-2.5 pr-6 py-0.5 border-0 cursor-pointer ${PRIORITY_CONFIG[sp.priority].color}`}
           >
             {PRIORITY_ORDER.map(p => (
