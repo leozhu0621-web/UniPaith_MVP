@@ -45,10 +45,17 @@ def fit_categorical_best(
     """Best categorical fit of one student value against a LIST of program-side
     options (e.g. the student's field vs every field a program offers). Returns
     the max ``fit_categorical`` over the options; an empty/unknown list yields
-    the neutral 0.5 (same convention as the single-value form)."""
-    if student_val is None or not program_vals:
+    the neutral 0.5 (same convention as the single-value form).
+
+    Falsy options (``None``/``""``) are dropped before the max: ``fit_categorical``
+    treats a ``None`` program value as the neutral 0.5, so a stray falsy element
+    would otherwise win the max and inflate a true 0.0 mismatch to 0.5. After
+    filtering, a list of only falsy options is treated as empty → neutral 0.5.
+    """
+    options = [pv for pv in (program_vals or []) if pv]
+    if student_val is None or not options:
         return 0.5
-    return max(fit_categorical(student_val, pv, sim_table) for pv in program_vals)
+    return max(fit_categorical(student_val, pv, sim_table) for pv in options)
 
 
 def fit_numeric_higher(

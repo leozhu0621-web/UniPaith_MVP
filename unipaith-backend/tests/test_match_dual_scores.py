@@ -266,7 +266,23 @@ async def test_explain_returns_stub_rationale(
 ):
     profile = await _ensure_profile(db_session, mock_student_user)
     program = await _seed_institution_and_program(db_session)
-    await _seed_match(db_session, profile, program)
+    # A realistic CPEF breakdown: the stub must surface FRIENDLY driver labels
+    # from the per-signal list, never the raw internal keys (model/value/inner/...).
+    await _seed_match(
+        db_session,
+        profile,
+        program,
+        fitness_breakdown={
+            "model": "cpef",
+            "value": 0.71,
+            "inner": 0.8,
+            "coverage": 0.9,
+            "signals": [
+                {"key": "themes", "f": 0.9},
+                {"key": "budget", "f": 0.8},
+            ],
+        },
+    )
 
     resp = await student_client.post(f"{MATCHES}/{program.id}/explain")
     assert resp.status_code == 200, resp.text
@@ -277,9 +293,12 @@ async def test_explain_returns_stub_rationale(
     # AI-Structure-3 §14: the student NEVER sees a number — the stub rationale
     # must carry NO digit (no "Fitness 0.85", no "Confidence 0.70", no percent).
     assert not any(ch.isdigit() for ch in text), f"§14 leak — digit in stub: {text!r}"
-    # It is still informative: a qualitative band word + the driver names survive.
+    # It is still informative: a qualitative band word + FRIENDLY driver labels.
     assert any(w in text for w in ("Strong", "Solid", "Moderate", "Limited"))
-    assert "gpa_alignment" in text
+    assert "interests & goals" in text  # themes signal → friendly label
+    # And it must NOT leak raw internal breakdown keys to the student.
+    for raw in ("model", "inner", "coverage", "mean_rho", "s2p_value"):
+        assert raw not in text, f"raw breakdown key leaked to student: {raw!r} in {text!r}"
 
 
 @pytest.mark.asyncio
