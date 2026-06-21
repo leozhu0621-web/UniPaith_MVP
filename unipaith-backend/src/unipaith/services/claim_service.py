@@ -25,11 +25,18 @@ class ClaimService:
         *,
         program_ids: list[UUID] | None = None,
         school_ids: list[UUID] | None = None,
+        claim_institution: bool = False,
     ) -> dict:
         # The caller must own an institution; only its own programs/schools are claimable.
         inst = await InstitutionService(self.db)._get_institution_for_user(user_id)
         now = datetime.now(UTC)
-        result = {"programs": 0, "schools": 0}
+        result = {"programs": 0, "schools": 0, "institution": 0}
+
+        if claim_institution:
+            inst.is_claimed = True
+            inst.claimed_at = now
+            inst.claimed_by_user_id = user_id
+            result["institution"] = 1
 
         if program_ids:
             rows = (

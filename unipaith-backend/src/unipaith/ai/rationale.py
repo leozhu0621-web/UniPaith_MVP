@@ -97,6 +97,7 @@ class RationaleResult:
     para_confidence: str = ""
     cited_student_fields: list[str] = field(default_factory=list)
     cited_program_fields: list[str] = field(default_factory=list)
+    decision_brief: dict[str, Any] | None = None
     grounded: bool = False
     ungrounded_paths: list[str] = field(default_factory=list)
     retry_count: int = 0
@@ -276,8 +277,7 @@ class RationaleAgent:
             last_result = result
             attempt += 1
             logger.warning(
-                "Rationale ungrounded (attempt %d) for student=%s program=%s; "
-                "ungrounded_paths=%s",
+                "Rationale ungrounded (attempt %d) for student=%s program=%s; ungrounded_paths=%s",
                 attempt,
                 student.student_id,
                 program.program_id,
@@ -336,6 +336,7 @@ class RationaleAgent:
                     para_confidence=inp.get("para_confidence", "") or "",
                     cited_student_fields=list(inp.get("cited_student_fields") or []),
                     cited_program_fields=list(inp.get("cited_program_fields") or []),
+                    decision_brief=inp.get("decision_brief") or None,
                 )
         return RationaleResult()
 

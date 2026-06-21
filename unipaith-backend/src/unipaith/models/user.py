@@ -43,5 +43,8 @@ class User(Base):
         "StudentProfile", back_populates="user", uselist=False
     )
     institution: Mapped[Institution | None] = relationship(  # type: ignore[name-defined]  # noqa: F821
-        "Institution", back_populates="admin_user", uselist=False
+        "Institution",
+        back_populates="admin_user",
+        uselist=False,
+        foreign_keys="Institution.admin_user_id",
     )

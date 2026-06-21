@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, AnalyticsFilters, AttributionReport, AuditEventDetail, AuditLogList, Campaign, CommunicationTemplate, FunnelReport, IntakeRound, OverviewReport, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, InstitutionSetupState, NLBridgeResult, PostCTA, PostVisibility, Program, Promotion, Segment, SegmentPreview, SegmentRuleTree, SetupStepPatch, SignalDictionary, ValidationReport } from '../types'
+import type { AnalyticsData, AnalyticsFilters, AttributionReport, AuditEventDetail, AuditLogList, Campaign, CommunicationTemplate, FunnelReport, IntakeRound, OverviewReport, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, InstitutionSetupState, NLBridgeResult, PostCTA, PostVisibility, Program, Promotion, Segment, SegmentPreview, SegmentRuleTree, SetupStepPatch, SignalDictionary, TargetProfile, ValidationReport } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -966,6 +966,11 @@ export interface ProgramPreferences {
   weight_outcomes_alignment: number | null
   weight_funding_need: number | null
   weight_geographic: number | null
+  target_profile?: TargetProfile | null
+  preference_weights?: Record<string, number> | null
+  provenance?: Record<string, unknown> | null
+  standard_version?: number | null
+  derived_at?: string | null
 }
 
 export async function getProgramPreferences(

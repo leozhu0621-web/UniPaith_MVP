@@ -16,11 +16,14 @@ overrides it and is never touched by the routine.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
 
+from unipaith.schemas.profile_intelligence import validate_target_profile
 from unipaith.services.match.field_canon import fields_offered_for_program
 from unipaith.services.matching import eligible_current_levels
 from unipaith.services.program_features import target_education_level
+from unipaith.services.program_featurizer import featurize_program
 
 DERIVED_SOURCE = "derived"
 DERIVED_CONFIDENCE = 0.4  # Spec 2 §3.6 inferred/derived c_program anchor
@@ -76,12 +79,242 @@ def _gpa_floor(class_profile: dict | None) -> float | None:
     return None
 
 
+def _evidence(label: str, url: str | None, *, field_path: str) -> list[dict[str, Any]]:
+    if not url:
+        return []
+    return [
+        {
+            "label": label,
+            "url": url,
+            "source_type": "official",
+            "field_path": field_path,
+            "freshness": {"status": "current", "checked_at": datetime.now(UTC).isoformat()},
+        }
+    ]
+
+
+def _add_signal(
+    layers: dict[str, list[dict[str, Any]]],
+    layer: str,
+    *,
+    attribute: str,
+    preferred_values: list[str],
+    statement: str,
+    weight: float,
+    confidence: float,
+    evidence: list[dict[str, Any]],
+) -> None:
+    if not preferred_values or not evidence:
+        return
+    layers[layer].append(
+        {
+            "attribute": attribute,
+            "preferred_values": preferred_values,
+            "statement": statement,
+            "weight": weight,
+            "confidence": confidence,
+            "evidence": evidence,
+        }
+    )
+
+
+def _target_profile(
+    *,
+    program_name: str,
+    degree_type: str | None,
+    cip_code: str | None,
+    class_profile: dict | None,
+    description: str | None,
+    outcomes_data: dict | None,
+    application_requirements: dict | None,
+    source_url: str | None,
+    pref_fields: list[str],
+    pref_levels: list[str],
+    pref_min_gpa: float | None,
+) -> dict[str, Any] | None:
+    layers: dict[str, list[dict[str, Any]]] = {
+        "background_academic": [],
+        "goals_behaviors_learning_working_style": [],
+        "values_motivations_community": [],
+    }
+    program_ev = _evidence("Program page", source_url, field_path="program")
+    class_ev = _evidence("Class profile", source_url, field_path="class_profile")
+
+    _add_signal(
+        layers,
+        "background_academic",
+        attribute="field_preparation",
+        preferred_values=pref_fields,
+        statement=f"{program_name} is best grounded for students prepared in related fields.",
+        weight=0.28,
+        confidence=0.74,
+        evidence=program_ev,
+    )
+    _add_signal(
+        layers,
+        "background_academic",
+        attribute="current_academic_level",
+        preferred_values=pref_levels,
+        statement=(
+            f"{degree_type or 'This'} program's degree level implies these compatible "
+            "current academic stages."
+        ),
+        weight=0.18,
+        confidence=0.68,
+        evidence=program_ev,
+    )
+    if pref_min_gpa is not None:
+        _add_signal(
+            layers,
+            "background_academic",
+            attribute="academic_strength",
+            preferred_values=[f"gpa_at_or_above_{pref_min_gpa:.2f}"],
+            statement=(
+                "Published admitted-student academic evidence implies a soft academic "
+                "preparation floor."
+            ),
+            weight=0.16,
+            confidence=0.72,
+            evidence=class_ev or program_ev,
+        )
+
+    derived = featurize_program(
+        cip_code=cip_code,
+        degree_type=degree_type,
+        name=program_name,
+        description=description or "",
+    )
+    career_arcs = list(derived.get("career_arcs") or [])
+    interest_themes = list(derived.get("interest_themes") or [])
+    values = list(derived.get("values") or [])
+    outcomes_url = (
+        (outcomes_data or {}).get("source_url") if isinstance(outcomes_data, dict) else None
+    )
+    outcomes_ev = _evidence(
+        "Career outcomes", outcomes_url or source_url, field_path="outcomes_data"
+    )
+    req_url = (
+        (application_requirements or {}).get("source_url")
+        if isinstance(application_requirements, dict)
+        else None
+    )
+    req_ev = _evidence(
+        "Admissions requirements", req_url or source_url, field_path="application_requirements"
+    )
+
+    _add_signal(
+        layers,
+        "goals_behaviors_learning_working_style",
+        attribute="career_direction",
+        preferred_values=career_arcs,
+        statement="Public program and outcomes evidence points to these likely career directions.",
+        weight=0.2,
+        confidence=0.7,
+        evidence=outcomes_ev or program_ev,
+    )
+    _add_signal(
+        layers,
+        "goals_behaviors_learning_working_style",
+        attribute="interest_themes",
+        preferred_values=interest_themes,
+        statement="The curriculum and description emphasize these academic interests.",
+        weight=0.18,
+        confidence=0.66,
+        evidence=program_ev,
+    )
+
+    text = f"{description or ''} {application_requirements or ''}".lower()
+    if any(t in text for t in ("team", "collaboration", "collaborative", "cohort")):
+        _add_signal(
+            layers,
+            "goals_behaviors_learning_working_style",
+            attribute="working_style",
+            preferred_values=["collaborative"],
+            statement="Program evidence suggests collaboration or cohort work matters.",
+            weight=0.1,
+            confidence=0.62,
+            evidence=req_ev or program_ev,
+        )
+    if any(t in text for t in ("capstone", "project", "practicum", "internship", "applied")):
+        _add_signal(
+            layers,
+            "goals_behaviors_learning_working_style",
+            attribute="learning_preference",
+            preferred_values=["applied_project_work"],
+            statement="Program evidence favors students who want applied project work.",
+            weight=0.12,
+            confidence=0.68,
+            evidence=program_ev,
+        )
+    if any(t in text for t in ("quantitative", "programming", "machine learning", "optimization")):
+        _add_signal(
+            layers,
+            "background_academic",
+            attribute="skill_preparation",
+            preferred_values=["quantitative_programming_readiness"],
+            statement=(
+                "Admissions or curriculum evidence emphasizes quantitative and "
+                "programming preparation."
+            ),
+            weight=0.14,
+            confidence=0.7,
+            evidence=req_ev or program_ev,
+        )
+
+    _add_signal(
+        layers,
+        "values_motivations_community",
+        attribute="values_alignment",
+        preferred_values=values,
+        statement="Program evidence points to these declared values or motivations.",
+        weight=0.12,
+        confidence=0.62,
+        evidence=program_ev,
+    )
+    if "applied" in text or "impact" in text or "real-world" in text:
+        _add_signal(
+            layers,
+            "values_motivations_community",
+            attribute="motivation",
+            preferred_values=["applied_impact"],
+            statement="The program emphasizes applying knowledge to real problems.",
+            weight=0.1,
+            confidence=0.66,
+            evidence=program_ev,
+        )
+    if "rigorous" in text or "rigor" in text:
+        _add_signal(
+            layers,
+            "values_motivations_community",
+            attribute="community_expectation",
+            preferred_values=["intellectual_rigor"],
+            statement="The program presents rigor as part of the expected student experience.",
+            weight=0.1,
+            confidence=0.64,
+            evidence=program_ev,
+        )
+
+    if not all(layers[layer] for layer in layers):
+        return None
+    return validate_target_profile(
+        {
+            "standard_version": 1,
+            "derived_at": datetime.now(UTC).isoformat(),
+            "layers": layers,
+        }
+    )
+
+
 def derive_program_preference(
     *,
     cip_code: str | None = None,
     program_name: str = "",
     degree_type: str | None = None,
     class_profile: dict | None = None,
+    description: str | None = None,
+    outcomes_data: dict | None = None,
+    application_requirements: dict | None = None,
+    source_url: str | None = None,
 ) -> dict[str, Any] | None:
     """Baseline target-applicant preference from real attributes, or None to omit.
 
@@ -107,6 +340,37 @@ def derive_program_preference(
     gpa = _gpa_floor(class_profile)
     if gpa is not None:
         pref["pref_min_gpa"] = gpa
+
+    target = _target_profile(
+        program_name=program_name or "",
+        degree_type=degree_type,
+        cip_code=cip_code,
+        class_profile=class_profile,
+        description=description,
+        outcomes_data=outcomes_data,
+        application_requirements=application_requirements,
+        source_url=source_url,
+        pref_fields=fields,
+        pref_levels=levels,
+        pref_min_gpa=gpa,
+    )
+    if target is not None:
+        pref["target_profile"] = target
+        pref["preference_weights"] = {
+            "academic_preparation": 0.3,
+            "field_fit": 0.22,
+            "career_alignment": 0.2,
+            "learning_working_style": 0.16,
+            "values_community": 0.12,
+        }
+        pref["provenance"] = {
+            "source": DERIVED_SOURCE,
+            "standard_version": 1,
+            "derived_at": datetime.now(UTC).isoformat(),
+            "method": "public_evidence_target_profile_v1",
+        }
+        pref["standard_version"] = 1
+        pref["derived_at"] = datetime.now(UTC)
 
     if not pref:
         return None
@@ -151,25 +415,42 @@ def backfill_program_preferences(session: Any, *, institution_id: Any = None) ->
         return 0
 
     program_ids = [p.id for p in programs]
-    existing = set(
-        session.scalars(
-            select(ProgramPreference.program_id).where(
-                ProgramPreference.program_id.in_(program_ids)
-            )
+    existing_rows = {
+        r.program_id: r
+        for r in session.scalars(
+            select(ProgramPreference).where(ProgramPreference.program_id.in_(program_ids))
         ).all()
-    )
+    }
 
     inserted = 0
     for prog in programs:
-        if prog.id in existing:
-            continue  # never overwrite an existing (derived or claimed) row
+        if getattr(prog, "is_claimed", False):
+            continue  # claimed programs are first-party; crawler never writes them
         pref = derive_program_preference(
             cip_code=getattr(prog, "cip_code", None),
             program_name=getattr(prog, "program_name", "") or "",
             degree_type=getattr(prog, "degree_type", None),
             class_profile=_latest_class_profile(session, prog.id),
+            description=getattr(prog, "description_text", None),
+            outcomes_data=getattr(prog, "outcomes_data", None),
+            application_requirements=getattr(prog, "application_requirements", None),
+            source_url=getattr(prog, "website_url", None) or getattr(prog, "source_url", None),
         )
         if pref is None:
+            continue
+        existing = existing_rows.get(prog.id)
+        if existing is not None:
+            if existing.source == "claimed":
+                continue
+            for key in (
+                "target_profile",
+                "preference_weights",
+                "provenance",
+                "standard_version",
+                "derived_at",
+            ):
+                if getattr(existing, key, None) in (None, {}, []):
+                    setattr(existing, key, pref.get(key))
             continue
         session.add(ProgramPreference(program_id=prog.id, **pref))
         inserted += 1

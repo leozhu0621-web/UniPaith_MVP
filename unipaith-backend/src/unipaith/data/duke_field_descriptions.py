@@ -395,9 +395,9 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
         "the School of Medicine."
     ),
     "duke-computer-science-grad-phd": (
-        "The Duke computer science Ph.D. supports dissertation research in algorithms, machine "
-        "learning, systems, and computational biology through the Department of Computer "
-        "Science and the Rhodes Information Initiative at Duke (iiD)."
+        "The Computer Science Ph.D. at Duke trains doctoral researchers through seminars, "
+        "qualifying milestones, faculty lab work, and an original dissertation in areas "
+        "such as AI, theory, systems, security, and interdisciplinary computing."
     ),
     "duke-cultural-anthropology-grad-phd": (
         "Duke cultural anthropology doctoral students design long-term ethnographic fieldwork "

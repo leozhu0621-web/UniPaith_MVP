@@ -31,52 +31,52 @@ SCRAPE_DEBRIS_CLEAN = ["mit", "usc", "uiuc", "nyu", "columbia"]
 # Catalogs whose per-program descriptions have been verified gold-equal (every metric 0).
 # Grow this list as catalogs are genuinely de-fabricated — never weaken the assertions.
 CERTIFIED_CLEAN = [
-    "mit",        # gold reference
-    "ucsd",       # cert padding dropped; per-credential descriptions (#745 + this run)
-    "caltech",    # cert + non-terminal-MS padding dropped; field-specific descriptions (this run)
-    "nyu",        # bulletin-sourced descriptions; school-blurb + synthesized reviews removed (#753)
+    "mit",  # gold reference
+    "ucsd",  # cert padding dropped; per-credential descriptions (#745 + this run)
+    "caltech",  # cert + non-terminal-MS padding dropped; field-specific descriptions (this run)
+    "nyu",  # bulletin-sourced descriptions; school-blurb + synthesized reviews removed (#753)
     "princeton",  # CIP rollups → real majors; textbook-def stubs → researched descriptions (#754)
     "carnegie_mellon",  # researched per-program clauses; "{program_name}: " prefix-double removed
-    "duke",       # "{program_name}: " prefix-double removed; per-credential doctoral clauses
-    "uiuc",       # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
-    "usc",        # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
+    "duke",  # "{program_name}: " prefix-double removed; per-credential doctoral clauses
+    "uiuc",  # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
+    "usc",  # catalogue-sourced descriptions; school-blurb + synthesized reviews removed
     "georgia_tech",  # catalog.gatech.edu descriptions; stubs + synth reviews removed (gatechprof3)
     "ut_austin",  # catalog.utexas.edu descriptions; school-blurb + synth reviews removed (utaprof2)
-    "uw",         # Wikipedia-sourced per-credential descriptions; junk/Westwood removed (uwdefab1)
-    "ucla",       # Wikipedia per-credential descriptions; Catalog entry junk removed (uclaprof4)
-    "jhu",        # per-credential level bodies (frame+tail-share removed); real reviews kept
-    "michigan",   # per-credential discipline definitions; build-artifact junk removed (michprof4)
-    "stanford",   # per-credential defs; Catalog entry junk removed (stanfordprof11)
-    "purdue",     # per-credential discipline defs; peer-copy + rollups removed (purduedefab1)
-    "chicago",    # per-credential graduate descriptions; cert padding dropped (chicagodefab1)
-    "bu",         # Medill peer-copy removed; real dual-degree/MPH/CFA/math/world-lang
+    "uw",  # Wikipedia-sourced per-credential descriptions; junk/Westwood removed (uwdefab1)
+    "ucla",  # Wikipedia per-credential descriptions; Catalog entry junk removed (uclaprof4)
+    "jhu",  # per-credential level bodies (frame+tail-share removed); real reviews kept
+    "michigan",  # per-credential discipline definitions; build-artifact junk removed (michprof4)
+    "stanford",  # per-credential defs; Catalog entry junk removed (stanfordprof11)
+    "purdue",  # per-credential discipline defs; peer-copy + rollups removed (purduedefab1)
+    "chicago",  # per-credential graduate descriptions; cert padding dropped (chicagodefab1)
+    "bu",  # Medill peer-copy removed; real dual-degree/MPH/CFA/math/world-lang
     #             names + depts; per-credential bodies; school-as-field fixes (budefab1,
     #             supersedes buprof11's narrower description-only repair)
-    "berkeley",   # CIP rollup de-fab; real dept names; per-credential descriptions (berkeleyprof9)
-    "cornell",    # CIP-rollup buckets → real Cornell degrees or dropped; field-echo
+    "berkeley",  # CIP rollup de-fab; real dept names; per-credential descriptions (berkeleyprof9)
+    "cornell",  # CIP-rollup buckets → real Cornell degrees or dropped; field-echo
     #             departments → real owning college; per-credential description leads
     #             (verbatim/shared-body removed) (cornelldefab1)
-    "penn",       # CIP-rollup buckets → real Penn degrees or dropped; dept = real owning
+    "penn",  # CIP-rollup buckets → real Penn degrees or dropped; dept = real owning
     #             school (field-echo removed); per-credential description leads with the
     #             resolved real name, no rollup leak (verbatim/shared-body removed) (penndefab1)
-    "yale",       # "{program_name}: " prefix-double removed; per-credential bodies — graduate
+    "yale",  # "{program_name}: " prefix-double removed; per-credential bodies — graduate
     #             rows take a distinct doctoral/master's clause (GRADUATE_FIELD_DESCRIPTIONS),
     #             so credential siblings no longer share a leading body (yaledefab1)
-    "harvard",    # CIP rollup de-fab; suffix-diversifier removed; per-credential bodies
+    "harvard",  # CIP rollup de-fab; suffix-diversifier removed; per-credential bodies
     #             (harvarddefab1 — HIGH #4; harvardpercred1 clears frame-stripped shared body)
-    "columbia",   # CIP rollup + possessive de-fab; real owning schools; per-credential
+    "columbia",  # CIP rollup + possessive de-fab; real owning schools; per-credential
     #             bodies (columbiadefab1 — HIGH #1)
-    "rice",       # conferred UG names; real depts; per-credential description leads
+    "rice",  # conferred UG names; real depts; per-credential description leads
     #             (verbatim/shared-body removed) (ricedefab1 — HIGH #4)
     "uw_madison",  # per-credential description leads; suffix-diversifier removed
     #             (shared-leading-body = 0) (uwmaddefab1 — HIGH #5)
     "northwestern",  # per-credential description leads; suffix-diversifier removed
     #               (shared-leading-body = 0) (nwdefab1 — HIGH #6)
-    "uf",         # 314-program real catalog; LiveWhale feeds; 16 colleges (ufprof1/2)
+    "uf",  # 314-program real catalog; LiveWhale feeds; 16 colleges (ufprof1/2)
     "dartmouth",  # institution seed → gold + real verified 43-program catalog across the
     #             five schools; field-specific researched descriptions, real departments,
     #             no rollup/possessive/stub rows (dartprof1)
-    "emory",      # institution seed → gold + 46-program catalog; Trumba events feed;
+    "emory",  # institution seed → gold + 46-program catalog; Trumba events feed;
     #             4-photo gallery; field-specific descriptions (emoryprof1)
     "notre_dame",  # 113-program real catalog; conferred names; per-credential discipline
     #             defs (verbatim/shared-body/cross-field = 0); events feeds (ndprof1)
@@ -150,7 +150,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
 
 _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
-    "ut_austin", "columbia", "michigan",
+    "ut_austin", "columbia", "michigan", "duke", "georgia_tech",
 ]
 
 
@@ -238,8 +238,7 @@ def test_frame_stripped_shared_body_detector_bites_on_the_run65_evasion():
         {
             "program_name": "Doctor of Philosophy in Chemistry",
             "description": (
-                "Doctoral study in Chemistry at Rice centers on dissertation research in "
-                + body
+                "Doctoral study in Chemistry at Rice centers on dissertation research in " + body
             ),
         },
     ]
@@ -348,8 +347,7 @@ def test_harvard_catalog_has_no_rollup_or_shared_leading_body():
         if any(t in p.get("program_name", "") for t in rollup_tells)
     ]
     assert not rollup_names, (
-        f"Harvard catalog has {len(rollup_names)} rollup program_name rows: "
-        f"{rollup_names[:5]}"
+        f"Harvard catalog has {len(rollup_names)} rollup program_name rows: {rollup_names[:5]}"
     )
     report = analyze(harvard_profile.PROGRAMS)
     assert report.is_clean, f"Harvard anti-stub regressed: {report.summary()}"
@@ -368,9 +366,7 @@ def test_nyu_catalog_has_no_slug_leak_prefixes():
         for p in nyu_profile.PROGRAMS
         if slug_re.match((p.get("description") or "").strip())
     ]
-    assert not hits, (
-        f"NYU catalog has {len(hits)} slug-prefixed descriptions: {hits[:5]}"
-    )
+    assert not hits, f"NYU catalog has {len(hits)} slug-prefixed descriptions: {hits[:5]}"
 
 
 @pytest.mark.parametrize("name", SCRAPE_DEBRIS_CLEAN)
@@ -440,3 +436,16 @@ def test_scrape_debris_exempts_a_trailing_source_citation():
     ]
     assert not scrape_debris(cited), "must not flag a row ending in a (Source: ...) citation"
     assert scrape_debris(still_debris), "a colon-truncated row is still debris"
+
+
+def test_scrape_debris_allows_legitimate_hall_building_names():
+    clean = [
+        {
+            "program_name": "Master of Architecture",
+            "description": (
+                "Architecture students work in Gund Hall, a studio building that supports "
+                "design reviews, fabrication work, and seminars across the school."
+            ),
+        }
+    ]
+    assert not scrape_debris(clean), "building names ending in Hall are not address debris"

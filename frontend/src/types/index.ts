@@ -383,6 +383,54 @@ export interface ProgramOutcomesData {
   [key: string]: any // back-compat: legacy seeds carry median_salary, employment_rate, …
 }
 
+export interface ProfileEvidenceReference {
+  label: string
+  url: string
+  source_type?: 'official' | 'institution_report' | 'government' | 'verified_secondary' | 'student_employer' | 'unknown' | string
+  field_path?: string | null
+  freshness?: { status?: string; checked_at?: string; effective_date?: string | null } | null
+}
+
+export interface ProfileIntelligenceFinding {
+  statement: string
+  source_type?: 'fact' | 'inferred' | 'institution_confirmed' | string
+  confidence?: number
+  time_sensitive?: boolean
+  freshness?: { status?: string; checked_at?: string; effective_date?: string | null } | null
+  evidence: ProfileEvidenceReference[]
+}
+
+export interface ProfileIntelligenceSection {
+  findings: ProfileIntelligenceFinding[]
+}
+
+export interface ProfileIntelligence {
+  standard_version: number
+  profile_version: number
+  generated_at?: string
+  sections: Record<string, ProfileIntelligenceSection>
+  omissions?: Array<{ section: string; reason: string }>
+}
+
+export interface TargetProfileSignal {
+  attribute: string
+  preferred_values: string[]
+  statement: string
+  weight: number
+  confidence: number
+  evidence: ProfileEvidenceReference[]
+}
+
+export interface TargetProfile {
+  standard_version: number
+  derived_at: string
+  layers: {
+    background_academic: TargetProfileSignal[]
+    goals_behaviors_learning_working_style: TargetProfileSignal[]
+    values_motivations_community: TargetProfileSignal[]
+  }
+}
+
 export interface Program {
   id: string
   institution_id: string
@@ -418,10 +466,16 @@ export interface Program {
   promotion_categories?: string[] | null
   english_policy?: IntlEnglishPolicy | null
   website_url?: string | null
+  source_url?: string | null
+  cip_code?: string | null
+  field_provenance?: Record<string, any> | null
   class_profile?: Record<string, any> | null
   institution_name?: string | null
   institution_website_url?: string | null
   content_sources?: ContentSources | null
+  profile_intelligence?: ProfileIntelligence | null
+  profile_intelligence_version?: number | null
+  is_claimed?: boolean
   created_at: string
   updated_at: string
 }
@@ -488,6 +542,10 @@ export interface SchoolSummary {
   website_url?: string | null
   content_sources?: ContentSources | null
   about_detail?: SchoolAboutDetail | null
+  field_provenance?: Record<string, any> | null
+  profile_intelligence?: ProfileIntelligence | null
+  profile_intelligence_version?: number | null
+  is_claimed?: boolean
   program_count: number
   program_names: string[]
 }
@@ -1427,6 +1485,9 @@ export interface Institution {
   policies: Record<string, any> | null
   international_info: Record<string, any> | null
   school_outcomes: Record<string, any> | null
+  profile_intelligence?: ProfileIntelligence | null
+  profile_intelligence_version?: number | null
+  is_claimed?: boolean
   is_verified: boolean
   require_campaign_approval?: boolean
   setup_complete?: boolean
@@ -3036,6 +3097,28 @@ export interface ProbabilityBandsResponse {
   reason: string | null // "no_history" | "not_match_ready" | "disabled" | null
 }
 
+export interface DecisionBriefEvidence {
+  side: 'student' | 'program'
+  path: string
+  label: string
+  url?: string | null
+}
+
+export interface DecisionBriefItem {
+  statement: string
+  confidence?: number
+  uncertainty?: string | null
+  evidence: DecisionBriefEvidence[]
+}
+
+export interface DecisionBrief {
+  standard_version: number
+  student_profile_version: number
+  program_profile_version: number
+  sections: Record<string, DecisionBriefItem[]>
+  omissions?: Array<{ section: string; reason: string }>
+}
+
 // Spec 11 §3.5 — Insights: student/alumni reviews + employer feedback.
 export interface ProgramReview {
   id: string
@@ -3132,6 +3215,7 @@ export interface ExplainMatchResponse {
   rationale_text: string
   rationale_generated_at: string
   is_stub: boolean
+  decision_brief?: DecisionBrief | null
   // Spec 06 §5.5 — student (redacted) projection. Institution-only
   // comparative signals are stripped server-side before reaching here.
   fitness_breakdown?: Record<string, unknown> | null

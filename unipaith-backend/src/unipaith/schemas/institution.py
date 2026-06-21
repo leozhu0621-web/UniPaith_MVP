@@ -110,6 +110,10 @@ class InstitutionResponse(BaseModel):
     policies: dict | None = None
     international_info: dict | None = None
     school_outcomes: dict | None = None
+    profile_intelligence: dict | None = None
+    profile_intelligence_version: int = 0
+    profile_intelligence_updated_at: datetime | None = None
+    is_claimed: bool = False
     is_verified: bool
     require_campaign_approval: bool = False
     setup_complete: bool = False
@@ -222,6 +226,14 @@ class ProgramResponse(BaseModel):
     website_url: str | None = None
     class_profile: dict | None = None
     external_reviews: dict | None = None
+    cip_code: str | None = None
+    source_url: str | None = None
+    field_provenance: dict | None = None
+    content_sources: dict | None = None
+    profile_intelligence: dict | None = None
+    profile_intelligence_version: int = 0
+    profile_intelligence_updated_at: datetime | None = None
+    is_claimed: bool = False
     is_published: bool
     application_deadline: date | None
     program_start_date: date | None
@@ -290,6 +302,13 @@ class SchoolSummaryResponse(BaseModel):
     media_urls: list | dict | None = None
     logo_url: str | None = None
     website_url: str | None = None
+    field_provenance: dict | None = None
+    content_sources: dict | None = None
+    about_detail: dict | None = None
+    profile_intelligence: dict | None = None
+    profile_intelligence_version: int = 0
+    profile_intelligence_updated_at: datetime | None = None
+    is_claimed: bool = False
     program_count: int = 0
     program_names: list[str] = []
 

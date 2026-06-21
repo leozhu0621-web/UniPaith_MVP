@@ -92,6 +92,7 @@ class MatchWithRationale:
     rationale_text: str = ""
     cited_student_fields: list[str] = field(default_factory=list)
     cited_program_fields: list[str] = field(default_factory=list)
+    decision_brief: dict[str, Any] | None = None
     cache_hit: bool = False
     grounded: bool = True
     cost_usd: float = 0.0
@@ -572,6 +573,7 @@ class MatchService:
                 rationale_text=cached.rationale_text,
                 cited_student_fields=list(cached.cited_student_fields or []),
                 cited_program_fields=list(cached.cited_program_fields or []),
+                decision_brief=cached.decision_brief,
                 cache_hit=True,
                 grounded=True,
             )
@@ -595,6 +597,15 @@ class MatchService:
             score=score_view,
             db=self.db,
         )
+        from unipaith.services.decision_brief import build_decision_brief
+
+        decision_brief = result.decision_brief or build_decision_brief(
+            student_sparse=dict(sfv.sparse_features or {}),
+            program=program_view,
+            fitness_breakdown=match_row.fitness_breakdown,
+            confidence_breakdown=match_row.confidence_breakdown,
+            student_profile_version=sfv.profile_version,
+        )
 
         if result.grounded and result.joined_text():
             await self._persist_rationale(
@@ -603,6 +614,7 @@ class MatchService:
                 profile_version=sfv.profile_version,
                 program_version=program_view.program_version,
                 result=result,
+                decision_brief=decision_brief,
             )
             # Mirror onto match_results for backwards-compat reads that
             # don't yet hit match_rationales.
@@ -617,6 +629,7 @@ class MatchService:
             rationale_text=result.joined_text(),
             cited_student_fields=result.cited_student_fields,
             cited_program_fields=result.cited_program_fields,
+            decision_brief=decision_brief,
             cache_hit=False,
             grounded=result.grounded,
             cost_usd=result.cost_usd,
@@ -848,6 +861,22 @@ class MatchService:
                     pf.sparse["pref_fields"] = canon_fields
             if pref.pref_levels:
                 pf.sparse["pref_levels"] = list(pref.pref_levels)
+            if pref.target_profile:
+                pf.sparse["target_profile"] = pref.target_profile
+                layers = (pref.target_profile or {}).get("layers") or {}
+                for signal in layers.get("goals_behaviors_learning_working_style", []):
+                    attr = signal.get("attribute")
+                    vals = list(signal.get("preferred_values") or [])
+                    if attr == "career_direction" and vals:
+                        pf.sparse["pref_career_arcs"] = vals
+                    elif (
+                        attr in {"interest_themes", "learning_preference", "working_style"} and vals
+                    ):
+                        pf.sparse.setdefault("pref_learning_working_style", []).extend(vals)
+                for signal in layers.get("values_motivations_community", []):
+                    vals = list(signal.get("preferred_values") or [])
+                    if vals:
+                        pf.sparse.setdefault("pref_values", []).extend(vals)
             # AI Structure (Spec 2/3, GAP — claim → c_program): the program-side
             # confidence is its DATA AUTHORITY. A claimed preference (first-party,
             # verified school user) is high-authority; a derived one (crawler-
@@ -911,6 +940,7 @@ class MatchService:
         profile_version: int,
         program_version: int,
         result: RationaleResult,
+        decision_brief: dict[str, Any] | None = None,
     ) -> None:
         from unipaith.ai.cache_invalidation import RATIONALE_PROMPT_VERSION
 
@@ -921,6 +951,7 @@ class MatchService:
             program_version=program_version,
             prompt_version=RATIONALE_PROMPT_VERSION,
             rationale_text=result.joined_text(),
+            decision_brief=decision_brief,
             cited_student_fields=list(result.cited_student_fields),
             cited_program_fields=list(result.cited_program_fields),
         )
@@ -996,6 +1027,8 @@ def build_program_view(program: Any) -> ProgramView:
             or getattr(program, "requirements", None)
         ),
         "cost_data": getattr(program, "cost_data", None),
+        "profile_intelligence": getattr(program, "profile_intelligence", None),
+        "profile_intelligence_version": getattr(program, "profile_intelligence_version", None),
     }
     sparse = {k: v for k, v in raw_sparse.items() if v not in (None, "", {}, [])}
     return ProgramView(

@@ -289,11 +289,16 @@ class ProgramPreferenceBody(BaseModel):
     weight_outcomes_alignment: int | None = None
     weight_funding_need: int | None = None
     weight_geographic: int | None = None
+    target_profile: dict | None = None
+    preference_weights: dict | None = None
+    provenance: dict | None = None
 
 
 class ProgramPreferenceResponse(ProgramPreferenceBody):
     program_id: UUID
     source: str
+    standard_version: int = 1
+    derived_at: datetime | None = None
 
 
 def _pref_response(pref) -> ProgramPreferenceResponse:
@@ -310,6 +315,11 @@ def _pref_response(pref) -> ProgramPreferenceResponse:
         weight_outcomes_alignment=pref.weight_outcomes_alignment,
         weight_funding_need=pref.weight_funding_need,
         weight_geographic=pref.weight_geographic,
+        target_profile=pref.target_profile,
+        preference_weights=pref.preference_weights,
+        provenance=pref.provenance,
+        standard_version=pref.standard_version,
+        derived_at=pref.derived_at,
     )
 
 
@@ -1626,6 +1636,15 @@ async def get_institution_schools(
             "website_url": s.website_url,
             "content_sources": s.content_sources,
             "about_detail": s.about_detail,
+            "field_provenance": s.field_provenance,
+            "profile_intelligence": s.profile_intelligence,
+            "profile_intelligence_version": s.profile_intelligence_version,
+            "profile_intelligence_updated_at": (
+                s.profile_intelligence_updated_at.isoformat()
+                if s.profile_intelligence_updated_at
+                else None
+            ),
+            "is_claimed": s.is_claimed,
             "program_count": pc_map.get(s.id, (0, []))[0],
             "program_names": sorted(pc_map.get(s.id, (0, []))[1] or []),
         }
