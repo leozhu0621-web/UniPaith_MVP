@@ -88,8 +88,7 @@ def _school_snapshot(m: dict) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    is_ug = spec["degree_type"] == "bachelors"
-    cost = b._undergrad_cost() if is_ug else b._grad_cost_fallback(spec)
+    _, cost = b._program_tuition(spec)
     outcomes = dict(b._OUTCOMES_BY_SLUG.get(slug, {}))
     outcomes["_standard"] = b._program_standard(slug, spec)
     kw = b._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(b._KEYWORDS_BY_SCHOOL[spec["school"]])
@@ -212,16 +211,29 @@ def test_no_identical_across_credential_levels():
 
 
 def test_catalog_is_anti_stub_clean():
-    """Per-credential bodies — gold MIT = 0% frame-stripped shared body (REPAIR CRITICAL #2)."""
-    from unipaith.profile_standard.anti_stub import analyze, frame_stripped_shared_body
+    """Per-credential bodies — gold MIT = 0% frame-stripped shared body (REPAIR HIGH #5)."""
+    from unipaith.profile_standard.anti_stub import (
+        analyze,
+        frame_stripped_shared_body,
+        scrape_debris,
+    )
 
     report = analyze(b.PROGRAMS)
     assert report.is_clean, f"anti-stub not clean: {report.summary()}"
-    shared = frame_stripped_shared_body(b.PROGRAMS)
+    shared = frame_stripped_shared_body(b.PROGRAMS, abs_chars=150)
     assert not shared, (
-        f"credential siblings share a frame-stripped body on "
+        f"credential siblings share a 150+-char body on "
         f"{len(shared)} field(s): {shared[:8]}"
     )
+    assert not scrape_debris(b.PROGRAMS), "un-terminated or debris descriptions"
+
+
+def test_matcher_core_tuition_is_published_catalog_wide():
+    """Tuition is institution-published — every program carries a cited rate (REPAIR #6)."""
+    missing = [p["slug"] for p in b.PROGRAMS if b._program_tuition(p)[0] is None]
+    assert not missing, f"programs missing published tuition: {missing[:8]}"
+    covered = sum(1 for p in b.PROGRAMS if b._program_tuition(p)[0] is not None)
+    assert covered >= len(b.PROGRAMS) * 0.95
 
 
 def test_no_credential_combo_names_or_departments():
