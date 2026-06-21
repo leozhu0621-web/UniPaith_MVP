@@ -1798,6 +1798,22 @@ def _strip_cornell_frame(clause: str) -> str:
     return _CORNELL_LEVEL_TAIL_RE.sub("", clause).strip().rstrip(".")
 
 
+def _terminate(text: str) -> str:
+    """Ensure a researched body ends in a sentence terminator.
+
+    ``_strip_cornell_frame`` removes the trailing period to recover the bare field
+    clause; an anchor / slug body assigned straight from that stripped clause therefore
+    shipped UN-terminated and tripped the ``anti_stub.scrape_debris`` truncation tell on
+    115 of 237 Cornell rows (REPAIR_BACKLOG run 73 HIGH #3). Re-add a period (after any
+    trailing parenthetical such as ``(LASSP)``) when the body does not already end in
+    ``.``/``!``/``?`` (optionally followed by a closing quote/paren).
+    """
+    t = (text or "").rstrip()
+    if t and not re.search(r"[.!?][\"')]?$", t):
+        t += "."
+    return t
+
+
 def _extract_focus(clause: str) -> str:
     clause = _strip_cornell_frame(clause)
     m = re.match(
@@ -2006,6 +2022,7 @@ def _assign_descriptions(programs: list[dict]) -> None:
                     )
                 else:
                     body = slug_body
+            body = _terminate(body)
             suffix_n = 0
             while body in group_bodies or any(
                 _descriptions_share(body, prev) for prev in group_bodies
