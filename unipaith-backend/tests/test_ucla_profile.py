@@ -91,6 +91,18 @@ def test_catalog_breadth_and_shape():
     assert all(p.get("department") == p["school"] for p in u.PROGRAMS)
 
 
+def test_ucla_catalog_has_no_frame_stripped_shared_body():
+    from unipaith.profile_standard.anti_stub import analyze, frame_stripped_shared_body
+
+    report = analyze(u.PROGRAMS)
+    assert report.is_clean, f"UCLA anti-stub regressed: {report.summary()}"
+    shared = frame_stripped_shared_body(u.PROGRAMS, abs_chars=150)
+    assert not shared, (
+        f"UCLA credential siblings share a frame-stripped body on "
+        f"{len(shared)} field(s): {shared[:8]}{' …' if len(shared) > 8 else ''}"
+    )
+
+
 def test_catalog_descriptions_are_field_specific_and_real():
     from unipaith.profile_standard.anti_stub import analyze
 
