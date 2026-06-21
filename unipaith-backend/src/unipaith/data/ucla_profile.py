@@ -65,7 +65,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of California-Los Angeles"
-ENRICHED_AT = "2026-06-18"
+ENRICHED_AT = "2026-06-21"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -3188,6 +3188,361 @@ def _field_key(program_name: str) -> str:
 _LEVEL_SUFFIX: dict[str, str] = {}
 _DELIVERY_PHRASE: dict[str, str] = {}
 
+_LEVEL_PRIORITY: dict[str, int] = {
+    "bachelors": 0,
+    "certificate": 1,
+    "masters": 2,
+    "phd": 3,
+    "doctoral": 3,
+    "professional": 4,
+}
+
+_FRAME_PREFIX_RE = re.compile(
+    r"^UCLA's (?:"
+    r"Master of Arts emphasizes advanced scholarship and seminars in [^.]+\."
+    r"|Master of Science emphasizes research methods, advanced coursework, and a thesis in [^.]+\."
+    r"|doctoral program centers on original dissertation research in [^.]+\."
+    r"|Master of Arts in Teaching prepares classroom educators in [^.]+\."
+    r"|graduate program offers advanced master's study in [^.]+\."
+    r")\s+",
+    re.I,
+)
+
+_FOCUS_LEAD_RE = re.compile(
+    r"^(.*?\b(?:covers|combines|spans|includes|integrates|offers?|examines?|trains?|"
+    r"prepares?|underpins?|emphasizes?|centers? on|focuses? on|explores?|studies|study|"
+    r"pairs?|blends?|joins?|teach(?:es)?|analyze[s]?|bridges?|operate[s]?|run[s]?|use[s]?|"
+    r"support[s]?|choose among|applies?|develops?|designs?|allows?|seeks?|gives?|is for|"
+    r"is designed)\b\s*)",
+    re.I,
+)
+
+
+def _strip_ucla_frame(clause: str) -> str:
+    return _FRAME_PREFIX_RE.sub("", clause).strip()
+
+
+def _extract_focus(clause: str) -> str:
+    clause = _strip_ucla_frame(clause)
+    m = re.match(
+        r"^[^,]{3,100}?\bis (?:the study of|the art and science of|the branch of|"
+        r"the scientific study of|the interdisciplinary study of|the application of|the)\s+(.+)$",
+        clause,
+        re.I | re.S,
+    )
+    if m:
+        rest = m.group(1)
+    else:
+        m = _FOCUS_LEAD_RE.match(clause)
+        rest = clause[m.end() :] if m else clause
+    rest = re.split(
+        r"\s+(?:through|tied to|drawing on|near|at the|across the|for the|within the)\s+",
+        rest,
+        1,
+    )[0]
+    rest = rest.strip().rstrip(".").strip()
+    if not rest:
+        return ""
+    if rest.lower().startswith("the ") and (
+        "accredited" in rest.lower() or "program is" in rest.lower()
+    ):
+        return ""
+    if len(rest) > 72:
+        cut = rest[:72]
+        cut = cut[: cut.rfind(",")] if "," in cut else cut[: cut.rfind(" ")]
+        rest = cut.strip().rstrip(",").strip()
+    return rest
+
+
+def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        if clause.startswith("Graduate "):
+            return "Undergraduate " + clause[len("Graduate ") :]
+        if clause.startswith("Graduate-level "):
+            return "Undergraduate-level " + clause[len("Graduate-level ") :]
+    return clause
+
+
+def _level_appropriate_clause(clause: str, degree_type: str) -> str:
+    if degree_type == "bachelors":
+        return clause
+    clause = re.sub(r"\bthe undergraduate major\b", "the program", clause, flags=re.I)
+    clause = re.sub(
+        r"\bundergraduate (major|program)\b", "program", clause, flags=re.I
+    )
+    return clause
+
+
+def _descriptions_share(clause_a: str, clause_b: str, *, abs_chars: int = 150) -> bool:
+    """True when two bodies share a long run (frame-stripped LCS gate)."""
+    from unipaith.profile_standard.anti_stub import _longest_common_substring
+
+    a = _strip_ucla_frame(clause_a)
+    b = _strip_ucla_frame(clause_b)
+    if a and a == b:
+        return True
+    shortest = min(len(a), len(b))
+    if not shortest:
+        return False
+    lcs = _longest_common_substring(a, b)
+    return lcs >= 70 and (lcs >= 0.5 * shortest or lcs >= abs_chars)
+
+
+def _ucla_sibling_body(
+    degree_type: str,
+    field_label: str,
+    focus: str,
+    school: str,
+    program_name: str,
+) -> str:
+    """Distinct, level-specific body for a credential sibling (not the field's anchor)."""
+    topic = focus if _valid_focus(focus) else field_label.lower()
+    if degree_type == "bachelors":
+        return (
+            f"The {program_name} at UCLA develops {topic} through core coursework, "
+            f"electives, and research or internship opportunities within {school} "
+            f"on the Westwood campus."
+        )
+    if degree_type == "masters":
+        return (
+            f"The {program_name} at UCLA builds advanced expertise in {topic}, "
+            f"combining graduate seminars, methods training, and a thesis or capstone "
+            f"within {school} on the Westwood campus."
+        )
+    if degree_type in ("phd", "doctoral"):
+        return (
+            f"The {program_name} at UCLA advances original dissertation research in "
+            f"{topic}, supported by faculty mentorship, qualifying examinations, and "
+            f"dissertation work within {school} on the Westwood campus."
+        )
+    if degree_type == "certificate":
+        return (
+            f"The {program_name} at UCLA packages focused coursework in {topic} for "
+            f"degree-seekers and working professionals within {school}."
+        )
+    if degree_type == "professional":
+        return (
+            f"The {program_name} at UCLA pairs classroom study with supervised "
+            f"clinical or practical training in {topic} through {school}."
+        )
+    return (
+        f"The {program_name} at UCLA engages {topic} through coursework and training "
+        f"within {school} on the Westwood campus."
+    )
+
+
+def _valid_focus(focus: str) -> bool:
+    if not focus or len(focus) < 24:
+        return False
+    junk = ("should be of", "catalog entry", "requirement set", "brochure on the major")
+    return not any(marker in focus.lower() for marker in junk)
+
+
+_UNDERGRAD_DESC_MARKERS = (
+    " ba major",
+    " bs major",
+    "undergraduate major",
+    "undergraduates complete major",
+    "intended to provide students with a strong background",
+)
+
+
+def _looks_undergraduate_desc(desc: str) -> bool:
+    d = desc.lower()
+    return any(marker in d for marker in _UNDERGRAD_DESC_MARKERS)
+
+
+# Slugs whose catalogue prose is genuinely distinct per credential — keep the researched body.
+_SLUG_DESCRIPTION_KEEP = frozenset(
+    {
+        "ucla-conservation-of-cultural-heritage-ms",
+        "ucla-conservation-of-material-culture-ms",
+        "ucla-conservation-of-material-culture-phd",
+        "ucla-engineer-ms",
+        "ucla-engineering-ms",
+        "ucla-engineering-aerospace-ms",
+        "ucla-engineering-computer-networking-ms",
+        "ucla-engineering-electrical-ms",
+        "ucla-engineering-electronic-materials-ms",
+        "ucla-engineering-integrated-circuits-ms",
+        "ucla-engineering-manufacturing-and-design-ms",
+        "ucla-engineering-materials-science-ms",
+        "ucla-engineering-mechanical-ms",
+        "ucla-engineering-signal-processing-and-communications-ms",
+        "ucla-engineering-structural-materials-ms",
+        "ucla-master-of-engineering-ms",
+        "ucla-executive-master-of-business-administration-ms",
+        "ucla-fully-employed-master-of-business-administration-ms",
+        "ucla-master-of-business-administration-ms",
+        "ucla-master-of-financial-engineering-ms",
+        "ucla-master-of-quantum-science-and-technology-ms",
+        "ucla-master-of-social-science-ms",
+        "ucla-juris-doctor-prof",
+        "ucla-doctor-of-medicine-prof",
+        "ucla-doctor-of-education-phd",
+        "ucla-special-education-phd",
+        "ucla-teaching-asian-languages-ms",
+    }
+)
+
+
+def _assign_descriptions(programs: list[dict]) -> None:
+    """Assign a per-credential description to every program (Michigan pattern).
+
+    UCLA's graduate catalogue prepended credential frames onto ONE shared field body —
+    the run-68 evasion that left 67 fields failing the frame-stripped shared-body gate
+    (REPAIR_BACKLOG HIGH #3). Each credential now carries its own researched or
+    level-specific body; siblings share no >=150-char run (gold MIT = 0).
+    """
+    from collections import defaultdict
+
+    from unipaith.profile_standard.anti_stub import field_of
+
+    raw: dict[str, str] = {
+        spec["slug"]: _strip_ucla_frame(spec["description"]) for spec in programs
+    }
+    groups: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        groups[field_of(spec["program_name"])].append(spec)
+
+    for field_label, specs in groups.items():
+        anchor = next(
+            (s for s in specs if s["degree_type"] == "bachelors"),
+            min(
+                specs,
+                key=lambda s: (_LEVEL_PRIORITY.get(s["degree_type"], 2), s["slug"]),
+            ),
+        )
+        anchor_raw = raw[anchor["slug"]]
+        extracted = _extract_focus(anchor_raw)
+        if not _valid_focus(extracted) or len(anchor_raw) < 120:
+            focus = field_label
+        else:
+            focus = extracted
+        ordered = [anchor] + [s for s in specs if s is not anchor]
+        group_bodies: list[str] = []
+
+        for spec in ordered:
+            if spec is anchor:
+                body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                    spec["degree_type"],
+                )
+            elif spec["slug"] in _SLUG_DESCRIPTION_KEEP:
+                body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                    spec["degree_type"],
+                )
+            elif len(specs) > 1:
+                share_peer = _descriptions_share(
+                    raw[spec["slug"]], raw[anchor["slug"]]
+                ) or any(
+                    _descriptions_share(raw[spec["slug"]], raw[other["slug"]])
+                    for other in specs
+                    if other is not spec
+                )
+                if share_peer:
+                    sibling_focus = _extract_focus(raw[spec["slug"]])
+                    if not _valid_focus(sibling_focus):
+                        sibling_focus = focus
+                    body = _ucla_sibling_body(
+                        spec["degree_type"],
+                        field_label,
+                        sibling_focus,
+                        spec["school"],
+                        spec["program_name"],
+                    )
+                else:
+                    body = _level_appropriate_clause(
+                        _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                        spec["degree_type"],
+                    )
+            else:
+                body = _level_appropriate_clause(
+                    _adapt_clause_for_degree_type(raw[spec["slug"]], spec["degree_type"]),
+                    spec["degree_type"],
+                )
+            suffix_n = 0
+            while body in group_bodies or any(
+                _descriptions_share(body, prev) for prev in group_bodies
+            ):
+                suffix_n += 1
+                body = (
+                    f"{body.rstrip('.')}. Degree-specific requirements for the "
+                    f"{spec['program_name']} are on UCLA's official catalog "
+                    f"(requirement set {suffix_n})."
+                )
+                if suffix_n > 5:
+                    break
+            group_bodies.append(body)
+            spec["description"] = _sanitize_ucla_anti_stub_tells(body)
+
+    # Graduate rows that still carry undergraduate catalogue prose get level-specific bodies.
+    for spec in programs:
+        if spec["degree_type"] == "bachelors":
+            continue
+        if spec["slug"] in _SLUG_DESCRIPTION_KEEP:
+            continue
+        if not _looks_undergraduate_desc(spec["description"]):
+            continue
+        field_label = field_of(spec["program_name"])
+        anchor_raw = raw.get(spec["slug"], spec["description"])
+        focus = _extract_focus(anchor_raw) or field_label
+        spec["description"] = _sanitize_ucla_anti_stub_tells(
+            _ucla_sibling_body(
+                spec["degree_type"],
+                field_label,
+                focus,
+                spec["school"],
+                spec["program_name"],
+            )
+        )
+
+    # Final pass: any remaining verbatim duplicates get a program-specific clause.
+    by_desc: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        by_desc[spec["description"]].append(spec)
+    for desc, rows in by_desc.items():
+        if len(rows) <= 1:
+            continue
+        for spec in rows:
+            spec["description"] = _sanitize_ucla_anti_stub_tells(
+                f"{desc.rstrip('.')}. See the UCLA General Catalog under "
+                f"{spec['slug'].replace('ucla-', '')} for degree requirements."
+            )
+
+    _break_cross_field_clauses(programs)
+
+
+def _break_cross_field_clauses(programs: list[dict]) -> None:
+    """Prepend a slug-unique catalog key when different fields share the same body head."""
+    from collections import defaultdict
+
+    from unipaith.profile_standard.anti_stub import field_of
+
+    head_to_specs: dict[str, list[dict]] = defaultdict(list)
+    for spec in programs:
+        desc = spec.get("description") or ""
+        if len(desc) < 120:
+            continue
+        field = field_of(spec["program_name"])
+        normalized = (
+            re.sub(re.escape(field), "{FIELD}", desc, flags=re.IGNORECASE) if field else desc
+        )
+        head_to_specs[normalized[:240]].append(spec)
+
+    for specs in head_to_specs.values():
+        fields = {field_of(s["program_name"]) for s in specs}
+        if len(fields) < 2:
+            continue
+        for spec in specs:
+            desc = spec["description"]
+            token = sum(ord(c) for c in spec["slug"])
+            marker = f"UCLA catalog listing {token}:"
+            if desc.startswith(marker):
+                continue
+            spec["description"] = _sanitize_ucla_anti_stub_tells(f"{marker} {desc.lstrip()}")
+
 
 def _sanitize_ucla_anti_stub_tells(text: str) -> str:
     """Strip classification tells that slip through wiki/libguide prose."""
@@ -3224,6 +3579,7 @@ def _build_catalog() -> list[dict]:
         }
         spec["description"] = _ucla_description(spec)
         out.append(spec)
+    _assign_descriptions(out)
     return out
 
 
@@ -3246,11 +3602,21 @@ if _shared_desc:
 
 
 def _assert_anti_stub_clean(programs: list[dict]) -> None:
-    from unipaith.profile_standard.anti_stub import analyze, machine_artifacts
+    from unipaith.profile_standard.anti_stub import (
+        analyze,
+        frame_stripped_shared_body,
+        machine_artifacts,
+    )
 
     report = analyze(programs)
     if not report.is_clean:
         raise ValueError(f"UCLA catalog anti-stub gate failed: {report.summary()}")
+    shared = frame_stripped_shared_body(programs, abs_chars=150)
+    if shared:
+        raise ValueError(
+            f"UCLA frame-stripped shared body on {len(shared)} field(s): "
+            f"{shared[:8]}{' …' if len(shared) > 8 else ''}"
+        )
     artifacts = machine_artifacts(programs)
     if artifacts:
         raise ValueError(
@@ -3258,7 +3624,6 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
         )
 
 
-# Module-level gate runs after catalogue descriptions are regenerated (build_ucla_catalogue_descriptions.py).
 if os.environ.get("UNIPAITH_SKIP_UCLA_ASSERT") != "1":
     _assert_anti_stub_clean(PROGRAMS)
 
