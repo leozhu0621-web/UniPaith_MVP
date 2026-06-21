@@ -5811,3 +5811,82 @@ gate directly — imported every `CERTIFIED_CLEAN` catalog and re-computed `anal
 enforces: **0 failures across all 32 CERTIFIED_CLEAN + 17 frame-stripped + 5 debris-clean catalogs** (CI gate
 currently passes; the Berkeley/UCLA template-slot defect confirms the gate's blind spot, FLAG #1c). This
 grader PR changes only the three skill markdown files — backend CI is unaffected.
+
+---
+
+## Run 72 — 2026-06-21
+
+**Audited:** FULL-FLEET sweep — all **300 LIVE institutions** + all **40 catalogs** re-measured via the live
+API (`api.unipaith.co/api/v1`) with `profile_standard/anti_stub.py` (`analyze`, `template_slot_artifacts`,
+`scrape_debris`, `machine_artifacts`, `frame_stripped_shared_body(abs_chars=150)`), PLUS a **repo-vs-live
+diff** running the same functions over every importable in-repo `*_profile.PROGRAMS`. Merged since run 71:
+#1020 (Stanford tuition), #1024, #1025 (Berkeley fleet template-slot gate + truncated-name), #1026 (Berkeley
+template-slot repair), #1027 (UCLA template-slot + tuition).
+
+**HEADLINE — the run-71 critical pair FLIPPED, and a NEW worst-case appeared:**
+- 🟢 **Berkeley (run-71 C1) is now LIVE-CLEAN** — `template_slot_artifacts` 107→0 (REPO+LIVE), deployed.
+- 🟡 **UCLA (run-71 C2) is repo-fixed (#1027)** — in-repo `template_slot_artifacts`=0 + tuition backfilled —
+  but prod still serves 13 template-slot rows + 0% tuition; its `Deploy Backend` is IN PROGRESS (verify).
+- 🔴 **NEW WORST — Stanford.** Its #1021 "per-credential description bodies" repair cleared the 51 frame-share
+  fields (frame_abs150 51→0) but MANUFACTURED **51 `template_slot_artifacts` rows**, REPO-confirmed AND LIVE:
+  "Graduate coursework in **the Master of Science in {field}** emphasizes {field-blurb}, with seminars, methods
+  training, and a culminating thesis or capstone through {School}." (credential doubled + universal
+  field-agnostic tail; some blurbs broken: "…emphasizes Chemical engineering applies chemistry, physics, with…").
+  They shipped because Stanford is in `CERTIFIED_CLEAN` but EXCLUDED from the gate's `_TEMPLATE_SLOT_CLEAN`.
+
+**Confirmed WINS (verified live):** **UF** (run-71 HIGH #1 — frame 54→0, generic-encyclopedia-definition openers
+gone, tuition 28%→92%; the #1016/#1023 deploys LANDED) · **Berkeley** (template-slot 107→0) · **Stanford tuition**
+33%→69% (#1020). Debris + machine-artifacts = **0 across all 40 catalogs**; 0 duplicate / bare-abbreviation /
+"Programs"-department on the mature catalogs; no empty/duplicate names on any mature catalog.
+
+**Other live findings (all map to EXISTING rules → COMPLIANCE GAPS, queued not re-added):**
+- **template-slot machine grammar still LIVE (miss #9 template-slot):** Stanford 51 (repo+live), UCLA 13
+  (repo-fixed, deploy pending), UT-Austin 3 (repo+live — a PhD row slots a *bachelor's* description fragment into
+  "research in ___"), Michigan 1 (repo+live — empty slot "research in ,"). All four are `CERTIFIED_CLEAN` yet
+  EXCLUDED from `_TEMPLATE_SLOT_CLEAN`, so CI never fails them (FLAG #1a).
+- **credential-FRAME + shared field body (miss #8 fraction-floor), LIVE+REPO:** Penn 51 · Cornell 44 · Notre
+  Dame 23 · BU 23 (gold MIT 0). Penn/Notre Dame read frame_frac>0 on the CI DEFAULT metric yet ship live
+  (absent from the abs-floor `@parametrize` list); Cornell/BU read 0 (DILUTION — caught only by abs-≥150).
+- **matcher-core TUITION null catalog-wide (run-70 rule):** 16/40 catalogs at 0% — NYU/UIUC/USC/UW-Seattle/
+  UT-Austin/Michigan/BU/UCLA(pending) + 8 flagship seeds. Verified tuition is set in `apply()` by credential
+  level, NOT in the `PROGRAMS` dict (repo-side tuition reads 0 for everyone and is MEANINGLESS — the LIVE API is
+  the sole truth, recorded for future graders). Peers prove knowable: Princeton 100% · Cornell 92% · UF 92%.
+- **flagship 5-program seeds:** all 8 (Brown/Georgetown/UC-Davis/UC-Irvine/UNC/UVA/Vanderbilt/WashU) ship EMPTY
+  descriptions + null department + 0% tuition + dead feed (run 71 noted only Brown's empties — corrected to all 8);
+  UC-Davis/UNC/Vanderbilt/WashU at 3 photos (<4).
+- **JHU** still deploy-stranded — in-repo frame_abs150=0 (#984 genuine) but prod serves 3 old shared-body fields;
+  #984's deploy was CANCELLED and not caught up (FLAG #4, non-self-healing).
+
+**Rule change (1 — bounded, evidence-backed, NOT a duplicate; it CORRECTS a now-STALE note):** miss #9
+template-slot sub-bullet's closing NOTE said "the enforced `anti_stub` gate has no metric for this yet — run this
+scan by hand." That is FALSE post-#1025, which ADDED `template_slot_artifacts` (`_TEMPLATE_SLOT_RES`) + a
+parametrized test. Rewrote it to: a frame-share / per-credential repair is NOT a clear until
+`template_slot_artifacts == 0`; the description repair that clears the frame-share dimension routinely
+MANUFACTURES the template-slot dimension in the same edit (the recurring single-dimension non-clear, miss #8
+dimension-agnostic-and-simultaneous), so the SAME pass must take BOTH to 0 and only THEN graduate the catalog into
+`_TEMPLATE_SLOT_CLEAN`; and the fatal anti-pattern is shipping the frame-share fix while PARKING the catalog in the
+gate's EXCLUSION set (it stays in `CERTIFIED_CLEAN`, reading "certified clean", while its template-slot rows ship
+live un-gated) — exclusion is a temporary parking lot for a KNOWN repair target, NEVER a destination. Cited live
+evidence: Stanford #1021, UT-Austin (3), Michigan (1). Why only 1 change: a full-fleet sweep found NO genuinely
+new defect CLASS — every live defect maps to an existing rule (template-slot, frame-share, tuition, empty/seed),
+so the bounded/anti-churn rail forbids inventing more; the work is repair-queueing + compliance logging.
+
+**Backlog delta:** complete worst-first rewrite. PROMOTED Stanford to CRITICAL #1 (NEW). UCLA→#2 (deploy-pending,
+verify), UT-Austin→#3, Michigan→#4 (all template-slot CRITICAL). Frame-share Penn/Cornell/Notre Dame/BU →#5–#8.
+Tuition-16 →#9. JHU →#10 (still stranded). Flagship seeds →#11 (corrected to all-8-empty), bare seeds →#12. MOVED
+Berkeley + UF into CLEAN/WINS (verified live). Updated FLAG #1 (three gate gaps: template-slot subset, abs-floor
+drift, threshold), FLAG #4 (Deploy Backend #1025 FAILED, #1027 in-progress, #984 not caught up).
+
+**Invariants:** all intact. The SKILL.md edit is a miss #9 / §8.5 gate TIGHTENING (corrects a stale note +
+strengthens the template-slot clear bar; loosens nothing). No school name added to SKILL.md (Stanford/UT-Austin/
+Michigan appear in the rule edit only as live EVIDENCE pointers, the same convention as the existing build-artifact
+sub-bullet). Post-edit re-read: misses still numbered sequentially, no contradictions, #1019's tuition rule and the
+no-fabrication / merge-mandatory / workshop-feedback-only invariants untouched.
+
+**Health check:** the full `pytest` suite needs a live Postgres + httpx/asyncpg the conftest imports (unavailable
+here), so the mandated tests could not run in this environment. Installed the DB-free deps (sqlalchemy, pgvector)
+and ran the substantive gate directly — imported every `CERTIFIED_CLEAN` catalog and re-computed `analyze` /
+`machine_artifacts` / `frame_stripped_shared_body` / `scrape_debris` / `template_slot_artifacts`: backend CI
+currently passes (the gate's blind spots — Stanford/UCLA/UT-Austin/Michigan excluded from `_TEMPLATE_SLOT_CLEAN`,
+Penn/Cornell/ND/BU absent from the abs-floor list — are exactly why those defects ship green, FLAG #1). This grader
+PR changes only the three skill markdown files — backend CI is unaffected.

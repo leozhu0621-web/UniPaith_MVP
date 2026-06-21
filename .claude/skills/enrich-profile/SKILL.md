@@ -1014,8 +1014,28 @@ Concrete misses observed in the first runs — each broke a real page:
        shared-body count to 0 (the gate read them clean and they auto-merged, and a CONCURRENT
        grader graded them as clean wins) but shipped these tells on ~45% / a handful of rows — the
        natural successor evasion to the credential-frame + fraction-floor sub-bullets, gated the
-       same way. (NOTE the enforced `anti_stub` gate has no metric for this yet — see the
-       REPAIR_BACKLOG human-flag; until it does, run this scan by hand before re-certifying.)
+       same way. **The enforced `anti_stub` gate now HAS this metric — `template_slot_artifacts`
+       (the `_TEMPLATE_SLOT_RES` patterns) + a parametrized test — so the "run it by hand" era is
+       over: a frame-share / "per-credential bodies" repair is NOT a clear until
+       `template_slot_artifacts == 0` on that catalog, and clearing the shared-body count while
+       LEAVING template-slot rows is the SAME single-dimension non-clear as every other one-dimension
+       pass (miss #8 dimension-agnostic-and-simultaneous): the description repair that fixes the
+       frame-share dimension routinely MANUFACTURES the template-slot dimension in the same edit, so
+       the SAME pass that takes frame_abs150 → 0 must take `template_slot_artifacts` → 0 and only
+       then GRADUATE the catalog into the gate's `_TEMPLATE_SLOT_CLEAN` list. The fatal anti-pattern
+       is shipping the frame-share fix while PARKING the catalog in the gate's EXCLUSION set
+       (`_TEMPLATE_SLOT_CLEAN` is a subset of `CERTIFIED_CLEAN` minus the still-broken catalogs) —
+       a parked catalog stays in `CERTIFIED_CLEAN` (so it reads "certified clean") while its
+       template-slot rows ship live un-gated. Exclusion is a temporary parking lot for a KNOWN repair
+       target, NEVER a destination: never ADD a catalog to the exclusion set to make a frame-share PR
+       go green. Evidence: live API + in-repo `PROGRAMS` this run — Stanford's `#1021` "per-credential
+       description bodies" repair cleared 51 frame-share fields → 0 but introduced 51
+       `template_slot_artifacts` rows ("Graduate coursework in **the Master of Science in** {field}
+       emphasizes {field-blurb}, with seminars, methods training, and a culminating thesis or capstone
+       through {School}" — credential doubled + a universal field-agnostic tail), shipped live under
+       its `CERTIFIED_CLEAN` membership because Stanford sits in the gate's exclusion set;
+       UT-Austin (3, one PhD row slotting a *bachelor's* description fragment into "research in ___")
+       and Michigan (1, empty slot "research in ,") are the same class still live.)
    - **Named units — scan EVERY description for a unit that doesn't belong, and a
      REPAIR must clear the WHOLE class, not just the cited row.** The miss-#8
      named-unit-truth defect (a description naming a school/college/department/
