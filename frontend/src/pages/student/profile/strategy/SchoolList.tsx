@@ -53,7 +53,7 @@ function WordTag({
 
 function SchoolRow({ match }: { match: MatchResultDual }) {
   const fit = fitWord(match.fitness_score)
-  const odds = oddsWord(match.confidence_score)
+  const odds = oddsWord(match.band_label)
   const reason = matchReason(match)
 
   return (

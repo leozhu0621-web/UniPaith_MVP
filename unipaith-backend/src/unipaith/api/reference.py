@@ -86,3 +86,43 @@ async def get_institution(unitid: int, db: AsyncSession = Depends(get_db)) -> In
     if row is None:
         raise HTTPException(status_code=404, detail="Institution not found")
     return InstitutionDetail.model_validate(row)
+
+
+class Major(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    cip_code: str
+    title: str
+    description: str | None = None
+    related_occupations: list | None = None
+
+
+class MajorList(BaseModel):
+    items: list[Major]
+
+
+@router.get(
+    "/majors",
+    response_model=MajorList,
+    summary="Search the NCES CIP major taxonomy",
+)
+async def list_majors(
+    q: str | None = None,
+    limit: int = Query(25, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+) -> MajorList:
+    rows = await ReferenceService(db).search_majors(q=q, limit=limit, offset=offset)
+    return MajorList(items=[Major.model_validate(r) for r in rows])
+
+
+@router.get(
+    "/majors/{cip_code}",
+    response_model=Major,
+    summary="One major (field of study) by CIP code",
+)
+async def get_major(cip_code: str, db: AsyncSession = Depends(get_db)) -> Major:
+    row = await ReferenceService(db).get_major(cip_code)
+    if row is None:
+        raise HTTPException(status_code=404, detail="Major not found")
+    return Major.model_validate(row)
