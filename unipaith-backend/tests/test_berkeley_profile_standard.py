@@ -230,3 +230,28 @@ def test_berkeley_catalog_has_no_frame_stripped_shared_body():
         f"Berkeley credential siblings share a frame-stripped body on "
         f"{len(shared)} field(s): {shared[:8]}{' …' if len(shared) > 8 else ''}"
     )
+
+
+def test_berkeley_catalog_has_no_template_slot_artifacts():
+    """Regression: per-credential slotted templates must not ship machine-broken grammar."""
+    hits = b._template_slot_artifacts(b.PROGRAMS)
+    assert not hits, (
+        f"Berkeley has {len(hits)} template-slot grammar rows: {hits[:5]}"
+    )
+
+
+def test_berkeley_tuition_rates_are_published():
+    """Matcher-core tuition: institution publishes undergrad + graduate systemwide rates."""
+    from collections import Counter
+
+    counts = Counter(p["degree_type"] for p in b.PROGRAMS)
+    assert b._TUITION_IN_STATE > 0
+    assert b._TUITION_GRAD > 0
+    # apply() stamps tuition on bachelors, masters, certificate, and funded PhD rows.
+    coverable = (
+        counts["bachelors"]
+        + counts["masters"]
+        + counts.get("certificate", 0)
+        + counts["phd"]
+    )
+    assert coverable / len(b.PROGRAMS) >= 0.85
