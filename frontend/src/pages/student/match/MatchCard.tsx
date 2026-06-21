@@ -28,6 +28,7 @@ import { formatCurrency } from '../../../utils/format'
 import BandBadge from '../../../components/ui/BandBadge'
 import type { MatchResultDual } from '../../../types'
 import DualRing from './DualRing'
+import { matchStoryline } from './matchStoryline'
 import ProbabilityBands from './ProbabilityBands'
 import RationalePopover from './RationalePopover'
 import { cardLinkClick } from '../explore/shared/cardLink'
@@ -77,6 +78,9 @@ export default function MatchCard({
   const confidence = confRing.value
   // Hide the precise numeral when the ring is band-derived (no raw score served).
   const hideNumeral = fitRing.fromBand
+  // Strategy→matches storytelling: a one-line counselor read of this band, framed
+  // as fit-for-you + admission odds (turns the two rings into plain language).
+  const storyline = matchStoryline(match.band_label, fitness, !hideNumeral)
   const acceptPct =
     match.acceptance_rate != null ? Math.round(match.acceptance_rate * 100) : null
   // Without an explicit reason on the list payload, derive the right "not
@@ -147,6 +151,13 @@ export default function MatchCard({
           </div>
         </div>
       </div>
+
+      {/* ── Band storyline — the counselor's one-line read (fit + odds) ── */}
+      {storyline && (
+        <p className="px-4 -mt-0.5 pb-1.5 text-[12.5px] leading-snug text-foreground/85">
+          {storyline}
+        </p>
+      )}
 
       {/* ── Why this match + realistic-shot expander ── */}
       <div className="px-4 pb-2 flex items-center gap-3">
