@@ -370,6 +370,24 @@ describe('MySpaceHomePage', () => {
     })
   })
 
+  it('lets students inspect readiness provenance and review the source record', async () => {
+    renderHome()
+
+    const title = await screen.findByText('Profile readiness')
+    const row = title.closest('[data-readiness-key="profile"]')
+    expect(row).toBeTruthy()
+
+    fireEvent.click(within(row as HTMLElement).getByText('Why this appears'))
+    fireEvent.click(within(row as HTMLElement).getByRole('button', { name: 'Review source' }))
+
+    expect(track).toHaveBeenCalledWith('readiness_explanation_opened', {
+      route: '/s/profile',
+      key: 'profile',
+      status: 'needs_attention',
+      source: 'provenance',
+    })
+  })
+
   it('surfaces offer decision pressure in offers and costs', async () => {
     vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
       ...overview,

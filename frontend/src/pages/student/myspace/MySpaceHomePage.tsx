@@ -196,7 +196,11 @@ export default function MySpaceHomePage() {
           <PipelineStrip items={data.pipeline} onGo={(route, key) => go(route, key === 'offers' ? 'offer_compare_opened' : 'my_space_task_clicked', { module: 'pipeline', key })} />
 
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
-            <ReadinessLedger readiness={data.readiness} onGo={(row) => go(row.route, 'readiness_explanation_opened', { key: row.key, status: row.status })} />
+            <ReadinessLedger
+              readiness={data.readiness}
+              onGo={(row) => go(row.route, 'readiness_explanation_opened', { key: row.key, status: row.status })}
+              onReviewSource={(row, route) => go(route, 'readiness_explanation_opened', { key: row.key, status: row.status, source: 'provenance' })}
+            />
             <ImportCard item={data.import_status} onGo={(route) => go(route, 'my_space_empty_cta_clicked', { module: 'import' })} />
           </div>
 
@@ -283,7 +287,11 @@ export default function MySpaceHomePage() {
               onGo={(route) => go(route, 'strategy_refine_clicked')}
               onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'strategy', key: item.key, source: 'provenance' })}
             />
-            <PrepCard readiness={data.prep_readiness} onGo={(row) => go(row.route, 'readiness_explanation_opened', { key: row.key, status: row.status })} />
+            <PrepCard
+              readiness={data.prep_readiness}
+              onGo={(row) => go(row.route, 'readiness_explanation_opened', { key: row.key, status: row.status })}
+              onReviewSource={(row, route) => go(route, 'readiness_explanation_opened', { key: row.key, status: row.status, source: 'provenance' })}
+            />
             <ItemModule
               title="Offers & costs"
               items={data.offers}
@@ -466,35 +474,49 @@ function PipelineStrip({ items, onGo }: { items: { key: string; label: string; v
   )
 }
 
-function ReadinessLedger({ readiness, onGo }: { readiness: MySpaceReadiness[]; onGo: (row: MySpaceReadiness) => void }) {
+function ReadinessLedger({
+  readiness,
+  onGo,
+  onReviewSource,
+}: {
+  readiness: MySpaceReadiness[]
+  onGo: (row: MySpaceReadiness) => void
+  onReviewSource: (row: MySpaceReadiness, route: string) => void
+}) {
   return (
     <Card pad={false} className="p-5">
       <SectionHeader>Readiness ledger</SectionHeader>
       <div className="space-y-3">
         {readiness.map(row => (
-          <button
+          <div
             key={row.key}
-            type="button"
-            onClick={() => onGo(row)}
-            className="w-full rounded-md border-b border-border py-2 text-left last:border-0 hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            className="rounded-md border-b border-border py-2 last:border-0"
+            data-readiness-key={row.key}
           >
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-medium text-foreground">{row.label}</span>
-              <Badge variant={readinessTone(row.status)}>{row.status.replace('_', ' ')}</Badge>
-            </div>
-            <div
-              role="progressbar"
-              aria-label={`${row.label} readiness`}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={row.pct ?? 0}
-              className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
+            <button
+              type="button"
+              onClick={() => onGo(row)}
+              className="w-full text-left hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
-              <div className="h-full rounded-full bg-secondary" style={{ width: `${row.pct ?? 0}%` }} />
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">{row.detail}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{sourceLine(row)}</p>
-          </button>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-medium text-foreground">{row.label}</span>
+                <Badge variant={readinessTone(row.status)}>{row.status.replace('_', ' ')}</Badge>
+              </div>
+              <div
+                role="progressbar"
+                aria-label={`${row.label} readiness`}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={row.pct ?? 0}
+                className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
+              >
+                <div className="h-full rounded-full bg-secondary" style={{ width: `${row.pct ?? 0}%` }} />
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">{row.detail}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{sourceLine(row)}</p>
+            </button>
+            <EvidenceDisclosure item={row} onReviewSource={(route) => onReviewSource(row, route)} />
+          </div>
         ))}
       </div>
     </Card>
@@ -838,25 +860,39 @@ function EvidenceDisclosure({
   )
 }
 
-function PrepCard({ readiness, onGo }: { readiness: MySpaceReadiness[]; onGo: (row: MySpaceReadiness) => void }) {
+function PrepCard({
+  readiness,
+  onGo,
+  onReviewSource,
+}: {
+  readiness: MySpaceReadiness[]
+  onGo: (row: MySpaceReadiness) => void
+  onReviewSource: (row: MySpaceReadiness, route: string) => void
+}) {
   return (
     <Card pad={false} className="p-5">
       <SectionHeader>Prep readiness</SectionHeader>
       <div className="space-y-3">
         {readiness.map(row => (
-          <button
+          <div
             key={row.key}
-            type="button"
-            onClick={() => onGo(row)}
-            aria-label={`Open ${row.label}`}
-            className="w-full rounded-md py-2 text-left hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            className="rounded-md py-2"
+            data-readiness-key={row.key}
           >
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-medium text-foreground">{row.label}</span>
-              <Badge variant={readinessTone(row.status)}>{row.pct ?? 0}%</Badge>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">{row.detail}</p>
-          </button>
+            <button
+              type="button"
+              onClick={() => onGo(row)}
+              aria-label={`Open ${row.label}`}
+              className="w-full text-left hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-medium text-foreground">{row.label}</span>
+                <Badge variant={readinessTone(row.status)}>{row.pct ?? 0}%</Badge>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">{row.detail}</p>
+            </button>
+            <EvidenceDisclosure item={row} onReviewSource={(route) => onReviewSource(row, route)} />
+          </div>
         ))}
       </div>
     </Card>
