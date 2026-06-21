@@ -1608,6 +1608,188 @@ def _level_body(dtype: str, name: str, college: str, field: str) -> str:
     return ""
 
 
+# Per-program researched descriptions for the multi-credential fields whose generated
+# clause+level-body collided across credential siblings (REPAIR_BACKLOG #5, frame_abs150).
+# Each row is written distinct per credential level from the already-verified field facts
+# (gold MIT = 0% shared body). When a slug is present here, _bu_description returns it
+# verbatim instead of the clause+level-body generator; the online delivery note is baked in.
+_FULL_DESC_BY_SLUG: dict[str, str] = {
+# ===== Anthropology =====
+"bu-academics-cas-anthropology-biological-anthropology":
+ "The Bachelor of Arts in Anthropology at Boston University's College of Arts & Sciences grounds undergraduates in biological anthropology — human evolution, primatology, and skeletal biology — taught with laboratory and field methods alongside archaeology and sociocultural study. Students advance from introductory sequences to upper-division electives and hands-on research with the department's collections.",
+"bu-academics-grs-anthropology-ma":
+ "Master's students in the Graduate School of Arts & Sciences specialize across archaeological field schools, human biology, and sociocultural ethnography, working with the Boston University Museum collections and the program's global research sites. The degree pairs graduate seminars and methods coursework with a supervised research thesis or applied project.",
+"bu-academics-grs-anthropology-phd":
+ "Doctoral candidates in anthropology pursue faculty-mentored dissertation work in archaeology, human biology, or cultural ethnography, drawing on international fieldwork and the University's museum holdings. Qualifying examinations and advanced seminars build toward sustained original scholarship and research, museum, or faculty careers.",
+# ===== Archaeology =====
+"bu-academics-cas-archaeology-ba":
+ "The Bachelor of Arts in Archaeology trains undergraduates in excavation technique, artifact and ceramic analysis, and the archaeology of the Mediterranean and Near East, with summer field-school seasons and study of campus collections. The College of Arts & Sciences major builds method and theory toward graduate study or heritage-sector work.",
+"bu-academics-cas-archaeology-ba-ma":
+ "Through Boston University's accelerated bachelor's-to-master's, the Master of Science in Archaeology adds a fifth year of graduate fieldwork, lithic and zooarchaeological laboratory analysis, and a research thesis. It lets advanced undergraduates deepen excavation and survey skills before doctoral study or professional practice.",
+"bu-academics-grs-archaeology-ma":
+ "The Master of Arts in Archaeology in the Graduate School of Arts & Sciences deepens regional survey, GIS, and material-culture method, preparing students for doctoral programs or cultural-heritage careers. Seminars and a supervised thesis concentrate on a chosen geographic or methodological specialization.",
+"bu-academics-grs-archaeology-phd":
+ "Doctoral candidates in archaeology conduct original fieldwork and dissertation projects across Mediterranean, Near Eastern, and environmental-archaeology specializations. The PhD couples advanced seminars and qualifying examinations with sustained, faculty-mentored research toward academic and museum careers.",
+# ===== Astronomy =====
+"bu-academics-cas-astronomy-ba":
+ "The Bachelor of Arts in Astronomy introduces observational and theoretical astrophysics, using the Perkins Telescope Observatory at Anderson Mesa, Arizona, and the Institute for Astrophysical Research on the Charles River Campus. Undergraduates pair physics and mathematics foundations with telescope time and faculty research projects.",
+"bu-academics-cas-astronomy-ba-ma-astrophysics":
+ "Boston University's accelerated bachelor's-to-master's awards the Master of Science in Astronomy after a fifth year of graduate astrophysics coursework and a supervised research project. Students extend their undergraduate preparation into observational or computational work before doctoral programs or technical careers.",
+"bu-academics-grs-astronomy-ma":
+ "The Master of Arts in Astronomy in the Graduate School of Arts & Sciences combines graduate astrophysics seminars with directed research, often using the Perkins Telescope Observatory and the Institute for Astrophysical Research. It serves students bridging toward the doctorate or entering data-intensive science roles.",
+"bu-academics-grs-astronomy-phd":
+ "Doctoral candidates in astronomy pursue dissertation research in observational, theoretical, and computational astrophysics, with access to the Perkins Telescope Observatory and faculty groups in the Institute for Astrophysical Research. Qualifying examinations and advanced seminars lead to funded, original scholarship.",
+# ===== Biochemistry Molecular Biology =====
+"bu-academics-cas-biochemistry-molecular-biology-ba":
+ "The Bachelor of Arts in Biochemistry & Molecular Biology, taught across the College of Arts & Sciences and the Chobanian & Avedisian School of Medicine, studies protein structure, enzymology, and molecular mechanisms with intensive laboratory training. Undergraduates join federally funded research groups along the way to graduate or professional study.",
+"bu-academics-cas-biochemistry-molecular-biology-ba-ma":
+ "Boston University's accelerated bachelor's-to-master's confers the Master of Science in Biochemistry & Molecular Biology after a fifth year of advanced coursework and a directed research project in protein science or molecular mechanism. It readies students for doctoral programs or biotechnology roles.",
+# ===== Bioinformatics =====
+"bu-academics-cds-ms-in-bioinformatics":
+ "The Master of Science in Bioinformatics, based in the Faculty of Computing & Data Sciences, pairs genomics pipelines and statistical computing with biostatistics from the School of Public Health. Coursework and a capstone or thesis prepare students for computational-biology roles in industry and research.",
+"bu-academics-cds-phd-in-bioinformatics":
+ "Doctoral candidates in bioinformatics build computational methods for genomics and systems biology, mentored across the Faculty of Computing & Data Sciences and School of Public Health biostatistics. The PhD combines qualifying examinations and seminars with sustained dissertation research and funded training.",
+# ===== Biology =====
+"bu-academics-cas-biology-ba":
+ "The Bachelor of Arts in Biology surveys genetics, cell biology, ecology, and neurobiology through introductory-to-advanced laboratory sequences, with undergraduate research placements in campus life-sciences labs. The College of Arts & Sciences major prepares graduates for health professions, industry, or doctoral study.",
+"bu-academics-grs-biology-master-of-science-in-biology":
+ "The Master of Science in Biology in the Graduate School of Arts & Sciences pairs advanced coursework with a laboratory research project in molecular, cellular, or organismal biology. It deepens experimental skill for students moving toward doctoral programs or research positions.",
+"bu-academics-grs-biology-phd":
+ "Doctoral candidates in biology carry out dissertation research in genetics, ecology, evolution, or neurobiology within faculty laboratories. The funded PhD combines rotations, qualifying examinations, and advanced seminars with sustained original investigation toward academic and research careers.",
+"bu-academics-met-biology":
+ "Metropolitan College's evening Bachelor of Science in Biology gives working students a flexible path through the core genetics, cell-biology, and physiology sequence with campus laboratory sections. The degree fits part-time learners completing science prerequisites or changing careers. Offered online through Metropolitan College.",
+# ===== Chemistry =====
+"bu-academics-cas-chemistry-ba":
+ "The Bachelor of Arts in Chemistry grounds undergraduates in organic, inorganic, physical, and analytical chemistry through a laboratory-intensive sequence and access to faculty research groups. The College of Arts & Sciences major builds the foundation for graduate school, medicine, or the chemical industry.",
+"bu-academics-cas-chemistry-ba-ma":
+ "Boston University's accelerated bachelor's-to-master's awards the Master of Science in Chemistry after a fifth year of graduate coursework and a research project spanning organic, inorganic, physical, or chemical-biology areas. It bridges advanced undergraduates into doctoral study or industry laboratories.",
+"bu-academics-grs-chemistry-ma":
+ "The Master of Arts in Chemistry in the Graduate School of Arts & Sciences combines advanced coursework with a directed research project, serving students en route to the doctorate or to technical industry roles. Students concentrate in a sub-discipline under faculty supervision.",
+"bu-academics-grs-chemistry-phd":
+ "Doctoral candidates in chemistry pursue funded dissertation research in synthesis, spectroscopy, materials, or chemical biology within faculty laboratories. The PhD couples cumulative examinations and seminars with sustained original investigation toward academic, industrial, and national-lab careers.",
+# ===== Classical Studies =====
+"bu-academics-cas-classical-studies-ba-latin":
+ "The Bachelor of Arts in Classical Studies builds Greek and Latin language together with ancient history, literature, and Mediterranean archaeology. The College of Arts & Sciences major develops close-reading and historical skill toward graduate study, teaching, or law.",
+"bu-academics-cas-classical-studies-ba-ma":
+ "Boston University's accelerated bachelor's-to-master's confers the Master of Science in Classical Studies after a fifth year of graduate philology and a research thesis in Greek or Latin texts. It deepens language command for advanced undergraduates before doctoral programs.",
+"bu-academics-grs-classical-studies-ma":
+ "The Master of Arts in Classical Studies in the Graduate School of Arts & Sciences advances Greek and Latin philology, textual criticism, and ancient history. Seminars and a supervised thesis prepare students for doctoral work or secondary-school classics teaching.",
+"bu-academics-grs-classical-studies-phd":
+ "Doctoral candidates in classical studies write a dissertation in Greek or Latin literature, ancient philosophy, or Mediterranean history, supported by manuscript and archaeological resources. The PhD combines qualifying examinations and advanced seminars with sustained scholarship toward faculty careers.",
+# ===== Cognitive Neural Systems =====
+"bu-academics-grs-cognitive-neural-systems-ma":
+ "The Master of Arts in Cognitive & Neural Systems integrates computational modeling, neuroimaging, and systems physiology, drawing on the Center for Systems Neuroscience and College of Engineering neuroengineering labs. Graduate seminars and a research project ready students for doctoral study or modeling roles.",
+"bu-academics-grs-cognitive-neural-systems-phd":
+ "Doctoral candidates in cognitive and neural systems develop computational and experimental models of brain and behavior, mentored across the Center for Systems Neuroscience and neuroengineering laboratories. The PhD pairs qualifying examinations and seminars with sustained, funded dissertation research.",
+# ===== Computer Science =====
+"bu-academics-cas-computer-science-ba":
+ "The Bachelor of Arts in Computer Science covers algorithms, systems, and artificial intelligence, with ties to the Rafik B. Hariri Institute for Computing and Boston's technology sector. The College of Arts & Sciences major balances theory with project work toward software, data, and research careers.",
+"bu-academics-grs-computer-science-phd":
+ "Doctoral candidates in computer science conduct dissertation research in algorithms, systems, artificial intelligence, and theory, within groups spanning the Faculty of Computing & Data Sciences and the Hariri Institute for Computing. The funded PhD leads to academic and industry-research careers.",
+"bu-academics-met-computer-science-bs":
+ "Metropolitan College's Bachelor of Science in Computer Science gives working students a flexible route through programming, data structures, systems, and software engineering. The degree serves part-time and career-changing learners with evening and online sections. Offered online through Metropolitan College.",
+# ===== Economics =====
+"bu-academics-cas-economics-ba":
+ "The Bachelor of Arts in Economics combines microeconomic and macroeconomic theory, econometrics, and policy analysis, with access to Boston's finance and nonprofit research institutions. The College of Arts & Sciences major prepares graduates for business, policy, and graduate study.",
+"bu-academics-grs-economics-ma-phd":
+ "Doctoral candidates in economics produce original dissertation work in microeconomic theory, macroeconomics, and applied fields, supported by the Institute for Economic Research. The PhD pairs core theory and field examinations with funded research toward academic and policy careers.",
+"bu-academics-grs-economics-ma-economic-policy":
+ "The Master of Science in Economics offers empirically rigorous training in micro, macro, and applied econometrics, with faculty research spanning health, trade, development, and behavioral economics at the Institute for Economic Research. The degree readies students for analyst, policy, and pre-doctoral roles.",
+"bu-academics-met-economics":
+ "Metropolitan College's evening Bachelor of Science in Economics gives working students the core theory and quantitative sequence with flexible scheduling and applied policy electives. The degree fits part-time learners and career changers. Offered online through Metropolitan College.",
+# ===== English =====
+"bu-academics-cas-english-ba":
+ "The Bachelor of Arts in English combines literary history, creative writing, and rhetoric, with access to the Howard Gotlieb Archival Research Center and Boston's literary community. The College of Arts & Sciences major builds interpretive and writing skill toward publishing, teaching, law, and graduate study.",
+"bu-academics-cas-english-bama-in-english":
+ "Boston University's accelerated bachelor's-to-master's confers the Master of Science in English after a fifth year of graduate literary theory, creative writing, and rhetoric. It lets advanced undergraduates extend their study before doctoral programs or professional writing careers.",
+"bu-academics-grs-english-ma":
+ "The Master of Arts in English in the Graduate School of Arts & Sciences advances training in literary history, theory, and rhetoric, with archival resources at the Howard Gotlieb Center. Seminars and a thesis prepare students for doctoral study or teaching.",
+"bu-academics-grs-english-phd":
+ "Doctoral candidates in English write a dissertation in literary history, theory, or rhetoric, drawing on the Gotlieb archival collections and Boston's literary networks. The PhD combines coursework, examinations, and teaching toward faculty careers.",
+# ===== International Relations =====
+"bu-academics-cas-international-relations-ba":
+ "The Bachelor of Arts in International Relations, in the Frederick S. Pardee School of Global Studies, combines international economics, security studies, and a language requirement with regional concentrations. Undergraduates build analytic and language skill toward diplomacy, policy, and global business.",
+"bu-academics-cas-international-relations-ba-in-international-relationsma-in-international-affairs":
+ "The Master of Science in International Relations, an accelerated pathway in the Pardee School of Global Studies, lets advanced undergraduates add a graduate year of policy economics, security, and regional study. The degree readies graduates for government, NGO, and international-business roles.",
+"bu-academics-grs-international-relations":
+ "The Master of Arts in International Relations in the Pardee School of Global Studies deepens international economics, security studies, and regional expertise with a language requirement and applied policy work. Seminars and a capstone prepare graduates for policy and analytic careers.",
+# ===== Linguistics =====
+"bu-academics-cas-linguistics-ba-linguistics":
+ "The Bachelor of Arts in Linguistics covers phonetics, syntax, sociolinguistics, and computational language science, with cross-disciplinary ties to computer science and the Hariri Institute for Computing. The College of Arts & Sciences major joins theory with data analysis toward graduate study and language-technology work.",
+"bu-academics-cas-linguistics-bama-in-linguistics":
+ "Boston University's accelerated bachelor's-to-master's awards the Master of Science in Linguistics after a fifth year of graduate syntax, semantics, and fieldwork coursework. It lets advanced undergraduates deepen analytic training before doctoral programs or computational-linguistics roles.",
+"bu-academics-grs-linguistics-ma-in-linguistics":
+ "The Master of Arts in Linguistics in the Graduate School of Arts & Sciences advances phonology, syntax, and sociolinguistic method, with options in computational language science. Seminars and a thesis prepare students for the doctorate or language-technology careers.",
+"bu-academics-grs-linguistics-phd-in-linguistics":
+ "Doctoral candidates in linguistics pursue dissertation research in phonetics, syntax, sociolinguistics, or computational language science, with collaborations across computer science and the Hariri Institute. The PhD couples examinations and seminars with sustained original investigation.",
+# ===== Mathematics =====
+"bu-academics-cas-mathematics-statistics-ba":
+ "The Bachelor of Arts in Mathematics builds calculus, linear algebra, real analysis, and probability through proof-based coursework, with computational and applied electives. The College of Arts & Sciences major prepares graduates for graduate study, data and quantitative roles, or teaching.",
+"bu-academics-grs-mathematics-statistics-ma-mathematics":
+ "The Master of Arts in Mathematics in the Graduate School of Arts & Sciences advances analysis, algebra, and topology, serving students preparing for the doctorate or for technical and teaching careers. A directed project concentrates on a chosen area.",
+"bu-academics-grs-mathematics-statistics-phd-mathematics":
+ "Doctoral candidates in mathematics pursue dissertation research in analysis, algebra, geometry, or dynamical systems. The PhD combines qualifying examinations and advanced seminars with sustained, faculty-mentored work toward academic and research positions.",
+"bu-academics-met-mathematics":
+ "Metropolitan College's Bachelor of Science in Mathematics gives working students a flexible path through analysis, algebra, probability, and mathematical-biology electives in small upper-level seminars. The degree fits part-time and career-changing learners. Offered online through Metropolitan College.",
+# ===== Mathematics Education =====
+"bu-academics-cas-mathematics-statistics-ba-mathematics-education":
+ "The Bachelor of Arts in Mathematics Education pairs the College of Arts & Sciences mathematics core with teaching methods toward secondary-school licensure. Undergraduates combine proof-based coursework with classroom practicum.",
+"bu-academics-wheelock-mathematics-education-bs":
+ "The Bachelor of Science in Mathematics Education at the Wheelock College of Education & Human Development prepares licensed secondary math teachers, joining content coursework with pedagogy seminars and supervised student teaching. Graduates enter the classroom ready for Massachusetts certification.",
+# ===== Molecular Biology Cell Biology Biochemistry =====
+"bu-academics-grs-molecular-biology-cell-biology-biochemistry-ma":
+ "The Master of Arts in Molecular Biology, Cell Biology & Biochemistry, shared by the College of Arts & Sciences and the Chobanian & Avedisian School of Medicine, focuses on signaling, developmental biology, and microscopy methods used in cancer and immunology labs. Coursework and a research project ready students for doctoral or industry roles.",
+"bu-academics-grs-molecular-biology-cell-biology-biochemistry-phd":
+ "Doctoral candidates in molecular biology, cell biology, and biochemistry conduct dissertation research on signaling, development, and imaging within cancer and immunology laboratories spanning Arts & Sciences and the medical campus. The funded PhD combines rotations, examinations, and sustained investigation.",
+# ===== Philosophy =====
+"bu-academics-cas-philosophy-ba":
+ "The Bachelor of Arts in Philosophy emphasizes logic, ethics, metaphysics, and philosophy of science, strengths that also anchor Boston University's interdisciplinary Philosophy, Politics & Economics major. The College of Arts & Sciences degree sharpens argument and analysis toward law, policy, and graduate study.",
+"bu-academics-grs-philosophy-ma":
+ "The Master of Arts in Philosophy in the Graduate School of Arts & Sciences advances work in ethics, metaphysics, logic, and philosophy of science through graduate seminars and a thesis. It prepares students for doctoral programs or analytically demanding professions.",
+"bu-academics-grs-philosophy-phd":
+ "Doctoral candidates in philosophy write a dissertation in ethics, metaphysics, logic, or philosophy of science, with departmental strengths bridging to the sciences. The PhD couples coursework, examinations, and teaching toward academic careers.",
+# ===== Physics =====
+"bu-academics-cas-physics-ba":
+ "The Bachelor of Arts in Physics covers classical and quantum mechanics, electromagnetism, and laboratory technique, with research exposure in condensed-matter, particle, and biophysics groups. The College of Arts & Sciences major prepares graduates for engineering, data, and doctoral paths.",
+"bu-academics-cas-physics-ba-ma":
+ "Boston University's accelerated bachelor's-to-master's awards the Master of Science in Physics after a fifth year of graduate coursework and a research project in condensed-matter, particle, or biological physics. It extends undergraduate preparation toward doctoral study or technical careers.",
+"bu-academics-grs-physics-ma":
+ "The Master of Arts in Physics in the Graduate School of Arts & Sciences combines core graduate coursework with directed research, serving students bridging to the doctorate or entering applied science roles. Students concentrate under faculty supervision.",
+"bu-academics-grs-physics-phd":
+ "Doctoral candidates in physics pursue funded dissertation research in condensed-matter, high-energy, or biophysics within faculty laboratories. The PhD pairs qualifying examinations and seminars with sustained original investigation toward research careers.",
+# ===== Psychology =====
+"bu-academics-cas-psychology-ba":
+ "The Bachelor of Arts in Psychology — one of Boston University's largest majors — introduces cognitive, developmental, social, and clinical science with statistics, research methods, and campus-lab participation. The College of Arts & Sciences degree opens paths to health, business, and graduate study.",
+"bu-academics-grs-psychology-ma":
+ "The Master of Arts in Psychology in the Graduate School of Arts & Sciences builds advanced research design and analysis in cognitive, developmental, or clinical specializations. Coursework and a research project prepare students for doctoral programs or applied roles.",
+"bu-academics-grs-psychology-phd":
+ "Doctoral candidates in psychology pursue mentored dissertation research in clinical, cognitive, developmental, or behavioral-neuroscience tracks. The funded PhD combines coursework, examinations, and supervised practice toward research and clinical-science careers.",
+"bu-academics-met-psychology":
+ "Metropolitan College's evening Bachelor of Science in Psychology gives working students the core methods, statistics, and cognitive- and social-psychology sequence with flexible scheduling. The degree fits part-time and career-changing learners. Offered online through Metropolitan College.",
+# ===== Religion =====
+"bu-academics-cas-religion-ba":
+ "The Bachelor of Arts in Religion examines world religions, theology, and religion-and-culture with the global faculty of the College of Arts & Sciences Department of Religious Studies. Undergraduates build comparative and textual skill toward graduate study, ministry, law, or public service.",
+"bu-academics-grs-religion":
+ "Doctoral candidates in religion pursue dissertation research across world religions, theology, and religion-and-culture, supported by the Department of Religious Studies' international faculty. The PhD combines coursework, examinations, and language study toward academic careers.",
+# ===== Science Education =====
+"bu-academics-cas-ba-in-science-education":
+ "The Bachelor of Arts in Science Education prepares future biology, chemistry, and physics teachers through College of Arts & Sciences content coursework paired with pedagogy and classroom practicum toward secondary licensure.",
+"bu-academics-wheelock-science-education-bs":
+ "The Bachelor of Science in Science Education at the Wheelock College of Education & Human Development trains licensed biology, chemistry, and physics teachers, joining disciplinary content with education seminars and supervised student teaching for Massachusetts certification.",
+"bu-academics-wheelock-science-education-cags":
+ "The Graduate Certificate in Science Education at the Wheelock College of Education & Human Development packages focused coursework in science pedagogy and content for working teachers and degree-seekers, standing alone or applying toward a related graduate degree.",
+# ===== Sociology =====
+"bu-academics-cas-sociology-ba":
+ "The Bachelor of Arts in Sociology examines urban inequality, health disparities, and social networks, building survey and field methods through Boston community-based research. The College of Arts & Sciences major prepares graduates for policy, social services, and graduate study.",
+"bu-academics-grs-sociology-ma":
+ "The Master of Arts in Sociology in the Graduate School of Arts & Sciences advances quantitative and qualitative method in stratification, health, and urban sociology. Seminars and a research project ready students for doctoral programs or applied research.",
+"bu-academics-grs-sociology-phd":
+ "Doctoral candidates in sociology write a dissertation in inequality, health, migration, or social-network analysis, with strong mixed-method training. The PhD combines coursework, examinations, and apprenticeship toward academic and research careers.",
+"bu-academics-met-sociology-bs":
+ "Metropolitan College's evening Bachelor of Science in Sociology gives working students the core theory and methods sequence with an emphasis on urban and applied social analysis. The degree fits part-time and career-changing learners. Offered online through Metropolitan College.",
+}
+
+
 def _bu_description(spec: dict) -> str:
     """Field-specific, per-credential description — never a classification stub."""
     slug = spec["slug"]
@@ -1615,6 +1797,10 @@ def _bu_description(spec: dict) -> str:
     college = spec["school"]
     name = spec["program_name"]
     fmt = spec.get("delivery_format", "on_campus")
+    # Multi-credential fields whose generated clause+level-body collided across credential
+    # siblings carry a fully researched, per-program description here (REPAIR_BACKLOG #5).
+    if slug in _FULL_DESC_BY_SLUG:
+        return _FULL_DESC_BY_SLUG[slug]
     if slug in SLUG_DESCRIPTIONS:
         clause = SLUG_DESCRIPTIONS[slug]
     else:
@@ -1870,12 +2056,33 @@ if not _anti_stub.is_clean:
 from unipaith.profile_standard.anti_stub import (  # noqa: E402
     frame_stripped_shared_body as _frame_stripped_shared_body,
 )
+from unipaith.profile_standard.anti_stub import (  # noqa: E402
+    machine_artifacts as _machine_artifacts,
+)
+from unipaith.profile_standard.anti_stub import (  # noqa: E402
+    scrape_debris as _scrape_debris,
+)
+from unipaith.profile_standard.anti_stub import (  # noqa: E402
+    template_slot_artifacts as _template_slot_artifacts,
+)
 
-_frame_shared = _frame_stripped_shared_body(PROGRAMS)
+# Enforce the absolute-150 floor (REPAIR_BACKLOG miss #8 fraction-floor sub-bullet): a
+# 150+-char run shared across a field's credential siblings is a stamped sentence even when
+# a padded tail dilutes it below the fraction guard. Gold MIT = 0.
+_frame_shared = _frame_stripped_shared_body(PROGRAMS, abs_chars=150)
 if _frame_shared:
     _catalog_errors.append(
         f"frame-stripped shared body on {len(_frame_shared)} field(s): {_frame_shared[:8]}"
     )
+
+for _label, _fn in (
+    ("template-slot", _template_slot_artifacts),
+    ("scrape-debris", _scrape_debris),
+    ("machine-artifact", _machine_artifacts),
+):
+    _hits = _fn(PROGRAMS)
+    if _hits:
+        _catalog_errors.append(f"{_label} on {len(_hits)} program(s): {_hits[:6]}")
 if _catalog_errors:
     raise RuntimeError(f"Boston University catalog quality gate failed: {_catalog_errors}")
 PROGRAM_SLUGS = [p["slug"] for p in PROGRAMS]
@@ -1906,30 +2113,64 @@ _AVG_NET_PRICE = 24402
 _COST_SRC = "U.S. Dept. of Education — College Scorecard (Boston University, UNITID 164988)"
 _COST_SRC_URL = "https://collegescorecard.ed.gov/school/?164988-Boston-University"
 
+# Published full-time tuition (2026–27). BU charges one full-time tuition across undergraduate
+# and most graduate/professional programs ($73,024), with distinct published rates at a few
+# professional schools. These feed the matcher-core ``tuition`` scalar (REPAIR_BACKLOG #6 — a
+# whole-catalog null is matcher STARVATION, so the institution-published rate is stamped here).
+_UG_TUITION = 73024          # full-time undergraduate, 2026–27
+_GRAD_TUITION = 73024        # full-time graduate (GRS/CAS and most schools), 2026–27
+_MD_TUITION = 74078          # Chobanian & Avedisian School of Medicine — MD, 2026–27
+_DMD_TUITION = 101676        # Henry M. Goldman School of Dental Medicine — DMD, 2026–27
+_SSW_TUITION = 41184         # School of Social Work full-time, 2026–27
+_TUITION_SRC = (
+    "Boston University Student Financials / Office of the University Registrar — "
+    "published 2026–27 full-time tuition (professional rates from BUMC Student Financial Support)"
+)
+_TUITION_SRC_URL = "https://www.bu.edu/studentfinancials/your-bill/tuition-fees/"
+
+
+def _tuition_for(spec: dict) -> int:
+    """Published full-time tuition for a program, by credential level / professional school."""
+    name = spec.get("program_name", "")
+    school = spec.get("school", "")
+    if name == "Doctor of Dental Medicine":
+        return _DMD_TUITION
+    if name == "Doctor of Medicine":
+        return _MD_TUITION
+    if school == "School of Social Work":
+        return _SSW_TUITION
+    if spec.get("degree_type") == "bachelors":
+        return _UG_TUITION
+    return _GRAD_TUITION
+
 
 def _undergrad_cost() -> dict:
     return {
+        "tuition_usd": _UG_TUITION,
         "total_cost_of_attendance": _UNDERGRAD_COA,
         "avg_net_price": _AVG_NET_PRICE,
         "funded": False,
         "note": (
-            "BU's published academic-year cost of attendance is about $86,285 and the average net "
-            "price after grant aid is about $24,402 (College Scorecard, UNITID 164988). Tuition "
-            "varies by school and program. See BU Student Financial Assistance for current figures."
+            f"BU's published full-time undergraduate tuition is ${_UG_TUITION:,} for 2026–27; the "
+            "academic-year cost of attendance is about $86,285 and the average net price after grant "
+            "aid is about $24,402 (College Scorecard, UNITID 164988). See BU Student Financial "
+            "Assistance for current figures."
         ),
         "source": _COST_SRC, "source_url": _COST_SRC_URL, "year": "2023-24",
+        "tuition_source": _TUITION_SRC, "tuition_source_url": _TUITION_SRC_URL,
     }
 
 
 def _grad_cost_fallback(spec: dict) -> dict:
+    tuition = _tuition_for(spec)
     return {
+        "tuition_usd": tuition,
         "note": (
-            "Tuition for this graduate/professional program is set by BU and is typically billed "
-            "per term (and varies by school, program, and online vs. on-campus delivery), so a "
-            "single verified annual figure is not published here. See the program's tuition page "
-            "for current figures."
+            f"BU's published full-time tuition for this program is ${tuition:,} for 2026–27. "
+            "Part-time and online students are typically billed per credit; see the program's "
+            "tuition page for current figures."
         ),
-        "source": "Boston University Office of the Registrar / program tuition page",
+        "source": _TUITION_SRC,
         "source_url": _website_for(spec),
     }
 
@@ -4243,7 +4484,7 @@ for _old_slug, _new_slug in _SLUG_REDIRECT.items():
 
 
 def _program_standard(slug: str, spec: dict) -> dict:
-    omitted: list[str] = ["tracks", "cost_data.tuition_usd"]
+    omitted: list[str] = ["tracks"]
     if slug not in _OUTCOMES_BY_SLUG:
         omitted += [
             "outcomes_data.employment_rate",
@@ -4369,6 +4610,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.tracks = spec.get("tracks")
         p.application_requirements = _requirements_for(spec)
         p.cost_data = _undergrad_cost() if spec["degree_type"] == "bachelors" else _grad_cost_fallback(spec)
+        p.tuition = _tuition_for(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)
         p.outcomes_data = outcomes

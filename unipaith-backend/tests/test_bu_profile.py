@@ -217,7 +217,11 @@ def test_catalog_is_anti_stub_clean():
 
     report = analyze(b.PROGRAMS)
     assert report.is_clean, f"anti-stub not clean: {report.summary()}"
-    shared = frame_stripped_shared_body(b.PROGRAMS)
+    # Enforce the absolute-150 floor (REPAIR_BACKLOG miss #8 fraction-floor): a 150+-char run
+    # shared across a field's credential siblings is a stamped sentence even when a padded tail
+    # dilutes it below the fraction guard — the run-73 BU defect (frame_abs150=23) the
+    # fraction-only default read as a false 0. Gold MIT = 0.
+    shared = frame_stripped_shared_body(b.PROGRAMS, abs_chars=150)
     assert not shared, (
         f"credential siblings share a frame-stripped body on "
         f"{len(shared)} field(s): {shared[:8]}"
