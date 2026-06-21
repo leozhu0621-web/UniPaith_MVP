@@ -78,14 +78,13 @@ async def test_my_space_overview_composes_release_ready_tasks(
             due_date=(datetime.now(UTC) + timedelta(days=1)).date(),
         )
     )
-    db_session.add(
-        OfferLetter(
-            application_id=app.id,
-            status="extended",
-            scholarship_amount=12000,
-            response_deadline=(datetime.now(UTC) + timedelta(days=2)).date(),
-        )
+    offer = OfferLetter(
+        application_id=app.id,
+        status="extended",
+        scholarship_amount=12000,
+        response_deadline=(datetime.now(UTC) + timedelta(days=2)).date(),
     )
+    db_session.add(offer)
     await db_session.flush()
 
     resp = await student_client.get(f"{BASE}/overview")
@@ -134,6 +133,12 @@ async def test_my_space_overview_composes_release_ready_tasks(
     assert offer_item["status"] == "due_soon"
     assert "Offer response is due soon" in offer_item["description"]
     assert "Aid: $12,000." in offer_item["description"]
+    recent_offer = next(i for i in data["recent_changes"] if i["key"] == f"recent:offer:{offer.id}")
+    assert recent_offer["title"] == "Offer from MS Computer Science"
+    assert recent_offer["route"] == f"/s/applications/{app.id}?tab=offer"
+    assert recent_offer["status"] == "due_soon"
+    assert recent_offer["provenance"][0]["source"] == "offer_letters"
+    assert recent_offer["provenance"][0]["label"] == "Offer updated"
     strategy_task = tasks["strategy:create"]
     strategy_route = urlsplit(strategy_task["cta_route"])
     strategy_params = parse_qs(strategy_route.query)

@@ -327,6 +327,7 @@ class MySpaceService:
                 saved=saved,
                 documents=documents,
                 workshop_runs=workshop_runs,
+                now=now,
             ),
             access_issues=self.access_issues,
         )
@@ -1262,8 +1263,41 @@ class MySpaceService:
         saved: list,
         documents: list[StudentDocument],
         workshop_runs: list[WorkshopFeedbackRun],
+        now: datetime,
     ) -> list[MySpaceModuleItem]:
         rows: list[MySpaceModuleItem] = []
+        for app in apps:
+            offer = getattr(app, "offer", None)
+            if offer is None:
+                continue
+            due_at = _due_date_to_datetime(getattr(offer, "response_deadline", None))
+            offer_status, offer_description, _offer_blocker, offer_urgency = _offer_decision_state(
+                response=getattr(offer, "student_response", None),
+                status=getattr(offer, "status", None),
+                due_at=due_at,
+                received_externally=bool(getattr(offer, "received_externally", False)),
+                now=now,
+            )
+            route = _application_route(app.id, "offer")
+            rows.append(
+                MySpaceModuleItem(
+                    key=f"recent:offer:{offer.id}",
+                    title=f"Offer from {_program_label(app)}",
+                    description=offer_description,
+                    route=route,
+                    owner="student",
+                    urgency=offer_urgency,
+                    status=offer_status,
+                    due_at=getattr(offer, "updated_at", None) or due_at,
+                    provenance=_provenance(
+                        "offer_letters",
+                        "Offer updated",
+                        href=route,
+                        confidence=90,
+                        updated_at=getattr(offer, "updated_at", None),
+                    ),
+                )
+            )
         for app in apps[:4]:
             rows.append(
                 MySpaceModuleItem(
