@@ -6,7 +6,7 @@ import usePageTitle from '../../hooks/usePageTitle'
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
   format, addMonths, subMonths, addWeeks, subWeeks, isSameDay, isToday, parseISO,
-  setHours, setMinutes, differenceInMinutes, addMinutes, differenceInDays,
+  setHours, setMinutes, differenceInMinutes, addMinutes,
 } from 'date-fns'
 import {
   ChevronLeft, ChevronRight, Clock, FileText, Mic, Video,
@@ -19,7 +19,7 @@ import {
 } from '../../api/calendar'
 import { declineInterview, getMyInterviews } from '../../api/interviews'
 import InterviewRespondPanel from './interviews/InterviewRespondPanel'
-import { deadlineTone } from '../../utils/deadline'
+import { deadlineTone, daysUntil } from '../../utils/deadline'
 import type { Interview } from '../../types'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -109,8 +109,10 @@ function itemColor(item: CalendarItem): DotColor {
   const base = TYPE_META[item.type].color
   if (base !== 'error') return base
   // deadline items: escalate by the canonical shared 7/21 table (utils/deadline)
-  // so the calendar matches every other room. Past-due → red.
-  const daysLeft = differenceInDays(parseISO(item.start_at), new Date())
+  // so the calendar matches every other room. Use the SAME daysUntil() the rest of
+  // the app uses (Math.ceil) — date-fns differenceInDays truncates, which made a
+  // ~7.5-day deadline read red here but amber elsewhere. Past-due → red.
+  const daysLeft = daysUntil(item.start_at) ?? 0
   if (daysLeft < 0) return 'error'
   return TONE_DOT[deadlineTone(daysLeft)]
 }
