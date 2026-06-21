@@ -304,6 +304,18 @@ _PENDING_SUMMARY = "This is coming soon — your inputs are saved."
 # Action keys that have real service implementations today.
 _REAL_ACTIONS = frozenset({"build_school_list", "generate_strategy", "compare_schools"})
 
+# Actions that don't produce a one-shot artifact here — the work lives in a My
+# Space surface (or Discover). Instead of a dead "coming soon" placeholder, hand
+# the student off to where they actually do it. {key: (link, honest summary)}.
+_HANDOFFS: dict[str, tuple[str, str]] = {
+    "generate_goal_stack": ("/s/profile?tab=goals", "Set your goals in My Space → Goals."),
+    "generate_needs_map": ("/s/profile?tab=needs", "Map what you need in My Space → Needs."),
+    "build_checklist": ("/s/applications", "Build your application checklist in My Space."),
+    "draft_feedback": ("/s/prep?tab=workshops", "Get feedback on your draft in My Space → Prep."),
+    "interview_practice": ("/s/prep?tab=interviews", "Practice interviews in My Space → Prep."),
+    "find_events": ("/s/explore?tab=events", "Find events to connect with in Discover."),
+}
+
 
 @router.post("/templates/action/{action_key}", response_model=ActionArtifactOut)
 async def dispatch_template_action(
@@ -321,10 +333,24 @@ async def dispatch_template_action(
         raise HTTPException(status_code=400, detail=f"Unknown action key: {action_key!r}")
 
     if action_key not in _REAL_ACTIONS:
+        title = ACTION_CATALOG.get(action_key, {}).get("label", action_key)
+        handoff = _HANDOFFS.get(action_key)
+        if handoff:
+            link, summary = handoff
+            # An honest handoff — not a fabricated result. The work happens in the
+            # My Space surface this links to; the card invites the student there.
+            return ActionArtifactOut(
+                action_key=action_key,
+                kind="handoff",
+                title=title,
+                summary=summary,
+                status="ready",
+                link=link,
+            )
         return ActionArtifactOut(
             action_key=action_key,
             kind="note",
-            title=ACTION_CATALOG.get(action_key, {}).get("label", action_key),
+            title=title,
             summary=_PENDING_SUMMARY,
             status="pending",
         )

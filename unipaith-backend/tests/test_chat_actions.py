@@ -71,13 +71,27 @@ async def test_unknown_action_key_returns_400(student_client, db_session, mock_s
 
 
 @pytest.mark.asyncio
-async def test_non_real_action_is_pending_with_no_link(
-    student_client, db_session, mock_student_user
+@pytest.mark.parametrize(
+    ("action_key", "expected_link"),
+    [
+        ("generate_goal_stack", "/s/profile?tab=goals"),
+        ("generate_needs_map", "/s/profile?tab=needs"),
+        ("build_checklist", "/s/applications"),
+        ("draft_feedback", "/s/prep?tab=workshops"),
+        ("interview_practice", "/s/prep?tab=interviews"),
+        ("find_events", "/s/explore?tab=events"),
+    ],
+)
+async def test_handoff_action_returns_ready_with_my_space_link(
+    student_client, db_session, mock_student_user, action_key, expected_link
 ):
-    """A catalog action without a real service (find_events) → pending, link=None."""
+    """A catalog action without a one-shot service hands the student off to its
+    My Space (or Discover) home — a real, honest link, not a dead placeholder."""
     await ensure_profile(db_session, mock_student_user)
-    r = await student_client.post(f"{BASE}/templates/action/find_events")
+    r = await student_client.post(f"{BASE}/templates/action/{action_key}")
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["status"] == "pending"
-    assert body["link"] is None
+    assert body["status"] == "ready", body
+    assert body["kind"] == "handoff", body
+    assert body["link"] == expected_link
+    assert body["summary"]
