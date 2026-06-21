@@ -537,7 +537,7 @@ export default function ProgramDetailPage() {
                 <Card pad={false} className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <BookOpen size={14} className="text-secondary" />
-                    <h3 className="font-semibold text-foreground">Curriculum & Structure</h3>
+                    <h2 className="font-semibold text-foreground">Curriculum & Structure</h2>
                   </div>
                   {tracksMeta.note && tracksMeta.curriculum.length === 0 && (
                     <p className="text-sm text-foreground mb-3">{tracksMeta.note}</p>
@@ -621,7 +621,7 @@ export default function ProgramDetailPage() {
                   <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <Users size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Class Profile</h3>
+                      <h2 className="font-semibold text-foreground">Class Profile</h2>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {rows.map(r => (
@@ -658,7 +658,7 @@ export default function ProgramDetailPage() {
                   <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <Users size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Faculty</h3>
+                      <h2 className="font-semibold text-foreground">Faculty</h2>
                     </div>
                     {lead.length > 0 && (
                       <div className="space-y-2 mb-3">
@@ -693,7 +693,7 @@ export default function ProgramDetailPage() {
                 <Card pad={false} className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles size={14} className="text-secondary" />
-                    <h3 className="font-semibold text-foreground">Program Highlights</h3>
+                    <h2 className="font-semibold text-foreground">Program Highlights</h2>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {p.highlights.map((h: string, i: number) => (
@@ -718,7 +718,7 @@ export default function ProgramDetailPage() {
                   <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <Mail size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Program Contacts</h3>
+                      <h2 className="font-semibold text-foreground">Program Contacts</h2>
                     </div>
                     <div className="space-y-2 text-sm">
                       {rows.map((c, i) => (
@@ -788,7 +788,7 @@ export default function ProgramDetailPage() {
                 <Card pad={false} className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <GraduationCap size={14} className="text-secondary" />
-                    <h3
+                    <h2
                       className="font-semibold text-foreground"
                       title={
                         appReqs.length > 0
@@ -797,7 +797,7 @@ export default function ProgramDetailPage() {
                       }
                     >
                       Application Requirements
-                    </h3>
+                    </h2>
                   </div>
 
                   {appReqs.length > 0 ? (
@@ -855,7 +855,7 @@ export default function ProgramDetailPage() {
                   <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <GraduationCap size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Prerequisites</h3>
+                      <h2 className="font-semibold text-foreground">Prerequisites</h2>
                     </div>
                     <ul className="space-y-2">
                       {prerequisites.map((pr, i) => (
@@ -882,7 +882,7 @@ export default function ProgramDetailPage() {
                   <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Clock size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground" title={admissionTimeline.term || undefined}>Application Timeline</h3>
+                      <h2 className="font-semibold text-foreground" title={admissionTimeline.term || undefined}>Application Timeline</h2>
                     </div>
                     <div className="space-y-2">
                       {admissionTimeline.rounds.map((r: any, i: number) => {
@@ -937,7 +937,7 @@ export default function ProgramDetailPage() {
                   <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <Clock size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Application Timeline</h3>
+                      <h2 className="font-semibold text-foreground">Application Timeline</h2>
                     </div>
                     <ul className="space-y-2 text-sm">
                       {deadlineRounds.map((d, i) => (
@@ -973,7 +973,7 @@ export default function ProgramDetailPage() {
                     <Card pad={false} className="p-5">
                       <div className="flex items-center gap-2 mb-3">
                         <Building2 size={14} className="text-secondary" />
-                        <h3 className="font-semibold text-foreground">International Students</h3>
+                        <h2 className="font-semibold text-foreground">International Students</h2>
                       </div>
                       <div className="space-y-3">
                         {eng && (
@@ -1022,7 +1022,7 @@ export default function ProgramDetailPage() {
                     <Card pad={false} className="p-5">
                       <div className="flex items-center gap-2 mb-3">
                         <Sparkles size={14} className="text-secondary" />
-                        <h3 className="font-semibold text-foreground">Admissions Profile</h3>
+                        <h2 className="font-semibold text-foreground">Admissions Profile</h2>
                       </div>
                       <ul className="space-y-2 text-sm">
                         {(() => {
@@ -1080,7 +1080,7 @@ export default function ProgramDetailPage() {
                 <Card pad={false} className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <DollarSign size={14} className="text-secondary" />
-                    <h3 className="font-semibold text-foreground">Tuition & Fees</h3>
+                    <h2 className="font-semibold text-foreground">Tuition & Fees</h2>
                   </div>
                   <dl className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -1137,7 +1137,7 @@ export default function ProgramDetailPage() {
                   <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-3">
                       <DollarSign size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Funding & Aid Signals</h3>
+                      <h2 className="font-semibold text-foreground">Funding & Aid Signals</h2>
                     </div>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                       {fundingSignals.ta_funded && (
@@ -1180,7 +1180,7 @@ export default function ProgramDetailPage() {
                     <Card pad={false} className="p-5">
                       <div className="flex items-center gap-2 mb-2">
                         <DollarSign size={14} className="text-secondary" />
-                        <h3 className="font-semibold text-foreground">Net Price by Household Income</h3>
+                        <h2 className="font-semibold text-foreground">Net Price by Household Income</h2>
                       </div>
                       <p className="text-xs text-foreground mb-4">
                         Average price families actually pay after grants & scholarships, by household income band.
@@ -1238,7 +1238,7 @@ export default function ProgramDetailPage() {
                     <Card pad={false} className="p-5">
                       <div className="flex items-center gap-2 mb-2">
                         <DollarSign size={14} className="text-secondary" />
-                        <h3 className="font-semibold text-foreground">Graduate Debt Distribution</h3>
+                        <h2 className="font-semibold text-foreground">Graduate Debt Distribution</h2>
                       </div>
                       <p className="text-xs text-foreground mb-3">
                         How much graduates actually borrow. Most fall between the 25th and 75th percentiles.
@@ -1343,7 +1343,7 @@ export default function ProgramDetailPage() {
                   <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Briefcase size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Employment &amp; Placement</h3>
+                      <h2 className="font-semibold text-foreground">Employment &amp; Placement</h2>
                     </div>
                     <div className="flex flex-wrap gap-x-10 gap-y-4">
                       {empRate != null && (
@@ -1390,7 +1390,7 @@ export default function ProgramDetailPage() {
                   <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <DollarSign size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">Salary Distribution</h3>
+                      <h2 className="font-semibold text-foreground">Salary Distribution</h2>
                     </div>
                     {salaryBands.length > 0 ? (
                       <div className="space-y-2">
@@ -1479,7 +1479,7 @@ export default function ProgramDetailPage() {
                   <Card pad={false} className="p-5">
                     <div className="flex items-center gap-2 mb-2">
                       <Star size={14} className="text-secondary" />
-                      <h3 className="font-semibold text-foreground">What students say</h3>
+                      <h2 className="font-semibold text-foreground">What students say</h2>
                     </div>
                     {er.summary && <p className="text-sm text-foreground leading-relaxed mb-3">{String(er.summary)}</p>}
                     {themes.length > 0 && (
