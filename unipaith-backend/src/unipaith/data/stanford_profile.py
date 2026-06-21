@@ -1187,6 +1187,7 @@ _TRACKS_BY_SLUG: dict[str, dict] = {
 # (College Scorecard, UNITID 243744); the GSB MBA carries its own professional
 # rate. PhDs are fully funded. Undergraduate tuition is its own published rate.
 _TUITION_UNDERGRAD = 67731  # Stanford full-time undergraduate tuition, 2025-26
+_TUITION_GRAD = 65910  # Stanford standard full-time graduate tuition, 2025-26 (Scorecard 243744)
 _COST_BY_SLUG: dict[str, dict] = {
     "stanford-mba": {
         "tuition_usd": 85755,
@@ -2538,8 +2539,11 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             p.content_sources = _MBA_CONTENT
         else:
             p.content_sources = _program_content(spec)
-        # Cost: program override (official) → funded PhD → undergrad rate →
-        # professional (omitted, varies) → standard grad rate.
+        # Cost: program override (official) → funded PhD → undergrad rate → standard
+        # full-time graduate rate (masters) → per-unit/professional (omitted). The
+        # published full-time graduate tuition is institution-wide, so a degree master's
+        # carries it (matcher budget-fit signal — REPAIR_BACKLOG run-70 tuition-coverage
+        # rule); a per-unit graduate certificate has no single full-time sticker.
         cost_override = _COST_BY_SLUG.get(slug)
         if cost_override is not None:
             p.tuition = cost_override.get("tuition_usd")
@@ -2563,13 +2567,27 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source_url": "https://studentservices.stanford.edu/tuition-rates/2025-2026-undergraduate-tuition-rates",
                 "year": "2025-26",
             }
+        elif spec["degree_type"] == "masters":
+            p.tuition = _TUITION_GRAD
+            p.cost_data = {
+                "tuition_usd": _TUITION_GRAD,
+                "funded": False,
+                "note": (
+                    "Stanford's standard full-time graduate tuition; some professional "
+                    "master's (e.g. GSB) carry their own published rate."
+                ),
+                "source": "College Scorecard / Stanford R&DE — 2025-26 graduate tuition",
+                "source_url": "https://studentservices.stanford.edu/tuition-rates",
+                "year": "2025-26",
+            }
         else:
             p.tuition = None
             p.cost_data = {
-                "funded": spec["degree_type"] == "phd",
+                "funded": False,
                 "note": (
-                    "Stanford does not publish a single citable per-program tuition for this "
-                    "catalog node; see the program's official admissions/tuition page."
+                    "Graduate certificates and professional degrees are billed per unit or "
+                    "at a school-specific professional rate, not a single full-time sticker; "
+                    "see the program's official admissions/tuition page."
                 ),
                 "source": "Stanford Graduate Admissions",
                 "source_url": "https://gradadmissions.stanford.edu/",
