@@ -20,7 +20,7 @@ import { PageContainer, PageHeader, SectionHeader, StatTile } from '../../../com
 import Card from '../../../components/ui/Card'
 import Badge from '../../../components/ui/Badge'
 import Skeleton from '../../../components/ui/Skeleton'
-import { getMySpaceOverview, patchMySpaceTask, type MySpaceModuleItem, type MySpaceReadiness, type MySpaceTask, type MySpaceUrgency } from '../../../api/my-space'
+import { getMySpaceOverview, patchMySpaceTask, type MySpaceModuleItem, type MySpaceProvenance, type MySpaceReadiness, type MySpaceTask, type MySpaceUrgency } from '../../../api/my-space'
 import { qk } from '../../../api/queryKeys'
 import { track } from '../../../lib/analytics'
 import { useAuthStore } from '../../../stores/auth-store'
@@ -53,6 +53,10 @@ function sourceLine(item: { provenance?: { source: string; label: string; confid
   if (!source) return 'Source unavailable'
   const confidence = source.confidence == null ? '' : ` · ${source.confidence}% confidence`
   return `${source.label} · ${source.source.split('_').join(' ')}${confidence}`
+}
+
+function primarySource(item: { provenance?: MySpaceProvenance[] }) {
+  return item.provenance?.[0] ?? null
 }
 
 function ownerLabel(owner: string | null | undefined) {
@@ -170,6 +174,7 @@ export default function MySpaceHomePage() {
           <FocusPanel
             task={focus}
             onGo={(task) => go(task.cta_route, 'my_space_task_clicked', { task_key: task.key, category: task.category })}
+            onReviewSource={(task, route) => go(route, 'readiness_explanation_opened', { task_key: task.key, category: task.category, source: 'provenance' })}
             onDismiss={dismissTask}
             onSnooze={snoozeTask}
             busy={taskMutation.isPending}
@@ -192,6 +197,7 @@ export default function MySpaceHomePage() {
               emptyRoute="/s/applications"
               emptyCtaLabel="Open applications"
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'application_portfolio', key: item.key })}
+              onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'application_portfolio', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/applications', 'my_space_empty_cta_clicked', { module: 'application_portfolio' })}
             />
             <TaskModule
@@ -202,6 +208,7 @@ export default function MySpaceHomePage() {
               emptyRoute="/s/import"
               emptyCtaLabel="Review imports"
               onGo={(task) => go(task.cta_route, 'my_space_task_clicked', { task_key: task.key, category: task.category })}
+              onReviewSource={(task, route) => go(route, 'readiness_explanation_opened', { task_key: task.key, category: task.category, source: 'provenance' })}
               onEmpty={() => go('/s/import', 'my_space_empty_cta_clicked', { module: 'evidence_gaps' })}
               onDismiss={dismissTask}
               onSnooze={snoozeTask}
@@ -216,6 +223,7 @@ export default function MySpaceHomePage() {
               emptyRoute="/s/calendar"
               emptyCtaLabel="Open calendar"
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'deadlines', key: item.key })}
+              onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'deadlines', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/calendar', 'my_space_empty_cta_clicked', { module: 'deadlines' })}
             />
             <ItemModule
@@ -227,6 +235,7 @@ export default function MySpaceHomePage() {
               emptyRoute="/s/prep?tab=recommenders"
               emptyCtaLabel="Review recommenders"
               onGo={(item) => go(item.route, item.owner === 'recommender' ? 'recommender_nudge_clicked' : 'my_space_task_clicked', { module: 'waiting_on', key: item.key })}
+              onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'waiting_on', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/prep?tab=recommenders', 'my_space_empty_cta_clicked', { module: 'waiting_on' })}
             />
             <ItemModule
@@ -238,6 +247,7 @@ export default function MySpaceHomePage() {
               emptyRoute="/s/messages"
               emptyCtaLabel="Open messages"
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'messages', key: item.key })}
+              onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'messages', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/messages', 'my_space_empty_cta_clicked', { module: 'messages' })}
             />
             <ItemModule
@@ -249,12 +259,17 @@ export default function MySpaceHomePage() {
               emptyRoute="/s/prep?tab=workshops"
               emptyCtaLabel="Open Prep"
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'feedback', key: item.key })}
+              onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'feedback', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/prep?tab=workshops', 'my_space_empty_cta_clicked', { module: 'feedback' })}
             />
           </div>
 
           <div className="grid gap-5 xl:grid-cols-3">
-            <StrategyCard strategy={data.strategy} onGo={(route) => go(route, 'strategy_refine_clicked')} />
+            <StrategyCard
+              strategy={data.strategy}
+              onGo={(route) => go(route, 'strategy_refine_clicked')}
+              onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'strategy', key: item.key, source: 'provenance' })}
+            />
             <PrepCard readiness={data.prep_readiness} onGo={(row) => go(row.route, 'readiness_explanation_opened', { key: row.key, status: row.status })} />
             <ItemModule
               title="Offers & costs"
@@ -265,6 +280,7 @@ export default function MySpaceHomePage() {
               emptyRoute="/s/applications?tab=offers"
               emptyCtaLabel="Compare offers"
               onGo={(item) => go(item.route, 'offer_compare_opened', { key: item.key })}
+              onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'offers', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/applications?tab=offers', 'my_space_empty_cta_clicked', { module: 'offers' })}
             />
           </div>
@@ -279,6 +295,7 @@ export default function MySpaceHomePage() {
               emptyRoute="/s/explore"
               emptyCtaLabel="Open Discover"
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'saved_targets', key: item.key })}
+              onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'saved_targets', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/explore', 'my_space_empty_cta_clicked', { module: 'saved_targets' })}
             />
             <ItemModule
@@ -290,6 +307,7 @@ export default function MySpaceHomePage() {
               emptyRoute="/s"
               emptyCtaLabel="Open Uni"
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'recent_changes', key: item.key })}
+              onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'recent_changes', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s', 'my_space_empty_cta_clicked', { module: 'recent_changes' })}
             />
           </div>
@@ -317,12 +335,14 @@ function LoadingState() {
 function FocusPanel({
   task,
   onGo,
+  onReviewSource,
   onDismiss,
   onSnooze,
   busy,
 }: {
   task: MySpaceTask | null
   onGo: (task: MySpaceTask) => void
+  onReviewSource: (task: MySpaceTask, route: string) => void
   onDismiss: (task: MySpaceTask) => void
   onSnooze: (task: MySpaceTask) => void
   busy: boolean
@@ -358,6 +378,7 @@ function FocusPanel({
               {task.blocker ? `${task.blocker}` : 'Missing'}{task.missing_field ? ` · ${task.missing_field}` : ''}
             </p>
           )}
+          <EvidenceDisclosure item={task} onReviewSource={(route) => onReviewSource(task, route)} />
         </div>
         <div className="flex flex-wrap gap-2 lg:justify-end">
           <button
@@ -486,6 +507,7 @@ function TaskModule({
   emptyRoute,
   emptyCtaLabel,
   onGo,
+  onReviewSource,
   onEmpty,
   onDismiss,
   onSnooze,
@@ -498,6 +520,7 @@ function TaskModule({
   emptyRoute: string
   emptyCtaLabel: string
   onGo: (task: MySpaceTask) => void
+  onReviewSource: (task: MySpaceTask, route: string) => void
   onEmpty: () => void
   onDismiss: (task: MySpaceTask) => void
   onSnooze: (task: MySpaceTask) => void
@@ -511,7 +534,7 @@ function TaskModule({
       ) : (
         <div className="divide-y divide-border">
           {tasks.slice(0, 5).map(task => (
-            <TaskRow key={task.key} task={task} onGo={onGo} onDismiss={onDismiss} onSnooze={onSnooze} busy={busy} />
+            <TaskRow key={task.key} task={task} onGo={onGo} onReviewSource={onReviewSource} onDismiss={onDismiss} onSnooze={onSnooze} busy={busy} />
           ))}
         </div>
       )}
@@ -522,12 +545,14 @@ function TaskModule({
 function TaskRow({
   task,
   onGo,
+  onReviewSource,
   onDismiss,
   onSnooze,
   busy,
 }: {
   task: MySpaceTask
   onGo: (task: MySpaceTask) => void
+  onReviewSource: (task: MySpaceTask, route: string) => void
   onDismiss: (task: MySpaceTask) => void
   onSnooze: (task: MySpaceTask) => void
   busy: boolean
@@ -535,23 +560,26 @@ function TaskRow({
   const due = formatDate(task.due_at)
   const blockerLine = [task.blocker, task.missing_field].filter(Boolean).join(' · ')
   return (
-    <div className="flex items-start gap-3 py-3">
-      <button
-        type="button"
-        onClick={() => onGo(task)}
-        aria-label={`${task.cta_label}: ${task.title}`}
-        className="min-w-0 flex-1 text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium text-foreground">{task.title}</span>
-          <Badge variant={urgencyTone[task.urgency]}>{urgencyLabel[task.urgency]}</Badge>
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
-        {blockerLine && <p className="mt-1 text-xs text-foreground">{blockerLine}</p>}
-        <p className="mt-1 text-xs text-muted-foreground">
-          {ownerLabel(task.owner)}{due ? ` · due ${due}` : ''} · {sourceLine(task)}
-        </p>
-      </button>
+    <div className="flex items-start gap-3 py-3" data-task-key={task.key}>
+      <div className="min-w-0 flex-1">
+        <button
+          type="button"
+          onClick={() => onGo(task)}
+          aria-label={`${task.cta_label}: ${task.title}`}
+          className="w-full text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-foreground">{task.title}</span>
+            <Badge variant={urgencyTone[task.urgency]}>{urgencyLabel[task.urgency]}</Badge>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
+          {blockerLine && <p className="mt-1 text-xs text-foreground">{blockerLine}</p>}
+          <p className="mt-1 text-xs text-muted-foreground">
+            {ownerLabel(task.owner)}{due ? ` · due ${due}` : ''} · {sourceLine(task)}
+          </p>
+        </button>
+        <EvidenceDisclosure item={task} onReviewSource={(route) => onReviewSource(task, route)} />
+      </div>
       {task.dismissible && (
         <div className="flex shrink-0 gap-1">
           <button type="button" disabled={busy} onClick={() => onSnooze(task)} aria-label={`Snooze ${task.title}`} className="ui-btn rounded border border-border px-2 py-1 text-xs hover:bg-muted disabled:opacity-50">Snooze</button>
@@ -623,6 +651,7 @@ function ItemModule({
   emptyRoute,
   emptyCtaLabel,
   onGo,
+  onReviewSource,
   onEmpty,
 }: {
   title: string
@@ -633,6 +662,7 @@ function ItemModule({
   emptyRoute: string
   emptyCtaLabel: string
   onGo: (item: MySpaceModuleItem) => void
+  onReviewSource: (item: MySpaceModuleItem, route: string) => void
   onEmpty: () => void
 }) {
   return (
@@ -643,22 +673,27 @@ function ItemModule({
       ) : (
         <div className="divide-y divide-border">
           {items.slice(0, 5).map(item => (
-            <button
+            <div
               key={item.key}
-              type="button"
-              onClick={() => onGo(item)}
-              className="flex w-full items-start gap-3 py-3 text-left hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              className="flex w-full items-start gap-3 py-3"
             >
               <span className="mt-0.5 shrink-0 text-muted-foreground">{icon}</span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-medium text-foreground">{item.title}</span>
-                <span className="mt-1 block text-xs text-muted-foreground">{item.description}</span>
-                <span className="mt-1 block text-xs text-muted-foreground">
-                  {ownerLabel(item.owner)}{formatDate(item.due_at) ? ` · ${formatDate(item.due_at)}` : ''} · {sourceLine(item)}
-                </span>
-              </span>
+              <div className="min-w-0 flex-1">
+                <button
+                  type="button"
+                  onClick={() => onGo(item)}
+                  className="w-full rounded-sm text-left hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  <span className="block text-sm font-medium text-foreground">{item.title}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{item.description}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    {ownerLabel(item.owner)}{formatDate(item.due_at) ? ` · ${formatDate(item.due_at)}` : ''} · {sourceLine(item)}
+                  </span>
+                </button>
+                <EvidenceDisclosure item={item} onReviewSource={(route) => onReviewSource(item, route)} />
+              </div>
               {item.status && <Badge variant={urgencyTone[item.urgency]}>{item.status.split('_').join(' ')}</Badge>}
-            </button>
+            </div>
           ))}
         </div>
       )}
@@ -695,7 +730,15 @@ function EmptyAction({
   )
 }
 
-function StrategyCard({ strategy, onGo }: { strategy: MySpaceModuleItem | null; onGo: (route: string) => void }) {
+function StrategyCard({
+  strategy,
+  onGo,
+  onReviewSource,
+}: {
+  strategy: MySpaceModuleItem | null
+  onGo: (route: string) => void
+  onReviewSource: (item: MySpaceModuleItem, route: string) => void
+}) {
   return (
     <Card pad={false} className="p-5">
       <SectionHeader>Strategy living doc</SectionHeader>
@@ -704,6 +747,7 @@ function StrategyCard({ strategy, onGo }: { strategy: MySpaceModuleItem | null; 
           <p className="text-sm font-medium text-foreground">{strategy.title}</p>
           <p className="mt-1 text-xs text-muted-foreground">{strategy.description}</p>
           <p className="mt-2 text-xs text-muted-foreground">{sourceLine(strategy)}</p>
+          <EvidenceDisclosure item={strategy} onReviewSource={(route) => onReviewSource(strategy, route)} />
           <button
             type="button"
             onClick={() => onGo(strategy.route)}
@@ -722,6 +766,43 @@ function StrategyCard({ strategy, onGo }: { strategy: MySpaceModuleItem | null; 
         />
       )}
     </Card>
+  )
+}
+
+function EvidenceDisclosure({
+  item,
+  onReviewSource,
+}: {
+  item: { provenance?: MySpaceProvenance[] }
+  onReviewSource: (route: string) => void
+}) {
+  const source = primarySource(item)
+  if (!source) {
+    return (
+      <p className="mt-2 text-xs text-muted-foreground">Why this appears: Uni could not attach a source yet.</p>
+    )
+  }
+  return (
+    <details className="mt-2 text-xs text-muted-foreground">
+      <summary className="inline-flex cursor-pointer list-none rounded-sm font-medium text-foreground underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+        Why this appears
+      </summary>
+      <div className="mt-2 rounded-md border border-border bg-muted/30 p-3">
+        <p>{sourceLine(item)}</p>
+        <p className="mt-1">
+          This row comes from the owning UniPaith module. Use the source record to correct the underlying data instead of dismissing the signal.
+        </p>
+        {source.href && (
+          <button
+            type="button"
+            onClick={() => onReviewSource(source.href as string)}
+            className="ui-btn mt-2 inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-background"
+          >
+            Review source <ArrowRight size={12} />
+          </button>
+        )}
+      </div>
+    </details>
   )
 }
 

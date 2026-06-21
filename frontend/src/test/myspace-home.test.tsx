@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
@@ -193,7 +193,7 @@ describe('MySpaceHomePage', () => {
     expect(screen.getByText('Admissions follow-up')).toBeTruthy()
     expect(screen.getByText('Offers & costs')).toBeTruthy()
     expect(screen.getByText('Import & clarification')).toBeTruthy()
-    expect(screen.getByText('Application readiness · applications · 80% confidence')).toBeTruthy()
+    expect(screen.getAllByText('Application readiness · applications · 80% confidence').length).toBeGreaterThan(0)
   })
 
   it('routes application portfolio rows to the owning application', async () => {
@@ -323,7 +323,49 @@ describe('MySpaceHomePage', () => {
 
     expect(await screen.findByText('Confirm GPA')).toBeTruthy()
     expect(screen.getByText('Low-confidence extracted signal · GPA')).toBeTruthy()
-    expect(screen.getByText(/Clarification .* adaptive intake .* 55% confidence/)).toBeTruthy()
+    expect(screen.getAllByText(/Clarification .* adaptive intake .* 55% confidence/).length).toBeGreaterThan(0)
+  })
+
+  it('lets students inspect provenance and review the source record', async () => {
+    vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
+      ...overview,
+      evidence_gaps: [
+        {
+          key: 'clarification:gpa',
+          title: 'Confirm GPA',
+          description: 'Uni needs this before trusting the signal.',
+          owner: 'student',
+          urgency: 'priority_window',
+          category: 'clarification',
+          cta_label: 'Clarify in Uni',
+          cta_route: '/s?intent=clarification&source_task=clarification%3Agpa&return_to=%2Fs%2Fspace&artifact_destination=clarification',
+          blocker: 'Low-confidence extracted signal',
+          missing_field: 'GPA',
+          due_at: null,
+          provenance: [{ source: 'adaptive_intake', label: 'Clarification', href: '/s/import', confidence: 55, updated_at: null }],
+          dismissed: false,
+          snoozed_until: null,
+          active: true,
+          dismissible: true,
+        },
+      ],
+    })
+
+    renderHome()
+
+    const title = await screen.findByText('Confirm GPA')
+    const row = title.closest('[data-task-key="clarification:gpa"]')
+    expect(row).toBeTruthy()
+
+    fireEvent.click(within(row as HTMLElement).getByText('Why this appears'))
+    fireEvent.click(within(row as HTMLElement).getByRole('button', { name: 'Review source' }))
+
+    expect(track).toHaveBeenCalledWith('readiness_explanation_opened', {
+      route: '/s/import',
+      task_key: 'clarification:gpa',
+      category: 'clarification',
+      source: 'provenance',
+    })
   })
 
   it('surfaces offer decision pressure in offers and costs', async () => {
