@@ -1,7 +1,7 @@
 import { ChevronRight, Calendar, FileText, MessageSquare, Send } from 'lucide-react'
 import Card from '../../../components/ui/Card'
 import { formatDate } from '../../../utils/format'
-import { differenceInDays } from 'date-fns'
+import { daysUntil } from '../../../utils/deadline'
 
 interface Step {
   icon: any
@@ -55,7 +55,7 @@ export default function NextStepsCard({
       onClick: onViewApplication,
     })
   } else if (onApply) {
-    const daysLeft = applicationDeadline ? differenceInDays(new Date(applicationDeadline), new Date()) : null
+    const daysLeft = applicationDeadline ? daysUntil(applicationDeadline) : null
     steps.push({
       icon: Send,
       label: 'Start your application',

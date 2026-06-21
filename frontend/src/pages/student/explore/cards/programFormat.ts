@@ -1,4 +1,4 @@
-import { differenceInDays } from 'date-fns'
+import { daysUntil } from '../../../../utils/deadline'
 
 // Shared program field formatters — used by ProgramCard and ProgramListRow so
 // the card and the dense row never disagree on how a value reads.
@@ -36,7 +36,7 @@ export interface DeadlineInfo {
 
 export function deadlineInfo(deadline?: string | null): DeadlineInfo | null {
   if (!deadline) return null
-  const days = differenceInDays(new Date(deadline), new Date())
+  const days = daysUntil(deadline) ?? 0
   const date = new Date(deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   if (days < 0) return { text: date, urgent: false, closed: true }
   if (days <= 30) return { text: `${days}d left`, urgent: true, closed: false, date }
