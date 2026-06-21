@@ -428,42 +428,49 @@ export default function ApplicationDetailPage() {
             becomes the 240px column from lg up. */}
         <div className="w-full space-y-4 lg:w-60 lg:flex-shrink-0">
           <Card pad={false} className="p-4">
-            <h3 className="font-medium text-sm text-foreground mb-3">Checklist</h3>
-            <div className="space-y-2 mb-3">
-              {checklistItems.map((item, i) => (
-                <div
-                  key={item.key || i}
-                  className={`flex items-center gap-2 rounded-md px-1 py-0.5 text-sm ${
-                    checklistFocus && item.category === checklistFocus
-                      ? 'bg-warning-soft ring-1 ring-warning/40'
-                      : ''
-                  }`}
-                >
-                  {item.status === 'completed' ? (
-                    <Check size={14} className="text-success flex-shrink-0" />
-                  ) : item.status === 'blocked' || item.mismatch ? (
-                    <AlertTriangle size={14} className="text-warning flex-shrink-0" />
-                  ) : (
-                    <Circle size={12} className="text-muted-foreground flex-shrink-0" />
-                  )}
-                  <span className={item.status === 'completed' ? 'text-muted-foreground line-through' : 'text-foreground'}>
-                    {item.name}
-                  </span>
-                </div>
-              ))}
-              {checklistItems.length === 0 && (
-                checklistError ? (
-                  <QueryError
-                    variant="inline"
-                    detail="We couldn't load your checklist."
-                    onRetry={() => refetchChecklist()}
-                  />
-                ) : (
-                  <p className="text-xs text-muted-foreground">Generating checklist…</p>
-                )
-              )}
-            </div>
+            {/* Compact readiness summary — the FULL interactive checklist lives in
+                the Checklist tab; the sidebar used to duplicate the whole item list
+                (and the readiness % showed three times). Keep an at-a-glance
+                summary + a jump-in, not a second copy (Applications review 2026-06-21 #9). */}
+            <h3 className="font-medium text-sm text-foreground mb-3">Readiness</h3>
             <ProgressBar value={completionPct} label="Readiness" />
+            {checklistItems.length > 0 ? (
+              <div className="mt-2.5 space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  {checklistItems.filter(i => i.status === 'completed').length} of {checklistItems.length} items complete
+                </p>
+                {(() => {
+                  const next = checklistItems.find(i => i.status !== 'completed')
+                  return next ? (
+                    <button
+                      onClick={() => setTab('checklist')}
+                      className="flex w-full items-center gap-2 rounded-md px-1 py-0.5 text-left text-sm text-foreground hover:bg-muted"
+                    >
+                      <Circle size={12} className="flex-shrink-0 text-muted-foreground" />
+                      <span className="min-w-0 truncate">Next: {next.name}</span>
+                    </button>
+                  ) : (
+                    <p className="flex items-center gap-1.5 text-xs text-success">
+                      <Check size={13} /> All items complete
+                    </p>
+                  )
+                })()}
+                <button
+                  onClick={() => setTab('checklist')}
+                  className="text-xs font-semibold text-secondary hover:underline"
+                >
+                  View checklist →
+                </button>
+              </div>
+            ) : checklistError ? (
+              <QueryError
+                variant="inline"
+                detail="We couldn't load your checklist."
+                onRetry={() => refetchChecklist()}
+              />
+            ) : (
+              <p className="mt-2 text-xs text-muted-foreground">Generating checklist…</p>
+            )}
 
             <Button className="w-full mt-3" size="sm" variant="tertiary" onClick={checkReadinessFn}>
               <FileCheck size={14} className="mr-1" /> Check readiness
@@ -584,6 +591,7 @@ export default function ApplicationDetailPage() {
                     isExternal={isExternal}
                     canToggle={application.status === 'draft'}
                     onToggle={(key, completed) => toggleMut.mutate({ key, completed })}
+                    focusCategory={checklistFocus}
                   />
                 )}
               </>
@@ -1073,12 +1081,15 @@ function FeeCard({ fee, isDraft, payPending, onPay, onRequestWaiver, programName
 }
 
 // --- Checklist tab (spec 15 §5) ---
-function ChecklistTab({ items, completionPct, isExternal, canToggle, onToggle }: {
+function ChecklistTab({ items, completionPct, isExternal, canToggle, onToggle, focusCategory }: {
   items: ChecklistItem[]
   completionPct: number
   isExternal: boolean
   canToggle: boolean
   onToggle: (key: string, completed: boolean) => void
+  /** Deep-link target (?checklist=<category>, e.g. from a linked message) — the
+      matching group highlights and scrolls into view. */
+  focusCategory?: string | null
 }) {
   const OWNER_COLORS: Record<string, 'info' | 'warning' | 'neutral'> = { student: 'info', recommender: 'warning', institution: 'neutral' }
   const grouped = items.reduce<Record<string, ChecklistItem[]>>((acc, item) => {
@@ -1097,7 +1108,18 @@ function ChecklistTab({ items, completionPct, isExternal, canToggle, onToggle }:
         <ProgressBar value={completionPct} />
       </Card>
       {Object.entries(grouped).map(([cat, catItems]) => (
-        <div key={cat}>
+        <div
+          key={cat}
+          ref={el => {
+            // Scroll the deep-linked category into view once (e.g. arriving from a
+            // linked message thread); the visual ring marks it.
+            if (el && cat === focusCategory && !el.dataset.scrolled) {
+              el.dataset.scrolled = '1'
+              el.scrollIntoView({ block: 'center' })
+            }
+          }}
+          className={cat === focusCategory ? 'rounded-lg p-2 -m-2 ring-1 ring-warning/40 bg-warning-soft/40' : undefined}
+        >
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{cat.replace(/_/g, ' ')}</p>
           <div className="space-y-2">
             {catItems.map((item, idx) => (
