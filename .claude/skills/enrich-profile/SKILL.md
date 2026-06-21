@@ -1399,6 +1399,20 @@ watch Deploy Backend → **verify live** (query the public API for the instituti
 sample school + a sample program; confirm new fields + citations + that the explore-card
 eyebrow, updates feed, online programs, and resource links all render).
 
+**A merge is NOT a deploy — `Deploy Backend` GREEN is part of "done," and you must
+re-confirm the new data RENDERS LIVE.** A repair can pass CI, squash-merge, and still
+never reach students if its Deploy Backend run FAILS or is CANCELLED — most often the
+auto-merge dual-head race (step 5 / §8), which fails the prod migration so the live DB
+keeps the OLD rows while the repo (and CI) shows the fix. Evidence: live API this run —
+two per-credential repairs merged + green CI yet prod kept serving the OLD shared-body
+descriptions because their Deploy Backend runs failed/were cancelled (and even the
+dual-head fixup deploy failed). So treat the live re-query as the real gate, not the
+merge. **If a prior repair is correct in the repo (CI-green) but its defect is still LIVE,
+the remaining work is to DRIVE THE DEPLOY GREEN** — land/reland the merge-only migration,
+clear the dual head, re-trigger Deploy Backend — and **do NOT rewrite the already-correct
+data** (re-pointing or re-authoring a clean catalog only risks a fresh dual head and a
+second failed deploy). The data is done; the deploy is the unfinished half.
+
 **An opened-but-unmerged PR is a FAILED run, not a finished one.** Opening a PR and
 stopping leaves the whole university invisible to students (the seeded thin profile
 still shows) and lets work rot — a batch of fully-enriched universities once sat in

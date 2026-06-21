@@ -302,6 +302,7 @@ function FolderBlock({
   onRenameFolder,
   onDeleteFolder,
   onReorder,
+  folderDrag,
 }: {
   node: FolderNode;
   activeSessionId?: string | null;
@@ -315,6 +316,16 @@ function FolderBlock({
   /** Persist a new within-folder session order (auto-categorization still owns
    *  which folder a session lives in — a session is never dragged across folders). */
   onReorder: (folderId: string, orderedIds: string[]) => void;
+  /** Custom-folder drag-reorder within the custom group (spec §3.3). Omitted for
+   *  preset folders — they're the protected white-paper backbone and stay fixed. */
+  folderDrag?: {
+    onDragStart: () => void;
+    onDragOver: () => void;
+    onDrop: () => void;
+    onDragEnd: () => void;
+    dragging: boolean;
+    dropTarget: boolean;
+  };
 }) {
   const [open, setOpen] = useState(node.sessions.length > 0);
   const [menu, setMenu] = useState(false);
@@ -373,7 +384,28 @@ function FolderBlock({
     <div className="mb-0.5">
       {/* folder header */}
       <div
-        className="group relative flex items-center gap-2 px-2.5 py-2 rounded-[10px] cursor-pointer hover:bg-muted transition-colors"
+        draggable={!!folderDrag && !renaming}
+        onDragStart={folderDrag?.onDragStart}
+        onDragOver={
+          folderDrag
+            ? (e) => {
+                e.preventDefault();
+                folderDrag.onDragOver();
+              }
+            : undefined
+        }
+        onDrop={
+          folderDrag
+            ? (e) => {
+                e.preventDefault();
+                folderDrag.onDrop();
+              }
+            : undefined
+        }
+        onDragEnd={folderDrag?.onDragEnd}
+        className={`group relative flex items-center gap-2 px-2.5 py-2 rounded-[10px] cursor-pointer hover:bg-muted transition-colors ${
+          folderDrag?.dragging ? "opacity-40" : ""
+        } ${folderDrag?.dropTarget ? "ring-2 ring-secondary ring-inset" : ""}`}
         onClick={(e) => {
           if ((e.target as HTMLElement).closest("button, input")) return;
           setOpen((v) => !v);
@@ -381,6 +413,13 @@ function FolderBlock({
         role="button"
         aria-expanded={open}
       >
+        {/* drag grip — only on reorderable (custom) folders */}
+        {folderDrag && (
+          <span className="absolute left-1 top-0 bottom-0 flex items-center opacity-0 group-hover:opacity-40 transition-opacity text-muted-foreground cursor-grab active:cursor-grabbing">
+            <GripVertical size={13} />
+          </span>
+        )}
+
         {/* expand chevron */}
         <ChevronRight
           size={12}
@@ -541,6 +580,41 @@ export default function SessionBrowser({
   });
   const onReorder = (folderId: string, orderedIds: string[]) =>
     reorderMut.mutate({ folderId, orderedIds });
+
+  // Custom-folder reorder within the custom group (spec §3.3). No dedicated
+  // endpoint, so persist via per-folder updateFolder(sort_order); optimistic so
+  // the drop is instant. Preset folders are never reordered (fixed backbone).
+  const [dragFolderId, setDragFolderId] = useState<string | null>(null);
+  const [overFolderId, setOverFolderId] = useState<string | null>(null);
+  const folderReorderMut = useMutation({
+    mutationFn: (orderedIds: string[]) =>
+      Promise.all(orderedIds.map((id, i) => updateFolder(id, { sort_order: i }))),
+    onMutate: (orderedIds) => {
+      qc.setQueryData<ChatTreeResponse>(CHAT_TREE_KEY, (old) => {
+        if (!old) return old;
+        const rank = new Map(orderedIds.map((id, i) => [id, i]));
+        // Reorder only the custom folders by the new ranking; presets untouched.
+        const sorted = [...old.folders].sort((a, b) => {
+          const ra = rank.get(a.id);
+          const rb = rank.get(b.id);
+          if (ra === undefined || rb === undefined) return 0;
+          return ra - rb;
+        });
+        return { folders: sorted };
+      });
+    },
+    onSettled: invalidate,
+  });
+  const dropFolderOnto = (targetId: string, customIds: string[]) => {
+    const from = customIds.indexOf(dragFolderId ?? "");
+    const to = customIds.indexOf(targetId);
+    setDragFolderId(null);
+    setOverFolderId(null);
+    if (from < 0 || to < 0 || from === to) return;
+    const next = [...customIds];
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    folderReorderMut.mutate(next);
+  };
 
   // ── derived data ─────────────────────────────────────────────────────────
   const folders = data?.folders ?? [];
@@ -706,6 +780,22 @@ export default function SessionBrowser({
                 }
                 onDeleteFolder={(id) => deleteFolderMut.mutate(id)}
                 onReorder={onReorder}
+                folderDrag={{
+                  onDragStart: () => setDragFolderId(f.id),
+                  onDragOver: () => setOverFolderId(f.id),
+                  onDrop: () =>
+                    dropFolderOnto(
+                      f.id,
+                      customFolders.map((c) => c.id),
+                    ),
+                  onDragEnd: () => {
+                    setDragFolderId(null);
+                    setOverFolderId(null);
+                  },
+                  dragging: dragFolderId === f.id,
+                  dropTarget:
+                    overFolderId === f.id && dragFolderId !== null && dragFolderId !== f.id,
+                }}
               />
             ))}
           </section>

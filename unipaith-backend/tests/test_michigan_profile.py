@@ -144,3 +144,15 @@ def test_flagship_programs_carry_reviews():
         assert slug in m._REVIEWS_BY_SLUG, f"{slug} should carry external_reviews"
         rev = m._REVIEWS_BY_SLUG[slug]
         assert rev["summary"] and rev["themes"] and rev["sources"] and rev["disclaimer"]
+
+
+def test_michigan_catalog_has_no_frame_stripped_shared_body():
+    from unipaith.profile_standard.anti_stub import analyze, frame_stripped_shared_body
+
+    report = analyze(m.PROGRAMS)
+    assert report.is_clean, f"Michigan anti-stub regressed: {report.summary()}"
+    shared = frame_stripped_shared_body(m.PROGRAMS, abs_chars=150)
+    assert not shared, (
+        f"Michigan credential siblings share a frame-stripped body on "
+        f"{len(shared)} field(s): {shared[:8]}{' …' if len(shared) > 8 else ''}"
+    )
