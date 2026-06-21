@@ -52,7 +52,8 @@ CERTIFIED_CLEAN = [
     "bu",  # Medill peer-copy removed; real dual-degree/MPH/CFA/math/world-lang
     #             names + depts; per-credential bodies; school-as-field fixes (budefab1,
     #             supersedes buprof11's narrower description-only repair)
-    "berkeley",  # CIP rollup de-fab; real dept names; per-credential descriptions (berkeleyprof9)
+    "berkeley",  # CIP rollup de-fab; real dept names; per-credential descriptions
+    #             (berkeleyprof9 — frame-stripped shared body cleared berkeleypercrd1)
     "cornell",  # CIP-rollup buckets → real Cornell degrees or dropped; field-echo
     #             departments → real owning college; per-credential description leads
     #             (verbatim/shared-body removed) (cornelldefab1)
@@ -150,7 +151,7 @@ def test_artifact_detector_bites_on_catalog_entry_junk():
 
 _FRAME_STRIPPED_CLEAN = [
     "mit", "rice", "uf", "usc", "uw_madison", "jhu", "uiuc", "uw", "harvard", "nyu",
-    "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla",
+    "ut_austin", "columbia", "michigan", "duke", "georgia_tech", "ucla", "berkeley",
 ]
 
 
@@ -178,7 +179,7 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
 # REPAIR_BACKLOG miss #8 fraction-floor; the dilution-evasion catalogs UF / Cornell / BU
 # are NOT here yet on purpose).
 _ABS_FLOOR_CLEAN = [
-    "nyu", "mit", "columbia", "michigan", "ucla", "jhu",
+    "nyu", "mit", "columbia", "michigan", "ucla", "jhu", "berkeley",
 ]
 
 
