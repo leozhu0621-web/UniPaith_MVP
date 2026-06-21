@@ -294,6 +294,38 @@ describe('MySpaceHomePage', () => {
     })
   })
 
+  it('shows blocker and missing-field context on module task rows', async () => {
+    vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
+      ...overview,
+      evidence_gaps: [
+        {
+          key: 'clarification:gpa',
+          title: 'Confirm GPA',
+          description: 'Uni needs this before trusting the signal.',
+          owner: 'student',
+          urgency: 'priority_window',
+          category: 'clarification',
+          cta_label: 'Clarify in Uni',
+          cta_route: '/s?intent=clarification&source_task=clarification%3Agpa&return_to=%2Fs%2Fspace&artifact_destination=clarification',
+          blocker: 'Low-confidence extracted signal',
+          missing_field: 'GPA',
+          due_at: null,
+          provenance: [{ source: 'adaptive_intake', label: 'Clarification', href: '/s/import', confidence: 55, updated_at: null }],
+          dismissed: false,
+          snoozed_until: null,
+          active: true,
+          dismissible: true,
+        },
+      ],
+    })
+
+    renderHome()
+
+    expect(await screen.findByText('Confirm GPA')).toBeTruthy()
+    expect(screen.getByText('Low-confidence extracted signal · GPA')).toBeTruthy()
+    expect(screen.getByText(/Clarification .* adaptive intake .* 55% confidence/)).toBeTruthy()
+  })
+
   it('surfaces offer decision pressure in offers and costs', async () => {
     vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
       ...overview,

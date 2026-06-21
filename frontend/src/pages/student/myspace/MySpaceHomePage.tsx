@@ -533,6 +533,7 @@ function TaskRow({
   busy: boolean
 }) {
   const due = formatDate(task.due_at)
+  const blockerLine = [task.blocker, task.missing_field].filter(Boolean).join(' · ')
   return (
     <div className="flex items-start gap-3 py-3">
       <button
@@ -546,6 +547,7 @@ function TaskRow({
           <Badge variant={urgencyTone[task.urgency]}>{urgencyLabel[task.urgency]}</Badge>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
+        {blockerLine && <p className="mt-1 text-xs text-foreground">{blockerLine}</p>}
         <p className="mt-1 text-xs text-muted-foreground">
           {ownerLabel(task.owner)}{due ? ` · due ${due}` : ''} · {sourceLine(task)}
         </p>
