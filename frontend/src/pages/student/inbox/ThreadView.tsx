@@ -49,7 +49,7 @@ export default function ThreadView({
 }: {
   thread: InboxThread
   onBack: () => void
-  onSend: (body: string, attachments: InboxAttachment[], aiDraftUsed: boolean) => void
+  onSend: (body: string, attachments: InboxAttachment[], aiDraftUsed: boolean) => Promise<unknown>
   sending: boolean
   onMarkComplete: () => void
   completing: boolean
@@ -94,13 +94,19 @@ export default function ThreadView({
     )
   }, [interviewsQ.data, thread.application_id])
 
-  const sendManual = () => {
+  const sendManual = async () => {
     const body = reply.trim()
     if (!body || sending) return
-    onSend(body, attachments, false)
-    setReply('')
-    setAttachments([])
-    setShowAttach(false)
+    try {
+      await onSend(body, attachments, false)
+      // Clear the composer ONLY after the send succeeds — a failed send used to
+      // wipe the draft AND show nothing, so the message just vanished.
+      setReply('')
+      setAttachments([])
+      setShowAttach(false)
+    } catch {
+      // Keep the draft + attachments to retry; the error toast is shown upstream.
+    }
   }
 
   const addAttachment = (a: InboxAttachment) => setAttachments(prev => [...prev, a])
@@ -289,7 +295,7 @@ export default function ThreadView({
               <SuggestedReplyCard
                 reply={suggestion}
                 sending={sending}
-                onSend={text => onSend(text, [], true)}
+                onSend={text => void onSend(text, [], true).catch(() => {})}
               />
             </div>
           ) : null}
