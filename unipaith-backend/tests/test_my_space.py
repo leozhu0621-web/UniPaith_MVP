@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.models.application import Application, OfferLetter
+from unipaith.models.engagement import SavedList, SavedListItem
 from unipaith.models.institution import Institution, Program
 from unipaith.models.my_space import MySpaceTaskState
 from unipaith.models.student import RecommendationRequest, StudentProfile
@@ -223,3 +224,51 @@ async def test_my_space_overview_partial_dependency_failure_returns_access_issue
     assert data["pipeline"][1]["key"] == "drafts"
     assert data["access_issues"][0]["source"] == "partial_failure"
     assert "applications" in data["access_issues"][0]["label"]
+
+
+@pytest.mark.asyncio
+async def test_my_space_overview_returns_full_module_sets_for_progressive_disclosure(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    profile, seeded_program, _app = await _seed_student(
+        db_session,
+        mock_student_user,
+        mock_institution_user,
+    )
+    saved_list = SavedList(student_id=profile.id, list_name="My List")
+    db_session.add(saved_list)
+    await db_session.flush()
+
+    for index in range(6):
+        program = Program(
+            institution_id=seeded_program.institution_id,
+            program_name=f"Overflow Program {index + 1}",
+            degree_type="MS",
+            application_deadline=(datetime.now(UTC) + timedelta(days=30 + index)).date(),
+        )
+        db_session.add(program)
+        await db_session.flush()
+        db_session.add(SavedListItem(list_id=saved_list.id, program_id=program.id))
+        db_session.add(
+            RecommendationRequest(
+                student_id=profile.id,
+                recommender_name=f"Recommender {index + 1}",
+                status="requested",
+                due_date=(datetime.now(UTC) + timedelta(days=7 + index)).date(),
+            )
+        )
+
+    await db_session.flush()
+
+    resp = await student_client.get(f"{BASE}/overview")
+
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert len(data["saved_targets"]) == 6
+    assert len(data["waiting_on"]) == 6
+    assert len(data["recent_changes"]) >= 6
+    assert "Overflow Program 6" in {row["title"] for row in data["saved_targets"]}
+    assert "Recommender 6 recommendation" in {row["title"] for row in data["waiting_on"]}

@@ -753,7 +753,7 @@ class MySpaceService:
                     )
                 )
 
-        for c in clarifications[:5]:
+        for c in clarifications:
             key = f"clarification:{c['id']}"
             tasks.append(
                 MySpaceTask(
@@ -925,7 +925,7 @@ class MySpaceService:
                     ),
                 )
             )
-        return sorted(rows, key=lambda r: r.due_at or datetime.max.replace(tzinfo=UTC))[:6]
+        return sorted(rows, key=lambda r: r.due_at or datetime.max.replace(tzinfo=UTC))
 
     def _application_items(
         self,
@@ -1030,7 +1030,7 @@ class MySpaceService:
                 r.due_at or far,
                 r.title,
             ),
-        )[:6]
+        )
 
     def _waiting_on_items(
         self,
@@ -1078,7 +1078,7 @@ class MySpaceService:
                         ),
                     )
                 )
-        return sorted(rows, key=lambda r: r.due_at or datetime.max.replace(tzinfo=UTC))[:5]
+        return sorted(rows, key=lambda r: r.due_at or datetime.max.replace(tzinfo=UTC))
 
     def _message_items(self, threads: list[ThreadSummary]) -> list[MySpaceModuleItem]:
         return [
@@ -1100,7 +1100,7 @@ class MySpaceService:
                     updated_at=t.last_message_at,
                 ),
             )
-            for t in threads[:5]
+            for t in threads
         ]
 
     def _feedback_items(self, runs: list[WorkshopFeedbackRun]) -> list[MySpaceModuleItem]:
@@ -1122,7 +1122,7 @@ class MySpaceService:
                     updated_at=r.created_at,
                 ),
             )
-            for r in runs[:4]
+            for r in runs
         ]
 
     def _strategy_item(self, strategy: StudentStrategy | None) -> MySpaceModuleItem | None:
@@ -1218,7 +1218,7 @@ class MySpaceService:
                     ),
                 )
             )
-        return sorted(rows, key=lambda r: r.due_at or datetime.max.replace(tzinfo=UTC))[:4]
+        return sorted(rows, key=lambda r: r.due_at or datetime.max.replace(tzinfo=UTC))
 
     def _saved_items(self, saved: list) -> list[MySpaceModuleItem]:
         return [
@@ -1240,7 +1240,7 @@ class MySpaceService:
                     updated_at=row.added_at,
                 ),
             )
-            for row in saved[:4]
+            for row in saved
         ]
 
     def _import_status(
@@ -1326,7 +1326,7 @@ class MySpaceService:
                     ),
                 )
             )
-        for app in apps[:4]:
+        for app in apps:
             rows.append(
                 MySpaceModuleItem(
                     key=f"recent:app:{app.id}",
@@ -1340,7 +1340,7 @@ class MySpaceService:
                     ),
                 )
             )
-        for row in saved[:3]:
+        for row in saved:
             rows.append(
                 MySpaceModuleItem(
                     key=f"recent:saved:{row.program_id}",
@@ -1355,7 +1355,7 @@ class MySpaceService:
                     provenance=_provenance("saved_lists", "Saved program", updated_at=row.added_at),
                 )
             )
-        for doc in documents[:3]:
+        for doc in documents:
             rows.append(
                 MySpaceModuleItem(
                     key=f"recent:doc:{doc.id}",
@@ -1369,7 +1369,7 @@ class MySpaceService:
                     ),
                 )
             )
-        for run in workshop_runs[:3]:
+        for run in workshop_runs:
             rows.append(
                 MySpaceModuleItem(
                     key=f"recent:feedback:{run.id}",
@@ -1389,4 +1389,4 @@ class MySpaceService:
             rows,
             key=lambda r: r.due_at or datetime.min.replace(tzinfo=UTC),
             reverse=True,
-        )[:6]
+        )
