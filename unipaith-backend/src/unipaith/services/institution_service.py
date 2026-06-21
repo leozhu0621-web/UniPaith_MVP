@@ -459,6 +459,16 @@ class InstitutionService:
             # (keyed by program_version) invalidates on next read. Previously
             # the column didn't exist and this was a dead no-op.
             program.feature_version = int(getattr(program, "feature_version", 1) or 1) + 1
+            # Also flag every student's match for THIS program stale, so the
+            # student-side read (which scores against program features) recomputes
+            # against the edited data — the rationale-cache bump alone left fitness/
+            # bands scored against the OLD program. The lazy GET /me/matches
+            # recompute picks them up once. Bounded to students with a row here.
+            await self.db.execute(
+                update(MatchResult)
+                .where(MatchResult.program_id == program_id)
+                .values(is_stale=True)
+            )
         await self.db.flush()
         await self.db.refresh(program)
         program.applications_count = await self._program_application_count(program_id)
@@ -529,6 +539,12 @@ class InstitutionService:
     async def unpublish_program(self, institution_id: UUID, program_id: UUID) -> Program:
         program = await self._verify_program_ownership(institution_id, program_id)
         program.is_published = False
+        # Drop this program from students' existing match lists: flag their rows
+        # stale so the lazy recompute (which scores published programs only) removes
+        # it. (Publish needs no flag — a newly-public program has no rows yet.)
+        await self.db.execute(
+            update(MatchResult).where(MatchResult.program_id == program_id).values(is_stale=True)
+        )
         await self.db.flush()
         # AI feature extraction skipped (engine being rebuilt)
         await self.db.refresh(program)
