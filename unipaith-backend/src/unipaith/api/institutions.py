@@ -1500,6 +1500,14 @@ async def search_institutions(
         # Prefer out-of-state as the universal published price.
         tuition_annual = rd.get("tuition_out_of_state") or rd.get("tuition_in_state")
 
+        # US News rank: bulk seeds store a flat `us_news_2025`; hand-authored
+        # profiles store `us_news_national` as {"rank", "year"} — surface either
+        # so the gold-standard profiles' ranks show on the browse card too.
+        _natl_rank = rd.get("us_news_national")
+        us_news_rank = rd.get("us_news_2025") or (
+            _natl_rank.get("rank") if isinstance(_natl_rank, dict) else _natl_rank
+        )
+
         next_dl = next_deadline_map.get(inst.id)
 
         items.append(
@@ -1543,7 +1551,7 @@ async def search_institutions(
                 "description_text": ((inst.description_text or "")[:200]),
                 "acceptance_rate": rd.get("acceptance_rate"),
                 "sat_avg": rd.get("sat_avg"),
-                "us_news_rank": rd.get("us_news_2025"),
+                "us_news_rank": us_news_rank,
                 "median_earnings": rd.get("earnings_10yr_median"),
                 "graduation_rate": rd.get("graduation_rate"),
                 "region": inst.region,
