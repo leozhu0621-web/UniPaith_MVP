@@ -4506,15 +4506,6 @@ def _website_for(spec: dict) -> str:
     return _WEBSITE_OVERRIDE.get(spec["slug"], SCHOOL_WEBSITE[spec["school"]])
 
 
-# == Costs ==
-_UNDERGRAD_COA = 33642
-_AVG_NET_PRICE = 14355
-_COST_SRC = "U.S. Dept. of Education — College Scorecard (UIUC, UNITID 145637)"
-_COST_SRC_URL = (
-    "https://collegescorecard.ed.gov/school/?145637-University-of-Illinois-Urbana-Champaign"
-)
-
-
 # == Published tuition (matcher-core budget signal — REPAIR_BACKLOG run 74 HIGH #3) ==
 # Every figure below is UIUC-PUBLISHED for 2025-26 and carries a first-party citation; the
 # matcher number ``p.tuition`` is the Illinois-resident annual TUITION (campus fees excluded,
@@ -4542,20 +4533,51 @@ _UG_TF_RES = (18046, 23426)
 _UG_TF_NONRES = (38398, 46498)
 _UG_TF_INTL = (39392, 49742)
 
-# Graduate annual tuition (resident, non-resident); fees excluded.
+# Graduate base annual tuition (resident, non-resident); fees excluded.
 _GRAD_RES, _GRAD_NONRES = 14474, 31266
-# Grainger Engineering graduate tuition differential.
-_GRAD_ENGR_RES, _GRAD_ENGR_NONRES = 20714, 39344
 _ENGINEERING = "The Grainger College of Engineering"
 
-# Named on-campus Gies graduate programs (resident, non-resident/international).
-_GIES_GRAD: dict[str, tuple[int, int]] = {
-    "Master of Science in Business Analytics": (37324, 51188),
-    "Master of Science in Financial Engineering": (34400, 47100),
+# School-wide graduate tuition differentials (UIUC Registrar 2025-26) — the college's published
+# rate applies to all of that school's master's/diploma rows. Only colleges whose registrar row
+# is a single college-wide rate are listed here; mixed-rate colleges (Applied Health Sciences,
+# Liberal Arts & Sciences, ACES, Education) keep the base rate plus the program overrides below.
+_GRAD_SCHOOL_DIFF: dict[str, tuple[int, int]] = {
+    "The Grainger College of Engineering": (20714, 39344),
+    "Gies College of Business": (17184, 33976),
+    "College of Media": (15278, 32070),
+    "College of Fine and Applied Arts": (15624, 32416),
+    "School of Information Sciences": (14870, 28632),
 }
 
-# Online flat-tuition degrees — published TOTAL program tuition (resident; non-resident where it
-# differs). Keyed by slug because the rate is program-specific, not tier- or school-uniform.
+# Program-specific graduate tuition differentials, matched on exact program_name (UIUC Registrar
+# 2025-26). A third element, when present, is the international rate (distinct from the domestic
+# non-resident rate). These take precedence over the school-wide rate.
+_GRAD_NAME_DIFF: dict[str, tuple] = {
+    # Gies College of Business
+    "Master of Science in Business Analytics": (37324, 37324, 51188),
+    "Master of Science in Financial Engineering": (34400, 47100),
+    "Master of Science in Management": (30758, 42182),
+    "Master of Accounting Science in Accountancy": (27520, 42740),
+    # College of Agricultural, Consumer and Environmental Sciences
+    "Master of Agricultural and Applied Economics": (16474, 33266),
+    # College of Applied Health Sciences
+    "Master of Public Health in Public Health": (15474, 32266),
+    "Master of Public Health in Epidemiology": (15474, 32266),
+    "Master of Health Administration in Health Administration": (15474, 32266),
+    "Master of Science in Health Technology": (22400, 32000),
+    "Master of Arts in Speech & Hearing Science": (14674, 31466),
+    # School of Social Work
+    "Master of Social Work in Social Work": (17184, 34296),
+    # School of Labor and Employment Relations
+    "Master of Human Resources and Industrial Relations in Labor & Employment Relations": (23144, 36028),
+    # College of Law (graduate law degrees)
+    "Master of Laws (LL.M.) in Law": (49500, 49500),
+    "Master of Studies in Law in Law": (49500, 49500),
+}
+
+# Online flat-tuition degrees — published TOTAL program tuition, annualized over the program's
+# length for the matcher number (the app renders ``tuition`` as a per-year figure); the total is
+# kept in the breakdown. Keyed by slug because the rate is program-specific.
 _ONLINE_TUITION: dict[str, dict] = {
     "uiuc-business-administration-online-mba": {
         "res": 27288,
@@ -4579,18 +4601,22 @@ _ONLINE_TUITION: dict[str, dict] = {
     },
 }
 
-# Professional-degree annual tuition (resident, non-resident).
+# Professional-degree annual tuition (resident, non-resident) — UIUC Registrar 2025-26.
 _PROF_TUITION: dict[str, tuple[int, int]] = {
     "Juris Doctor": (36500, 46500),
     "Doctor of Medicine": (37558, 47396),
     "Doctor of Veterinary Medicine": (32464, 58146),
+    "Doctor of Audiology in Speech & Hearing Science": (14194, 29704),
 }
 
 
-def _grad_pub_cost(res: int, nonres: int, note: str) -> tuple[int, dict]:
+def _grad_pub_cost(res: int, nonres: int, note: str, *, intl: int | None = None) -> tuple[int, dict]:
+    bd: dict = {"tuition_in_state": res, "tuition_out_of_state": nonres}
+    if intl is not None and intl != nonres:
+        bd["tuition_international"] = intl
     return res, {
         "tuition_usd": res,
-        "breakdown": {"tuition_in_state": res, "tuition_out_of_state": nonres},
+        "breakdown": bd,
         "funded": False,
         "note": note,
         "source": _TUI_SRC_GRAD,
@@ -4611,18 +4637,32 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
     name = spec["program_name"]
     slug = spec["slug"]
 
-    # Online flat-tuition degrees (Gies iMBA/iMSM/iMSA, Grainger MCS) — slug-specific.
+    # Online flat-tuition degrees (Gies iMBA/iMSM/iMSA, Grainger MCS) — slug-specific. The
+    # published figure is a TOTAL program tuition; annualize it over the program length for the
+    # matcher (per-year) number and keep the total in the breakdown.
     onl = _ONLINE_TUITION.get(slug)
     if onl is not None:
-        res = onl["res"]
-        bd: dict = {"total_program_tuition_in_state": res}
-        if onl.get("nonres"):
-            bd["total_program_tuition_out_of_state"] = onl["nonres"]
-        return res, {
-            "tuition_usd": res,
+        months = spec.get("duration_months") or 24
+        years = max(months / 12, 1)
+        total_res = onl["res"]
+        total_nonres = onl.get("nonres")
+        annual_res = round(total_res / years)
+        bd: dict = {
+            "total_program_tuition_in_state": total_res,
+            "annual_tuition_in_state": annual_res,
+            "program_length_months": months,
+        }
+        if total_nonres:
+            bd["total_program_tuition_out_of_state"] = total_nonres
+            bd["annual_tuition_out_of_state"] = round(total_nonres / years)
+        return annual_res, {
+            "tuition_usd": annual_res,
             "breakdown": bd,
             "funded": False,
-            "note": onl["note"],
+            "note": (
+                f"{onl['note']} The per-year figure annualizes the total over the {months}-month "
+                "program length; the full program total is in the breakdown."
+            ),
             "source": onl["source"],
             "source_url": onl["source_url"],
             "year": "2025-26",
@@ -4645,8 +4685,6 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
                 "tuition_and_fees_out_of_state_range": list(_UG_TF_NONRES),
                 "tuition_and_fees_international_range": list(_UG_TF_INTL),
             },
-            "total_cost_of_attendance": _UNDERGRAD_COA,
-            "avg_net_price": _AVG_NET_PRICE,
             "funded": False,
             "note": note,
             "source": _TUI_SRC_UG,
@@ -4655,7 +4693,7 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         }
 
     if dtype == "phd":
-        sticker = _GRAD_ENGR_RES if school == _ENGINEERING else _GRAD_RES
+        sticker = _GRAD_SCHOOL_DIFF.get(school, (_GRAD_RES, _GRAD_NONRES))[0]
         return 0, {
             "tuition_usd": 0,
             "funded": True,
@@ -4678,26 +4716,30 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
                 f"Published annual {name} tuition (Illinois resident); non-residents pay the rate in "
                 "the breakdown.",
             )
-        # e.g. Doctor of Audiology — billed at the published graduate tuition rate.
         return _grad_pub_cost(
             _GRAD_RES, _GRAD_NONRES,
             "Billed at UIUC's published graduate tuition rate (Illinois resident, full-time); "
             "non-residents pay the rate in the breakdown.",
         )
 
-    # masters + diploma (Artist Diploma) — graduate tuition, with school/program differentials.
-    if name in _GIES_GRAD:
-        res, nonres = _GIES_GRAD[name]
+    # masters + diploma — graduate tuition: exact program override → school differential → base.
+    named = _GRAD_NAME_DIFF.get(name)
+    if named is not None:
+        res, nonres = named[0], named[1]
+        intl = named[2] if len(named) > 2 else None
         return _grad_pub_cost(
             res, nonres,
-            f"Published annual Gies College of Business {name} tuition (Illinois resident); "
-            "non-residents/international pay the rate in the breakdown.",
+            f"Published annual {name} tuition (Illinois resident); non-residents"
+            f"{' (and international, shown separately)' if intl else ''} pay the rate in the breakdown.",
+            intl=intl,
         )
-    if school == _ENGINEERING:
+    sch = _GRAD_SCHOOL_DIFF.get(school)
+    if sch is not None:
+        res, nonres = sch
         return _grad_pub_cost(
-            _GRAD_ENGR_RES, _GRAD_ENGR_NONRES,
-            "Published annual Grainger Engineering graduate tuition (Illinois resident, includes the "
-            "engineering differential); non-residents pay the rate in the breakdown.",
+            res, nonres,
+            f"Published annual {school} graduate tuition (Illinois resident, includes the college "
+            "differential); non-residents pay the rate in the breakdown.",
         )
     return _grad_pub_cost(
         _GRAD_RES, _GRAD_NONRES,
