@@ -1060,7 +1060,10 @@ async def _recompute_catalog_matches(db: AsyncSession, student_id: UUID) -> None
     weights (Spec 09 §5.2). Best-effort: mirrors discovery_service's recompute
     hook so an explicit refresh and a Discovery-completion recompute agree."""
     from unipaith.models.institution import Program
-    from unipaith.services.match_banding import weights_from_preferences
+    from unipaith.services.match_banding import (
+        cpef_params_from_preferences,
+        weights_from_preferences,
+    )
     from unipaith.services.match_service import MatchService
     from unipaith.services.program_features import program_row_from_orm
 
@@ -1072,7 +1075,10 @@ async def _recompute_catalog_matches(db: AsyncSession, student_id: UUID) -> None
     await _reemit_feature_vector_if_stale(db, student_id)
 
     pref = await _svc(db).get_preferences(student_id)
-    weights = weights_from_preferences(pref)
+    weights = weights_from_preferences(pref)  # legacy convex-sum path
+    # CPEF per-signal weights from the priority sliders — under the live (CPEF) path
+    # the legacy `weights` are dropped, so this is what makes the sliders re-rank.
+    params = cpef_params_from_preferences(pref)
 
     programs = list(
         (await db.execute(select(Program).where(Program.is_published.is_(True)))).scalars().all()
@@ -1093,6 +1099,7 @@ async def _recompute_catalog_matches(db: AsyncSession, student_id: UUID) -> None
         program_rows=program_rows,
         program_embeddings=program_embeddings,
         weights=weights,
+        params=params,
     )
 
 

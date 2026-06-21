@@ -323,6 +323,7 @@ class MatchService:
         top_n: int = 50,
         replace_existing: bool = True,
         weights: dict[str, float] | None = None,
+        params: dict[str, float] | None = None,
     ) -> list[MatchRow]:
         """Score the student against the provided programs and persist
         the top N to `match_results`.
@@ -376,7 +377,7 @@ class MatchService:
         await self._overlay_program_prefs(program_features)
 
         ranked: list[tuple[ProgramFeatures, Score]] = rank_programs(
-            sfv, program_features, weights=weights, include_eliminated=False
+            sfv, program_features, weights=weights, params=params, include_eliminated=False
         )
 
         # D3: rerank top-K. Cold start = identity, but the breakdowns
