@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 
 from alembic import op
 from unipaith.data import stanford_profile
-from unipaith.models.institution import Institution
+from unipaith.models.institution import Institution, Program, ProgramPreference
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "stanfordpercrd2"
@@ -39,6 +39,30 @@ def upgrade() -> None:
         select(Institution).where(Institution.name == stanford_profile.INSTITUTION_NAME)
     )
     if inst is not None:
+        # The derived ``target_profile`` extracts academic-interest keywords from
+        # ``description_text`` (services/match/derive_preferences._target_profile). On a DB
+        # that already ran the ancestor preference migrations, Stanford's programs carry
+        # ``source='derived'`` preference rows whose ``target_profile`` was computed from the
+        # OLD template-slot descriptions, and ``backfill_program_preferences`` only fills
+        # NULL fields on an existing row — it never recomputes a populated one. So reset the
+        # derived target_profile (and its weight/provenance siblings) on Stanford's
+        # non-claimed rows first, then let the backfill recompute them from the rewritten
+        # descriptions. Claimed/first-party rows are left untouched (authority precedence).
+        prog_ids = list(
+            session.scalars(select(Program.id).where(Program.institution_id == inst.id)).all()
+        )
+        if prog_ids:
+            stale = session.scalars(
+                select(ProgramPreference).where(
+                    ProgramPreference.program_id.in_(prog_ids),
+                    ProgramPreference.source != "claimed",
+                )
+            ).all()
+            for row in stale:
+                row.target_profile = None
+                row.preference_weights = None
+                row.provenance = None
+            session.flush()
         backfill_program_preferences(session, institution_id=inst.id)
     session.flush()
 
