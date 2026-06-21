@@ -72,6 +72,7 @@ export const qk = {
   savedTags: () => ['saved-tags'] as const,
 
   // ── Student · apply ───────────────────────────────────────────────────────
+  mySpaceOverview: () => ['my-space-overview'] as const,
   myApplications: () => ['my-applications'] as const,
   application: (id: string) => ['application', id] as const,
   checklist: (applicationId: string) => ['checklist', applicationId] as const,

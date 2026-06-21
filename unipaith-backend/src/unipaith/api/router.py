@@ -33,6 +33,7 @@ from unipaith.api.intake import router as intake_router
 from unipaith.api.interviews import router as interviews_router
 from unipaith.api.major_specific import router as major_specific_router
 from unipaith.api.materials import router as materials_router
+from unipaith.api.my_space import router as my_space_router
 from unipaith.api.needs import router as needs_router
 from unipaith.api.notifications import router as notifications_router
 from unipaith.api.payments import router as payments_router
@@ -84,6 +85,7 @@ api_router.include_router(major_specific_router)
 # students_router so the literal sub-paths win over `/students/me/*` (and over
 # the legacy `/students/me/intake/chat` stub still served by students_router).
 api_router.include_router(intake_router)
+api_router.include_router(my_space_router)
 api_router.include_router(students_router)
 api_router.include_router(discovery_router)
 api_router.include_router(goals_router)

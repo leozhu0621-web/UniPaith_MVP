@@ -1,247 +1,607 @@
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Mail, FolderKanban, Compass, Target,
-  MessageSquare, GraduationCap, ArrowRight,
+  AlertTriangle,
+  ArrowRight,
+  BookOpenCheck,
+  CalendarClock,
+  CheckCircle2,
+  Clock3,
+  FileUp,
+  Mail,
+  ShieldCheck,
+  Target,
 } from 'lucide-react'
-import { PageContainer, PageHeader, SectionHeader, ListRow, StatTile } from '../../../components/student/density'
+import { PageContainer, PageHeader, SectionHeader, StatTile } from '../../../components/student/density'
 import Card from '../../../components/ui/Card'
 import Badge from '../../../components/ui/Badge'
 import Skeleton from '../../../components/ui/Skeleton'
-import { listMyApplications } from '../../../api/applications'
-import { getCalendar, type CalendarItem } from '../../../api/calendar'
-import { listSaved } from '../../../api/saved-lists'
+import { getMySpaceOverview, patchMySpaceTask, type MySpaceModuleItem, type MySpaceReadiness, type MySpaceTask, type MySpaceUrgency } from '../../../api/my-space'
 import { qk } from '../../../api/queryKeys'
-import { listRecommendations } from '../../../api/recommendations'
-import { listWorkshopRuns } from '../../../api/workshops-feedback'
-import { getThreads } from '../../../api/inbox'
-import { listClarifications } from '../../../api/intake'
-import { getProfile, getOnboarding } from '../../../api/students'
+import { track } from '../../../lib/analytics'
 import { useAuthStore } from '../../../stores/auth-store'
-import { buildUpNext } from './home/upNext'
-import TodaysFocus from './home/TodaysFocus'
-import MomentumBand from './home/MomentumBand'
-import StrategySnapshot from './home/StrategySnapshot'
-import TopMatchesPeek from './home/TopMatchesPeek'
-import ScholarshipsPeek from './home/ScholarshipsPeek'
-import { freshWinIds, markCelebrated } from './home/celebrate'
-import type { Application, InboxThreadSummary, OnboardingStatus, RecommendationRequest, SavedProgram, WorkshopFeedbackRun } from '../../../types'
-
-// My Space · Home — mission control (Spec 2026-06-10 §4, redesigned 2026-06-14).
-// Focus → momentum → density: a Today's-focus hero, a momentum band (journey
-// map + this-week ribbon + onboarding ring), then the dense dashboard. Pure
-// client-side composition of endpoints that already exist; no aggregate backend.
 
 const STALE = 60_000
-type MySpaceThreadSummary = InboxThreadSummary & { unread_count?: number }
 
-function daysUntil(iso: string): number {
-  return Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000)
+const urgencyLabel: Record<MySpaceUrgency, string> = {
+  focus_now: 'focus now',
+  priority_window: 'priority',
+  gentle_attention: 'attention',
+  neutral: 'normal',
+}
+
+const urgencyTone: Record<MySpaceUrgency, 'error' | 'warning' | 'success' | 'neutral'> = {
+  focus_now: 'error',
+  priority_window: 'warning',
+  gentle_attention: 'neutral',
+  neutral: 'success',
+}
+
+function formatDate(iso: string | null): string | null {
+  if (!iso) return null
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
+function sourceLine(item: { provenance?: { source: string; label: string; confidence: number | null }[] }) {
+  const source = item.provenance?.[0]
+  if (!source) return 'Source unavailable'
+  const confidence = source.confidence == null ? '' : ` · ${source.confidence}% confidence`
+  return `${source.label} · ${source.source.split('_').join(' ')}${confidence}`
+}
+
+function ownerLabel(owner: string | null | undefined) {
+  if (owner === 'student') return 'you'
+  if (owner === 'recommender') return 'recommender'
+  if (owner === 'institution') return 'school'
+  if (owner === 'system') return 'system'
+  return 'tracked'
+}
+
+function isUniHandoff(route: string) {
+  return route.startsWith('/s?') && route.includes('intent=')
 }
 
 export default function MySpaceHomePage() {
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const { user } = useAuthStore()
 
-  // Query keys are shared with their primary consumers so navigating between
-  // rooms reuses cache.
-  const apps = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications, staleTime: STALE })
-  const profile = useQuery({ queryKey: ['profile'], queryFn: getProfile, staleTime: 300_000 })
-  const onboarding = useQuery<OnboardingStatus>({ queryKey: ['onboarding'], queryFn: getOnboarding, staleTime: STALE })
-  const saved = useQuery({ queryKey: qk.savedPrograms(), queryFn: listSaved, staleTime: STALE })
-  const fortnight = useMemo(() => {
-    const from = new Date().toISOString().slice(0, 10)
-    const to = new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 10)
-    return { from, to }
-  }, [])
-  const calendar = useQuery({ queryKey: ['calendar', 'home', fortnight], queryFn: () => getCalendar(fortnight), staleTime: STALE })
-  const recs = useQuery({ queryKey: ['recommendations'], queryFn: listRecommendations, staleTime: STALE })
-  const runs = useQuery({ queryKey: ['workshop-runs', 'home'], queryFn: () => listWorkshopRuns(), staleTime: STALE })
-  const threads = useQuery({ queryKey: ['inbox-threads-unread'], queryFn: () => getThreads(), staleTime: 30_000 })
-  const clarifications = useQuery({ queryKey: ['intake-clarifications'], queryFn: listClarifications, staleTime: STALE })
+  const overview = useQuery({
+    queryKey: qk.mySpaceOverview(),
+    queryFn: getMySpaceOverview,
+    staleTime: STALE,
+  })
 
-  const appList: Application[] = Array.isArray(apps.data) ? apps.data : []
-  const savedList: SavedProgram[] = Array.isArray(saved.data) ? saved.data : []
-  const calItems: CalendarItem[] = Array.isArray(calendar.data) ? calendar.data : []
-  const recList: RecommendationRequest[] = Array.isArray(recs.data) ? recs.data : []
-  const runList: WorkshopFeedbackRun[] = (Array.isArray(runs.data) ? runs.data : []).slice().sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
-  const threadList: MySpaceThreadSummary[] = Array.isArray(threads.data) ? threads.data : []
-  const pendingClarifications = clarifications.data?.clarifications?.length ?? 0
-  const unreadThreads = threadList.filter(t => t.unread || (t.unread_count ?? 0) > 0).length
+  const taskMutation = useMutation({
+    mutationFn: ({ key, dismissed, snoozed_until }: { key: string; dismissed?: boolean; snoozed_until?: string | null }) =>
+      patchMySpaceTask(key, { dismissed, snoozed_until }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.mySpaceOverview() }),
+  })
 
-  // ── Pipeline counts ───────────────────────────────────────────────────────
-  const drafts = appList.filter(a => a.status === 'draft')
-  const inFlight = appList.filter(a => ['submitted', 'under_review', 'interview'].includes(a.status))
-  const offers = appList.filter(a => a.status === 'decision_made' && ['admitted', 'accepted', 'conditional_admission'].includes(a.decision ?? ''))
-
-  // ── Up next → Today's focus (the top action) + the rest ───────────────────
-  const upNext = buildUpNext({ calItems, offers, drafts, pendingClarifications })
-  const focus = upNext[0] ?? null
-  const restUpNext = upNext.slice(1)
-
-  const waitingRecs = recList.filter(r => r.status === 'requested')
-  const deadlines = calItems.filter(i => i.status !== 'cancelled' && i.status !== 'completed').slice().sort((a, b) => a.start_at.localeCompare(b.start_at)).slice(0, 5)
-
-  // ── Momentum inputs (real data only) ──────────────────────────────────────
-  const stage = { savedCount: savedList.length, appCount: appList.length, hasOffer: offers.length > 0, hasDecision: appList.some(a => a.status === 'decision_made') }
-  const week = { saved: savedList, runs: runList, apps: appList }
-
-  // Earned-gold win beat: a fresh offer fires one gold pulse on the Offers tile.
-  const offersEarned = offers.length > 0
-  const freshOffer = useMemo(() => freshWinIds(offers.map(o => `offer-${o.id}`)).length > 0, [offers])
   useEffect(() => {
-    if (offers.length) markCelebrated(offers.map(o => `offer-${o.id}`))
-  }, [offers])
+    if (overview.data) {
+      track('my_space_viewed', {
+        task_count: overview.data.tasks.filter(t => t.active).length,
+        generated_at: overview.data.generated_at,
+      })
+    }
+  }, [overview.data])
 
-  const anyLoading = apps.isLoading || calendar.isLoading
-  const brandNew = !anyLoading && appList.length === 0 && savedList.length === 0
-  const onboardingComplete = (onboarding.data?.completion_percentage ?? 0) >= 100
-
+  const data = overview.data
+  const activeTasks = useMemo(() => data?.tasks.filter(t => t.active) ?? [], [data])
+  const focus = activeTasks[0] ?? null
+  const firstName = data?.student.first_name || user?.email?.split('@')[0] || ''
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
-  const firstName = profile.data?.first_name || user?.email?.split('@')[0] || ''
+
+  const go = (route: string, event: string, props: Record<string, string | number | boolean | null | undefined> = {}) => {
+    track(event, { route, ...props })
+    if (isUniHandoff(route)) track('uni_chat_handoff_started', { route })
+    navigate(route)
+  }
+
+  const dismissTask = (task: MySpaceTask) => {
+    taskMutation.mutate({ key: task.key, dismissed: true })
+  }
+
+  const snoozeTask = (task: MySpaceTask) => {
+    const snoozed = new Date(Date.now() + 7 * 86_400_000).toISOString()
+    taskMutation.mutate({ key: task.key, snoozed_until: snoozed })
+  }
 
   return (
     <PageContainer>
-      <PageHeader eyebrow="My Space" title={`${greeting}${firstName ? `, ${firstName}` : ''}`} sub="Everything about your applications, in one place" />
+      <PageHeader
+        eyebrow="My Space"
+        title={`${greeting}${firstName ? `, ${firstName}` : ''}`}
+        sub="Admissions command center"
+      />
 
-      {anyLoading ? (
-        <div className="mt-4 space-y-3">
-          <Skeleton className="h-16" />
-          <Skeleton className="h-40" />
-        </div>
-      ) : brandNew ? (
-        // Empty state — the momentum band (with its setup ring) is the primary
-        // content for a brand-new student; the CTA card follows as a second beat.
-        <div className="stagger-list mt-2 space-y-4">
-          <MomentumBand stage={stage} week={week} />
-          <Card pad={false} className="p-6">
-            <p className="text-sm font-medium text-foreground">Your space fills as you work.</p>
-            <p className="mt-1 mb-4 text-xs text-muted-foreground">Start with Uni to build your profile, then save programs you like — applications, deadlines and prep will all show up here.</p>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => navigate('/s')} className="ui-btn inline-flex items-center gap-1.5 rounded-md bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground"><Compass size={13} /> Talk to Uni</button>
-              <button onClick={() => navigate('/s/explore')} className="ui-btn inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"><Target size={13} /> Browse matches</button>
+      {overview.isLoading ? (
+        <LoadingState />
+      ) : overview.isError || !data ? (
+        <Card pad={false} className="mt-4 p-5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={18} className="mt-0.5 text-error" />
+            <div>
+              <p className="text-sm font-medium text-foreground">My Space did not load.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Refresh this view or open Uni if the issue continues.</p>
+              <button
+                type="button"
+                onClick={() => overview.refetch()}
+                className="ui-btn mt-3 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+              >
+                Retry
+              </button>
             </div>
-          </Card>
-        </div>
-      ) : (
-        <div className="stagger-list">
-          {/* C — one focal point. */}
-          <TodaysFocus action={focus} onboardingComplete={onboardingComplete} />
-
-          {/* A — momentum band. */}
-          <MomentumBand stage={stage} week={week} className="mt-5" />
-
-          {/* B — dense dashboard. Pipeline with an earned-gold Offers tile. */}
-          <div className="mt-5 grid grid-cols-4 gap-3 rounded-lg border border-border bg-card px-4 py-3">
-            <button onClick={() => navigate('/s/saved')} className="text-left" aria-label="Saved programs"><StatTile label="Saved" value={savedList.length} /></button>
-            <button onClick={() => navigate('/s/applications?status=in_progress')} className="text-left" aria-label="Applications in progress"><StatTile label="In progress" value={drafts.length} /></button>
-            <button onClick={() => navigate('/s/applications?status=submitted')} className="text-left" aria-label="Submitted applications"><StatTile label="Submitted" value={inFlight.length} /></button>
-            <button
-              onClick={() => navigate('/s/applications?tab=offers')}
-              aria-label="Offers"
-              className={`text-left transition-shadow ${offersEarned ? '-mx-2 rounded-md px-2 ring-1 ring-primary/40' : ''} ${offersEarned && freshOffer ? 'motion-safe:animate-beat' : ''}`}
-            >
-              <StatTile label="Offers" value={offers.length} tone={offersEarned ? 'gold' : 'default'} />
-            </button>
           </div>
-
-          {/* Up next — everything after the promoted focus. */}
-          {restUpNext.length > 0 && (
-            <div className="stagger-list mt-5">
-              <SectionHeader>Up next</SectionHeader>
-              {restUpNext.map(a => (
-                <ListRow
-                  key={a.key}
-                  media={<a.icon size={15} className={a.urgency === 'danger' ? 'text-error' : a.urgency === 'warning' ? 'text-warning' : 'text-muted-foreground'} />}
-                  title={a.title}
-                  sub={a.sub}
-                  trailing={<Badge variant={a.urgency === 'danger' ? 'error' : a.urgency === 'warning' ? 'warning' : 'neutral'}>{a.chip}</Badge>}
-                  onClick={() => navigate(a.to)}
-                />
-              ))}
+        </Card>
+      ) : (
+        <div className="stagger-list mt-4 space-y-5">
+          {data.access_issues.length > 0 && (
+            <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-foreground">
+              Some My Space modules are using fallback data. {data.access_issues[0].label}.
             </div>
           )}
 
-          {/* Your top matches — a discovery peek that deep-links to /s/explore. */}
-          <TopMatchesPeek className="mt-5" />
+          <FocusPanel
+            task={focus}
+            onGo={(task) => go(task.cta_route, 'my_space_task_clicked', { task_key: task.key, category: task.category })}
+            onDismiss={dismissTask}
+            onSnooze={snoozeTask}
+            busy={taskMutation.isPending}
+          />
 
-          <div className="mt-5 grid gap-6 md:grid-cols-2">
-            {/* Deadlines — next 14 days */}
-            <div>
-              <SectionHeader action={<button onClick={() => navigate('/s/calendar')} className="inline-flex items-center gap-1 text-xs text-secondary hover:underline">Calendar <ArrowRight size={12} /></button>}>Deadlines · next 14 days</SectionHeader>
-              {calendar.isError ? (
-                <p className="py-2 text-sm text-muted-foreground">Couldn't load your calendar.</p>
-              ) : deadlines.length === 0 ? (
-                <p className="py-2 text-sm text-muted-foreground">Nothing due in the next two weeks — a good time to get ahead in <button className="text-secondary hover:underline" onClick={() => navigate('/s/prep')}>Prep</button>.</p>
-              ) : (
-                deadlines.map(item => {
-                  const d = daysUntil(item.start_at)
-                  return (
-                    <ListRow
-                      key={item.id}
-                      title={item.title}
-                      sub={item.subtitle ?? item.institution_name ?? undefined}
-                      trailing={<span className={`text-xs ${d <= 3 ? 'text-error font-medium' : 'text-muted-foreground'}`}>{new Date(item.start_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>}
-                      onClick={() => navigate('/s/calendar')}
-                    />
-                  )
-                })
-              )}
-            </div>
+          <PipelineStrip items={data.pipeline} onGo={(route, key) => go(route, key === 'offers' ? 'offer_compare_opened' : 'my_space_task_clicked', { module: 'pipeline', key })} />
 
-            {/* Waiting on others + latest feedback */}
-            <div>
-              <SectionHeader>Waiting on others</SectionHeader>
-              {waitingRecs.length === 0 ? (
-                <p className="py-2 text-sm text-muted-foreground">No pending requests. When you ask for a recommendation it'll show here — <button className="text-secondary hover:underline" onClick={() => navigate('/s/prep?tab=recommenders')}>request a letter</button>.</p>
-              ) : (
-                waitingRecs.slice(0, 3).map(r => (
-                  <ListRow
-                    key={r.id}
-                    media={<Mail size={15} className="text-muted-foreground" />}
-                    title={`Rec letter — ${r.recommender_name}`}
-                    sub={r.requested_at ? `Requested ${new Date(r.requested_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` : 'Requested'}
-                    trailing={<Badge variant="neutral">waiting</Badge>}
-                    onClick={() => navigate('/s/prep?tab=recommenders')}
-                  />
-                ))
-              )}
-
-              <div className="mt-4">
-                <SectionHeader action={unreadThreads > 0 ? <button onClick={() => navigate('/s/messages')} className="inline-flex items-center gap-1 text-xs text-secondary hover:underline"><MessageSquare size={12} /> {unreadThreads} unread</button> : undefined}>Latest feedback</SectionHeader>
-                {runList.length === 0 ? (
-                  <p className="py-2 text-sm text-muted-foreground">No workshop runs yet — get feedback on an essay draft in <button className="text-secondary hover:underline" onClick={() => navigate('/s/prep?tab=workshops')}>Prep</button>.</p>
-                ) : (
-                  runList.slice(0, 3).map(run => (
-                    <ListRow
-                      key={run.id}
-                      media={<GraduationCap size={15} className="text-muted-foreground" />}
-                      title={`${run.domain === 'essay' ? 'Essay' : run.domain === 'interview' ? 'Interview' : 'Test'} feedback`}
-                      sub={new Date(run.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                      onClick={() => navigate('/s/prep?tab=workshops')}
-                    />
-                  ))
-                )}
-              </div>
-            </div>
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+            <ReadinessLedger readiness={data.readiness} onGo={(row) => go(row.route, 'readiness_explanation_opened', { key: row.key, status: row.status })} />
+            <ImportCard item={data.import_status} onGo={(route) => go(route, 'my_space_empty_cta_clicked', { module: 'import' })} />
           </div>
 
-          {/* Opportunity row — strategy + scholarships you may qualify for.
-              ScholarshipsPeek self-hides when there are no matches, so this
-              collapses to a single full-width strategy card. */}
-          <div className="mt-5 grid gap-6 md:grid-cols-2">
-            <StrategySnapshot />
-            <ScholarshipsPeek />
+          <div className="grid gap-5 xl:grid-cols-2">
+            <TaskModule
+              title="Evidence gaps"
+              tasks={data.evidence_gaps.filter(t => t.active)}
+              emptyTitle="Evidence is clear for now."
+              emptyText="New gaps appear when Uni extracts uncertain data or an application needs more evidence."
+              emptyRoute="/s/import"
+              onGo={(task) => go(task.cta_route, 'my_space_task_clicked', { task_key: task.key, category: task.category })}
+              onEmpty={() => go('/s/import', 'my_space_empty_cta_clicked', { module: 'evidence_gaps' })}
+              onDismiss={dismissTask}
+              onSnooze={snoozeTask}
+              busy={taskMutation.isPending}
+            />
+            <ItemModule
+              title="Deadlines"
+              items={data.deadlines}
+              icon={<CalendarClock size={15} />}
+              emptyTitle="No near deadlines."
+              emptyText="Calendar items appear from applications, interviews, recommenders, offers, and your reminders."
+              emptyRoute="/s/calendar"
+              onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'deadlines', key: item.key })}
+              onEmpty={() => go('/s/calendar', 'my_space_empty_cta_clicked', { module: 'deadlines' })}
+            />
+            <ItemModule
+              title="Waiting on others"
+              items={data.waiting_on}
+              icon={<Mail size={15} />}
+              emptyTitle="No one is blocking you."
+              emptyText="Recommender requests and admissions-office replies will appear here."
+              emptyRoute="/s/prep?tab=recommenders"
+              onGo={(item) => go(item.route, item.owner === 'recommender' ? 'recommender_nudge_clicked' : 'my_space_task_clicked', { module: 'waiting_on', key: item.key })}
+              onEmpty={() => go('/s/prep?tab=recommenders', 'my_space_empty_cta_clicked', { module: 'waiting_on' })}
+            />
+            <ItemModule
+              title="Latest feedback"
+              items={data.feedback}
+              icon={<BookOpenCheck size={15} />}
+              emptyTitle="No workshop feedback yet."
+              emptyText="Use Prep to get feedback on essays, interviews, and test plans."
+              emptyRoute="/s/prep?tab=workshops"
+              onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'feedback', key: item.key })}
+              onEmpty={() => go('/s/prep?tab=workshops', 'my_space_empty_cta_clicked', { module: 'feedback' })}
+            />
           </div>
 
-          {/* Quiet footer link into the portfolio. */}
-          <div className="mt-6 flex justify-end">
-            <button onClick={() => navigate('/s/applications')} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"><FolderKanban size={12} /> All applications <ArrowRight size={12} /></button>
+          <div className="grid gap-5 xl:grid-cols-3">
+            <StrategyCard strategy={data.strategy} onGo={(route) => go(route, 'strategy_refine_clicked')} />
+            <PrepCard readiness={data.prep_readiness} onGo={(row) => go(row.route, 'readiness_explanation_opened', { key: row.key, status: row.status })} />
+            <ItemModule
+              title="Offers & costs"
+              items={data.offers}
+              icon={<ShieldCheck size={15} />}
+              emptyTitle="No active offers."
+              emptyText="Admits, deposits, conditions, and external offers will become compare rows here."
+              emptyRoute="/s/applications?tab=offers"
+              onGo={(item) => go(item.route, 'offer_compare_opened', { key: item.key })}
+              onEmpty={() => go('/s/applications?tab=offers', 'my_space_empty_cta_clicked', { module: 'offers' })}
+            />
+          </div>
+
+          <div className="grid gap-5 xl:grid-cols-2">
+            <ItemModule
+              title="Saved targets"
+              items={data.saved_targets}
+              icon={<Target size={15} />}
+              emptyTitle="No saved programs yet."
+              emptyText="Save programs from Discover to build a shortlist, compare fit, and start applications."
+              emptyRoute="/s/explore"
+              onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'saved_targets', key: item.key })}
+              onEmpty={() => go('/s/explore', 'my_space_empty_cta_clicked', { module: 'saved_targets' })}
+            />
+            <ItemModule
+              title="Recent changes"
+              items={data.recent_changes}
+              icon={<Clock3 size={15} />}
+              emptyTitle="No recent movement."
+              emptyText="Updates appear after imports, saved programs, application edits, feedback, and offer changes."
+              emptyRoute="/s"
+              onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'recent_changes', key: item.key })}
+              onEmpty={() => go('/s', 'my_space_empty_cta_clicked', { module: 'recent_changes' })}
+            />
           </div>
         </div>
       )}
     </PageContainer>
+  )
+}
+
+function LoadingState() {
+  return (
+    <div className="mt-4 space-y-4">
+      <Skeleton className="h-28" />
+      <Skeleton className="h-20" />
+      <div className="grid gap-4 md:grid-cols-2">
+        <Skeleton className="h-56" />
+        <Skeleton className="h-56" />
+      </div>
+    </div>
+  )
+}
+
+function FocusPanel({
+  task,
+  onGo,
+  onDismiss,
+  onSnooze,
+  busy,
+}: {
+  task: MySpaceTask | null
+  onGo: (task: MySpaceTask) => void
+  onDismiss: (task: MySpaceTask) => void
+  onSnooze: (task: MySpaceTask) => void
+  busy: boolean
+}) {
+  if (!task) {
+    return (
+      <Card pad={false} className="p-5">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 size={18} className="mt-0.5 text-success" />
+          <div>
+            <p className="text-sm font-medium text-foreground">No urgent task right now.</p>
+            <p className="mt-1 text-xs text-muted-foreground">Use the readiness ledger below to decide where to strengthen your profile next.</p>
+          </div>
+        </div>
+      </Card>
+    )
+  }
+  const due = formatDate(task.due_at)
+  return (
+    <Card pad={false} className="p-5">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+        <div className="min-w-0">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <Badge variant={urgencyTone[task.urgency]}>{urgencyLabel[task.urgency]}</Badge>
+            <Badge variant="neutral">{ownerLabel(task.owner)}</Badge>
+            {due && <span className="text-xs text-muted-foreground">Due {due}</span>}
+          </div>
+          <p className="text-base font-semibold text-foreground">{task.title}</p>
+          <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{task.description}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{sourceLine(task)}</p>
+          {(task.blocker || task.missing_field) && (
+            <p className="mt-2 text-xs text-foreground">
+              {task.blocker ? `${task.blocker}` : 'Missing'}{task.missing_field ? ` · ${task.missing_field}` : ''}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2 lg:justify-end">
+          <button
+            type="button"
+            onClick={() => onGo(task)}
+            className="ui-btn inline-flex items-center gap-1.5 rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground"
+          >
+            {task.cta_label} <ArrowRight size={14} />
+          </button>
+          {task.dismissible && (
+            <>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => onSnooze(task)}
+                className="ui-btn rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
+              >
+                Snooze
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => onDismiss(task)}
+                className="ui-btn rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50"
+              >
+                Dismiss
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function PipelineStrip({ items, onGo }: { items: { key: string; label: string; value: number | string; route: string; status?: string | null }[]; onGo: (route: string, key: string) => void }) {
+  return (
+    <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-card px-4 py-3 md:grid-cols-4">
+      {items.map(item => (
+        <button
+          key={item.key}
+          type="button"
+          onClick={() => onGo(item.route, item.key)}
+          className={`rounded-md px-2 py-1 text-left transition-colors hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${item.key === 'offers' && Number(item.value) > 0 ? 'ring-1 ring-primary/40' : ''}`}
+        >
+          <StatTile label={item.label} value={item.value} tone={item.key === 'offers' && Number(item.value) > 0 ? 'gold' : 'default'} />
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ReadinessLedger({ readiness, onGo }: { readiness: MySpaceReadiness[]; onGo: (row: MySpaceReadiness) => void }) {
+  return (
+    <Card pad={false} className="p-5">
+      <SectionHeader>Readiness ledger</SectionHeader>
+      <div className="space-y-3">
+        {readiness.map(row => (
+          <button
+            key={row.key}
+            type="button"
+            onClick={() => onGo(row)}
+            className="w-full rounded-md border-b border-border py-2 text-left last:border-0 hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-foreground">{row.label}</span>
+              <Badge variant={readinessTone(row.status)}>{row.status.replace('_', ' ')}</Badge>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+              <div className="h-full rounded-full bg-secondary" style={{ width: `${row.pct ?? 0}%` }} />
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">{row.detail}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{sourceLine(row)}</p>
+          </button>
+        ))}
+      </div>
+    </Card>
+  )
+}
+
+function readinessTone(status: MySpaceReadiness['status']): 'success' | 'warning' | 'error' | 'neutral' {
+  if (status === 'ready') return 'success'
+  if (status === 'blocked') return 'error'
+  if (status === 'needs_attention') return 'warning'
+  return 'neutral'
+}
+
+function ImportCard({ item, onGo }: { item: MySpaceModuleItem; onGo: (route: string) => void }) {
+  return (
+    <Card pad={false} className="p-5">
+      <SectionHeader>Import & clarification</SectionHeader>
+      <div className="flex items-start gap-3">
+        <FileUp size={17} className="mt-0.5 text-muted-foreground" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-foreground">{item.title}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{sourceLine(item)}</p>
+          <button
+            type="button"
+            onClick={() => onGo(item.route)}
+            className="ui-btn mt-3 inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+          >
+            Open import <ArrowRight size={12} />
+          </button>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function TaskModule({
+  title,
+  tasks,
+  emptyTitle,
+  emptyText,
+  emptyRoute,
+  onGo,
+  onEmpty,
+  onDismiss,
+  onSnooze,
+  busy,
+}: {
+  title: string
+  tasks: MySpaceTask[]
+  emptyTitle: string
+  emptyText: string
+  emptyRoute: string
+  onGo: (task: MySpaceTask) => void
+  onEmpty: () => void
+  onDismiss: (task: MySpaceTask) => void
+  onSnooze: (task: MySpaceTask) => void
+  busy: boolean
+}) {
+  return (
+    <Card pad={false} className="p-5">
+      <SectionHeader count={tasks.length}>{title}</SectionHeader>
+      {tasks.length === 0 ? (
+        <EmptyAction title={emptyTitle} text={emptyText} route={emptyRoute} onClick={onEmpty} />
+      ) : (
+        <div className="divide-y divide-border">
+          {tasks.slice(0, 5).map(task => (
+            <TaskRow key={task.key} task={task} onGo={onGo} onDismiss={onDismiss} onSnooze={onSnooze} busy={busy} />
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function TaskRow({
+  task,
+  onGo,
+  onDismiss,
+  onSnooze,
+  busy,
+}: {
+  task: MySpaceTask
+  onGo: (task: MySpaceTask) => void
+  onDismiss: (task: MySpaceTask) => void
+  onSnooze: (task: MySpaceTask) => void
+  busy: boolean
+}) {
+  const due = formatDate(task.due_at)
+  return (
+    <div className="flex items-start gap-3 py-3">
+      <button type="button" onClick={() => onGo(task)} className="min-w-0 flex-1 text-left focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-medium text-foreground">{task.title}</span>
+          <Badge variant={urgencyTone[task.urgency]}>{urgencyLabel[task.urgency]}</Badge>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {ownerLabel(task.owner)}{due ? ` · due ${due}` : ''} · {sourceLine(task)}
+        </p>
+      </button>
+      {task.dismissible && (
+        <div className="flex shrink-0 gap-1">
+          <button type="button" disabled={busy} onClick={() => onSnooze(task)} className="ui-btn rounded border border-border px-2 py-1 text-xs hover:bg-muted disabled:opacity-50">Snooze</button>
+          <button type="button" disabled={busy} onClick={() => onDismiss(task)} className="ui-btn rounded border border-border px-2 py-1 text-xs hover:bg-muted disabled:opacity-50">Dismiss</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ItemModule({
+  title,
+  items,
+  icon,
+  emptyTitle,
+  emptyText,
+  emptyRoute,
+  onGo,
+  onEmpty,
+}: {
+  title: string
+  items: MySpaceModuleItem[]
+  icon: React.ReactNode
+  emptyTitle: string
+  emptyText: string
+  emptyRoute: string
+  onGo: (item: MySpaceModuleItem) => void
+  onEmpty: () => void
+}) {
+  return (
+    <Card pad={false} className="p-5">
+      <SectionHeader count={items.length}>{title}</SectionHeader>
+      {items.length === 0 ? (
+        <EmptyAction title={emptyTitle} text={emptyText} route={emptyRoute} onClick={onEmpty} />
+      ) : (
+        <div className="divide-y divide-border">
+          {items.slice(0, 5).map(item => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onGo(item)}
+              className="flex w-full items-start gap-3 py-3 text-left hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <span className="mt-0.5 shrink-0 text-muted-foreground">{icon}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-foreground">{item.title}</span>
+                <span className="mt-1 block text-xs text-muted-foreground">{item.description}</span>
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  {ownerLabel(item.owner)}{formatDate(item.due_at) ? ` · ${formatDate(item.due_at)}` : ''} · {sourceLine(item)}
+                </span>
+              </span>
+              {item.status && <Badge variant={urgencyTone[item.urgency]}>{item.status.split('_').join(' ')}</Badge>}
+            </button>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function EmptyAction({ title, text, route, onClick }: { title: string; text: string; route: string; onClick: () => void }) {
+  return (
+    <div className="rounded-md border border-dashed border-border px-3 py-4">
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{text}</p>
+      <button
+        type="button"
+        onClick={onClick}
+        className="ui-btn mt-3 inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+      >
+        Open <span className="sr-only">{route}</span><ArrowRight size={12} />
+      </button>
+    </div>
+  )
+}
+
+function StrategyCard({ strategy, onGo }: { strategy: MySpaceModuleItem | null; onGo: (route: string) => void }) {
+  return (
+    <Card pad={false} className="p-5">
+      <SectionHeader>Strategy living doc</SectionHeader>
+      {strategy ? (
+        <div>
+          <p className="text-sm font-medium text-foreground">{strategy.title}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{strategy.description}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{sourceLine(strategy)}</p>
+          <button
+            type="button"
+            onClick={() => onGo(strategy.route)}
+            className="ui-btn mt-3 inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+          >
+            Refine strategy <ArrowRight size={12} />
+          </button>
+        </div>
+      ) : (
+        <EmptyAction
+          title="No active strategy yet."
+          text="Create the career, degree, academic, financial, and geographic plan before applications branch too far."
+          route="/s/profile?tab=strategy"
+          onClick={() => onGo('/s/profile?tab=strategy')}
+        />
+      )}
+    </Card>
+  )
+}
+
+function PrepCard({ readiness, onGo }: { readiness: MySpaceReadiness[]; onGo: (row: MySpaceReadiness) => void }) {
+  return (
+    <Card pad={false} className="p-5">
+      <SectionHeader>Prep readiness</SectionHeader>
+      <div className="space-y-3">
+        {readiness.map(row => (
+          <button key={row.key} type="button" onClick={() => onGo(row)} className="w-full rounded-md py-2 text-left hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-foreground">{row.label}</span>
+              <Badge variant={readinessTone(row.status)}>{row.pct ?? 0}%</Badge>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">{row.detail}</p>
+          </button>
+        ))}
+      </div>
+    </Card>
   )
 }

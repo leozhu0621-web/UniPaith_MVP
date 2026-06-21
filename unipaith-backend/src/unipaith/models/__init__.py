@@ -130,6 +130,7 @@ from unipaith.models.ml_loop import (
     OutcomeRecord,
     TrainingRun,
 )
+from unipaith.models.my_space import MySpaceTaskState
 from unipaith.models.needs import StudentNeed
 from unipaith.models.outcomes import (
     ProgramAdmissionsHistory,
@@ -236,6 +237,7 @@ __all__ = [
     "StudentNeed",
     "StudentIdentity",
     "MaterialIngest",
+    "MySpaceTaskState",
     "StudentStrategy",
     "WorkshopFeedbackRun",
     "BehavioralPrompt",
