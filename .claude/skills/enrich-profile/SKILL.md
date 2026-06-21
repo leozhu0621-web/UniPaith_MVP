@@ -1021,7 +1021,9 @@ Concrete misses observed in the first runs — each broke a real page:
        LEAVING template-slot rows is the SAME single-dimension non-clear as every other one-dimension
        pass (miss #8 dimension-agnostic-and-simultaneous): the description repair that fixes the
        frame-share dimension routinely MANUFACTURES the template-slot dimension in the same edit, so
-       the SAME pass that takes frame_abs150 → 0 must take `template_slot_artifacts` → 0 and only
+       the SAME pass that takes frame_abs150 → 0 must take `template_slot_artifacts` → 0 — **AND
+       `scrape_debris` → 0 (see the next sub-bullet): the re-scan after a body rewrite is the FULL
+       `anti_stub` suite, never just the one dimension you targeted** — and only
        then GRADUATE the catalog into the gate's `_TEMPLATE_SLOT_CLEAN` list. The fatal anti-pattern
        is shipping the frame-share fix while PARKING the catalog in the gate's EXCLUSION set
        (`_TEMPLATE_SLOT_CLEAN` is a subset of `CERTIFIED_CLEAN` minus the still-broken catalogs) —
@@ -1036,6 +1038,33 @@ Concrete misses observed in the first runs — each broke a real page:
        its `CERTIFIED_CLEAN` membership because Stanford sits in the gate's exclusion set;
        UT-Austin (3, one PhD row slotting a *bachelor's* description fragment into "research in ___")
        and Michigan (1, empty slot "research in ,") are the same class still live.)
+   - **A per-credential BODY REWRITE is itself a `scrape_debris` source — a hand-AUTHORED
+     researched body shipped WITHOUT terminal punctuation (or left cut mid-clause) trips the
+     debris TRUNCATION tell exactly like SCRAPED catalogue junk, so the post-rewrite re-scan
+     MUST include `scrape_debris == 0`, not only frame + template-slot. This is the live
+     regression this run, and it shows the per-credential-bodies pass manufacturing a NEW
+     un-rescanned dimension for the THIRD interval running.** `scrape_debris` is wrongly
+     assumed to fire only on SCRAPED text (course codes, unit/credit counts, phone/email
+     contacts, mailing addresses) — but its terminal-punctuation tell (a description whose
+     body, after stripping a trailing `(citation)`, does NOT end in `.`/`!`/`?` or ends on a
+     `:`) fires on ANY description that does not END in a sentence terminator, INCLUDING a
+     freshly authored per-credential body the enricher wrote by hand and forgot to terminate
+     (or truncated mid-clause). So the dimension-agnostic-and-simultaneous rule (miss #8)
+     extends to debris: the SAME "per-credential bodies" pass that takes frame_abs150 → 0
+     and `template_slot_artifacts` → 0 must ALSO leave `scrape_debris` → 0; after ANY
+     description rewrite re-run the FULL suite — `analyze` + `frame_stripped_shared_body
+     (abs_chars=150)` + `template_slot_artifacts` + `scrape_debris` + `machine_artifacts` —
+     and require EVERY one at 0 before graduating the catalog. Clearing the frame dimension
+     while shipping 100+ un-terminated bodies is the same single-dimension non-clear as the
+     frame-for-template-slot trade above, just on a different metric. A clean per-credential
+     body is a COMPLETE researched sentence about what THAT degree studies at THAT level,
+     ending in a terminator (gold MIT `scrape_debris` = 0). Evidence: live API this run — a
+     just-merged "sibling-aware per-credential bodies" repair cleared a 237-program catalog's
+     44 frame-share fields → 0 AND `template_slot_artifacts` → 0, yet shipped 115 of 237 rows
+     (49%) tripping the debris truncation tell — genuinely field-specific bodies ("…the Dyson
+     School's AACSB-accredited undergraduate business degree, grounded in applied economics",
+     no terminal period), which shipped live because the catalog is absent from the gate's
+     debris-clean `@parametrize` list (the same coverage drift as FLAG #1).
    - **Named units — scan EVERY description for a unit that doesn't belong, and a
      REPAIR must clear the WHOLE class, not just the cited row.** The miss-#8
      named-unit-truth defect (a description naming a school/college/department/
