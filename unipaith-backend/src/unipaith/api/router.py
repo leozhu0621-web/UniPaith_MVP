@@ -45,6 +45,7 @@ from unipaith.api.prompt_library import router as prompt_library_router
 from unipaith.api.realtime import router as realtime_router
 from unipaith.api.recommendations import router as recommendations_router
 from unipaith.api.recruitment import router as recruitment_router
+from unipaith.api.reference import router as reference_router
 from unipaith.api.reviews import router as reviews_router
 from unipaith.api.saved_lists import router as saved_lists_router
 from unipaith.api.saved_search import router as saved_search_router
@@ -150,6 +151,8 @@ api_router.include_router(notifications_router)
 # broker (Redis-bridged across ECS tasks) and hold no pooled DB connection.
 api_router.include_router(realtime_router)
 api_router.include_router(recommendations_router)
+# Public reference directory (College Scorecard institutions) — read-only, no auth.
+api_router.include_router(reference_router)
 api_router.include_router(calendar_router)
 api_router.include_router(connect_router)
 api_router.include_router(feedback_router)

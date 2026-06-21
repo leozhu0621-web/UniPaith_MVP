@@ -250,3 +250,60 @@ class ReferenceEntity(UUIDPrimaryKeyMixin, TimestampMixin, ProvenanceMixin, Base
         CheckConstraint(KNOWLEDGE_STATUS_CHECK, name="ck_reference_entities_status"),
         Index("ix_reference_entities_type", "ref_type"),
     )
+
+
+class RefInstitution(UUIDPrimaryKeyMixin, TimestampMixin, ProvenanceMixin, Base):
+    """§3.7 — the public U.S. institution directory (College Scorecard, bulk seed).
+
+    A typed reference table joining the §3 family, keyed on the IPEDS ``unitid``.
+    Distinct from ``institutions`` (claimed accounts, ``admin_user_id`` NOT NULL):
+    this is read-only public reference data, shown as "typical for this school"
+    until a school claims + verifies its own listing (§8). Bulk-loaded with
+    ``source="seed"`` from the committed Scorecard distillation.
+    """
+
+    __tablename__ = "ref_institutions"
+
+    unitid: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
+    opeid: Mapped[str | None] = mapped_column(String(20))
+    opeid6: Mapped[str | None] = mapped_column(String(20))
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    alias: Mapped[str | None] = mapped_column(Text)
+    city: Mapped[str | None] = mapped_column(String(120))
+    state: Mapped[str | None] = mapped_column(String(10))
+    zip: Mapped[str | None] = mapped_column(String(20))
+    lat: Mapped[float | None] = mapped_column(Numeric(9, 6))
+    lon: Mapped[float | None] = mapped_column(Numeric(9, 6))
+    control_code: Mapped[int | None] = mapped_column(Integer)
+    control: Mapped[str | None] = mapped_column(String(40))
+    locale_code: Mapped[int | None] = mapped_column(Integer)
+    region_code: Mapped[int | None] = mapped_column(Integer)
+    pred_degree: Mapped[int | None] = mapped_column(Integer)
+    high_degree: Mapped[int | None] = mapped_column(Integer)
+    accreditor: Mapped[str | None] = mapped_column(String(255))
+    url: Mapped[str | None] = mapped_column(String(500))
+    price_calc_url: Mapped[str | None] = mapped_column(String(500))
+    admit_rate: Mapped[float | None] = mapped_column(Numeric(6, 4))
+    sat_avg: Mapped[int | None] = mapped_column(Integer)
+    act_mid: Mapped[int | None] = mapped_column(Integer)
+    size: Mapped[int | None] = mapped_column(Integer)
+    cost_attendance: Mapped[int | None] = mapped_column(Integer)
+    tuition_in: Mapped[int | None] = mapped_column(Integer)
+    tuition_out: Mapped[int | None] = mapped_column(Integer)
+    pct_pell: Mapped[float | None] = mapped_column(Numeric(6, 4))
+    completion_rate: Mapped[float | None] = mapped_column(Numeric(6, 4))
+    retention: Mapped[float | None] = mapped_column(Numeric(6, 4))
+    earnings_10yr_median: Mapped[int | None] = mapped_column(Integer)
+    median_debt: Mapped[int | None] = mapped_column(Integer)
+    carnegie_basic: Mapped[int | None] = mapped_column(Integer)
+    program_pct: Mapped[dict | None] = mapped_column(JSONB)
+    extra: Mapped[dict | None] = mapped_column(JSONB)
+    source_vintage: Mapped[str | None] = mapped_column(String(40))
+
+    __table_args__ = (
+        CheckConstraint(KNOWLEDGE_SOURCE_CHECK, name="ck_ref_institutions_source"),
+        CheckConstraint(KNOWLEDGE_STATUS_CHECK, name="ck_ref_institutions_status"),
+        Index("ix_ref_institutions_name", "name"),
+        Index("ix_ref_institutions_state", "state"),
+        Index("ix_ref_institutions_control_code", "control_code"),
+    )
