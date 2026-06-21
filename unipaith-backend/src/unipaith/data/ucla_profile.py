@@ -3222,6 +3222,34 @@ def _strip_ucla_frame(clause: str) -> str:
     return _FRAME_PREFIX_RE.sub("", clause).strip()
 
 
+# A topic clause is slotted into a sentence frame ("builds advanced expertise in {topic}, …",
+# "advances original dissertation research in {topic}, …"), so it MUST read as a clean noun
+# phrase. The run-71 CRITICAL C2 defect was a fragment slotted raw — a leading preposition
+# ("research in OF artistic production…"), a mid-sentence truncation ("understanding of
+# human."), or a dangling relative clause ("expertise in THAT incorporates their interests…").
+# These helpers reject such fragments so the slot only ever receives a grammatical phrase.
+_TOPIC_CLAUSE_END = (". ", "; ", " — ", " – ", " near ", " at the ", " for the ", " within the ")
+_TOPIC_TRAILING_JUNK = frozenset(
+    {"and", "or", "of", "in", "on", "for", "with", "to", "by", "from", "the", "a", "an", "that"}
+)
+_TOPIC_BAD_LEAD = frozenset(
+    {
+        "is", "are", "and", "or", "but", "of", "in", "on", "for", "with", "to", "by",
+        "from", "under", "as", "at", "this", "these", "those", "that", "which", "who",
+        "whose", "while", "where", "when", "study", "studies", "science", "sciences",
+        "discipline", "branch", "field", "area", "form", "body", "way", "set", "system",
+        "framework", "process", "method", "theory", "application", "analysis",
+        "examination", "investigation", "art", "practice", "applies", "apply",
+        "develops", "develop", "prepares", "prepare", "examines", "provides",
+        "operates", "encompass", "encompasses", "students", "student", "incorporates",
+        "give", "gives", "refine", "accommodate", "specialization", "opportunities",
+        "provide", "provides", "prepare", "prepares", "enable", "enabling", "incorporate",
+        "understand", "understanding", "designed", "intended", "appropriate", "aims",
+        "aim", "seeks", "seek", "allow", "allows", "want", "wants", "desire", "desiring",
+    }
+)
+
+
 def _extract_focus(clause: str) -> str:
     clause = _strip_ucla_frame(clause)
     m = re.match(
@@ -3235,6 +3263,10 @@ def _extract_focus(clause: str) -> str:
     else:
         m = _FOCUS_LEAD_RE.match(clause)
         rest = clause[m.end() :] if m else clause
+    # Drop a leading preposition the lead-in regex left attached ("...study of artistic
+    # production" → "artistic production"), so the slot frame "expertise in {topic}" never
+    # doubles a preposition ("expertise in of artistic production…").
+    rest = re.sub(r"^(?:of|for|in|on|to|with|that|which|whose|as|by)\s+", "", rest.strip(), flags=re.I)
     rest = re.split(
         r"\s+(?:through|tied to|drawing on|near|at the|across the|for the|within the)\s+",
         rest,
@@ -3247,11 +3279,46 @@ def _extract_focus(clause: str) -> str:
         "accredited" in rest.lower() or "program is" in rest.lower()
     ):
         return ""
+    # Cut at the first clause/sentence boundary so a mid-sentence run never carries a
+    # second sentence into the slot ("...visual culture throughout human history. Art").
+    cut_at = len(rest)
+    for sep in _TOPIC_CLAUSE_END:
+        idx = rest.find(sep)
+        if 18 <= idx < cut_at:
+            cut_at = idx
+    rest = rest[:cut_at].strip().rstrip(",;").strip()
     if len(rest) > 72:
         cut = rest[:72]
         cut = cut[: cut.rfind(",")] if "," in cut else cut[: cut.rfind(" ")]
         rest = cut.strip().rstrip(",").strip()
-    return rest
+    # Trim trailing connector/article words so the slot never ends dangling ("...fulfillment
+    # of", "...desire to pursue").
+    words = rest.split()
+    while words and words[-1].lower().strip(",;") in _TOPIC_TRAILING_JUNK:
+        words.pop()
+    return " ".join(words).rstrip(",;").strip()
+
+
+def _topic_is_clean(topic: str) -> bool:
+    """True only when ``topic`` reads as a grammatical noun phrase fit for a sentence slot."""
+    if not topic or len(topic) < 12:
+        return False
+    words = topic.split()
+    if words[0].lower() in _TOPIC_BAD_LEAD:
+        return False
+    if words[-1].lower().strip(",;") in _TOPIC_TRAILING_JUNK or topic.rstrip().endswith((",", ".")):
+        return False
+    if ". " in topic:
+        return False
+    # A run-on that smuggles a second verb clause into the slot ("...and develops…").
+    if re.search(
+        r"\sand\s+(?:develops|applies|operates|provides|creates|manages|delivers|builds|"
+        r"examines|explores|designs|produces|trains|enabling|pursue)\b",
+        topic,
+        re.I,
+    ):
+        return False
+    return True
 
 
 def _adapt_clause_for_degree_type(clause: str, degree_type: str) -> str:
@@ -3296,7 +3363,7 @@ def _ucla_sibling_body(
     program_name: str,
 ) -> str:
     """Distinct, level-specific body for a credential sibling (not the field's anchor)."""
-    topic = focus if _valid_focus(focus) else field_label.lower()
+    topic = _topic_for_field(focus, field_label)
     if degree_type == "bachelors":
         return (
             f"The {program_name} at UCLA develops {topic} through core coursework, "
@@ -3332,13 +3399,91 @@ def _ucla_sibling_body(
 
 
 def _valid_focus(focus: str) -> bool:
-    if not focus or len(focus) < 24:
+    if any(marker in focus.lower() for marker in (
+        "should be of", "catalog entry", "requirement set", "brochure on the major"
+    )):
         return False
-    stripped = focus.lstrip()
-    if not stripped or not stripped[0].isalpha():
-        return False
-    junk = ("should be of", "catalog entry", "requirement set", "brochure on the major")
-    return not any(marker in focus.lower() for marker in junk)
+    return _topic_is_clean(focus)
+
+
+# Verified clean topic phrases for fields whose UCLA catalogue anchor prose does not yield a
+# grammatical noun phrase by auto-extraction (run-71 CRITICAL C2). Each is a true, distinct
+# disciplinary summary grounded in that field's verified anchor description — no fabricated
+# named units. The build asserts ``_template_slot_artifacts(PROGRAMS) == []`` so any field
+# that still slots a broken fragment surfaces here and is added with a verified topic.
+_GRAD_TOPIC_BY_FIELD: dict[str, str] = {
+    "African American Studies": "African American history, culture, politics, and social life",
+    "American Indian Studies": "American Indian cultures, histories, and contemporary issues",
+    "Anthropology": "the cross-cultural, archaeological, and biological study of humanity",
+    "Archaeology": "the material remains and methods of archaeological inquiry",
+    "Asian Languages and Cultures": "the languages, literatures, and cultures of Asia",
+    "Astronomy and Astrophysics (M.A.T.)": "the teaching of astronomy and astrophysics in secondary education",
+    "Mathematics (M.A.T.)": "the teaching of mathematics in secondary education",
+    "Physics (M.A.T.)": "the teaching of physics in secondary education",
+    "Physics (M.S.)": "advanced study and research in physics",
+    "Bioengineering": "the application of engineering principles to biology and medicine",
+    "Bioinformatics": "computational methods and software for analyzing biological data",
+    "Chemical Engineering": "chemical processes, reaction engineering, and process design",
+    "Civil Engineering": "structural, environmental, geotechnical, and transportation engineering",
+    "Communication": "human communication across interpersonal, media, and political contexts",
+    "Culture and Performance": "performance, ritual, and the anthropology of cultural expression",
+    "Electrical and Computer Engineering": "circuits, signals, devices, and computer engineering",
+    "Environment and Sustainability": "environmental systems, sustainability, and policy",
+    "Geography": "spatial analysis of human and physical environments",
+    "Germanic Languages": "German and Germanic literature, language, and culture",
+    "Human Genetics": "the genetics of human health, disease, and inheritance",
+    "Management": "the management, strategy, and organization of enterprises",
+    "Molecular, Cell, and Developmental Biology": "molecular, cellular, and developmental processes of living systems",
+    "Music in Music": "musical composition, performance, history, and theory",
+    "Nursing": "nursing science, patient care, and health promotion",
+    "Oral Biology": "the biology of the oral cavity, its microbiota, and oral health",
+    "Physics and Biology In Medicine": "the physics and biology underlying medical diagnosis and therapy",
+    "Physiological Science": "the function of cells, organs, and systems in living organisms",
+    "Planetary Science": "planetary bodies, their formation, and the processes that shape them",
+    "Psychology": "cognition, behavior, and the biological and social bases of mind",
+    "Sociology": "social structure, institutions, and human social behavior",
+    "Spanish": "Spanish and Latin American language, literature, and culture",
+    "Aerospace Engineering": "the design, dynamics, and control of aerospace vehicles and systems",
+    "Architecture": "architectural design, history, theory, and building technology",
+    "Art History": "the study of artistic production and visual culture across periods and cultures",
+    "Biology": "molecular, organismal, and ecological approaches to the life sciences",
+    "Classics": "the languages, literature, and civilizations of ancient Greece and Rome",
+    "Comparative Literature": "literature and cultural expression across languages and national traditions",
+    "Computer Science": "computing systems, algorithms, artificial intelligence, and software",
+    "English": "English-language literature, criticism, and literary theory",
+    "French and Francophone Studies": "French and Francophone literature, language, and culture",
+    "Gender Studies": "gender, sexuality, and feminist theory across social and cultural life",
+    "Geochemistry": "the chemistry of Earth and planetary materials and processes",
+    "Italian": "Italian language, literature, and cultural history",
+    "Linguistics": "the structure, sound, meaning, and use of human language",
+    "Materials Science and Engineering": "the structure, properties, and processing of engineering materials",
+    "Mathematics": "pure and applied mathematics",
+    "Mechanical Engineering": "thermodynamics, fluid and solid mechanics, dynamics, and design",
+    "Molecular Biology": "the molecular structures and chemical processes of living systems",
+    "Molecular and Medical Pharmacology": "molecular and medical pharmacology and drug action",
+    "Near Eastern Languages and Cultures": "the languages, texts, and archaeology of the ancient Near East",
+    "Philosophy": "metaphysics, epistemology, ethics, and the history of philosophy",
+    "Political Science": "political institutions, behavior, theory, and international relations",
+    "Slavic, East European, and Eurasian Languages and Cultures": "Slavic, East European, and Eurasian languages, literatures, and cultures",
+    "Statistics": "statistical theory, methodology, and data analysis",
+    "Theater": "theater, performance, and dramatic practice",
+}
+
+
+def _topic_for_field(focus: str, field_label: str) -> str:
+    """A clean, field-specific topic for a sibling slot — never a broken fragment.
+
+    Fields whose catalogue anchor does not auto-extract to a grammatical noun phrase carry a
+    verified curated topic (``_GRAD_TOPIC_BY_FIELD``), which always wins — the auto-extractor
+    is unreliable on those anchors (run-71 CRITICAL C2). Other fields use a clean extracted
+    focus, falling back to a generic disciplinary phrase.
+    """
+    override = _GRAD_TOPIC_BY_FIELD.get(field_label)
+    if override:
+        return override
+    if _topic_is_clean(focus) and focus.lower() != field_label.lower():
+        return focus
+    return f"the discipline of {field_label.lower()}"
 
 
 _UNDERGRAD_DESC_MARKERS = (
@@ -3604,6 +3749,76 @@ if _shared_desc:
     raise ValueError(f"UCLA catalog has {_shared_desc} identical descriptions shared across rows")
 
 
+# Sentence frames that slot a field topic. ``_template_slot_artifacts`` extracts the slotted
+# {topic} from each and flags any that is grammatically broken — the run-71 CRITICAL C2 defect
+# (a slotted fragment such as "research in of artistic production…" or "…understanding of
+# human."). Gold MIT scores 0 (researched per-credential prose, no slotting).
+_SLOT_FRAME_RES: tuple[re.Pattern[str], ...] = (
+    re.compile(r"builds advanced expertise in (.+?), combining graduate seminars"),
+    re.compile(r"advances original dissertation research in (.+?), supported by faculty"),
+    re.compile(r"\bdevelops (.+?) through core coursework"),
+    re.compile(r"packages focused coursework in (.+?) for "),
+    re.compile(r"practical training in (.+?) through "),
+    re.compile(r"\bengages (.+?) through coursework"),
+)
+_TOPIC_BROKEN_LEAD = frozenset(
+    {"of", "for", "that", "which", "whose", "in", "on", "to", "as", "by", "and", "or", "with"}
+)
+
+
+def _topic_is_broken(topic: str) -> bool:
+    """True when a slotted topic reads as a broken fragment, not a clean noun phrase."""
+    t = topic.strip()
+    if not t or len(t) < 12:
+        return True
+    if t[0] in ",:;.()-":  # leading punctuation from a mid-clause cut
+        return True
+    words = t.split()
+    first = words[0].lower().strip(",.()")
+    if first in _TOPIC_BROKEN_LEAD or first in _TOPIC_BAD_LEAD or first in {"a", "an", "future", "profound"}:
+        return True
+    last = words[-1].lower().strip(",.()")
+    if last in _TOPIC_TRAILING_JUNK or last in {
+        "more", "various", "following", "one", "other", "such", "their", "its",
+        "his", "her", "biological", "new",
+    }:
+        return True
+    if t.endswith((",", ".", ":", ";")):
+        return True
+    if ". " in t:  # a second sentence smuggled into the slot
+        return True
+    # A finite verb in the slot means a clause was captured, not a noun phrase.
+    if re.search(
+        r"\b(is|are|was|were|may|might|can|provides?|includes?|focuses?|deals?|offers?|"
+        r"used|earns?|earned|designed|allows?|seeks?|aims?|interested)\b",
+        t,
+        re.I,
+    ):
+        return True
+    # A credential designation smuggled into a field slot ("…research in Master of Science…").
+    if re.search(
+        r"\b(Master of|Doctor of Philosophy|Bachelor of|MA degree|MS degree|PhD degree|"
+        r"degrees?|[BM][AS] program)\b|\((?:MS|MA|MFA|PhD|BA|BS|m\.a\.t\.|m\.s\.|m\.a\.)\)",
+        t,
+        re.I,
+    ):
+        return True
+    return False
+
+
+def _template_slot_artifacts(programs: list[dict]) -> list[str]:
+    """Programs whose sentence-frame slot carries machine-broken grammar (CRITICAL C2; MIT = 0)."""
+    hits: list[str] = []
+    for p in programs:
+        d = p.get("description") or ""
+        for rx in _SLOT_FRAME_RES:
+            m = rx.search(d)
+            if m and _topic_is_broken(m.group(1)):
+                hits.append(p.get("program_name") or p.get("slug") or "")
+                break
+    return hits
+
+
 def _assert_anti_stub_clean(programs: list[dict]) -> None:
     from unipaith.profile_standard.anti_stub import (
         analyze,
@@ -3624,6 +3839,11 @@ def _assert_anti_stub_clean(programs: list[dict]) -> None:
     if artifacts:
         raise ValueError(
             f"UCLA catalog has {len(artifacts)} machine-build artifacts, e.g. {artifacts[:3]}"
+        )
+    slots = _template_slot_artifacts(programs)
+    if slots:
+        raise ValueError(
+            f"UCLA catalog has {len(slots)} template-slot grammar artifacts, e.g. {slots[:5]}"
         )
 
 
@@ -3668,24 +3888,116 @@ _COST_SRC_URL = (
     "https://collegescorecard.ed.gov/school/?110662-University-of-California-Los-Angeles"
 )
 
+# Matcher-core budget-fit signal (enrich-profile §"Also enrich for the MATCH"): tuition is
+# institution-published, so a whole-catalog null is matcher STARVATION, not an honest omission.
+# UCLA undergraduate University Fees (tuition + campus-based fees), CA resident, 2024-25; the
+# nonresident total adds the systemwide Nonresident Supplemental Tuition.
+# Source: UCLA Financial Aid — Cost of Attendance (2024-25 continuing-student schedule).
+_TUITION_UG_IN_STATE = 15202
+_NRST_UG = 34200
+_TUITION_UG_OOS = _TUITION_UG_IN_STATE + _NRST_UG  # 49402
+_UG_COST_SRC = "UCLA Financial Aid & Scholarships — Cost of Attendance (2024-25)"
+_UG_COST_SRC_URL = "https://financialaid.ucla.edu/how-aid-works/cost-of-attendance"
+
+# UCLA estimated annual graduate (academic master's / doctoral) tuition & fees, 2024-25:
+# ~$21,115 CA resident, ~$36,297 nonresident, built on UC systemwide graduate tuition
+# ($12,762) + Student Services Fee ($1,254) + campus-based fees, plus graduate Nonresident
+# Supplemental Tuition ($15,102). Professional & self-supporting degrees carry separate
+# schedules. Source: UCLA Graduate Division — Tuition & Student Fees.
+_TUITION_GRAD = 21115
+_TUITION_GRAD_OOS = 36297
+_GRAD_SYSTEMWIDE_TUITION = 12762
+_GRAD_NRST = 15102
+_GRAD_COST_SRC = "UCLA Graduate Division — Tuition & Student Fees (2024-25)"
+_GRAD_COST_SRC_URL = "https://grad.ucla.edu/funding/tuition/"
+
 
 def _undergrad_cost() -> dict:
     return {
+        "tuition_usd": _TUITION_UG_IN_STATE,
         "total_cost_of_attendance": _UNDERGRAD_COA,
         "avg_net_price": _AVG_NET_PRICE,
+        "breakdown": {
+            "tuition_in_state": _TUITION_UG_IN_STATE,
+            "tuition_out_of_state": _TUITION_UG_OOS,
+            "nonresident_supplemental_tuition": _NRST_UG,
+        },
         "funded": False,
         "note": (
-            "UCLA's published academic-year cost of attendance is about $38,614 and the average net "
-            "price after grant aid is about $12,548 (College Scorecard, UNITID 110662). In-state and "
-            "out-of-state tuition differ and are set by the University of California; through the UC "
-            "Blue and Gold Opportunity Plan, UCLA covers system-wide tuition and fees for eligible "
-            "California families below a published income threshold. See the program's cost-of-"
-            "attendance page for the current figures."
+            "UCLA's published 2024-25 undergraduate University Fees (tuition + campus-based fees) "
+            "are about $15,202 for California residents; nonresidents pay an additional nonresident "
+            "supplemental tuition of $34,200 (about $49,402 total). The full cost of attendance is "
+            "about $38,614 and the average net price after grant aid is about $12,548 (College "
+            "Scorecard, UNITID 110662). Through the UC Blue and Gold Opportunity Plan, UCLA covers "
+            "system-wide tuition and fees for eligible California families below a published income "
+            "threshold."
         ),
-        "source": _COST_SRC,
-        "source_url": _COST_SRC_URL,
-        "year": "2023-24",
+        "source": _UG_COST_SRC,
+        "source_url": _UG_COST_SRC_URL,
+        "year": "2024-25",
     }
+
+
+def _grad_academic_cost() -> dict:
+    """Published UCLA graduate (academic master's / certificate) tuition & fees, 2024-25."""
+    return {
+        "tuition_usd": _TUITION_GRAD,
+        "breakdown": {
+            "tuition_in_state": _TUITION_GRAD,
+            "tuition_out_of_state": _TUITION_GRAD_OOS,
+            "systemwide_tuition": _GRAD_SYSTEMWIDE_TUITION,
+            "nonresident_supplemental_tuition": _GRAD_NRST,
+        },
+        "funded": False,
+        "note": (
+            "UCLA's estimated 2024-25 annual graduate tuition and fees for most academic master's "
+            "and certificate programs are about $21,115 for California residents and about $36,297 "
+            "for nonresidents (UC systemwide graduate tuition of $12,762 plus the Student Services "
+            "Fee and campus-based fees, with a graduate nonresident supplemental tuition of $15,102). "
+            "Professional and self-supporting degrees carry separate, higher tuition schedules."
+        ),
+        "source": _GRAD_COST_SRC,
+        "source_url": _GRAD_COST_SRC_URL,
+        "year": "2024-25",
+    }
+
+
+def _phd_funded_cost() -> dict:
+    """Doctoral students admitted with funding typically receive tuition remission + stipend."""
+    return {
+        "tuition_usd": 0,
+        "funded": True,
+        "note": (
+            "UCLA doctoral students admitted with funding typically receive a full or partial "
+            "tuition and fee remission together with a stipend through fellowships, teaching, or "
+            "research assistantships; see the UCLA Graduate Division for program-specific funding. "
+            "The published systemwide graduate tuition is $12,762 (2024-25) before remission."
+        ),
+        "source": _GRAD_COST_SRC,
+        "source_url": _GRAD_COST_SRC_URL,
+        "year": "2024-25",
+    }
+
+
+# Professional / self-supporting master's degrees carry a separate (higher) supplemental or
+# self-supporting tuition schedule, NOT the academic systemwide graduate rate — stamping the
+# academic rate on an MBA / MPH / MEng would be a wrong fact, so these are omitted-with-reason
+# (no-fabrication rule). Keyed on the degree designation, so a research M.S./M.A. in the same
+# school still gets the correct academic rate.
+_PROFESSIONAL_MASTER_RE = re.compile(
+    r"M\.P\.H\.|M\.F\.A\.|M\.P\.P\.|M\.S\.W\.|M\.U\.R\.P\.|M\.B\.A\.|LL\.M\.|M\.L\.I\.S\.|M\.Ed\.|"
+    r"Master of Business Administration|Master of Financial Engineering|Master of Engineering|"
+    r"Master of Fine Arts|Master of Public Health|Master of Public Policy|Master of Social Welfare|"
+    r"Master of Urban|Master of Real Estate|Master of Education|Master of Library|Master of Laws|"
+    r"Master of Legal Studies|Master of Healthcare|Master of Health|Master of Data Science|"
+    r"Master of Applied|Master of Science in Business Analytics|Master of Science in Management|"
+    r"Executive Master|Fully Employed Master|Global Executive",
+    re.I,
+)
+
+
+def _is_professional_master(spec: dict) -> bool:
+    return bool(_PROFESSIONAL_MASTER_RE.search(spec.get("program_name") or ""))
 
 
 def _grad_cost_fallback(spec: dict) -> dict:
@@ -4136,8 +4448,33 @@ def _requirements_for(spec: dict) -> dict:
     return _REQ_GRAD_GENERIC
 
 
+def _cost_for(spec: dict) -> tuple[int | None, dict]:
+    """The (tuition, cost_data) ``_apply_programs`` stamps — single source of truth.
+
+    Tuition is institution-published (matcher-core budget-fit), so it is filled for every
+    knowable credential level: the undergrad sticker, the academic graduate rate, and a
+    funded $0 for doctoral students. Professional / self-supporting degrees carry distinct,
+    higher schedules and are omitted-with-reason rather than guessed (no-fabrication rule).
+    """
+    dt = spec["degree_type"]
+    if dt == "bachelors":
+        return _TUITION_UG_IN_STATE, _undergrad_cost()
+    if dt in ("phd", "doctoral"):
+        return 0, _phd_funded_cost()
+    if dt == "certificate" or (dt == "masters" and not _is_professional_master(spec)):
+        return _TUITION_GRAD, _grad_academic_cost()
+    return None, _grad_cost_fallback(spec)
+
+
+def _has_tuition(spec: dict) -> bool:
+    """True when ``_cost_for`` stamps a real published tuition on this program."""
+    return _cost_for(spec)[0] is not None
+
+
 def _program_standard(slug: str, spec: dict) -> dict:
-    omitted: list[str] = ["tracks", "cost_data.tuition_usd"]
+    omitted: list[str] = ["tracks"]
+    if not _has_tuition(spec):
+        omitted.append("cost_data.tuition_usd")
     if slug not in _OUTCOMES_BY_SLUG:
         omitted += [
             "outcomes_data.employment_rate",
@@ -4269,12 +4606,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.delivery_format = spec.get("delivery_format", "on_campus")
         _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], _kw)
-        if spec["degree_type"] == "bachelors":
-            p.tuition = None
-            p.cost_data = _undergrad_cost()
-        else:
-            p.tuition = None
-            p.cost_data = _grad_cost_fallback(spec)
+        p.tuition, p.cost_data = _cost_for(spec)
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)
