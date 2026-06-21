@@ -8,7 +8,7 @@ sticker, academic graduate rate, funded $0 doctoral). Re-applies ``ucla_profile.
 re-derives program-preference rows.
 
 Revision ID: uclatpl1
-Revises: berkeleytpl2
+Revises: stanfordtuit1
 Create Date: 2026-06-21
 """
 
@@ -23,7 +23,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "uclatpl1"
-down_revision = "berkeleytpl2"
+down_revision = "stanfordtuit1"
 branch_labels = None
 depends_on = None
 
