@@ -26,6 +26,7 @@ import { track } from '../../../lib/analytics'
 import { useAuthStore } from '../../../stores/auth-store'
 
 const STALE = 60_000
+const MODULE_VISIBLE_LIMIT = 5
 
 type TaskActionType = 'dismiss' | 'snooze' | 'restore'
 
@@ -265,6 +266,7 @@ export default function MySpaceHomePage() {
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'application_portfolio', key: item.key })}
               onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'application_portfolio', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/applications', 'my_space_empty_cta_clicked', { module: 'application_portfolio' })}
+              onViewAll={() => go('/s/applications', 'my_space_task_clicked', { module: 'application_portfolio', key: 'view_all' })}
             />
             <TaskModule
               title="Evidence gaps"
@@ -276,6 +278,7 @@ export default function MySpaceHomePage() {
               onGo={(task) => go(task.cta_route, 'my_space_task_clicked', { task_key: task.key, category: task.category })}
               onReviewSource={(task, route) => go(route, 'readiness_explanation_opened', { task_key: task.key, category: task.category, source: 'provenance' })}
               onEmpty={() => go('/s/import', 'my_space_empty_cta_clicked', { module: 'evidence_gaps' })}
+              onViewAll={() => go('/s/import', 'my_space_task_clicked', { module: 'evidence_gaps', key: 'view_all' })}
               onDismiss={dismissTask}
               onSnooze={snoozeTask}
               pendingTaskKey={pendingTaskKey}
@@ -291,6 +294,7 @@ export default function MySpaceHomePage() {
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'deadlines', key: item.key })}
               onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'deadlines', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/calendar', 'my_space_empty_cta_clicked', { module: 'deadlines' })}
+              onViewAll={() => go('/s/calendar', 'my_space_task_clicked', { module: 'deadlines', key: 'view_all' })}
             />
             <ItemModule
               title="Waiting on others"
@@ -303,6 +307,7 @@ export default function MySpaceHomePage() {
               onGo={(item) => go(item.route, item.owner === 'recommender' ? 'recommender_nudge_clicked' : 'my_space_task_clicked', { module: 'waiting_on', key: item.key })}
               onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'waiting_on', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/prep?tab=recommenders', 'my_space_empty_cta_clicked', { module: 'waiting_on' })}
+              onViewAll={() => go('/s/prep?tab=recommenders', 'my_space_task_clicked', { module: 'waiting_on', key: 'view_all' })}
             />
             <ItemModule
               title="Messages"
@@ -315,6 +320,7 @@ export default function MySpaceHomePage() {
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'messages', key: item.key })}
               onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'messages', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/messages', 'my_space_empty_cta_clicked', { module: 'messages' })}
+              onViewAll={() => go('/s/messages', 'my_space_task_clicked', { module: 'messages', key: 'view_all' })}
             />
             <ItemModule
               title="Latest feedback"
@@ -327,6 +333,7 @@ export default function MySpaceHomePage() {
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'feedback', key: item.key })}
               onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'feedback', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/prep?tab=workshops', 'my_space_empty_cta_clicked', { module: 'feedback' })}
+              onViewAll={() => go('/s/prep?tab=workshops', 'my_space_task_clicked', { module: 'feedback', key: 'view_all' })}
             />
           </div>
 
@@ -352,6 +359,7 @@ export default function MySpaceHomePage() {
               onGo={(item) => go(item.route, 'offer_compare_opened', { key: item.key })}
               onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'offers', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/applications?tab=offers', 'my_space_empty_cta_clicked', { module: 'offers' })}
+              onViewAll={() => go('/s/applications?tab=offers', 'offer_compare_opened', { key: 'view_all' })}
             />
           </div>
 
@@ -367,6 +375,7 @@ export default function MySpaceHomePage() {
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'saved_targets', key: item.key })}
               onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'saved_targets', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s/explore', 'my_space_empty_cta_clicked', { module: 'saved_targets' })}
+              onViewAll={() => go('/s/explore', 'my_space_task_clicked', { module: 'saved_targets', key: 'view_all' })}
             />
             <ItemModule
               title="Recent changes"
@@ -379,6 +388,7 @@ export default function MySpaceHomePage() {
               onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'recent_changes', key: item.key })}
               onReviewSource={(item, route) => go(route, 'readiness_explanation_opened', { module: 'recent_changes', key: item.key, source: 'provenance' })}
               onEmpty={() => go('/s', 'my_space_empty_cta_clicked', { module: 'recent_changes' })}
+              onViewAll={() => go('/s', 'my_space_task_clicked', { module: 'recent_changes', key: 'view_all' })}
             />
           </div>
 
@@ -667,6 +677,7 @@ function TaskModule({
   onGo,
   onReviewSource,
   onEmpty,
+  onViewAll,
   onDismiss,
   onSnooze,
   pendingTaskKey,
@@ -680,6 +691,7 @@ function TaskModule({
   onGo: (task: MySpaceTask) => void
   onReviewSource: (task: MySpaceTask, route: string) => void
   onEmpty: () => void
+  onViewAll: () => void
   onDismiss: (task: MySpaceTask) => void
   onSnooze: (task: MySpaceTask) => void
   pendingTaskKey: string | null
@@ -690,11 +702,23 @@ function TaskModule({
       {tasks.length === 0 ? (
         <EmptyAction title={emptyTitle} text={emptyText} route={emptyRoute} ctaLabel={emptyCtaLabel} onClick={onEmpty} />
       ) : (
-        <div className="divide-y divide-border">
-          {tasks.slice(0, 5).map(task => (
-            <TaskRow key={task.key} task={task} onGo={onGo} onReviewSource={onReviewSource} onDismiss={onDismiss} onSnooze={onSnooze} pendingTaskKey={pendingTaskKey} />
-          ))}
-        </div>
+        <>
+          <div className="divide-y divide-border">
+            {tasks.slice(0, MODULE_VISIBLE_LIMIT).map(task => (
+              <TaskRow key={task.key} task={task} onGo={onGo} onReviewSource={onReviewSource} onDismiss={onDismiss} onSnooze={onSnooze} pendingTaskKey={pendingTaskKey} />
+            ))}
+          </div>
+          {tasks.length > MODULE_VISIBLE_LIMIT && (
+            <ModuleOverflowAction
+              shown={MODULE_VISIBLE_LIMIT}
+              total={tasks.length}
+              ctaLabel={emptyCtaLabel}
+              title={title}
+              route={emptyRoute}
+              onClick={onViewAll}
+            />
+          )}
+        </>
       )}
     </Card>
   )
@@ -815,6 +839,7 @@ function ItemModule({
   onGo,
   onReviewSource,
   onEmpty,
+  onViewAll,
 }: {
   title: string
   items: MySpaceModuleItem[]
@@ -826,6 +851,7 @@ function ItemModule({
   onGo: (item: MySpaceModuleItem) => void
   onReviewSource: (item: MySpaceModuleItem, route: string) => void
   onEmpty: () => void
+  onViewAll: () => void
 }) {
   return (
     <Card pad={false} className="p-5">
@@ -833,32 +859,74 @@ function ItemModule({
       {items.length === 0 ? (
         <EmptyAction title={emptyTitle} text={emptyText} route={emptyRoute} ctaLabel={emptyCtaLabel} onClick={onEmpty} />
       ) : (
-        <div className="divide-y divide-border">
-          {items.slice(0, 5).map(item => (
-            <div
-              key={item.key}
-              className="flex w-full items-start gap-3 py-3"
-              data-item-key={item.key}
-            >
-              <span className="mt-0.5 shrink-0 text-muted-foreground">{icon}</span>
-              <div className="min-w-0 flex-1">
-                <button
-                  type="button"
-                  onClick={() => onGo(item)}
-                  className="w-full rounded-sm text-left hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                >
-                  <span className="block text-sm font-medium text-foreground">{item.title}</span>
-                  <span className="mt-1 block text-xs text-muted-foreground">{item.description}</span>
-                  <span className="mt-1 block text-xs text-muted-foreground">{moduleMetaLine(item)}</span>
-                </button>
-                <EvidenceDisclosure item={item} destination={destinationRoute(item)} onReviewSource={(route) => onReviewSource(item, route)} />
+        <>
+          <div className="divide-y divide-border">
+            {items.slice(0, MODULE_VISIBLE_LIMIT).map(item => (
+              <div
+                key={item.key}
+                className="flex w-full items-start gap-3 py-3"
+                data-item-key={item.key}
+              >
+                <span className="mt-0.5 shrink-0 text-muted-foreground">{icon}</span>
+                <div className="min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => onGo(item)}
+                    className="w-full rounded-sm text-left hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  >
+                    <span className="block text-sm font-medium text-foreground">{item.title}</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">{item.description}</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">{moduleMetaLine(item)}</span>
+                  </button>
+                  <EvidenceDisclosure item={item} destination={destinationRoute(item)} onReviewSource={(route) => onReviewSource(item, route)} />
+                </div>
+                {item.status && <Badge variant={urgencyTone[item.urgency]}>{item.status.split('_').join(' ')}</Badge>}
               </div>
-              {item.status && <Badge variant={urgencyTone[item.urgency]}>{item.status.split('_').join(' ')}</Badge>}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          {items.length > MODULE_VISIBLE_LIMIT && (
+            <ModuleOverflowAction
+              shown={MODULE_VISIBLE_LIMIT}
+              total={items.length}
+              ctaLabel={emptyCtaLabel}
+              title={title}
+              route={emptyRoute}
+              onClick={onViewAll}
+            />
+          )}
+        </>
       )}
     </Card>
+  )
+}
+
+function ModuleOverflowAction({
+  shown,
+  total,
+  ctaLabel,
+  title,
+  route,
+  onClick,
+}: {
+  shown: number
+  total: number
+  ctaLabel: string
+  title: string
+  route: string
+  onClick: () => void
+}) {
+  return (
+    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+      <span>Showing {shown} of {total}.</span>
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`${ctaLabel}: ${title}`}
+        className="ui-btn inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 font-medium text-foreground hover:bg-muted"
+      >
+        {ctaLabel} <span className="sr-only">{route}</span><ArrowRight size={12} />
+      </button>
+    </div>
   )
 }
 

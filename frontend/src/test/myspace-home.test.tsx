@@ -345,6 +345,31 @@ describe('MySpaceHomePage', () => {
     })
   })
 
+  it('shows an owning-room path when modules have more rows than the overview renders', async () => {
+    vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
+      ...overview,
+      messages: Array.from({ length: 6 }, (_, index) => ({
+        ...overview.messages[0],
+        key: `message:thread-${index + 1}`,
+        title: `Admissions message ${index + 1}`,
+        route: `/s/messages?thread=thread-${index + 1}`,
+      })),
+    })
+
+    renderHome()
+
+    expect(await screen.findByText('Admissions message 1')).toBeTruthy()
+    expect(screen.getByText('Showing 5 of 6.')).toBeTruthy()
+    expect(screen.queryByText('Admissions message 6')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open messages: Messages' }))
+    expect(track).toHaveBeenCalledWith('my_space_task_clicked', {
+      route: '/s/messages',
+      module: 'messages',
+      key: 'view_all',
+    })
+  })
+
   it('shows blocker and missing-field context on module task rows', async () => {
     vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
       ...overview,
@@ -375,6 +400,33 @@ describe('MySpaceHomePage', () => {
     expect(await screen.findByText('Confirm GPA')).toBeTruthy()
     expect(screen.getByText('Low-confidence extracted signal · GPA')).toBeTruthy()
     expect(screen.getAllByText(/Clarification .* adaptive intake .* 55% confidence/).length).toBeGreaterThan(0)
+  })
+
+  it('shows an owning-room path when task modules have more rows than the overview renders', async () => {
+    vi.mocked(getMySpaceOverview).mockResolvedValueOnce({
+      ...overview,
+      evidence_gaps: Array.from({ length: 6 }, (_, index) => ({
+        ...overview.tasks[0],
+        key: `clarification:${index + 1}`,
+        title: `Confirm signal ${index + 1}`,
+        category: 'clarification',
+        cta_label: 'Clarify in Uni',
+        cta_route: `/s?intent=clarification&source_task=clarification%3A${index + 1}&return_to=%2Fs%2Fspace&artifact_destination=clarification`,
+      })),
+    })
+
+    renderHome()
+
+    expect(await screen.findByText('Confirm signal 1')).toBeTruthy()
+    expect(screen.getByText('Showing 5 of 6.')).toBeTruthy()
+    expect(screen.queryByText('Confirm signal 6')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review imports: Evidence gaps' }))
+    expect(track).toHaveBeenCalledWith('my_space_task_clicked', {
+      route: '/s/import',
+      module: 'evidence_gaps',
+      key: 'view_all',
+    })
   })
 
   it('lets students inspect provenance and review the source record', async () => {
