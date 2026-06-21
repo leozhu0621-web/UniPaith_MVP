@@ -36,10 +36,10 @@ describe('MySpaceShell rail structure', () => {
     const rail = screen.getByRole('complementary', { name: 'My Space' })
     const links = within(rail)
       .getAllByRole('link')
-      .map(a => (a.textContent ?? '').trim())
+      .map(a => (a.getAttribute('href') ?? '').trim())
     // At /s/space no group is expanded, so the only links are the two top-level
     // items — Import sits right after Overview (Spec 2026-06-16).
-    expect(links.slice(0, 2)).toEqual(['Overview', 'Import'])
+    expect(links.slice(0, 2)).toEqual(['/s/space', '/s/import'])
   })
 
   it('points Import at /s/import', () => {
@@ -48,5 +48,18 @@ describe('MySpaceShell rail structure', () => {
     expect(
       within(rail).getByRole('link', { name: /^Import/ }).getAttribute('href'),
     ).toBe('/s/import')
+  })
+
+  it('shows named metadata for rail rooms', () => {
+    renderShell()
+    const rail = screen.getByRole('complementary', { name: 'My Space' })
+
+    expect(within(rail).getByText('What matters now')).toBeTruthy()
+    expect(within(rail).getByText('Review extracted signals')).toBeTruthy()
+    expect(within(rail).getByText('Durable student record')).toBeTruthy()
+    expect(within(rail).getByText('Goals, fit, constraints')).toBeTruthy()
+    expect(within(rail).getByText('Shortlist and search memory')).toBeTruthy()
+    expect(within(rail).getByText('Prep, applications, decisions')).toBeTruthy()
+    expect(within(rail).getByRole('link', { name: 'Workspace: Prep, applications, decisions' })).toBeTruthy()
   })
 })
