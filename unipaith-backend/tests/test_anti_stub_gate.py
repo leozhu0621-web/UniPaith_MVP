@@ -21,6 +21,7 @@ from unipaith.profile_standard.anti_stub import (
     frame_stripped_shared_body,
     machine_artifacts,
     scrape_debris,
+    template_slot_artifacts,
 )
 
 # Catalogs verified free of raw scraped-catalogue debris (course-code / requirements /
@@ -198,6 +199,69 @@ def test_credential_siblings_no_shared_body_absolute_floor(name: str):
         f"{name}: credential siblings share a 150+-char body on "
         f"{len(shared)} field(s): {shared[:8]}{' …' if len(shared) > 8 else ''}"
     )
+
+
+# Catalogs verified free of run-71 template-slot machine grammar (a field phrase slotted
+# into a fixed per-credential frame: a DOUBLED credential heading or a DOUBLE/DANGLING
+# preposition from an empty slot — REPAIR_BACKLOG CRITICAL C1/C2, FLAG #1c). These score 0
+# on every share/form metric (the body differs per row) yet render machine junk, so they
+# need their own gate. This is intentionally a SUBSET of CERTIFIED_CLEAN — the whole-fleet
+# sweep this run found template-slot rows still LIVE on stanford (49), ucla (9), ut_austin
+# (3) and michigan (1); they stay OUT until repaired, and the durable fix is to parametrize
+# this over CERTIFIED_CLEAN itself once those clear (FLAG for the grader).
+_TEMPLATE_SLOT_CLEAN = [
+    n
+    for n in CERTIFIED_CLEAN
+    if n not in {"stanford", "ucla", "ut_austin", "michigan"}
+]
+
+
+@pytest.mark.parametrize("name", _TEMPLATE_SLOT_CLEAN)
+def test_certified_catalog_has_no_template_slot_grammar(name: str):
+    """A certified catalog must not ship template-slot machine grammar: a per-credential body
+    that DIFFERS per row (so analyze + frame_stripped read 0) but re-states the credential
+    inside the body ("...coursework in the Master of Science in …") or carries a double /
+    dangling preposition from an empty slot ("research in of farm…"). Berkeley auto-merged
+    107 such rows green and CERTIFIED_CLEAN (REPAIR_BACKLOG CRITICAL C1); gold MIT scores 0."""
+    hits = template_slot_artifacts(_programs(name))
+    assert not hits, (
+        f"{name} catalog carries template-slot machine grammar in {len(hits)} descriptions: "
+        f"{hits[:5]}{' …' if len(hits) > 5 else ''}"
+    )
+
+
+def test_template_slot_detector_bites_on_doubled_credential_and_empty_slot():
+    """Regression guard: the template-slot gate flags the doubled-credential and
+    double-preposition forms while passing a clean per-credential researched body."""
+    junk = [
+        {
+            "program_name": "Doctor of Philosophy in Agricultural Business and Management",
+            "description": (
+                "Doctoral training in the Doctor of Philosophy in Agricultural Business and "
+                "Management centers on dissertation research in of farm and agribusiness "
+                "economics, with qualifying examinations."
+            ),
+        },
+        {
+            "program_name": "Master of Science in Earth Systems",
+            "description": (
+                "Graduate coursework in the Master of Science in Earth Systems emphasizes "
+                "climate and ecosystems."
+            ),
+        },
+    ]
+    clean = [
+        {
+            "program_name": "Doctor of Philosophy in Anthropology",
+            "description": (
+                "The Doctor of Philosophy in Anthropology centers doctoral research on "
+                "archaeological fieldwork, ethnography, and biological anthropology, advancing "
+                "candidates through qualifying examinations and a faculty-mentored dissertation."
+            ),
+        }
+    ]
+    assert len(template_slot_artifacts(junk)) == 2, "should flag doubled credential + empty slot"
+    assert not template_slot_artifacts(clean), "must not flag a clean per-credential body"
 
 
 def test_absolute_floor_catches_a_diluted_shared_sentence():

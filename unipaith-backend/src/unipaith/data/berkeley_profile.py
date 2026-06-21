@@ -1605,6 +1605,66 @@ for _p in PROGRAMS:
 
 _assign_descriptions(PROGRAMS)
 
+# Repair truncated CIP-rollup field labels left in a few program NAMES (the field portion
+# was cut to its first comma — "…in Ethnic", "…in Slavic" — by ``_display_field``). These
+# are real Berkeley degree designations. Applied AFTER ``_assign_descriptions`` (so field
+# resolution is untouched); the sibling bodies embed the program_name verbatim, so the old
+# label is also replaced inside each affected description.
+_NAME_OVERRIDES: dict[str, str] = {
+    "berkeley-ethnic-cultural-minority-gender-and-group-studies-bs": (
+        "Bachelor of Arts in Ethnic Studies"
+    ),
+    "berkeley-ethnic-cultural-minority-gender-and-group-studies-ms": (
+        "Master of Arts in Ethnic Studies"
+    ),
+    "berkeley-ethnic-cultural-minority-gender-and-group-studies-phd": (
+        "Doctor of Philosophy in Ethnic Studies"
+    ),
+    "berkeley-electrical-electronics-and-communications-engineering-ms": (
+        "Master of Science in Electrical Engineering"
+    ),
+    "berkeley-electrical-electronics-and-communications-engineering-phd": (
+        "Doctor of Philosophy in Electrical Engineering"
+    ),
+    "berkeley-electrical-electronics-and-communications-engineering-prof": (
+        "Master of Engineering in Electrical Engineering"
+    ),
+    "berkeley-linguistic-comparative-and-related-language-studies-and-services-bs": (
+        "Bachelor of Arts in Linguistics"
+    ),
+    "berkeley-linguistic-comparative-and-related-language-studies-and-services-ms": (
+        "Master of Arts in Linguistics"
+    ),
+    "berkeley-linguistic-comparative-and-related-language-studies-and-services-phd": (
+        "Doctor of Philosophy in Linguistics"
+    ),
+    "berkeley-east-asian-languages-literatures-and-linguistics-bs": (
+        "Bachelor of Arts in East Asian Languages and Cultures"
+    ),
+    "berkeley-east-asian-languages-literatures-and-linguistics-ms": (
+        "Master of Arts in East Asian Languages and Cultures"
+    ),
+    "berkeley-east-asian-languages-literatures-and-linguistics-phd": (
+        "Doctor of Philosophy in East Asian Languages and Cultures"
+    ),
+    "berkeley-slavic-baltic-and-albanian-languages-literatures-and-linguistics-bs": (
+        "Bachelor of Arts in Slavic Languages and Literatures"
+    ),
+    "berkeley-slavic-baltic-and-albanian-languages-literatures-and-linguistics-ms": (
+        "Master of Arts in Slavic Languages and Literatures"
+    ),
+    "berkeley-slavic-baltic-and-albanian-languages-literatures-and-linguistics-phd": (
+        "Doctor of Philosophy in Slavic Languages and Literatures"
+    ),
+}
+for _p in PROGRAMS:
+    _new_name = _NAME_OVERRIDES.get(_p["slug"])
+    if _new_name:
+        _old_name = _p["program_name"]
+        if _p.get("description"):
+            _p["description"] = _p["description"].replace(_old_name, _new_name)
+        _p["program_name"] = _new_name
+
 _catalog_errors = validate_catalog(PROGRAMS)
 _classification_stubs = sum(
     1 for p in PROGRAMS if _CLASSIFICATION_STUB_RE.match(p.get("description") or "")
@@ -1716,6 +1776,17 @@ _TUITION_GRAD_OOS = _TUITION_GRAD + 15102  # + nonresident supplemental tuition 
 _GRAD_COST_SRC = (
     "University of California Office of the President — 2024-25 Tuition and Fee Levels",
     "https://www.ucop.edu/operating-budget/_files/fees/202425/2024-25.pdf",
+)
+# Professional master's degrees that are typed ``masters`` but carry a program-specific
+# Professional Degree Supplemental Tuition (Graduate: Professional on the registrar fee
+# schedule), NOT the uniform Graduate: Academic rate — so they must NOT be priced at
+# ``_TUITION_GRAD`` (that underprices them). They follow the professional omission path.
+_PROFESSIONAL_MASTERS_SLUGS: frozenset[str] = frozenset(
+    {
+        "berkeley-architecture-ms",  # Master of Architecture (M.Arch.)
+        "berkeley-city-urban-community-and-regional-planning-ms",  # M.C.P.
+        "berkeley-landscape-architecture-ms",  # M.L.A.
+    }
 )
 _UNDERGRAD_COA = 45619
 _ROOM_BOARD = 23750
@@ -2904,7 +2975,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source_url": "https://grad.berkeley.edu/admissions/application-process/cost/",
                 "year": "2024-25",
             }
-        elif spec["degree_type"] in ("masters", "certificate"):
+        elif (
+            spec["degree_type"] in ("masters", "certificate")
+            and slug not in _PROFESSIONAL_MASTERS_SLUGS
+        ):
             p.tuition = _TUITION_GRAD
             p.cost_data = {
                 "tuition_usd": _TUITION_GRAD,
