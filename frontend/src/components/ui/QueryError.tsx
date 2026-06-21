@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-react'
+import { COPY } from '../../lib/copy'
 import Button from './Button'
 
 // QueryError — the canonical error state for a failed data fetch (Spec 78 §3).
@@ -12,14 +13,16 @@ interface QueryErrorProps {
   detail?: string
   /** Wire to `query.refetch()` / `mutation.mutate()`. Renders a Try-again control. */
   onRetry?: () => void
+  retryLabel?: string
   /** block = full-region (default) · inline = in-panel note · row = table cell. */
   variant?: 'block' | 'inline' | 'row'
 }
 
 export default function QueryError({
-  title = "We couldn't load this.",
-  detail,
+  title = COPY.errLoad,
+  detail = COPY.errRetry,
   onRetry,
+  retryLabel = COPY.errRetryAction,
   variant = 'block',
 }: QueryErrorProps) {
   if (variant === 'inline' || variant === 'row') {
@@ -39,7 +42,7 @@ export default function QueryError({
         </span>
         {onRetry && (
           <button onClick={onRetry} className="text-secondary font-medium hover:underline">
-            Try again
+            {retryLabel}
           </button>
         )}
       </div>
@@ -54,8 +57,8 @@ export default function QueryError({
       <h3 className="text-h3 text-foreground">{title}</h3>
       {detail && <p className="mt-1.5 text-sm text-muted-foreground max-w-[56ch]">{detail}</p>}
       {onRetry && (
-        <Button onClick={onRetry} variant="secondary" className="mt-5">
-          Try again
+        <Button onClick={onRetry} variant="secondary" className="mt-5" aria-label={retryLabel}>
+          {retryLabel}
         </Button>
       )}
     </div>

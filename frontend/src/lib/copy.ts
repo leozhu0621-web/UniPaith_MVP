@@ -5,7 +5,8 @@
  */
 export const COPY = {
   errLoad: "We couldn't load this.",
-  errRetry: 'Try again',
+  errRetry: 'Please try again.',
+  errRetryAction: 'Try again',
   errGeneric: "We couldn't do that. Please try again.",
   offline: "You're offline. We'll reconnect automatically.",
   emptyGeneric: 'Nothing here yet.',
