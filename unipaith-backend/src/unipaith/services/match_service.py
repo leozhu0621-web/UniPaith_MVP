@@ -800,6 +800,29 @@ class MatchService:
                 if canon:
                     sparse["degree_level_target"] = canon
 
+        # The student's ACTIVE broad strategy steers matching too (white-paper
+        # Stage-2): when no preference set the degree target, derive it from the
+        # strategy's target_degree, canonicalized via the SAME map. Gated +
+        # set-only-if-absent (a preference still wins), fail-soft like the rest of the
+        # overlay. This is the immediately-wireable strategy→match link — geographic/
+        # financial steering awaits the corresponding program-side signals — and
+        # turns the strategy from display-only into an actual ranking influence.
+        if "degree_level_target" not in sparse:
+            from unipaith.models.strategy import StudentStrategy
+
+            strat = await self.db.scalar(
+                select(StudentStrategy).where(
+                    StudentStrategy.student_id == student_id,
+                    StudentStrategy.status == "active",
+                )
+            )
+            if strat is not None and strat.target_degree:
+                from unipaith.services.program_features import target_education_level
+
+                canon = target_education_level(strat.target_degree)
+                if canon:
+                    sparse["degree_level_target"] = canon
+
         # Founder governance (2026-06-18) — the visa FEASIBILITY signal, in the
         # STUDENT's direction ONLY. A study-visa-needing student cannot attend a
         # program that cannot sponsor an international applicant; surfacing that

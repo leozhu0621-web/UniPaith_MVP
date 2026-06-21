@@ -262,6 +262,32 @@ async def test_student_preference_degree_target_overlaid_and_fires(db_session, m
 
 
 @pytest.mark.asyncio
+async def test_active_strategy_degree_target_steers_matching(db_session, mock_student_user):
+    """The student's ACTIVE broad strategy steers matching (white-paper Stage-2):
+    its target_degree projects into degree_level_target (canonicalized) when no
+    preference set one, so the strategy actually influences the s→p degree fit
+    instead of being display-only."""
+    from unipaith.models.strategy import StudentStrategy
+    from unipaith.services.match.params import DEFAULT_PARAMS
+    from unipaith.services.matching import _build_cpef_signals
+
+    profile = await ensure_profile(db_session, mock_student_user)
+    db_session.add(
+        StudentStrategy(student_id=profile.id, status="active", target_degree="PhD", version=1)
+    )
+    db_session.add(StudentFeatureVector(student_id=profile.id, sparse_features={}))
+    await db_session.flush()
+
+    feats = await MatchService(db_session)._student_features(profile.id)
+    assert feats is not None
+    assert feats.sparse["degree_level_target"] == "doctoral"  # PhD → doctoral
+
+    program = ProgramFeatures(program_id="p", sparse={"target_education_level": "doctoral"})
+    signals, _db, _w = _build_cpef_signals(feats, program, DEFAULT_PARAMS)
+    assert "degree_level" in {s["key"] for s in signals}
+
+
+@pytest.mark.asyncio
 async def test_student_preference_absent_degree_target_emits_no_degree_signal(
     db_session, mock_student_user
 ):
