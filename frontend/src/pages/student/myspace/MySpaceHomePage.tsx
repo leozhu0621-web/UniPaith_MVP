@@ -88,6 +88,20 @@ function sourceLine(item: { provenance?: { source: string; label: string; confid
   return `${source.label} · ${source.source.split('_').join(' ')}${confidence}`
 }
 
+function destinationRoute(item: { route?: string; cta_route?: string }) {
+  return item.cta_route ?? item.route ?? null
+}
+
+function moduleMetaLine(item: MySpaceModuleItem) {
+  const due = formatDate(item.due_at)
+  return [
+    ownerLabel(item.owner),
+    urgencyLabel[item.urgency],
+    due ? `due ${due}` : null,
+    sourceLine(item),
+  ].filter(Boolean).join(' · ')
+}
+
 function primarySource(item: { provenance?: MySpaceProvenance[] }) {
   return item.provenance?.[0] ?? null
 }
@@ -508,7 +522,7 @@ function FocusPanel({
               {task.blocker ? `${task.blocker}` : 'Missing'}{task.missing_field ? ` · ${task.missing_field}` : ''}
             </p>
           )}
-          <EvidenceDisclosure item={task} onReviewSource={(route) => onReviewSource(task, route)} />
+          <EvidenceDisclosure item={task} destination={destinationRoute(task)} onReviewSource={(route) => onReviewSource(task, route)} />
         </div>
         <div className="flex flex-wrap gap-2 lg:justify-end">
           <button
@@ -605,7 +619,7 @@ function ReadinessLedger({
               <p className="mt-2 text-xs text-muted-foreground">{row.detail}</p>
               <p className="mt-1 text-xs text-muted-foreground">{sourceLine(row)}</p>
             </button>
-            <EvidenceDisclosure item={row} onReviewSource={(route) => onReviewSource(row, route)} />
+            <EvidenceDisclosure item={row} destination={destinationRoute(row)} onReviewSource={(route) => onReviewSource(row, route)} />
           </div>
         ))}
       </div>
@@ -723,7 +737,7 @@ function TaskRow({
             {ownerLabel(task.owner)}{due ? ` · due ${due}` : ''} · {sourceLine(task)}
           </p>
         </button>
-        <EvidenceDisclosure item={task} onReviewSource={(route) => onReviewSource(task, route)} />
+        <EvidenceDisclosure item={task} destination={destinationRoute(task)} onReviewSource={(route) => onReviewSource(task, route)} />
       </div>
       {task.dismissible && (
         <div className="flex shrink-0 gap-1">
@@ -824,6 +838,7 @@ function ItemModule({
             <div
               key={item.key}
               className="flex w-full items-start gap-3 py-3"
+              data-item-key={item.key}
             >
               <span className="mt-0.5 shrink-0 text-muted-foreground">{icon}</span>
               <div className="min-w-0 flex-1">
@@ -834,11 +849,9 @@ function ItemModule({
                 >
                   <span className="block text-sm font-medium text-foreground">{item.title}</span>
                   <span className="mt-1 block text-xs text-muted-foreground">{item.description}</span>
-                  <span className="mt-1 block text-xs text-muted-foreground">
-                    {ownerLabel(item.owner)}{formatDate(item.due_at) ? ` · ${formatDate(item.due_at)}` : ''} · {sourceLine(item)}
-                  </span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{moduleMetaLine(item)}</span>
                 </button>
-                <EvidenceDisclosure item={item} onReviewSource={(route) => onReviewSource(item, route)} />
+                <EvidenceDisclosure item={item} destination={destinationRoute(item)} onReviewSource={(route) => onReviewSource(item, route)} />
               </div>
               {item.status && <Badge variant={urgencyTone[item.urgency]}>{item.status.split('_').join(' ')}</Badge>}
             </div>
@@ -895,7 +908,7 @@ function StrategyCard({
           <p className="text-sm font-medium text-foreground">{strategy.title}</p>
           <p className="mt-1 text-xs text-muted-foreground">{strategy.description}</p>
           <p className="mt-2 text-xs text-muted-foreground">{sourceLine(strategy)}</p>
-          <EvidenceDisclosure item={strategy} onReviewSource={(route) => onReviewSource(strategy, route)} />
+          <EvidenceDisclosure item={strategy} destination={destinationRoute(strategy)} onReviewSource={(route) => onReviewSource(strategy, route)} />
           <button
             type="button"
             onClick={() => onGo(strategy.route)}
@@ -919,9 +932,11 @@ function StrategyCard({
 
 function EvidenceDisclosure({
   item,
+  destination,
   onReviewSource,
 }: {
   item: { provenance?: MySpaceProvenance[] }
+  destination?: string | null
   onReviewSource: (route: string) => void
 }) {
   const source = primarySource(item)
@@ -940,6 +955,11 @@ function EvidenceDisclosure({
         <p className="mt-1">
           This row comes from the owning UniPaith module. Use the source record to correct the underlying data instead of dismissing the signal.
         </p>
+        {destination && (
+          <p className="mt-1 break-all">
+            Action opens {destination}.
+          </p>
+        )}
         {source.href && (
           <button
             type="button"
@@ -985,7 +1005,7 @@ function PrepCard({
               </div>
               <p className="mt-1 text-xs text-muted-foreground">{row.detail}</p>
             </button>
-            <EvidenceDisclosure item={row} onReviewSource={(route) => onReviewSource(row, route)} />
+            <EvidenceDisclosure item={row} destination={destinationRoute(row)} onReviewSource={(route) => onReviewSource(row, route)} />
           </div>
         ))}
       </div>

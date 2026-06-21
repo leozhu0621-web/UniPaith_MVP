@@ -210,6 +210,19 @@ describe('MySpaceHomePage', () => {
     })
   })
 
+  it('makes module urgency and destination routes inspectable', async () => {
+    renderHome()
+
+    const title = await screen.findByText('MS Data Science application')
+    const row = title.closest('[data-item-key="application:app-1"]')
+    expect(row).toBeTruthy()
+
+    expect(within(row as HTMLElement).getByText(/you · priority · due Jun 27 · in_progress · applications · 85% confidence/)).toBeTruthy()
+    fireEvent.click(within(row as HTMLElement).getByText('Why this appears'))
+
+    expect(within(row as HTMLElement).getByText(/Action opens \/s\/applications\/app-1\./)).toBeTruthy()
+  })
+
   it('persists dismiss state for computed tasks', async () => {
     renderHome()
 
@@ -396,6 +409,7 @@ describe('MySpaceHomePage', () => {
     expect(row).toBeTruthy()
 
     fireEvent.click(within(row as HTMLElement).getByText('Why this appears'))
+    expect(within(row as HTMLElement).getByText(/Action opens \/s\?intent=clarification/)).toBeTruthy()
     fireEvent.click(within(row as HTMLElement).getByRole('button', { name: 'Review source' }))
 
     expect(track).toHaveBeenCalledWith('readiness_explanation_opened', {
