@@ -9,7 +9,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.models import RefInstitution
+from unipaith.models import RefInstitution, RefMajor
 
 
 class ReferenceService:
@@ -40,3 +40,15 @@ class ReferenceService:
 
     async def get_institution(self, unitid: int) -> RefInstitution | None:
         return await self.db.scalar(select(RefInstitution).where(RefInstitution.unitid == unitid))
+
+    async def search_majors(
+        self, *, q: str | None = None, limit: int = 25, offset: int = 0
+    ) -> list[RefMajor]:
+        stmt = select(RefMajor)
+        if q:
+            stmt = stmt.where(RefMajor.title.ilike(f"%{q}%"))
+        stmt = stmt.order_by(RefMajor.cip_code).limit(min(limit, 100)).offset(offset)
+        return list((await self.db.scalars(stmt)).all())
+
+    async def get_major(self, cip_code: str) -> RefMajor | None:
+        return await self.db.scalar(select(RefMajor).where(RefMajor.cip_code == cip_code))
