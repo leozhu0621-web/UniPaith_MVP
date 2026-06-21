@@ -212,7 +212,11 @@ def test_no_identical_across_credential_levels():
 
 def test_catalog_is_anti_stub_clean():
     """Per-credential bodies — gold MIT = 0% frame-stripped shared body (REPAIR HIGH #5)."""
-    from unipaith.profile_standard.anti_stub import analyze, frame_stripped_shared_body, scrape_debris
+    from unipaith.profile_standard.anti_stub import (
+        analyze,
+        frame_stripped_shared_body,
+        scrape_debris,
+    )
 
     report = analyze(b.PROGRAMS)
     assert report.is_clean, f"anti-stub not clean: {report.summary()}"
@@ -228,7 +232,8 @@ def test_matcher_core_tuition_is_published_catalog_wide():
     """Tuition is institution-published — every program carries a cited rate (REPAIR #6)."""
     missing = [p["slug"] for p in b.PROGRAMS if b._program_tuition(p)[0] is None]
     assert not missing, f"programs missing published tuition: {missing[:8]}"
-    assert sum(1 for p in b.PROGRAMS if b._program_tuition(p)[0] is not None) >= len(b.PROGRAMS) * 0.95
+    covered = sum(1 for p in b.PROGRAMS if b._program_tuition(p)[0] is not None)
+    assert covered >= len(b.PROGRAMS) * 0.95
 
 
 def test_no_credential_combo_names_or_departments():
