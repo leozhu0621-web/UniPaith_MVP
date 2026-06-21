@@ -7,7 +7,7 @@
  * anatomy (Spec/02 §6) and the AI-surface conventions (§15): visible AI
  * attribution, confidence shown, graceful rule-based fallback, refresh.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Sparkles, X, RefreshCw } from 'lucide-react'
 
@@ -51,11 +51,20 @@ export default function RationalePopover({
 
   const studentCitations = resp?.cited_student_fields ?? []
   const decisionBrief = resp?.decision_brief ?? null
+  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     explainMut.mutate()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Modal behavior: move focus into the dialog on open; Escape closes it.
+  useEffect(() => {
+    panelRef.current?.focus()
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
 
   return (
     <div
@@ -63,13 +72,18 @@ export default function RationalePopover({
       onClick={onClose}
     >
       <div
-        className="bg-card text-foreground rounded-t-2xl sm:rounded-xl elev-raised max-w-lg w-full max-h-[85vh] overflow-y-auto animate-slide-up-fade sm:animate-scale-in"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rationale-title"
+        tabIndex={-1}
+        className="bg-card text-foreground rounded-t-2xl sm:rounded-xl elev-raised max-w-lg w-full max-h-[85vh] overflow-y-auto animate-slide-up-fade sm:animate-scale-in focus-visible:outline-none"
         onClick={e => e.stopPropagation()}
       >
         <header className="flex items-center justify-between gap-2 px-5 py-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Why this match</h3>
+            <h3 id="rationale-title" className="text-sm font-semibold text-foreground">Why this match</h3>
             <AIBadge />
           </div>
           <button aria-label="Close" onClick={onClose} className="text-muted-foreground hover:text-foreground">

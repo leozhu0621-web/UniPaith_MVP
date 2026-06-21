@@ -96,6 +96,8 @@ export default function NetPriceEstimator({ estimate, compact = false }: Props) 
       {/* Range bar — cobalt band within the neutral COA track, marker at expected */}
       <div className="mb-1">
         <div
+          role="img"
+          aria-label={`Estimated net price about ${formatCurrency(range.expected)} per year, likely ${formatCurrency(range.min)} to ${formatCurrency(range.max)}, against a sticker price of ${formatCurrency(coa)} per year`}
           className="relative h-3 rounded-pill bg-muted overflow-hidden"
           title={`Sticker ${formatCurrency(coa)}/yr`}
         >

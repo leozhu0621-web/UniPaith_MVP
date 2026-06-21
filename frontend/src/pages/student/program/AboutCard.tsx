@@ -83,7 +83,7 @@ export default function AboutCard({ description, institutionName, programName, w
     <Card pad={false} className="p-5">
       <div className="flex items-center gap-2 mb-3">
         <BookOpen size={14} className="text-secondary" />
-        <h3 className="font-semibold text-foreground">About This Program</h3>
+        <h3 className="font-semibold text-foreground">About this program</h3>
       </div>
 
       {keywords.length > 0 && (
