@@ -16,9 +16,6 @@ export const submitApplication = (appId: string) =>
 export const withdrawApplication = (appId: string) =>
   apiClient.delete(`/applications/me/${appId}`)
 
-export const respondToOffer = (appId: string, response: string, declineReason?: string) =>
-  apiClient.post(`/applications/me/${appId}/offer/respond`, { response, decline_reason: declineReason }).then(r => r.data)
-
 export const getChecklist = (appId: string) =>
   apiClient.get(`/students/me/applications/${appId}/checklist`).then(r => r.data)
 

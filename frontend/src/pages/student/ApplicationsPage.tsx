@@ -26,7 +26,7 @@ import { FileText, Star, ChevronRight, CalendarClock, CheckCircle2, ArrowRight, 
 import DecisionComparison from './apply/offer/DecisionComparison'
 import OfferComparisonTable from './apply/offer/OfferComparisonTable'
 import { hasPendingOfferResponse } from './apply/offer/offerFormat'
-import { daysUntil, deadlineTone, DEADLINE_TONE_CLASS } from '../../utils/deadline'
+import { daysUntil, deadlineTone, DEADLINE_TONE_CLASS, DeadlinePill } from '../../utils/deadline'
 import type { Application } from '../../types'
 
 // My Space › Applications views (Spec 2026-06-10 §5): All · Offers · Costs & aid.
@@ -143,6 +143,11 @@ function rowModel(app: Application): RowModel {
   let action: { label: string; href: string } | null
   if (hasOfferToRead) {
     action = { label: 'View offer', href: `/s/applications/${app.id}?tab=offer` }
+  } else if (app.status === 'interview') {
+    // Interview is surfaced as a high-priority "Prepare for your interview" —
+    // deep-link to the Interviews tab where InterviewRespondPanel lives, not the
+    // checklist the bare detail route defaults to (Applications review 2026-06-21).
+    action = { label: 'Prepare', href: `/s/applications/${app.id}?tab=interviews` }
   } else if (bucket === 'ready') {
     action = { label: 'Submit', href: `/s/applications/${app.id}?tab=checklist` }
   } else if (bucket === 'in_progress') {
@@ -498,6 +503,8 @@ export default function ApplicationsPage() {
           <button
             key={b}
             onClick={() => setStatusFilter(statusFilter === b ? 'all' : b)}
+            aria-pressed={statusFilter === b}
+            aria-label={`Filter by ${BUCKET_LABELS[b]} (${counts[b]})${statusFilter === b ? ', active' : ''}`}
             className={`rounded-xl border px-3 py-2.5 text-left transition-colors ${
               statusFilter === b
                 ? 'border-secondary bg-secondary/5'
@@ -647,9 +654,18 @@ export default function ApplicationsPage() {
                       {isDraft && (
                         <span className="text-xs text-muted-foreground">{pct}% ready</span>
                       )}
-                      {d != null && d >= 0 && d <= 30 && isDraft && (
-                        <span className={`text-xs font-medium inline-flex items-center gap-1 ${DEADLINE_TONE_CLASS[deadlineTone(d)]}`}>
-                          <CalendarClock size={11} />{d === 0 ? 'Due today' : `${d}d left`}
+                      {/* Real deadline DATE + a tight countdown on every still-open
+                          (draft) app — not just a 30-day relative pill — so a
+                          student can plan the season (Applications review 2026-06-21). */}
+                      {isDraft && app.program?.application_deadline && (
+                        <span className="inline-flex items-center gap-1">
+                          <CalendarClock size={11} className={DEADLINE_TONE_CLASS[deadlineTone(d)]} />
+                          <DeadlinePill date={app.program.application_deadline} days={d} />
+                          {d != null && d >= 0 && d <= 14 && (
+                            <span className={`text-xs ${DEADLINE_TONE_CLASS[deadlineTone(d)]}`}>
+                              ({d === 0 ? 'today' : `${d}d`})
+                            </span>
+                          )}
                         </span>
                       )}
                       {pendingOffer && offerDays != null && offerDays >= 0 && (

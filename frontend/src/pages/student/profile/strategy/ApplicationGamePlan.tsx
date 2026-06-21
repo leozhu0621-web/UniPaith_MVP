@@ -12,6 +12,7 @@ import { ArrowRight, Target as TargetIcon, ShieldCheck, Flame, CalendarClock } f
 import Card from '../../../../components/ui/Card'
 import { listMyApplications } from '../../../../api/applications'
 import { listSaved } from '../../../../api/saved-lists'
+import { daysUntil } from '../../../../utils/deadline'
 import type { Application } from '../../../../types'
 
 type Band = 'reach' | 'target' | 'safer'
@@ -24,11 +25,6 @@ function bandOf(app: Application): Band | null {
     case 'high': return 'safer'
     default: return null
   }
-}
-
-function daysUntil(iso?: string | null): number | null {
-  if (!iso) return null
-  return Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000)
 }
 
 export default function ApplicationGamePlan() {
