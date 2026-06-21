@@ -30,6 +30,7 @@ import Select from '../../components/ui/Select'
 import EmptyState from '../../components/ui/EmptyState'
 import QueryError from '../../components/ui/QueryError'
 import ApplicationSeason from './calendar/ApplicationSeason'
+import { DEADLINE_TYPES, itemDay } from './calendar/itemDay'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 
 type ViewMode = 'month' | 'week' | 'agenda'
@@ -89,11 +90,6 @@ const WEEK_GRID_END_HOUR = 21 // 9 PM boundary
 const WEEK_HOUR_PX = 44
 const WEEK_GRID_HEIGHT = (WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR) * WEEK_HOUR_PX
 const WEEK_GRID_MINUTES = (WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR) * 60
-const DEADLINE_TYPES: CalendarItemType[] = [
-  'submission_deadline', 'document_deadline', 'recommendation_deadline',
-  'interview_submission_deadline', 'deposit_deadline',
-]
-
 const isOverdue = (i: CalendarItem) => i.status === 'overdue'
 const isDone = (i: CalendarItem) => i.status === 'completed' || i.status === 'cancelled'
 
@@ -238,7 +234,7 @@ export default function CalendarPage() {
   const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 })
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
 
-  const itemsOn = (day: Date) => filtered.filter(i => isSameDay(parseISO(i.start_at), day))
+  const itemsOn = (day: Date) => filtered.filter(i => isSameDay(itemDay(i), day))
 
   return (
     <PageContainer>
@@ -419,7 +415,9 @@ export default function CalendarPage() {
 // ── Week hour grid (Spec 16 §3: 7am–9pm) ─────────────────────────────────
 function weekItemLayout(item: CalendarItem, day: Date): { top: number; height: number } | 'allday' | null {
   const start = parseISO(item.start_at)
-  if (!isSameDay(start, day)) return null
+  // Match the day by the timezone-stable item day (date-only deadlines bucket by
+  // their UTC date), not the raw parsed instant (Calendar review #1).
+  if (!isSameDay(itemDay(item), day)) return null
 
   const gridStart = setMinutes(setHours(day, WEEK_GRID_START_HOUR), 0)
   const defaultEnd = item.end_at
@@ -567,7 +565,7 @@ function AgendaView({ items, hasActiveFilter, onClearFilters, onOpen, onDiscover
   const grouped = useMemo(() => {
     const g: Record<string, CalendarItem[]> = {}
     items.forEach(i => {
-      const key = format(parseISO(i.start_at), 'EEEE, MMMM d, yyyy')
+      const key = format(itemDay(i), 'EEEE, MMMM d, yyyy')
       ;(g[key] ||= []).push(i)
     })
     return g
