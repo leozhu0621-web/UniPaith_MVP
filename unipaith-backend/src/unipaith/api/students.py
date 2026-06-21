@@ -1148,6 +1148,28 @@ def _humanize_fitness_drivers(breakdown: dict, *, top_n: int = 3) -> list[str]:
     return labels
 
 
+def _band_fitness(match: MatchResult) -> float:
+    """The fitness to BAND on (reach/target/safer + probability bands): the
+    student-direction CPEF fit ``s2p_value`` when present, else the persisted
+    ``fitness_score``.
+
+    The persisted ``fitness_score`` is the blended rank key M = sp^α·ps^(1-α),
+    which is alpha-inflated above the student's own fit for no-preference
+    programs (ps=1 ⇒ M = sp^α > sp). M is the right RANKING key, but the band
+    answers "what are MY odds", so it should reflect the student's own fit.
+    """
+    bd = match.fitness_breakdown or {}
+    s2p = bd.get("s2p_value")
+    return float(s2p) if s2p is not None else float(match.fitness_score)
+
+
+def _band_readiness(match: MatchResult) -> float | None:
+    """Student-side confidence (c_student) for the probability-band VISIBILITY
+    gate, read from the CPEF confidence breakdown. None for legacy/non-cpef rows
+    (the band layer then falls back to the persisted product confidence)."""
+    return (match.confidence_breakdown or {}).get("c_student")
+
+
 def _strip_numbers(obj: object) -> object:
     """Recursively remove every numeric scalar from a breakdown so the student
     never sees a number (AI-Structure-3 §14). Qualitative driver names, boolean
@@ -1218,14 +1240,19 @@ def _enrich_match_for_student(
     if institution_name is not None:
         resp.institution_name = institution_name
 
-    fitness = float(match.fitness_score)
+    # Band on the student-direction fit (s2p_value), not the alpha-inflated blend
+    # M; gate band VISIBILITY on c_student, keep band WIDTH on the product.
+    fitness = _band_fitness(match)
     confidence = float(match.confidence_score)
     resp.band_label = band_for_acceptance(
         fitness=fitness, acceptance_rate=acceptance_rate, weight_ranking=weight_ranking
     )
     if bands_enabled:
         resp.probability_bands = estimate_probability_bands(
-            acceptance_rate=acceptance_rate, fitness=fitness, confidence=confidence
+            acceptance_rate=acceptance_rate,
+            fitness=fitness,
+            confidence=confidence,
+            readiness=_band_readiness(match),
         )
     return resp
 
@@ -1418,9 +1445,12 @@ async def get_match_probability(
         if program is not None and program.acceptance_rate is not None
         else None
     )
-    fitness = float(match.fitness_score)
+    # Band on the student-direction fit (s2p_value), not the alpha-inflated blend
+    # M; gate readiness on c_student (band WIDTH still uses the product below).
+    fitness = _band_fitness(match)
     confidence = float(match.confidence_score)
-    ready = is_match_ready(confidence)
+    readiness = _band_readiness(match)
+    ready = is_match_ready(readiness if readiness is not None else confidence)
 
     bands: dict | None = None
     reason: str | None = None
@@ -1428,7 +1458,7 @@ async def get_match_probability(
         reason = "disabled"
     else:
         bands = estimate_probability_bands(
-            acceptance_rate=ar, fitness=fitness, confidence=confidence
+            acceptance_rate=ar, fitness=fitness, confidence=confidence, readiness=readiness
         )
         if bands is None:
             reason = "no_history" if ar is None else "not_match_ready"

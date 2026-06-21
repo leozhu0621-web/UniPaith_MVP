@@ -56,6 +56,7 @@ def estimate_probability_bands(
     acceptance_rate: float | None,
     fitness: float,
     confidence: float,
+    readiness: float | None = None,
     offers_aid: bool | None = None,
 ) -> dict | None:
     """Return the probability-band dict for one (student, program) pair, or
@@ -88,7 +89,15 @@ def estimate_probability_bands(
         isn't match-ready (Spec 09 §4A rule).
     """
     # Spec 09 §4A rule: need BOTH historical signal AND a match-ready student.
-    if acceptance_rate is None or not is_match_ready(confidence):
+    # VISIBILITY gates on `readiness` — the student-side confidence ("do we know
+    # the STUDENT well enough to estimate her odds") — when provided. The CPEF
+    # product confidence is a two-sided c_student×c_program (~0.24 for a solid
+    # profile against an unclaimed program), so gating visibility on it would
+    # silently hide bands for most matches whenever the program's data is thin;
+    # that program-data uncertainty belongs in band WIDTH (below), not visibility.
+    # `readiness=None` falls back to the product confidence (back-compat).
+    readiness_conf = confidence if readiness is None else readiness
+    if acceptance_rate is None or not is_match_ready(readiness_conf):
         return None
 
     fitness = _clamp(float(fitness), 0.0, 1.0)

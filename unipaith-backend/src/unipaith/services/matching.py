@@ -840,12 +840,22 @@ def _score_cpef(
     # breakdown keeps the full s→p detail plus the p→s direction and M.
     m, bd = mutual_match(student, program, params=params)
     conf = bd.get("mean_rho", 0.0)
+    # Expose the student-side confidence so the probability-band layer can gate
+    # VISIBILITY on "do we know the STUDENT well enough to estimate her odds"
+    # (c_student) rather than the program-authority-diluted product (mean_rho).
+    # Band WIDTH still uses the product. mean_rho stays the persisted confidence.
+    c_student = _student_side_confidence(student)
     return Score(
         fitness=Decimal(str(round(m, 4))),
         confidence=Decimal(str(round(conf, 4))),
         eliminated=False,  # nothing is hard-dropped; vetoed programs sink instead
         fitness_breakdown=bd,
-        confidence_breakdown={"mean_rho": conf, "model": "cpef", "m": round(m, 4)},
+        confidence_breakdown={
+            "mean_rho": conf,
+            "c_student": round(c_student, 4),
+            "model": "cpef",
+            "m": round(m, 4),
+        },
     )
 
 
