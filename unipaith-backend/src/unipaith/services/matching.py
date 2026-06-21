@@ -715,11 +715,18 @@ def cpef_program_to_student(
     s, pr = student.sparse, program.sparse
 
     fits_present: list[float] = []
-    # academic strength: program's preferred minimum GPA vs the student's GPA
+    # academic strength: program's preferred minimum GPA vs the student's GPA.
+    # ``pref_min_gpa`` is an admit FLOOR, not a cohort mean — a student AT the floor
+    # is a qualified applicant and should read ~0.85, not the mean-centered 0.5. We
+    # shift the higher-is-better center down by one sigma (0.3) so the floor is the
+    # high-pass point: at-floor → ~0.85, comfortably above → ~1.0, below → decays.
+    gpa_sigma = 0.3
     pref_gpa = pr.get("pref_min_gpa")
     s_gpa = s.get("gpa")
     if pref_gpa is not None and s_gpa is not None:
-        fits_present.append(_fits.fit_numeric_higher(float(s_gpa), float(pref_gpa), 0.3))
+        fits_present.append(
+            _fits.fit_numeric_higher(float(s_gpa), float(pref_gpa) - gpa_sigma, gpa_sigma)
+        )
     # field background: program's preferred fields vs the student's field. Graded
     # via the curated similarity table (Spec 3 §3 categorical), so a related-field
     # applicant (statistics vs a DS program's preferred data_science) reads as a
@@ -733,14 +740,18 @@ def cpef_program_to_student(
     s_lvl = s.get("education_level")
     if pref_levels and s_lvl:
         fits_present.append(1.0 if s_lvl in pref_levels else 0.0)
+    # career arcs / values: GRADE by program-preference coverage (how many of the
+    # arcs/values the program prefers does this applicant carry), not a hard binary
+    # any-overlap=1.0 — a 1-of-4 applicant should not read identical to a 4-of-4
+    # one. Mirrors the s→p `_tag_coverage`, normalized by the PROGRAM's pref count.
     pref_careers = set(pr.get("pref_career_arcs") or [])
     s_careers = set(s.get("career_arcs") or [])
     if pref_careers and s_careers:
-        fits_present.append(1.0 if pref_careers & s_careers else 0.0)
+        fits_present.append(len(pref_careers & s_careers) / len(pref_careers))
     pref_values = set(pr.get("pref_values") or [])
     s_values = set(s.get("values") or [])
     if pref_values and s_values:
-        fits_present.append(1.0 if pref_values & s_values else 0.0)
+        fits_present.append(len(pref_values & s_values) / len(pref_values))
     pref_style = set(pr.get("pref_learning_working_style") or [])
     social = s.get("social_prefs") or {}
     if pref_style and isinstance(social, dict):
