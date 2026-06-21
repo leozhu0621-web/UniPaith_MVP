@@ -348,14 +348,23 @@ interface DropdownProps {
 function FilterDropdown({ label, active, options, selected, onToggle }: DropdownProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!open) return
     const onClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('mousedown', onClick)
-    return () => document.removeEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onKey)
+      // Return focus to the trigger if it would otherwise be lost.
+      const ae = document.activeElement
+      if (!ae || ae === document.body || ref.current?.contains(ae)) triggerRef.current?.focus()
+    }
   }, [open])
 
   const hasActive = active > 0
@@ -363,7 +372,10 @@ function FilterDropdown({ label, active, options, selected, onToggle }: Dropdown
   return (
     <div className="relative" ref={ref}>
       <button
+        ref={triggerRef}
         type="button"
+        aria-expanded={open}
+        aria-haspopup="listbox"
         onClick={() => setOpen(o => !o)}
         className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[13px] font-medium rounded-full border transition-colors ${
           hasActive
@@ -381,17 +393,24 @@ function FilterDropdown({ label, active, options, selected, onToggle }: Dropdown
       </button>
 
       {open && (
-        <div className="absolute z-40 top-full left-0 mt-1 min-w-[200px] max-h-80 overflow-y-auto rounded-lg border border-border bg-card elev-raised">
+        <div
+          role="listbox"
+          aria-multiselectable="true"
+          aria-label={`${label} options`}
+          className="absolute z-40 top-full left-0 mt-1 min-w-[200px] max-h-80 overflow-y-auto rounded-lg border border-border bg-card elev-raised"
+        >
           {options.length === 0 ? (
             <p className="text-[11px] text-foreground/60 italic px-3 py-2">No options available</p>
           ) : (
-            <ul className="py-1">
+            <ul className="py-1" role="presentation">
               {options.map(opt => {
                 const isSelected = selected.includes(opt.value)
                 return (
                   <li key={opt.value}>
                     <button
                       type="button"
+                      role="option"
+                      aria-selected={isSelected}
                       onClick={() => onToggle(opt.value)}
                       className={`w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-left transition-colors ${
                         isSelected
