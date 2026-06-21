@@ -1,0 +1,832 @@
+{"soc_code": "11-1011", "title": "Chief executives", "median_salary": 206420, "employment": 309400, "projected_growth_pct": 4.3, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-1021", "title": "General and operations managers", "median_salary": 102950, "employment": 3712900, "projected_growth_pct": 4.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-1031", "title": "Legislators", "median_salary": 44810, "employment": 27700, "projected_growth_pct": 3.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-2011", "title": "Advertising and promotions managers", "median_salary": 126960, "employment": 27000, "projected_growth_pct": -2.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-2021", "title": "Marketing managers", "median_salary": 161030, "employment": 407000, "projected_growth_pct": 6.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-2022", "title": "Sales managers", "median_salary": 138060, "employment": 619500, "projected_growth_pct": 4.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-2032", "title": "Public relations managers", "median_salary": 138520, "employment": 83200, "projected_growth_pct": 5.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-2033", "title": "Fundraising managers", "median_salary": 123480, "employment": 45700, "projected_growth_pct": 4.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-3012", "title": "Administrative services managers", "median_salary": 108390, "employment": 271200, "projected_growth_pct": 4.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-3013", "title": "Facilities managers", "median_salary": 104690, "employment": 151400, "projected_growth_pct": 3.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-3021", "title": "Computer and information systems managers", "median_salary": 171200, "employment": 667100, "projected_growth_pct": 15.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-3031", "title": "Financial managers", "median_salary": 161700, "employment": 868600, "projected_growth_pct": 14.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-3051", "title": "Industrial production managers", "median_salary": 121440, "employment": 241900, "projected_growth_pct": 1.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-3061", "title": "Purchasing managers", "median_salary": 139510, "employment": 83500, "projected_growth_pct": 3.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-3071", "title": "Transportation, storage, and distribution managers", "median_salary": 102010, "employment": 216700, "projected_growth_pct": 6.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "11-3111", "title": "Compensation and benefits managers", "median_salary": 140360, "employment": 20900, "projected_growth_pct": 0.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-3121", "title": "Human resources managers", "median_salary": 140030, "employment": 221900, "projected_growth_pct": 5.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-3131", "title": "Training and development managers", "median_salary": 127090, "employment": 46400, "projected_growth_pct": 5.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-9013", "title": "Farmers, ranchers, and other agricultural managers", "median_salary": 87980, "employment": 836100, "projected_growth_pct": -1.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "11-9021", "title": "Construction managers", "median_salary": 106980, "employment": 550300, "projected_growth_pct": 8.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-9031", "title": "Education and childcare administrators, preschool and daycare", "median_salary": 56270, "employment": 90200, "projected_growth_pct": -2.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-9032", "title": "Education administrators, kindergarten through secondary", "median_salary": 104070, "employment": 333300, "projected_growth_pct": -1.5, "education_typical": "Master's degree"}
+{"soc_code": "11-9033", "title": "Education administrators, postsecondary", "median_salary": 103960, "employment": 226600, "projected_growth_pct": 1.7, "education_typical": "Master's degree"}
+{"soc_code": "11-9039", "title": "Education administrators, all other", "median_salary": 89040, "employment": 60200, "projected_growth_pct": 2.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-9041", "title": "Architectural and engineering managers", "median_salary": 167740, "employment": 212500, "projected_growth_pct": 3.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-9051", "title": "Food service managers", "median_salary": 65310, "employment": 352800, "projected_growth_pct": 6.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "11-9071", "title": "Gambling managers", "median_salary": 85580, "employment": 5100, "projected_growth_pct": 1.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "11-9072", "title": "Entertainment and recreation managers, except gambling", "median_salary": 77180, "employment": 43200, "projected_growth_pct": 7.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-9081", "title": "Lodging managers", "median_salary": 68130, "employment": 52000, "projected_growth_pct": 3.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "11-9111", "title": "Medical and health services managers", "median_salary": 117960, "employment": 616200, "projected_growth_pct": 23.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-9121", "title": "Natural sciences managers", "median_salary": 161180, "employment": 104300, "projected_growth_pct": 3.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-9131", "title": "Postmasters and mail superintendents", "median_salary": 92730, "employment": 13100, "projected_growth_pct": -3.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "11-9141", "title": "Property, real estate, and community association managers", "median_salary": 66700, "employment": 466100, "projected_growth_pct": 3.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "11-9151", "title": "Social and community service managers", "median_salary": 78240, "employment": 219800, "projected_growth_pct": 6.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-9161", "title": "Emergency management directors", "median_salary": 86130, "employment": 13200, "projected_growth_pct": 3.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "11-9171", "title": "Funeral home managers", "median_salary": 76830, "employment": 32100, "projected_growth_pct": 4.1, "education_typical": "Associate's degree"}
+{"soc_code": "11-9179", "title": "Personal service managers, all other", "median_salary": 61340, "employment": 25100, "projected_growth_pct": 6.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "11-9199", "title": "Managers, all other", "median_salary": 136550, "employment": 1333700, "projected_growth_pct": 4.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1011", "title": "Agents and business managers of artists, performers, and athletes", "median_salary": 96310, "employment": 21400, "projected_growth_pct": 8.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1020", "title": "Buyers and purchasing agents", "median_salary": 75650, "employment": 522200, "projected_growth_pct": 5.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1031", "title": "Claims adjusters, examiners, and investigators", "median_salary": 76790, "employment": 356100, "projected_growth_pct": -5.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "13-1032", "title": "Insurance appraisers, auto damage", "median_salary": 76650, "employment": 9200, "projected_growth_pct": -8.2, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "13-1041", "title": "Compliance officers", "median_salary": 78420, "employment": 418000, "projected_growth_pct": 3.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1051", "title": "Cost estimators", "median_salary": 77070, "employment": 221400, "projected_growth_pct": -4.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1071", "title": "Human resources specialists", "median_salary": 72910, "employment": 944300, "projected_growth_pct": 6.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1074", "title": "Farm labor contractors", "median_salary": 48690, "employment": 3900, "projected_growth_pct": 6.0, "education_typical": "No formal educational credential"}
+{"soc_code": "13-1075", "title": "Labor relations specialists", "median_salary": 93500, "employment": 65400, "projected_growth_pct": -0.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1081", "title": "Logisticians", "median_salary": 80880, "employment": 241000, "projected_growth_pct": 16.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1082", "title": "Project management specialists", "median_salary": 100750, "employment": 1046300, "projected_growth_pct": 5.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1111", "title": "Management analysts", "median_salary": 101190, "employment": 1075100, "projected_growth_pct": 8.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1121", "title": "Meeting, convention, and event planners", "median_salary": 59440, "employment": 155800, "projected_growth_pct": 4.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1131", "title": "Fundraisers", "median_salary": 66490, "employment": 134400, "projected_growth_pct": 4.3, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1141", "title": "Compensation, benefits, and job analysis specialists", "median_salary": 77020, "employment": 107000, "projected_growth_pct": 5.3, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1151", "title": "Training and development specialists", "median_salary": 65850, "employment": 452300, "projected_growth_pct": 10.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1161", "title": "Market research analysts and marketing specialists", "median_salary": 76950, "employment": 941700, "projected_growth_pct": 6.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-1199", "title": "Business operations specialists, all other", "median_salary": 81270, "employment": 1205700, "projected_growth_pct": 3.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-2011", "title": "Accountants and auditors", "median_salary": 81680, "employment": 1579800, "projected_growth_pct": 4.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-2020", "title": "Property appraisers and assessors", "median_salary": 65420, "employment": 77300, "projected_growth_pct": 3.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-2031", "title": "Budget analysts", "median_salary": 87930, "employment": 50400, "projected_growth_pct": 1.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-2041", "title": "Credit analysts", "median_salary": 80970, "employment": 67800, "projected_growth_pct": -4.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-2051", "title": "Financial and investment analysts", "median_salary": 101350, "employment": 368500, "projected_growth_pct": 5.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-2052", "title": "Personal financial advisors", "median_salary": 102140, "employment": 326000, "projected_growth_pct": 9.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-2053", "title": "Insurance underwriters", "median_salary": 79880, "employment": 127000, "projected_growth_pct": -2.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-2054", "title": "Financial risk specialists", "median_salary": 106000, "employment": 60500, "projected_growth_pct": 6.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-2061", "title": "Financial examiners", "median_salary": 90400, "employment": 65099, "projected_growth_pct": 18.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-2071", "title": "Credit counselors", "median_salary": 50480, "employment": 31800, "projected_growth_pct": 3.3, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-2072", "title": "Loan officers", "median_salary": 74180, "employment": 301400, "projected_growth_pct": 1.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-2081", "title": "Tax examiners and collectors, and revenue agents", "median_salary": 59740, "employment": 57600, "projected_growth_pct": -1.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "13-2082", "title": "Tax preparers", "median_salary": 50560, "employment": 90600, "projected_growth_pct": 4.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "13-2099", "title": "Financial specialists, all other", "median_salary": 80190, "employment": 137100, "projected_growth_pct": 3.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-1211", "title": "Computer systems analysts", "median_salary": 103790, "employment": 521100, "projected_growth_pct": 8.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-1212", "title": "Information security analysts", "median_salary": 124910, "employment": 182800, "projected_growth_pct": 28.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-1221", "title": "Computer and information research scientists", "median_salary": 140910, "employment": 40300, "projected_growth_pct": 19.7, "education_typical": "Master's degree"}
+{"soc_code": "15-1231", "title": "Computer network support specialists", "median_salary": 73340, "employment": 152700, "projected_growth_pct": 1.8, "education_typical": "Associate's degree"}
+{"soc_code": "15-1232", "title": "Computer user support specialists", "median_salary": 60340, "employment": 729500, "projected_growth_pct": -3.7, "education_typical": "Some college, no degree"}
+{"soc_code": "15-1241", "title": "Computer network architects", "median_salary": 130390, "employment": 179200, "projected_growth_pct": 11.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-1242", "title": "Database administrators", "median_salary": 104620, "employment": 78000, "projected_growth_pct": -0.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-1243", "title": "Database architects", "median_salary": 135980, "employment": 66900, "projected_growth_pct": 8.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-1244", "title": "Network and computer systems administrators", "median_salary": 96800, "employment": 331500, "projected_growth_pct": -4.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-1251", "title": "Computer programmers", "median_salary": 98670, "employment": 121200, "projected_growth_pct": -6.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-1252", "title": "Software developers", "median_salary": 133080, "employment": 1693800, "projected_growth_pct": 15.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-1253", "title": "Software quality assurance analysts and testers", "median_salary": 102610, "employment": 201700, "projected_growth_pct": 10.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-1254", "title": "Web developers", "median_salary": 90930, "employment": 86000, "projected_growth_pct": 7.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-1255", "title": "Web and digital interface designers", "median_salary": 98090, "employment": 128900, "projected_growth_pct": 7.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-1299", "title": "Computer occupations, all other", "median_salary": 108970, "employment": 472000, "projected_growth_pct": 8.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-2011", "title": "Actuaries", "median_salary": 125770, "employment": 33600, "projected_growth_pct": 21.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-2021", "title": "Mathematicians", "median_salary": 121680, "employment": 2400, "projected_growth_pct": -0.7, "education_typical": "Master's degree"}
+{"soc_code": "15-2031", "title": "Operations research analysts", "median_salary": 91290, "employment": 112100, "projected_growth_pct": 21.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-2041", "title": "Statisticians", "median_salary": 103300, "employment": 32200, "projected_growth_pct": 8.5, "education_typical": "Master's degree"}
+{"soc_code": "15-2051", "title": "Data scientists", "median_salary": 112590, "employment": 245900, "projected_growth_pct": 33.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "15-2099", "title": "Mathematical science occupations, all other", "median_salary": 71490, "employment": 5000, "projected_growth_pct": 4.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-1011", "title": "Architects, except landscape and naval", "median_salary": 96690, "employment": 123600, "projected_growth_pct": 3.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-1012", "title": "Landscape architects", "median_salary": 79660, "employment": 21800, "projected_growth_pct": 3.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-1021", "title": "Cartographers and photogrammetrists", "median_salary": 78380, "employment": 13400, "projected_growth_pct": 6.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-1022", "title": "Surveyors", "median_salary": 72740, "employment": 56100, "projected_growth_pct": 4.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2011", "title": "Aerospace engineers", "median_salary": 134830, "employment": 71600, "projected_growth_pct": 6.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2021", "title": "Agricultural engineers", "median_salary": 84630, "employment": 1700, "projected_growth_pct": 5.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2031", "title": "Bioengineers and biomedical engineers", "median_salary": 106950, "employment": 22200, "projected_growth_pct": 5.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2041", "title": "Chemical engineers", "median_salary": 121860, "employment": 21600, "projected_growth_pct": 2.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2051", "title": "Civil engineers", "median_salary": 99590, "employment": 368900, "projected_growth_pct": 5.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2061", "title": "Computer hardware engineers", "median_salary": 155020, "employment": 76800, "projected_growth_pct": 7.3, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2071", "title": "Electrical engineers", "median_salary": 111910, "employment": 192000, "projected_growth_pct": 7.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2072", "title": "Electronics engineers, except computer", "median_salary": 127590, "employment": 95900, "projected_growth_pct": 6.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2081", "title": "Environmental engineers", "median_salary": 104170, "employment": 39400, "projected_growth_pct": 3.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2111", "title": "Health and safety engineers, except mining safety engineers and inspectors", "median_salary": 109660, "employment": 23800, "projected_growth_pct": 4.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2112", "title": "Industrial engineers", "median_salary": 101140, "employment": 351100, "projected_growth_pct": 11.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2121", "title": "Marine engineers and naval architects", "median_salary": 105670, "employment": 8500, "projected_growth_pct": 5.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2131", "title": "Materials engineers", "median_salary": 108310, "employment": 23000, "projected_growth_pct": 5.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2141", "title": "Mechanical engineers", "median_salary": 102320, "employment": 293100, "projected_growth_pct": 9.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2151", "title": "Mining and geological engineers, including mining safety engineers", "median_salary": 101020, "employment": 7000, "projected_growth_pct": 0.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2161", "title": "Nuclear engineers", "median_salary": 127520, "employment": 15400, "projected_growth_pct": -1.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2171", "title": "Petroleum engineers", "median_salary": 141280, "employment": 19600, "projected_growth_pct": 1.3, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-2199", "title": "Engineers, all other", "median_salary": 117750, "employment": 158800, "projected_growth_pct": 2.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "17-3011", "title": "Architectural and civil drafters", "median_salary": 64280, "employment": 110500, "projected_growth_pct": 4.1, "education_typical": "Associate's degree"}
+{"soc_code": "17-3012", "title": "Electrical and electronics drafters", "median_salary": 73720, "employment": 21600, "projected_growth_pct": -5.6, "education_typical": "Associate's degree"}
+{"soc_code": "17-3013", "title": "Mechanical drafters", "median_salary": 68510, "employment": 42900, "projected_growth_pct": -6.5, "education_typical": "Associate's degree"}
+{"soc_code": "17-3019", "title": "Drafters, all other", "median_salary": 62010, "employment": 17100, "projected_growth_pct": -6.9, "education_typical": "Associate's degree"}
+{"soc_code": "17-3021", "title": "Aerospace engineering and operations technologists and technicians", "median_salary": 79830, "employment": 9300, "projected_growth_pct": 8.1, "education_typical": "Associate's degree"}
+{"soc_code": "17-3022", "title": "Civil engineering technologists and technicians", "median_salary": 64200, "employment": 64900, "projected_growth_pct": 2.1, "education_typical": "Associate's degree"}
+{"soc_code": "17-3023", "title": "Electrical and electronic engineering technologists and technicians", "median_salary": 77180, "employment": 93700, "projected_growth_pct": 0.6, "education_typical": "Associate's degree"}
+{"soc_code": "17-3024", "title": "Electro-mechanical and mechatronics technologists and technicians", "median_salary": 70760, "employment": 15000, "projected_growth_pct": 1.1, "education_typical": "Associate's degree"}
+{"soc_code": "17-3025", "title": "Environmental engineering technologists and technicians", "median_salary": 58890, "employment": 12900, "projected_growth_pct": 1.2, "education_typical": "Associate's degree"}
+{"soc_code": "17-3026", "title": "Industrial engineering technologists and technicians", "median_salary": 64790, "employment": 74600, "projected_growth_pct": 1.7, "education_typical": "Associate's degree"}
+{"soc_code": "17-3027", "title": "Mechanical engineering technologists and technicians", "median_salary": 68730, "employment": 38300, "projected_growth_pct": 0.0, "education_typical": "Associate's degree"}
+{"soc_code": "17-3028", "title": "Calibration technologists and technicians", "median_salary": 65040, "employment": 15800, "projected_growth_pct": 4.7, "education_typical": "Associate's degree"}
+{"soc_code": "17-3029", "title": "Engineering technologists and technicians, except drafters, all other", "median_salary": 77390, "employment": 67300, "projected_growth_pct": 1.5, "education_typical": "Associate's degree"}
+{"soc_code": "17-3031", "title": "Surveying and mapping technicians", "median_salary": 51940, "employment": 59400, "projected_growth_pct": 4.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "19-1011", "title": "Animal scientists", "median_salary": 79120, "employment": 2800, "projected_growth_pct": 5.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-1012", "title": "Food scientists and technologists", "median_salary": 85310, "employment": 15200, "projected_growth_pct": 6.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-1013", "title": "Soil and plant scientists", "median_salary": 71410, "employment": 20700, "projected_growth_pct": 5.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-1021", "title": "Biochemists and biophysicists", "median_salary": 103650, "employment": 35600, "projected_growth_pct": 5.8, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "19-1022", "title": "Microbiologists", "median_salary": 87330, "employment": 20700, "projected_growth_pct": 4.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-1023", "title": "Zoologists and wildlife biologists", "median_salary": 72860, "employment": 18200, "projected_growth_pct": 1.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-1029", "title": "Biological scientists, all other", "median_salary": 93330, "employment": 63700, "projected_growth_pct": 1.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-1031", "title": "Conservation scientists", "median_salary": 67950, "employment": 28500, "projected_growth_pct": 3.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-1032", "title": "Foresters", "median_salary": 70660, "employment": 13800, "projected_growth_pct": 1.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-1041", "title": "Epidemiologists", "median_salary": 83980, "employment": 12300, "projected_growth_pct": 16.2, "education_typical": "Master's degree"}
+{"soc_code": "19-1042", "title": "Medical scientists, except epidemiologists", "median_salary": 100590, "employment": 165300, "projected_growth_pct": 8.7, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "19-1099", "title": "Life scientists, all other", "median_salary": 87800, "employment": 7800, "projected_growth_pct": 3.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-2011", "title": "Astronomers", "median_salary": 132170, "employment": 1800, "projected_growth_pct": 2.2, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "19-2012", "title": "Physicists", "median_salary": 166290, "employment": 24600, "projected_growth_pct": 4.0, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "19-2021", "title": "Atmospheric and space scientists", "median_salary": 97450, "employment": 9400, "projected_growth_pct": 0.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-2031", "title": "Chemists", "median_salary": 84150, "employment": 86800, "projected_growth_pct": 4.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-2032", "title": "Materials scientists", "median_salary": 104160, "employment": 8700, "projected_growth_pct": 4.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-2041", "title": "Environmental scientists and specialists, including health", "median_salary": 80060, "employment": 90300, "projected_growth_pct": 4.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-2042", "title": "Geoscientists, except hydrologists and geographers", "median_salary": 99240, "employment": 25100, "projected_growth_pct": 3.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-2043", "title": "Hydrologists", "median_salary": 92060, "employment": 6300, "projected_growth_pct": -0.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-2099", "title": "Physical scientists, all other", "median_salary": 117960, "employment": 31900, "projected_growth_pct": 0.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-3011", "title": "Economists", "median_salary": 115440, "employment": 17600, "projected_growth_pct": 1.2, "education_typical": "Master's degree"}
+{"soc_code": "19-3022", "title": "Survey researchers", "median_salary": 63380, "employment": 8800, "projected_growth_pct": -5.2, "education_typical": "Master's degree"}
+{"soc_code": "19-3032", "title": "Industrial-organizational psychologists", "median_salary": 109840, "employment": 5600, "projected_growth_pct": 6.3, "education_typical": "Master's degree"}
+{"soc_code": "19-3033", "title": "Clinical and counseling psychologists", "median_salary": 95830, "employment": 76300, "projected_growth_pct": 11.2, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "19-3034", "title": "School psychologists", "median_salary": 86930, "employment": 67200, "projected_growth_pct": 0.7, "education_typical": "Master's degree"}
+{"soc_code": "19-3039", "title": "Psychologists, all other", "median_salary": 117580, "employment": 55300, "projected_growth_pct": 4.3, "education_typical": "Master's degree"}
+{"soc_code": "19-3041", "title": "Sociologists", "median_salary": 101690, "employment": 3400, "projected_growth_pct": 3.6, "education_typical": "Master's degree"}
+{"soc_code": "19-3051", "title": "Urban and regional planners", "median_salary": 83720, "employment": 44700, "projected_growth_pct": 3.4, "education_typical": "Master's degree"}
+{"soc_code": "19-3091", "title": "Anthropologists and archeologists", "median_salary": 64910, "employment": 8800, "projected_growth_pct": 3.7, "education_typical": "Master's degree"}
+{"soc_code": "19-3092", "title": "Geographers", "median_salary": 97200, "employment": 1500, "projected_growth_pct": -3.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-3093", "title": "Historians", "median_salary": 74050, "employment": 3400, "projected_growth_pct": 2.2, "education_typical": "Master's degree"}
+{"soc_code": "19-3094", "title": "Political scientists", "median_salary": 139380, "employment": 6500, "projected_growth_pct": -3.1, "education_typical": "Master's degree"}
+{"soc_code": "19-3099", "title": "Social scientists and related workers, all other", "median_salary": 100340, "employment": 40800, "projected_growth_pct": -1.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-4012", "title": "Agricultural technicians", "median_salary": 46790, "employment": 18600, "projected_growth_pct": 4.3, "education_typical": "Associate's degree"}
+{"soc_code": "19-4013", "title": "Food science technicians", "median_salary": 49430, "employment": 20400, "projected_growth_pct": 4.8, "education_typical": "Associate's degree"}
+{"soc_code": "19-4021", "title": "Biological technicians", "median_salary": 52000, "employment": 82700, "projected_growth_pct": 3.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-4031", "title": "Chemical technicians", "median_salary": 57790, "employment": 57000, "projected_growth_pct": 3.7, "education_typical": "Associate's degree"}
+{"soc_code": "19-4042", "title": "Environmental science and protection technicians, including health", "median_salary": 49490, "employment": 40400, "projected_growth_pct": 4.0, "education_typical": "Associate's degree"}
+{"soc_code": "19-4043", "title": "Geological technicians, except hydrologic technicians", "median_salary": 48390, "employment": 9800, "projected_growth_pct": 1.5, "education_typical": "Associate's degree"}
+{"soc_code": "19-4044", "title": "Hydrologic technicians", "median_salary": 58570, "employment": 3100, "projected_growth_pct": -2.1, "education_typical": "Associate's degree"}
+{"soc_code": "19-4051", "title": "Nuclear technicians", "median_salary": 104240, "employment": 6000, "projected_growth_pct": -7.7, "education_typical": "Associate's degree"}
+{"soc_code": "19-4061", "title": "Social science research assistants", "median_salary": 58040, "employment": 40600, "projected_growth_pct": 4.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-4071", "title": "Forest and conservation technicians", "median_salary": 54310, "employment": 33800, "projected_growth_pct": -3.2, "education_typical": "Associate's degree"}
+{"soc_code": "19-4092", "title": "Forensic science technicians", "median_salary": 67440, "employment": 20700, "projected_growth_pct": 12.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-4099", "title": "Life, physical, and social science technicians, all other", "median_salary": 60130, "employment": 83200, "projected_growth_pct": 3.5, "education_typical": "Associate's degree"}
+{"soc_code": "19-5011", "title": "Occupational health and safety specialists", "median_salary": 83910, "employment": 131900, "projected_growth_pct": 12.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "19-5012", "title": "Occupational health and safety technicians", "median_salary": 58440, "employment": 31900, "projected_growth_pct": 8.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "21-1012", "title": "Educational, guidance, and career counselors and advisors", "median_salary": 65140, "employment": 376300, "projected_growth_pct": 3.5, "education_typical": "Master's degree"}
+{"soc_code": "21-1013", "title": "Marriage and family therapists", "median_salary": 63780, "employment": 77800, "projected_growth_pct": 12.6, "education_typical": "Master's degree"}
+{"soc_code": "21-1015", "title": "Rehabilitation counselors", "median_salary": 46110, "employment": 91900, "projected_growth_pct": 1.4, "education_typical": "Master's degree"}
+{"soc_code": "21-1018", "title": "Substance abuse, behavioral disorder, and mental health counselors", "median_salary": 59190, "employment": 483500, "projected_growth_pct": 16.8, "education_typical": "Master's degree"}
+{"soc_code": "21-1019", "title": "Counselors, all other", "median_salary": 49830, "employment": 69100, "projected_growth_pct": 12.6, "education_typical": "Master's degree"}
+{"soc_code": "21-1021", "title": "Child, family, and school social workers", "median_salary": 58570, "employment": 399900, "projected_growth_pct": 3.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "21-1022", "title": "Healthcare social workers", "median_salary": 68090, "employment": 193200, "projected_growth_pct": 7.7, "education_typical": "Master's degree"}
+{"soc_code": "21-1023", "title": "Mental health and substance abuse social workers", "median_salary": 60060, "employment": 136800, "projected_growth_pct": 9.7, "education_typical": "Master's degree"}
+{"soc_code": "21-1029", "title": "Social workers, all other", "median_salary": 69480, "employment": 81000, "projected_growth_pct": 3.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "21-1091", "title": "Health education specialists", "median_salary": 63000, "employment": 71800, "projected_growth_pct": 4.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "21-1092", "title": "Probation officers and correctional treatment specialists", "median_salary": 64520, "employment": 92300, "projected_growth_pct": 2.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "21-1093", "title": "Social and human service assistants", "median_salary": 45120, "employment": 449600, "projected_growth_pct": 6.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "21-1094", "title": "Community health workers", "median_salary": 51030, "employment": 65099, "projected_growth_pct": 11.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "21-1099", "title": "Community and social service specialists, all other", "median_salary": 54940, "employment": 119200, "projected_growth_pct": 4.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "21-2011", "title": "Clergy", "median_salary": 60820, "employment": 262000, "projected_growth_pct": 1.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "21-2021", "title": "Directors, religious activities and education", "median_salary": 54840, "employment": 138900, "projected_growth_pct": 2.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "21-2099", "title": "Religious workers, all other", "median_salary": 45120, "employment": 88400, "projected_growth_pct": 0.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "23-1011", "title": "Lawyers", "median_salary": 151160, "employment": 864800, "projected_growth_pct": 4.1, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "23-1012", "title": "Judicial law clerks", "median_salary": 60400, "employment": 14500, "projected_growth_pct": 2.5, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "23-1021", "title": "Administrative law judges, adjudicators, and hearing officers", "median_salary": 115230, "employment": 17500, "projected_growth_pct": -0.7, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "23-1022", "title": "Arbitrators, mediators, and conciliators", "median_salary": 67710, "employment": 9100, "projected_growth_pct": 4.3, "education_typical": "Bachelor's degree"}
+{"soc_code": "23-1023", "title": "Judges, magistrate judges, and magistrates", "median_salary": 156210, "employment": 27300, "projected_growth_pct": 2.5, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "23-2011", "title": "Paralegals and legal assistants", "median_salary": 61010, "employment": 376200, "projected_growth_pct": 0.2, "education_typical": "Associate's degree"}
+{"soc_code": "23-2093", "title": "Title examiners, abstractors, and searchers", "median_salary": 54980, "employment": 57400, "projected_growth_pct": 2.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "23-2099", "title": "Legal support workers, all other", "median_salary": 68760, "employment": 51300, "projected_growth_pct": -1.2, "education_typical": "Associate's degree"}
+{"soc_code": "25-1011", "title": "Business teachers, postsecondary", "median_salary": 97270, "employment": 103100, "projected_growth_pct": 5.7, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1021", "title": "Computer science teachers, postsecondary", "median_salary": 96690, "employment": 44800, "projected_growth_pct": 5.3, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1022", "title": "Mathematical science teachers, postsecondary", "median_salary": 79350, "employment": 58900, "projected_growth_pct": 2.3, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1031", "title": "Architecture teachers, postsecondary", "median_salary": 101480, "employment": 11600, "projected_growth_pct": 2.0, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1032", "title": "Engineering teachers, postsecondary", "median_salary": 106120, "employment": 50300, "projected_growth_pct": 8.1, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1041", "title": "Agricultural sciences teachers, postsecondary", "median_salary": 86350, "employment": 10700, "projected_growth_pct": 4.1, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1042", "title": "Biological science teachers, postsecondary", "median_salary": 83460, "employment": 66000, "projected_growth_pct": 7.3, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1043", "title": "Forestry and conservation science teachers, postsecondary", "median_salary": 100830, "employment": 1600, "projected_growth_pct": 4.0, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1051", "title": "Atmospheric, earth, marine, and space sciences teachers, postsecondary", "median_salary": 101390, "employment": 14000, "projected_growth_pct": 2.6, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1052", "title": "Chemistry teachers, postsecondary", "median_salary": 86220, "employment": 25400, "projected_growth_pct": 2.2, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1053", "title": "Environmental science teachers, postsecondary", "median_salary": 87710, "employment": 9000, "projected_growth_pct": 2.9, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1054", "title": "Physics teachers, postsecondary", "median_salary": 97360, "employment": 17100, "projected_growth_pct": 2.5, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1061", "title": "Anthropology and archeology teachers, postsecondary", "median_salary": 95770, "employment": 6500, "projected_growth_pct": 2.7, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1062", "title": "Area, ethnic, and cultural studies teachers, postsecondary", "median_salary": 84290, "employment": 14500, "projected_growth_pct": 2.4, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1063", "title": "Economics teachers, postsecondary", "median_salary": 119980, "employment": 15800, "projected_growth_pct": 2.1, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1064", "title": "Geography teachers, postsecondary", "median_salary": 86730, "employment": 4000, "projected_growth_pct": 3.3, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1065", "title": "Political science teachers, postsecondary", "median_salary": 94680, "employment": 21800, "projected_growth_pct": 2.0, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1066", "title": "Psychology teachers, postsecondary", "median_salary": 80330, "employment": 52500, "projected_growth_pct": 3.6, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1067", "title": "Sociology teachers, postsecondary", "median_salary": 82540, "employment": 15400, "projected_growth_pct": 2.1, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1069", "title": "Social sciences teachers, postsecondary, all other", "median_salary": 75040, "employment": 20700, "projected_growth_pct": 1.7, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1071", "title": "Health specialties teachers, postsecondary", "median_salary": 105620, "employment": 289600, "projected_growth_pct": 17.3, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1072", "title": "Nursing instructors and teachers, postsecondary", "median_salary": 79940, "employment": 91600, "projected_growth_pct": 16.8, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1081", "title": "Education teachers, postsecondary", "median_salary": 72090, "employment": 74900, "projected_growth_pct": 2.1, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1082", "title": "Library science teachers, postsecondary", "median_salary": 78630, "employment": 5100, "projected_growth_pct": 3.0, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1111", "title": "Criminal justice and law enforcement teachers, postsecondary", "median_salary": 71470, "employment": 16200, "projected_growth_pct": 2.0, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1112", "title": "Law teachers, postsecondary", "median_salary": 126650, "employment": 29500, "projected_growth_pct": 2.2, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1113", "title": "Social work teachers, postsecondary", "median_salary": 76210, "employment": 17100, "projected_growth_pct": 2.3, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1121", "title": "Art, drama, and music teachers, postsecondary", "median_salary": 80190, "employment": 122800, "projected_growth_pct": 1.7, "education_typical": "Master's degree"}
+{"soc_code": "25-1122", "title": "Communications teachers, postsecondary", "median_salary": 77800, "employment": 35800, "projected_growth_pct": 2.1, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1123", "title": "English language and literature teachers, postsecondary", "median_salary": 78270, "employment": 72200, "projected_growth_pct": 0.0, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1124", "title": "Foreign language and literature teachers, postsecondary", "median_salary": 77010, "employment": 26400, "projected_growth_pct": -0.2, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1125", "title": "History teachers, postsecondary", "median_salary": 81500, "employment": 24600, "projected_growth_pct": -0.2, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1126", "title": "Philosophy and religion teachers, postsecondary", "median_salary": 78050, "employment": 27300, "projected_growth_pct": 0.7, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1192", "title": "Family and consumer sciences teachers, postsecondary", "median_salary": 77280, "employment": 3200, "projected_growth_pct": 3.4, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1193", "title": "Recreation and fitness studies teachers, postsecondary", "median_salary": 75890, "employment": 15400, "projected_growth_pct": 2.4, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-1194", "title": "Career/technical education teachers, postsecondary", "median_salary": 61490, "employment": 122200, "projected_growth_pct": 0.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-1199", "title": "Postsecondary teachers, all other", "median_salary": 78490, "employment": 183400, "projected_growth_pct": 1.8, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "25-2011", "title": "Preschool teachers, except special education", "median_salary": 37120, "employment": 555100, "projected_growth_pct": 4.1, "education_typical": "Associate's degree"}
+{"soc_code": "25-2012", "title": "Kindergarten teachers, except special education", "median_salary": 61430, "employment": 117200, "projected_growth_pct": -1.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-2021", "title": "Elementary school teachers, except special education", "median_salary": 62340, "employment": 1422700, "projected_growth_pct": -2.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-2022", "title": "Middle school teachers, except special and career/technical education", "median_salary": 62970, "employment": 633700, "projected_growth_pct": -2.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-2023", "title": "Career/technical education teachers, middle school", "median_salary": 63620, "employment": 14000, "projected_growth_pct": -2.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-2031", "title": "Secondary school teachers, except special and career/technical education", "median_salary": 64580, "employment": 1094500, "projected_growth_pct": -1.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-2032", "title": "Career/technical education teachers, secondary school", "median_salary": 63910, "employment": 103400, "projected_growth_pct": -1.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-2051", "title": "Special education teachers, preschool", "median_salary": 62190, "employment": 29300, "projected_growth_pct": 1.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-2052", "title": "Special education teachers, kindergarten and elementary school", "median_salary": 63000, "employment": 230200, "projected_growth_pct": -1.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-2057", "title": "Special education teachers, middle school", "median_salary": 64880, "employment": 94800, "projected_growth_pct": -1.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-2058", "title": "Special education teachers, secondary school", "median_salary": 69590, "employment": 164200, "projected_growth_pct": -1.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-2059", "title": "Special education teachers, all other", "median_salary": 67430, "employment": 41000, "projected_growth_pct": 1.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-3011", "title": "Adult basic education, adult secondary education, and english as a second language instructors", "median_salary": 59950, "employment": 40900, "projected_growth_pct": -13.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-3021", "title": "Self-enrichment teachers", "median_salary": 45590, "employment": 417500, "projected_growth_pct": 3.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "25-3031", "title": "Substitute teachers, short-term", "median_salary": 38470, "employment": 510100, "projected_growth_pct": 1.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-3041", "title": "Tutors", "median_salary": 40090, "employment": 215500, "projected_growth_pct": 0.6, "education_typical": "Some college, no degree"}
+{"soc_code": "25-3099", "title": "Teachers and instructors, all other", "median_salary": 64690, "employment": 153800, "projected_growth_pct": -0.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-4011", "title": "Archivists", "median_salary": 61570, "employment": 9300, "projected_growth_pct": 3.8, "education_typical": "Master's degree"}
+{"soc_code": "25-4012", "title": "Curators", "median_salary": 61770, "employment": 15100, "projected_growth_pct": 7.0, "education_typical": "Master's degree"}
+{"soc_code": "25-4013", "title": "Museum technicians and conservators", "median_salary": 47460, "employment": 15700, "projected_growth_pct": 5.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-4022", "title": "Librarians and media collections specialists", "median_salary": 64320, "employment": 142100, "projected_growth_pct": 1.7, "education_typical": "Master's degree"}
+{"soc_code": "25-4031", "title": "Library technicians", "median_salary": 39970, "employment": 78600, "projected_growth_pct": -6.8, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "25-9021", "title": "Farm and home management educators", "median_salary": 58120, "employment": 12400, "projected_growth_pct": -2.5, "education_typical": "Master's degree"}
+{"soc_code": "25-9031", "title": "Instructional coordinators", "median_salary": 74720, "employment": 232600, "projected_growth_pct": 1.3, "education_typical": "Master's degree"}
+{"soc_code": "25-9044", "title": "Teaching assistants, postsecondary", "median_salary": 44930, "employment": 193600, "projected_growth_pct": 3.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "25-9045", "title": "Teaching assistants, except postsecondary", "median_salary": 35240, "employment": 1422800, "projected_growth_pct": -1.5, "education_typical": "Some college, no degree"}
+{"soc_code": "25-9099", "title": "Educational instruction and library workers, all other", "median_salary": 48400, "employment": 132000, "projected_growth_pct": 1.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-1011", "title": "Art directors", "median_salary": 111040, "employment": 135000, "projected_growth_pct": 4.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-1012", "title": "Craft artists", "median_salary": 38480, "employment": 11600, "projected_growth_pct": 2.1, "education_typical": "No formal educational credential"}
+{"soc_code": "27-1013", "title": "Fine artists, including painters, sculptors, and illustrators", "median_salary": 60560, "employment": 26500, "projected_growth_pct": -1.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-1014", "title": "Special effects artists and animators", "median_salary": 99800, "employment": 57100, "projected_growth_pct": 1.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-1019", "title": "Artists and related workers, all other", "median_salary": 72760, "employment": 13900, "projected_growth_pct": 0.8, "education_typical": "No formal educational credential"}
+{"soc_code": "27-1021", "title": "Commercial and industrial designers", "median_salary": 79450, "employment": 30600, "projected_growth_pct": 3.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-1022", "title": "Fashion designers", "median_salary": 80690, "employment": 25700, "projected_growth_pct": 2.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-1023", "title": "Floral designers", "median_salary": 36120, "employment": 43800, "projected_growth_pct": -5.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "27-1024", "title": "Graphic designers", "median_salary": 61300, "employment": 265900, "projected_growth_pct": 2.1, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-1025", "title": "Interior designers", "median_salary": 63490, "employment": 87100, "projected_growth_pct": 3.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-1026", "title": "Merchandise displayers and window trimmers", "median_salary": 37350, "employment": 193000, "projected_growth_pct": 3.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "27-1027", "title": "Set and exhibit designers", "median_salary": 66280, "employment": 31300, "projected_growth_pct": 2.3, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-1029", "title": "Designers, all other", "median_salary": 66220, "employment": 28600, "projected_growth_pct": 2.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-2011", "title": "Actors", "employment": 57000, "projected_growth_pct": 0.3, "education_typical": "Some college, no degree"}
+{"soc_code": "27-2012", "title": "Producers and directors", "median_salary": 83480, "employment": 167000, "projected_growth_pct": 4.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-2021", "title": "Athletes and sports competitors", "median_salary": 62360, "employment": 19100, "projected_growth_pct": 5.5, "education_typical": "No formal educational credential"}
+{"soc_code": "27-2022", "title": "Coaches and scouts", "median_salary": 45920, "employment": 306500, "projected_growth_pct": 6.4, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-2023", "title": "Umpires, referees, and other sports officials", "median_salary": 38820, "employment": 19300, "projected_growth_pct": 5.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "27-2031", "title": "Dancers", "employment": 12300, "projected_growth_pct": 4.5, "education_typical": "No formal educational credential"}
+{"soc_code": "27-2032", "title": "Choreographers", "median_salary": 55600, "employment": 4600, "projected_growth_pct": 6.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "27-2041", "title": "Music directors and composers", "median_salary": 63670, "employment": 47300, "projected_growth_pct": -0.3, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-2042", "title": "Musicians and singers", "employment": 169800, "projected_growth_pct": 1.1, "education_typical": "No formal educational credential"}
+{"soc_code": "27-2091", "title": "Disc jockeys, except radio", "employment": 15400, "projected_growth_pct": 3.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "27-2099", "title": "Entertainers and performers, sports and related workers, all other", "employment": 35800, "projected_growth_pct": 6.0, "education_typical": "No formal educational credential"}
+{"soc_code": "27-3011", "title": "Broadcast announcers and radio disc jockeys", "median_salary": 45680, "employment": 24100, "projected_growth_pct": -5.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-3023", "title": "News analysts, reporters, and journalists", "median_salary": 60280, "employment": 49300, "projected_growth_pct": -3.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-3031", "title": "Public relations specialists", "median_salary": 69780, "employment": 315900, "projected_growth_pct": 4.8, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-3041", "title": "Editors", "median_salary": 75260, "employment": 115800, "projected_growth_pct": 0.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-3042", "title": "Technical writers", "median_salary": 91670, "employment": 56400, "projected_growth_pct": 0.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-3043", "title": "Writers and authors", "median_salary": 72270, "employment": 135400, "projected_growth_pct": 3.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-3091", "title": "Interpreters and translators", "median_salary": 59440, "employment": 75300, "projected_growth_pct": 1.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-3092", "title": "Court reporters and simultaneous captioners", "median_salary": 67310, "employment": 17700, "projected_growth_pct": -0.3, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "27-3099", "title": "Media and communication workers, all other", "median_salary": 71770, "employment": 34300, "projected_growth_pct": 2.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "27-4011", "title": "Audio and video technicians", "median_salary": 54830, "employment": 92300, "projected_growth_pct": 3.3, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "27-4012", "title": "Broadcast technicians", "median_salary": 53920, "employment": 24800, "projected_growth_pct": -2.8, "education_typical": "Associate's degree"}
+{"soc_code": "27-4014", "title": "Sound engineering technicians", "median_salary": 66430, "employment": 16900, "projected_growth_pct": -1.7, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "27-4015", "title": "Lighting technicians", "median_salary": 60560, "employment": 12100, "projected_growth_pct": -4.6, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "27-4021", "title": "Photographers", "median_salary": 42520, "employment": 151200, "projected_growth_pct": 1.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "27-4031", "title": "Camera operators, television, video, and film", "median_salary": 68810, "employment": 36400, "projected_growth_pct": 1.2, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-4032", "title": "Film and video editors", "median_salary": 70980, "employment": 43500, "projected_growth_pct": 4.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "27-4099", "title": "Media and communication equipment workers, all other", "median_salary": 67190, "employment": 15100, "projected_growth_pct": 0.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "29-1011", "title": "Chiropractors", "median_salary": 79000, "employment": 57200, "projected_growth_pct": 9.5, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1021", "title": "Dentists, general", "median_salary": 172790, "employment": 129800, "projected_growth_pct": 4.1, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1022", "title": "Oral and maxillofacial surgeons", "median_salary": 239200, "employment": 6100, "projected_growth_pct": 4.1, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1023", "title": "Orthodontists", "median_salary": 239200, "employment": 5900, "projected_growth_pct": 4.4, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1024", "title": "Prosthodontists", "median_salary": 239200, "employment": 900, "projected_growth_pct": 4.5, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1029", "title": "Dentists, all other specialists", "median_salary": 225770, "employment": 6600, "projected_growth_pct": 0.3, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1031", "title": "Dietitians and nutritionists", "median_salary": 73850, "employment": 90900, "projected_growth_pct": 5.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "29-1041", "title": "Optometrists", "median_salary": 134830, "employment": 47800, "projected_growth_pct": 8.0, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1051", "title": "Pharmacists", "median_salary": 137480, "employment": 335100, "projected_growth_pct": 4.6, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1071", "title": "Physician assistants", "median_salary": 133260, "employment": 162700, "projected_growth_pct": 20.4, "education_typical": "Master's degree"}
+{"soc_code": "29-1081", "title": "Podiatrists", "median_salary": 152800, "employment": 9700, "projected_growth_pct": 1.8, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1122", "title": "Occupational therapists", "median_salary": 98340, "employment": 160000, "projected_growth_pct": 13.8, "education_typical": "Master's degree"}
+{"soc_code": "29-1123", "title": "Physical therapists", "median_salary": 101020, "employment": 267200, "projected_growth_pct": 10.9, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1124", "title": "Radiation therapists", "median_salary": 101990, "employment": 19200, "projected_growth_pct": 1.9, "education_typical": "Associate's degree"}
+{"soc_code": "29-1125", "title": "Recreational therapists", "median_salary": 60280, "employment": 16100, "projected_growth_pct": 3.3, "education_typical": "Bachelor's degree"}
+{"soc_code": "29-1126", "title": "Respiratory therapists", "median_salary": 80450, "employment": 139600, "projected_growth_pct": 12.1, "education_typical": "Associate's degree"}
+{"soc_code": "29-1127", "title": "Speech-language pathologists", "median_salary": 95410, "employment": 187400, "projected_growth_pct": 15.0, "education_typical": "Master's degree"}
+{"soc_code": "29-1128", "title": "Exercise physiologists", "median_salary": 58160, "employment": 23900, "projected_growth_pct": 9.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "29-1129", "title": "Therapists, all other", "median_salary": 65010, "employment": 56100, "projected_growth_pct": 11.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "29-1131", "title": "Veterinarians", "median_salary": 125510, "employment": 86400, "projected_growth_pct": 9.6, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1141", "title": "Registered nurses", "median_salary": 93600, "employment": 3391000, "projected_growth_pct": 4.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "29-1151", "title": "Nurse anesthetists", "median_salary": 223210, "employment": 53800, "projected_growth_pct": 8.6, "education_typical": "Master's degree"}
+{"soc_code": "29-1161", "title": "Nurse midwives", "median_salary": 128790, "employment": 8600, "projected_growth_pct": 11.1, "education_typical": "Master's degree"}
+{"soc_code": "29-1171", "title": "Nurse practitioners", "median_salary": 129210, "employment": 320400, "projected_growth_pct": 40.1, "education_typical": "Master's degree"}
+{"soc_code": "29-1181", "title": "Audiologists", "median_salary": 92120, "employment": 15800, "projected_growth_pct": 9.5, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1211", "title": "Anesthesiologists", "median_salary": 239200, "employment": 45300, "projected_growth_pct": 3.2, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1212", "title": "Cardiologists", "median_salary": 239200, "employment": 19400, "projected_growth_pct": 4.1, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1213", "title": "Dermatologists", "median_salary": 239200, "employment": 10900, "projected_growth_pct": 6.4, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1214", "title": "Emergency medicine physicians", "median_salary": 239200, "employment": 36100, "projected_growth_pct": 2.7, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1215", "title": "Family medicine physicians", "median_salary": 238380, "employment": 116000, "projected_growth_pct": 2.7, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1216", "title": "General internal medicine physicians", "median_salary": 236350, "employment": 73200, "projected_growth_pct": 3.3, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1217", "title": "Neurologists", "median_salary": 239200, "employment": 8300, "projected_growth_pct": 5.4, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1218", "title": "Obstetricians and gynecologists", "median_salary": 239200, "employment": 21500, "projected_growth_pct": 1.2, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1221", "title": "Pediatricians, general", "median_salary": 210130, "employment": 46400, "projected_growth_pct": 0.8, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1222", "title": "Physicians, pathologists", "median_salary": 239200, "employment": 12600, "projected_growth_pct": 4.2, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1223", "title": "Psychiatrists", "median_salary": 239200, "employment": 27100, "projected_growth_pct": 6.1, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1224", "title": "Radiologists", "median_salary": 239200, "employment": 28200, "projected_growth_pct": 2.7, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1229", "title": "Physicians, all other", "median_salary": 239200, "employment": 340700, "projected_growth_pct": 2.5, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1241", "title": "Ophthalmologists, except pediatric", "median_salary": 239200, "employment": 12500, "projected_growth_pct": 4.3, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1242", "title": "Orthopedic surgeons, except pediatric", "median_salary": 239200, "employment": 14700, "projected_growth_pct": 4.1, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1243", "title": "Pediatric surgeons", "median_salary": 239200, "employment": 1100, "projected_growth_pct": 1.5, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1249", "title": "Surgeons, all other", "median_salary": 239200, "employment": 25100, "projected_growth_pct": 3.9, "education_typical": "Doctoral or professional degree"}
+{"soc_code": "29-1291", "title": "Acupuncturists", "median_salary": 78140, "employment": 15300, "projected_growth_pct": 6.8, "education_typical": "Master's degree"}
+{"soc_code": "29-1292", "title": "Dental hygienists", "median_salary": 94260, "employment": 221600, "projected_growth_pct": 7.0, "education_typical": "Associate's degree"}
+{"soc_code": "29-1299", "title": "Healthcare diagnosing or treating practitioners, all other", "median_salary": 113730, "employment": 41300, "projected_growth_pct": 2.0, "education_typical": "Master's degree"}
+{"soc_code": "29-2010", "title": "Clinical laboratory technologists and technicians", "median_salary": 61890, "employment": 351200, "projected_growth_pct": 1.7, "education_typical": "Bachelor's degree"}
+{"soc_code": "29-2031", "title": "Cardiovascular technologists and technicians", "median_salary": 67260, "employment": 64700, "projected_growth_pct": 3.0, "education_typical": "Associate's degree"}
+{"soc_code": "29-2032", "title": "Diagnostic medical sonographers", "median_salary": 89340, "employment": 90000, "projected_growth_pct": 13.0, "education_typical": "Associate's degree"}
+{"soc_code": "29-2033", "title": "Nuclear medicine technologists", "median_salary": 97020, "employment": 20000, "projected_growth_pct": 3.0, "education_typical": "Associate's degree"}
+{"soc_code": "29-2034", "title": "Radiologic technologists and technicians", "median_salary": 77660, "employment": 228000, "projected_growth_pct": 4.3, "education_typical": "Associate's degree"}
+{"soc_code": "29-2035", "title": "Magnetic resonance imaging technologists", "median_salary": 88180, "employment": 44100, "projected_growth_pct": 7.1, "education_typical": "Associate's degree"}
+{"soc_code": "29-2036", "title": "Medical dosimetrists", "median_salary": 138110, "employment": 4800, "projected_growth_pct": 3.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "29-2042", "title": "Emergency medical technicians", "median_salary": 41340, "employment": 181000, "projected_growth_pct": 5.1, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "29-2043", "title": "Paramedics", "median_salary": 58410, "employment": 101900, "projected_growth_pct": 5.0, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "29-2051", "title": "Dietetic technicians", "median_salary": 37040, "employment": 30900, "projected_growth_pct": 2.5, "education_typical": "Associate's degree"}
+{"soc_code": "29-2052", "title": "Pharmacy technicians", "median_salary": 43460, "employment": 490400, "projected_growth_pct": 6.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "29-2053", "title": "Psychiatric technicians", "median_salary": 42590, "employment": 144500, "projected_growth_pct": 20.0, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "29-2055", "title": "Surgical technologists", "median_salary": 62830, "employment": 115600, "projected_growth_pct": 4.5, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "29-2056", "title": "Veterinary technologists and technicians", "median_salary": 45980, "employment": 134200, "projected_growth_pct": 9.1, "education_typical": "Associate's degree"}
+{"soc_code": "29-2057", "title": "Ophthalmic medical technicians", "median_salary": 44080, "employment": 78800, "projected_growth_pct": 19.8, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "29-2061", "title": "Licensed practical and licensed vocational nurses", "median_salary": 62340, "employment": 651400, "projected_growth_pct": 2.6, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "29-2072", "title": "Medical records specialists", "median_salary": 50250, "employment": 194800, "projected_growth_pct": 7.1, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "29-2081", "title": "Opticians, dispensing", "median_salary": 46560, "employment": 79900, "projected_growth_pct": 2.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "29-2091", "title": "Orthotists and prosthetists", "median_salary": 78310, "employment": 10100, "projected_growth_pct": 13.3, "education_typical": "Master's degree"}
+{"soc_code": "29-2092", "title": "Hearing aid specialists", "median_salary": 61560, "employment": 10700, "projected_growth_pct": 18.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "29-2099", "title": "Health technologists and technicians, all other", "median_salary": 48790, "employment": 178800, "projected_growth_pct": 5.2, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "29-9021", "title": "Health information technologists and medical registrars", "median_salary": 67310, "employment": 41900, "projected_growth_pct": 14.7, "education_typical": "Associate's degree"}
+{"soc_code": "29-9091", "title": "Athletic trainers", "median_salary": 60250, "employment": 33900, "projected_growth_pct": 11.1, "education_typical": "Master's degree"}
+{"soc_code": "29-9092", "title": "Genetic counselors", "median_salary": 98910, "employment": 4000, "projected_growth_pct": 9.3, "education_typical": "Master's degree"}
+{"soc_code": "29-9093", "title": "Surgical assistants", "median_salary": 60290, "employment": 25300, "projected_growth_pct": 5.1, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "29-9099", "title": "Healthcare practitioners and technical workers, all other", "median_salary": 64030, "employment": 41700, "projected_growth_pct": 3.6, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "31-1120", "title": "Home health and personal care aides", "median_salary": 34900, "employment": 4347700, "projected_growth_pct": 17.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "31-1131", "title": "Nursing assistants", "median_salary": 39530, "employment": 1441500, "projected_growth_pct": 2.3, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "31-1132", "title": "Orderlies", "median_salary": 37700, "employment": 54000, "projected_growth_pct": 3.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "31-1133", "title": "Psychiatric aides", "median_salary": 41590, "employment": 38500, "projected_growth_pct": -0.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "31-2011", "title": "Occupational therapy assistants", "median_salary": 68340, "employment": 49200, "projected_growth_pct": 19.2, "education_typical": "Associate's degree"}
+{"soc_code": "31-2012", "title": "Occupational therapy aides", "median_salary": 37370, "employment": 5200, "projected_growth_pct": 2.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "31-2021", "title": "Physical therapist assistants", "median_salary": 65510, "employment": 111500, "projected_growth_pct": 22.0, "education_typical": "Associate's degree"}
+{"soc_code": "31-2022", "title": "Physical therapist aides", "median_salary": 34520, "employment": 45600, "projected_growth_pct": 2.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "31-9011", "title": "Massage therapists", "median_salary": 57950, "employment": 168000, "projected_growth_pct": 15.4, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "31-9091", "title": "Dental assistants", "median_salary": 47300, "employment": 381900, "projected_growth_pct": 6.4, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "31-9092", "title": "Medical assistants", "median_salary": 44200, "employment": 811000, "projected_growth_pct": 12.5, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "31-9093", "title": "Medical equipment preparers", "median_salary": 46490, "employment": 76500, "projected_growth_pct": 10.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "31-9094", "title": "Medical transcriptionists", "median_salary": 37550, "employment": 43900, "projected_growth_pct": -4.9, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "31-9095", "title": "Pharmacy aides", "median_salary": 37000, "employment": 41100, "projected_growth_pct": -0.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "31-9096", "title": "Veterinary assistants and laboratory animal caretakers", "median_salary": 37320, "employment": 117800, "projected_growth_pct": 8.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "31-9097", "title": "Phlebotomists", "median_salary": 43660, "employment": 139700, "projected_growth_pct": 5.6, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "31-9099", "title": "Healthcare support workers, all other", "median_salary": 46050, "employment": 109700, "projected_growth_pct": 3.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-1011", "title": "First-line supervisors of correctional officers", "median_salary": 76310, "employment": 57100, "projected_growth_pct": -2.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-1012", "title": "First-line supervisors of police and detectives", "median_salary": 105980, "employment": 160800, "projected_growth_pct": 2.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-1021", "title": "First-line supervisors of firefighting and prevention workers", "median_salary": 92430, "employment": 97200, "projected_growth_pct": 3.4, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "33-1091", "title": "First-line supervisors of security workers", "median_salary": 58610, "employment": 71900, "projected_growth_pct": 2.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-1099", "title": "First-line supervisors of protective service workers, all other", "median_salary": 74960, "employment": 21500, "projected_growth_pct": 1.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-2011", "title": "Firefighters", "median_salary": 59530, "employment": 344900, "projected_growth_pct": 3.4, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "33-2021", "title": "Fire inspectors and investigators", "median_salary": 78060, "employment": 14700, "projected_growth_pct": 3.8, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "33-2022", "title": "Forest fire inspectors and prevention specialists", "median_salary": 52380, "employment": 2900, "projected_growth_pct": 14.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-3011", "title": "Bailiffs", "median_salary": 57050, "employment": 19000, "projected_growth_pct": -2.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-3012", "title": "Correctional officers and jailers", "median_salary": 57970, "employment": 387500, "projected_growth_pct": -7.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-3021", "title": "Detectives and criminal investigators", "median_salary": 93580, "employment": 117900, "projected_growth_pct": -0.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-3031", "title": "Fish and game wardens", "median_salary": 68180, "employment": 7000, "projected_growth_pct": -6.0, "education_typical": "Bachelor's degree"}
+{"soc_code": "33-3041", "title": "Parking enforcement workers", "median_salary": 47150, "employment": 8400, "projected_growth_pct": -1.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-3051", "title": "Police and sheriff's patrol officers", "median_salary": 76290, "employment": 698800, "projected_growth_pct": 3.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-3052", "title": "Transit and railroad police", "median_salary": 82320, "employment": 3100, "projected_growth_pct": 3.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-9011", "title": "Animal control workers", "median_salary": 45830, "employment": 12200, "projected_growth_pct": 3.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-9021", "title": "Private detectives and investigators", "median_salary": 52370, "employment": 43600, "projected_growth_pct": 6.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-9031", "title": "Gambling surveillance officers and gambling investigators", "median_salary": 43900, "employment": 10300, "projected_growth_pct": 0.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-9032", "title": "Security guards", "median_salary": 38370, "employment": 1262100, "projected_growth_pct": 0.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-9091", "title": "Crossing guards and flaggers", "median_salary": 37700, "employment": 91400, "projected_growth_pct": 3.6, "education_typical": "No formal educational credential"}
+{"soc_code": "33-9092", "title": "Lifeguards, ski patrol, and other recreational protective service workers", "median_salary": 33720, "employment": 149700, "projected_growth_pct": 5.8, "education_typical": "No formal educational credential"}
+{"soc_code": "33-9093", "title": "Transportation security screeners", "median_salary": 63360, "employment": 50100, "projected_growth_pct": -6.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-9094", "title": "School bus monitors", "median_salary": 34980, "employment": 71400, "projected_growth_pct": -2.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "33-9099", "title": "Protective service workers, all other", "median_salary": 41600, "employment": 84000, "projected_growth_pct": 2.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "35-1011", "title": "Chefs and head cooks", "median_salary": 60990, "employment": 197300, "projected_growth_pct": 7.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "35-1012", "title": "First-line supervisors of food preparation and serving workers", "median_salary": 42010, "employment": 1215000, "projected_growth_pct": 6.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "35-2011", "title": "Cooks, fast food", "median_salary": 30160, "employment": 669500, "projected_growth_pct": -13.5, "education_typical": "No formal educational credential"}
+{"soc_code": "35-2012", "title": "Cooks, institution and cafeteria", "median_salary": 36450, "employment": 466100, "projected_growth_pct": 2.0, "education_typical": "No formal educational credential"}
+{"soc_code": "35-2013", "title": "Cooks, private household", "median_salary": 44530, "employment": 34200, "projected_growth_pct": 5.1, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "35-2014", "title": "Cooks, restaurant", "median_salary": 36830, "employment": 1460200, "projected_growth_pct": 14.9, "education_typical": "No formal educational credential"}
+{"soc_code": "35-2015", "title": "Cooks, short order", "median_salary": 35620, "employment": 151100, "projected_growth_pct": -5.6, "education_typical": "No formal educational credential"}
+{"soc_code": "35-2019", "title": "Cooks, all other", "median_salary": 36210, "employment": 24000, "projected_growth_pct": 5.5, "education_typical": "No formal educational credential"}
+{"soc_code": "35-2021", "title": "Food preparation workers", "median_salary": 34220, "employment": 902700, "projected_growth_pct": -3.4, "education_typical": "No formal educational credential"}
+{"soc_code": "35-3011", "title": "Bartenders", "median_salary": 33530, "employment": 756700, "projected_growth_pct": 5.9, "education_typical": "No formal educational credential"}
+{"soc_code": "35-3023", "title": "Fast food and counter workers", "median_salary": 30480, "employment": 3796000, "projected_growth_pct": 6.1, "education_typical": "No formal educational credential"}
+{"soc_code": "35-3031", "title": "Waiters and waitresses", "median_salary": 33760, "employment": 2329700, "projected_growth_pct": -0.7, "education_typical": "No formal educational credential"}
+{"soc_code": "35-3041", "title": "Food servers, nonrestaurant", "median_salary": 34460, "employment": 277200, "projected_growth_pct": 3.0, "education_typical": "No formal educational credential"}
+{"soc_code": "35-9011", "title": "Dining room and cafeteria attendants and bartender helpers", "median_salary": 32670, "employment": 527400, "projected_growth_pct": 6.3, "education_typical": "No formal educational credential"}
+{"soc_code": "35-9021", "title": "Dishwashers", "median_salary": 33670, "employment": 477700, "projected_growth_pct": 0.2, "education_typical": "No formal educational credential"}
+{"soc_code": "35-9031", "title": "Hosts and hostesses, restaurant, lounge, and coffee shop", "median_salary": 30380, "employment": 429900, "projected_growth_pct": -1.5, "education_typical": "No formal educational credential"}
+{"soc_code": "35-9099", "title": "Food preparation and serving related workers, all other", "median_salary": 34830, "employment": 90500, "projected_growth_pct": 6.4, "education_typical": "No formal educational credential"}
+{"soc_code": "37-1011", "title": "First-line supervisors of housekeeping and janitorial workers", "median_salary": 47520, "employment": 269800, "projected_growth_pct": 2.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "37-1012", "title": "First-line supervisors of landscaping, lawn service, and groundskeeping workers", "median_salary": 56170, "employment": 224700, "projected_growth_pct": 2.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "37-2011", "title": "Janitors and cleaners, except maids and housekeeping cleaners", "median_salary": 35930, "employment": 2447700, "projected_growth_pct": 2.0, "education_typical": "No formal educational credential"}
+{"soc_code": "37-2012", "title": "Maids and housekeeping cleaners", "median_salary": 34660, "employment": 1356800, "projected_growth_pct": 0.4, "education_typical": "No formal educational credential"}
+{"soc_code": "37-2019", "title": "Building cleaning workers, all other", "median_salary": 42360, "employment": 18100, "projected_growth_pct": 2.5, "education_typical": "No formal educational credential"}
+{"soc_code": "37-2021", "title": "Pest control workers", "median_salary": 44730, "employment": 102400, "projected_growth_pct": 4.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "37-3011", "title": "Landscaping and groundskeeping workers", "median_salary": 38090, "employment": 1192500, "projected_growth_pct": 3.6, "education_typical": "No formal educational credential"}
+{"soc_code": "37-3012", "title": "Pesticide handlers, sprayers, and applicators, vegetation", "median_salary": 45200, "employment": 29600, "projected_growth_pct": 3.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "37-3013", "title": "Tree trimmers and pruners", "median_salary": 50430, "employment": 60100, "projected_growth_pct": 3.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "37-3019", "title": "Grounds maintenance workers, all other", "median_salary": 43410, "employment": 14100, "projected_growth_pct": 2.4, "education_typical": "No formal educational credential"}
+{"soc_code": "39-1013", "title": "First-line supervisors of gambling services workers", "median_salary": 61590, "employment": 32500, "projected_growth_pct": 2.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-1014", "title": "First-line supervisors of entertainment and recreation workers, except gambling services", "median_salary": 46900, "employment": 123300, "projected_growth_pct": 6.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-1022", "title": "First-line supervisors of personal service workers", "median_salary": 47080, "employment": 149100, "projected_growth_pct": 6.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-2011", "title": "Animal trainers", "median_salary": 38750, "employment": 47300, "projected_growth_pct": 5.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-2021", "title": "Animal caretakers", "median_salary": 33470, "employment": 392100, "projected_growth_pct": 12.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-3011", "title": "Gambling dealers", "median_salary": 33280, "employment": 88700, "projected_growth_pct": -0.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-3012", "title": "Gambling and sports book writers and runners", "median_salary": 30460, "employment": 8200, "projected_growth_pct": -6.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-3019", "title": "Gambling service workers, all other", "median_salary": 34530, "employment": 16100, "projected_growth_pct": -0.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-3021", "title": "Motion picture projectionists", "median_salary": 38180, "employment": 2000, "projected_growth_pct": -3.7, "education_typical": "No formal educational credential"}
+{"soc_code": "39-3031", "title": "Ushers, lobby attendants, and ticket takers", "median_salary": 31150, "employment": 121700, "projected_growth_pct": 1.2, "education_typical": "No formal educational credential"}
+{"soc_code": "39-3091", "title": "Amusement and recreation attendants", "median_salary": 30490, "employment": 392300, "projected_growth_pct": 3.4, "education_typical": "No formal educational credential"}
+{"soc_code": "39-3092", "title": "Costume attendants", "median_salary": 54810, "employment": 6700, "projected_growth_pct": 5.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-3093", "title": "Locker room, coatroom, and dressing room attendants", "median_salary": 34800, "employment": 15600, "projected_growth_pct": 6.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-3099", "title": "Entertainment attendants and related workers, all other", "median_salary": 34550, "employment": 8500, "projected_growth_pct": 3.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-4011", "title": "Embalmers", "median_salary": 56280, "employment": 3600, "projected_growth_pct": 1.3, "education_typical": "Associate's degree"}
+{"soc_code": "39-4012", "title": "Crematory operators", "median_salary": 42880, "employment": 3100, "projected_growth_pct": 3.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-4021", "title": "Funeral attendants", "median_salary": 34610, "employment": 32500, "projected_growth_pct": 3.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-4031", "title": "Morticians, undertakers, and funeral arrangers", "median_salary": 49800, "employment": 27500, "projected_growth_pct": 3.1, "education_typical": "Associate's degree"}
+{"soc_code": "39-5011", "title": "Barbers", "median_salary": 38960, "employment": 76000, "projected_growth_pct": 4.1, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "39-5012", "title": "Hairdressers, hairstylists, and cosmetologists", "median_salary": 35250, "employment": 575200, "projected_growth_pct": 5.6, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "39-5091", "title": "Makeup artists, theatrical and performance", "median_salary": 50280, "employment": 7000, "projected_growth_pct": 8.1, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "39-5092", "title": "Manicurists and pedicurists", "median_salary": 34660, "employment": 210100, "projected_growth_pct": 7.0, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "39-5093", "title": "Shampooers", "median_salary": 31470, "employment": 18500, "projected_growth_pct": 5.5, "education_typical": "No formal educational credential"}
+{"soc_code": "39-5094", "title": "Skincare specialists", "median_salary": 41560, "employment": 97400, "projected_growth_pct": 6.7, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "39-6011", "title": "Baggage porters and bellhops", "median_salary": 36020, "employment": 32500, "projected_growth_pct": -1.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-6012", "title": "Concierges", "median_salary": 37320, "employment": 45600, "projected_growth_pct": 2.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-7010", "title": "Tour and travel guides", "median_salary": 36660, "employment": 55800, "projected_growth_pct": 8.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-9011", "title": "Childcare workers", "median_salary": 32050, "employment": 991600, "projected_growth_pct": -2.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-9031", "title": "Exercise trainers and group fitness instructors", "median_salary": 46180, "employment": 370100, "projected_growth_pct": 11.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-9032", "title": "Recreation workers", "median_salary": 35380, "employment": 327700, "projected_growth_pct": 4.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-9041", "title": "Residential advisors", "median_salary": 39180, "employment": 91200, "projected_growth_pct": 3.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "39-9099", "title": "Personal care and service workers, all other", "median_salary": 37900, "employment": 94400, "projected_growth_pct": 6.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "41-1011", "title": "First-line supervisors of retail sales workers", "median_salary": 47320, "employment": 1432600, "projected_growth_pct": -5.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "41-1012", "title": "First-line supervisors of non-retail sales workers", "median_salary": 84130, "employment": 320000, "projected_growth_pct": 0.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "41-2011", "title": "Cashiers", "median_salary": 31190, "employment": 3157200, "projected_growth_pct": -9.9, "education_typical": "No formal educational credential"}
+{"soc_code": "41-2012", "title": "Gambling change persons and booth cashiers", "median_salary": 34810, "employment": 22600, "projected_growth_pct": -6.4, "education_typical": "No formal educational credential"}
+{"soc_code": "41-2021", "title": "Counter and rental clerks", "median_salary": 38540, "employment": 408200, "projected_growth_pct": 3.2, "education_typical": "No formal educational credential"}
+{"soc_code": "41-2022", "title": "Parts salespersons", "median_salary": 37440, "employment": 272100, "projected_growth_pct": 3.1, "education_typical": "No formal educational credential"}
+{"soc_code": "41-2031", "title": "Retail salespersons", "median_salary": 34580, "employment": 3936700, "projected_growth_pct": -0.5, "education_typical": "No formal educational credential"}
+{"soc_code": "41-3011", "title": "Advertising sales agents", "median_salary": 61460, "employment": 103700, "projected_growth_pct": -6.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "41-3021", "title": "Insurance sales agents", "median_salary": 60370, "employment": 568800, "projected_growth_pct": 3.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "41-3031", "title": "Securities, commodities, and financial services sales agents", "median_salary": 78140, "employment": 514500, "projected_growth_pct": 3.3, "education_typical": "Bachelor's degree"}
+{"soc_code": "41-3041", "title": "Travel agents", "median_salary": 48450, "employment": 65700, "projected_growth_pct": 2.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "41-3091", "title": "Sales representatives of services, except advertising, insurance, financial services, and travel", "median_salary": 66260, "employment": 1226700, "projected_growth_pct": 3.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "41-4011", "title": "Sales representatives, wholesale and manufacturing, technical and scientific products", "median_salary": 100070, "employment": 303200, "projected_growth_pct": 1.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "41-4012", "title": "Sales representatives, wholesale and manufacturing, except technical and scientific products", "median_salary": 66780, "employment": 1310500, "projected_growth_pct": 0.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "41-9011", "title": "Demonstrators and product promoters", "median_salary": 37960, "employment": 79200, "projected_growth_pct": -0.1, "education_typical": "No formal educational credential"}
+{"soc_code": "41-9012", "title": "Models", "median_salary": 89990, "employment": 6700, "projected_growth_pct": -0.5, "education_typical": "No formal educational credential"}
+{"soc_code": "41-9021", "title": "Real estate brokers", "median_salary": 72280, "employment": 111300, "projected_growth_pct": 3.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "41-9022", "title": "Real estate sales agents", "median_salary": 56320, "employment": 420900, "projected_growth_pct": 3.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "41-9031", "title": "Sales engineers", "median_salary": 121520, "employment": 56800, "projected_growth_pct": 5.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "41-9041", "title": "Telemarketers", "median_salary": 34410, "employment": 67400, "projected_growth_pct": -22.1, "education_typical": "No formal educational credential"}
+{"soc_code": "41-9091", "title": "Door-to-door sales workers, news and street vendors, and related workers", "median_salary": 34530, "employment": 25300, "projected_growth_pct": -10.0, "education_typical": "No formal educational credential"}
+{"soc_code": "41-9099", "title": "Sales and related workers, all other", "median_salary": 46370, "employment": 122600, "projected_growth_pct": 3.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-1011", "title": "First-line supervisors of office and administrative support workers", "median_salary": 66140, "employment": 1558400, "projected_growth_pct": -0.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-2011", "title": "Switchboard operators, including answering service", "median_salary": 38370, "employment": 36600, "projected_growth_pct": -26.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-2021", "title": "Telephone operators", "median_salary": 39130, "employment": 4000, "projected_growth_pct": -27.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-2099", "title": "Communications equipment operators, all other", "median_salary": 49910, "employment": 1400, "projected_growth_pct": 2.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-3011", "title": "Bill and account collectors", "median_salary": 46040, "employment": 166900, "projected_growth_pct": -10.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-3021", "title": "Billing and posting clerks", "median_salary": 47170, "employment": 429800, "projected_growth_pct": -0.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-3031", "title": "Bookkeeping, accounting, and auditing clerks", "median_salary": 49210, "employment": 1613400, "projected_growth_pct": -5.8, "education_typical": "Some college, no degree"}
+{"soc_code": "43-3041", "title": "Gambling cage workers", "median_salary": 36990, "employment": 14100, "projected_growth_pct": -5.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-3051", "title": "Payroll and timekeeping clerks", "median_salary": 55290, "employment": 161100, "projected_growth_pct": -16.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-3061", "title": "Procurement clerks", "median_salary": 48510, "employment": 61900, "projected_growth_pct": -8.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-3071", "title": "Tellers", "median_salary": 39340, "employment": 347400, "projected_growth_pct": -12.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-3099", "title": "Financial clerks, all other", "median_salary": 52150, "employment": 38900, "projected_growth_pct": 1.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4011", "title": "Brokerage clerks", "median_salary": 62940, "employment": 40800, "projected_growth_pct": -9.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4021", "title": "Correspondence clerks", "median_salary": 46740, "employment": 6900, "projected_growth_pct": -5.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4031", "title": "Court, municipal, and license clerks", "median_salary": 47700, "employment": 180400, "projected_growth_pct": 3.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4041", "title": "Credit authorizers, checkers, and clerks", "median_salary": 49130, "employment": 12000, "projected_growth_pct": -6.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4051", "title": "Customer service representatives", "median_salary": 42830, "employment": 2814000, "projected_growth_pct": -5.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4061", "title": "Eligibility interviewers, government programs", "median_salary": 51500, "employment": 166800, "projected_growth_pct": 1.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4071", "title": "File clerks", "median_salary": 41270, "employment": 84300, "projected_growth_pct": -15.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4081", "title": "Hotel, motel, and resort desk clerks", "median_salary": 34270, "employment": 264200, "projected_growth_pct": 3.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4111", "title": "Interviewers, except eligibility and loan", "median_salary": 43830, "employment": 164300, "projected_growth_pct": -11.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4121", "title": "Library assistants, clerical", "median_salary": 36010, "employment": 84500, "projected_growth_pct": -6.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4131", "title": "Loan interviewers and clerks", "median_salary": 48950, "employment": 177600, "projected_growth_pct": -2.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4141", "title": "New accounts clerks", "median_salary": 46610, "employment": 38900, "projected_growth_pct": -13.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4151", "title": "Order clerks", "median_salary": 44660, "employment": 89500, "projected_growth_pct": -17.2, "education_typical": "Some college, no degree"}
+{"soc_code": "43-4161", "title": "Human resources assistants, except payroll and timekeeping", "median_salary": 49440, "employment": 95200, "projected_growth_pct": -7.1, "education_typical": "Associate's degree"}
+{"soc_code": "43-4171", "title": "Receptionists and information clerks", "median_salary": 37230, "employment": 1007200, "projected_growth_pct": 0.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4181", "title": "Reservation and transportation ticket agents and travel clerks", "median_salary": 41460, "employment": 131900, "projected_growth_pct": 2.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-4199", "title": "Information and record clerks, all other", "median_salary": 48360, "employment": 153300, "projected_growth_pct": -0.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-5011", "title": "Cargo and freight agents", "median_salary": 49900, "employment": 100600, "projected_growth_pct": 8.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-5021", "title": "Couriers and messengers", "median_salary": 38340, "employment": 247200, "projected_growth_pct": 8.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-5031", "title": "Public safety telecommunicators", "median_salary": 50730, "employment": 105200, "projected_growth_pct": 3.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-5032", "title": "Dispatchers, except police, fire, and ambulance", "median_salary": 48880, "employment": 218700, "projected_growth_pct": -0.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-5041", "title": "Meter readers, utilities", "median_salary": 49180, "employment": 20100, "projected_growth_pct": -12.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-5051", "title": "Postal service clerks", "median_salary": 61630, "employment": 74200, "projected_growth_pct": -3.5, "education_typical": "No formal educational credential"}
+{"soc_code": "43-5052", "title": "Postal service mail carriers", "median_salary": 57490, "employment": 319400, "projected_growth_pct": -3.5, "education_typical": "No formal educational credential"}
+{"soc_code": "43-5053", "title": "Postal service mail sorters, processors, and processing machine operators", "median_salary": 56530, "employment": 106400, "projected_growth_pct": -8.4, "education_typical": "No formal educational credential"}
+{"soc_code": "43-5061", "title": "Production, planning, and expediting clerks", "median_salary": 57770, "employment": 388800, "projected_growth_pct": -1.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-5071", "title": "Shipping, receiving, and inventory clerks", "median_salary": 43190, "employment": 862200, "projected_growth_pct": -7.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-5111", "title": "Weighers, measurers, checkers, and samplers, recordkeeping", "median_salary": 45650, "employment": 49800, "projected_growth_pct": -4.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-6011", "title": "Executive secretaries and executive administrative assistants", "median_salary": 74260, "employment": 502800, "projected_growth_pct": -1.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-6012", "title": "Legal secretaries and administrative assistants", "median_salary": 54140, "employment": 156300, "projected_growth_pct": -5.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-6013", "title": "Medical secretaries and administrative assistants", "median_salary": 44640, "employment": 850000, "projected_growth_pct": 4.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-6014", "title": "Secretaries and administrative assistants, except legal, medical, and executive", "median_salary": 46290, "employment": 1944000, "projected_growth_pct": -1.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-9021", "title": "Data entry keyers", "median_salary": 39850, "employment": 141600, "projected_growth_pct": -25.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-9022", "title": "Word processors and typists", "median_salary": 47850, "employment": 40000, "projected_growth_pct": -36.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-9031", "title": "Desktop publishers", "median_salary": 53620, "employment": 5000, "projected_growth_pct": -12.4, "education_typical": "Associate's degree"}
+{"soc_code": "43-9041", "title": "Insurance claims and policy processing clerks", "median_salary": 48450, "employment": 256700, "projected_growth_pct": -3.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-9051", "title": "Mail clerks and mail machine operators, except postal service", "median_salary": 38150, "employment": 67400, "projected_growth_pct": -6.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-9061", "title": "Office clerks, general", "median_salary": 43630, "employment": 2646000, "projected_growth_pct": -6.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-9071", "title": "Office machine operators, except computer", "median_salary": 39020, "employment": 25500, "projected_growth_pct": -15.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "43-9081", "title": "Proofreaders and copy markers", "median_salary": 49210, "employment": 12000, "projected_growth_pct": -0.6, "education_typical": "Bachelor's degree"}
+{"soc_code": "43-9111", "title": "Statistical assistants", "median_salary": 51440, "employment": 6500, "projected_growth_pct": -2.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "43-9199", "title": "Office and administrative support workers, all other", "median_salary": 46040, "employment": 232900, "projected_growth_pct": -7.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "45-1011", "title": "First-line supervisors of farming, fishing, and forestry workers", "median_salary": 59330, "employment": 65400, "projected_growth_pct": 2.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "45-2011", "title": "Agricultural inspectors", "median_salary": 50990, "employment": 14700, "projected_growth_pct": 1.5, "education_typical": "Bachelor's degree"}
+{"soc_code": "45-2021", "title": "Animal breeders", "median_salary": 52000, "employment": 7900, "projected_growth_pct": 2.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "45-2041", "title": "Graders and sorters, agricultural products", "median_salary": 35430, "employment": 38900, "projected_growth_pct": -5.4, "education_typical": "No formal educational credential"}
+{"soc_code": "45-2091", "title": "Agricultural equipment operators", "median_salary": 42580, "employment": 65200, "projected_growth_pct": 7.7, "education_typical": "No formal educational credential"}
+{"soc_code": "45-2092", "title": "Farmworkers and laborers, crop, nursery, and greenhouse", "median_salary": 35690, "employment": 504800, "projected_growth_pct": -3.3, "education_typical": "No formal educational credential"}
+{"soc_code": "45-2093", "title": "Farmworkers, farm, ranch, and aquacultural animals", "median_salary": 36150, "employment": 224600, "projected_growth_pct": -5.0, "education_typical": "No formal educational credential"}
+{"soc_code": "45-2099", "title": "Agricultural workers, all other", "median_salary": 40390, "employment": 10100, "projected_growth_pct": 2.3, "education_typical": "No formal educational credential"}
+{"soc_code": "45-3031", "title": "Fishing and hunting workers", "employment": 21900, "projected_growth_pct": -4.6, "education_typical": "No formal educational credential"}
+{"soc_code": "45-4011", "title": "Forest and conservation workers", "median_salary": 43680, "employment": 10800, "projected_growth_pct": -4.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "45-4021", "title": "Fallers", "median_salary": 53900, "employment": 5600, "projected_growth_pct": -7.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "45-4022", "title": "Logging equipment operators", "median_salary": 49210, "employment": 30900, "projected_growth_pct": -1.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "45-4023", "title": "Log graders and scalers", "median_salary": 46710, "employment": 4600, "projected_growth_pct": -0.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "45-4029", "title": "Logging workers, all other", "median_salary": 52000, "employment": 3100, "projected_growth_pct": -4.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-1011", "title": "First-line supervisors of construction trades and extraction workers", "median_salary": 78690, "employment": 921600, "projected_growth_pct": 5.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2011", "title": "Boilermakers", "median_salary": 73340, "employment": 10400, "projected_growth_pct": -2.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2021", "title": "Brickmasons and blockmasons", "median_salary": 60800, "employment": 74100, "projected_growth_pct": 3.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2022", "title": "Stonemasons", "median_salary": 51990, "employment": 12100, "projected_growth_pct": -3.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2031", "title": "Carpenters", "median_salary": 59310, "employment": 959000, "projected_growth_pct": 4.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2041", "title": "Carpet installers", "median_salary": 49850, "employment": 20300, "projected_growth_pct": -9.6, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2042", "title": "Floor layers, except carpet, wood, and hard tiles", "median_salary": 54340, "employment": 33700, "projected_growth_pct": 9.5, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2043", "title": "Floor sanders and finishers", "median_salary": 49150, "employment": 5600, "projected_growth_pct": 2.6, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2044", "title": "Tile and stone setters", "median_salary": 52240, "employment": 52600, "projected_growth_pct": 10.1, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2051", "title": "Cement masons and concrete finishers", "median_salary": 54660, "employment": 206700, "projected_growth_pct": 1.8, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2053", "title": "Terrazzo workers and finishers", "median_salary": 57260, "employment": 1500, "projected_growth_pct": -11.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2061", "title": "Construction laborers", "median_salary": 46730, "employment": 1457000, "projected_growth_pct": 7.3, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2071", "title": "Paving, surfacing, and tamping equipment operators", "median_salary": 51650, "employment": 47000, "projected_growth_pct": 3.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2072", "title": "Pile driver operators", "median_salary": 70510, "employment": 3200, "projected_growth_pct": 4.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2073", "title": "Operating engineers and other construction equipment operators", "median_salary": 58710, "employment": 489300, "projected_growth_pct": 3.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2081", "title": "Drywall and ceiling tile installers", "median_salary": 58140, "employment": 103100, "projected_growth_pct": 4.2, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2082", "title": "Tapers", "median_salary": 64700, "employment": 15600, "projected_growth_pct": 0.1, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2111", "title": "Electricians", "median_salary": 62350, "employment": 818700, "projected_growth_pct": 9.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2121", "title": "Glaziers", "median_salary": 55440, "employment": 60500, "projected_growth_pct": 3.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2131", "title": "Insulation workers, floor, ceiling, and wall", "median_salary": 48680, "employment": 40200, "projected_growth_pct": 3.8, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2132", "title": "Insulation workers, mechanical", "median_salary": 57250, "employment": 27200, "projected_growth_pct": 4.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2141", "title": "Painters, construction and maintenance", "median_salary": 48660, "employment": 342200, "projected_growth_pct": 3.8, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2142", "title": "Paperhangers", "median_salary": 48260, "employment": 2300, "projected_growth_pct": 5.3, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2151", "title": "Pipelayers", "median_salary": 48710, "employment": 34400, "projected_growth_pct": -4.1, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2152", "title": "Plumbers, pipefitters, and steamfitters", "median_salary": 62970, "employment": 504500, "projected_growth_pct": 4.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2161", "title": "Plasterers and stucco masons", "median_salary": 56020, "employment": 24200, "projected_growth_pct": 4.1, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2171", "title": "Reinforcing iron and rebar workers", "median_salary": 59280, "employment": 19400, "projected_growth_pct": 4.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2181", "title": "Roofers", "median_salary": 50970, "employment": 166700, "projected_growth_pct": 5.9, "education_typical": "No formal educational credential"}
+{"soc_code": "47-2211", "title": "Sheet metal workers", "median_salary": 60850, "employment": 127000, "projected_growth_pct": 2.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2221", "title": "Structural iron and steel workers", "median_salary": 62700, "employment": 65700, "projected_growth_pct": 4.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-2231", "title": "Solar photovoltaic installers", "median_salary": 51860, "employment": 28600, "projected_growth_pct": 42.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-3011", "title": "Helpers--brickmasons, blockmasons, stonemasons, and tile and marble setters", "median_salary": 46480, "employment": 16100, "projected_growth_pct": -10.5, "education_typical": "No formal educational credential"}
+{"soc_code": "47-3012", "title": "Helpers--carpenters", "median_salary": 41600, "employment": 25200, "projected_growth_pct": 4.5, "education_typical": "No formal educational credential"}
+{"soc_code": "47-3013", "title": "Helpers--electricians", "median_salary": 39890, "employment": 66600, "projected_growth_pct": 0.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-3014", "title": "Helpers--painters, paperhangers, plasterers, and stucco masons", "median_salary": 38140, "employment": 7400, "projected_growth_pct": 2.3, "education_typical": "No formal educational credential"}
+{"soc_code": "47-3015", "title": "Helpers--pipelayers, plumbers, pipefitters, and steamfitters", "median_salary": 39270, "employment": 45300, "projected_growth_pct": 4.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-3016", "title": "Helpers--roofers", "median_salary": 40590, "employment": 5200, "projected_growth_pct": 5.7, "education_typical": "No formal educational credential"}
+{"soc_code": "47-3019", "title": "Helpers, construction trades, all other", "median_salary": 40760, "employment": 26300, "projected_growth_pct": 4.4, "education_typical": "No formal educational credential"}
+{"soc_code": "47-4011", "title": "Construction and building inspectors", "median_salary": 72120, "employment": 147600, "projected_growth_pct": -0.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-4021", "title": "Elevator and escalator installers and repairers", "median_salary": 106580, "employment": 24200, "projected_growth_pct": 5.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-4031", "title": "Fence erectors", "median_salary": 46940, "employment": 26400, "projected_growth_pct": 4.6, "education_typical": "No formal educational credential"}
+{"soc_code": "47-4041", "title": "Hazardous materials removal workers", "median_salary": 48490, "employment": 51300, "projected_growth_pct": 1.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-4051", "title": "Highway maintenance workers", "median_salary": 49070, "employment": 159100, "projected_growth_pct": 3.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-4061", "title": "Rail-track laying and maintenance equipment operators", "median_salary": 67370, "employment": 15000, "projected_growth_pct": 1.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-4071", "title": "Septic tank servicers and sewer pipe cleaners", "median_salary": 49140, "employment": 30400, "projected_growth_pct": 7.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-4090", "title": "Miscellaneous construction and related workers", "median_salary": 48120, "employment": 35000, "projected_growth_pct": 3.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-5011", "title": "Derrick operators, oil and gas", "median_salary": 62740, "employment": 11300, "projected_growth_pct": 0.5, "education_typical": "No formal educational credential"}
+{"soc_code": "47-5012", "title": "Rotary drill operators, oil and gas", "median_salary": 65010, "employment": 13300, "projected_growth_pct": 0.2, "education_typical": "No formal educational credential"}
+{"soc_code": "47-5013", "title": "Service unit operators, oil and gas", "median_salary": 57980, "employment": 45200, "projected_growth_pct": 0.4, "education_typical": "No formal educational credential"}
+{"soc_code": "47-5022", "title": "Excavating and loading machine and dragline operators, surface mining", "median_salary": 52550, "employment": 35800, "projected_growth_pct": -0.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-5023", "title": "Earth drillers, except oil and gas", "median_salary": 59600, "employment": 18300, "projected_growth_pct": 2.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-5032", "title": "Explosives workers, ordnance handling experts, and blasters", "median_salary": 59110, "employment": 5800, "projected_growth_pct": -0.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-5041", "title": "Continuous mining machine operators", "median_salary": 63380, "employment": 14900, "projected_growth_pct": 0.6, "education_typical": "No formal educational credential"}
+{"soc_code": "47-5043", "title": "Roof bolters, mining", "median_salary": 76640, "employment": 2300, "projected_growth_pct": -34.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-5044", "title": "Loading and moving machine operators, underground mining", "median_salary": 68860, "employment": 6400, "projected_growth_pct": -22.3, "education_typical": "No formal educational credential"}
+{"soc_code": "47-5049", "title": "Underground mining machine operators, all other", "median_salary": 67220, "employment": 3600, "projected_growth_pct": -6.1, "education_typical": "No formal educational credential"}
+{"soc_code": "47-5051", "title": "Rock splitters, quarry", "median_salary": 47460, "employment": 3200, "projected_growth_pct": 4.4, "education_typical": "No formal educational credential"}
+{"soc_code": "47-5071", "title": "Roustabouts, oil and gas", "median_salary": 47510, "employment": 46000, "projected_growth_pct": 2.5, "education_typical": "No formal educational credential"}
+{"soc_code": "47-5081", "title": "Helpers--extraction workers", "median_salary": 48400, "employment": 7000, "projected_growth_pct": -1.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "47-5099", "title": "Extraction workers, all other", "median_salary": 50110, "employment": 6300, "projected_growth_pct": 1.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-1011", "title": "First-line supervisors of mechanics, installers, and repairers", "median_salary": 78300, "employment": 617500, "projected_growth_pct": 3.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-2011", "title": "Computer, automated teller, and office machine repairers", "median_salary": 46860, "employment": 79100, "projected_growth_pct": -0.9, "education_typical": "Some college, no degree"}
+{"soc_code": "49-2021", "title": "Radio, cellular, and tower equipment installers and repairers", "median_salary": 64190, "employment": 11700, "projected_growth_pct": 8.6, "education_typical": "Associate's degree"}
+{"soc_code": "49-2022", "title": "Telecommunications equipment installers and repairers, except line installers", "median_salary": 62630, "employment": 156900, "projected_growth_pct": -4.2, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "49-2091", "title": "Avionics technicians", "median_salary": 81390, "employment": 21400, "projected_growth_pct": 8.2, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "49-2092", "title": "Electric motor, power tool, and related repairers", "median_salary": 53990, "employment": 17100, "projected_growth_pct": 3.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-2093", "title": "Electrical and electronics installers and repairers, transportation equipment", "median_salary": 82730, "employment": 7000, "projected_growth_pct": 6.1, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "49-2094", "title": "Electrical and electronics repairers, commercial and industrial equipment", "median_salary": 71300, "employment": 61100, "projected_growth_pct": -0.8, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "49-2095", "title": "Electrical and electronics repairers, powerhouse, substation, and relay", "median_salary": 100940, "employment": 23400, "projected_growth_pct": 5.5, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "49-2096", "title": "Electronic equipment installers and repairers, motor vehicles", "median_salary": 47940, "employment": 10300, "projected_growth_pct": -13.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-2097", "title": "Audiovisual equipment installers and repairers", "median_salary": 50620, "employment": 24600, "projected_growth_pct": 6.6, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "49-2098", "title": "Security and fire alarm systems installers", "median_salary": 59300, "employment": 85900, "projected_growth_pct": 10.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-3011", "title": "Aircraft mechanics and service technicians", "median_salary": 78680, "employment": 139400, "projected_growth_pct": 4.0, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "49-3021", "title": "Automotive body and related repairers", "median_salary": 51680, "employment": 172600, "projected_growth_pct": 1.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-3022", "title": "Automotive glass installers and repairers", "median_salary": 47260, "employment": 20400, "projected_growth_pct": 3.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-3023", "title": "Automotive service technicians and mechanics", "median_salary": 49670, "employment": 805600, "projected_growth_pct": 4.2, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "49-3031", "title": "Bus and truck mechanics and diesel engine specialists", "median_salary": 60640, "employment": 319900, "projected_growth_pct": 2.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-3041", "title": "Farm equipment mechanics and service technicians", "median_salary": 52080, "employment": 39000, "projected_growth_pct": 11.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-3042", "title": "Mobile heavy equipment mechanics, except engines", "median_salary": 63980, "employment": 188700, "projected_growth_pct": 5.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-3043", "title": "Rail car repairers", "median_salary": 65680, "employment": 17900, "projected_growth_pct": 2.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-3051", "title": "Motorboat mechanics and service technicians", "median_salary": 54950, "employment": 26200, "projected_growth_pct": 6.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-3052", "title": "Motorcycle mechanics", "median_salary": 47200, "employment": 14900, "projected_growth_pct": 5.3, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "49-3053", "title": "Outdoor power equipment and other small engine mechanics", "median_salary": 46560, "employment": 36900, "projected_growth_pct": 2.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-3091", "title": "Bicycle repairers", "median_salary": 40360, "employment": 13200, "projected_growth_pct": -2.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-3092", "title": "Recreational vehicle service technicians", "median_salary": 50540, "employment": 19500, "projected_growth_pct": 11.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-3093", "title": "Tire repairers and changers", "median_salary": 37120, "employment": 113400, "projected_growth_pct": 5.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9011", "title": "Mechanical door repairers", "median_salary": 51050, "employment": 28400, "projected_growth_pct": 11.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9012", "title": "Control and valve installers and repairers, except mechanical door", "median_salary": 74690, "employment": 47700, "projected_growth_pct": 1.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9021", "title": "Heating, air conditioning, and refrigeration mechanics and installers", "median_salary": 59810, "employment": 425200, "projected_growth_pct": 8.1, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "49-9031", "title": "Home appliance repairers", "median_salary": 49410, "employment": 37300, "projected_growth_pct": 2.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9041", "title": "Industrial machinery mechanics", "median_salary": 63760, "employment": 439600, "projected_growth_pct": 16.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9043", "title": "Maintenance workers, machinery", "median_salary": 60500, "employment": 57500, "projected_growth_pct": -2.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9044", "title": "Millwrights", "median_salary": 65170, "employment": 41300, "projected_growth_pct": 0.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9045", "title": "Refractory materials repairers, except brickmasons", "median_salary": 58540, "employment": 1100, "projected_growth_pct": -16.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9051", "title": "Electrical power-line installers and repairers", "median_salary": 92560, "employment": 127400, "projected_growth_pct": 6.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9052", "title": "Telecommunications line installers and repairers", "median_salary": 70500, "employment": 99900, "projected_growth_pct": -3.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9061", "title": "Camera and photographic equipment repairers", "median_salary": 49300, "employment": 2300, "projected_growth_pct": -15.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9062", "title": "Medical equipment repairers", "median_salary": 62630, "employment": 68000, "projected_growth_pct": 12.9, "education_typical": "Associate's degree"}
+{"soc_code": "49-9063", "title": "Musical instrument repairers and tuners", "median_salary": 45320, "employment": 6200, "projected_growth_pct": 1.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9064", "title": "Watch and clock repairers", "median_salary": 60690, "employment": 1400, "projected_growth_pct": -1.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9069", "title": "Precision instrument and equipment repairers, all other", "median_salary": 67080, "employment": 10800, "projected_growth_pct": 2.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9071", "title": "Maintenance and repair workers, general", "median_salary": 48620, "employment": 1629700, "projected_growth_pct": 3.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9081", "title": "Wind turbine service technicians", "median_salary": 62580, "employment": 13600, "projected_growth_pct": 49.9, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "49-9091", "title": "Coin, vending, and amusement machine servicers and repairers", "median_salary": 47350, "employment": 32500, "projected_growth_pct": -2.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9092", "title": "Commercial divers", "median_salary": 61130, "employment": 4200, "projected_growth_pct": 8.5, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "49-9094", "title": "Locksmiths and safe repairers", "median_salary": 50490, "employment": 18800, "projected_growth_pct": -8.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9095", "title": "Manufactured building and mobile home installers", "median_salary": 41080, "employment": 3100, "projected_growth_pct": 5.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9096", "title": "Riggers", "median_salary": 62060, "employment": 24600, "projected_growth_pct": 3.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9097", "title": "Signal and track switch repairers", "median_salary": 83600, "employment": 8700, "projected_growth_pct": 1.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9098", "title": "Helpers--installation, maintenance, and repair workers", "median_salary": 38860, "employment": 98700, "projected_growth_pct": 2.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "49-9099", "title": "Installation, maintenance, and repair workers, all other", "median_salary": 48640, "employment": 221200, "projected_growth_pct": 2.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-1011", "title": "First-line supervisors of production and operating workers", "median_salary": 71190, "employment": 698600, "projected_growth_pct": 1.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-2011", "title": "Aircraft structure, surfaces, rigging, and systems assemblers", "median_salary": 61680, "employment": 33600, "projected_growth_pct": -14.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-2021", "title": "Coil winders, tapers, and finishers", "median_salary": 47260, "employment": 12200, "projected_growth_pct": -6.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-2028", "title": "Electrical, electronic, and electromechanical assemblers, except coil winders, tapers, and finishers", "median_salary": 44040, "employment": 261399, "projected_growth_pct": 4.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-2031", "title": "Engine and other machine assemblers", "median_salary": 52540, "employment": 38400, "projected_growth_pct": -21.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-2041", "title": "Structural metal fabricators and fitters", "median_salary": 49900, "employment": 53800, "projected_growth_pct": -16.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-2051", "title": "Fiberglass laminators and fabricators", "median_salary": 45760, "employment": 18600, "projected_growth_pct": 4.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-2061", "title": "Timing device assemblers and adjusters", "median_salary": 40790, "employment": 200, "projected_growth_pct": -17.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-2090", "title": "Miscellaneous assemblers and fabricators", "median_salary": 42210, "employment": 1467100, "projected_growth_pct": -0.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-3011", "title": "Bakers", "median_salary": 36650, "employment": 249100, "projected_growth_pct": 5.6, "education_typical": "No formal educational credential"}
+{"soc_code": "51-3021", "title": "Butchers and meat cutters", "median_salary": 38960, "employment": 143100, "projected_growth_pct": 1.0, "education_typical": "No formal educational credential"}
+{"soc_code": "51-3022", "title": "Meat, poultry, and fish cutters and trimmers", "median_salary": 37700, "employment": 146800, "projected_growth_pct": 5.5, "education_typical": "No formal educational credential"}
+{"soc_code": "51-3023", "title": "Slaughterers and meat packers", "median_salary": 39790, "employment": 69600, "projected_growth_pct": 2.2, "education_typical": "No formal educational credential"}
+{"soc_code": "51-3091", "title": "Food and tobacco roasting, baking, and drying machine operators and tenders", "median_salary": 42730, "employment": 20700, "projected_growth_pct": 0.6, "education_typical": "No formal educational credential"}
+{"soc_code": "51-3092", "title": "Food batchmakers", "median_salary": 40790, "employment": 173500, "projected_growth_pct": 6.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-3093", "title": "Food cooking machine operators and tenders", "median_salary": 40550, "employment": 29700, "projected_growth_pct": 0.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-3099", "title": "Food processing workers, all other", "median_salary": 38420, "employment": 58700, "projected_growth_pct": 5.3, "education_typical": "No formal educational credential"}
+{"soc_code": "51-4021", "title": "Extruding and drawing machine setters, operators, and tenders, metal and plastic", "median_salary": 46980, "employment": 66000, "projected_growth_pct": 1.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4022", "title": "Forging machine setters, operators, and tenders, metal and plastic", "median_salary": 49240, "employment": 8800, "projected_growth_pct": -18.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4023", "title": "Rolling machine setters, operators, and tenders, metal and plastic", "median_salary": 48630, "employment": 22500, "projected_growth_pct": -8.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4031", "title": "Cutting, punching, and press machine setters, operators, and tenders, metal and plastic", "median_salary": 45590, "employment": 174700, "projected_growth_pct": -12.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4032", "title": "Drilling and boring machine tool setters, operators, and tenders, metal and plastic", "median_salary": 46630, "employment": 5300, "projected_growth_pct": -19.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4033", "title": "Grinding, lapping, polishing, and buffing machine tool setters, operators, and tenders, metal and plastic", "median_salary": 45190, "employment": 70100, "projected_growth_pct": -12.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4034", "title": "Lathe and turning machine tool setters, operators, and tenders, metal and plastic", "median_salary": 48620, "employment": 18900, "projected_growth_pct": -13.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4035", "title": "Milling and planing machine setters, operators, and tenders, metal and plastic", "median_salary": 48310, "employment": 13800, "projected_growth_pct": -14.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4041", "title": "Machinists", "median_salary": 56150, "employment": 299500, "projected_growth_pct": 0.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4051", "title": "Metal-refining furnace operators and tenders", "median_salary": 55770, "employment": 20800, "projected_growth_pct": -2.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4052", "title": "Pourers and casters, metal", "median_salary": 48940, "employment": 5900, "projected_growth_pct": -4.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4061", "title": "Model makers, metal and plastic", "median_salary": 62700, "employment": 3200, "projected_growth_pct": -18.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4062", "title": "Patternmakers, metal and plastic", "median_salary": 54540, "employment": 1600, "projected_growth_pct": -24.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4071", "title": "Foundry mold and coremakers", "median_salary": 45700, "employment": 12700, "projected_growth_pct": -25.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4072", "title": "Molding, coremaking, and casting machine setters, operators, and tenders, metal and plastic", "median_salary": 41230, "employment": 154600, "projected_growth_pct": -3.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4081", "title": "Multiple machine tool setters, operators, and tenders, metal and plastic", "median_salary": 46060, "employment": 131000, "projected_growth_pct": -0.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4111", "title": "Tool and die makers", "median_salary": 63180, "employment": 55200, "projected_growth_pct": -10.8, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "51-4121", "title": "Welders, cutters, solderers, and brazers", "median_salary": 51000, "employment": 457300, "projected_growth_pct": 2.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4122", "title": "Welding, soldering, and brazing machine setters, operators, and tenders", "median_salary": 47060, "employment": 38900, "projected_growth_pct": -9.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4191", "title": "Heat treating equipment setters, operators, and tenders, metal and plastic", "median_salary": 47450, "employment": 14800, "projected_growth_pct": -12.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4192", "title": "Layout workers, metal and plastic", "median_salary": 61870, "employment": 5700, "projected_growth_pct": -5.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4193", "title": "Plating machine setters, operators, and tenders, metal and plastic", "median_salary": 41600, "employment": 31700, "projected_growth_pct": -13.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4194", "title": "Tool grinders, filers, and sharpeners", "median_salary": 48970, "employment": 5800, "projected_growth_pct": -7.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-4199", "title": "Metal workers and plastic workers, all other", "median_salary": 42750, "employment": 20400, "projected_growth_pct": -9.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-5111", "title": "Prepress technicians and workers", "median_salary": 47300, "employment": 26200, "projected_growth_pct": -14.6, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "51-5112", "title": "Printing press operators", "median_salary": 45160, "employment": 150200, "projected_growth_pct": -8.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-5113", "title": "Print binding and finishing workers", "median_salary": 39820, "employment": 35800, "projected_growth_pct": -16.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-6011", "title": "Laundry and dry-cleaning workers", "median_salary": 33800, "employment": 202600, "projected_growth_pct": 5.4, "education_typical": "No formal educational credential"}
+{"soc_code": "51-6021", "title": "Pressers, textile, garment, and related materials", "median_salary": 33880, "employment": 28400, "projected_growth_pct": -13.5, "education_typical": "No formal educational credential"}
+{"soc_code": "51-6031", "title": "Sewing machine operators", "median_salary": 36000, "employment": 124000, "projected_growth_pct": -10.8, "education_typical": "No formal educational credential"}
+{"soc_code": "51-6041", "title": "Shoe and leather workers and repairers", "median_salary": 35950, "employment": 9500, "projected_growth_pct": -3.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-6042", "title": "Shoe machine operators and tenders", "median_salary": 38160, "employment": 4100, "projected_growth_pct": -3.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-6051", "title": "Sewers, hand", "median_salary": 33760, "employment": 5400, "projected_growth_pct": -7.0, "education_typical": "No formal educational credential"}
+{"soc_code": "51-6052", "title": "Tailors, dressmakers, and custom sewers", "median_salary": 40860, "employment": 38800, "projected_growth_pct": -4.5, "education_typical": "No formal educational credential"}
+{"soc_code": "51-6061", "title": "Textile bleaching and dyeing machine operators and tenders", "median_salary": 37320, "employment": 6200, "projected_growth_pct": -10.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-6062", "title": "Textile cutting machine setters, operators, and tenders", "median_salary": 37940, "employment": 9300, "projected_growth_pct": -11.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-6063", "title": "Textile knitting and weaving machine setters, operators, and tenders", "median_salary": 38260, "employment": 15300, "projected_growth_pct": -11.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-6064", "title": "Textile winding, twisting, and drawing out machine setters, operators, and tenders", "median_salary": 37660, "employment": 21700, "projected_growth_pct": -9.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-6091", "title": "Extruding and forming machine setters, operators, and tenders, synthetic and glass fibers", "median_salary": 44980, "employment": 15200, "projected_growth_pct": -1.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-6092", "title": "Fabric and apparel patternmakers", "median_salary": 67670, "employment": 2800, "projected_growth_pct": -10.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-6093", "title": "Upholsterers", "median_salary": 46190, "employment": 22700, "projected_growth_pct": -1.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-6099", "title": "Textile, apparel, and furnishings workers, all other", "median_salary": 37010, "employment": 14700, "projected_growth_pct": -9.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-7011", "title": "Cabinetmakers and bench carpenters", "median_salary": 46020, "employment": 86000, "projected_growth_pct": -1.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-7021", "title": "Furniture finishers", "median_salary": 42530, "employment": 20500, "projected_growth_pct": -3.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-7031", "title": "Model makers, wood", "median_salary": 51850, "employment": 900, "projected_growth_pct": -4.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-7032", "title": "Patternmakers, wood", "median_salary": 52520, "employment": 500, "projected_growth_pct": -5.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-7041", "title": "Sawing machine setters, operators, and tenders, wood", "median_salary": 39950, "employment": 45000, "projected_growth_pct": -0.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-7042", "title": "Woodworking machine setters, operators, and tenders, except sawing", "median_salary": 40440, "employment": 63100, "projected_growth_pct": -1.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-7099", "title": "Woodworkers, all other", "median_salary": 41220, "employment": 17600, "projected_growth_pct": -4.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-8011", "title": "Nuclear power reactor operators", "median_salary": 122610, "employment": 5700, "projected_growth_pct": -15.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-8012", "title": "Power distributors and dispatchers", "median_salary": 107240, "employment": 9300, "projected_growth_pct": -3.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-8013", "title": "Power plant operators", "median_salary": 99670, "employment": 31600, "projected_growth_pct": -11.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-8021", "title": "Stationary engineers and boiler operators", "median_salary": 75190, "employment": 33300, "projected_growth_pct": 2.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-8031", "title": "Water and wastewater treatment plant and system operators", "median_salary": 58260, "employment": 132400, "projected_growth_pct": -6.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-8091", "title": "Chemical plant and system operators", "median_salary": 73540, "employment": 18100, "projected_growth_pct": -6.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-8092", "title": "Gas plant operators", "median_salary": 83400, "employment": 16200, "projected_growth_pct": -8.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-8093", "title": "Petroleum pump system operators, refinery operators, and gaugers", "median_salary": 97540, "employment": 34900, "projected_growth_pct": -2.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-8099", "title": "Plant and system operators, all other", "median_salary": 61710, "employment": 16300, "projected_growth_pct": 1.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9011", "title": "Chemical equipment operators and tenders", "median_salary": 57090, "employment": 128900, "projected_growth_pct": 3.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9012", "title": "Separating, filtering, clarifying, precipitating, and still machine setters, operators, and tenders", "median_salary": 49500, "employment": 54400, "projected_growth_pct": -4.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9021", "title": "Crushing, grinding, and polishing machine setters, operators, and tenders", "median_salary": 46890, "employment": 28700, "projected_growth_pct": -2.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9022", "title": "Grinding and polishing workers, hand", "median_salary": 41690, "employment": 11800, "projected_growth_pct": -21.2, "education_typical": "No formal educational credential"}
+{"soc_code": "51-9023", "title": "Mixing and blending machine setters, operators, and tenders", "median_salary": 47680, "employment": 101100, "projected_growth_pct": -6.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9031", "title": "Cutters and trimmers, hand", "median_salary": 38800, "employment": 7000, "projected_growth_pct": -18.1, "education_typical": "No formal educational credential"}
+{"soc_code": "51-9032", "title": "Cutting and slicing machine setters, operators, and tenders", "median_salary": 45700, "employment": 49000, "projected_growth_pct": -2.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9041", "title": "Extruding, forming, pressing, and compacting machine setters, operators, and tenders", "median_salary": 45130, "employment": 57300, "projected_growth_pct": 2.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9051", "title": "Furnace, kiln, oven, drier, and kettle operators and tenders", "median_salary": 47010, "employment": 16500, "projected_growth_pct": 3.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9061", "title": "Inspectors, testers, sorters, samplers, and weighers", "median_salary": 47460, "employment": 598000, "projected_growth_pct": 0.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9071", "title": "Jewelers and precious stone and metal workers", "median_salary": 49140, "employment": 35100, "projected_growth_pct": -5.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9081", "title": "Dental laboratory technicians", "median_salary": 48310, "employment": 35200, "projected_growth_pct": -4.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9082", "title": "Medical appliance technicians", "median_salary": 47060, "employment": 12000, "projected_growth_pct": 3.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9083", "title": "Ophthalmic laboratory technicians", "median_salary": 38420, "employment": 19600, "projected_growth_pct": 2.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9111", "title": "Packaging and filling machine operators and tenders", "median_salary": 40900, "employment": 381200, "projected_growth_pct": 4.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9123", "title": "Painting, coating, and decorating workers", "median_salary": 40860, "employment": 8800, "projected_growth_pct": 1.4, "education_typical": "No formal educational credential"}
+{"soc_code": "51-9124", "title": "Coating, painting, and spraying machine setters, operators, and tenders", "median_salary": 47590, "employment": 165500, "projected_growth_pct": 0.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9141", "title": "Semiconductor processing technicians", "median_salary": 51180, "employment": 31900, "projected_growth_pct": 10.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9151", "title": "Photographic process workers and processing machine operators", "median_salary": 40100, "employment": 11200, "projected_growth_pct": -2.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9161", "title": "Computer numerically controlled tool operators", "median_salary": 49970, "employment": 177100, "projected_growth_pct": -10.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9162", "title": "Computer numerically controlled tool programmers", "median_salary": 65670, "employment": 28300, "projected_growth_pct": 12.8, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "51-9191", "title": "Adhesive bonding machine operators and tenders", "median_salary": 45210, "employment": 12200, "projected_growth_pct": 1.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9192", "title": "Cleaning, washing, and metal pickling equipment operators and tenders", "median_salary": 41460, "employment": 14600, "projected_growth_pct": 3.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9193", "title": "Cooling and freezing equipment operators and tenders", "median_salary": 40160, "employment": 7100, "projected_growth_pct": 7.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9194", "title": "Etchers and engravers", "median_salary": 40450, "employment": 8600, "projected_growth_pct": -0.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9195", "title": "Molders, shapers, and casters, except metal and plastic", "median_salary": 45690, "employment": 41700, "projected_growth_pct": 6.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9196", "title": "Paper goods machine setters, operators, and tenders", "median_salary": 49390, "employment": 97500, "projected_growth_pct": -6.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9197", "title": "Tire builders", "median_salary": 55580, "employment": 20900, "projected_growth_pct": 2.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9198", "title": "Helpers--production workers", "median_salary": 38220, "employment": 168500, "projected_growth_pct": -8.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "51-9199", "title": "Production workers, all other", "median_salary": 38820, "employment": 292800, "projected_growth_pct": 0.5, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-1041", "title": "Aircraft cargo handling supervisors", "median_salary": 63940, "employment": 10300, "projected_growth_pct": 5.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-1047", "title": "First-line supervisors of transportation and material moving workers, except aircraft cargo handling supervisors", "median_salary": 61890, "employment": 609600, "projected_growth_pct": 3.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-2011", "title": "Airline pilots, copilots, and flight engineers", "median_salary": 226600, "employment": 100000, "projected_growth_pct": 3.9, "education_typical": "Bachelor's degree"}
+{"soc_code": "53-2012", "title": "Commercial pilots", "median_salary": 122670, "employment": 55400, "projected_growth_pct": 5.1, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "53-2021", "title": "Air traffic controllers", "median_salary": 144580, "employment": 24100, "projected_growth_pct": 1.2, "education_typical": "Associate's degree"}
+{"soc_code": "53-2022", "title": "Airfield operations specialists", "median_salary": 56750, "employment": 16900, "projected_growth_pct": 4.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-2031", "title": "Flight attendants", "median_salary": 67130, "employment": 130800, "projected_growth_pct": 9.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-3011", "title": "Ambulance drivers and attendants, except emergency medical technicians", "median_salary": 34330, "employment": 12300, "projected_growth_pct": -1.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-3031", "title": "Driver/sales workers", "median_salary": 37130, "employment": 451500, "projected_growth_pct": 8.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-3032", "title": "Heavy and tractor-trailer truck drivers", "median_salary": 57440, "employment": 2235100, "projected_growth_pct": 4.0, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "53-3033", "title": "Light truck drivers", "median_salary": 44140, "employment": 1079800, "projected_growth_pct": 7.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-3051", "title": "Bus drivers, school", "median_salary": 47040, "employment": 387300, "projected_growth_pct": 0.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-3052", "title": "Bus drivers, transit and intercity", "median_salary": 57440, "employment": 158800, "projected_growth_pct": 4.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-3053", "title": "Shuttle drivers and chauffeurs", "median_salary": 36670, "employment": 243900, "projected_growth_pct": 6.7, "education_typical": "No formal educational credential"}
+{"soc_code": "53-3054", "title": "Taxi drivers", "median_salary": 36220, "employment": 204000, "projected_growth_pct": 11.1, "education_typical": "No formal educational credential"}
+{"soc_code": "53-3099", "title": "Motor vehicle operators, all other", "median_salary": 36260, "employment": 79300, "projected_growth_pct": 6.0, "education_typical": "No formal educational credential"}
+{"soc_code": "53-4011", "title": "Locomotive engineers", "median_salary": 77400, "employment": 27000, "projected_growth_pct": 0.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-4013", "title": "Rail yard engineers, dinkey operators, and hostlers", "median_salary": 58030, "employment": 3100, "projected_growth_pct": 0.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-4022", "title": "Railroad brake, signal, and switch operators and locomotive firers", "median_salary": 65480, "employment": 11000, "projected_growth_pct": 1.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-4031", "title": "Railroad conductors and yardmasters", "median_salary": 74080, "employment": 36800, "projected_growth_pct": 1.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-4041", "title": "Subway and streetcar operators", "median_salary": 84830, "employment": 9600, "projected_growth_pct": 3.4, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-4099", "title": "Rail transportation workers, all other", "median_salary": 49330, "employment": 1600, "projected_growth_pct": 3.9, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-5011", "title": "Sailors and marine oilers", "median_salary": 49610, "employment": 32100, "projected_growth_pct": 2.3, "education_typical": "No formal educational credential"}
+{"soc_code": "53-5021", "title": "Captains, mates, and pilots of water vessels", "median_salary": 85540, "employment": 40700, "projected_growth_pct": 0.5, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "53-5022", "title": "Motorboat operators", "median_salary": 51880, "employment": 2700, "projected_growth_pct": 1.4, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "53-5031", "title": "Ship engineers", "median_salary": 101320, "employment": 8800, "projected_growth_pct": 1.6, "education_typical": "Postsecondary nondegree award"}
+{"soc_code": "53-6011", "title": "Bridge and lock tenders", "median_salary": 58490, "employment": 2900, "projected_growth_pct": -3.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-6021", "title": "Parking attendants", "median_salary": 34600, "employment": 135700, "projected_growth_pct": 3.0, "education_typical": "No formal educational credential"}
+{"soc_code": "53-6031", "title": "Automotive and watercraft service attendants", "median_salary": 34850, "employment": 100000, "projected_growth_pct": -1.0, "education_typical": "No formal educational credential"}
+{"soc_code": "53-6032", "title": "Aircraft service attendants", "median_salary": 41540, "employment": 28000, "projected_growth_pct": 5.1, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-6041", "title": "Traffic technicians", "median_salary": 58480, "employment": 7900, "projected_growth_pct": 3.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-6051", "title": "Transportation inspectors", "median_salary": 85750, "employment": 25700, "projected_growth_pct": 1.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-6061", "title": "Passenger attendants", "median_salary": 37560, "employment": 25600, "projected_growth_pct": 4.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-6099", "title": "Transportation workers, all other", "median_salary": 39630, "employment": 11500, "projected_growth_pct": 3.8, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-7011", "title": "Conveyor operators and tenders", "median_salary": 41230, "employment": 29100, "projected_growth_pct": -3.4, "education_typical": "No formal educational credential"}
+{"soc_code": "53-7021", "title": "Crane and tower operators", "median_salary": 66370, "employment": 42300, "projected_growth_pct": 3.0, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-7031", "title": "Dredge operators", "median_salary": 48430, "employment": 1100, "projected_growth_pct": 1.2, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-7041", "title": "Hoist and winch operators", "median_salary": 52310, "employment": 2700, "projected_growth_pct": -1.1, "education_typical": "No formal educational credential"}
+{"soc_code": "53-7051", "title": "Industrial truck and tractor operators", "median_salary": 46390, "employment": 792500, "projected_growth_pct": 1.1, "education_typical": "No formal educational credential"}
+{"soc_code": "53-7061", "title": "Cleaners of vehicles and equipment", "median_salary": 35270, "employment": 410100, "projected_growth_pct": 3.9, "education_typical": "No formal educational credential"}
+{"soc_code": "53-7062", "title": "Laborers and freight, stock, and material movers, hand", "median_salary": 38940, "employment": 2988900, "projected_growth_pct": 1.5, "education_typical": "No formal educational credential"}
+{"soc_code": "53-7063", "title": "Machine feeders and offbearers", "median_salary": 39700, "employment": 46500, "projected_growth_pct": -13.0, "education_typical": "No formal educational credential"}
+{"soc_code": "53-7064", "title": "Packers and packagers, hand", "median_salary": 35580, "employment": 591800, "projected_growth_pct": -5.4, "education_typical": "No formal educational credential"}
+{"soc_code": "53-7065", "title": "Stockers and order fillers", "median_salary": 37090, "employment": 2764800, "projected_growth_pct": 8.5, "education_typical": "No formal educational credential"}
+{"soc_code": "53-7071", "title": "Gas compressor and gas pumping station operators", "median_salary": 71510, "employment": 5400, "projected_growth_pct": -1.3, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-7072", "title": "Pump operators, except wellhead pumpers", "median_salary": 60020, "employment": 13100, "projected_growth_pct": 2.6, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-7073", "title": "Wellhead pumpers", "median_salary": 70010, "employment": 18800, "projected_growth_pct": -4.7, "education_typical": "High school diploma or equivalent"}
+{"soc_code": "53-7081", "title": "Refuse and recyclable material collectors", "median_salary": 48350, "employment": 147900, "projected_growth_pct": 0.9, "education_typical": "No formal educational credential"}
+{"soc_code": "53-7121", "title": "Tank car, truck, and ship loaders", "median_salary": 58070, "employment": 12000, "projected_growth_pct": 4.3, "education_typical": "No formal educational credential"}
+{"soc_code": "53-7199", "title": "Material moving workers, all other", "median_salary": 41690, "employment": 27700, "projected_growth_pct": 4.3, "education_typical": "No formal educational credential"}
