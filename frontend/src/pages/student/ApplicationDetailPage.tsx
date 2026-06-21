@@ -97,6 +97,12 @@ function isMissingChecklist(err: unknown): boolean {
   return msg.includes('404') || msg.includes('not found') || msg.includes('no checklist')
 }
 
+// Any "you're in" decision variant — schools issue 'admitted', 'accepted', or
+// 'conditional_admission' (matches the list view + My Space). The decision banner
+// must treat all three the same, not just literal 'admitted'.
+const ADMIT_DECISIONS = ['admitted', 'accepted', 'conditional_admission']
+const isAdmitDecision = (d?: string | null) => ADMIT_DECISIONS.includes(d ?? '')
+
 export default function ApplicationDetailPage() {
   const { appId } = useParams<{ appId: string }>()
   const navigate = useNavigate()
@@ -355,32 +361,28 @@ export default function ApplicationDetailPage() {
         </div>
       </div>
 
-      {/* Decision banner — routes to Offer tab when admitted (spec 18 §4) */}
-      {application.status === 'decision_made' && application.decision && (
+      {/* Decision banner — routes to the Offer tab for any admit variant with a
+          real offer (admitted / accepted / conditional_admission), spec 18 §4. */}
+      {application.status === 'decision_made' && application.decision && (() => {
+        const accepted = application.student_decision === 'accepted_by_student'
+        const admit = isAdmitDecision(application.decision) || accepted
+        return (
         <div className={`mt-4 rounded-lg px-4 py-3 flex items-center gap-3 ${
-          application.decision === 'admitted' || application.student_decision === 'accepted_by_student'
-            ? 'bg-success-soft'
-            : application.decision === 'rejected'
-              ? 'bg-destructive/10'
-              : 'bg-warning-soft'
+          admit ? 'bg-success-soft' : application.decision === 'rejected' ? 'bg-destructive/10' : 'bg-warning-soft'
         }`}>
           <Award size={18} className={
-            application.decision === 'admitted' || application.student_decision === 'accepted_by_student'
-              ? 'text-success'
-              : application.decision === 'rejected'
-                ? 'text-destructive'
-                : 'text-warning'
+            admit ? 'text-success' : application.decision === 'rejected' ? 'text-destructive' : 'text-warning'
           } />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground">
               {DECISION_STATE_LABEL[application.decision_state || application.decision] ||
                 `Decision: ${application.decision}`}
             </p>
-            {application.student_decision === 'accepted_by_student' && (
+            {accepted && (
               <p className="text-xs text-muted-foreground">You&apos;re in — enrollment steps are on your calendar.</p>
             )}
           </div>
-          {application.decision === 'admitted' && application.student_decision !== 'accepted_by_student' && (
+          {application.offer && !accepted && (
             <button
               onClick={() => setTab('offer')}
               className="text-xs text-secondary font-medium shrink-0 hover:underline"
@@ -389,7 +391,8 @@ export default function ApplicationDetailPage() {
             </button>
           )}
         </div>
-      )}
+        )
+      })()}
 
       {/* Status timeline (§4 / §12) */}
       <div className="my-5">
@@ -484,7 +487,9 @@ export default function ApplicationDetailPage() {
               >
                 <Send size={14} className="mr-1" />
                 {canSubmit
-                  ? 'Submit application'
+                  ? isExternal
+                    ? 'Mark as submitted' /* external = you applied on their portal; UniPaith records it, doesn't send it (ownership rule) */
+                    : 'Submit application'
                   : allComplete && markedReady && !feeClear
                     ? 'Settle the fee to submit'
                     : allComplete

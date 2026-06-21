@@ -13,7 +13,7 @@ import {
   deadlineTone,
   DEADLINE_TONE_CLASS,
 } from './offerFormat'
-import { Award, Sparkles, PiggyBank, ShieldCheck, Check, Minus } from 'lucide-react'
+import { Award, Sparkles, PiggyBank, ShieldCheck } from 'lucide-react'
 
 const pct = (n: number | null | undefined) =>
   n == null ? '—' : `${Math.round(n * 100)}%`
@@ -222,28 +222,11 @@ export default function OfferComparisonTable({
                   : '—'
               }
             />
-            {data?.must_have_constraints && data.must_have_constraints.length > 0 && (
-              <Row
-                label="Must-haves"
-                offers={offers}
-                render={o => {
-                  // Fitness >= 0.5 indicates the match engine scored the offer
-                  // as at least medium-fit (must-haves factored in). Below 0.5
-                  // signals likely gaps — the global must-haves section has details.
-                  const fit = o.fit.fitness
-                  if (fit == null) return <span className="text-muted-foreground">—</span>
-                  return fit >= 0.5 ? (
-                    <span className="inline-flex items-center gap-1 text-success">
-                      <Check size={12} /> Likely met
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-warning">
-                      <Minus size={12} /> Review below
-                    </span>
-                  )
-                }}
-              />
-            )}
+            {/* No per-offer "must-haves met" verdict: the backend returns the
+                student's must-haves as a flat list with NO per-offer satisfaction
+                data, so a green "Likely met" inferred from the fitness score would
+                fabricate a claim we can't substantiate (data-honesty rule). The
+                honest "Your must-haves" list renders below instead. */}
           </tbody>
         </table>
       </div>
