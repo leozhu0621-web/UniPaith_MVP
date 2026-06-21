@@ -296,6 +296,81 @@ SLUG_DEPARTMENTS: dict[str, str] = {
     "jhu-area-studies-bs": "Program in Latin American, Caribbean, and Latinx Studies",
 }
 
+# Per-slug full description override (clause + body, before the delivery suffix).
+# Used where a field's verified clause is long enough (>= ~150 chars) that, stamped
+# verbatim across the field's credential siblings, it leaves a shared run the
+# absolute-150 anti-stub floor flags (REPAIR_BACKLOG #11, miss #8 fraction-floor).
+# Each row below gets its OWN researched, credential-distinct opening so no two
+# siblings of a field share a >= 150-char run (frame_stripped_shared_body abs150 = 0;
+# gold MIT = 0). Sources: JHU department pages — engineering.jhu.edu (Chemical and
+# Biomolecular Engineering, Institute for NanoBioTechnology), krieger.jhu.edu
+# (Anthropology; Sociology / Program in Film and Media Studies).
+SLUG_DESCRIPTIONS: dict[str, str] = {
+    # Anthropology — Krieger Department of Anthropology (Homewood)
+    "jhu-anthropology-bs": (
+        "Homewood's anthropology program blends archaeological fieldwork, medical "
+        "anthropology, and sociocultural theory, with Baltimore and Chesapeake-area "
+        "research sites. The Bachelor of Arts in Anthropology moves undergraduates from "
+        "introductory core sequences into upper-level seminars and supervised fieldwork "
+        "at Johns Hopkins, building the ethnographic and analytical range that prepares "
+        "graduates for professional roles or graduate study."
+    ),
+    "jhu-anthropology-cert": (
+        "Advanced coursework in medical anthropology and sociocultural theory anchors "
+        "graduate anthropology in the Krieger School. The Graduate Certificate in "
+        "Anthropology concentrates a focused set of these courses for working "
+        "professionals and degree-seeking students, giving them targeted Homewood "
+        "expertise that can stand alone or count toward a related graduate degree."
+    ),
+    "jhu-anthropology-ms": (
+        "Sociocultural theory, medical anthropology, and archaeological method shape "
+        "graduate study in the Krieger Department of Anthropology. The Master of Science "
+        "in Anthropology pairs graduate seminars and methods training with a "
+        "faculty-directed research project or thesis at Johns Hopkins, letting students "
+        "deepen a chosen subfield before advanced practice or doctoral work."
+    ),
+    # Chemical Engineering — Whiting Department of Chemical and Biomolecular Engineering
+    "jhu-chemical-engineering-bs": (
+        "Whiting's Department of Chemical and Biomolecular Engineering works across "
+        "catalysis, drug delivery, and sustainable process design, with ties to the "
+        "Institute for NanoBioTechnology. The Bachelor of Science in Chemical "
+        "Engineering leads undergraduates through core thermodynamics, transport, and "
+        "reaction-engineering sequences, laboratory work, and upper-level electives at "
+        "Johns Hopkins, building the foundation for professional practice or graduate "
+        "study."
+    ),
+    "jhu-chemical-engineering-cert": (
+        "Molecular-scale design — catalysis, drug delivery, and sustainable processes — "
+        "defines graduate chemical and biomolecular engineering at Johns Hopkins. The "
+        "Graduate Certificate in Chemical Engineering packages a focused set of advanced "
+        "courses for working professionals, giving them targeted Whiting School "
+        "expertise that can stand alone or count toward a related graduate degree."
+    ),
+    "jhu-chemical-engineering-ms": (
+        "Graduate research in the Whiting School spans nanobiotechnology, drug delivery, "
+        "catalysis, and sustainable process design through the Institute for "
+        "NanoBioTechnology. The Master of Science in Chemical Engineering combines "
+        "advanced coursework and methods with an applied project or research thesis "
+        "directed by Johns Hopkins faculty, readying students for senior practice or "
+        "doctoral study."
+    ),
+    # Communication Studies — Krieger (Sociology / Program in Film and Media Studies)
+    "jhu-communication-and-media-studies-cert": (
+        "Media, rhetoric, and digital-culture study at Krieger links to the Program in "
+        "Film and Media Studies and Baltimore civic-engagement work. The Graduate "
+        "Certificate in Communication Studies gathers a compact set of these advanced "
+        "courses for working professionals, giving them targeted Johns Hopkins "
+        "expertise that can stand alone or count toward a related graduate degree."
+    ),
+    "jhu-communication-and-media-studies-ms": (
+        "Graduate communication study in the Krieger School joins rhetoric, media "
+        "analysis, and digital culture with applied, community-engaged projects in "
+        "Baltimore. The Master of Science in Communication Studies builds on graduate "
+        "seminars, research methods, and a capstone or thesis directed by Johns Hopkins "
+        "faculty, preparing students for advanced professional practice or doctoral work."
+    ),
+}
+
 # Fields that confer a B.A. at JHU Krieger (humanities and social sciences).
 BA_FIELDS = frozenset({
     "Anthropology", "Archaeology", "Latin American, Caribbean, and Latinx Studies",

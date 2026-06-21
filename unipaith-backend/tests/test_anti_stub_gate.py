@@ -169,21 +169,33 @@ def test_credential_siblings_have_no_frame_stripped_shared_body(name: str):
     )
 
 
-def test_nyu_credential_siblings_no_shared_body_absolute_floor():
-    """NYU's de-duplicated catalog must show no field whose credential siblings share a body
-    even under the run-67 ABSOLUTE floor (REPAIR_BACKLOG CRITICAL #2, miss #8 fraction-floor):
-    a 150+-char run shared across a field's BA/BS or MS/PhD is a stamped department blurb (the
-    Chemistry B.A.==B.S. 950-char duplicate), which the fraction-only default could dilute past.
-    Gold MIT also scores 0 with the absolute floor on. Enforced separately from the fleet-wide
-    default (which still uses fraction-only) until the remaining catalogs are repaired.
-    Columbia joins the absolute-floor set after its 14 frame-shared fields were rewritten to
-    per-credential researched bodies (columbiapercred1)."""
-    for name in ("nyu", "mit", "columbia"):
-        shared = frame_stripped_shared_body(_programs(name), abs_chars=150)
-        assert not shared, (
-            f"{name}: credential siblings share a 150+-char body on "
-            f"{len(shared)} field(s): {shared[:8]}{' …' if len(shared) > 8 else ''}"
-        )
+# Catalogs that hold to the run-67 ABSOLUTE floor (a 150+-char shared run across a field's
+# credential siblings is flagged regardless of fraction, so a padded per-credential tail
+# cannot dilute a stamped department blurb past the fraction-only default). Each entry is
+# verified at frame_stripped_shared_body(..., abs_chars=150) == 0. A catalog graduates here
+# once its frame-shared fields are rewritten to per-credential researched bodies (the
+# fraction-only default still guards the rest of the fleet until they are repaired —
+# REPAIR_BACKLOG miss #8 fraction-floor; the dilution-evasion catalogs UF / Cornell / BU
+# are NOT here yet on purpose).
+_ABS_FLOOR_CLEAN = [
+    "nyu", "mit", "columbia", "michigan", "ucla", "jhu",
+]
+
+
+@pytest.mark.parametrize("name", _ABS_FLOOR_CLEAN)
+def test_credential_siblings_no_shared_body_absolute_floor(name: str):
+    """A field's credential siblings must share no body even under the ABSOLUTE 150-char floor
+    (REPAIR_BACKLOG CRITICAL #2 / miss #8 fraction-floor): a 150+-char run shared across a
+    field's BA/BS or MS/PhD is a stamped department blurb (e.g. the Chemistry B.A.==B.S.
+    950-char duplicate), which the fraction-only default could dilute past once each sibling's
+    tail is padded. Gold MIT scores 0 with the absolute floor on; JHU joins after its
+    Anthropology / Chemical Engineering / Communication Studies clauses (each ~150 chars) were
+    rewritten to per-credential researched bodies (REPAIR_BACKLOG #11, jhupercrd1)."""
+    shared = frame_stripped_shared_body(_programs(name), abs_chars=150)
+    assert not shared, (
+        f"{name}: credential siblings share a 150+-char body on "
+        f"{len(shared)} field(s): {shared[:8]}{' …' if len(shared) > 8 else ''}"
+    )
 
 
 def test_absolute_floor_catches_a_diluted_shared_sentence():
