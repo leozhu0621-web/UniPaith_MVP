@@ -22,7 +22,7 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
 import { formatCurrency, formatDate } from '../../utils/format'
-import { differenceInDays } from 'date-fns'
+import { daysUntil } from '../../utils/deadline'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare, Megaphone,
   Briefcase, Building2, Users, Clock, Sparkles, Mail, Archive,
@@ -870,7 +870,7 @@ export default function ProgramDetailPage() {
                     </div>
                     <div className="space-y-2">
                       {admissionTimeline.rounds.map((r: any, i: number) => {
-                        const days = differenceInDays(new Date(r.deadline), new Date())
+                        const days = daysUntil(r.deadline) ?? 0
                         const isPast = days < 0
                         const isUrgent = !isPast && days <= 30
                         return (
