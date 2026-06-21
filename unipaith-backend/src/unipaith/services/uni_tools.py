@@ -12,6 +12,7 @@ custom-tool name declared in ``agents/uni.agent.yaml``.
 
 from __future__ import annotations
 
+import logging
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -21,6 +22,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.ai.artifacts import persist_extraction
 from unipaith.ai.extractor import ExtractedSignals
 from unipaith.services.discovery_service import DiscoveryService
+
+logger = logging.getLogger(__name__)
 
 
 # ── save_signals ──────────────────────────────────────────────────────────
@@ -232,9 +235,37 @@ async def tool_get_matches(
             "reason": handoff.get("reason"),
         }
     student_id = await disc._profile_id_for_user(user_id)
+    # The live managed-agent path persists signals to the structured tables but
+    # never emits a StudentFeatureVector (that hook lives only in the in-app
+    # orchestrator). Without a vector the matcher returns [] forever — so ensure one
+    # exists here before recomputing. Best-effort: a Haiku/embed failure must never
+    # break the agent turn (the recompute then degrades to its own empty state).
+    await _ensure_feature_vector(db, student_id)
     await disc._recompute_matches_for_student(student_id=student_id)
     matches = await MatchService(db).list_matches_for_display(student_id, limit=8)
     return {"ready": True, "matches": matches}
+
+
+async def _ensure_feature_vector(db: AsyncSession, student_id: UUID) -> None:
+    """Emit a StudentFeatureVector from the structured tables if the student has
+    none yet — closes the managed-agent gap where Discovery completes but the
+    matcher has nothing to score. No-op when a vector already exists; best-effort
+    on emit so it never breaks the turn."""
+    from unipaith.services.match_service import MatchService
+
+    if await MatchService(db)._student_feature_record(student_id) is not None:
+        return
+    try:
+        from unipaith.ai.artifacts import snapshot_from_structured_tables
+        from unipaith.ai.feature_emitter import get_feature_emitter, persist_features
+
+        snapshot = await snapshot_from_structured_tables(db, student_id)
+        features = await get_feature_emitter().emit(snapshot=snapshot, student_id=student_id, db=db)
+        if features.is_valid():
+            await persist_features(db=db, student_id=student_id, features=features)
+            await db.commit()
+    except Exception:  # pragma: no cover — degraded path, never breaks the turn
+        logger.exception("ensure_feature_vector: emit failed for student=%s", student_id)
 
 
 # ── generate_strategy ─────────────────────────────────────────────────────
