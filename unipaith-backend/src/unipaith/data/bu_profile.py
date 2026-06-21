@@ -975,6 +975,59 @@ _DEGREE_TOKENS = frozenset({
     "msd", "cags", "phd", "dsc", "dscd", "dmd", "jd", "md", "minor", "online",
 })
 _LEGACY_COUNTS = Counter(name for _s, _sk, name, *_ in _CATALOG)
+# Concentration rows BU lists on a separate catalog page but which confer the SAME degree as
+# a general sibling — collapse into the keeper's ``tracks`` (miss #2), never a separate
+# "{degree} — {concentration}" row. {dropped_slug: keeper_slug}. The dropped slug's tracks
+# merge into the keeper; ``_apply_programs`` removes the now-stale row from the live DB.
+# {dropped_slug: (keeper_slug, concentration_track_label)}.
+_FORCE_COLLAPSE: dict[str, tuple[str, str]] = {
+    # GRS lists "M.S. in CS" and "M.S. in CS — Artificial Intelligence" as separate catalog
+    # pages; both confer the GRS M.S. in Computer Science (AI is a concentration).
+    "bu-academics-grs-computer-science-ms-in-artificial-intelligence": (
+        "bu-academics-grs-computer-science-ms",
+        "Artificial Intelligence",
+    ),
+    # BU Law lists "JD/MBA" and "JD/MBA — Health Sector Management" (a Questrom MBA
+    # concentration) separately; same JD/MBA dual degree.
+    "bu-academics-law-jdmba-health": (
+        "bu-academics-law-jdmba",
+        "Health Sector Management",
+    ),
+}
+
+# Final display-name fixups applied AFTER all collapse / disambiguation (miss #2): clean
+# names for genuinely-distinct programs that the dedup cascade left with a
+# "{degree} — {concentration}" tail. Keyed by surviving keeper slug so it never disturbs the
+# collapse-keeper logic (unlike ``_PROGRAM_NAME_OVERRIDES``, which is consulted DURING
+# disambiguation and would orphan a collapse sibling). Distinguishers are verified facts —
+# the real owning unit / delivery from the bu.edu/academics catalog URL.
+_FINAL_NAME_FIXUP: dict[str, str] = {
+    # M.S. in Computer Science is offered through three units — distinguish by school/delivery.
+    "bu-academics-cas-computer-science-ba-ms": (
+        "Master of Science in Computer Science (BA/MS, College of Arts & Sciences)"
+    ),
+    "bu-academics-grs-computer-science-ms": (
+        "Master of Science in Computer Science (Graduate School of Arts & Sciences)"
+    ),
+    "bu-academics-met-computer-science-ms": "Master of Science in Computer Science (Online)",
+    # MET's .../met/programs/computer-science/mscis/ page is the M.S. in Computer Information
+    # Systems — a distinct degree, never "M.S. in CS — Mscis".
+    "bu-academics-met-computer-science-mscis": "Master of Science in Computer Information Systems",
+    # Earth & Environment graduate keepers — the BA/MA-accelerated (CAS) and standalone MA
+    # (GRS); the catalog URLs (".../bama-…", ".../ma-…") and descriptions confirm the M.A.
+    # designation. Concentrations already carried in ``tracks``.
+    "bu-academics-cas-earth-environment-bama-energy-environment": (
+        "Master of Arts in Earth & Environment (BA/MA, College of Arts & Sciences)"
+    ),
+    "bu-academics-grs-earth-environment-ma-remote-sensing": (
+        "Master of Arts in Earth & Environment (Graduate School of Arts & Sciences)"
+    ),
+    # Single BFA in Theatre Arts (Performance + Design & Production carried in ``tracks``).
+    "bu-academics-cfa-school-of-theatre-theatre-arts-bfa-performance": (
+        "Bachelor of Fine Arts in Theatre Arts"
+    ),
+}
+
 _PROGRAM_NAME_OVERRIDES: dict[str, str] = {
     "bu-academics-busm-four-year-program": "Doctor of Medicine",
     "bu-academics-law-jd": "Juris Doctor",
@@ -2033,6 +2086,15 @@ def _build_catalog() -> list[dict]:
             "legacy_credential": legacy,
         })
 
+    # Collapse the explicit concentration rows into their general sibling before any
+    # disambiguation can re-suffix them (miss #2). Their concentration becomes a track.
+    _by_slug_fc = {p["slug"]: p for p in out}
+    for _dropped, (_keeper, _track) in _FORCE_COLLAPSE.items():
+        if _dropped in _by_slug_fc and _keeper in _by_slug_fc:
+            k = _by_slug_fc[_keeper]
+            k["tracks"] = sorted(set(k.get("tracks") or []) | {_track})
+    out = [p for p in out if p["slug"] not in _FORCE_COLLAPSE]
+
     counts = Counter(p["program_name"] for p in out)
     for p in out:
         if counts[p["program_name"]] > 1 and p["slug"] not in _PROGRAM_NAME_OVERRIDES:
@@ -2063,6 +2125,10 @@ def _build_catalog() -> list[dict]:
         p.pop("legacy_credential", None)
 
     out = _collapse_concentration_splits(out)
+    # Preserve the force-collapse redirects (the call above clears ``_SLUG_REDIRECT``) so
+    # the dropped concentration rows' reviews migrate / are dropped at module load.
+    for _dropped, (_keeper, _track) in _FORCE_COLLAPSE.items():
+        _SLUG_REDIRECT[_dropped] = _keeper
 
     for p in out:
         p["description"] = _bu_description(p)
@@ -2102,6 +2168,12 @@ def _build_catalog() -> list[dict]:
     for p in out:
         if p["slug"] in _PROGRAM_NAME_OVERRIDES:
             p["program_name"] = _PROGRAM_NAME_OVERRIDES[p["slug"]]
+
+    # Last: clean the residual "{degree} — {concentration}" display tails on surviving
+    # keeper rows (runs after collapse/disambiguation so it can't orphan a sibling).
+    for p in out:
+        if p["slug"] in _FINAL_NAME_FIXUP:
+            p["program_name"] = _FINAL_NAME_FIXUP[p["slug"]]
 
     _assign_descriptions(out)
 
