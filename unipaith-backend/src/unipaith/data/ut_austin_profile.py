@@ -3744,6 +3744,15 @@ _MASTERS_TUITION_OVERRIDE: dict[str, dict] = {
         "source": "Texas McCombs — Full-Time MBA Tuition & Financial Aid (2025-26)",
         "source_url": "https://www.mccombs.utexas.edu/graduate/mba/full-time-mba/tuition-financial-aid/",
     },
+    # The LL.M. is a law degree billed at the School of Law's published ANNUAL rate, far
+    # above the standard graduate rate — without this override it fell through to the
+    # generic graduate figure ($12,006), understating a $33k law degree by ~$21k.
+    "ut-austin-law-llm": {
+        "in_state": 33304,
+        "out_of_state": 49490,
+        "source": "Texas Law — LL.M. Tuition, Expenses & Financial Aid (2026-27)",
+        "source_url": "https://law.utexas.edu/master-of-laws/tuition-expenses-and-financial-aid/",
+    },
 }
 
 # UT's online Computer & Data Science Online master's (MSCS / MSDS / MSAI) publish a single
