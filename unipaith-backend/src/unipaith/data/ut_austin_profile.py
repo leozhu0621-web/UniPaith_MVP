@@ -3734,12 +3734,44 @@ _TUITION_GRAD_OOS = 22954  # UT Austin published graduate tuition & fees, non-re
 _GRAD_COST_SRC = "UT Austin Texas One Stop — Tuition Rates"
 _GRAD_COST_SRC_URL = "https://onestop.utexas.edu/managing-costs/cost-tuition-rates/tuition-rates/"
 
-# UT's online CDSO master's (MSCS / MSDS / MSAI) publish a single low total program tuition
-# (~$10,000) rather than the standard per-credit graduate rate — use the published total.
-_ONLINE_MASTERS_TOTAL_TUITION = {
+# Professional / specialized master's with a school-published PREMIUM annual rate (well
+# above the standard per-credit graduate rate). ``program.tuition`` is consumed as ANNUAL
+# tuition, so these carry the school's published first-year tuition & fees.
+_MASTERS_TUITION_OVERRIDE: dict[str, dict] = {
+    "ut-austin-business-administration-mba": {
+        "in_state": 55196,
+        "out_of_state": 61214,
+        "source": "Texas McCombs — Full-Time MBA Tuition & Financial Aid (2025-26)",
+        "source_url": "https://www.mccombs.utexas.edu/graduate/mba/full-time-mba/tuition-financial-aid/",
+    },
+}
+
+# UT's online Computer & Data Science Online master's (MSCS / MSDS / MSAI) publish a single
+# low TOTAL program tuition (~$10,000) — NOT an annual rate. Since ``program.tuition`` is
+# consumed as annual, the annual scalar is OMITTED (recorded in ``_standard.omitted``) and
+# the published total is preserved in ``cost_data.total_program_tuition`` with a note —
+# never written into the annual field (it would render as "$10,000 / yr").
+_ONLINE_MASTERS_TOTAL = {
     "ut-austin-computer-science-online-ms": 10000,
     "ut-austin-data-science-ms": 10000,
     "ut-austin-artificial-intelligence-ms": 10000,
+}
+
+# Specialized McCombs professional master's whose published rate is a PREMIUM (materially
+# above the standard graduate per-credit rate) that is not separately verified here — the
+# generic graduate figure would understate them, so the annual ``tuition`` is honestly
+# OMITTED rather than guessed (the verified MBA is in ``_MASTERS_TUITION_OVERRIDE`` above).
+_PREMIUM_MASTERS_OMIT = {
+    "ut-austin-accounting-mpa",
+    "ut-austin-accounting-ms",
+    "ut-austin-business-analytics-ms",
+    "ut-austin-energy-management-ms",
+    "ut-austin-finance-ms",
+    "ut-austin-information-risk-and-operations-management-ms",
+    "ut-austin-information-technology-and-management-ms",
+    "ut-austin-management-ms",
+    "ut-austin-marketing-ms",
+    "ut-austin-technology-commercialization-ms",
 }
 
 # Professional-program annual tuition — each school's published 2025-26 figure.
@@ -3765,8 +3797,39 @@ _TUITION_OMIT_SLUGS = {
 }
 
 
+def _tuition_omitted(slug: str) -> bool:
+    """True when this program's annual ``cost_data.tuition_usd`` is honestly omitted."""
+    return (
+        slug in _TUITION_OMIT_SLUGS
+        or slug in _PREMIUM_MASTERS_OMIT
+        or slug in _ONLINE_MASTERS_TOTAL
+    )
+
+
+def _annual_tuition_cost(in_state: int, out_of_state: int, source: str, url: str) -> dict:
+    return {
+        "tuition_usd": in_state,
+        "breakdown": {"tuition_in_state": in_state, "tuition_out_of_state": out_of_state},
+        "funded": False,
+        "note": (
+            "Annual tuition & fees (Texas resident); non-residents pay the out-of-state rate "
+            "shown in the breakdown. UT Austin bills tuition per semester."
+        ),
+        "source": source,
+        "source_url": url,
+        "year": "2025-26",
+    }
+
+
 def _program_tuition(spec: dict) -> tuple[int | None, dict]:
-    """Return ``(tuition_usd, cost_data)`` for a program from UT's published rates."""
+    """Return ``(tuition_usd, cost_data)`` for a program from UT's published rates.
+
+    ``program.tuition`` is consumed as an ANNUAL figure, so a program only carries a
+    scalar when an annual rate is published/verified; premium specialized master's whose
+    rate is not separately verified, and the online programs that publish only a total,
+    omit the annual scalar (recorded in ``_standard.omitted``) rather than ship a wrong
+    or misleading "per year" number.
+    """
     dt = spec["degree_type"]
     slug = spec["slug"]
     if dt == "bachelors":
@@ -3777,39 +3840,34 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             "tuition_out_of_state": _TUITION_UG_OOS,
         }
         return _TUITION_UG_INSTATE, cost
+    if slug in _MASTERS_TUITION_OVERRIDE:
+        pr = _MASTERS_TUITION_OVERRIDE[slug]
+        return pr["in_state"], _annual_tuition_cost(
+            pr["in_state"], pr["out_of_state"], pr["source"], pr["source_url"]
+        )
     if dt == "professional" and slug in _PROFESSIONAL_TUITION:
         pr = _PROFESSIONAL_TUITION[slug]
-        return pr["in_state"], {
-            "tuition_usd": pr["in_state"],
-            "breakdown": {
-                "tuition_in_state": pr["in_state"],
-                "tuition_out_of_state": pr["out_of_state"],
-            },
-            "funded": False,
-            "note": (
-                "Annual professional-program tuition (Texas resident), billed by the school "
-                "per semester; non-residents pay the out-of-state rate shown in the breakdown."
-            ),
-            "source": pr["source"],
-            "source_url": pr["source_url"],
-            "year": "2025-26",
-        }
-    if dt == "professional":  # PharmD / AuD / DNP — rate not separately verified here
-        return None, _grad_cost_fallback(spec)
-    if slug in _ONLINE_MASTERS_TOTAL_TUITION:
-        total = _ONLINE_MASTERS_TOTAL_TUITION[slug]
-        return total, {
-            "tuition_usd": total,
+        return pr["in_state"], _annual_tuition_cost(
+            pr["in_state"], pr["out_of_state"], pr["source"], pr["source_url"]
+        )
+    if slug in _ONLINE_MASTERS_TOTAL:  # publishes a TOTAL, not an annual rate → omit annual
+        return None, {
+            "total_program_tuition": _ONLINE_MASTERS_TOTAL[slug],
             "funded": False,
             "note": (
                 "UT Austin's online Computer & Data Science Online master's degrees publish a "
-                "single low total program tuition of approximately $10,000 (not the standard "
-                "per-credit graduate rate)."
+                "single TOTAL program tuition of approximately $10,000 (the program is taken "
+                "part-time and flexibly), not a standard annual rate, so no annual tuition "
+                "figure is shown."
             ),
             "source": "UT Austin Computer & Data Science Online",
             "source_url": _website_for(spec),
             "year": "2024-25",
         }
+    if dt == "professional":  # PharmD / AuD / DNP — rate not separately verified here
+        return None, _grad_cost_fallback(spec)
+    if slug in _PREMIUM_MASTERS_OMIT:  # premium specialized master's — rate not verified
+        return None, _grad_cost_fallback(spec)
     funded_note = (
         "Published graduate tuition rate that applies to doctoral study; most UT Austin "
         "doctoral students are funded through teaching/research assistantships or "
@@ -4490,7 +4548,7 @@ def _requirements_for(spec: dict) -> dict:
 
 def _program_standard(slug: str, spec: dict) -> dict:
     omitted: list[str] = ["tracks"]
-    if slug in _TUITION_OMIT_SLUGS:
+    if _tuition_omitted(slug):
         omitted.append("cost_data.tuition_usd")
     if slug not in _OUTCOMES_BY_SLUG:
         omitted += [

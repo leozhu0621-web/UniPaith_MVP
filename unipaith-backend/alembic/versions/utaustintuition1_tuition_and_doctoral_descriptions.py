@@ -16,15 +16,21 @@ Two matcher-and-editorial repairs, applied as one atomic re-apply of ``ut_austin
 2. **Matcher-core tuition null catalog-wide (#9).** The catalog shipped 0% ``tuition`` (every
    ``p.tuition = None``), so the CPEF matcher scored budget-fit blind on all 338 programs.
    Tuition is institution-PUBLISHED, so this was a skipped knowable field, not an honest
-   omission. ``apply()`` now stamps the real cited published rate per credential level —
-   undergraduate $11,688 (College Scorecard, UNITID 228778); graduate $12,006 (UT Texas One
-   Stop per-credit × standard full-time load); the CDSO online master's published ~$10,000
-   total; School of Law J.D. $38,236 and Dell Med M.D. $22,074. The three remaining
-   professional doctorates (PharmD/AuD/DNP) have no separately-verified annual figure here, so
-   their ``cost_data.tuition_usd`` is honestly recorded in ``_standard.omitted`` rather than
-   guessed (335/338 = 99% covered).
+   omission. ``apply()`` now stamps the real cited published ANNUAL rate per credential level —
+   undergraduate $11,688 (College Scorecard, UNITID 228778); standard academic graduate
+   $12,006 (UT Texas One Stop per-credit × standard full-time load); School of Law J.D.
+   $38,236; Dell Med M.D. $22,074; and the McCombs Full-Time MBA $55,196 (its school-published
+   premium first-year rate, NOT the generic graduate figure). ``program.tuition`` is consumed
+   as ANNUAL, so programs without a verified annual rate omit the scalar rather than ship a
+   misleading number: the 3 online CDSO master's publish only a ~$10,000 TOTAL (kept in
+   ``cost_data.total_program_tuition``, annual omitted); the other specialized McCombs master's
+   carry an unverified premium rate; and PharmD/AuD/DNP bill per their own schedules — each
+   records ``cost_data.tuition_usd`` in ``_standard.omitted`` (322/338 = 95% carry a verified
+   annual figure; the 16 omissions are honest, not guesses).
 
-Re-applies ``ut_austin_profile.apply()`` and re-derives program-preference rows. Chains off
+Re-applies ``ut_austin_profile.apply()``, refreshes the DERIVED ``program_preferences`` rows
+(deleted first so backfill re-derives them from the repaired descriptions — claimed/first-party
+rows are never touched). Chains off
 ``cornellpercrd2`` (a concurrent session, #1037, landed it as the new single head while this
 PR's CI ran), so ``main`` carries exactly one head.
 
@@ -35,12 +41,12 @@ Create Date: 2026-06-21
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from alembic import op
 from unipaith.data import ut_austin_profile
-from unipaith.models.institution import Institution
+from unipaith.models.institution import Institution, Program, ProgramPreference
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "utaustintuition1"
@@ -56,6 +62,22 @@ def upgrade() -> None:
         select(Institution).where(Institution.name == ut_austin_profile.INSTITUTION_NAME)
     )
     if inst is not None:
+        # backfill_program_preferences only FILLS empty fields on an existing derived row;
+        # it does not refresh a stale target_profile. The three repaired Ph.D. descriptions
+        # (and the corrected tuition) feed the derived target applicant, so on a DB that
+        # already ran the fleet backfill those rows would keep signals derived from the old
+        # template-slot prose. Delete the DERIVED rows for this institution first so backfill
+        # re-derives them from the repaired data. source="claimed"/first-party rows are NEVER
+        # touched (authority-safe).
+        session.execute(
+            delete(ProgramPreference).where(
+                ProgramPreference.source == "derived",
+                ProgramPreference.program_id.in_(
+                    select(Program.id).where(Program.institution_id == inst.id)
+                ),
+            )
+        )
+        session.flush()
         backfill_program_preferences(session, institution_id=inst.id)
     session.flush()
 
