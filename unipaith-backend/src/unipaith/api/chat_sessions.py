@@ -7,6 +7,7 @@ pin/within-folder reorder, and context-spawn.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -21,6 +22,7 @@ from unipaith.services.chat.session_service import ChatSessionService
 from unipaith.services.chat.template_actions import ACTION_CATALOG, ACTION_KEYS
 from unipaith.services.chat.template_service import TemplateService
 from unipaith.services.enrichment_planner import CATALOG
+from unipaith.services.event_service import EventService
 from unipaith.services.intake.intake_engine_service import IntakeEngineService
 from unipaith.services.uni_tools import tool_generate_strategy, tool_get_matches
 
@@ -280,6 +282,29 @@ def _odds_label(confidence: float) -> str:
     return "Ambitious"
 
 
+def _event_subtitle(event) -> str | None:
+    """Compose a short, honest subtitle for an event card from its real fields:
+    the start date/time plus whichever of location / delivery format is present.
+    Returns None when nothing real is available — never fabricates."""
+    parts: list[str] = []
+    start = getattr(event, "start_time", None)
+    if isinstance(start, datetime):
+        try:
+            # e.g. "Mar 14, 3:00 PM". %-d/%-I are POSIX (the platform is darwin/linux).
+            parts.append(start.strftime("%b %-d, %-I:%M %p"))
+        except (ValueError, TypeError):
+            parts.append(start.strftime("%b %d"))
+    # The model has no `delivery_format`; surface location, else event_type,
+    # else "Online" when a meeting link implies a virtual event.
+    location = getattr(event, "location", None)
+    event_type = getattr(event, "event_type", None)
+    meeting_link = getattr(event, "meeting_link", None)
+    place = location or event_type or ("Online" if meeting_link else None)
+    if place:
+        parts.append(str(place))
+    return " · ".join(parts) if parts else None
+
+
 class ActionArtifactItem(BaseModel):
     name: str
     program: str | None = None
@@ -302,7 +327,9 @@ class ActionArtifactOut(BaseModel):
 _PENDING_SUMMARY = "This is coming soon — your inputs are saved."
 
 # Action keys that have real service implementations today.
-_REAL_ACTIONS = frozenset({"build_school_list", "generate_strategy", "compare_schools"})
+_REAL_ACTIONS = frozenset(
+    {"build_school_list", "generate_strategy", "compare_schools", "find_events"}
+)
 
 # Actions that don't produce a one-shot artifact here — the work lives in a My
 # Space surface (or Discover). Instead of a dead "coming soon" placeholder, hand
@@ -313,7 +340,6 @@ _HANDOFFS: dict[str, tuple[str, str]] = {
     "build_checklist": ("/s/applications", "Build your application checklist in My Space."),
     "draft_feedback": ("/s/prep?tab=workshops", "Get feedback on your draft in My Space → Prep."),
     "interview_practice": ("/s/prep?tab=interviews", "Practice interviews in My Space → Prep."),
-    "find_events": ("/s/explore?tab=events", "Find events to connect with in Discover."),
 }
 
 
@@ -434,6 +460,43 @@ async def dispatch_template_action(
             summary=narrative,
             status="ready",
             link="/s/profile?tab=strategy",
+        )
+
+    # ── find_events → EventService.list_upcoming_events ───────────────────────
+    if action_key == "find_events":
+        try:
+            events = await EventService(db).list_upcoming_events(limit=6)
+        except Exception:
+            # Treat any service failure as "no events" — an honest empty state,
+            # never a 5xx and never fabricated data.
+            events = []
+
+        items = [
+            ActionArtifactItem(
+                name=getattr(e, "event_name", None) or "Event",
+                program=_event_subtitle(e),
+            )
+            for e in events
+        ]
+        if not items:
+            return ActionArtifactOut(
+                action_key=action_key,
+                kind="event_list",
+                title="Upcoming events",
+                summary=(
+                    "No upcoming events right now — we'll surface them in Discover "
+                    "as they're posted."
+                ),
+                status="ready",
+                link="/s/explore?tab=events",
+            )
+        return ActionArtifactOut(
+            action_key=action_key,
+            kind="event_list",
+            title="Upcoming events",
+            items=items,
+            status="ready",
+            link="/s/explore?tab=events",
         )
 
     # Unreachable but satisfies type checker
