@@ -23,6 +23,7 @@ import StrategyView from './match/StrategyView'
 import MatchesSection from './match/MatchesSection'
 import PromoCard from './explore/cards/PromoCard'
 import DiscoverySearch from './explore/discovery/DiscoverySearch'
+import { resolveBrowseMode } from './explore/browseMode'
 import Pagination from '../../components/ui/Pagination'
 import { parseChipsParam } from './explore/discovery/chipUtils'
 import { hasActiveFilters as hasProgramFilters, parseFiltersParam } from './explore/discovery/filterUtils'
@@ -168,6 +169,25 @@ export default function ExplorePage() {
   const [managing, setManaging] = useState(false)
   const onUniversities = tab === 'academic' && sub === 'universities'
 
+  // Academic › Universities holds two distinct searches over two entity types.
+  // Make the mode an EXPLICIT choice (Discover review 2026-06-19 #3) instead of a
+  // silent swap driven by whether a program search is active: ?umode= owns it,
+  // and the default follows the URL so a shared program-search deep-link still
+  // opens in Programs.
+  const browseMode = resolveBrowseMode(searchParams.get('umode'), searchActive)
+  const setBrowseMode = (m: 'programs' | 'universities') =>
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.set('tab', 'academic')
+        next.delete('sub')
+        if (m === 'universities') next.delete('umode')
+        else next.set('umode', m)
+        return next
+      },
+      { replace: true },
+    )
+
   // Universities browse filter state lives in the URL.
   const filters = useMemo(() => filtersFromURL(searchParams), [searchParams])
   const setFilters = (next: FilterState) => {
@@ -178,7 +198,7 @@ export default function ExplorePage() {
     queryKey: ['explore-universities'],
     queryFn: () => searchAllInstitutions(),
     staleTime: 5 * 60 * 1000,
-    enabled: !searchActive && onUniversities,
+    enabled: onUniversities && browseMode === 'universities',
   })
 
   // Saved programs — for the MatchesSection cards.
@@ -463,18 +483,51 @@ export default function ExplorePage() {
             <EventsTab />
           ) : (
             <>
-              {/* Universities — program search (search box · outcome tiles · sort ·
-                  results) + the universities browse grid with traditional filters. */}
-              <div className="mb-8">
-                <DiscoverySearch
-                  followedIds={followedIds}
-                  onToggleFollow={toggleFollow}
-                  nextEventByInstitution={nextEventByInst}
-                  onEventClick={() => setSub('events')}
-                />
+              {/* Universities sub-tab: an EXPLICIT Programs vs Universities mode
+                  (Discover review 2026-06-19 #3) — one entity, one result set, one
+                  filter control per mode, instead of a silent swap on whether a
+                  program search happens to be active. */}
+              <div className="mb-5 flex justify-center">
+                <div
+                  role="group"
+                  aria-label="Browse universities or programs"
+                  className="inline-flex rounded-lg border border-border bg-card p-0.5"
+                >
+                  {(
+                    [
+                      { key: 'universities', label: 'Universities', Icon: Building2 },
+                      { key: 'programs', label: 'Programs', Icon: GraduationCap },
+                    ] as const
+                  ).map(m => {
+                    const on = browseMode === m.key
+                    return (
+                      <button
+                        key={m.key}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => setBrowseMode(m.key)}
+                        className={`inline-flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                          on ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <m.Icon size={14} aria-hidden />
+                        {m.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
-              {!searchActive && (
+              {browseMode === 'programs' ? (
+                <div className="mb-8">
+                  <DiscoverySearch
+                    followedIds={followedIds}
+                    onToggleFollow={toggleFollow}
+                    nextEventByInstitution={nextEventByInst}
+                    onEventClick={() => setSub('events')}
+                  />
+                </div>
+              ) : (
                 <div ref={browseTopRef} className="scroll-mt-4">
                   <div className="flex items-center justify-center gap-3 mb-3">
                     <h2 className="text-base font-bold text-foreground">Browse universities</h2>
