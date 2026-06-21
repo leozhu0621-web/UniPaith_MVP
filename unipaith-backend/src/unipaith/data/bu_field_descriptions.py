@@ -357,7 +357,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "policy for young children."
     ),
     "Earth Environment — Bama Energy Environment": (
-        "CAS/GRS energy and environment B.A./M.A. combines earth science with renewable energy and environmental economics."
+        "CAS/GRS energy and environment B.A./M.S. combines earth science with renewable energy and environmental economics."
     ),
     "Earth Environment — Bama In Remote Sensing Geospatial Sciences": (
         "CAS/GRS remote sensing and geospatial sciences combines GIS, satellite imagery, and environmental analysis with earth-science field methods."
@@ -1133,6 +1133,21 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
 }
 
 SLUG_DESCRIPTIONS: dict[str, str] = {
+    # CDS combined BS-to-MS in Data Science — real researched body (replaces the generic "Ms"
+    # URL-tail stub that mislabeled this row). Source: bu.edu/academics/cds/programs/bs-ms/.
+    "bu-academics-cds-bs-ms": (
+        "BU's Faculty of Computing & Data Sciences combined bachelor's-to-master's lets "
+        "data science undergraduates apply up to eight units of graduate coursework toward "
+        "an M.S. in Data Science, completing both degrees in about four-and-a-half to five "
+        "years with shared training in statistics, machine learning, and data engineering."
+    ),
+    # CAS combined B.A. in Biochemistry & Molecular Biology to M.A. in Biotechnology — the
+    # graduate credential is the Biotechnology M.A. (bu.edu/.../biochemistry-molecular-biology/ba-ma/).
+    "bu-academics-cas-biochemistry-molecular-biology-ba-ma": (
+        "BU's combined B.A. in biochemistry & molecular biology and M.A. in Biotechnology adds "
+        "a fifth year of graduate training in molecular techniques, bioprocessing, and applied "
+        "life-science research within the College of Arts & Sciences."
+    ),
     # buprof12 (2026-06-19): per-credential bodies for the five fields whose Penn-copied
     # clauses were replaced — each credential level gets its own self-contained researched
     # BU body (taking SLUG priority) so the field's siblings no longer share a leading body
@@ -1649,7 +1664,7 @@ SLUG_DESCRIPTIONS: dict[str, str] = {
     ),
     # Astronomy: distinct per-credential bodies (Perkins Observatory / IAR).
     "bu-academics-cas-astronomy-ba-ma-astrophysics": (
-        "BU's combined B.A./M.S. in astronomy and astrophysics accelerates students from "
+        "BU's combined B.A./M.A. in astronomy and astrophysics accelerates students from "
         "undergraduate observational coursework at the Perkins Telescope Observatory to "
         "graduate research with the Institute for Astrophysical Research."
     ),

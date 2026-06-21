@@ -684,7 +684,7 @@ _CATALOG: list[tuple] = [
     ("bu-academics-gms-biochemistry-mdphd", "GMS", "MD/PhD", "professional", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/biochemistry/mdphd/"),
     ("bu-academics-gms-mdphd-in-bioinformatics", "GMS", "MD/PhD", "professional", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/mdphd-in-bioinformatics/"),
     ("bu-academics-gms-chemistry", "GMS", "MD/PhD", "professional", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/chemistry/"),
-    ("bu-academics-gms-genetics-genomics", "GMS", "MD/PhD", "professional", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/genetics-genomics/"),
+    ("bu-academics-gms-genetics-genomics", "GMS", "PhD", "phd", "Programs", "on_campus", 60, "https://www.bu.edu/academics/gms/programs/genetics-genomics/"),
     ("bu-academics-gms-molecular-medicine", "GMS", "MD/PhD", "professional", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/molecular-medicine/"),
     ("bu-academics-gms-pathology-laboratory-medicine-phd", "GMS", "MD/PhD", "professional", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/pathology-laboratory-medicine/phd/"),
     ("bu-academics-gms-anatomy-neurobiology-ms", "GMS", "MS", "masters", "Programs", "on_campus", 24, "https://www.bu.edu/academics/gms/programs/anatomy-neurobiology/ms/"),
@@ -993,6 +993,66 @@ _FORCE_COLLAPSE: dict[str, tuple[str, str]] = {
         "bu-academics-law-jdmba",
         "Health Sector Management",
     ),
+    # MET lists per-concentration landing pages for its online M.S. in Computer Science;
+    # all confer the same MET M.S. in CS — fold them in as tracks (never separate rows).
+    "bu-academics-met-computer-science-telecommunication": (
+        "bu-academics-met-computer-science-ms", "Telecommunication",
+    ),
+    "bu-academics-met-computer-science-ms-in-health-informatics": (
+        "bu-academics-met-computer-science-ms", "Health Informatics",
+    ),
+    "bu-academics-met-computer-science-ms-in-software-development": (
+        "bu-academics-met-computer-science-ms", "Software Development",
+    ),
+}
+
+# Genuinely-DISTINCT degrees that the generic ``_collapse_concentration_splits`` heuristic
+# would otherwise EAT — it groups every MET/GRS/CAS row under one generated
+# "Master of Science in {field}" base and redirects all but one keeper, so distinct degrees
+# (the MET M.S. in Applied Data Analytics, the GRS Energy & Environment / Remote Sensing
+# master's, the CAS BA/MS-accelerated remote-sensing) get absorbed as garbage tracks. Per
+# their bu.edu/academics catalog URLs each is separately conferred — exclude them from the
+# heuristic so each survives as its own row (named via ``_FINAL_NAME_FIXUP``).
+_NO_COLLAPSE_SLUGS: frozenset[str] = frozenset({
+    "bu-academics-met-computer-science-mscis",
+    "bu-academics-met-computer-science-ms",
+    "bu-academics-met-computer-science-master-of-science-in-applied-data-analytics",
+    "bu-academics-grs-computer-science-ms",
+    "bu-academics-cas-computer-science-ba-ms",
+    "bu-academics-grs-earth-environment-ma-remote-sensing",
+    "bu-academics-grs-earth-environment-ma-energy-environment",
+    "bu-academics-grs-earth-environment-ma-in-energy-environment-mba-dual-degree-program",
+    "bu-academics-grs-earth-environment-geoarchaeology-ma",
+    "bu-academics-cas-earth-environment-bama-energy-environment",
+    "bu-academics-cas-earth-environment-bama-in-remote-sensing-geospatial-sciences",
+})
+
+# A track entry is a scrape/collapse artifact (not a real concentration) when it carries a
+# credential token (Ma/Ms/Mba/Mfa/Phd/Bama/Edm/Bs/Ba/Mph/Mscis/Dpt/Mm/Bm/Bfa/Md), a degree
+# phrase ("Master Of …"), a "Dual Degree" blurb, or "In Literary Translation" (the MFA
+# languages that bled into the Romance Studies B.A. on collapse). Real concentrations
+# (French, Performance, Health Informatics, …) match none of these and are kept.
+_TRACK_GARBAGE_RE = re.compile(
+    r"\b(?:Ma|Ms|Mba|Mfa|Phd|Bama|Edm|Bs|Ba|Mph|Mscis|Dpt|Mm|Bm|Bfa|Md)\b"
+    r"|\bDual Degree\b|\b(?:Master|Bachelor|Doctor) Of\b|MD/PhD|In Literary Translation",
+    re.I,
+)
+
+# Verified clean concentration lists for rows whose collapsed tracks need a real set rather
+# than just dropping the garbage. Source: the program's BU catalog page.
+_TRACKS_OVERRIDE_BY_SLUG: dict[str, list[str] | None] = {
+    # MET M.S. in Computer Information Systems — the eight published concentrations
+    # (bu.edu/met/programs/graduate/computer-information-systems/).
+    "bu-academics-met-computer-science-mscis": [
+        "Computer Networks",
+        "Cybersecurity",
+        "Data Analytics",
+        "Database Management & Business Intelligence",
+        "Digital Forensics",
+        "Health Informatics",
+        "IT Project & Product Management",
+        "Web Application Development",
+    ],
 }
 
 # Final display-name fixups applied AFTER all collapse / disambiguation (miss #2): clean
@@ -1013,14 +1073,56 @@ _FINAL_NAME_FIXUP: dict[str, str] = {
     # MET's .../met/programs/computer-science/mscis/ page is the M.S. in Computer Information
     # Systems — a distinct degree, never "M.S. in CS — Mscis".
     "bu-academics-met-computer-science-mscis": "Master of Science in Computer Information Systems",
-    # Earth & Environment graduate keepers — the BA/MA-accelerated (CAS) and standalone MA
-    # (GRS); the catalog URLs (".../bama-…", ".../ma-…") and descriptions confirm the M.A.
-    # designation. Concentrations already carried in ``tracks``.
+    # MET's M.S. in Applied Data Analytics is a SEPARATE degree (its own catalog page +
+    # reviews), not an MSCIS concentration — protect it from the collapse heuristic.
+    "bu-academics-met-computer-science-master-of-science-in-applied-data-analytics": (
+        "Master of Science in Applied Data Analytics"
+    ),
+    # Earth & Environment graduate degrees — VERIFIED against bu.edu/academics: the Energy &
+    # Environment programs confer the M.S. (not "M.A. in Earth & Environment"), and the
+    # Remote Sensing program is a distinct "M.S. in Remote Sensing & Geospatial Sciences".
     "bu-academics-cas-earth-environment-bama-energy-environment": (
-        "Master of Arts in Earth & Environment (BA/MA, College of Arts & Sciences)"
+        "Bachelor of Arts to Master of Science in Energy & Environment (Accelerated)"
+    ),
+    "bu-academics-grs-earth-environment-ma-energy-environment": (
+        "Master of Science in Energy & Environment"
+    ),
+    "bu-academics-grs-earth-environment-ma-in-energy-environment-mba-dual-degree-program": (
+        "Master of Science in Energy & Environment / Master of Business Administration"
     ),
     "bu-academics-grs-earth-environment-ma-remote-sensing": (
-        "Master of Arts in Earth & Environment (Graduate School of Arts & Sciences)"
+        "Master of Science in Remote Sensing & Geospatial Sciences"
+    ),
+    "bu-academics-cas-earth-environment-bama-in-remote-sensing-geospatial-sciences": (
+        "Bachelor of Arts to Master of Science in Remote Sensing & Geospatial Sciences (Accelerated)"
+    ),
+    "bu-academics-grs-earth-environment-geoarchaeology-ma": "Master of Arts in Earth & Environment",
+    # CAS combined BA/MA accelerated degrees the name-generator mislabeled "Master of Science
+    # in {field}" (a credential lie — these confer the MA per their /ba-ma/ & /bama-/ URLs,
+    # each VERIFIED against bu.edu; biochem's combined confers the M.A. in Biotechnology).
+    "bu-academics-cas-archaeology-ba-ma": "Master of Arts in Archaeology (Accelerated)",
+    "bu-academics-cas-astronomy-ba-ma-astrophysics": "Master of Arts in Astronomy (Accelerated)",
+    "bu-academics-cas-biochemistry-molecular-biology-ba-ma": (
+        "Master of Arts in Biotechnology (Accelerated)"
+    ),
+    "bu-academics-cas-chemistry-ba-ma": "Master of Arts in Chemistry (Accelerated)",
+    "bu-academics-cas-classical-studies-ba-ma": "Master of Arts in Classical Studies (Accelerated)",
+    "bu-academics-cas-english-bama-in-english": "Master of Arts in English (Accelerated)",
+    "bu-academics-cas-international-relations-ba-in-international-relationsma-in-international-affairs": (
+        "Master of Arts in International Affairs (Accelerated)"
+    ),
+    "bu-academics-cas-linguistics-bama-in-linguistics": "Master of Arts in Linguistics (Accelerated)",
+    "bu-academics-cas-physics-ba-ma": "Master of Arts in Physics (Accelerated)",
+    # CDS combined BS-to-MS in Data Science (was "Master of Science in Ms" + a generic stub).
+    "bu-academics-cds-bs-ms": (
+        "Bachelor of Science to Master of Science in Data Science (Accelerated)"
+    ),
+    # GMS Genetics & Genomics is the PhD (was mislabeled "MD/PhD (Graduate Medical Sciences)").
+    "bu-academics-gms-genetics-genomics": "Doctor of Philosophy in Genetics & Genomics",
+    # CGS two-year liberal-arts core (no standalone degree — never "Bachelor of …").
+    "bu-cgs-liberal-arts-bs": "Liberal Arts (College of General Studies)",
+    "bu-cgs-january-liberal-arts-bs": (
+        "Liberal Arts (College of General Studies, January Program)"
     ),
     # Single BFA in Theatre Arts (Performance + Design & Production carried in ``tracks``).
     "bu-academics-cfa-school-of-theatre-theatre-arts-bfa-performance": (
@@ -1998,6 +2100,8 @@ def _collapse_concentration_splits(programs: list[dict]) -> list[dict]:
         name = p["program_name"]
         if " — " not in name:
             continue
+        if p["slug"] in _NO_COLLAPSE_SLUGS:
+            continue  # distinct degree — never eaten by the concentration heuristic
         # Skip disambiguation suffixes from duplicate-name resolution (e.g. " — Ms (Online)").
         _, conc = name.split(" — ", 1)
         if conc.startswith("Ms (") or conc.startswith("M.S. ("):
@@ -2175,6 +2279,19 @@ def _build_catalog() -> list[dict]:
         if p["slug"] in _FINAL_NAME_FIXUP:
             p["program_name"] = _FINAL_NAME_FIXUP[p["slug"]]
 
+    # Sanitize collapsed/scraped ``tracks``: apply verified per-slug overrides, then drop
+    # credential-token artifacts the collapse cascade left in ``tracks`` (e.g. "Ma",
+    # "Bama In Linguistics", "Master Of Science In Biology", "Mfa In Literary Translation");
+    # an emptied list becomes None (recorded honestly in _standard.omitted).
+    for p in out:
+        if p["slug"] in _TRACKS_OVERRIDE_BY_SLUG:
+            p["tracks"] = _TRACKS_OVERRIDE_BY_SLUG[p["slug"]]
+            continue
+        tracks = p.get("tracks")
+        if tracks:
+            clean = [t for t in tracks if not _TRACK_GARBAGE_RE.search(t)]
+            p["tracks"] = clean or None
+
     _assign_descriptions(out)
 
     return out
@@ -2315,14 +2432,20 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         cost["year"] = "2023-24"
         return _TUITION_UG, cost
     if dtype in ("phd", "doctoral") and sk in _FUNDED_DOCTORAL_SCHOOL_KEYS:
-        return 0, {
-            "tuition_usd": 0,
+        # Matcher budget input = the PUBLISHED sticker (funding is a SEPARATE signal carried
+        # in ``funded``/``note``); a $0 would tell the matcher the program is free and starve
+        # every budget comparison for the whole PhD tier (enrich-profile matcher-core tuition
+        # rule: stamp the sticker, not 0/null, even when funding waives it in practice).
+        sticker = _GRAD_TUITION_BY_SCHOOL_KEY.get(sk, _TUITION_GRAD_STANDARD)
+        return sticker, {
+            "tuition_usd": sticker,
+            "breakdown": {"tuition": sticker},
             "funded": True,
             "note": (
                 "Admitted research doctoral students at Boston University typically receive "
-                "tuition scholarships and stipend support for required coursework (GRS/CAS "
-                "PhD & MFA policy, AY 2025-26); the published full-time graduate tuition "
-                f"sticker is ${_TUITION_GRAD_STANDARD:,} per year before aid."
+                "full tuition scholarships and stipend support (GRS/CAS PhD & MFA policy, "
+                f"AY 2025-26); the published full-time graduate tuition sticker is ${sticker:,} "
+                "per year before that aid."
             ),
             "source": "Boston University Graduate School of Arts & Sciences — PhD tuition scholarships",
             "source_url": "https://www.bu.edu/cas/admissions/phd-mfa/fellowship-aid/frequently-asked-questions/scholarships/",
