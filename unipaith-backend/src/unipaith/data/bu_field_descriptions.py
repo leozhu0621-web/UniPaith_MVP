@@ -1133,6 +1133,21 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
 }
 
 SLUG_DESCRIPTIONS: dict[str, str] = {
+    # MET's distinct online master's in the Computer Science & IT department (separate degrees,
+    # NOT M.S. in CS concentrations). Sources: bu.edu/academics/met/programs/computer-science/*.
+    "bu-academics-met-computer-science-ms-in-health-informatics": (
+        "MET's online M.S. in Health Informatics trains working professionals to design "
+        "clinical data systems, electronic-health-record integrations, and health-analytics "
+        "tools, bridging Boston's hospital IT sector with BU's Medical Campus."
+    ),
+    "bu-academics-met-computer-science-ms-in-software-development": (
+        "MET's online M.S. in Software Development builds advanced software engineering, cloud, "
+        "and agile-delivery skills for mid-career engineers through project-based coursework."
+    ),
+    "bu-academics-met-computer-science-telecommunication": (
+        "MET's M.S. in Telecommunication covers networking, wireless systems, and cloud "
+        "infrastructure for telecom and IT professionals."
+    ),
     # CDS combined BS-to-MS in Data Science — real researched body (replaces the generic "Ms"
     # URL-tail stub that mislabeled this row). Source: bu.edu/academics/cds/programs/bs-ms/.
     "bu-academics-cds-bs-ms": (

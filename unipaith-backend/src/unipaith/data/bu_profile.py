@@ -685,7 +685,7 @@ _CATALOG: list[tuple] = [
     ("bu-academics-gms-mdphd-in-bioinformatics", "GMS", "MD/PhD", "professional", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/mdphd-in-bioinformatics/"),
     ("bu-academics-gms-chemistry", "GMS", "MD/PhD", "professional", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/chemistry/"),
     ("bu-academics-gms-genetics-genomics", "GMS", "PhD", "phd", "Programs", "on_campus", 60, "https://www.bu.edu/academics/gms/programs/genetics-genomics/"),
-    ("bu-academics-gms-molecular-medicine", "GMS", "MD/PhD", "professional", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/molecular-medicine/"),
+    ("bu-academics-gms-molecular-medicine", "GMS", "PhD", "phd", "Programs", "on_campus", 60, "https://www.bu.edu/academics/gms/programs/molecular-medicine/"),
     ("bu-academics-gms-pathology-laboratory-medicine-phd", "GMS", "MD/PhD", "professional", "Programs", "on_campus", 48, "https://www.bu.edu/academics/gms/programs/pathology-laboratory-medicine/phd/"),
     ("bu-academics-gms-anatomy-neurobiology-ms", "GMS", "MS", "masters", "Programs", "on_campus", 24, "https://www.bu.edu/academics/gms/programs/anatomy-neurobiology/ms/"),
     ("bu-academics-gms-bioimaging", "GMS", "MS", "masters", "Programs", "on_campus", 24, "https://www.bu.edu/academics/gms/programs/bioimaging/"),
@@ -993,30 +993,23 @@ _FORCE_COLLAPSE: dict[str, tuple[str, str]] = {
         "bu-academics-law-jdmba",
         "Health Sector Management",
     ),
-    # MET lists per-concentration landing pages for its online M.S. in Computer Science;
-    # all confer the same MET M.S. in CS — fold them in as tracks (never separate rows).
-    "bu-academics-met-computer-science-telecommunication": (
-        "bu-academics-met-computer-science-ms", "Telecommunication",
-    ),
-    "bu-academics-met-computer-science-ms-in-health-informatics": (
-        "bu-academics-met-computer-science-ms", "Health Informatics",
-    ),
-    "bu-academics-met-computer-science-ms-in-software-development": (
-        "bu-academics-met-computer-science-ms", "Software Development",
-    ),
 }
 
 # Genuinely-DISTINCT degrees that the generic ``_collapse_concentration_splits`` heuristic
 # would otherwise EAT — it groups every MET/GRS/CAS row under one generated
 # "Master of Science in {field}" base and redirects all but one keeper, so distinct degrees
-# (the MET M.S. in Applied Data Analytics, the GRS Energy & Environment / Remote Sensing
-# master's, the CAS BA/MS-accelerated remote-sensing) get absorbed as garbage tracks. Per
-# their bu.edu/academics catalog URLs each is separately conferred — exclude them from the
-# heuristic so each survives as its own row (named via ``_FINAL_NAME_FIXUP``).
+# (the MET M.S. in Applied Data Analytics / Health Informatics / Software Development /
+# Telecommunication — each a SEPARATE MET master's per its bu.edu catalog page, NOT a CS
+# concentration — and the GRS Energy & Environment / Remote Sensing / Geoarchaeology
+# master's) get absorbed as garbage tracks. Exclude them so each survives as its own row
+# (named via ``_FINAL_NAME_FIXUP``).
 _NO_COLLAPSE_SLUGS: frozenset[str] = frozenset({
     "bu-academics-met-computer-science-mscis",
     "bu-academics-met-computer-science-ms",
     "bu-academics-met-computer-science-master-of-science-in-applied-data-analytics",
+    "bu-academics-met-computer-science-ms-in-health-informatics",
+    "bu-academics-met-computer-science-ms-in-software-development",
+    "bu-academics-met-computer-science-telecommunication",
     "bu-academics-grs-computer-science-ms",
     "bu-academics-cas-computer-science-ba-ms",
     "bu-academics-grs-earth-environment-ma-remote-sensing",
@@ -1027,16 +1020,29 @@ _NO_COLLAPSE_SLUGS: frozenset[str] = frozenset({
     "bu-academics-cas-earth-environment-bama-in-remote-sensing-geospatial-sciences",
 })
 
-# A track entry is a scrape/collapse artifact (not a real concentration) when it carries a
-# credential token (Ma/Ms/Mba/Mfa/Phd/Bama/Edm/Bs/Ba/Mph/Mscis/Dpt/Mm/Bm/Bfa/Md), a degree
-# phrase ("Master Of …"), a "Dual Degree" blurb, or "In Literary Translation" (the MFA
-# languages that bled into the Romance Studies B.A. on collapse). Real concentrations
-# (French, Performance, Health Informatics, …) match none of these and are kept.
+# A track entry is a scrape/collapse artifact (not a real concentration) when it embeds a
+# credential token, a degree phrase ("Master Of …"), a "Dual Degree" blurb, or "In Literary
+# Translation" (the MFA languages that bled into the Romance Studies B.A. on collapse). Real
+# concentrations (French, Performance, Health Informatics, …) match none of these and are kept.
 _TRACK_GARBAGE_RE = re.compile(
-    r"\b(?:Ma|Ms|Mba|Mfa|Phd|Bama|Edm|Bs|Ba|Mph|Mscis|Dpt|Mm|Bm|Bfa|Md)\b"
+    r"\b(?:Ma|Ms|Mba|Mfa|Phd|Bama|Edm|Bs|Ba|Mph|Mscis|Dpt|Mm|Bm|Bfa|Md|Dma|Mcj|Bsms|Msd|Dscd"
+    r"|Cags|Dsc|Msw|Dmd|Jd)\b"
     r"|\bDual Degree\b|\b(?:Master|Bachelor|Doctor) Of\b|MD/PhD|In Literary Translation",
     re.I,
 )
+# Whole-token credential abbreviations that are a complete track on their own ("Dma", "MSW",
+# "Bsms") — the regex above also catches these, but this set is the durable backstop keyed on
+# the shared ``_DEGREE_TOKENS`` plus the music/criminal-justice/combined-degree abbreviations.
+_TRACK_CREDENTIAL_TOKENS: frozenset[str] = _DEGREE_TOKENS | frozenset(
+    {"dma", "mcj", "bsms", "mscis", "dpt", "edm", "bama", "mfa", "bma", "dscd", "msd"}
+)
+
+
+def _is_garbage_track(t: str) -> bool:
+    """True when a track entry is a credential/scrape artifact, not a real concentration."""
+    if _TRACK_GARBAGE_RE.search(t):
+        return True
+    return re.sub(r"[^a-z]", "", t.lower()) in _TRACK_CREDENTIAL_TOKENS
 
 # Verified clean concentration lists for rows whose collapsed tracks need a real set rather
 # than just dropping the garbage. Source: the program's BU catalog page.
@@ -1053,6 +1059,10 @@ _TRACKS_OVERRIDE_BY_SLUG: dict[str, list[str] | None] = {
         "IT Project & Product Management",
         "Web Application Development",
     ],
+    # MET M.S. in Computer Science — its three published concentrations (bu.edu/.../ms/);
+    # Health Informatics / Software Development / Telecommunication are SEPARATE degrees,
+    # not concentrations of this one.
+    "bu-academics-met-computer-science-ms": ["Computer Networks", "Data Analytics", "Security"],
 }
 
 # Final display-name fixups applied AFTER all collapse / disambiguation (miss #2): clean
@@ -1073,10 +1083,20 @@ _FINAL_NAME_FIXUP: dict[str, str] = {
     # MET's .../met/programs/computer-science/mscis/ page is the M.S. in Computer Information
     # Systems — a distinct degree, never "M.S. in CS — Mscis".
     "bu-academics-met-computer-science-mscis": "Master of Science in Computer Information Systems",
-    # MET's M.S. in Applied Data Analytics is a SEPARATE degree (its own catalog page +
-    # reviews), not an MSCIS concentration — protect it from the collapse heuristic.
+    # MET's M.S. in Applied Data Analytics / Health Informatics / Software Development /
+    # Telecommunication are each a SEPARATE MET master's (own catalog page + reviews), NOT a
+    # concentration of the M.S. in CS — protect them from the collapse heuristic and name each.
     "bu-academics-met-computer-science-master-of-science-in-applied-data-analytics": (
         "Master of Science in Applied Data Analytics"
+    ),
+    "bu-academics-met-computer-science-ms-in-health-informatics": (
+        "Master of Science in Health Informatics"
+    ),
+    "bu-academics-met-computer-science-ms-in-software-development": (
+        "Master of Science in Software Development"
+    ),
+    "bu-academics-met-computer-science-telecommunication": (
+        "Master of Science in Telecommunication"
     ),
     # Earth & Environment graduate degrees — VERIFIED against bu.edu/academics: the Energy &
     # Environment programs confer the M.S. (not "M.A. in Earth & Environment"), and the
@@ -1096,7 +1116,7 @@ _FINAL_NAME_FIXUP: dict[str, str] = {
     "bu-academics-cas-earth-environment-bama-in-remote-sensing-geospatial-sciences": (
         "Bachelor of Arts to Master of Science in Remote Sensing & Geospatial Sciences (Accelerated)"
     ),
-    "bu-academics-grs-earth-environment-geoarchaeology-ma": "Master of Arts in Earth & Environment",
+    "bu-academics-grs-earth-environment-geoarchaeology-ma": "Master of Arts in Geoarchaeology",
     # CAS combined BA/MA accelerated degrees the name-generator mislabeled "Master of Science
     # in {field}" (a credential lie — these confer the MA per their /ba-ma/ & /bama-/ URLs,
     # each VERIFIED against bu.edu; biochem's combined confers the M.A. in Biotechnology).
@@ -1119,6 +1139,11 @@ _FINAL_NAME_FIXUP: dict[str, str] = {
     ),
     # GMS Genetics & Genomics is the PhD (was mislabeled "MD/PhD (Graduate Medical Sciences)").
     "bu-academics-gms-genetics-genomics": "Doctor of Philosophy in Genetics & Genomics",
+    # GMS Molecular & Translational Medicine PhD (was the bare "MD/PhD" legacy once its
+    # genetics-genomics disambiguation partner became a PhD — bu.edu/.../molecular-medicine/).
+    "bu-academics-gms-molecular-medicine": (
+        "Doctor of Philosophy in Molecular & Translational Medicine"
+    ),
     # CGS two-year liberal-arts core (no standalone degree — never "Bachelor of …").
     "bu-cgs-liberal-arts-bs": "Liberal Arts (College of General Studies)",
     "bu-cgs-january-liberal-arts-bs": (
@@ -2289,7 +2314,7 @@ def _build_catalog() -> list[dict]:
             continue
         tracks = p.get("tracks")
         if tracks:
-            clean = [t for t in tracks if not _TRACK_GARBAGE_RE.search(t)]
+            clean = [t for t in tracks if not _is_garbage_track(t)]
             p["tracks"] = clean or None
 
     _assign_descriptions(out)
