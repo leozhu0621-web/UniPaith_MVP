@@ -12,7 +12,6 @@ any failure falls back to the deterministic ranking (never a 5xx).
 from __future__ import annotations
 
 import statistics
-from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -27,6 +26,7 @@ from unipaith.models.application import Application, EnrollmentRecord, OfferLett
 from unipaith.models.institution import IntakeRound, Program
 from unipaith.models.matching import MatchResult
 from unipaith.models.student import StudentProfile
+from unipaith.utils.calendar_dates import business_today
 
 _ADMITTED_DECISIONS = ("admitted", "accepted", "conditional_admission")
 _CONFIRMED_STATES = {"intent_confirmed", "deposit_recorded", "enrollment_confirmed", "enrolled"}
@@ -59,7 +59,7 @@ class YieldService:
             return self._empty(institution_id, program_id)
 
         admits, enr_by_app, offer_by_app, profile_by_student = rows
-        today = datetime.now(UTC).date()
+        today = business_today()
 
         # ── Core counts (the funnel tail) ──
         admitted = len(admits)

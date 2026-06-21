@@ -48,27 +48,53 @@ BEGIN
 END $$;
 """)
 
+_DROP_ORPHAN_COMPOSITE_TYPES = text("""
+DO $$ DECLARE r RECORD;
+BEGIN
+    FOR r IN (
+        SELECT t.typname
+        FROM pg_type t
+        JOIN pg_namespace n ON n.oid = t.typnamespace
+        LEFT JOIN pg_class c ON c.reltype = t.oid
+        WHERE n.nspname = 'public'
+          AND t.typtype = 'c'
+          AND c.oid IS NULL
+    ) LOOP
+        EXECUTE 'DROP TYPE IF EXISTS public.' || quote_ident(r.typname) || ' CASCADE';
+    END LOOP;
+END $$;
+""")
+
+_TEST_SCHEMA_LOCK_ID = 667_210_531
+
 
 @pytest.fixture
 async def setup_db():
-    for _attempt in range(3):
+    lock_conn = await test_engine.connect()
+    try:
+        await lock_conn.execute(
+            text("SELECT pg_advisory_lock(:lock_id)"), {"lock_id": _TEST_SCHEMA_LOCK_ID}
+        )
+        async with test_engine.begin() as conn:
+            await conn.execute(_DROP_ALL_TABLES)
+            await conn.execute(_DROP_ORPHAN_COMPOSITE_TYPES)
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            await conn.run_sync(Base.metadata.create_all)
+        yield
         try:
             async with test_engine.begin() as conn:
                 await conn.execute(_DROP_ALL_TABLES)
-                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-                await conn.run_sync(Base.metadata.create_all)
-            break
+                await conn.execute(_DROP_ORPHAN_COMPOSITE_TYPES)
         except Exception:
-            if _attempt == 2:
-                raise
+            pass
+    finally:
+        try:
+            await lock_conn.execute(
+                text("SELECT pg_advisory_unlock(:lock_id)"), {"lock_id": _TEST_SCHEMA_LOCK_ID}
+            )
+        finally:
+            await lock_conn.close()
             await test_engine.dispose()
-    yield
-    try:
-        async with test_engine.begin() as conn:
-            await conn.execute(_DROP_ALL_TABLES)
-    except Exception:
-        pass
-    await test_engine.dispose()
 
 
 @pytest.fixture

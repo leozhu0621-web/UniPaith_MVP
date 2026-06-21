@@ -1,5 +1,7 @@
 .PHONY: dev dev-db dev-backend dev-frontend test-backend test-frontend lint format reset-db seed install-backend install-frontend eval-ai eval-ai-real
 
+BACKEND_TEST_DATABASE_URL ?= postgresql+asyncpg://unipaith:unipaith@localhost:5432/unipaith
+
 # ── Local Development ──────────────────────────────────────────────
 
 dev-db:  ## Start PostgreSQL (Docker)
@@ -38,7 +40,7 @@ install: install-backend install-frontend  ## Install all dependencies
 test-backend:  ## Run backend tests
 	cd unipaith-backend && \
 		PYTHONPATH=src \
-		DATABASE_URL="postgresql+asyncpg://unipaith:unipaith@localhost:5432/unipaith" \
+		DATABASE_URL="$(BACKEND_TEST_DATABASE_URL)" \
 		COGNITO_BYPASS=true \
 		AI_MOCK_MODE=true \
 		S3_LOCAL_MODE=true \

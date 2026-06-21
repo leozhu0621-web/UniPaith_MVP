@@ -27,6 +27,7 @@ from unipaith.models.matching import MatchResult
 from unipaith.models.needs import StudentNeed
 from unipaith.models.student import StudentProfile
 from unipaith.services.guardrail_service import validate_intent
+from unipaith.utils.calendar_dates import business_today
 
 logger = logging.getLogger(__name__)
 
@@ -429,7 +430,7 @@ class ApplicationService:
 
         deadlines: list[dict] = []
         if offer.response_deadline:
-            days = (offer.response_deadline - datetime.now(UTC).date()).days
+            days = (offer.response_deadline - business_today()).days
             deadlines.append(
                 {
                     "label": "Respond by",
@@ -485,7 +486,7 @@ class ApplicationService:
             view = OfferBriefInput(
                 program_name=program.program_name if program else None,
                 institution_name=getattr(program, "institution_name", None) if program else None,
-                today=datetime.now(UTC).date().isoformat(),
+                today=business_today().isoformat(),
                 offer={
                     "offer_type": offer.offer_type,
                     "scholarship_amount": offer.scholarship_amount,
@@ -732,7 +733,7 @@ class ApplicationService:
             start_term_season=start_term_season,
             start_term_year=start_term_year,
             next_step_actions=next_step_actions,
-            decision_date=datetime.now(UTC).date(),
+            decision_date=business_today(),
             status="sent",
         )
         self.db.add(offer)
@@ -1013,7 +1014,7 @@ class ApplicationService:
             return "accepted"
         if offer.student_response == "declined":
             return "declined"
-        today = datetime.now(UTC).date()
+        today = business_today()
         if offer.status == "rescinded":
             return "rescinded"
         if offer.response_deadline and offer.response_deadline < today:
@@ -1025,7 +1026,7 @@ class ApplicationService:
         app = await self._get_application_for_institution(institution_id, application_id)
         res = await self.db.execute(select(OfferLetter).where(OfferLetter.application_id == app.id))
         offer = res.scalar_one_or_none()
-        today = datetime.now(UTC).date()
+        today = business_today()
         deadline = offer.response_deadline if offer else None
         days_remaining = (deadline - today).days if deadline else None
         return {
@@ -1161,7 +1162,7 @@ class ApplicationService:
         """Admitted students with an unanswered offer, flagged by deadline
         proximity (spec 34 §6 / spec 31 §2). High risk = deadline within 7 days
         or already past; medium otherwise."""
-        today = datetime.now(UTC).date()
+        today = business_today()
         res = await self.db.execute(
             select(OfferLetter, Application, StudentProfile)
             .join(Application, OfferLetter.application_id == Application.id)
