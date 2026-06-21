@@ -3,7 +3,7 @@ import type { UseQueryResult } from '@tanstack/react-query'
 import QueryError from './QueryError'
 
 interface QueryBoundaryProps<TData> {
-  query: Pick<UseQueryResult<TData, unknown>, 'data' | 'error' | 'isError' | 'isLoading' | 'refetch'>
+  query: Pick<UseQueryResult<TData, unknown>, 'data' | 'isError' | 'isLoading' | 'refetch'>
   children: (data: TData) => ReactNode
   loadingFallback: ReactNode
   emptyFallback?: ReactNode
@@ -11,12 +11,6 @@ interface QueryBoundaryProps<TData> {
   errorDetail?: string
   isEmpty?: (data: TData) => boolean
   variant?: 'block' | 'inline' | 'row'
-}
-
-function detailFromError(error: unknown, fallback?: string) {
-  if (fallback) return fallback
-  if (error instanceof Error && error.message) return error.message
-  return undefined
 }
 
 export default function QueryBoundary<TData>({
@@ -35,7 +29,7 @@ export default function QueryBoundary<TData>({
     return (
       <QueryError
         title={errorTitle}
-        detail={detailFromError(query.error, errorDetail)}
+        detail={errorDetail}
         variant={variant}
         onRetry={() => {
           void query.refetch()
