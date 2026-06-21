@@ -54,6 +54,8 @@ export const qk = {
   workExperiences: () => ['work-experiences'] as const,
   discovery: (track?: string) =>
     (track ? (['discovery', track] as const) : (['discovery'] as const)),
+  chatTemplates: () => ['chat-templates'] as const,
+  chatTree: () => ['chat-tree'] as const,
 
   // ── Student · match / explore ─────────────────────────────────────────────
   recommendations: (refresh = false) => ['recommendations', { refresh }] as const,
@@ -61,6 +63,8 @@ export const qk = {
   program: (id: string) => ['program', id] as const,
   institution: (id: string) => ['institution', id] as const,
   search: (params: SearchParams) => ['search', params] as const,
+  launcherAcademic: () => ['launcher-academic'] as const,
+  launcherScholarships: () => ['launcher-scholarships'] as const,
   majorSpecific: () => ['major-specific'] as const,
 
   // ── Student · saved + compare ─────────────────────────────────────────────

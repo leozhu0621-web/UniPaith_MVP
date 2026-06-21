@@ -45,9 +45,12 @@ import {
   type ActionArtifactItem,
 } from "../../../api/chatTemplates";
 import { setEnrichValue } from "../../../api/enrichment";
+import { qk } from "../../../api/queryKeys";
 import AnswerChoices from "../discover/AnswerChoices";
 import { KeywordPicker, TypeaheadPicker } from "../../../components/student/EnrichWidget";
 import Button from "../../../components/ui/Button";
+import QueryError from "../../../components/ui/QueryError";
+import { useAnnounce } from "../../../hooks/useAnnounce";
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -462,6 +465,7 @@ function ActionStep({
 }) {
   const [artifact, setArtifact] = useState<ActionArtifact | null>(null);
   const [working, setWorking] = useState(true);
+  const announce = useAnnounce();
 
   useEffect(() => {
     let cancelled = false;
@@ -476,6 +480,7 @@ function ActionStep({
         status: "pending",
       });
       setWorking(false);
+      announce(`${step.action_label ?? step.label} is unavailable. Your answers are saved.`);
       return () => {
         cancelled = true;
       };
@@ -486,6 +491,7 @@ function ActionStep({
         if (!cancelled) {
           setArtifact(result);
           setWorking(false);
+          announce(`${result.title} is ready.`);
         }
       })
       .catch(() => {
@@ -500,6 +506,7 @@ function ActionStep({
             status: "pending",
           });
           setWorking(false);
+          announce(`${step.action_label ?? step.label} could not finish. Your answers are saved.`);
         }
       });
 
@@ -512,6 +519,7 @@ function ActionStep({
     step.action_label,
     step.availability_reason,
     step.label,
+    announce,
   ]);
 
   if (working) {
@@ -589,14 +597,16 @@ export default function TemplateRunner({ templateKey, onClose }: Props) {
   >([]);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const announce = useAnnounce();
 
-  const { data: templates, isLoading, error } = useQuery({
-    queryKey: ["chat-templates"],
+  const templatesQuery = useQuery({
+    queryKey: qk.chatTemplates(),
     queryFn: getChatTemplates,
     staleTime: 5 * 60_000,
     retry: 1,
   });
 
+  const { data: templates, isLoading, error } = templatesQuery;
   const template = templates?.find((t) => t.key === templateKey) ?? null;
   const steps = template?.steps ?? [];
   const currentStep = steps[currentStepIndex] ?? null;
@@ -605,10 +615,12 @@ export default function TemplateRunner({ templateKey, onClose }: Props) {
     const next = currentStepIndex + 1;
     if (next >= steps.length) {
       setDone(true);
+      announce("Template complete. Your answers are saved to My Space.");
     } else {
       setCurrentStepIndex(next);
+      announce(`Step ${next + 1} of ${steps.length}.`);
     }
-  }, [currentStepIndex, steps.length]);
+  }, [announce, currentStepIndex, steps.length]);
 
   const handlePromptSubmit = useCallback(
     async (value: unknown) => {
@@ -621,10 +633,11 @@ export default function TemplateRunner({ templateKey, onClose }: Props) {
       } finally {
         setSaving(false);
         setCompletedStepValues((prev) => [...prev, { step: currentStep, value }]);
+        announce(`${currentStep.label} saved.`);
         advance();
       }
     },
-    [currentStep, advance],
+    [currentStep, announce, advance],
   );
 
   // Loading / error states
@@ -639,9 +652,19 @@ export default function TemplateRunner({ templateKey, onClose }: Props) {
   if (error || !template) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center px-6">
-        <p className="text-[14px] text-muted-foreground">
-          {error ? "Couldn't load the template." : `Template "${templateKey}" not found.`}
-        </p>
+        {error ? (
+          <QueryError
+            title="Template couldn't load."
+            detail="Go back or try loading this template again."
+            onRetry={() => {
+              void templatesQuery.refetch();
+            }}
+          />
+        ) : (
+          <p className="text-[14px] text-muted-foreground">
+            Template "{templateKey}" not found.
+          </p>
+        )}
         <Button variant="ghost" size="sm" onClick={onClose}>
           Go back
         </Button>

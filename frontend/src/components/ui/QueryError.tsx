@@ -33,7 +33,10 @@ export default function QueryError({
         role="alert"
       >
         <AlertTriangle size={15} className="text-warning shrink-0" />
-        <span className="text-muted-foreground">{detail || title}</span>
+        <span className="text-muted-foreground">
+          <span className="font-semibold text-foreground">{title}</span>
+          {detail && <span> {detail}</span>}
+        </span>
         {onRetry && (
           <button onClick={onRetry} className="text-secondary font-medium hover:underline">
             Try again

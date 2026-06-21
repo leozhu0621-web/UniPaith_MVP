@@ -25,7 +25,10 @@ import { getChatTemplates, type ChatTemplate } from "../../../api/chatTemplates"
 import { createSession, type ChatSession } from "../../../api/chatSessions";
 import { searchPrograms } from "../../../api/programs";
 import { searchScholarships, type Scholarship } from "../../../api/scholarships";
+import { qk } from "../../../api/queryKeys";
 import type { ProgramSummary } from "../../../types";
+import QueryBoundary from "../../../components/ui/QueryBoundary";
+import QueryError from "../../../components/ui/QueryError";
 import UniOrb from "../discover/UniOrb";
 
 // ── Props ──────────────────────────────────────────────────────────────────
@@ -117,6 +120,29 @@ function EyebrowLabel({ children }: { children: React.ReactNode }) {
     <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-secondary mb-3">
       {children}
     </p>
+  );
+}
+
+function CardSkeleton() {
+  return (
+    <div
+      className="min-h-[116px] rounded-[14px] border border-border bg-card p-4 shadow-[0_1px_2px_rgba(10,20,40,.06)]"
+      aria-hidden="true"
+    >
+      <div className="h-9 w-9 rounded-[10px] bg-muted animate-pulse" />
+      <div className="mt-4 h-3.5 w-3/4 rounded bg-muted animate-pulse" />
+      <div className="mt-2 h-3 w-1/2 rounded bg-muted animate-pulse" />
+    </div>
+  );
+}
+
+function TemplateSkeleton() {
+  return (
+    <div className="flex flex-wrap gap-2 animate-pulse" aria-hidden="true">
+      {[120, 140, 110, 130, 100, 150].map((w, i) => (
+        <div key={i} className="h-9 rounded-full bg-muted" style={{ width: w }} />
+      ))}
+    </div>
   );
 }
 
@@ -345,17 +371,17 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
   const [uploadOpen, setUploadOpen] = useState(false);
   const uploadBtnRef = useRef<HTMLButtonElement>(null);
 
-  const { data: templates, isLoading: templatesLoading } = useQuery({
-    queryKey: ["chat-templates"],
+  const templatesQuery = useQuery({
+    queryKey: qk.chatTemplates(),
     queryFn: getChatTemplates,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 
   // Academic — real programs that carry a campus photo (institution_image_url).
-  // Falls back to the representative cards below when none are available.
-  const { data: academicData } = useQuery({
-    queryKey: ["launcher-academic"],
+  // Falls back to search actions when no live photo-backed programs are available.
+  const academicQuery = useQuery({
+    queryKey: qk.launcherAcademic(),
     queryFn: () => searchPrograms({ page_size: 24 }),
     staleTime: 5 * 60 * 1000,
     retry: 1,
@@ -363,7 +389,7 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
   // Four DISTINCT institutions that carry a campus photo (dedupe so the row
   // isn't four programs from the same school).
   const academicPrograms = (() => {
-    const withPhoto = ((academicData?.items ?? []) as ProgramSummary[]).filter(
+    const withPhoto = ((academicQuery.data?.items ?? []) as ProgramSummary[]).filter(
       (p) => p.institution_image_url,
     );
     const seen = new Set<string>();
@@ -378,24 +404,23 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
   })();
 
   // Financial — real scholarships with a stated award amount (from the
-  // external_scholarships catalog). Falls back to the representative card.
-  const { data: scholarshipData } = useQuery({
-    queryKey: ["launcher-scholarships"],
+  // external_scholarships catalog). Falls back to real funding actions.
+  const scholarshipQuery = useQuery({
+    queryKey: qk.launcherScholarships(),
     queryFn: () => searchScholarships({ page_size: 8 }),
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
-  const scholarships = ((scholarshipData?.items ?? []) as Scholarship[])
+  const scholarships = ((scholarshipQuery.data?.items ?? []) as Scholarship[])
     .filter((s) => s.award_amount)
     .slice(0, 2);
-  const runnableTemplates = (templates ?? []).filter(templateIsRunnable);
 
   const qc = useQueryClient();
   const createMut = useMutation({
     mutationFn: createSession,
     onSuccess: (s: ChatSession, vars) => {
       // Refresh the rail so the newly named + auto-filed session appears.
-      void qc.invalidateQueries({ queryKey: ["chat-tree"] });
+      void qc.invalidateQueries({ queryKey: qk.chatTree() });
       onSessionStart(s.id, vars.origin_kind, vars.origin_ref ?? undefined);
     },
   });
@@ -522,8 +547,20 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
         {/* Academic */}
         <section className="mb-7" aria-label="Academic">
           <EyebrowLabel>Academic</EyebrowLabel>
+          {academicQuery.isError && (
+            <QueryError
+              variant="inline"
+              title="Programs couldn't load."
+              detail="You can still start with search or preferences."
+              onRetry={() => {
+                void academicQuery.refetch();
+              }}
+            />
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {academicPrograms.length >= 2
+            {academicQuery.isLoading
+              ? [0, 1, 2, 3].map((i) => <CardSkeleton key={i} />)
+              : academicPrograms.length >= 2
               ? academicPrograms.map((p) => (
                   <VisualCard
                     key={p.id}
@@ -563,8 +600,20 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
         {/* Financial — real scholarships (name + amount) then funding guides. */}
         <section className="mb-7" aria-label="Financial">
           <EyebrowLabel>Financial</EyebrowLabel>
+          {scholarshipQuery.isError && (
+            <QueryError
+              variant="inline"
+              title="Scholarships couldn't load."
+              detail="You can still open a funding session."
+              onRetry={() => {
+                void scholarshipQuery.refetch();
+              }}
+            />
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {scholarships.length > 0 ? (
+            {scholarshipQuery.isLoading ? (
+              [0, 1].map((i) => <CardSkeleton key={i} />)
+            ) : scholarships.length > 0 ? (
               scholarships.map((s) => (
                 <ScholarshipCard
                   key={s.id}
@@ -662,17 +711,26 @@ export default function NewSessionLauncher({ recentSession, onSessionStart }: Pr
         {/* Start from a template */}
         <section aria-label="Start from a template">
           <EyebrowLabel>Start from a template</EyebrowLabel>
-          {templatesLoading ? (
-            <div className="flex flex-wrap gap-2 animate-pulse">
-              {[120, 140, 110, 130, 100, 150].map((w, i) => (
-                <div key={i} className="h-9 rounded-full bg-muted" style={{ width: w }} />
-              ))}
-            </div>
-          ) : runnableTemplates.length > 0 ? (
-            <TemplatesSection templates={runnableTemplates} onPick={handleTemplatePick} />
-          ) : (
-            <p className="text-[13px] text-muted-foreground">No templates available.</p>
-          )}
+          <QueryBoundary
+            query={templatesQuery}
+            variant="inline"
+            loadingFallback={<TemplateSkeleton />}
+            errorTitle="Templates couldn't load."
+            errorDetail="You can still start a regular chat."
+            isEmpty={(list) => list.filter(templateIsRunnable).length === 0}
+            emptyFallback={
+              <p className="text-[13px] text-muted-foreground">
+                Guided templates are unavailable right now. Start a regular chat instead.
+              </p>
+            }
+          >
+            {(list) => (
+              <TemplatesSection
+                templates={list.filter(templateIsRunnable)}
+                onPick={handleTemplatePick}
+              />
+            )}
+          </QueryBoundary>
         </section>
 
       </div>

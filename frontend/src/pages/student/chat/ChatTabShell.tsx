@@ -28,6 +28,7 @@ import TemplateRunner from "./TemplateRunner";
 import DiscoverHomePage from "../DiscoverHomePage";
 import { useQuery } from "@tanstack/react-query";
 import { getChatTree } from "../../../api/chatSessions";
+import { qk } from "../../../api/queryKeys";
 
 interface ActiveSession {
   id: string;
@@ -40,7 +41,7 @@ export default function ChatTabShell() {
 
   // Fetch tree so we can surface the most-recent session in the launcher.
   const { data: treeData } = useQuery({
-    queryKey: ["chat-tree"],
+    queryKey: qk.chatTree(),
     queryFn: getChatTree,
     retry: 1,
     staleTime: 30_000,

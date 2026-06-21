@@ -34,6 +34,12 @@ vi.mock("../pages/student/DiscoverHomePage", () => ({
 vi.mock("../api/chatTemplates", () => ({
   getChatTemplates: vi.fn().mockResolvedValue([]),
 }));
+vi.mock("../api/programs", () => ({
+  searchPrograms: vi.fn().mockResolvedValue({ items: [] }),
+}));
+vi.mock("../api/scholarships", () => ({
+  searchScholarships: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1 }),
+}));
 
 // ── Other mocks expected by the module tree ──────────────────────────────
 vi.mock("../api/discovery", () => ({
@@ -58,6 +64,8 @@ vi.mock("../api/inbox", () => ({ getThreads: vi.fn().mockResolvedValue([]) }));
 
 import { getChatTree } from "../api/chatSessions";
 import { getChatTemplates } from "../api/chatTemplates";
+import { searchPrograms } from "../api/programs";
+import { searchScholarships } from "../api/scholarships";
 import SessionBrowser from "../pages/student/chat/SessionBrowser";
 import ChatTabShell from "../pages/student/chat/ChatTabShell";
 
@@ -261,6 +269,8 @@ describe("ChatTabShell", () => {
   beforeEach(() => {
     vi.mocked(getChatTree).mockResolvedValue({ folders: [] });
     vi.mocked(getChatTemplates).mockResolvedValue([]);
+    vi.mocked(searchPrograms).mockResolvedValue({ items: [] });
+    vi.mocked(searchScholarships).mockResolvedValue({ items: [], total: 0, page: 1 });
   });
 
   it("renders the session browser aside and the new-session launcher by default", async () => {
@@ -334,5 +344,46 @@ describe("ChatTabShell", () => {
 
     expect(await screen.findByText("Build my school list")).toBeInTheDocument();
     expect(screen.queryByText("Find events")).not.toBeInTheDocument();
+  });
+
+  it("shows a retryable template error without blocking regular chat actions", async () => {
+    vi.mocked(getChatTemplates).mockRejectedValue(new Error("catalog unavailable"));
+
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <ChatTabShell />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(
+      await screen.findByText("Templates couldn't load.", undefined, { timeout: 4000 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("You can still start a regular chat.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /build your school list/i })).toBeInTheDocument();
+  });
+
+  it("shows academic and scholarship fetch failures while keeping fallback actions visible", async () => {
+    vi.mocked(searchPrograms).mockRejectedValue(new Error("programs unavailable"));
+    vi.mocked(searchScholarships).mockRejectedValue(new Error("scholarships unavailable"));
+
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <ChatTabShell />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(
+      await screen.findByText("Programs couldn't load.", undefined, { timeout: 4000 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Scholarships couldn't load.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /search programs/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /find more scholarships/i })).toBeInTheDocument();
   });
 });
