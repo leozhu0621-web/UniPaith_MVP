@@ -1,18 +1,29 @@
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
 
+// A malformed ISO string makes parseISO return an Invalid Date, and date-fns
+// format()/formatDistanceToNow() THROW on that — which would crash the whole
+// render tree. Guard every formatter so bad data degrades to a dash, not a crash.
+function valid(iso: string): Date | null {
+  const d = parseISO(iso)
+  return isNaN(d.getTime()) ? null : d
+}
+
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—'
-  return format(parseISO(iso), 'MMM d, yyyy')
+  const d = valid(iso)
+  return d ? format(d, 'MMM d, yyyy') : '—'
 }
 
 export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '—'
-  return format(parseISO(iso), 'MMM d, yyyy h:mm a')
+  const d = valid(iso)
+  return d ? format(d, 'MMM d, yyyy h:mm a') : '—'
 }
 
 export function formatRelative(iso: string | null | undefined): string {
   if (!iso) return '—'
-  return formatDistanceToNow(parseISO(iso), { addSuffix: true })
+  const d = valid(iso)
+  return d ? formatDistanceToNow(d, { addSuffix: true }) : '—'
 }
 
 export function formatCurrency(amount: number | null | undefined): string {
