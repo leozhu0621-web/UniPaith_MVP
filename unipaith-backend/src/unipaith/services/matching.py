@@ -646,7 +646,16 @@ def cpef(
     p = params or DEFAULT_PARAMS
     signals, dealbreakers, full_w = _build_cpef_signals(student, program, p)
 
-    num = den = present_a = rho_sum = raw_f_sum = 0.0
+    # Coverage is gated by how well we know the STUDENT (c_student) only — NOT the
+    # program's authority (c_program). Folding c_program into coverage double-counts
+    # confidence (`inner` already carries the full two-sided product) and
+    # structurally caps derived/unclaimed programs (the cosine-cap class). Keeping
+    # the c_student gate preserves the "deeper profile → sharper match" property
+    # (the cohort tests). c_student is constant across a pair's signals, so the
+    # student-side trust gain is computed once and multiplies the rho-free breadth.
+    rho_student = confidence_to_gain(_student_side_confidence(student), p)
+
+    num = den = present_a = present_breadth = rho_sum = raw_f_sum = 0.0
     sig_bd: list[dict[str, Any]] = []
     for sig in signals:
         rho = confidence_to_gain(sig["c"], p)
@@ -655,6 +664,7 @@ def cpef(
         num += a * fhat
         den += a
         present_a += a
+        present_breadth += sig["w"] / 10.0
         rho_sum += rho
         raw_f_sum += sig["f"]
         sig_bd.append(
@@ -683,7 +693,7 @@ def cpef(
             hard = True
         db_bd.append({"key": db["key"], "v": round(db["v"], 4), "v_eff": round(v_eff, 4)})
 
-    g = _coverage(present_a, full_w, p["n0"])
+    g = _coverage(rho_student * present_breadth, full_w, p["n0"])
     value = clamp01(g * v_total * inner)
     if hard:
         # A confirmed true deal-breaker sinks below every clean (un-vetoed) program.
