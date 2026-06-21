@@ -236,6 +236,46 @@ def test_partial_derived_target_profile_records_layer_omissions():
     assert_no_protected_traits(target)
 
 
+def test_omission_only_target_profile_records_all_missing_layers():
+    from unipaith.schemas.profile_intelligence import assert_no_protected_traits
+    from unipaith.services.match.derive_preferences import derive_program_preference
+
+    pref = derive_program_preference(
+        program_name="Graduate Certificate in Classics",
+        degree_type="certificate",
+        source_url="https://www.college.columbia.edu/",
+        allow_omission_only_target_profile=True,
+    )
+
+    assert pref is not None
+    assert pref["preference_weights"] == {}
+    assert pref["provenance"]["method"] == "public_evidence_target_profile_omissions_v1"
+    target = pref["target_profile"]
+    assert target["layers"] == {
+        "background_academic": [],
+        "goals_behaviors_learning_working_style": [],
+        "values_motivations_community": [],
+    }
+    assert target["omissions"] == [
+        {
+            "layer": "background_academic",
+            "reason": "No eligible public evidence was available for this target-profile layer.",
+            "source": "derived",
+        },
+        {
+            "layer": "goals_behaviors_learning_working_style",
+            "reason": "No eligible public evidence was available for this target-profile layer.",
+            "source": "derived",
+        },
+        {
+            "layer": "values_motivations_community",
+            "reason": "No eligible public evidence was available for this target-profile layer.",
+            "source": "derived",
+        },
+    ]
+    assert_no_protected_traits(target)
+
+
 def test_derived_target_profile_does_not_echo_protected_terms_from_program_name():
     from unipaith.schemas.profile_intelligence import assert_no_protected_traits
     from unipaith.services.match.derive_preferences import derive_program_preference
@@ -425,3 +465,73 @@ async def test_backfill_fills_missing_target_profile_on_existing_derived_row(db_
             "source": "derived",
         }
     ]
+
+
+async def test_backfill_fills_omission_only_target_profile_on_existing_derived_row(
+    db_session,
+):
+    from decimal import Decimal
+
+    from sqlalchemy import select
+
+    from unipaith.models.institution import Institution, Program, ProgramPreference
+    from unipaith.models.user import User, UserRole
+    from unipaith.services.match.derive_preferences import backfill_program_preferences
+
+    admin = User(email="pref-omission-retrofit@example.com", role=UserRole.institution_admin)
+    db_session.add(admin)
+    await db_session.flush()
+    inst = Institution(
+        admin_user_id=admin.id,
+        name="Preference Omission Retrofit U",
+        type="university",
+        country="US",
+    )
+    db_session.add(inst)
+    await db_session.flush()
+    program = Program(
+        institution_id=inst.id,
+        program_name="Graduate Certificate in Classics",
+        degree_type="certificate",
+        website_url="https://www.college.columbia.edu/",
+        slug="retrofit-classics-certificate",
+    )
+    db_session.add(program)
+    await db_session.flush()
+    db_session.add(
+        ProgramPreference(
+            program_id=program.id,
+            source="derived",
+            confidence=Decimal("0.40"),
+            target_profile=None,
+        )
+    )
+    await db_session.flush()
+
+    inst_id = inst.id
+    program_id = program.id
+    sync_conn = await db_session.connection()
+
+    def _run(conn):
+        from sqlalchemy.orm import Session
+
+        with Session(bind=conn) as s:
+            return backfill_program_preferences(s, institution_id=inst_id)
+
+    inserted = await sync_conn.run_sync(_run)
+    row = (
+        await db_session.execute(
+            select(ProgramPreference).where(ProgramPreference.program_id == program_id)
+        )
+    ).scalar_one()
+
+    assert inserted == 0
+    assert row.target_profile is not None
+    assert all(not signals for signals in row.target_profile["layers"].values())
+    assert [item["layer"] for item in row.target_profile["omissions"]] == [
+        "background_academic",
+        "goals_behaviors_learning_working_style",
+        "values_motivations_community",
+    ]
+    assert row.preference_weights == {}
+    assert row.provenance["method"] == "public_evidence_target_profile_omissions_v1"
