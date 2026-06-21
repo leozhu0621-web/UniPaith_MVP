@@ -220,20 +220,28 @@ def cosine(a: list[float] | None, b: list[float] | None) -> float:
 
 
 def soft_align(student: StudentFeatures, program: ProgramFeatures) -> float:
-    """Tag-overlap score in [0,1]. Weighted average of three sub-scores:
-    interest themes (0.4), career arcs (0.4), values (0.2). Each
-    sub-score is Jaccard-with-floor: |A∩B| / max(1, |A∪B|).
+    """Student's-view tag-fit score in [0,1]. Weighted average of three
+    sub-scores: interest themes (0.4), career arcs (0.4), values (0.2).
 
-    Plus social_prefs alignment: dot-product of the student's [0,1]
-    preference vector against the program's [0,1] feature vector,
-    normalized by length.
+    This is the s→p (student-led) signal — "how much of what the student cares
+    about does this program offer" — so each sub-score is STUDENT-SIDE coverage
+    (`_tag_coverage`: |student ∩ program| / |student|), NOT symmetric Jaccard.
+    A program that covers ALL of a student's interests is a full fit on that
+    dimension and is not penalized for *also* offering themes the student didn't
+    ask about (Jaccard's union normalization penalized exactly that, biasing
+    against broad/interdisciplinary programs). A student who expressed no tags on
+    a dimension contributes a neutral 0 there.
+
+    Plus social_prefs alignment via `_pref_satisfaction`: the preference-weighted
+    coverage of the student's [0,1] social prefs by the program's [0,1] features
+    (a met preference is likewise never diluted by the program's other features).
     """
     s = student.sparse
     p = program.sparse
 
-    interest_score = _jaccard(s.get("interest_themes") or [], p.get("interest_themes") or [])
-    career_score = _jaccard(s.get("career_arcs") or [], p.get("career_arcs") or [])
-    value_score = _jaccard(s.get("values") or [], p.get("values") or [])
+    interest_score = _tag_coverage(s.get("interest_themes") or [], p.get("interest_themes") or [])
+    career_score = _tag_coverage(s.get("career_arcs") or [], p.get("career_arcs") or [])
+    value_score = _tag_coverage(s.get("values") or [], p.get("values") or [])
 
     tag_score = 0.4 * interest_score + 0.4 * career_score + 0.2 * value_score
 
@@ -268,11 +276,20 @@ def needs_match(student: StudentFeatures, program: ProgramFeatures) -> float:
     return matched / total_weight
 
 
-def _jaccard(a: list[str], b: list[str]) -> float:
-    sa, sb = set(a), set(b)
-    if not sa and not sb:
+def _tag_coverage(student_tags: list[str], program_tags: list[str]) -> float:
+    """Student-side tag coverage in [0,1]: the fraction of the STUDENT's tags
+    the program covers — ``|student ∩ program| / |student|``.
+
+    Asymmetric by design (this is the student's-view signal): the program's
+    extra tags never lower the score, so a program covering all of a student's
+    interests reads as a full fit even when it offers much more. A student with
+    no tags on the dimension returns a neutral 0.0 (no positive signal), matching
+    the prior empty-set behavior.
+    """
+    s_tags = set(student_tags)
+    if not s_tags:
         return 0.0
-    return len(sa & sb) / max(1, len(sa | sb))
+    return len(s_tags & set(program_tags)) / len(s_tags)
 
 
 def _pref_satisfaction(prefs: dict[str, float], features: dict[str, float]) -> float:
