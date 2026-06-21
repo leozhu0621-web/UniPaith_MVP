@@ -8,6 +8,7 @@ import {
   CalendarClock,
   CheckCircle2,
   Clock3,
+  FileText,
   FileUp,
   Mail,
   RotateCcw,
@@ -181,6 +182,17 @@ export default function MySpaceHomePage() {
           </div>
 
           <div className="grid gap-5 xl:grid-cols-2">
+            <ItemModule
+              title="Application portfolio"
+              items={data.application_portfolio}
+              icon={<FileText size={15} />}
+              emptyTitle="No applications yet."
+              emptyText="Start from a saved program when you are ready; every application becomes a tracked project here."
+              emptyRoute="/s/applications"
+              emptyCtaLabel="Open applications"
+              onGo={(item) => go(item.route, 'my_space_task_clicked', { module: 'application_portfolio', key: item.key })}
+              onEmpty={() => go('/s/applications', 'my_space_empty_cta_clicked', { module: 'application_portfolio' })}
+            />
             <TaskModule
               title="Evidence gaps"
               tasks={data.evidence_gaps.filter(t => t.active)}

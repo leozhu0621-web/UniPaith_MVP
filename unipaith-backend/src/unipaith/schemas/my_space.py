@@ -83,6 +83,7 @@ class MySpaceOverview(BaseModel):
     evidence_gaps: list[MySpaceTask]
     deadlines: list[MySpaceModuleItem]
     waiting_on: list[MySpaceModuleItem]
+    application_portfolio: list[MySpaceModuleItem]
     messages: list[MySpaceModuleItem]
     feedback: list[MySpaceModuleItem]
     strategy: MySpaceModuleItem | None = None

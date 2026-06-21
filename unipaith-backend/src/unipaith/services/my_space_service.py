@@ -172,6 +172,24 @@ def _offer_decision_state(
     )
 
 
+def _application_status_label(app: Application) -> str:
+    status = app.status or "draft"
+    decision_state = getattr(app, "decision_state", None)
+    if status == "decision_made":
+        return str(decision_state or app.decision or "decision_made")
+    if status == "interview":
+        return "interview"
+    if status == "under_review":
+        return "under_review"
+    if status == "submitted":
+        return "submitted"
+    if app.readiness_pct is not None and app.readiness_pct >= 100:
+        return "ready_to_submit"
+    if app.readiness_pct:
+        return "in_progress"
+    return status
+
+
 def _program_label(app: Application) -> str:
     program = getattr(app, "program", None)
     return getattr(program, "program_name", None) or "Application"
@@ -294,6 +312,7 @@ class MySpaceService:
             ],
             deadlines=self._deadline_items(calendar, now=now),
             waiting_on=self._waiting_on_items(recs=recs, threads=threads, now=now),
+            application_portfolio=self._application_items(apps=apps, now=now),
             messages=self._message_items(threads),
             feedback=self._feedback_items(workshop_runs),
             strategy=self._strategy_item(strategy),
@@ -878,6 +897,111 @@ class MySpaceService:
                 )
             )
         return sorted(rows, key=lambda r: r.due_at or datetime.max.replace(tzinfo=UTC))[:6]
+
+    def _application_items(
+        self,
+        *,
+        apps: list[Application],
+        now: datetime,
+    ) -> list[MySpaceModuleItem]:
+        rows: list[MySpaceModuleItem] = []
+        for app in apps:
+            status = _application_status_label(app)
+            due_at = _due_date_to_datetime(getattr(app.program, "application_deadline", None))
+            offer = getattr(app, "offer", None)
+            offer_due_at = _due_date_to_datetime(getattr(offer, "response_deadline", None))
+            route = (
+                _application_route(app.id, "offer")
+                if offer is not None
+                else _application_route(app.id)
+            )
+            owner = "student"
+            urgency = _urgency_for_due(due_at, now=now)
+            missing = self._missing_items(app)
+            readiness = app.readiness_pct
+            institution = _institution_label(app)
+            context = f" at {institution}" if institution else ""
+
+            if offer is not None and not getattr(offer, "student_response", None):
+                offer_status, offer_description, _offer_blocker, offer_urgency = (
+                    _offer_decision_state(
+                        response=getattr(offer, "student_response", None),
+                        status=getattr(offer, "status", None),
+                        due_at=offer_due_at,
+                        received_externally=bool(getattr(offer, "received_externally", False)),
+                        now=now,
+                    )
+                )
+                status = f"offer_{offer_status}"
+                description = offer_description
+                due_at = offer_due_at
+                urgency = offer_urgency
+            elif app.status == "draft" and missing:
+                missing_text = f"Missing {', '.join(missing[:3])}."
+                description = (
+                    f"{missing_text} {readiness}% ready." if readiness is not None else missing_text
+                )
+                urgency = _urgency_for_due(due_at, now=now)
+                if urgency == "neutral":
+                    urgency = "priority_window"
+            elif app.status == "draft" and readiness is not None and readiness >= 100:
+                description = "Ready to submit. Do a final review before the deadline."
+                urgency = _urgency_for_due(due_at, now=now)
+                if urgency == "neutral":
+                    urgency = "priority_window"
+            elif app.status == "submitted":
+                description = f"Submitted{context}; admissions office owns the next review step."
+                owner = "institution"
+                urgency = "neutral"
+            elif app.status == "under_review":
+                description = f"Under review{context}; watch messages for follow-up requests."
+                owner = "institution"
+                urgency = "gentle_attention"
+            elif app.status == "interview":
+                description = f"Interview stage{context}; keep prep and scheduling visible."
+                urgency = "priority_window"
+            elif app.status == "decision_made":
+                decision = (
+                    getattr(app, "decision_state", None) or app.decision or "decision received"
+                )
+                description = f"Decision: {str(decision).replace('_', ' ')}."
+                urgency = (
+                    "gentle_attention"
+                    if decision in {"waitlisted", "conditional_admission"}
+                    else "neutral"
+                )
+                owner = "student" if decision in {"waitlisted", "accepted"} else "institution"
+            else:
+                description = f"{status.replace('_', ' ').title()}{context}."
+
+            rows.append(
+                MySpaceModuleItem(
+                    key=f"application:{app.id}",
+                    title=_program_label(app),
+                    description=description,
+                    route=route,
+                    owner=owner,
+                    urgency=urgency,
+                    status=status,
+                    due_at=due_at,
+                    provenance=_provenance(
+                        "applications",
+                        status,
+                        href=route,
+                        confidence=85 if readiness is not None else 75,
+                        updated_at=app.updated_at,
+                    ),
+                )
+            )
+        far = datetime.max.replace(tzinfo=UTC)
+        return sorted(
+            rows,
+            key=lambda r: (
+                URGENCY_RANK.get(r.urgency, 9),
+                r.due_at or far,
+                r.title,
+            ),
+        )[:6]
 
     def _waiting_on_items(
         self,

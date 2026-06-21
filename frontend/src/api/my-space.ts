@@ -74,6 +74,7 @@ export interface MySpaceOverview {
   evidence_gaps: MySpaceTask[]
   deadlines: MySpaceModuleItem[]
   waiting_on: MySpaceModuleItem[]
+  application_portfolio: MySpaceModuleItem[]
   messages: MySpaceModuleItem[]
   feedback: MySpaceModuleItem[]
   strategy: MySpaceModuleItem | null

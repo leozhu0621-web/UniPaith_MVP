@@ -78,6 +78,19 @@ const overview: MySpaceOverview = {
     },
   ],
   waiting_on: [],
+  application_portfolio: [
+    {
+      key: 'application:app-1',
+      title: 'MS Data Science application',
+      description: 'Missing Transcript, Statement of purpose. 55% ready.',
+      route: '/s/applications/app-1',
+      owner: 'student',
+      urgency: 'priority_window',
+      status: 'in_progress',
+      due_at: '2026-06-27T23:59:00Z',
+      provenance: [{ source: 'applications', label: 'in_progress', href: '/s/applications/app-1', confidence: 85, updated_at: null }],
+    },
+  ],
   messages: [],
   feedback: [],
   strategy: {
@@ -161,10 +174,24 @@ describe('MySpaceHomePage', () => {
     expect(await screen.findByText(/Good (morning|afternoon|evening), Ada/)).toBeTruthy()
     expect(screen.getByText('Complete MS Computer Science application')).toBeTruthy()
     expect(screen.getByText('Readiness ledger')).toBeTruthy()
+    expect(screen.getByText('Application portfolio')).toBeTruthy()
+    expect(screen.getByText('MS Data Science application')).toBeTruthy()
     expect(screen.getByText('Evidence gaps')).toBeTruthy()
     expect(screen.getByText('Offers & costs')).toBeTruthy()
     expect(screen.getByText('Import & clarification')).toBeTruthy()
     expect(screen.getByText('Application readiness · applications · 80% confidence')).toBeTruthy()
+  })
+
+  it('routes application portfolio rows to the owning application', async () => {
+    renderHome()
+
+    fireEvent.click(await screen.findByText('MS Data Science application'))
+
+    expect(track).toHaveBeenCalledWith('my_space_task_clicked', {
+      route: '/s/applications/app-1',
+      module: 'application_portfolio',
+      key: 'application:app-1',
+    })
   })
 
   it('persists dismiss state for computed tasks', async () => {

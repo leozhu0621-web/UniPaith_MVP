@@ -101,6 +101,14 @@ async def test_my_space_overview_composes_release_ready_tasks(
         "major_evidence",
     }
     assert {m["key"]: m["value"] for m in data["pipeline"]}["drafts"] == 1
+    portfolio_item = next(
+        i for i in data["application_portfolio"] if i["key"] == f"application:{app.id}"
+    )
+    assert portfolio_item["title"] == "MS Computer Science"
+    assert portfolio_item["route"] == f"/s/applications/{app.id}?tab=offer"
+    assert portfolio_item["urgency"] == "focus_now"
+    assert portfolio_item["status"] == "offer_due_soon"
+    assert portfolio_item["provenance"][0]["label"] == "offer_due_soon"
 
     tasks = {t["key"]: t for t in data["tasks"]}
     app_task = tasks[f"application:{app.id}:missing"]
