@@ -45,20 +45,10 @@ def _school_snapshot(name: str) -> dict:
 
 
 def _program_cost(spec: dict) -> dict:
-    slug = spec["slug"]
-    if slug in h._TUITION_BY_SLUG:
-        return {"tuition_usd": h._TUITION_BY_SLUG[slug], "source": "x"}
-    if spec["degree_type"] == "phd":
-        return {"tuition_usd": 0, "source": "x"}
-    if (
-        slug == "harvard-alm"
-        or spec.get("delivery_format") == "online"
-        or spec["degree_type"] == "certificate"
-    ):
+    tuition, cost = h._program_tuition(spec)
+    if cost is None:
         return {}
-    if spec["degree_type"] == "bachelors":
-        return {"tuition_usd": h._TUITION_UNDERGRAD, "source": "x"}
-    return {}
+    return {"tuition_usd": cost.get("tuition_usd"), "source": cost.get("source", "x")}
 
 
 def _program_outcomes(spec: dict) -> dict:
@@ -239,6 +229,39 @@ def test_flagship_mba_is_deeply_enriched():
     assert "harvard-mba" in h._TRACKS_BY_SLUG
     assert set(res.missing_fields) <= omitted
     assert not _section_gaps_unexpected("program", res.missing_sections, omitted)
+
+
+def test_graduate_tier_tuition_coverage():
+    """REPAIR_BACKLOG #2: master's tier must carry published per-school tuition."""
+    from collections import Counter
+
+    by_type: dict[str, list[int | None]] = {}
+    for spec in h.PROGRAMS:
+        dt = spec["degree_type"]
+        tuition, _ = h._program_tuition(spec)
+        by_type.setdefault(dt, []).append(tuition)
+    assert all(t is not None for t in by_type["bachelors"])
+    masters = by_type["masters"]
+    assert sum(t is not None for t in masters) >= 100, (
+        f"master's tier under-filled: {sum(t is not None for t in masters)}/{len(masters)}"
+    )
+    null_masters = [
+        s["slug"]
+        for s in h.PROGRAMS
+        if s["degree_type"] == "masters" and h._program_tuition(s)[0] is None
+    ]
+    assert set(null_masters) <= {
+        "harvard-alm",
+        "harvard-health-and-medical-administrative-services-ms",
+        "harvard-medicine-ms",
+        "harvard-medical-illustration-and-informatics-ms",
+        "harvard-health-professions-education-ethics-and-humanities-ms",
+    }, f"unexpected null masters: {null_masters}"
+    assert all(t == 0 for t in by_type["phd"])
+    masters_vals = Counter(t for t in masters if t is not None)
+    assert len(masters_vals) >= 8, "master's tier should carry distinct school differentials"
+    assert h._TUITION_MASTERS_BY_SCHOOL[h._FAS] in masters_vals
+    assert h._TUITION_MASTERS_BY_SCHOOL[h._HBS] in masters_vals
 
 
 def test_every_node_has_content_sources():
