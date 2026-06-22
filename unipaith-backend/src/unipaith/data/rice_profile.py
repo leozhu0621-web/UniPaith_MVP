@@ -19,9 +19,8 @@ guessed. Built 2026-06-11 from:
 
 Honest caveats stamped into ``_standard.omitted``: Rice publishes career outcomes
 institution-wide (no per-program employment/industry split), so those program fields are
-omitted; graduate/professional programs without a verified per-program tuition carry a
-sourced "see the program's tuition page" record rather than a guessed number; notable-
-faculty rosters are omitted for schools where no current named distinction could be
+omitted; funded research doctorates (Ph.D., D.M.A.) omit ``tuition_usd`` with reason;
+notable-faculty rosters are omitted for schools where no current named distinction could be
 verified from an official page; and Rice's news site exposes no editorial RSS feed, so the
 verified LiveWhale events RSS (current, image-carrying) feeds the Updates surface while the
 iCalendar feeds Events (both verified HTTP 200 on 2026-06-11).
@@ -48,6 +47,13 @@ gives every multi-credential field a distinct per-(field, degree_type) body from
 ``FIELD_CRED_DESCRIPTIONS`` (what THAT degree studies at THAT level) and drops the
 redundant "Rice offers the … in {field}." classification lead; gold MIT = 0%
 frame-stripped shared body, now enforced at import + in ``test_anti_stub_gate.py``.
+
+Graduate-tier tuition (2026-06-22, ricegradtuition1): stamps published per-school /
+per-program Rice Bursar rates (2026-27) for every master's and professional row — clearing
+the REPAIR BACKLOG #4 matcher starvation (master's 1/29, professional 11/38 live). Funded
+research doctorates (Ph.D., D.M.A.) omit ``tuition_usd`` with reason; per-credit-only
+Glasscock rows stamp per-credit × a typical 18-credit annual load. Values are
+school-distinct and never the $66,540 undergraduate sticker copied down.
 """
 
 # ruff: noqa: E501
@@ -917,7 +923,7 @@ _GRAD_EXPLICIT: list[tuple] = [
     ("Master of Business Administration (Full-Time MBA)", "masters", _BIZ, "Rice Business", 22, "on_campus", "https://business.rice.edu/rice-mba/full-time-mba", None, None),
     ("Professional MBA — Evening", "professional", _BIZ, "Rice Business", 22, "on_campus", "https://business.rice.edu/rice-mba/professional-mba", None, None),
     ("Professional MBA — Weekend", "professional", _BIZ, "Rice Business", 22, "on_campus", "https://business.rice.edu/rice-mba/professional-mba", None, None),
-    ("Hybrid MBA", "professional", _BIZ, "Rice Business", 22, "hybrid", "https://business.rice.edu/rice-mba/hybrid-mba", 137700, "total"),
+    ("Hybrid MBA", "professional", _BIZ, "Rice Business", 22, "hybrid", "https://business.rice.edu/rice-mba/hybrid-mba", None, None),
     ("Executive MBA", "professional", _BIZ, "Rice Business", 22, "on_campus", "https://business.rice.edu/rice-mba/executive-mba", None, None),
     ("MBA@Rice (Online MBA)", "professional", _BIZ, "Rice Business", 24, "online", "https://business.rice.edu/rice-mba/online-mba", None, None),
     ("Master of Accounting (MAcc)", "masters", _BIZ, "Rice Business", 10, "on_campus", "https://business.rice.edu/graduate-programs/master-accounting", None, None),
@@ -1494,26 +1500,363 @@ _MBA_OUTCOMES: dict = {
     ),
 }
 
-# Rice Business Full-Time MBA 2025-26 tuition (Rice Bursar published rate).
-_MBA_TUITION = 76073
+# ── Published graduate-tier tuition (REPAIR_BACKLOG #4 — master's/professional
+# starvation behind a 100% bachelor's tier) ──────────────────────────────────
+# Rice charges graduate/professional tuition by SCHOOL or PROGRAM on first-party
+# Bursar pages (2026-27). Program.tuition is the matcher's ANNUAL budget input.
+# Funded research doctorates omit with reason; per-credit Glasscock / online rows
+# stamp per-credit × typical load where no flat annual figure is published.
+_GS_FULLTIME_ANNUAL = 66784  # Engineering / Natural Sciences / Social Sciences / Humanities
+_PM_ENG_ANNUAL = 61440  # Professional Master's in Engineering (on-campus PM degrees)
+_PM_NS_ANNUAL = 40600  # Professional Master's in Natural Sciences (students entering 2026)
+_ARCH_ANNUAL = 41333  # Professional Master's in Architecture
+_MUSIC_ANNUAL = 35020
+_MBA_FT_ANNUAL = 79116
+_EMBA_ANNUAL = 79932  # $39,965.75 × 2 semesters
+_PMBA_WEEKEND_ANNUAL = 70707
+_PMBA_EVENING_ANNUAL = 67431
+_PMBA_HYBRID_ANNUAL = 70916  # $35,457.75 × 2 semesters
+_MACC_ANNUAL = 65100
+_ONLINE_MBA_ANNUAL = 64098  # $128,196 program estimate ÷ 2 years
+_MEEcon_ANNUAL = 60000
+_MGA_ANNUAL = 45000
+_MSPE_ANNUAL = 46000
+_MHCIHF_ANNUAL = 37500
+_MCEcon_ANNUAL = 32000
+_MIOP_ANNUAL = 37500
+_MEML_ONLINE_ANNUAL = 30600  # $1,700/credit × 18 credits (typical annual load)
+_MAT_PER_CREDIT = 834
+_MIS_PER_CREDIT = 1265
+_MLS_PER_CREDIT = 1400
+_GLASSCOCK_TYPICAL_CREDITS = 18  # 9 credits/semester threshold on Bursar pages
+
+_ENG_TUITION_SRC = (
+    "Rice Bursar — Engineering Graduate Programs (2026-27)",
+    "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/engineering",
+)
+_NS_TUITION_SRC = (
+    "Rice Bursar — Natural Sciences Graduate Programs (2026-27)",
+    "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/natural-sciences",
+)
+_HUM_TUITION_SRC = (
+    "Rice Bursar — Humanities Graduate Programs (2026-27)",
+    "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/humanities",
+)
+_SOC_TUITION_SRC = (
+    "Rice Bursar — Social Sciences Graduate Programs (2026-27)",
+    "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/social-sciences",
+)
+_ARCH_TUITION_SRC = (
+    "Rice Bursar — Architecture Graduate Programs (2026-27)",
+    "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/architecture",
+)
+_MUSIC_TUITION_SRC = (
+    "Rice Bursar — Music Graduate Programs (2026-27)",
+    "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/music",
+)
+_BIZ_TUITION_SRC = (
+    "Rice Bursar — Business Graduate Programs (2026-27)",
+    "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/business",
+)
+_GLASSCOCK_TUITION_SRC = (
+    "Rice Bursar — Continuing Studies Graduate Programs (2026-27)",
+    "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/continuing-studies-0",
+)
+
+
+def _annual_cost(
+    tuition_usd: int,
+    *,
+    note: str,
+    source: str,
+    source_url: str,
+    funded: bool = False,
+) -> dict:
+    return {
+        "tuition_usd": tuition_usd,
+        "funded": funded,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": "2026-27",
+    }
+
+
+def _gs_masters_cost(field: str, source: tuple[str, str]) -> dict:
+    return _annual_cost(
+        _GS_FULLTIME_ANNUAL,
+        note=(
+            f"Standard full-time graduate tuition for the terminal master's in {field} "
+            f"(${_GS_FULLTIME_ANNUAL // 2:,} per semester × 2 = "
+            f"${_GS_FULLTIME_ANNUAL:,} per academic year)."
+        ),
+        source=source[0],
+        source_url=source[1],
+    )
+
+
+def _per_credit_annual_cost(
+    per_credit: int,
+    *,
+    program: str,
+    source: tuple[str, str],
+    typical_credits: int = _GLASSCOCK_TYPICAL_CREDITS,
+) -> dict:
+    annual = per_credit * typical_credits
+    return _annual_cost(
+        annual,
+        note=(
+            f"{program}: ${per_credit:,} per credit hour × {typical_credits} credits "
+            f"(typical annual load at 9+ credits per semester) = ${annual:,}."
+        ),
+        source=source[0],
+        source_url=source[1],
+    )
+
+
+# Rice Business Full-Time MBA 2026-27 tuition (Rice Bursar published rate).
+_MBA_TUITION = _MBA_FT_ANNUAL
 _COST_BY_SLUG: dict[str, dict] = {
     _FLAGSHIP: {
         "tuition_usd": _MBA_TUITION,
         "breakdown": {
             "tuition": _MBA_TUITION,
-            "mba_fees": 1230,
+            "mba_fees": 550,
         },
         "funded": False,
         "note": (
-            "Published 2025-26 Rice Business Full-Time MBA tuition ($76,073 per year) plus "
-            "required MBA fees ($1,230). Rice Business reports that 96% of Full-Time MBA "
-            "students receive merit-based scholarships with average awards exceeding $80,000."
+            "Published 2026-27 Rice Business Full-Time MBA tuition ($39,558 per semester × "
+            "2 = $79,116 per year) plus the Full-Time MBA activity fee ($550). Rice Business "
+            "reports that 96% of Full-Time MBA students receive merit-based scholarships with "
+            "average awards exceeding $80,000."
         ),
         "source": "Rice University Bursar — Business Full-Time MBA",
         "source_url": "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/business/business-full-time-mba",
-        "year": "2025-26",
+        "year": "2026-27",
     },
 }
+
+# Professional engineering master's / MEng-style degrees billed at the PM Engineering rate.
+_PM_ENG_SLUGS = {
+    "rice-master-of-bioengineering-mbe-applied-bioengineering-prof",
+    "rice-master-of-bioengineering-mbe-global-medical-innovation-prof",
+    "rice-master-of-chemical-engineering-mche-prof",
+    "rice-master-of-civil-and-environmental-engineering-mcee-prof",
+    "rice-master-of-computational-and-applied-mathematics-mcaam-prof",
+    "rice-master-of-computational-science-and-engineering-mcse-prof",
+    "rice-master-of-computer-science-mcs-prof",
+    "rice-master-of-data-science-mds-prof",
+    "rice-master-of-digital-health-mdh-prof",
+    "rice-master-of-electrical-and-computer-engineering-mece-prof",
+    "rice-master-of-engineering-management-and-leadership-meml-prof",
+    "rice-master-of-industrial-engineering-mie-prof",
+    "rice-master-of-materials-science-and-nanoengineering-mmsne-prof",
+    "rice-master-of-mechanical-engineering-mme-prof",
+    "rice-master-of-statistics-mstat-prof",
+}
+
+_SOC_PROF_ANNUAL: dict[str, int] = {
+    "rice-master-of-energy-economics-meecon-prof": _MEEcon_ANNUAL,
+    "rice-master-of-global-affairs-mga-prof": _MGA_ANNUAL,
+    "rice-master-of-social-policy-evaluation-mspe-prof": _MSPE_ANNUAL,
+    "rice-master-of-human-computer-interaction-and-human-factors-mhcihf-prof": _MHCIHF_ANNUAL,
+    "rice-master-of-computational-economics-mcecon-prof": _MCEcon_ANNUAL,
+    "rice-master-of-industrial-organizational-psychology-miop-prof": _MIOP_ANNUAL,
+}
+
+
+def _resolve_grad_cost(spec: dict) -> dict | None:
+    """Published Rice graduate/professional tuition by school and program tier."""
+    slug = spec["slug"]
+    dtype = spec["degree_type"]
+    school = spec["school"]
+    name = spec["program_name"]
+
+    if dtype == "phd":
+        return None
+
+    if slug == "rice-professional-mba-weekend-prof":
+        return _annual_cost(
+            _PMBA_WEEKEND_ANNUAL,
+            note=(
+                "Professional MBA — Weekend tuition for students entering 2026 "
+                f"(${_PMBA_WEEKEND_ANNUAL // 2:,} per semester × 2)."
+            ),
+            source="Rice Bursar — Business Professional MBA",
+            source_url=(
+                "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/"
+                "business/business-professional-mba"
+            ),
+        )
+    if slug == "rice-professional-mba-evening-prof":
+        return _annual_cost(
+            _PMBA_EVENING_ANNUAL,
+            note=(
+                "Professional MBA — Evening tuition for students entering 2026 "
+                f"(${_PMBA_EVENING_ANNUAL // 2:,} per semester × 2)."
+            ),
+            source="Rice Bursar — Business Professional MBA",
+            source_url=(
+                "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/"
+                "business/business-professional-mba"
+            ),
+        )
+    if slug == "rice-hybrid-mba-prof":
+        return _annual_cost(
+            _PMBA_HYBRID_ANNUAL,
+            note=(
+                "Hybrid MBA tuition for students entering 2026 "
+                f"(${_PMBA_HYBRID_ANNUAL // 2:,} per semester × 2)."
+            ),
+            source="Rice Bursar — Business Professional MBA",
+            source_url=(
+                "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/"
+                "business/business-professional-mba"
+            ),
+        )
+    if slug == "rice-executive-mba-prof":
+        return _annual_cost(
+            _EMBA_ANNUAL,
+            note="Executive MBA Year 1 tuition ($39,965.75 per semester × 2).",
+            source="Rice Bursar — Business Executive MBA",
+            source_url=(
+                "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/"
+                "business/business-executive-mba"
+            ),
+        )
+    if slug == "rice-mba-rice-online-mba-prof":
+        return _annual_cost(
+            _ONLINE_MBA_ANNUAL,
+            note=(
+                "MBA@Rice Online: $2,374 per credit with a published $128,196 program "
+                f"estimate; annual matcher input = ${_ONLINE_MBA_ANNUAL:,} (half the "
+                "two-year program estimate)."
+            ),
+            source="Rice Bursar — MBA@Rice Online",
+            source_url=(
+                "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/"
+                "business/business-mbarice-hybrid-online"
+            ),
+        )
+    if slug == "rice-master-of-accounting-macc-ms":
+        return _annual_cost(
+            _MACC_ANNUAL,
+            note="Master of Accounting tuition ($32,550 per semester × 2).",
+            source="Rice Bursar — Business Master of Accounting",
+            source_url=(
+                "https://bursar.rice.edu/tuition_fee_rates/graduate-programs/"
+                "business/business-masters-accounting"
+            ),
+        )
+    if slug == "rice-master-of-engineering-management-and-leadership-meml-online-prof":
+        return _annual_cost(
+            _MEML_ONLINE_ANNUAL,
+            note=(
+                "MEML Online: $1,700 per credit × 18 credits (typical annual load) = "
+                f"${_MEML_ONLINE_ANNUAL:,}."
+            ),
+            source=_ENG_TUITION_SRC[0],
+            source_url=_ENG_TUITION_SRC[1],
+        )
+    if slug in _SOC_PROF_ANNUAL:
+        annual = _SOC_PROF_ANNUAL[slug]
+        return _annual_cost(
+            annual,
+            note=f"Published {name} tuition (${annual:,} per academic year).",
+            source=_SOC_TUITION_SRC[0],
+            source_url=_SOC_TUITION_SRC[1],
+        )
+    if slug in _PM_ENG_SLUGS:
+        return _annual_cost(
+            _PM_ENG_ANNUAL,
+            note=(
+                f"Professional Master's in Engineering tuition for {name} "
+                f"(${_PM_ENG_ANNUAL // 2:,} per semester × 2)."
+            ),
+            source=_ENG_TUITION_SRC[0],
+            source_url=_ENG_TUITION_SRC[1],
+        )
+    if slug == "rice-master-of-science-teaching-mst-prof":
+        return _annual_cost(
+            _PM_NS_ANNUAL,
+            note=(
+                "Professional Master's in Natural Sciences tuition (Master of Science "
+                f"Teaching; students entering 2026: ${_PM_NS_ANNUAL // 2:,} per semester × 2)."
+            ),
+            source=_NS_TUITION_SRC[0],
+            source_url=_NS_TUITION_SRC[1],
+        )
+    if slug == "rice-master-of-music-ms":
+        return _annual_cost(
+            _MUSIC_ANNUAL,
+            note=f"Shepherd School of Music tuition (${_MUSIC_ANNUAL // 2:,} per semester × 2).",
+            source=_MUSIC_TUITION_SRC[0],
+            source_url=_MUSIC_TUITION_SRC[1],
+        )
+    if slug == "rice-master-of-science-in-architecture-option-3-ms":
+        return _annual_cost(
+            _ARCH_ANNUAL,
+            note=(
+                "Professional Master's in Architecture tuition (Option 3 M.S.; same published "
+                f"full-regular rate as the M.Arch.: ${_ARCH_ANNUAL:,} per year)."
+            ),
+            source=_ARCH_TUITION_SRC[0],
+            source_url=_ARCH_TUITION_SRC[1],
+        )
+    if slug == "rice-master-of-arts-in-teaching-mat-ms":
+        return _per_credit_annual_cost(
+            _MAT_PER_CREDIT,
+            program="Master of Arts in Teaching",
+            source=_GLASSCOCK_TUITION_SRC,
+        )
+    if slug == "rice-master-of-interdisciplinary-studies-mis-ms":
+        return _per_credit_annual_cost(
+            _MIS_PER_CREDIT,
+            program="Master of Interdisciplinary Studies",
+            source=_GLASSCOCK_TUITION_SRC,
+        )
+    if slug == "rice-master-of-liberal-studies-mls-ms":
+        return _per_credit_annual_cost(
+            _MLS_PER_CREDIT,
+            program="Master of Liberal Studies",
+            source=_GLASSCOCK_TUITION_SRC,
+        )
+    if dtype == "masters" and school in {_ENG, _NS, _HUM, _SOC}:
+        field = _field_from_spec(spec)
+        src = {
+            _ENG: _ENG_TUITION_SRC,
+            _NS: _NS_TUITION_SRC,
+            _HUM: _HUM_TUITION_SRC,
+            _SOC: _SOC_TUITION_SRC,
+        }[school]
+        return _gs_masters_cost(field, src)
+    if dtype == "certificate" and school == _MUS:
+        return _annual_cost(
+            _MUSIC_ANNUAL,
+            note=(
+                "Shepherd School Artist Diploma tuition (same published music graduate "
+                f"rate: ${_MUSIC_ANNUAL:,} per year)."
+            ),
+            source=_MUSIC_TUITION_SRC[0],
+            source_url=_MUSIC_TUITION_SRC[1],
+        )
+    return None
+
+
+def _published_grad_cost(spec: dict) -> dict | None:
+    """Verified graduate cost: slug override → tuple tuition → school-tier resolver."""
+    slug = spec["slug"]
+    override = _COST_BY_SLUG.get(slug)
+    if override is not None:
+        return override
+    from_tuple = _grad_cost(spec)
+    if from_tuple is not None:
+        return from_tuple
+    return _resolve_grad_cost(spec)
+
+
+def _grad_has_verified_tuition(spec: dict) -> bool:
+    return _published_grad_cost(spec) is not None
 
 _TRACKS_BY_SLUG: dict[str, dict] = {
     _FLAGSHIP: {
@@ -2045,9 +2388,9 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
             "outcomes_data.employment_rate",
             "outcomes_data.top_industries",
         ]
-    # Graduate/professional programs without a verified per-program tuition omit tuition_usd
-    # (their cost_data carries a sourced "see the program page" record instead).
-    if spec.get("degree_type") != "bachelors" and slug not in _COST_BY_SLUG and spec.get("tuition") is None:
+    # Graduate/professional programs without verified tuition omit cost_data.tuition_usd
+    # (Ph.D. / D.M.A. are funded; per-credit-only rows without a computed annual load).
+    if spec.get("degree_type") != "bachelors" and not _grad_has_verified_tuition(spec):
         omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
@@ -2116,25 +2459,20 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "year": "2025-26",
             }
         else:
-            grad_cost = _grad_cost(spec)
-            cost_override = _COST_BY_SLUG.get(slug)
-            if cost_override is not None:
-                p.tuition = cost_override["tuition_usd"]
-                p.cost_data = cost_override
-            elif grad_cost is not None:
-                p.tuition = grad_cost["tuition_usd"]
-                p.cost_data = grad_cost
+            published = _published_grad_cost(spec)
+            if published is not None:
+                p.tuition = published["tuition_usd"]
+                p.cost_data = published
             else:
                 p.tuition = None
                 p.cost_data = {
                     "note": (
-                        "Tuition for this graduate/professional program varies and is "
-                        "published on the program's official Rice tuition page; a verified "
-                        "per-program figure is not yet recorded here. Research master's and "
-                        "doctoral students are typically funded."
+                        "Tuition for this graduate/professional program is typically covered "
+                        "by funding (research doctorates) or is published on the program's "
+                        "official Rice tuition page; a flat annual figure is not stated here."
                     ),
-                    "source": "Rice University — program tuition page",
-                    "source_url": spec.get("website") or _SCHOOL_WEBSITE.get(spec["school"]),
+                    "source": "Rice University — Graduate tuition & fees",
+                    "source_url": "https://bursar.rice.edu/tuition_fee_rates/graduate-programs",
                 }
         p.application_requirements = _requirements_for(spec)
         if slug == _FLAGSHIP:
