@@ -34,15 +34,14 @@ program's ``_standard.omitted``.
 Idempotent: re-applies ``yale_profile.apply()`` (no rows added/dropped here — only
 tuition / cost_data set) and re-derives the matcher's target-applicant rows.
 
-Head-sync: concurrent tuition repairs left ``main`` with TWO sibling merge migrations of
-the same ``gatechgradtuition1`` + ``penntuition1`` pair — ``penngatechmrg1`` (#1098) and
-``gatepennmerge1`` (#1100, with ``nwtuition1`` chained after it) — so the tree forked into
-two heads (``penngatechmrg1`` and ``nwtuition1``). This revision sets ``down_revision`` to
-BOTH current heads, so it is a merge-of-merges that re-converges the tree to a single head
-while carrying the Yale tuition backfill.
+Head-sync: a burst of concurrent tuition/name repairs repeatedly forked the migration
+tree off the ``gatechgradtuition1`` + ``penntuition1`` pair. PR #1102's ``cornellnames2``
+already re-converged that pair (its ``down_revision`` is the same pair), and is now
+``main``'s single non-Yale head, so this revision simply chains LINEARLY after it —
+leaving ``main`` at a single head while carrying the Yale tuition backfill.
 
 Revision ID: yalegradtuition1
-Revises: penngatechmrg1, nwtuition1
+Revises: cornellnames2
 Create Date: 2026-06-22
 """
 
@@ -57,7 +56,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "yalegradtuition1"
-down_revision = ("penngatechmrg1", "nwtuition1")
+down_revision = "cornellnames2"
 branch_labels = None
 depends_on = None
 
