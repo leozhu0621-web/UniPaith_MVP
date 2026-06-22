@@ -52,37 +52,9 @@ def _school_snapshot(name: str) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    cost = (
-        {
-            "tuition_usd": p._TUITION_UG_INSTATE,
-            "total_cost_of_attendance": p._UNDERGRAD_COA,
-            "avg_net_price": p._AVG_NET_PRICE,
-            "breakdown": {
-                "tuition_in_state": p._TUITION_UG_INSTATE,
-                "tuition_out_of_state": p._TUITION_UG_OOS,
-            },
-            "funded": False,
-            "source": p._COST_SRC[0],
-            "source_url": p._COST_SRC[1],
-        }
-        if spec["degree_type"] == "bachelors"
-        else (
-            {
-                "tuition_usd": 0,
-                "funded": True,
-                "source": "Purdue Graduate School — Funding",
-                "source_url": "https://www.purdue.edu/gradschool/prospective/financing/",
-            }
-            if spec["degree_type"] == "phd"
-            else {
-                "note": "see program page",
-                "source": "Purdue program tuition page",
-                "source_url": p._website_for(spec),
-            }
-        )
-    )
+    tuition, cost = p._program_tuition(spec)
     outcomes = dict(p._OUTCOMES_INSTITUTION)
-    outcomes["_standard"] = p._program_standard(slug, spec)
+    outcomes["_standard"] = p._program_standard(slug, spec, tuition_omitted=tuition is None)
     kw = p._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(p._KEYWORDS_BY_SCHOOL[spec["school"]])
     return {
         "program_name": spec["program_name"],
@@ -171,10 +143,37 @@ def test_every_program_is_conformant_or_omitted():
     for spec in p.PROGRAMS:
         snap = _program_snapshot(spec)
         res = check_conformance("program", snap, profile_version=STANDARD_VERSION)
-        omitted = set(p._program_standard(spec["slug"], spec)["omitted"])
+        tuition, _ = p._program_tuition(spec)
+        omitted = set(
+            p._program_standard(spec["slug"], spec, tuition_omitted=tuition is None)["omitted"]
+        )
         bad = _gaps("program", res, omitted)
         assert not bad, f"{spec['slug']} has un-omitted gaps: {bad}"
         assert snap["content_sources"], f"{spec['slug']} missing content_sources"
+
+
+def test_graduate_tier_tuition_coverage():
+    """REPAIR_BACKLOG #3: master's and professional tiers must carry published tuition."""
+    from collections import Counter
+
+    by_type: dict[str, list[int | None]] = {}
+    for spec in p.PROGRAMS:
+        dt = spec["degree_type"]
+        tuition, _ = p._program_tuition(spec)
+        by_type.setdefault(dt, []).append(tuition)
+    assert all(t is not None for t in by_type["bachelors"])
+    assert all(t is not None for t in by_type["masters"]), "master's tier must be filled"
+    assert all(t is not None for t in by_type["professional"]), "professional tier must be filled"
+    assert all(t == 0 for t in by_type["phd"]), "PhD tier stamps funded tuition=0"
+    masters_vals = Counter(t for t in by_type["masters"] if t is not None)
+    assert len(masters_vals) >= 3, "master's tier should carry distinct school differentials"
+    assert p._TUITION_GRAD_CSE in masters_vals
+    prof_tuition = {
+        p._program_tuition(s)[0]
+        for s in p.PROGRAMS
+        if s["degree_type"] == "professional"
+    }
+    assert p._TUITION_PHARMD_RESIDENT in prof_tuition
 
 
 def test_catalog_has_no_padding_stubs():

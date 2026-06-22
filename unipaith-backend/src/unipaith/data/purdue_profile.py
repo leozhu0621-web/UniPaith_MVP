@@ -509,6 +509,158 @@ _UNDERGRAD_COA = 24591
 _AVG_NET_PRICE = 14600
 _COST_SRC = ("U.S. Dept. of Education College Scorecard (UNITID 243780)", "https://collegescorecard.ed.gov/school/?243780-Purdue-University-Main-Campus")
 
+# ── Graduate / professional published tuition (matcher-core budget signal) ─────
+# REPAIR_BACKLOG run 76 HIGH #3: Purdue filled bachelor's (100%) but shipped master's
+# 0/68 and professional 0/2 — matcher-blind on graduate budget. Indiana-resident
+# flat-rate figures from Purdue Bursar graduate tuition schedules (8+ credits/semester).
+_TUITION_GRAD_RESIDENT = 9992  # general graduate flat rate, academic year (same as UG in-state)
+_TUITION_GRAD_OOS = 28794  # nonresident graduate flat rate, academic year
+_TUITION_GRAD_CSE = 11116  # Computer Science & Engineering differential (2024-25)
+_TUITION_GRAD_BUSINESS = 22408  # Daniels School MBA/MSIA/MSHR/MS Acct differential (2024-25)
+_TUITION_GRAD_POLY = 10564  # Purdue Polytechnic Institute differential (2024-25)
+_TUITION_GRAD_SLP = 11492  # MS Speech Language Pathology differential (2024-25)
+_TUITION_PHARMD_RESIDENT = 23272  # PharmD P1–P3 resident, 2025-26 bursar schedule
+_TUITION_DVM_RESIDENT = 22931  # DVM P1–P3 resident (enrolled Fall 2022+), 2024-25 vet med schedule
+_GRAD_TUITION_SRC = "Purdue Office of the Bursar — Graduate Tuition and Fees"
+_GRAD_TUITION_SRC_URL = (
+    "https://www.purdue.edu/treasurer/finance/bursar-office/tuition/"
+    "fee-rates-2024-2025/graduate-tuition-and-fees-2024-2025/"
+)
+_PHARMD_TUITION_SRC_URL = (
+    "https://www.purdue.edu/treasurer/finance/bursar-office/tuition/"
+    "fee-rates-2025-2026/pharm-d-graduate-tuition-and-fees-2025-2026/"
+)
+_DVM_TUITION_SRC_URL = (
+    "https://www.purdue.edu/treasurer/finance/bursar-office/tuition/"
+    "fee-rates-2024-2025/vet-med-graduate-tuition-and-fees-2024-2025/"
+)
+_TUITION_YEAR = "2024-25"
+_PHARMD_TUITION_YEAR = "2025-26"
+
+_CSE_MASTER_SLUGS = frozenset({"purdue-computer-science-ms"})
+_SLP_MASTER_SLUGS = frozenset({"purdue-communication-disorders-sciences-and-services-ms"})
+
+
+def _grad_cost(
+    tuition: int,
+    note: str,
+    *,
+    source: str = _GRAD_TUITION_SRC,
+    source_url: str = _GRAD_TUITION_SRC_URL,
+    year: str = _TUITION_YEAR,
+    extra: dict | None = None,
+) -> dict:
+    out: dict = {
+        "tuition_usd": tuition,
+        "funded": False,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": year,
+        "breakdown": {
+            "tuition_in_state": tuition,
+            "tuition_out_of_state": _TUITION_GRAD_OOS,
+        },
+    }
+    out.update(extra or {})
+    return out
+
+
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return (matcher_tuition, cost_data) from Purdue-published rates."""
+    slug = spec["slug"]
+    dtype = spec["degree_type"]
+    school = spec["school"]
+
+    if dtype == "bachelors":
+        return _TUITION_UG_INSTATE, {
+            "tuition_usd": _TUITION_UG_INSTATE,
+            "total_cost_of_attendance": _UNDERGRAD_COA,
+            "avg_net_price": _AVG_NET_PRICE,
+            "breakdown": {
+                "tuition_in_state": _TUITION_UG_INSTATE,
+                "tuition_out_of_state": _TUITION_UG_OOS,
+            },
+            "funded": False,
+            "note": (
+                "In-state tuition and cost of attendance; nonresidents pay the "
+                "out-of-state tuition rate shown in the breakdown."
+            ),
+            "source": _COST_SRC[0],
+            "source_url": _COST_SRC[1],
+            "year": "2024-25",
+        }
+
+    if dtype == "phd":
+        return 0, {
+            "tuition_usd": 0,
+            "funded": True,
+            "note": (
+                "Purdue PhD students typically receive full tuition plus a stipend through "
+                "Purdue Graduate School fellowship programs."
+            ),
+            "source": "Purdue Graduate School — Funding",
+            "source_url": "https://www.purdue.edu/gradschool/prospective/financing/",
+            "year": _TUITION_YEAR,
+        }
+
+    if slug == "purdue-pharmacy-prof":
+        return _TUITION_PHARMD_RESIDENT, _grad_cost(
+            _TUITION_PHARMD_RESIDENT,
+            (
+                f"Purdue College of Pharmacy PharmD resident tuition is ${_TUITION_PHARMD_RESIDENT:,} "
+                "for the academic year at a full-time load (Purdue Bursar PharmD schedule, 2025-26)."
+            ),
+            source="Purdue Office of the Bursar — PharmD Graduate Tuition and Fees",
+            source_url=_PHARMD_TUITION_SRC_URL,
+            year=_PHARMD_TUITION_YEAR,
+        )
+
+    if slug == "purdue-veterinary-medicine-prof":
+        return _TUITION_DVM_RESIDENT, _grad_cost(
+            _TUITION_DVM_RESIDENT,
+            (
+                f"Purdue Doctor of Veterinary Medicine resident tuition is ${_TUITION_DVM_RESIDENT:,} "
+                "for the academic year (P1–P3, students enrolled Fall 2022 and after; Purdue Bursar "
+                "Vet Med schedule)."
+            ),
+            source="Purdue Office of the Bursar — Vet Med Graduate Tuition and Fees",
+            source_url=_DVM_TUITION_SRC_URL,
+            year=_TUITION_YEAR,
+        )
+
+    if dtype == "masters":
+        if school == ENGINEERING or slug in _CSE_MASTER_SLUGS:
+            rate = _TUITION_GRAD_CSE
+            label = "Computer Science & Engineering"
+        elif school == BUSINESS:
+            rate = _TUITION_GRAD_BUSINESS
+            label = "Daniels School of Business"
+        elif school == POLYTECHNIC:
+            rate = _TUITION_GRAD_POLY
+            label = "Purdue Polytechnic Institute"
+        elif slug in _SLP_MASTER_SLUGS:
+            rate = _TUITION_GRAD_SLP
+            label = "Speech Language Pathology (MS-SLP)"
+        else:
+            rate = _TUITION_GRAD_RESIDENT
+            label = "general graduate"
+        return rate, _grad_cost(
+            rate,
+            (
+                f"Purdue's published {_TUITION_YEAR} Indiana-resident {label} master's tuition is "
+                f"${rate:,} for the academic year at a full-time load of 8+ credits per semester "
+                f"(Purdue Bursar graduate tuition schedule); nonresidents pay ${_TUITION_GRAD_OOS:,}."
+            ),
+        )
+
+    return None, {
+        "note": "Tuition varies by program; see the official program tuition page.",
+        "source": "Purdue program tuition page",
+        "source_url": _website_for(spec),
+        "year": _TUITION_YEAR,
+    }
+
 _REQ_UNDERGRAD = {
     "materials": [
         {"name": "Common Application", "required": True},
@@ -799,7 +951,7 @@ _PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
 }
 
 
-def _program_standard(slug: str, spec: dict | None = None) -> dict:
+def _program_standard(slug: str, spec: dict | None = None, *, tuition_omitted: bool = False) -> dict:
     if spec is None:
         spec = _SPEC_BY_SLUG.get(slug, {})
     omitted: list[str] = [
@@ -807,7 +959,7 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
         "outcomes_data.top_industries",
         "outcomes_data.conditions",
     ]
-    if spec.get("degree_type") != "bachelors" and slug not in _COST_BY_SLUG:
+    if tuition_omitted:
         omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
@@ -917,41 +1069,12 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.department = spec.get("department")
         kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], kw)
-        if spec["degree_type"] == "bachelors":
-            p.tuition = _TUITION_UG_INSTATE
-            p.cost_data = {
-                "tuition_usd": _TUITION_UG_INSTATE,
-                "total_cost_of_attendance": _UNDERGRAD_COA,
-                "avg_net_price": _AVG_NET_PRICE,
-                "breakdown": {
-                    "tuition_in_state": _TUITION_UG_INSTATE,
-                    "tuition_out_of_state": _TUITION_UG_OOS,
-                },
-                "funded": False,
-                "note": (
-                    "In-state tuition and cost of attendance; nonresidents pay the "
-                    "out-of-state tuition rate shown in the breakdown."
-                ),
-                "source": _COST_SRC[0], "source_url": _COST_SRC[1], "year": "2024-25",
-            }
-        elif spec["degree_type"] == "phd":
-            p.tuition = 0
-            p.cost_data = {
-                "tuition_usd": 0, "funded": True,
-                "note": "Purdue PhD students typically receive full tuition plus a stipend through Purdue Graduate School fellowship programs.",
-                "source": "Purdue Graduate School — Funding",
-                "source_url": "https://www.purdue.edu/gradschool/prospective/financing/",
-            }
-        else:
-            p.tuition = None
-            p.cost_data = {
-                "note": "Tuition varies by program; see the official program tuition page.",
-                "source": "Purdue program tuition page",
-                "source_url": _website_for(spec),
-            }
+        tuition, cost = _program_tuition(spec)
+        p.tuition = tuition
+        p.cost_data = cost
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_INSTITUTION)
-        outcomes["_standard"] = _program_standard(slug, spec)
+        outcomes["_standard"] = _program_standard(slug, spec, tuition_omitted=tuition is None)
         p.outcomes_data = outcomes
         p.tracks = _TRACKS_BY_SLUG.get(slug)
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
