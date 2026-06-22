@@ -4,176 +4,186 @@ Ranked **worst-first**. The enricher MUST clear the top open entry before deepen
 other university (repair-first, SKILL.md §2). This is the ONLY file where specific
 schools appear. Severity: **critical** (fabricated / cross-contaminated / scraped-debris /
 near-duplicate / **machine-broken template-slot grammar** / wrong-program content shipped live) ·
-**high** (real data but materially broken structure — credential-frame + ONE shared field body
-across credential levels / a matcher-core field null catalog-wide OR a whole credential TIER null /
-a correct repair stranded un-deployed) · **medium** (institution-level seed below gold, or dead
-feed on an otherwise-enriched node).
+**high** (real data but materially broken structure OR a matcher-core field carrying a WRONG
+value the coverage metric hides — the undergrad sticker copied onto graduate rows / a whole credential
+TIER null / a correct repair stranded un-deployed) · **medium** (institution-level seed below gold, or
+dead feed on an otherwise-enriched node).
 
 Evidence is from the live API (`api.unipaith.co/api/v1`), measured this run with
 `profile_standard/anti_stub.py` (the enforced CI gate's own functions): `analyze`,
 `template_slot_artifacts`, `scrape_debris`, `machine_artifacts`, and
 `frame_stripped_shared_body(..., abs_chars=150)` over the fully-paginated `/programs` list of every
-program-bearing catalog, plus per-`degree_type` tuition coverage. Gold MIT (n=65) is the 0 control.
+program-bearing catalog, plus per-`degree_type` tuition COVERAGE **and per-`degree_type` tuition VALUE
+distribution (the new axis: distinct-value count + undergrad-sticker copy-down)**. Gold MIT (n=65) is
+the description 0-control — but NOT a tuition control (it ships null cert/PhD tiers + 9 grad rows at the
+undergrad sticker).
 
-_Last graded: 2026-06-21 (grader **run 74**). **FULL-FLEET sweep: all 300 LIVE institutions + all 40
-catalogs re-measured via the live API.** **1 rule change** — the matcher-core tuition rule keyed the
-FAILURE on a catalog AGGREGATE ("0%/near-0% catalog-wide"); it now ALSO measures coverage PER CREDENTIAL
-LEVEL, because the dominant residual starvation is a whole GRADUATE tier at 0% hidden behind a healthy
-aggregate %. **HEADLINE — the entire run-73 CRITICAL/HIGH tier CLEARED + deployed: UT-Austin (template-slot
-3→0, tuition 0→95%, #1036/#1038), Michigan (template-slot 1→0, #1042), Cornell (115 un-terminated bodies →
-debris 0, #1047), Notre Dame (frame 23→0, #1039) are all LIVE-CLEAN. Fleet-wide template_slot/debris/machine
-= 0; no fabricated/duplicate/bare-abbrev/"Programs"-dept rows on any mature catalog.** The NEW worst tier
-is TUITION: BU ships catalog-wide 0% (even bachelors) + 23 frame-dilution fields (repair #1051 STRANDED as
-DRAFT); and ~9 structurally-clean catalogs starve the matcher on a whole GRADUATE tier behind a healthy
-aggregate (Wisconsin grad 0%, JHU grad 0%, Harvard/Penn cert+PhD 0%, Michigan PhD 1/148, …). See CHANGELOG run 74._
+_Last graded: 2026-06-22 (grader **run 75**). **FULL-FLEET sweep: all 300 LIVE institutions + all 40
+catalogs re-measured via the live API** (≈8,400 programs paginated; per-tier tuition coverage AND value
+distribution; campus-photo count on all 300). **1 rule change** — the matcher-core tuition rule measured
+COVERAGE only (non-null per tier); it now ALSO measures VALUE correctness, because a tier "filled" with one
+uniform number — usually the UNDERGRADUATE sticker copied onto the graduate / professional rows — reads
+"covered" while the matcher scores the same budget number for a funded PhD, an academic master's, and a
+professional Law/MBA/MD. **HEADLINE — STRUCTURE is CLEAN fleet-wide and stays clean:** `template_slot` /
+`scrape_debris` / `machine_artifacts` = 0 on all 40 catalogs; 0 duplicate / bare-abbrev / "Programs"-dept /
+null-dept / CIP-rollup rows on any mature catalog; only benign marginal `frame_abs` (GT 5, Yale/Duke/
+Chicago/Northwestern 1 — distinct per-credential leads repeating a factual subfield enumeration) and MIT's
+known `name_prefixed=1`. The run-71→74 template-slot/debris saga is fully resolved + deployed. **The NEW
+worst tier is TUITION VALUE-CORRECTNESS** (BU 182 + Cornell 152 grad rows carry the undergrad sticker — both
+read "88%/92% covered"), then graduate-tier NULLs (~20 catalogs), then catalog-wide 0% (USC/NYU/UW-Seattle +
+UIUC deploy-strand). See CHANGELOG run 75._
 
-## Fleet at a glance (run 74, live `api.unipaith.co/api/v1`)
+## Fleet at a glance (run 75, live `api.unipaith.co/api/v1`)
 
 - **Fleet = 300 institutions LIVE.** **40 carry programs; 260 are bare institution-level stubs**
   (0 programs, dead feed, **33 with ZERO campus photo**). Seeding is **external**; the routine
   ENRICHES + REPAIRS only.
-- **🟢 Cleared + verified LIVE since run 73:** **UT-Austin** (template_slot 3→0, tuition 0→95%) ·
-  **Michigan** (template_slot 1→0; tuition 0→61% — but PhD tier still null, entry #2) · **Cornell**
-  (115 un-terminated research bodies → `scrape_debris` 0, #1047 — the run-73 HIGH #3) · **Notre Dame**
-  (frame 23→0, #1039). Fleet-wide `template_slot_artifacts` / `scrape_debris` / `machine_artifacts` =
-  **0**; 0 duplicate / bare-abbreviation / "Programs"-department / null-department on every mature catalog.
-- **🔴 catalog-wide 0% tuition + frame-dilution + a STRANDED repair:** **Boston University** — 0%
-  `tuition` on ALL tiers (even bachelors 0/108) + 23 `frame_abs150` dilution fields + concentration-split
-  rows. Repair **#1051 is OPEN but DRAFT/unmerged** (stranded enricher work — SKILL §2 / merge-mandatory).
-- **🔴 NEW — graduate-TIER tuition starvation behind a healthy aggregate (the new per-credential rule):**
-  otherwise structurally-clean catalogs fill the uniform undergrad sticker (bachelor's 100% everywhere)
-  but ship a whole GRADUATE tier at 0%, which the catalog aggregate HIDES: **Wisconsin** (cert/master's/PhD/
-  prof all 0% — 248 grad rows; agg 29%) · **JHU** (master's 0/95, cert 0/84, PhD 0/4; agg 25%) · **Harvard**
-  (cert 0/80, PhD 0/25, master's 17%; agg 30%) · **Penn** (cert 0/16, PhD 0/47, master's 12%; agg 34%) ·
-  **CMU** (master's 1/99, PhD 0/41; agg 22%) · **Michigan** (PhD 1/148; agg 61%) · **Yale** (PhD 0/66) ·
-  **Columbia** (PhD 0/44, master's 7%) · **Rice** (PhD 0/29, master's 3%). The matcher scores GRADUATE
-  budget-fit BLIND. Master's/certificate/professional publish a rate and are rarely funded → unambiguous
-  starvation; a blanket PhD-tier null beside a peer that fills it (UT-Austin PhD 86/86) is not the
-  "rare funded-waiver" omission.
-- **🔴 catalog-wide 0% tuition (aggregate, all tiers null):** **NYU 507 · UIUC 419 · USC 511 ·
-  UW-Seattle 360** (+ BU above + the 8 flagship 5-program seeds). The matcher scores budget BLIND on
-  every program. Peers prove it knowable: Princeton 100% · Cornell 92% · UF 92% · Stanford 66% · UCLA 64%.
-- **Marginal abs-150 over-counts to IGNORE (NOT stubs — distinct per-credential leads that merely repeat a
-  factual SUBFIELD-ENUMERATION / department name across levels):** Georgia Tech 5 · Duke 1 · Yale 1 ·
-  Chicago 1 · Northwestern 1. Mild redundancy, low priority. (MIT's single `name_prefixed=1` is a
-  real-described row — the 0-control's known benign artifact.)
+- **🟢 STRUCTURE clean fleet-wide (verified LIVE):** every mature catalog scores 0 on
+  `template_slot_artifacts` / `scrape_debris` / `machine_artifacts` and on every `analyze` description
+  tell; no duplicate / bare-abbreviation / "Programs"-dept / null-dept / CIP-rollup name or department on
+  any mature catalog. The run-74 HIGH tier landed + deployed (BU #1054/#1058, UW-Madison #1057, UIUC #1061).
+- **🔴 NEW worst tier — undergrad-sticker COPY-DOWN (reads "covered", ships a WRONG value):**
+  **Boston University** stamps its $69,870 undergrad sticker on **182** graduate programs (reads 88%);
+  **Cornell** stamps the identical $71,266 on **152 of 153** grad + professional rows — every PhD, every
+  professional degree (reads 92%, was in run-74 CLEAN). Both feed the matcher the UNDERGRADUATE number on
+  their whole graduate tier. Low-density copy-down on gold MIT (9), Princeton (5/6), Caltech (2/2),
+  Harvard (2) — notes, not repair priority.
+- **🔴 graduate-TIER tuition NULL behind a 100% bachelor's tier (matcher-blind on grad budget):** ~20
+  structurally-clean catalogs (entry #3). Master's / certificate / professional publish a rate and are
+  rarely funded → unambiguous starvation; a blanket PhD-tier null beside a peer that fills it (UT-Austin
+  PhD 86/86, Cornell PhD 74/74 — though Cornell's are the copy-down) is not the "rare funded-waiver."
+- **🔴 catalog-wide 0% tuition (all tiers null):** **USC 511 · NYU 507 · UW-Seattle 360**, plus **UIUC 419
+  — a DEPLOY-STRAND** (the repo data IS filled — #1061 — but live reads 0%; the auto-merge dual-head race
+  recurred, bunames1+uiuctuition1 → fixup **#1062** was deploying at grade time — confirm it landed).
+- **Genuine per-tier fillers to PRESERVE (not copy-down — DISTINCT graduate values):** Michigan (master's
+  16 distinct), Stanford (67), Berkeley (71), UCLA (98), UF + UT-Austin (distinct flat graduate rate ≠
+  undergrad). Do NOT "re-uniform" these.
 
 ⚠️ **FLAG FOR HUMAN (code/workflow, out of grader scope — the grader edits only the 3 skill files):**
 1. **The enforced anti-stub gate's `@parametrize` lists DRIFT from `CERTIFIED_CLEAN`** (`anti_stub.py` +
    `test_anti_stub_gate.py`): a catalog can be `CERTIFIED_CLEAN` yet ship a metric live because that metric's
-   list excludes it. Still live this run for the abs-floor list — **BU is structurally registered yet ships
-   `frame_abs150=23`** (and `frame_stripped_shared_body`'s DEFAULT reads 0 via the dilution evasion). The
-   durable, drift-proof fix is one change: **parametrize the template-slot / abs-floor / debris / artifact
-   tests over `CERTIFIED_CLEAN` ITSELF** so a catalog cannot be "certified clean" while any metric is
-   un-checked, and add `OR lcs >= 150` to `frame_stripped_shared_body`'s DEFAULT so the dilution evasion
-   cannot read a false 0 fleet-wide.
+   list excludes it. The durable, drift-proof fix is one change: **parametrize the template-slot / abs-floor /
+   debris / artifact tests over `CERTIFIED_CLEAN` ITSELF**, and add `OR lcs >= 150` to
+   `frame_stripped_shared_body`'s DEFAULT so the dilution evasion cannot read a false 0 fleet-wide. (No live
+   structure breach this run — but the drift is still latent.)
 2. **`cip_code` is NOT serialized on `/programs/{id}` or the list endpoint** — absent on EVERY program incl.
-   gold MIT (verified again this run), so the matcher-side "flag empty `cip_code` via public API" channel is
-   UNUSABLE. The in-repo `PROGRAMS` carry a `cip` key, so it is a serializer gap, not necessarily a data gap —
-   expose it or audit via DB/git. (`tuition` IS serialized — the tuition gaps are a real DATA gap.)
-3. **`anti_stub.scrape_debris` ADDRESS tell can FALSE-POSITIVE on researched prose naming a building**
-   ("Warren Weaver Hall, at the heart of NYU's…"); anchor it to a real address context or drop it. `scrape_debris`
-   reads 0 fleet-wide this run (no live instance), so this is a latent note, not a current defect.
-4. **A repair's PR title can OVERSTATE the live result** — Michigan #1042 is titled "0%→100%" but the LIVE API
-   reads 61% (the PhD tier was never filled). The new per-credential tuition rule (SKILL.md) catches this class
-   at the source (measure per `degree_type`, not aggregate); flagged here because the enricher should verify the
-   CLAIMED metric live per-tier before declaring done (verify-rendered-output). No deploy-strand observed this run.
-5. **Stranded / colliding enrichment PRs.** **#1051 (BU repair) is an OPEN DRAFT** — the live BU defect persists
-   because the repair never left draft. Plus a pile-up of stale enrichment drafts opened-but-never-merged-or-closed
-   (#769 UCLA — already clean live; #515/#503 Harvard reviews; #499/#489 CMU reviews; #420/#403 gold) clutters the
-   queue. Land or close them; schedule one enricher firing per window and dedupe before merge.
+   gold MIT (re-confirmed this run), so the matcher-side "flag empty `cip_code` via public API" channel is
+   UNUSABLE. The in-repo `PROGRAMS` carry a `cip` key, so it is a serializer gap — expose it or audit via
+   DB/git. (`tuition` IS serialized — the tuition gaps are a real DATA gap.)
+3. **There is NO enforced gate on tuition VALUE — `anti_stub` has no tuition metric at all.** Coverage and
+   the new copy-down defect are both invisible to CI (the gate is description-only). The durable fix is a
+   `tuition_value_artifacts` metric in `anti_stub.py` (FAIL a graduate/professional row whose `tuition` ==
+   the institution's undergrad sticker; warn on a single distinct value across a whole grad tier) +
+   per-tier coverage in the profile test, baselined to a real per-tier reference — app/test code the grader
+   does not edit. Flagged so the copy-down cannot recur silently.
+4. **A repair PR title can OVERSTATE the live result** — BU/UIUC "full-tier tuition" PRs read 88% / 0% live
+   (BU copy-down; UIUC deploy-strand). Verify the CLAIMED metric live PER TIER **and** for value-realness
+   before declaring done (verify-rendered-output).
+5. **The auto-merge dual-head race RECURRED** — bunames1 (BU) + uiuctuition1 (UIUC) branched off the same
+   base, both auto-merged, dual head, Deploy Backend FAILED (23:38Z), fixup **#1062** deploying at grade
+   time. This is the §8-step-5 class the rule already documents; the durable fix (single-head assertion on
+   the MERGE RESULT, blocking auto-merge) lives in the CI/automerge workflow. Schedule one enricher firing
+   per window + dedupe migration-bearing PRs before merge.
 
 ---
 
-# HIGH — catalog-wide 0% tuition + frame-dilution + a STRANDED repair — clear FIRST
+# HIGH — undergrad-sticker COPY-DOWN (reads "covered", ships a WRONG matcher value) — clear FIRST
 
-## 1. Boston University — catalog-wide 0% tuition + 23 frame-dilution fields + splits — severity: high — first seen run 32 · 2026-06-16
-396 programs. Ships **0% `tuition` on EVERY tier** (bachelors 0/108, master's 0/161, cert 0/24, PhD 0/76, prof
-0/27) — a catalog-wide matcher-budget null (the original aggregate rule) — PLUS **23 fields still share a body**
-(`frame_abs150=23`, DILUTION: `frame_frac=0` on the CI fraction-only metric, caught only by the absolute-≥150
-floor) behind a credential frame: e.g. MA + PhD Anthropology both open "College of Arts & Sciences anthropology
-combines archaeological field schools, biological anthropology, and sociocultural ethnography with the Boston
-University Museum collections and global research sites" then diverge only in a generic per-credential tail.
-PLUS concentration-split rows ("Master of Science in Computer Science — Artificial Intelligence" — collapse into
-`tracks`, miss #2). **Repair #1051 is OPEN but DRAFT** — land it (per-credential researched bodies + collapse
-splits + published tuition per credential level), re-scan the FULL `anti_stub` suite → all 0, then merge.
+## 1. Boston University — $69,870 undergrad sticker copied onto 182 graduate programs — severity: high — first seen run 75 · 2026-06-22
+394 programs, reads **88% tuition "covered"** — but **182 of 240 graduate-filled rows carry $69,870, the
+undergraduate sticker** (master's 132/160, PhD 15/30, plus certificate/professional), so the matcher scores
+the same budget for a funded PhD and a professional master's. PLUS PhD tier only 30/76 filled (the rest
+null). **Fix:** stamp BU's published per-credential / per-credit graduate rates (Questrom MBA, MET / GRS /
+SPH per-program rates) — never the $69,870 undergrad number on a graduate row — or omit-with-reason for a
+genuinely-funded research PhD. Re-measure LIVE per tier AND for distinct values (copy-down count → 0).
 
----
-
-# HIGH — graduate-TIER tuition starvation behind a healthy aggregate (NEW this run)
-
-## 2. The graduate-tier-null catalogs — per-credential matcher STARVATION the aggregate hides — severity: high — first seen run 74 · 2026-06-21
-Structurally clean catalogs (descriptions/structure pass every metric) that fill the uniform undergrad sticker
-(bachelor's tier 100% everywhere) but ship a whole GRADUATE tier at 0%, so the matcher scores graduate budget-fit
-BLIND while the catalog AGGREGATE reads "covered":
-- **Wisconsin** agg 29% — cert 0/129, master's 0/107, PhD 0/8, prof 0/4 (ENTIRE grad catalog null)
-- **JHU** agg 25% — master's 0/95, cert 0/84, PhD 0/4, prof 0/1 (ENTIRE grad catalog null)
-- **Harvard** agg 30% — cert 0/80, PhD 0/25, master's 17% (94 grad nulls)
-- **Penn** agg 34% — cert 0/16, PhD 0/47, master's 12% (≈73 grad nulls)
-- **CMU** agg 22% — master's 1/99, PhD 0/41, cert 0/1 (≈139 grad nulls)
-- **Michigan** agg 61% — PhD 1/148 (147 PhD nulls; overlaps the run-73 repair which filled only bach+master's)
-- **Yale** agg 47% — PhD 0/66, master's 24%; **Columbia** agg 45% — PhD 0/44, master's 7%; **Rice** agg 47% —
-  PhD 0/29, master's 3%
-**Fix (per university, one pass):** group coverage by `degree_type`; stamp the published per-program / per-credit
-rate for the null master's / certificate / professional tier (these publish a rate and are rarely funded —
-unambiguous starvation). For the PhD tier, stamp the published sticker (the matcher's budget input — funding is a
-separate signal) or record `tuition` in each genuinely-funded program's `_standard.omitted` with a reason — never a
-silent blanket tier null. Re-measure LIVE per tier (not aggregate) before declaring done.
+## 2. Cornell University — identical $71,266 on 152/153 grad + professional rows — severity: high — first seen run 75 · 2026-06-22
+237 programs, reads **92% "covered"** (was in run-74 CLEAN) — but **every** master's (75/76), **every** PhD
+(74/74), and **every** professional row (3/3) carries the IDENTICAL $71,266 = the undergraduate endowed
+sticker copied wholesale down the tree. Cornell research PhDs are commonly funded, contract-college (CALS /
+ILR / Human Ecology) tuition differs from endowed, and the professional schools (Law / Johnson MBA / Vet)
+cost far more — none is $71,266. **Fix:** stamp the real published rate per program type (endowed vs
+contract/in-state, each professional program's own rate, the per-credit research rate) or omit-with-reason
+for funded research degrees; copy-down count → 0 live.
 
 ---
 
-# HIGH — catalog-wide 0% tuition (aggregate, all tiers null)
+# HIGH — graduate-TIER tuition NULL behind a 100% bachelor's tier
 
-## 3. The zero-tuition catalogs — matcher STARVATION — severity: high — first seen run 70 · 2026-06-21
-**4 large + 8 seed catalogs ship 0% `tuition` on every tier** so the CPEF matcher scores budget-fit blind on every
-program: **NYU 507 · UIUC 419 · USC 511 · UW-Seattle 360** (BU is entry #1) + the **8 flagship 5-program seeds**
-(entry #4). Tuition is institution-PUBLISHED (uniform undergrad sticker / published graduate rate), so a
-whole-catalog null is a SKIPPED knowable field, not an honest omission. Stamp the real cited published rate per
-credential level in `apply()` for each program; record `_standard.omitted` only for a genuinely-unpublished program.
-Peers prove it knowable: Princeton 100% · Cornell 92% · UF 92% · Stanford 66% · UCLA 64%.
+## 3. The graduate-tier-null catalogs — per-credential matcher STARVATION the aggregate hides — severity: high — first seen run 74 · 2026-06-21
+Structurally clean catalogs whose bachelor's tier is 100% but whose graduate tiers ship 0% (matcher scores
+graduate budget-fit BLIND). Worst-first by grad rows null:
+- **JHU** agg 25% — cert 0/84, master's 0/95, PhD 0/4, prof 0/1 (ENTIRE grad catalog null, ~184 rows)
+- **CMU** agg 22% — master's 1/99, PhD 0/41, cert 0/1 (~140 grad nulls)
+- **UCLA** agg 64% — PhD 0/82, prof 0/4 (master's 98/146 distinct — good); **Berkeley** agg 63% — PhD 0/64,
+  prof 0/20 (master's 71/74 good)
+- **Harvard** agg 30% — cert 0/80, PhD 0/25, master's 19/110; **Penn** agg 34% — cert 0/16, PhD 0/47,
+  master's 8/66; **Stanford** agg 66% — cert 0/53, PhD 0/6 (master's 67/67 good)
+- **Yale** agg 47% — PhD 0/66, master's 9/38; **Columbia** agg 45% — PhD 0/44, master's 3/45; **Rice**
+  agg 47% — PhD 0/29, master's 1/29, prof 11/38; **Duke** agg 52% — PhD 1/51, master's 21/38
+- **Purdue** master's 0/68 + PhD 0/5; **UCSD** master's 0/60 + PhD 0/3; **Northwestern** grad 0/54;
+  **Notre Dame** grad 0/53; **GT** master's 2/55 + PhD 0/39; **Chicago** master's 3/41; **Emory** grad 0/14;
+  **Dartmouth** grad 0/12; **Caltech** PhD 0/16; **Wisconsin** PhD 0/8; **UF** PhD 0/26; **Michigan** PhD 1/148
+**Fix (per university):** group coverage by `degree_type`; stamp the published per-program / per-credit rate
+for the null master's / certificate / professional tier (these publish a rate, rarely funded — unambiguous
+starvation). For the PhD tier, stamp the published sticker (matcher budget input — funding is a separate
+signal) or record `tuition` in each genuinely-funded program's `_standard.omitted` with a reason — never a
+silent blanket tier null, and never the undergrad sticker copied down (entry #1/#2). Re-measure LIVE per tier.
+
+---
+
+# HIGH — catalog-wide 0% tuition (all tiers null) + a DEPLOY-STRAND
+
+## 4. The zero-tuition catalogs — matcher STARVATION — severity: high — first seen run 70 · 2026-06-21
+**USC 511 · NYU 507 · UW-Seattle 360** ship 0% `tuition` on every tier so the CPEF matcher scores budget-fit
+blind on every program. **UIUC 419 is a DEPLOY-STRAND** — the repo data IS filled (#1061, 68 published-rate
+refs) but the live API reads 0% because the auto-merge dual-head race (bunames1+uiuctuition1) failed the
+deploy; fixup **#1062** was deploying at grade time — **confirm it landed live; if so UIUC clears, if not
+re-trigger Deploy Backend (do NOT rewrite the already-correct data, §9)**. Tuition is institution-PUBLISHED,
+so a whole-catalog null is a SKIPPED knowable field. Peers prove it knowable: Princeton 100% · UW-Madison
+98% · UT-Austin 95% · UF 92%.
 
 ---
 
 # MEDIUM — flagship seeds · institution-level seeds (seeding is external)
 
-## 4. The flagship seeds (5 programs each) — EMPTY descriptions + null department + 0% tuition + DEAD FEED — severity: medium — first seen run 57 · 2026-06-18
-**Brown · Georgetown · UC-Davis · UC-Irvine · UNC-Chapel Hill · UVA · Vanderbilt · Washington U-St Louis** each ship
-5 flagship rows with **EMPTY `description_text`**, **null department**, **0% tuition**, and a **DEAD FEED** (posts=0).
-**UC-Davis / UNC / Vanderbilt / Washington U-St Louis ship only 3 campus photos (<4)** (Brown/Georgetown/UC-Irvine 4,
-UVA 5). **Enrich (per university, one PR):** a full real-named catalog + per-credential researched descriptions +
-real departments + published tuition (per credential level) + a working feed + a ≥4-photo verified gallery, then
-deepen toward the full real catalog.
+## 5. The flagship seeds (5 programs each) — EMPTY descriptions + null department + 0% tuition + DEAD FEED — severity: medium — first seen run 57 · 2026-06-18
+**Brown · Georgetown · UC-Davis · UC-Irvine · UNC-Chapel Hill · UVA · Vanderbilt · Washington U-St Louis** each
+ship 5 flagship rows with **EMPTY `description_text`**, **null department**, **0% tuition**, and a **DEAD FEED**
+(posts=0). **UC-Davis / UNC / Vanderbilt / Washington U-St Louis ship only 3 campus photos (<4)** (Brown /
+Georgetown / UC-Irvine 4, UVA 5). **Enrich (per university, one PR):** a full real-named catalog +
+per-credential researched descriptions + real departments + published tuition (per credential level, NOT the
+undergrad sticker copied down) + a working feed + a ≥4-photo verified gallery, then deepen toward the full
+real catalog.
 
-## 5. The ~260 bulk institution-level seeds (0 programs) — severity: medium — first seen run 59/60
+## 6. The ~260 bulk institution-level seeds (0 programs) — severity: medium — first seen run 59/60
 Each entered at institution level with **0 programs, a dead feed**, and **33 with ZERO campus photos** (broken
 explore-card gradient header + detail hero — the acute sub-set to clear first; e.g. Air Force Institute of
-Technology, Arizona State (Campus & Digital Immersion), Azusa Pacific, Colorado State-Fort Collins, James Madison,
-Keiser-Ft Lauderdale, Loyola Marymount, Loyola-Chicago, Miami U-Oxford, Michigan Tech, Montclair State, Oakland,
-Oregon State, SUNY-ESF, Sacred Heart). **Enrich (per university, one PR):** a full real-named catalog + per-credential
-field-specific descriptions + real departments + published tuition · a working feed · a ≥4-photo verified gallery ·
-reviews on coverable programs · `_standard`. Pick a 0-photo seed once the HIGH tier clears.
+Technology, Arizona State (Campus & Digital Immersion), Azusa Pacific, Colorado State-Fort Collins, James
+Madison, Keiser-Ft Lauderdale, Loyola Marymount, Loyola-Chicago, Miami U-Oxford, Michigan Tech, Montclair
+State, Oakland, Oregon State, SUNY-ESF, Sacred Heart) plus **~50 more at 2–3 photos** (Clark Atlanta 2,
+Ferris State 2, Fordham 2, Georgia State 2, Auburn 3, Florida State 3, LSU 3, …). **Enrich (per university,
+one PR):** a full real-named catalog + per-credential field-specific descriptions + real departments +
+published tuition · a working feed · a ≥4-photo verified gallery · reviews on coverable programs ·
+`_standard`. Pick a 0-photo seed once the HIGH tier clears.
 
 ---
 
-# CLEAN (desc + structure; no action) — verified LIVE run 74
-- **Gold:** MIT (n=65, 0 on every metric, tuition 69%; the single `name_prefixed=1` is a real-described row).
-- **Cleared + verified LIVE since run 73:** **UT-Austin** (n=338 — template_slot 3→0, tuition 95%) · **Michigan**
-  (n=379 — template_slot 1→0; **PhD tuition still null, entry #2**) · **Cornell** (n=237 — 115 un-terminated bodies
-  → debris 0, tuition 92%) · **Notre Dame** (n=113 — frame 23→0, tuition 53%). Earlier-cleared still clean:
-  **Stanford** (n=178), **UCLA** (n=373, tuition 64%), **Penn** (n=186 — but **grad tuition null, entry #2**),
-  **JHU** (n=244 — but **grad tuition null, entry #2**), **Berkeley** (n=233, tuition 63%), **UF** (n=314, tuition 92%).
-- **Structurally clean (per-credential-distinct bodies, frame_abs ≤ 1 marginal, no debris/artifacts/template-slot):**
-  Duke (1/154) · Yale (1/189 — **PhD tuition null, entry #2**) · Chicago (1/91) · Northwestern (1/125) · Rice (0/159
-  — **grad tuition null, entry #2**) · Purdue (0/172) · UC-San Diego (0/137) · Caltech (0/43, tuition 63%) ·
-  Princeton (0/43, tuition 100%) · Harvard (0/279 — **grad tuition null, entry #2**) · Columbia (0/167 — **grad
-  tuition null, entry #2**) · Carnegie Mellon (0/180 — **grad tuition null, entry #2**) · UW-Madison (0/348 — **grad
-  tuition null, entry #2**) · Dartmouth (0/43, feed ok, tuition 72%) · Emory (0/46, feed ok, tuition 70%) · NYU
-  (0/507 — **0% tuition** #3) · USC (0/511 — **0% tuition** #3) · UIUC (0/419 — **0% tuition** #3) · UW-Seattle
-  (0/360 — **0% tuition** #3) · Georgia Tech (5/143 — 5 fields share a SUBFIELD ENUMERATION across levels, each lead
-  distinct; mild redundancy, not a stub).
-- **Heuristic over-counts to IGNORE (not defects):** Princeton/Duke/Rice dept-echo (those ARE their real
-  departments); own-unit peer-substring hits (Cornell CALS/Weill, Penn Wharton/Perelman, JHU Peabody/Whiting,
-  Berkeley Lawrence-Berkeley); a trailing `(Source: …edu)` citation (GOOD sourcing); a building named in prose
-  ("Warren Weaver Hall, …" — `\bHall,\s` false-flags it, FLAG #3); a shared SUBFIELD ENUMERATION / department name
-  across credential levels when each lead is distinct (the abs-150 marginal over-count — GT/Duke/Yale/Chicago/
-  Northwestern). Treat all as artifacts UNLESS a row names a unit / landmark / place the institution provably lacks.
+# CLEAN (structure + descriptions; no action) — verified LIVE run 75
+- **Gold (description 0-control):** MIT (n=65, 0 on every description metric; tuition 69% but cert/PhD tiers
+  null + 9 grad rows at the undergrad sticker — MIT is NOT a tuition reference).
+- **Structure + description clean fleet-wide** (0 template_slot / debris / machine / classification /
+  verbatim-shared / CIP-rollup; benign marginal `frame_abs` ≤5 only): UT-Austin (338, tuition 95% distinct) ·
+  Michigan (379, master's distinct — **PhD 1/148, entry #3**) · UW-Madison (348, 98% — **PhD 0/8, entry #3**) ·
+  UF (314, 92% — **PhD 0/26, entry #3**) · Stanford (178 — **cert/PhD null, entry #3**) · UCLA (373 — **PhD
+  null, entry #3**) · Berkeley (233 — **PhD/prof null, entry #3**) · Duke (154) · Yale (189) · Chicago (91) ·
+  Northwestern (125) · Rice (159) · Purdue (172) · UCSD (137) · Caltech (43) · Princeton (43, 100%) · Harvard
+  (279) · Columbia (167) · CMU (180) · Dartmouth (43) · Emory (46) · Notre Dame (113) · GT (143). **Many of
+  these carry a graduate-tier tuition gap (entry #3) — "structure clean" ≠ "tuition done".**
+- **NOT tuition-clean despite being structure-clean:** Cornell (copy-down #2) · BU (copy-down #1) · USC / NYU /
+  UW-Seattle / UIUC (0% #4) · all of entry #3.
+- **Heuristic over-counts to IGNORE (not defects):** the benign marginal `frame_abs` (GT 5, Yale/Duke/Chicago/
+  Northwestern 1 — distinct per-credential leads repeating a factual subfield enumeration); MIT's
+  `name_prefixed=1` (a real-described row); a genuine published flat academic-graduate rate DISTINCT from the
+  undergrad sticker (UT-Austin $12,006, UF $12,740 — NOT copy-down). Treat as artifacts UNLESS a grad/prof row
+  equals the undergrad sticker or a tier is null.
