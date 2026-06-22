@@ -142,7 +142,13 @@ def test_all_twelve_schools_done():
 
 
 def test_full_catalog_breadth():
-    assert len(h.PROGRAMS) >= 270, f"catalog too short after de-fabrication: {len(h.PROGRAMS)}"
+    # Floor sits BELOW the verified real catalog (227 after the run-78 whole-class
+    # CIP-title de-fabrication dropped 44 federal-mint / fabricated-HBS rows) — a
+    # frozen count calibrated to a padded catalog FIGHTS de-fabrication, so realness
+    # is enforced by the per-row gates below (no rollup names, no possessive mints,
+    # no padding stubs, anti-stub clean), not by a high number. Never raise this to
+    # reward padding.
+    assert len(h.PROGRAMS) >= 220, f"catalog too short after de-fabrication: {len(h.PROGRAMS)}"
     assert len(h.PROGRAM_SLUGS) == len(set(h.PROGRAM_SLUGS)), "duplicate program slug"
     for spec in h.PROGRAMS:
         fmt = spec.get("delivery_format", "in_person")
@@ -273,7 +279,11 @@ def test_graduate_tier_tuition_coverage():
         by_type.setdefault(dt, []).append(tuition)
     assert all(t is not None for t in by_type["bachelors"])
     masters = by_type["masters"]
-    assert sum(t is not None for t in masters) >= 100, (
+    # Floor reflects the de-padded real master's tier (89 rows after the run-78
+    # whole-class de-fabrication; 84 carry published per-school tuition, the 5 nulls
+    # are the honest-omission slugs allowlisted below). A frozen ">= 100" calibrated
+    # to the padded catalog is now unreachable — coverage, not raw count, is the bar.
+    assert sum(t is not None for t in masters) >= 80, (
         f"master's tier under-filled: {sum(t is not None for t in masters)}/{len(masters)}"
     )
     null_masters = [

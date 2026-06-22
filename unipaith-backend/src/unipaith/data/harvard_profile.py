@@ -1450,6 +1450,20 @@ _ROLLUP_RESOLVE: dict[str, str] = {
     "Architectural History, Criticism, and Conservation": (
         "History of Art and Architecture"
     ),
+    # Run-78 whole-class re-scan (REPAIR_BACKLOG #1): un-enumerated federal CIP
+    # taxonomy titles resolved to a real Harvard degree (web-verified against the
+    # owning school's program page). Credential levels Harvard does not confer are
+    # dropped in ``_ROLLUP_LEVEL_DROP``; purely-federal buckets go to ``_ROLLUP_DROP``.
+    # HGSE Ed.M. (gse.harvard.edu/degrees/masters/program/ttl)
+    "Teacher Education and Professional Development, Specific Levels and Methods": (
+        "Teaching and Teacher Leadership"
+    ),
+    "Biochemistry, Biophysics and Molecular Biology": (
+        "Chemical and Physical Biology"  # Harvard College concentration (mcb.harvard.edu)
+    ),
+    "Health Professions Education, Ethics, and Humanities": (
+        "Bioethics"  # HMS Center for Bioethics M.S. (bioethics.hms.harvard.edu)
+    ),
 }
 
 # (rollup title, degree_type) → DROP: credential level Harvard does not confer in
@@ -1479,6 +1493,17 @@ _ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
     ("Architectural History, Criticism, and Conservation", "masters"),
     ("Architectural History, Criticism, and Conservation", "certificate"),
     ("Physiology, Pathology and Related Sciences", "certificate"),
+    # Run-78 resolved fields — drop the credential levels Harvard does not confer:
+    #  • Teaching and Teacher Leadership: a one-year HGSE Ed.M. only (no certificate).
+    #  • Chemical and Physical Biology: a Harvard College concentration only — no
+    #    terminal FAS master's or certificate (graduate work runs through the
+    #    integrated PhD, already shipped as the MCB / Biomedical Sciences doctorates).
+    ("Teacher Education and Professional Development, Specific Levels and Methods", "certificate"),
+    ("Biochemistry, Biophysics and Molecular Biology", "masters"),
+    ("Biochemistry, Biophysics and Molecular Biology", "certificate"),
+    # Real Estate: the master's is GSD's real MRE (kept, reassigned to GSD); GSD
+    # confers no real-estate certificate, so the IPEDS HBS cert mint drops.
+    ("Real Estate", "certificate"),
 })
 
 # slug → real owning school, for an IPEDS row whose Field-of-Study completion is coded to
@@ -1486,12 +1511,48 @@ _ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
 # The CBQG master's is a Harvard T.H. Chan SPH degree, not F.A.S.
 _SLUG_SCHOOL_OVERRIDE: dict[str, str] = {
     "harvard-biomathematics-bioinformatics-and-computational-biology-ms": _HSPH,
+    # CIP 52.15 Real Estate is conferred by Harvard GSD (the Master in Real Estate),
+    # not HBS — the IPEDS Field-of-Study row codes it to HBS (run-78).
+    "harvard-real-estate-ms": _GSD,
 }
 
 _ROLLUP_DROP: frozenset[str] = frozenset({
     "Accounting and Related Services",
     "Advanced/Graduate Dentistry and Oral Sciences",
     "Area Studies",
+    # Run-78 whole-class re-scan (REPAIR_BACKLOG #1): federal CIP taxonomy titles +
+    # impossible-credential mints Harvard does not award at ANY level. Harvard's REAL
+    # degrees in each area already ship as flagships, so dropping these loses no program:
+    #  • HBS confers ONE general MBA + the PhD in Business Administration (both
+    #    flagships) — NOT undergraduate business degrees, concentration MBAs, or
+    #    certificates, so every IPEDS-minted "BA/MBA-in-{area}" HBS row drops.
+    #  • Harvard Law (LL.M./S.J.D./J.D.), GSE (Ed.M./Ed.L.D./PhD in Education), and
+    #    Psychology (A.B./PhD) flagships already cover these federal-title rollups.
+    #  • Environmental study is covered by Environmental Science & Engineering / Earth
+    #    & Planetary Sciences / Sustainability Studies flagships.
+    # "Intelligence, Command Control and Information Operations" is the exact fabrication
+    # the enrich-profile rulebook cites; Harvard offers none of these as a degree.
+    "Bilingual, Multilingual, and Multicultural Education",
+    "Business Administration, Management and Operations",
+    "Clinical, Counseling and Applied Psychology",
+    "Educational Administration and Supervision",
+    "Educational Assessment, Evaluation, and Research",
+    "Entrepreneurial and Small Business Operations",
+    "Finance and Financial Management Services",
+    "Human Resources Management and Services",
+    "Intelligence, Command Control and Information Operations",
+    "Legal Research and Advanced Professional Studies",
+    "Management Sciences and Quantitative Methods",
+    "Marketing",
+    "Natural Resources Conservation and Research",
+    "Non-Professional Legal Studies",
+    "Public Relations, Advertising, and Applied Communication",
+    "Radio, Television, and Digital Communication",
+    # NB: "Real Estate" is NOT dropped — the CIP 52.15 master's is Harvard GSD's REAL
+    # 12-month Master in Real Estate (MRE), reassigned to GSD below; only the HBS
+    # certificate mint is dropped (in _ROLLUP_LEVEL_DROP).
+    "Research and Experimental Psychology",
+    "Teacher Education and Professional Development, Specific Subject Areas",
     "Biological and Biomedical Sciences, Other",
     "Business/Commerce, General",
     "Business/Corporate Communications",
@@ -1780,6 +1841,15 @@ def _normalize_program(spec: dict, field_name: str | None = None) -> None:
     spec["_fd_field"] = _resolve_fd_field(spec, field_name)
 
 
+# Per-slug duration override where the IPEDS award-level default (12/24/48) misstates a
+# resolved program's real length (run-78): HGSE Teaching and Teacher Leadership is a
+# one-year Ed.M.; the GSD Master in Real Estate is a 12-month, three-term degree.
+_DURATION_BY_SLUG: dict[str, int] = {
+    "harvard-teacher-education-and-professional-development-specific-levels-and-methods-ms": 12,
+    "harvard-real-estate-ms": 12,
+}
+
+
 def _build_catalog() -> list[dict]:
     """Append breadth-first program nodes from the IPEDS Field-of-Study catalog."""
     out: list[dict] = []
@@ -1807,7 +1877,7 @@ def _build_catalog() -> list[dict]:
             "degree_type": dtype,
             "department": school,
             "cip": cip,
-            "duration_months": dur,
+            "duration_months": _DURATION_BY_SLUG.get(slug, dur),
             "delivery_format": fmt,
             "_field_name": field_name,
         }
@@ -3258,6 +3328,15 @@ _FULL_NAME_BY_SLUG: dict[str, str] = {
     "harvard-mba": "Master of Business Administration",
     "harvard-mpa-id": "Master in Public Administration in International Development",
     "harvard-edm": "Master of Education (Ed.M.)",
+    # Professional-degree slugs whose program_name IS already the conferred designation —
+    # pin them so the generic ``_conferred_program_name`` doesn't double the credential
+    # ("Master of Arts in Juris Doctor (J.D.)" → "Juris Doctor (J.D.)"). Run-78.
+    "harvard-jd": "Juris Doctor (J.D.)",
+    "harvard-llm": "Master of Laws (LL.M.)",
+    "harvard-law-sjd": "Doctor of Juridical Science (S.J.D.)",
+    "harvard-edld": "Doctor of Education Leadership (Ed.L.D.)",
+    # GSD's conferred designation (not the generic "Master of Arts in …") — run-78.
+    "harvard-real-estate-ms": "Master in Real Estate (MRE)",
 }
 
 
