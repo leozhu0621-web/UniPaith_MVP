@@ -177,8 +177,14 @@ def test_catalog_breadth_and_shape():
     # legitimately shrinks the catalog below the old padded 260 (enrich-profile miss #2);
     # resolving the 5 residual federal CIP titles (REPAIR_BACKLOG #1) dropped 4 more rows
     # for credential levels Cornell does not confer (Linguistics MA, Computational Biology
-    # BS, Architectural History BS/MA) → 233 verified real programs.
-    assert len(cu.PROGRAMS) >= 233
+    # BS, Architectural History BS/MA) → 233. The run-79 whole-class pass (REPAIR_BACKLOG
+    # #3) resolved 5 more federal CIP series titles to real Cornell fields (BMCB,
+    # Microbiology, Neurobiology and Behavior, Management, Natural Resources and the
+    # Environment) and DROPPED 11 rows that collide with a real degree or are federal
+    # aggregations Cornell does not confer (Research & Experimental Psychology, Behavioral
+    # Sciences, Pharmacology & Toxicology, Biological & Physical Sciences, Management
+    # Sciences MBA, Allied Health, Legal Research, Natural Resources bachelors) → 222.
+    assert len(cu.PROGRAMS) >= 222
     _assert_no_cip_rollup_names(cu.PROGRAMS)
     assert len(set(cu.PROGRAM_SLUGS)) == len(cu.PROGRAM_SLUGS)
     assert cu.RANKING_DATA["ownership_type"] == "private"
@@ -251,7 +257,8 @@ def test_structure_integrity():
     # Slugs are unique.
     assert len(cu.PROGRAM_SLUGS) == len(set(cu.PROGRAM_SLUGS)), "duplicate program slug"
     # Full catalog breadth: College Scorecard Field-of-Study list for UNITID 190415.
-    assert len(cu.PROGRAMS) >= 233, "verified real Cornell catalog breadth (de-padded)"
+    # Floor reflects the run-79 whole-class CIP-title de-fabrication (233 → 222).
+    assert len(cu.PROGRAMS) >= 222, "verified real Cornell catalog breadth (de-padded)"
     # Every program sets a delivery_format, and at least one online + one hybrid exist.
     fmts = {p.get("delivery_format") for p in cu.PROGRAMS}
     assert None not in fmts

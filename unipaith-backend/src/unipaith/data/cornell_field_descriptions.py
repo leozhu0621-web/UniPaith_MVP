@@ -105,7 +105,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         'Plant physiology, ecology, and evolutionary biology with field work at Cornell Botanic Gardens and CALS agricultural research stations.'
     ),
     'Business Administration, Management and Operations': (
-        "Johnson MBA and executive programs combine finance, strategy, and operations with 18+ majors and the school's deep analytics and entrepreneurship ecosystem."
+        "Johnson School doctoral study in management spans organizational behavior, strategy, marketing, operations, and managerial economics, drawing on the school's analytics and entrepreneurship faculty."
     ),
     'Cell/Cellular Biology and Anatomical Sciences': (
         'Cell biology at Arts and Sciences and the Weill Institute for Cell and Molecular Biology focuses on signaling, developmental biology, and microscopy methods in cancer and immunology research labs.'
@@ -288,7 +288,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         'Arts and Sciences music combines musicology, theory, and performance with Ithaca orchestra partnerships and campus ensemble opportunities.'
     ),
     'Natural Resources Conservation and Research': (
-        'Environmental science and resource-management coursework at Arts and Sciences addresses conservation biology, sustainability, and policy with Cornell Botanic Gardens natural-areas field work.'
+        "Cornell's CALS Department of Natural Resources and the Environment studies conservation biology, fisheries and wildlife, environmental policy, and sustainability with field research across New York State and the Cornell Botanic Gardens natural areas."
     ),
     'Neurobiology and Neurosciences': (
         'Cornell neuroscience spans cellular, cognitive, and systems levels across the Department of Neurobiology and Behavior, Cornell Neurotech, and Weill Cornell Medicine.'
