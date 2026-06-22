@@ -6056,3 +6056,99 @@ no DB in this environment — same constraint as runs 70–73), so the mandated 
 `template_slot_artifacts` / `scrape_debris` / `machine_artifacts` over all 40 live catalogs (they compute cleanly),
 and verified against LIVE prod that gold MIT scores 0 on every quality metric (the 0 control). This grader PR changes
 only the three skill markdown files (no code, no data, no migration), so backend CI is unaffected.
+
+---
+
+## 2026-06-22 — Run 75 (FULL-FLEET sweep of all 300 live + all 40 catalogs · STRUCTURE clean fleet-wide · 1 rule change — TUITION COVERAGE ≠ TUITION CORRECTNESS: the undergrad-sticker COPY-DOWN)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+reusing `profile_standard/anti_stub.py` directly (paginated full program list of all 40 program-bearing
+catalogs ≈ 8,400 programs; the other 260 are bare institution-level stubs). Per catalog I computed `analyze`
+(name-prefix / classification / double-period / verbatim-shared / shared-leading-body / cross-field),
+`machine_artifacts`, `scrape_debris`, `template_slot_artifacts`, `frame_stripped_shared_body` (default +
+abs150), **tuition COVERAGE grouped by `degree_type`, AND — the new axis — tuition VALUE distribution per
+tier (distinct-value count + undergrad-sticker copy-down count)**; plus a campus-photo count on ALL 300
+institutions. Where a metric and the live data disagreed I went direct (read tuition value distributions,
+checked the UIUC repo data vs live, listed Deploy Backend runs via the GitHub API).
+
+**Merged since run 74 (verified LIVE):** the run-74 HIGH tier landed + deployed — BU #1054 (collapse
+concentration splits) + #1051/#1058 (real names + tuition backfill), UW-Madison #1057 (graduate-tier tuition
+→ 98%), UIUC #1061 (tuition backfill — but see deploy-strand below). STRUCTURE is now CLEAN fleet-wide:
+`template_slot_artifacts` / `scrape_debris` / `machine_artifacts` = 0 on all 40 catalogs; 0 duplicate /
+bare-abbrev / "Programs"-dept / null-dept / CIP-rollup rows anywhere; only benign marginal `frame_abs` (GT 5,
+Yale/Duke/Chicago/Northwestern 1) and MIT's known `name_prefixed=1`. The run-71→74 template-slot/debris saga
+is fully resolved and deployed.
+
+**The 1 rule change (bounded; the ONLY genuinely-new gap-class after a full-fleet sweep):**
+- **The matcher-core tuition rule measured COVERAGE only (non-null per tier) → it now ALSO measures VALUE
+  CORRECTNESS: a graduate / professional program carrying the institution's UNDERGRADUATE sticker is a WRONG
+  value the matcher scores, not coverage.** Not a duplicate of the run-74 per-credential rule: that rule
+  counts non-null per tier and is BEATEN by stamping one uniform number — usually the undergrad sticker copied
+  down the tree — across a whole heterogeneous tier, which reads "100% covered" while the matcher reads the
+  SAME budget number for a funded PhD, an academic master's, and a professional Law/MBA/MD (the budget-fit
+  analog of one description stamped across credential levels, miss #8). The new rule FAILS any grad/prof row
+  whose `tuition` == the undergrad sticker (stamp the tier's own published rate, or omit-with-reason for a
+  funded research degree), and flags a single-distinct-value tier to VERIFY (a genuine flat academic-graduate
+  rate distinct from undergrad is fine; the same value as undergrad, or one academic rate flattened across the
+  professional tier, is the copy-down). A TIGHTENING (adds a value axis; loosens nothing — omit-never-guess is
+  preserved, the undergrad sticker is never a back-fill). Added as a paragraph in "Also enrich for the MATCH"
+  beside the run-70/74 tuition paragraphs; also notes that gold MIT is the DESCRIPTION 0-control, NOT a tuition
+  reference (it ships null cert/PhD tiers + 9 grad rows at its own undergrad sticker). Evidence: live API this
+  run — BU stamps its $69,870 undergrad sticker on 182 graduate programs (reads 88% "covered"); Cornell stamps
+  the identical $71,266 on 152/153 grad + professional rows — every PhD, every professional degree (reads 92%,
+  was in run-74 CLEAN); low-density on gold MIT (9), Princeton (5/6), Caltech (2/2), Harvard (2); while the
+  genuine per-tier fillers (Michigan master's 16 distinct, Stanford 67, Berkeley 71, UCLA 98) carry DISTINCT
+  graduate rates. Why only 1 change: the full-fleet sweep found NO other new defect CLASS — structure is
+  clean fleet-wide, and every other live defect (graduate-tier null, catalog-wide 0%, the UIUC deploy-strand,
+  the flagship + bulk seeds) maps to an existing rule, so the bounded/anti-churn rail forbids inventing more;
+  that work is repair-queueing + compliance logging.
+
+**Compliance gaps logged (existing rules the enricher disobeyed — queued, NOT re-added):**
+- **graduate-tier tuition NULL behind a 100% bachelor's tier (the run-74 per-credential rule), LIVE on ~20
+  catalogs:** JHU (grad 0/~184), CMU (master's 1/99 + PhD 0/41), Harvard (cert 0/80 + PhD 0/25), Penn (cert
+  0/16 + PhD 0/47), Yale (PhD 0/66), Columbia (PhD 0/44), Rice (PhD 0/29), Berkeley (PhD 0/64 + prof 0/20),
+  UCLA (PhD 0/82), Purdue (master's 0/68), UCSD (master's 0/60), Northwestern (grad 0/54), Notre Dame (grad
+  0/53), GT (master's 2/55 + PhD 0/39), Stanford (cert 0/53 + PhD 0/6), UF (PhD 0/26), Wisconsin (PhD 0/8),
+  Michigan (PhD 1/148), Emory / Dartmouth / Caltech / Chicago / Duke grad tiers (backlog #3). The run-74 rule
+  already covers this; the enricher cleared only the named UW-Madison/BU, not the broad fleet.
+- **catalog-wide 0% tuition (run-70 rule), LIVE:** USC 511 · NYU 507 · UW-Seattle 360 (backlog #4).
+- **UIUC DEPLOY-STRAND (§9 merge-is-not-deploy + §8-step-5 dual-head race), LIVE:** UIUC #1061's repo data IS
+  filled (68 published-rate refs on origin/main) but the live API reads 0% — the auto-merge dual-head race
+  recurred (bunames1 + uiuctuition1 → Deploy Backend FAILED 23:38Z → fixup #1062 deploying at grade time).
+  The data is correct; the remaining work is to DRIVE THE DEPLOY GREEN (do NOT rewrite the data).
+- **flagship seeds:** all 8 still EMPTY descriptions + null dept + 0% tuition + dead feed; UC-Davis/UNC/
+  Vanderbilt/WashU at 3 photos (<4). **bulk seeds:** 33 at ZERO photos, ~50 more at 2–3 (photo sweep this run).
+
+**Flags (code/workflow, not grader-editable):** (1) anti-stub `@parametrize` lists DRIFT from `CERTIFIED_CLEAN`
+(latent — no live structure breach this run; drift-proof fix = parametrize over `CERTIFIED_CLEAN` + `OR lcs>=150`
+on the default). (2) `cip_code` not serialized on public program endpoints (re-confirmed None on gold MIT). (3)
+NEW — there is NO enforced gate on tuition VALUE; `anti_stub` has no tuition metric at all, so coverage AND the
+copy-down are invisible to CI — durable fix is a `tuition_value_artifacts` metric + per-tier coverage in the
+profile test (app/test code; flagged). (4) a repair PR title can OVERSTATE the live result (BU/UIUC "full-tier
+tuition" read 88%/0% live). (5) the auto-merge dual-head race RECURRED (bunames1+uiuctuition1, #1062 fixup) —
+one enricher firing per window + dedupe migration-bearing PRs before merge.
+
+**Backlog delta:** complete worst-first rewrite. NEW HIGH #1/#2 = the undergrad-sticker COPY-DOWN (BU 182,
+Cornell 152) — the new rule's class, INVISIBLE to the coverage metric (both read "covered"); MOVED Cornell out
+of run-74 CLEAN into #2. Graduate-tier-null → HIGH #3 (expanded from the run-74 named 9 to the full ~20-catalog
+fleet). Catalog-wide 0% → HIGH #4 (USC/NYU/UW-Seattle + UIUC deploy-strand; BU cleared the 0% but inherited the
+copy-down #1). Flagship seeds → MEDIUM #5, bulk seeds → MEDIUM #6. Updated FLAG #3 (NEW — no tuition-value
+gate), FLAG #4 (BU/UIUC overstatement), FLAG #5 (dual-head recurred). No CRITICAL this run (structure clean
+fleet-wide).
+
+**Invariants:** all intact. The SKILL.md edit is a tuition-rule TIGHTENING (adds a per-credential VALUE axis on
+top of the coverage axis; omit-never-guess is preserved and the undergrad sticker is explicitly NOT a back-fill)
+— loosens nothing. No school name added to the numbered "Concrete misses" (the per-school figures appear only as
+a live EVIDENCE pointer in the "Also enrich for the MATCH" prose, the same convention as the existing tuition
+paragraphs). Post-edit re-read: the numbered misses 1–9 are untouched and sequential, the new paragraph sits
+between the run-74 per-credential paragraph and the ProgramPreference step with no contradiction, and the
+no-fabrication / merge-mandatory / workshop-feedback-only / omit-never-guess invariants are untouched.
+
+**Health check:** the full `pytest` suite needs a live Postgres + httpx/asyncpg the conftest imports (no `.venv`,
+no DB in this environment — same constraint as runs 70–74), so the mandated `test_profile_standard.py` /
+`test_profile_enrichment.py` could not run here. Substantive DB-free check instead: imported
+`profile_standard/anti_stub.py` and ran `analyze` / `frame_stripped_shared_body`(default+abs150) /
+`template_slot_artifacts` / `scrape_debris` / `machine_artifacts` over all 40 live catalogs (they compute
+cleanly), and verified against LIVE prod that gold MIT scores 0 on every description-quality metric (the 0
+control; `name_prefixed=1` is the known benign real-described row). This grader PR changes only the three skill
+markdown files (no code, no data, no migration), so backend CI is unaffected.

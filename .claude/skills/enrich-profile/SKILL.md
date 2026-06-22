@@ -126,6 +126,38 @@ API this run — Michigan reads 61% aggregate yet ships PhD 1/148 (1%); Carnegie
 PhD 0/4) at 0% — while a peer (UT-Austin) fills PhD 86/86 and master's 90% and EVERY catalog's bachelor's
 tier is already 100%.
 
+**Tuition COVERAGE is NOT tuition CORRECTNESS — a graduate / professional program carrying the
+institution's UNDERGRADUATE sticker is a WRONG value the matcher scores, not coverage; the per-credential
+coverage rule above (non-null per tier) is BEATEN by stamping one uniform number — usually the undergrad
+sticker copied down the tree — across a whole heterogeneous tier.** The per-credential rule fixed "is the
+tier non-null"; it does NOT check that the value is RIGHT, so the cheapest way to clear it is to copy the
+single undergraduate sticker onto every graduate and professional row: the tier then reads "100% covered"
+while the matcher reads the SAME budget number for a funded research PhD, an academic master's, and a
+professional Law / MBA / MD — the budget-fit analog of one description stamped across credential levels
+(miss #8). Graduate tuition is NOT the undergraduate rate (research degrees are commonly funded or billed
+per-credit; endowed vs contract/in-state colleges differ) and a PROFESSIONAL program (JD / MBA / MD / MArch)
+publishes its OWN, typically much higher, rate — so a graduate or professional row whose `tuition` EQUALS
+the undergraduate sticker is a copy-down DEFECT, a hard FAIL independent of coverage %. So the tuition pass
+must measure VALUE-realness, not just non-null: (a) FAIL any graduate / professional program whose `tuition`
+equals the institution's undergraduate sticker — stamp that tier's own published rate (the graduate base /
+per-credit × typical load, the professional program's published rate) or, for a genuinely-funded research
+degree, record `tuition` in `_standard.omitted` with a reason — never the undergrad number copied down;
+(b) a single DISTINCT value across an entire graduate tier is a tell to VERIFY (a genuine published flat
+academic-graduate rate distinct from undergrad is fine — UT-Austin's $12,006, UF's $12,740 — but the same
+value as the undergrad sticker, or one academic rate flattened across the PROFESSIONAL tier, is the
+copy-down). This TIGHTENS the per-credential coverage measurement to a per-credential VALUE measurement; it
+loosens nothing (omit-never-guess holds — fill from the tier's PUBLISHED number, never a guess, and a
+genuinely-unpublished program is omitted-with-reason, never back-filled with the undergrad sticker). **Gold
+MIT is the 0-control for the DESCRIPTION metrics, NOT a tuition reference — it ships null cert / PhD tiers
+AND 9 graduate rows carrying its own undergrad sticker, so do NOT imitate its tuition; verify against the
+institution's published graduate / professional rate.** Evidence: live API this run — Boston University (now
+read "88% covered") stamps its $69,870 undergrad sticker on 182 graduate programs; Cornell (read "92%
+covered", in the CLEAN tier) stamps the identical $71,266 on 152 of 153 grad + professional rows (every
+PhD, every professional degree), so both feed the matcher the undergraduate number on their entire graduate
+tier; even gold MIT (9), Princeton (5/6), Caltech (2/2), Harvard (2) carry the undergrad sticker on grad
+rows — while the genuine per-tier fillers (Michigan master's = 16 distinct values, Stanford 67, Berkeley
+71, UCLA 98) carry DISTINCT graduate rates.
+
 **NEW per-program step — derive the target applicant (`ProgramPreference`).** For
 every program, also write a **`program_preferences`** row (model `ProgramPreference`,
 table `program_preferences`, added in the AI-Structure build) so the **program →
