@@ -1451,7 +1451,9 @@ _ROLLUP_RESOLVE: dict[str, str] = {
 #  • Linguistics: PhD-only graduate field (no standalone master's; AM is in-passing).
 #  • Electrical Engineering bachelor's already ships as flagship ``harvard-electrical-eng-sb``.
 #  • Integrative Biology (OEB): PhD-only at graduate level; no terminal master's.
-#  • Computational Biology: the real SM is HSPH Biostatistics (not an FAS row).
+#  • Computational Biology: the real master's is Harvard T.H. Chan SPH's "Master of
+#    Science in Computational Biology and Quantitative Genetics" — PRESERVED and
+#    reassigned to HSPH via _SLUG_SCHOOL_OVERRIDE (only the certificate is dropped).
 #  • Architectural History: no standalone GSD master's; PhD work sits under GSD PhD
 #    areas or FAS History of Art and Architecture (the IPEDS ms/cert rows are federal mint).
 _ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
@@ -1460,11 +1462,17 @@ _ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
     ("Electrical, Electronics, and Communications Engineering", "bachelors"),
     ("Ecology, Evolution, Systematics, and Population Biology", "masters"),
     ("Ecology, Evolution, Systematics, and Population Biology", "certificate"),
-    ("Biomathematics, Bioinformatics, and Computational Biology", "masters"),
     ("Biomathematics, Bioinformatics, and Computational Biology", "certificate"),
     ("Architectural History, Criticism, and Conservation", "masters"),
     ("Architectural History, Criticism, and Conservation", "certificate"),
 })
+
+# slug → real owning school, for an IPEDS row whose Field-of-Study completion is coded to
+# F.A.S. but whose real degree is conferred by another Harvard school (REPAIR_BACKLOG #1).
+# The CBQG master's is a Harvard T.H. Chan SPH degree, not F.A.S.
+_SLUG_SCHOOL_OVERRIDE: dict[str, str] = {
+    "harvard-biomathematics-bioinformatics-and-computational-biology-ms": _HSPH,
+}
 
 _ROLLUP_DROP: frozenset[str] = frozenset({
     "Accounting and Related Services",
@@ -1768,6 +1776,7 @@ def _build_catalog() -> list[dict]:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
+        school = _SLUG_SCHOOL_OVERRIDE.get(slug, school)
         real_name = _resolve_rollup(field_name, dtype, school)
         if real_name is None:
             continue
