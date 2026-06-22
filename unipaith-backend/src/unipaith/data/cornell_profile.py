@@ -1513,6 +1513,15 @@ _ROLLUP_RESOLVE: dict[str, str] = {
     "Psychology, General": "Psychology",
     "Drama/Theatre Arts and Stagecraft": "Performing and Media Arts",
     "Hospitality Administration/Management": "Hospitality Management",
+    # Residual federal CIP taxonomy titles → Cornell's real published degree name
+    # (REPAIR_BACKLOG #1, run 77). Each verified against Cornell's own department/
+    # graduate-field pages; per-level drops for credentials Cornell does not confer
+    # live in _ROLLUP_LEVEL_DROP below.
+    "Linguistic, Comparative, and Related Language Studies and Services": "Linguistics",
+    "Electrical, Electronics, and Communications Engineering": "Electrical and Computer Engineering",  # noqa: E501
+    "Ecology, Evolution, Systematics, and Population Biology": "Ecology and Evolutionary Biology",
+    "Biomathematics, Bioinformatics, and Computational Biology": "Computational Biology",
+    "Architectural History, Criticism, and Conservation": "History of Architecture and Urban Development",  # noqa: E501
 }
 
 # Federal "Other"/"General" buckets (and fields fully covered by a real flagship/other
@@ -1549,6 +1558,22 @@ _ROLLUP_LEVEL_NAME: dict[tuple[str, str], str] = {
     ("Operations Research", "bachelors"): "Operations Research and Engineering",
     ("Operations Research", "phd"): "Operations Research and Information Engineering",
 }
+
+# (rollup title, degree_type) → DROP: a credential level Cornell does not actually
+# confer in this field, so it has no real degree name to ship (omit, never guess —
+# REPAIR_BACKLOG #1, run 77). Verified against Cornell's department/graduate-field pages:
+#  • Linguistics is a Ph.D.-only field (no standalone master's).
+#  • Computational Biology is an undergraduate CONCENTRATION (within the B.S. in Biology),
+#    not a standalone bachelor's degree.
+#  • Architectural History has no undergraduate major (a minor only); the master's
+#    attribution is ambiguous (HAUD is the Ph.D., HPP is a separate program), so only the
+#    verified Ph.D. in History of Architecture and Urban Development is kept.
+_ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
+    ("Linguistic, Comparative, and Related Language Studies and Services", "masters"),
+    ("Biomathematics, Bioinformatics, and Computational Biology", "bachelors"),
+    ("Architectural History, Criticism, and Conservation", "bachelors"),
+    ("Architectural History, Criticism, and Conservation", "masters"),
+})
 
 # Schools whose degrees are typically conferred as Bachelor/Master of Science.
 _BS_SCHOOLS = frozenset({
@@ -1594,6 +1619,8 @@ _CIP_CODE_RE = re.compile(r"\(CIP\s*\d|\b\d\d\.\d\d\b")
 def _resolve_rollup(field_name: str, degree_type: str, school: str = "") -> str | None:
     """Real Cornell degree name for a Scorecard field, or None to drop the row."""
     if field_name == "Human Resources Management and Services" and school == _JOHNSON:
+        return None
+    if (field_name, degree_type) in _ROLLUP_LEVEL_DROP:
         return None
     if field_name == "Foods, Nutrition, and Related Services":
         return "Nutrition Sciences"
