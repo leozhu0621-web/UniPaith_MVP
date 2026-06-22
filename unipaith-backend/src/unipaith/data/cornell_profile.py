@@ -2572,7 +2572,9 @@ def _pub_tuition_cost(
     return cost
 
 
-def _omit_tuition_cost(note: str, *, source: str | None = None, source_url: str | None = None) -> dict:
+def _omit_tuition_cost(
+    note: str, *, source: str | None = None, source_url: str | None = None
+) -> dict:
     return {
         "funded": False,
         "note": note,
