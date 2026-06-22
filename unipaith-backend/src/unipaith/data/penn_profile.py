@@ -2456,6 +2456,201 @@ _COST_BY_SLUG: dict[str, dict] = {
     },
 }
 
+# ── Graduate-tier published tuition by owning school (matcher budget-fit) ──────
+# The IPEDS-derived graduate rows (those NOT in _COST_BY_SLUG) shipped with tuition=None,
+# leaving the matcher blind on graduate budget-fit (REPAIR_BACKLOG #3 — master's /
+# professional-tier starvation behind a 100% bachelor's tier). Penn publishes a tuition
+# rate per credential tier per school (SRFS, 2026-27), so each such row inherits its owning
+# school's published, first-party rate. Every figure is DISTINCT from the $71,236
+# undergraduate sticker — the genuine published graduate rate, never the undergrad number
+# copied down (run-76 copy-down guard). Tiers for which Penn does not publish a single
+# citable per-program rate — academic research master's billed within funded Ph.D. study,
+# per-credit graduate certificates, and the Carey Law LL.M./ML — are omitted-with-reason
+# (cost_data carries the reason), never guessed (verify-or-omit).
+
+# SAS standard full-time academic-graduate tuition (A.M./M.S. via the graduate groups),
+# 2026-27. Distinct from both the undergraduate sticker and the LPS per-c.u. professional
+# rate; this is the published academic-graduate full-time rate (the figure waived for
+# funded Ph.D. students and billed to standalone academic master's students).
+_SAS_GRAD_TUITION = 46540
+_SAS_GRAD_GENERAL_FEE = 4268
+_SAS_GRAD_CLINICAL_FEE = 770
+# SEAS master's: $8,825 per course unit × the standard 10-c.u. master's degree.
+_SEAS_CU = 8825
+_SEAS_MS_TUITION = _SEAS_CU * 10  # 88,250
+# GSE: $8,280 per course unit × the 10-c.u. M.S.Ed. (the rate used for the Higher Ed M.S.Ed).
+_GSE_CU = 8280
+_GSE_MS_TUITION = _GSE_CU * 10  # 82,800
+# Penn Nursing MSN: $7,160 per course unit; full-time is capped at 4 c.u./term, so a
+# full-time academic year (8 c.u.) is $57,280 tuition.
+_NURSING_CU = 7160
+_NURSING_FT_TUITION = _NURSING_CU * 8  # 57,280
+
+
+def _grad_cost(spec: dict) -> dict | None:
+    """Published graduate tuition for an IPEDS-derived grad row, keyed by owning school+level.
+
+    Returns a ``cost_data`` dict (with first-party ``tuition_usd``) where Penn publishes a
+    citable per-tier rate, or ``None`` to omit-with-reason (no single citable per-program
+    rate — academic research master's, per-credit graduate certificates, the LL.M./ML).
+    """
+    key = (spec["school"], spec["degree_type"])
+    if key == (_SAS, "masters"):
+        return {
+            "tuition_usd": _SAS_GRAD_TUITION,
+            "breakdown": {
+                "tuition": _SAS_GRAD_TUITION,
+                "general_fee": _SAS_GRAD_GENERAL_FEE,
+                "clinical_fee": _SAS_GRAD_CLINICAL_FEE,
+                "tuition_and_fees_subtotal": (
+                    _SAS_GRAD_TUITION + _SAS_GRAD_GENERAL_FEE + _SAS_GRAD_CLINICAL_FEE
+                ),
+            },
+            "funded": False,
+            "note": (
+                "Penn's standard full-time academic-graduate tuition for 2026-27 ($46,540), "
+                "the rate for A.M./M.S. study through the School of Arts and Sciences graduate "
+                "groups, plus the general ($4,268) and clinical ($770) fees. This is distinct "
+                "from the undergraduate sticker; many disciplinary master's students study "
+                "within funded Ph.D. programs that waive tuition."
+            ),
+            "source": (
+                "Penn Student Registration & Financial Services — PhD/Graduate Tuition, 2026-27"
+            ),
+            "source_url": "https://srfs.upenn.edu/costs-budgeting/phd",
+            "year": "2026-27",
+        }
+    if key == (_SEAS, "masters"):
+        return {
+            "tuition_usd": _SEAS_MS_TUITION,
+            "breakdown": {
+                "tuition_per_course_unit": _SEAS_CU,
+                "course_units": 10,
+                "tuition": _SEAS_MS_TUITION,
+            },
+            "funded": False,
+            "note": (
+                "Penn Engineering bills master's students per course unit; at the published "
+                "2026-27 rate of $8,825 per c.u., the standard 10-c.u. master's degree is "
+                "$88,250 in tuition (plus per-c.u. general and technology fees). Actual cost "
+                "depends on the number of course units taken."
+            ),
+            "source": (
+                "Penn Student Registration & Financial Services — SEAS Graduate Costs, 2026-27"
+            ),
+            "source_url": "https://srfs.upenn.edu/costs-budgeting/seas",
+            "year": "2026-27",
+        }
+    if key == (_WHARTON, "masters"):
+        return {
+            "tuition_usd": _MBA_TUITION,
+            "breakdown": {"tuition": _MBA_TUITION},
+            "funded": False,
+            "note": (
+                "These Wharton master's rows are concentrations of the single full-time "
+                "Wharton MBA; the published 2026-27 MBA tuition is $87,970. Wharton awards "
+                "need- and merit-based fellowships that reduce the net cost for many students."
+            ),
+            "source": "The Wharton School — MBA Tuition & Fees",
+            "source_url": "https://mba-inside.wharton.upenn.edu/financial-aid/tuition-fees/",
+            "year": "2026-27",
+        }
+    if key == (_GSE, "masters"):
+        return {
+            "tuition_usd": _GSE_MS_TUITION,
+            "breakdown": {
+                "tuition_per_course_unit": _GSE_CU,
+                "course_units": 10,
+                "tuition": _GSE_MS_TUITION,
+            },
+            "funded": False,
+            "note": (
+                "Penn GSE bills per course unit; at the published 2026-27 master's rate of "
+                "$8,280 per c.u., a standard 10-c.u. M.S.Ed. is $82,800 in tuition. Penn GSE "
+                "awards merit- and need-based aid."
+            ),
+            "source": "Penn GSE Tuition & Fees, 2026-27",
+            "source_url": "https://www.gse.upenn.edu/admissions-and-aid/tuition-and-fees",
+            "year": "2026-27",
+        }
+    if key == (_DESIGN, "masters"):
+        return {
+            "tuition_usd": 63308,
+            "breakdown": {"tuition": 63308, "general_fee": 4108, "clinical_fee": 742},
+            "funded": False,
+            "note": (
+                "Penn SRFS publishes a school-wide full-time graduate tuition for the Stuart "
+                "Weitzman School of Design of $63,308 for 2025-26 (plus the general and "
+                "clinical fees); the budget is school-wide rather than program-specific. "
+                "Weitzman awards merit-based scholarships."
+            ),
+            "source": (
+                "Penn Student Registration & Financial Services — Weitzman School of Design "
+                "Cost of Attendance, 2025-26"
+            ),
+            "source_url": "https://srfs.upenn.edu/costs-budgeting/design",
+            "year": "2025-26",
+        }
+    if key == (_NURSING, "masters"):
+        return {
+            "tuition_usd": _NURSING_FT_TUITION,
+            "breakdown": {
+                "tuition_per_course_unit": _NURSING_CU,
+                "full_time_course_units_per_year": 8,
+                "tuition": _NURSING_FT_TUITION,
+            },
+            "funded": False,
+            "note": (
+                "Penn Nursing bills MSN students per course unit ($7,160 per c.u., 2026-27), "
+                "capped at the 4-c.u. rate each term; a full-time academic year (8 c.u.) is "
+                "$57,280 in tuition. The total varies with each MSN track's course-unit "
+                "requirement and pace of study."
+            ),
+            "source": (
+                "Penn Student Registration & Financial Services — "
+                "Graduate Nursing (MSN) Costs, 2026-27"
+            ),
+            "source_url": "https://srfs.upenn.edu/graduate-school-nursing-costs-msn",
+            "year": "2026-27",
+        }
+    if key == (_VET, "professional"):
+        return {
+            "tuition_usd": 68712,
+            "breakdown": {"tuition": 68712, "general_fee": 4268, "clinical_fee": 770},
+            "funded": False,
+            "note": (
+                "Official Penn SRFS VMD tuition for 2026-27 (Year 1, out-of-state): $68,712 "
+                "(Pennsylvania residents pay $58,710). Penn Vet awards need- and merit-based aid."
+            ),
+            "source": (
+                "Penn Student Registration & Financial Services — VMD Cost of Attendance "
+                "(Out-of-State), 2026-27"
+            ),
+            "source_url": "https://srfs.upenn.edu/vmd-out-state-residents",
+            "year": "2026-27",
+        }
+    if key == (_LAW, "professional"):
+        return {
+            "tuition_usd": 81796,
+            "breakdown": {
+                "tuition": 81796,
+                "general_fee": 4268,
+                "clinical_fee": 770,
+                "learning_support_fee": 1350,
+            },
+            "funded": False,
+            "note": (
+                "Official Penn SRFS Penn Carey Law J.D. tuition for 2026-27: $81,796 plus the "
+                "general, clinical and learning-support fees. Penn Carey Law awards need- and "
+                "merit-based grants that reduce the net cost for many students."
+            ),
+            "source": "Penn Student Registration & Financial Services — Penn Carey Law JD",
+            "source_url": "https://srfs.upenn.edu/penn-carey-law-jd",
+            "year": "2026-27",
+        }
+    return None
+
+
 # ── Program-specific outcomes ──────────────────────────────────────────────
 # The flagship Wharton MBA carries its full official employment report (below). The other
 # programs use the College Scorecard Field-of-Study median earnings (one year after
@@ -4204,7 +4399,11 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
             "outcomes_data.employment_rate",
             "outcomes_data.top_industries",
         ]
-    if spec["degree_type"] != "bachelors" and slug not in _COST_BY_SLUG:
+    if (
+        spec["degree_type"] != "bachelors"
+        and slug not in _COST_BY_SLUG
+        and _grad_cost(spec) is None
+    ):
         omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
@@ -4284,6 +4483,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source_url": "https://collegescorecard.ed.gov/school/?215062",
                 "year": "2024-25",
             }
+        elif (grad_cost := _grad_cost(spec)) is not None:
+            p.tuition = grad_cost.get("tuition_usd")
+            p.cost_data = dict(grad_cost)
         else:
             p.tuition = None
             p.cost_data = {

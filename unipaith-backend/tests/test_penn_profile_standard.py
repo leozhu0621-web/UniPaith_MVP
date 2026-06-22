@@ -84,10 +84,13 @@ def _program_snapshot(slug: str) -> dict:
             outcomes = dict(p._OUTCOMES_INSTITUTION)
     outcomes["_standard"] = p._program_standard(slug, spec)
     cost_override = p._COST_BY_SLUG.get(slug)
+    grad_cost = None if cost_override is not None or is_undergrad else p._grad_cost(spec)
     if cost_override is not None:
         cost = dict(cost_override)
     elif is_undergrad:
         cost = {"tuition_usd": p._TUITION_UG, "source": "x"}
+    elif grad_cost is not None:
+        cost = dict(grad_cost)
     elif spec["degree_type"] in ("masters", "professional", "phd", "certificate"):
         cost = {
             "funded": spec["degree_type"] == "phd",
