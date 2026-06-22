@@ -2003,7 +2003,6 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
     slug = spec["slug"]
     dtype = spec["degree_type"]
     school = spec["school"]
-    delivery = spec.get("delivery_format", "on_campus")
 
     if slug in _COST_BY_SLUG:
         cost = dict(_COST_BY_SLUG[slug])

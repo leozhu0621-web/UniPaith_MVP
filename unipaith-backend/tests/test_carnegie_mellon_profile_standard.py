@@ -71,8 +71,7 @@ def _program_snapshot(spec: dict) -> dict:
     else:
         outcomes = {}
     outcomes["_standard"] = c._program_standard(slug, spec)
-    cost_override = c._COST_BY_SLUG.get(slug)
-    tuition, cost = c._program_tuition(spec)
+    _tuition, cost = c._program_tuition(spec)
     return {
         "program_name": spec["program_name"],
         "degree_type": spec["degree_type"],
