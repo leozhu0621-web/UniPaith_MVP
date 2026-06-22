@@ -6376,3 +6376,119 @@ imported `profile_standard/anti_stub.py` and ran `analyze` / `frame_stripped_sha
 cleanly), verified gold MIT scores 0 on every description metric AND 0 CIP-title names, and computed the repo's
 alembic head set (single head). This grader PR changes only the three skill markdown files (no code, no data,
 no migration), so backend CI is unaffected.
+
+
+## 2026-06-22 — Run 78 (FULL-FLEET sweep of all 300 live + all 40 catalogs · run-77 CIP-title repairs landed but left a 6th SAME-class title live on Cornell+Harvard · 1 rule change — a CIP-title repair must clear the WHOLE class, the backlog is a SAMPLE)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+reusing `profile_standard/anti_stub.py` directly (paginated full program list of all 40 program-bearing
+catalogs ≈ 8,400 programs; the other 260 are bare institution-level stubs). Per catalog I computed `analyze`,
+`machine_artifacts`, `scrape_debris`, `template_slot_artifacts`, `frame_stripped_shared_body` (abs150),
+**tuition COVERAGE + VALUE distribution grouped by `degree_type`** (degree_type uses `phd`, not `doctorate`),
+a **campus-photo count on ALL 300**, and a **cross-institution CIP-title NAME scan** (the federal "…and
+Related Sciences/Services" suffix AND multi-clause field strings shared verbatim across ≥2 institutions). Where
+a metric and the data disagreed I went direct — checked repo `_ROLLUP_RESOLVE` maps vs live names, the program
+detail endpoint for `cip_code`/`external_reviews`, the Deploy Backend run statuses, and the alembic head set.
+
+**Merged since run 77 (verified LIVE):** the run-77 HIGH tier was repaired — Cornell #1085 + Harvard #1088 +
+Penn #1089 (the 5 enumerated CIP-title names), UCSD #1083 (graduate + professional tuition → master's 53/60 +
+prof 2/2), Purdue #1082 (graduate-tier tuition → 100% all tiers). STRUCTURE + DESCRIPTIONS remain CLEAN
+fleet-wide: `template_slot_artifacts` / `scrape_debris` / `machine_artifacts` = 0 on all 40 catalogs; only
+benign marginal `frame_abs150` (GT 5 — engineering MS/PhD share a specialization clause; Yale/Duke/Chicago/
+Northwestern 1, all assessed benign at run 77) and MIT's known `name_prefixed=1`.
+
+**The 1 rule change (bounded; the ONLY genuinely-new gap-class after a full-fleet sweep):**
+- **A CIP-title-NAME repair must clear the WHOLE CLASS, not the backlog-enumerated strings — the
+  REPAIR_BACKLOG lists a SAMPLE the grader spotted, never the exhaustive set, so a pass that resolves exactly
+  the named strings and ships leaves the un-enumerated SAME-class CIP titles live.** This is the miss-#2 analog
+  of miss #8's named-unit "clear the whole class, re-scan, get ZERO" rule, which miss #2 lacked. The run-77
+  backlog #1 named 5 verbatim federal CIP titles; the Cornell/Harvard/Penn repairs each added exactly those 5
+  keys to their `_ROLLUP_RESOLVE` map and shipped — but the catalogs' IPEDS source carries OTHER fields of the
+  identical class (the same "…and Related Sciences" suffix form / cross-institution-shared title) that fall
+  through `_ROLLUP_RESOLVE.get(field, field)` and ship the federal title verbatim. The rule now requires: a
+  CIP-title repair is done only when you RE-SCAN every `program_name` AND `department` in the WHOLE catalog
+  with the miss-#2 tells and get ZERO, resolving each surviving CIP title (keeping the run-77 verified-real-
+  major carve-out). Added as a sub-bullet under miss #2 directly after the run-77 real-major carve-out.
+  Evidence: live API this run — Cornell #1085 and Harvard #1088 each cleared the 5 enumerated strings yet BOTH
+  still ship "Physiology, Pathology and Related Sciences" (federal CIP 26.09, the "…and Related Sciences"
+  suffix form, identical on both = the CIP mint) verbatim as a PhD / certificate name, because neither map
+  gained a key for it (the description is field-specific + true — only the NAME is the CIP title). Why only 1
+  change: the full-fleet sweep found NO other genuinely-new defect CLASS — structure + descriptions are clean
+  fleet-wide, GT's `frame150=5` / the marginal `frame150=1` hits match run-77's benign-marginal assessment
+  exactly, and every other live defect (master's/prof-tier null, the Penn name deploy-lag, the seeds) maps to
+  an existing rule, so the bounded/anti-churn rail forbids inventing more; that work is repair-queueing +
+  compliance logging.
+
+**Cleared since run 77 (verified LIVE — removed from backlog):**
+- **Cornell/Harvard/Penn 5 enumerated CIP-title names (run-77 HIGH #1):** #1085/#1088/#1089 (Penn deploy
+  in-progress — names land on deploy).
+- **UCSD master's/prof tuition (run-77 HIGH #2):** #1083 — master's 53/60, prof 2/2.
+- **Purdue tuition (run-77):** #1082 — 100% across bachelor's/master's/prof (PhD funded-omit).
+
+**VERIFIED NOT-A-DEFECT this run (false-positives AVOIDED — do NOT re-queue):**
+- **All multi-clause names the naive scan flags are VERIFIED real majors** the run-77 carve-out lists
+  (Science/Technology/Society; Speech/Language/Hearing; Russian/East-European/Eurasian; Molecular/Cellular/
+  Developmental Biology; Theater/Dance/Performance; Radio/Television/Film; Latina/Latino Studies) — NOT CIP
+  titles; never mangle them. The genuine residual is ONLY the federal "…and Related Sciences" form
+  ("Physiology, Pathology and Related Sciences") on Cornell + Harvard.
+- **Georgia Tech "Professional Master's in …"** (PMASE, Manufacturing Leadership, Occupational Safety) — GT's
+  REAL conferred designation, NOT the IPEDS possessive mint; a naive possessive scan would false-flag it.
+- **Boston University** professional Law tier (15 JD/LL.M. at the flat $69,870) = BU's verified flat full-time
+  rate, NOT a copy-down (re-confirmed; MD/DMD distinct).
+
+**Compliance gaps logged (existing rules the enricher disobeyed — queued, NOT re-added):**
+- **un-enumerated CIP-TITLE NAME (miss #2 whole-class), LIVE:** Cornell + Harvard "Physiology, Pathology and
+  Related Sciences" — backlog #1. The repairs fixed only the backlog's 5-string sample (the new miss-#2 rule
+  closes the gap that allowed it).
+- **Penn name DEPLOY LAG (§9 merge-is-not-deploy), LIVE:** repo `_ROLLUP_RESOLVE` maps the Linguistics CIP
+  title correctly (#1089) but live is stale; #1089 Deploy Backend in-progress — backlog #2 (verify, do NOT
+  rewrite).
+- **master's / professional-tier 0–low% (run-74 per-credential rule), LIVE on ~13 catalogs:** Harvard
+  (master's 19/107), Penn (8/66), GT (2/55), Columbia (3/45), Yale (10/38), Rice (1/29 + prof 11/38), Duke
+  (21/38 + prof 2/9), Northwestern (0/26), Notre Dame (0/24), Berkeley (prof 0/20), UCLA (prof 0/4 + master's
+  98/146), Dartmouth/Emory — backlog #3. PhD/cert nulls EXCLUDED (largely funded/per-credit → legitimate
+  omit-with-reason).
+- **seeds:** 8 flagship seeds null dept + 0% tuition + dead feed; ~260 bulk seeds, 33 at ZERO photos + 54 at
+  1–3 (backlog #4/#5).
+
+**Alembic / deploy observation (FLAG #5, app/infra — not grader-editable):** the auto-merge dual-head race is
+DORMANT this run — alembic history is a single linear head (recent Deploy Backend runs are green and #1089 is
+deploying; one Harvard #1088 deploy failed but the later #1087 deploy succeeded and the names landed, so the
+failure did not strand the data). No dual-head deploy block this interval.
+
+**Flags (code/workflow, not grader-editable):** (1) UPDATED — the enforced anti-stub gate is DESCRIPTION-only
+and never scans NAMES, so the Cornell/Harvard CIP-title name ships live undetected; durable fix = a
+name-realness metric over `CERTIFIED_CLEAN` with the run-77 real-major carve-out. (2) `cip_code` is serialized
+as a KEY on `/programs/{id}` but its VALUE is `None` on EVERY program incl. gold MIT (re-confirmed) — the
+matcher channel is unusable. (3) a `tuition_value_artifacts` CI metric must NOT fail `grad==undergrad`
+unconditionally (false-flags BU's verified flat rate). (4) a repair PR title / prior backlog clear can
+OVERSTATE the live result — run-77 "Cornell/Harvard/Penn CIP-title names repaired" cleared only the 5
+enumerated strings (entry #1); verify whole-class realness live. (5) the dual-head race is DORMANT (single
+linear head).
+
+**Backlog delta:** complete worst-first rewrite. REMOVED the run-77 HIGH tier (5 enumerated CIP-title names
+cleared; UCSD + Purdue tuition cleared). NEW worst tier = the un-enumerated CIP-title residual on
+Cornell+Harvard → HIGH #1; Penn name deploy-lag → HIGH #2 (verify, do NOT rewrite); master's/prof tuition
+starvation → HIGH #3 (refreshed live, PhD/cert nulls excluded, UCSD/Purdue/NYU/USC removed); flagship seeds →
+MEDIUM #4, bulk seeds → MEDIUM #5 (33 zero-photo names enumerated). Updated FLAG #1 (gate name-blind), FLAG #2
+(cip_code key serialized but value None), FLAG #4 (clears can overstate — fix only the sample), FLAG #5
+(dual-head dormant). No CRITICAL this run (structure + descriptions clean fleet-wide; the CIP-title NAME is a
+contained 1-string residual on otherwise-rich catalogs).
+
+**Invariants:** all intact. The SKILL.md edit is a miss-#2 TIGHTENING (it demands a CIP-title repair clear the
+whole class instead of the backlog's sample; it preserves the run-77 verified-real-major carve-out and
+no-fabrication — "resolve to the real published degree, or drop a federal aggregation bucket") — loosens
+nothing. No school name added to the numbered "Concrete misses" (per-school figures appear only as a live
+EVIDENCE pointer in the sub-bullet prose, the existing convention). Post-edit re-read: numbered misses 1–9 are
+untouched and sequential, the new sub-bullet sits between two existing miss-#2 sub-bullets (the run-77
+real-major carve-out and the CIP-code bullet) with no contradiction, and the no-fabrication / merge-mandatory
+/ workshop-feedback-only / omit-never-guess invariants are untouched.
+
+**Health check:** the full `pytest` suite needs a live Postgres + sqlalchemy/httpx/asyncpg the conftest and the
+data modules import (no `.venv`, no DB in this environment — same constraint as runs 70–77), so the mandated
+`test_profile_standard.py` / `test_profile_enrichment.py` could not run here. Substantive DB-free check:
+imported `profile_standard/anti_stub.py` and ran `analyze` / `frame_stripped_shared_body`(abs150) /
+`template_slot_artifacts` / `scrape_debris` / `machine_artifacts` over all 40 live catalogs (they compute
+cleanly), verified gold MIT scores 0 on every description metric (the 0 control; `name_prefixed=1` is the known
+benign real-described row), and confirmed the repo's alembic history is a single linear head. This grader PR
+changes only the three skill markdown files (no code, no data, no migration), so backend CI is unaffected.
