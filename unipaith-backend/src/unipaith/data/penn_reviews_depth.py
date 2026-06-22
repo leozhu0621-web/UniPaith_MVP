@@ -179,47 +179,11 @@ DEPTH_REVIEWS: dict[str, dict] = {
         ],
         "disclaimer": _DISCLAIMER,
     },
-    "penn-business-administration-management-and-operations-phd": {
-        "summary": "Students and guides describe Wharton's doctoral offerings in Business Administration, Management and Operations within one of the nation's top business schools \u2014 Poets&Quants and U.S. News consistently rank Wharton among leading business programs; praise includes finance strength and a powerful alumni network, with cautions about selective admission, high tuition, and a competitive recruiting culture.",
-        "themes": [
-            {
-                "label": "Finance & analytics strength",
-                "sentiment": "positive",
-                "detail": "Wharton is perennially ranked among top finance and analytics programs.",
-            },
-            {
-                "label": "Recruiting depth",
-                "sentiment": "positive",
-                "detail": "Consulting, finance, and tech firms recruit actively from Wharton.",
-            },
-            {
-                "label": "Alumni network",
-                "sentiment": "positive",
-                "detail": "A large global Wharton network opens doors widely.",
-            },
-            {
-                "label": "Competitive culture",
-                "sentiment": "caution",
-                "detail": "Recruiting timelines and club culture can feel intense.",
-            },
-            {
-                "label": "Tuition cost",
-                "sentiment": "caution",
-                "detail": "Private business-school tuition is steep; merit aid is limited.",
-            },
-        ],
-        "sources": [
-            {
-                "label": "The Wharton School",
-                "url": "https://www.wharton.upenn.edu/",
-            },
-            {
-                "label": "Poets&Quants \u2014 Wharton",
-                "url": "https://poetsandquants.com/schools/the-wharton-school-university-of-pennsylvania/",
-            },
-        ],
-        "disclaimer": _DISCLAIMER,
-    },
+    # NOTE: the federal-CIP-52.02 row was renamed to "Doctor of Philosophy in Management"
+    # (penncip2). Its prior DEPTH review was synthesized MBA/recruiting copy that embedded
+    # the federal CIP rollup title verbatim and described the business school rather than the
+    # Management research doctorate (miss #8 fabrication-by-synthesis) \u2014 dropped here so the
+    # row carries external_reviews omitted-with-reason rather than stale, mismatched copy.
     "penn-business-cip-52-11-ms": {
         "summary": "Students and guides describe Wharton's graduate offerings in in Business (CIP 52.11) within one of the nation's top business schools \u2014 Poets&Quants and U.S. News consistently rank Wharton among leading business programs; praise includes finance strength and a powerful alumni network, with cautions about selective admission, high tuition, and a competitive recruiting culture.",
         "themes": [

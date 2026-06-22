@@ -1350,6 +1350,18 @@ _ROLLUP_FULL_NAME: dict[tuple[str, str], str] = {
     ),
 }
 
+# slug → metadata overrides for a resolved row whose real program differs from the
+# IPEDS-default duration / delivery the raw Scorecard row carries. MAPP is a one-year
+# HYBRID professional master's (on-site weekends + interactive distance modules), not the
+# generic 24-month on-campus master's the IPEDS row defaults to. Verified at
+# lps.upenn.edu/degree-programs/mapp.
+_ROLLUP_META_OVERRIDE: dict[str, dict] = {
+    "penn-clinical-counseling-and-applied-psychology-ms": {
+        "duration_months": 12,
+        "delivery_format": "hybrid",
+    },
+}
+
 # (rollup title, degree_type) → real OWNING school override (the IPEDS row tags these to
 # the School of Arts and Sciences, but the program is administered elsewhere). GCB + the
 # Biostatistics MS are Perelman School of Medicine graduate groups.
@@ -1869,6 +1881,8 @@ def _build_catalog() -> list[dict]:
             # FIELD_DESCRIPTIONS) still resolves after the rename.
             "_field_name": field_name,
         }
+        # Override IPEDS-default duration / delivery where the resolved real program differs.
+        spec.update(_ROLLUP_META_OVERRIDE.get(slug, {}))
         _normalize_program(spec, field_name)
         # Keep _field_name on the spec so the re-normalization pass below (and any
         # idempotent re-apply) re-resolves the verified fact after the rename.
@@ -2530,24 +2544,29 @@ _COST_BY_SLUG: dict[str, dict] = {
     # rate is stamped here, never the generic SAS rate copied onto a professional program
     # (run-76 copy-down guard). First-party LPS tuition page, 2026-27.
     "penn-clinical-counseling-and-applied-psychology-ms": {
-        "tuition_usd": 59424,
+        # MAPP is a ONE-YEAR program: all three terms (fall + spring + summer) are required
+        # to earn the degree, so the annual budget signal is the full required tuition, not
+        # the fall+spring-only subtotal (the summer term is required, not optional).
+        "tuition_usd": 67382,
         "breakdown": {
-            "tuition_per_semester": 29712,
+            "tuition_per_semester_fall_spring": 29712,
             "course_units_per_semester": 4,
-            "fall_spring_full_time_tuition": 59424,
+            "summer_course_unit_tuition_est": 7958,
+            "required_terms": "fall + spring + summer (one year)",
+            "tuition": 67382,
             "program_fee_one_time": 3600,
             "general_fee_per_semester": 2054,
-            "summer_course_unit_tuition_est": 7958,
             "total_program_cost": 75090,
         },
         "funded": False,
         "note": (
             "Penn LPS bills the Master of Applied Positive Psychology at $29,712 per "
-            "semester (4 course units) for 2026-27 — a full-time fall-plus-spring academic "
-            "year of $59,424 in tuition. With the one-time $3,600 program fee, the $2,054 "
-            "per-semester general fee, and the summer course unit (about $7,958), the full "
-            "one-year program totals roughly $75,090. This LPS professional rate is distinct "
-            "from both the undergraduate sticker and the standard SAS academic-graduate rate."
+            "semester (4 course units) for fall and spring, plus a required summer course "
+            "unit (about $7,958), 2026-27 — the one-year program requires all three terms, "
+            "so the full degree tuition is roughly $67,382. With the one-time $3,600 program "
+            "fee and the $2,054 per-semester general fee, the total one-year cost is about "
+            "$75,090. This LPS professional rate is distinct from both the undergraduate "
+            "sticker and the standard SAS academic-graduate rate."
         ),
         "source": "Penn LPS — Master of Applied Positive Psychology, Tuition and Fees",
         "source_url": "https://www.lps.upenn.edu/degree-programs/mapp/tuition",
