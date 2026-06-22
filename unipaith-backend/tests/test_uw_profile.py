@@ -53,7 +53,7 @@ def _school_snapshot(m: dict) -> dict:
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
     is_ug = spec["degree_type"] == "bachelors"
-    cost = u._undergrad_cost() if is_ug else u._grad_cost_fallback(spec)
+    cost = u._undergrad_cost(spec) if is_ug else u._grad_cost(spec)
     outcomes = dict(u._OUTCOMES_BY_SLUG.get(slug, {}))
     outcomes["_standard"] = u._program_standard(slug, spec)
     kw = u._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(u._KEYWORDS_BY_SCHOOL[spec["school"]])
@@ -148,3 +148,62 @@ def test_flagship_programs_carry_reviews():
         assert slug in u._REVIEWS_BY_SLUG, f"{slug} should carry external_reviews"
         rev = u._REVIEWS_BY_SLUG[slug]
         assert rev["summary"] and rev["themes"] and rev["sources"] and rev["disclaimer"]
+
+
+# Programs whose tuition is honestly omitted-with-reason rather than carrying a wrong value:
+# the Doctor of Audiology (variable graduate-tier schedule, no single published figure) and
+# the fee-based / self-sustaining online programs (program-specific per-credit rate, not the
+# state-supported sticker). Every other program must carry a published rate.
+_TUITION_OMITTED_SLUGS = {"uw-audiology-prof"} | {
+    spec["slug"] for spec in u.PROGRAMS if spec.get("delivery_format") == "online"
+}
+
+
+def test_matcher_core_tuition_is_published_catalog_wide():
+    """REPAIR_BACKLOG #4: the catalog shipped 0% tuition (matcher-blind on budget).
+
+    Every program now carries UW's published WA-resident annual tuition except the one
+    honestly-omitted Doctor of Audiology, so the matcher reads a real budget signal.
+    """
+    missing = [
+        spec["slug"]
+        for spec in u.PROGRAMS
+        if u._tuition_for(spec) is None and spec["slug"] not in _TUITION_OMITTED_SLUGS
+    ]
+    assert not missing, f"programs missing published tuition: {missing[:8]}"
+    # The only omission is recorded in that program's _standard.omitted (not a silent null).
+    for spec in u.PROGRAMS:
+        if u._tuition_for(spec) is None:
+            assert spec["slug"] in _TUITION_OMITTED_SLUGS
+            omitted = u._program_standard(spec["slug"], spec)["omitted"]
+            assert "cost_data.tuition_usd" in omitted
+
+
+def test_no_undergrad_sticker_copydown():
+    """A graduate/professional row carrying the undergraduate sticker is the BU/Cornell
+    copy-down defect — the matcher would score the same budget for a funded PhD and a
+    professional degree. UW's graduate sticker is distinct from the undergrad one."""
+    ug = u._TUITION_UG_RESIDENT
+    copydown = [
+        spec["slug"]
+        for spec in u.PROGRAMS
+        if spec["degree_type"] != "bachelors" and u._tuition_for(spec) == ug
+    ]
+    assert not copydown, f"undergrad sticker copied onto graduate rows: {copydown[:8]}"
+
+
+def test_graduate_tiers_carry_published_tuition():
+    """A whole graduate tier at 0% is matcher starvation the aggregate hides — each tier
+    is filled (PhD carries the published grad sticker, funding being a separate signal)."""
+    from collections import Counter
+
+    # Among state-supported (non-online) programs, every graduate tier is fully covered;
+    # fee-based online programs are omitted-with-reason and counted separately.
+    null_by_dt: Counter[str] = Counter()
+    for spec in u.PROGRAMS:
+        if u._tuition_for(spec) is None and spec.get("delivery_format") != "online":
+            null_by_dt[spec["degree_type"]] += 1
+    assert null_by_dt["masters"] == 0, "on-campus master's tier must be fully covered"
+    assert null_by_dt["phd"] == 0, "PhD tier must carry the published grad sticker, not null"
+    # Professional: only the Doctor of Audiology is omitted-with-reason.
+    assert null_by_dt["professional"] == 1
