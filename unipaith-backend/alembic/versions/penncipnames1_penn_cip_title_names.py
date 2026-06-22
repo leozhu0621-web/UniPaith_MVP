@@ -24,12 +24,11 @@ bodies instead of an identical body masked by the token. Field-specific descript
 published per-tier tuition are preserved on surviving rows. Re-applies ``penn_profile.apply()``
 and re-derives the matcher's target-applicant rows.
 
-This revision also UNIFIES the dual Alembic head left by the #1083 (ucsdgradtuition1) /
-#1088 (harvardcipnames1) auto-merge race — both branched off ``cornellcipnames1`` — so
-``main`` returns to a single head and Deploy Backend is unblocked.
+Chains after ``harvardcbqgmrg1`` (PR #1087's head-unify, which already merged the dual
+Alembic head left by the #1083 / #1088 auto-merge race), keeping ``main`` at a single head.
 
 Revision ID: penncipnames1
-Revises: harvardcipnames1, ucsdgradtuition1
+Revises: harvardcbqgmrg1
 Create Date: 2026-06-22
 """
 
@@ -44,7 +43,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "penncipnames1"
-down_revision = ("harvardcipnames1", "ucsdgradtuition1")
+down_revision = "harvardcbqgmrg1"
 branch_labels = None
 depends_on = None
 
