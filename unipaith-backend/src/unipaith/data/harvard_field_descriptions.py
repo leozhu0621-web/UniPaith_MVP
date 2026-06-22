@@ -54,7 +54,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Harvard Graduate School of Education bilingual and multicultural education programs prepare teachers and researchers in dual-language instruction, heritage-language pedagogy, and immigrant-student support."
     ),
     'Biochemistry, Biophysics and Molecular Biology': (
-        "Graduate biochemistry and biophysics at Harvard Faculty of Arts & Sciences and Harvard Medical School studies protein structure, enzymology, and molecular mechanisms in NIH-funded Harvard labs."
+        "Chemical and Physical Biology is the Harvard College concentration that applies quantitative, chemical, and physical tools to biology, pairing coursework in chemistry, physics, and biochemistry with required laboratory thesis research for students headed into scientific careers."
     ),
     'Biological and Biomedical Sciences, Other': (
         "Harvard's Division of Medical Sciences and GSAS biological-sciences Ph.D. programs span systems biology, immunology, and translational research across Longwood and Cambridge labs."
@@ -210,7 +210,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "German language, literature, and culture at Harvard Faculty of Arts & Sciences includes Berlin study-abroad and European intellectual-history coursework."
     ),
     'Health Professions Education, Ethics, and Humanities': (
-        "Harvard Graduate School of Education health-professions education programs prepare clinician-educators in medical ethics, humanities, and bedside teaching at affiliated Boston teaching hospitals."
+        "The Harvard Medical School Center for Bioethics Master of Science in Bioethics grounds students in bioethical theory and its application to clinical care, research, and health law and policy, anchored by the year-long Foundations of Bioethics course and a capstone project."
     ),
     'Health and Medical Administrative Services': (
         "Harvard Business School and Harvard Graduate School of Education health-administration coursework prepares leaders for hospitals, insurers, and health-policy agencies with Harvard Medicine case studies."
@@ -360,7 +360,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Harvard's Visual and Environmental Studies program covers film production, digital media, and documentary filmmaking with the Carpenter Center screening rooms."
     ),
     'Real Estate': (
-        "Harvard Business School's real-estate program combines finance, development, and urban economics with Cambridge and New York City market case studies."
+        "The Harvard Graduate School of Design Master in Real Estate (MRE) is a 12-month, three-term degree pairing real-estate finance and development with the GSD's design and urban-planning expertise, culminating in a summer off-campus practicum."
     ),
     'Religion/Religious Studies': (
         "Harvard Faculty of Arts & Sciences religious studies examines world religions, theology, and religion-and-culture with the Harvard Department of Religious Studies' global faculty."
@@ -402,7 +402,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "SEAS and Harvard Kennedy School systems coursework models complex networks in health care, infrastructure, and policy using computational and operations-research methods."
     ),
     'Teacher Education and Professional Development, Specific Levels and Methods': (
-        "Harvard Graduate School of Education teacher-preparation programs lead to Massachusetts educator certification with Cambridge partner-school clinical practice."
+        "The Harvard Graduate School of Education Teaching and Teacher Leadership Ed.M. prepares classroom teachers and teacher leaders through a one-year residency, offering licensure and non-licensure strands with clinical practice in partner schools."
     ),
     'Teacher Education and Professional Development, Specific Subject Areas': (
         "GSE subject-specific teacher education pairs content expertise with pedagogy and urban classroom placements in Cambridge districts."
