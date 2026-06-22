@@ -2463,10 +2463,16 @@ _COST_BY_SLUG: dict[str, dict] = {
 # rate per credential tier per school (SRFS, 2026-27), so each such row inherits its owning
 # school's published, first-party rate. Every figure is DISTINCT from the $71,236
 # undergraduate sticker — the genuine published graduate rate, never the undergrad number
-# copied down (run-76 copy-down guard). Tiers for which Penn does not publish a single
-# citable per-program rate — academic research master's billed within funded Ph.D. study,
-# per-credit graduate certificates, and the Carey Law LL.M./ML — are omitted-with-reason
-# (cost_data carries the reason), never guessed (verify-or-omit).
+# copied down (run-76 copy-down guard). The stored figure is the per-YEAR rate (exposed as
+# tuition_usd_per_year; the matcher hard-vetoes on the annual budget), so per-course-unit
+# tiers use the full-time academic-YEAR tuition, never a multi-year degree total. Tuition is
+# the budget-fit input and FUNDING is a SEPARATE signal (the matcher's needs_aid), so the
+# published academic-graduate rate is stamped even on disciplinary master's that many
+# students pursue within funded Ph.D. study (their aid is modelled separately). Only rows for
+# which Penn publishes NO citable per-program rate — the Perelman / Annenberg / SP&P graduate
+# master's, the Carey Law LL.M./ML, per-credit graduate certificates, and funded research
+# doctorates — are omitted-with-reason (cost_data carries the reason), never guessed
+# (verify-or-omit).
 
 # SAS standard full-time academic-graduate tuition (A.M./M.S. via the graduate groups),
 # 2026-27. Distinct from both the undergraduate sticker and the LPS per-c.u. professional
@@ -2475,12 +2481,14 @@ _COST_BY_SLUG: dict[str, dict] = {
 _SAS_GRAD_TUITION = 46540
 _SAS_GRAD_GENERAL_FEE = 4268
 _SAS_GRAD_CLINICAL_FEE = 770
-# SEAS master's: $8,825 per course unit × the standard 10-c.u. master's degree.
+# SEAS master's: $8,825 per course unit. Penn caps full-time at 4 c.u./term, so a full-time
+# academic YEAR is 8 c.u. — Program.tuition is exposed as tuition_usd_per_year and the matcher
+# vetoes on the ANNUAL figure, so store the per-year rate, never the multi-year degree total.
 _SEAS_CU = 8825
-_SEAS_MS_TUITION = _SEAS_CU * 10  # 88,250
-# GSE: $8,280 per course unit × the 10-c.u. M.S.Ed. (the rate used for the Higher Ed M.S.Ed).
+_SEAS_FT_TUITION = _SEAS_CU * 8  # 70,600 (full-time academic year)
+# GSE: $8,280 per course unit; full-time academic year = 8 c.u. (per-year, not degree total).
 _GSE_CU = 8280
-_GSE_MS_TUITION = _GSE_CU * 10  # 82,800
+_GSE_FT_TUITION = _GSE_CU * 8  # 66,240 (full-time academic year)
 # Penn Nursing MSN: $7,160 per course unit; full-time is capped at 4 c.u./term, so a
 # full-time academic year (8 c.u.) is $57,280 tuition.
 _NURSING_CU = 7160
@@ -2522,18 +2530,21 @@ def _grad_cost(spec: dict) -> dict | None:
         }
     if key == (_SEAS, "masters"):
         return {
-            "tuition_usd": _SEAS_MS_TUITION,
+            "tuition_usd": _SEAS_FT_TUITION,
             "breakdown": {
                 "tuition_per_course_unit": _SEAS_CU,
-                "course_units": 10,
-                "tuition": _SEAS_MS_TUITION,
+                "full_time_course_units_per_year": 8,
+                "tuition": _SEAS_FT_TUITION,
+                "degree_course_units": 10,
+                "estimated_degree_tuition": _SEAS_CU * 10,
             },
             "funded": False,
             "note": (
-                "Penn Engineering bills master's students per course unit; at the published "
-                "2026-27 rate of $8,825 per c.u., the standard 10-c.u. master's degree is "
-                "$88,250 in tuition (plus per-c.u. general and technology fees). Actual cost "
-                "depends on the number of course units taken."
+                "Penn Engineering bills master's students per course unit ($8,825 per c.u., "
+                "2026-27). Full-time is capped at 4 c.u. per term, so a full-time academic "
+                "year (8 c.u.) is $70,600 in tuition (plus per-c.u. general and technology "
+                "fees); the standard 10-c.u. master's degree totals about $88,250. Actual "
+                "cost depends on the number of course units taken."
             ),
             "source": (
                 "Penn Student Registration & Financial Services — SEAS Graduate Costs, 2026-27"
@@ -2557,17 +2568,19 @@ def _grad_cost(spec: dict) -> dict | None:
         }
     if key == (_GSE, "masters"):
         return {
-            "tuition_usd": _GSE_MS_TUITION,
+            "tuition_usd": _GSE_FT_TUITION,
             "breakdown": {
                 "tuition_per_course_unit": _GSE_CU,
-                "course_units": 10,
-                "tuition": _GSE_MS_TUITION,
+                "full_time_course_units_per_year": 8,
+                "tuition": _GSE_FT_TUITION,
+                "degree_course_units": 10,
+                "estimated_degree_tuition": _GSE_CU * 10,
             },
             "funded": False,
             "note": (
-                "Penn GSE bills per course unit; at the published 2026-27 master's rate of "
-                "$8,280 per c.u., a standard 10-c.u. M.S.Ed. is $82,800 in tuition. Penn GSE "
-                "awards merit- and need-based aid."
+                "Penn GSE bills per course unit ($8,280 per c.u., 2026-27); a full-time "
+                "academic year (8 c.u.) is $66,240 in tuition and a standard 10-c.u. M.S.Ed. "
+                "totals about $82,800. Penn GSE awards merit- and need-based aid."
             ),
             "source": "Penn GSE Tuition & Fees, 2026-27",
             "source_url": "https://www.gse.upenn.edu/admissions-and-aid/tuition-and-fees",

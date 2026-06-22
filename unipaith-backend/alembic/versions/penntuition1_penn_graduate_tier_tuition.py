@@ -9,9 +9,9 @@ tuition rate (Penn SRFS / the school, 2025-26 or 2026-27), every figure DISTINCT
 $71,236 undergraduate sticker (never the undergrad number copied down):
 
 - School of Arts and Sciences master's → $46,540 (standard full-time academic-graduate rate)
-- School of Engineering and Applied Science master's → $88,250 (10 c.u. × $8,825/c.u.)
+- School of Engineering and Applied Science master's → $70,600 (full-time year, 8 c.u. × $8,825)
 - The Wharton School master's → $87,970 (the single full-time MBA)
-- Graduate School of Education master's → $82,800 (10 c.u. × $8,280/c.u.)
+- Graduate School of Education master's → $66,240 (full-time year, 8 c.u. × $8,280)
 - Stuart Weitzman School of Design master's → $63,308 (school-wide graduate budget)
 - School of Nursing master's → $57,280 (full-time year, 8 c.u. × $7,160/c.u.)
 - School of Veterinary Medicine professional → $68,712 (VMD, out-of-state)
