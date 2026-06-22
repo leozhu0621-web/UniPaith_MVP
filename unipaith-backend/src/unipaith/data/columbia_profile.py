@@ -63,6 +63,11 @@ descriptions with Columbia-specific level suffixes (0% identical-across-levels);
 remaining peer-contamination (Kelly Writers House, Perry World House, Morris Arboretum,
 Haas/CDSS, ICA); gates shared descriptions and peer signatures at build time.
 
+Graduate-tier tuition (2026-06-22, colgradtuition1): stamps published per-school /
+per-program tuition on every master's and professional row where Columbia publishes a
+flat annual or per-program figure (REPAIR_BACKLOG #4 — was master's 3/45, professional
+2/8). Funded Ph.D. rows and per-credit-only DrPH stay omitted-with-reason.
+
 Depth pass (2026-06-15, columbiaprof8): merged ``DEPTH_REVIEWS`` for 37 coverable
 programs (46/46 total external_reviews on coverable programs).
 """
@@ -1473,10 +1478,183 @@ _UNDERGRAD_FEES = 3280
 _UNDERGRAD_COA = 89472
 _AVG_NET_PRICE = 21590
 
+# ── Published graduate-tier tuition (REPAIR_BACKLOG #4 — master's/professional
+# starvation behind a 100% bachelor's tier) ──────────────────────────────────
+# Columbia charges graduate/professional tuition by SCHOOL or PROGRAM on first-party
+# bulletin / cost-of-attendance pages (2025-26 unless noted). Program.tuition is the
+# matcher's ANNUAL budget input — stamp the published sticker, never the $70,170
+# undergraduate rate copied down. Funded research doctorates (Ph.D., J.S.D.) and
+# per-credit-only programs with no flat annual figure (DrPH) stay omitted-with-reason.
+_GSAS_MA_TUITION_PER_SEM = 36727  # GSAS full Residence Unit (terminal M.A.)
+_GSAS_MA_TUITION_ANNUAL = 73454  # 2 × $36,727
+_SEAS_MS_PER_CREDIT = 2700
+_SEAS_MS_TYPICAL_POINTS = 30
+_SEAS_MS_TUITION = 81000  # 30 × $2,700
+_GSAPP_MS_PER_TERM = 35190  # 12–19 points
+_GSAPP_MS_ANNUAL = 70380  # 2 terms
+_GSAPP_ONE_YEAR_MS = 105570  # 3-term 12-month M.S. programs
+_SIPA_TUITION_PER_SEM = 37110  # MIA / MPA full Residence Unit (12–16.5 credits)
+_SIPA_TUITION_ANNUAL = 74220
+_SSW_TUITION_PER_SEM = 30182  # MSSW flat rate (2025-26 residential COA table)
+_SSW_TUITION_ANNUAL = 60364
+_MDE_TUITION_PER_SEM = 32092  # Master's Direct Entry flat rate (2024-25 listing)
+_MDE_TUITION_ANNUAL = 64184
+_LAW_TUITION = 85368  # J.D. = LL.M. per Law bulletin
+_MD_TUITION = 76336
+_DDS_TUITION = 105048
+_DPT_TUITION_ANNUAL = 46928  # Fall $23,464 + Spring $23,464 (2026-27 budget)
+_DNP_TUITION_PER_SEM = 24338  # full-time flat rate (2024-25 listing)
+_DNP_TUITION_ANNUAL = 48676
+
+_GSAS_TUITION_SRC = (
+    "Columbia GSAS — Cost of Attendance (2025-26)",
+    "https://www.gsas.columbia.edu/content/cost-attendance",
+)
+_SEAS_TUITION_SRC = (
+    "Columbia Engineering — Graduate Tuition, Fees and Payments (bulletin)",
+    "https://bulletin.columbia.edu/columbia-engineering/graduate-studies/"
+    "graduate-tuition-fees-payments/",
+)
+_GSAPP_TUITION_SRC = (
+    "Columbia GSAPP — Tuition and Aid",
+    "https://www.arch.columbia.edu/admissions/tuition-aid",
+)
+_SIPA_TUITION_SRC = (
+    "Columbia SIPA — Tuition and Fees",
+    "https://www.sipa.columbia.edu/office-financial-aid/tuition-and-fees",
+)
+_SSW_TUITION_SRC = (
+    "Columbia School of Social Work — Cost of Attendance (2025-26)",
+    "https://socialwork.columbia.edu/content/cost-attendance-residential-campus-2025-2026",
+)
+_CBS_MS_SRC = (
+    "Columbia Business School — MS Programs Costs",
+    "https://business.columbia.edu/financial-aid/costs/ms-programs",
+)
+_CBS_EMBA_SRC = (
+    "Columbia Business School — Executive MBA Costs",
+    "https://business.columbia.edu/financial-aid/costs/executive-mba",
+)
+_LAW_TUITION_SRC = (
+    "Columbia Law School — J.D. and LL.M. Tuition and Fees",
+    "https://www.law.columbia.edu/about/departments/financial-aid/jd-and-llm-tuition-and-fees",
+)
+_MAILMAN_TUITION_SRC = (
+    "Mailman School of Public Health — Tuition & Fees",
+    "https://www.publichealth.columbia.edu/become-student/how-apply/financial-aid/tuition-fees",
+)
+_JOURNALISM_TUITION_SRC = (
+    "Columbia Journalism School — Detailed Cost of Attendance",
+    "https://journalism.columbia.edu/cost-attendance/detailed",
+)
+_ARTS_TUITION_SRC = (
+    "Columbia Student Financial Services — School of the Arts Cost of Attendance",
+    "https://sfs.columbia.edu/content/school-arts-cost-attendance",
+)
+_PS_TUITION_SRC = (
+    "Vagelos College of Physicians and Surgeons — program budgets",
+    "https://www.vagelos.columbia.edu/education/academic-programs",
+)
+_NURSING_TUITION_SRC = (
+    "Columbia School of Nursing — Financial Aid (tuition listing)",
+    "https://www.nursing.columbia.edu/academics/financial-aid/apply-financial-aid",
+)
+
+
+def _gsas_ma_cost(field: str) -> dict:
+    return {
+        "tuition_usd": _GSAS_MA_TUITION_ANNUAL,
+        "funded": False,
+        "note": (
+            f"GSAS full-time Residence Unit tuition for the terminal M.A. in {field} "
+            f"(${_GSAS_MA_TUITION_PER_SEM:,} per semester × 2 = "
+            f"${_GSAS_MA_TUITION_ANNUAL:,} per academic year)."
+        ),
+        "source": _GSAS_TUITION_SRC[0],
+        "source_url": _GSAS_TUITION_SRC[1],
+        "year": "2025-26",
+    }
+
+
+def _seas_ms_cost(field: str) -> dict:
+    return {
+        "tuition_usd": _SEAS_MS_TUITION,
+        "funded": False,
+        "note": (
+            f"Columbia Engineering M.S. in {field}: ${_SEAS_MS_PER_CREDIT:,} per credit × "
+            f"{_SEAS_MS_TYPICAL_POINTS} points = ${_SEAS_MS_TUITION:,} (excludes fees)."
+        ),
+        "source": _SEAS_TUITION_SRC[0],
+        "source_url": _SEAS_TUITION_SRC[1],
+        "year": "2025-26",
+    }
+
+
+def _gsapp_ms_cost(field: str, *, one_year: bool = False) -> dict:
+    tuition = _GSAPP_ONE_YEAR_MS if one_year else _GSAPP_MS_ANNUAL
+    term_note = (
+        "three terms in 12 months"
+        if one_year
+        else f"${_GSAPP_MS_PER_TERM:,} per term × 2"
+    )
+    return {
+        "tuition_usd": tuition,
+        "funded": False,
+        "note": (
+            f"GSAPP M.S. in {field}: ${tuition:,} tuition ({term_note}; 12–19 points per "
+            f"term billed at ${_GSAPP_MS_PER_TERM:,}, additional points at $2,346/point)."
+        ),
+        "source": _GSAPP_TUITION_SRC[0],
+        "source_url": _GSAPP_TUITION_SRC[1],
+        "year": "2025-26",
+    }
+
+
+def _sipa_cost(degree: str) -> dict:
+    return {
+        "tuition_usd": _SIPA_TUITION_ANNUAL,
+        "funded": False,
+        "note": (
+            f"Columbia SIPA {degree} full-time tuition (${_SIPA_TUITION_PER_SEM:,} per "
+            f"semester × 2 = ${_SIPA_TUITION_ANNUAL:,}; 12–16.5 credits per term at the "
+            "standard rate)."
+        ),
+        "source": _SIPA_TUITION_SRC[0],
+        "source_url": _SIPA_TUITION_SRC[1],
+        "year": "2025-26",
+    }
+
+
+def _law_cost(degree: str) -> dict:
+    return {
+        "tuition_usd": _LAW_TUITION,
+        "funded": False,
+        "note": (
+            f"Columbia Law School {degree} tuition (the Law bulletin states the same "
+            f"${_LAW_TUITION:,} tuition for the J.D. and LL.M.)."
+        ),
+        "source": _LAW_TUITION_SRC[0],
+        "source_url": _LAW_TUITION_SRC[1],
+        "year": "2025-26",
+    }
+
+
+def _mailman_flat_cost(program: str, tuition: int, *, year: str = "2026-27") -> dict:
+    return {
+        "tuition_usd": tuition,
+        "funded": False,
+        "note": (
+            f"Mailman School flat-rate {program} tuition across two semesters "
+            f"(${tuition:,} total tuition; program fees apply on top)."
+        ),
+        "source": _MAILMAN_TUITION_SRC[0],
+        "source_url": _MAILMAN_TUITION_SRC[1],
+        "year": year,
+    }
+
+
 # Per-program graduate tuition, verified first-party (Columbia bulletin / school cost
-# pages). Programs whose tuition is published only on bot-blocked pages and could not be
-# confirmed first-party are omitted (recorded in _program_standard) rather than guessed:
-# MBA, M.S. Journalism, MIA/MPA, MSW and MFA.
+# pages). Ph.D. / J.S.D. / DrPH rows stay omitted-with-reason (funded or per-credit-only).
 _COST_BY_SLUG: dict[str, dict] = {
     "columbia-mba": {
         "tuition_usd": 88300,
@@ -1494,61 +1672,249 @@ _COST_BY_SLUG: dict[str, dict] = {
         "source_url": "https://business.columbia.edu/financial-aid/costs/full-time",
         "year": "2024-25",
     },
-    "columbia-computer-science-ms": {
-        "tuition_usd": 81000,
+    "columbia-emba": {
+        "tuition_usd": 105360,
         "funded": False,
         "note": (
-            "Columbia Engineering charges $2,700 per credit for M.S. students; the 30-point "
-            "M.S. in Computer Science is shown as 30 × $2,700 = $81,000 in tuition (excludes "
-            "fees)."
+            "EMBA-NY Friday/Saturday Year 1 tuition ($52,680 per term × Fall + Spring = "
+            "$105,360); total program tuition is $263,400 over five terms."
         ),
-        "source": "Columbia Engineering — Graduate Tuition, Fees and Payments (bulletin)",
+        "source": _CBS_EMBA_SRC[0],
+        "source_url": _CBS_EMBA_SRC[1],
+        "year": "2026-27",
+    },
+    "columbia-accounting-ms": {
+        "tuition_usd": 58284,
+        "funded": False,
+        "note": (
+            "MSAFA Year 1 flat-rate tuition (two semesters of the three-term program; "
+            "estimated third term $29,142)."
+        ),
+        "source": _CBS_MS_SRC[0],
+        "source_url": _CBS_MS_SRC[1],
+        "year": "2025-26",
+    },
+    "columbia-financial-economics-ms": {
+        "tuition_usd": 75256,
+        "funded": False,
+        "note": "MS in Financial Economics Year 1 flat-rate tuition (four-semester program).",
+        "source": _CBS_MS_SRC[0],
+        "source_url": _CBS_MS_SRC[1],
+        "year": "2025-26",
+    },
+    "columbia-marketing-science-ms": {
+        "tuition_usd": 79472,
+        "funded": False,
+        "note": (
+            "MS in Marketing Science flat-rate tuition for the two-semester portion of the "
+            "program (capstone typically taken in a third term at no additional tuition)."
+        ),
+        "source": _CBS_MS_SRC[0],
+        "source_url": _CBS_MS_SRC[1],
+        "year": "2025-26",
+    },
+    "columbia-computer-science-ms": _seas_ms_cost("Computer Science"),
+    "columbia-mechanical-engineering-ms": _seas_ms_cost("Mechanical Engineering"),
+    "columbia-electrical-engineering-ms": _seas_ms_cost("Electrical Engineering"),
+    "columbia-biomedical-engineering-ms": _seas_ms_cost("Biomedical Engineering"),
+    "columbia-chemical-engineering-ms": _seas_ms_cost("Chemical Engineering"),
+    "columbia-civil-engineering-ms": _seas_ms_cost("Civil Engineering"),
+    "columbia-applied-physics-ms": _seas_ms_cost("Applied Physics"),
+    "columbia-applied-mathematics-ms": _seas_ms_cost("Applied Mathematics"),
+    "columbia-materials-science-and-engineering-ms": _seas_ms_cost(
+        "Materials Science and Engineering"
+    ),
+    "columbia-earth-and-environmental-engineering-ms": _seas_ms_cost(
+        "Earth and Environmental Engineering"
+    ),
+    "columbia-computer-engineering-ms": _seas_ms_cost("Computer Engineering"),
+    "columbia-operations-research-ms": _seas_ms_cost("Operations Research"),
+    "columbia-industrial-engineering-ms": _seas_ms_cost("Industrial Engineering"),
+    "columbia-financial-engineering-ms": _seas_ms_cost("Financial Engineering"),
+    "columbia-management-science-and-engineering-ms": _seas_ms_cost(
+        "Management Science and Engineering"
+    ),
+    "columbia-data-science-ms": _seas_ms_cost("Data Science"),
+    "columbia-climate-and-society-ma": _gsas_ma_cost("Climate and Society"),
+    "columbia-human-rights-studies-ma": _gsas_ma_cost("Human Rights Studies"),
+    "columbia-qmss-ma": _gsas_ma_cost("Quantitative Methods in the Social Sciences"),
+    "columbia-statistics-ma": _gsas_ma_cost("Statistics"),
+    "columbia-jd": _law_cost("J.D."),
+    "columbia-llm": _law_cost("LL.M."),
+    "columbia-md": {
+        "tuition_usd": _MD_TUITION,
+        "funded": False,
+        "note": (
+            f"Vagelos College M.D. tuition (${_MD_TUITION:,} per year, uniform across "
+            "all four years)."
+        ),
+        "source": "Vagelos College of Physicians and Surgeons — M.D. budget",
+        "source_url": "https://www.vagelos.columbia.edu/education/degree-programs/md-program",
+        "year": "2025-26",
+    },
+    "columbia-dental-dds": {
+        "tuition_usd": _DDS_TUITION,
+        "funded": False,
+        "note": f"College of Dental Medicine D.D.S. tuition (${_DDS_TUITION:,} per year).",
+        "source": "Columbia College of Dental Medicine — student budget",
+        "source_url": "https://www.dental.columbia.edu/",
+        "year": "2026-27",
+    },
+    "columbia-physical-therapy-dpt": {
+        "tuition_usd": _DPT_TUITION_ANNUAL,
+        "funded": False,
+        "note": (
+            "Doctor of Physical Therapy Year 1 tuition (Fall $23,464 + Spring $23,464 = "
+            f"${_DPT_TUITION_ANNUAL:,}; summer term billed separately)."
+        ),
+        "source": "Columbia Programs in Physical Therapy — student budget",
         "source_url": (
-            "https://bulletin.columbia.edu/columbia-engineering/graduate-studies/"
-            "graduate-tuition-fees-payments/"
+            "https://www.vagelos.columbia.edu/education/academic-programs/"
+            "programs-physical-therapy/doctor-physical-therapy/financial-fact-sheet"
+        ),
+        "year": "2026-27",
+    },
+    "columbia-genetic-counseling-ms": {
+        "tuition_usd": 50731,
+        "funded": False,
+        "note": (
+            "MS in Genetic Counseling tuition ($50,731 per year; 21-month program requires "
+            "two years of enrollment)."
+        ),
+        "source": "Vagelos College — MS Genetic Counseling Tuition and Financial Aid",
+        "source_url": (
+            "https://www.vagelos.columbia.edu/education/academic-programs/"
+            "program-genetic-counseling/ms-genetic-counseling/admission/tuition-and-financial-aid"
         ),
         "year": "2025-26",
     },
-    "columbia-jd": {
-        "tuition_usd": 85368,
-        "total_cost_of_attendance": 93757,
+    "columbia-human-nutrition-ms": {
+        "tuition_usd": 56854,
         "funded": False,
         "note": (
-            "J.D. tuition; total university charges of $93,757 add the student activity, "
-            "university-services, health-services fees and (waivable) student health "
-            "insurance."
+            "Institute of Human Nutrition M.S. tuition for the one-year program "
+            "($56,854 for 2025-26)."
         ),
-        "source": "Columbia Law School — J.D. and LL.M. Tuition and Fees",
+        "source": "Columbia Institute of Human Nutrition — Tuition and Financial Aid",
         "source_url": (
-            "https://www.law.columbia.edu/about/departments/financial-aid/"
-            "jd-and-llm-tuition-and-fees"
+            "https://www.ihn.cuimc.columbia.edu/education/ms-human-nutrition/"
+            "tuition-and-financial-aid"
         ),
+        "year": "2025-26",
+    },
+    "columbia-journalism-ms": {
+        "tuition_usd": 85576,
+        "funded": False,
+        "note": "Full-time M.S. in Journalism tuition (9.5-month program).",
+        "source": _JOURNALISM_TUITION_SRC[0],
+        "source_url": _JOURNALISM_TUITION_SRC[1],
+        "year": "2025-26",
+    },
+    "columbia-journalism-ma": {
+        "tuition_usd": 77890,
+        "funded": False,
+        "note": "Master of Arts in Journalism tuition (9-month program).",
+        "source": _JOURNALISM_TUITION_SRC[0],
+        "source_url": _JOURNALISM_TUITION_SRC[1],
+        "year": "2025-26",
+    },
+    "columbia-data-journalism-ms": {
+        "tuition_usd": 117546,
+        "funded": False,
+        "note": (
+            "M.S. in Data Journalism tuition (12-month program spanning fall, spring, and "
+            "summer)."
+        ),
+        "source": "Columbia Journalism School — Cost of Attendance",
+        "source_url": "https://journalism.columbia.edu/cost-attendance",
+        "year": "2024-25",
+    },
+    "columbia-sipa-mia": _sipa_cost("MIA"),
+    "columbia-sipa-mpa": _sipa_cost("MPA"),
+    "columbia-public-health-mph": _mailman_flat_cost("MPH", 49888),
+    "columbia-health-administration-mha": _mailman_flat_cost("MHA", 49888),
+    "columbia-biostatistics-ms": {
+        "tuition_usd": 53352,
+        "funded": False,
+        "note": (
+            "Mailman M.S. in Biostatistics Year 1 tuition (estimated ~24 credits at "
+            "$2,223/credit = $53,352; per-credit rate applies for additional credits)."
+        ),
+        "source": _MAILMAN_TUITION_SRC[0],
+        "source_url": _MAILMAN_TUITION_SRC[1],
+        "year": "2026-27",
+    },
+    "columbia-social-work-msw": {
+        "tuition_usd": _SSW_TUITION_ANNUAL,
+        "funded": False,
+        "note": (
+            f"Columbia MSSW flat-rate tuition (${_SSW_TUITION_PER_SEM:,} per semester × 2 "
+            f"= ${_SSW_TUITION_ANNUAL:,}; up to 19.5 credits per semester at the flat rate)."
+        ),
+        "source": _SSW_TUITION_SRC[0],
+        "source_url": _SSW_TUITION_SRC[1],
         "year": "2025-26",
     },
     "columbia-architecture-march": {
-        "tuition_usd": 70380,
+        "tuition_usd": _GSAPP_MS_ANNUAL,
         "funded": False,
         "note": (
-            "GSAPP charges $35,190 per term (12-19 points); the figure shown is two terms = "
-            "$70,380 per year, with coursework beyond the band billed at $2,346 per point."
+            f"GSAPP M.Arch tuition (${_GSAPP_MS_PER_TERM:,} per term × 2 = "
+            f"${_GSAPP_MS_ANNUAL:,}; additional points at $2,346/point)."
         ),
-        "source": "Columbia GSAPP — Tuition and Aid",
-        "source_url": "https://www.arch.columbia.edu/admissions/tuition-aid",
+        "source": _GSAPP_TUITION_SRC[0],
+        "source_url": _GSAPP_TUITION_SRC[1],
         "year": "2025-26",
     },
-    "columbia-public-health-mph": {
-        "tuition_usd": 49888,
+    "columbia-urban-planning-ms": _gsapp_ms_cost("Urban Planning"),
+    "columbia-historic-preservation-ms": _gsapp_ms_cost("Historic Preservation"),
+    "columbia-real-estate-development-ms": _gsapp_ms_cost(
+        "Real Estate Development", one_year=True
+    ),
+    "columbia-urban-design-ms": _gsapp_ms_cost("Urban Design"),
+    "columbia-architecture-aad-ms": _gsapp_ms_cost("Advanced Architectural Design", one_year=True),
+    "columbia-arts-mfa": {
+        "tuition_usd": 74840,
         "funded": False,
         "note": (
-            "Full-time MPH flat-rate tuition across two semesters (the earliest year the "
-            "official page publishes is 2026-27); program fees apply on top."
+            "School of the Arts MFA tuition for full-residency Years 1–2 "
+            "($38,920 per semester × 2 = $74,840)."
         ),
-        "source": "Mailman School of Public Health — Tuition & Fees",
-        "source_url": (
-            "https://www.publichealth.columbia.edu/become-student/how-apply/financial-aid/"
-            "tuition-fees"
+        "source": _ARTS_TUITION_SRC[0],
+        "source_url": _ARTS_TUITION_SRC[1],
+        "year": "2025-26",
+    },
+    "columbia-film-media-studies-ma": {
+        "tuition_usd": 73868,
+        "funded": False,
+        "note": (
+            "M.A. in Film and Media Studies tuition ($36,934 per semester × 2 = $73,868)."
         ),
-        "year": "2026-27",
+        "source": _ARTS_TUITION_SRC[0],
+        "source_url": _ARTS_TUITION_SRC[1],
+        "year": "2025-26",
+    },
+    "columbia-nursing-msn": {
+        "tuition_usd": _MDE_TUITION_ANNUAL,
+        "funded": False,
+        "note": (
+            f"Master's Direct Entry (MDE) flat-rate tuition (${_MDE_TUITION_PER_SEM:,} per "
+            f"semester × 2 = ${_MDE_TUITION_ANNUAL:,}; 10–24 credits at the flat rate)."
+        ),
+        "source": _NURSING_TUITION_SRC[0],
+        "source_url": _NURSING_TUITION_SRC[1],
+        "year": "2024-25",
+    },
+    "columbia-nursing-dnp": {
+        "tuition_usd": _DNP_TUITION_ANNUAL,
+        "funded": False,
+        "note": (
+            f"Doctor of Nursing Practice full-time flat-rate tuition "
+            f"(${_DNP_TUITION_PER_SEM:,} per semester × 2 = ${_DNP_TUITION_ANNUAL:,})."
+        ),
+        "source": _NURSING_TUITION_SRC[0],
+        "source_url": _NURSING_TUITION_SRC[1],
+        "year": "2024-25",
     },
 }
 
@@ -2560,8 +2926,8 @@ def _program_standard(slug: str) -> dict:
     if slug not in _REVIEWS_BY_SLUG:
         omitted.append("external_reviews.summary")
     # Cost: undergraduate programs all carry the published Columbia undergraduate tuition;
-    # graduate programs carry tuition only where it was verified first-party. Programs
-    # whose graduate tuition is published only on bot-blocked pages omit the figure.
+    # graduate/professional programs carry tuition where verified first-party (see
+    # _COST_BY_SLUG). Funded Ph.D. / J.S.D. and per-credit-only DrPH omit the figure.
     is_undergrad = any(p["slug"] == slug and p["degree_type"] == "bachelors" for p in PROGRAMS)
     if not is_undergrad and slug not in _COST_BY_SLUG:
         # cost_data is cleared entirely for these programs, so both the figure and its
