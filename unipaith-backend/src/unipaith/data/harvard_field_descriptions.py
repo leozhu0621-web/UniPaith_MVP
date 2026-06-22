@@ -63,7 +63,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Harvard Faculty of Arts & Sciences biology spans genetics, cell biology, ecology, and neurobiology with undergraduate research in campus life-sciences institutes and the Harvard Medicine research network."
     ),
     'Biomathematics, Bioinformatics, and Computational Biology': (
-        "Computational biology training pairs genomics pipelines, statistical genetics, and systems biology across Harvard Faculty of Arts & Sciences, SEAS, and Harvard Medical School precision-medicine initiatives."
+        "Harvard T.H. Chan School of Public Health's computational-biology and quantitative-genetics training pairs statistical genetics, genomics pipelines, and population-scale data analysis for biomedical research."
     ),
     'Biomedical/Medical Engineering': (
         "Harvard Bioengineering integrates device design, imaging, and tissue engineering with Harvard Medical School Hospital clinical immersion — routinely ranked among the top undergraduate BME programs nationally."
@@ -141,7 +141,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Chinese, Japanese, and Korean language and cultural studies at Harvard Faculty of Arts & Sciences with the Center for East Asian Studies and study-abroad pathways."
     ),
     'Ecology, Evolution, Systematics, and Population Biology': (
-        "Field ecology, evolutionary genomics, and conservation biology at Harvard Faculty of Arts & Sciences with research at Harvard's Morris Arboretum and global field-station partnerships."
+        "Field ecology, evolutionary genomics, and conservation biology at Harvard Faculty of Arts & Sciences with research at the Arnold Arboretum, Harvard Forest, and the Museum of Comparative Zoology."
     ),
     'Economics': (
         "Harvard Faculty of Arts & Sciences and Harvard Business School economics is empirically rigorous — faculty research spans health, trade, development, and behavioral economics with the Harvard Institute for Economic Research."
@@ -264,7 +264,7 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Harvard Faculty of Arts & Sciences general studies pathways satisfy College distribution requirements across humanities, social sciences, and natural sciences for flexible degree plans."
     ),
     'Linguistic, Comparative, and Related Language Studies and Services': (
-        "Harvard Faculty of Arts & Sciences linguistics covers phonetics, syntax, sociolinguistics, and computational language science with ties to Harvard CIS and the Language Data Institute."
+        "Harvard Faculty of Arts & Sciences linguistics covers phonetics, phonology, syntax, semantics, historical linguistics, and sociolinguistics — one of the oldest U.S. linguistics departments, with strength in both theoretical and historical analysis."
     ),
     'Literature': (
         "Harvard Faculty of Arts & Sciences comparative literature examines literary theory, translation, and world literatures with resources at Houghton Library and the Barker Center."
@@ -309,10 +309,10 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
         "Harvard Faculty of Arts & Sciences music combines musicology, theory, and performance with Cambridge orchestra partnerships and campus ensemble opportunities."
     ),
     'Nanotechnology': (
-        "Institute for NanoBioTechnology graduate work spans nanomaterials, drug delivery, and imaging at the Paulson School of Engineering and Applied Sciences–medicine interface."
+        "Center for Nanoscale Systems work spans nanomaterials, drug delivery, and imaging at the Paulson School of Engineering and Applied Sciences–medicine interface."
     ),
     'Natural Resources Conservation and Research': (
-        "Environmental science and resource-management coursework at Harvard Faculty of Arts & Sciences addresses conservation biology, sustainability, and policy with Morris Arboretum field work."
+        "Environmental science and resource-management coursework at Harvard Faculty of Arts & Sciences addresses conservation biology, sustainability, and policy with field work at the Arnold Arboretum and Harvard Forest."
     ),
     'Natural Sciences': (
         "Broad natural-sciences distribution at Harvard College combines biology, chemistry, and physics foundations for pre-health and research paths."
