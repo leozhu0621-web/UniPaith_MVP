@@ -37,13 +37,17 @@ rate or uniform top-employer-industries list, so those institution outcome field
 Tuition repair (2026-06-22, ucsdgradtuition1): the master's and professional tiers shipped 0%
 ``tuition`` (matcher budget-fit STARVATION behind a 100% bachelor's tier — REPAIR_BACKLOG #3),
 even though UC San Diego's Office of the Registrar PUBLISHES a per-program annual tuition-and-fees
-schedule. Stamped the verified 2024-25 California-resident rate per tier (academic graduate $15,197
-res / $30,299 nonres; M.D. $44,715 / $56,960; Pharm.D. $50,345 / $62,590; Rady state-supported
-M.B.A. $53,727 / $65,972; Rady MS Business Analytics $71,300 self-supporting), each cited to the
-registrar table and computed on the same tuition+mandatory-fees-excluding-health-insurance basis as
-the undergraduate sticker. Funded research PhDs keep their $0 tuition-remission record, and the two
-remaining Rady self-supporting per-unit master's (MS Finance, MS Information Technology Management)
-record tuition omitted-with-reason — both never the undergrad sticker copied down.
+schedule. Stamped the verified 2024-25 California-resident rate where the registrar publishes a
+single annual figure on the academic basis — academic (state-supported) graduate $15,197 res /
+$30,299 nonres; M.D. $44,715 / $56,960; Pharm.D. $50,345 / $62,590 — each cited and computed on the
+same tuition+mandatory-fees-excluding-health-insurance basis as the undergraduate sticker. Every
+priced tier is distinct (the academic-graduate rate itself differs from the undergrad sticker), so
+this is never a copy-down. The funded research PhDs keep their $0 tuition-remission record, and the
+SELF-SUPPORTING / professional-fee master's — the Rady School of Management, the School of Global
+Policy & Strategy, the M.P.H., and the executive M.S. in Health Administration — record tuition
+omitted-with-reason: UCSD bills these on a separate per-unit cohort schedule with no single annual
+figure on the academic basis, so pricing them at the academic rate would understate them (coverage
+is not correctness) and a guessed per-unit total is not permitted — verify-or-omit.
 """
 
 # ruff: noqa: E501
@@ -662,9 +666,6 @@ _TUITION_MD_INSTATE = 44715     # Doctor of Medicine, resident
 _TUITION_MD_OOS = 56960
 _TUITION_PHARMD_INSTATE = 50345  # Doctor of Pharmacy, resident
 _TUITION_PHARMD_OOS = 62590
-_TUITION_MBA_INSTATE = 53727    # Rady state-supported M.B.A., resident
-_TUITION_MBA_OOS = 65972
-_TUITION_MSBA = 71300           # Rady MS Business Analytics (self-supporting, one rate)
 _GRAD_COST_SRC = (
     "UC San Diego Office of the Registrar — Graduate Registration Fees 2024-25",
     "https://students.ucsd.edu/finances/fees/registration/previous/2024-25/graduate.html",
@@ -677,10 +678,16 @@ _PHARMD_COST_SRC = (
     "UC San Diego Office of the Registrar — Skaggs School of Pharmacy Registration Fees 2024-25",
     "https://students.ucsd.edu/finances/fees/registration/previous/2024-25/pharmacy.html",
 )
-_RADY_COST_SRC = (
-    "UC San Diego Office of the Registrar — Rady School of Management Registration Fees 2024-25",
-    "https://students.ucsd.edu/finances/fees/registration/previous/2024-25/rady.html",
-)
+
+# Schools whose master's are billed on UCSD's SELF-SUPPORTING / professional-fee
+# schedule (a program-specific per-unit cohort rate UCSD does not publish as a single
+# annual figure on the academic-tuition basis used here): the Rady School of Management,
+# the School of Global Policy & Strategy, and the Herbert Wertheim School of Public
+# Health (the MPH). Their tuition is recorded omitted-with-reason rather than priced at
+# the academic-graduate rate (which would understate a self-supporting program — the
+# "coverage is not correctness" trap). The standalone executive MS in Health
+# Administration is handled by name below.
+_SELF_SUPPORTING_MASTERS_SCHOOLS = {RADY, GPS, PUBHEALTH}
 
 
 def _omit_cost(spec: dict) -> dict:
@@ -738,14 +745,13 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             return _TUITION_PHARMD_INSTATE, _grad_fee_cost(_TUITION_PHARMD_INSTATE, _TUITION_PHARMD_OOS, _PHARMD_COST_SRC, "Pharm.D.")
         return None, _omit_cost(spec)
     if dt == "masters":
-        if school == RADY:
-            if name == "Master of Business Administration":
-                return _TUITION_MBA_INSTATE, _grad_fee_cost(_TUITION_MBA_INSTATE, _TUITION_MBA_OOS, _RADY_COST_SRC, "Rady M.B.A.")
-            if name == "Master of Science in Business Analytics":
-                return _TUITION_MSBA, _grad_fee_cost(_TUITION_MSBA, None, _RADY_COST_SRC, "Rady MSBA")
-            # other Rady programs (MS Finance, MS IT Management) bill a self-supporting
-            # per-unit rate with no single published annual figure for this catalog name.
+        # Self-supporting / professional-fee master's record tuition omitted-with-reason
+        # (per-unit cohort billing, no single annual figure on the academic basis here) —
+        # never the academic-graduate rate applied to a program billed off a separate
+        # self-supporting schedule.
+        if school in _SELF_SUPPORTING_MASTERS_SCHOOLS or name == "Master of Science in Health Administration":
             return None, _omit_cost(spec)
+        # academic graduate: the standard state-supported UC graduate tuition & fees
         return _TUITION_GRAD_INSTATE, _grad_fee_cost(_TUITION_GRAD_INSTATE, _TUITION_GRAD_OOS, _GRAD_COST_SRC, "academic graduate")
     return None, _omit_cost(spec)
 
