@@ -3337,6 +3337,22 @@ _FULL_NAME_BY_SLUG: dict[str, str] = {
     "harvard-edld": "Doctor of Education Leadership (Ed.L.D.)",
     # GSD's conferred designation (not the generic "Master of Arts in …") — run-78.
     "harvard-real-estate-ms": "Master in Real Estate (MRE)",
+    # Remaining professional-degree flagships whose program_name IS already the conferred
+    # designation — pin them so ``_conferred_program_name`` doesn't double the credential
+    # ("Master of Arts in Master of Architecture (M.Arch)" → "Master of Architecture
+    # (M.Arch)"). Whole-class doubling clear (re-scanned live → 0). Run-78 follow-up.
+    "harvard-md": "Doctor of Medicine (M.D.)",
+    "harvard-dmd": "Doctor of Dental Medicine (D.M.D.)",
+    "harvard-mph": "Master of Public Health (M.P.H.)",
+    "harvard-mpp": "Master in Public Policy (M.P.P.)",
+    "harvard-mpa": "Master in Public Administration (M.P.A.)",
+    "harvard-march": "Master of Architecture (M.Arch)",
+    "harvard-mla": "Master in Landscape Architecture (M.L.A.)",
+    "harvard-mup": "Master in Urban Planning (M.U.P.)",
+    "harvard-mdes": "Master in Design Studies (M.Des.)",
+    "harvard-mdiv": "Master of Divinity (M.Div.)",
+    "harvard-mts": "Master of Theological Studies (M.T.S.)",
+    "harvard-alm": "Master of Liberal Arts (A.L.M.)",
 }
 
 
