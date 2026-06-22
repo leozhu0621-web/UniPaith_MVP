@@ -2640,18 +2640,21 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         )
 
     if dtype == "phd":
-        return 0, _pub_tuition_cost(
-            0,
+        # Matcher budget input = the REAL published research-doctoral tuition sticker
+        # ($20,800/yr, Cornell Graduate School). Funding is a SEPARATE signal carried by
+        # ``funded=True`` — NEVER 0 (which the matcher reads as "free") and never the
+        # undergraduate sticker copied down.
+        return _TUITION_PHD, _pub_tuition_cost(
+            _TUITION_PHD,
             (
-                "Cornell Ph.D. students in endowed and contract colleges typically receive full "
-                "tuition plus a stipend through fellowship and assistantship support; the "
-                f"published research-doctoral tuition sticker is ${_TUITION_PHD:,} per year "
-                "before aid."
+                "Published research-doctoral tuition sticker for Cornell endowed and contract "
+                f"colleges, 2025-26 (${_TUITION_PHD:,} per year before aid). Admitted Ph.D. "
+                "students typically receive full tuition plus a stipend through fellowship and "
+                "assistantship support, so most pay no out-of-pocket tuition."
             ),
             source=_PHD_FUNDING_SRC,
             source_url=_PHD_FUNDING_URL,
             funded=True,
-            extra={"published_tuition_sticker": _TUITION_PHD},
         )
 
     if dtype == "professional":
