@@ -1528,6 +1528,15 @@ _ROLLUP_RESOLVE: dict[str, str] = {
     # and Biological Sciences (BBS) field, administered by the College of Veterinary
     # Medicine (the owning college is set on the IPEDS row). Description unchanged (true).
     "Physiology, Pathology and Related Sciences": "Biomedical and Biological Sciences",
+    # Federal CIP rollup TITLES that no real degree carries — the run-79 whole-class
+    # residual (REPAIR_BACKLOG #3): the punctuation-keyed regex above missed these
+    # multi-clause federal series titles. Each is resolved to the verified Cornell
+    # graduate Field of Study name (gradschool.cornell.edu fields-of-study list).
+    "Biochemistry, Biophysics and Molecular Biology": "Biochemistry, Molecular and Cell Biology",  # CIP 26.02 → Cornell BMCB field  # noqa: E501
+    "Microbiological Sciences and Immunology": "Microbiology",  # CIP 26.05 → Cornell Microbiology field  # noqa: E501
+    "Neurobiology and Neurosciences": "Neurobiology and Behavior",  # CIP 26.15 → Cornell NB&B field  # noqa: E501
+    "Business Administration, Management and Operations": "Management",  # CIP 52.02 → Johnson PhD field of Management  # noqa: E501
+    "Natural Resources Conservation and Research": "Natural Resources and the Environment",  # CIP 03.01 → CALS dept/field (MS/PhD; bachelors dropped below)  # noqa: E501
 }
 
 # Federal "Other"/"General" buckets (and fields fully covered by a real flagship/other
@@ -1556,6 +1565,15 @@ _ROLLUP_DROP: frozenset[str] = frozenset({
     "Visual and Performing Arts, Other",
     "Health Professions and Related Clinical Sciences, Other",
     "Culinary Arts and Related Services",  # federal bucket — not a Cornell A&S degree
+    # Run-79 whole-class residual (REPAIR_BACKLOG #3): federal CIP titles with NO single
+    # real Cornell degree, or that collide with an existing real flagship/breadth row.
+    "Research and Experimental Psychology",  # CIP 42.27 — Cornell ships real Psychology (BA/MA/PhD)  # noqa: E501
+    "Behavioral Sciences",  # CIP 30.17 federal interdisciplinary — covered by Psychology
+    "Pharmacology and Toxicology",  # CIP 26.10 — not a Cornell graduate Field of Study
+    "Biological and Physical Sciences",  # CIP 30.01 federal interdisciplinary — covered by Biological Sciences  # noqa: E501
+    "Management Sciences and Quantitative Methods",  # CIP 52.13 — Johnson master's is the Two-Year MBA  # noqa: E501
+    "Allied Health Diagnostic, Intervention, and Treatment Professions",  # CIP 51.09 — no such Weill master's  # noqa: E501
+    "Legal Research and Advanced Professional Studies",  # CIP 22.02 — Cornell Law ships PhD in Law  # noqa: E501
 })
 
 # (rollup title, degree_type) → level-specific real Cornell degree name.
@@ -1579,6 +1597,11 @@ _ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
     ("Biomathematics, Bioinformatics, and Computational Biology", "bachelors"),
     ("Architectural History, Criticism, and Conservation", "bachelors"),
     ("Architectural History, Criticism, and Conservation", "masters"),
+    # Natural Resources and the Environment is a CALS graduate field (M.S./Ph.D./MPS); the
+    # undergraduate major in this area is "Environment & Sustainability" (a distinct name we
+    # do not mint here), so the federal-bachelor's row is dropped, not renamed (omit, never
+    # guess the undergrad designation — REPAIR_BACKLOG #3, run 79).
+    ("Natural Resources Conservation and Research", "bachelors"),
 })
 
 # Schools whose degrees are typically conferred as Bachelor/Master of Science.
@@ -1621,6 +1644,20 @@ _ROLLUP_NAME_RE = re.compile(
     # CIP 26.09 "Physiology, Pathology and Related Sciences" form — run-78 whole-class
     # durable gate so any future un-resolved same-class title raises the build error).
     r"|\band Related (?:Sciences|Services)\b"
+    # Run-79 whole-class residual (REPAIR_BACKLOG #3): the specific federal CIP series
+    # TITLES the punctuation tells above missed. Each is anchored to the federal title so a
+    # real Cornell degree (e.g. "Neurobiology and Behavior", "Biochemistry, Molecular and
+    # Cell Biology") never trips it — only the un-resolved federal mint does.
+    r"|, Management and Operations\b"  # CIP 52.02
+    r"|, Biophysics and Molecular Biology\b"  # CIP 26.02
+    r"|Research and Experimental Psychology\b"  # CIP 42.27
+    r"|Microbiological Sciences and Immunology\b"  # CIP 26.05
+    r"|Neurobiology and Neurosciences\b"  # CIP 26.15
+    r"|Pharmacology and Toxicology\b"  # CIP 26.10
+    r"|Management Sciences and Quantitative Methods\b"  # CIP 52.13
+    r"|Legal Research and Advanced Professional Studies\b"  # CIP 22.02
+    r"|Natural Resources Conservation and Research\b"  # CIP 03.01
+    r"|, Intervention, and Treatment Professions\b"  # CIP 51.09
     r"|[A-Za-z]/[A-Za-z]"
 )
 _CIP_CODE_RE = re.compile(r"\(CIP\s*\d|\b\d\d\.\d\d\b")
