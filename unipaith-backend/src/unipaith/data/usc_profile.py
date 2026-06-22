@@ -6244,35 +6244,236 @@ _COST_SRC = "U.S. Dept. of Education — College Scorecard (USC, UNITID 123961)"
 _COST_SRC_URL = "https://collegescorecard.ed.gov/school/?123961-University-of-Southern-California"
 
 
+# ── Published tuition (matcher-core budget signal — REPAIR_BACKLOG run 76 HIGH #1) ──
+# Catalog-wide 0% tuition starves the CPEF budget-fit signal. Tuition is institution-
+# PUBLISHED, so it is filled here from USC's own rates (verify-or-omit, never guessed):
+#   • Undergraduate — one uniform sticker (same in-state/out-of-state).
+#   • Graduate — billed PER UNIT at a university-wide rate, with three schools (Cinematic
+#     Arts, Viterbi, Marshall graduate) at their own published per-unit rates. Annualized
+#     at USC's full-time graduate load (8 units/semester = 16 units/year) for a comparable
+#     annual budget signal; the per-unit basis and load are stated in every note.
+#   • Professional doctorates (J.D., M.D., D.D.S., Pharm.D., D.P.T.) — their own published
+#     flat rates from the registrar tuition table.
+#   • Research doctorates — typically fully funded (full tuition remission + stipend); USC
+#     publishes no flat doctoral sticker, so tuition is omitted-with-reason (the per-unit
+#     basis is recorded in the note); funding is a SEPARATE signal, never a guessed sticker.
+# Figures are USC 2025-26 (registrar "Spring/Summer" column = current academic year, cross-
+# checked: undergrad $36,630/sem × 2 = $73,260) unless a note states otherwise.
+_TUI_SRC = "USC Office of Academic Records and Registrar — Tuition and Fees (2025-26)"
+_TUI_SRC_URL = "https://arr.usc.edu/tuition-and-fees/"
+_TUI_FA_SRC = "USC Financial Aid — Cost of Attendance (2025-26)"
+_TUI_FA_UG_URL = "https://financialaid.usc.edu/undergraduate-financial-aid/cost-of-attendance/"
+
+_TUITION_UNDERGRAD = 73260  # USC 2025-26 undergraduate tuition (uniform; financial aid + registrar)
+_UNDERGRAD_COA_2526 = 99139  # USC 2025-26 total cost of attendance
+_GRAD_UNITS_PER_YEAR = 16  # USC full-time graduate load (8 units/semester) used to annualize per-unit rates
+
+# Per-unit graduate tuition rates (2025-26 registrar Spring/Summer column = current year).
+_UNIT_GENERAL = 2467
+_UNIT_CINEMA = 2624
+_UNIT_VITERBI = 2665
+_UNIT_MARSHALL = 2541
+
+# Professional-program annual tuition (2025-26 registrar tuition table; per-term × terms/year).
+_TUITION_JD = 84034  # Gould J.D.: $42,017 / semester × 2
+_TUITION_MD = 74480  # Keck M.D.: $37,240 / semester × 2 (flat-fee)
+_TUITION_DDS = 124923  # Ostrow D.D.S.: $41,641 / trimester × 3 (September / January / May)
+_TUITION_PHARMD = 68866  # Mann Pharm.D.: $34,433 / semester × 2
+_TUITION_DPT = 86125  # Ostrow D.P.T.: published full-year tuition (years 1-2)
+_TUITION_FTMBA = 79893  # Marshall Full-Time MBA first-year tuition (2024-25)
+
+_MBA_FLAGSHIP = "usc-full-time-mba-program-mba"
+
+_PROF_TUITION_BY_SLUG: dict[str, tuple[int, str]] = {
+    "usc-law-jd": (
+        _TUITION_JD,
+        "USC Gould School of Law J.D. annual tuition, 2025-26 ($42,017 per semester × 2 "
+        "semesters; USC registrar tuition table).",
+    ),
+    "usc-medicine-md": (
+        _TUITION_MD,
+        "Keck School of Medicine M.D. annual tuition, 2025-26 ($37,240 per-semester flat-fee "
+        "× 2 semesters; USC registrar tuition table).",
+    ),
+    "usc-dental-surgery-dds": (
+        _TUITION_DDS,
+        "Herman Ostrow School of Dentistry D.D.S. annual tuition, 2025-26 ($41,641 per "
+        "trimester × 3 trimesters — September, January, May; USC registrar tuition table).",
+    ),
+    "usc-pharmacy-pharmd": (
+        _TUITION_PHARMD,
+        "USC Mann School of Pharmacy Pharm.D. annual tuition, 2025-26 ($34,433 per semester "
+        "× 2 semesters; USC registrar tuition table).",
+    ),
+    "usc-professional-entry-level-doctor-of-physical-therapy-program-dpt": (
+        _TUITION_DPT,
+        "USC Division of Biokinesiology and Physical Therapy D.P.T. tuition, 2025-26 "
+        "(published full-year rate for years 1-2; USC registrar tuition table).",
+    ),
+}
+
+# MBA-family programs at a distinct flat program tuition (not the per-unit grad rate); only
+# the Full-Time MBA has a single verified annual figure published, so the others omit.
+_MBA_OMIT_SLUGS = frozenset(
+    {
+        "usc-executive-mba-program-mba",
+        "usc-online-mba-program-mba",
+        "usc-international-mba-program-mba",
+        "usc-food-industry-management-program-mba",
+        "usc-mba-program-for-professionals-and-managers-mba",
+    }
+)
+
+# Clinical professional doctorates whose program-specific tuition USC does not publish as a
+# single citable annual figure on a public page (billed per unit / per term).
+_PROF_OMIT_SLUGS = frozenset(
+    {
+        "usc-doctor-of-nurse-anesthesia-practice-dnap",
+        "usc-entry-level-occupational-therapy-otd",
+        "usc-occupational-therapy-otd",
+    }
+)
+
+
+def _grad_unit_rate(school_key: str) -> tuple[int, str]:
+    if school_key == "CINEMA":
+        return _UNIT_CINEMA, "USC School of Cinematic Arts graduate per-unit rate"
+    if school_key == "VITERBI":
+        return _UNIT_VITERBI, "USC Viterbi School of Engineering graduate per-unit rate"
+    if school_key == "MARSHALL":
+        return _UNIT_MARSHALL, "USC Marshall School of Business graduate (500-level) per-unit rate"
+    return _UNIT_GENERAL, "USC university-wide graduate per-unit rate"
+
+
+def _annual(unit_rate: int) -> int:
+    return unit_rate * _GRAD_UNITS_PER_YEAR
+
+
+def _pub_cost(
+    tuition: int,
+    note: str,
+    *,
+    funded: bool = False,
+    source: str = _TUI_SRC,
+    source_url: str = _TUI_SRC_URL,
+    year: str = "2025-26",
+    extra: dict | None = None,
+) -> dict:
+    cost: dict = {
+        "tuition_usd": tuition,
+        "funded": funded,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": year,
+    }
+    if extra:
+        cost.update(extra)
+    return cost
+
+
+def _omit_cost(
+    note: str,
+    *,
+    source: str = _TUI_SRC,
+    source_url: str = _TUI_SRC_URL,
+) -> dict:
+    return {"note": note, "source": source, "source_url": source_url, "year": "2025-26"}
+
+
 def _undergrad_cost() -> dict:
-    return {
-        "total_cost_of_attendance": _UNDERGRAD_COA,
-        "avg_net_price": _AVG_NET_PRICE,
-        "funded": False,
-        "note": (
-            "USC's published academic-year cost of attendance is about $90,300 and the average net "
-            "price after grant aid is about $32,740 (College Scorecard, UNITID 123961). USC is "
-            "need-blind in admission and meets the demonstrated financial need of admitted students "
-            "who qualify; the 2025-26 undergraduate tuition estimate is about $73,260. See the USC "
-            "Financial Aid Office for current figures."
-        ),
-        "source": _COST_SRC,
-        "source_url": _COST_SRC_URL,
-        "year": "2023-24",
-    }
+    return _pub_cost(
+        _TUITION_UNDERGRAD,
+        "USC 2025-26 undergraduate tuition is $73,260 (the same for in-state and out-of-state "
+        "students); the published total cost of attendance is about $99,139 and the average "
+        "net price after grant aid is about $32,740. USC is need-blind in admission and meets "
+        "the demonstrated financial need of admitted students who qualify.",
+        source=_TUI_FA_SRC,
+        source_url=_TUI_FA_UG_URL,
+        extra={
+            "total_cost_of_attendance": _UNDERGRAD_COA_2526,
+            "avg_net_price": _AVG_NET_PRICE,
+        },
+    )
 
 
-def _grad_cost_fallback(spec: dict) -> dict:
-    return {
-        "note": (
-            "Tuition for this graduate/professional program is set by USC and is typically billed per "
-            "unit or per term, so it varies by program and enrollment; a single verified annual figure "
-            "is not published here. Many doctoral students are funded through assistantships and "
-            "fellowships. See the program's tuition page for current figures."
-        ),
-        "source": "USC Financial Aid / program tuition page",
-        "source_url": _website_for(spec),
-    }
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return (matcher_tuition, cost_data) from USC-published 2025-26 rates.
+
+    A ``None`` tuition means the matcher field is honestly omitted (funded research
+    doctorate / clinical doctorate / non-degree diploma / per-program-flat MBA with no
+    single published annual figure); the basis is recorded in the cost note.
+    """
+    slug = spec["slug"]
+    dtype = spec["degree_type"]
+    school_key = spec["school_key"]
+
+    if dtype == "bachelors":
+        return _TUITION_UNDERGRAD, _undergrad_cost()
+
+    if slug in _PROF_TUITION_BY_SLUG:
+        amount, note = _PROF_TUITION_BY_SLUG[slug]
+        return amount, _pub_cost(amount, note)
+
+    if slug == _MBA_FLAGSHIP:
+        return _TUITION_FTMBA, _pub_cost(
+            _TUITION_FTMBA,
+            "USC Marshall Full-Time MBA first-year tuition, 2024-25 ($79,893; billed at a flat "
+            "program rate rather than the per-unit graduate rate).",
+            source="USC Marshall — Full-Time MBA Tuition and Fees",
+            source_url=(
+                "https://www.marshall.usc.edu/programs/graduate-programs/mba-programs/"
+                "full-time-mba/tuition-fees"
+            ),
+            year="2024-25",
+        )
+
+    if slug in _MBA_OMIT_SLUGS:
+        return None, _omit_cost(
+            "This M.B.A. program is billed at a distinct flat program tuition that USC Marshall "
+            "publishes per program rather than at the per-unit graduate rate; see the program's "
+            "tuition page for the current figure.",
+            source="USC Marshall — MBA Programs",
+            source_url="https://www.marshall.usc.edu/programs/graduate-programs/mba-programs",
+        )
+
+    if slug in _PROF_OMIT_SLUGS:
+        return None, _omit_cost(
+            "This clinical professional doctorate is billed per unit or per term at a program-"
+            "specific rate that USC does not publish as a single annual figure on a public page; "
+            "see the program's tuition page for current rates.",
+            source_url=_website_for(spec),
+        )
+
+    if dtype == "phd":
+        unit, label = _grad_unit_rate(school_key)
+        annual = _annual(unit)
+        return None, _omit_cost(
+            f"Doctoral coursework enrolls at the {label} of ${unit:,}/unit (2025-26; about "
+            f"${annual:,}/year at a full-time load), but admitted students in USC's research "
+            "doctorates are typically fully funded with full tuition remission plus a stipend, "
+            "so most pay no out-of-pocket tuition; USC publishes no flat annual sticker for the "
+            "funded doctorate.",
+            source_url=_website_for(spec),
+        )
+
+    if dtype == "diploma":
+        return None, _omit_cost(
+            "This non-degree graduate diploma is billed per unit at USC's graduate rate with no "
+            "single published annual tuition; see the program's tuition page.",
+            source_url=_website_for(spec),
+        )
+
+    # Master's and any remaining graduate program: USC's per-unit graduate rate, annualized.
+    unit, label = _grad_unit_rate(school_key)
+    annual = _annual(unit)
+    return annual, _pub_cost(
+        annual,
+        f"Billed at the {label} of ${unit:,}/unit (2025-26); annualized at USC's full-time "
+        f"graduate load of {_GRAD_UNITS_PER_YEAR} units/year (≈${annual:,}/year). Actual cost "
+        "varies with enrollment pace and the program's total unit count.",
+        extra={"per_unit": unit},
+    )
 
 
 # ── Flagship outcomes / class profile / faculty / reviews ──────────────────
@@ -6770,8 +6971,8 @@ def _requirements_for(spec: dict) -> dict:
     return _REQ_GRAD_GENERIC
 
 
-def _program_standard(slug: str, spec: dict) -> dict:
-    omitted: list[str] = ["cost_data.tuition_usd"]
+def _program_standard(slug: str, spec: dict, *, tuition_omitted: bool = False) -> dict:
+    omitted: list[str] = ["cost_data.tuition_usd"] if tuition_omitted else []
     if not spec.get("tracks"):
         omitted.append("tracks")
     if slug not in _OUTCOMES_BY_SLUG:
@@ -6907,15 +7108,12 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.delivery_format = spec.get("delivery_format", "on_campus")
         _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], _kw)
-        if spec["degree_type"] == "bachelors":
-            p.tuition = None
-            p.cost_data = _undergrad_cost()
-        else:
-            p.tuition = None
-            p.cost_data = _grad_cost_fallback(spec)
+        tuition, cost_data = _program_tuition(spec)
+        p.tuition = tuition
+        p.cost_data = cost_data
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
-        outcomes["_standard"] = _program_standard(slug, spec)
+        outcomes["_standard"] = _program_standard(slug, spec, tuition_omitted=tuition is None)
         p.outcomes_data = outcomes
         p.tracks = spec.get("tracks")
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)

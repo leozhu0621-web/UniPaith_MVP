@@ -51,10 +51,9 @@ def _school_snapshot(m: dict) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    is_ug = spec["degree_type"] == "bachelors"
-    cost = u._undergrad_cost() if is_ug else u._grad_cost_fallback(spec)
+    tuition, cost = u._program_tuition(spec)
     outcomes = dict(u._OUTCOMES_BY_SLUG.get(slug, {}))
-    outcomes["_standard"] = u._program_standard(slug, spec)
+    outcomes["_standard"] = u._program_standard(slug, spec, tuition_omitted=tuition is None)
     kw = u._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(u._KEYWORDS_BY_SCHOOL[spec["school"]])
     return {
         "program_name": spec["program_name"],
@@ -135,10 +134,56 @@ def test_every_program_is_conformant_or_omitted():
     for spec in u.PROGRAMS:
         snap = _program_snapshot(spec)
         res = check_conformance("program", snap, profile_version=STANDARD_VERSION)
-        omitted = set(u._program_standard(spec["slug"], spec)["omitted"])
+        tuition = u._program_tuition(spec)[0]
+        omitted = set(
+            u._program_standard(spec["slug"], spec, tuition_omitted=tuition is None)["omitted"]
+        )
         bad = _gaps("program", res, omitted)
         assert not bad, f"{spec['slug']} has un-omitted gaps: {bad}"
         assert snap["content_sources"], f"{spec['slug']} missing content_sources"
+
+
+def test_published_tuition_coverage():
+    """Tuition is a matcher-core, institution-PUBLISHED budget field — the catalog must
+    not ship 0% (REPAIR_BACKLOG run 76 HIGH #1). Every published tier is filled with a
+    real, distinct, cited rate; only funded research doctorates / per-program-flat MBA
+    variants / clinical doctorates without a single published annual figure / the
+    non-degree diploma are omitted-with-reason (never the undergrad sticker copied down).
+    """
+    from collections import defaultdict
+
+    ug = u._TUITION_UNDERGRAD
+    filled = defaultdict(int)
+    total = defaultdict(int)
+    values = defaultdict(set)
+    for spec in u.PROGRAMS:
+        tuition, cost = u._program_tuition(spec)
+        dt = spec["degree_type"]
+        total[dt] += 1
+        # Every cost record is cited, whether filled or omitted-with-reason.
+        assert cost.get("source") and cost.get("source_url"), spec["slug"]
+        if tuition is None:
+            # Omitted tiers must carry a real reason, never an empty record.
+            assert cost.get("note"), spec["slug"]
+        else:
+            filled[dt] += 1
+            values[dt].add(tuition)
+            assert cost.get("tuition_usd") == tuition, spec["slug"]
+
+    # Bachelor's: uniform published sticker on every row.
+    assert filled["bachelors"] == total["bachelors"]
+    assert values["bachelors"] == {ug}
+    # Master's tier is filled (not a tier-wide null), with DISTINCT real rates (no copy-down).
+    assert filled["masters"] >= total["masters"] - 6
+    assert len(values["masters"]) >= 4
+    # Professional tier publishes flat rates — at least the verified doctorates are filled.
+    assert filled["professional"] >= 5
+    # No graduate / professional row carries the undergraduate sticker (copy-down guard).
+    for dt in ("masters", "professional"):
+        assert ug not in values[dt], f"{dt} carries the undergrad sticker (copy-down)"
+    # Catalog-wide aggregate is no longer ~0% (the run-76 defect).
+    agg_filled = sum(filled.values())
+    assert agg_filled / len(u.PROGRAMS) > 0.5
 
 
 def test_no_slug_prefixed_descriptions():
