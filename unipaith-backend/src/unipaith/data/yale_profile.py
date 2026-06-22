@@ -2037,6 +2037,253 @@ _COST_BY_SLUG: dict[str, dict] = {
     },
 }
 
+# ── Published graduate-tier tuition (REPAIR_BACKLOG #3 — master's/professional
+# starvation behind a 100% bachelor's tier) ──────────────────────────────────
+# Yale charges graduate/professional tuition by SCHOOL, each publishing a single
+# full-time figure (Program.tuition is read as ANNUAL tuition by the matcher).
+# Every value below is verified against the Yale University Catalog or the owning
+# school's official tuition page (2025-26). Values are SCHOOL-distinct (GSAS
+# $50,900 · Environment $53,550 · Divinity $30,576 · Architecture $64,400 · Law
+# $76,636 · Medicine $74,460 · Jackson $62,900 · SOM $87,800 · Music/Drama $0),
+# never the $67,250 undergraduate sticker copied down. Funded research doctorates
+# and the few graduate programs with no single published figure stay omitted-with-
+# reason (never guessed). Funding (e.g. Jackson covers 100% of M.P.P. tuition) is a
+# SEPARATE signal — the published sticker is what the matcher scores on.
+_GSAS_MASTERS_TUITION = 50900  # GSAS full-time tuition, all terminal master's
+_SOM_SINGLE_DEGREE_TUITION = 87800  # SOM MBA / MAM / MMS single-degree tuition
+_LAW_TUITION = 76636  # Yale Law full-time tuition — J.D. = LL.M. = M.S.L.
+_ARCH_TUITION = 64400  # Yale School of Architecture full-time tuition
+_DIV_TUITION = 30576  # Yale Divinity School full tuition (3/4-time or more)
+
+_GSAS_TUITION_SRC = (
+    "Yale University Catalog — Graduate School of Arts and Sciences, Tuition & Fees",
+    "https://catalog.yale.edu/gsas/financing/tuition-fees/",
+)
+
+
+def _gsas_masters_cost(field: str) -> dict:
+    return {
+        "tuition_usd": _GSAS_MASTERS_TUITION,
+        "funded": False,
+        "note": (
+            f"Standard full-time GSAS tuition for the terminal master's in {field} "
+            "($25,450 per term); GSAS terminal master's are self-funded."
+        ),
+        "source": _GSAS_TUITION_SRC[0],
+        "source_url": _GSAS_TUITION_SRC[1],
+        "year": "2025-26",
+    }
+
+
+def _som_single_degree_cost(program: str) -> dict:
+    return {
+        "tuition_usd": _SOM_SINGLE_DEGREE_TUITION,
+        "funded": False,
+        "note": (
+            f"School of Management single-degree program tuition (applies to the MBA, "
+            f"MAM and the one-year MMS specialized master's, including {program}), plus a "
+            "$500 mandatory program fee."
+        ),
+        "source": "Yale University Catalog — School of Management, Tuition & Fees",
+        "source_url": "https://catalog.yale.edu/management/tuition-fees/",
+        "year": "2025-26",
+    }
+
+
+def _law_cost(degree: str) -> dict:
+    return {
+        "tuition_usd": _LAW_TUITION,
+        "funded": False,
+        "note": (
+            f"Yale Law School full-time tuition; the bulletin states the {degree} pays the "
+            "same tuition as the J.D."
+        ),
+        "source": "Yale Law School — Cost of Attendance",
+        "source_url": "https://law.yale.edu/admissions/cost-financial-aid/cost-attendance",
+        "year": "2025-26",
+    }
+
+
+def _arch_cost(degree: str) -> dict:
+    return {
+        "tuition_usd": _ARCH_TUITION,
+        "funded": False,
+        "note": (
+            f"Yale School of Architecture full-time tuition (the school's single published "
+            f"rate, applying to the {degree}); includes Yale Health coverage."
+        ),
+        "source": "Yale University Catalog — School of Architecture, Tuition",
+        "source_url": "https://catalog.yale.edu/architecture/tuition/",
+        "year": "2025-26",
+    }
+
+
+def _div_cost(degree: str) -> dict:
+    return {
+        "tuition_usd": _DIV_TUITION,
+        "funded": False,
+        "note": (
+            f"Yale Divinity School full tuition at three-quarter-time or more (applies to the "
+            f"M.Div., M.A.R. and S.T.M., here the {degree}); YDS offers full-tuition "
+            "scholarships to students with demonstrated need."
+        ),
+        "source": "Yale University Catalog — Divinity School, Tuition & Fees",
+        "source_url": "https://catalog.yale.edu/div/educational-expenses-financial-aid/tuition-fees/",
+        "year": "2025-26",
+    }
+
+
+def _tuition_free_cost(school: str, source: str, source_url: str) -> dict:
+    return {
+        "tuition_usd": 0,
+        "total_cost_of_attendance": 0,
+        "funded": True,
+        "note": (
+            f"{school} is tuition-free: every admitted full-time degree/certificate "
+            "student receives 100% tuition remission. Students still pay living costs, "
+            "fees and insurance."
+        ),
+        "source": source,
+        "source_url": source_url,
+        "year": "2025-26",
+    }
+
+
+_DRAMA_FREE_SRC = (
+    "Bulletin of Yale University — David Geffen School of Drama, Financial Aid Policy",
+    "https://bulletin.yale.edu/bulletins/drama/financial-aid-policy",
+)
+_MUSIC_FREE_SRC = ("Yale School of Music — Financial Aid", "https://music.yale.edu/financial-aid")
+
+_COST_BY_SLUG.update({
+    # GSAS terminal master's — standard $50,900 full-time tuition
+    "yale-african-studies-gsas-ma": _gsas_masters_cost("African Studies"),
+    "yale-archaeological-studies-gsas-ma": _gsas_masters_cost("Archaeological Studies"),
+    "yale-east-asian-studies-gsas-ma": _gsas_masters_cost("East Asian Studies"),
+    "yale-european-and-russian-studies-gsas-ma": _gsas_masters_cost(
+        "European and Russian Studies"
+    ),
+    "yale-international-and-development-economics-gsas-ma": _gsas_masters_cost(
+        "International and Development Economics"
+    ),
+    "yale-statistics-gsas-ma": _gsas_masters_cost("Statistics"),
+    "yale-personalized-medicine-and-applied-engineering-gsas-ma": _gsas_masters_cost(
+        "Personalized Medicine and Applied Engineering"
+    ),
+    # School of the Environment master's — $53,550 (same rate as M.E.M./M.E.Sc.)
+    "yale-master-of-forestry-mf-ms": {
+        "tuition_usd": 53550,
+        "funded": False,
+        "note": "Master's-program tuition (applies to the M.E.M., M.E.Sc., M.F. and M.F.S.).",
+        "source": "Yale University Catalog — School of the Environment, Tuition",
+        "source_url": (
+            "https://catalog.yale.edu/environment/tuition-fees-other-expenses/"
+            "masters-program-tuition-fees/"
+        ),
+        "year": "2025-26",
+    },
+    "yale-master-of-forest-science-mfs-ms": {
+        "tuition_usd": 53550,
+        "funded": False,
+        "note": "Master's-program tuition (applies to the M.E.M., M.E.Sc., M.F. and M.F.S.).",
+        "source": "Yale University Catalog — School of the Environment, Tuition",
+        "source_url": (
+            "https://catalog.yale.edu/environment/tuition-fees-other-expenses/"
+            "masters-program-tuition-fees/"
+        ),
+        "year": "2025-26",
+    },
+    # Divinity master's — $30,576 (same YDS tuition as the M.Div.)
+    "yale-master-of-arts-in-religion-mar-ms": _div_cost("M.A.R."),
+    "yale-master-of-sacred-theology-stm-ms": _div_cost("S.T.M."),
+    # Architecture master's — $64,400 (school's single published rate)
+    "yale-master-of-architecture-ii-march-ii-ms": _arch_cost("M.Arch II"),
+    "yale-master-of-environmental-design-med-ms": _arch_cost("M.E.D."),
+    # Law degrees — $76,636 (J.D. = LL.M. = M.S.L. per the Law bulletin)
+    "yale-juris-doctor-jd-prof": _law_cost("J.D."),
+    "yale-master-of-laws-llm-ms": _law_cost("LL.M."),
+    "yale-master-of-studies-in-law-msl-ms": _law_cost("M.S.L."),
+    # Medicine — M.D. $74,460 (uniform across all four years)
+    "yale-doctor-of-medicine-md-prof": {
+        "tuition_usd": 74460,
+        "total_cost_of_attendance": 110728,
+        "funded": False,
+        "note": (
+            "M.D. program tuition, charged uniformly across all four years; estimated "
+            "total cost of attendance shown."
+        ),
+        "source": "Yale School of Medicine — M.D. Program Cost of Attendance",
+        "source_url": "https://medicine.yale.edu/md-program/financialaid/mdprogram/budget/2025-budget/",
+        "year": "2025-26",
+    },
+    # Jackson School — M.P.P. $62,900 (Jackson funds 100% of tuition; sticker shown)
+    "yale-master-of-public-policy-in-global-affairs-mpp-ms": {
+        "tuition_usd": 62900,
+        "total_cost_of_attendance": 93322,
+        "funded": True,
+        "note": (
+            "Published full-time M.P.P. tuition for the nine-month year; the Jackson "
+            "School covers 100% of tuition for every M.P.P. student, so the sticker is "
+            "the budget signal, not the out-of-pocket cost."
+        ),
+        "source": "Yale Jackson School of Global Affairs — Tuition & Funding",
+        "source_url": "https://jackson.yale.edu/admissions/mpp/tuition-funding/",
+        "year": "2025-26",
+    },
+    # School of Management single-degree master's — $87,800
+    "yale-master-of-advanced-management-mam-ms": _som_single_degree_cost(
+        "the Master of Advanced Management"
+    ),
+    "yale-masters-degree-in-asset-management-ms": _som_single_degree_cost(
+        "the M.M.S. in Asset Management"
+    ),
+    "yale-masters-degree-in-global-business-and-society-ms": _som_single_degree_cost(
+        "the M.M.S. in Global Business & Society"
+    ),
+    "yale-masters-degree-in-systemic-risk-ms": _som_single_degree_cost(
+        "the M.M.S. in Systemic Risk"
+    ),
+    "yale-masters-degree-in-technology-management-ms": _som_single_degree_cost(
+        "the M.M.S. in Technology Management"
+    ),
+    # School of Management — EMBA $224,500 first-year total program fee
+    "yale-mba-for-executives-emba-ms": {
+        "tuition_usd": 224500,
+        "funded": False,
+        "note": (
+            "First-year total program fee for the MBA for Executives (tuition, required "
+            "textbooks and study materials, a laptop, and meals on class days); the "
+            "second-year fee is $216,840."
+        ),
+        "source": "Yale University Catalog — School of Management, Tuition & Fees",
+        "source_url": "https://catalog.yale.edu/management/tuition-fees/",
+        "year": "2025-26",
+    },
+    # David Geffen School of Drama — tuition-free since 2021-22
+    "yale-master-of-fine-arts-in-drama-mfa-ms": _tuition_free_cost(
+        "The David Geffen School of Drama at Yale", *_DRAMA_FREE_SRC
+    ),
+    "yale-certificate-in-drama-cert": _tuition_free_cost(
+        "The David Geffen School of Drama at Yale", *_DRAMA_FREE_SRC
+    ),
+    "yale-doctor-of-fine-arts-dfa-phd": _tuition_free_cost(
+        "The David Geffen School of Drama at Yale", *_DRAMA_FREE_SRC
+    ),
+    # School of Music — tuition-free since 2005 (Adams gift)
+    "yale-master-of-musical-arts-mma-ms": _tuition_free_cost(
+        "The Yale School of Music", *_MUSIC_FREE_SRC
+    ),
+    "yale-artist-diploma-ad-cert": _tuition_free_cost(
+        "The Yale School of Music", *_MUSIC_FREE_SRC
+    ),
+    "yale-certificate-in-performance-cert": _tuition_free_cost(
+        "The Yale School of Music", *_MUSIC_FREE_SRC
+    ),
+    "yale-doctor-of-musical-arts-dma-phd": _tuition_free_cost(
+        "The Yale School of Music", *_MUSIC_FREE_SRC
+    ),
+})
+
 # ── Program-specific outcomes (College Scorecard Field of Study, by CIP) ────
 # Where the federal College Scorecard publishes a Field-of-Study median earnings (one
 # year after completion) for an awarded CIP at UNITID 130794, we use it (program scope).
