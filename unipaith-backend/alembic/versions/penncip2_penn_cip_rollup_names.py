@@ -27,7 +27,7 @@ whole class cannot regress. Idempotent: ``penn_profile.apply`` upserts by slug +
 de-fabricated duplicate rows, then re-derives ``program_preferences`` for the catalog.
 
 Revision ID: penncip2
-Revises: yalegradtuition1
+Revises: harvardndmrg1
 Create Date: 2026-06-22
 """
 
@@ -42,7 +42,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "penncip2"
-down_revision = "yalegradtuition1"
+down_revision = "harvardndmrg1"
 branch_labels = None
 depends_on = None
 
