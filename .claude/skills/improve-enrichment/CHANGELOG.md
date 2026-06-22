@@ -6264,3 +6264,115 @@ source + git instead). Substantive DB-free check: imported `profile_standard/ant
 over all 40 live catalogs (they compute cleanly), and verified against LIVE prod that gold MIT scores 0 on every
 description-quality metric (the 0 control; `name_prefixed=1` is the known benign real-described row). This grader
 PR changes only the three skill markdown files (no code, no data, no migration), so backend CI is unaffected.
+
+## 2026-06-22 — Run 77 (FULL-FLEET sweep of all 300 live + all 40 catalogs · catalog-wide 0% tuition + CMU deploy-strand CLEARED · NEW worst tier = residual CIP-TITLE NAMES on Cornell/Harvard/Penn · 1 rule change — the comma-and rollup tell false-flags gold MIT's own real "Science, Technology, and Society")
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+reusing `profile_standard/anti_stub.py` directly (paginated full program list of all 40 program-bearing
+catalogs ≈ 8,400 programs; the other 260 are bare institution-level stubs). Per catalog I computed `analyze`,
+`machine_artifacts`, `scrape_debris`, `template_slot_artifacts`, `frame_stripped_shared_body` (abs150),
+**tuition COVERAGE + VALUE distribution grouped by `degree_type`**, a **campus-photo count on ALL 300**, and a
+**NEW cross-institution CIP-title NAME scan** (multi-clause field strings shared verbatim across ≥2
+institutions). Where a metric and the data disagreed I went direct — web-verified BU Law / BU general tuition,
+computed the true alembic head set from the repo, listed the merged PRs since run 76.
+
+**Merged since run 76 (verified LIVE):** the run-76 HIGH tier was repaired — USC #1078 + NYU #1080 + UW #1074
+(catalog-wide 0% tuition → 97% / 72% / 95%), CMU #1073/#1082-era (deploy-strand → 77%, master's filled),
+Cornell #1071 (PhD value-correctness), Purdue #1082 (graduate-tier tuition — MERGED to main as the single
+alembic head, but reads master's 0/68 LIVE = deploy lag). STRUCTURE + DESCRIPTIONS remain CLEAN fleet-wide:
+`template_slot_artifacts` / `scrape_debris` / `machine_artifacts` = 0 on all 40 catalogs; only benign marginal
+`frame_abs` (GT 5, Yale/Duke/Chicago/Northwestern 1) and MIT's known `name_prefixed=1`.
+
+**The 1 rule change (bounded; the ONLY genuinely-new gap-class after a full-fleet sweep):**
+- **The comma-and rollup tell (miss #2) was OVER-BROAD — applied bluntly it FALSE-FLAGS gold MIT's OWN real
+  "Science, Technology, and Society" major (a rulebook contradiction: the tell would reject the description
+  0-control itself), and would pressure mangling other real multi-clause majors.** Prior miss-#2 bullets ban
+  the "federal multi-clause comma-and list" as a degree name — but the true discriminator is whether the
+  institution ACTUALLY AWARDS the string, not merely whether the field carries commas-and. A genuine
+  interdisciplinary major can carry a multi-clause name the institution publishes verbatim (MIT "Science,
+  Technology, and Society"; "Molecular, Cellular, and Developmental Biology" = MCDB; "Speech, Language, and
+  Hearing Sciences"; "Russian, East European, and Eurasian Studies"; "Theater, Dance, and Performance
+  Studies"; "Radio/Television/Film"). The DEFECT is specifically the verbatim federal CIP TITLE the
+  institution does NOT award (real degree has a different published name): "Linguistic, Comparative, and
+  Related Language Studies and Services" (real: Linguistics), "Electrical, Electronics, and Communications
+  Engineering" (real: Electrical Engineering), "Ecology, Evolution, Systematics, and Population Biology"
+  (real: EEB), "Biomathematics, Bioinformatics, and Computational Biology" (real: Computational Biology),
+  "Architectural History, Criticism, and Conservation". Two tells separate them: (a) the federal "…and
+  Related…Studies and Services" / "…, and {parent} Engineering/Biology" suffix; (b) the SAME string appearing
+  verbatim across ≥2 DIFFERENT institutions (a real major name is institution-specific). A TIGHTENING toward
+  precision + no-fabrication in BOTH directions (resolve the CIP title to the real name; NEVER mangle a
+  verified real major — omit-never-guess in reverse); loosens NO invariant. Added as a sub-bullet under miss
+  #2 directly after the credential-form-agnostic rollup bullet. Evidence: live API this run — Cornell (12
+  rows), Harvard (11), Penn (10) ship the five verbatim CIP titles across BA/MA/PhD/cert (identical strings on
+  all three = the CIP mint), while gold MIT ships 0 and carries its real "Science, Technology, and Society"
+  major. Why only 1 change: the full-fleet sweep found NO other genuinely-new defect CLASS — structure +
+  descriptions are clean fleet-wide, and every other live defect (master's/prof-tier null, the Purdue deploy
+  lag, the seeds) maps to an existing rule, so the bounded/anti-churn rail forbids inventing more; that work is
+  repair-queueing + compliance logging.
+
+**Cleared since run 76 (verified LIVE — removed from backlog):**
+- **catalog-wide 0% tuition (run-76 HIGH #1):** USC 97% · NYU 72% · UW-Seattle 95% (all tiers now stamped).
+- **CMU deploy-strand (run-76 HIGH #2):** now 77% agg, master's filled — the deploy landed.
+
+**VERIFIED NOT-A-DEFECT this run (false-positive AVOIDED — the run-75 class, do NOT re-queue):**
+- **Boston University professional Law tier.** Live: 15 of 20 BU professional rows (Juris Doctor, Accelerated
+  LL.M.s, JD/LL.M. duals) carry $69,870 = the BU undergrad/general-grad flat sticker — which initially looked
+  like the run-76 professional-tier copy-down. I web-verified before flagging: BU's university-wide full-time
+  tuition for 2026-27 is **$73,024** and BU School of Law JD 2026-27 is **also $73,024** — EQUAL. So BU Law
+  genuinely bills the university flat rate (unlike most law schools); the $69,870 (prior-year flat rate) on the
+  Law rows is BU's verified flat rate, NOT a copy-down. MD ($72,626) / DMD ($99,680) are separately billed +
+  distinct, correctly. The run-76 rule's "copy-down only when EVERY professional row carries the undergrad
+  number" tell correctly does NOT flag BU (MD/DMD distinct) — confirming the rule already protects this case;
+  no rule edit needed. I nearly re-made the run-75 false-positive and caught it by year-matched verification.
+
+**Compliance gaps logged (existing rules the enricher disobeyed — queued, NOT re-added):**
+- **verbatim CIP-TITLE NAMES (miss #2), LIVE:** Cornell 12 · Harvard 11 · Penn 10 — backlog #1. Run 76 wrongly
+  read "0 CIP-rollup rows fleet-wide" because the enforced anti-stub gate is DESCRIPTION-only and never scans
+  NAMES (FLAG #1). The new miss-#2 carve-out tells the enricher exactly which strings to fix and which real
+  majors to leave alone.
+- **master's / professional-tier 0% (run-74 per-credential rule), LIVE on ~14 catalogs:** Harvard (master's
+  19/110), Penn (8/66), GT (2/55), Purdue (0/68 — deploy lag), UCSD (0/60), Columbia (3/45), Yale (9/38), Rice
+  (1/29 + prof 11/38), Northwestern (0/26), Notre Dame (0/24), Berkeley (prof 0/20), Dartmouth/Emory, UCLA
+  (prof 0/4) — backlog #2. PhD/cert nulls EXCLUDED (largely funded/per-credit → legitimate omit-with-reason).
+- **seeds:** 8 flagship seeds null dept + 0% tuition + dead feed; ~260 bulk seeds, 33 at ZERO photos + 54 at
+  1–3 (backlog #3/#4).
+
+**Alembic / deploy observation (FLAG #5, app/infra — not grader-editable):** the auto-merge dual-head race is
+DORMANT this run — the repo's alembic history is a SINGLE head (`purduetuition1`); the cascade of failed Deploy
+Backend runs that plagued the prior interval did NOT recur. Purdue #1082 reading master's 0/68 live is plain
+deploy lag (merged 07:42Z today), not a dual-head block — verify it lands.
+
+**Flags (code/workflow, not grader-editable):** (1) UPDATED — the enforced anti-stub gate is DESCRIPTION-only
+and never scans NAMES, so verbatim CIP-TITLE names ship live undetected (Cornell/Harvard/Penn); durable fix = a
+name-realness metric over `CERTIFIED_CLEAN`. (2) `cip_code` not serialized on public program endpoints
+(re-confirmed None on gold MIT). (3) a `tuition_value_artifacts` CI metric must NOT fail `grad==undergrad`
+unconditionally (false-flags BU's verified flat rate incl. Law JD): key the copy-down fail on a professional
+row at the flat sticker ONLY where that professional school publishes a distinct higher rate. (4) a repair PR
+title / prior backlog clear can OVERSTATE the live result (run-76 "BU professional distinct" was incomplete;
+Purdue "clear master's 0%" reads 0/68 live = deploy lag). (5) the dual-head race is DORMANT this run (single
+head).
+
+**Backlog delta:** complete worst-first rewrite. REMOVED USC/NYU/UW (catalog-wide 0% cleared) + CMU
+(deploy-strand cleared) from HIGH; CONFIRMED BU as verified-NOT-a-defect (kept out of the queue, documented in
+CLEAN + a 🟢 note). NEW worst tier = residual CIP-TITLE NAMES → HIGH #1 (Cornell/Harvard/Penn); master's/prof
+tier null → HIGH #2 (refreshed live, PhD/cert nulls excluded); flagship seeds → MEDIUM #3, bulk seeds →
+MEDIUM #4. Updated FLAG #1 (gate is name-blind), FLAG #4 (clears can overstate), FLAG #5 (dual-head dormant).
+No CRITICAL this run (structure + descriptions clean fleet-wide; the CIP-title NAMES are a contained residual
+on otherwise-rich catalogs).
+
+**Invariants:** all intact. The SKILL.md edit is a miss-#2 PRECISION refinement (it removes a false-positive
+that would reject gold MIT's own real major and pressure mangling real multi-clause degrees; omit-never-guess
+is preserved in BOTH directions, and the verbatim-CIP-title ban is preserved) — loosens nothing. No school name
+added to the numbered "Concrete misses" (per-school figures appear only as a live EVIDENCE pointer in the
+sub-bullet prose, the existing convention). Post-edit re-read: numbered misses 1–9 are untouched and
+sequential, the new sub-bullet sits between two existing miss-#2 sub-bullets with no contradiction, and the
+no-fabrication / merge-mandatory / workshop-feedback-only / omit-never-guess invariants are untouched.
+
+**Health check:** the full `pytest` suite needs a live Postgres + sqlalchemy/httpx/asyncpg the conftest and the
+data modules import (no `.venv`, no DB in this environment — same constraint as runs 70–76), so the mandated
+`test_profile_standard.py` / `test_profile_enrichment.py` could not run here. Substantive DB-free check:
+imported `profile_standard/anti_stub.py` and ran `analyze` / `frame_stripped_shared_body`(abs150) /
+`template_slot_artifacts` / `scrape_debris` / `machine_artifacts` over all 40 live catalogs (they compute
+cleanly), verified gold MIT scores 0 on every description metric AND 0 CIP-title names, and computed the repo's
+alembic head set (single head). This grader PR changes only the three skill markdown files (no code, no data,
+no migration), so backend CI is unaffected.
