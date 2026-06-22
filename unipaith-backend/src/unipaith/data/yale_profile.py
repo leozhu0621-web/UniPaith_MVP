@@ -2134,9 +2134,11 @@ def _div_cost(degree: str) -> dict:
 
 
 def _tuition_free_cost(school: str, source: str, source_url: str) -> dict:
+    # tuition_usd is the verified $0 (tuition remitted in full); total_cost_of_attendance
+    # is OMITTED, not zero — students still pay living costs, fees and insurance and no
+    # single COA figure is published here, so a 0 would misrepresent the full budget.
     return {
         "tuition_usd": 0,
-        "total_cost_of_attendance": 0,
         "funded": True,
         "note": (
             f"{school} is tuition-free: every admitted full-time degree/certificate "
@@ -2163,9 +2165,18 @@ _COST_BY_SLUG.update({
     "yale-european-and-russian-studies-gsas-ma": _gsas_masters_cost(
         "European and Russian Studies"
     ),
-    "yale-international-and-development-economics-gsas-ma": _gsas_masters_cost(
-        "International and Development Economics"
-    ),
+    "yale-international-and-development-economics-gsas-ma": {
+        "tuition_usd": 51900,
+        "funded": False,
+        "note": (
+            "International & Development Economics (IDE) carries its own published GSAS "
+            "rate of $25,950 per term ($51,900/yr) — $500 per term above the standard "
+            "full-time GSAS tuition; IDE is a self-funded one-year terminal master's."
+        ),
+        "source": _GSAS_TUITION_SRC[0],
+        "source_url": _GSAS_TUITION_SRC[1],
+        "year": "2025-26",
+    },
     "yale-statistics-gsas-ma": _gsas_masters_cost("Statistics"),
     "yale-personalized-medicine-and-applied-engineering-gsas-ma": _gsas_masters_cost(
         "Personalized Medicine and Applied Engineering"
@@ -2206,11 +2217,11 @@ _COST_BY_SLUG.update({
     # Medicine — M.D. $74,460 (uniform across all four years)
     "yale-doctor-of-medicine-md-prof": {
         "tuition_usd": 74460,
-        "total_cost_of_attendance": 110728,
         "funded": False,
         "note": (
-            "M.D. program tuition, charged uniformly across all four years; estimated "
-            "total cost of attendance shown."
+            "M.D. program tuition, charged uniformly across all four years (total cost "
+            "of attendance omitted — the official budget figure is verified per matriculation "
+            "year, not stated here)."
         ),
         "source": "Yale School of Medicine — M.D. Program Cost of Attendance",
         "source_url": "https://medicine.yale.edu/md-program/financialaid/mdprogram/budget/2025-budget/",
@@ -2246,19 +2257,28 @@ _COST_BY_SLUG.update({
     "yale-masters-degree-in-technology-management-ms": _som_single_degree_cost(
         "the M.M.S. in Technology Management"
     ),
-    # School of Management — EMBA $224,500 first-year total program fee
-    "yale-mba-for-executives-emba-ms": {
-        "tuition_usd": 224500,
-        "funded": False,
+    # School of Management — Public Education Management M.M.S. is tuition-free
+    # (14-month Broad Center program; 100% tuition remission).
+    "yale-masters-degree-in-public-education-management-ms": {
+        "tuition_usd": 0,
+        "funded": True,
         "note": (
-            "First-year total program fee for the MBA for Executives (tuition, required "
-            "textbooks and study materials, a laptop, and meals on class days); the "
-            "second-year fee is $216,840."
+            "The Master's in Public Education Management is a 14-month, tuition-free "
+            "M.M.S. program run by The Broad Center at Yale SOM. Students still pay "
+            "living costs, fees and insurance."
         ),
-        "source": "Yale University Catalog — School of Management, Tuition & Fees",
-        "source_url": "https://catalog.yale.edu/management/tuition-fees/",
+        "source": "Yale SOM — The Broad Center, Master's in Public Education Management",
+        "source_url": (
+            "https://som.yale.edu/centers/the-broad-center/"
+            "masters-degree-in-public-education-management"
+        ),
         "year": "2025-26",
     },
+    # NOTE: the MBA for Executives (EMBA) is intentionally OMITTED-with-reason — Yale
+    # publishes it as a multi-term total PROGRAM FEE ($224,500 first year / $216,840
+    # second), not a standard annual tuition, so stamping the program fee as one year's
+    # tuition would overstate the annual budget the matcher scores. yale-mba-for-
+    # executives-emba-ms therefore keeps tuition_usd in _standard.omitted (never guessed).
     # David Geffen School of Drama — tuition-free since 2021-22
     "yale-master-of-fine-arts-in-drama-mfa-ms": _tuition_free_cost(
         "The David Geffen School of Drama at Yale", *_DRAMA_FREE_SRC
