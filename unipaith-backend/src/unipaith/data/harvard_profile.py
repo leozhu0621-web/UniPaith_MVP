@@ -52,6 +52,13 @@ CIP-title NAME repair (2026-06-22, harvardcipnames1, REPAIR_BACKLOG #1): resolve
 five verbatim federal CIP taxonomy titles (11 rows) to Harvard's real published
 degree names or drops credential levels Harvard does not confer; preserves field-
 specific descriptions and tuition on surviving rows.
+
+Graduate-tier tuition repair (2026-06-22, harvardgradtuition1, REPAIR_BACKLOG #2):
+stamps each school's published 2025-26 annual master's tuition (Griffin GSAS /
+OIRA Fact Book + school financial-aid pages) on the 88 null master's rows; HMS
+master's (program-specific COA with no single school-wide rate mapped to these
+IPEDS names) and Extension A.L.M. / certificate (per-course) stay omitted-with-
+reason — never the undergraduate sticker copied down.
 """
 
 from __future__ import annotations
@@ -2894,6 +2901,33 @@ _TUITION_BY_SLUG: dict[str, int] = {
     "harvard-data-science-sm": 57328,  # Griffin GSAS full tuition, 2025-26
     "harvard-cse-sm": 57328,
 }
+
+# Published 2025-26 annual master's tuition by school — Harvard OIRA Fact Book
+# (https://oira.harvard.edu/factbook/fact-book-grad-tuition/) + each school's
+# financial-aid / registrar page. Griffin GSAS full tuition covers FAS and SEAS
+# academic master's (FAS Registrar confirms SEAS master's follow standard GSAS).
+_TUITION_MASTERS_BY_SCHOOL: dict[str, int] = {
+    _FAS: 57328,
+    _SEAS: 57328,
+    _HBS: 78700,
+    _HLS: 78692,
+    _HSPH: 65160,
+    _HKS: 61926,
+    _HGSE: 62244,
+    _GSD: 61510,
+    _HDS: 30472,
+    _HSDM: 69300,
+}
+
+# HMS master's and Extension credentials bill per-program / per-course — no single
+# annual figure maps cleanly to the IPEDS field names in this catalog.
+_MASTERS_TUITION_OMIT_SCHOOLS = frozenset({_HMS, _DCE})
+
+_OIRA_COST_SRC = (
+    "Harvard Office of Institutional Research — Graduate/Professional Tuition Fact Book",
+    "https://oira.harvard.edu/factbook/fact-book-grad-tuition/",
+)
+
 _COST_SRC_BY_SCHOOL: dict[str, tuple[str, str]] = {
     _FAS: ("Harvard College / Griffin GSAS", "https://college.harvard.edu/financial-aid"),
     _SEAS: ("Harvard Griffin GSAS", "https://gsas.harvard.edu/financial-support"),
@@ -3577,20 +3611,72 @@ def _deadline_for(spec: dict) -> date | None:
     return date(2026, 12, 15)  # graduate baseline (varies by program)
 
 
-def _resolved_tuition_present(spec: dict) -> bool:
-    """True when the program ends up with a real cost_data.tuition_usd (mirrors the
-    tuition branch in _apply_programs). Funded PhDs carry tuition_usd = 0 (present);
-    the ALM, online, and certificate credentials are priced per-course → null."""
-    slug, dt = spec["slug"], spec["degree_type"]
-    if slug in _TUITION_BY_SLUG:
-        return True
+def _cost_data_for(tuition: int | None, spec: dict) -> dict | None:
+    """Build persisted cost_data from a resolved tuition figure."""
+    dt = spec["degree_type"]
+    school = spec["school"]
     if dt == "phd":
-        return True
-    if slug == "harvard-alm" or spec.get("delivery_format") == "online" or dt == "certificate":
-        return False
+        src_name, src_url = _COST_SRC_BY_SCHOOL.get(
+            school, ("Harvard Griffin GSAS", "https://gsas.harvard.edu/financial-support")
+        )
+        return {
+            "tuition_usd": 0,
+            "funded": True,
+            "source": src_name,
+            "source_url": src_url,
+            "year": "2025-26",
+            "note": "Harvard PhD students typically receive a funding package covering tuition.",
+        }
+    if tuition is None:
+        return None
+    src_name, src_url = _COST_SRC_BY_SCHOOL.get(school, _OIRA_COST_SRC)
+    return {
+        "tuition_usd": tuition,
+        "funded": False,
+        "source": src_name,
+        "source_url": src_url,
+        "year": "2025-26",
+    }
+
+
+def _program_tuition(spec: dict) -> tuple[int | None, dict | None]:
+    """Return ``(tuition, cost_data)`` from Harvard's published per-school rates.
+
+    ``tuition`` is ``None`` only when Harvard bills per-course / per-program with
+    no flat annual figure for this catalog row (Extension A.L.M., certificates,
+    HMS master's with program-specific COA) — recorded omitted-with-reason, never
+    guessed and never the undergraduate sticker copied onto graduate rows.
+    """
+    slug, dt, school = spec["slug"], spec["degree_type"], spec["school"]
+    if slug in _TUITION_BY_SLUG:
+        t = _TUITION_BY_SLUG[slug]
+        return t, _cost_data_for(t, spec)
+    if dt == "phd":
+        return 0, _cost_data_for(0, spec)
     if dt == "bachelors":
-        return True
-    return False  # a master's with no published flat rate → null rather than guessed
+        return _TUITION_UNDERGRAD, _cost_data_for(_TUITION_UNDERGRAD, spec)
+    if (
+        slug == "harvard-alm"
+        or spec.get("delivery_format") == "online"
+        or dt == "certificate"
+    ):
+        return None, None
+    if dt == "masters":
+        if school in _MASTERS_TUITION_OMIT_SCHOOLS:
+            return None, None
+        school_rate = _TUITION_MASTERS_BY_SCHOOL.get(school)
+        if school_rate is not None:
+            return school_rate, _cost_data_for(school_rate, spec)
+        return None, None
+    return None, None
+
+
+def _resolved_tuition_present(spec: dict) -> bool:
+    """True when the program ends up with a real cost_data.tuition_usd (mirrors
+    ``_program_tuition``). Funded PhDs carry tuition_usd = 0 (present); Extension,
+    online, certificate, and HMS master's (program-specific COA) → null."""
+    tuition, _ = _program_tuition(spec)
+    return tuition is not None
 
 
 def _uses_open_admissions(spec: dict) -> bool:
@@ -3684,36 +3770,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
-        # Tuition: explicit per-school published rate → undergrad rate → funded
-        # PhD (0) → Extension/HarvardX per-course (null). Every figure is real.
-        if spec["slug"] in _TUITION_BY_SLUG:
-            p.tuition = _TUITION_BY_SLUG[spec["slug"]]
-        elif spec["degree_type"] == "phd":
-            p.tuition = 0
-        elif (
-            spec["slug"] == "harvard-alm"
-            or p.delivery_format == "online"
-            or (spec["degree_type"] == "certificate")
-        ):
-            p.tuition = None
-        elif spec["degree_type"] == "bachelors":
-            p.tuition = _TUITION_UNDERGRAD
-        else:
-            p.tuition = None
-        src_name, src_url = _COST_SRC_BY_SCHOOL.get(
-            spec["school"], ("Harvard University", "https://www.harvard.edu/")
-        )
-        p.cost_data = (
-            {
-                "tuition_usd": p.tuition,
-                "funded": spec["degree_type"] == "phd",
-                "source": src_name,
-                "source_url": src_url,
-                "year": "2025-26",
-            }
-            if (p.tuition is not None or spec["degree_type"] == "phd")
-            else None
-        )
+        tuition, cost = _program_tuition(spec)
+        p.tuition = tuition
+        p.cost_data = cost
         p.application_requirements = _requirements_for(spec)
         # Inject per-program deadlines for the professional doctorates whose shared
         # requirement template is degree-agnostic (J.D. / LL.M. / M.D.).

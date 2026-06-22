@@ -363,6 +363,34 @@ Concrete misses observed in the first runs — each broke a real page:
      the CIP mint), while gold MIT ships 0 of them and carries its real "Science,
      Technology, and Society" major (so the prior comma-and tell, applied bluntly, would
      reject the 0-control itself).
+   - **A CIP-title-NAME repair must clear the WHOLE CLASS, not the backlog-enumerated
+     strings — the REPAIR_BACKLOG lists a SAMPLE the grader happened to spot, never the
+     exhaustive set, so a pass that resolves exactly the named strings and ships leaves the
+     un-enumerated SAME-class CIP titles live. This is the live regression this run, and it
+     is the miss-#2 analog of the named-unit "clear the whole class, re-scan, get ZERO" rule
+     (miss #8).** When a backlog entry names, say, five verbatim federal CIP titles to fix,
+     the enricher's `_ROLLUP_RESOLVE`-style map adds exactly those five keys and the deploy
+     ships — but the catalog's IPEDS source carries OTHER fields of the identical class
+     (the same `…and Related Sciences/Services` / `…, and {parent} Engineering/Biology`
+     federal-suffix form, or the same field string shared verbatim across ≥2 institutions'
+     catalogs) that fall straight through `_ROLLUP_RESOLVE.get(field, field)` and ship the
+     federal title verbatim as the live `program_name`. The backlog enumeration is evidence,
+     not a worklist: a CIP-title repair is done only when you RE-SCAN every `program_name`
+     AND `department` in the whole catalog with the miss-#2 tells — the federal-suffix forms
+     above, a trailing ", General"/", Other", a bare CIP rollup title, an embedded
+     slash, a literal `(CIP NN.NN)` code, AND any multi-clause field string shared verbatim
+     across ≥2 institutions — and get ZERO, resolving each surviving CIP title to the
+     institution's real published degree (or dropping a federal aggregation bucket with no
+     single named degree), exactly as for the enumerated ones. Fixing only the cited strings
+     while a same-class title survives is a non-repair, the same single-row patch the
+     named-unit rule forbids. (Keep the run-77 carve-out: a VERIFIED real interdisciplinary
+     major the institution actually awards — even one shared across peers, like "Speech,
+     Language, and Hearing Sciences" — is NOT a CIP title; never mangle it.) Evidence: live
+     API this run — the five-string CIP-title repairs of Cornell (#1085) and Harvard (#1088)
+     each cleared exactly the backlog-named strings yet BOTH still ship the un-enumerated
+     "Physiology, Pathology and Related Sciences" (federal CIP 26.09 — the "…and Related
+     Sciences" suffix form, identical across both = the CIP mint) verbatim as a PhD /
+     certificate name, because neither catalog's `_ROLLUP_RESOLVE` map gained a key for it.
    - **The realness gate must ALSO reject a literal CIP CODE left in the name or
      department — the naked IPEDS-minting fingerprint the punctuation-keyed rollup scan
      MISSES (the live tell this run).** Every prior rollup-tell bullet keys the scan on
