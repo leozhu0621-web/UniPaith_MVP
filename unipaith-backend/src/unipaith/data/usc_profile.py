@@ -35,14 +35,31 @@ carries a citation, or is honestly omitted (recorded in that node's
     for Computer Science, the M.D., Cinematic Arts, Journalism, the undergraduate
     business program, the M.S. in Computer Science, the M.P.A., and Pharmacy.
 
+Published tuition (2026-06-22 repair — REPAIR_BACKLOG #1, catalog-wide 0% tuition):
+every program now carries USC's published 2025-26 annual tuition as the matcher budget
+signal (the prior placeholder left all 511 programs matcher-blind on budget). Bachelor's
+carry the uniform undergraduate sticker ($73,260 for 12–18 units across two semesters);
+general graduate programs carry USC's published flat full-time graduate rate ($73,260 for
+15–18 units × two semesters — USC's catalogue lists the same per-semester flat for
+undergraduate and general graduate study); engineering master's/Ph.D. rows carry the
+published engineering graduate unit rate annualized at a full-time load ($2,665/unit × 20
+units = $53,300); Marshall/Leventhal business graduate programs $2,541/unit × 20 = $50,820;
+Cinematic Arts graduate $2,624/unit × 20 = $52,480; Social Work $33,840/semester × 2 =
+$67,680; pharmacy graduate and Pharm.D. $34,443/semester × 2 = $68,886; Keck medicine-tier
+programs $37,240/semester × 2 = $74,480; Gould J.D. $42,017/semester × 2 = $84,034;
+Ostrow D.D.S. $41,641/trimester × 3 = $124,923; D.P.T. $86,125 (catalogue full-year rate);
+occupational therapy doctorates $32,516/trimester × 3 = $97,548; Price Dollinger MRED
+$43,781/semester × 2 = $87,562. Fee-based online programs (Bovard College and other
+``delivery_format = "online"`` rows billing a program-specific per-credit rate) and the
+Thornton Artist Diploma keep ``cost_data.tuition_usd`` omitted-with-reason rather than
+carrying a wrong annual guess.
+
 Honest caveats stamped into ``_standard.omitted``: USC does not publish a single
 university-wide "employed or continuing education" placement rate or a uniform
 top-employer-industries list across all schools, so those two institution outcome
 fields are omitted with reason (the College Scorecard institution-wide ten-year
-median earnings, $92,498, is kept). Most graduate/professional programs bill
-tuition per unit or per term and publish no single annual figure, so those carry a
-sourced "see the program's tuition page" record rather than a guessed number. This
-is a genuinely large catalog (613 programs, NYU/UCLA scale), so external reviews
+median earnings, $92,498, is kept). This is a genuinely large catalog (511 programs,
+NYU/UCLA scale), so external reviews
 and the deep outcome/class-profile fields are attached to the flagship coverable
 programs and the remaining programs record those fields in their
 ``_standard.omitted`` pending a depth pass on a future repair-first run. USC's
@@ -66,7 +83,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "University of Southern California"
-ENRICHED_AT = "2026-06-19"
+ENRICHED_AT = "2026-06-22"
 
 
 def _standard(omitted: list[str] | None = None) -> dict:
@@ -6237,42 +6254,241 @@ def _website_for(spec: dict) -> str:
     return _WEBSITE_OVERRIDE.get(spec["slug"], SCHOOL_WEBSITE[spec["school"]])
 
 
-# ── Costs ──────────────────────────────────────────────────────────────────
+# ── Costs / published tuition (matcher-core budget signal) ─────────────────
+# USC Catalogue 2025-26 — Tuition and Fees, Fall 2025 + Financial Aid COA (2025-26).
+# REPAIR_BACKLOG run 76 HIGH #1: catalog-wide 0% tuition — stamp published rates per tier.
+_TUITION_SRC = "USC Catalogue — Tuition and Fees, Fall 2025 (2025-26 academic year)"
+_TUITION_SRC_URL = "https://catalogue.usc.edu/content.php?catoid=21&navoid=8855"
+_TUITION_FA_SRC = "USC Financial Aid — Cost of Attendance (2025-26)"
+_TUITION_FA_URL = "https://financialaid.usc.edu/cost-of-attendance/"
+
+_TUITION_UG = 73260  # 12–18 units × two semesters (2025-26)
+_TUITION_GRAD_FLAT = 73260  # general graduate 15–18 units × two semesters
+_FT_UNITS_PER_YEAR = 20  # FA: most master's full-time ≈ 10 units/semester
+_TUITION_ENG_UNIT = 2665
+_TUITION_ENG_ANNUAL = _TUITION_ENG_UNIT * _FT_UNITS_PER_YEAR  # 53,300
+_TUITION_BIZ_UNIT = 2541
+_TUITION_BIZ_ANNUAL = _TUITION_BIZ_UNIT * _FT_UNITS_PER_YEAR  # 50,820
+_TUITION_CINEMA_UNIT = 2624
+_TUITION_CINEMA_ANNUAL = _TUITION_CINEMA_UNIT * _FT_UNITS_PER_YEAR  # 52,480
+_TUITION_SOCIAL_ANNUAL = 67680  # $33,840/semester × 2
+_TUITION_PHARM_ANNUAL = 68886  # $34,443/semester × 2
+_TUITION_MED_ANNUAL = 74480  # medicine Session 003 flat $37,240/semester × 2
+_TUITION_MRED_ANNUAL = 87562  # MRED Session 038 flat $43,781/semester × 2
+_TUITION_JD_ANNUAL = 84034  # law flat $42,017/semester × 2
+_TUITION_DDS_ANNUAL = 124923  # dentistry $41,641/trimester × 3
+_TUITION_DPT_ANNUAL = 86125  # DPT full-year rate (years 1–2)
+_TUITION_OT_ANNUAL = 97548  # OT doctorate $32,516/trimester × 3
+
 _UNDERGRAD_COA = 90300
 _AVG_NET_PRICE = 32740
 _COST_SRC = "U.S. Dept. of Education — College Scorecard (USC, UNITID 123961)"
 _COST_SRC_URL = "https://collegescorecard.ed.gov/school/?123961-University-of-Southern-California"
 
+_VITERBI = "USC Viterbi School of Engineering"
+_MARSHALL = "USC Marshall School of Business"
+_LEVENTHAL = "USC Leventhal School of Accounting"
+_CINEMA = "USC School of Cinematic Arts"
+_SOCIAL = "USC Suzanne Dworak-Peck School of Social Work"
+_PHARMACY = "USC Alfred E. Mann School of Pharmacy and Pharmaceutical Sciences"
+_KECK = "Keck School of Medicine of USC"
+_DENTISTRY = "Herman Ostrow School of Dentistry of USC"
+_PRICE = "USC Price School of Public Policy"
+_LAW = "USC Gould School of Law"
+
+_TUITION_BY_SLUG: dict[str, int] = {
+    "usc-law-jd": _TUITION_JD_ANNUAL,
+    "usc-medicine-md": _TUITION_MED_ANNUAL,
+    "usc-pharmacy-pharmd": _TUITION_PHARM_ANNUAL,
+    "usc-dollinger-master-of-real-estate-development-mred": _TUITION_MRED_ANNUAL,
+    "usc-physician-assistant-practice-mpap": _TUITION_MED_ANNUAL,
+    "usc-doctor-of-nurse-anesthesia-practice-dnap": _TUITION_MED_ANNUAL,
+}
+
+_TUITION_OMIT_SLUGS = frozenset({
+    "usc-artist-diploma-program-diploma",  # Artist Diploma — no flat annual catalogue rate
+})
+
+
+def _pub_tuition_cost(
+    tuition: int,
+    note: str,
+    *,
+    source: str = _TUITION_SRC,
+    source_url: str = _TUITION_SRC_URL,
+    funded: bool = False,
+) -> dict:
+    return {
+        "tuition_usd": tuition,
+        "funded": funded,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": "2025-26",
+    }
+
+
+def _omit_tuition_cost(note: str, *, source: str | None = None, source_url: str | None = None) -> dict:
+    return {
+        "note": note,
+        "source": source or _TUITION_SRC,
+        "source_url": source_url or _TUITION_SRC_URL,
+        "year": "2025-26",
+    }
+
 
 def _undergrad_cost() -> dict:
     return {
+        "tuition_usd": _TUITION_UG,
         "total_cost_of_attendance": _UNDERGRAD_COA,
         "avg_net_price": _AVG_NET_PRICE,
         "funded": False,
         "note": (
-            "USC's published academic-year cost of attendance is about $90,300 and the average net "
-            "price after grant aid is about $32,740 (College Scorecard, UNITID 123961). USC is "
-            "need-blind in admission and meets the demonstrated financial need of admitted students "
-            "who qualify; the 2025-26 undergraduate tuition estimate is about $73,260. See the USC "
-            "Financial Aid Office for current figures."
+            f"USC's 2025-26 undergraduate tuition is ${_TUITION_UG:,} for 12–18 units across two "
+            "semesters (USC Catalogue / Financial Aid COA). The published academic-year cost of "
+            f"attendance is about ${_UNDERGRAD_COA:,} and the average net price after grant aid is "
+            f"about ${_AVG_NET_PRICE:,} (College Scorecard, UNITID 123961). USC is need-blind in "
+            "admission and meets the demonstrated financial need of admitted students who qualify."
         ),
-        "source": _COST_SRC,
-        "source_url": _COST_SRC_URL,
-        "year": "2023-24",
+        "source": _TUITION_FA_SRC,
+        "source_url": _TUITION_FA_URL,
+        "year": "2025-26",
     }
+
+
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return (matcher_tuition, cost_data) from USC-published 2025-26 rates."""
+    slug = spec["slug"]
+    dtype = spec["degree_type"]
+    school = spec["school"]
+    pname = spec.get("program_name") or ""
+
+    if slug in _TUITION_BY_SLUG:
+        rate = _TUITION_BY_SLUG[slug]
+        return rate, _pub_tuition_cost(
+            rate,
+            f"Published USC 2025-26 annual tuition of ${rate:,} for this program "
+            f"({pname}); see the USC Catalogue tuition schedule.",
+        )
+
+    if slug in _TUITION_OMIT_SLUGS or spec.get("delivery_format") == "online":
+        return None, _omit_tuition_cost(
+            "This is a fee-based online or special-format program billed at a program-specific "
+            "per-credit rate; USC publishes no single verified flat annual tuition figure for it, "
+            "so tuition is omitted here rather than guessed.",
+            source_url=_website_for(spec),
+        )
+
+    if dtype == "bachelors":
+        return _TUITION_UG, _undergrad_cost()
+
+    if dtype == "professional":
+        if pname.startswith("Juris Doctor"):
+            return _TUITION_JD_ANNUAL, _pub_tuition_cost(
+                _TUITION_JD_ANNUAL,
+                f"USC Gould J.D. tuition is ${42017:,} per semester for 12–17 units "
+                f"(${_TUITION_JD_ANNUAL:,} annual, 2025-26 Catalogue).",
+            )
+        if pname.startswith("Doctor of Medicine"):
+            return _TUITION_MED_ANNUAL, _pub_tuition_cost(
+                _TUITION_MED_ANNUAL,
+                f"Keck School M.D. tuition is ${37240:,} per semester "
+                f"(${_TUITION_MED_ANNUAL:,} annual, 2025-26 Catalogue).",
+            )
+        if pname.startswith("Doctor of Pharmacy"):
+            return _TUITION_PHARM_ANNUAL, _pub_tuition_cost(
+                _TUITION_PHARM_ANNUAL,
+                f"USC Pharm.D. tuition is ${34443:,} per semester for 15–18 units "
+                f"(${_TUITION_PHARM_ANNUAL:,} annual, 2025-26 Catalogue).",
+            )
+        if pname.startswith("Doctor of Dental Surgery"):
+            return _TUITION_DDS_ANNUAL, _pub_tuition_cost(
+                _TUITION_DDS_ANNUAL,
+                f"Ostrow D.D.S. tuition is ${41641:,} per trimester "
+                f"(${_TUITION_DDS_ANNUAL:,} annualized at three trimesters, 2025-26 Catalogue).",
+            )
+        if pname.startswith("Doctor of Physical Therapy"):
+            return _TUITION_DPT_ANNUAL, _pub_tuition_cost(
+                _TUITION_DPT_ANNUAL,
+                f"USC D.P.T. tuition is ${_TUITION_DPT_ANNUAL:,} for the first- and second-year "
+                "full-year rate (2025-26 Catalogue).",
+            )
+        if "Occupational Therapy" in pname:
+            return _TUITION_OT_ANNUAL, _pub_tuition_cost(
+                _TUITION_OT_ANNUAL,
+                f"USC occupational therapy doctorate tuition is ${32516:,} per trimester "
+                f"(${_TUITION_OT_ANNUAL:,} annualized at three trimesters, 2025-26 Catalogue).",
+            )
+        if pname.startswith("Doctor of Nurse Anesthesia Practice"):
+            return _TUITION_MED_ANNUAL, _pub_tuition_cost(
+                _TUITION_MED_ANNUAL,
+                f"Keck D.N.A.P. is billed on USC's medicine-session graduate schedule "
+                f"(${37240:,}/semester, ${_TUITION_MED_ANNUAL:,} annual, 2025-26 Catalogue).",
+            )
+
+    if school == _VITERBI:
+        return _TUITION_ENG_ANNUAL, _pub_tuition_cost(
+            _TUITION_ENG_ANNUAL,
+            f"Viterbi engineering graduate tuition is ${_TUITION_ENG_UNIT:,} per unit; "
+            f"${_TUITION_ENG_ANNUAL:,} at a full-time load of {_FT_UNITS_PER_YEAR} units/year "
+            "(2025-26 Catalogue / Viterbi tuition schedule).",
+        )
+
+    if school in (_MARSHALL, _LEVENTHAL):
+        return _TUITION_BIZ_ANNUAL, _pub_tuition_cost(
+            _TUITION_BIZ_ANNUAL,
+            f"Marshall/Leventhal business graduate tuition is ${_TUITION_BIZ_UNIT:,} per unit; "
+            f"${_TUITION_BIZ_ANNUAL:,} at {_FT_UNITS_PER_YEAR} units/year (2025-26 Catalogue).",
+        )
+
+    if school == _CINEMA:
+        return _TUITION_CINEMA_ANNUAL, _pub_tuition_cost(
+            _TUITION_CINEMA_ANNUAL,
+            f"Cinematic Arts graduate tuition is ${_TUITION_CINEMA_UNIT:,} per unit; "
+            f"${_TUITION_CINEMA_ANNUAL:,} at {_FT_UNITS_PER_YEAR} units/year (2025-26 Catalogue).",
+        )
+
+    if school == _SOCIAL:
+        return _TUITION_SOCIAL_ANNUAL, _pub_tuition_cost(
+            _TUITION_SOCIAL_ANNUAL,
+            f"USC Social Work graduate tuition is ${33840:,} per semester for 15–18 units "
+            f"(${_TUITION_SOCIAL_ANNUAL:,} annual, 2025-26 Catalogue).",
+        )
+
+    if school == _PHARMACY:
+        return _TUITION_PHARM_ANNUAL, _pub_tuition_cost(
+            _TUITION_PHARM_ANNUAL,
+            f"Mann School graduate/pharmacy tuition is ${34443:,} per semester "
+            f"(${_TUITION_PHARM_ANNUAL:,} annual, 2025-26 Catalogue).",
+        )
+
+    if school == _KECK:
+        return _TUITION_MED_ANNUAL, _pub_tuition_cost(
+            _TUITION_MED_ANNUAL,
+            f"Keck graduate programs bill on USC's medicine-session schedule "
+            f"(${37240:,}/semester, ${_TUITION_MED_ANNUAL:,} annual, 2025-26 Catalogue).",
+        )
+
+    if school == _DENTISTRY and dtype == "masters":
+        return _TUITION_DDS_ANNUAL, _pub_tuition_cost(
+            _TUITION_DDS_ANNUAL,
+            f"Ostrow advanced dentistry graduate programs bill on the dentistry trimester "
+            f"schedule (${_TUITION_DDS_ANNUAL:,} annualized, 2025-26 Catalogue).",
+        )
+
+    # General academic graduate (Dornsife, Rossier, Price, Thornton, Architecture, etc.)
+    return _TUITION_GRAD_FLAT, _pub_tuition_cost(
+        _TUITION_GRAD_FLAT,
+        f"USC general graduate tuition is ${36630:,} per semester for 15–18 units "
+        f"(${_TUITION_GRAD_FLAT:,} annual, 2025-26 Catalogue). Many doctoral students "
+        "receive assistantships or fellowships; funding is a separate matcher signal.",
+        funded=dtype == "phd",
+    )
 
 
 def _grad_cost_fallback(spec: dict) -> dict:
-    return {
-        "note": (
-            "Tuition for this graduate/professional program is set by USC and is typically billed per "
-            "unit or per term, so it varies by program and enrollment; a single verified annual figure "
-            "is not published here. Many doctoral students are funded through assistantships and "
-            "fellowships. See the program's tuition page for current figures."
-        ),
-        "source": "USC Financial Aid / program tuition page",
-        "source_url": _website_for(spec),
-    }
+    """Legacy alias — prefer ``_program_tuition``."""
+    return _program_tuition(spec)[1]
 
 
 # ── Flagship outcomes / class profile / faculty / reviews ──────────────────
@@ -6771,7 +6987,9 @@ def _requirements_for(spec: dict) -> dict:
 
 
 def _program_standard(slug: str, spec: dict) -> dict:
-    omitted: list[str] = ["cost_data.tuition_usd"]
+    omitted: list[str] = []
+    if _program_tuition(spec)[0] is None:
+        omitted.append("cost_data.tuition_usd")
     if not spec.get("tracks"):
         omitted.append("tracks")
     if slug not in _OUTCOMES_BY_SLUG:
@@ -6907,12 +7125,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.delivery_format = spec.get("delivery_format", "on_campus")
         _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], _kw)
-        if spec["degree_type"] == "bachelors":
-            p.tuition = None
-            p.cost_data = _undergrad_cost()
-        else:
-            p.tuition = None
-            p.cost_data = _grad_cost_fallback(spec)
+        tuition, cost = _program_tuition(spec)
+        p.tuition = tuition
+        p.cost_data = cost
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
         outcomes["_standard"] = _program_standard(slug, spec)
