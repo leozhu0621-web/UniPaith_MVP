@@ -276,7 +276,7 @@ def test_graduate_tuition_not_undergrad_copy_down():
         p["slug"]
         for p in cu.PROGRAMS
         if p["degree_type"] != "bachelors"
-        and (t := cu._program_tuition(p)[0]) == cu._TUITION_UG_ENDOWED
+        and cu._program_tuition(p)[0] == cu._TUITION_UG_ENDOWED
         and p["slug"] not in tier1
         and p["slug"] != cu._FLAGSHIP
     ]
