@@ -33,8 +33,17 @@ descriptions.
 Honest caveats stamped into ``_standard.omitted``: the University of California is test-free
 (no SAT/ACT percentiles to report). UCSD does not publish a single university-wide placement
 rate or uniform top-employer-industries list, so those institution outcome fields are omitted.
-Most graduate/professional programs bill tuition per term; those carry a sourced "see the
-program's tuition page" record rather than a guessed number.
+
+Tuition repair (2026-06-22, ucsdgradtuition1): the master's and professional tiers shipped 0%
+``tuition`` (matcher budget-fit STARVATION behind a 100% bachelor's tier — REPAIR_BACKLOG #3),
+even though UC San Diego's Office of the Registrar PUBLISHES a per-program annual tuition-and-fees
+schedule. Stamped the verified 2024-25 California-resident rate per tier (academic graduate $15,197
+res / $30,299 nonres; M.D. $44,715 / $56,960; Pharm.D. $50,345 / $62,590; Rady state-supported
+M.B.A. $53,727 / $65,972; Rady MS Business Analytics $71,300 self-supporting), each cited to the
+registrar table and computed on the same tuition+mandatory-fees-excluding-health-insurance basis as
+the undergraduate sticker. Funded research PhDs keep their $0 tuition-remission record, and the two
+remaining Rady self-supporting per-unit master's (MS Finance, MS Information Technology Management)
+record tuition omitted-with-reason — both never the undergrad sticker copied down.
 """
 
 # ruff: noqa: E501
@@ -638,6 +647,108 @@ _UNDERGRAD_COA = 38701
 _AVG_NET_PRICE = 12470
 _COST_SRC = ("U.S. Dept. of Education College Scorecard (UNITID 110680)", "https://collegescorecard.ed.gov/school/?110680-University-of-California-San-Diego")
 
+# ── Published 2024-25 UCSD graduate / professional tuition & fees ────────────
+# UC San Diego Office of the Registrar registration-fee tables: the three-quarter
+# annual total of Tuition + the applicable Professional Degree Supplemental Tuition +
+# mandatory campus fees, EXCLUDING the waivable graduate health-insurance premium (the
+# same basis as the undergraduate sticker above). The California-resident rate is the
+# headline matcher signal; the nonresident rate (adding Nonresident Supplemental
+# Tuition) is carried in cost_data.breakdown. Each rate is read VERBATIM from the cited
+# registrar table — never the undergraduate sticker copied down (every tier here is
+# distinct, and the academic-graduate rate itself differs from the undergrad sticker).
+_TUITION_GRAD_INSTATE = 15197   # academic graduate (master's), resident
+_TUITION_GRAD_OOS = 30299       # academic graduate, nonresident (+ NRST $15,102/yr)
+_TUITION_MD_INSTATE = 44715     # Doctor of Medicine, resident
+_TUITION_MD_OOS = 56960
+_TUITION_PHARMD_INSTATE = 50345  # Doctor of Pharmacy, resident
+_TUITION_PHARMD_OOS = 62590
+_TUITION_MBA_INSTATE = 53727    # Rady state-supported M.B.A., resident
+_TUITION_MBA_OOS = 65972
+_TUITION_MSBA = 71300           # Rady MS Business Analytics (self-supporting, one rate)
+_GRAD_COST_SRC = (
+    "UC San Diego Office of the Registrar — Graduate Registration Fees 2024-25",
+    "https://students.ucsd.edu/finances/fees/registration/previous/2024-25/graduate.html",
+)
+_MD_COST_SRC = (
+    "UC San Diego Office of the Registrar — School of Medicine Registration Fees 2024-25",
+    "https://students.ucsd.edu/finances/fees/registration/previous/2024-25/som.html",
+)
+_PHARMD_COST_SRC = (
+    "UC San Diego Office of the Registrar — Skaggs School of Pharmacy Registration Fees 2024-25",
+    "https://students.ucsd.edu/finances/fees/registration/previous/2024-25/pharmacy.html",
+)
+_RADY_COST_SRC = (
+    "UC San Diego Office of the Registrar — Rady School of Management Registration Fees 2024-25",
+    "https://students.ucsd.edu/finances/fees/registration/previous/2024-25/rady.html",
+)
+
+
+def _omit_cost(spec: dict) -> dict:
+    return {
+        "note": "Tuition varies by program; see the official program tuition page.",
+        "source": "UC San Diego program tuition page",
+        "source_url": _website_for(spec),
+    }
+
+
+def _grad_fee_cost(res: int, oos: int | None, src: tuple[str, str], label: str) -> dict:
+    breakdown = {"tuition_in_state": res}
+    if oos is not None:
+        breakdown["tuition_out_of_state"] = oos
+        tail = "; nonresidents add Nonresident Supplemental Tuition (rate in breakdown)."
+    else:
+        tail = "; self-supporting program billed at one rate for all students."
+    return {
+        "tuition_usd": res, "funded": False, "breakdown": breakdown,
+        "note": (
+            f"California-resident {label} tuition and mandatory fees for 2024-25 "
+            "(excludes the waivable graduate health-insurance premium)" + tail
+        ),
+        "source": src[0], "source_url": src[1], "year": "2024-25",
+    }
+
+
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return ``(tuition, cost_data)`` for any program by UCSD's published registration-
+    fee schedule. ``tuition`` is ``None`` (with an omit cost_data) only when UCSD bills
+    the program at a self-supporting per-unit rate with no single published annual figure
+    cleanly mapped to this catalog name (recorded omitted-with-reason). PhD rows stamp a
+    funded $0 (tuition remission) and are recorded omitted-with-reason in the standard."""
+    dt = spec["degree_type"]
+    school = spec["school"]
+    name = spec["program_name"]
+    if dt == "bachelors":
+        return _TUITION_UG_INSTATE, {
+            "tuition_usd": _TUITION_UG_INSTATE, "total_cost_of_attendance": _UNDERGRAD_COA,
+            "avg_net_price": _AVG_NET_PRICE, "funded": False,
+            "breakdown": {"tuition_in_state": _TUITION_UG_INSTATE, "tuition_out_of_state": _TUITION_UG_OOS},
+            "source": _COST_SRC[0], "source_url": _COST_SRC[1], "year": "2024-25",
+        }
+    if dt == "phd":
+        return 0, {
+            "tuition_usd": 0, "funded": True,
+            "note": "UCSD PhD students typically receive tuition remission plus a stipend.",
+            "source": "UC San Diego Graduate Division — Funding",
+            "source_url": "https://grad.ucsd.edu/funding/",
+        }
+    if dt == "professional":
+        if name == "Doctor of Medicine":
+            return _TUITION_MD_INSTATE, _grad_fee_cost(_TUITION_MD_INSTATE, _TUITION_MD_OOS, _MD_COST_SRC, "M.D.")
+        if name == "Doctor of Pharmacy":
+            return _TUITION_PHARMD_INSTATE, _grad_fee_cost(_TUITION_PHARMD_INSTATE, _TUITION_PHARMD_OOS, _PHARMD_COST_SRC, "Pharm.D.")
+        return None, _omit_cost(spec)
+    if dt == "masters":
+        if school == RADY:
+            if name == "Master of Business Administration":
+                return _TUITION_MBA_INSTATE, _grad_fee_cost(_TUITION_MBA_INSTATE, _TUITION_MBA_OOS, _RADY_COST_SRC, "Rady M.B.A.")
+            if name == "Master of Science in Business Analytics":
+                return _TUITION_MSBA, _grad_fee_cost(_TUITION_MSBA, None, _RADY_COST_SRC, "Rady MSBA")
+            # other Rady programs (MS Finance, MS IT Management) bill a self-supporting
+            # per-unit rate with no single published annual figure for this catalog name.
+            return None, _omit_cost(spec)
+        return _TUITION_GRAD_INSTATE, _grad_fee_cost(_TUITION_GRAD_INSTATE, _TUITION_GRAD_OOS, _GRAD_COST_SRC, "academic graduate")
+    return None, _omit_cost(spec)
+
 _REQ_UNDERGRAD = {
     "materials": [
         {"name": "UC Application (University of California)", "required": True},
@@ -962,7 +1073,7 @@ _PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
 }
 
 
-def _program_standard(slug: str, spec: dict | None = None) -> dict:
+def _program_standard(slug: str, spec: dict | None = None, tuition_omitted: bool | None = None) -> dict:
     if spec is None:
         spec = _SPEC_BY_SLUG.get(slug, {})
     omitted: list[str] = [
@@ -970,7 +1081,13 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
         "outcomes_data.top_industries",
         "outcomes_data.conditions",
     ]
-    if spec.get("degree_type") != "bachelors" and slug not in _COST_BY_SLUG:
+    # Bachelor's, academic-graduate, and the published professional tiers carry a cited
+    # tuition (see ``_program_tuition``). Only the funded research PhD (tuition remission)
+    # and the self-supporting Rady per-unit programs record tuition omitted-with-reason.
+    if tuition_omitted is None and slug not in _COST_BY_SLUG:
+        t, _ = _program_tuition(spec)
+        tuition_omitted = spec.get("degree_type") == "phd" or t is None
+    if tuition_omitted:
         omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
@@ -1080,32 +1197,13 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.department = spec.get("department")
         kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], kw)
-        if spec["degree_type"] == "bachelors":
-            p.tuition = _TUITION_UG_INSTATE
-            p.cost_data = {
-                "tuition_usd": _TUITION_UG_INSTATE, "total_cost_of_attendance": _UNDERGRAD_COA,
-                "avg_net_price": _AVG_NET_PRICE, "funded": False,
-                "breakdown": {"tuition_in_state": _TUITION_UG_INSTATE, "tuition_out_of_state": _TUITION_UG_OOS},
-                "source": _COST_SRC[0], "source_url": _COST_SRC[1], "year": "2024-25",
-            }
-        elif spec["degree_type"] == "phd":
-            p.tuition = 0
-            p.cost_data = {
-                "tuition_usd": 0, "funded": True,
-                "note": "UCSD PhD students typically receive tuition remission plus a stipend.",
-                "source": "UC San Diego Graduate Division — Funding",
-                "source_url": "https://grad.ucsd.edu/funding/",
-            }
-        else:
-            p.tuition = None
-            p.cost_data = {
-                "note": "Tuition varies by program; see the official program tuition page.",
-                "source": "UC San Diego program tuition page",
-                "source_url": _website_for(spec),
-            }
+        tuition, cost = _program_tuition(spec)
+        p.tuition = tuition
+        p.cost_data = cost
+        tuition_omitted = spec["degree_type"] == "phd" or tuition is None
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_INSTITUTION)
-        outcomes["_standard"] = _program_standard(slug, spec)
+        outcomes["_standard"] = _program_standard(slug, spec, tuition_omitted=tuition_omitted)
         p.outcomes_data = outcomes
         p.tracks = _TRACKS_BY_SLUG.get(slug)
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)
