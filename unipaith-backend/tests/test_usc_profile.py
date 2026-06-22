@@ -176,10 +176,22 @@ def test_published_tuition_coverage():
     # Master's tier is filled (not a tier-wide null), with DISTINCT real rates (no copy-down).
     assert filled["masters"] >= total["masters"] - 6
     assert len(values["masters"]) >= 4
-    # Professional tier publishes flat rates — at least the verified doctorates are filled.
-    assert filled["professional"] >= 5
-    # No graduate / professional row carries the undergraduate sticker (copy-down guard).
-    for dt in ("masters", "professional"):
+    # Professional tier publishes flat rates — the verified doctorates are filled.
+    assert filled["professional"] >= 7
+    # Practice doctorates typed `phd` (Ed.D., D.M.A., D.S.W., …) are filled per-unit and are
+    # NOT mislabelled as funded research Ph.D.s; only true research Ph.D.s are omitted-funded.
+    practice = [
+        p for p in u.PROGRAMS
+        if p["degree_type"] == "phd" and "Doctor of Philosophy" not in p["program_name"]
+    ]
+    research = [
+        p for p in u.PROGRAMS
+        if p["degree_type"] == "phd" and "Doctor of Philosophy" in p["program_name"]
+    ]
+    assert practice and all(u._program_tuition(p)[0] is not None for p in practice)
+    assert research and all(u._program_tuition(p)[0] is None for p in research)
+    # No graduate / professional / doctoral row carries the undergraduate sticker (copy-down).
+    for dt in ("masters", "professional", "phd"):
         assert ug not in values[dt], f"{dt} carries the undergrad sticker (copy-down)"
     # Catalog-wide aggregate is no longer ~0% (the run-76 defect).
     agg_filled = sum(filled.values())

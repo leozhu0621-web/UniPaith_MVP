@@ -6281,10 +6281,24 @@ _TUITION_DDS = 124923  # Ostrow D.D.S.: $41,641 / trimester × 3 (September / Ja
 _TUITION_PHARMD = 68866  # Mann Pharm.D.: $34,433 / semester × 2
 _TUITION_DPT = 86125  # Ostrow D.P.T.: published full-year tuition (years 1-2)
 _TUITION_FTMBA = 79893  # Marshall Full-Time MBA first-year tuition (2024-25)
+_TUITION_EMBA = 76230  # Marshall Executive MBA year-1 tuition (2025-26)
+_TUITION_ONLINE_MBA = 82519  # Marshall Online MBA first-year tuition (2024-25)
+_TUITION_IBEAR = 140856  # Marshall One-Year (IBEAR / International) MBA tuition (2025-26)
+_TUITION_OTD_ENTRY = 67409  # Entry-Level O.T.D. average annual (3-year front-loaded; USC Chan)
+_TUITION_OTD_POSTPROF = 88812  # Post-Professional O.T.D. annual tuition (2025-26; USC Chan)
+
+# School / program per-unit graduate rates the registrar publishes distinctly from the general
+# $2,467/unit (verified on arr.usc.edu/tuition-and-fees, Spring/Summer 2025-26 column).
+_UNIT_SOCIALWORK = 2256  # Suzanne Dworak-Peck School of Social Work ($33,840 / 15 units)
+_UNIT_MRED = 2737  # Price Dollinger Master of Real Estate Development
 
 _MBA_FLAGSHIP = "usc-full-time-mba-program-mba"
+_MRED_SLUG = "usc-dollinger-master-of-real-estate-development-mred"
 
-_PROF_TUITION_BY_SLUG: dict[str, tuple[int, str]] = {
+_OTD_CHAN_SRC = "USC Chan Division of Occupational Science and Occupational Therapy — Cost of Attendance (2025-26)"
+
+# Each value is (amount, note) using the registrar source, or (amount, note, source, source_url).
+_PROF_TUITION_BY_SLUG: dict[str, tuple] = {
     "usc-law-jd": (
         _TUITION_JD,
         "USC Gould School of Law J.D. annual tuition, 2025-26 ($42,017 per semester × 2 "
@@ -6310,29 +6324,53 @@ _PROF_TUITION_BY_SLUG: dict[str, tuple[int, str]] = {
         "USC Division of Biokinesiology and Physical Therapy D.P.T. tuition, 2025-26 "
         "(published full-year rate for years 1-2; USC registrar tuition table).",
     ),
+    "usc-entry-level-occupational-therapy-otd": (
+        _TUITION_OTD_ENTRY,
+        "USC Chan Entry-Level O.T.D. tuition, 2025-26: a front-loaded 3-year program (3 "
+        "trimesters/year) — Year 1 $97,548, Year 2 $69,740, Year 3 $34,938; the matcher figure "
+        "is the ≈$67,409 average annual tuition.",
+        _OTD_CHAN_SRC,
+        "https://chan.usc.edu/education/entry-level-otd/cost-of-attendance",
+    ),
+    "usc-occupational-therapy-otd": (
+        _TUITION_OTD_POSTPROF,
+        "USC Chan Post-Professional O.T.D. tuition, 2025-26 ($24,670 fall + $34,538 spring + "
+        "$29,604 summer = $88,812; tuition only).",
+        _OTD_CHAN_SRC,
+        "https://chan.usc.edu/education/post-professional-otd/cost-of-attendance",
+    ),
 }
 
-# MBA-family programs at a distinct flat program tuition (not the per-unit grad rate); only
-# the Full-Time MBA has a single verified annual figure published, so the others omit.
-_MBA_OMIT_SLUGS = frozenset(
-    {
-        "usc-executive-mba-program-mba",
-        "usc-online-mba-program-mba",
-        "usc-international-mba-program-mba",
-        "usc-food-industry-management-program-mba",
-        "usc-mba-program-for-professionals-and-managers-mba",
-    }
-)
+# MBA-family programs billed at a distinct FLAT program tuition (not the per-unit grad rate).
+# Value is (amount, note, source_url, year). MBA.PM and the Food Industry MBA are billed at the
+# Marshall per-unit rate, so they fall through to the per-unit path (not listed here).
+_MBA_FLAT_BY_SLUG: dict[str, tuple[int, str, str, str]] = {
+    "usc-executive-mba-program-mba": (
+        _TUITION_EMBA,
+        "USC Marshall Executive MBA year-1 tuition, 2025-26 ($76,230; flat program rate).",
+        "https://www.marshall.usc.edu/programs/graduate-programs/mba-programs/executive-mba/tuition",
+        "2025-26",
+    ),
+    "usc-online-mba-program-mba": (
+        _TUITION_ONLINE_MBA,
+        "USC Marshall Online MBA first-year tuition, 2024-25 ($82,519; flat program rate).",
+        "https://www.marshall.usc.edu/online-mba-tuition-and-fees",
+        "2024-25",
+    ),
+    "usc-international-mba-program-mba": (
+        _TUITION_IBEAR,
+        "USC Marshall One-Year (IBEAR) MBA tuition, 2025-26 ($140,856; flat program rate).",
+        "https://www.marshall.usc.edu/programs/graduate-programs/mba-programs/one-year-mba/tuition",
+        "2025-26",
+    ),
+}
 
-# Clinical professional doctorates whose program-specific tuition USC does not publish as a
-# single citable annual figure on a public page (billed per unit / per term).
-_PROF_OMIT_SLUGS = frozenset(
-    {
-        "usc-doctor-of-nurse-anesthesia-practice-dnap",
-        "usc-entry-level-occupational-therapy-otd",
-        "usc-occupational-therapy-otd",
-    }
-)
+# The Food Industry Management MBA is a distinct flat-rate program USC does not publish a single
+# annual figure for on a public page; honestly omitted (never the per-unit rate guessed).
+_MBA_OMIT_SLUGS = frozenset({"usc-food-industry-management-program-mba"})
+
+# The remaining clinical professional doctorate without a single published annual figure.
+_PROF_OMIT_SLUGS = frozenset({"usc-doctor-of-nurse-anesthesia-practice-dnap"})
 
 
 def _grad_unit_rate(school_key: str) -> tuple[int, str]:
@@ -6342,6 +6380,8 @@ def _grad_unit_rate(school_key: str) -> tuple[int, str]:
         return _UNIT_VITERBI, "USC Viterbi School of Engineering graduate per-unit rate"
     if school_key == "MARSHALL":
         return _UNIT_MARSHALL, "USC Marshall School of Business graduate (500-level) per-unit rate"
+    if school_key == "SOCIALWORK":
+        return _UNIT_SOCIALWORK, "USC Suzanne Dworak-Peck School of Social Work graduate per-unit rate"
     return _UNIT_GENERAL, "USC university-wide graduate per-unit rate"
 
 
@@ -6401,8 +6441,9 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
     """Return (matcher_tuition, cost_data) from USC-published 2025-26 rates.
 
     A ``None`` tuition means the matcher field is honestly omitted (funded research
-    doctorate / clinical doctorate / non-degree diploma / per-program-flat MBA with no
-    single published annual figure); the basis is recorded in the cost note.
+    doctorate / a clinical doctorate or flat-rate MBA with no single published annual
+    figure / non-degree diploma); the basis is recorded in the cost note. Practice
+    doctorates typed ``phd`` (Ed.D., D.M.A., D.S.W., …) are filled per-unit, not funded.
     """
     slug = spec["slug"]
     dtype = spec["degree_type"]
@@ -6412,8 +6453,11 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         return _TUITION_UNDERGRAD, _undergrad_cost()
 
     if slug in _PROF_TUITION_BY_SLUG:
-        amount, note = _PROF_TUITION_BY_SLUG[slug]
-        return amount, _pub_cost(amount, note)
+        entry = _PROF_TUITION_BY_SLUG[slug]
+        amount, note = entry[0], entry[1]
+        src = entry[2] if len(entry) > 2 else _TUI_SRC
+        url = entry[3] if len(entry) > 3 else _TUI_SRC_URL
+        return amount, _pub_cost(amount, note, source=src, source_url=url)
 
     if slug == _MBA_FLAGSHIP:
         return _TUITION_FTMBA, _pub_cost(
@@ -6428,6 +6472,12 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             year="2024-25",
         )
 
+    if slug in _MBA_FLAT_BY_SLUG:
+        amount, note, url, year = _MBA_FLAT_BY_SLUG[slug]
+        return amount, _pub_cost(
+            amount, note, source="USC Marshall School of Business", source_url=url, year=year
+        )
+
     if slug in _MBA_OMIT_SLUGS:
         return None, _omit_cost(
             "This M.B.A. program is billed at a distinct flat program tuition that USC Marshall "
@@ -6435,6 +6485,16 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
             "tuition page for the current figure.",
             source="USC Marshall — MBA Programs",
             source_url="https://www.marshall.usc.edu/programs/graduate-programs/mba-programs",
+        )
+
+    if slug == _MRED_SLUG:
+        annual = _annual(_UNIT_MRED)
+        return annual, _pub_cost(
+            annual,
+            f"Billed at the USC Price School Master of Real Estate Development per-unit rate of "
+            f"${_UNIT_MRED:,}/unit (2025-26); annualized at {_GRAD_UNITS_PER_YEAR} units/year "
+            f"(≈${annual:,}/year).",
+            extra={"per_unit": _UNIT_MRED},
         )
 
     if slug in _PROF_OMIT_SLUGS:
@@ -6448,6 +6508,17 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
     if dtype == "phd":
         unit, label = _grad_unit_rate(school_key)
         annual = _annual(unit)
+        if "Doctor of Philosophy" not in spec["program_name"]:
+            # Practice / professional doctorate (Ed.D., D.M.A., D.S.W., D.P.P.D., D.R.Sc.,
+            # D.L.A.S.) typed `phd` in the catalog — billed per unit, NOT a funded research Ph.D.
+            return annual, _pub_cost(
+                annual,
+                f"Practice/professional doctorate billed at the {label} of ${unit:,}/unit "
+                f"(2025-26); annualized at USC's full-time graduate load of {_GRAD_UNITS_PER_YEAR} "
+                f"units/year (≈${annual:,}/year). This is a professional doctorate, not a funded "
+                "research Ph.D.",
+                extra={"per_unit": unit},
+            )
         return None, _omit_cost(
             f"Doctoral coursework enrolls at the {label} of ${unit:,}/unit (2025-26; about "
             f"${annual:,}/year at a full-time load), but admitted students in USC's research "
