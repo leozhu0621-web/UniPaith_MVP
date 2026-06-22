@@ -13,12 +13,11 @@ research-doctoral tuition sticker ($20,800/yr, Cornell Graduate School Tuition R
 the matcher ``tuition``, keeping ``funded=True`` + the funding note in ``cost_data``.
 
 Idempotent: re-applies the Cornell profile (``replace``-style upsert) and re-derives
-``program_preferences`` for any program lacking one. Also unifies the live dual head left
-by the §8 auto-merge race (``cornelltuition1`` + ``bujhumrg1``, collapsed by ``bucornmrg1``)
-by chaining onto that single merged head.
+``program_preferences`` for any program lacking one. Chains onto the current single head
+``cmutuition1`` (CMU graduate-tier backfill, #1073) so ``main`` keeps exactly one head.
 
 Revision ID: cornellphdtui1
-Revises: bucornmrg1
+Revises: cmutuition1
 Create Date: 2026-06-22
 """
 
@@ -33,7 +32,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "cornellphdtui1"
-down_revision = "bucornmrg1"
+down_revision = "cmutuition1"
 branch_labels = None
 depends_on = None
 
