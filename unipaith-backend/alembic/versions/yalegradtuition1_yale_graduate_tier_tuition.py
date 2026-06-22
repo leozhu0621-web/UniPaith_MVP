@@ -35,13 +35,12 @@ Idempotent: re-applies ``yale_profile.apply()`` (no rows added/dropped here — 
 tuition / cost_data set) and re-derives the matcher's target-applicant rows.
 
 Head-sync: a burst of concurrent tuition/name repairs repeatedly forked the migration
-tree off the ``gatechgradtuition1`` + ``penntuition1`` pair. PR #1102's ``cornellnames2``
-already re-converged that pair (its ``down_revision`` is the same pair), and is now
-``main``'s single non-Yale head, so this revision simply chains LINEARLY after it —
-leaving ``main`` at a single head while carrying the Yale tuition backfill.
+tree. As they land they each chain linearly (cornellnames2 -> harvardcip3 -> ...), so this
+revision chains after ``harvardcip3`` — ``main``'s current single head — leaving ``main``
+at a single head while carrying the Yale tuition backfill.
 
 Revision ID: yalegradtuition1
-Revises: cornellnames2
+Revises: harvardcip3
 Create Date: 2026-06-22
 """
 
@@ -56,7 +55,7 @@ from unipaith.models.institution import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "yalegradtuition1"
-down_revision = "cornellnames2"
+down_revision = "harvardcip3"
 branch_labels = None
 depends_on = None
 
