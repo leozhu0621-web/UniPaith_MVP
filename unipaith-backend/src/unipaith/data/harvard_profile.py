@@ -47,6 +47,11 @@ failed the frame-stripped shared-body gate live) with sibling-aware
 ``_assign_descriptions`` (UW-Madison / gold-MIT pattern): the anchor credential
 carries the full verified ``FIELD_DESCRIPTIONS`` clause; each sibling carries a
 distinct level-specific body naming real subareas — 0% frame-stripped shared body.
+
+CIP-title NAME repair (2026-06-22, harvardcipnames1, REPAIR_BACKLOG #1): resolves
+five verbatim federal CIP taxonomy titles (11 rows) to Harvard's real published
+degree names or drops credential levels Harvard does not confer; preserves field-
+specific descriptions and tuition on surviving rows.
 """
 
 from __future__ import annotations
@@ -1425,7 +1430,41 @@ _ROLLUP_RESOLVE: dict[str, str] = {
     "Urban Studies/Affairs": "Urban Studies",
     "Religion/Religious Studies": "Study of Religion",
     "Information Science/Studies": "Information Science",
+    # Residual federal CIP taxonomy titles → Harvard's real published degree name
+    # (REPAIR_BACKLOG #1, run 77). Verified against Harvard department / GSAS pages;
+    # per-level drops for credentials Harvard does not confer live in
+    # ``_ROLLUP_LEVEL_DROP`` below.
+    "Linguistic, Comparative, and Related Language Studies and Services": "Linguistics",
+    "Electrical, Electronics, and Communications Engineering": "Electrical Engineering",
+    "Ecology, Evolution, Systematics, and Population Biology": "Integrative Biology",
+    "Biomathematics, Bioinformatics, and Computational Biology": (
+        "Computational Biology and Quantitative Genetics"
+    ),
+    "Architectural History, Criticism, and Conservation": (
+        "History of Art and Architecture"
+    ),
 }
+
+# (rollup title, degree_type) → DROP: credential level Harvard does not confer in
+# this field (omit, never guess — REPAIR_BACKLOG #1, run 77). Verified against
+# Harvard's own department / graduate-school pages:
+#  • Linguistics: PhD-only graduate field (no standalone master's; AM is in-passing).
+#  • Electrical Engineering bachelor's already ships as flagship ``harvard-electrical-eng-sb``.
+#  • Integrative Biology (OEB): PhD-only at graduate level; no terminal master's.
+#  • Computational Biology: the real SM is HSPH Biostatistics (not an FAS row).
+#  • Architectural History: no standalone GSD master's; PhD work sits under GSD PhD
+#    areas or FAS History of Art and Architecture (the IPEDS ms/cert rows are federal mint).
+_ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
+    ("Linguistic, Comparative, and Related Language Studies and Services", "masters"),
+    ("Linguistic, Comparative, and Related Language Studies and Services", "certificate"),
+    ("Electrical, Electronics, and Communications Engineering", "bachelors"),
+    ("Ecology, Evolution, Systematics, and Population Biology", "masters"),
+    ("Ecology, Evolution, Systematics, and Population Biology", "certificate"),
+    ("Biomathematics, Bioinformatics, and Computational Biology", "masters"),
+    ("Biomathematics, Bioinformatics, and Computational Biology", "certificate"),
+    ("Architectural History, Criticism, and Conservation", "masters"),
+    ("Architectural History, Criticism, and Conservation", "certificate"),
+})
 
 _ROLLUP_DROP: frozenset[str] = frozenset({
     "Accounting and Related Services",
@@ -1459,8 +1498,12 @@ _ROLLUP_DROP: frozenset[str] = frozenset({
 })
 
 
-def _resolve_rollup(field_name: str) -> str | None:
+def _resolve_rollup(
+    field_name: str, degree_type: str = "", school: str = ""
+) -> str | None:
     """Real Harvard degree name for a Scorecard CIP field, or None to DROP the row."""
+    if (field_name, degree_type) in _ROLLUP_LEVEL_DROP:
+        return None
     if field_name in _ROLLUP_DROP:
         return None
     return _ROLLUP_RESOLVE.get(field_name, field_name)
@@ -1725,7 +1768,7 @@ def _build_catalog() -> list[dict]:
             continue
         if (cip, dtype) in _EXISTING_CIP_KEYS:
             continue
-        real_name = _resolve_rollup(field_name)
+        real_name = _resolve_rollup(field_name, dtype, school)
         if real_name is None:
             continue
         fkey = (school, real_name.lower().strip(), dtype)
@@ -3181,7 +3224,7 @@ def _finalize_catalog(programs: list[dict]) -> None:
             p["program_name"] = _FULL_NAME_BY_SLUG[slug]
         else:
             field = _field_from_program_name(raw_field) or raw_field
-            resolved = _resolve_rollup(field)
+            resolved = _resolve_rollup(field, dtype, school)
             if resolved is not None:
                 p["program_name"] = _conferred_program_name(resolved, dtype, school)
         p["department"] = school
@@ -3199,7 +3242,7 @@ def _normalize_all_program_names() -> None:
             or _field_from_program_name(p.get("program_name", ""))
             or p.get("program_name", "")
         )
-        resolved = _resolve_rollup(field)
+        resolved = _resolve_rollup(field, p["degree_type"], p["school"])
         if resolved is None:
             continue
         p["program_name"] = _conferred_program_name(
