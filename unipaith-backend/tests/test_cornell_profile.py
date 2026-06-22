@@ -283,14 +283,19 @@ def test_graduate_tuition_not_undergrad_copy_down():
     assert not bad, f"{len(bad)} grad programs still carry undergrad sticker: {bad[:8]}"
 
 
-def test_research_phd_tuition_is_funded_not_sticker():
+def test_research_phd_tuition_is_published_sticker_not_zero():
+    """REPAIR_BACKLOG run 75 HIGH #2 follow-up: a funded research doctorate carries the
+    REAL published sticker as the matcher budget input (funding is a SEPARATE ``funded``
+    signal) — never ``0``, which the CPEF matcher reads as "free" (perfect affordability
+    for everyone) and never the undergrad sticker copied down."""
     phd = [p for p in cu.PROGRAMS if p["degree_type"] == "phd"]
     assert len(phd) >= 70
     for p in phd:
         tuition, cost = cu._program_tuition(p)
-        assert tuition == 0, p["slug"]
+        assert tuition == cu._TUITION_PHD, p["slug"]
+        assert tuition != 0, p["slug"]
+        assert tuition != cu._TUITION_UG_ENDOWED, p["slug"]
         assert cost.get("funded") is True
-        assert cost.get("published_tuition_sticker") == cu._TUITION_PHD
 
 
 def test_research_masters_use_distinct_endowed_rate():
