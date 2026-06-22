@@ -1227,6 +1227,18 @@ _ROLLUP_RESOLVE: dict[str, str] = {
     "International/Globalization Studies": "International Relations",
     "City/Urban, Community, and Regional Planning": "City and Regional Planning",
     "Biochemistry, Biophysics and Molecular Biology": "Biochemistry",
+    # Residual federal CIP taxonomy titles → Penn's real published degree name
+    # (REPAIR_BACKLOG #1, run 77; mirrors the verified Harvard/Cornell repairs).
+    # Verified against Penn department / graduate-group pages; per-level drops for
+    # credentials Penn does not confer live are in ``_ROLLUP_LEVEL_DROP`` below.
+    #  • Linguistics: Department of Linguistics (BA + PhD; the AM is submatriculation-only).
+    #  • Electrical Engineering: Department of Electrical and Systems Engineering (BSE/MSE/PhD).
+    #  • Genomics and Computational Biology: the GCB graduate group (PhD; no terminal MA).
+    "Linguistic, Comparative, and Related Language Studies and Services": "Linguistics",
+    "Electrical, Electronics, and Communications Engineering": "Electrical Engineering",
+    "Biomathematics, Bioinformatics, and Computational Biology": (
+        "Genomics and Computational Biology"
+    ),
 }
 
 # Federal "Other"/"General"/CIP-coded aggregation buckets — and fields already covered by
@@ -1270,11 +1282,53 @@ _ROLLUP_DROP: frozenset[str] = frozenset({
     "Visual and Performing Arts, General",
     "Area Studies",  # federal aggregation — Penn offers specific regional majors
     "Accounting and Related Services",  # covered by Wharton BS Economics / MBA flagships
+    # Federal CIP research-area split already covered by Penn's real Biology degree
+    # (BA + MA + PhD in Biology already ship); Penn confers no distinct EEB degree.
+    "Ecology, Evolution, Systematics, and Population Biology",
 })
 
+# (rollup title, degree_type) → DROP: credential level Penn does not confer in this
+# field (omit, never guess — REPAIR_BACKLOG #1, run 77). Verified against Penn's own
+# department / graduate-group pages:
+#  • Linguistics: BA + PhD graduate field; the AM is submatriculation-only, no standalone
+#    terminal master's admit.
+_ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
+    ("Linguistic, Comparative, and Related Language Studies and Services", "masters"),
+})
 
-def _resolve_rollup(field_name: str) -> str | None:
+# (rollup title, degree_type) → Penn's real PER-LEVEL degree name, where the conferred
+# degree differs by credential level (so the field-wide ``_ROLLUP_RESOLVE`` would mis-name
+# one level). Verified against catalog.upenn.edu / the owning graduate group:
+#  • Electrical PhD is conferred as "Electrical and Systems Engineering" (the ESE doctoral
+#    program); only the BSE/MSE are conferred as "Electrical Engineering".
+#  • The CIP-26.11 graduate rows map to two DISTINCT real Perelman programs: the PhD to the
+#    Genomics and Computational Biology graduate group, the MS to Biostatistics (Graduate
+#    Group in Epidemiology and Biostatistics) — both housed in the Perelman School of Medicine.
+_ROLLUP_LEVEL_RESOLVE: dict[tuple[str, str], str] = {
+    ("Electrical, Electronics, and Communications Engineering", "phd"): (
+        "Electrical and Systems Engineering"
+    ),
+    ("Biomathematics, Bioinformatics, and Computational Biology", "phd"): (
+        "Genomics and Computational Biology"
+    ),
+    ("Biomathematics, Bioinformatics, and Computational Biology", "masters"): "Biostatistics",
+}
+
+# (rollup title, degree_type) → real OWNING school override (the IPEDS row tags these to
+# the School of Arts and Sciences, but the program is administered elsewhere). GCB + the
+# Biostatistics MS are Perelman School of Medicine graduate groups.
+_ROLLUP_LEVEL_SCHOOL: dict[tuple[str, str], str] = {
+    ("Biomathematics, Bioinformatics, and Computational Biology", "phd"): _MED,
+    ("Biomathematics, Bioinformatics, and Computational Biology", "masters"): _MED,
+}
+
+
+def _resolve_rollup(field_name: str, degree_type: str = "") -> str | None:
     """Real Penn degree name for a Scorecard CIP field, or None to DROP the row."""
+    if (field_name, degree_type) in _ROLLUP_LEVEL_DROP:
+        return None
+    if (field_name, degree_type) in _ROLLUP_LEVEL_RESOLVE:
+        return _ROLLUP_LEVEL_RESOLVE[(field_name, degree_type)]
     if field_name in _ROLLUP_DROP:
         return None
     return _ROLLUP_RESOLVE.get(field_name, field_name)
@@ -1615,14 +1669,18 @@ def _assign_descriptions(programs: list[dict]) -> None:
     """
     from collections import defaultdict
 
-    from unipaith.profile_standard.anti_stub import field_of
-
     raw: dict[str, str] = {
         spec["slug"]: _strip_penn_frame(spec["description"]) for spec in programs
     }
     groups: dict[str, list[dict]] = defaultdict(list)
     for spec in programs:
-        groups[field_of(spec["program_name"])].append(spec)
+        # Group a field's credential siblings together using Penn's own field extractor,
+        # which strips the full conferred designation (incl. "Bachelor of Science in
+        # Engineering in …" and "Master of Business Administration in …"). The shared
+        # ``anti_stub.field_of`` mis-parses those doubled-"in" SEAS/Wharton forms and
+        # split BS/MS siblings into separate groups, leaving them an IDENTICAL body that
+        # was then masked with a "Penn catalog listing {token}:" machine token (miss #8).
+        groups[_real_field_of(spec["program_name"])].append(spec)
 
     for field_label, specs in groups.items():
         anchor = next(
@@ -1748,11 +1806,15 @@ def _build_catalog() -> list[dict]:
             continue
         # De-fabricate the federal CIP-rollup name → real Penn degree, or DROP the row
         # when the CIP is an aggregation bucket with no single named degree (miss #2).
-        real_name = _resolve_rollup(field_name)
+        real_name = _resolve_rollup(field_name, dtype)
         if real_name is None:
             continue
         seen.add(slug)
         delivery = _delivery_format(fmt)
+        # Some resolved rows are administered by a different school than the IPEDS row's
+        # tag (e.g. GCB / Biostatistics are Perelman, not SAS) — override so the conferred
+        # name, school_id, website and department all match the real owning unit.
+        school = _ROLLUP_LEVEL_SCHOOL.get((field_name, dtype), school)
         pname = _conferred_program_name(real_name, dtype, school)
         spec = {
             "slug": slug,
@@ -1789,7 +1851,7 @@ def _normalize_all_program_names() -> None:
             or _field_from_program_name(p.get("program_name", ""))
             or p.get("program_name", "")
         )
-        resolved = _resolve_rollup(field)
+        resolved = _resolve_rollup(field, p["degree_type"])
         if resolved is None:
             continue
         p["program_name"] = _conferred_program_name(
