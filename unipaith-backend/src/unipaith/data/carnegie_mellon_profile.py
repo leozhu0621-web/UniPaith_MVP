@@ -20,6 +20,12 @@ Description depth pass (2026-06-16, cmuprof5): replaces all classification-only
 ``{name} is a {degree} in the {dept} within CMU's {school}`` stubs with
 field-specific clauses from ``cmu_field_descriptions.py`` (180/180 programs).
 
+Tuition backfill (2026-06-22, cmutuition1): every program carries a CMU-published
+2026-27 tuition figure from Student Financial Services college/program tables;
+funded research doctorates stamp tuition 0 with the published sticker in the note.
+Per-credit, online-only, and CMU-Africa need-based programs without a single flat
+annual figure are recorded as honest omissions (omit-never-guess).
+
 Idempotent: ``apply(session)`` enriches the existing CMU institution (no-op when
 absent, e.g. on a fresh CI database), creating/reconciling its schools + programs.
 """
@@ -40,7 +46,7 @@ from unipaith.models.institution import Institution, Program, School
 from unipaith.profile_standard import STANDARD_VERSION
 
 INSTITUTION_NAME = "Carnegie Mellon University"
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-22"
 
 _CLASSIFICATION_STUB_RE = re.compile(
     r"^.+ is a .+ in the .+ within Carnegie Mellon University's .+",
@@ -1182,7 +1188,54 @@ _COST_SRC = (
     "Carnegie Mellon University — Tuition & Fees",
     "https://www.cmu.edu/sfs/tuition/index.html",
 )
-_TUITION_UNDERGRAD = 67020  # CMU SFS 2025-26 undergraduate tuition
+_TUITION_UNDERGRAD = 67020  # CMU SFS undergraduate tuition (2025-26 table; 2026-27 pending)
+
+# Published tuition (matcher-core budget signal — REPAIR_BACKLOG run 75 HIGH #3).
+# All figures are CMU SFS 2026-27 academic-year rates unless noted; funding is a
+# separate signal — funded research Ph.D.s stamp tuition 0 with the sticker in note.
+_TUI_SRC = "Carnegie Mellon University — Student Financial Services, Tuition & Fees (2026-27)"
+_TUI_SRC_URL = "https://www.cmu.edu/sfs/tuition/graduate/index.html"
+_TUI_AFRICA_SRC = "Carnegie Mellon University Africa — Tuition and financial aid (2025-26)"
+_TUI_AFRICA_URL = "https://www.africa.engineering.cmu.edu/admissions/tuition.html"
+_PHD_FUNDING_SRC = "Carnegie Mellon University — Graduate Admissions"
+_PHD_FUNDING_URL = "https://www.cmu.edu/graduate/admissions/index.html"
+
+# College annual graduate rates (CMU SFS 2026-27).
+_TUITION_SCS_MASTERS = 62200
+_TUITION_SCS_PHD_STICKER = 52000
+_TUITION_CIT_MASTERS = 61510
+_TUITION_CIT_PHD_STICKER = 52780
+_TUITION_MCS_MASTERS = 60900
+_TUITION_MCS_PHD_STICKER = 52300
+_TUITION_DIETRICH = 53000
+_TUITION_III = 61510
+_TUITION_MSCF = 71800
+_TUITION_HEINZ_SEMESTER = 29570
+_TUITION_HEINZ_ANNUAL = 59140  # 2 semesters × $29,570 (Heinz full-time standard)
+_TUITION_TEPPER_PHD_STICKER = 47000  # $23,500 × 2 semesters
+_TUITION_AFRICA_INTL = 60300  # CMU-Africa international students, 2025-26
+
+_CFA_DEPT_TUITION: dict[str, int] = {
+    "School of Architecture": 44300,
+    "School of Art": 36720,
+    "School of Design": 45000,
+    "School of Drama": 38496,
+    "School of Music": 45950,
+}
+
+# Per-unit Tepper rates (annualized at a published full-time load for the matcher).
+_TEPPER_MSBA_UNIT = 743
+_TEPPER_MSM_UNIT = 695
+_TEPPER_UNITS_PER_YEAR = 36
+
+# Heinz per-unit programs (MPM, MSIT online).
+_HEINZ_UNIT = 620
+_HEINZ_UNITS_PER_YEAR = 48
+
+# Programs whose tuition is per-credit/online-only with no flat annual figure.
+_TUITION_OMIT_SLUGS = frozenset({
+    "cmu-cert-fds-online",
+})
 
 _FLAGSHIP = "cmu-mba"
 
@@ -1881,16 +1934,296 @@ def _deadline_for(spec: dict) -> date | None:
 _UNFUNDED_DOCTORATE_SLUGS = {"cmu-ddes", "cmu-da-math"}
 
 
+def _pub_tuition_cost(
+    tuition: int,
+    note: str,
+    *,
+    source: str = _TUI_SRC,
+    source_url: str = _TUI_SRC_URL,
+    funded: bool = False,
+    extra: dict | None = None,
+) -> dict:
+    cost: dict = {
+        "tuition_usd": tuition,
+        "funded": funded,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": "2026-27",
+    }
+    if extra:
+        cost.update(extra)
+    return cost
+
+
+def _omit_tuition_cost(
+    note: str,
+    *,
+    source: str | None = None,
+    source_url: str | None = None,
+) -> dict:
+    return {
+        "note": note,
+        "source": source or _TUI_SRC,
+        "source_url": source_url or _TUI_SRC_URL,
+        "year": "2026-27",
+    }
+
+
+def _annualize_per_unit(unit_rate: int, units: int = _TEPPER_UNITS_PER_YEAR) -> int:
+    return unit_rate * units
+
+
+def _cfa_annual_rate(department: str) -> int:
+    for key, rate in _CFA_DEPT_TUITION.items():
+        if key in department:
+            return rate
+    return _CFA_DEPT_TUITION["School of Architecture"]
+
+
+def _phd_sticker_for(spec: dict) -> int:
+    school = spec["school"]
+    if school == _SCS:
+        return _TUITION_SCS_PHD_STICKER
+    if school == _CIT:
+        return _TUITION_CIT_PHD_STICKER
+    if school == _MCS:
+        return _TUITION_MCS_PHD_STICKER
+    if school == _TEPPER:
+        return _TUITION_TEPPER_PHD_STICKER
+    if school == _HEINZ:
+        return _TUITION_HEINZ_ANNUAL
+    if school == _CFA:
+        return _cfa_annual_rate(spec["department"])
+    return _TUITION_DIETRICH
+
+
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return (matcher_tuition, cost_data) from CMU-published 2026-27 rates."""
+    slug = spec["slug"]
+    dtype = spec["degree_type"]
+    school = spec["school"]
+    delivery = spec.get("delivery_format", "on_campus")
+
+    if slug in _COST_BY_SLUG:
+        cost = dict(_COST_BY_SLUG[slug])
+        return cost.get("tuition_usd"), cost
+
+    if slug in _TUITION_OMIT_SLUGS:
+        return None, _omit_tuition_cost(
+            "Tuition for this program is billed per credit hour or per term with no "
+            "single flat annual figure published; see the program's CMU tuition page "
+            "for current rates.",
+        )
+
+    if slug == "cmu-mse-online":
+        return _TUITION_SCS_MASTERS, _pub_tuition_cost(
+            _TUITION_SCS_MASTERS,
+            "Published SCS master's tuition (2026-27); the online MSE program uses the "
+            "same per-academic-year tuition table as on-campus SCS master's programs.",
+            source_url="https://www.cmu.edu/sfs/tuition/graduate/scs.html",
+        )
+    if slug == "cmu-miips-online":
+        return _TUITION_III, _pub_tuition_cost(
+            _TUITION_III,
+            "Published Integrated Innovation Institute tuition (2026-27).",
+            source_url="https://www.cmu.edu/sfs/tuition/graduate/iii.html",
+        )
+    if slug == "cmu-msba-online":
+        annual = _annualize_per_unit(_TEPPER_MSBA_UNIT)
+        return annual, _pub_tuition_cost(
+            annual,
+            f"Published part-time/online Tepper MSBA tuition at ${_TEPPER_MSBA_UNIT:,} "
+            f"per unit; annualized at {_TEPPER_UNITS_PER_YEAR} units.",
+            source_url="https://www.cmu.edu/sfs/tuition/graduate/tepper/msba.html",
+            extra={"per_unit": _TEPPER_MSBA_UNIT},
+        )
+    if slug == "cmu-mba-online":
+        unit = 769
+        annual = _annualize_per_unit(unit)
+        return annual, _pub_tuition_cost(
+            annual,
+            f"Published Online Hybrid MBA tuition at ${unit:,} per unit; annualized at "
+            f"{_TEPPER_UNITS_PER_YEAR} units for the matcher budget signal.",
+            source_url="https://www.cmu.edu/sfs/tuition/graduate/tepper/online-hybrid-mba.html",
+            extra={"per_unit": unit},
+        )
+    if slug == "cmu-msit-online":
+        annual = _HEINZ_UNIT * _HEINZ_UNITS_PER_YEAR
+        return annual, _pub_tuition_cost(
+            annual,
+            f"Published online Heinz MSIT tuition at ${_HEINZ_UNIT:,} per unit; "
+            f"annualized at {_HEINZ_UNITS_PER_YEAR} units.",
+            source_url="https://www.cmu.edu/sfs/tuition/graduate/heinz/mpm-msit.html",
+            extra={"per_unit": _HEINZ_UNIT},
+        )
+
+    if dtype == "bachelors":
+        return _TUITION_UNDERGRAD, {
+            "tuition_usd": _TUITION_UNDERGRAD,
+            "funded": False,
+            "source": _COST_SRC[0],
+            "source_url": _COST_SRC[1],
+            "year": "2025-26",
+        }
+
+    if slug.startswith("cmu-africa-"):
+        return _TUITION_AFRICA_INTL, _pub_tuition_cost(
+            _TUITION_AFRICA_INTL,
+            "Published CMU-Africa tuition for international students (2025-26); "
+            "African students may receive need-based aid covering a substantial "
+            "fraction of cost.",
+            source=_TUI_AFRICA_SRC,
+            source_url=_TUI_AFRICA_URL,
+        )
+
+    if dtype == "phd":
+        if slug == "cmu-da-math":
+            return _TUITION_MCS_PHD_STICKER, _pub_tuition_cost(
+                _TUITION_MCS_PHD_STICKER,
+                "Published Mellon College of Science doctoral tuition sticker "
+                "(2026-27); the Doctor of Arts is not fully funded like research Ph.D.s.",
+            )
+        if slug == "cmu-ddes":
+            rate = _cfa_annual_rate(spec["department"])
+            return rate, _pub_tuition_cost(
+                rate,
+                "Published College of Fine Arts graduate tuition for the School of "
+                "Architecture (2026-27); the Doctor of Design is a terminal professional "
+                "degree, not a funded research doctorate.",
+                source_url="https://www.cmu.edu/sfs/tuition/graduate/cfa.html",
+            )
+        sticker = _phd_sticker_for(spec)
+        return 0, _pub_tuition_cost(
+            0,
+            (
+                "CMU Ph.D. students typically receive full tuition plus a stipend "
+                "through fellowship and assistantship support; the published "
+                f"doctoral tuition sticker is ${sticker:,} per year before aid."
+            ),
+            source=_PHD_FUNDING_SRC,
+            source_url=_PHD_FUNDING_URL,
+            funded=True,
+            extra={"published_tuition_sticker": sticker},
+        )
+
+    if dtype == "certificate":
+        return None, _omit_tuition_cost(
+            "Graduate certificates are billed per credit hour; CMU publishes no "
+            "single flat annual certificate tuition figure.",
+        )
+
+    if school == _TEPPER:
+        if slug == "cmu-mscf":
+            return _TUITION_MSCF, _pub_tuition_cost(
+                _TUITION_MSCF,
+                "Published MSCF tuition for the 2026-27 academic year (Pittsburgh "
+                "and New York tracks).",
+                source_url="https://www.cmu.edu/sfs/tuition/graduate/mscf.html",
+            )
+        if slug == "cmu-mspm":
+            rate = 79272  # $39,636 × 2 semesters (Spring 2026 cohort table)
+            return rate, _pub_tuition_cost(
+                rate,
+                "Published Tepper MSPM tuition at $39,636 per semester for the Spring 2026 "
+                "cohort (spring + fall semesters; summer internship billed separately).",
+                source_url="https://www.cmu.edu/sfs/tuition/graduate/tepper/mspm-spring2026.html",
+            )
+        if slug == "cmu-msba":
+            annual = _annualize_per_unit(_TEPPER_MSBA_UNIT)
+            return annual, _pub_tuition_cost(
+                annual,
+                f"Published Tepper MSBA tuition at ${_TEPPER_MSBA_UNIT:,} per unit; "
+                f"annualized at {_TEPPER_UNITS_PER_YEAR} units for the matcher budget signal.",
+                source_url="https://www.cmu.edu/sfs/tuition/graduate/tepper/full-msba.html",
+                extra={"per_unit": _TEPPER_MSBA_UNIT},
+            )
+        if slug == "cmu-msm":
+            annual = _annualize_per_unit(_TEPPER_MSM_UNIT)
+            return annual, _pub_tuition_cost(
+                annual,
+                f"Published Tepper MSM tuition at ${_TEPPER_MSM_UNIT:,} per unit; "
+                f"annualized at {_TEPPER_UNITS_PER_YEAR} units for the matcher budget signal.",
+                source_url="https://www.cmu.edu/sfs/tuition/graduate/tepper/msm.html",
+                extra={"per_unit": _TEPPER_MSM_UNIT},
+            )
+
+    if school == _HEINZ:
+        if slug == "cmu-mpm":
+            annual = _HEINZ_UNIT * _HEINZ_UNITS_PER_YEAR
+            return annual, _pub_tuition_cost(
+                annual,
+                f"Published Heinz MPM tuition at ${_HEINZ_UNIT:,} per unit; "
+                f"annualized at {_HEINZ_UNITS_PER_YEAR} units for the matcher budget signal.",
+                source_url="https://www.cmu.edu/sfs/tuition/graduate/heinz/mpm-msit.html",
+                extra={"per_unit": _HEINZ_UNIT},
+            )
+        return _TUITION_HEINZ_ANNUAL, _pub_tuition_cost(
+            _TUITION_HEINZ_ANNUAL,
+            f"Published Heinz full-time tuition at ${_TUITION_HEINZ_SEMESTER:,} per "
+            "semester (standard two-semester academic year).",
+            source_url="https://www.cmu.edu/sfs/tuition/graduate/heinz/mism.html",
+        )
+
+    if school == _SCS:
+        return _TUITION_SCS_MASTERS, _pub_tuition_cost(
+            _TUITION_SCS_MASTERS,
+            "Published SCS master's program tuition for the 2026-27 academic year.",
+            source_url="https://www.cmu.edu/sfs/tuition/graduate/scs.html",
+        )
+
+    if school == _CIT:
+        dept = spec.get("department", "")
+        if dept in ("Integrated Innovation Institute", "Engineering & Technology Innovation Management"):
+            rate = _TUITION_III if dept == "Integrated Innovation Institute" else _TUITION_CIT_MASTERS
+            url = (
+                "https://www.cmu.edu/sfs/tuition/graduate/iii.html"
+                if dept == "Integrated Innovation Institute"
+                else "https://www.cmu.edu/sfs/tuition/graduate/cit.html"
+            )
+            return rate, _pub_tuition_cost(
+                rate,
+                f"Published CMU {dept} master's tuition for the 2026-27 academic year.",
+                source_url=url,
+            )
+        return _TUITION_CIT_MASTERS, _pub_tuition_cost(
+            _TUITION_CIT_MASTERS,
+            "Published College of Engineering master's tuition for the 2026-27 "
+            "academic year.",
+            source_url="https://www.cmu.edu/sfs/tuition/graduate/cit.html",
+        )
+
+    if school == _MCS:
+        return _TUITION_MCS_MASTERS, _pub_tuition_cost(
+            _TUITION_MCS_MASTERS,
+            "Published Mellon College of Science master's tuition for the 2026-27 "
+            "academic year.",
+            source_url="https://www.cmu.edu/sfs/tuition/graduate/mcs.html",
+        )
+
+    if school == _DIETRICH:
+        return _TUITION_DIETRICH, _pub_tuition_cost(
+            _TUITION_DIETRICH,
+            "Published Dietrich College graduate tuition for the 2026-27 academic year.",
+            source_url="https://www.cmu.edu/sfs/tuition/graduate/dc.html",
+        )
+
+    if school == _CFA:
+        rate = _cfa_annual_rate(spec["department"])
+        return rate, _pub_tuition_cost(
+            rate,
+            f"Published College of Fine Arts graduate tuition for {spec['department']} "
+            "(2026-27 academic year).",
+            source_url="https://www.cmu.edu/sfs/tuition/graduate/cfa.html",
+        )
+
+    return None, _omit_tuition_cost(
+        "Tuition varies by program; see the official CMU tuition page for current rates.",
+    )
+
+
 def _is_funded_phd(spec: dict) -> bool:
     return spec["degree_type"] == "phd" and spec["slug"] not in _UNFUNDED_DOCTORATE_SLUGS
-
-
-def _tuition_for(spec: dict) -> int | None:
-    if spec["degree_type"] == "bachelors":
-        return _TUITION_UNDERGRAD
-    if _is_funded_phd(spec):
-        return 0  # funded research doctorates
-    return None  # per-program graduate tuition deepened on a resume run
 
 
 def _program_content_for(spec: dict) -> dict:
@@ -1903,7 +2236,7 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
     """Per-program omitted-field list (verified-unavailable), for _standard."""
     if spec is None:
         spec = _SPEC_BY_SLUG[slug]
-    has_tuition = slug in _COST_BY_SLUG or _tuition_for(spec) is not None
+    has_tuition = _program_tuition(spec)[0] is not None
     has_outcomes = spec["degree_type"] in ("bachelors", "masters", "phd")
     omitted: list[str] = []
     if slug not in _TRACKS_BY_SLUG:
@@ -2054,24 +2387,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec["delivery_format"]
-        cost_override = _COST_BY_SLUG.get(slug)
-        if cost_override is not None:
-            p.tuition = cost_override.get("tuition_usd")
-            p.cost_data = dict(cost_override)
-        else:
-            tuition = _tuition_for(spec)
-            if tuition is not None:
-                p.tuition = tuition
-                p.cost_data = {
-                    "tuition_usd": tuition,
-                    "funded": _is_funded_phd(spec),
-                    "source": _COST_SRC[0],
-                    "source_url": _COST_SRC[1],
-                    "year": "2025-26",
-                }
-            else:
-                p.tuition = None
-                p.cost_data = None
+        tuition, cost = _program_tuition(spec)
+        p.tuition = tuition
+        p.cost_data = cost
         p.application_requirements = _requirements_for(spec)
         if slug == _FLAGSHIP:
             outcomes = dict(_MBA_OUTCOMES)

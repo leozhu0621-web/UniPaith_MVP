@@ -72,16 +72,7 @@ def _program_snapshot(spec: dict) -> dict:
         outcomes = {}
     outcomes["_standard"] = c._program_standard(slug, spec)
     cost_override = c._COST_BY_SLUG.get(slug)
-    if cost_override is not None:
-        cost = dict(cost_override)
-    elif c._tuition_for(spec) is not None:
-        cost = {
-            "tuition_usd": c._tuition_for(spec),
-            "source": c._COST_SRC[0],
-            "source_url": c._COST_SRC[1],
-        }
-    else:
-        cost = None
+    tuition, cost = c._program_tuition(spec)
     return {
         "program_name": spec["program_name"],
         "degree_type": spec["degree_type"],
@@ -203,3 +194,52 @@ def test_every_program_has_delivery_format():
         assert spec["delivery_format"], f"{spec['slug']} missing delivery_format"
     assert any(p["delivery_format"] == "online" for p in c.PROGRAMS)
     assert any(p["delivery_format"] == "hybrid" for p in c.PROGRAMS)
+
+
+def test_matcher_core_tuition_is_published_catalog_wide():
+    """Graduate-tier NULL is matcher starvation — every row carries a cited rate or
+    an honest per-program omission (REPAIR_BACKLOG run 75 HIGH #3)."""
+    missing = []
+    for spec in c.PROGRAMS:
+        tuition, cost = c._program_tuition(spec)
+        if tuition is None:
+            omitted = c._program_standard(spec["slug"], spec)["omitted"]
+            assert "cost_data.tuition_usd" in omitted, spec["slug"]
+            assert cost and cost.get("note"), spec["slug"]
+            missing.append(spec["slug"])
+    assert len(missing) == 1 and missing == ["cmu-cert-fds-online"], (
+        f"unexpected tuition gaps: {missing}"
+    )
+    covered = sum(1 for spec in c.PROGRAMS if c._program_tuition(spec)[0] is not None)
+    assert covered == len(c.PROGRAMS) - 1
+
+
+def test_graduate_tiers_carry_published_tuition():
+    """Whole graduate tiers at 0% is a hard fail — master's and Ph.D. must be filled."""
+    from collections import Counter
+
+    by_dt: Counter[str] = Counter()
+    null_by_dt: Counter[str] = Counter()
+    for spec in c.PROGRAMS:
+        dt = spec["degree_type"]
+        by_dt[dt] += 1
+        if c._program_tuition(spec)[0] is None:
+            null_by_dt[dt] += 1
+    assert null_by_dt["masters"] == 0, (
+        f"master's tier missing tuition on {null_by_dt['masters']}/{by_dt['masters']}"
+    )
+    assert null_by_dt["phd"] == 0, (
+        f"PhD tier should carry tuition 0 (funded) or a sticker, not null — "
+        f"{null_by_dt['phd']}/{by_dt['phd']} null"
+    )
+
+
+def test_graduate_tuition_not_undergrad_copy_down():
+    """Graduate rows must not carry the undergraduate sticker (value-correctness)."""
+    ug = c._TUITION_UNDERGRAD
+    copydown = [
+        p["slug"]
+        for p in c.PROGRAMS
+        if p["degree_type"] != "bachelors" and c._program_tuition(p)[0] == ug
+    ]
+    assert not copydown, f"undergrad sticker on graduate rows: {copydown[:8]}"
