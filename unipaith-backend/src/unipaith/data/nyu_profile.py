@@ -5728,50 +5728,255 @@ _PROGRAM_KEYWORDS_BY_SLUG: dict[str, list[str]] = {
 }
 
 
-# ── Costs ──────────────────────────────────────────────────────────────────
-# NYU bills tuition per school and (for most graduate programs) per credit hour or per term, and
-# publishes no single uniform annual program-tuition figure, so cost_data.tuition_usd is omitted
-# on every program (recorded in _standard) and the verified College Scorecard institution figures
-# (cost of attendance $84,374; average net price $37,050) anchor the cost picture. Undergraduate
-# programs carry those institution figures; graduate/professional programs carry a sourced
-# "see the program/bursar tuition page" record.
+# ── Costs / published tuition (matcher-core budget signal) ──────────────────
+# REPAIR_BACKLOG run 76 HIGH #1: NYU shipped catalog-wide 0% tuition, so the CPEF matcher scored
+# budget-fit blind on every one of its ~500 programs. Tuition is institution-PUBLISHED (a uniform
+# undergraduate direct-cost per school; a published per-credit / flat graduate rate per school), so
+# a whole-catalog null was a SKIPPED knowable field, not an honest omission. Each program now carries
+# NYU's published tuition as the matcher budget signal, verified + cited, OR is omitted-with-reason
+# (a funded research doctorate; a program billed at a program-specific cohort/per-credit rate NYU
+# does not publish as one verified annual figure). Graduate per-credit rates are annualized at NYU's
+# full-time enrollment standard of 12 points/semester (24/year); the verified College Scorecard
+# institution figures (cost of attendance $84,374; average net price $37,050) still anchor the
+# undergraduate cost picture.
 _UNDERGRAD_COA = 84374
 _AVG_NET_PRICE = 37050
 _COST_SRC = "U.S. Dept. of Education — College Scorecard (NYU, UNITID 193900) + NYU Bursar"
 _COST_SRC_URL = "https://collegescorecard.ed.gov/school/?193900-New-York-University"
 
+# NYU full-time graduate enrollment is 12 points/semester (24/year); per-credit rates annualize on it.
+_FT_CREDITS_PER_YEAR = 24
 
-def _undergrad_cost() -> dict:
-    return {
-        "total_cost_of_attendance": _UNDERGRAD_COA,
-        "avg_net_price": _AVG_NET_PRICE,
-        "funded": False,
-        "note": (
-            "NYU's published academic-year cost of attendance is about $84,374 and the average "
-            "net price (after grant aid) is about $37,050 (College Scorecard, UNITID 193900). "
-            "Since 2021 NYU has met 100% of demonstrated financial need for incoming first-year "
-            "undergraduates, and the NYU Promise makes tuition free for families earning under "
-            "$100,000. A single tuition-only figure is set per school and per term by the NYU "
-            "Bursar — see the program's bulletin page."
-        ),
-        "source": _COST_SRC,
-        "source_url": _COST_SRC_URL,
-        "year": "2024-25",
+# Published 2026-27 full-time undergraduate direct cost (tuition + registration/services fees),
+# uniform across majors WITHIN a school (NYU Bursar / Bulletins Cost of Attendance, two semesters).
+_UG_TUITION_SRC = "NYU Bursar / Bulletins — 2026-27 Cost of Attendance (undergraduate tuition and fees)"
+_UG_TUITION_SRC_URL = "https://bulletins.nyu.edu/nyu/cost-attendance/"
+_UG_TUITION_DEFAULT = 68576  # CAS, Gallatin, Liberal Studies, Nursing, SPS, Silver, Steinhardt, Tandon
+_UG_TUITION_BY_SCHOOL: dict[str, int] = {
+    _STERN: 70464,
+    _TISCH: 75326,
+}
+
+# Graduate per-credit ("per point") tuition by school → (per_credit, year, source_label, source_url).
+# Annualized at _FT_CREDITS_PER_YEAR. Each rate is the school's own published per-credit figure.
+_GRAD_PER_CREDIT: dict[str, tuple[int, str, str, str]] = {
+    _STEINHARDT: (
+        2363, "2026-27", "NYU Steinhardt — Graduate Study Tuition and Fees",
+        "https://steinhardt.nyu.edu/admissions/tuition-and-student-charges/graduate-study-tuition-and-fees",
+    ),
+    _TANDON: (
+        2525, "2026-27", "NYU Tandon School of Engineering — Graduate Tuition and Financial Aid",
+        "https://engineering.nyu.edu/admissions/graduate/tuition-and-financial-aid",
+    ),
+    _GSAS: (
+        2391, "2024-25",
+        "NYU Graduate School of Arts and Science / Institute of Fine Arts — Tuition (per point)",
+        "https://ifa.nyu.edu/study/tuition.html",
+    ),
+    _GPH: (
+        2272, "2025-26", "NYU School of Global Public Health — Funding Your Degree",
+        "https://publichealth.nyu.edu/admissions/financial-aid",
+    ),
+    _SPS: (
+        2785, "2025-26", "NYU School of Professional Studies — Graduate Tuition and Financial Aid",
+        "https://www.sps.nyu.edu/join/graduate-admissions/tuition-and-financial-aid.html",
+    ),
+}
+
+# Graduate FLAT full-time annual tuition by school (NYU bills a flat full-time rate, not per credit).
+_GRAD_FLAT_BY_SCHOOL: dict[str, tuple[int, str, str, str]] = {
+    # Tisch charges a flat $41,451/semester for 12–18 credits (full-time), i.e. $82,902/year.
+    _TISCH: (
+        82902, "2025-26",
+        "NYU Tisch School of the Arts — Graduate Tuition and Fees (flat $41,451/semester, 12–18 credits)",
+        "https://tisch.nyu.edu/admissions/graduate-admissions/graduate-tuition-and-fees.html",
+    ),
+}
+
+# School of Law: the LL.M. / specialized-master's slate bills per credit; full-time = 24 credits/year.
+_LAW_LLM_PER_CREDIT = 3498  # NYU Law LL.M. per credit (2025-26)
+_JD_ANNUAL = 83952          # NYU Law J.D. full-time annual tuition (Bulletins Law Cost of Attendance, 2026-27)
+_DDS_ANNUAL = 106962        # NYU College of Dentistry D.D.S. annual tuition (Bulletins Dentistry COA, 2026-27)
+_LAW_TUITION_SRC = "NYU School of Law — Cost of Attendance / Tuition and Fees (Bulletins)"
+_LAW_TUITION_SRC_URL = "https://bulletins.nyu.edu/graduate/law/cost-attendance/"
+_DENT_TUITION_SRC = "NYU College of Dentistry — Cost of Attendance (Bulletins)"
+_DENT_TUITION_SRC_URL = "https://bulletins.nyu.edu/graduate/dentistry/cost-attendance/"
+
+# Master's-bearing schools whose programs are billed at program-specific cohort / per-credit rates
+# NYU does not publish as a single verified annual figure → tuition omitted-with-reason (never guessed).
+_GRAD_OMIT_REASON_BY_SCHOOL: dict[str, str] = {
+    _STERN: (
+        "NYU Stern prices its M.B.A. and specialized M.S. programs at program-specific cohort/flat "
+        "rates that vary by program rather than a single per-credit school rate, so a verified annual "
+        "tuition figure is omitted here rather than guessed — see the program's NYU Stern cost page."
+    ),
+    _WAGNER: (
+        "NYU Wagner bills tuition per credit at program-specific rates that are not published as one "
+        "uniform annual figure, so tuition is omitted here rather than guessed — see the program's "
+        "NYU Wagner financial-aid page."
+    ),
+    _NURSING: (
+        "Rory Meyers nursing graduate programs bill tuition per credit at program-specific rates, so "
+        "a single verified annual figure is omitted here rather than guessed — see the Meyers tuition page."
+    ),
+    _SILVER: (
+        "NYU Silver bills the M.S.W. per credit; a single verified annual figure is not published here, "
+        "so tuition is omitted rather than guessed — see the Silver School tuition page."
+    ),
+    _GALLATIN: (
+        "The Gallatin M.A. is billed per point at the school's own published rate; a single verified "
+        "annual figure is omitted here rather than guessed — see the Gallatin tuition page."
+    ),
+    _MED: (
+        "These Grossman research master's degrees are billed on the school's own schedule and are "
+        "frequently funded; NYU does not publish one verified annual tuition figure for them, so "
+        "tuition is omitted rather than guessed."
+    ),
+    _DENTISTRY: (
+        "These advanced dental-science master's degrees are billed at program-specific rates rather "
+        "than a single published annual figure, so tuition is omitted here rather than guessed."
+    ),
+}
+
+
+def _cost(tuition: int | None, note: str, *, source: str, source_url: str, year: str,
+          funded: bool = False, extra: dict | None = None) -> dict:
+    out: dict = {
+        "funded": funded,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": year,
     }
+    if tuition is not None:
+        out["tuition_usd"] = tuition
+    out.update(extra or {})
+    return out
 
 
-def _grad_cost_fallback(spec: dict) -> dict:
-    return {
-        "note": (
-            "Tuition for this graduate/professional program is set by the NYU Bursar — most NYU "
-            "graduate programs bill per credit hour or per term and vary by school and "
-            "enrollment, so a single verified annual figure is not published here. Research "
-            "doctoral students are typically funded through assistantships and fellowships; the "
-            "Grossman School of Medicine M.D. and the Grossman Long Island M.D. are tuition-free."
+def _undergrad_cost(school: str | None = None) -> dict:
+    rate = _UG_TUITION_BY_SCHOOL.get(school or "", _UG_TUITION_DEFAULT)
+    return _cost(
+        rate,
+        (
+            f"NYU's published 2026-27 full-time undergraduate tuition and fees are ${rate:,} for two "
+            "semesters (NYU Bursar / Bulletins Cost of Attendance), uniform across majors within the "
+            "school. The total academic-year cost of attendance is about $84,374 and the average net "
+            "price after grant aid is about $37,050 (College Scorecard, UNITID 193900). Since 2021 NYU "
+            "has met 100% of demonstrated financial need for incoming first-year undergraduates, and "
+            "the NYU Promise makes tuition free for families earning under $100,000."
         ),
-        "source": "NYU Bursar / program bulletin page",
-        "source_url": spec["website"],
-    }
+        source=_UG_TUITION_SRC,
+        source_url=_UG_TUITION_SRC_URL,
+        year="2026-27",
+        extra={"total_cost_of_attendance": _UNDERGRAD_COA, "avg_net_price": _AVG_NET_PRICE},
+    )
+
+
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return (matcher_tuition, cost_data) from NYU-published rates; omit-with-reason otherwise."""
+    slug = spec["slug"]
+    dtype = spec["degree_type"]
+    school = spec["school"]
+
+    # Tuition-free M.D. (Grossman + Grossman Long Island) — verified full-tuition scholarship to all.
+    if slug in ("nyu-medicine-md", "nyu-medicine-md-long-island"):
+        return 0, _cost(
+            0,
+            "NYU Grossman School of Medicine awards a Full-Tuition Scholarship to every student in its "
+            "M.D. program (the first top-ranked U.S. medical school to do so, since 2018), so M.D. "
+            "tuition is $0 regardless of merit or need; the Grossman Long Island M.D. is likewise "
+            "tuition-free.",
+            source="NYU Langone Health — Full-Tuition Scholarship for M.D. students",
+            source_url="https://nyulangone.org/our-story/our-advertising/better-health-system/free-tuition",
+            year="2025-26",
+            funded=True,
+        )
+
+    # Professional flat-rate doctorates.
+    if slug == "nyu-law-jd":
+        return _JD_ANNUAL, _cost(
+            _JD_ANNUAL,
+            f"NYU School of Law J.D. full-time tuition is ${_JD_ANNUAL:,} for the year "
+            "(NYU Law Cost of Attendance, Bulletins).",
+            source=_LAW_TUITION_SRC, source_url=_LAW_TUITION_SRC_URL, year="2026-27",
+        )
+    if slug == "nyu-dentistry-dds":
+        return _DDS_ANNUAL, _cost(
+            _DDS_ANNUAL,
+            f"NYU College of Dentistry D.D.S. tuition is ${_DDS_ANNUAL:,} for the year "
+            "(NYU Dentistry Cost of Attendance, Bulletins).",
+            source=_DENT_TUITION_SRC, source_url=_DENT_TUITION_SRC_URL, year="2026-27",
+        )
+    # Combined 7-year B.A./D.D.S. is entered and billed as a CAS undergraduate for the early years.
+    if slug == "nyu-biology-dentistry-ba-dds":
+        rate = _UG_TUITION_DEFAULT
+        return rate, _cost(
+            rate,
+            f"This combined 7-year degree is entered as a College of Arts and Science undergraduate "
+            f"(published 2026-27 tuition and fees ${rate:,}); the later dental years bill at the "
+            f"College of Dentistry D.D.S. rate (${_DDS_ANNUAL:,}).",
+            source=_UG_TUITION_SRC, source_url=_UG_TUITION_SRC_URL, year="2026-27",
+        )
+
+    # Undergraduate: per-school published direct cost (tuition + fees).
+    if dtype == "bachelors":
+        rate = _UG_TUITION_BY_SCHOOL.get(school, _UG_TUITION_DEFAULT)
+        return rate, _undergrad_cost(school)
+
+    # Research doctorates: NYU funds Ph.D. students (tuition remission + stipend) → omit-with-reason.
+    if dtype == "phd":
+        return None, _cost(
+            None,
+            "NYU funds its research doctoral students with full tuition remission plus a stipend "
+            "(e.g. the GSAS MacCracken program and school fellowships/assistantships), so there is no "
+            "out-of-pocket annual tuition figure to state; tuition is omitted-with-reason (funded) "
+            "rather than guessed. Funding is a separate matcher signal from sticker tuition.",
+            source="NYU graduate funding (school fellowship/assistantship policy)",
+            source_url=spec["website"], year="2025-26", funded=True,
+        )
+
+    # Master's by school.
+    if school == _LAW:  # LL.M. / specialized law master's — per-credit, full-time = 24 credits/year.
+        annual = _LAW_LLM_PER_CREDIT * _FT_CREDITS_PER_YEAR
+        return annual, _cost(
+            annual,
+            f"NYU Law master's (LL.M./M.S.) tuition is ${_LAW_LLM_PER_CREDIT:,} per credit; "
+            f"${annual:,} at a full-time load of {_FT_CREDITS_PER_YEAR} credits/year "
+            "(NYU Law tuition schedule, 2025-26).",
+            source=_LAW_TUITION_SRC, source_url=_LAW_TUITION_SRC_URL, year="2025-26",
+        )
+
+    if school in _GRAD_FLAT_BY_SCHOOL:
+        annual, year, src, url = _GRAD_FLAT_BY_SCHOOL[school]
+        return annual, _cost(
+            annual,
+            f"NYU {school} charges a flat full-time graduate tuition of ${annual:,} per year ({year}).",
+            source=src, source_url=url, year=year,
+        )
+
+    if school in _GRAD_PER_CREDIT:
+        per_credit, year, src, url = _GRAD_PER_CREDIT[school]
+        annual = per_credit * _FT_CREDITS_PER_YEAR
+        return annual, _cost(
+            annual,
+            f"NYU {school} graduate tuition is ${per_credit:,} per credit ({year}); ${annual:,} at a "
+            f"full-time load of {_FT_CREDITS_PER_YEAR} credits/year (NYU's full-time standard of 12 "
+            "points/semester).",
+            source=src, source_url=url, year=year,
+        )
+
+    # Omit-with-reason schools (program-specific cohort/per-credit pricing, or funded research master's).
+    reason = _GRAD_OMIT_REASON_BY_SCHOOL.get(
+        school,
+        "Tuition for this graduate program is billed per credit / per term by the NYU Bursar at a "
+        "program-specific rate not published as one verified annual figure, so it is omitted rather "
+        "than guessed — see the program's tuition page.",
+    )
+    return None, _cost(
+        None, reason, source="NYU Bursar / program tuition page", source_url=spec["website"],
+        year="2025-26",
+    )
 
 
 # ── Outcomes (flagship programs with verified program-specific employment data) ──
@@ -6222,9 +6427,11 @@ def _requirements_for(spec: dict) -> dict:
     return _REQ_GRAD_GENERIC
 
 
-def _program_standard(slug: str, spec: dict) -> dict:
+def _program_standard(slug: str, spec: dict, *, tuition_omitted: bool = True) -> dict:
     """Per-program omitted-field list (verified-unavailable), for _standard."""
-    omitted: list[str] = ["tracks", "cost_data.tuition_usd"]
+    omitted: list[str] = ["tracks"]
+    if tuition_omitted:
+        omitted.append("cost_data.tuition_usd")
     if slug not in _OUTCOMES_BY_SLUG:
         omitted += [
             "outcomes_data.employment_rate",
@@ -6359,15 +6566,12 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.delivery_format = spec.get("delivery_format", "on_campus")
         _kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_SCHOOL_FEED_SPEC[spec["school"]])
         p.content_sources = _program_content(spec["school"], _kw)
-        if spec["degree_type"] == "bachelors":
-            p.tuition = None
-            p.cost_data = _undergrad_cost()
-        else:
-            p.tuition = None
-            p.cost_data = _grad_cost_fallback(spec)
+        tuition, cost_data = _program_tuition(spec)
+        p.tuition = tuition
+        p.cost_data = cost_data
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_BY_SLUG.get(slug, {}))
-        outcomes["_standard"] = _program_standard(slug, spec)
+        outcomes["_standard"] = _program_standard(slug, spec, tuition_omitted=tuition is None)
         p.outcomes_data = outcomes
         p.tracks = spec.get("tracks")
         p.class_profile = _CLASS_PROFILE_BY_SLUG.get(slug)

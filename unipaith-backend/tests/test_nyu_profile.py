@@ -54,10 +54,9 @@ def _school_snapshot(spec: dict) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    is_ug = spec["degree_type"] == "bachelors"
-    cost = n._undergrad_cost() if is_ug else n._grad_cost_fallback(spec)
+    tuition, cost = n._program_tuition(spec)
     outcomes = dict(n._OUTCOMES_BY_SLUG.get(slug, {}))
-    outcomes["_standard"] = n._program_standard(slug, spec)
+    outcomes["_standard"] = n._program_standard(slug, spec, tuition_omitted=tuition is None)
     kw = n._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(n._SCHOOL_FEED_SPEC[spec["school"]])
     return {
         "program_name": spec["program_name"],
@@ -159,6 +158,9 @@ def test_every_program_is_conformant_or_omitted():
     for spec in n.PROGRAMS:
         snap = _program_snapshot(spec)
         res = check_conformance("program", snap, profile_version=STANDARD_VERSION)
-        omitted = set(n._program_standard(spec["slug"], spec)["omitted"])
+        tuition, _ = n._program_tuition(spec)
+        omitted = set(
+            n._program_standard(spec["slug"], spec, tuition_omitted=tuition is None)["omitted"]
+        )
         bad = _gaps("program", res, omitted)
         assert not bad, f"{spec['slug']} has un-omitted gaps: {bad}"
