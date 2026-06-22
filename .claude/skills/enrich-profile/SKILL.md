@@ -327,6 +327,42 @@ Concrete misses observed in the first runs — each broke a real page:
      "Religion/Religious Studies", "Area Studies" — each with the rollup echoed
      verbatim into `department`, shipped live (the descriptions were field-specific and
      true, so only the names/departments + the prefix-doubling remained un-de-fabricated).
+   - **The comma-and rollup tell must EXCLUDE a VERIFIED real interdisciplinary major —
+     a blanket "every multi-clause comma-and field is a rollup" scan FALSE-FLAGS gold
+     MIT's OWN real degree and would pressure mangling a legitimate multi-clause name (the
+     rulebook contradiction surfaced this run).** The prior bullets correctly forbid the
+     verbatim federal CIP TITLE as a degree name — but the discriminator is whether the
+     institution ACTUALLY AWARDS that string, NOT merely whether the field carries
+     commas-and. A genuine interdisciplinary major can carry a multi-clause name the
+     institution publishes verbatim: gold MIT (the description 0-control) ships **"Science,
+     Technology, and Society"**, and real majors like **"Molecular, Cellular, and
+     Developmental Biology"** (MCDB), **"Speech, Language, and Hearing Sciences"**,
+     **"Russian, East European, and Eurasian Studies"** (REEES), **"Theater, Dance, and
+     Performance Studies"**, and **"Radio/Television/Film"** are each the institution's
+     real published degree name — flagging them is a FALSE POSITIVE that destroys real
+     data (omit-never-guess in REVERSE: never replace a verified real name with a fabricated
+     "cleaner" one). The DEFECT is specifically the verbatim **federal CIP taxonomy title
+     the institution does NOT award** (its real degree has a different, usually shorter,
+     published name): **"Linguistic, Comparative, and Related Language Studies and
+     Services"** (real: Linguistics), **"Electrical, Electronics, and Communications
+     Engineering"** (real: Electrical Engineering / ECE), **"Ecology, Evolution,
+     Systematics, and Population Biology"** (real: Ecology & Evolutionary Biology),
+     **"Biomathematics, Bioinformatics, and Computational Biology"** (real: Computational
+     Biology), **"Architectural History, Criticism, and Conservation"** (real:
+     Architectural History / Historic Preservation). Two reliable tells separate the two:
+     (a) the federal **"…and Related … Studies and Services"** / **"…, and
+     {parent-discipline} Engineering/Biology"** suffix no real degree prints; and (b) the
+     SAME multi-clause string appearing **verbatim across ≥2 DIFFERENT institutions'
+     catalogs** — a real major name is institution-specific (Yale's "Ethics, Politics, and
+     Economics" is Yale's alone), so an identical string shared by several peers is the
+     shared CIP title, not three coincidentally-identical real majors. Resolve a CIP title
+     to the institution's real published degree name + owning department; NEVER mangle or
+     "de-rollup" a verified real multi-clause major. Evidence: live API this run — Cornell
+     (12 rows), Harvard (11), Penn (10) ship these five verbatim CIP titles across
+     bachelor's / master's / PhD / certificate levels (the identical strings on all three =
+     the CIP mint), while gold MIT ships 0 of them and carries its real "Science,
+     Technology, and Society" major (so the prior comma-and tell, applied bluntly, would
+     reject the 0-control itself).
    - **The realness gate must ALSO reject a literal CIP CODE left in the name or
      department — the naked IPEDS-minting fingerprint the punctuation-keyed rollup scan
      MISSES (the live tell this run).** Every prior rollup-tell bullet keys the scan on
