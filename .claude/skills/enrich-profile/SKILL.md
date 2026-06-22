@@ -158,6 +158,39 @@ tier; even gold MIT (9), Princeton (5/6), Caltech (2/2), Harvard (2) carry the u
 rows — while the genuine per-tier fillers (Michigan master's = 16 distinct values, Stanford 67, Berkeley
 71, UCLA 98) carry DISTINCT graduate rates.
 
+**But grad `tuition` == the undergrad sticker is a VERIFY-trigger, NOT proof of copy-down — some institutions
+VERIFIABLY charge ONE flat full-time rate for undergraduate AND general graduate study, so an UNCONDITIONAL
+"grad==undergrad ⇒ FAIL" would REJECT correctly-verified data and pressure a FABRICATED "different" graduate
+number (omit-never-guess in REVERSE — never replace a verified value with a guessed distinct one). This is the
+live false-positive this run.** The copy-down paragraph above is right that the undergrad sticker copied down a
+heterogeneous tier is a defect — but `grad == undergrad` ALONE does not prove a blind copy: a real institution
+can publish a DOCUMENTED flat full-time rate where undergraduate and general-graduate tuition genuinely
+coincide. The DISCRIMINATOR that separates a verified flat-rate from a copy-down is the **PROFESSIONAL tier and
+the per-program detail, NOT the general-graduate number**: a TRUE flat-rate institution still carries its
+PROFESSIONAL programs (MD / JD / MBA / DMD) at their OWN distinct, HIGHER published rates and records funded
+research doctorates + per-credit-billed certificates as honest omissions (no flat annual figure to state without
+guessing); a COPY-DOWN stamps the single undergrad number INDISCRIMINATELY across the WHOLE grad tree — every
+PhD, every professional degree — which is impossible (professional schools always cost more, research doctorates
+are funded). So: the undergrad number on the GENERAL-graduate tier is correct-IF-verified (keep + cite the
+flat-rate policy); the SAME number on the PROFESSIONAL tier (or on every funded doctorate) is the copy-down —
+fix THAT, never the verified general-graduate flat rate. The same omit-never-guess logic governs the coverage
+tells: a certificate / PhD tier null is LEGITIMATE omit-with-reason when the program has no flat annual figure
+(per-credit billing) or its tuition is waived (funded), so the per-tier coverage rules above demand the
+institution-PUBLISHED rate only where one EXISTS (the master's / professional tiers, which publish a rate and
+are rarely funded) and an omit-WITH-REASON otherwise — they do NOT demand a guessed annual total on a per-credit
+or funded tier. (A CI `tuition_value_artifacts` metric must therefore key the copy-down FAIL on the PROFESSIONAL
+tier / a blanket all-grad-equal stamp, NOT an unconditional grad==undergrad fail, or it false-flags a verified
+flat-rate catalog.) This TIGHTENS the rule toward no-fabrication (removes a false-positive that would force a
+guess); it loosens NO invariant — verify-or-omit still governs and the undergrad sticker is still NEVER a
+back-fill for a tier that publishes its own rate. Evidence: live API + repo this run — Boston University's 154
+grad rows at $69,870 are BU's VERIFIED flat full-time graduate rate (BU Student Accounting Services + U.S. News,
+three sources, `bu_profile.py` butuitionval1), with PROFESSIONAL rows DISTINCT (MD $72,626, DMD $99,680, SSW
+$40,352) and funded doctorates + per-credit certificates omitted-with-reason — yet the grader's OWN prior
+backlog flagged BU as HIGH "copy-down" (182 rows), a false positive the enricher correctly resolved by VERIFYING
+the policy rather than fabricating a fake distinct number; Cornell by contrast was a REAL copy-down (the
+identical $71,266 on every professional degree, which cost far more) and was correctly repaired to distinct
+master's rates + funded-PhD omissions.
+
 **NEW per-program step — derive the target applicant (`ProgramPreference`).** For
 every program, also write a **`program_preferences`** row (model `ProgramPreference`,
 table `program_preferences`, added in the AI-Structure build) so the **program →

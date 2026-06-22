@@ -6152,3 +6152,115 @@ no DB in this environment — same constraint as runs 70–74), so the mandated 
 cleanly), and verified against LIVE prod that gold MIT scores 0 on every description-quality metric (the 0
 control; `name_prefixed=1` is the known benign real-described row). This grader PR changes only the three skill
 markdown files (no code, no data, no migration), so backend CI is unaffected.
+
+## 2026-06-22 — Run 76 (FULL-FLEET sweep of all 300 live + all 40 catalogs · STRUCTURE + DESCRIPTIONS clean fleet-wide · 1 rule change — the run-75 copy-down tell was OVER-BROAD: a VERIFIED flat full-time rate is not a copy-down)
+
+**Institutions audited: ALL 300 LIVE (full-fleet, programmatic — not a sample), via `api.unipaith.co/api/v1`,**
+reusing `profile_standard/anti_stub.py` directly (paginated full program list of all 40 program-bearing
+catalogs ≈ 8,400 programs; the other 260 are bare institution-level stubs). Per catalog I computed `analyze`
+(name-prefix / classification / double-period / verbatim-shared / shared-leading-body / cross-field),
+`machine_artifacts`, `scrape_debris`, `template_slot_artifacts`, `frame_stripped_shared_body` (default +
+abs150), **tuition COVERAGE grouped by `degree_type` AND tuition VALUE distribution per tier (distinct-value
+count + undergrad-sticker copy-down count)**; plus a campus-photo count on ALL 300 institutions. Where a
+metric and the data disagreed I went direct — read BU/Cornell/CMU repo tuition rationale, listed Deploy
+Backend runs via the GitHub API to separate deploy-strands from incomplete repairs.
+
+**Merged since run 75 (verified LIVE):** the run-75 HIGH tier was repaired — BU #1066 (tuition
+value-correctness), Cornell #1068 (stop copy-down → distinct master's + funded-PhD omit), JHU #1063
+(graduate-tier tuition → 98%), CMU #1073 (graduate-tier backfill — but a DEPLOY-STRAND, below). STRUCTURE +
+DESCRIPTIONS are CLEAN fleet-wide: `template_slot_artifacts` / `scrape_debris` / `machine_artifacts` = 0 on
+all 40 catalogs; 0 duplicate / bare-abbrev / "Programs"-dept / null-dept / CIP-rollup rows anywhere; only
+benign marginal `frame_abs` (GT 5, Yale/Duke/Chicago/Northwestern 1) and MIT's known `name_prefixed=1`.
+
+**The 1 rule change (bounded; the ONLY genuinely-new gap-class after a full-fleet sweep):**
+- **The run-75 copy-down tell (`grad tuition == the undergrad sticker ⇒ FAIL`) was OVER-BROAD — it
+  false-flags a VERIFIED flat full-time rate, and an unconditional fail would REJECT correctly-verified data
+  and pressure a FABRICATED "different" graduate number (omit-never-guess in REVERSE).** Run 75 declared any
+  grad/professional row whose `tuition` equals the undergrad sticker an automatic copy-down fail. But a real
+  institution can publish a DOCUMENTED flat full-time rate where undergraduate and general-graduate tuition
+  genuinely coincide — so `grad==undergrad` alone does not prove a blind copy. The discriminator is the
+  PROFESSIONAL tier + per-program detail, NOT the general-graduate number: a TRUE flat-rate institution still
+  carries its professional programs (MD/JD/MBA/DMD) at their OWN distinct higher rates and omits funded
+  doctorates + per-credit certificates with reason; a COPY-DOWN stamps the single undergrad number across the
+  WHOLE grad tree — every PhD, every professional degree — which is impossible (professional schools cost
+  more, research doctorates are funded). New tell: `grad==undergrad` is a VERIFY-trigger; a copy-down only
+  when the PROFESSIONAL tier / every funded doctorate carries the undergrad number; correct (keep + cite the
+  flat-rate policy) on the general-graduate tier. A TIGHTENING toward no-fabrication (removes a false-positive
+  that forces a guess); loosens NO invariant (verify-or-omit still governs; the undergrad sticker is still
+  never a back-fill for a tier that publishes its own rate). Added as a paragraph in "Also enrich for the
+  MATCH" directly after the run-75 copy-down paragraph; also clarifies that PhD + per-credit-certificate
+  tier-nulls are legitimate omit-with-reason (do not demand a guessed annual total). Evidence: live API + repo
+  this run — Boston University's 154 grad rows at $69,870 are BU's VERIFIED flat full-time graduate rate (BU
+  Student Accounting Services + U.S. News, 3 sources, `bu_profile.py` butuitionval1), with professional rows
+  DISTINCT (MD $72,626, DMD $99,680, SSW $40,352) and funded doctorates + per-credit certs omitted-with-reason
+  — yet the grader's OWN run-75 backlog flagged BU as HIGH #1 "copy-down" (182 rows), a false positive the
+  enricher correctly resolved by VERIFYING the policy; Cornell #1068 by contrast was a REAL copy-down (the
+  identical $71,266 on every professional degree, which cost far more) and was correctly repaired. Why only 1
+  change: the full-fleet sweep found NO other new defect CLASS — structure + descriptions are clean
+  fleet-wide, and every other live defect (catalog-wide 0% tuition, master's/professional-tier null, the CMU
+  deploy-strand, the seeds) maps to an existing rule, so the bounded/anti-churn rail forbids inventing more;
+  that work is repair-queueing + compliance logging.
+
+**Cleared since run 75 (verified — NOT defects, removed from backlog):**
+- **Boston University copy-down (run-75 HIGH #1) — FALSE POSITIVE.** Its 154 grad rows at $69,870 are BU's
+  verified flat full-time rate (the new rule's class); BU is now in the tuition-COMPLETE CLEAN tier.
+- **Cornell copy-down (run-75 HIGH #2) — REPAIRED (#1068):** master's 85/91 distinct, PhD 0/74 funded-omit,
+  5 residual benign. In CLEAN.
+- **JHU graduate-tier null (run-75 #3) — REPAIRED (#1063):** agg 98% live. In CLEAN.
+
+**Compliance gaps logged (existing rules the enricher disobeyed — queued, NOT re-added):**
+- **catalog-wide 0% tuition (run-70 rule), LIVE:** USC 511 · NYU 507 · UW-Seattle 360 (bachelor's INCLUDED) —
+  backlog #1.
+- **CMU DEPLOY-STRAND (§9 merge-is-not-deploy + §8-step-5 dual-head race), LIVE:** #1073 fills every program
+  in the repo (cmutuition1) but live reads master's 1/99 — its Deploy Backend FAILED 03:19Z; fixup #1072
+  in_progress at grade time. Data correct; drive the deploy green, do NOT rewrite (backlog #2).
+- **master's / professional-tier 0% (run-74 per-credential rule), LIVE on ~14 catalogs:** Purdue (master's
+  0/68), UCSD (master's 0/60), Northwestern (master's 0/26 + prof 0/4), Notre Dame (master's 0/24), Harvard
+  (master's 19/110 + cert 0/80), Penn (master's 8/66 + cert 0/16), Yale (master's 9/38 + prof/cert), Columbia
+  (master's 3/45), GT (master's 2/55 + prof 0/8), Chicago (master's 3/41), Rice (master's 1/29), Berkeley
+  (prof 0/20), UCLA (prof 0/4), Dartmouth/Emory (master's) — backlog #3. PhD-tier nulls EXCLUDED (largely
+  funded → legitimate omit-with-reason; the run-74 rule exempts them — do not pressure fabrication).
+- **seeds:** 8 flagship seeds still null dept + 0% tuition + dead feed (UC-Davis/UNC/Vanderbilt/WashU at 3
+  photos); ~260 bulk seeds, 33 at ZERO photos + ~54 at 1–3 (backlog #4/#5).
+
+**Deploy-race observation (FLAG #5, app/infra — not grader-editable):** a CASCADE of failed Deploy Backend
+runs this interval (JHU #1063, BU #1066, CMU #1073, merge #1067/#1069 all FAILED via the auto-merge dual-head
+race; intervening successful deploys carried JHU/BU/Cornell data live; #1072 fixup in_progress for CMU). The
+durable fix (single-head assertion on the MERGE RESULT, blocking auto-merge) lives in the CI/automerge workflow.
+
+**Flags (code/workflow, not grader-editable):** (1) anti-stub `@parametrize` lists DRIFT from
+`CERTIFIED_CLEAN` (latent — no live structure breach; drift-proof fix = parametrize over `CERTIFIED_CLEAN` +
+`OR lcs>=150` on the default). (2) `cip_code` not serialized on public program endpoints (re-confirmed None on
+gold MIT). (3) UPDATED — a `tuition_value_artifacts` CI metric must NOT fail `grad==undergrad` unconditionally
+(false-flags BU's verified flat rate): key the copy-down fail on the PROFESSIONAL tier / a blanket
+all-grad-equal stamp + require a per-institution published-rate reference. (4) a repair PR title can OVERSTATE
+the live result (CMU "graduate-tier tuition" reads 1/99 master's live — deploy-strand). (5) the auto-merge
+dual-head race RECURRED (cascade of failed deploys; #1072 fixup).
+
+**Backlog delta:** complete worst-first rewrite. REMOVED BU + Cornell (cleared — BU a verified-flat-rate false
+positive, Cornell repaired) and JHU (repaired) from the HIGH tier. NEW worst tier = matcher tuition
+STARVATION: catalog-wide 0% → HIGH #1 (USC/NYU/UW-Seattle); CMU deploy-strand → HIGH #2; master's/professional
+tier null → HIGH #3 (PhD nulls excluded as legitimate funded-omit). Flagship seeds → MEDIUM #4, bulk seeds →
+MEDIUM #5. Added a "🟡 PhD/cert null is largely legitimate" note so the enricher is not pushed to fabricate
+funded-PhD / per-credit-cert annual figures. Updated FLAG #3 (the CI tuition metric must not fail
+grad==undergrad unconditionally), FLAG #5 (deploy cascade). No CRITICAL this run (structure + descriptions
+clean fleet-wide).
+
+**Invariants:** all intact. The SKILL.md edit is a copy-down-rule TIGHTENING toward no-fabrication (it removes a
+false-positive that would force a guessed "different" graduate number; omit-never-guess is preserved in BOTH
+directions, and the undergrad sticker is still NEVER a back-fill for a tier that publishes its own rate) —
+loosens nothing. No school name added to the numbered "Concrete misses" (the per-school figures appear only as a
+live EVIDENCE pointer in the "Also enrich for the MATCH" prose, the same convention as the existing tuition
+paragraphs). Post-edit re-read: the numbered misses 1–9 are untouched and sequential, the new paragraph sits
+between the run-75 copy-down paragraph and the ProgramPreference step with no contradiction, and the
+no-fabrication / merge-mandatory / workshop-feedback-only / omit-never-guess invariants are untouched.
+
+**Health check:** the full `pytest` suite needs a live Postgres + sqlalchemy/httpx/asyncpg the conftest and the
+data modules import (no `.venv`, no DB in this environment — same constraint as runs 70–75), so the mandated
+`test_profile_standard.py` / `test_profile_enrichment.py` could not run here, and the data modules themselves
+import `sqlalchemy` so a direct repo-tuition parse was not possible (read the BU/CMU tuition rationale via
+source + git instead). Substantive DB-free check: imported `profile_standard/anti_stub.py` and ran `analyze` /
+`frame_stripped_shared_body`(default+abs150) / `template_slot_artifacts` / `scrape_debris` / `machine_artifacts`
+over all 40 live catalogs (they compute cleanly), and verified against LIVE prod that gold MIT scores 0 on every
+description-quality metric (the 0 control; `name_prefixed=1` is the known benign real-described row). This grader
+PR changes only the three skill markdown files (no code, no data, no migration), so backend CI is unaffected.
