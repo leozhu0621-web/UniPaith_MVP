@@ -52,8 +52,8 @@ def _school_snapshot(name: str) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    cost = (
-        {
+    if spec["degree_type"] == "bachelors":
+        cost = {
             "tuition_usd": n._TUITION_UG,
             "total_cost_of_attendance": n._UNDERGRAD_COA,
             "avg_net_price": n._AVG_NET_PRICE,
@@ -61,22 +61,21 @@ def _program_snapshot(spec: dict) -> dict:
             "source": n._COST_SRC[0],
             "source_url": n._COST_SRC[1],
         }
-        if spec["degree_type"] == "bachelors"
-        else (
-            {
-                "tuition_usd": 0,
-                "funded": True,
-                "source": "Northwestern The Graduate School",
-                "source_url": "https://www.tgs.northwestern.edu/admission/",
-            }
-            if spec["degree_type"] == "phd"
-            else {
-                "note": "see program page",
-                "source": "Northwestern program tuition page",
-                "source_url": n._website_for(spec),
-            }
-        )
-    )
+    elif spec["degree_type"] == "phd":
+        cost = {
+            "tuition_usd": 0,
+            "funded": True,
+            "source": "The Graduate School — Funding",
+            "source_url": "https://www.tgs.northwestern.edu/funding/",
+        }
+    elif (grad_cost := n._grad_cost(spec)) is not None:
+        cost = dict(grad_cost)
+    else:
+        cost = {
+            "note": "see program page",
+            "source": "Northwestern program tuition page",
+            "source_url": n._website_for(spec),
+        }
     outcomes = dict(n._OUTCOMES_INSTITUTION)
     outcomes["_standard"] = n._program_standard(slug, spec)
     kw = n._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(n._KEYWORDS_BY_SCHOOL[spec["school"]])
@@ -295,3 +294,24 @@ def test_no_synthesized_depth_reviews_module():
 
     with pytest.raises(ModuleNotFoundError):
         importlib.import_module("unipaith.data.northwestern_reviews_depth")
+
+
+def test_graduate_tiers_carry_published_tuition():
+    """Master's / professional rows stamp verified tuition — not matcher-blind nulls."""
+    masters = [p for p in n.PROGRAMS if p["degree_type"] == "masters"]
+    professional = [p for p in n.PROGRAMS if p["degree_type"] == "professional"]
+    assert masters and professional
+    masters_with_tuition = sum(1 for p in masters if n._grad_cost(p) is not None)
+    prof_with_tuition = sum(1 for p in professional if n._grad_cost(p) is not None)
+    assert masters_with_tuition == len(masters), (
+        f"masters tier must be fully filled: {masters_with_tuition}/{len(masters)}"
+    )
+    assert prof_with_tuition == len(professional), (
+        f"professional tier must be fully filled: {prof_with_tuition}/{len(professional)}"
+    )
+    for spec in masters + professional:
+        cost = n._grad_cost(spec)
+        assert cost is not None
+        assert cost["tuition_usd"] != n._TUITION_UG, (
+            f"{spec['slug']} must not carry the undergraduate sticker"
+        )

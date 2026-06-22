@@ -27,9 +27,14 @@ carries a citation, or is honestly omitted (recorded in that node's ``_standard.
 
 Honest caveats stamped into ``_standard.omitted``: Northwestern does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
-schools, so those two institution outcome fields are omitted. Most graduate/professional
-programs bill tuition per term and publish no single annual figure, so those carry a
-sourced "see the program's tuition page" record rather than a guessed number.
+schools, so those two institution outcome fields are omitted.
+
+Graduate-tier tuition repair (2026-06-22, nwtuition1): stamps each master's /
+professional row from its owning school's published 2025-26 Northwestern Student
+Financial Services rate (quarterly / trimester / semester / per-unit totals converted
+to the annual or program-total figure the matcher reads), every value DISTINCT from
+the $68,322 undergraduate sticker — never the undergrad number copied down.
+Funded research doctorates carry ``tuition_usd = 0`` with a funded note (TGS policy).
 
 Catalog repair (2026-06-16, northwesternprof3): de-fabricates the IPEDS breadth catalog —
 maps CIP rollup titles to real Northwestern degree names and owning departments, and
@@ -1816,6 +1821,282 @@ _COST_SRC = (
     "https://collegescorecard.ed.gov/school/?147767-Northwestern-University",
 )
 
+# ── Published graduate / professional tuition (2025-26) ─────────────────────
+# Northwestern Student Financial Services + school COA pages. Quarterly / trimester
+# rates are converted to a full-time academic-year total (3 quarters or 3 trimesters)
+# unless the program publishes an explicit annual or program-total figure.
+_SFS_GRAD = "https://www.northwestern.edu/sfs/tuition/graduate/"
+_TGS_MASTERS_QUARTER = 22973  # TGS full-time master's, 3–4 units/term
+_TGS_MASTERS_ANNUAL = _TGS_MASTERS_QUARTER * 3  # 68,919
+_TGS_MFA_QUARTER = 18689
+_TGS_MFA_ANNUAL = _TGS_MFA_QUARTER * 3  # 56,067
+_MCCORMICK_MS_QUARTER = 22973
+_MCCORMICK_MS_ANNUAL = _MCCORMICK_MS_QUARTER * 3  # 68,919
+_MCCORMICK_MEM_QUARTER = 22656
+_MCCORMICK_MEM_ANNUAL = _MCCORMICK_MEM_QUARTER * 3  # 67,968
+_KELLOGG_MBA_TUITION = 86370  # Two-Year MBA, year 1 (Kellogg ft-fin-aid 2025-26)
+_KELLOGG_MSM_TUITION = 69129  # MiM / MS in Management Studies (10-month program)
+_LAW_JD_TUITION = 79772  # $39,886/semester × 2
+_LAW_LLM_TUITION = 83462  # General LLM (Chicago Financial Aid COA 2025-26)
+_LAW_MSL_TUITION = 65686  # Full-time residential MSL
+_FEINBERG_MD_TUITION = 74104
+_FEINBERG_MPH_TRIMESTER = 18789
+_FEINBERG_MPH_ANNUAL = _FEINBERG_MPH_TRIMESTER * 3  # 56,367
+_FEINBERG_MPO_TUITION = 43351
+_FEINBERG_PA_TUITION = 57231
+_FEINBERG_GC_TRIMESTER = 18519
+_FEINBERG_GC_ANNUAL = _FEINBERG_GC_TRIMESTER * 3  # 55,557
+_FEINBERG_DPT_TRIMESTER = 18789
+_FEINBERG_DPT_ANNUAL = _FEINBERG_DPT_TRIMESTER * 3  # 56,367
+_MEDILL_IMC_QUARTER = 20993
+_MEDILL_IMC_PROGRAM = _MEDILL_IMC_QUARTER * 4  # 83,972 — 12-month, 4-quarter program
+_MEDILL_JOURNALISM_QUARTER = 18368
+_MEDILL_JOURNALISM_PROGRAM = _MEDILL_JOURNALISM_QUARTER * 4  # 73,472
+_COMM_AUD_QUARTER = 16478
+_COMM_AUD_ANNUAL = _COMM_AUD_QUARTER * 3  # 49,434
+_COMM_SLP_QUARTER = 19439
+_COMM_SLP_ANNUAL = _COMM_SLP_QUARTER * 3  # 58,317
+_COMM_RTVF_MFA_QUARTER = 18624
+_COMM_RTVF_MFA_ANNUAL = _COMM_RTVF_MFA_QUARTER * 3  # 55,872
+
+# slug → annual tuition_usd (or program total where noted in cost_data.tuition_basis)
+_GRAD_TUITION_BY_SLUG: dict[str, int] = {
+    "northwestern-mba-ms": _KELLOGG_MBA_TUITION,
+    "northwestern-management-sciences-and-quantitative-methods-ms": _KELLOGG_MSM_TUITION,
+    "northwestern-master-in-management-ms": _KELLOGG_MSM_TUITION,
+    "northwestern-law-prof": _LAW_JD_TUITION,
+    "northwestern-llm": _LAW_LLM_TUITION,
+    "northwestern-master-science-law-ms": _LAW_MSL_TUITION,
+    "northwestern-medicine-prof": _FEINBERG_MD_TUITION,
+    "northwestern-public-health-mph": _FEINBERG_MPH_ANNUAL,
+    "northwestern-genetic-counseling-ms": _FEINBERG_GC_ANNUAL,
+    "northwestern-prosthetics-orthotics-ms": _FEINBERG_MPO_TUITION,
+    "northwestern-physician-assistant-ms": _FEINBERG_PA_TUITION,
+    "northwestern-physical-therapy-dpt": _FEINBERG_DPT_ANNUAL,
+    "northwestern-engineering-management-mem": _MCCORMICK_MEM_ANNUAL,
+    "northwestern-creative-writing-mfa": _TGS_MFA_ANNUAL,
+    "northwestern-imc-ms": _MEDILL_IMC_PROGRAM,
+    "northwestern-journalism-ms": _MEDILL_JOURNALISM_PROGRAM,
+    "northwestern-radio-television-and-digital-communication-ms": _COMM_RTVF_MFA_ANNUAL,
+    "northwestern-speech-language-pathology-ms": _COMM_SLP_ANNUAL,
+    "northwestern-audiology-aud": _COMM_AUD_ANNUAL,
+    "northwestern-data-science-ms": 62796,  # 12 courses × $5,098 (SPS MSDS page)
+    "northwestern-public-administration-ma": 48276,  # 12 units × $4,023 (SPS per-unit)
+    "northwestern-information-systems-ms": 60444,  # 12 units × $5,037
+    "northwestern-sports-administration-ma": 52692,  # 12 units × $4,391
+    "northwestern-prose-poetry-mfa": 47112,  # 12 units × $3,926
+}
+
+# McCormick standard full-time MS (most engineering master's share the SFS rate)
+_MCCORMICK_MS_SLUGS = frozenset({
+    "northwestern-computer-science-ms",
+    "northwestern-machine-learning-data-science-ms",
+    "northwestern-artificial-intelligence-ms",
+    "northwestern-robotics-ms",
+    "northwestern-engineering-design-innovation-ms",
+})
+
+# TGS full-time academic-graduate rate (Weinberg / SESP / most TGS master's)
+_TGS_MASTERS_SLUGS = frozenset({
+    "northwestern-learning-organizational-change-ms",
+})
+
+
+def _grad_cost(spec: dict) -> dict | None:
+    """Published graduate/professional cost for a catalog row, or None to omit-with-reason."""
+    slug = spec["slug"]
+    school = spec["school"]
+    dtype = spec.get("degree_type")
+
+    if dtype == "phd":
+        return None
+
+    tuition = _GRAD_TUITION_BY_SLUG.get(slug)
+    if tuition is None and slug in _MCCORMICK_MS_SLUGS:
+        tuition = _MCCORMICK_MS_ANNUAL
+    if tuition is None and slug in _TGS_MASTERS_SLUGS:
+        tuition = _TGS_MASTERS_ANNUAL
+
+    if tuition is None:
+        return None
+
+    # Program-total tuition (online SPS part-time degrees billed per course/unit)
+    program_total_slugs = frozenset({
+        "northwestern-data-science-ms",
+        "northwestern-imc-ms",
+        "northwestern-journalism-ms",
+        "northwestern-public-administration-ma",
+        "northwestern-information-systems-ms",
+        "northwestern-sports-administration-ma",
+        "northwestern-prose-poetry-mfa",
+    })
+    tuition_basis = "program" if slug in program_total_slugs else "annual"
+
+    notes: dict[str, str] = {
+        "northwestern-mba-ms": (
+            "Kellogg Two-Year MBA published tuition for 2025-26 ($86,370 per academic year); "
+            "distinct from Northwestern's undergraduate sticker."
+        ),
+        "northwestern-management-sciences-and-quantitative-methods-ms": (
+            "Kellogg MS in Management Studies / MiM published tuition for 2025-26 ($69,129 for "
+            "the 10-month program)."
+        ),
+        "northwestern-master-in-management-ms": (
+            "Kellogg Master in Management published tuition for 2025-26 ($69,129 for the "
+            "10-month program)."
+        ),
+        "northwestern-law-prof": (
+            "Pritzker Law J.D. tuition for 2025-26 ($39,886 per semester × two semesters = "
+            "$79,772)."
+        ),
+        "northwestern-llm": (
+            "Northwestern Pritzker Law General LLM tuition for 2025-26 ($83,462 for the "
+            "nine-month program)."
+        ),
+        "northwestern-master-science-law-ms": (
+            "Northwestern Pritzker Law full-time residential MSL tuition for 2025-26 "
+            "($65,686)."
+        ),
+        "northwestern-medicine-prof": (
+            "Feinberg MD tuition for 2025-26 ($74,104 per academic year, billed half in "
+            "July and half in December)."
+        ),
+        "northwestern-public-health-mph": (
+            "Feinberg MPH full-time tuition for 2025-26 ($18,789 per trimester × three "
+            "trimesters)."
+        ),
+        "northwestern-genetic-counseling-ms": (
+            "Feinberg Graduate Program in Genetic Counseling tuition for 2025-26 "
+            "($18,519 per trimester × three trimesters)."
+        ),
+        "northwestern-prosthetics-orthotics-ms": (
+            "Feinberg MPO program tuition for 2025-26 ($43,351 per year)."
+        ),
+        "northwestern-physician-assistant-ms": (
+            "Feinberg Physician Assistant program tuition for 2025-26 ($57,231 per year)."
+        ),
+        "northwestern-physical-therapy-dpt": (
+            "Feinberg DPT tuition for 2025-26 ($18,789 per trimester × three trimesters in "
+            "years one and two)."
+        ),
+        "northwestern-engineering-management-mem": (
+            "McCormick MEM full-time tuition for 2025-26 ($22,656 per quarter × three "
+            "quarters)."
+        ),
+        "northwestern-creative-writing-mfa": (
+            "The Graduate School MFA tuition for 2025-26 ($18,689 per quarter × three "
+            "quarters)."
+        ),
+        "northwestern-imc-ms": (
+            "Medill full-time IMC tuition for 2025-26 ($20,993 per quarter × four quarters "
+            "in the 12-month program)."
+        ),
+        "northwestern-journalism-ms": (
+            "Medill graduate journalism tuition for 2025-26 ($18,368 per quarter × four "
+            "quarters)."
+        ),
+        "northwestern-radio-television-and-digital-communication-ms": (
+            "School of Communication full-time graduate tuition for 2025-26 ($18,624 per "
+            "quarter × three quarters)."
+        ),
+        "northwestern-speech-language-pathology-ms": (
+            "School of Communication MSSLL full-time tuition for 2025-26 ($19,439 per "
+            "quarter × three quarters)."
+        ),
+        "northwestern-audiology-aud": (
+            "School of Communication AuD full-time tuition for 2025-26 ($16,478 per quarter "
+            "× three quarters)."
+        ),
+        "northwestern-data-science-ms": (
+            "SPS online MS in Data Science estimated program tuition for 2025-26 (12 courses "
+            "× $5,098 per course = $62,796)."
+        ),
+        "northwestern-public-administration-ma": (
+            "SPS MA in Public Policy & Administration per-unit tuition for 2025-26 ($4,023 × "
+            "12 units ≈ $48,276 program total)."
+        ),
+        "northwestern-information-systems-ms": (
+            "SPS MS in Information Systems per-unit tuition for 2025-26 ($5,037 × 12 units "
+            "≈ $60,444 program total)."
+        ),
+        "northwestern-sports-administration-ma": (
+            "SPS MA in Sports Administration per-unit tuition for 2025-26 ($4,391 × 12 units "
+            "≈ $52,692 program total)."
+        ),
+        "northwestern-prose-poetry-mfa": (
+            "SPS MFA in Prose and Poetry per-unit tuition for 2025-26 ($3,926 × 12 units "
+            "≈ $47,112 program total)."
+        ),
+    }
+
+    default_note = (
+        f"McCormick full-time master's tuition for 2025-26 ($22,973 per quarter × three "
+        f"quarters = ${_MCCORMICK_MS_ANNUAL:,}), distinct from the undergraduate sticker."
+        if slug in _MCCORMICK_MS_SLUGS
+        else (
+            f"The Graduate School full-time master's tuition for 2025-26 ($22,973 per "
+            f"quarter × three quarters = ${_TGS_MASTERS_ANNUAL:,})."
+            if slug in _TGS_MASTERS_SLUGS
+            else f"Published {school} graduate tuition for 2025-26."
+        )
+    )
+
+    sources: dict[str, tuple[str, str]] = {
+        KELLOGG: (
+            "Kellogg School of Management — Tuition & Financial Aid",
+            "https://www.kellogg.northwestern.edu/admissions/financial-aid/ft-fin-aid/",
+        ),
+        LAW: (
+            "Northwestern Pritzker School of Law — Tuition Rates",
+            "https://www.law.northwestern.edu/admissions/tuitionaid/tuition/",
+        ),
+        FEINBERG: (
+            "Northwestern Student Financial Services — Feinberg School of Medicine",
+            f"{_SFS_GRAD}feinberg-school-of-medicine.html",
+        ),
+        MCCORMICK: (
+            "Northwestern Student Financial Services — McCormick School of Engineering",
+            f"{_SFS_GRAD}mccormick-school-of-engineering.html",
+        ),
+        MEDILL: (
+            "Northwestern Student Financial Services — Medill School",
+            f"{_SFS_GRAD}medill-school-of-journalism.html",
+        ),
+        COMMUNICATION: (
+            "Northwestern Student Financial Services — School of Communication",
+            f"{_SFS_GRAD}school-of-communication.html",
+        ),
+        SPS: (
+            "Northwestern Student Financial Services — School of Professional Studies",
+            f"{_SFS_GRAD}school-of-professional-studies.html",
+        ),
+        WEINBERG: (
+            "Northwestern Student Financial Services — The Graduate School",
+            f"{_SFS_GRAD}the-graduate-school.html",
+        ),
+        SESP: (
+            "Northwestern Student Financial Services — The Graduate School",
+            f"{_SFS_GRAD}the-graduate-school.html",
+        ),
+    }
+    src_label, src_url = sources.get(
+        school,
+        (
+            "Northwestern Student Financial Services — Graduate Tuition",
+            _SFS_GRAD,
+        ),
+    )
+
+    return {
+        "tuition_usd": tuition,
+        "tuition_basis": tuition_basis,
+        "funded": False,
+        "note": notes.get(slug, default_note),
+        "source": src_label,
+        "source_url": src_url,
+        "year": "2025-26",
+    }
+
 _REQ_UNDERGRAD = {
     "materials": [
         {"name": "Application (Common Application or Coalition Application)", "required": True},
@@ -2395,8 +2676,9 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
         "outcomes_data.top_industries",
         "outcomes_data.conditions",
     ]
-    if spec.get("degree_type") != "bachelors" and slug not in _COST_BY_SLUG:
-        omitted.append("cost_data.tuition_usd")
+    if spec.get("degree_type") not in ("bachelors", "phd") and slug not in _COST_BY_SLUG:
+        if _grad_cost(spec) is None:
+            omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
     if slug not in _CLASS_PROFILE_BY_SLUG:
@@ -2540,6 +2822,9 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
                 "source": "The Graduate School — Funding",
                 "source_url": "https://www.tgs.northwestern.edu/funding/",
             }
+        elif (grad_cost := _grad_cost(spec)) is not None:
+            p.tuition = grad_cost.get("tuition_usd")
+            p.cost_data = dict(grad_cost)
         else:
             p.tuition = None
             p.cost_data = {
