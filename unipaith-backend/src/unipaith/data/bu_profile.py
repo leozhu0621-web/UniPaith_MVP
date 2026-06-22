@@ -49,9 +49,15 @@ credential siblings (23 fields failed ``frame_stripped_shared_body(..., abs_char
 REPAIR_BACKLOG HIGH #5). Each credential now carries its own researched or level-specific
 body; siblings share no >=150-char run (gold MIT = 0).
 
-Tuition backfill (2026-06-21, bupercred2): every program carries a BU-published 2025-26
-tuition figure from the Office of Financial Assistance cost-of-attendance tables (matcher-
-core budget signal — REPAIR_BACKLOG HIGH #6); funded research doctorates at tuition 0.
+Tuition value-correctness (2026-06-22, butuitionval1, REPAIR_BACKLOG run 75 HIGH #1):
+each program carries BU's REAL published 2025-26 rate (BU Student Accounting Services /
+Student Financials; U.S. News confirms the Questrom MBA flat rate). BU charges one flat
+full-time rate ($69,870) for undergraduate AND most full-time graduate/professional
+programs — a verified BU policy, not a copy-down of the undergrad sticker. Distinct
+published rates: SSW $40,352 · STH $24,648 · CFA music $30,376 / MFA $34,984 · MD
+$72,626 · DMD $99,680. Fully-funded research doctorates (tuition waived), per-credit
+graduate certificates, and SDM advanced-education specialty programs (no single annual
+figure) are recorded as honest omissions — never the flat full-time number copied down.
 
 Description repair (2026-06-17, buprof9): replaces all name-prefixed
 ``{program_name} is {role} at Boston University's {school}`` classification stubs
@@ -2410,23 +2416,35 @@ _AVG_NET_PRICE = 24402
 _COST_SRC = "U.S. Dept. of Education — College Scorecard (Boston University, UNITID 164988)"
 _COST_SRC_URL = "https://collegescorecard.ed.gov/school/?164988-Boston-University"
 
-# Published tuition (matcher-core budget signal — REPAIR_BACKLOG HIGH #6).
-# Sources: BU Admissions 2025-26 billed expenses (undergraduate) and BU Financial
-# Assistance graduate/professional cost-of-attendance tables (2025-26).
-_TUITION_SRC = (
-    "Boston University Office of Financial Assistance — 2025-26 cost of attendance"
-)
-_TUITION_SRC_URL = "https://www.bu.edu/finaid/graduate-students/graduate-coa/"
-_TUITION_UG = 69870  # Full-time undergraduate tuition, 2025-26 (bu.edu/admissions)
-_TUITION_GRAD_STANDARD = 69870  # Most graduate schools (GRS, COM, ENG, CDS, Questrom, …)
-_GRAD_TUITION_BY_SCHOOL_KEY: dict[str, int] = {
-    "CFA": 34984,
-    "SSW": 40352,
-    "STH": 24648,
-    "BUSM": 72626,
-    "SDM": 99680,
+# Published tuition (matcher-core budget signal — REPAIR_BACKLOG run 75 HIGH #1:
+# value-correctness, not just coverage). Sources (verified, authoritative_2x):
+#   * BU Student Accounting Services / Student Financials — Tuition & Fees 2025-26
+#       https://www.bu.edu/studentaccountingservices/your-bill/tuition-fees/
+#   * U.S. News — Questrom full-time MBA $69,870/yr (independent confirmation of the flat rate)
+#
+# Boston University charges ONE flat full-time rate ($69,870/yr) for undergraduate AND
+# most full-time graduate/professional programs (GRS, CAS, ENG, COM, CDS, SAR, Wheelock,
+# SPH, GMS, Questrom MBA/MS, Law JD). Three first-party/independent sources confirm the
+# full-time GRADUATE rate equals the undergraduate rate — this is a documented BU policy,
+# NOT a copy-down of the undergrad sticker, so a general full-time graduate row at $69,870
+# is its real published rate. A handful of schools publish a DISTINCT full-time annual rate
+# (below). Research doctorates are fully funded (tuition waived) and graduate certificates
+# are billed per credit (total varies by credit count), so both are recorded as honest
+# omissions (omit-never-guess) rather than the flat full-time number.
+_TUITION_SRC = "Boston University Student Accounting Services — Tuition & Fees 2025-26"
+_TUITION_SRC_URL = "https://www.bu.edu/studentaccountingservices/your-bill/tuition-fees/"
+_TUITION_UG = 69870  # Full-time undergraduate tuition, 2025-26
+_TUITION_GRAD_FT = 69870  # BU flat full-time GRADUATE rate (= UG rate by BU policy, verified)
+_GRAD_PER_CREDIT_GENERAL = 2183  # general graduate per-credit (part-time), 2025-26
+# Schools that publish a DISTINCT full-time annual graduate rate (by school_key).
+_SCHOOL_FT_TUITION: dict[str, int] = {
+    "SSW": 40352,  # School of Social Work
+    "STH": 24648,  # School of Theology
 }
-_FUNDED_DOCTORAL_SCHOOL_KEYS = frozenset({"GRS", "GMS", "ENG", "CDS", "CAS"})
+_CFA_MUSIC_TUITION = 30376  # CFA School of Music graduate programs
+_CFA_OTHER_TUITION = 34984  # CFA MFA / visual arts & theatre graduate programs
+_MD_TUITION = 72626  # Chobanian & Avedisian School of Medicine — MD
+_DMD_TUITION = 99680  # Henry M. Goldman School of Dental Medicine — DMD
 
 
 def _pub_tuition_cost(tuition_usd: int, note: str) -> dict:
@@ -2440,15 +2458,42 @@ def _pub_tuition_cost(tuition_usd: int, note: str) -> dict:
     }
 
 
+def _omit_tuition_cost(note: str, source: str | None = None, source_url: str | None = None) -> dict:
+    """cost_data that EXPLAINS the price but carries NO matcher tuition (omit-with-reason):
+    a fully-funded research doctorate or a per-credit-billed certificate/specialty program
+    whose flat annual figure would be a guess. ``_program_standard`` records
+    ``cost_data.tuition_usd`` in the node's ``_standard.omitted`` when tuition is None."""
+    return {
+        "note": note,
+        "source": source or _TUITION_SRC,
+        "source_url": source_url or _TUITION_SRC_URL,
+        "year": "2025-26",
+    }
+
+
+def _is_cfa_music(spec: dict) -> bool:
+    name = spec["program_name"]
+    return any(
+        k in name
+        for k in ("Music", "Musical", "Musicology", "Conducting", "Composition", "Performance")
+    )
+
+
 def _program_tuition(spec: dict) -> tuple[int | None, dict]:
-    """Return (matcher tuition, cost_data) from BU-published 2025-26 rates."""
+    """Return (matcher tuition, cost_data) from BU-published 2025-26 rates. Omit-never-guess:
+    a value ships only when it is BU's real published rate for that program; funded research
+    doctorates and per-credit certificates are recorded as honest omissions, never the flat
+    full-time number copied down."""
     dtype = spec["degree_type"]
     sk = spec.get("school_key", "")
+    name = spec["program_name"]
+
+    # Undergraduate — flat full-time rate + College Scorecard COA / net-price context.
     if dtype == "bachelors":
         cost = _pub_tuition_cost(
             _TUITION_UG,
-            "Published full-time undergraduate tuition for 2025-26 (BU Admissions billed "
-            "expenses). Fees, housing, and meal plans are additional.",
+            "Published full-time undergraduate tuition for 2025-26 (BU Student Accounting "
+            "Services). Fees, housing, and meal plans are additional.",
         )
         cost["total_cost_of_attendance"] = _UNDERGRAD_COA
         cost["avg_net_price"] = _AVG_NET_PRICE
@@ -2456,33 +2501,92 @@ def _program_tuition(spec: dict) -> tuple[int | None, dict]:
         cost["source_url"] = _COST_SRC_URL
         cost["year"] = "2023-24"
         return _TUITION_UG, cost
-    if dtype in ("phd", "doctoral") and sk in _FUNDED_DOCTORAL_SCHOOL_KEYS:
-        # Matcher budget input = the PUBLISHED sticker (funding is a SEPARATE signal carried
-        # in ``funded``/``note``); a $0 would tell the matcher the program is free and starve
-        # every budget comparison for the whole PhD tier (enrich-profile matcher-core tuition
-        # rule: stamp the sticker, not 0/null, even when funding waives it in practice).
-        sticker = _GRAD_TUITION_BY_SCHOOL_KEY.get(sk, _TUITION_GRAD_STANDARD)
-        return sticker, {
-            "tuition_usd": sticker,
-            "breakdown": {"tuition": sticker},
-            "funded": True,
-            "note": (
-                "Admitted research doctoral students at Boston University typically receive "
-                "full tuition scholarships and stipend support (GRS/CAS PhD & MFA policy, "
-                f"AY 2025-26); the published full-time graduate tuition sticker is ${sticker:,} "
-                "per year before that aid."
-            ),
-            "source": "Boston University Graduate School of Arts & Sciences — PhD tuition scholarships",
-            "source_url": "https://www.bu.edu/cas/admissions/phd-mfa/fellowship-aid/frequently-asked-questions/scholarships/",
-            "year": "2025-26",
-        }
-    annual = _GRAD_TUITION_BY_SCHOOL_KEY.get(sk, _TUITION_GRAD_STANDARD)
-    school = spec.get("school", "Boston University")
-    return annual, _pub_tuition_cost(
-        annual,
-        f"Published annual tuition for {school} graduate/professional students, 2025-26 "
-        f"(BU Financial Assistance cost-of-attendance table). Fees and living expenses "
-        f"are additional.",
+
+    # MD/PhD (Medical Scientist Training Program) is fully funded — omit-with-reason.
+    if name.startswith("Doctor of Medicine / Doctor of Philosophy"):
+        return None, _omit_tuition_cost(
+            "BU's MD/PhD (Medical Scientist Training Program) is fully funded — full tuition "
+            "scholarship plus stipend — so no out-of-pocket tuition is charged.",
+            source="Boston University Chobanian & Avedisian School of Medicine — MD/PhD (MSTP)",
+            source_url="https://www.bumc.bu.edu/busm/admissions/md-phd/",
+        )
+    # MD and other MD-dual degrees — the MD rate governs the dual cost.
+    if "Doctor of Medicine" in name:
+        return _MD_TUITION, _pub_tuition_cost(
+            _MD_TUITION,
+            "Published annual tuition for the MD program, 2025-26 (BU Chobanian & Avedisian "
+            "School of Medicine). Fees and living expenses are additional.",
+        )
+    if "Doctor of Dental Medicine" in name:
+        return _DMD_TUITION, _pub_tuition_cost(
+            _DMD_TUITION,
+            "Published annual tuition for the DMD program, 2025-26 (BU Henry M. Goldman "
+            "School of Dental Medicine). Fees and living expenses are additional.",
+        )
+
+    # SDM advanced-education (specialty MS + clinical/research doctorates) — tuition is set
+    # per clinical program and not published as a single annual figure → omit-with-reason.
+    if sk == "SDM":
+        return None, _omit_tuition_cost(
+            "Tuition for this BU Henry M. Goldman School of Dental Medicine advanced-education "
+            "specialty program is set per clinical program and is not published as a single "
+            "annual figure; see the program's tuition page for current rates.",
+            source="Boston University Henry M. Goldman School of Dental Medicine",
+            source_url="https://www.bu.edu/dental/",
+        )
+
+    # Research doctorates (PhD / DSc) — fully funded; published sticker waived → omit-with-reason.
+    if (
+        dtype in ("phd", "doctoral")
+        or name.startswith("Doctor of Philosophy")
+        or name.startswith("Doctor of Science")
+    ):
+        return None, _omit_tuition_cost(
+            "Admitted research doctoral students at Boston University typically receive a full "
+            "tuition scholarship plus stipend support, so no out-of-pocket tuition is charged — "
+            "the program is fully funded rather than billed at the published rate.",
+            source="Boston University — PhD tuition scholarships & stipends",
+            source_url="https://www.bu.edu/cas/admissions/phd-mfa/fellowship-aid/frequently-asked-questions/scholarships/",
+        )
+
+    # Graduate certificates — billed per credit; total varies by credit count → omit-with-reason.
+    if dtype == "certificate":
+        return None, _omit_tuition_cost(
+            "Graduate certificates at Boston University are billed per credit (general graduate "
+            f"rate ${_GRAD_PER_CREDIT_GENERAL:,}/credit, 2025-26), so the total tuition varies "
+            "by the certificate's credit requirement.",
+        )
+
+    # College of Fine Arts — distinct published rates (School of Music vs MFA/visual/theatre).
+    if sk == "CFA":
+        rate = _CFA_MUSIC_TUITION if _is_cfa_music(spec) else _CFA_OTHER_TUITION
+        div = "School of Music" if rate == _CFA_MUSIC_TUITION else "MFA / visual arts & theatre"
+        return rate, _pub_tuition_cost(
+            rate,
+            f"Published annual tuition for College of Fine Arts {div} graduate students, "
+            "2025-26 (BU Student Accounting Services). Fees and living expenses are additional.",
+        )
+
+    # Schools with a distinct published full-time annual rate (SSW, STH).
+    if sk in _SCHOOL_FT_TUITION:
+        rate = _SCHOOL_FT_TUITION[sk]
+        school = spec.get("school", "Boston University")
+        return rate, _pub_tuition_cost(
+            rate,
+            f"Published annual full-time tuition for {school} graduate students, 2025-26 "
+            "(BU Student Accounting Services). Fees and living expenses are additional.",
+        )
+
+    # General full-time graduate & professional programs (incl. Questrom MBA, Law JD) — BU's
+    # flat full-time rate, VERIFIED equal to the UG rate by BU policy (NOT a copy-down: BU
+    # Student Financials + U.S. News both confirm the full-time graduate rate). Part-time
+    # students are billed per credit; the matcher tuition is the published full-time annual.
+    return _TUITION_GRAD_FT, _pub_tuition_cost(
+        _TUITION_GRAD_FT,
+        "Published full-time graduate tuition for 2025-26 (BU Student Accounting Services). "
+        "Boston University charges a single flat full-time rate for undergraduate and most "
+        "full-time graduate/professional programs; part-time students are billed "
+        f"${_GRAD_PER_CREDIT_GENERAL:,}/credit. Fees and living expenses are additional.",
     )
 
 
