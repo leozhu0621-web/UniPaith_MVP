@@ -168,7 +168,11 @@ def test_graduate_tier_tuition_coverage():
     masters_vals = Counter(t for t in by_type["masters"] if t is not None)
     assert len(masters_vals) >= 3, "master's tier should carry distinct school differentials"
     assert p._TUITION_GRAD_CSE in masters_vals
-    prof_tuition = {p._program_tuition(s)[0] for s in p.PROGRAMS if s["degree_type"] == "professional"}
+    prof_tuition = {
+        p._program_tuition(s)[0]
+        for s in p.PROGRAMS
+        if s["degree_type"] == "professional"
+    }
     assert p._TUITION_PHARMD_RESIDENT in prof_tuition
 
 
