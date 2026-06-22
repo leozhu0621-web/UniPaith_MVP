@@ -16,7 +16,7 @@ Technology Management) record tuition omitted-with-reason — never a guessed fi
 Re-applies ``ucsd_profile.apply()`` (idempotent) and re-derives program-preference rows.
 
 Revision ID: ucsdgradtuition1
-Revises: purduetuition1
+Revises: cornellcipnames1
 Create Date: 2026-06-22
 """
 
@@ -31,7 +31,7 @@ from unipaith.models import Institution
 from unipaith.services.match.derive_preferences import backfill_program_preferences
 
 revision = "ucsdgradtuition1"
-down_revision = "purduetuition1"
+down_revision = "cornellcipnames1"
 branch_labels = None
 depends_on = None
 
