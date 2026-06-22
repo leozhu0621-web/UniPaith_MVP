@@ -228,12 +228,55 @@ def test_catalog_is_anti_stub_clean():
     assert not scrape_debris(b.PROGRAMS), "un-terminated or debris descriptions"
 
 
-def test_matcher_core_tuition_is_published_catalog_wide():
-    """Tuition is institution-published — every program carries a cited rate (REPAIR #6)."""
-    missing = [p["slug"] for p in b.PROGRAMS if b._program_tuition(p)[0] is None]
-    assert not missing, f"programs missing published tuition: {missing[:8]}"
-    covered = sum(1 for p in b.PROGRAMS if b._program_tuition(p)[0] is not None)
-    assert covered >= len(b.PROGRAMS) * 0.95
+def test_matcher_core_tuition_is_value_correct():
+    """Tuition is VALUE-correct, not merely present (REPAIR_BACKLOG run 75 HIGH #1: the
+    undergrad sticker must NOT be copied down onto graduate rows). BU charges ONE flat
+    full-time rate ($69,870) for undergraduate AND most full-time graduate/professional
+    programs — a VERIFIED BU policy (BU Student Financials + U.S. News for the Questrom MBA),
+    so a general full-time graduate row at $69,870 is its real published rate, not a copy-down.
+    Invariants:
+      * research doctorates (PhD/DSc) and graduate certificates carry NO flat tuition — they
+        are fully funded / billed per-credit, so they are recorded as honest omissions;
+      * schools with a DISTINCT published rate stamp it, never the undergrad sticker;
+      * every program with tuition None records cost_data.tuition_usd in _standard.omitted and
+        carries a cost_data explanation.
+    """
+    ug = b._TUITION_UG
+    for spec in b.PROGRAMS:
+        tuition, cost = b._program_tuition(spec)
+        dt = spec["degree_type"]
+        assert cost and cost.get("note") and cost.get("source"), f"{spec['slug']} cost incomplete"
+        # Funded research doctorates + per-credit certificates ship no flat number.
+        if dt in ("phd", "doctoral") or dt == "certificate":
+            assert tuition is None, f"{spec['slug']}: {dt} should be omitted, got {tuition}"
+        if tuition is None:
+            omitted = b._program_standard(spec["slug"], spec)["omitted"]
+            assert "cost_data.tuition_usd" in omitted, f"{spec['slug']} omission not recorded"
+    # No certificate / phd row carries the undergrad sticker (the run-75 copy-down defect).
+    copydown = [
+        p["slug"]
+        for p in b.PROGRAMS
+        if p["degree_type"] in ("certificate", "phd", "doctoral")
+        and b._program_tuition(p)[0] == ug
+    ]
+    assert not copydown, f"undergrad sticker copied onto funded/per-credit rows: {copydown[:8]}"
+    # Professional doctorates carry their own published rates (distinct from the UG sticker).
+    md = [b._program_tuition(p)[0] for p in b.PROGRAMS if p["program_name"] == "Doctor of Medicine"]
+    assert md and all(t == b._MD_TUITION for t in md), f"MD rate wrong: {md}"
+    dmd = [
+        b._program_tuition(p)[0]
+        for p in b.PROGRAMS
+        if p["program_name"] == "Doctor of Dental Medicine"
+    ]
+    assert dmd and all(t == b._DMD_TUITION for t in dmd), f"DMD rate wrong: {dmd}"
+    # Distinct graduate rates appear across the master's tier (the copy-down is broken up).
+    masters_vals = {b._program_tuition(p)[0] for p in b.PROGRAMS if p["degree_type"] == "masters"}
+    for rate in (40352, 24648, 30376, 34984):
+        assert rate in masters_vals, f"distinct grad rate {rate} missing"
+    # The bachelor's tier is the published full-time rate, catalog-wide.
+    assert all(
+        b._program_tuition(p)[0] == ug for p in b.PROGRAMS if p["degree_type"] == "bachelors"
+    )
 
 
 def test_no_concentration_split_rows():
