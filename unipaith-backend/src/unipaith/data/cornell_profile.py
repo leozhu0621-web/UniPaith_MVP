@@ -1522,6 +1522,12 @@ _ROLLUP_RESOLVE: dict[str, str] = {
     "Ecology, Evolution, Systematics, and Population Biology": "Ecology and Evolutionary Biology",
     "Biomathematics, Bioinformatics, and Computational Biology": "Computational Biology",
     "Architectural History, Criticism, and Conservation": "History of Architecture and Urban Development",  # noqa: E501
+    # CIP 26.09 federal title (the "…and Related Sciences" suffix form, no comma before
+    # "and" — the run-78 un-enumerated residual, REPAIR_BACKLOG #1). Cornell's real named
+    # PhD covering human physiology, disease mechanisms, and pathobiology is the Biomedical
+    # and Biological Sciences (BBS) field, administered by the College of Veterinary
+    # Medicine (the owning college is set on the IPEDS row). Description unchanged (true).
+    "Physiology, Pathology and Related Sciences": "Biomedical and Biological Sciences",
 }
 
 # Federal "Other"/"General" buckets (and fields fully covered by a real flagship/other
@@ -1611,6 +1617,10 @@ _POSSESSIVE_NAME_RE = re.compile(r"^(Bachelor's|Master's|Doctorate) in ")
 _ROLLUP_NAME_RE = re.compile(
     r", General\b|, Other\b|, and Linguistics\b|, Pharmaceutical Sciences, and "
     r"Administration\b|, and Group Studies\b|, and Technicians\b|, and Related Services\b"
+    # Federal "…and Related Sciences/Services" suffix WITHOUT a preceding comma (the
+    # CIP 26.09 "Physiology, Pathology and Related Sciences" form — run-78 whole-class
+    # durable gate so any future un-resolved same-class title raises the build error).
+    r"|\band Related (?:Sciences|Services)\b"
     r"|[A-Za-z]/[A-Za-z]"
 )
 _CIP_CODE_RE = re.compile(r"\(CIP\s*\d|\b\d\d\.\d\d\b")
