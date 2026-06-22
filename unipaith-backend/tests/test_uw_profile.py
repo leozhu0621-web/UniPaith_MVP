@@ -53,7 +53,7 @@ def _school_snapshot(m: dict) -> dict:
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
     is_ug = spec["degree_type"] == "bachelors"
-    cost = u._undergrad_cost() if is_ug else u._grad_cost(spec)
+    cost = u._undergrad_cost(spec) if is_ug else u._grad_cost(spec)
     outcomes = dict(u._OUTCOMES_BY_SLUG.get(slug, {}))
     outcomes["_standard"] = u._program_standard(slug, spec)
     kw = u._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(u._KEYWORDS_BY_SCHOOL[spec["school"]])
@@ -150,9 +150,13 @@ def test_flagship_programs_carry_reviews():
         assert rev["summary"] and rev["themes"] and rev["sources"] and rev["disclaimer"]
 
 
-# The single program whose tuition is honestly omitted (variable graduate-tier schedule,
-# no single published annual figure) — every other program must carry a published rate.
-_TUITION_OMITTED_SLUGS = {"uw-audiology-prof"}
+# Programs whose tuition is honestly omitted-with-reason rather than carrying a wrong value:
+# the Doctor of Audiology (variable graduate-tier schedule, no single published figure) and
+# the fee-based / self-sustaining online programs (program-specific per-credit rate, not the
+# state-supported sticker). Every other program must carry a published rate.
+_TUITION_OMITTED_SLUGS = {"uw-audiology-prof"} | {
+    spec["slug"] for spec in u.PROGRAMS if spec.get("delivery_format") == "online"
+}
 
 
 def test_matcher_core_tuition_is_published_catalog_wide():
@@ -193,11 +197,13 @@ def test_graduate_tiers_carry_published_tuition():
     is filled (PhD carries the published grad sticker, funding being a separate signal)."""
     from collections import Counter
 
+    # Among state-supported (non-online) programs, every graduate tier is fully covered;
+    # fee-based online programs are omitted-with-reason and counted separately.
     null_by_dt: Counter[str] = Counter()
     for spec in u.PROGRAMS:
-        if u._tuition_for(spec) is None:
+        if u._tuition_for(spec) is None and spec.get("delivery_format") != "online":
             null_by_dt[spec["degree_type"]] += 1
-    assert null_by_dt["masters"] == 0, "master's tier must be fully covered"
+    assert null_by_dt["masters"] == 0, "on-campus master's tier must be fully covered"
     assert null_by_dt["phd"] == 0, "PhD tier must carry the published grad sticker, not null"
     # Professional: only the Doctor of Audiology is omitted-with-reason.
-    assert null_by_dt["professional"] == len(_TUITION_OMITTED_SLUGS)
+    assert null_by_dt["professional"] == 1

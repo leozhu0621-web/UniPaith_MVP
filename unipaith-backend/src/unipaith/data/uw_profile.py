@@ -54,9 +54,12 @@ because funding is a separate matcher signal, not a $0 budget. The four bespoke
 professional schools carry their own published resident annual rates (Law $47,073,
 Medicine $57,968, Dentistry $59,226, Pharmacy $36,708) and the two graduate-schedule
 clinical doctorates their published resident annual rate (DNP $35,064, DPT $27,807).
-Only the Doctor of Audiology keeps ``cost_data.tuition_usd`` omitted-with-reason — it
-bills on UW's variable graduate-tier schedule and publishes no single verified annual
-resident figure, so it is omitted rather than guessed.
+Two classes keep ``cost_data.tuition_usd`` omitted-with-reason rather than carrying a
+wrong value: the Doctor of Audiology (bills on UW's variable graduate-tier schedule, no
+single published annual resident figure) and the 15 fee-based / self-sustaining online
+programs (UW Professional & Continuing Education bills these at a program-specific
+per-credit rate distinct from the state-supported sticker, so they are omitted pending a
+program-specific figure rather than understated with the on-campus rate).
 
     This repair (2026-06-20) replaces generic Wikipedia field definitions and credential-
     frame shared bodies with UW-specific field clauses (``uw_field_descriptions.py``),
@@ -3169,6 +3172,12 @@ _PROFESSIONAL_TUITION: dict[str, dict] = {
 
 def _tuition_for(spec: dict) -> int | None:
     """Published WA-resident annual tuition for a program, or None when honestly omitted."""
+    # Fee-based / self-sustaining online programs (UW Professional & Continuing Education)
+    # bill a distinct per-credit rate, NOT the state-supported sticker — stamping the state
+    # rate would understate them, so their tuition is omitted-with-reason pending a program-
+    # specific published figure rather than carrying a wrong budget signal.
+    if spec.get("delivery_format") == "online":
+        return None
     if spec["degree_type"] == "professional":
         pr = _PROFESSIONAL_TUITION.get(spec["program_name"])
         return pr["resident"] if pr else None
@@ -3177,7 +3186,24 @@ def _tuition_for(spec: dict) -> int | None:
     return _TUITION_GRAD_RESIDENT  # masters + phd: flat resident graduate Tier I sticker
 
 
-def _undergrad_cost() -> dict:
+def _online_cost(spec: dict) -> dict:
+    """Cost record for a fee-based / self-sustaining online program (tuition omitted-with-reason)."""
+    return {
+        "funded": False,
+        "note": (
+            "This is a fee-based / self-sustaining online program (UW Professional & Continuing "
+            "Education), billed at a program-specific per-credit rate distinct from the state-"
+            "supported sticker. UW publishes no single state-rate annual figure for it, so its "
+            "tuition is omitted here rather than stamped with the on-campus rate."
+        ),
+        "source": "UW Professional & Continuing Education — program tuition page",
+        "source_url": _website_for(spec),
+    }
+
+
+def _undergrad_cost(spec: dict | None = None) -> dict:
+    if spec is not None and spec.get("delivery_format") == "online":
+        return _online_cost(spec)
     return {
         "tuition_usd": _TUITION_UG_RESIDENT,
         "total_cost_of_attendance": _UNDERGRAD_COA,
@@ -3189,18 +3215,24 @@ def _undergrad_cost() -> dict:
         "funded": False,
         "note": (
             "WA-resident undergraduate annual tuition is $13,406 (UW Office of Planning & "
-            "Budgeting, 2025-26); the average net price after grant aid is about $14,091 "
-            "(College Scorecard, UNITID 236948). Non-residents pay the out-of-state rate shown "
-            "in the breakdown."
+            "Budgeting / Financial Aid, 2025-26). The total cost of attendance ($32,446) and "
+            "average net price after grant aid ($14,091) are College Scorecard figures "
+            "(UNITID 236948, 2023-24). Non-residents pay the out-of-state rate in the breakdown."
         ),
-        "source": _TUITION_FA_SRC,
-        "source_url": _TUITION_FA_URL,
-        "year": "2025-26",
+        # Tuition and the Scorecard COA/net-price carry separate provenance + year.
+        "tuition_source": _TUITION_FA_SRC,
+        "tuition_source_url": _TUITION_FA_URL,
+        "tuition_year": "2025-26",
+        "source": _COST_SRC,
+        "source_url": _COST_SRC_URL,
+        "year": "2023-24",
     }
 
 
 def _grad_cost(spec: dict) -> dict:
     """Cost record for a graduate / professional program, carrying its published tuition."""
+    if spec.get("delivery_format") == "online":
+        return _online_cost(spec)
     if spec["degree_type"] == "professional":
         pr = _PROFESSIONAL_TUITION.get(spec["program_name"])
         if pr is None:  # Doctor of Audiology — omitted-with-reason
@@ -3984,7 +4016,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.content_sources = _program_content(spec["school"], _kw)
         p.tuition = _tuition_for(spec)
         if spec["degree_type"] == "bachelors":
-            p.cost_data = _undergrad_cost()
+            p.cost_data = _undergrad_cost(spec)
         else:
             p.cost_data = _grad_cost(spec)
         p.application_requirements = _requirements_for(spec)
