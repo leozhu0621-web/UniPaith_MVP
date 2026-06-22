@@ -56,9 +56,12 @@ Caribbean, and Latinx Studies"); the IPEDS-minted MS + certificate rows are drop
 
 Honest caveats stamped into ``_standard.omitted``: JHU does not publish a single
 university-wide placement rate or a uniform top-employer-industries list across all
-schools, so those two institution outcome fields are omitted. Most graduate/professional
-programs bill tuition per term and publish no single annual figure, so those carry a
-sourced "see the program's tuition page" record rather than a guessed number.
+schools, so those two institution outcome fields are omitted.
+
+Tuition backfill (2026-06-22, jhutuition1): every program carries a JHU-published
+2025-26 tuition figure from the Academic Catalogue cost-of-attendance tables
+(matcher-core budget signal — REPAIR_BACKLOG run 74 HIGH #2); funded research
+doctorates at tuition 0 with the published sticker recorded in the note.
 """
 
 # ruff: noqa: E501
@@ -88,7 +91,7 @@ from unipaith.profile_standard import STANDARD_VERSION
 from unipaith.profile_standard.anti_stub import frame_stripped_shared_body
 
 INSTITUTION_NAME = "Johns Hopkins University"
-ENRICHED_AT = "2026-06-16"
+ENRICHED_AT = "2026-06-22"
 
 # IPEDS CIP rows with no real JHU degree page — omit rather than fabricate.
 _EXCLUDED_SLUGS = frozenset({
@@ -660,6 +663,256 @@ _UNDERGRAD_COA = 85947
 _AVG_NET_PRICE = 18809
 _COST_SRC = ("U.S. Dept. of Education College Scorecard (UNITID 162928)", "https://collegescorecard.ed.gov/school/?162928-Johns-Hopkins-University")
 
+# Published tuition (matcher-core budget signal — REPAIR_BACKLOG run 74 HIGH #2).
+# All figures are JHU-published for 2025-26 from the Academic Catalogue; funding is a
+# separate signal — PhD rows stamp tuition 0 with the published sticker in the note.
+_TUI_SRC = "Johns Hopkins University Academic Catalogue — Tuition, Fees, and Cost of Attendance (2025-26)"
+_TUI_SRC_URL = "https://e-catalogue.jhu.edu/university-wide-policies-information/admission-aid/tuition-fees/"
+_TUI_SRC_MED = "Johns Hopkins University School of Medicine — Tuition and Other Fees (2025-26)"
+_TUI_SRC_MED_URL = "https://e-catalogue.jhu.edu/medicine/general-information/tuition-fees/"
+_PHD_FUNDING_SRC = "Johns Hopkins Graduate Admissions"
+_PHD_FUNDING_URL = "https://grad.jhu.edu/admissions/"
+
+# Homewood / Whiting / Peabody full-time annual tuition (2025-26 catalogue).
+_GRAD_FT = 66670
+# Carey Business School full-time annual tuition.
+_CAREY_MBA = 75000
+_CAREY_MS = 91500
+_CAREY_PT_CREDIT = 1985
+# Bloomberg School full-time annual tuition.
+_BSPH_MPH = 85740
+_BSPH_MS = 68592
+_BSPH_PT_CREDIT = 1429
+# SAIS full-time DC-resident annual tuition.
+_SAIS_FT = 64850
+# School of Nursing full-time annual tuition.
+_NURSING_MSN = 58176
+_NURSING_PHD = 44172
+_NURSING_PT_CREDIT = 1995
+# School of Medicine annual tuition.
+_SOM = 66580
+_SOM_CERT_CREDIT = 1387
+# School of Education per-credit graduate tuition (full- and part-time).
+_EDU_CREDIT = 1140
+_EDU_DOCTORAL = 51934
+# Advanced Academic Programs part-time per-course tuition (midpoint of published range).
+_AAP_COURSE = 5115
+_AAP_COURSES_PER_YEAR = 5
+# Whiting Engineering for Professionals part-time per-course tuition.
+_WHITING_EP_COURSE = 6664
+_WHITING_EP_COURSES_PER_YEAR = 5
+
+
+def _pub_tuition_cost(tuition: int, note: str, *, source: str = _TUI_SRC, source_url: str = _TUI_SRC_URL, funded: bool = False, extra: dict | None = None) -> dict:
+    cost: dict = {
+        "tuition_usd": tuition,
+        "funded": funded,
+        "note": note,
+        "source": source,
+        "source_url": source_url,
+        "year": "2025-26",
+    }
+    if extra:
+        cost.update(extra)
+    return cost
+
+
+def _annualize_per_credit(credit_rate: int, credits: int = 18) -> int:
+    return credit_rate * credits
+
+
+def _annualize_per_course(course_rate: int, courses: int) -> int:
+    return course_rate * courses
+
+
+def _program_tuition(spec: dict) -> tuple[int | None, dict]:
+    """Return (matcher_tuition, cost_data) from JHU-published 2025-26 rates."""
+    school = spec["school"]
+    dtype = spec["degree_type"]
+    name = spec["program_name"]
+    delivery = spec.get("delivery_format", "on_campus")
+
+    if dtype == "bachelors":
+        return _TUITION_UG, {
+            "tuition_usd": _TUITION_UG,
+            "total_cost_of_attendance": _UNDERGRAD_COA,
+            "avg_net_price": _AVG_NET_PRICE,
+            "funded": False,
+            "source": _COST_SRC[0],
+            "source_url": _COST_SRC[1],
+            "year": "2024-25",
+        }
+
+    if dtype == "phd":
+        if school == NURSING:
+            sticker = _NURSING_PHD
+        elif school == MEDICINE:
+            sticker = _SOM
+        elif school == SAIS:
+            sticker = _SAIS_FT
+        else:
+            sticker = _GRAD_FT
+        return 0, _pub_tuition_cost(
+            0,
+            (
+                "JHU PhD students typically receive full tuition plus a stipend through "
+                "fellowship and assistantship programs; the published full-time "
+                f"doctoral tuition sticker is ${sticker:,} per year before aid."
+            ),
+            source=_PHD_FUNDING_SRC,
+            source_url=_PHD_FUNDING_URL,
+            funded=True,
+            extra={"published_tuition_sticker": sticker},
+        )
+
+    if dtype == "professional":
+        if name == "Doctor of Medicine":
+            return _SOM, _pub_tuition_cost(
+                _SOM,
+                "Published annual M.D. tuition (2025-26); many students receive need-based "
+                "scholarships covering full tuition or full cost of attendance per the "
+                "School of Medicine financial-aid policy.",
+                source=_TUI_SRC_MED,
+                source_url=_TUI_SRC_MED_URL,
+            )
+        return None, {
+            "note": "Tuition varies by program; see the official program tuition page.",
+            "source": _TUI_SRC,
+            "source_url": _TUI_SRC_URL,
+        }
+
+    if school == CAREY:
+        if name == "Master of Business Administration":
+            return _CAREY_MBA, _pub_tuition_cost(
+                _CAREY_MBA,
+                "Published annual full-time Global MBA tuition (2025-26).",
+            )
+        if dtype == "masters":
+            return _CAREY_MS, _pub_tuition_cost(
+                _CAREY_MS,
+                "Published annual full-time Carey master's program tuition (2025-26).",
+            )
+        annual = _annualize_per_credit(_CAREY_PT_CREDIT)
+        return annual, _pub_tuition_cost(
+            annual,
+            f"Published part-time Carey tuition at ${_CAREY_PT_CREDIT:,} per credit hour; "
+            f"annualized at {annual // _CAREY_PT_CREDIT} credits for the matcher budget signal.",
+            extra={"per_credit_hour": _CAREY_PT_CREDIT},
+        )
+
+    if school == BLOOMBERG:
+        if name == "Master of Public Health":
+            return _BSPH_MPH, _pub_tuition_cost(
+                _BSPH_MPH,
+                "Published full-time Master of Public Health tuition (five terms, 2025-26).",
+            )
+        if dtype == "masters":
+            return _BSPH_MS, _pub_tuition_cost(
+                _BSPH_MS,
+                "Published full-time Bloomberg master's/doctoral tuition (2025-26).",
+            )
+        annual = _annualize_per_credit(_BSPH_PT_CREDIT)
+        return annual, _pub_tuition_cost(
+            annual,
+            f"Published part-time Bloomberg tuition at ${_BSPH_PT_CREDIT:,} per credit hour; "
+            f"annualized at {annual // _BSPH_PT_CREDIT} credits for the matcher budget signal.",
+            extra={"per_credit_hour": _BSPH_PT_CREDIT},
+        )
+
+    if school == SAIS:
+        return _SAIS_FT, _pub_tuition_cost(
+            _SAIS_FT,
+            "Published full-time SAIS graduate/doctoral tuition, Washington, D.C. campus (2025-26).",
+        )
+
+    if school == NURSING:
+        if dtype == "masters":
+            return _NURSING_MSN, _pub_tuition_cost(
+                _NURSING_MSN,
+                "Published full-time MSN tuition (2025-26).",
+            )
+        annual = _annualize_per_credit(_NURSING_PT_CREDIT)
+        return annual, _pub_tuition_cost(
+            annual,
+            f"Published part-time School of Nursing tuition at ${_NURSING_PT_CREDIT:,} per credit hour; "
+            f"annualized at {annual // _NURSING_PT_CREDIT} credits for the matcher budget signal.",
+            extra={"per_credit_hour": _NURSING_PT_CREDIT},
+        )
+
+    if school == MEDICINE:
+        if dtype == "masters":
+            return _SOM, _pub_tuition_cost(
+                _SOM,
+                "Published School of Medicine master's (M.A./M.S.) tuition (2025-26).",
+                source=_TUI_SRC_MED,
+                source_url=_TUI_SRC_MED_URL,
+            )
+        annual = _annualize_per_credit(_SOM_CERT_CREDIT)
+        return annual, _pub_tuition_cost(
+            annual,
+            f"Published School of Medicine graduate-certificate tuition at ${_SOM_CERT_CREDIT:,} "
+            f"per credit hour; annualized at {annual // _SOM_CERT_CREDIT} credits for the matcher "
+            "budget signal.",
+            source=_TUI_SRC_MED,
+            source_url=_TUI_SRC_MED_URL,
+            extra={"per_credit_hour": _SOM_CERT_CREDIT},
+        )
+
+    if school == EDUCATION:
+        if "International Teaching and Global Leadership" in name:
+            tuition = 67200 if "TEFL" in name.upper() else 63360
+            return tuition, _pub_tuition_cost(
+                tuition,
+                f"Published full-time {name} program tuition (2025-26).",
+            )
+        if dtype == "masters":
+            annual = _annualize_per_credit(_EDU_CREDIT)
+            return annual, _pub_tuition_cost(
+                annual,
+                f"Published School of Education graduate tuition at ${_EDU_CREDIT:,} per credit hour; "
+                f"annualized at {annual // _EDU_CREDIT} credits for the matcher budget signal.",
+                extra={"per_credit_hour": _EDU_CREDIT},
+            )
+        annual = _annualize_per_credit(_EDU_CREDIT)
+        return annual, _pub_tuition_cost(
+            annual,
+            f"Published School of Education certificate tuition at ${_EDU_CREDIT:,} per credit hour; "
+            f"annualized at {annual // _EDU_CREDIT} credits for the matcher budget signal.",
+            extra={"per_credit_hour": _EDU_CREDIT},
+        )
+
+    if school == AAP and delivery == "online":
+        annual = _annualize_per_course(_AAP_COURSE, _AAP_COURSES_PER_YEAR)
+        return annual, _pub_tuition_cost(
+            annual,
+            f"Published Advanced Academic Programs part-time tuition at about ${_AAP_COURSE:,} "
+            f"per course; annualized at {_AAP_COURSES_PER_YEAR} courses for the matcher budget signal.",
+            extra={"per_course": _AAP_COURSE, "courses_per_year": _AAP_COURSES_PER_YEAR},
+        )
+
+    if school == WHITING and dtype == "certificate":
+        annual = _annualize_per_course(_WHITING_EP_COURSE, _WHITING_EP_COURSES_PER_YEAR)
+        return annual, _pub_tuition_cost(
+            annual,
+            f"Published Engineering for Professionals part-time tuition at ${_WHITING_EP_COURSE:,} "
+            f"per course; annualized at {_WHITING_EP_COURSES_PER_YEAR} courses for the matcher "
+            "budget signal.",
+            extra={"per_course": _WHITING_EP_COURSE, "courses_per_year": _WHITING_EP_COURSES_PER_YEAR},
+        )
+
+    if dtype in ("masters", "certificate"):
+        return _GRAD_FT, _pub_tuition_cost(
+            _GRAD_FT,
+            f"Published full-time graduate/doctoral tuition for {school} (2025-26).",
+        )
+
+    return None, {
+        "note": "Tuition varies by program; see the official program tuition page.",
+        "source": _TUI_SRC,
+        "source_url": _TUI_SRC_URL,
+    }
+
+
 _REQ_UNDERGRAD = {
     "materials": [
         {"name": "Application (Common Application or Coalition Application)", "required": True},
@@ -961,7 +1214,7 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
         "outcomes_data.top_industries",
         "outcomes_data.conditions",
     ]
-    if spec.get("degree_type") != "bachelors" and slug not in _COST_BY_SLUG:
+    if spec.get("degree_type") != "bachelors" and slug not in _COST_BY_SLUG and _program_tuition(spec)[0] is None:
         omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
@@ -1071,28 +1324,7 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.department = spec.get("department")
         kw = _PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(_KEYWORDS_BY_SCHOOL[spec["school"]])
         p.content_sources = _program_content(spec["school"], kw)
-        if spec["degree_type"] == "bachelors":
-            p.tuition = _TUITION_UG
-            p.cost_data = {
-                "tuition_usd": _TUITION_UG, "total_cost_of_attendance": _UNDERGRAD_COA,
-                "avg_net_price": _AVG_NET_PRICE, "funded": False,
-                "source": _COST_SRC[0], "source_url": _COST_SRC[1], "year": "2024-25",
-            }
-        elif spec["degree_type"] == "phd":
-            p.tuition = 0
-            p.cost_data = {
-                "tuition_usd": 0, "funded": True,
-                "note": "JHU PhD students typically receive full tuition plus a stipend.",
-                "source": "Johns Hopkins Graduate Admissions",
-                "source_url": "https://grad.jhu.edu/admissions/",
-            }
-        else:
-            p.tuition = None
-            p.cost_data = {
-                "note": "Tuition varies by program; see the official program tuition page.",
-                "source": "Johns Hopkins program tuition page",
-                "source_url": _website_for(spec),
-            }
+        p.tuition, p.cost_data = _program_tuition(spec)
         p.application_requirements = _requirements_for(spec)
         outcomes = dict(_OUTCOMES_INSTITUTION)
         outcomes["_standard"] = _program_standard(slug, spec)

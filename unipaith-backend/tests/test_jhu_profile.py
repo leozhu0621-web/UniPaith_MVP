@@ -52,31 +52,7 @@ def _school_snapshot(name: str) -> dict:
 
 def _program_snapshot(spec: dict) -> dict:
     slug = spec["slug"]
-    cost = (
-        {
-            "tuition_usd": j._TUITION_UG,
-            "total_cost_of_attendance": j._UNDERGRAD_COA,
-            "avg_net_price": j._AVG_NET_PRICE,
-            "funded": False,
-            "source": j._COST_SRC[0],
-            "source_url": j._COST_SRC[1],
-        }
-        if spec["degree_type"] == "bachelors"
-        else (
-            {
-                "tuition_usd": 0,
-                "funded": True,
-                "source": "Johns Hopkins Graduate Admissions",
-                "source_url": "https://grad.jhu.edu/admissions/",
-            }
-            if spec["degree_type"] == "phd"
-            else {
-                "note": "see program page",
-                "source": "Johns Hopkins program tuition page",
-                "source_url": j._website_for(spec),
-            }
-        )
-    )
+    _tuition, cost = j._program_tuition(spec)
     outcomes = dict(j._OUTCOMES_INSTITUTION)
     outcomes["_standard"] = j._program_standard(slug, spec)
     kw = j._PROGRAM_KEYWORDS_BY_SLUG.get(slug) or list(j._KEYWORDS_BY_SCHOOL[spec["school"]])
@@ -175,3 +151,29 @@ def test_catalog_is_anti_stub_clean():
         f"credential siblings share a frame-stripped body on "
         f"{len(shared)} field(s): {shared[:8]}"
     )
+
+
+def test_matcher_core_tuition_is_published_catalog_wide():
+    """Tuition is institution-published — every program carries a cited rate (REPAIR #2)."""
+    missing = [spec["slug"] for spec in j.PROGRAMS if j._program_tuition(spec)[0] is None]
+    assert not missing, f"programs missing published tuition: {missing[:8]}"
+    covered = sum(1 for spec in j.PROGRAMS if j._program_tuition(spec)[0] is not None)
+    assert covered == len(j.PROGRAMS)
+
+
+def test_graduate_tiers_carry_published_tuition():
+    """Whole graduate tiers at 0% is matcher starvation — each tier must be filled."""
+    from collections import Counter
+
+    by_dt: Counter[str] = Counter()
+    null_by_dt: Counter[str] = Counter()
+    for spec in j.PROGRAMS:
+        dt = spec["degree_type"]
+        by_dt[dt] += 1
+        if j._program_tuition(spec)[0] is None:
+            null_by_dt[dt] += 1
+    for dt in ("masters", "certificate", "professional"):
+        assert null_by_dt[dt] == 0, (
+            f"{dt} tier missing tuition on {null_by_dt[dt]}/{by_dt[dt]} programs"
+        )
+    assert null_by_dt["phd"] == 0, "PhD tier should carry tuition 0 (funded), not null"
