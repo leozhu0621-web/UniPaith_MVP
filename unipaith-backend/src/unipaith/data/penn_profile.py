@@ -1292,17 +1292,43 @@ _ROLLUP_DROP: frozenset[str] = frozenset({
 # department / graduate-group pages:
 #  • Linguistics: BA + PhD graduate field; the AM is submatriculation-only, no standalone
 #    terminal master's admit.
-#  • Genomics and Computational Biology (GCB graduate group): PhD-only; no terminal MA.
 _ROLLUP_LEVEL_DROP: frozenset[tuple[str, str]] = frozenset({
     ("Linguistic, Comparative, and Related Language Studies and Services", "masters"),
-    ("Biomathematics, Bioinformatics, and Computational Biology", "masters"),
 })
+
+# (rollup title, degree_type) → Penn's real PER-LEVEL degree name, where the conferred
+# degree differs by credential level (so the field-wide ``_ROLLUP_RESOLVE`` would mis-name
+# one level). Verified against catalog.upenn.edu / the owning graduate group:
+#  • Electrical PhD is conferred as "Electrical and Systems Engineering" (the ESE doctoral
+#    program); only the BSE/MSE are conferred as "Electrical Engineering".
+#  • The CIP-26.11 graduate rows map to two DISTINCT real Perelman programs: the PhD to the
+#    Genomics and Computational Biology graduate group, the MS to Biostatistics (Graduate
+#    Group in Epidemiology and Biostatistics) — both housed in the Perelman School of Medicine.
+_ROLLUP_LEVEL_RESOLVE: dict[tuple[str, str], str] = {
+    ("Electrical, Electronics, and Communications Engineering", "phd"): (
+        "Electrical and Systems Engineering"
+    ),
+    ("Biomathematics, Bioinformatics, and Computational Biology", "phd"): (
+        "Genomics and Computational Biology"
+    ),
+    ("Biomathematics, Bioinformatics, and Computational Biology", "masters"): "Biostatistics",
+}
+
+# (rollup title, degree_type) → real OWNING school override (the IPEDS row tags these to
+# the School of Arts and Sciences, but the program is administered elsewhere). GCB + the
+# Biostatistics MS are Perelman School of Medicine graduate groups.
+_ROLLUP_LEVEL_SCHOOL: dict[tuple[str, str], str] = {
+    ("Biomathematics, Bioinformatics, and Computational Biology", "phd"): _MED,
+    ("Biomathematics, Bioinformatics, and Computational Biology", "masters"): _MED,
+}
 
 
 def _resolve_rollup(field_name: str, degree_type: str = "") -> str | None:
     """Real Penn degree name for a Scorecard CIP field, or None to DROP the row."""
     if (field_name, degree_type) in _ROLLUP_LEVEL_DROP:
         return None
+    if (field_name, degree_type) in _ROLLUP_LEVEL_RESOLVE:
+        return _ROLLUP_LEVEL_RESOLVE[(field_name, degree_type)]
     if field_name in _ROLLUP_DROP:
         return None
     return _ROLLUP_RESOLVE.get(field_name, field_name)
@@ -1785,6 +1811,10 @@ def _build_catalog() -> list[dict]:
             continue
         seen.add(slug)
         delivery = _delivery_format(fmt)
+        # Some resolved rows are administered by a different school than the IPEDS row's
+        # tag (e.g. GCB / Biostatistics are Perelman, not SAS) — override so the conferred
+        # name, school_id, website and department all match the real owning unit.
+        school = _ROLLUP_LEVEL_SCHOOL.get((field_name, dtype), school)
         pname = _conferred_program_name(real_name, dtype, school)
         spec = {
             "slug": slug,

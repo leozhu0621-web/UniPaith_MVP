@@ -523,6 +523,16 @@ FIELD_DESCRIPTIONS: dict[str, str] = {
 }
 
 SLUG_DESCRIPTIONS: dict[str, str] = {
+    # The CIP-26.11 MS resolves to Penn's real Biostatistics MS (Perelman School of
+    # Medicine, Graduate Group in Epidemiology and Biostatistics) — a distinct program
+    # from the GCB PhD, so it carries its own Biostatistics-specific body, not the
+    # computational-biology field fact.
+    "penn-biomathematics-bioinformatics-and-computational-biology-ms": (
+        "Penn's Master of Science in Biostatistics, through the Perelman School of "
+        "Medicine's Graduate Group in Epidemiology and Biostatistics, trains students in "
+        "probability, mathematical statistics, survival analysis, categorical data, and "
+        "statistical computing for biomedical research, culminating in a master's thesis."
+    ),
     "penn-wharton-mba": (
         "Wharton's full-time MBA — the flagship two-year program of the world's first "
         "collegiate business school, with 18+ majors and one of the deepest finance "
