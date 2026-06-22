@@ -19,8 +19,12 @@ guessed. Built 2026-06-11 from:
 
 Honest caveats stamped into ``_standard.omitted``: Rice publishes career outcomes
 institution-wide (no per-program employment/industry split), so those program fields are
-omitted; graduate/professional programs without a verified per-program tuition carry a
-sourced "see the program's tuition page" record rather than a guessed number; notable-
+omitted; academic master's and PhD programs carry Rice's published 2025-26 standard
+full-time graduate tuition ($62,474/yr; the matcher budget signal, with the funded
+tuition-waiver+stipend reality noted separately), professional programs with a published
+annual rate carry it, and only the per-credit professional / continuing-studies programs
+(billed per credit with no single published annual figure) omit tuition with a sourced
+per-credit record rather than a guessed number; notable-
 faculty rosters are omitted for schools where no current named distinction could be
 verified from an official page; and Rice's news site exposes no editorial RSS feed, so the
 verified LiveWhale events RSS (current, image-carrying) feeds the Updates surface while the
@@ -918,9 +922,9 @@ _GRAD_EXPLICIT: list[tuple] = [
     ("Professional MBA — Evening", "professional", _BIZ, "Rice Business", 22, "on_campus", "https://business.rice.edu/rice-mba/professional-mba", None, None),
     ("Professional MBA — Weekend", "professional", _BIZ, "Rice Business", 22, "on_campus", "https://business.rice.edu/rice-mba/professional-mba", None, None),
     ("Hybrid MBA", "professional", _BIZ, "Rice Business", 22, "hybrid", "https://business.rice.edu/rice-mba/hybrid-mba", 137700, "total"),
-    ("Executive MBA", "professional", _BIZ, "Rice Business", 22, "on_campus", "https://business.rice.edu/rice-mba/executive-mba", None, None),
+    ("Executive MBA", "professional", _BIZ, "Rice Business", 22, "on_campus", "https://business.rice.edu/rice-mba/executive-mba", 76125, "year"),
     ("MBA@Rice (Online MBA)", "professional", _BIZ, "Rice Business", 24, "online", "https://business.rice.edu/rice-mba/online-mba", None, None),
-    ("Master of Accounting (MAcc)", "masters", _BIZ, "Rice Business", 10, "on_campus", "https://business.rice.edu/graduate-programs/master-accounting", None, None),
+    ("Master of Accounting (MAcc)", "masters", _BIZ, "Rice Business", 10, "on_campus", "https://business.rice.edu/graduate-programs/master-accounting", 62596, "year"),
     ("Doctor of Philosophy in Business", "phd", _BIZ, "Rice Business", 60, "on_campus", "https://business.rice.edu/graduate-programs/phd-business", None, None),
     ("Graduate Certificate in Healthcare Management", "certificate", _BIZ, "Rice Business", 10, "on_campus", "https://business.rice.edu/graduate-programs/healthcare/healthcare-certificate", 25000, "total"),
     # ── George R. Brown School of Engineering and Computing ──
@@ -1003,10 +1007,10 @@ _GRAD_EXPLICIT: list[tuple] = [
     ("Doctor of Philosophy in Sociology", "phd", _SOC, "Sociology", 60, "on_campus", f"{_GA}/social-sciences/sociology/sociology-phd/", None, None),
     ("Master of Computational Economics (MCEcon)", "professional", _SOC, "Economics", 24, "on_campus", "https://economics.rice.edu/graduate-program/mcecon", None, None),
     ("Master of Energy Economics (MEEcon)", "professional", _SOC, "Economics", 24, "on_campus", "https://economics.rice.edu/graduate-program/MEECON", None, None),
-    ("Master of Global Affairs (MGA)", "professional", _SOC, "Global Affairs", 24, "on_campus", "https://mga.rice.edu", None, None),
-    ("Master of Human-Computer Interaction and Human Factors (MHCIHF)", "professional", _SOC, "Psychological Sciences", 24, "on_campus", "https://psychology.rice.edu/MHCIHF", None, None),
-    ("Master of Industrial-Organizational Psychology (MIOP)", "professional", _SOC, "Psychological Sciences", 24, "on_campus", "https://psychology.rice.edu/miop", None, None),
-    ("Master of Social Policy Evaluation (MSPE)", "professional", _SOC, "Social Policy Analysis", 12, "on_campus", "https://socialpolicy.rice.edu/", None, None),
+    ("Master of Global Affairs (MGA)", "professional", _SOC, "Global Affairs", 24, "on_campus", "https://mga.rice.edu", 58000, "year"),
+    ("Master of Human-Computer Interaction and Human Factors (MHCIHF)", "professional", _SOC, "Psychological Sciences", 24, "on_campus", "https://psychology.rice.edu/MHCIHF", 35000, "year"),
+    ("Master of Industrial-Organizational Psychology (MIOP)", "professional", _SOC, "Psychological Sciences", 24, "on_campus", "https://psychology.rice.edu/miop", 35000, "year"),
+    ("Master of Social Policy Evaluation (MSPE)", "professional", _SOC, "Social Policy Analysis", 12, "on_campus", "https://socialpolicy.rice.edu/", 44000, "year"),
     # ── Rice School of Architecture ──
     ("Master of Architecture (MArch) — Option 1 (Professional)", "professional", _ARCH, "Architecture", 42, "on_campus", f"{_GA}/architecture/architecture/architecture-march/", 41333, "year"),
     ("Master of Architecture (MArch) — Option 2 (Post-Professional)", "professional", _ARCH, "Architecture", 30, "on_campus", f"{_GA}/architecture/architecture/architecture-march/", 41333, "year"),
@@ -1300,6 +1304,60 @@ def _grad_cost(spec: dict) -> dict | None:
         ),
         "source": "Rice program tuition page / Rice Bursar",
         "source_url": spec.get("website") or _SCHOOL_WEBSITE.get(spec["school"]),
+        "year": "2025-26",
+    }
+
+
+# Rice's published 2025-26 standard full-time graduate tuition — the single rate that the
+# Wiess (Natural Sciences), Engineering, Humanities, and Social Sciences academic master's
+# and PhD programs share (Rice General Announcements, "Tuition, Fees, and Expenses",
+# 2025-26: $62,474/yr = $31,237/semester = $3,471/credit hour). It is the matcher-core
+# budget signal (REPAIR_BACKLOG run 74 HIGH #2): a funded research doctorate is still stamped
+# with the published sticker — funding is carried separately in ``funded``/``note`` — because
+# a null/$0 would tell the matcher the whole graduate tier is free and starve every budget
+# comparison.
+_GRAD_STICKER = 62474
+_GRAD_STICKER_SRC = (
+    "Rice University General Announcements — Tuition, Fees, and Expenses (2025-26)"
+)
+_GRAD_STICKER_URL = (
+    "https://ga.rice.edu/graduate-students/student-services-organizations/"
+    "tuition-fees-expenses/"
+)
+
+
+def _is_funded_academic(spec: dict) -> bool:
+    """True for an academic research master's or doctoral program billed at Rice's standard
+    full-time graduate tuition (and typically funded with a tuition waiver + stipend).
+
+    Excludes the per-credit / per-program professional and continuing-studies programs:
+    the Glasscock School (per credit), and any row that already carries its own verified
+    ``tuition`` (set in ``_GRAD_EXPLICIT``) or a ``_COST_BY_SLUG`` override. Professional
+    master's (``degree_type == "professional"``) are never funded-academic — they pay a
+    published professional rate or honestly omit when Rice bills them per credit."""
+    return (
+        spec.get("degree_type") in ("phd", "masters")
+        and spec.get("school") != _GLAS
+        and spec.get("tuition") is None
+    )
+
+
+def _standard_grad_cost(spec: dict) -> dict:
+    """Cost record for a funded academic master's / PhD at Rice's published standard
+    full-time graduate tuition (the matcher budget reference; funding is a separate signal)."""
+    return {
+        "tuition_usd": _GRAD_STICKER,
+        "tuition_basis": "year",
+        "funded": True,
+        "note": (
+            f"Rice's published 2025-26 standard full-time graduate tuition is ${_GRAD_STICKER:,} "
+            "per year ($31,237 per semester / $3,471 per credit hour); this is the matcher's "
+            "budget reference. Admitted academic master's and doctoral students at Rice are "
+            "typically fully funded with a tuition waiver plus a stipend, so most pay far less "
+            "than the published sticker."
+        ),
+        "source": _GRAD_STICKER_SRC,
+        "source_url": _GRAD_STICKER_URL,
         "year": "2025-26",
     }
 
@@ -2045,9 +2103,16 @@ def _program_standard(slug: str, spec: dict | None = None) -> dict:
             "outcomes_data.employment_rate",
             "outcomes_data.top_industries",
         ]
-    # Graduate/professional programs without a verified per-program tuition omit tuition_usd
-    # (their cost_data carries a sourced "see the program page" record instead).
-    if spec.get("degree_type") != "bachelors" and slug not in _COST_BY_SLUG and spec.get("tuition") is None:
+    # Per-credit professional / continuing-studies programs without a verified annual figure
+    # omit tuition_usd (their cost_data carries a sourced per-credit record). Funded academic
+    # master's / PhD now carry Rice's published standard graduate sticker, so they are NOT
+    # omitted (REPAIR_BACKLOG run 74 HIGH #2 — matcher-core budget signal).
+    if (
+        spec.get("degree_type") != "bachelors"
+        and slug not in _COST_BY_SLUG
+        and spec.get("tuition") is None
+        and not _is_funded_academic(spec)
+    ):
         omitted.append("cost_data.tuition_usd")
     if slug not in _TRACKS_BY_SLUG:
         omitted.append("tracks")
@@ -2124,14 +2189,18 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
             elif grad_cost is not None:
                 p.tuition = grad_cost["tuition_usd"]
                 p.cost_data = grad_cost
+            elif _is_funded_academic(spec):
+                standard_cost = _standard_grad_cost(spec)
+                p.tuition = standard_cost["tuition_usd"]
+                p.cost_data = standard_cost
             else:
                 p.tuition = None
                 p.cost_data = {
                     "note": (
-                        "Tuition for this graduate/professional program varies and is "
-                        "published on the program's official Rice tuition page; a verified "
-                        "per-program figure is not yet recorded here. Research master's and "
-                        "doctoral students are typically funded."
+                        "Tuition for this professional/continuing-studies program is billed "
+                        "per credit hour and varies with the program's credit requirement, so "
+                        "no single verified annual figure is published here; see the program's "
+                        "official Rice tuition page."
                     ),
                     "source": "Rice University — program tuition page",
                     "source_url": spec.get("website") or _SCHOOL_WEBSITE.get(spec["school"]),

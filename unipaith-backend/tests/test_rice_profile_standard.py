@@ -54,7 +54,11 @@ def _program_cost(spec: dict):
     if spec["degree_type"] == "bachelors":
         return {"tuition_usd": r._TUITION_UG, "source": r._COST_SRC[0], "source_url": r._COST_SRC[1]}
     grad = r._grad_cost(spec)
-    return grad if grad is not None else {"note": "see school page", "source": "x", "source_url": "x"}
+    if grad is not None:
+        return grad
+    if r._is_funded_academic(spec):
+        return r._standard_grad_cost(spec)
+    return {"note": "see school page", "source": "x", "source_url": "x"}
 
 
 def _program_snapshot(spec: dict) -> dict:
