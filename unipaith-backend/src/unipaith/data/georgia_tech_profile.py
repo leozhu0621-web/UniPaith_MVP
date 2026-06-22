@@ -1116,59 +1116,61 @@ _COST_BY_SLUG: dict[str, dict] = {
         "year": "2024-25",
     },
     "gatech-online-ms-cybersecurity": {
-        "tuition_usd": 11808,
+        "tuition_usd": 11936,
         "tuition_basis": "total program",
         "funded": False,
         "note": (
             "The 32-credit Online MS in Cybersecurity (OMS Cyber) is billed per credit hour "
-            "($369/credit on the Fall 2025 Bursar schedule), totaling roughly $11,808 in "
+            "($373/credit on the Fall 2026 Bursar schedule), totaling roughly $11,936 in "
             "tuition — the program is advertised at under $12,000 total, a fraction of a "
-            "comparable on-campus or peer online cybersecurity master's."
+            "comparable on-campus or peer online cybersecurity master's. Part-time program "
+            "spread over two to three years; figure is the full-program total."
         ),
-        "source": "Georgia Tech Office of the Bursar (Fall 2025) + GTPE OMS Cybersecurity",
+        "source": "Georgia Tech Office of the Bursar (Fall 2026) + GTPE OMS Cybersecurity",
         "source_url": "https://pe.gatech.edu/degrees/cybersecurity",
-        "year": "2025-26",
+        "year": "2026-27",
     },
 }
 
 # ── Published graduate tuition (REPAIR_BACKLOG #2 — master's/professional starvation) ──
 # Georgia Tech is a public university; the University System of Georgia Board of Regents
 # publishes a standard full-time graduate tuition that applies to every graduate program
-# EXCEPT those on the Bursar's differential-tuition list. The figures below are the Fall
-# 2025 Bursar full-time (12+ credit) per-semester rates DOUBLED to an academic-year total
-# (the same in-state basis the undergraduate row uses), verified against the official
-# Bursar "Fall 2025 Tuition and Fee Rates per Semester" schedule. Funding (assistantships)
-# is a SEPARATE signal — these are the published sticker tuition the matcher scores on.
-_TUITION_GRAD_IN_STATE = 14416  # $7,208/sem standard graduate rate × 2 semesters
-_TUITION_GRAD_OUT_STATE = 31210  # $15,605/sem standard graduate rate × 2 semesters
+# EXCEPT those on the Bursar's differential-tuition list. The figures below are the CURRENT
+# Fall 2026 Bursar full-time (12+ credit) per-semester rates DOUBLED to an academic-year
+# total (the same in-state basis the undergraduate row uses; Program.tuition is read as
+# ANNUAL tuition by the matcher), verified against the official Bursar "Fall 2026 Tuition
+# and Fee Rates per Semester" schedule. Funding (assistantships) is a SEPARATE signal —
+# these are the published sticker tuition the matcher scores on.
+_TUITION_GRAD_IN_STATE = 14560  # $7,280/sem standard graduate rate × 2 semesters
+_TUITION_GRAD_OUT_STATE = 32146  # $16,073/sem standard graduate rate × 2 semesters
 
 # slug → (annual in-state, annual out-of-state) for Bursar DIFFERENTIAL-tuition programs
 # (each its own published rate, distinct from the standard graduate rate and from each
-# other — never one uniform number flattened across the tier).
+# other — never one uniform number flattened across the tier). Fall 2026 per-sem × 2.
 _GRAD_TUITION_BY_SLUG: dict[str, tuple[int, int]] = {
-    "gatech-mba": (30246, 43646),  # Scheller Full-Time MBA — $15,123/$21,823 per sem
-    "gatech-quantitative-computational-finance-ms": (18026, 41390),  # MSQCF
-    "gatech-analytics-ms": (29936, 43398),  # on-campus MS Analytics (MSANLT) — premium
-    "gatech-electrical-computer-engineering-ms": (16888, 36564),  # MSECE
-    "gatech-human-computer-interaction-ms": (16466, 37922),  # MSHCI
-    "gatech-robotics-ms": (16458, 37914),  # MSROBO
-    "gatech-bioinformatics-ms": (16930, 39294),  # MSBINF
-    "gatech-supply-chain-engineering-ms": (16980, 40586),  # MSSCE
-    "gatech-march": (18506, 35482),  # Master of Architecture (MARCH)
-    "gatech-mcrp": (17332, 34258),  # Master of City & Regional Planning (MCRP)
-    "gatech-gist-ms": (17332, 34258),  # MS Geographic Information Science & Tech (MSGIST)
-    "gatech-masters-industrial-design": (18506, 37708),  # Master of Industrial Design (MID)
-    "gatech-music-technology-ms": (17956, 34910),  # MS Music Technology (MSMT)
-    "gatech-urban-design-msud": (18506, 35482),  # MS Urban Design (MSUD)
-    "gatech-building-construction-facility-management-ms": (20004, 42498),  # MSBCFM
+    "gatech-mba": (30548, 44956),  # Scheller Full-Time MBA — $15,274/$22,478 per sem
+    "gatech-quantitative-computational-finance-ms": (18206, 42632),  # MSQCF
+    "gatech-analytics-ms": (30236, 44700),  # on-campus MS Analytics (MSANLT) — premium
+    "gatech-electrical-computer-engineering-ms": (17056, 37660),  # MSECE
+    "gatech-human-computer-interaction-ms": (16630, 39060),  # MSHCI
+    "gatech-robotics-ms": (16622, 39052),  # MSROBO
+    "gatech-bioinformatics-ms": (17100, 40472),  # MSBINF
+    "gatech-supply-chain-engineering-ms": (17150, 41804),  # MSSCE
+    "gatech-march": (18692, 36546),  # Master of Architecture (MARCH)
+    "gatech-mcrp": (17506, 35286),  # Master of City & Regional Planning (MCRP)
+    "gatech-gist-ms": (17506, 35286),  # MS Geographic Information Science & Tech (MSGIST)
+    "gatech-masters-industrial-design": (18692, 38840),  # Master of Industrial Design (MID)
+    "gatech-music-technology-ms": (18136, 35958),  # MS Music Technology (MSMT)
+    "gatech-urban-design-msud": (18692, 36546),  # MS Urban Design (MSUD)
+    "gatech-building-construction-facility-management-ms": (20204, 43772),  # MSBCFM
 }
 
 # Graduate programs Georgia Tech does NOT publish a single annual tuition for — executive
 # cohort programs billed per residence term and GTPE professional master's billed at
 # program-specific per-credit rates. tuition_usd is omitted-with-reason (never guessed).
 _GRAD_TUITION_OMIT: frozenset[str] = frozenset({
-    "gatech-mba-global-business-executive",  # Executive MBA — $21,140.75/residence term
-    "gatech-mba-management-technology-executive",  # Executive MBA — $21,140.75/residence term
+    "gatech-mba-global-business-executive",  # Executive MBA — $21,775/residence term (Fall 2026)
+    "gatech-mba-management-technology-executive",  # Executive MBA — $21,775/residence term
     "gatech-applied-systems-engineering-pmase",  # GTPE professional master's — per-credit
     "gatech-manufacturing-leadership-pmml",  # GTPE professional master's — per-credit
     "gatech-occupational-safety-health-pmosh",  # GTPE professional master's — per-credit
@@ -1218,14 +1220,14 @@ def _grad_cost(spec: dict) -> dict:
             "tuition_out_of_state": tout,
         },
         "note": (
-            f"Published Georgia Tech graduate tuition (Fall 2025 Bursar full-time rate × "
+            f"Published Georgia Tech graduate tuition (Fall 2026 Bursar full-time rate × "
             f"two semesters): ${tin:,} in-state / ${tout:,} out-of-state, plus required "
             f"fees. Set by the University System of Georgia Board of Regents; many research "
             f"students receive assistantships that cover tuition separately."
         ),
-        "source": "Georgia Tech Office of the Bursar — Fall 2025 Tuition and Fee Rates",
+        "source": "Georgia Tech Office of the Bursar — Fall 2026 Tuition and Fee Rates",
         "source_url": "https://bursar.gatech.edu/tuition-fees",
-        "year": "2025-26",
+        "year": "2026-27",
     }
 
 
